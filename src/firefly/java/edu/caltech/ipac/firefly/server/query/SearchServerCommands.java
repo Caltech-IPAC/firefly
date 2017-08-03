@@ -184,7 +184,7 @@ public class SearchServerCommands {
     public static class AddBgJob extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            BackgroundStatus bgStatus = QueryUtil.convertToBackgroundStatus(params.getRequired("bgStats"));
+            BackgroundStatus bgStatus = QueryUtil.convertToBackgroundStatus(params.getRequired("bgStatus"));
             BackgroundEnv.addUserBackgroundInfo(bgStatus);
             return "true";
         }

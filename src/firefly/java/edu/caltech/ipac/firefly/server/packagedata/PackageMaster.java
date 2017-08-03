@@ -163,9 +163,11 @@ public class PackageMaster  {
                                         SearchProcessor<List<FileGroup>> processor) {
 
         PackagingWorker worker= new PackagingWorker(processor,req);
+        String dataTag = req.getSearchRequest() != null ? req.getSearchRequest().getMeta(BackgroundStatus.DATA_TAG) : null;
         BackgroundEnv.BackgroundProcessor backProcess=
                 new BackgroundEnv.BackgroundProcessor( worker,  req.getBaseFileName(),
-                                                       req.getTitle(),req.getEmail(),
+                                                       req.getTitle(), dataTag,
+                                                       req.getEmail(),
                                                        req.getDataSource(),
                                                        ServerContext.getRequestOwner());
         BackgroundStatus bgStat= BackgroundEnv.backgroundProcess(WAIT_MILLS,backProcess, BgType.PACKAGE);

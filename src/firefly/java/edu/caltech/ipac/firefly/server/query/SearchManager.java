@@ -206,12 +206,12 @@ public class SearchManager {
     public BackgroundStatus getRawDataSetBackground(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
 
         Logger.briefDebug("Backgrounded search started:" + waitMillis + " wait, req:" + request);
-        String email= request.getMeta(ServerParams.EMAIL) == null ? "" : request.getMeta(ServerParams.EMAIL);
+        String email= request.getMeta(ServerParams.EMAIL);
         SearchWorker worker= new SearchWorker(request, clientRequest);
         String title = request.getTblTitle() == null ? request.getRequestId() : request.getTblTitle();
         BackgroundEnv.BackgroundProcessor processor=
                               new BackgroundEnv.BackgroundProcessor(worker,  null,
-                                                                    title,
+                                                                    title, request.getMeta(BackgroundStatus.DATA_TAG),
                                                                     email, request.getRequestId(),
                                                                     ServerContext.getRequestOwner() );
         return BackgroundEnv.backgroundProcess(waitMillis, processor, BackgroundStatus.BgType.SEARCH);

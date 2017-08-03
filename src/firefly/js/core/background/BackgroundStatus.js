@@ -25,7 +25,7 @@ const URL_SUB = 'URL_PARAM_SEP';
 const KW_VAL_SEP = '==>>';
 const NO_ID = 'WARNING:_UNKNOWN_PACKAGE_ID';
 
-const Keys= {
+export const Keys= {
     TYPE: 'TYPE',
     ID: 'ID',
     ATTRIBUTE: 'ATTRIBUTES',
@@ -40,6 +40,7 @@ const Keys= {
     WEB_PLOT_REQ: 'WEB_PLOT_REQ',
     FILE_PATH: 'FILE_PATH',
     TOTAL_BYTES: 'TOTAL_BYTES',
+    DATA_TAG: 'DataTag',             // a tag describing the content of the returned data.  ie. 'catalog', 'imagemeta'
     PUSH_DATA_BASE: 'PUSH_DATA_#',
     PUSH_TYPE_BASE: 'PUSH_TYPE_#',
     PUSH_CNT:       'PUSH_CNT',

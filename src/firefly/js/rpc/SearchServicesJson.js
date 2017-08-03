@@ -10,10 +10,9 @@ import {get, set} from 'lodash';
 
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
-import {BackgroundStatus} from '../core/background/BackgroundStatus.js';
-import {MAX_ROW} from '../tables/TableUtil.js';
+import {MAX_ROW, DataTagMeta} from '../tables/TableUtil.js';
 import {getBgEmail} from '../core/background/BackgroundUtil.js';
-import {encodeUrl, download} from '../util/WebUtil.js';
+import {encodeUrl, download, getModuleName} from '../util/WebUtil.js';
 
 import Enum from 'enum';
 import {getTblById} from '../tables/TableUtil.js';
@@ -117,6 +116,10 @@ export function packageRequest(dlRequest, searchRequest, selectionInfo) {
     if (!dlRequest.Email && getBgEmail()) {
         dlRequest.Email = getBgEmail();
     }
+    // insert DataTag if not present
+    if (!get(searchRequest, DataTagMeta)) {
+        set(searchRequest, DataTagMeta, `${getModuleName()}-${ServerParams.PACKAGE_REQUEST}`);
+    }
 
     const params = {
         [DOWNLOAD_REQUEST]: JSON.stringify(dlRequest),
@@ -152,6 +155,10 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
     if (getBgEmail()) {
         request = set(request, ['META_INFO', ServerParams.EMAIL], getBgEmail());
     }
+    // insert DataTag if not present
+    if (!get(request, DataTagMeta)) {
+        set(request, DataTagMeta, `${getModuleName()}-${request.id}`);
+    }
     const params = {
         [ServerParams.REQUEST]: JSON.stringify(request),
         [ServerParams.WAIT_MILS]: String(waitMillis)
@@ -166,8 +173,8 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
  * @param {string} id background id
  * @return {Promise}
  */
-export function addBgJob(bgStats) {
-    const params = {bgStats: JSON.stringify(bgStats)};
+export function addBgJob(bgStatus) {
+    const params = {bgStatus: JSON.stringify(bgStatus)};
     return doJsonRequest(ServerParams.ADD_JOB, params).then( () => true);
 };
 

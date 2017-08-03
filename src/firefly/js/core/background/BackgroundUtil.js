@@ -2,12 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, omit} from 'lodash';
+import {get, omit, isNil} from 'lodash';
 import Enum from 'enum';
 
 import {flux} from '../../Firefly.js';
 import {BACKGROUND_PATH} from './BackgroundCntlr.js';
-import {parseUrl} from '../../util/WebUtil.js';
+import {getModuleName} from '../../util/WebUtil.js';
 
 
 /**
@@ -42,6 +42,15 @@ export function getBgEmail() {
     return get(flux.getState(), [BACKGROUND_PATH, 'email']);
 }
 
+/**
+ * returns the email related info.  Currently, it's email and enableEmail.
+ * @returns {object.<string, }
+ */
+export function getBgEmailInfo() {
+    let {email, enableEmail} =  get(flux.getState(), BACKGROUND_PATH) || {};
+    enableEmail = isNil(enableEmail) ? !!email : enableEmail;
+    return {email, enableEmail};
+}
 
 export function emailSent(bgStatus) {
     return get(bgStatus, 'ATTRIBUTES', '').includes('EmailSent');
@@ -71,6 +80,27 @@ export function getErrMsg(bgStatus) {
     return Object.entries(omit(bgStatus, 'MESSAGE_CNT')).filter( ([k,v]) => k.startsWith('MESSAGE_'))
                             .map(([k,v]) => v)
                             .join('; ');
+}
+
+
+/**
+ * returns a regex used to filter the incoming BackgroundStatus's DataTag.
+ * @returns {RegExp}
+ */
+export function getDataTagMatcher() {
+    var patterns = get(flux.getState(), [BACKGROUND_PATH, 'allowDataTag']) || [`^${getModuleName()}-.*`, 'catalog'];
+    patterns = Array.isArray(patterns) ? patterns : patterns.split(',').map((s) => s.trim());
+    return new RegExp(patterns.join('|'));
+}
+
+/**
+ * returns a regex used to filter the incoming BackgroundStatus's DataTag.
+ * @returns {RegExp}
+ */
+export function setDataTagMatcher() {
+    var patterns = get(flux.getState(), [BACKGROUND_PATH, 'allowDataTag']) || [`^${getModuleName()}-.*`, 'catalog'];
+    patterns = Array.isArray(patterns) ? patterns : patterns.split(',').map((s) => s.trim());
+    return new RegExp(patterns.join('|'));
 }
 
 

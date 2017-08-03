@@ -44,13 +44,14 @@ public class BackgroundInfoCacher {
      * @param baseFileName base name
      * @param title title
      */
-    public BackgroundInfoCacher(String key, String email, String baseFileName, String title, ServerEvent.EventTarget target) {
+    public BackgroundInfoCacher(String key, String email, String baseFileName, String title, String dataTag, ServerEvent.EventTarget target) {
         this(key);
-        updateInfo(new BackgroundInfo(null, email, baseFileName, title, target, false));
+        updateInfo(new BackgroundInfo(null, email, baseFileName, title, dataTag, target, false));
     }
 
     public static void fireBackgroundJobAdd(BackgroundStatus bgStat) {
         if (bgStat != null) {
+            mergeInfoIntoStatus(getInfo(new StringKey(bgStat.getID())), bgStat);
             FluxAction addAction = new FluxAction("background.bgJobAdd", QueryUtil.convertToJsonObject(bgStat));
             ServerEventManager.fireAction(addAction, ServerEvent.Scope.USER);
         }
@@ -164,27 +165,39 @@ public class BackgroundInfoCacher {
         fireStatusUpdate(info);
     }
 
-    private void mergeInfoIntoStatus(BackgroundInfo info, BackgroundStatus bgStatus) {
-        bgStatus.setParam(ServerParams.TITLE, info.getTitle());
-        bgStatus.setParam(ServerParams.EMAIL, info.getEmailAddress());
+    /**
+     * because on the client, bgStatus is a combination of both bgInfo and bgStatus.  So here, we will
+     * update the two objects so it can be stored correctly.
+     */
+    private static void mergeInfoIntoStatus(BackgroundInfo info, BackgroundStatus bgStatus) {
+        if (info != null && bgStatus != null) {
+            bgStatus.setParam(ServerParams.TITLE, info.getTitle());
+            bgStatus.setParam(ServerParams.EMAIL, info.getEmailAddress());
+            bgStatus.setParam(BackgroundStatus.DATA_TAG, info.getDataTag());
+        }
     }
 
     private BackgroundInfo getInfo() {
+        return getInfo(_key);
+    }
+
+    private static BackgroundInfo getInfo(StringKey key) {
         Cache cache= BackgroundEnv.getCache();
         BackgroundInfo retval= null;
-        if (cache.isCached(_key)) {
-            BackgroundInfo info= (BackgroundInfo)cache.get(_key);
+        if (cache.isCached(key)) {
+            BackgroundInfo info= (BackgroundInfo)cache.get(key);
             if (info!=null) {
                 retval= new BackgroundInfo(info.getStatus(),
                                         info.getEmailAddress(),
                                         info.getBaseFileName(),
                                         info.getTitle(),
+                                        info.getDataTag(),
                                         info.getEventTarget(),
                                         info.isCanceled());
             }
         }
         else {
-            Logger.error( "Could not update background info, BackgroundInfo not found in cache, key: "+_key );
+            Logger.error( "Could not update background info, BackgroundInfo not found in cache, key: "+ key );
         }
         return retval;
     }

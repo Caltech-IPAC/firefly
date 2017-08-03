@@ -3,7 +3,7 @@
  */
 
 import React, {PureComponent} from 'react';
-import {get, set, isEmpty, unset} from 'lodash';
+import {get, set, isEmpty, unset, isNil} from 'lodash';
 
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -13,7 +13,7 @@ import Validate from '../../util/Validate.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {getBackgroundInfo, BG_STATE, isActive, isDone, isSuccess, emailSent, canCreateScript} from './BackgroundUtil.js';
-import {dispatchBgStatus, dispatchJobRemove, dispatchBgSetEmail, dispatchJobCancel} from './BackgroundCntlr.js';
+import {dispatchBgStatus, dispatchJobRemove, dispatchBgSetEmailInfo, dispatchJobCancel} from './BackgroundCntlr.js';
 import {downloadWithProgress} from '../../util/WebUtil.js';
 import {DownloadProgress} from '../../rpc/SearchServicesJson.js';
 import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
@@ -48,7 +48,7 @@ class BackgroundMonitor extends SimpleComponent {
     }
 
     render() {
-        const {jobs={}, email='', help_id} = this.state || {};
+        const {jobs={}, email='', help_id, enableEmail} = this.state || {};
         const packages = Object.entries(jobs)
                         .filter(([id, job]) => get(job, 'TYPE') === 'PACKAGE')
                         .map( ([id, job]) => {
@@ -71,7 +71,7 @@ class BackgroundMonitor extends SimpleComponent {
                     {!isEmpty(searches) && searches}
                     {!isEmpty(unknown) && unknown}
                 </div>
-                <BgFooter {...{help_id, email}}/>
+                <BgFooter {...{help_id, email, enableEmail}}/>
             </div>
         );
     }
@@ -86,27 +86,38 @@ class BgFooter extends PureComponent {
     onEmailChanged(v) {
         if (get(v, 'valid')) {
             const {email} = this.props;
-            if (email !== v.value) dispatchBgSetEmail(v.value);
+            if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
         }
     }
 
     render() {
-        const {help_id = 'basics.bgmon', email} = this.props;
+        const {help_id = 'basics.bgmon', email=''} = this.props;
+        const enableEmail = isNil(this.props.enableEmail) ? !!email : this.props.enableEmail;
+        const toggleEnableEmail = (e) => {
+            const enableEmail = e.target.checked;
+            const email = enableEmail ? email : '';
+            dispatchBgSetEmailInfo({email, enableEmail});
+        };
         return (
             <div className='BGMon__footer' key='bgMonFooter'>
                 <button className='button std hl' onClick={this.onHide}
                         title='Hide Background Monitor'>Hide</button>
-                <InputField
-                    validator={Validate.validateEmail.bind(null, 'an email field')}
-                    tooltip='Enter an email to be notified when a process completes.'
-                    label='Email:'
-                    labelStyle={{display: 'inline-block', width: 40, fontWeight: 'bold'}}
-                    value={email}
-                    placeholder='Enter an email to get notification'
-                    size={27}
-                    onChange={this.onEmailChanged.bind(this)}
-                    actOn={['blur','enter']}
-                />
+                <div>
+                    <div style={{width: 250}}><input type='checkbox' checked={enableEmail} value='' onChange={toggleEnableEmail}/>Enable email notification</div>
+                    {enableEmail &&
+                        <InputField
+                            validator={Validate.validateEmail.bind(null, 'an email field')}
+                            tooltip='Enter an email to be notified when a process completes.'
+                            label='Email:'
+                            labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
+                            value={email}
+                            placeholder='Enter an email to get notification'
+                            style={{width: 170}}
+                            onChange={this.onEmailChanged.bind(this)}
+                            actOn={['blur','enter']}
+                        />
+                    }
+                </div>
                 <div>
                     <HelpIcon helpId={help_id} />
                 </div>
@@ -179,6 +190,8 @@ function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
     var progress;
     if (BG_STATE.WAITING.is(STATE)) {
         progress = <div className='BGMon__header--waiting'>Computing number of packages... <img style={{marginLeft: 3}} src={LOADING}/></div>;
+    } else if (BG_STATE.WORKING.is(STATE)) {
+            progress = <div className='BGMon__header--waiting'>In progress.... <img style={{marginLeft: 3}} src={LOADING}/></div>;
     } else if (BG_STATE.CANCELED.is(STATE)) {
         progress = <div>User aborted this request</div>;
     } else {

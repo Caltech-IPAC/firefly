@@ -25,6 +25,7 @@ class BackgroundInfo implements Serializable {
     private String email;
     private String baseFileName;
     private String title;
+    private String dataTag;
     private ServerEvent.EventTarget eventTarget;
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -34,12 +35,14 @@ class BackgroundInfo implements Serializable {
                           String email,
                           String baseFileName,
                           String title,
+                          String dataTag,
                           ServerEvent.EventTarget eventTarget,
                           boolean canceled) {
         this.bgStat= bgStat;
         this.canceled= canceled;
         this.email= email;
         this.baseFileName = baseFileName;
+        this.dataTag = dataTag;
         this.eventTarget= eventTarget;
         this.title = title;
     }
@@ -80,6 +83,14 @@ class BackgroundInfo implements Serializable {
     public void setTitle(String title) {
         this.title = title;
         bgStat.setParam(BackgroundStatus.TITLE, title);
+    }
+
+    public String getDataTag() {
+        return dataTag;
+    }
+
+    public void setDataTag(String dataTag) {
+        this.dataTag = dataTag;
     }
 
     public ServerEvent.EventTarget getEventTarget() { return eventTarget; }
