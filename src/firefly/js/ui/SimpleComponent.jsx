@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react';
+import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 
@@ -10,7 +11,9 @@ export class SimpleComponent extends PureComponent {
 
     componentWillReceiveProps(np) {
         if (!this.isUnmounted) {
-            this.setState(this.getNextState(np));
+            if (!shallowequal(this.props, np)) {
+                this.setState(this.getNextState(np));
+            }
         }
     }
     componentDidMount() {
