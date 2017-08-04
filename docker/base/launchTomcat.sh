@@ -84,6 +84,7 @@ fi
 rm -rf /usr/local/tomcat/webapps/examples
 rm -rf /usr/local/tomcat/webapps/docs
 rm -rf /usr/local/tomcat/webapps/host-manager
+rm -rf /usr/local/tomcat/webapps/ROOT
 
 if [ "$MANAGER" != "true" ] && [ "$MANAGER" != "t" ] && [ "$MANAGER" != "1" ] &&  \
    [ "$MANAGER" != "TRUE" ] && [ "$MANAGER" != "True" ] ; then
