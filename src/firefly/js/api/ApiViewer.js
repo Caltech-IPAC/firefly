@@ -278,9 +278,9 @@ function buildChartPart(channel,file,dispatch) {
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showPlot= (xyPlotOptions, tbl_id, viewerId) => {
+    const showPlot= (xyPlotOptions, viewerId) => {
         doViewerOperation(channel, file, () => {
-            plotRemotePlot(xyPlotOptions, tbl_id, viewerId, dispatch);
+            plotRemotePlot(xyPlotOptions, viewerId, dispatch);
         });
     };
 
@@ -355,7 +355,7 @@ export function* doOnWindowConnected({channel, f}) {
  * @param {string} viewerId
  * @param {Function} dispatch - dispatch function
  */
-function plotRemotePlot(params, tblId, viewerId, dispatch) {
+function plotRemotePlot(params, viewerId, dispatch) {
 
     const dispatchParams= clone({
         viewerId:viewerId || 'default',
