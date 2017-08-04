@@ -11,8 +11,10 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, ENABLE_SPECIAL_VIEWER, SPECIAL_VIEWER,
           getLayouInfo, dispatchUpdateLayoutInfo, dispatchAddCell, dispatchRemoveCell, getNextCell} from '../../core/LayoutCntlr.js';
-import {findGroupByTblId, getTblIdsByGroup} from '../../tables/TableUtil.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {findGroupByTblId, getTblIdsByGroup, getTblById} from '../../tables/TableUtil.js';
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE, TABLE_SORT} from '../../tables/TablesCntlr.js';
+import {dispatchLoadTblStats} from '../../charts/TableStatsCntlr';
+
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
@@ -74,6 +76,9 @@ export function* layoutManager({title}) {
             case TBL_RESULTS_ADDED:
                 newLayoutInfo = handleNewTable(newLayoutInfo, action);
                 break;
+            case TABLE_LOADED:
+                newLayoutInfo = handleTableLoaded(newLayoutInfo, action);
+                break;
             case TABLE_REMOVE:
                 newLayoutInfo = handleTableDelete(newLayoutInfo, action);
                 break;
@@ -128,6 +133,14 @@ function handleNewTable(layoutInfo, action) {
         }
     }
     return layoutInfo;
+}
+
+function handleTableLoaded(layoutInfo, action) {
+    const {tbl_id, invokedBy} = action.payload;
+    const table= getTblById(tbl_id);
+    if (table && invokedBy !== TABLE_SORT &&  !table.origTableModel) {
+        dispatchLoadTblStats(table.request);
+    }
 }
 
 function handleTableDelete(layoutInfo, action) {
@@ -192,24 +205,32 @@ function handleNewImage(layoutInfo, action) {
 
 function handleNewChart(layoutInfo, action) {
 
-    const {chartId, groupId}= action.payload;
+    const {chartId, groupId, chartType}= action.payload;
     const {gridView=[]}= layoutInfo;
 
+    if (chartType!=='plot.ly') {
+        if (groupId) {
+            let viewer= getViewer(getMultiViewRoot(), groupId);
+            if (!viewer) {
+                dispatchAddViewer(groupId,true,PLOT2D,true);
+            }
+            dispatchAddViewerItems(groupId, [chartId], PLOT2D);
 
-    if (groupId) {
-        let viewer= getViewer(getMultiViewRoot(), groupId);
-        if (!viewer) {
-            dispatchAddViewer(groupId,true,PLOT2D,true);
-        }
-        dispatchAddViewerItems(groupId, [chartId], PLOT2D);
-
-        const item= gridView.find( (g) => g.cellId===groupId);
-        if (!item) {
-            viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
-            const cell= getNextCell(gridView,3,1);
-            dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
+            const item= gridView.find( (g) => g.cellId===groupId);
+            if (!item) {
+                viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
+                const cell= getNextCell(gridView,3,1);
+                dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
+            }
         }
     }
+    const item= gridView.find( (g) => g.cellId===groupId);
+    if (!item) {
+        const viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
+        const cell= getNextCell(gridView,3,1);
+        dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
+    }
+
 
     return layoutInfo;
 }

@@ -8,6 +8,7 @@ import {omit,get} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {revalidateFields} from './FieldGroupUtils.js';
 import {smartMerge} from '../tables/TableUtil.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 /**
  * Reducer for 'fieldGroup' key
@@ -284,6 +285,9 @@ function reducer(state={}, action={}) {
             break;
         case RELATED_ACTION:
             retState= relatedAction(state,action);
+            break;
+        case REINIT_APP:
+            retState= {};
             break;
     }
     return retState;

@@ -14,6 +14,7 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const LAYOUT_PATH = 'layout';
 
@@ -56,6 +57,8 @@ export function reducer(state={}, action={}) {
             return removeCell(state, action.payload);
         case ENABLE_SPECIAL_VIEWER :
             return enableSpecialViewer(state,action.payload);
+        case REINIT_APP:
+            return {};
         default:
             return state;
     }

@@ -4,6 +4,7 @@ import {get, has, omit} from 'lodash';
 
 import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 import * as TableUtil from '../tables/TableUtil.js';
 
@@ -83,6 +84,8 @@ export function reducer(state=getInitState(), action={}) {
             const {tblId, isColStatsReady, colStats} = action.payload;
             return updateMerge(state, tblId, {isColStatsReady, colStats});
         }
+        case (REINIT_APP)  :
+            return getInitState();
         default:
             return state;
     }

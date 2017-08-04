@@ -17,6 +17,7 @@ import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
 import {BG_STATUS, BG_JOB_ADD} from '../core/background/BackgroundCntlr.js';
 import {isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -503,11 +504,17 @@ function tableFilterSelrow(action) {
 }
 /*-----------------------------------------------------------------------------------------*/
 
+function initState() {
+    return {data:{}, results: {}, ui:{}};
+}
+
 /*---------------------------- REDUCERS -----------------------------*/
 
-function reducer(state={data:{}, results: {}, ui:{}}, action={}) {
+function reducer(state=initState(), action={}) {
 
-    var nstate = {...state};
+    if (action.type===REINIT_APP) return initState();
+
+    const nstate = {...state};
     nstate.results = resultsReducer(nstate, action);
     nstate.data = dataReducer(nstate, action);
     nstate.ui   = uiReducer(nstate, action);

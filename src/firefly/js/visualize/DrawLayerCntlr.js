@@ -25,10 +25,10 @@ import {footprintCreateLayerActionCreator,
         footprintMoveActionCreator,
         footprintEndActionCreator
 } from '../drawingLayers/FootprintTool.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
 
-const RETRIEVE_DATA= `${DRAWLAYER_PREFIX}.retrieveData`;
 const CREATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.createDrawLayer`;
 const DESTROY_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.destroyDrawLayer`;
 const CHANGE_VISIBILITY= `${DRAWLAYER_PREFIX}.changeVisibility`;
@@ -138,7 +138,7 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
 
 export default {
     getDrawLayerCntlrDef,
-    CHANGE_VISIBILITY, RETRIEVE_DATA,
+    CHANGE_VISIBILITY,
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
     CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER, MODIFY_CUSTOM_FIELD,
     SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC,
@@ -149,7 +149,7 @@ export default {
     REGION_SELECT,
     MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,
     FOOTPRINT_CREATE, FOOTPRINT_START, FOOTPRINT_END, FOOTPRINT_MOVE,
-    makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
+    makeReducer, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
     dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
@@ -159,16 +159,6 @@ export default {
 
 
 
-/**
- *
- * @param drawLayerId
- * @public
- * @memberof firefly.action
- * @function dispatchRetrieveData
- */
-export function dispatchRetrieveData(drawLayerId) {
-    flux.process({type: RETRIEVE_DATA , payload: {drawLayerId} });
-}
 
 /**
  *
@@ -543,10 +533,14 @@ function makeDetachLayerActionCreator(factory) {
 function makeReducer(factory) {
     const dlReducer= DrawLayerReducer.makeReducer(factory);
     return (state=initState(), action={}) => {
+
+
+        if (action.type===REINIT_APP) return initState();
+
         if (!action.payload || !action.type) return state;
         if (!state.allowedActions.includes(action.type)) return state;
 
-        var retState = state;
+        let retState = state;
         switch (action.type) {
             case CHANGE_VISIBILITY:
             case CHANGE_DRAWING_DEF:
@@ -582,11 +576,6 @@ function makeReducer(factory) {
                 break;
             case ImagePlotCntlr.ANY_REPLOT:
                 retState = determineAndCallLayerReducer(state, action, dlReducer, true);
-                break;
-            case RETRIEVE_DATA:
-                // todo: for async data:
-                // todo: get the data in action creator, update the retrieved data here
-                // todo: the action creator will have to defer to the layer somehow
                 break;
             default:
                 retState = determineAndCallLayerReducer(state, action, dlReducer);
@@ -738,7 +727,7 @@ const initState= function() {
      *                              are tableId and a draw layer
      */
     return {
-        allowedActions: [ RETRIEVE_DATA, CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
+        allowedActions: [ CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
                           ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT, MODIFY_CUSTOM_FIELD,
                           CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,TABLE_TO_IGNORE,
                           ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW

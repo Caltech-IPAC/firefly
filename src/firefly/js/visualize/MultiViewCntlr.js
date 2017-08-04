@@ -6,6 +6,7 @@ import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
 import ImagePlotCntlr, {ExpandType} from './ImagePlotCntlr.js';
 import Enum from 'enum';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 
 export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
@@ -383,6 +384,9 @@ function reducer(state=initState(), action={}) {
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
         case ImagePlotCntlr.PLOT_IMAGE:
             retState = changeActiveItem(state, payload, IMAGE);
+            break;
+        case REINIT_APP:
+            retState= initState();
             break;
         default:
             break;
