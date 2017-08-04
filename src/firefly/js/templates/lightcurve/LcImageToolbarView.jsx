@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../../visualize/PlotViewUtil.js';
-import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
+import {WcsMatchType, visRoot, dispatchWcsMatch, dispatchRecenter} from '../../visualize/ImagePlotCntlr.js';
 import {VisInlineToolbarView} from '../../visualize/ui/VisInlineToolbarView.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';
@@ -116,9 +116,12 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
 
 
 function changeSize(viewerId, value) {
-    value= Number(value);
-    dispatchChangeViewerLayout(viewerId, value === 1 ? SINGLE : GRID, {count:value});
+    value = Number(value);
+    dispatchChangeViewerLayout(viewerId, value === 1 ? SINGLE : GRID, {count: value});
+    const vr = visRoot();
+    return setTimeout(() => dispatchRecenter({plotId: vr.activePlotId}), 1000);
 }
+
 
 // <ImagePager pageSize={10} tbl_id={tableId} />
 // <ToolbarButton icon={ONE} tip={'Show single image at full size'}

@@ -667,7 +667,14 @@ export function setupImages(layoutInfo) {
     const viewer = getViewer(getMultiViewRoot(), LC.IMG_VIEWER_ID);
     const count = get(viewer, 'layoutDetail.count', converterData.defaultImageCount);
 
+
     var vr = visRoot();
+
+    if (plotIdRoot+tableModel.highlightedRow===vr.activePlotId && count===get(viewer,'itemIdAry', []).length) {
+        return;
+    }
+
+
     const hasPlots = vr.plotViewAry.length > 0;
     const newPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, count);
     const maxPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, LC.MAX_IMAGE_CNT);
