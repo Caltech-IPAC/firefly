@@ -100,6 +100,18 @@ public class LSSTLightCurveQuery extends LSSTQuery {
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
         meta.setAttribute(MetaConst.DATASET_CONVERTER, "lsst_sdss");
+
+        String database = request.getParam("database");
+        String tableName = request.getParam("table_name");
+
+        // add ra&dec column name info
+        if (LSSTQuery.isCatalogTable(database, tableName)) {
+            Object RA = LSSTQuery.getRA(database, tableName);
+            Object DEC = LSSTQuery.getDEC(database, tableName);
+
+            TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) RA, (String) DEC);
+            meta.setCenterCoordColumns(llc);
+        }
     }
 
 }

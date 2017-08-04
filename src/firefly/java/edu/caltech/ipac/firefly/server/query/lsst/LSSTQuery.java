@@ -541,6 +541,28 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         return null;
     }
 
+    /**
+     * get ra (or ra corners) column name given the database and table name
+     * @param database database name
+     * @param catalog  table name
+     * @return  ra related column(s)
+     */
+    public static Object getRA(String database, String catalog) {
+        return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"ra"});
+    }
+
+    /**
+     * get dec (or dec corners) columne name given the database and table name
+     * @param database database name
+     * @param catalog  table name
+     * @return dec related column(s)
+     */
+    public static Object getDEC(String database, String catalog) {
+        return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"dec"});
+
+    }
+
+
     static String[] getDBTableNameFromRequest(TableServerRequest request) {
         String tableName = request.getParam("table_name");
         String catTable = request.getParam(CatalogRequest.CATALOG);

@@ -107,6 +107,28 @@ export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true, 
     return idList.filter( (id) => get(getPlotViewById(visRoot,id),'plots.length') );
 }
 
+/**
+ * return an array of plotIds that are all under visRoot and based on the group lock of the group associated
+ * width the pvOrId parameter
+ * @param visRoot
+ * @param pvOrId
+ * @param hasPlots
+ * @returns {*}
+ */
+export function getAllPlotViewId(visRoot, pvOrId, hasPlots=false) {
+    if (!pvOrId) return [];
+    const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    const gid= pv.plotGroupId;
+    const group= getPlotGroupById(visRoot,gid);
+    const locked= hasGroupLock(pv,group);
+
+    if (!locked) {
+        return [pv.plotId];
+    } else {
+        return visRoot.plotViewAry.filter((pv) => (!hasPlots || get(pv, 'plots.length')))
+                                  .map((pv) => pv.plotId);
+    }
+}
 
 /**
  * Is this plotview the active one
@@ -224,7 +246,7 @@ export function getConnectedPlotsIds(ref, drawLayerId) {
 
 
 /**
- *
+ * get the first found drawing layer of type 'typeId'
  * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param typeId
  * @return {object} the draw layer
@@ -232,6 +254,17 @@ export function getConnectedPlotsIds(ref, drawLayerId) {
 export function getDrawLayerByType(ref,typeId) {
     const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.drawLayerTypeId===typeId);
+}
+
+/**
+ * get all drawing layers of type 'typeId'
+ * @param {DrawLayer[]|DrawLayerRoot} ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param typeId
+ * @return {object} the draw layer
+ */
+export function getDrawLayersByType(ref,typeId) {
+    const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
+    return dlAry.filter( (dl) => dl.drawLayerTypeId===typeId);
 }
 
 /**

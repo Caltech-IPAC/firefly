@@ -15,6 +15,7 @@ import CsysConverter from '../visualize/CsysConverter.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
+import {get, isEmpty} from 'lodash';
 
 const ID= 'POINT_SELECTION';
 const TYPE_ID= 'POINT_SELECTION_TYPE';
@@ -71,7 +72,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     if (dataType!==DataTypes.DATA) return null;
     var active= isActivePlotView(visRoot(), plotId);
-    var drawAry= selectAPoint(drawLayer,action, active);
+    var drawAry= selectAPoint(drawLayer,action, active, plotId);
     return drawAry || lastDataRet;
 }
 
@@ -79,7 +80,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
 function getLayerChanges(drawLayer, action) {
     if  (action.type===DrawLayerCntlr.CHANGE_DRAWING_DEF) {
-        return {drawingDef: clone(drawLayer.drawingDef,action.payload.drawingDef)}
+        return {drawingDef: clone(drawLayer.drawingDef,action.payload.drawingDef)};
     }
 }
 
@@ -93,19 +94,48 @@ function makeSelectedPt(screenPt,plotId) {
 }
 
 
-function selectAPoint(drawLayer, action, active) {
-    var {screenPt,plotId}= action.payload;
-    if (!screenPt) return null;
+function selectAPoint(drawLayer, action, active, pId) {
+    var {screenPt, plotId, plotIdAry}= action.payload;
+
+    const isEmptyData = () => {
+        const data = get(drawLayer, ['drawData', 'data']);
+
+        if (isEmpty(data)) return true;
+        const idx = Object.keys(data).findIndex((onePid) => !isEmpty(data[onePid]));
+
+        return idx < 0;
+    };
+    // attach drawing layer to the plot which is created after the drawing layer
+    if (!screenPt &&
+        action.type === DrawLayerCntlr.ATTACH_LAYER_TO_PLOT &&
+        !isEmptyData() && plotIdAry && plotIdAry.includes(pId))  {
+        if (drawLayer.plotIdAry) {
+            let dAry;
+
+            const prevPID = drawLayer.plotIdAry.find((id) => {
+                dAry = get(drawLayer, ['drawData', 'data', id], null);
+                return dAry&&dAry.length;
+            });
+
+            return !prevPID ? null : dAry;
+        }
+    }
+
+    if (!screenPt) {
+        return null;
+    }
+
+
     var selPt= makeSelectedPt(screenPt,plotId);
     if (!selPt) return null;
     var drawAry;
     if (active) {
         drawAry= [
-            PointDataObj.make(selPt),
+            PointDataObj.make(selPt)
         ];
     }
     else {
-        drawAry= [PointDataObj.make(selPt)]
+        drawAry= [PointDataObj.make(selPt)];
     }
     return  drawAry;
 }

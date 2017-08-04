@@ -6,7 +6,7 @@ import {WebPlotRequest} from '../../../visualize/WebPlotRequest.js';
 import {makeWorldPt} from '../../../visualize/Point.js';
 import {CoordinateSys} from '../../../visualize/CoordSys.js';
 import {ServerRequest} from '../../../data/ServerRequest.js';
-import {isNil, isEmpty} from 'lodash';
+import {isNil, get} from 'lodash';
 import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
@@ -56,9 +56,21 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
     fluxCol: 'w1mpro_ep',
     dataSource: 'frame_id'
 }) {
-    const ra = getCellValue(tableModel, hlrow, 'ra');
-    const dec = getCellValue(tableModel, hlrow, 'dec') || getCellValue(tableModel, hlrow, 'decl'); // LSST WISE convention is 'decl'
 
+    const {CENTER_COLUMN} = get(tableModel, ['tableMeta']);
+    const ra_dec = ['ra', 'dec'];
+
+    if (CENTER_COLUMN) {
+        const s = CENTER_COLUMN.split(';');
+
+        if (s && s.length === 3) {
+            ra_dec[0] = s[0];
+            ra_dec[1] = s[1];
+        }
+    }
+
+    const ra = getCellValue(tableModel, hlrow, ra_dec[0]);
+    const dec = getCellValue(tableModel, hlrow, ra_dec[1]);
 
     //For images from AllWise:
     const frameId = getCellValue(tableModel, hlrow, 'frame_id');

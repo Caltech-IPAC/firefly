@@ -3,7 +3,7 @@
  */
 
 import numeral from 'numeral';
-import {isBoolean} from 'lodash';
+import {isBoolean, isEmpty, get} from 'lodash';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
@@ -19,10 +19,6 @@ import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {getUIComponent} from './DistanceToolUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import {flux} from '../Firefly.js';
-
-
-
 
 
 const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
@@ -103,7 +99,7 @@ function onDetach(drawLayer,action) {
 
 function getCursor(plotView, screenPt) {
     const plot= primePlot(plotView);
-    var cc= CsysConverter.make(plot);
+
     var ptAry= getPtAry(plot);
     if (!ptAry) return null;
     var idx= findClosestPtIdx(ptAry,screenPt);
@@ -127,7 +123,9 @@ function getLayerChanges(drawLayer, action) {
             return end(action);
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            return attach();
+            if (isEmpty(get(drawLayer, ['drawData', 'data']))) {
+                return attach();
+            }
             break;
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);

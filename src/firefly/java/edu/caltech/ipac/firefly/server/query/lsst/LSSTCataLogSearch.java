@@ -303,27 +303,6 @@ public class LSSTCataLogSearch extends LSSTQuery {
 
     }
 
-    /**
-     * get ra (or ra corners) column name given the database and table name
-     * @param database database name
-     * @param catalog  table name
-     * @return  ra related column(s)
-     */
-    Object getRA(String database, String catalog) {
-        return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"ra"});
-    }
-
-    /**
-     * get dec (or dec corners) columne name given the database and table name
-     * @param database database name
-     * @param catalog  table name
-     * @return dec related column(s)
-     */
-    Object getDEC(String database, String catalog) {
-         return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"dec"});
-
-    }
-
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
@@ -333,8 +312,8 @@ public class LSSTCataLogSearch extends LSSTQuery {
         String database = request.getParam("database");
 
         if (LSSTQuery.isCatalogTable(database, catTable)) {
-            Object RA = getRA(database, catTable);
-            Object DEC = getDEC(database, catTable);
+            Object RA = LSSTQuery.getRA(database, catTable);
+            Object DEC = LSSTQuery.getDEC(database, catTable);
 
             TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) RA, (String) DEC, CoordinateSys.EQ_J2000);
             meta.setCenterCoordColumns(llc);
