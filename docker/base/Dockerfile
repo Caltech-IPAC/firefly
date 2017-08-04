@@ -81,6 +81,7 @@ ENV MAX_JVM_SIZE=8G
 ENV ADMIN_USER=admin
 ENV ADMIN_PASSWORD=replaceMe
 ENV DEBUG=true
+ENV MANAGER=true
 
 # if jvmRoute is not passed the hostname (the container id) is used
 # such as: -e jvmRoute="myroute1"

@@ -39,6 +39,7 @@ echo "          Admin username               ADMIN_USER           ${ADMIN_USER}"
 echo "          Admin password               ADMIN_PASSWORD       ${ADMIN_PASSWORD}"
 echo "          Run tomcat with debug        DEBUG                ${DEBUG}"
 echo "          Run tomcat with debug        LOG_FILE_TO_CONSOLE  ${LOG_FILE_TO_CONSOLE}"
+echo "          Tomcat Manager available     MANAGER              ${MANAGER}"
 echo "          Multi web app shared cache   SHARE_CACHE          ${SHARE_CACHE}"
 echo "          Extra firefly properties     FIREFLY_OPTS         ${FIREFLY_OPTS}"
 echo
@@ -78,6 +79,17 @@ if [ "$SHARE_CACHE" = "true" ] ||[ "$SHARE_CACHE" = "t" ] ||[ "$SHARE_CACHE" = "
    [ "$SHARE_CACHE" = "TRUE" ] || [ "$SHARE_CACHE" = "True" ] ; then
    ./setupSharedCacheJars.sh
 fi
+
+
+rm -rf /usr/local/tomcat/webapps/examples
+rm -rf /usr/local/tomcat/webapps/docs
+rm -rf /usr/local/tomcat/webapps/host-manager
+
+if [ "$MANAGER" != "true" ] && [ "$MANAGER" != "t" ] && [ "$MANAGER" != "1" ] &&  \
+   [ "$MANAGER" != "TRUE" ] && [ "$MANAGER" != "True" ] ; then
+   rm -r /usr/local/tomcat/webapps/manager
+fi
+
 
 
 if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
