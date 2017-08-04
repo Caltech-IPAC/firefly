@@ -512,7 +512,7 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
  * Note - function parameter is a single object
  * @param {Object}  p
  * @param {string} p.plotId
- * @param {Point} p.centerPt Point to center on
+ * @param {Point} [p.centerPt] Point to center on
  * @param {boolean} p.centerOnImage only used if centerPt is not defined.  If true then the centering will be
  *                                  the center of the image.  If false, then the center point will be the
  *                                  FIXED_TARGET attribute, if defined. Otherwise it will be the center of the image.
@@ -522,7 +522,7 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
  * @function dispatchRecenter
  * @memberof firefly.action
  */
-export function dispatchRecenter({plotId, centerPt, centerOnImage, dispatcher= flux.process}) {
+export function dispatchRecenter({plotId, centerPt= undefined, centerOnImage=false, dispatcher= flux.process}) {
     dispatcher({type: RECENTER, payload: {plotId, centerPt, centerOnImage} });
 }
 
