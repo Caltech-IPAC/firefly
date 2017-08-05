@@ -39,10 +39,14 @@ COPY launchTomcat.sh \
      start-examples.txt \
      setupSharedCacheJars.sh /usr/local/tomcat/
 
-# Make directories, make scripts executable, save old tomcat config files
+# Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
 RUN chmod +x /usr/local/tomcat/launchTomcat.sh /usr/local/tomcat/setupSharedCacheJars.sh; \
     mv /usr/local/tomcat/conf/context.xml /usr/local/tomcat/conf/context.xml.bak; \
     mv /usr/local/tomcat/conf/tomcat-users.xml /usr/local/tomcat/conf/tomcat-users.xml.bak; \
+    rm -rf /usr/local/tomcat/webapps/examples \
+           /usr/local/tomcat/webapps/docs \
+           /usr/local/tomcat/webapps/host-manager \
+           /usr/local/tomcat/webapps/ROOT; \
     mkdir -p ${SERVER_CONFIG_DIR}; \
     mkdir -p ${FIREFLY_WORK_DIR}; \
     mkdir -p ${EXTERNAL_MOUNT_POINT}
@@ -73,14 +77,14 @@ EXPOSE 8080 5050 9050 7011
 # MIN_JVM_SIZE and MAX_JVM_SIZE should be used to set the min and max JVM side
 # at least MAX_JVM_SIZE should almost alway be used on the command line with 
 # parameter such as: -e "MAX_JVM_SIZE=4G"
-ENV MIN_JVM_SIZE=1g
+ENV MIN_JVM_SIZE=1G
 ENV MAX_JVM_SIZE=8G
 
 
 #User name and password to use admin
 ENV ADMIN_USER=admin
 ENV ADMIN_PASSWORD=replaceMe
-ENV DEBUG=true
+ENV DEBUG=false
 ENV MANAGER=true
 
 # if jvmRoute is not passed the hostname (the container id) is used
