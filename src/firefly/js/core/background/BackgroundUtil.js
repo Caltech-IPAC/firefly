@@ -20,7 +20,7 @@ export function getBackgroundInfo() {
 
 /**
  * returns an array of all background jobs.
- * @returns [string]
+ * @returns {Array.<string>}
  */
 export function getBackgroundJobs() {
     return get(flux.getState(), [BACKGROUND_PATH, 'jobs']);
@@ -28,6 +28,7 @@ export function getBackgroundJobs() {
 
 /**
  * returns background status for the given id.
+ * @param id
  * @returns {BgStatus}
  */
 export function getBgStatusById(id) {
@@ -44,7 +45,7 @@ export function getBgEmail() {
 
 /**
  * returns the email related info.  Currently, it's email and enableEmail.
- * @returns {object.<string, }
+ * @returns {object.<string>}
  */
 export function getBgEmailInfo() {
     let {email, enableEmail} =  get(flux.getState(), BACKGROUND_PATH) || {};

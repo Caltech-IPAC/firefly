@@ -50,7 +50,7 @@ let defaultViewerType=ViewerType.TriView;
 
 
 /**
- * @returns {{getViewer: getViewer, getExternalViewer: getExternalViewer}}
+ * @returns {{getViewer: function, getExternalViewer: function}}
  * @ignore
  */
 export function buildViewerApi() {
@@ -98,7 +98,7 @@ export function getViewer(channel= getWsChannel(),file=defaultViewerFile) {
     const viewer= Object.assign({dispatch, reinitViewer, channel},
         buildImagePart(channel,file,dispatch),
         buildTablePart(channel,file,dispatch),
-        buildChartPart(channel,file,dispatch),
+        buildChartPart(channel,file,dispatch)
     );
 
 
