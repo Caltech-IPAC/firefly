@@ -37,7 +37,7 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <webappDirectory>${build.dir}/gwt/firefly</webappDirectory>
+                    <webappDirectory>${build.dir}/war</webappDirectory>
                     <outputDirectory>${build.dir}/exec/</outputDirectory>
                 </configuration>
             </plugin>
