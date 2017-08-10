@@ -183,32 +183,11 @@ public class CtxControl {
         ctx.setImages(images);
         ctx.setPlotState(state);
         ctx.setPlot(plot);
-        loadColorInfoIntoState(plot, state, frGroup);
         PlotStateUtil.setPixelAccessInfo(plot, state, frGroup);
         putPlotCtx(ctx);
         PlotServUtils.createThumbnail(plot, frGroup, images, true, state.getThumbnailSize());
         state.setNewPlot(false);
     }
-
-    private static void loadColorInfoIntoState(ImagePlot p, PlotState state, ActiveFitsReadGroup frGroup) {
-        if (p!=null) {
-            if (p.isThreeColor()) {
-                for(Band band : new Band[] {Band.RED,Band.GREEN,Band.BLUE}) {
-                    if (p.isColorBandInUse(band, frGroup)) {
-                        state.setRangeValues(FitsRead.getDefaultRangeValues(), band);
-                    }
-                }
-            }
-            else {
-                if (state.getRangeValues(Band.NO_BAND)==null) {
-                    state.setRangeValues(FitsRead.getDefaultRangeValues(), Band.NO_BAND);
-                }
-                int id= p.getImageData().getColorTableId();
-                state.setColorTableId(id==-1 ? 0 : id);
-            }
-        }
-    }
-
 
 
 

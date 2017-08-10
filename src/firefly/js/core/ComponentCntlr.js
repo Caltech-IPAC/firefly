@@ -5,6 +5,7 @@
 import {flux} from '../Firefly.js';
 import {get} from 'lodash';
 import update from 'immutability-helper';
+import {REINIT_APP} from './AppDataCntlr.js';
 
 export const DIALOG_OR_COMPONENT_KEY = 'dialogOrComponent';
 
@@ -102,6 +103,9 @@ function reducer(state={[DIALOG_KEY]: {}, [COMPONENT_KEY]: {}}, action={}) {
         case COMPONENT_STATE_CHANGE  :
             return changeComponentState(state,action);
 
+        case REINIT_APP  :
+            return hideAllDialogsChange(state,action);
+
         default:
             return state;
     }
@@ -156,7 +160,7 @@ const hideAllDialogsChange= function(state) {
                                    obj[key]= {visible: false};
                                    return obj;
                                  },{} );
-    return Object.assign({}, state, newDialogState);
+    return Object.assign({}, state, {[DIALOG_KEY] :newDialogState});
 };
 
 const changeComponentState=  function(state, action) {

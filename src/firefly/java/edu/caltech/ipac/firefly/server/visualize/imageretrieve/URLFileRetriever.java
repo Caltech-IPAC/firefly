@@ -44,6 +44,9 @@ public class URLFileRetriever implements FileRetriever {
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
         FileInfo fitsFileInfo;
         String urlStr = request.getURL();
+        if (urlStr.toLowerCase().startsWith("file:///")) {
+            return new LocalFileRetriever().getFileByName(urlStr.substring(7));
+        }
         if (urlStr == null) throw new FailedRequestException("Could not find file", "request.getURL() returned null");
         if (urlStr.contains("+")) { // i think this is a hack for IRSA image that have a plus in files names as ra+dec
             try {

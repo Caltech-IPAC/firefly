@@ -277,6 +277,7 @@
                 plotGroupId : 'myGroup',
                 Service   : 'TWOMASS',
                 Title     : '2mass from service',
+                ColorTable : 5,
                 GridOn     : true,
 //                GridOn     : 'TRUE_LABELS_FALSE',
                 SurveyKey  : 'k',
@@ -349,7 +350,11 @@
                 title     : 'Failure Test',
             });
             firefly.showImage('imageViewHere', {
-                file : '/external/wise-m31-level1-3.fits',
+                //file : '/external/wise-m31-level1-3.fits',
+                //url : 'file:///Users/roby/fits/wise-m31-level1-3.fits',
+                url : 'FILE:///Users/roby/fits/dss-m31.fits',
+                //url : 'file:///Users/roby/fits/dss-m31-red.fits',
+//                url : 'file:///Users/roby/fits/f-32.fits',
                 title     : 'From a Container',
             });
 

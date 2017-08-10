@@ -358,6 +358,7 @@ export function* doOnWindowConnected({channel, f}) {
 function plotRemotePlot(params, viewerId, dispatch) {
 
     const dispatchParams= clone({
+        groupId: viewerId || 'default',
         viewerId:viewerId || 'default',
         chartId: params.chartId || uniqueChartId(),
         chartType: 'plot.ly',
@@ -395,7 +396,9 @@ function plotRemoteXYPlot(params, viewerId, dispatch) {
     }
     const chartId = uniqueChartId();
     // SCATTER
-    dispatchChartAdd({chartId, chartType: SCATTER, groupId: viewerId || 'default',
+    dispatchChartAdd({chartId, chartType: SCATTER,
+        groupId: viewerId || 'default',
+        viewerId:viewerId || 'default',
         chartDataElements: [
             {
                 type: DT_XYCOLS,
@@ -432,7 +435,10 @@ function plotRemoteHistogram(params, viewerId, dispatch) {
     }
     const chartId = uniqueChartId();
     // HISTOGRAM
-    dispatchChartAdd({chartId, chartType: HISTOGRAM, groupId: viewerId || 'default',
+    dispatchChartAdd({chartId,
+        chartType: HISTOGRAM,
+        groupId: viewerId || 'default',
+        viewerId:viewerId || 'default',
         chartDataElements: [
             {
                 type: DT_HISTOGRAM,

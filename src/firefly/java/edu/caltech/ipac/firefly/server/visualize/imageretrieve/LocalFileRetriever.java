@@ -32,7 +32,11 @@ import java.io.File;
 public class LocalFileRetriever implements FileRetriever {
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
-        String fStr= StringUtils.crunch(request.getFileName());
+        return getFileByName(request.getFileName());
+    }
+
+    public FileInfo getFileByName(String fileName) throws FailedRequestException, GeomException, SecurityException {
+        String fStr= StringUtils.crunch(fileName);
         if (fStr!=null) {
             Cache sessionCache= UserCache.getInstance();
             UploadFileInfo uFI= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
@@ -44,19 +48,19 @@ public class LocalFileRetriever implements FileRetriever {
                 if (fStr.charAt(0)==File.separatorChar) {
                     if (new File(fStr).canRead()) {
                         throw new FailedRequestException("Could read file, "+
-                                request.getFileName() +
+                                fileName +
                                 " is not in the path specified by " +
                                 "visualize.fits.search.path in the configuration file");
                     }
                     else {
                         throw new FailedRequestException("File not found", "Could not find your requested file, "+
-                                "the file: " + request.getFileName() + " is was not found");
+                                "the file: " + fileName + " is was not found");
                     }
                 }
                 else {
                     throw new FailedRequestException("File not found", "Could not find your requested file, "+
-                                                     "the file: " + request.getFileName() +
-                                                             " could not be converted to an absolute path");
+                            "the file: " + fileName +
+                            " could not be converted to an absolute path");
                 }
             }
             if (f.canRead()) {
@@ -64,7 +68,7 @@ public class LocalFileRetriever implements FileRetriever {
             }
             else {
                 throw new FailedRequestException("No read access for file",
-                                                 "the file: " + request.getFileName());
+                        "the file: " + fileName);
             }
         }
         else {

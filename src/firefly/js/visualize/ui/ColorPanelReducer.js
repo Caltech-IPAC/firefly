@@ -29,15 +29,11 @@ export const colorPanelChange= function(band) {
     return (fields,action) => {
         if (!fields || !Object.keys(fields).length) fields= getFieldInit();
         var plot= primePlot(visRoot());
-        if (!plot.plotState.isBandUsed(band)) return fields;
+        if (!plot || !plot.plotState.isBandUsed(band)) return fields;
 
-        var plottedRV= null;
-        var fitsData= null;
-        if (plot) {
-            fitsData= plot.webFitsData[band.value];
-            plottedRV= plot.plotState.getRangeValues(band);
-            if (!fitsData || !plottedRV) return fields;
-        }
+        const fitsData= plot.webFitsData[band.value];
+        const plottedRV= plot.plotState.getRangeValues(band);
+        if (!fitsData || !plottedRV) return fields;
 
         return computeColorPanelState(fields, plottedRV, fitsData, band, action.type);
     };
