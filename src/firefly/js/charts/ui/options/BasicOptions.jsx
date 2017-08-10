@@ -65,6 +65,10 @@ export function hasMarkerColor(type) {
     return type.startsWith('scatter') || type.startsWith('histogram') || type === 'box' || type === 'bar' || type === 'area' || type === 'pointcloud';
 }
 
+function hasNoXY(type) {
+    return type.endsWith('3d') || ['pie','surface'].includes(type);
+}
+
 export class BasicOptions extends SimpleComponent {
 
     getNextState() {
@@ -80,13 +84,15 @@ export class BasicOptions extends SimpleComponent {
         const groupKey = `${chartId}-basic-${activeTrace}`;
         const tablesource = get(tablesources, [activeTrace]);
         const tbl_id = get(tablesource, 'tbl_id');
-        const noColor = hasMarkerColor(get(data, 'type', 'scatter'));
+        const type = get(data, `${activeTrace}.type`, 'scatter');
+        const noColor = !hasMarkerColor(type);
+        const noXY = hasNoXY(type);
         return (
             <div style={{minWidth: 250, padding:'0 5px 7px'}}>
                 <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
                             reducerFunc={basicFieldReducer({chartId, activeTrace})}>
-                    <BasicOptionFields {...{activeTrace, groupKey, noColor}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY}}/>
                 </FieldGroup>
             </div>
         );
@@ -287,7 +293,7 @@ export class BasicOptionFields extends Component {
     }
 
     render() {
-        const {activeTrace, groupKey, align='vertical', noColor, xNoLog} = this.props;
+        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog} = this.props;
 
         // TODO: need color input field
         const colorFldPath = `data.${activeTrace}.marker.color`;
@@ -316,32 +322,34 @@ export class BasicOptionFields extends Component {
                 {/* checkboxgroup is not working right when there's only 1 .. will add in later
                  <CheckboxGroupInputField fieldKey={'layout.showlegend'}/>
                  */}
-                <ValidationField fieldKey={'layout.xaxis.title'}/>
-                <CheckboxGroupInputField fieldKey='__xoptions'
-                                         options={xNoLog ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
-                <br/>
-                <ValidationField fieldKey={'layout.yaxis.title'}/>
-                <CheckboxGroupInputField fieldKey='__yoptions' options={Y_AXIS_OPTIONS}/>
-                <br/>
-                <div style={helpStyle}>
-                    Set plot boundaries if different from data range.
-                </div>
-                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
-                    <div style={{paddingRight: 5}}>
-                        <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
+                {!noXY && <div>
+                    <ValidationField fieldKey={'layout.xaxis.title'}/>
+                    <CheckboxGroupInputField fieldKey='__xoptions'
+                                             options={xNoLog ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
+                    <br/>
+                    <ValidationField fieldKey={'layout.yaxis.title'}/>
+                    <CheckboxGroupInputField fieldKey='__yoptions' options={Y_AXIS_OPTIONS}/>
+                    <br/>
+                    <div style={helpStyle}>
+                        Set plot boundaries if different from data range.
                     </div>
-                    <div style={{paddingRight: 5}}>
-                        <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
+                        <div style={{paddingRight: 5}}>
+                            <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
+                        </div>
+                        <div style={{paddingRight: 5}}>
+                            <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
+                        </div>
                     </div>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
-                    <div style={{paddingRight: 5}}>
-                        <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
+                        <div style={{paddingRight: 5}}>
+                            <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
+                        </div>
+                        <div style={{paddingRight: 5}}>
+                            <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
+                        </div>
                     </div>
-                    <div style={{paddingRight: 5}}>
-                        <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
-                    </div>
-                </div>
+                </div>}
                 <div style={helpStyle}>
                     Enter display aspect ratio below.<br/>
                     Leave it blank to use all available space.<br/>
@@ -369,7 +377,8 @@ BasicOptionFields.propTypes = {
     activeTrace: PropTypes.number.isRequired,
     align: PropTypes.oneOf(['vertical', 'horizontal']),
     noColor: PropTypes.bool,
-    xNoLog: PropTypes.bool
+    xNoLog: PropTypes.bool,
+    noXY: PropTypes.bool
 };
 
 

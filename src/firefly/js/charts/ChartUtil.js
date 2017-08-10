@@ -279,12 +279,16 @@ export function getPointIdx(traceData, rowIdx) {
     return rowIdxArray ? rowIdxArray.findIndex((e) => e == rowIdx) : rowIdx;
 }
 
+export function isScatter2d(type) {
+    return type.includes('scatter') && !type.endsWith('3d');
+}
+
 export function getOptionsUI(chartId) {
     // based on chartData, determine what options to display
     const {data, fireflyData, activeTrace=0} = getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
     const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
-    if (type.includes('scatter')) {
+    if (isScatter2d(type)) {
         return ScatterOptions;
     } else if (type === 'histogram') {
         return HistogramOptions;
@@ -300,7 +304,7 @@ export function getOptionsUI(chartId) {
 export function getToolbarUI(chartId, activeTrace=0) {
     const {data} =  getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], '');
-    if (type.includes('scatter')) {
+    if (isScatter2d(type)) {
         return ScatterToolbar;
     } else {
         return BasicToolbar;
@@ -318,8 +322,8 @@ export function clearChartConn({chartId}) {
 
 export function newTraceFrom(data, selIndexes, newTraceProps) {
 
-    const sdata = cloneDeep(pick(data, ['x', 'y', 'error_x', 'error_y', 'text', 'marker', 'hoverinfo', 'firefly' ]));
-    Object.assign(sdata, {showlegend: false, type: 'scatter', mode: 'markers'});
+    const sdata = cloneDeep(pick(data, ['x', 'y', 'z', 'error_x', 'error_y', 'text', 'marker', 'hoverinfo', 'firefly' ]));
+    Object.assign(sdata, {showlegend: false, type: get(data, 'type', 'scatter'), mode: 'markers'});
 
     // walk through object and replace values where there's an array with only the selected indexes.
     function deepReplace(obj) {

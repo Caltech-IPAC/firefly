@@ -246,23 +246,41 @@ Images
         function load3DChart(r,c,w,h) {
             firefly.getViewer().addCell(r,c,w,h, 'xyPlots', '3dChartContainer');
 
-
             var data3d = [
                 {
                     type: 'scatter3d',
-                    name: 'w1-w2',
+                    name: 'w1-w2-w3',
                     x: "tables::wiseCatTbl,w1mpro",
                     y: "tables::wiseCatTbl,w2mpro",
                     z: "tables::wiseCatTbl,w3mpro",
                     mode : 'markers',
                     marker : {
-                        size: 5,
-                        opacity: 0.6
-                    }
+                        size: 3,
+                        line: {
+                            color: 'rgb(127, 127, 127, 0.14)',
+                            width: 1
+                        }
+                    },
+                    hoverinfo: 'x+y+z'
                 }
             ];
 
-            firefly.getViewer().showPlot({chartId: 'newChart3', data: data3d },
+            layout3d = {
+                title: 'Scatter 3D on w1mpro, w2mpro and w3mpro',
+                scene: {
+                    xaxis: {
+                        title: 'w1'
+                    },
+                    yaxis: {
+                        title: 'w2'
+                    },
+                    zaxis: {
+                        title: 'w3'
+                    }
+                }
+            };
+
+            firefly.getViewer().showPlot({chartId: 'newChart3', data: data3d, layout: layout3d },
                 '3dChartContainer');
         }
 

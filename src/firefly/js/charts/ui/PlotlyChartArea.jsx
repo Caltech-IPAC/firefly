@@ -6,6 +6,7 @@ import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 
 import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
+import {isScatter2d} from '../ChartUtil.js';
 
 export class PlotlyChartArea extends PureComponent {
 
@@ -63,8 +64,9 @@ export class PlotlyChartArea extends PureComponent {
         }
         const showlegend = data.length > 1;
         let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
-        if (!data[activeTrace] || get(data[activeTrace], 'type', '').includes('scatter')) {
+        if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
             // highlight makes sense only for scatter at the moment
+            // 3d scatter highlight and selected appear in front - not good: disable for the moment
             pdata = selected ? pdata.concat([selected]) : pdata;
             pdata = highlighted ? pdata.concat([highlighted]) : pdata;
         }

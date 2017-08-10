@@ -56,12 +56,14 @@ export class BasicToolbar extends SimpleComponent {
         //const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
         const {activeTrace, hasFilter, hasSelection, tbl_id, dragmode} = this.state;
 
-        const showSelectionPart = get(getChartData(chartId), `data.${activeTrace}.type`, '').includes('heatmap');
+        const type = get(getChartData(chartId), `data.${activeTrace}.type`, '');
+        const showSelectionPart = type.includes('heatmap');
+        const is3d = type.endsWith('3d') || type === 'surface';
 
         return (
             <div className='ChartToolbar'>
                 <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
-                <DragModePart {...{chartId, tbl_id, dragmode}}/>
+                <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode: showSelectionPart, is3d}}/>
                 {showSelectionPart && <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
                     {hasFilter    && <ClearFilter {...{tbl_id}} />}
                     {hasSelection && <FilterSelection {...{chartId}} />}
@@ -91,12 +93,14 @@ function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) 
     );
 }
 
-function DragModePart({chartId, tbl_id, dragmode}) {
+function DragModePart({chartId, tbl_id, dragmode, hasSelectionMode, is3d}) {
     return (
         <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
             <ZoomBtn {...{chartId, dragmode}} />
             <PanBtn {...{chartId, dragmode}} />
-            {tbl_id && <SelectBtn {...{chartId, dragmode}} />}
+            {is3d && <OrbitBtn {...{chartId, dragmode}} />}
+            {is3d && <TurntableBtn {...{chartId, dragmode}} />}
+            {tbl_id && hasSelectionMode && <SelectBtn {...{chartId, dragmode}} />}
         </div>
     );
 }
@@ -119,6 +123,24 @@ function PanBtn({style={}, chartId, dragmode}) {
     );
 }
 
+function TurntableBtn({style={}, chartId, dragmode}) {
+    const selected = dragmode === 'turntable' ? 'selected' : '';
+    return (
+        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'turntable', 'selection': undefined}})}
+             title='Turntable rotation'
+             className={`ChartToolbar__turntable ${selected}`}/>
+    );
+}
+
+function OrbitBtn({style={}, chartId, dragmode}) {
+    const selected = dragmode === 'orbit' ? 'selected' : '';
+    return (
+        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'orbit', 'selection': undefined}})}
+             title='Orbital rotation'
+             className={`ChartToolbar__orbital ${selected}`}/>
+    );
+}
+
 function SelectBtn({style={}, chartId, dragmode}) {
     const selected = dragmode === 'select' ? 'selected' : '';
     return (
@@ -129,15 +151,21 @@ function SelectBtn({style={}, chartId, dragmode}) {
 }
 
 function ResetZoomBtn({style={}, chartId}) {
-    const {_original} = getChartData(chartId) || {};
+    const {_original, layout} = getChartData(chartId) || {};
     const doClick = () => {
-        // TODO:  this only handles chart with 2 axes
+        // 2d axes
         const changes = ['xaxis','yaxis'].reduce((pv, axis) => {
-            pv[`layout.${axis}.autorange`]  = get(_original, `layout.${axis}.autorange`, true);
-            pv[`layout.${axis}.range`]      = get(_original, `layout.${axis}.range`);
+            if (get(layout, `${axis}`)) {
+                pv[`layout.${axis}.autorange`] = get(_original, `layout.${axis}.autorange`, true);
+                pv[`layout.${axis}.range`] = get(_original, `layout.${axis}.range`);
+            }
             return pv;
         }, {});
-        dispatchChartUpdate({chartId, changes});
+        // 3d axes
+        changes['layout.scene.camera'] = get(_original, 'layout.scene.camera', {});
+        if (!isEmpty(changes)) {
+            dispatchChartUpdate({chartId, changes});
+        }
     };
     return (
         <div style={style} onClick={doClick}
