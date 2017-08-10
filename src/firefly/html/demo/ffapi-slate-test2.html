@@ -66,7 +66,7 @@
 Load Tables for charts to use
 <ul>
     <li>
-        <a href="javascript:showATable(getSTarget(),0, 0,2,2)">Load the Table</a> <span class='smallCoords'>at row: 0, col: 0, w:2 h: 2</span>
+        <a href="javascript:showATable(getSTarget(),0, 4,2,2)">Load the Table</a> <span class='smallCoords'>at row: 0, col: 0, w:2 h: 2</span>
     </li>
 </ul>
 
@@ -74,7 +74,7 @@ Load Tables for charts to use
 Add Some plotly Charts
 <ul>
     <li>
-        <a href='javascript:loadNewCharts(0,4,2,2)'>Show new Plotly </a> <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
+        <a href='javascript:loadNewCharts(0,0,2,2)'>Show new Plotly </a> <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
     </li>
     <li>
         <a href='javascript:loadNewHeatmapCharts(2,0,2,3)'>Show new Heat Map </a> <span class='smallCoords'>at row: 2, col: 0, w:2 h: 3</span>
@@ -118,31 +118,36 @@ Images
                 {
                     type      : 'SERVICE',
 //                    plotGroupId : 'myGroup',
-                    Service   : 'TWOMASS',
+                    Service   : 'WISE',
                     Title     : '3 color',
-                    SurveyKey  : 'j',
+                    SurveyKey  : 'Atlas',
+                    SurveyKeyBand: '1',
                     WorldPt    : sTarget,
-                    SizeInDeg  : '.12'
+                    RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                    SizeInDeg  : '1'
                 },
                 {
                     Type      : 'SERVICE',
 //                    PLOTgroupId : 'myGroup',
-                    Service   : 'TWOMASS',
+                    Service   : 'WISE',
                     Title     : '3 color',
-                    SurveyKey  : 'h',
+                    SurveyKey  : 'Atlas',
+                    SurveyKeyBand: '2',
                     WorldPt    : sTarget,
-                    SizeInDeg  : '.12'
+                    RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                    SizeInDeg  : '1'
                 },
                 {
                     Type      : 'SERVICE',
 //                    plotGroupId : 'myGroup',
-                    Service   : 'TWOMASS',
+                    Service   : 'WISE',
                     title     : '3 color',
-                    SurveyKey  : 'k',
+                    SurveyKey  : 'Atlas',
+                    SurveyKeyBand: '3',
                     WorldPt    : sTarget,
-                    moreBadKeys : 'qqq',
-                    SizeInDeg  : '.12'
-                }
+                    RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                    SizeInDeg  : '1'
+                },
             ];
 
 

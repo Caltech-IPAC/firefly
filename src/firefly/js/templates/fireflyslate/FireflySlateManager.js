@@ -205,7 +205,7 @@ function handleNewImage(layoutInfo, action) {
 
 function handleNewChart(layoutInfo, action) {
 
-    const {chartId, groupId, chartType}= action.payload;
+    const {chartId, groupId, viewerId, chartType}= action.payload;
     const {gridView=[]}= layoutInfo;
 
     if (chartType!=='plot.ly') {
@@ -220,11 +220,11 @@ function handleNewChart(layoutInfo, action) {
             if (!item) {
                 viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
                 const cell= getNextCell(gridView,3,1);
-                dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
+                dispatchAddCell({row:cell.row,col:cell.col,width:3,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
             }
         }
     }
-    const item= gridView.find( (g) => g.cellId===groupId);
+    const item= gridView.find( (g) => g.cellId===viewerId);
     if (!item) {
         const viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
         const cell= getNextCell(gridView,3,1);
