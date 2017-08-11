@@ -53,8 +53,10 @@
 </div>
 <pre>
     try:
-    148.88822;69.06529;EQ_J2000
-    202.48417;47.23056;EQ_J2000
+    148.88822;69.06529;EQ_J2000 # Galaxy M81
+    202.48417;47.23056;EQ_J2000 # Galaxy M51
+    136.9316774;+1.1195886;galactic # W5 star-forming region
+    10.68479;41.26906;EQ_J2000 # Galaxy M31
 </pre>
 
 
@@ -94,7 +96,7 @@ Images
         <a href="javascript:load3C(getSTarget(),0,2,2,2)">3 Color</a> in cell <span class='smallCoords'>at row: 0, col: 2, w:2 h: 2</span>
     </li>
 </ul>
-
+</body>
 
 
 <script type="text/javascript">
@@ -147,7 +149,7 @@ Images
                     WorldPt    : sTarget,
                     RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
                     SizeInDeg  : '1'
-                },
+                }
             ];
 
 
@@ -160,15 +162,23 @@ Images
         function loadNewCharts(r,c,w,h) {
             firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'newChartContainer');
 
-            trace1 = {
-                x: "tables::wiseCatTbl,ra",
-                y: "tables::wiseCatTbl,dec",
+            var trace1 = {
+                x: "tables::wiseCatTbl,w1mpro-w2mpro",
+                y: "tables::wiseCatTbl,w2mpro-w3mpro",
                 mode: 'markers',
-                type: 'scatter'
+                type: 'scatter',
+                marker: {size: 4}
             };
 
-            firefly.getViewer().showPlot({chartId: 'newChart1', data: [trace1], fireflyData: [{dataType: 'fireflyScatter'}]},
-                  'newChartContainer');
+            var layoutS = {
+                title: 'Color-Color',
+                xaxis: {title: 'w1mpro-w2mpro (mag)'},
+                yaxis: {title: 'w2mpro-w3mpro (mag)'}
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newChart1', layout: layoutS, data: [trace1], fireflyData: [{dataType: 'fireflyScatter'}]},
+                    'newChartContainer');
         }
 
         function loadNewHeatmapCharts(r,c,w,h) {
@@ -205,16 +215,23 @@ Images
                 {dataType: 'fireflyHeatmap'}
             ];
 
-            firefly.getViewer().showPlot({chartId: 'newChart2', data: dataHM, fireflyData:fireflyDataHM },
-                'heatMapContainer');
+            var layoutHM = {
+                title: 'Magnitude-magnitude densities',
+                xaxis: {title: 'w1 photometry (mag)'},
+                yaxis: {title: ''}
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newChart2', layout: layoutHM,  data: dataHM, fireflyData:fireflyDataHM },
+                    'heatMapContainer');
         }
 
         function loadHistogramCharts(r,c,w,h) {
             firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'histContainer');
 
             var dataH = [
-                {name: 'dec-0.02', marker: {color: 'rgba(153, 51, 153, 0.8)'}},
-                {name: 'dec+0.02', marker: {color: 'rgba(102,153,0, 0.7)'}}
+                {name: 'w1mpro', marker: {color: 'rgba(153, 51, 153, 0.8)'}},
+                {name: 'w2mpro', marker: {color: 'rgba(102,153,0, 0.7)'}}
             ];
 
             var fireflyDataH = [
@@ -225,7 +242,7 @@ Images
                         algorithm: 'fixedSizeBins',
                         fixedBinSizeSelection: 'numBins',
                         numBins: 30,
-                        columnOrExpr: 'dec-0.02'
+                        columnOrExpr: 'w1mpro'
                     }
                 },
                 {
@@ -235,12 +252,20 @@ Images
                         algorithm: 'fixedSizeBins',
                         fixedBinSizeSelection: 'numBins',
                         numBins: 40,
-                        columnOrExpr: 'dec+0.02'   // same column but shifted
+                        columnOrExpr: 'w2mpro'   // same column but shifted
                     }
                 }
             ];
-            firefly.getViewer().showPlot({chartId: 'firefly-hist-tbl', data: dataH, fireflyData: fireflyDataH},
-                'histContainer');
+
+            var layoutHist = {
+                title: 'Photometry histogram',
+                xaxis: {title: 'photometry (mag)'},
+                yaxis: {title: ''}
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH, fireflyData: fireflyDataH},
+                    'histContainer');
         }
 
         function load3DChart(r,c,w,h) {
@@ -250,26 +275,52 @@ Images
             var data3d = [
                 {
                     type: 'scatter3d',
-                    name: 'w1-w2',
+                    name: 'w1-w2-w3',
                     x: "tables::wiseCatTbl,w1mpro",
                     y: "tables::wiseCatTbl,w2mpro",
                     z: "tables::wiseCatTbl,w3mpro",
                     mode : 'markers',
                     marker : {
-                        size: 5,
-                        opacity: 0.6
-                    }
+                        size: 3,
+                        line: {
+                            color: 'rgb(127, 127, 127, 0.14)',
+                            width: 1
+                        }
+                    },
+                    hoverinfo: 'x+y+z'
                 }
             ];
 
-            firefly.getViewer().showPlot({chartId: 'newChart3', data: data3d },
-                '3dChartContainer');
+            var tfont = {size: 11};
+            var layout3d = {
+                title: 'Photometry in band 1, 2, 3',
+                xaxis: {visible: false},
+                yaxis: {visible: false},
+                scene:{
+                    xaxis: {
+                        title: 'w1 (mag)',
+                        titlefont: tfont
+                    },
+                    yaxis: {
+                        title: 'w2 (mag)',
+                        titlefont: tfont
+                    },
+                    zaxis: {
+                        title: 'w3 (mag)',
+                        titlefont: tfont
+                    }
+                }
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newChart3', layout: layout3d, data: data3d },
+                    '3dChartContainer');
         }
 
 
         function showATable(sTarget,r,c,w,h) {
             firefly.getViewer().addCell(r,c,w,h, 'tables');
-            var req=  firefly.util.table.makeIrsaCatalogRequest('another wise catalog', 'WISE', 'allwise_p3as_psd',
+            var req=  firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
                 {   position: sTarget,
                     SearchMethod: 'Cone',
                     radius: 1200,
@@ -333,3 +384,4 @@ Images
 <script  type="text/javascript" src="../firefly_loader.js"></script>
 
 
+</html>
