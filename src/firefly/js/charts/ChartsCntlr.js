@@ -313,13 +313,13 @@ export function makeChartDataFetch (getChartDataType) {
 
 function chartAdd(action) {
     return (dispatch) => {
-        const {chartId, chartType, viewerId='main', data, fireflyData} = action.payload;
+        const {chartId, chartType, viewerId='main', data, fireflyData, fireflyLayout} = action.payload;
         clearChartConn({chartId});
         dispatch(action);
         if (chartType === 'plot.ly') {
             dispatchAddViewer(viewerId,true,'plot2d',true);
             dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
-            handleTableSourceConnections({chartId, data, fireflyData});
+            handleTableSourceConnections({chartId, data, fireflyData, fireflyLayout});
         }
     };
 }

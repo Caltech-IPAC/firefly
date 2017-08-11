@@ -115,6 +115,15 @@
 .ChartToolbar__pan {
     background-image: url("/images/icons-2014/pan.png");
 }
+
+.ChartToolbar__turntable {
+    background-image: url("/images/turntable-tmp.png");
+}
+
+.ChartToolbar__orbital {
+    background-image: url("/images/orbital-tmp.png");
+}
+
 .ChartToolbar__select {
     background-image: url("/images/icons-2014/select.png");
 }

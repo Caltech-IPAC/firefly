@@ -29,8 +29,11 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
         xyratio = xbins/ybins;
     }
 
-    //TODO: take into account zoom? and boundaries
-    const {xmin, xmax, ymin, ymax} = {};
+    //should we take into account zoom?
+    const xmin = get(fireflyLayout, 'xaxis.min');
+    const xmax = get(fireflyLayout, 'xaxis.max');
+    const ymin = get(fireflyLayout, 'yaxis.min');
+    const ymax = get(fireflyLayout, 'yaxis.max');
 
     const options = {
         xColOrExpr: get(mappings, 'x'),

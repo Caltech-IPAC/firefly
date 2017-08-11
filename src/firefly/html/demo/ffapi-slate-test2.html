@@ -76,16 +76,16 @@ Load Tables for charts to use
 Add Some plotly Charts
 <ul>
     <li>
-        <a href='javascript:loadNewCharts(0,0,2,2)'>Show new Plotly </a> <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
+        <a href='javascript:loadNewCharts(0,0,2,2)'>Show Scatter </a> <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
     </li>
     <li>
-        <a href='javascript:loadNewHeatmapCharts(2,0,2,3)'>Show new Heat Map </a> <span class='smallCoords'>at row: 2, col: 0, w:2 h: 3</span>
+        <a href='javascript:loadNewHeatmapCharts(2,0,2,3)'>Show Heatmap </a> <span class='smallCoords'>at row: 2, col: 0, w:2 h: 3</span>
     </li>
     <li>
         <a href='javascript:loadHistogramCharts(2,2,2,3)'>Show Histogram</a> <span class='smallCoords'>at row: 2, col: 2, w:2 h: 3</span>
     </li>
     <li>
-        <a href='javascript:load3DChart(2,4,2,3)'>3d Charts</a> <span class='smallCoords'>at row: 2, col: 4, w:2 h: 3</span>
+        <a href='javascript:load3DChart(2,4,2,3)'>Show 3d Scatter</a> <span class='smallCoords'>at row: 2, col: 4, w:2 h: 3</span>
     </li>
 </ul>
 
@@ -167,7 +167,7 @@ Images
                 y: "tables::wiseCatTbl,w2mpro-w3mpro",
                 mode: 'markers',
                 type: 'scatter',
-                marker: {size: 4}
+                marker: {size: 4, opacity: 0.5}
             };
 
             var layoutS = {
@@ -209,20 +209,31 @@ Images
                     colorscale: 'Greens'
                 }
             ];
+            // use firefly algorithm to create heatmap data
             var	fireflyDataHM = [
                 {dataType: 'fireflyHeatmap'},
                 {dataType: 'fireflyHeatmap'},
                 {dataType: 'fireflyHeatmap'}
             ];
-
             var layoutHM = {
                 title: 'Magnitude-magnitude densities',
                 xaxis: {title: 'w1 photometry (mag)'},
                 yaxis: {title: ''}
             };
+            // user boundaries - so that heatmaps will be calculated in the same XY space
+            var fireflyLayoutHM = {
+                xaxis: {
+                    min: 5,
+                    max: 20
+                },
+                yaxis: {
+                    min: 4,
+                    max: 18
+                }
+            };
 
             firefly.getViewer().showPlot(
-                    {chartId: 'newChart2', layout: layoutHM,  data: dataHM, fireflyData:fireflyDataHM },
+                    {chartId: 'newChart2', layout: layoutHM,  data: dataHM, fireflyData:fireflyDataHM, fireflyLayout:fireflyLayoutHM},
                     'heatMapContainer');
         }
 
@@ -294,8 +305,6 @@ Images
             var tfont = {size: 11};
             var layout3d = {
                 title: 'Photometry in band 1, 2, 3',
-                xaxis: {visible: false},
-                yaxis: {visible: false},
                 scene:{
                     xaxis: {
                         title: 'w1 (mag)',
@@ -376,7 +385,7 @@ Images
         };
 
    }
-   
+
 </script>
 
 <!-- to try a container: <script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>-->
