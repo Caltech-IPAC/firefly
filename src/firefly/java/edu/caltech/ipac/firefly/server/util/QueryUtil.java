@@ -790,13 +790,17 @@ public class QueryUtil {
         }
 
         if (doDecimation) {
-
             boolean checkLimits = false;
             if (checkDeciLimits) {
-                if (xDeciMin > xMin) { xMin = xDeciMin; checkLimits = true; }
-                if (xDeciMax < xMax) { xMax = xDeciMax; checkLimits = true; }
-                if (yDeciMin > yMin) { yMin = yDeciMin; checkLimits = true; }
-                if (yDeciMax < yMax) { yMax = yDeciMax; checkLimits = true; }
+                if (xDeciMin > xMin || xDeciMax < xMax || yDeciMin > yMin || yDeciMax < yMax) {
+                    checkLimits = true;
+                }
+
+                // use boundaries provided in decimate info, if available
+                if (!Double.isNaN(decimateInfo.getXMin())) { xMin = xDeciMin; }
+                if (!Double.isNaN(decimateInfo.getXMax())) { xMax = xDeciMax; }
+                if (!Double.isNaN(decimateInfo.getYMin())) { yMin = yDeciMin; }
+                if (!Double.isNaN(decimateInfo.getYMax())) { yMax = yDeciMax; }
             }
 
             if (outRows < deciEnableSize) {

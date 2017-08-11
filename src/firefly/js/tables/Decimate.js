@@ -29,7 +29,7 @@ export const serializeDecimateInfo = function(xColumnName, yColumnName, maxPoint
     const orderedNumericProps = [maxPoints, xyRatio, xMin, xMax, yMin, yMax, deciEnableLimit];
     const deciStrStart = `${DECIMATE_TAG}=${xColumnName},${yColumnName}`;
     return orderedNumericProps.reduce((sres, val)=>{
-        return sres + ',' + (Number.isFinite(val) ? val : '');
+        return sres + ',' + (Number.isFinite(Number.parseFloat(val)) ? val : '');
     }, deciStrStart);
 };
 

@@ -155,8 +155,8 @@ function addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, 
         const yval = y[idx];
         const xerr = hasXErrors ? formatError(xval, xErr[idx], xErrLow[idx], xErrHigh[idx]) : '';
         const yerr = hasYErrors ? formatError(yval, yErr[idx], yErrLow[idx], yErrHigh[idx]) : '';
-        return `<span> ${xTipLabel} = ${xval}${xerr} ${xUnit} <br>` +
-            ` ${yTipLabel} = ${yval}${yerr} ${yUnit} </span>`;
+        return `<span> ${xTipLabel} = ${parseFloat(xval)}${xerr} ${xUnit} <br>` +
+            ` ${yTipLabel} = ${parseFloat(yval)}${yerr} ${yUnit} </span>`;
     });
     changes[`data.${traceNum}.text`] = text;
     changes[`data.${traceNum}.hoverinfo`] = 'text';
