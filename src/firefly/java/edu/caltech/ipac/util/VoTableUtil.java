@@ -200,7 +200,6 @@ public class VoTableUtil {
                     precision = Integer.parseInt(cinfo.getAuxDatum(VOStarTable.PRECISION_INFO).toString());
                 }catch (NumberFormatException e){
                     // problem with VOTable vinfo precision: should be numeric - keep default min precision
-                    continue;
                 }
             }
             DataType dt = new DataType(cinfo.getName(), cinfo.getName(),

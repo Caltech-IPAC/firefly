@@ -72,7 +72,7 @@ public class DataType implements Serializable, Cloneable {
         _keyName  = keyName;
         _prefix   = null;
         _defTitle  = defTitle;
-        _importance= importance;
+        _importance= importance==null?Importance.HIGH:importance;
         _type= type;
         _units= units;
         _mayBeNull = mayBeNull;
