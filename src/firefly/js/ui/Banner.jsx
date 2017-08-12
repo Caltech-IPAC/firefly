@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import {SimpleComponent} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
+import {getRootURL} from '../util/BrowserUtil.js';
 import './Banner.css';
 
 
@@ -61,14 +62,24 @@ export class UserInfo extends SimpleComponent {
     }
 
     render() {
+        /*global __$sso_redirect_uri*/
+        var logoutUri = typeof __$sso_redirect_uri === 'undefined' ? undefined : __$sso_redirect_uri;
+
         const {loginName='Guest', firstName, lastName, login_url} = this.state || {};
         const isGuest = loginName === 'Guest';
         const onLogin = () => login_url && (window.location = login_url);
+        const onLogout = () => {
+            if (logoutUri) {
+                window.location = `${getRootURL()}${logoutUri}?logout=${getRootURL()}`;
+            } else {
+                logout();
+            }
+        };
 
         return (
             <div className='banner__user-info'>
                 <span>{loginName}</span>
-                {!isGuest && <div className='banner__user-info--links' onClick={logout}>Logout</div>}
+                {!isGuest && <div className='banner__user-info--links' onClick={onLogout}>Logout</div>}
                 {isGuest && <div className='banner__user-info--links' onClick={onLogin}>Login</div>}
             </div>
         );

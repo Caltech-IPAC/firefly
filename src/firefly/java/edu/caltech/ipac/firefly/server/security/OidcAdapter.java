@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,11 +66,11 @@ public class OidcAdapter implements SsoAdapter {
     private static String ssoProfileUrl = AppProperties.getProperty("sso.user.profile.url");
     private static String oidcClientId = AppProperties.getProperty("oidc_client_id");
     private static String oidcClientSecret = AppProperties.getProperty("oidc_client_secret");
+    private static final String REDIRECT_URI = AppProperties.getProperty("oidc_redirect_uri", "oidc/verify");
 
     private static final String LOGIN_URL = ssoServerUrl + "/authorize";
     private static final String TOKEN_URL = ssoServerUrl + "/oauth2/token";
     private static final String USER_INFO_URL = ssoServerUrl + "/oauth2/userinfo";
-    private static final String VERIFY_URL = "oidc/verify";
     private static final String SCOPE = "openid profile email org.cilogon.userinfo edu.uiuc.ncsa.myproxy.getcert";
     private static final String ROLE_CLAIM = "isMemberOf";
 
@@ -252,7 +251,7 @@ public class OidcAdapter implements SsoAdapter {
     }
 
     private static String makeVerifyUrl() {
-        return   ServerContext.getRequestOwner().getRequestAgent().getBaseUrl() + VERIFY_URL;
+        return   ServerContext.getRequestOwner().getRequestAgent().getBaseUrl() + REDIRECT_URI;
     }
 
     @NotNull

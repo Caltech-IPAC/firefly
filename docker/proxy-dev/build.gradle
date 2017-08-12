@@ -1,0 +1,17 @@
+
+dockerImage {
+
+  docker_repo = "ipac/proxy-dev"
+  docker_registry = ''
+  docker_tag = 'latest'
+  copy_res = false
+
+  doFirst {
+    // copy artifacts to staging directory
+    copy {
+      from (projectDir) include '**/*'
+      into "${buildDir}/docker"
+      filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
+    }
+  }
+}

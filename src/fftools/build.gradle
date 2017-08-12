@@ -36,6 +36,7 @@ ext.appConfig = {
     test {
       ehcache.multicast.port = "6016"
     }
+
     ops_int {
       ehcache.multicast.port = "7516"
     }

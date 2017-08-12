@@ -15,6 +15,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -62,6 +63,19 @@ public class SsoCheckFilter implements Filter {
         if (request instanceof HttpServletRequest) {
             HttpServletRequest req = (HttpServletRequest) request;
             HttpServletResponse res = (HttpServletResponse) response;
+
+            System.out.println("REMOTE_USER: " + req.getRemoteUser());
+            Enumeration<String> headers = req.getHeaderNames();
+            while (headers.hasMoreElements()) {
+                String k = headers.nextElement();
+                String v = req.getHeader(k);
+                System.out.println("HEADER " + k + ":" + v);
+            }
+
+            for (String k : req.getParameterMap().keySet()) {
+                String v = req.getParameter(k);
+                System.out.println("PARAM " + k + ":" + v);
+            }
 
             if (!isExcluded(req)) {
                 SsoAdapter.Token authToken = SsoAdapter.getAdapter().getAuthToken();

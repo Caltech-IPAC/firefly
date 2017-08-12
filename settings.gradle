@@ -1,10 +1,12 @@
 rootProject.name = 'firefly_root'
 
-include 'simbad', 'xstream', 'firefly', 'fftools', 'firefly_data'
+include 'simbad', 'xstream', 'firefly', 'fftools', 'firefly_data', 'proxy', 'proxyDev'
 
 project(":simbad").projectDir   = file('src/external/simbad')
 project(":xstream").projectDir  = file('src/external/xstream')
 project(":firefly").projectDir  = file('src/firefly')
 project(":fftools").projectDir  = file('src/fftools')
 project(":firefly_data").projectDir = file('src/firefly_data')
+project(":proxy").projectDir = file('docker/proxy')
+project(":proxyDev").projectDir = file('docker/proxy-dev')
 
