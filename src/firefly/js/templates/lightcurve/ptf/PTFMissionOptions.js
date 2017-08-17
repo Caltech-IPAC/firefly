@@ -8,6 +8,7 @@ import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fi
 import {LC} from '../LcManager.js';
 import {DownloadOptionPanel, DownloadButton} from '../../../ui/DownloadDialog.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
+import {DL_DATA_TAG} from '../LcConverterFactory.js';
 
 
 const labelWidth = 80;
@@ -158,6 +159,7 @@ export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
     return (
         <DownloadButton>
             <DownloadOptionPanel
+                dataTag = {DL_DATA_TAG}
                 cutoutSize={cutoutSizeInDeg}
                 title={'Image Download Option'}
                 dlParams={{
