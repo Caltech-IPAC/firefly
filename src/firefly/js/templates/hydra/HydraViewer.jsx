@@ -145,31 +145,32 @@ BannerSection.propTypes = {
 
 function ResultSection({layoutInfo}) {
     const {currentSearch, images} = layoutInfo;
-    const {expanded=LO_VIEW.none, closeable} = layoutInfo.mode || {};
+    const {expanded=LO_VIEW.none} = layoutInfo.mode || {};
 
     const {allSearchItems} = getSearchInfo();
     if (!allSearchItems) return <div/>;
     const {results} = allSearchItems[currentSearch] || {};
     const standard = results ? results(layoutInfo) : <div/>;
 
-    return expanded === LO_VIEW.none ? standard : <ExpandedView {...{expanded, closeable, images}}/>;
+    return expanded === LO_VIEW.none ? standard : <ExpandedView {...{expanded, images}}/>;
 }
 
-function ExpandedView ({expanded, closeable,  images}) {
+function ExpandedView ({expanded,  images}) {
+
     var view;
     if (expanded === LO_VIEW.tables) {
         view = (<TablesContainer mode='both'
-                         closeable={closeable}
+                         closeable={true}
                          expandedMode={expanded===LO_VIEW.tables}
                          tableOptions={{help_id:'main1TSV.table'}}/>
                 );
     } else if (expanded === LO_VIEW.xyPlots) {
-        view = (<ChartsContainer closeable={closeable}
+        view = (<ChartsContainer closeable={true}
                          expandedMode={expanded===LO_VIEW.xyPlots}/>
                 );
     } else {
         view = (<TriViewImageSection key='res-tri-img'
-                         closeable={closeable}
+                         closeable={true}
                          imageExpandedMode={expanded===LO_VIEW.images}
                          {...images}  />
                 );
