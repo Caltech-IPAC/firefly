@@ -85,9 +85,10 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
             if (pidstr != null) {
                 try {
                     pfilename = new PtfIbeResolver().getListPfilenames(new long[]{pid})[0];
-                } catch (InterruptedException e) {
-                    //PID didn't work
-                    throw new DataAccessException("PID " + pid + " didn't give any result ", e);
+                } catch (Exception e) {
+                    //PID didn't work, swallow it
+                    logger.briefInfo("PID " + pid + " didn't give any result ");
+                    continue;
                 }
             } else {
                 pfilename = (String) dgData.get(rowIdx, "pfilename");
