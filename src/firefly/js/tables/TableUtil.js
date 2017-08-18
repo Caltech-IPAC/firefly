@@ -184,7 +184,7 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
     options.use = options.use || 'catalog_overlay';
     const tbl_id = options.tbl_id || uniqueTblId();
-    const id = 'ConeSearchByURL';
+    const id = params.ned?'NedSearch':'ConeSearchByURL';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
 
