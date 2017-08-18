@@ -6,6 +6,7 @@ import {makeFileRequest, getCellValue, getTblById, getColumnIdx, smartMerge, get
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
 import {LC} from '../LcManager.js';
+import {DL_DATA_TAG} from '../LcConverterFactory.js';
 
 
 const labelWidth = 80;
@@ -164,6 +165,7 @@ export function wiseOnFieldUpdate(fieldKey, value) {
 export function wiseDowloadOptionPanel (mission, cutoutSizeInDeg){
     return (
         <DownloadOptionPanel
+            dataTag = {DL_DATA_TAG}
             cutoutSize={cutoutSizeInDeg}
             title={'Image Download Option'}
             dlParams={{
