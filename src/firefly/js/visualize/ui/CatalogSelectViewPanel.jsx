@@ -45,6 +45,7 @@ const COLDEF1 = 9;
 const COLDEF2 = 8;
 const dropdownName = 'IrsaCatalogDropDown';
 const constraintskey = 'inputconstraint';
+const voProviders = [{name: 'NED', id: 'NedSearch'}];
 
 /**
  * Globally scoped here, master table, columns object
@@ -262,11 +263,11 @@ function doVoSearch(request, providerName = '') {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
             SearchMethod: 'Cone',
             radius: conesize, //degree!
-            ned:true,
+            providerName,
             accessUrl
         }
     );
-    dispatchTableSearch(tReq);
+    dispatchTableSearch(tReq, {backgroundable:true});
 }
 
 function doLoadTable(request) {

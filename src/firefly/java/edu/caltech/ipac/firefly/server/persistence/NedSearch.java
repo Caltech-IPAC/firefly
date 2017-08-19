@@ -10,10 +10,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.util.DataSetParser;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.util.*;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -45,6 +42,13 @@ public class NedSearch extends QueryByConeSearchURL {
     protected File postProcessData(File dgFile, TableServerRequest request) throws Exception {
         String url = "http://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%s&extend=no&list_limit=5&img_stamp=YES";
         final DataGroup resDg = DataGroupReader.read(dgFile);
+        //Check if this is the first time (original table to be postporcess)  for a different usage (Statistic/XYWithWerror, etc.
+        if (!StringUtils.isEmpty(resDg.getAttribute("joined"))) {
+            return dgFile;
+        } else {
+            resDg.addAttribute("joined", "true");
+        }
+
         TableDef tableDef = IpacTableUtil.getMetaInfo(dgFile);
         int maxWidth = NED_OBJECT_NAME.length();
         Iterator<DataObject> iterator = resDg.iterator();
