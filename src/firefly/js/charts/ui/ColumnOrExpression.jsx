@@ -11,6 +11,7 @@ import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
+import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 const EXPRESSION_TTIPS = `
 Supported operators: ^, *, /, +, -, <, <=, =, <>, >=, >, and, or.
@@ -113,7 +114,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
             <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
                  title={`Select ${name} column`}
                  onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${name}`,'OK',val)}>
-                <ToolbarButton icon={MAGNIFYING_GLASS}/>
+                <ToolbarButton styyle={{width:'24px', height:'24px'}} icon={MAGNIFYING_GLASS}/>
             </div>
         </div>
     );
