@@ -10,6 +10,8 @@ import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';
+import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
+import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 const EXPRESSION_TTIPS = `
 Supported operators: ^, *, /, +, -, <, <=, =, <>, >=, >, and, or.
@@ -88,7 +90,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
 
     // http://www.charbase.com/1f50d-unicode-left-pointing-magnifying-glass
     // http://www.charbase.com/1f50e-unicode-right-pointing-magnifying-glass
-    const cols = '\ud83d\udd0e';
+    //const cols = '\ud83d\udd0e';
     return (
         <div style={{whiteSpace: 'nowrap'}}>
             <SuggestBoxInputField
@@ -112,7 +114,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
             <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
                  title={`Select ${name} column`}
                  onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${name}`,'OK',val)}>
-                {cols}
+                <ToolbarButton styyle={{width:'24px', height:'24px'}} icon={MAGNIFYING_GLASS}/>
             </div>
         </div>
     );
