@@ -52,17 +52,17 @@ function creator(initPayload, presetDefaults) {
     drawingDef= Object.assign(drawingDef,presetDefaults);
     idCnt++;
 
-    var pairs= {
+    const pairs= {
         [MouseState.UP.key]: dispatchSelectPoint
     };
-
-    var actionTypes= [DrawLayerCntlr.SELECT_POINT];
-
-    var options= {
-        isPointData:true,
-        hasPerPlotData:true,
+    const actionTypes= [DrawLayerCntlr.SELECT_POINT];
+    const options = {
+        isPointData: true,
+        hasPerPlotData: true,
+        canUserDelete: false,
         canUserChangeColor: ColorChangeType.DYNAMIC
     };
+
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, 'Selected Point', options, drawingDef, actionTypes, pairs);
 }
 

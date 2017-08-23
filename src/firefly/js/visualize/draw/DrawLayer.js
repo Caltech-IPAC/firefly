@@ -112,8 +112,8 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @param {object} drawingDef  the defaults that the drawer will use if not overridden by the object @see DrawingDef
  * @param {Array} actionTypeAry extra [actions] that are allow though to the drawing layer reducer
  * @param {object} mouseEventMap object literal with event to function mapping, see documentation below in object
- *
- *
+ * @param {object} exclusive
+ * @param {function} getCursor
  * @return {DrawLayer}
  */
 function makeDrawLayer(drawLayerId,

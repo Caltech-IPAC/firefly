@@ -13,7 +13,12 @@ const bSty= {
     display:'inline-block',
     whiteSpace: 'nowrap'
 };
+const bStyWid = {
+    ...bSty, width: 'calc(33%)'
+};
+
 const symbolSize= 10;
+const mLeft = 5;
 
 function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             color, canUserChangeColor, canUserDelete, title, helpLine,
@@ -50,7 +55,7 @@ function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                     <input type='checkbox' checked={visible} onChange={() => changeVisible()} />
                     {getTitleTag(title,maxTitleChars)}
                 </div>
-                <div style={{padding:'0 4px 0 5px'}}>
+                <div style={{padding:'0 4px 0 5px', width: 180, display: 'flex', justifyContent: 'flex-end'}}>
                     {makeColorChange(color, canUserChangeColor,modifyColor)}
                     {makeShape(isPointData,drawingDef, modifyShape)}
                     {makeDelete(canUserDelete,deleteLayer)}
@@ -103,20 +108,20 @@ function makeColorChange(color, canUserChangeColor, modifyColor) {
         height:symbolSize,
         backgroundColor: color,
         display:'inline-block',
-        marginLeft:5
+        marginLeft: mLeft
     };
     if (canUserChangeColor) {
         return (
-            <div style={bSty}>
+            <div style={bStyWid}>
                 <div style={feedBackStyle} onClick={() => modifyColor()}  />
                 <a className='ff-href'
                    onClick={() => modifyColor()}
-                   style={Object.assign({},bSty,{marginLeft:5})}>Color</a>
+                   style={Object.assign({},bSty, {paddingLeft:5})}>Color</a>
             </div>
         );
     }
     else {
-        return (<div style={Object.assign({},bSty, {width:15})}></div>);
+        return false;
     }
 
 }
@@ -130,25 +135,25 @@ function makeShape(isPointData, drawingDef, modifyShape) {
         var {width, height} = DrawUtil.getDrawingSize(size, drawingDef.symbol);
 
         const feedBackStyle= {
-            width:width,
-            height:height,
+            width,
+            height,
             display:'inline-block',
-            marginLeft:5
+            marginLeft:mLeft
         };
 
         return (
-            <div style={bSty} >
+            <div style={bStyWid} >
                 <div style={feedBackStyle} onClick={() => modifyShape()}>
                     <SimpleCanvas width={width} height={height} drawIt={ (c) => drawOnCanvas(c, df, width, height)}/>
                 </div>
                 <a className='ff-href'
                    onClick={() => modifyShape()}
-                   style={Object.assign({}, bSty, {marginLeft:5})}>Symbol</a>
+                   style={Object.assign({}, bSty, {paddingLeft:5})}>Symbol</a>
            </div>
         );
     }
     else {
-        return (<div style={Object.assign({},bSty, {width:20})}></div>);
+        return false;
     }
 
 }
@@ -179,15 +184,18 @@ function makeDelete(canUserDelete,deleteLayer) {
     const deleteStyle= {
         display:'inline-block',
         whiteSpace: 'nowrap',
-        marginLeft: 5
+        marginLeft: mLeft*2+symbolSize
     };
     if (canUserDelete) {
         return (
-            <a className='ff-href' onClick={() => deleteLayer()} style={deleteStyle}>Delete</a>
+            <div style={bStyWid}>
+                <a className='ff-href'
+                   onClick={() => deleteLayer()} style={deleteStyle}>Delete</a>
+            </div>
         );
     }
     else {
-        return (<div style={Object.assign({},bSty, {width:15})}></div>);
+        return false;
     }
 
 }
