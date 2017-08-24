@@ -11,6 +11,7 @@ import * as ChartsCntlr from '../ChartsCntlr.js';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
 
+
 class ChartPanelView extends PureComponent {
 
     constructor(props) {
@@ -155,7 +156,10 @@ class ChartPanelView extends PureComponent {
                     <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
                     <div className='ChartPanel__chartarea--withToolbar'>
                         {showOptions &&
-                        <div className='ChartPanelOptions'>
+                        <div className='ChartPanelOptions'
+                             onClick={stopPropagation}
+                             onTouchStart={stopPropagation}
+                             onMouseDown={stopPropagation}>
                             <div style={{height: 14}}>
                                 <div style={{ right: -6, float: 'right'}}
                                      className='btn-close'
@@ -191,6 +195,8 @@ ChartPanelView.defaultProps = {
     showToolbar: true,
     showChart: true
 };
+
+const stopPropagation= (ev) => ev.stopPropagation();
 
 function ErrorPanel({errors}) {
     return (

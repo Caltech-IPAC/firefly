@@ -520,6 +520,9 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
 
 // does the default depend on the chart type?
 export function applyDefaults(chartData={}) {
+    const chartType = get(chartData, ['data', '0', 'type']);
+    const noXYAxis = chartType && (chartType === 'pie');
+
     const defaultLayout = {
         hovermode: 'closest',
         dragmode: 'zoom',
@@ -537,29 +540,29 @@ export function applyDefaults(chartData={}) {
             titlefont: {
                 size: FSIZE
             },
-            tickfont: {
-                size: FSIZE
-            },
-            showline: true,
+            ticks: noXYAxis ? '' : 'outside',
+            showline: !noXYAxis,
+            showticklabels: !noXYAxis,
             zeroline: false
         },
         yaxis: {
             autorange:true,
-            showgrid: true,
+            showgrid: !noXYAxis,
             lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,
             titlefont: {
                 size: FSIZE
             },
-            tickfont: {
-                size: FSIZE
-            },
-            showline: true,
+            ticks: noXYAxis ? '' : 'outside',
+            showline: !noXYAxis,
+            showticklabels: !noXYAxis,
             zeroline: false
         }
     };
+
     chartData.layout = merge(defaultLayout, chartData.layout);
+
 }
 
 // color-blind friendly colors

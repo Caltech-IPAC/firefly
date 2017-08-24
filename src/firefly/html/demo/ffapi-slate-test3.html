@@ -1,0 +1,354 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+        <style type="text/css">
+            .smallCoords {
+                font-size: 10pt;
+            }
+        </style>
+    </head>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 10px 0 0 20px;">
+</div>
+
+
+<div style="font-size: 16pt; padding:0 0 10px 10px;">
+    Test Firefly Blank Slate Viewer
+</div>
+
+<pre>
+    Slate function calls from firefly.getViewer()
+
+        v.addCell
+
+        v.showCoverage
+        v.showImageMetaDataViewer
+        v.showTable
+        v.showImage
+        v.showXYPlot
+        v.showHistogram
+
+    flow:
+       call v.addCell with position, type and cellId - type must be one of 'tables', 'images', 'xyPlots', 'tableImageMeta', 'coverageImage'
+       call v.showTable, v.showImage, v.showXYPlot, v.showHistogram, v.showCoverage, or v.showImageMetaDataViewer
+</pre>
+
+<div>
+    serialized target: <input type="text" name="fname" id="sTarget" style="width: 300px; margin: 10px;">
+</div>
+<pre>
+    try:
+    148.88822;69.06529;EQ_J2000 # Galaxy M81
+    202.48417;47.23056;EQ_J2000 # Galaxy M51
+    136.9316774;+1.1195886;galactic # W5 star-forming region
+    10.68479;41.26906;EQ_J2000 # Galaxy M31
+</pre>
+
+
+<div style='margin-bottom: 15px'>
+    <a href='javascript:firefly.getViewer().reinitViewer()'>Reinit App</a>
+</div>
+
+
+Load Tables for charts to use
+<ul>
+    <li>
+        <a href="javascript:showATable(getSTarget(),0,4,2,2)">Load the Table</a> <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
+    </li>
+</ul>
+
+Some unsupported plotly charts:
+<ul>
+
+    <li>
+        <a href='javascript:loadHistogramCharts(0,0,2,2)'>Show Histogram</a> <span class='smallCoords'>at row: 0, col: 0, w:2 h: 2</span>
+    </li>
+    <li>
+        <a href="javascript:loadSurface(0,2,2,2)">Show Surface</a><span class='smallCoords'>at row: 0, col: 2, w: 2, h: 2</span>
+    </li>
+    <li>
+        <a href="javascript:loadBar(2,0,3,3)">Show Bar chart</a><span class='smallCoords'>at row: 2, col: 0, w: 3, h: 3</span>
+    </li>
+    <li>
+        <a href="javascript:loadPie(2,3,3,3)">Show Pie Chart</a><span class='smallCoords'>at row: 2, col: 3, w: 3. h: 3</span>
+    </li>
+    <li>
+        <a href="javascript:loadDensity(4,0,3,3)">Show Histogram2dContour</a><span class='smallCoords'>at row: 4, col: 0, w: 3, h: 3</span>
+    </li>
+    <li>
+        <a href="javascript:loadBox(4,3,3,3)">Show Box</a><span class='smallCoords'>at row: 4, col: 3, w: 3, h: 3</span>
+    </li>
+</ul>
+</body>
+
+
+<script type="text/javascript">
+    if (!window.firefly) window.firefly= {};
+    window.firefly.options= {charts: {chartEngine: 'plotly'}};
+</script>
+
+
+
+<script type="text/javascript">
+    {
+
+        function getSTarget() {
+            return document.getElementById('sTarget').value;
+        }
+
+
+        function loadHistogramCharts(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'histContainer');
+
+            var dataH = [
+                {name: 'w1mpro', marker: {color: 'rgba(153, 51, 153, 0.8)'}},
+                {name: 'w2mpro', marker: {color: 'rgba(102,153,0, 0.7)'}}
+            ];
+
+            var fireflyDataH = [
+                {
+                    dataType: 'fireflyHistogram',
+                    tbl_id: 'wiseCatTbl',
+                    options: {
+                        algorithm: 'fixedSizeBins',
+                        fixedBinSizeSelection: 'numBins',
+                        numBins: 30,
+                        columnOrExpr: 'w1mpro'
+                    }
+                },
+                {
+                    dataType: 'fireflyHistogram',
+                    tbl_id: 'wiseCatTbl',
+                    options: {
+                        algorithm: 'fixedSizeBins',
+                        fixedBinSizeSelection: 'numBins',
+                        numBins: 40,
+                        columnOrExpr: 'w2mpro'   // same column but shifted
+                    }
+                }
+            ];
+
+            var layoutHist = {
+                title: 'Photometry histogram',
+                xaxis: {title: 'photometry (mag)'},
+                yaxis: {title: ''}
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH, fireflyData: fireflyDataH},
+                    'histContainer');
+        }
+
+        function loadBar(r, c, w, h) {
+            firefly.getViewer().addCell(r, c, w, h, 'xyPlots', 'barContainer');
+
+
+            var dataBar = [
+                {
+                    type: 'bar',
+                    name: 'w1nm',
+                    orientation: 'h',
+                    y: "tables::wiseCatTbl,clon",
+                    x: "tables::wiseCatTbl,w1nm"
+                }
+            ];
+
+            var layoutBar = {
+                title: 'Bar: w1nm vs. clon',
+                xaxis: {title: 'w1nm'},
+                yaxis: {tickfont:{size: 11, family: 'PT Sans Narrow'}}
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newBar', data: dataBar, layout: layoutBar}, 'barContainer');
+        }
+
+        function loadPie(r, c, w, h) {
+            firefly.getViewer().addCell(r, c, w, h, 'xyPlots', 'pieContainer');
+
+            var dataPie = [
+                {
+                    name: 'Area',
+                    type: 'pie',
+                    values: "tables::wiseCatTbl,w1mpro",
+                    labels:  "tables::wiseCatTbl,clon",
+                    textinfo: 'none'
+                }];
+
+            var layoutPie = {
+                title: 'pie: w1mpro vs. clon',
+                showlegend: true
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newPie', data: dataPie, layout: layoutPie}, 'pieContainer');
+        }
+
+        function loadDensity(r, c, w, h) {
+            firefly.getViewer().addCell(r, c, w, h, 'xyPlots', 'h2dcontourContainer');
+
+            var dataContour = [
+                {
+                    name: 'contour',
+                    type: 'histogram2dcontour',
+                    x: "tables::wiseCatTbl,ra",
+                    y:  "tables::wiseCatTbl,dec",
+                    ncontours: 20
+                }];
+
+            var layoutContour = {
+                title: 'histogram2dcontour: ra vs. dec',
+                xaxis: {title: 'ra'},
+                yaxis: {title: 'dec'}
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newhist2dcontour', data: dataContour, layout: layoutContour}, 'h2dcontourContainer');
+        }
+
+        function loadSurface(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'surfaceContainer');
+
+
+            var dataSurface = [
+                {
+                    type: 'surface',
+                    name: 'w1-ra-dec',
+                    x: "tables::wiseCatTbl,ra",
+                    y: "tables::wiseCatTbl,dec",
+                    z: "tables::wiseCatTbl,w1mpro",
+                    hoverinfo: 'x+y+z'
+                }
+            ];
+
+            var tfont = {size: 11};
+            var layoutSurface = {
+                title: 'Surface on ra & dec',
+                scene:{
+                    xaxis: {
+                        title: 'ra (deg)',
+                        titlefont: tfont
+                    },
+                    yaxis: {
+                        title: 'dec (deg)',
+                        titlefont: tfont
+                    }
+                }
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newSurface', layout: layoutSurface, data: dataSurface },
+                    'surfaceContainer');
+        }
+
+        function loadBox(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'boxContainer');
+
+
+            var dataBox = [
+                {
+                    type: 'box',
+                    name: 'w1mpro',
+                    y: "tables::wiseCatTbl,w1mpro"
+                },
+                {
+                    type: 'box',
+                    name: 'w2mpro',
+                    y: "tables::wiseCatTbl,w2mpro"
+                }
+            ];
+
+            var tfont = {size: 11};
+            var layoutBox = {
+                title: 'Box on photometry',
+                titlefont: tfont
+            };
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newBox', layout: layoutBox, data: dataBox},
+                    'boxContainer');
+        }
+
+
+        function showATable(sTarget,r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'tables');
+            var req=  firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                {
+                    position: sTarget,
+                    SearchMethod: 'Cone',
+                    radius: 360
+                },
+                {
+                    tbl_id: "wiseCatTbl"
+                }
+            );
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+    }
+</script>
+
+
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function(firefly) {
+
+            document.getElementById('sTarget').value=  '10.68479;41.26906;EQ_J2000';
+
+            firefly.setViewerConfig(firefly.ViewerType.Grid);
+            window.ffViewer= firefly.getViewer();
+
+            firefly.setGlobalImageDef({
+                ZoomType  : 'TO_WIDTH'
+            } );
+
+            firefly.debug= true;
+
+            var util= firefly.util;
+            var ui= firefly.ui;
+
+            var req= {
+                plotId: 'xxq',
+                Type      : 'SERVICE',
+                plotGroupId : 'myGroup',
+                Service   : 'TWOMASS',
+                Title     : '2mass from service',
+                GridOn     : true,
+//                GridOn     : 'TRUE_LABELS_FALSE',
+                SurveyKey  : 'k',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                SizeInDeg  : '.12',
+                AllowImageSelection : true
+            };
+
+
+
+
+        };
+
+   }
+
+</script>
+
+<!-- to try a container: <script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>-->
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+
+
+</html>

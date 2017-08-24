@@ -17,6 +17,7 @@ import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
+import {getColumnType, getTblById} from '../../../tables/TableUtil.js';
 
 const fieldProps = {labelWidth: 50, size: 25};
 const boundariesFieldProps = {labelWidth: 35, size: 10};
@@ -29,8 +30,8 @@ const X_AXIS_OPTIONS = [
     {label: 'top', value: 'opposite'},
     {label: 'log', value: 'log'}
 ];
-
 const X_AXIS_OPTIONS_NOLOG = X_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
+
 
 const Y_AXIS_OPTIONS = [
     {label: 'grid', value: 'grid'},
@@ -38,6 +39,7 @@ const Y_AXIS_OPTIONS = [
     {label: 'right', value: 'opposite'},
     {label: 'log', value: 'log'}
 ];
+const Y_AXIS_OPTIONS_NOLOG = Y_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
 
 function getOptions(a, layout) {
     const opts = [];
@@ -62,11 +64,17 @@ function getOptions(a, layout) {
  * @param type - Plotly chart type
  */
 export function hasMarkerColor(type) {
-    return type.startsWith('scatter') || type.startsWith('histogram') || type === 'box' || type === 'bar' || type === 'area' || type === 'pointcloud';
+    return type.startsWith('scatter') || ['histogram', 'box', 'bar', 'area', 'plotcloud'].includes(type);
 }
 
-function hasNoXY(type) {
-    return type.endsWith('3d') || ['pie','surface'].includes(type);
+function hasNoXY(type, tablesources) {
+    if (type.endsWith('3d') || ['pie', 'surface'].includes(type)) return true;
+
+    const noXYtrace = tablesources.findIndex((trace) => {
+        return (!get(trace, ['mappings', 'x']) || !get(trace, ['mappings', 'y']));
+    });
+
+    return noXYtrace >= 0;
 }
 
 export class BasicOptions extends SimpleComponent {
@@ -86,13 +94,18 @@ export class BasicOptions extends SimpleComponent {
         const tbl_id = get(tablesource, 'tbl_id');
         const type = get(data, `${activeTrace}.type`, 'scatter');
         const noColor = !hasMarkerColor(type);
-        const noXY = hasNoXY(type);
+        const noXY = hasNoXY(type, tablesources);
+        const xColType = noXY ? '' : getColumnType(getTblById(tbl_id), get(tablesource, ['mappings', 'x'], ''));
+        const yColType = noXY ? '' : getColumnType(getTblById(tbl_id), get(tablesource, ['mappings', 'y'], ''));
+        const xNoLog = type.includes('histogram') ? true : undefined;          // histogram2d or histogram2dcontour
+        const yNoLog = type.includes('histogram') ? true : undefined;
+
         return (
             <div style={{minWidth: 250, padding:'0 5px 7px'}}>
                 <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
                             reducerFunc={basicFieldReducer({chartId, activeTrace})}>
-                    <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, xColType, yColType, xNoLog, yNoLog}}/>
                 </FieldGroup>
             </div>
         );
@@ -293,7 +306,8 @@ export class BasicOptionFields extends Component {
     }
 
     render() {
-        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog} = this.props;
+        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog, yNoLog, xColType, yColType} = this.props;
+        const strT = ['str', 'char', 's', 'c'];
 
         // TODO: need color input field
         const colorFldPath = `data.${activeTrace}.marker.color`;
@@ -325,30 +339,34 @@ export class BasicOptionFields extends Component {
                 {!noXY && <div>
                     <ValidationField fieldKey={'layout.xaxis.title'}/>
                     <CheckboxGroupInputField fieldKey='__xoptions'
-                                             options={xNoLog ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
+                                             options={xNoLog || strT.includes(xColType) ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
                     <br/>
                     <ValidationField fieldKey={'layout.yaxis.title'}/>
-                    <CheckboxGroupInputField fieldKey='__yoptions' options={Y_AXIS_OPTIONS}/>
+                    <CheckboxGroupInputField fieldKey='__yoptions'
+                                             options={yNoLog || strT.includes(yColType) ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
                     <br/>
                     <div style={helpStyle}>
                         Set plot boundaries if different from data range.
                     </div>
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
-                        <div style={{paddingRight: 5}}>
-                            <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
+                    {strT.includes(xColType) ? false :
+                        <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
+                            <div style={{paddingRight: 5}}>
+                                <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
+                            </div>
+                            <div style={{paddingRight: 5}}>
+                                <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
+                            </div>
+                        </div>}
+                    {strT.includes(yColType) ? false :
+                        <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
+                            <div style={{paddingRight: 5}}>
+                                <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
+                            </div>
+                            <div style={{paddingRight: 5}}>
+                                <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
+                            </div>
                         </div>
-                        <div style={{paddingRight: 5}}>
-                            <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
-                        </div>
-                    </div>
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
-                        <div style={{paddingRight: 5}}>
-                            <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
-                        </div>
-                        <div style={{paddingRight: 5}}>
-                            <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
-                        </div>
-                    </div>
+                    }
                 </div>}
                 <div style={helpStyle}>
                     Enter display aspect ratio below.<br/>
@@ -378,7 +396,10 @@ BasicOptionFields.propTypes = {
     align: PropTypes.oneOf(['vertical', 'horizontal']),
     noColor: PropTypes.bool,
     xNoLog: PropTypes.bool,
-    noXY: PropTypes.bool
+    yNoLog: PropTypes.bool,
+    noXY: PropTypes.bool,
+    xColType: PropTypes.string,
+    yColType: PropTypes.string
 };
 
 
@@ -436,12 +457,11 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     const range = get(layout, `${a}axis.range`);
 
                     if (opts.includes('flip')) {
-                        if (range) {
+                        if (range) {  
                             if (range[0]<range[1]) changes[`layout.${a}axis.range`] = reverse(range);
                         } else {
                             changes[`layout.${a}axis.autorange`] = 'reversed';
                         }
-
                     } else {
                         if (range) {
                             if (range[1]<range[0]) changes[`layout.${a}axis.range`] = reverse(range);
@@ -456,7 +476,11 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     }
 
                     changes[`layout.${a}axis.showgrid`] = opts.includes('grid');
-                    changes[`layout.${a}axis.type`]  = opts.includes('log') ? 'log' : 'linear';
+                    if (opts.includes('log')) {
+                        changes[`layout.${a}axis.type`] = 'log';
+                    } else if (get(layout, `${a}axis.type`, '') === 'log') {
+                        changes[`layout.${a}axis.type`] = 'linear';
+                    }
                 }
             });
         }
@@ -498,7 +522,7 @@ function adjustAxesRange(layout, changes) {
             changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', reversed);
             changes[`layout.${a}axis.autorange`] = false;
         } else {
-            changes[`layout.${a}axis.autorange`] = true;
+            //changes[`layout.${a}axis.autorange`] = true;
         }
     });
 }

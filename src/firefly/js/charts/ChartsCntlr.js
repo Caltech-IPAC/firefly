@@ -579,6 +579,13 @@ export function chartDataUpdate(payload) {
     return { type : CHART_DATA_UPDATE, payload };
 }
 
+function findNewBar() {
+    const newChart = getChartData('newBar');
+    const l = get(newChart, ['layout', 'xaxis', 'range']);
+    if (l) {
+        console.log(l);
+    }
+}
 
 /*
  Possible structure of store:

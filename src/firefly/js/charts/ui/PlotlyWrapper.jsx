@@ -6,7 +6,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 
-import {get, debounce, isEmpty, set, omit} from 'lodash';
+import {get, debounce, isEmpty, set, omit, cloneDeep} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL} from '../ChartsCntlr.js';
 import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
@@ -46,6 +46,13 @@ function isSlowResize() {
     return BrowserInfo.isFirefox();
 }
 
+function findNewBar() {
+    const newChart = getChartData('newBar');
+    const l = get(newChart, ['layout', 'xaxis', 'range']);
+    if (l) {
+        console.log(l);
+    }
+}
 
 export function downloadChart(chartId) {
     getPlotLy().then( (Plotly) => {
@@ -236,10 +243,10 @@ const now = Date.now();
                         Plotly.Plots.resize(this.div);
                         break;
                     case RenderType.UPDATE:
-                        Plotly.update(this.div, data, layout);
+                        Plotly.update(this.div, data, cloneDeep(layout));
                         break;
                     case RenderType.NEW_PLOT:
-                        Plotly.newPlot(this.div, data, layout, config);
+                        Plotly.newPlot(this.div, data, cloneDeep(layout), config);
                         if (this.div.on) {
                             const chart = this.div;
                             chart.on('plotly_click', () => chart.parentElement.click());
