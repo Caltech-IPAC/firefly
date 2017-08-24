@@ -118,8 +118,6 @@ export function LcImageToolbarView({activePlotId, viewerId, viewerPlotIds, layou
 function changeSize(viewerId, value) {
     value = Number(value);
     dispatchChangeViewerLayout(viewerId, value === 1 ? SINGLE : GRID, {count: value});
-    const vr = visRoot();
-    return setTimeout(() => dispatchRecenter({plotId: vr.activePlotId}), 1000);
 }
 
 

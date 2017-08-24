@@ -2,9 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {without,union,difference, get, includes, has} from 'lodash';
+import {race,call} from 'redux-saga/effects';
+import {take} from 'redux-saga/effects';
+import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
-import ImagePlotCntlr, {ExpandType} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {dispatchRecenter, dispatchProcessScroll, dispatchWcsMatch,
+                        visRoot, ExpandType, WcsMatchType} from './ImagePlotCntlr.js';
+import {findCurrentCenterPoint} from './reducer/PlotView.js';
+import {makeScreenPt} from './Point.js';
+import {primePlot, getPlotViewById} from './PlotViewUtil.js';
 import Enum from 'enum';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
@@ -24,11 +31,28 @@ export const UPDATE_VIEWER_CUSTOM_DATA= `${IMAGE_MULTI_VIEW_PREFIX}.updateViewer
 export const ADD_TO_AUTO_RECEIVER = `${IMAGE_MULTI_VIEW_PREFIX}.addToAutoReceiver`;
 
 
+
+
+function reducers() {
+    return {
+        [IMAGE_MULTI_VIEW_KEY]: reducer,
+    };
+}
+
+function actionCreators() {
+    return {
+        [CHANGE_VIEWER_LAYOUT]: changeViewerLayoutActionCreator,
+    };
+}
+
+
+
 export function getMultiViewRoot() { 
-    return flux.getState()[IMAGE_MULTI_VIEW_KEY]; 
+    return flux.getState()[IMAGE_MULTI_VIEW_KEY];
 }
 
 export default {
+    reducers, actionCreators,
     ADD_VIEWER, REMOVE_VIEWER,
     ADD_VIEWER_ITEMS, REMOVE_VIEWER_ITEMS, REPLACE_VIEWER_ITEMS,
     VIEWER_MOUNTED, VIEWER_UNMOUNTED, UPDATE_VIEWER_CUSTOM_DATA,
@@ -61,6 +85,7 @@ function initState() {
      * @prop {string} layout must be 'single' or 'grid'
      * @prop {boolean} canReceiveNewPlots - NewPlotMode.create_replace.key,
      * @prop {boolean} reservedContainer
+     * @prop {string} containerType - one of 'image', 'plot2d'
      * @prop {boolean} mounted - if the react component using the store is mounted
      * @prop {Object|String} layoutDetail - may be any object, string, etc- Hint for the UI, can be any string but with 2 reserved  GRID_RELATED, GRID_FULL
      * @prop {object} customData: {}
@@ -206,6 +231,66 @@ export function dispatchViewerUnmounted(viewerId) {
  */
 export function dispatchUpdateCustom(viewerId, customData) {
     flux.process({type: UPDATE_VIEWER_CUSTOM_DATA , payload: {viewerId,customData} });
+}
+
+
+//======================================== ActionCreators =============================
+//======================================== ActionCreators =============================
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+
+export function* watchForResizing(options) {
+    let remainingIdAry= options.plotIdAry.slice(0);
+    let waitingForMore= true;
+
+    if (!visRoot().wcsMatchType) return;
+
+    while (waitingForMore) {
+        const raceWinner = yield race({
+            action: take([ImagePlotCntlr.UPDATE_VIEW_SIZE]),
+            timer: call(delay, 1000)
+        });
+        const {action}= raceWinner;
+        if (action && action.payload.plotId) {
+            remainingIdAry= remainingIdAry.filter( (id) => id!==action.payload.plotId);
+            waitingForMore= remainingIdAry.length>0;
+        }
+        else {
+            waitingForMore= false;
+            console.log('watchForResizing: hit timeout');
+        }
+    }
+
+    const vr= visRoot();
+    const pv= getPlotViewById(vr, vr.mpwWcsPrimId);
+    if (pv && primePlot(vr, pv)) {
+        if (vr.wcsMatchType) {
+            setTimeout(() => dispatchRecenter({
+                plotId: vr.activePlotId,
+                centerOnImage:vr.wcsMatchType===WcsMatchType.Standard
+            }) , 100);
+        }
+    }
+}
+
+
+
+/**
+ * @param {Action} rawAction
+ * @returns {Function}
+ */
+function changeViewerLayoutActionCreator(rawAction) {
+    return (dispatcher, getState) => {
+
+        dispatcher(rawAction);
+        const {viewerId}= rawAction.payload;
+        const viewer= getViewer(getState()[IMAGE_MULTI_VIEW_KEY], viewerId);
+        if (get(viewer, 'containerType')===IMAGE) {
+            dispatchAddSaga(watchForResizing, {
+                    plotIdAry:viewer.layout===GRID ? viewer.itemIdAry: [viewer.lastActiveItemId]});
+        }
+    };
 }
 
 //======================================== Utilities =============================

@@ -104,7 +104,7 @@ export class ImageViewerLayout extends PureComponent {
 
         const vr= visRoot();
 
-        if (vr.wcsMatchType===WcsMatchType.Target && vr.activePlotId===pv.plotId && primePlot(vr)) {
+        if (vr.wcsMatchType===WcsMatchType.Target && vr.mpwWcsPrimId===pv.plotId && primePlot(vr)) {
             const plot= primePlot(vr);
             const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
             if (ft) dispatchRecenter({plotId:plot.plotId, centerPt:ft});
@@ -112,7 +112,7 @@ export class ImageViewerLayout extends PureComponent {
     }
 
     componentWillReceiveProps(nextProps) {
-        const {width,height}= nextProps;
+        const {width,height, plotView:pv}= nextProps;
         const {viewDim}= nextProps.plotView;
         if (width!==viewDim.width && height!==viewDim.height) {
             dispatchUpdateViewSize(nextProps.plotView.plotId,width,height);
