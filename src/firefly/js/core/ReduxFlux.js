@@ -121,7 +121,6 @@ const reducers = {
     [LayoutCntlr.LAYOUT_PATH]: LayoutCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
-    [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
     [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
 };
 
@@ -140,6 +139,7 @@ registerCntlr(ExternalAccessCntlr);
 registerCntlr(TablesCntlr);
 registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 registerCntlr(ChartsCntlrDef);
+registerCntlr(MultiViewCntlr);
 
 
 let redux = null;
