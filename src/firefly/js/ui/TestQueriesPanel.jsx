@@ -90,11 +90,11 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='2Mass Search' id='2massImage'>
                                 <div>{render2MassSearch(fields)}</div>
                             </Tab>
-                            {/*
+                            {
                             <Tab name='Periodogram' id='periodogram'>
                                 <div>{renderPeriodogram(fields)}</div>
                             </Tab>
-                            */}
+                            }
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -163,7 +163,8 @@ function renderPeriodogram(fields) {
                 //'alg': 'ls', //There are three algorithms: ls (Lomb-Scargle), bls (Box-fitting Least Squares), and plav (Plavchan 2008). The default algorithm is Lomb-Scargle.
                 //'peaks' : 50
                 //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
-            });
+            },
+                {inclCols : 'Power,Period'});
         } else if (opt === 1) {
             tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', {
                 'period_days': ds,
@@ -185,7 +186,7 @@ function renderPeriodogram(fields) {
                 //'alg': 'ls', //There are three algorithms: ls (Lomb-Scargle), bls (Box-fitting Least Squares), and plav (Plavchan 2008). The default algorithm is Lomb-Scargle.
                 'peaks' : 57
                 //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
-            });
+            }, {inclCols : 'Peak, Period, Power, SDE'});
         }
 
         console.log(ds);
