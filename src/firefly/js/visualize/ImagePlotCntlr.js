@@ -1164,7 +1164,7 @@ function deletePlotView(state,action) {
         state.prevActivePlotId= null;
     }
     if (state.mpwWcsPrimId===plotId) {
-        state.mpwWcsPrimId= state.prevActivePlotId;
+        state.mpwWcsPrimId= state.prevActivePlotId || state.activePlotId || get(state,'plotViewAry.0.plotId',null);
     }
     state.processedTiles= state.processedTiles.filter( (d) => d.plotId!==plotId);// remove old client tile data
     return state;

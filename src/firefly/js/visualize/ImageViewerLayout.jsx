@@ -14,15 +14,13 @@ import {flux} from '../Firefly.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CysConverter}  from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
-import {primePlot, plotInActiveGroup} from './PlotViewUtil.js';
+import {primePlot, plotInActiveGroup, getPlotViewById} from './PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
-import {PlotAttribute} from './WebPlot.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 
 import {
     visRoot,
-    WcsMatchType,
     ActionScope,
     dispatchPlotProgressUpdate,
     dispatchZoom,
@@ -40,31 +38,39 @@ const {MOVE,DOWN,DRAG,UP, DRAG_COMPONENT, EXIT, ENTER}= MouseState;
 const draggingOrReleasing = (ms) => ms===DRAG || ms===DRAG_COMPONENT || ms===UP || ms===EXIT || ms===ENTER;
 
 
+/**
+ * when a resize happens and zoom locking is enable then we need to start a zoom level change
+ * @param {string} plotId
+ * @param {boolean} paging
+ */
+function updateZoom(plotId, paging) {
+    const vr= visRoot();
+    const pv= getPlotViewById(vr, plotId);
 
-function updateZoom(pv, paging) {
     if (!primePlot(pv)) return;
+    if (!pv.plotViewCtx.zoomLockingEnabled) return;
+
     let doZoom= false;
     let actionScope= ActionScope.GROUP;
-    const vr= visRoot();
-    if (!paging && vr.wcsMatchType && pv.plotId!==vr.mpwWcsPrimId) {
+    if (!paging && vr.wcsMatchType && plotId!==vr.mpwWcsPrimId) {
         doZoom= false;
     }
-    else if (isImageViewerSingleLayout(getMultiViewRoot(), vr, pv.plotId)) {
+    else if (isImageViewerSingleLayout(getMultiViewRoot(), vr, plotId)) {
         doZoom= true;
         actionScope= ActionScope.SINGLE;
     }
     else {  // case: not expanded or expand as grid
             // if plot are in the group that is active then only the prime plot will do the zooming for all the group.
             // otherwise if we are not in the active group each plot will do a zoom
-        const inActive= plotInActiveGroup(vr,pv.plotId);
-        const isActive= vr.activePlotId===pv.plotId;
+        const inActive= plotInActiveGroup(vr,plotId);
+        const isActive= vr.activePlotId===plotId;
         doZoom= (isActive || !inActive);
         actionScope= isActive ? ActionScope.GROUP : ActionScope.SINGLE;
     }
 
     if (doZoom) {
         dispatchZoom({
-            plotId: pv.plotId,
+            plotId,
             userZoomType: (paging && vr.wcsMatchType) ? UserZoomTypes.WCS_MATCH_PREV : pv.plotViewCtx.zoomLockingType,
             zoomLockingEnabled: true,
             forceDelay: true,
@@ -97,25 +103,23 @@ export class ImageViewerLayout extends PureComponent {
         const {width,height, plotView:pv}= this.props;
         this.previousDim= makePrevDim(this.props);
         dispatchUpdateViewSize(pv.plotId,width,height);
-        if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
+        if (primePlot(pv)) {
             const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
-            updateZoom(pv,paging);
-        }
-
-        const vr= visRoot();
-
-        if (vr.wcsMatchType===WcsMatchType.Target && vr.mpwWcsPrimId===pv.plotId && primePlot(vr)) {
-            const plot= primePlot(vr);
-            const ft=  plot.attributes[PlotAttribute.FIXED_TARGET];
-            if (ft) dispatchRecenter({plotId:plot.plotId, centerPt:ft});
+            updateZoom(pv.plotId,paging);
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        const {width,height, plotView:pv}= nextProps;
+        const {width,height}= nextProps;
         const {viewDim}= nextProps.plotView;
         if (width!==viewDim.width && height!==viewDim.height) {
             dispatchUpdateViewSize(nextProps.plotView.plotId,width,height);
+        }
+
+        // case: a new plot force other plot to zoom match
+        if (!primePlot(this.props.plotView) &&  primePlot(nextProps.plotView)) {
+            const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), nextProps.plotView.plotId);
+            updateZoom(nextProps.plotView.plotId,paging);
         }
     }
 
@@ -126,9 +130,9 @@ export class ImageViewerLayout extends PureComponent {
 
         if (prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) {
             dispatchUpdateViewSize(pv.plotId,width,height);
-            if (pv.plotViewCtx.zoomLockingEnabled && primePlot(pv)) {
+            if (primePlot(pv)) {
                 if (prevExternalWidth!==externalWidth || prevExternalHeight!==externalHeight) {
-                    updateZoom(pv,false);
+                    updateZoom(pv.plotId,false);
                 }
             }
             this.previousDim= makePrevDim(this.props);

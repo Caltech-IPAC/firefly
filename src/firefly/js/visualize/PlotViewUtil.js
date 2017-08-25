@@ -154,8 +154,19 @@ export function getActivePlotView(visRoot) {
  */
 export function isThreeColor(plotOrPv) {
     let plot= plotOrPv;
-    if (plotOrPv.plots) plot= primePlot(plotOrPv);
+    if (isPlotView(plotOrPv)) plot= primePlot(plotOrPv);
     return plot ? plot.plotState.isThreeColor() : false;
+}
+
+/**
+ * Return true if this is a PlotView object
+ * @param obj
+ * @return boolean
+ */
+export function isPlotView(obj) {
+    return Boolean(obj && obj.plots && obj.plotId &&
+        obj.options && obj.viewDim &&
+        obj.overlayPlotViews && obj.plotViewCtx);
 }
 
 /**

@@ -10,7 +10,7 @@
 
 import update from 'immutability-helper';
 import {PlotAttribute} from './../WebPlot.js';
-import {get, isString, isUndefined} from 'lodash';
+import {get, isUndefined} from 'lodash';
 import {clone} from '../../util/WebUtil.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {makeScreenPt, makeDevicePt} from './../Point.js';
@@ -319,32 +319,27 @@ export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAr
 
 /**
  * Modify a scroll point to a new scroll point so that the new point puts the plot to have the same center as the master plot
- * @param {VisRoot} vr
- * @param {string|WebPlot} masterPlotOrId
- * @param {string|WebPlot} matchPlotOrToId
+ * @param {WcsMatchType} wcsMatchType
+ * @param {PlotView} masterPv - master PlotView
+ * @param {PlotView} matchToPv - match to PlotView
  * @param {ScreenPt} currScrollPt
  * @return {ScreenPt} the screen point offset
  */
-export function findWCSMatchScrollPosition(vr, masterPlotOrId, matchPlotOrToId, currScrollPt) {
+export function findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv, currScrollPt) {
 
-    const masterP=  isString(masterPlotOrId) ? primePlot(vr, masterPlotOrId) : masterPlotOrId;
-    const matchToP = isString(matchPlotOrToId) ? primePlot(vr, matchPlotOrToId) : matchPlotOrToId;
-    if (!masterP || !matchToP) return currScrollPt;
-    if (masterP.plotId===matchToP.plotId) return currScrollPt;
+    const masterP= primePlot(masterPv);
+    const matchToP= primePlot(matchToPv);
 
+    if (!masterP || !matchToP || !wcsMatchType || masterP.plotId===matchToP.plotId) return currScrollPt;
 
     const ccMaster= CysConverter.make(masterP);
     const ccMatch= CysConverter.make(matchToP);
-    const masterPv= getPlotViewById(vr,masterP.plotId);
-    const matchToPv= getPlotViewById(vr,matchToP.plotId);
 
-    if (vr.wcsMatchType===WcsMatchType.Standard) {
-
+    if (wcsMatchType===WcsMatchType.Standard) {
         const centerMasterWorldPt=  ccMaster.getWorldCoords(findCurrentCenterPoint(masterPv));
         return findScrollPtToCenterImagePt( matchToPv,  ccMatch.getImageCoords(centerMasterWorldPt));
     }
-    else if (vr.wcsMatchType===WcsMatchType.Target) {
-
+    else if (wcsMatchType===WcsMatchType.Target) {
         if (!matchToP.attributes[PlotAttribute.FIXED_TARGET] || !masterP.attributes[PlotAttribute.FIXED_TARGET] ) {
             return currScrollPt;
         }
@@ -379,12 +374,8 @@ function makeScrollPosMatcher(sourcePV, visRoot) {
         let retPV= pv;
         const plot= primePlot(pv);
         if (plot) {
-            if (visRoot.wcsMatchType===WcsMatchType.Standard) {
-                const newPt = findWCSMatchScrollPosition(visRoot, sourcePV.plotId, plot.plotId,makeScreenPt(srcSx,srcSy) );
-                retPV= updatePlotViewScrollXY(pv,newPt);
-            }
-            else if (visRoot.wcsMatchType===WcsMatchType.Target) {
-                const newPt = findWCSMatchScrollPosition(visRoot, sourcePV.plotId, plot.plotId, makeScreenPt(srcSx,srcSy));
+            if (visRoot.wcsMatchType) {
+                const newPt = findWCSMatchScrollPosition(visRoot.wcsMatchType, sourcePV, pv,makeScreenPt(srcSx,srcSy) );
                 retPV= updatePlotViewScrollXY(pv,newPt);
             }
             else {
@@ -505,7 +496,7 @@ export const getScrollSize = (plotView) => computeScrollSizes(primePlot(plotView
 
 /**
  *
- * @param plotView
+ * @param {PlotView} plotView
  * @return {ScreenPt}
  */
 function findScrollPtForCenter(plotView) {

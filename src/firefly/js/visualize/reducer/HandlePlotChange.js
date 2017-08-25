@@ -183,9 +183,9 @@ function zoomStart(state, action) {
 
 
     if (state.wcsMatchType && mpwWcsPrimId!==plotId) {
-        const masterPV= getPlotViewById(state, mpwWcsPrimId);
-        const {scrollX,scrollY}= masterPV;
-        const newSp= findWCSMatchScrollPosition(state, mpwWcsPrimId, primePlot(pv), makeScreenPt(scrollX,scrollY));
+        const masterPv= getPlotViewById(state, mpwWcsPrimId);
+        const {scrollX,scrollY}= masterPv;
+        const newSp= findWCSMatchScrollPosition(state.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
         pv= updatePlotViewScrollXY(pv, newSp);
     }
     else {
@@ -221,7 +221,7 @@ function installTiles(state, action) {
     if (state.wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPV= getPlotViewById(state, mpwWcsPrimId);
         const {scrollX,scrollY}= masterPV;
-        const newSp= findWCSMatchScrollPosition(state, mpwWcsPrimId, primePlot(pv), makeScreenPt(scrollX,scrollY));
+        const newSp= findWCSMatchScrollPosition(state.wcsMatchType, masterPV, pv, makeScreenPt(scrollX,scrollY));
         pv= updatePlotViewScrollXY(pv, newSp);
     }
     else {
@@ -382,19 +382,20 @@ function updateViewSize(state,action) {
         pv= Object.assign({}, pv, {viewDim: {width:w, height:h}});
         if (!plot) return pv;
 
-        let masterPv;
+        const masterPv= getPlotViewById(state, state.mpwWcsPrimId);
+        const {scrollX,scrollY}= masterPv;
 
         if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
-            masterPv= getPlotViewById(state, state.mpwWcsPrimId);
             if (masterPv) {
-                const {scrollX,scrollY}= masterPv;
-                const newSp= findWCSMatchScrollPosition(state, state.mpwWcsPrimId, plotId, makeScreenPt(scrollX,scrollY));
+                const newSp= findWCSMatchScrollPosition(state.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
                 pv= updatePlotViewScrollXY(pv, newSp);
             }
         }
         else if (state.wcsMatchType===WcsMatchType.Target) {
-            const newSp= findWCSMatchScrollPosition(state, state.mpwWcsPrimId, plotId, makeScreenPt(scrollX,scrollY));
-            pv= updatePlotViewScrollXY(pv, newSp);
+            if (masterPv) {
+                const newSp = findWCSMatchScrollPosition(state.wcsMatchType, masterPv, pv, makeScreenPt(scrollX, scrollY));
+                pv = updatePlotViewScrollXY(pv, newSp);
+            }
         }
         else if (isUndefined(pv.scrollX) || isUndefined(pv.scrollY)) {
             pv= recenterPv(null, false)(pv);
@@ -425,9 +426,8 @@ function recenter(state,action) {
     if (state.wcsMatchType) {
         const newPv= recenterPv(centerPt, centerOnImage)(pv);
         plotViewAry= replacePlotView(plotViewAry, newPv);
-        state= clone(state,{plotViewAry, mpwWcsPrimId:plotId});
         plotViewAry= matchPlotView(newPv, plotViewAry,plotGroup, (pv) => {
-            const newSp= findWCSMatchScrollPosition(state, plotId, pv.plotId, makeScreenPt(newPv.scrollX,newPv.scrollY));
+            const newSp= findWCSMatchScrollPosition(state.wcsMatchType, newPv, pv, makeScreenPt(newPv.scrollX,newPv.scrollY));
             return updatePlotViewScrollXY(pv, newSp);
 
         } );
