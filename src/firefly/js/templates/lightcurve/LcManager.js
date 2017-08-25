@@ -671,7 +671,7 @@ export function setupImages(layoutInfo) {
     var vr = visRoot();
 
     if (plotIdRoot+tableModel.highlightedRow===vr.activePlotId && count===get(viewer,'itemIdAry', []).length) {
-        return;
+        return layoutInfo;
     }
 
 

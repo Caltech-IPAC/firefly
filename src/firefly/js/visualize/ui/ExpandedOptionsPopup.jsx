@@ -35,7 +35,7 @@ function ExpandedOptionsPanel ({plotViewAry}) {
     const expandedIds= getExpandedViewerItemIds(getMultiViewRoot());
     var enabledStr= loadedPv.reduce( (s,pv) => {
         if (!expandedIds.includes(pv.plotId)) return s;
-        return s ? `${s},${pv.plotId}` : pv.plotId;
+        return s ? `${pv.plotId},${s}` : pv.plotId;
     },'');
 
     return (

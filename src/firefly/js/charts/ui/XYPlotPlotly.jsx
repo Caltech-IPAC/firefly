@@ -580,6 +580,18 @@ export class XYPlotPlotly extends PureComponent {
                         layoutUpdate['xaxis.range'] = getRange(xAxisMin, xAxisMax, newXOptions.xLog, newXOptions.xReversed); // no change for reverse here
                         layoutUpdate['yaxis.range'] = getRange(yAxisMin, yAxisMax, newYOptions.yLog, newYOptions.yReversed); // no change for reverse here
                     }
+                    // when no boundaries are changed, the block below to ensure the boundaries are kept if the boundaries IRSA-688
+                    else if( !isUndefined(params.boundaries) && shallowequal(params.boundaries, newParams.boundaries) ){
+                        layoutUpdate['xaxis.autorange'] = false;
+                        const xAxisMin = params.boundaries.xMin;
+                        const xAxisMax = params.boundaries.xMax;
+                        const yAxisMin = params.boundaries.yMin;
+                        const yAxisMax = params.boundaries.yMax;
+                        layoutUpdate['xaxis.range'] = getRange(xAxisMin, xAxisMax, newXOptions.xLog, newXOptions.xReversed); // no change for reverse here
+                        layoutUpdate['yaxis.range'] = getRange(yAxisMin, yAxisMax, newYOptions.yLog, newYOptions.yReversed); // no change for reverse here
+
+                    }
+
 
                     if (!shallowequal(params.selection, newParams.selection)) {
                         if (newParams.selection) {

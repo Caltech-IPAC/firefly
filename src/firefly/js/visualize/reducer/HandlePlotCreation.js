@@ -155,12 +155,13 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
     const plot= primePlot(pv);
     if (!plot || !wcsMatchType ) return pv;
 
+    const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
+
     if (wcsMatchType===WcsMatchType.Standard) {
         if (mpwWcsPrimId!==pv.plotId) {
-            const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
             if (masterPv) {
                 const {scrollX,scrollY}= masterPv;
-                const newSp= findWCSMatchScrollPosition(visRoot, mpwWcsPrimId, primePlot(pv), makeScreenPt(scrollX,scrollY));
+                const newSp= findWCSMatchScrollPosition(visRoot.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
                 pv= updatePlotViewScrollXY(pv, newSp);
             }
         }
@@ -174,10 +175,9 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
             }
         }
         else {
-            // const offPt= findWCSMatchOffset(visRoot, mpwWcsPrimId, primePlot(pv));
-            const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
             if (masterPv) {
-                const newSp= findWCSMatchScrollPosition(visRoot, mpwWcsPrimId, pv.plotId, makeScreenPt(scrollX,scrollY));
+                const {scrollX,scrollY}= masterPv;
+                const newSp= findWCSMatchScrollPosition(visRoot.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
                 pv= updatePlotViewScrollXY(pv, newSp);
             }
         }

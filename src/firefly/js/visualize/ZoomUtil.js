@@ -99,17 +99,18 @@ export function zoomActionCreator(rawAction) {
         }
 
 
+        let zoomActive= true;
         if (Math.floor(plot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
             if (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL) {
                 dispatchRecenter({plotId, centerOnImage:true});
             }
-            return;
+            zoomActive= false;
         }
 
 
         if (goodParams) {
             visRoot= getState()[IMAGE_PLOT_KEY];
-            doZoom(dispatcher,visRoot, plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
+            if (zoomActive) doZoom(dispatcher,visRoot, plot,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
             const matchFunc= makeZoomLevelMatcher(dispatcher, visRoot,pv,level,isFullScreen,
                                                    zoomLockingEnabled,userZoomType,useDelay, getState);
             if (actionScope===ActionScope.GROUP) {
@@ -158,7 +159,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,z
             // if the new level is only slightly different then use the target level
            newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
         }
-        doZoom(dispatcher,visRoot,pv.plotId,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
+        doZoom(dispatcher,visRoot,plot,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
     };
 }
 
@@ -167,16 +168,22 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,z
  * Begin zooming
  *
  * @param dispatcher
- * @param visRoot
- * @param plotId
- * @param zoomLevel
- * @param isFullScreen
- * @param zoomLockingEnabled
- * @param userZoomType
- * @param useDelay
+ * @param {VisRoot} visRoot
+ * @param {WebPlot} plot
+ * @param {number} zoomLevel
+ * @param {boolean} isFullScreen
+ * @param {boolean} zoomLockingEnabled
+ * @param {UserZoomType} userZoomType
+ * @param {boolean} useDelay
  * @param {Function} getState
  */
-function doZoom(dispatcher,visRoot,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay,getState) {
+function doZoom(dispatcher,visRoot,plot,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay,getState) {
+
+
+   if (Math.floor(plot.zoomFactor*1000)===Math.floor(zoomLevel*1000)) return;
+
+
+    const {plotId}= plot;
     dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
                   payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType} } );
 

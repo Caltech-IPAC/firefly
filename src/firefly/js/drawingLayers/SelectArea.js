@@ -266,7 +266,7 @@ function drag(drawLayer,action) {
     const pv= getPlotViewById(visRoot(),plotId);
     const plot= primePlot(pv);
     if (!plot) return;
-    const drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot), pv.rotation);
+    const drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot), pv.rotation, plot.title);
     const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
     return {currentPt:imagePt,
             drawData:{data:drawSel},
@@ -336,9 +336,10 @@ function findClosestCorner(cc,ptAry, spt, testDist) {
  * @param {object} currentPt
  * @param {CysConverter} cc
  * @param {boolean} rotated is plot rotated
+ * @param {string} plot title
  * @return {Array}
  */
-function makeSelectObj(firstPt,currentPt,cc, rotated) {
+function makeSelectObj(firstPt,currentPt,cc, rotated, title) {
     const fallbackAry= [firstPt,currentPt];
 
     const world= cc.projection.isSpecified();
@@ -354,9 +355,11 @@ function makeSelectObj(firstPt,currentPt,cc, rotated) {
     fpObj.color= 'yellow';
     fpObj.renderOptions.lineDash= [8,5,2,5];
 
-    const retAry=  [fpObj, SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], Style.HANDLED)];
+    const retAry=  [];
+    if (rotated) retAry.push(fpObj);
+    retAry.push(SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], Style.HANDLED));
     if (rotated) {
-        const textInfo= ShapeDataObj.makeText(fpAry[0], 'Selection: image space');
+        const textInfo= ShapeDataObj.makeText(fpAry[0], `Selection: ${title} image space`);
         textInfo.color= 'yellow';
         retAry.push(textInfo);
     }
