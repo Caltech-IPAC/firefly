@@ -87,6 +87,10 @@ public class RequestAgent {
     }
 
     public String getHeader(String name) {
+        return getHeader(name, null);
+    }
+
+    public String getHeader(String name, String def) {
         return null;
     }
 
@@ -124,15 +128,22 @@ public class RequestAgent {
             this.request = request;
             this.response = response;
 
-            String remoteIP = request.getHeader("X-Forwarded-For");
-            if (StringUtils.isEmpty(remoteIP)) {
-                remoteIP = request.getRemoteAddr();
-            }
-            setRemoteIP(remoteIP);
-            setProtocol(request.getProtocol());
-            setRequestUrl(request.getRequestURL().toString());
+            String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
+            String scheme = getHeader("X-Forwarded-Proto", request.getHeader("Referer"));
+            scheme = StringUtils.isEmpty(scheme) ? request.getScheme().toLowerCase() : scheme;
+            scheme = scheme.toLowerCase().startsWith("https") ? "https" : "http";
 
-            setBaseUrl(request.getRequestURL().toString().replace(request.getRequestURI(), request.getContextPath()) + "/");
+            String serverName = request.getServerName();
+            int serverPort = request.getServerPort();
+            String serverPortDesc = serverPort == 80 || serverPort == 443 ? "" : ":" + serverPort;
+
+            String baseUrl = String.format("%s://%s%s%s/", scheme, serverName, serverPortDesc, request.getContextPath());
+            String requestUrl = String.format("%s://%s%s%s", scheme, serverName, serverPortDesc, request.getRequestURI());
+
+            setRemoteIP(remoteIP);
+            setProtocol(scheme);
+            setRequestUrl(requestUrl);
+            setBaseUrl(baseUrl);
         }
 
         @Override
@@ -161,8 +172,9 @@ public class RequestAgent {
         }
 
         @Override
-        public String getHeader(String name) {
-            return request != null ? request.getHeader(name) : null;
+        public String getHeader(String name, String def) {
+            String retval = request != null ? request.getHeader(name) : null;
+            return StringUtils.isEmpty(retval) ? def : retval;
         }
 
         @Override

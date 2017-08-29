@@ -203,7 +203,7 @@ public class RequestOwner implements Cloneable {
      * return host url including protocol
      */
     public String getHostUrl() {
-        return (getProtocol().startsWith("HTTPS") ? "https" : "http") + "://" + getHost();
+        return (getProtocol().startsWith("https") ? "https" : "http") + "://" + getHost();
     }
 
     public boolean isCrossSite() {
