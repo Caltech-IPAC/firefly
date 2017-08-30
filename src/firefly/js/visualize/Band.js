@@ -1,11 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
 import Enum from 'enum';
 
 /**
- * A Band in a plot
+ * A Band in an image plot
  * must be enum 'RED', 'GREEN', 'BLUE', 'NO_BAND'
  * @public
  * @global

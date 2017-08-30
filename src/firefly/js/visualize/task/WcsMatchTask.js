@@ -57,9 +57,10 @@ export function* watchForCompletedPlot(options, dispatch, getState) {
 
 export function wcsMatchActionCreator(action) {
     return (dispatcher, getState) => {
-        const {plotId}= action.payload;
-        const matchType= WcsMatchType.get(action.payload.matchType);
         let visRoot= getState()[IMAGE_PLOT_KEY];
+        const plotId= action.payload.plotId || visRoot.activePlotId || get(visRoot.plotViewAry, '0.plotId');
+        if (!plotId) return;
+        const matchType= WcsMatchType.get(action.payload.matchType);
         let masterPv= getPlotViewById(visRoot, plotId);
 
         const width= get(masterPv,'viewDim.width',false);

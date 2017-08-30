@@ -3,6 +3,7 @@
  */
 
 import {makeDrawingDef} from './DrawingDef.js';
+import {GroupingScope} from '../DrawLayerCntlr.js';
 
 export default {makeDrawLayer};
 
@@ -151,10 +152,7 @@ function makeDrawLayer(drawLayerId,
         dataAvailable : true,  //todo
         drawingDef,
 
-        // following to fields deal with subgrouping //todo: the subgroup is not yet finished, I still need to think through it
-        subgroups : {},       // subgroupId : plotIdAry todo: decide if this is the right approach
-        groupTypes: [],       // id's of types of subgroups such as single, row, all, todo: is this over generalized?
-
+        groupingScope: GroupingScope.SUBGROUP, // only applies if a catalog has supportSubgroups
 
 
            // The following are the options that the drawing layer supports.
@@ -174,6 +172,7 @@ function makeDrawLayer(drawLayerId,
         helpLine : '',
         decimate: false, // enable decimation
         canAttachNewPlot: true,
+        supportSubgroups: false,
 
            // drawData contains the components that may be drawn.
            // Three keys are supported data, highlightData, selectedIdxAry

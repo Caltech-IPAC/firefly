@@ -205,6 +205,7 @@ export class TablePanel extends PureComponent {
                                  onClick={this.toggleOptions}/>
                             }
                             {showOptions &&
+
                             <TablePanelOptions
                                 onChange={this.onOptionUpdate}
                                 onOptionReset={this.onOptionReset}

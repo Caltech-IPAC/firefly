@@ -87,7 +87,7 @@ export class HydraViewer extends PureComponent {
                 </header>
                 <main style={{position: 'relative', padding: 0}}>
                     <div style={{display: 'flex', position: 'relative', flexGrow: 1}}>
-                        <ResultSection layoutInfo={layoutInfo}/>
+                        <ResultSection layoutInfo={layoutInfo} renderExpandView={showExpandedView}/>
                     </div>
                 </main>
             </div>
@@ -149,15 +149,16 @@ function ResultSection({layoutInfo}) {
 
     const {allSearchItems} = getSearchInfo();
     if (!allSearchItems) return <div/>;
-    const {results} = allSearchItems[currentSearch] || {};
+    const {results, renderExpandedView} = allSearchItems[currentSearch] || {};
+    const showExpandedImpl= renderExpandedView || showExpandedView;
     const standard = results ? results(layoutInfo) : <div/>;
 
-    return expanded === LO_VIEW.none ? standard : <ExpandedView {...{expanded, images}}/>;
+    return expanded === LO_VIEW.none ? standard : showExpandedImpl({layoutInfo, expanded, images});
 }
 
-function ExpandedView ({expanded,  images}) {
+function showExpandedView ({expanded,  images}) {
 
-    var view;
+    let view;
     if (expanded === LO_VIEW.tables) {
         view = (<TablesContainer mode='both'
                          closeable={true}

@@ -11,12 +11,15 @@ import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
                findRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
 import DrawLayerItemView from './DrawLayerItemView.jsx';
 import {ColorChangeType} from '../draw/DrawLayer.js';
+import {GroupingScope} from '../DrawLayerCntlr.js';
 import {clone} from '../../util/WebUtil.js';
 import {dispatchChangeDrawingDef, dispatchChangeVisibility,
         dispatchDetachLayerFromPlot, getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot, dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
+import {getPlotViewById} from '../PlotViewUtil';
+
 
 
 
@@ -86,16 +89,12 @@ function makePermInfo(pv,layers) {
 }
 
 function showAllLayers(layers, pv, visible) {
-    // var last= layers.length-1;
-    // return layers.map( (l,idx) => <DrawLayerItemView key={l.drawLayerId}
-    //                                                  if (!pv.overlayPlotViews) return [];
     pv.overlayPlotViews.forEach( (opv) => {
         setMaskVisibleInGroup(opv,visible);
-        // dispatchOverlayPlotChangeAttributes({plotId:pv.plotId, imageOverlayId:opv.imageOverlayId, attributes:{visible}});
     });
 
     return layers.forEach( (dl) => {
-        dispatchChangeVisibility(dl.displayGroupId, visible,pv.plotId );
+        changeVisible(dl, visible,pv.plotId );
     });
 }
 
@@ -142,7 +141,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
                                                      modifyColor={() => modifyColor(l,pv.plotId)}
                                                      modifyShape={() => modifyShape(l,pv.plotId)}
                                                      deleteLayer={() => deleteLayer(l,pv.plotId)}
-                                                     changeVisible={() => changeVisible(l,pv.plotId)}
+                                                     changeVisible={() => flipVisible(l,pv.plotId)}
                                                      UIComponent={getUIComponent(l,pv,factory)}
     />);
 }
@@ -253,9 +252,47 @@ function deleteMaskLayer(opv) {
     });
 }
 
-function changeVisible(dl, plotId) {
-    dispatchChangeVisibility(dl.displayGroupId, !isDrawLayerVisible(dl,plotId),plotId );
+/**
+ *
+ * @param {DrawingLayer} dl
+ * @param {string} plotId
+ */
+function flipVisible(dl, plotId) {
+    changeVisible(dl, !isDrawLayerVisible(dl,plotId),plotId );
 }
+
+
+/**
+ *
+ * @param {DrawingLayer} dl
+ * @param {boolean} visible
+ * @param {string} plotId
+ */
+function changeVisible(dl, visible, plotId) {
+    const {drawLayerId, groupingScope, supportSubgroups}= dl;
+    const pv= getPlotViewById(visRoot(),plotId);
+    if (groupingScope===GroupingScope.GROUP || !supportSubgroups || !groupingScope || !pv || !pv.drawingSubGroupId)  {
+        dispatchChangeVisibility( drawLayerId, visible,plotId );
+    }
+    else {
+        switch (groupingScope) {
+            case GroupingScope.SUBGROUP : // change all, then put only subgroup back
+                // dispatchChangeVisibility(drawLayerId, currVisibleState,plotId);
+                dispatchChangeVisibility(drawLayerId, visible,plotId,true, pv.drawingSubGroupId);
+                break;
+            case GroupingScope.SINGLE : // change all, then put only image back
+                // dispatchChangeVisibility(drawLayerId, !visible,plotId);
+                dispatchChangeVisibility(drawLayerId, visible,plotId, false);
+                break;
+            default :
+                console.log('DrawLayerPanelView.changeVisible show never happen');
+                break;
+        }
+
+    }
+}
+
+
 
 
 function setMaskVisibleInGroup(opv, visible) {

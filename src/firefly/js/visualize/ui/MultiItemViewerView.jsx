@@ -18,7 +18,6 @@ const flexContainerStyle= {
 const defDecStyle= {
     background: 'rgb(200,200,200)',
     border: '1px solid rgb(200,200,200)',
-    // borderRadius: '5px',
     boxSizing: 'border-box'
 };
 
@@ -31,32 +30,32 @@ export function MultiItemViewerView(props) {
 
     const {layoutType, activeItemId,
         viewerItemIds, forceRowSize, forceColSize, gridDefFunc,
-        style, insideFlex=false, defaultDecoration=true,
+        style, insideFlex=false, defaultDecoration=true, sparseGridTitleLocation= 'top',
         makeToolbar, makeItemViewer, makeItemViewerFull}= props;
-    var wrapperStyle;
+    let wrapperStyle;
     if (insideFlex) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
     }
     else {
         wrapperStyle= Object.assign({}, flexContainerStyle, {width:'100%', height:'100%'});
     }
-    var container;
+    let container;
     if (viewerItemIds.length===0) {
         container= false;
     }
     else if (layoutType==='single' || viewerItemIds.length===1) {  // SINGLE VIEW
-        var id= viewerItemIds.includes(activeItemId) ? activeItemId : viewerItemIds[0];
+        const id= viewerItemIds.includes(activeItemId) ? activeItemId : viewerItemIds[0];
         container= renderItemViewerFull(makeItemViewerFull,id);
     }
     else if (gridDefFunc) {  // GRID computed by a function
-        container= makeSparseGrid(viewerItemIds, gridDefFunc(viewerItemIds), makeItemViewer);
+        container= makeSparseGrid(viewerItemIds, gridDefFunc(viewerItemIds), makeItemViewer, sparseGridTitleLocation);
     }
     else if (forceRowSize) {  // GRID with row size
-        var col = viewerItemIds.length / forceRowSize + (viewerItemIds.length % forceRowSize);
+        const col = viewerItemIds.length / forceRowSize + (viewerItemIds.length % forceRowSize);
         container= makePackedGrid(viewerItemIds,forceRowSize,col,false,makeItemViewer);
     }
     else if (forceColSize) { // GRID with column size
-        var rows = viewerItemIds.length / forceColSize + (viewerItemIds.length % forceColSize);
+        const rows = viewerItemIds.length / forceColSize + (viewerItemIds.length % forceColSize);
         container= makePackedGrid(viewerItemIds,rows,forceColSize,true,makeItemViewer);
     }
     else {                   // GRID automatic
@@ -64,15 +63,16 @@ export function MultiItemViewerView(props) {
         container= makePackedGrid(viewerItemIds,dim.rows,dim.cols,true,makeItemViewer);
     }
 
-    var s= Object.assign({}, style, wrapperStyle, defaultDecoration? defDecStyle: {});
+    const s= Object.assign({}, style, wrapperStyle, defaultDecoration? defDecStyle: {});
 
     return (
         <div style={s}>
             {makeToolbar &&
-                <div style={flexToolbarStyle}>
+                <div key='toolbar' style={flexToolbarStyle}>
                     {makeToolbar()}
                 </div>}
-            <div style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto'}}>
+            <div key='container' style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto',
+                         overflow: gridDefFunc ? 'auto' : 'hidden' }}>
                 {container}
             </div>
         </div>
@@ -97,7 +97,8 @@ MultiItemViewerView.propTypes= {
     makeToolbar : PropTypes.func,
     makeItemViewer : PropTypes.func,
     makeItemViewerFull : PropTypes.func,
-    eventCallback: PropTypes.object
+    eventCallback: PropTypes.object,
+    sparseGridTitleLocation : PropTypes.oneOf(['top', 'left', 'off', ''])
 };
 
 
@@ -116,11 +117,11 @@ function makePackedGrid(viewerItemIds,rows,cols, columnBased,makeItemViewer) {
 
 
 function rowBasedIvAry(viewerItemIds,rows,percentWidth,percentHeight,width,height,makeItemViewer) {
-    var col = 0;
-    var row = 0;
+    let col = 0;
+    let row = 0;
     return viewerItemIds.map( (plotId) => {
-        var left= `calc(${col*percentWidth}% + 1px)`;
-        var top= `calc(${row*percentHeight}% + 1px)`;
+        const left= `calc(${col*percentWidth}% + 1px)`;
+        const top= `calc(${row*percentHeight}% + 1px)`;
         row = (row < rows - 1) ? row + 1 : 0;
         if (row===0) col++;
         return renderItemViewer(makeItemViewer,plotId,top,left,width,height);
@@ -130,11 +131,11 @@ function rowBasedIvAry(viewerItemIds,rows,percentWidth,percentHeight,width,heigh
 
 
 function columnBasedIvAry(viewerItemIds,cols,percentWidth,percentHeight,width,height,makeItemViewer) {
-    var col = 0;
-    var row = 0;
+    let col = 0;
+    let row = 0;
     return viewerItemIds.map( (plotId) => {
-        var left= `calc(${col*percentWidth}% + 1px)`;
-        var top= `calc(${row*percentHeight}% + 1px)`;
+        const left= `calc(${col*percentWidth}% + 1px)`;
+        const top= `calc(${row*percentHeight}% + 1px)`;
         col = (col < cols - 1) ? col + 1 : 0;
         if (col===0) row++;
         return renderItemViewer(makeItemViewer,plotId,top,left,width,height);
@@ -155,7 +156,7 @@ const renderItemViewerFull = (makeItemViewerFull, itemId) => (
     );
 
 function findAutoGridDim(size) {
-    var rows=0 ,cols=0;
+    let rows=0 ,cols=0;
     if (size) {
         rows = 1;
         cols = 1;
@@ -190,8 +191,108 @@ function findAutoGridDim(size) {
  * @param {Array} viewerItemIds
  * @param {Array.<{string,string[]}>} gridDef
  * @param {Function} makeItemViewer
+ * @param sparseGridTitleLocation
  */
-function makeSparseGrid(viewerItemIds,gridDef,makeItemViewer) {
-    //todo
+function makeSparseGrid(viewerItemIds,gridDef,makeItemViewer, sparseGridTitleLocation) {
+    const itemPosAry= viewerItemIds.map( (plotId) => {
+        return gridDef.reduce( (obj, gridRow, idx) => {
+            const colIdx= gridRow.plotIdAry.findIndex( (id) => id===plotId);
+            if (colIdx>-1) {
+                obj.row= idx;
+                obj.col= colIdx;
+                obj.size= gridDef[idx].size;
+                obj.plotId= plotId;
+            }
+            return obj;
+        },{row:-1,col:-1});
+    });
+
+    const itemPosTitle= gridDef.map( (gd,idx) => ({title:gd.title, noDataMessage: gd.noDataMessage,
+                                                   row:idx, col:0, hasData:gd.plotIdAry.length>0,
+                                                   dataSize: gd.size}));
+
+
+    const itemRender= itemPosAry.map ( (pos,idx) => {
+        const left= (sparseGridTitleLocation==='left') ?
+                                `${pos.col*pos.size+ 30}px` : `${pos.col*pos.size+1}px`;
+
+        const top= computeDataYOffset(sparseGridTitleLocation,itemPosTitle,pos.row);
+        return renderItemViewer(makeItemViewer,pos.plotId || 'plot-'+idx,top,left,pos.size,pos.size);
+    });
+    let itemTitleRender= [];
+
+    if (sparseGridTitleLocation==='top' || sparseGridTitleLocation==='left') {
+        itemTitleRender= itemPosTitle.map ( (pos,idx) => {
+            const top= computeTitleYOffset(sparseGridTitleLocation, itemPosTitle,pos.row);
+            if (sparseGridTitleLocation==='top' || !pos.hasData) {
+                const left= '5px';
+                return (
+                    <div key={`title-${idx}`}
+                         style={{
+                             position:'absolute',
+                             left,top,
+                         }}><div style={{
+                        fontSize:  pos.hasData ? '12pt' :  '10pt',
+                        fontWeight: 'bold',
+                        lineHeight: '27px'
+                    }}>{pos.hasData ? pos.title : pos.noDataMessage}</div>
+                    </div>
+                );
+            }
+            else {
+                const left= '0';
+                return (
+                    <div key={`title-${idx}`}
+                         style={{
+                             position:'absolute',
+                             left,top,
+                             fontSize:  pos.hasData ? '12pt' :  '10pt',
+                             fontWeight: 'bold',
+                             lineHeight: '27px',
+                             width: pos.dataSize,
+                             marginLeft : pos.dataSize* -0.45,
+                             textAlign : 'center',
+                             transform : 'rotate(-90deg)',
+                             whiteSpace : 'nowrap',
+                             overflow : 'hidden',
+                             textOverflow : 'ellipsis'
+                         }}> {pos.hasData ? pos.title : pos.noDataMessage} </div>
+                );
+            }
+        });
+    }
+
+    return [...itemTitleRender, ...itemRender];
 }
+
+const titleHeight= 30;
+
+function computeTitleYOffset(sparseGridTitleLocation, itemPosTitle,rowIdx) {
+    let titleOffset= sparseGridTitleLocation==='left' && itemPosTitle[0].hasData ? itemPosTitle[0].dataSize/2 : 0;
+    for(let i= 0; (i<rowIdx); i++) {
+        if (sparseGridTitleLocation==='top') {
+            titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize+titleHeight : titleHeight;
+        }
+        else if (sparseGridTitleLocation==='left') {
+            titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize  : titleHeight;
+        }
+    }
+    if (!itemPosTitle[rowIdx].hasData && sparseGridTitleLocation==='left') {
+        titleOffset-= itemPosTitle[rowIdx].dataSize/2;
+    }
+    return titleOffset;
+}
+function computeDataYOffset(sparseGridTitleLocation, itemPosTitle,rowIdx) {
+    let titleOffset= sparseGridTitleLocation==='left' && itemPosTitle[0].hasData ? 0 : 30;
+    for(let i= 0; (i<rowIdx); i++) {
+        if (sparseGridTitleLocation==='top') {
+            titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize+titleHeight : titleHeight;
+        }
+        else if (sparseGridTitleLocation==='left') {
+            titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize : titleHeight;
+        }
+    }
+    return titleOffset;
+}
+
 

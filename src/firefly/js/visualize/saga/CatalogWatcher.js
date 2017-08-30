@@ -3,13 +3,14 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {isEmpty, get, has} from 'lodash';
-import {TABLE_LOADED, TABLE_SORT, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
-import {getDlRoot, dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
+import {isEmpty, get} from 'lodash';
+import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
+import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
+        dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, getTableGroup, cloneRequest, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {getDrawLayerById} from '../PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
@@ -158,6 +159,12 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
                                 selectInfo, columns, dataTooBigForSelection, catalog:true,
                                 angleInRadian});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
+        const dl= getDrawLayerById(dlRoot(),tbl_id);
+        if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {
+            plotIdAry.map( (plotId) =>  getPlotViewById(visRoot(), plotId))
+                .filter( (pv) => dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId'))
+                .forEach( (pv) => pv && dispatchChangeVisibility(dl.drawLayerId, false, pv.plotId, false));
+        }
     }
 }
 
@@ -165,7 +172,13 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
 function attachToAllCatalogs(pvNewPlotInfoAry) {
     dlRoot().drawLayerAry.forEach( (dl) => {
         if (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog) {
-            pvNewPlotInfoAry.forEach( (info) => dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId));
+            pvNewPlotInfoAry.forEach( (info) => {
+                dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
+                const pv= getPlotViewById(visRoot(), info.plotId);
+                if (dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId')) {
+                    pv && dispatchChangeVisibility(dl.drawLayerId, false, pv.plotId, false);
+                }
+            });
         }
     });
 }

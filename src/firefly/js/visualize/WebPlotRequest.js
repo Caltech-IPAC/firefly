@@ -48,8 +48,6 @@ export const DEFAULT_THUMBNAIL_SIZE= 70;
 const WEB_PLOT_REQUEST_CLASS= 'WebPlotRequest';
 const Order= new Enum(['FLIP_Y', 'FLIP_X', 'ROTATE', 'POST_CROP', 'POST_CROP_AND_CENTER'], { ignoreCase: true });
 
-//keys
-// note- if you add a new key make sure you put it in the _allKeys array
 
 const C= {
     FILE : 'File',
@@ -213,7 +211,7 @@ export class WebPlotRequest extends ServerRequest {
             wpr.setParams(cleanupObj(obj));
 
 
-            var typeGuess;
+            let typeGuess;
             if (obj[C.FILE]) typeGuess= RequestType.FILE;
             if (obj[C.URLKEY]) typeGuess= RequestType.URL;
             if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
@@ -248,7 +246,7 @@ export class WebPlotRequest extends ServerRequest {
      * @return {ServerRequest} the new WebPlotRequest
      */
     makeRequest(serverReq) {
-        var retval;
+        let retval;
         if (serverReq instanceof WebPlotRequest) {
             retval= serverReq;
         }
@@ -263,7 +261,7 @@ export class WebPlotRequest extends ServerRequest {
 
 
     static makeFilePlotRequest(fileName, initZoomLevel) {
-        var req = new WebPlotRequest(RequestType.FILE, 'Fits file: ' + fileName);
+        const req = new WebPlotRequest(RequestType.FILE, 'Fits file: ' + fileName);
         req.setParam(C.FILE, fileName);
         req.setTitleOptions(TitleOptions.FILE_NAME);
         if (initZoomLevel) {
@@ -277,14 +275,13 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     static makeProcessorRequest(serverRequest, desc) {
-        var req = new WebPlotRequest(RequestType.PROCESSOR, desc);
-        // req.setParams(serverRequest.getParams());
+        const req = new WebPlotRequest(RequestType.PROCESSOR, desc);
         req.setParams(serverRequest.getParams());
         return req;
     }
 
     static makeURLPlotRequest(url, userDesc) {
-        var req = new WebPlotRequest(RequestType.URL, userDesc||'Fits from URL: ' + url);
+        const req = new WebPlotRequest(RequestType.URL, userDesc||'Fits from URL: ' + url);
         req.setTitleOptions(TitleOptions.FILE_NAME);
         req.setURL(url);
         return req;
@@ -292,14 +289,14 @@ export class WebPlotRequest extends ServerRequest {
 
 
     static makeTblFilePlotRequest(fileName) {
-        var req = new WebPlotRequest(RequestType.FILE, 'Table: ' + fileName);
+        const req = new WebPlotRequest(RequestType.FILE, 'Table: ' + fileName);
         req.setParam(C.FILE, fileName);
         return req;
     }
 
 
     static makeTblURLPlotRequest(url) {
-        var req = new WebPlotRequest(RequestType.URL, 'Table from URL: ' + url);
+        const req = new WebPlotRequest(RequestType.URL, 'Table from URL: ' + url);
         req.setParam(C.URLKEY, url);
         return req;
     }
@@ -315,8 +312,9 @@ export class WebPlotRequest extends ServerRequest {
      * @return {WebPlotRequest}
      */
     static makeISSARequest(worldPt, survey, sizeInDeg) {
-        var req= this.makePlotServiceReq(ServiceType.ISSA, worldPt, survey, sizeInDeg);
+        const req= this.makePlotServiceReq(ServiceType.ISSA, worldPt, survey, sizeInDeg);
         req.setTitle('ISSA '+survey);
+        req.setDrawingSubGroupId('irsa');
         return req;
     }
 
@@ -331,8 +329,9 @@ export class WebPlotRequest extends ServerRequest {
      * @return {WebPlotRequest}
      */
     static makeIRISRequest(worldPt, survey, sizeInDeg) {
-        var req= this.makePlotServiceReq(ServiceType.IRIS, worldPt, survey, sizeInDeg);
+        const req= this.makePlotServiceReq(ServiceType.IRIS, worldPt, survey, sizeInDeg);
         req.setTitle('IRIS '+survey);
+        req.setDrawingSubGroupId('irsa');
         return req;
     }
 
@@ -343,12 +342,13 @@ export class WebPlotRequest extends ServerRequest {
      *
      * @param wp
      * @param {string} survey  must be one of 'j','h','k'
-     * @param sizeInDeg less then .138 degreess (500 arcsec)
+     * @param sizeInDeg less then .138 degrees (500 arcsec)
      * @return {WebPlotRequest}
      */
     static make2MASSRequest(wp, survey, sizeInDeg) {
-        var req= this.makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
+        const req= this.makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
         req.setTitle('2MASS '+survey.toUpperCase());
+        req.setDrawingSubGroupId('2mass');
         return req;
     }
 
@@ -365,8 +365,9 @@ export class WebPlotRequest extends ServerRequest {
      * @return {WebPlotRequest}
      */
     static makeMSXRequest(wp, survey, sizeInDeg) {
-        var req= this.makePlotServiceReq(ServiceType.MSX, wp, survey, sizeInDeg);
+        const req= this.makePlotServiceReq(ServiceType.MSX, wp, survey, sizeInDeg);
         req.setTitle('MSX '+survey);
+        req.setDrawingSubGroupId('msx');
         return req;
     }
 
@@ -380,8 +381,9 @@ export class WebPlotRequest extends ServerRequest {
      * @return {WebPlotRequest}
      */
     static makeSloanDSSRequest(wp, band, sizeInDeg) {
-        var req= this.makePlotServiceReq(ServiceType.SDSS, wp, band, sizeInDeg);
+        const req= this.makePlotServiceReq(ServiceType.SDSS, wp, band, sizeInDeg);
         req.setTitle('SDSS '+band);
+        req.setDrawingSubGroupId('sdss');
         return req;
     }
     //======================== DSS =====================================
@@ -395,8 +397,9 @@ export class WebPlotRequest extends ServerRequest {
      * @return {WebPlotRequest}
      */
     static makeDSSRequest(wp, survey, sizeInDeg) {
-        var req = this.makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
+        const req = this.makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
         req.setTitle(`DSS ${survey}`);
+        req.setDrawingSubGroupId('dss');
         return req;
 
     }
@@ -413,17 +416,18 @@ export class WebPlotRequest extends ServerRequest {
      * @return {WebPlotRequest}
      */
     static makeWiseRequest(wp, survey, band, sizeInDeg) {
-        var req = this.makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
+        const req = this.makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
         req.setParam(C.SURVEY_KEY_BAND, band + '');
-        var sDesc= survey.toLowerCase()==='3a' ? 'Atlas' : survey;
+        const sDesc= survey.toLowerCase()==='3a' ? 'Atlas' : survey;
         req.setTitle('WISE: '+sDesc+ ', B'+ band);
+        req.setDrawingSubGroupId('wise');
         return req;
     }
 
     //======================== DSS or IRIS =====================================
 
     static makeDSSOrIRISRequest(wp, dssSurvey, IssaSurvey, sizeInDeg) {
-        var r = this.makePlotServiceReq(ServiceType.DSS_OR_IRIS, wp, dssSurvey, sizeInDeg);
+        const r = this.makePlotServiceReq(ServiceType.DSS_OR_IRIS, wp, dssSurvey, sizeInDeg);
         r.setSurveyKeyAlt(IssaSurvey);
         return r;
     }
@@ -439,7 +443,7 @@ export class WebPlotRequest extends ServerRequest {
 
     //======================== Blank =====================================
     static makeBlankPlotRequest(wp, arcsecSize, plotWidth, plotHeight ) {
-        var r= new WebPlotRequest(RequestType.BLANK, '');
+        const r= new WebPlotRequest(RequestType.BLANK, '');
         r.setWorldPt(wp);
         r.setBlankArcsecPerPix(arcsecSize);
         r.setBlankPlotWidth(plotWidth);
@@ -461,10 +465,6 @@ export class WebPlotRequest extends ServerRequest {
 
     getExpandedTitle() { return this.getParam(C.EXPANDED_TITLE); }
 
-    //setShowTitleArea(show) { this.setParam(C.SHOW_TITLE_AREA, show + ''); }
-    //
-    //getShowTitleArea() { return this.getBooleanParam(C.SHOW_TITLE_AREA); }
-
     getUserDesc() { return this.getParam(C.USER_DESC); }
 
     /**
@@ -475,7 +475,7 @@ export class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return {}
+     * @return {TitleOptions}
      */
     getTitleOptions() {
         return TitleOptions.get(this.getParam(C.TITLE_OPTIONS)) || TitleOptions.NONE;
@@ -491,7 +491,7 @@ export class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return {}
+     * @return {AnnotationOps}
      */
     getAnnotationOps() {
         return AnnotationOps.get(this.getParam(C.ANNOTATION_OPS)) || AnnotationOps.INLINE;
@@ -523,10 +523,6 @@ export class WebPlotRequest extends ServerRequest {
 
     setPostTitle(postTitle) { this.setParam(C.POST_TITLE, postTitle); }
     getPostTitle() { return this.getParam(C.POST_TITLE); }
-
-    //setTitleFilenameModePfx(pfx) { this.setParam(C.TITLE_FILENAME_MODE_PFX, pfx); }
-    //getTitleFilenameModePfx() { return this.getParam(C.TITLE_FILENAME_MODE_PFX); }
-
 
 //======================================================================
 //----------------------- Overlay Settings ------------------------------
@@ -739,8 +735,8 @@ export class WebPlotRequest extends ServerRequest {
      * @return CoordinateSys
      */
     getRotateNorthType() {
-        var cStr = this.getParam(C.ROTATE_NORTH_TYPE);
-        var retval = null;
+        const cStr = this.getParam(C.ROTATE_NORTH_TYPE);
+        let retval = null;
         if (cStr !== null) retval = CoordinateSys.parse(cStr);
         if (retval === null) retval = CoordinateSys.EQ_J2000;
         return retval;
@@ -838,8 +834,8 @@ export class WebPlotRequest extends ServerRequest {
      * @return CoordinatesSys
      */
     getPostCropAndCenterType() {
-        var cStr= this.getParam(C.POST_CROP_AND_CENTER_TYPE);
-        var retval= null;
+        const cStr= this.getParam(C.POST_CROP_AND_CENTER_TYPE);
+        let retval= null;
         if (cStr!==null) retval= CoordinateSys.parse(cStr);
         if (retval===null) retval= CoordinateSys.EQ_J2000;
         return retval;
@@ -884,23 +880,23 @@ export class WebPlotRequest extends ServerRequest {
      * set the arc seconds per pixel that will be used for a blank image
      * Used with RequestType.BLANK
      *
-     * @param arcsecSize float,  the size of the pixels in arcsec
+     * @param {number} arcsecSize float,  the size of the pixels in arcsec
      * @see RequestType
      */
     setBlankArcsecPerPix(arcsecSize) { this.setParam(C.BLANK_ARCSEC_PER_PIX, arcsecSize + ''); }
 
     /**
-     * @return float
+     * @return {number} float
      */
     getBlankArcsecPerPix() { return this.getFloatParam(C.BLANK_ARCSEC_PER_PIX,0); }
 
     /**
-     * @param width int
+     * @param {number} width int
      */
     setBlankPlotWidth(width) { this.setParam(C.BLANK_PLOT_WIDTH, width + ''); }
 
     /**
-     * @return width int
+     * @return {number} width int
      */
     getBlankPlotWidth() {
         return this.getIntParam(C.BLANK_PLOT_WIDTH,0);
@@ -972,27 +968,27 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     * @param key string
+     * @param {string} key string
      */
     setSurveyKey(key) { this.setParam(C.SURVEY_KEY, key); }
 
     /**
-     * @return key string
+     * @return {string} key string
      */
     getSurveyKey() { return this.getParam(C.SURVEY_KEY); }
 
     /**
-     * @param key string
+     * @param {string} key string
      */
     setSurveyKeyAlt(key) { this.setParam(C.SURVEY_KEY_ALT, key); }
 
     /**
-     * @return key string
+     * @return {string} key string
      */
     getSurveyKeyAlt() { return this.getParam(C.SURVEY_KEY_ALT); }
 
     /**
-     * @return key string
+     * @return {string} key string
      */
     getSurveyBand() { return this.getParam(C.SURVEY_KEY_BAND); }
 
@@ -1001,13 +997,12 @@ export class WebPlotRequest extends ServerRequest {
 //======================================================================
 
     /**
-     * @return objectName string astronomical object to search
-     * @param objectName
+     * @param {string} objectName string astronomical object to search
      */
     setObjectName(objectName) { this.setParam(C.OBJECT_NAME, objectName); }
 
     /**
-     * @return astronomical object, string
+     * @return {string} astronomical object, string
      */
     getObjectName() { return this.getParam(C.OBJECT_NAME); }
 
@@ -1025,14 +1020,14 @@ export class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @param worldPt WorldPt
+     * @param {WorldPt} worldPt WorldPt
      */
     setWorldPt(worldPt) {
         if (worldPt) this.setParam(C.WORLD_PT, worldPt.toString());
     }
 
     /**
-     * @return WorldPt
+     * @return {WorldPt} WorldPt
      */
     getWorldPt() { return this.getWorldPtParam(C.WORLD_PT); }
 
@@ -1117,7 +1112,7 @@ export class WebPlotRequest extends ServerRequest {
      */
 
     setGridOn(gridOnStatus= GridOnStatus.FALSE) {
-        var stat= GridOnStatus.get( String(gridOnStatus) );
+        const stat= GridOnStatus.get( String(gridOnStatus) );
         this.setParam(C.GRID_ON, stat.key);
     }
 
@@ -1241,7 +1236,7 @@ export class WebPlotRequest extends ServerRequest {
      * @return {Array} array of Order enums
      */
     getPipelineOrder() {
-        var retList= DEF_ORDER;
+        let retList= DEF_ORDER;
         if (this.containsParam(C.PIPELINE_ORDER)) {
             retList= makeOrderList(this.getParam(C.PIPELINE_ORDER));
             if (retList.length<2) retList= DEF_ORDER;
@@ -1267,7 +1262,7 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     getMaskColors() {
-        var retList= [];
+        const retList= [];
         if (this.containsParam(C.MASK_COLORS)) {
             return this.getParam(C.MASK_COLORS).split(';');
         }
@@ -1314,16 +1309,16 @@ export class WebPlotRequest extends ServerRequest {
      * @return an area to select
      */
     getRequestArea() {
-        var retval = null;
-        var wp= this.getWorldPt();
-        var side = this.getSizeInDeg();
+        let retval = null;
+        const wp= this.getWorldPt();
+        const side = this.getSizeInDeg();
         if (wp) retval = {center:wp, radius:side};
         return retval;
     }
 
 
     prettyString() {
-        var s = 'WebPlotRequest: ';
+        let s = 'WebPlotRequest: ';
         switch (this.getRequestType()) {
             case RequestType.SERVICE:
                 switch (this.getServiceType()) {
@@ -1382,8 +1377,8 @@ export class WebPlotRequest extends ServerRequest {
     * @return {WebPlotRequest} the PlotRequest object that was constructed
     */
     static makePlotServiceReq(serviceType, wp, survey, sizeInDeg) {
-        var desc = this.makeServiceReqDesc(serviceType, survey, sizeInDeg);
-        var req = new WebPlotRequest(RequestType.SERVICE, desc, serviceType);
+        const desc = this.makeServiceReqDesc(serviceType, survey, sizeInDeg);
+        const req = new WebPlotRequest(RequestType.SERVICE, desc, serviceType);
         req.setSurveyKey(survey);
         req.setWorldPt(wp);
         req.setSizeInDeg(sizeInDeg);
@@ -1407,7 +1402,7 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     makeCopy() {
-        var retval = new WebPlotRequest();
+        const retval = new WebPlotRequest();
         retval.copyFrom(this);
         return retval;
     }
@@ -1426,10 +1421,10 @@ export class WebPlotRequest extends ServerRequest {
      * @return {boolean}
      */
     equalsPlottingParams(obj) {
-        var retval= false;
+        let retval= false;
         if (obj instanceof WebPlotRequest) {
-            var wpr1= this.makeCopy();
-            var wpr2= obj.makeCopy();
+            const wpr1= this.makeCopy();
+            const wpr2= obj.makeCopy();
             ignoreForEquals.forEach((key)=> {
                 wpr1.removeParam(key);
                 wpr2.removeParam(key);
@@ -1486,11 +1481,11 @@ export function findInvalidWPRKeys(r) {
  */
 export function confirmPlotRequest(request,global,fallbackGroupId,makePlotId) {
     if (isArray(request)) {
-        var locked= true;
+        let locked= true;
         const idx= request.findIndex( (r) => r.plotId);
 
         const plotId= (idx>=0) ? request[idx].plotId : makePlotId();
-        var plotGroupId;
+        let plotGroupId;
 
         if (idx>=0  && request[idx].plotGroupId) {
             plotGroupId= request[idx].plotGroupId;

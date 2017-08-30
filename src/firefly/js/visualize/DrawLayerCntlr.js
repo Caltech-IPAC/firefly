@@ -3,7 +3,9 @@
  */
 
 import {flux} from '../Firefly.js';
-import {getPlotViewIdListInGroup, getDrawLayerById, getConnectedPlotsIds, getAllPlotViewId} from './PlotViewUtil.js';
+import Enum from 'enum';
+import {getPlotViewIdListInGroup, getPlotViewById, getDrawLayerById,
+          getConnectedPlotsIds, getAllPlotViewId} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import {without,union,isEmpty} from 'lodash';
@@ -28,6 +30,14 @@ import {footprintCreateLayerActionCreator,
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
+
+export const SUBGROUP= 'subgroup';
+
+/** {Enum} can be 'GROUP', 'SUBGROUP', 'SINGLE' */
+export const GroupingScope= new Enum(['GROUP', 'SUBGROUP', 'SINGLE']);
+
+
+
 
 const CREATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.createDrawLayer`;
 const DESTROY_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.destroyDrawLayer`;
@@ -78,6 +88,7 @@ export const RegionSelectStyle = ['UprightBox', 'DottedOverlay', 'SolidOverlay',
                                   'DottedReplace', 'SolidReplace'];
 export const  defaultRegionSelectColor = '#DAA520';   // golden
 export const  defaultRegionSelectStyle = RegionSelectStyle[0];
+
 
 export function getRegionSelectStyle(style = defaultRegionSelectStyle) {
     var idx = RegionSelectStyle.findIndex((val) => {
@@ -181,7 +192,7 @@ export function dispatchTableToIgnore(drawLayerTypeId, tableId) {
  * @function  dispatchCreateDrawLayer
  */
 export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
-    var drawLayer= flux.createDrawLayer(drawLayerTypeId,params);
+    const drawLayer= flux.createDrawLayer(drawLayerTypeId,params);
     flux.process({type: CREATE_DRAWING_LAYER, payload: {drawLayer}} );
 
     const plotIdAry= dlRoot().preAttachedTypes[drawLayerTypeId];
@@ -196,18 +207,27 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param visible
  * @param plotId
- * @param useGroup
+ * @param useGroup If true, get all the plotViews in the group of the plotId, if false use only the one
+ * @param subGroupId if defined the list of PlotViews affected will be further filtered by the subGroupId
  *  @public
  *  @memberof firefly.action
  *  @function dispatchChangeVisibility
  */
-export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
-    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
-
-    getDrawLayerIdAry(dlRoot(),id,useGroup)
-        .forEach( (drawLayerId) => {
-            flux.process({type: CHANGE_VISIBILITY, payload: {drawLayerId, visible, plotIdAry} });
+export function dispatchChangeVisibility(id,visible, plotId, useGroup= true, subGroupId= undefined) {
+    let plotIdAry= useGroup ? getPlotViewIdListInGroup(visRoot(), plotId) : [plotId];
+    if (subGroupId) {
+        const vr= visRoot();
+        plotIdAry= plotIdAry.filter( (plotId) => {
+            const pv= getPlotViewById(vr,plotId);
+            return  (pv && subGroupId===pv.drawingSubGroupId);
         });
+    }
+    if (plotIdAry.length) {
+        getDrawLayerIdAry(dlRoot(),id,useGroup)
+            .forEach( (drawLayerId) => {
+                flux.process({type: CHANGE_VISIBILITY, payload: {drawLayerId, visible, plotIdAry} });
+            });
+    }
 }
 
 /**

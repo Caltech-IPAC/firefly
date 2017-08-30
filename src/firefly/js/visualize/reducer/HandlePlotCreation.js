@@ -4,11 +4,10 @@
 
 import {uniqBy,unionBy, isEmpty} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
-import {replacePlots, makePlotView,
-        findWCSMatchScrollPosition, updatePlotViewScrollXY, findScrollPtToCenterImagePt} from './PlotView.js';
+import {replacePlots, makePlotView, updatePlotViewScrollXY,
+        findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
-import {makeScreenPt} from '../Point.js';
 import PlotGroup from '../PlotGroup.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {CCUtil} from '../CsysConverter.js';
@@ -158,13 +157,7 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
     const masterPv=getPlotViewById(visRoot,mpwWcsPrimId);
 
     if (wcsMatchType===WcsMatchType.Standard) {
-        if (mpwWcsPrimId!==pv.plotId) {
-            if (masterPv) {
-                const {scrollX,scrollY}= masterPv;
-                const newSp= findWCSMatchScrollPosition(visRoot.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
-                pv= updatePlotViewScrollXY(pv, newSp);
-            }
-        }
+        pv= updateScrollToWcsMatch(visRoot.wcsMatchType, masterPv, pv);
     }
     else if (wcsMatchType===WcsMatchType.Target) {
         if (getPlotViewIdListInGroup(visRoot,pv.plotId,true,true).length<2) {
@@ -175,11 +168,7 @@ function updateForWcsMatching(visRoot, pv, mpwWcsPrimId) {
             }
         }
         else {
-            if (masterPv) {
-                const {scrollX,scrollY}= masterPv;
-                const newSp= findWCSMatchScrollPosition(visRoot.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
-                pv= updatePlotViewScrollXY(pv, newSp);
-            }
+            pv= updateScrollToWcsMatch(visRoot.wcsMatchType, masterPv, pv);
         }
     }
     return pv;
