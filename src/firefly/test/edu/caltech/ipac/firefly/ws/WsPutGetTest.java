@@ -10,9 +10,12 @@ import org.apache.jackrabbit.webdav.DavMethods;
 import org.apache.jackrabbit.webdav.client.methods.DavMethodBase;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import static edu.caltech.ipac.firefly.util.FileLoader.resolveFile;
@@ -85,6 +88,42 @@ public class WsPutGetTest extends ConfigTest {
         return new byte[0];
     }
 
+    @Ignore
+    @Test
+    public void testGetAllLeaves() throws WsException {
+
+        WsResponse wsResponse = wsm.putFile(testRelPathFolder,
+                testFile,
+                ContentType.DEFAULT_BINARY.getMimeType());
+
+
+        WspaceMeta meta = wsm.getMeta("/", WspaceMeta.Includes.CHILDREN_PROPS);
+
+
+        printPath(meta, false);
+
+
+    }
+
+    private void printPath(WspaceMeta parent, boolean avoidFolders) {
+
+        if(avoidFolders && parent.getContentType()==null || (parent.getContentType()!=null && !parent.getContentType().contains("directory"))){
+            System.out.println("File: "+parent.getUrl());
+        }else if(!avoidFolders){
+            System.out.println("Folder: "+parent.getUrl());
+        }
+        WspaceMeta pMeta = wsm.getMeta(parent.getRelPath(), WspaceMeta.Includes.CHILDREN_PROPS);
+
+        if(pMeta.hasChildNodes()) {
+            List<WspaceMeta> childs = pMeta.getChildNodes();
+            Iterator<WspaceMeta> iterator =
+                    childs.iterator();
+            while (iterator.hasNext()) {
+                WspaceMeta child = iterator.next();
+                printPath(child, avoidFolders);
+            }
+        }
+    }
     @Test
     public void testGet() throws WsException {
 
