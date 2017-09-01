@@ -103,6 +103,8 @@ public class AnyFileUpload extends BaseHttpServlet {
                 int idx = url.lastIndexOf('/');
                 fileName = (idx >= 0) ? url.substring(idx + 1) : new String(url);
             }
+            //Check for filename max chars:
+            fileName = fileName.length()>255? fileName.substring(fileName.length()-255):fileName;
             ext = resolveExt(fileName);
             fType = resolveType(fileType, ext, (file != null ? file.getContentType() : null));
             destDir = resolveDestDir(dest, fType);
