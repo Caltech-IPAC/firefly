@@ -5,7 +5,7 @@ import {get, has, isEmpty, isNil, cloneDeep, defer} from 'lodash';
 import {take, fork} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,TABLE_FILTER,
         dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx, removeTablesFromGroup} from '../../tables/TableUtil.js';
 import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
@@ -508,6 +508,12 @@ function handleTableLoad(layoutInfo, action) {
             if (invokedBy === TABLE_FETCH) {
                 layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
                 layoutInfo = updateSet(layoutInfo, ['periodRange', 'period'], '' );
+            }
+           else if (invokedBy === TABLE_FILTER){
+                //update the raw table row number here
+                const rawTable = getTblById(tbl_id);
+                //layoutInfo.rawTable = rawTable;
+                //layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
             }
 
 
