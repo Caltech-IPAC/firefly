@@ -5,10 +5,9 @@
 import update from 'immutability-helper';
 import {get, isEmpty,isUndefined, isArray, unionBy} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
-import {replacePlotView, replacePrimaryPlot, changePrimePlot,
-        findWCSMatchScrollPosition,updatePlotViewScrollXY,
+import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findCurrentCenterPoint, findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
-       updatePlotGroupScrollXY} from './PlotView.js';
+        updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
 import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
@@ -26,7 +25,7 @@ import {primePlot,
         isInSameGroup,
         findPlot,
         getPlotViewById} from '../PlotViewUtil.js';
-import {makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt} from '../Point.js';
+import {makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import Point from '../Point.js';
@@ -184,9 +183,7 @@ function zoomStart(state, action) {
 
     if (state.wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPv= getPlotViewById(state, mpwWcsPrimId);
-        const {scrollX,scrollY}= masterPv;
-        const newSp= findWCSMatchScrollPosition(state.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
-        pv= updatePlotViewScrollXY(pv, newSp);
+        pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
     }
     else {
         pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
@@ -220,9 +217,7 @@ function installTiles(state, action) {
 
     if (state.wcsMatchType && mpwWcsPrimId!==plotId) {
         const masterPV= getPlotViewById(state, mpwWcsPrimId);
-        const {scrollX,scrollY}= masterPV;
-        const newSp= findWCSMatchScrollPosition(state.wcsMatchType, masterPV, pv, makeScreenPt(scrollX,scrollY));
-        pv= updatePlotViewScrollXY(pv, newSp);
+        pv= updateScrollToWcsMatch(state.wcsMatchType, masterPV, pv);
     }
     else {
         const centerImagePt= findCurrentCenterPoint(pv);
@@ -383,19 +378,12 @@ function updateViewSize(state,action) {
         if (!plot) return pv;
 
         const masterPv= getPlotViewById(state, state.mpwWcsPrimId);
-        const {scrollX,scrollY}= masterPv;
 
         if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
-            if (masterPv) {
-                const newSp= findWCSMatchScrollPosition(state.wcsMatchType, masterPv, pv, makeScreenPt(scrollX,scrollY));
-                pv= updatePlotViewScrollXY(pv, newSp);
-            }
+            pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
         }
         else if (state.wcsMatchType===WcsMatchType.Target) {
-            if (masterPv) {
-                const newSp = findWCSMatchScrollPosition(state.wcsMatchType, masterPv, pv, makeScreenPt(scrollX, scrollY));
-                pv = updatePlotViewScrollXY(pv, newSp);
-            }
+            pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
         }
         else if (isUndefined(pv.scrollX) || isUndefined(pv.scrollY)) {
             pv= recenterPv(null, false)(pv);
@@ -427,9 +415,7 @@ function recenter(state,action) {
         const newPv= recenterPv(centerPt, centerOnImage)(pv);
         plotViewAry= replacePlotView(plotViewAry, newPv);
         plotViewAry= matchPlotView(newPv, plotViewAry,plotGroup, (pv) => {
-            const newSp= findWCSMatchScrollPosition(state.wcsMatchType, newPv, pv, makeScreenPt(newPv.scrollX,newPv.scrollY));
-            return updatePlotViewScrollXY(pv, newSp);
-
+            return updateScrollToWcsMatch(state.wcsMatchType, newPv, pv);
         } );
     }
     else {

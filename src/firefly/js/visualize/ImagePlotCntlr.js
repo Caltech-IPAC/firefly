@@ -41,16 +41,16 @@ import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 
-/** can the 'COLLAPSE', 'GRID', 'SINGLE' */
+/** enum can be 'COLLAPSE', 'GRID', 'SINGLE' */
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 
-/** can the 'Standard', 'Target' */
+/** enum can be 'Standard', 'Target' */
 export const WcsMatchType= new Enum(['Standard', 'Target']);
 
 
 
 /**
- * can the 'GROUP', 'SINGLE', 'LIST'
+ * enum can be 'GROUP', 'SINGLE', 'LIST'
  * @public
  * @global
  */
@@ -313,7 +313,7 @@ export function makeUniqueRequestKey(prefix= KEY_ROOT) {
 //======================================== Dispatch Functions =============================
 
 /**
- * 
+ *
  * @param apiToolsView
  */
 export function dispatchApiToolsView(apiToolsView) {
@@ -355,7 +355,7 @@ export function dispatchGroupLocking(plotId,groupLocked) {
 //--------------
 
 /**
- * Change the primary plot for a multi image fits display 
+ * Change the primary plot for a multi image fits display
  * Note - function parameter is a single object
  * @param {Object} p
  * @param {string} p.plotId
@@ -413,7 +413,7 @@ export function dispatchColorChange({plotId, cbarId, actionScope=ActionScope.GRO
  * action.dispatchStretchChange({plotId:’myplot’, strechData:stretchData });
  *
  */
-export function dispatchStretchChange({plotId, stretchData, 
+export function dispatchStretchChange({plotId, stretchData,
                                        actionScope=ActionScope.GROUP, dispatcher= flux.process} ) {
     dispatcher({ type: STRETCH_CHANGE, payload: { plotId, stretchData, actionScope }});
 }
@@ -743,7 +743,7 @@ export function dispatchChangeActivePlotView(plotId) {
 }
 
 /**
- * 
+ *
  * @param plotId
  * @param applyToGroup
  * @param attKey
@@ -811,7 +811,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
 
 /**
- * 
+ *
  * @param autoPlayOn
  */
 export function dispatchExpandedAutoPlay(autoPlayOn) {
@@ -1155,7 +1155,7 @@ function changeExpandedMode(state,action) {
 function deletePlotView(state,action) {
     const {plotId}= action.payload;
     if (!state.plotViewAry.find( (pv) => pv.plotId===plotId)) return state;
-    
+
     state= clone(state, {plotViewAry:state.plotViewAry.filter( (pv) => pv.plotId!==plotId)});
     if (state.activePlotId===plotId) {
         state.activePlotId= get(state,'plotViewAry.0.plotId',null);
@@ -1187,4 +1187,3 @@ function deletePlotView(state,action) {
 //============ end private functions =================================
 //============ end private functions =================================
 //============ end private functions =================================
-

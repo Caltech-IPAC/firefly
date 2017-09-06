@@ -1,5 +1,5 @@
 
-import {isString, isNil, isObject, isArray} from 'lodash';
+import {isString, isNumber, isNil, isObject, isArray} from 'lodash';
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import validator from 'validator';
@@ -349,6 +349,13 @@ export const parseWorldPt = function (serializedWP) {
 
 const ptTypes= Object.values(Point);
 
-export const isValidPoint= (testPt) =>  (testPt && testPt.type && ptTypes.includes(testPt.type));
+/**
+ * Make sure this is a defined value, valid point object, has a valid type, and the coordinates are numbers.
+ * @param {*} testPt - any value
+ * @return {boolean} true if this point is valid
+ */
+export const isValidPoint= (testPt) =>  Boolean(testPt &&
+                                                testPt.type && ptTypes.includes(testPt.type) &&
+                                                isNumber(testPt.x) && isNumber(testPt.y));
 
 export default Point;

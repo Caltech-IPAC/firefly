@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {getPlotViewById, getAllDrawLayersForPlot} from '../../visualize/PlotViewUtil.js';
-import {WcsMatchType, visRoot, dispatchWcsMatch, dispatchRecenter} from '../../visualize/ImagePlotCntlr.js';
+import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {VisInlineToolbarView} from '../../visualize/ui/VisInlineToolbarView.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE} from '../../visualize/MultiViewCntlr.js';

@@ -84,7 +84,7 @@ MultiImageViewer.propTypes= {
     handleInlineToolsWhenSingle : PropTypes.bool
 };
 
-// function gridDefFunc(plotIdAry) : [ {title :string, [plotId:string]}]
+// function gridDefFunc(plotIdAry) : [ {title :string, plotId:[string]}]
 //
 // the gridDefFunc function will take an array of plot id and return
 // an array of objects that contain an optional title and an array of plotIds

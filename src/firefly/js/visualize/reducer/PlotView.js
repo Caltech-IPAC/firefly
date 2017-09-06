@@ -2,15 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/**
- * REDUCER USE ONLY
- * REDUCER USE ONLY
- * REDUCER USE ONLY
- */
-
 import update from 'immutability-helper';
 import {PlotAttribute} from './../WebPlot.js';
 import {get, isUndefined} from 'lodash';
+import Enum from 'enum';
 import {clone} from '../../util/WebUtil.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {makeScreenPt, makeDevicePt} from './../Point.js';
@@ -28,14 +23,7 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
 
 const DEF_WORKING_MSG= 'Plotting ';
 
-
-
-//======================================== Exported Functions =============================
-//======================================== Exported Functions =============================
-//======================================== Exported Functions =============================
-
-
-
+export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignoreCase: true });
 
 
 
@@ -51,7 +39,7 @@ const DEF_WORKING_MSG= 'Plotting ';
  * PlotView is mostly about the viewing of the plot.  The plot data is contained in a WebPlot. A plotView can have an
  * array of WebPlots. The array length will only be one for normals fits files and n for multi image fits and cube fits
  * files. plots[primeIdx] refers to the plot currently showing in the plot view.
- * 
+ *
  * @prop {String} plotId, immutable
  * @prop {String} plotGroupId, immutable
  * @prop {String} drawingSubGroupId, immutable
@@ -89,7 +77,7 @@ const DEF_WORKING_MSG= 'Plotting ';
  * @param {string} plotId
  * @param {WebPlotRequest} req
  * @param {object} pvOptions options for this plot view todo- define what pvOptions is, somewhere
- * @return  {PlotView} 
+ * @return  {PlotView}
  */
 export function makePlotView(plotId, req, pvOptions= {}) {
     const pv= {
@@ -111,18 +99,13 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         rotation: 0,
         flipY: false,
         flipX: false,
-
-
         options : {
-
             acceptAutoLayers : true,
-            workingMsg      : DEF_WORKING_MSG,
+            workingMsg      : DEF_WORKING_MSG, // the working message that the users sees
             saveCorners     : req.getSaveCorners(),
             expandedTitleOptions: req.getExpandedTitleOptions(),
             annotationOps : req.getAnnotationOps(), // how titles are drawn
-
-            allowImageLock  : false, // show the image lock button in the toolbar, todo
-
+            allowImageLock  : false, // show the image lock button in the toolbar, todo, this may go away
         }
     };
 
@@ -149,7 +132,7 @@ function createPlotViewContextData(req, pvOptions) {
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
         containsMultiImageFits : false,
         containsMultipleCubes : false,
-        lockPlotHint: false, //todo
+        lockPlotHint: false, //todo - i may remove this option
         plotCounter:0 // index of how many plots, used for making next ID
     };
 }
@@ -171,9 +154,9 @@ export function changePrimePlot(pv, nextIdx) {
     if (!plots[nextIdx]) return pv;
     const currentScrollImPt= CCUtil.getImageCoords(primePlot(pv),makeScreenPt(pv.scrollX,pv.scrollY));
     //=================
-    
+
     pv= Object.assign({},pv,{primeIdx:nextIdx});
-    
+
     const cc= CysConverter.make(plots[nextIdx]);
     if (cc.pointInData(currentScrollImPt)) {
         pv= updatePlotViewScrollXY(pv,cc.getScreenCoords(currentScrollImPt));
@@ -184,8 +167,6 @@ export function changePrimePlot(pv, nextIdx) {
     pv= updateTransform(pv);
     return pv;
 }
-
-
 
 /**
  * Replace the plotAry and overlayPlotViews into the PlotView, return a new PlotView
@@ -233,8 +214,6 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
     PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.plots[pv.primeIdx].plotState);
 
-
-
     if (pv.plots.length>1) {
         pv.plotViewCtx.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
     }
@@ -277,10 +256,10 @@ export function updatePlotViewScrollXY(plotView,newScrollPt) {
 
 
 /**
- * replace a plotview in the plotViewAry with the passed plotview whose plotId's match
- * @param {Array} plotViewAry
- * @param {object} newPlotView
- * @return {Array} new plotView array after return a plotview
+ * replace the PlotView in plotview array keyed by plotId
+ * @param {Array.<PlotView>} plotViewAry
+ * @param {PlotView} newPlotView
+ * @return {Array.<PlotView>} new plotView array after return a plotview
  */
 export function replacePlotView(plotViewAry,newPlotView) {
     return plotViewAry.map( (pv) => pv.plotId===newPlotView.plotId ? newPlotView : pv);
@@ -316,22 +295,35 @@ export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAr
     return plotViewAry;
 }
 
-
 /**
- * Modify a scroll point to a new scroll point so that the new point puts the plot to have the same center as the master plot
+ * Create a new plotView that will wcs match the scroll position of the master plotView.
+ * This function all all the safety checks for undefined plotview or plots. It is
+ * always safe to call.
  * @param {WcsMatchType} wcsMatchType
  * @param {PlotView} masterPv - master PlotView
  * @param {PlotView} matchToPv - match to PlotView
- * @param {ScreenPt} currScrollPt
+ * @return {PlotView} a new version of matchToPv with the scroll position matching
+ */
+export function updateScrollToWcsMatch(wcsMatchType, masterPv, matchToPv) {
+    if (!masterPv || !matchToPv || masterPv===matchToPv) return matchToPv;
+    if (masterPv.plotId===matchToPv.plotId || !primePlot(masterPv)|| !primePlot(matchToPv)) return matchToPv;
+
+    const newScrollPoint= findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv);
+    return updatePlotViewScrollXY(matchToPv, newScrollPoint);
+}
+
+/**
+ * Find a scroll point that the point puts the plot be scroll the to same wcs or target as the master plot
+ * To use this function the plot view objects and the primary plot objects must all be defined.
+ * @param {WcsMatchType} wcsMatchType
+ * @param {PlotView} masterPv - master PlotView
+ * @param {PlotView} matchToPv - match to PlotView
  * @return {ScreenPt} the screen point offset
  */
-export function findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv, currScrollPt) {
+function findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv) {
 
     const masterP= primePlot(masterPv);
     const matchToP= primePlot(matchToPv);
-
-    if (!masterP || !matchToP || !wcsMatchType || masterP.plotId===matchToP.plotId) return currScrollPt;
-
     const ccMaster= CysConverter.make(masterP);
     const ccMatch= CysConverter.make(matchToP);
 
@@ -341,16 +333,14 @@ export function findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv, cu
     }
     else if (wcsMatchType===WcsMatchType.Target) {
         if (!matchToP.attributes[PlotAttribute.FIXED_TARGET] || !masterP.attributes[PlotAttribute.FIXED_TARGET] ) {
-            return currScrollPt;
+            return makeScreenPt(masterPv.scrollX, masterPv.scrollY);
         }
         const mastDevPt= ccMaster.getDeviceCoords(masterP.attributes[PlotAttribute.FIXED_TARGET]);
         const matchPoint= ccMatch.getImageCoords(matchToP.attributes[PlotAttribute.FIXED_TARGET]);
-
-
         return findScrollPtToPlaceOnDevPt( matchToPv, matchPoint, mastDevPt);
     }
     else {
-        return currScrollPt;
+        return makeScreenPt(masterPv.scrollX, masterPv.scrollY);
     }
 
 }
@@ -375,8 +365,7 @@ function makeScrollPosMatcher(sourcePV, visRoot) {
         const plot= primePlot(pv);
         if (plot) {
             if (visRoot.wcsMatchType) {
-                const newPt = findWCSMatchScrollPosition(visRoot.wcsMatchType, sourcePV, pv,makeScreenPt(srcSx,srcSy) );
-                retPV= updatePlotViewScrollXY(pv,newPt);
+                retPV= updateScrollToWcsMatch(visRoot.wcsMatchType, sourcePV, pv);
             }
             else {
                 const {screenSize:{width,height}}= plot;
@@ -510,7 +499,7 @@ function findScrollPtForCenter(plotView) {
 /**
  * find the scroll screen pt to put the image centered on the passed ImagePt
  * @param {PlotView} plotView
- * @param {ImagePt} ipt
+ * @param {ImagePt} ipt - if this is not an image point it will be converted to one
  * @return {ScreenPt} the screen point to use as the scroll position
  */
 export function findScrollPtToCenterImagePt(plotView, ipt) {
@@ -520,15 +509,16 @@ export function findScrollPtToCenterImagePt(plotView, ipt) {
 
 
 /**
- * Find the scroll point that will ploce the passed image point to the point on the device
+ * return the scroll point for a PlotView that will place the passed image point on the passed device point
  * @param {PlotView} pv
- * @param {ImagePt} ipt
- * @param {DevicePt} targetDevPtPos
- * @return {ScreenPt}
+ * @param {ImagePt} ipt - if this is not an image point it will be converted to one
+ * @param {DevicePt} targetDevPtPos - the point on the device that the image
+ * @return {ScreenPt} the scroll position the places the image point on to the device point
  */
 export function findScrollPtToPlaceOnDevPt(pv, ipt, targetDevPtPos) {
     const plot= primePlot(pv);
 
+                            // make a CsysConverter for a image that has a scroll  position of 0,0
     const altAffTrans= makeTransform(0,0, 0, 0, pv.rotation, pv.flipX, pv.flipY, pv.viewDim);
     const cc= CysConverter.make(plot,altAffTrans);
 

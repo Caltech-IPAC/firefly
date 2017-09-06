@@ -11,7 +11,7 @@ import FootprintObj from '../visualize/draw/FootprintObj.js';
 import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {SUBGROUP, GroupingScope} from '../visualize/DrawLayerCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {makeWorldPt} from '../visualize/Point.js';
@@ -24,6 +24,7 @@ import {dispatchTableSelect} from '../tables/TablesCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {getTblById,getCellValue} from '../tables/TableUtil.js';
+import {getUIComponent} from './CatalogUI.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 
@@ -35,10 +36,9 @@ const helpText= 'Click on point to highlight';
 
 const findColIdx= (columns,colId) => columns.findIndex( (c) => c.name===colId);
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,getUIComponent);
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
-var createCnt= 0;
 
 
 //---------------------------------------------------------------------
@@ -54,18 +54,21 @@ function creator(initPayload, presetDefaults) {
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
            symbol, size,
            dataTooBigForSelection=false, catalog=true,boxData=false }= initPayload;
-    var drawingDef= makeDrawingDef();
-    drawingDef.size= size || 5;
-    drawingDef.symbol= DrawSymbol.get(symbol) || DrawSymbol.SQUARE;
-    drawingDef= Object.assign(drawingDef,presetDefaults);
 
-    var pairs= {
+    const drawingDef= Object.assign(makeDrawingDef(),
+        {
+            size: size || 5,
+            symbol: DrawSymbol.get(symbol) || DrawSymbol.SQUARE
+        },
+        presetDefaults);
+
+    const pairs= {
         [MouseState.DOWN.key]: highlightChange
     };
 
     drawingDef.color= (color || tableMeta[MetaConst.DEFAULT_COLOR] || getNextColor());
 
-    var options= {
+    const options= {
         hasPerPlotData:false,
         isPointData:!boxData,
         canUserDelete: true,
@@ -75,7 +78,8 @@ function creator(initPayload, presetDefaults) {
         canFilter: true,
         dataTooBigForSelection,
         helpLine : helpText,
-        canUserChangeColor: ColorChangeType.DYNAMIC
+        canUserChangeColor: ColorChangeType.DYNAMIC,
+        supportSubgroups: Boolean(tableMeta[SUBGROUP])
     };
     // todo: get the real title
     const dl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID, 
@@ -92,7 +96,6 @@ function creator(initPayload, presetDefaults) {
     dl.boxData= boxData;
     dl.angleInRadian= angleInRadian;
 
-    createCnt++;
     return dl;
 }
 
@@ -116,13 +119,13 @@ function highlightChange(mouseStatePayload) {
  * @returns {function()}
  */
 function makeHighlightDeferred(drawLayer,plotId,screenPt) {
-    var done= false;
-    var idx= 0;
+    let done= false;
+    let idx= 0;
     const maxChunk= 1000;
-    var minDist = 20;
+    let minDist = 20;
     const {data}= drawLayer.drawData;
     const {tableRequest}= drawLayer;
-    var closestIdx= -1;
+    let closestIdx= -1;
     const plot= primePlot(visRoot(),plotId);
     const id= window.setInterval( () => {
         if (done) {
@@ -139,9 +142,9 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
             }
         }
 
-        var dist;
+        let dist;
 
-        for(var i=0;(idx<data.length && i<maxChunk ); i++) {
+        for(let i=0;(idx<data.length && i<maxChunk ); i++) {
             const obj= data[idx];
             if (obj) {
                 dist = DrawOp.getScreenDist(obj, plot, screenPt);
@@ -164,7 +167,7 @@ function getLayerChanges(drawLayer, action) {
     if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null;
 
     const {changes}= action.payload;
-    var dd= Object.assign({},drawLayer.drawData);
+    const dd= Object.assign({},drawLayer.drawData);
     dd[DataTypes.HIGHLIGHT_DATA]= null;
     if (changes.tableData) dd[DataTypes.DATA]= null;
     if (changes.selectInfo) dd[DataTypes.SELECTED_IDXS]= null;
@@ -351,8 +354,8 @@ export function clearFilterCatalog(pv, dlAry) {
 
 export function filterCatalog(pv,dlAry) {
 
-    var p= primePlot(pv);
-    var sel= p.attributes[PlotAttribute.SELECTION];
+    const p= primePlot(pv);
+    const sel= p.attributes[PlotAttribute.SELECTION];
     if (!sel) return;
     const catDlAry= getLayers(pv,dlAry);
     if (!catDlAry.length) return;
@@ -371,8 +374,8 @@ function doFilter(dl,p,sel) {
     if (!tbl) return;
     const filterInfo = get(tbl, 'request.filters');
     const filterInfoCls = FilterInfo.parse(filterInfo);
-    var filter;
-    var newRequest;
+    let filter;
+    let newRequest;
 
     const decimateIdx= findColIdx(dl.tableData.columns,'decimate_key');
     if (decimateIdx>1 && dl.tableMeta['decimate_key']) {
@@ -387,7 +390,7 @@ function doFilter(dl,p,sel) {
     }
     else {
         const rowidIdx= findColIdx(dl.tableData.columns,'ROWID');
-        var idxs= getSelectedPts(sel, p, dl.drawData.data);
+        let idxs= getSelectedPts(sel, p, dl.drawData.data);
         idxs = rowidIdx < 0 ? idxs : idxs.map( (idx) => get(dl,`tableData.data[${idx}][${rowidIdx}]`) );
         filter= `IN (${idxs.toString()})`;
         // filterInfoCls.setFilter(filter);
