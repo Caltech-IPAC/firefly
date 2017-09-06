@@ -4,7 +4,7 @@ import {get, isEmpty} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded} from '../ChartsCntlr.js';
 import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
-import {getTblById, clearFilters, getColumnIdx} from '../../tables/TableUtil.js';
+import {getTblById, clearFilters, getColumnIdx, getColumnType} from '../../tables/TableUtil.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {downloadChart} from './PlotlyWrapper.jsx';
 
@@ -45,29 +45,36 @@ export class ScatterToolbar extends SimpleComponent {
     }
 }
 
-function isSelectable(tbl_id, chartId, type, activeTrace) {
-    const typeWithX = ['heatmap', 'histogram2dcontour', 'histogram2d'];
-    const typeWithY = ['heatmap', 'histogram2dcontour', 'histogram2d'];
+function isSelectable(tbl_id, chartId, type) {
+    const typeWithX = ['heatmap', 'histogram2dcontour', 'histogram2d', 'scatter'];
+    const typeWithY = ['heatmap', 'histogram2dcontour', 'histogram2d', 'scatter'];
 
     if (!tbl_id) return false;
+
     const checkX = typeWithX.includes(type);
     const checkY = typeWithY.includes(type);
-
     if (!checkX&&!checkY) return false;     // chart type has no selection box in tool bar
 
-    const {x, y} = get(getChartData(chartId), `tablesources.${activeTrace}.mappings`) || {};
+    const {tablesources} = getChartData(chartId);
+    const strCol = ['str', 's', 'char', 'c'];
     const tableModel = getTblById(tbl_id);
-    const dataExp = [x, y];
+    const noSelectionTraceIdx = tablesources.findIndex((tablesource) =>  {
+          const {x, y} = get(tablesource, 'mappings') || {};
+          const dataExp = [x, y];
 
-    const noSelectionIdx = [checkX, checkY].findIndex((checkItem, idx) => {
-        if (!checkItem) return false;      // ignore
-        if (dataExp[idx]) {
-            return getColumnIdx(tableModel, dataExp[idx]) < 0;
-        } else {
-            return true;   // not qualified to have selection box
-        }
+          const noSelectionIdx = [checkX, checkY].findIndex((checkItem, idx) => {
+              if (!checkItem) return false;      // ignore
+
+              if (dataExp[idx]) {
+                  return getColumnIdx(tableModel, dataExp[idx]) < 0 ||
+                         strCol.includes(getColumnType(tableModel, dataExp[idx]));
+              } else {
+                  return true;   // not qualified to have selection box
+              }
+          });
+          return noSelectionIdx >= 0;
     });
-    return (noSelectionIdx < 0);
+    return (noSelectionTraceIdx < 0);
 }
 
 export class BasicToolbar extends SimpleComponent {
@@ -83,7 +90,7 @@ export class BasicToolbar extends SimpleComponent {
         const {activeTrace, hasFilter, hasSelection, tbl_id, dragmode} = this.state;
 
         const type = get(getChartData(chartId), `data.${activeTrace}.type`, '');
-        const showSelectionPart = isSelectable(tbl_id, chartId, type, activeTrace);
+        const showSelectionPart = isSelectable(tbl_id, chartId, type);
         const showDragPart = !type.includes('pie');
         const is3d = type.endsWith('3d') || type === 'surface'; // scatter3d, mesh3d, surface
 

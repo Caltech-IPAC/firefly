@@ -67,14 +67,13 @@ export function hasMarkerColor(type) {
     return type.startsWith('scatter') || ['histogram', 'box', 'bar', 'area', 'plotcloud'].includes(type);
 }
 
-function hasNoXY(type, tablesources) {
+/*
+ * check if the trace is not 3d-like chart or pie and has x and y defined
+*/
+function hasNoXY(type, tablesource) {
     if (type.endsWith('3d') || ['pie', 'surface'].includes(type)) return true;
 
-    const noXYtrace = tablesources.findIndex((trace) => {
-        return (!get(trace, ['mappings', 'x']) || !get(trace, ['mappings', 'y']));
-    });
-
-    return noXYtrace >= 0;
+    return (!get(tablesource, ['mappings', 'x']) || !get(tablesource, ['mappings', 'y']));
 }
 
 export class BasicOptions extends SimpleComponent {
@@ -94,7 +93,7 @@ export class BasicOptions extends SimpleComponent {
         const tbl_id = get(tablesource, 'tbl_id');
         const type = get(data, `${activeTrace}.type`, 'scatter');
         const noColor = !hasMarkerColor(type);
-        const noXY = hasNoXY(type, tablesources);
+        const noXY = hasNoXY(type, tablesource);
         const xColType = noXY ? '' : getColumnType(getTblById(tbl_id), get(tablesource, ['mappings', 'x'], ''));
         const yColType = noXY ? '' : getColumnType(getTblById(tbl_id), get(tablesource, ['mappings', 'y'], ''));
         const xNoLog = type.includes('histogram') ? true : undefined;          // histogram2d or histogram2dcontour
