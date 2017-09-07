@@ -36,7 +36,7 @@ function getDialogBuilder() {
 const dialogBuilder = getDialogBuilder();
 
 export function showFitsRotationDialog() {
-    // if (isOverlayLayersActive(visRoot())) {
+    // if (isImageOverlayLayersActive(visRoot())) {
     //    showInfoPopup('Rotate not yet supported with mask layers');
     // }
     // else {

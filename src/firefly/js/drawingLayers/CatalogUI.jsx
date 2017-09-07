@@ -2,10 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
@@ -18,12 +14,6 @@ export const getUIComponent = (drawLayer,pv) => <CatalogUI drawLayer={drawLayer}
 
 function CatalogUI({drawLayer,pv}) {
 
-    const tStyle= {
-        display:'inline-block',
-        whiteSpace: 'nowrap',
-        minWidth: '3em',
-        paddingLeft : 5
-    };
     const options= [ {label: 'All', value: 'GROUP'},
                    {label: 'Row', value: 'SUBGROUP'},
                    {label: 'Image', value: 'SINGLE'}
@@ -54,16 +44,16 @@ function changeVisibilityScope(drawLayer,pv,value) {
     dispatchModifyCustomField( drawLayerId, {groupingScope}, plotId );
     const visible= isDrawLayerVisible(drawLayer,plotId);
     switch (groupingScope) {
-        case GroupingScope.GROUP : //make sure all image match the visibility of the plotId
-            dispatchChangeVisibility(drawLayerId, visible,plotId);
+        case GroupingScope.GROUP : //make sure all images match the visibility of the plotId
+            dispatchChangeVisibility({id:drawLayerId, visible,plotId});
             break;
         case GroupingScope.SUBGROUP : // change all, then put only subgroup back
-            if (visible) dispatchChangeVisibility(drawLayerId, false,plotId);
-            dispatchChangeVisibility(drawLayerId, visible,plotId,true, drawingSubGroupId);
+            if (visible) dispatchChangeVisibility({id:drawLayerId, visible:false,plotId});
+            dispatchChangeVisibility({id:drawLayerId, visible,plotId,subGroupId:drawingSubGroupId});
             break;
         case GroupingScope.SINGLE : // change all, then put only image back
-            if (visible) dispatchChangeVisibility(drawLayerId, false, plotId);
-            dispatchChangeVisibility(drawLayerId, visible,plotId, false);
+            if (visible) dispatchChangeVisibility({id:drawLayerId, visible:false, plotId});
+            dispatchChangeVisibility({id:drawLayerId, visible,plotId, useGroup:false});
             break;
     }
 }

@@ -11,9 +11,10 @@ import {makeDrawingDef} from './DrawingDef.js';
 
 
 function updateDrawer(drawer,plot, width, height, drawLayer,force=false) {
-    var data, highlightData, selectIdxs;
+    let data, highlightData, selectIdxs;
     if (!drawLayer) return;
-    var {drawData}= drawLayer;
+    const {drawData}= drawLayer;
+    if (!drawData) return;
     drawer.decimate= drawLayer.decimate;
     var plotId= plot? plot.plotId : null;
     if (Array.isArray(drawData)) {

@@ -11,7 +11,7 @@ import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey,
                         IMAGE_PLOT_KEY, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {WebPlot,PlotAttribute} from '../WebPlot.js';
+import {WebPlot,PlotAttribute, RDConst} from '../WebPlot.js';
 import CsysConverter from '../CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtils from '../VisUtil.js';
@@ -24,8 +24,8 @@ import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
 import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
-import {enableMatchingRelatedData} from '../RelatedDataUtil.js';
+import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
+import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 
@@ -312,10 +312,10 @@ function addDrawLayers(request, plot ) {
             if (dl.drawLayerTypeId===ActiveTarget.TYPE_ID) {
                 const pt= plot.attributes[PlotAttribute.FIXED_TARGET];
                 if (pt && pt.type===Point.W_PT) {
-                    DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+                    dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
                 }
             } else if (dl.canAttachNewPlot) {
-                DrawLayerCntlr.dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
+                dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
             }
         });
     });
@@ -325,6 +325,16 @@ function addDrawLayers(request, plot ) {
         const useLabels= request.getGridOn()===GridOnStatus.TRUE;
         if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});
         dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
+    }
+
+    if (plot.relatedData) {
+        plot.relatedData.forEach( (rd) => {
+            if (rd.dataType === RDConst.TABLE) {
+                const dl = getDrawLayerById(dlRoot(), rd.relatedDataId);
+                if (!dl) enableRelatedDataLayer(visRoot(), getPlotViewById(visRoot(), plotId), rd);
+            }
+
+        });
     }
 }
 
@@ -337,7 +347,7 @@ function addDrawLayers(request, plot ) {
  /**
  * @global
  * @public
- * @typedef {Object} NewPlotInfo
+ * @typedef {Object} PvNewPlotInfo
  * @summary Main part of the payload of successful call to the server
  *
  * @prop {String} plotId,
@@ -353,7 +363,7 @@ function addDrawLayers(request, plot ) {
  * @param plotCreate
  * @param payload
  * @param requestKey
- * @return {NewPlotInfo}
+ * @return {PvNewPlotInfo}
  */
 const handleSuccessfulCall= function(plotCreate, payload, requestKey) {
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);

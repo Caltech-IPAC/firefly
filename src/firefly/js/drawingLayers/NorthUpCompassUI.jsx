@@ -5,7 +5,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
-import {dispatchModifyCustomField, dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
 
 export const getUIComponent = (drawLayer,pv) => <NorthUpCompassUI drawLayer={drawLayer} pv={pv}/>;
 
@@ -16,14 +15,7 @@ export const getUIComponent = (drawLayer,pv) => <NorthUpCompassUI drawLayer={dra
 */
 function NorthUpCompassUI({drawLayer,pv}) {
 
-    const tStyle= {
-        display:'inline-block',
-        whiteSpace: 'nowrap',
-        minWidth: '3em',
-        paddingLeft : 5
-    };
-
-    var options= [ {label: 'all', value: 'all'},
+    const options= [ {label: 'all', value: 'all'},
                    {label: 'row', value: 'row'},
                    {label: 'image', value: 'image'},
     ];
@@ -52,4 +44,3 @@ NorthUpCompassUI.propTypes= {
     drawLayer     : PropTypes.object.isRequired,
     pv            : PropTypes.object.isRequired
 };
-

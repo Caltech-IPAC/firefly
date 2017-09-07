@@ -21,7 +21,7 @@ import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
-import {isOverlayLayersActive} from '../RelatedDataUtil.js';
+import {isImageOverlayLayersActive} from '../RelatedDataUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CoordUtil from '../CoordUtil.js';
 import { parseImagePt } from '../Point.js';
@@ -53,14 +53,14 @@ const Metrics= {MAX:'MAX', MIN:'MIN', CENTROID:'CENTROID', FW_CENTROID:'FW_CENTR
 
 function formatNumber(num, fractionDigits=7)
 {
-    let numStr, thred;
+    let numStr;
     const SigDig = 7;
 
 
     if (num === null || num === undefined) {
         return '';
     }
-    thred = Math.min(Math.pow(10, SigDig - fractionDigits), 1.0);
+    const thred = Math.min(Math.pow(10, SigDig - fractionDigits), 1.0);
 
     if (Math.abs(num) >= thred) {
         numStr = num.toFixed(fractionDigits);
@@ -85,11 +85,11 @@ function tabulateStatics(wpResult, cc) {
     const bands  = wpResult.Band_Info;
     const noBand = 'NO_BAND';
 
-    var bandData = {};
+    const bandData = {};
 
     function getOneStatSet(b) {
 
-        let tblData = {};
+        const tblData = {};
 
         tblData[SSummary] = [
             [b.MEAN.desc, formatNumber(b.MEAN.value) + ' ' + b.MEAN.units],
@@ -106,18 +106,16 @@ function tabulateStatics(wpResult, cc) {
             }
 
             const item = b[ipMetrics[i]];
-            let ipt, wpt;
-            let hmsRA, hmsDec;
-            let statsRow = [];
+            const statsRow = [];
 
             // item title
             statsRow.push(item.desc);
 
             // item location
-            ipt = parseImagePt(item.ip);
-            wpt = cc.getWorldCoords(ipt);
-            hmsRA = CoordUtil.convertLonToString(wpt.getLon(), wpt.getCoordSys());
-            hmsDec = CoordUtil.convertLatToString(wpt.getLat(), wpt.getCoordSys());
+            const ipt = parseImagePt(item.ip);
+            const wpt = cc.getWorldCoords(ipt);
+            const hmsRA = CoordUtil.convertLonToString(wpt.getLon(), wpt.getCoordSys());
+            const hmsDec = CoordUtil.convertLatToString(wpt.getLat(), wpt.getCoordSys());
             statsRow.push(`RA: ${hmsRA}\nDEC: ${hmsDec}`);
 
             // item value
@@ -167,7 +165,7 @@ function stats(pv) {
     callGetAreaStatistics(p.plotState, ip0,ip1,ip2,ip3)
         .then( (wpResult) => {      // result of area stats
 
-            // tabaularize stats data
+            // tabularize stats data
             const tblData = tabulateStatics(wpResult, cc);
 
             //console.log(wpResult);
@@ -182,7 +180,7 @@ function stats(pv) {
 
 function crop(pv) {
 
-    if (isOverlayLayersActive(pv)) {
+    if (isImageOverlayLayersActive(pv)) {
         showInfoPopup('Crop not yet supported with mask layers');
         return;
     }
@@ -306,8 +304,8 @@ export class VisCtxToolbarView extends PureComponent {
 
         };
 
-        var showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
-            showFilter || showClearFilter || !isEmpty(extensionAry);
+        const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
+                           showFilter || showClearFilter || !isEmpty(extensionAry);
 
         return (
             <div style={rS}>
@@ -426,7 +424,7 @@ export function MultiImageControllerView({plotView:pv}) {
     }
     const plot= primePlot(pv);
 
-    var cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
+    let cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
     if (cIdx<0) cIdx= 0;
 
     const nextIdx= cIdx===plots.length-1 ? 0 : cIdx+1;

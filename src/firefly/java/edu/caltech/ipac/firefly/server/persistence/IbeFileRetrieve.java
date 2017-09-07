@@ -11,17 +11,22 @@ package edu.caltech.ipac.firefly.server.persistence;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.BaseFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+
 
 @SearchProcessorImpl(id = "ibe_file_retrieve", params =
         {@ParamDoc(name = "mission", desc = "mission"),
@@ -48,11 +53,35 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
             } else {
                 Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
                 ofile.setCookies(cookies);
+                ofile.addRelatedDataList( findRelatedDataList(request));
                 return ofile;
             }
         } catch (Exception e) {
             throw new DataAccessException(e.getMessage(), e);
         }
+    }
+
+    private List<RelatedData> findRelatedDataList(ServerRequest r) {
+        String mission = r.getParam(MISSION);
+        WorldPt wp= getWorldPtFromCenterParam(r.getParam("center"));
+        String subsize= r.getParam("subsize");
+        if (wp==null || mission==null || subsize==null) return null;
+
+        switch (mission.toLowerCase()) {
+            case "wise":
+                return IbeQueryArtifact.getWiseRelatedData(wp, subsize,r.getParam("band"));
+            case "2mass":
+                return IbeQueryArtifact.get2MassRelatedData(wp, subsize);
+            default:
+                return null;
+        }
+    }
+
+    private static WorldPt getWorldPtFromCenterParam(String cen) {
+        if (cen==null) return null;
+        String parts[]= cen.split(",");
+        if (parts.length!=2) return null;
+        return WorldPt.parse(parts[0]+';' + parts[1]+";J2000");
     }
 
     protected File makeOutputFile(IbeDataParam params) throws IOException {

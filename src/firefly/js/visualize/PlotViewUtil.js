@@ -551,3 +551,21 @@ export function isMultiImageFitsWithSameArea(pv) {
     });
 }
 
+/**
+ *
+ * @param {Array.<PvNewPlotInfo>} pvNewPlotInfoAry
+ * @return {Array.<String>}
+ */
+export function getPvNewPlotIdAry(pvNewPlotInfoAry) {
+    return pvNewPlotInfoAry.map( (npi) => npi.plotId);
+}
+
+/**
+ *
+ * @param {Array.<PvNewPlotInfo>} pvNewPlotInfoAry
+ * @param {String} plotId - plotId to test
+ * @return {boolean}
+ */
+export function isPlotIdInPvNewPlotInfoAry(pvNewPlotInfoAry, plotId) {
+    return pvNewPlotInfoAry.some( (npi) => npi.plotId===plotId);
+}

@@ -11,7 +11,7 @@ import FootprintObj from '../visualize/draw/FootprintObj.js';
 import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr, {SUBGROUP, GroupingScope} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {SUBGROUP} from '../visualize/DrawLayerCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {makeWorldPt} from '../visualize/Point.js';
@@ -66,7 +66,7 @@ function creator(initPayload, presetDefaults) {
         [MouseState.DOWN.key]: highlightChange
     };
 
-    drawingDef.color= (color || tableMeta[MetaConst.DEFAULT_COLOR] || getNextColor());
+    drawingDef.color= (color || get(tableMeta,MetaConst.DEFAULT_COLOR) || getNextColor());
 
     const options= {
         hasPerPlotData:false,
@@ -79,11 +79,11 @@ function creator(initPayload, presetDefaults) {
         dataTooBigForSelection,
         helpLine : helpText,
         canUserChangeColor: ColorChangeType.DYNAMIC,
-        supportSubgroups: Boolean(tableMeta[SUBGROUP])
+        supportSubgroups: Boolean(tableMeta && tableMeta[SUBGROUP])
     };
-    // todo: get the real title
+
     const dl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID, 
-                                      title || `Catalog: ${tableMeta.title || catalogId}`,
+                                      title || `Catalog: ${get(tableMeta,'title',catalogId)}`,
                                       options, drawingDef, null, pairs );
     dl.catalogId= catalogId;
     dl.tableData= tableData;
@@ -234,11 +234,6 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
 }
 
 function computeBoxDrawLayer(drawLayer, tableData, columns) {
-
-    // const lonIdx= findColIdx(tableData.columns, columns.lonCol);
-    // const latIdx= findColIdx(tableData.columns, columns.latCol);
-    // if (lonIdx<0 || latIdx<0) return null;
-
     const {angleInRadian:rad}= drawLayer;
 
     return tableData.data.map( (d) => {

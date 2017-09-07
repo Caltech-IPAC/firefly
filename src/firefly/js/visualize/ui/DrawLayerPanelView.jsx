@@ -8,7 +8,7 @@ import {padStart} from 'lodash';
 import {isDrawLayerVisible, getAllDrawLayersForPlot,
     getLayerTitle, getDrawLayersByDisplayGroup}  from '../PlotViewUtil.js';
 import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
-               findRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
+               findUnactivatedRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
 import DrawLayerItemView from './DrawLayerItemView.jsx';
 import {ColorChangeType} from '../draw/DrawLayer.js';
 import {GroupingScope} from '../DrawLayerCntlr.js';
@@ -102,7 +102,7 @@ function showAllLayers(layers, pv, visible) {
 function makeAddRelatedDataAry(pv) {
     if (!pv.plots) return null;
 
-    const relatedData= findRelatedData(pv);
+    const relatedData= findUnactivatedRelatedData(pv);
 
     return relatedData.map( (d,idx) => {
         return (
@@ -204,7 +204,7 @@ function modifyColor(dl,plotId) {
             const {r,g,b,a}= ev.rgb;
             const rgbStr= `rgba(${r},${g},${b},${a})`;
             dl = getDrawLayersByDisplayGroup(getDlAry(), dl.displayGroupId);
-            dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId);
+            dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId, dl.titleMatching);
         }, dl.drawLayerId);
 }
 
@@ -242,7 +242,7 @@ function modifyShape(dl, plotId) {
 }
 
 function deleteLayer(dl,plotId) {
-    dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, true, dl.destroyWhenAllDetached);
+    dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, dl.destroyWhenAllDetached);
 }
 
 function deleteMaskLayer(opv) {
@@ -272,17 +272,15 @@ function changeVisible(dl, visible, plotId) {
     const {drawLayerId, groupingScope, supportSubgroups}= dl;
     const pv= getPlotViewById(visRoot(),plotId);
     if (groupingScope===GroupingScope.GROUP || !supportSubgroups || !groupingScope || !pv || !pv.drawingSubGroupId)  {
-        dispatchChangeVisibility( drawLayerId, visible,plotId );
+        dispatchChangeVisibility( {id:drawLayerId, visible,plotId, matchTitle:dl.titleMatching} );
     }
     else {
         switch (groupingScope) {
             case GroupingScope.SUBGROUP : // change all, then put only subgroup back
-                // dispatchChangeVisibility(drawLayerId, currVisibleState,plotId);
-                dispatchChangeVisibility(drawLayerId, visible,plotId,true, pv.drawingSubGroupId);
+                dispatchChangeVisibility({id:drawLayerId, visible,plotId,subGroupId:pv.drawingSubGroupId});
                 break;
             case GroupingScope.SINGLE : // change all, then put only image back
-                // dispatchChangeVisibility(drawLayerId, !visible,plotId);
-                dispatchChangeVisibility(drawLayerId, visible,plotId, false);
+                dispatchChangeVisibility({id:drawLayerId, visible,plotId, useGroup:false});
                 break;
             default :
                 console.log('DrawLayerPanelView.changeVisible show never happen');

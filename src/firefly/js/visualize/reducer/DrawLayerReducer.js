@@ -4,6 +4,7 @@
 
 
 import {get,difference,union} from 'lodash';
+import {clone} from '../../util/WebUtil.js';
 import {DataTypes} from '../draw/DrawLayer.js';
 import DrawLayerCntlr from '../DrawLayerCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
@@ -12,9 +13,6 @@ import ImagePlotCntlr from '../ImagePlotCntlr.js';
 
 
 export default {makeReducer};
-
-const EMPTY_OBJ={};
-const EMPTY_ARY=[];
 
 /**
  *
@@ -58,9 +56,9 @@ function handleOtherAction(drawLayer,action,factory) {
 
     if (!drawLayer.actionTypeAry.includes(action.type)) return drawLayer;
 
-    var changes= factory.getLayerChanges(drawLayer,action);
-    var newDl= (changes && Object.keys(changes).length) ? Object.assign({},drawLayer,changes): drawLayer;
-    var drawData;
+    const changes= factory.getLayerChanges(drawLayer,action);
+    const newDl= (changes && Object.keys(changes).length) ? Object.assign({},drawLayer,changes): drawLayer;
+    let drawData;
 
     if (newDl.hasPerPlotData) {     //todo- perPlotData does not have the same optimization as normal, look into this
         newDl.plotIdAry.forEach( (id) => {
@@ -84,7 +82,7 @@ function handleOtherAction(drawLayer,action,factory) {
 }
 
 function updateFromLayer(drawLayer,action,factory) {
-    var {plotIdAry}= action.payload;
+    const {plotIdAry}= action.payload;
     drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
         plotIdAry.forEach( (id) =>
@@ -104,19 +102,17 @@ function updateFromLayer(drawLayer,action,factory) {
  * @return {*}
  */
 function attachLayerToPlot(drawLayer,action,factory) {
-    var {plotIdAry:inputPlotIdAry} = action.payload;
-    var {plotIdAry:dlPlotIdAry, visiblePlotIdAry}= drawLayer;
-    //if (dlPlotIdAry.includes(plotId)) return drawLayer;
+    const {plotIdAry:inputPlotIdAry, visible} = action.payload;
+    const {plotIdAry:dlPlotIdAry, visiblePlotIdAry}= drawLayer;
 
     if (!difference(inputPlotIdAry,dlPlotIdAry).length) return drawLayer;
 
+    const addAry= visible ? inputPlotIdAry.filter( (plotId) => !visiblePlotIdAry.includes(plotId)) : [];
 
-
-    dlPlotIdAry= union(dlPlotIdAry,inputPlotIdAry);
-    var addAry= inputPlotIdAry.filter( (plotId) => !visiblePlotIdAry.includes(plotId));
-    visiblePlotIdAry= [...visiblePlotIdAry,...addAry];
-    drawLayer= Object.assign({}, drawLayer,
-                             {plotIdAry:dlPlotIdAry,visiblePlotIdAry});
+    drawLayer= clone(drawLayer, {
+        plotIdAry: union(dlPlotIdAry,inputPlotIdAry),
+        visiblePlotIdAry: [...visiblePlotIdAry,...addAry]
+    });
 
     drawLayer= Object.assign(drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
@@ -132,9 +128,10 @@ function attachLayerToPlot(drawLayer,action,factory) {
 }
 
 function detachLayerFromPlot(drawLayer,action,factory) {
-    var {plotIdAry:inputPlotIdAry} = action.payload;
-    var {plotIdAry:dlPlotIdAry, visiblePlotIdAry}= drawLayer;
-    var plotIdAry= dlPlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
+    const {plotIdAry:inputPlotIdAry} = action.payload;
+    const {plotIdAry:dlPlotIdAry}= drawLayer;
+    let {visiblePlotIdAry}= drawLayer;
+    const plotIdAry= dlPlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
     visiblePlotIdAry= visiblePlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
 
     drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action), {plotIdAry, visiblePlotIdAry});
@@ -151,10 +148,10 @@ function detachLayerFromPlot(drawLayer,action,factory) {
 
 function detachPerPlotData(drawData, plotId) {
     if (!drawData) return null;
-    var highlightData= null;
-    var selectIdxs= drawData.selectIdxs;
+    let highlightData= null;
+    const selectIdxs= drawData.selectIdxs;
 
-    var data= Object.keys(drawData.data).reduce( (d,key) => {
+    const data= Object.keys(drawData.data).reduce( (d,key) => {
         if (key!==plotId) d[key]= drawData.data[key];
         return d;
     },{});
@@ -169,14 +166,9 @@ function detachPerPlotData(drawData, plotId) {
     return {data,highlightData,selectIdxs};
 }
 
-
-
-
-
-
 function changeVisibility(drawLayer,action,factory) {
-    var {visible,plotIdAry} = action.payload;
-    var visiblePlotIdAry;
+    const {visible,plotIdAry} = action.payload;
+    let visiblePlotIdAry;
 
     if (visible) {
         visiblePlotIdAry= union(drawLayer.visiblePlotIdAry,plotIdAry);
@@ -197,7 +189,7 @@ function changeVisibility(drawLayer,action,factory) {
 
 
 function changeDrawingDef(drawLayer,action,factory) {
-    var {drawingDef} = action.payload;
+    const {drawingDef} = action.payload;
     return Object.assign({}, drawLayer, {drawingDef}, factory.getLayerChanges(drawLayer,action));
 }
 
@@ -215,10 +207,9 @@ const SELECTED_IDXS= DataTypes.SELECTED_IDXS;
  */
 function getDrawData(factory, drawLayer, action, plotId= null) {
     if (!factory.hasGetDrawData(drawLayer)) return drawLayer.drawData;
-    var {drawData}= drawLayer;
-    if (!drawData) drawData= {};
-    var pId= plotId;
-    var newDD= Object.assign({},drawData);
+    const {drawData= {}}= drawLayer;
+    const pId= plotId;
+    const newDD= Object.assign({},drawData);
 
     if (!newDD.data) newDD.data={};
     
@@ -246,7 +237,7 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
     }
 
 
-    var retval;
+    let retval;
     if (plotId) {
         retval= {
             data:             Object.assign({},drawData.data,newDD.data),
