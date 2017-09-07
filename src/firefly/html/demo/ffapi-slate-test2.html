@@ -163,8 +163,9 @@ Images
             firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'newChartContainer');
 
             var trace1 = {
-                x: "tables::wiseCatTbl,w1mpro-w2mpro",
-                y: "tables::wiseCatTbl,w2mpro-w3mpro",
+                tbl_id: "wiseCatTbl",
+                x: "tables::w1mpro-w2mpro",
+                y: "tables::w2mpro-w3mpro",
                 mode: 'markers',
                 type: 'scatter',
                 marker: {size: 4, opacity: 0.5}
@@ -187,25 +188,28 @@ Images
 
             var dataHM = [
                 {
+                    tbl_id: "wiseCatTbl",
                     type: 'heatmap',
                     name: 'w1-w2',
-                    x: "tables::wiseCatTbl,w1mpro",
-                    y: "tables::wiseCatTbl,w2mpro",
+                    x: "tables::w1mpro",
+                    y: "tables::w2mpro",
                     colorscale: 'Blues'
                 },
                 {
+                    tbl_id: "wiseCatTbl",
                     type: 'heatmap',
                     name: 'w1-w3',
-                    x: "tables::wiseCatTbl,w1mpro",
-                    y: "tables::wiseCatTbl,w3mpro",
+                    x: "tables::w1mpro",
+                    y: "tables::w3mpro",
                     colorscale: 'Reds',
                     reversescale: true
                 },
                 {
+                    tbl_id: "wiseCatTbl",
                     type: 'heatmap',
                     name: 'w1-w4',
-                    x: "tables::wiseCatTbl,w1mpro",
-                    y: "tables::wiseCatTbl,w4mpro",
+                    x: "tables::w1mpro",
+                    y: "tables::w4mpro",
                     colorscale: 'Greens'
                 }
             ];
@@ -285,11 +289,12 @@ Images
 
             var data3d = [
                 {
+                    tbl_id: "wiseCatTbl",
                     type: 'scatter3d',
                     name: 'w1-w2-w3',
-                    x: "tables::wiseCatTbl,w1mpro",
-                    y: "tables::wiseCatTbl,w2mpro",
-                    z: "tables::wiseCatTbl,w3mpro",
+                    x: "tables::w1mpro",
+                    y: "tables::w2mpro",
+                    z: "tables::w3mpro",
                     mode : 'markers',
                     marker : {
                         size: 3,

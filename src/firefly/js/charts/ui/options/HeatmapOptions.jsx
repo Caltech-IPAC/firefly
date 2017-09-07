@@ -117,7 +117,7 @@ export function fieldReducer({chartId, activeTrace}) {
 }
 
 export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
-    // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::tbl_id,val' on submitChanges.
+    // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
     const labelWidth = 30;
