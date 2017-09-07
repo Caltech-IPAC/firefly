@@ -1,4 +1,4 @@
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {get, has, isFunction, isNil} from 'lodash';
 
@@ -10,6 +10,7 @@ import {ServerParams} from '../data/ServerParams.js';
 
 import LOADING from 'html/images/gxt/loading.gif';
 const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
+
 
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  message, onChange, value, labelWidth,
                          innerStyle, isFromURL, onUrlAnalysis, fileNameStyle}) {
