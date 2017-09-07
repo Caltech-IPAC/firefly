@@ -51,7 +51,7 @@ export const HIGHLIGHTED_PROPS = {
 
 const FSIZE = 12;
 
-export const TBL_SRC_PATTERN = /^tables::(.+),(.+)/;
+export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
 export function isPlotly() {
     return get(getAppOptions(), 'charts.chartEngine')==='plotly';
@@ -475,8 +475,7 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
                         Object.entries(flattenData)
                                 .filter(([k,v]) => typeof v === 'string' && v.startsWith('tables::'))
                                 .reduce( (p, [k,v]) => {
-                                    const [,tbl_id, colExp] = v.match(TBL_SRC_PATTERN) || [];
-                                    if (tbl_id) p.tbl_id = tbl_id;
+                                    const [,colExp] = v.match(TBL_SRC_PATTERN) || [];
                                     if (colExp) set(p, ['mappings',k], colExp);
                                     return p;
                                 }, {});
@@ -487,11 +486,10 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
 
     return currentData.map((d, traceNum) => {
         const ds = data[traceNum] ? convertToDS(flattenObject(data[traceNum])) : {}; //avoid flattening arrays
-        if (!ds.tbl_id) {
-            // table id can be a part of fireflyData
-            const tbl_id = get(fireflyData, `${traceNum}.tbl_id`);
-            if (tbl_id) ds.tbl_id = tbl_id;
-        }
+        // table id can be a part of fireflyData too
+        const tbl_id = get(data, `${traceNum}.tbl_id`) || get(fireflyData, `${traceNum}.tbl_id`);
+        if (tbl_id) ds.tbl_id = tbl_id;
+
         // we use tblFilePath to see if the table has changed (sorted, filtered, etc.)
         if (ds.tbl_id) {
             const tableModel = getTblById(ds.tbl_id);

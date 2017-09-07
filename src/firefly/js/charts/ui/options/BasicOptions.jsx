@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {get, isUndefined, reverse} from 'lodash';
+import {get, isUndefined, reverse, set} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartAdd, getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -414,7 +414,7 @@ OptionTopBar.propTypes = {
  * This is a default implementation of an option pane's apply changes function.
  * It assume the fieldId is the 'path' to the chart data and the value of the field is the value you want to change.
  * For fields that are mapped to tables, it assumes that they starts with '_tables'.  In this case, it will prepend
- * 'tables::tbl_id,' to the value.
+ * 'tables::' to the value.
  * @param {pbject} p
  * @param {string} p.chartId
  * @param {object} p.fields
@@ -426,8 +426,10 @@ export function submitChanges({chartId, fields, tbl_id}) {
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
+            const [,activeTrace] = /^_tables.data.(\d)/.exec(k) || [,];
+            if (!isUndefined(activeTrace)) set(changes, [`data.${activeTrace}.tbl_id`], tbl_id);
             k = k.replace('_tables.', '');
-            v = v ? `tables::${tbl_id},${v}` : undefined;
+            v = v ? `tables::${v}` : undefined;
         } else if (k.startsWith('__')) {
             // handling __xoptions and __yoptions
             ['x','y'].forEach((a) => {

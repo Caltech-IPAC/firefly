@@ -167,8 +167,9 @@
             firefly.showTable('table-1', tblReq);
 
             trace1 = {
-                x: "tables::test-tbl,ra",
-                y: "tables::test-tbl,dec",
+                tbl_id: "test-tbl",
+                x: "tables::ra",
+                y: "tables::dec",
                 mode: 'markers',
                 type: 'scatter'
             };
@@ -186,25 +187,28 @@
 
             var dataHM = [
                 {
+                    tbl_id: "test-tbl-lg",
                     type: 'heatmap',
                     name: 'w1-w2',
-                    x: "tables::test-tbl-lg,w1mpro",
-                    y: "tables::test-tbl-lg,w2mpro",
+                    x: "tables::w1mpro",
+                    y: "tables::w2mpro",
                     colorscale: 'Blues'
                 },
                 {
+                    tbl_id: "test-tbl-lg",
                     type: 'heatmap',
                     name: 'w1-w3',
-                    x: "tables::test-tbl-lg,w1mpro",
-                    y: "tables::test-tbl-lg,w3mpro",
+                    x: "tables::w1mpro",
+                    y: "tables::w3mpro",
                     colorscale: 'Reds',
                     reversescale: true
                 },
                 {
+                    tbl_id: "test-tbl-lg",
                     type: 'heatmap',
                     name: 'w1-w4',
-                    x: "tables::test-tbl-lg,w1mpro",
-                    y: "tables::test-tbl-lg,w4mpro",
+                    x: "tables::w1mpro",
+                    y: "tables::w4mpro",
                     colorscale: 'Greens'
                 }
             ];
