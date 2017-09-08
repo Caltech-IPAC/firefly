@@ -6,7 +6,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 
-import {get, debounce, isEmpty, set, omit, cloneDeep} from 'lodash';
+import {get, debounce, isEmpty, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
 import {getChartData, useChartRedraw, useScatterGL} from '../ChartsCntlr.js';
 import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
@@ -46,13 +46,6 @@ function isSlowResize() {
     return BrowserInfo.isFirefox();
 }
 
-function findNewBar() {
-    const newChart = getChartData('newBar');
-    const l = get(newChart, ['layout', 'xaxis', 'range']);
-    if (l) {
-        console.log(l);
-    }
-}
 
 export function downloadChart(chartId) {
     getPlotLy().then( (Plotly) => {
