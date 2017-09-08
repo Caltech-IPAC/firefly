@@ -32,7 +32,6 @@ const X_AXIS_OPTIONS = [
 ];
 const X_AXIS_OPTIONS_NOLOG = X_AXIS_OPTIONS.filter((el) => {return el.label !== 'log';});
 
-
 const Y_AXIS_OPTIONS = [
     {label: 'grid', value: 'grid'},
     {label: 'reverse', value: 'flip'},
@@ -64,14 +63,14 @@ function getOptions(a, layout) {
  * @param type - Plotly chart type
  */
 export function hasMarkerColor(type) {
-    return type.startsWith('scatter') || ['histogram', 'box', 'bar', 'area', 'plotcloud'].includes(type);
+    return type.startsWith('scatter') || ['histogram', 'box', 'bar', 'plotcloud'].includes(type);
 }
 
 /*
  * check if the trace is not 3d-like chart or pie and has x and y defined
 */
 function hasNoXY(type, tablesource) {
-    if (type.endsWith('3d') || ['pie', 'surface'].includes(type)) return true;
+    if (type.endsWith('3d') || ['pie', 'surface', 'bar', 'area'].includes(type)) return true;
 
     return (!get(tablesource, ['mappings', 'x']) || !get(tablesource, ['mappings', 'y']));
 }

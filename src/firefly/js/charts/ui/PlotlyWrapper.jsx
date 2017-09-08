@@ -243,10 +243,10 @@ const now = Date.now();
                         Plotly.Plots.resize(this.div);
                         break;
                     case RenderType.UPDATE:
-                        Plotly.update(this.div, data, cloneDeep(layout));
+                        Plotly.update(this.div, data, layout);
                         break;
                     case RenderType.NEW_PLOT:
-                        Plotly.newPlot(this.div, data, cloneDeep(layout), config);
+                        Plotly.newPlot(this.div, data, layout, config);
                         if (this.div.on) {
                             const chart = this.div;
                             chart.on('plotly_click', () => chart.parentElement.click());
