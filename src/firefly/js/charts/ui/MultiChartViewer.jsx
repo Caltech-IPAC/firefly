@@ -73,20 +73,29 @@ export class MultiChartViewer extends PureComponent {
             activeItemId = viewer.itemIdAry[0];
         }
 
-        const onChartSelect = (chartId) => {
+        const onChartSelect = (ev,chartId) => {
             if (chartId !== activeItemId) {
                 dispatchUpdateCustom(viewerId, {activeItemId: chartId});
             }
+            stopPropagation(ev);
         };
 
+
         const makeItemViewer = (chartId) => (
-            <div className={chartId === activeItemId ? 'ChartPanel ChartPanel--active' : 'ChartPanel'} onClick={()=>onChartSelect(chartId)}>
+            <div className={chartId === activeItemId ? 'ChartPanel ChartPanel--active' : 'ChartPanel'}
+                 onClick={(ev)=>onChartSelect(ev,chartId)}
+                 onTouchStart={stopPropagation}
+                 onMouseDown={stopPropagation}>
                 <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>
             </div>
         );
 
         const makeItemViewerFull = (chartId) => (
-            <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>
+            <div onClick={stopPropagation}
+                 onTouchStart={stopPropagation}
+                 onMouseDown={stopPropagation}>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>
+            </div>
         );
 
         const newProps = {
@@ -114,6 +123,10 @@ export class MultiChartViewer extends PureComponent {
         );
     }
 }
+
+
+const stopPropagation= (ev) => ev.stopPropagation();
+
 
 MultiChartViewer.propTypes= {
     viewerId : PropTypes.string.isRequired,
