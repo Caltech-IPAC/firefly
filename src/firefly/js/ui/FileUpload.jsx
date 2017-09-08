@@ -22,7 +22,6 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
 
         return (
             <InputFieldView
-                key={'upload_'+(new Date().valueOf())}
                 valid={valid}
                 visible={true}
                 message={message}
@@ -96,11 +95,13 @@ export const FileUpload = fieldGroupConnector(FileUploadView, getProps);
 
 
 function onUrlChange(ev, store, fireValueChange) {
-    var value = ev.target.value;
-    var {valid,message, ...others}= store.validator(value);
+    const displayValue = ev.target.value;
+    const {valid,message, ...others}= store.validator(displayValue);
+    let value;
+
     has(others, 'value') && (value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
 
-    fireValueChange({ value, message, valid, displayValue: value, analysisResult:''});
+    fireValueChange({ value, message, valid, displayValue, analysisResult:''});
 }
 
 function getProps(params, fireValueChange) {
