@@ -1,5 +1,5 @@
 import './ChartPanel.css';
-import React, {PureComponent} from 'react';
+import React from 'react';
 import {get, isEmpty} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded} from '../ChartsCntlr.js';
