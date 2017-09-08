@@ -444,6 +444,20 @@ export function getColumnIdx(tableModel, colName) {
 }
 
 /**
+ * Returns the column data type with the given name
+ * @param {TableModel} tableModel
+ * @param {string} colName
+ * @returns {string}
+ * @public getColumnType
+ */
+export function getColumnType(tableModel, colName) {
+    const cols = get(tableModel, 'tableData.columns', []);
+
+    return get(cols.find((col)=> col.name === colName), 'type', '');
+}
+
+
+/**
  * returns column information for the given name.
  * @param {TableModel} tableModel
  * @param {string} colName

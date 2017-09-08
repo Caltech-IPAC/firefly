@@ -334,19 +334,13 @@ isDebug() && console.log(`${renderType.toString()} ${dataUpdateTraces} elapsed: 
         // chart image download relies on div id matching chartId
         const nstyle = Object.assign({position:'relative', height: '100%', width: '100%'}, style);
         return (
-            <div style={nstyle}
-                 onClick={stopPropagation}
-                 onTouchStart={stopPropagation}
-                 onMouseDown={stopPropagation} >
+            <div style={nstyle} >
                 <div id={chartId || this.id} style={{height: '100%', width: '100%'}} ref={this.refUpdate}/>
                 {showMask && <div style={maskWrapper}> <div className='loading-mask'/> </div>}
             </div>
         );
     }
 }
-
-
-const stopPropagation= (ev) => ev.stopPropagation();
 
 PlotlyWrapper.propTypes = {
     chartId: PropTypes.string,
