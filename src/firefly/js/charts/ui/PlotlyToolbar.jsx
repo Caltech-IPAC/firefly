@@ -29,12 +29,13 @@ export class ScatterToolbar extends SimpleComponent {
     render() {
         const {chartId, expandable, toggleOptions} = this.props;
         const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
+        const hasSelectionMode = Boolean(tbl_id);
 
         return (
             <div className='ChartToolbar'>
                 <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
                 <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
-                <DragModePart {...{chartId, tbl_id, dragmode}}/>
+                <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode}}/>
                 <div className='ChartToolbar__buttons'>
                     <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <SaveBtn {...{chartId}} />
