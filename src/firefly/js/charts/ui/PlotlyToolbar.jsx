@@ -7,6 +7,8 @@ import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
 import {getTblById, clearFilters, getColumnIdx, getColumnType} from '../../tables/TableUtil.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {downloadChart} from './PlotlyWrapper.jsx';
+import {getColValidator} from './ColumnOrExpression.jsx';
+import {getColValStats} from '../TableStatsCntlr.js';
 
 function getToolbarStates(chartId) {
     const {selection, selected, activeTrace=0, tablesources, layout, data={}} = getChartData(chartId);
@@ -69,8 +71,14 @@ function isSelectable(tbl_id, chartId, type) {
               if (!checkItem) return false;      // ignore
 
               if (dataExp[idx]) {
-                  return getColumnIdx(tableModel, dataExp[idx]) < 0 ||
-                         strCol.includes(getColumnType(tableModel, dataExp[idx]));
+                  if (getColumnIdx(tableModel, dataExp[idx]) >= 0) {
+                      return strCol.includes(getColumnType(tableModel, dataExp[idx]));
+                  } else {
+                      const colValidator = getColValidator(getColValStats(tbl_id));
+                      const {valid} = colValidator(dataExp[idx]);
+
+                      return !valid;
+                  }
               } else {
                   return true;   // not qualified to have selection box
               }

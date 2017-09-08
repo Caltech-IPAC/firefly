@@ -18,6 +18,8 @@ import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
 import {getColumnType, getTblById} from '../../../tables/TableUtil.js';
+import {getColValStats} from '../../TableStatsCntlr.js';
+import {getColValidator} from '../ColumnOrExpression.jsx';
 
 const fieldProps = {labelWidth: 50, size: 25};
 const boundariesFieldProps = {labelWidth: 35, size: 10};
@@ -75,6 +77,21 @@ function hasNoXY(type, tablesource) {
     return (!get(tablesource, ['mappings', 'x']) || !get(tablesource, ['mappings', 'y']));
 }
 
+
+function isNonNumColumn(tbl_id, colExp) {
+    const numTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
+    const colType = getColumnType(getTblById(tbl_id), colExp);
+
+    if (colType) {
+        return !numTypes.includes(colType);
+    } else {
+        const colValidator = getColValidator(getColValStats(tbl_id));
+        const {valid} = colValidator(colExp);
+
+        return !valid;
+    }
+}
+
 export class BasicOptions extends SimpleComponent {
 
     getNextState() {
@@ -93,8 +110,8 @@ export class BasicOptions extends SimpleComponent {
         const type = get(data, `${activeTrace}.type`, 'scatter');
         const noColor = !hasMarkerColor(type);
         const noXY = hasNoXY(type, tablesource);
-        const xColType = noXY ? '' : getColumnType(getTblById(tbl_id), get(tablesource, ['mappings', 'x'], ''));
-        const yColType = noXY ? '' : getColumnType(getTblById(tbl_id), get(tablesource, ['mappings', 'y'], ''));
+        const isXNotNumeric = noXY ? undefined : isNonNumColumn(tbl_id, get(tablesource, ['mappings', 'x'], ''));
+        const isYNotNumeric = noXY ? undefined : isNonNumColumn(tbl_id, get(tablesource, ['mappings', 'y'], ''));
         const xNoLog = type.includes('histogram') ? true : undefined;          // histogram2d or histogram2dcontour
         const yNoLog = type.includes('histogram') ? true : undefined;
 
@@ -103,7 +120,7 @@ export class BasicOptions extends SimpleComponent {
                 <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
                             reducerFunc={basicFieldReducer({chartId, activeTrace})}>
-                    <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, xColType, yColType, xNoLog, yNoLog}}/>
+                    <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, isXNotNumeric, isYNotNumeric, xNoLog, yNoLog}}/>
                 </FieldGroup>
             </div>
         );
@@ -304,8 +321,7 @@ export class BasicOptionFields extends Component {
     }
 
     render() {
-        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog, yNoLog, xColType, yColType} = this.props;
-        const strT = ['str', 'char', 's', 'c'];
+        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog, yNoLog, isXNotNumeric, isYNotNumeric} = this.props;
 
         // TODO: need color input field
         const colorFldPath = `data.${activeTrace}.marker.color`;
@@ -337,16 +353,16 @@ export class BasicOptionFields extends Component {
                 {!noXY && <div>
                     <ValidationField fieldKey={'layout.xaxis.title'}/>
                     <CheckboxGroupInputField fieldKey='__xoptions'
-                                             options={xNoLog || strT.includes(xColType) ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
+                                             options={xNoLog || isXNotNumeric ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
                     <br/>
                     <ValidationField fieldKey={'layout.yaxis.title'}/>
                     <CheckboxGroupInputField fieldKey='__yoptions'
-                                             options={yNoLog || strT.includes(yColType) ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
+                                             options={yNoLog || isYNotNumeric ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
                     <br/>
                     <div style={helpStyle}>
                         Set plot boundaries if different from data range.
                     </div>
-                    {strT.includes(xColType) ? false :
+                    {isXNotNumeric ? false :
                         <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
                             <div style={{paddingRight: 5}}>
                                 <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
@@ -355,7 +371,7 @@ export class BasicOptionFields extends Component {
                                 <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
                             </div>
                         </div>}
-                    {strT.includes(yColType) ? false :
+                    {isYNotNumeric ? false :
                         <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
                             <div style={{paddingRight: 5}}>
                                 <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
@@ -396,8 +412,8 @@ BasicOptionFields.propTypes = {
     xNoLog: PropTypes.bool,
     yNoLog: PropTypes.bool,
     noXY: PropTypes.bool,
-    xColType: PropTypes.string,
-    yColType: PropTypes.string
+    isXNotNumeric: PropTypes.bool,
+    isYNotNumeric: PropTypes.bool
 };
 
 
