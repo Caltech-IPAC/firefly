@@ -2,6 +2,8 @@ FROM birgerk/apache-letsencrypt
 
 RUN apt-get update && \
     apt-get -f --assume-yes install libapache2-mod-auth-openidc && \
+    apt-get install wget && \
+    apt-get install telnet && \
     rm -rf /var/lib/apt/lists/*
 
 COPY ./others/*.conf /etc/apache2/conf-enabled/
@@ -24,3 +26,7 @@ RUN   mkdir /etc/apache2/certs; \
 
 
 EXPOSE 80 443
+
+# Default environment varibles.
+ENV docker_host=localhost
+ENV firefly_port=8080

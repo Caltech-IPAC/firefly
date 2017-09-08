@@ -15,3 +15,10 @@ dockerImage {
     }
   }
 }
+
+// define some dummy values so that if you do not have them, apache would still start up.
+ext.appConfig = {
+  oidc_client_id = "dummy"
+  oidc_client_secret = "dummy"
+  oidc_redirect_uri = "https://dummy/"
+}
