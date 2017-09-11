@@ -1,0 +1,16 @@
+
+dockerImage {
+
+  docker_repo = "ipac/proxy"
+  docker_registry = ''
+  docker_tag = 'latest'
+  copy_res = false
+
+  doFirst {
+    // copy artifacts to staging directory
+    copy {
+      from (projectDir) include '**/*'
+      into "${buildDir}/docker"
+    }
+  }
+}

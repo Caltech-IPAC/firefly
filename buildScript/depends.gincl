@@ -184,13 +184,16 @@ task dockerImage (dependsOn: loadConfig) {
   ext.docker_repo = "ipac/firefly"
   ext.docker_registry = ''
   ext.docker_tag = 'latest'
+  ext.copy_res = true
 
   doLast {
     // copy artifacts to staging directory
-    copy {
-      from ("${project.distDir}") { include '*.war' }
-      from ("${fireflyPath}/docker/base") { include '*' }
-      into "${buildDir}/docker"
+    if (copy_res) {
+      copy {
+        from ("${project.distDir}") { include '*.war' }
+        from ("${fireflyPath}/docker/base") { include '*' }
+        into "${buildDir}/docker"
+      }
     }
 
     try {
@@ -286,6 +289,13 @@ ext.NODE = { ...cmd ->
     environment 'WP_BUILD_DIR': wpBuildDir
     environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
     commandLine cmd
+    for (String key : project.appConfigProps.keySet()) {
+      if (key.startsWith('__$')) {
+        environment (key, project.appConfigProps[key])
+        println ">>   " + key + " = " + project.appConfigProps[key]
+      }
+    }
+
   }
   return res;
 }

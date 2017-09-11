@@ -27,6 +27,7 @@ public interface SsoAdapter {
     String SSO_FRAMEWORK_NAME = "sso.framework.name";
     String JOSSO = "josso";
     String OPENID_CONNECT = "oidc";
+    String MOD_AUTH_OPENIDC = "mod_auth_openidc";
 
     /**
      * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
@@ -79,16 +80,19 @@ public interface SsoAdapter {
                 return new JOSSOAdapter();
             case OPENID_CONNECT:
                 return new OidcAdapter();
+            case MOD_AUTH_OPENIDC:
+                return new AuthOpenidcMod();
             default:
                 return new JOSSOAdapter();
         }
     }
 
-    public static class Token implements Serializable {
+    class Token implements Serializable {
         private String id;
         private long expiresOn = Long.MAX_VALUE;
         private Map<String, String> others = new HashMap<>();
         private Map<String, String> claims;
+
 
         public Token(String id) {
             this.id = id;

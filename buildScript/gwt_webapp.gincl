@@ -30,12 +30,14 @@ configurations {
   }
 }
 
-task jsTest (dependsOn: [loadConfig]) << {
-  if (file("package.json").exists()) {
-    println ">> running JavaScript test..."
-    def res = project.ext.NODE 'yarn', 'run', 'test-unit'
-    if (res.getExitValue() != 0) {
-      throw new GradleException("JavaScript test fail.")
+task jsTest (dependsOn: [loadConfig]) {
+  doLast {
+    if (file("package.json").exists()) {
+      println ">> running JavaScript test..."
+      def res = project.ext.NODE 'yarn', 'run', 'test-unit'
+      if (res.getExitValue() != 0) {
+        throw new GradleException("JavaScript test fail.")
+      }
     }
   }
 }
@@ -177,23 +179,25 @@ clean {
   delete "${war.destinationDir}/${webapp.baseWarName}.war"
 }
 
-task deploy (dependsOn: [loadConfig, webapp]) << {
+task deploy (dependsOn: [loadConfig, webapp]) {
   description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
   group = MAIN_GROUP
 
-  if (!project.hasProperty("tomcat_home")) {
-    throw ProjectConfigurationException("tomcat_home property is not found.")
-  }
-  if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {
-    println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
-    throw new StopExecutionException("${webapp.baseWarName}.war not found.  Skipping deploy.")
-  }
+  doLast {
+    if (!project.hasProperty("tomcat_home")) {
+      throw ProjectConfigurationException("tomcat_home property is not found.")
+    }
+    if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {
+      println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
+      throw new StopExecutionException("${webapp.baseWarName}.war not found.  Skipping deploy.")
+    }
 
-  copy {
-    println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
-    delete("$tomcat_home/webapps/${webapp.baseWarName}")
-    from("$war.destinationDir/${webapp.baseWarName}.war")
-    into "$tomcat_home/webapps/"
+    copy {
+      println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
+      delete("$tomcat_home/webapps/${webapp.baseWarName}")
+      from("$war.destinationDir/${webapp.baseWarName}.war")
+      into "$tomcat_home/webapps/"
+    }
   }
 }
 

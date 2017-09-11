@@ -25,7 +25,7 @@ task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   group = "Build"
 
   outputs.upToDateWhen { false }
-  inputs.source sourceSets.main.java.srcDirs
+  inputs.file sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
   outputs.dir gwt.buildDir
 
@@ -90,7 +90,7 @@ task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT DevMode'
   group = MISC_GROUP
 
-  inputs.source sourceSets.main.java.srcDirs
+  inputs.file sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
 
   main = 'com.google.gwt.dev.DevMode'
@@ -134,7 +134,7 @@ task gwtSuperDev (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT SuperDev Mode'
   group = MISC_GROUP
 
-  inputs.source sourceSets.main.java.srcDirs
+  inputs.file sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
 
   main = 'com.google.gwt.dev.codeserver.CodeServer'

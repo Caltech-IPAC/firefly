@@ -197,6 +197,20 @@ export function fetchUrl(url, options, doValidation= true) {
 
     if (!url) return;
 
+
+    // ?info=json&access_token_refresh_interval=<seconds>
+    /*global __$sso_redirect_uri*/
+    if (typeof __$sso_redirect_uri !== 'undefined') {
+        const refreshUrl =  `${getRootURL()}${__$sso_redirect_uri}?info=json&access_token_refresh_interval=0`;
+        fetch(refreshUrl).then( (resp) =>  {
+            resp.text().then( (text) => {
+                console.log( text );
+            });
+        });
+    }
+
+
+
     // define defaults request options
     options = options || {};
     const req = { method: 'get',

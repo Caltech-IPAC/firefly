@@ -1,0 +1,24 @@
+
+dockerImage {
+
+  docker_repo = "ipac/proxy-dev"
+  docker_registry = ''
+  docker_tag = 'latest'
+  copy_res = false
+
+  doFirst {
+    // copy artifacts to staging directory
+    copy {
+      from (projectDir) include '**/*'
+      into "${buildDir}/docker"
+      filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
+    }
+  }
+}
+
+// define some dummy values so that if you do not have them, apache would still start up.
+ext.appConfig = {
+  oidc_client_id = "dummy"
+  oidc_client_secret = "dummy"
+  oidc_redirect_uri = "https://dummy/"
+}
