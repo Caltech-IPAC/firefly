@@ -23,6 +23,7 @@ import {CatalogSearchMethodType, SpatialMethod} from '../../ui/CatalogSearchMeth
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {parseWorldPt} from '../../visualize/Point.js';
 import {VoSearchPanel} from '../../ui/VoSearchPanel.jsx';
+import {NedSearchPanel} from '../../ui/NedSearchPanel.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
@@ -44,6 +45,7 @@ const COLDEF1 = 9;
 const COLDEF2 = 8;
 const dropdownName = 'IrsaCatalogDropDown';
 const constraintskey = 'inputconstraint';
+const voProviders = [{name: 'NED', id: 'NedSearch'}];
 
 /**
  * Globally scoped here, master table, columns object
@@ -121,7 +123,10 @@ function onSearchSubmit(request) {
         doLoadTable(request[gkey]);
     }
     else if (request[gkey].Tabs === 'vosearch') {
-        doVoSearch(request[gkey]);
+        doVoSearch(request[gkey],'');
+    }
+    else if (request[gkey].Tabs === 'nedsearch') {
+        doVoSearch(request[gkey], 'NED');
     }
     else {
         console.log('request no supported');
@@ -227,30 +232,42 @@ export function validateSql(sqlTxt) {
     return sqlTxt;
 }
 
-//import {FilterInfo} from '../../tables/FilterInfo.js';
-
 /**
  * VO search using 'ConeSearchByURL' search processor
  * N.B.: radius in degree!
- * TODO: doesn't trigger a coverage default image nor overlay compared to OPS usage of 'ConeSearchByURL' search processor
  * @param request
+ * @param providerName serves to distinguish between any user input SCS provider and specific provider such as 'NED'
  */
-function doVoSearch(request) {
+function doVoSearch(request, providerName = '') {
     //VO url that work http://vizier.u-strasbg.fr/viz-bin/votable/-A?-source=J/A+A/402/549
-    const radius = convertAngle('deg', 'arcsec', request.conesize);//arcsec
-    const accessUrl = request.vourl.trim();//.replace('&', 'URL_PARAM_SEP');
+    let radius;//arcsec
+    let accessUrl;//.replace('&', 'URL_PARAM_SEP');
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
     const nameUsed = wp.getObjName() || wp.toString();
-    const name = `${nameUsed} (VO SCS ${radius}")`;
+    let name;
+    let conesize;
+
+    if(providerName === 'NED'){
+        accessUrl = 'http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&';//http://vo.ned.ipac.caltech.edu/services/sia?TARGET='
+        conesize = request.nedconesize;
+        radius = convertAngle('deg', 'arcsec', conesize);
+        name = `${nameUsed} (NED SCS ${radius}")`;
+    }else{
+        accessUrl = request.vourl.trim();//.replace('&', 'URL_PARAM_SEP');
+        conesize = request.conesize;
+        radius = convertAngle('deg', 'arcsec', conesize);
+        name = `${nameUsed} (VO SCS ${radius}")`;
+    }
     var tReq = makeVOCatalogRequest(name,
         {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
             SearchMethod: 'Cone',
-            radius: request.conesize, //degree!
+            radius: conesize, //degree!
+            providerName,
             accessUrl
         }
     );
-    dispatchTableSearch(tReq);
+    dispatchTableSearch(tReq, {backgroundable:true});
 }
 
 function doLoadTable(request) {
@@ -420,6 +437,11 @@ class CatalogSelectView extends PureComponent {
                     <Tab name='VO Catalog' id='vosearch'>
 
                         <VoSearchPanel fieldKey='vopanel'/>
+
+                    </Tab>
+                    <Tab name='NED' id='nedsearch'>
+
+                        <NedSearchPanel fieldKey='nedpanel'/>
 
                     </Tab>
                 </FieldGroupTabs>
@@ -737,6 +759,13 @@ function fieldInit() {
             unit: 'arcsec',
             min: 1 / 3600,
             max: parseInt(catmaster[0].catalogs[0].option[0].cat[RADIUS_COL]) / 3600
+        },
+        'nedconesize': {
+            fieldKey: 'nedconesize',
+            value: initRadiusArcSec,
+            unit: 'arcsec',
+            min: 1 / 3600,
+            max: 5
         },
         'tableconstraints': {
             fieldKey: 'tableconstraints',

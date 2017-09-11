@@ -184,7 +184,9 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
     options.use = options.use || 'catalog_overlay';
     const tbl_id = options.tbl_id || uniqueTblId();
-    const id = 'ConeSearchByURL';
+    const providerid = voProviders[params.providerName];
+
+    const id = providerid || 'ConeSearchByURL';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
 
@@ -193,6 +195,8 @@ export function makeVOCatalogRequest(title, params={}, options={}) {
 
     return omitBy(Object.assign(req, options, params, {id, tbl_id, META_INFO, UserTargetWorldPt}), isNil);
 }
+
+const voProviders = {'NED':'NedSearch'};
 
 /**
  * create a deep clone of the given request.  tbl_id is removed from the cloned request.
