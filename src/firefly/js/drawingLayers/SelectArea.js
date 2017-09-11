@@ -63,7 +63,7 @@ export function selectAreaEndActionCreator(rawAction) {
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
 
         if (drawLayer.drawData.data) {
-            const selectBox= drawLayer.drawData.data[1];
+            const selectBox= drawLayer.drawData.data.find( (drawObj) => drawObj.type===SelectBox.SELECT_BOX);
             const sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
             dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
             // const imBoundSel= pv.rotation ? getImageBoundsSelection(sel,CsysConverter.make(plot)) : sel;
