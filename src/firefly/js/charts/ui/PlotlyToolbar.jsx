@@ -74,10 +74,14 @@ function isSelectable(tbl_id, chartId, type) {
                   if (getColumnIdx(tableModel, dataExp[idx]) >= 0) {
                       return strCol.includes(getColumnType(tableModel, dataExp[idx]));
                   } else {
-                      const colValidator = getColValidator(getColValStats(tbl_id));
-                      const {valid} = colValidator(dataExp[idx]);
-
-                      return !valid;
+                      const colValStats = getColValStats(tbl_id);
+                      if (colValStats) {
+                          const colValidator = getColValidator(colValStats);
+                          const {valid} = colValidator(dataExp[idx]);
+                          return !valid;
+                      } else {
+                          return false;
+                      }
                   }
               } else {
                   return true;   // not qualified to have selection box
