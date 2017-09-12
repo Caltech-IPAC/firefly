@@ -23,8 +23,8 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblById, doFetchTable, isTblDataAvail, MAX_ROW} from '../../tables/TableUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
-import {logError} from '../../util/WebUtil.js';
-import {getConverter, getMissionName, defaultDownloaderOptPanel, DL_DATA_TAG} from './LcConverterFactory.js';
+import {logError,updateSet} from '../../util/WebUtil.js';
+import {getConverter, getMissionName,  DL_DATA_TAG} from './LcConverterFactory.js';
 import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 
@@ -283,7 +283,7 @@ function setViewerFail() {
 }
 
 function updateFullRawTable(callback) {
-    const layoutInfo = getLayouInfo();
+    var layoutInfo = getLayouInfo();
     const tableItems = ['tableData', 'tableMeta'];
 
     // fullRawTable for the derivation of other table, like phase folded table
@@ -302,7 +302,7 @@ function updateFullRawTable(callback) {
         var max = 365;
         var min = Math.pow(10, -3);   // 0.001
 
-       // var period = get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], '');
+        // var period = get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], '');
 
         const period = '';
         var fields = FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER);
@@ -325,17 +325,26 @@ function updateFullRawTable(callback) {
             dispatchRestoreDefaults(LC.FG_PERIODOGRAM_FINDER);
         }
 
+        //IRSA-464: the smartMerge does not replace array component.  It updates the array. Therefore, setting it
+        //null first to force the new fullRawTable is updated to the layout
+        dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
+            fullRawTable:null,
+            periodRange: {min, max, tzero, tzeroMax, period}
+        }));
+        //add the fullRawtable into the layout
         dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {
             fullRawTable,
             periodRange: {min, max, tzero, tzeroMax, period}
         }));
+
+
         callback && callback();
     };
 
-    if (layoutInfo.fullRawTable) {
+    var rawTable = getTblById(LC.RAW_TABLE);
+    if (layoutInfo.fullRawTable && layoutInfo.fullRawTable.totalRows===rawTable) {
         callback && callback();
     } else {
-        var rawTable = getTblById(LC.RAW_TABLE);
 
         if (isTblDataAvail(0, rawTable.totalRows, rawTable)) {
             setTableData(rawTable);
