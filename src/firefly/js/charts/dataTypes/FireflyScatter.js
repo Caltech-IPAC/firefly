@@ -118,6 +118,8 @@ function fetchData(chartId, traceNum, tablesource) {
 
 function addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, yUnit, chartId, traceNum}) {
 
+    changes[`data.${traceNum}.type`] = 'scatter';
+
     // set default title if it's the first trace
     // and no title is set by the user
     const {layout, data} = getChartData(chartId) || {};

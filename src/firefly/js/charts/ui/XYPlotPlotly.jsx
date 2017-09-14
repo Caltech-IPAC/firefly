@@ -14,6 +14,8 @@ import {getFormatString} from '../../util/MathUtil.js';
 import {plotParamsShape, plotDataShape} from './XYPlotPropTypes.js';
 import {calculateChartSize, getXAxisOptions, getYAxisOptions, getZoomSelection, formatError,
     isLinePlot, plotErrors, selFiniteMin, selFiniteMax} from './XYPlot.jsx';
+import BrowserInfo from  '../../util/BrowserInfo.js';
+
 
 const defaultShading = 'lin';
 
@@ -210,14 +212,18 @@ function makeSeries(props) {
                 xanchor: yOpposite ? 'right' : 'left',
                 x: yOpposite ? -0.02 : 1.02,
                 thickness: 10,
-                outlinewidth: 0,
-                title: 'pts'
+                outlinewidth: 0
             },
             x,
             y,
             z,
             text: generateTooltips(props, rows)
         };
+        // colorbar.title is causing hover text display issues in Firefox
+        // see https://github.com/plotly/plotly.js/issues/2003
+        if (!BrowserInfo.isFirefox()) {
+            heatmap.colorbar.title = 'pts';
+        }
 
         if (get(params, 'shading', defaultShading) === defaultShading) {
             heatmap.colorscale = [[0, 'rgb(240,240,240)'], [1, 'rgb(37,37,37)']];
