@@ -185,15 +185,15 @@ Some unsupported plotly charts:
             var dataPie = [
                 {
                     tbl_id: "wiseCatTbl",
-                    name: 'Area',
+                    name: 'Stats for (w1+w2)',
                     type: 'pie',
-                    values: "tables::w1mpro",
+                    values: "tables::w1mpro+w2mpro",
                     labels:  "tables::clon",
                     textinfo: 'none'
                 }];
 
             var layoutPie = {
-                title: 'pie: w1mpro vs. clon',
+                title: 'pie: w1+w2 vs. clon',
                 showlegend: true
             };
 
@@ -231,10 +231,10 @@ Some unsupported plotly charts:
             var dataSurface = [
                 {
                     type: 'surface',
-                    name: 'w1-ra-dec',
+                    name: 'w1-w2-w3',
                     tbl_id: "wiseCatTbl",
-                    x: "tables::ra",
-                    y: "tables::dec",
+                    x: "tables::w1mpro-w2mpro",
+                    y: "tables::w2mpro-w3mpro",
                     z: "tables::w1mpro",
                     hoverinfo: 'x+y+z'
                 }
@@ -242,14 +242,14 @@ Some unsupported plotly charts:
 
             var tfont = {size: 11};
             var layoutSurface = {
-                title: 'Surface on ra & dec',
+                title: 'Surface on w1-w2 & w2-w3',
                 scene:{
                     xaxis: {
-                        title: 'ra (deg)',
+                        title: 'w1-w2 (deg)',
                         titlefont: tfont
                     },
                     yaxis: {
-                        title: 'dec (deg)',
+                        title: 'w2-w3 (deg)',
                         titlefont: tfont
                     }
                 }
@@ -267,15 +267,15 @@ Some unsupported plotly charts:
             var dataBox = [
                 {
                     type: 'box',
-                    name: 'w1mpro',
+                    name: 'w1+w2',
                     tbl_id: "wiseCatTbl",
-                    y: "tables::w1mpro"
+                    y: "tables::w1mpro+w2mpro"
                 },
                 {
                     type: 'box',
-                    name: 'w2mpro',
+                    name: 'w2+w3',
                     tbl_id: "wiseCatTbl",
-                    y: "tables::w2mpro"
+                    y: "tables::w2mpro+w3mpro"
                 }
             ];
 

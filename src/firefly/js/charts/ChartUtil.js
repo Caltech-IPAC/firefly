@@ -28,6 +28,7 @@ import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as scatterTSGetter} from './dataTypes/FireflyScatter.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
+import {getTraceTSEntries as genericTSGatter} from './dataTypes/FireflyGenericData.js';
 
 export const SCATTER = 'scatter';
 export const HEATMAP = 'heatmap';
@@ -276,7 +277,7 @@ export function getRowIdx(traceData, pointIdx) {
 export function getPointIdx(traceData, rowIdx) {
     const rowIdxArray = get(traceData, 'firefly.rowIdx');
     // use double equal in case we compare string to Number
-    return rowIdxArray ? rowIdxArray.findIndex((e) => e == rowIdx) : rowIdx;
+    return rowIdxArray ? rowIdxArray.findIndex((e) => e === rowIdx) : rowIdx;
 }
 
 export function isScatter2d(type) {
@@ -419,32 +420,9 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
             dispatchChartUpdate({chartId, changes});
         }
 
-        // fetch data
+        // fetch data for both Firefly recognized or unrecognized plotly chart types
         if (tablesource.fetchData) {
             tablesource.fetchData(chartId, traceNum, tablesource);
-        } else {
-            // default behavior
-            const {request, highlightedRow, selectInfo={}} = tableModel || {};
-            const sreq = cloneRequest(request, {
-                startIdx: 0,
-                pageSize: MAX_ROW,
-                inclCols: Object.values(mappings).join(',')
-            });
-            doFetchTable(sreq).then(
-                (tableModel) => {
-                    if (tableModel.tableData && tableModel.tableData.data) {
-                        const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
-                        dispatchChartUpdate({chartId, changes});
-                        const traceData = get(getChartData(chartId), `data.${traceNum}`);
-                        dispatchChartHighlighted({chartId, highlighted: getPointIdx(traceData,highlightedRow)});   // update highlighted point in chart
-                        updateSelected(chartId, selectInfo);
-                    }
-                }
-            ).catch(
-                (reason) => {
-                    console.error(`Failed to fetch table: ${reason}`);
-                }
-            );
         }
     }
 }
@@ -497,7 +475,7 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
         }
         // set up table server request parameters (options) for firefly specific charts
         const chartDataType = get(fireflyData[traceNum], 'dataType');
-        if (chartDataType) {
+        if (!isEmpty(ds)) {
             Object.assign(ds, getTraceTSEntries({chartDataType, traceTS: ds, chartId, traceNum}));
         }
         return ds;
@@ -508,11 +486,11 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
     if (chartDataType === 'fireflyScatter') {
         return scatterTSGetter({traceTS, chartId, traceNum});
     } else if (chartDataType === 'fireflyHistogram') {
-            return histogramTSGetter({traceTS, chartId, traceNum});
+        return histogramTSGetter({traceTS, chartId, traceNum});
     } else if (chartDataType === 'fireflyHeatmap') {
-                return heatmapTSGetter({traceTS, chartId, traceNum});
+        return heatmapTSGetter({traceTS, chartId, traceNum});
     } else {
-        return {};
+        return genericTSGatter({traceTS, chartId, traceNum});
     }
 }
 

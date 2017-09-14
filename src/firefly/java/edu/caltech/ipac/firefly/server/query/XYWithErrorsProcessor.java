@@ -113,29 +113,14 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         Col[] cols = colsLst.toArray(new Col[colsLst.size()]);
 
         // create the array of output columns
-        DataType dt, dtSrc;
+        DataType dt;
         ArrayList<DataType> columnList = new ArrayList<>();
         dt = new DataType("rowIdx", Integer.class);
         dt.setFormatInfo(new DataType.FormatInfo(11)); // max num digits in integer, long - 20
         columnList.add(dt);
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
 
-        for (Col col : cols) {
-            if (col.getter.isExpression()) {
-                dt = new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false);
-                DataType.FormatInfo fi = dt.getFormatInfo();
-                fi.setDataFormat("%.14g");
-                dt.setFormatInfo(fi);
-                columnList.add(dt);
-            } else {
-                dtSrc = dg.getDataDefintion(col.colname);
-                dt = dtSrc.copyWithNoColumnIdx(columnList.size());
-                dt.setMaxDataWidth(dtSrc.getMaxDataWidth());
-                dt.setFormatInfo(dtSrc.getFormatInfo());
-                columnList.add(dt);
-                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), col.colname));
-            }
-        }
+        createColumnsToList(columnList, dg, cols, colMeta);
         DataType columns [] = columnList.toArray(new DataType[columnList.size()]);
 
         // create the return data group
@@ -198,7 +183,29 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         return outFile;
     }
 
-    private Col getCol(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) throws DataAccessException {
+    public static void createColumnsToList(ArrayList<DataType>columnList, DataGroup dg, Col[] cols,
+                                           ArrayList<DataGroup.Attribute> colMeta) {
+        DataType dt, dtSrc;
+
+        for (Col col : cols) {
+            if (col.getter.isExpression()) {
+                dt = new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false);
+                DataType.FormatInfo fi = dt.getFormatInfo();
+                fi.setDataFormat("%.14g");
+                dt.setFormatInfo(fi);
+                columnList.add(dt);
+            } else {
+                dtSrc = dg.getDataDefintion(col.colname);
+                dt = dtSrc.copyWithNoColumnIdx(columnList.size());
+                dt.setMaxDataWidth(dtSrc.getMaxDataWidth());
+                dt.setFormatInfo(dtSrc.getFormatInfo());
+                columnList.add(dt);
+                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), col.colname));
+            }
+        }
+    }
+
+    public static Col getCol(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) throws DataAccessException {
         Col col = new Col(dataTypes, colOrExpr, exprColName, canBeNaN);
         if (!col.getter.isValid()) {
             throw new DataAccessException("Invalid column or expression: "+colOrExpr);
@@ -207,7 +214,7 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
     }
 
 
-    private static class Col {
+    public static class Col {
         DataObjectUtil.DoubleValueGetter getter;
         String colname;
         String exprColName;
