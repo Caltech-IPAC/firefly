@@ -36,7 +36,7 @@ import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const ViewerType= new Enum([
     'TriView',  // use what it in the title
-    'Grid', // use the plot description key
+    'Grid' // use the plot description key
 ], { ignoreCase: true });
 
 
@@ -273,14 +273,14 @@ function buildChartPart(channel,file,dispatch) {
 
     /**
      * @summary Show a chart
-     * @param {XYPlotOptions} xyPlotOptions
+     * @param {{chartId: string, data: array.object, layout: object}} options
      * @param {string} viewerId
      * @memberof firefly.ApiViewer
      * @public
      */
-    const showPlot= (xyPlotOptions, viewerId) => {
+    const showChart= (options, viewerId) => {
         doViewerOperation(channel, file, () => {
-            plotRemotePlot(xyPlotOptions, viewerId, dispatch);
+            plotRemoteChart(options, viewerId, dispatch);
         });
     };
 
@@ -312,7 +312,7 @@ function buildChartPart(channel,file,dispatch) {
         });
     };
 
-    return {showPlot, showXYPlot, showHistogram};
+    return {showChart, showXYPlot, showHistogram};
 }
 
 
@@ -340,22 +340,22 @@ export function* doOnWindowConnected({channel, f}) {
         isLoaded = cnt > 0;
     }
     // Added a half second delay before ready to combat a race condition
-    // TODO: loi is going to look it it to determine if application it truely ready
+    // TODO: loi is going to look it it to determine if application it truly ready
     setTimeout(() => f && f(), 500);
 }
 
 
 //================================================================
-//---------- Private XYPlot functions
+//---------- Private Chart functions
 //================================================================
 
 
 /**
- * @param {XYPlotOptions} params - XY plot parameters
+ * @param {{chartId: string, data: array.object, layout: object}} params - chart parameters
  * @param {string} viewerId
  * @param {Function} dispatch - dispatch function
  */
-function plotRemotePlot(params, viewerId, dispatch) {
+function plotRemoteChart(params, viewerId, dispatch) {
 
     const dispatchParams= clone({
         groupId: viewerId || 'default',

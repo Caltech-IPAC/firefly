@@ -288,7 +288,7 @@ export function getOptionsUI(chartId) {
     const {data, fireflyData, activeTrace=0} = getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
     const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
-    if (isScatter2d(type)) {
+    if (dataType === 'fireflyScatter' || isScatter2d(type)) {
         return ScatterOptions;
     } else if (type === 'histogram') {
         return HistogramOptions;

@@ -42,6 +42,8 @@ export const CHART_UNMOUNTED = `${UI_PREFIX}/unmounted`;
 
 const FIRST_CDEL_ID = '0'; // first data element id (if missing)
 
+const FIREFLY_TRACE_TYPES = ['fireflyScatter', 'fireflyHistogram', 'fireflyHeatmap'];
+
 export default {actionCreators, reducers};
 
 function actionCreators() {
@@ -313,13 +315,20 @@ export function makeChartDataFetch (getChartDataType) {
 
 function chartAdd(action) {
     return (dispatch) => {
-        const {chartId, chartType, viewerId='main', data, fireflyData, fireflyLayout} = action.payload;
+        const {chartId, chartType} = action.payload;
         clearChartConn({chartId});
-        dispatch(action);
+
         if (chartType === 'plot.ly') {
+            // the action payload might need to be updated for firefly trace types
+            const newPayload = handleFireflyTraceTypes(action.payload);
+            const actionToDispatch = (newPayload === action.payload) ? action : Object.assign({}, action, {payload: newPayload});
+            dispatch(actionToDispatch);
+            const {viewerId='main', data, fireflyData, fireflyLayout} = actionToDispatch.payload;
             dispatchAddViewer(viewerId,true,'plot2d',true);
             dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
             handleTableSourceConnections({chartId, data, fireflyData, fireflyLayout});
+        } else {
+            dispatch(action);
         }
     };
 }
@@ -448,6 +457,42 @@ function setActiveTrace(action) {
         const changes = {activeTrace, selected, highlighted, selection: undefined};
         dispatchChartUpdate({chartId, changes});
     };
+}
+
+function isFireflyType(type) {
+    return  FIREFLY_TRACE_TYPES.includes(type);
+}
+
+/**
+ * Move firefly attributes from data and layout objects to fireflyData and fireflyLayout
+ * @param payload – original action payload
+ * @return updated action payload
+ */
+function handleFireflyTraceTypes(payload) {
+    const {data=[], layout={}} = payload;
+    let newPayload = payload;
+    if (data.find((d) => isFireflyType(d.type))) {
+        const fireflyData = [];
+        const plotlyData = [];
+        data.forEach((d) => {
+            if (isFireflyType(d.type)) {
+                const fd = get(d, 'firefly', {});
+                fd.dataType = d.type;
+                fireflyData.push(fd);
+                plotlyData.push(omit(d, ['type', 'firefly']));
+            } else {
+                fireflyData.push(undefined);
+                plotlyData.push(d);
+            }
+        });
+        newPayload = Object.assign({}, newPayload, {data: plotlyData, fireflyData});
+    }
+    if (layout.firefly) {
+        const fireflyLayout = layout.firefly;
+        const plotlyLayout = omit(layout, 'firefly');
+        newPayload = Object.assign({}, newPayload, {layout: plotlyLayout, fireflyLayout});
+    }
+    return newPayload;
 }
 
 

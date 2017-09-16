@@ -31,7 +31,7 @@
 <br/><br/>
 <div id="xyplotHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
-<div id="plotly" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
+<div id="plotlyDiv" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
 <br/><br/>
 <div id="table-1" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
@@ -97,33 +97,36 @@
 //            firefly.util.renderDOM('histogramHere', firefly.ui.Histogram, props);
 
             var dataH = [
-                {name: 'dec-0.02', marker: {color: 'rgba(153, 51, 153, 0.8)'}},
-                {name: 'dec+0.02', marker: {color: 'rgba(102,153,0, 0.7)'}}
-            ];
-
-            var fireflyDataH = [
                 {
-                    dataType: 'fireflyHistogram',
-                    tbl_id: 'test-tbl',
-                    options: {
-                        algorithm: 'fixedSizeBins',
-                        fixedBinSizeSelection: 'numBins',
-                        numBins: 30,
-                        columnOrExpr: 'dec-0.02'
-                    }
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'test-tbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 30,
+                            columnOrExpr: 'dec-0.02'
+                        }
+                    },
+                    name: 'dec-0.02',
+                    marker: {color: 'rgba(153, 51, 153, 0.8)'}
                 },
                 {
-                    dataType: 'fireflyHistogram',
-                    tbl_id: 'test-tbl',
-                    options: {
-                        algorithm: 'fixedSizeBins',
-                        fixedBinSizeSelection: 'numBins',
-                        numBins: 40,
-                        columnOrExpr: 'dec+0.02'   // same column but shifted
-                    }
-                }
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'test-tbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 40,
+                            columnOrExpr: 'dec+0.02'   // same column but shifted
+                        }
+                    },
+                    name: 'dec+0.02',
+                    marker: {color: 'rgba(102,153,0, 0.7)'}}
             ];
-            firefly.showPlot('histogramHere', {chartId: 'firefly-hist-tbl', chartType: 'plot.ly', data: dataH, fireflyData: fireflyDataH});
+
+            firefly.showChart('histogramHere', {data: dataH});
 
 
             // show scatter chart
@@ -151,7 +154,7 @@
             };
 
             var data = [trace1, trace2];
-            firefly.showPlot('plotly', {chartId: 'test', chartType: 'plot.ly', data: data});
+            firefly.showChart('plotlyDiv', {data: data});
 
 
             var tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
@@ -167,14 +170,14 @@
             firefly.showTable('table-1', tblReq);
 
             trace1 = {
-                tbl_id: "test-tbl",
-                x: "tables::ra",
-                y: "tables::dec",
-                mode: 'markers',
-                type: 'scatter'
+                type: 'fireflyScatter',
+                tbl_id: 'test-tbl',
+                x: 'tables::ra',
+                y: 'tables::dec',
+                mode: 'markers'
             };
 
-            firefly.showPlot('plotly', {chartId: 'plotly-tbl', chartType: 'plot.ly', data: [trace1], fireflyData: [{dataType: 'fireflyScatter'}]});
+            firefly.showChart('plotlyDiv', {data: [trace1]});
 
 
             var tblReqLg =  firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
@@ -187,38 +190,33 @@
 
             var dataHM = [
                 {
+                    type: 'fireflyHeatmap',
                     tbl_id: "test-tbl-lg",
-                    type: 'heatmap',
-                    name: 'w1-w2',
                     x: "tables::w1mpro",
                     y: "tables::w2mpro",
+                    name: 'w1-w2',
                     colorscale: 'Blues'
                 },
                 {
+                    type: 'fireflyHeatmap',
                     tbl_id: "test-tbl-lg",
-                    type: 'heatmap',
-                    name: 'w1-w3',
                     x: "tables::w1mpro",
                     y: "tables::w3mpro",
+                    name: 'w1-w3',
                     colorscale: 'Reds',
                     reversescale: true
                 },
                 {
+                    type: 'fireflyHeatmap',
                     tbl_id: "test-tbl-lg",
-                    type: 'heatmap',
-                    name: 'w1-w4',
                     x: "tables::w1mpro",
                     y: "tables::w4mpro",
+                    name: 'w1-w4',
                     colorscale: 'Greens'
                 }
             ];
-            var	fireflyDataHM = [
-                {dataType: 'fireflyHeatmap'},
-                {dataType: 'fireflyHeatmap'},
-                {dataType: 'fireflyHeatmap'}
-            ];
 
-            firefly.showPlot('heatmapHere', {chartId: 'plotly-tbl-lg', chartType: 'plot.ly', data: dataHM, fireflyData: fireflyDataHM});
+            firefly.showChart('heatmapHere', {data: dataHM});
 
         }
     }

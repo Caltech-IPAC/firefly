@@ -167,7 +167,7 @@ Images
                 x: "tables::w1mpro-w2mpro",
                 y: "tables::w2mpro-w3mpro",
                 mode: 'markers',
-                type: 'scatter',
+                type: 'fireflyScatter',
                 marker: {size: 4, opacity: 0.5}
             };
 
@@ -177,8 +177,8 @@ Images
                 yaxis: {title: 'w2mpro-w3mpro (mag)'}
             };
 
-            firefly.getViewer().showPlot(
-                    {chartId: 'newChart1', layout: layoutS, data: [trace1], fireflyData: [{dataType: 'fireflyScatter'}]},
+            firefly.getViewer().showChart(
+                    {chartId: 'newChart1', layout: layoutS, data: [trace1]},
                     'newChartContainer');
         }
 
@@ -188,56 +188,49 @@ Images
 
             var dataHM = [
                 {
+                    type: 'fireflyHeatmap',
                     tbl_id: "wiseCatTbl",
-                    type: 'heatmap',
-                    name: 'w1-w2',
                     x: "tables::w1mpro",
                     y: "tables::w2mpro",
+                    name: 'w1-w2',
                     colorscale: 'Blues'
                 },
                 {
+                    type: 'fireflyHeatmap',
                     tbl_id: "wiseCatTbl",
-                    type: 'heatmap',
-                    name: 'w1-w3',
                     x: "tables::w1mpro",
                     y: "tables::w3mpro",
+                    name: 'w1-w3',
                     colorscale: 'Reds',
                     reversescale: true
                 },
                 {
+                    type: 'fireflyHeatmap',
                     tbl_id: "wiseCatTbl",
-                    type: 'heatmap',
-                    name: 'w1-w4',
                     x: "tables::w1mpro",
                     y: "tables::w4mpro",
+                    name: 'w1-w4',
                     colorscale: 'Greens'
                 }
-            ];
-            // use firefly algorithm to create heatmap data
-            var	fireflyDataHM = [
-                {dataType: 'fireflyHeatmap'},
-                {dataType: 'fireflyHeatmap'},
-                {dataType: 'fireflyHeatmap'}
             ];
             var layoutHM = {
                 title: 'Magnitude-magnitude densities',
                 xaxis: {title: 'w1 photometry (mag)'},
-                yaxis: {title: ''}
-            };
-            // user boundaries - so that heatmaps will be calculated in the same XY space
-            var fireflyLayoutHM = {
-                xaxis: {
-                    min: 5,
-                    max: 20
-                },
-                yaxis: {
-                    min: 4,
-                    max: 18
+                yaxis: {title: ''},
+                firefly: { // user boundaries - so that heatmaps will be calculated in the same XY space
+                    xaxis: {
+                        min: 5,
+                        max: 20
+                    },
+                    yaxis: {
+                        min: 4,
+                        max: 18
+                    }
                 }
             };
 
-            firefly.getViewer().showPlot(
-                    {chartId: 'newChart2', layout: layoutHM,  data: dataHM, fireflyData:fireflyDataHM, fireflyLayout:fireflyLayoutHM},
+            firefly.getViewer().showChart(
+                    {chartId: 'newChart2', layout: layoutHM,  data: dataHM},
                     'heatMapContainer');
         }
 
@@ -245,31 +238,33 @@ Images
             firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'histContainer');
 
             var dataH = [
-                {name: 'w1mpro', marker: {color: 'rgba(153, 51, 153, 0.8)'}},
-                {name: 'w2mpro', marker: {color: 'rgba(102,153,0, 0.7)'}}
-            ];
-
-            var fireflyDataH = [
                 {
-                    dataType: 'fireflyHistogram',
-                    tbl_id: 'wiseCatTbl',
-                    options: {
-                        algorithm: 'fixedSizeBins',
-                        fixedBinSizeSelection: 'numBins',
-                        numBins: 30,
-                        columnOrExpr: 'w1mpro'
-                    }
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'wiseCatTbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 30,
+                            columnOrExpr: 'w1mpro'
+                        }
+                    },
+                    name: 'w1mpro',
+                    marker: {color: 'rgba(153, 51, 153, 0.8)'}
                 },
                 {
-                    dataType: 'fireflyHistogram',
-                    tbl_id: 'wiseCatTbl',
-                    options: {
-                        algorithm: 'fixedSizeBins',
-                        fixedBinSizeSelection: 'numBins',
-                        numBins: 40,
-                        columnOrExpr: 'w2mpro'   // same column but shifted
-                    }
-                }
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'wiseCatTbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 40,
+                            columnOrExpr: 'w2mpro'
+                        }
+                    },
+                    name: 'w2mpro',
+                    marker: {color: 'rgba(102,153,0, 0.7)'}}
             ];
 
             var layoutHist = {
@@ -278,8 +273,8 @@ Images
                 yaxis: {title: ''}
             };
 
-            firefly.getViewer().showPlot(
-                    {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH, fireflyData: fireflyDataH},
+            firefly.getViewer().showChart(
+                    {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH},
                     'histContainer');
         }
 
@@ -326,7 +321,7 @@ Images
                 }
             };
 
-            firefly.getViewer().showPlot(
+            firefly.getViewer().showChart(
                     {chartId: 'newChart3', layout: layout3d, data: data3d },
                     '3dChartContainer');
         }
