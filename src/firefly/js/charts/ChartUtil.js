@@ -28,7 +28,7 @@ import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as scatterTSGetter} from './dataTypes/FireflyScatter.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
-import {getTraceTSEntries as genericTSGatter} from './dataTypes/FireflyGenericData.js';
+import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericData.js';
 
 export const SCATTER = 'scatter';
 export const HEATMAP = 'heatmap';
@@ -277,7 +277,7 @@ export function getRowIdx(traceData, pointIdx) {
 export function getPointIdx(traceData, rowIdx) {
     const rowIdxArray = get(traceData, 'firefly.rowIdx');
     // use double equal in case we compare string to Number
-    return rowIdxArray ? rowIdxArray.findIndex((e) => e === rowIdx) : rowIdx;
+    return rowIdxArray ? rowIdxArray.findIndex((e) => e == rowIdx) : rowIdx;
 }
 
 export function isScatter2d(type) {
@@ -490,7 +490,7 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
     } else if (chartDataType === 'fireflyHeatmap') {
         return heatmapTSGetter({traceTS, chartId, traceNum});
     } else {
-        return genericTSGatter({traceTS, chartId, traceNum});
+        return genericTSGetter({traceTS, chartId, traceNum});
     }
 }
 

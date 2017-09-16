@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author tatianag
+ * @author c.w.
  */
 @SearchProcessorImpl(id = "XYGeneric")
 public class XYGenericProcessor extends IpacTablePartProcessor {
@@ -27,7 +27,7 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
         String searchRequestJson = request.getParam(SEARCH_REQUEST);
         DataGroup dg = SearchRequestUtils.dataGroupFromSearchRequest(searchRequestJson);
         List<Param> allParams = request.getParams();
-        ArrayList<XYWithErrorsProcessor.Col> colsLst = new ArrayList<>();
+        ArrayList<Col> colsLst = new ArrayList<>();
         ArrayList<TextCol> txtcolsLst = new ArrayList<>();
 
         // the output table columns with the names like x, y, z, r, t, values, labels, etc.
@@ -38,7 +38,7 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
             String name = p.getName();
             String colName;
             String val;
-            XYWithErrorsProcessor.Col  aCol;
+            Col  aCol;
             TextCol tCol;
 
             if (name.endsWith(ColExpKey)) {
@@ -46,7 +46,7 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
                 val = p.getValue();
 
                 if (stringContainsItemFrom(val, numericCols)) {
-                    aCol = XYWithErrorsProcessor.getCol(dataTypes, val, colName, false);
+                    aCol = getCol(dataTypes, val, colName, false);
                     colsLst.add(aCol);
                 } else {
                     tCol = getTextCol(dataTypes, val, colName);
@@ -55,14 +55,14 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
             }
         }
 
-        XYWithErrorsProcessor.Col[] cols = colsLst.toArray(new XYWithErrorsProcessor.Col[colsLst.size()]);
+        Col[] cols = colsLst.toArray(new Col[colsLst.size()]);
         TextCol[] textcols = txtcolsLst.toArray(new TextCol[txtcolsLst.size()]);
 
         // create the array of output columns
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
         ArrayList<DataType> columnList = new ArrayList<>();
 
-        XYWithErrorsProcessor.createColumnsToList(columnList, dg, cols, colMeta);
+        createColumnsToList(columnList, dg, cols, colMeta);
         createColumnsOnTextCol(columnList, dg, textcols, colMeta);
         DataType columns [] = columnList.toArray(new DataType[columnList.size()]);
 
@@ -79,7 +79,7 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
 
             // render data from numeric columns
             for (int c = 0; c < numCols ; c++) {
-                XYWithErrorsProcessor.Col col = cols[c];
+                Col col = cols[c];
                 double val;
 
                 val = col.getter.getValue(row);
@@ -117,7 +117,7 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
             }
         }
 
-        for (XYWithErrorsProcessor.Col c : cols) {
+        for (Col c : cols) {
             colMeta.add(new DataGroup.Attribute(c.exprColName, c.colOrExpr));
         }
         for (TextCol c : textcols) {
@@ -203,6 +203,57 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
             dt.setFormatInfo(dtDef.getFormatInfo());
             columnList.add(dt);
             colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), col.colOrExpr));
+        }
+    }
+
+    public static void createColumnsToList(ArrayList<DataType>columnList, DataGroup dg, Col[] cols,
+                                           ArrayList<DataGroup.Attribute> colMeta) {
+        DataType dt, dtSrc;
+
+        for (Col col : cols) {
+            if (col.getter.isExpression()) {
+                dt = new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false);
+                DataType.FormatInfo fi = dt.getFormatInfo();
+                fi.setDataFormat("%.14g");
+                dt.setFormatInfo(fi);
+                columnList.add(dt);
+            } else {
+                dtSrc = dg.getDataDefintion(col.colname);
+                dt = dtSrc.copyWithNoColumnIdx(columnList.size());
+                dt.setMaxDataWidth(dtSrc.getMaxDataWidth());
+                dt.setFormatInfo(dtSrc.getFormatInfo());
+                columnList.add(dt);
+                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), col.colname));
+            }
+        }
+    }
+
+    public static Col getCol(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) throws DataAccessException {
+        Col col = new Col(dataTypes, colOrExpr, exprColName, canBeNaN);
+        if (!col.getter.isValid()) {
+            throw new DataAccessException("Invalid column or expression: "+colOrExpr);
+        }
+        return col;
+    }
+
+
+    public static class Col {
+        DataObjectUtil.DoubleValueGetter getter;
+        String colname;
+        String exprColName;
+        String colOrExpr;
+        boolean canBeNaN;
+
+        Col(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) {
+            this.colOrExpr = colOrExpr;
+            this.exprColName = exprColName;
+            this.getter = new DataObjectUtil.DoubleValueGetter(dataTypes, colOrExpr);
+            if (getter.isExpression()) {
+                this.colname = exprColName;
+            } else {
+                this.colname = colOrExpr;
+            }
+            this.canBeNaN = canBeNaN;
         }
     }
 

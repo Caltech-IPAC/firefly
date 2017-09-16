@@ -76,7 +76,7 @@ Some unsupported plotly charts:
 <ul>
 
     <li>
-        <a href='javascript:load3DChart(0,0,2,2)'>Show 3D Scatter </a> <span class='smallCoords'>at row: 0, col: 0, w:2 h: 2</span>
+        <a href='javascript:load2DScatter(0,0,2,2)'>Show Plotly Scatter </a> <span class='smallCoords'>at row: 0, col: 0, w:2 h: 2</span>
     </li>
     <li>
         <a href="javascript:loadSurface(0,2,2,2)">Show Surface </a><span class='smallCoords'>at row: 0, col: 2, w: 2, h: 2</span>
@@ -109,6 +109,34 @@ Some unsupported plotly charts:
 
         function getSTarget() {
             return document.getElementById('sTarget').value;
+        }
+
+        function load2DScatter(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'newChartContainer');
+
+            var trace1 = {
+                tbl_id: "wiseCatTbl",
+                x: "tables::w1mpro-w2mpro",
+                y: "tables::w2mpro-w3mpro",
+                mode: 'markers',
+                type: 'scatter',
+                error_x : {array: "tables::w3sigmpro"},
+                error_y : {array: "tables::w4sigmpro"},
+                marker: {size: 4, opacity: 0.5}
+            };
+
+            var layoutS = {
+                title: 'Color-Color',
+                xaxis: {title: 'w1mpro-w2mpro (mag)'},
+                yaxis: {title: 'w2mpro-w3mpro (mag)'}
+            };
+
+
+
+            firefly.getViewer().showPlot(
+                    {chartId: 'newChart1', layout: layoutS, data: [trace1]},
+                    'newChartContainer');
+
         }
 
         function load3DChart(r,c,w,h) {
