@@ -12,7 +12,7 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, getColumnIdx, getCellValue, cloneRequest, doFetchTable, isFullyLoaded, watchTableChanges, MAX_ROW} from '../tables/TableUtil.js';
+import {getTblById, getColumnIdx, getCellValue, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
@@ -325,6 +325,12 @@ export function newTraceFrom(data, selIndexes, newTraceProps) {
 
     const sdata = cloneDeep(pick(data, ['x', 'y', 'z', 'error_x', 'error_y', 'text', 'marker', 'hoverinfo', 'firefly' ]));
     Object.assign(sdata, {showlegend: false, type: get(data, 'type', 'scatter'), mode: 'markers'});
+
+    // the rowIdx doesn't exist for generic plotly chart case
+    if (!get(sdata, 'firefly.rowIdx') && get(sdata, 'x.length', 0) !== 0) {
+        const rowIdx = range(get(sdata, 'x.length')).map(String);
+        set(sdata, 'firefly.rowIdx', rowIdx);
+    }
 
     // walk through object and replace values where there's an array with only the selected indexes.
     function deepReplace(obj) {
