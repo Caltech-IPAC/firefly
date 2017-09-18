@@ -9,7 +9,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import 'styles/global.css';
 
-import {APP_LOAD, getUserInfo} from './core/AppDataCntlr.js';
+import {APP_LOAD} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
@@ -44,6 +44,37 @@ export const Templates = {
     LightCurveViewer : LcViewer,
     HydraViewer
 };
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} StartupConfigOptions
+ *
+ * @summary An object that is defined in the html that has configuration options for Firefly
+ *
+ *
+ * @prop {Object} MenuItemKeys -  an object the references MenuItemKeys.js that can turn on or off buttons on the image tool bar
+ * @prop {Array.<string> } imageTabs - specifies the order of the time in the image dialog e.g. - [ 'fileUpload', 'url', '2mass', 'wise', 'sdss', 'msx', 'dss', 'iras' ]
+ * @prop {string|function} irsaCatalogFilter - a function or a predefined key that specifies how the catalogs are filter in the UI
+ * @prop {string} catalogSpacialOp -  two values undefined or 'polygonWhenPlotExist'. when catalogSpacialOp === 'polygonWhenPlotExist' then
+ *                                  the catalog panel will show the polygon option as default when possible
+ * @prop {Array.<string> } imageMasterSources -  default - ['ALL'], source to build image master data from
+ * @prop {Array.<string> } imageMasterSourcesOrder - for the image dialog sort order of the projects, anything not listed is put on bottom
+ *
+ */
+
+
+const defConfigOptions = {
+    MenuItemKeys: {},
+    imageTabs: undefined,
+    irsaCatalogFilter: undefined,
+    catalogSpacialOp: undefined,
+    imageMasterSources: ['ALL'],
+    imageMasterSourcesOrder: '',
+};
+
+
 
 
 
@@ -118,6 +149,8 @@ export const firefly = {
 };
 
 
+
+
 /**
  * boostrap Firefly api or application.
  * @param options   global options used by both application and api
@@ -134,17 +167,10 @@ function bootstrap(options, viewer, props) {
         resolve && resolve();
 
         if (options) {
-            const defOps = {
-                MenuItemKeys: {},
-                imageTabs: undefined,
-                irsaCatalogFilter: undefined,
-                catalogSpacialOp: undefined
-            };
-            dispatchAppOptions(Object.assign({},defOps, options));
+            dispatchAppOptions(Object.assign({},defConfigOptions, options));
             if (options.disableDefaultDropDown) {
                 dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
             }
-
         }
         if (viewer) {
             ReactDOM.render(React.createElement(viewer, props),

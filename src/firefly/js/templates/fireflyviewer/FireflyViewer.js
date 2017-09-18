@@ -21,6 +21,7 @@ import {launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.js
 import {syncChartViewer, addDefaultScatter} from '../../visualize/saga/ChartsSync.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
+import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 
@@ -45,6 +46,7 @@ export class FireflyViewer extends PureComponent {
 
     constructor(props) {
         super(props);
+        getImageMasterData();
         const views = LO_VIEW.get(props.views) || LO_VIEW.none;
         this.state = this.getNextState();
         dispatchAddSaga(watchCatalogs);

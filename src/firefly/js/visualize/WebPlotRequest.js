@@ -4,7 +4,7 @@
  * Time: 9:18:47 AM
  */
 /* eslint prefer-template:0 */
-import {isString, isPlainObject, isArray, join, has} from 'lodash';
+import {get, isString, isPlainObject, isArray, join, has} from 'lodash';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
@@ -212,9 +212,10 @@ export class WebPlotRequest extends ServerRequest {
 
 
             let typeGuess;
-            if (obj[C.FILE]) typeGuess= RequestType.FILE;
-            if (obj[C.URLKEY]) typeGuess= RequestType.URL;
-            if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
+            if (obj.id) typeGuess= RequestType.PROCESSOR;
+            else if (obj[C.FILE]) typeGuess= RequestType.FILE;
+            else if (obj[C.URLKEY]) typeGuess= RequestType.URL;
+            else if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
 
 
             if (obj[C.BLANK_ARCSEC_PER_PIX] && obj[C.BLANK_PLOT_WIDTH] &&
@@ -1444,18 +1445,17 @@ export class WebPlotRequest extends ServerRequest {
 export const WPConst= C;
 export default WebPlotRequest;
 
-// function findKey(key) {
-//     key= key.toLowerCase();
-//     return allKeys.find( (k) => k.toLowerCase() ===key);
-// }
-
-
+/**
+ * Create a new object with the keys more consistent with the keys defined in WebPlotRequest.
+ * if a case insensitive version of the key exist then replace it with the proper one, otherwise
+ * use the key.
+ * The loop looks up the key with case insensitive matching, if it does not exist it uses the original key
+ * @param {Object} r - plain object
+ * @return {Object}
+ */
 function cleanupObj(r) {
     return Object.keys(r).reduce( (obj,k) => {
-        // const newKey= findKey(k);
-        const newKeyEnum= allKeys.get(k);
-        const newKey= newKeyEnum ? newKeyEnum.toString() : null;
-        if (newKey) obj[newKey]= r[k];
+        obj[get(allKeys.get(k), 'key',k)]= r[k]; // note - uses both lodash.get and enum.get
         return obj;
     },{});
 }

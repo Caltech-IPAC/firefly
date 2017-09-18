@@ -127,7 +127,7 @@ export function fieldGroupConnector(FieldComponent,
             const {fieldKey}= this.props;
             const paramValues= getParamValues(this.state.fieldState,this.props);
             return (
-                <FieldComponent fieldKey={fieldKey} groupKey={groupKey} 
+                <FieldComponent key={fieldKey} fieldKey={fieldKey} groupKey={groupKey}
                     {...getComponentProps(paramValues, this.fireValueChange)}
                 />
             );

@@ -6,6 +6,7 @@
  * Date: 3/5/12
  */
 
+import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {PlotState} from '../visualize/PlotState.js';
@@ -14,6 +15,10 @@ import {PlotState} from '../visualize/PlotState.js';
 
 /**
  *
+ * @param state
+ * @param band
+ * @param width
+ * @param height
  * @return {Promise}
  */
 export const callGetColorHistogram= function(state,band,width,height) {
@@ -161,16 +166,33 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
 
 export function callGetFileFlux(stateAry, pt) {
 
-    var params =  makeParamsWithStateAry(stateAry,[
+    const params =  makeParamsWithStateAry(stateAry,[
         {name: [ServerParams.PT], value: pt.toString()}
     ]);
 
     return doJsonRequest(ServerParams.FILE_FLUX_JSON, params,true);
 }
 
+
+/**
+ *
+ * @param {Array.<string>|string} imageSources -
+ * @param {Array.<string>|string} projectSortOrder -  a arrays of projects that you want on top, any project not in
+ * list will be add at the bottom
+ * @return {Promise} the json image data
+ */
+export function callGetImageMasterData(imageSources, projectSortOrder='') {
+    const sortOrderStr= isArray(projectSortOrder) ? projectSortOrder.join(',') : projectSortOrder.toString();
+    const imageSourcesStr= isArray(imageSources) ? imageSources.join(',') : imageSources.toString();
+    return doJsonRequest(ServerParams.GET_IMAGE_MASTER_DATA,
+        {[ServerParams.IMAGE_SOURCES] : imageSourcesStr},
+        {[ServerParams.SORT_ORDER] : sortOrderStr},
+        true);
+}
+
 export function getDS9Region(fileKey) {
 
-    var params= {
+    const params= {
         [ServerParams.FILE_KEY]: fileKey,
         [ServerParams.JSON_DEEP]: true
     };
@@ -180,7 +202,7 @@ export function getDS9Region(fileKey) {
 
 export function saveDS9RegionFile(regionData) {
 
-    var params= {
+    const params= {
         [ServerParams.REGION_DATA]: regionData,
         [ServerParams.JSON_DEEP]: true
     };
@@ -189,9 +211,13 @@ export function saveDS9RegionFile(regionData) {
 
 
 /**
- * 
+ *
  * @param state
  * @param regionData
+ * @param clientIsNorth
+ * @param clientRotAngle
+ * @param clientFlipY
+ * @return {Promise}
  */
 export function getImagePng(state, regionData, clientIsNorth, clientRotAngle, clientFlipY) {
 
@@ -205,21 +231,6 @@ export function getImagePng(state, regionData, clientIsNorth, clientRotAngle, cl
         [ServerParams.JSON_DEEP]: true
     };
     return doJsonRequest(ServerParams.IMAGE_PNG_REG, params, true);
-}
-
-
-
-
-const getOneFileGroup= function(requestList, progressKey) {
-    //todo
-};
-
-/**
- * not used
- * @param startAry
- */
-function makeJsonStateAryString(startAry) {
-    return JSON.stringify(startAry.map( (s) => PlotState.convertToJSON(s)));
 }
 
 function makeParamsWithStateAry(stateAry, otherParams=[]) {

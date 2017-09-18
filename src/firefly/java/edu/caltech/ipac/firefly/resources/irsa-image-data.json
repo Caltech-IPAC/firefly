@@ -1,0 +1,401 @@
+[
+  {
+    "project": "WISE",
+    "subProject": "Atlas",
+    "title": "band 1",
+    "wavelength": 41,
+    "wavelengthDesc": "41 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 1",
+    "imageId": "wiseAtlasBand1",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "3a",
+      "SurveyKeyBand": "1",
+      "title": "WISE Atlas 1",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "WISE",
+    "subProject": "Atlas",
+    "title": "band 2",
+    "wavelength": 42,
+    "wavelengthDesc": "42 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 2",
+    "imageId": "wiseAtlasBand2",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "3a",
+      "SurveyKeyBand": "2",
+      "title": "WISE Atlas 2",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "WISE",
+    "subProject": "Atlas",
+    "title": "band 3",
+    "wavelength": 43,
+    "wavelengthDesc": "43 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 3",
+    "imageId": "wiseAtlasBand3",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "3a",
+      "SurveyKeyBand": "3",
+      "title": "WISE Atlas 3",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "WISE",
+    "subProject": "Atlas",
+    "title": "band 4",
+    "wavelength": 44,
+    "wavelengthDesc": "44 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 4",
+    "imageId": "wiseAtlasBand4",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "3a",
+      "SurveyKeyBand": "4",
+      "title": "WISE Atlas 4",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "WISE",
+    "subProject": "4 Band Level 1",
+    "title": "Level 1 band 1",
+    "wavelength": 41,
+    "wavelengthDesc": "41 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 1",
+    "imageId": "wiseLevel1Band1",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "1b",
+      "SurveyKeyBand": "1",
+      "title": "WISE 1b 1",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "WISE",
+    "subProject": "4 Band Level 1",
+    "title": "Level 1 band 2",
+    "wavelength": 42,
+    "wavelengthDesc": "42 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 2",
+    "imageId": "wiseLevel1Band2",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "1b",
+      "SurveyKeyBand": "2",
+      "title": "WISE 1b 2",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "WISE",
+    "subProject": "4 Band Level 1",
+    "title": "Level 1 band 3",
+    "wavelength": 43,
+    "wavelengthDesc": "43 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 3",
+    "imageId": "wiseLevel1Band3",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "1b",
+      "SurveyKeyBand": "3",
+      "title": "WISE 1b 3",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "WISE",
+    "subProject": "4 Band Level 1",
+    "title": "Level 1 band 4",
+    "wavelength": 44,
+    "wavelengthDesc": "44 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is wise band 4",
+    "imageId": "wiseLevel1Band4",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.01,
+    "maxRangeDeg": 0.2,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "WISE",
+      "SurveyKey": "1b",
+      "SurveyKeyBand": "4",
+      "title": "WISE 1b 4",
+      "drawingSubgroupID": "wise"
+    }
+  },
+  {
+    "project": "2MASS",
+    "subProject": null,
+    "title": "J",
+    "wavelength": 1.25,
+    "wavelengthDesc": "1.25 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is 2MASS J",
+    "imageId": "2massJ",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.008,
+    "maxRangeDeg": 0.139,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "TWOMASS",
+      "SurveyKey": "j",
+      "title": "2MASS J",
+      "drawingSubgroupID": "2mass"
+    }
+  },
+  {
+    "project": "2MASS",
+    "subProject": null,
+    "title": "H",
+    "wavelength": 1.65,
+    "wavelengthDesc": "1.65 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is 2MASS H",
+    "imageId": "2massH",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.008,
+    "maxRangeDeg": 0.139,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "TWOMASS",
+      "SurveyKey": "h",
+      "title": "2MASS H",
+      "drawingSubgroupID": "2mass"
+    }
+  },
+  {
+    "project": "2MASS",
+    "subProject": null,
+    "title": "K",
+    "wavelength": 2.17,
+    "wavelengthDesc": "2.17 micron",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is 2MASS K",
+    "imageId": "2massK",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 0.008,
+    "maxRangeDeg": 0.139,
+    "plotRequestParams": {
+      "type": "SERVICE",
+      "Service": "TWOMASS",
+      "SurveyKey": "k",
+      "title": "2MASS K",
+      "drawingSubgroupID": "2mass"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "issa",
+    "title": "12 microns",
+    "wavelength": 12,
+    "wavelengthDesc": "12 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is ISSA 12",
+    "imageId": "iras-issa-12",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "ISSA",
+      "SurveyKey": "12",
+      "title": "ISSA 12",
+      "drawingSubgroupID": "iras"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "issa",
+    "title": "25 microns",
+    "wavelength": 25,
+    "wavelengthDesc": "25 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is ISSA 25",
+    "imageId": "iras-issa-25",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "ISSA",
+      "SurveyKey": "25",
+      "title": "ISSA 25",
+      "drawingSubgroupID": "iras"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "issa",
+    "title": "60 microns",
+    "wavelength": 60,
+    "wavelengthDesc": "60 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is ISSA 60",
+    "imageId": "iras-issa-60",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "ISSA",
+      "SurveyKey": "60",
+      "title": "ISSA 60",
+      "drawingSubgroupID": "iras"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "issa",
+    "title": "100 microns",
+    "wavelength": 100,
+    "wavelengthDesc": "100 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is ISSA 100",
+    "imageId": "iras-issa-100",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "ISSA",
+      "SurveyKey": "100",
+      "title": "ISSA 100",
+      "drawingSubgroupID": "iras"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "iris",
+    "title": "12 microns",
+    "wavelength": 12,
+    "wavelengthDesc": "12 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is IRIS 12",
+    "imageId": "iras-iris-12",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "IRIS",
+      "SurveyKey": "12",
+      "title": "IRIS 12",
+      "drawingSubgroupID": "iras"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "iris",
+    "title": "25 microns",
+    "wavelength": 25,
+    "wavelengthDesc": "25 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is IRIS 25",
+    "imageId": "iras-iris-25",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "IRIS",
+      "SurveyKey": "25",
+      "title": "IRIS 25",
+      "drawingSubgroupID": "iras"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "iris",
+    "title": "60 microns",
+    "wavelength": 60,
+    "wavelengthDesc": "60 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is IRIS 60",
+    "imageId": "iras-iris-60",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "IRIS",
+      "SurveyKey": "60",
+      "title": "IRIS 60",
+      "drawingSubgroupID": "iras"
+    }
+  },
+  {
+    "project": "IRAS",
+    "subProject": "iris",
+    "title": "100 microns",
+    "wavelength": 100,
+    "wavelengthDesc": "100 microns",
+    "helpUrl": "http://irsa.ipac.caltech.edu/stuff",
+    "tooltip": "This is IRIS 100",
+    "imageId": "iras-iris-100",
+    "projectTypeKey": "galactic",
+    "projectTypeDesc": "Galactic",
+    "minRangeDeg": 1,
+    "maxRangeDeg": 12.5,
+    "plotRequestParams": {
+      "Service": "IRIS",
+      "SurveyKey": "100",
+      "title": "IRIS 100",
+      "drawingSubgroupID": "iras"
+    }
+  }
+]

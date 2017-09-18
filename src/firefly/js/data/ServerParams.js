@@ -77,6 +77,12 @@ export const ServerParams = {
         DS9_REGION_DATA: 'ds9RegionData',
         DOWNLOAD_REQUEST: 'downloadRequest',
         SELECTION_INFO: 'selectionInfo',
+        SORT_ORDER: 'sortOrder',
+        IMAGE_SOURCES: 'imageSources',
+        EXTERNAL : 'external',
+        IRSA : 'irsa',
+        LSST : 'lsst',
+        ALL : 'all',
 
 
 
@@ -143,6 +149,7 @@ export const ServerParams = {
         UPLOAD: 'upload',
         LOG_OUT: 'CmdLogout',
         INIT_APP: 'CmdInitApp',
+        GET_IMAGE_MASTER_DATA: 'getImageMasterData',
 
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
         VIS_PUSH_ALIVE_COUNT: 'pushAliveCount',
