@@ -46,7 +46,7 @@ public class XYGenericProcessor extends IpacTablePartProcessor {
                 val = p.getValue();
 
                 if (stringContainsItemFrom(val, numericCols)) {
-                    aCol = getCol(dataTypes, val, colName, false);
+                    aCol = getCol(dataTypes, val, colName, true);
                     colsLst.add(aCol);
                 } else {
                     tCol = getTextCol(dataTypes, val, colName);
