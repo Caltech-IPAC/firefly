@@ -9,7 +9,7 @@ import {getActivePlotView,
     hasGroupLock,
     findPlotGroup,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {findRelatedData} from '../RelatedDataUtil.js';
+import {findUnactivatedRelatedData} from '../RelatedDataUtil.js';
 import {dispatchRotate, dispatchFlip, dispatchRecenter,
         dispatchRestoreDefaults,dispatchGroupLocking} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotState.js';
@@ -393,7 +393,7 @@ function showImagePopup() {
 
 export function LayerButton({pv,visible}) {
     const layerCnt=  pv ? (getAllDrawLayersForPlot(getDlAry(),pv.plotId).length + pv.overlayPlotViews.length) : 0;
-    const enabled= Boolean(layerCnt || findRelatedData(pv).length);
+    const enabled= Boolean(layerCnt || findUnactivatedRelatedData(pv).length);
     return (
         <ToolbarButton icon={LAYER_ICON}
                        tip='Manipulate overlay display: Control color, visibility, and advanced options'

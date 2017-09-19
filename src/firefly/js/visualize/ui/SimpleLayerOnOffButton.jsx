@@ -67,7 +67,7 @@ function onOff(pv,typeId,todo) {
         dispatchAttachLayerToPlot(typeId,pv.plotId,true);
     }
     else {
-        dispatchDetachLayerFromPlot(typeId,pv.plotId,true,true, dl.destroyWhenAllDetached);
+        dispatchDetachLayerFromPlot(typeId,pv.plotId,true,dl.destroyWhenAllDetached);
     }
 }
 

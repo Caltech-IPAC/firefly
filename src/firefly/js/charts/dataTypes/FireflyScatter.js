@@ -104,10 +104,9 @@ function fetchData(chartId, traceNum, tablesource) {
             const yColumn = getColumn(tableModel, get(mappings, 'y'));
             const yUnit = get(yColumn, 'units', '');
 
-            const traceData = get(getChartData(chartId), `data.${traceNum}`);
-
             addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, yUnit, chartId, traceNum});
             dispatchChartUpdate({chartId, changes});
+            const traceData = get(getChartData(chartId), `data.${traceNum}`);
             dispatchChartHighlighted({chartId, highlighted: getPointIdx(traceData, highlightedRow)});   // update highlighted point in chart
             updateSelected(chartId, selectInfo);
         }
@@ -119,6 +118,8 @@ function fetchData(chartId, traceNum, tablesource) {
 }
 
 function addOtherChanges({changes, xLabel, xTipLabel, xUnit, yLabel, yTipLabel, yUnit, chartId, traceNum}) {
+
+    changes[`data.${traceNum}.type`] = 'scatter';
 
     // set default title if it's the first trace
     // and no title is set by the user

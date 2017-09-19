@@ -18,8 +18,6 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
-import java.io.File;
-
 /**
  * @author tatianag
  *         $Id: ProcessorFileRetriever.java,v 1.8 2012/07/27 22:23:29 tatianag Exp $
@@ -46,8 +44,9 @@ public class ProcessorFileRetriever implements FileRetriever {
             if (responseCode>=305) {
                 throw new FailedRequestException(fi.getResponseCodeMsg());
             }
-            File f= new File(fi.getInternalFilename());
-            return new FileInfo(f, f.getName());
+//            File f= new File(fi.getInternalFilename());
+//            return new FileInfo(f, f.getName());
+            return fi;
         } catch (DataAccessException dae) {
             throw ResponseMessage.simplifyNetworkCallException(dae);
         } catch (FailedRequestException e) {

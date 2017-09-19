@@ -73,6 +73,7 @@ export function* watchCatalogs() {
 
 const isCName = (name) => (c) => c.name===name;
 
+//todo - this fucntion should start using TableInfoUtil.getCenterColumns
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
 
@@ -163,7 +164,8 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
         if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {
             plotIdAry.map( (plotId) =>  getPlotViewById(visRoot(), plotId))
                 .filter( (pv) => dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId'))
-                .forEach( (pv) => pv && dispatchChangeVisibility(dl.drawLayerId, false, pv.plotId, false));
+                .forEach( (pv) => pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false,
+                                                                  plotId:pv.plotId, useGroup:false}));
         }
     }
 }
@@ -176,7 +178,7 @@ function attachToAllCatalogs(pvNewPlotInfoAry) {
                 dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
                 const pv= getPlotViewById(visRoot(), info.plotId);
                 if (dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId')) {
-                    pv && dispatchChangeVisibility(dl.drawLayerId, false, pv.plotId, false);
+                    pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false, plotId:pv.plotId, useGroup:false});
                 }
             });
         }

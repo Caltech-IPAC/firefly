@@ -152,7 +152,14 @@ function buildTablePart(llApi) {
 
 function buildChartPart(llApi) {
 
-    const showPlot= (targetDiv, parameters)  => doShowPlot(llApi, targetDiv, parameters);
+    /**
+     * @summary The general function to plot a Plotly chart.
+     * @param {string|HTMLDivElement} targetDiv - div to put the chart in.
+     * @param {{data: array.object, layout: object}} parameters - plotly parameters (possibly with firefly extensions)
+     * @memberof firefly
+     * @public
+     */
+    const showChart = (targetDiv, parameters)  => doShowChart(llApi, targetDiv, parameters);
 
     /**
      * @summary The general plotting function to plot an XY Plot.
@@ -185,7 +192,7 @@ function buildChartPart(llApi) {
     const showHistogram= (targetDiv, parameters)  => doShowHistogram(llApi, targetDiv, parameters);
 
 
-    return {showPlot, showXYPlot, addXYPlot, showHistogram};
+    return {showChart, showXYPlot, addXYPlot, showHistogram};
 }
 
 function buildCommon(llApi) {
@@ -395,13 +402,13 @@ function makePlotId(wsConnIdGetter) {
 //---------- Private XYPlot or Histogram functions
 //================================================================
 
-function doShowPlot(llApi, targetDiv, params={}) {
+function doShowChart(llApi, targetDiv, params={}) {
     const {dispatchChartAdd}= llApi.action;
     const {uniqueChartId} = llApi.util.chart;
     const {renderDOM} = llApi.util;
     const {MultiChartViewer}= llApi.ui;
 
-    params = Object.assign({chartId: uniqueChartId, viewerId: targetDiv}, params);
+    params = Object.assign({chartId: uniqueChartId(`${targetDiv}`), viewerId: targetDiv, chartType: 'plot.ly'}, params);
     dispatchChartAdd(params);
 
     renderDOM(targetDiv, MultiChartViewer,

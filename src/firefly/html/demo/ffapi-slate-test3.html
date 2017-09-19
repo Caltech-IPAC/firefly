@@ -191,31 +191,33 @@ Some unsupported plotly charts:
             firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'histContainer');
 
             var dataH = [
-                {name: 'w1mpro', marker: {color: 'rgba(153, 51, 153, 0.8)'}},
-                {name: 'w2mpro', marker: {color: 'rgba(102,153,0, 0.7)'}}
-            ];
-
-            var fireflyDataH = [
                 {
-                    dataType: 'fireflyHistogram',
-                    tbl_id: 'wiseCatTbl',
-                    options: {
-                        algorithm: 'fixedSizeBins',
-                        fixedBinSizeSelection: 'numBins',
-                        numBins: 30,
-                        columnOrExpr: 'w1mpro'
-                    }
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'wiseCatTbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 30,
+                            columnOrExpr: 'w1mpro'
+                        }
+                    },
+                    name: 'w1mpro',
+                    marker: {color: 'rgba(153, 51, 153, 0.8)'}
                 },
                 {
-                    dataType: 'fireflyHistogram',
-                    tbl_id: 'wiseCatTbl',
-                    options: {
-                        algorithm: 'fixedSizeBins',
-                        fixedBinSizeSelection: 'numBins',
-                        numBins: 40,
-                        columnOrExpr: 'w2mpro'   // same column but shifted
-                    }
-                }
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'wiseCatTbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 40,
+                            columnOrExpr: 'w2mpro'
+                        }
+                    },
+                    name: 'w2mpro',
+                    marker: {color: 'rgba(102,153,0, 0.7)'}}
             ];
 
             var layoutHist = {
@@ -224,8 +226,8 @@ Some unsupported plotly charts:
                 yaxis: {title: ''}
             };
 
-            firefly.getViewer().showPlot(
-                    {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH, fireflyData: fireflyDataH},
+            firefly.getViewer().showChart(
+                    {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH},
                     'histContainer');
         }
 
@@ -250,7 +252,7 @@ Some unsupported plotly charts:
                 yaxis: {tickfont:{size: 11, family: 'PT Sans Narrow'}}
             };
 
-            firefly.getViewer().showPlot(
+            firefly.getViewer().showChart(
                     {chartId: 'newBar', data: dataBar, layout: layoutBar}, 'barContainer');
         }
 
@@ -272,7 +274,7 @@ Some unsupported plotly charts:
                 showlegend: true
             };
 
-            firefly.getViewer().showPlot(
+            firefly.getViewer().showChart(
                     {chartId: 'newPie', data: dataPie, layout: layoutPie}, 'pieContainer');
         }
 
@@ -295,7 +297,7 @@ Some unsupported plotly charts:
                 yaxis: {title: 'dec'}
             };
 
-            firefly.getViewer().showPlot(
+            firefly.getViewer().showChart(
                     {chartId: 'newhist2dcontour', data: dataContour, layout: layoutContour}, 'h2dcontourContainer');
         }
 
@@ -330,7 +332,7 @@ Some unsupported plotly charts:
                 }
             };
 
-            firefly.getViewer().showPlot(
+            firefly.getViewer().showChart(
                     {chartId: 'newSurface', layout: layoutSurface, data: dataSurface },
                     'surfaceContainer');
         }
@@ -360,7 +362,7 @@ Some unsupported plotly charts:
                 titlefont: tfont
             };
 
-            firefly.getViewer().showPlot(
+            firefly.getViewer().showChart(
                     {chartId: 'newBox', layout: layoutBox, data: dataBox},
                     'boxContainer');
         }

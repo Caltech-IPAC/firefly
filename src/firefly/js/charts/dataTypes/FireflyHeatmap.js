@@ -1,11 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isUndefined} from 'lodash';
+import {get} from 'lodash';
 import {getTblById, getColumn, cloneRequest, doFetchTable, MAX_ROW} from '../../tables/TableUtil.js';
-import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
-import {getPointIdx, updateSelected} from '../ChartUtil.js';
+import {dispatchChartUpdate, getChartData} from '../ChartsCntlr.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
+import BrowserInfo from  '../../util/BrowserInfo.js';
 
 /**
  * This function creates table source entries to get firefly scatter and error data from the server
@@ -48,7 +48,7 @@ function fetchData(chartId, traceNum, tablesource) {
 
     const {tbl_id, options, mappings} = tablesource;
     const tableModel = getTblById(tbl_id);
-    const {request, highlightedRow, selectInfo} = tableModel;
+    const {request} = tableModel;
 
     const {xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax} = options;
     // min rows for decimation is 0
@@ -141,6 +141,7 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
         //[`data.${traceNum}.y0`]: y0,
         //[`data.${traceNum}.dx`]: dx,
         //[`data.${traceNum}.dy`]: dy,
+        [`data.${traceNum}.type`]: 'heatmap',
         [`data.${traceNum}.x`]: x,
         [`data.${traceNum}.y`]: y,
         [`data.${traceNum}.z`]: z,
@@ -170,7 +171,11 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
     if (!get(data, `${traceNum}.colorbar`)) {
         changes[`data.${traceNum}.colorbar.thickness`] = 10;
         changes[`data.${traceNum}.colorbar.outlinewidth`] = 0;
-        changes[`data.${traceNum}.colorbar.title`] = get(data, `${traceNum}.name`, 'pts');
+        // colorbar.title is causing hover text display issues in Firefox
+        // see https://github.com/plotly/plotly.js/issues/2003
+        if (!BrowserInfo.isFirefox()) {
+            changes[`data.${traceNum}.colorbar.title`] = get(data, `${traceNum}.name`, 'pts');
+        }
 
         const nbars = data.filter((d) => get(d, 'colorbar') && get(d, 'showscale', true)).length + 1;
 

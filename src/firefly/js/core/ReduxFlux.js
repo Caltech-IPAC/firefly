@@ -54,6 +54,7 @@ import PointSelection from '../drawingLayers/PointSelection.js';
 import StatsPoint from '../drawingLayers/StatsPoint.js';
 import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 import Catalog from '../drawingLayers/Catalog.js';
+import Artifact from '../drawingLayers/Artifact.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 
 import RegionPlot from '../drawingLayers/RegionPlot.js';
@@ -107,7 +108,8 @@ const actionCreators = new Map();
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
-                                                     Catalog, WebGrid, RegionPlot, MarkerTool, FootprintTool);
+                                                     Catalog, Artifact, WebGrid, RegionPlot,
+                                                     MarkerTool, FootprintTool);
 
 const cdtFactory= chartDataTypeFactory([DATATYPE_XYCOLS, DATATYPE_HISTOGRAM]);
 const chartsFactory= chartTypeFactory([PLOTLY_CHART, SCATTER_TBLVIEW, HISTOGRAM_TBLVIEW]);

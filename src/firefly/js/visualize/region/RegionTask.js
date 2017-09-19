@@ -126,7 +126,7 @@ export function regionDeleteLayerActionCreator(rawAction) {
         var dl = getDrawLayerById(getDlAry(), drawLayerId);
 
         if (dl && drawLayerId && pId) {
-            dispatchDetachLayerFromPlot(drawLayerId, pId, true, false, dl.destroyWhenAllDetached);
+            dispatchDetachLayerFromPlot(drawLayerId, pId, true, dl.destroyWhenAllDetached);
         } else {
             reportError(`${RegionIdErr} for deleting region layer`);
         }

@@ -5,7 +5,7 @@
 
 
 import {RequestType} from './RequestType.js';
-import {isString} from 'lodash';
+import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
 import {makeProjection} from './projection/Projection.js';
 import PlotState from './PlotState.js';
@@ -16,9 +16,8 @@ export const RDConst= {
     IMAGE_OVERLAY: 'IMAGE_OVERLAY',
     IMAGE_MASK: 'IMAGE_MASK',
     TABLE: 'TABLE',
-    SUPPORTED_DATATYPES: ['IMAGE_MASK']
-   // SUPPORTED_DATATYPES: ['IMAGE_MASK', 'IMAGE_OVERLAY']
-
+    SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE']
+   // SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE', 'IMAGE_OVERLAY']
 };
 
 export const PlotAttribute= {
@@ -179,10 +178,14 @@ export const PlotAttribute= {
  * @typedef {Object} RelatedData
  * @summary overlay data that is associated with the image data
  *
- * @prop {string} dataType one of 'IMAGE_OVERLAY', 'IMAGE_MASK', 'TABLE'
- * @prop {string} desc user description of the data
- * @prop {Object.<string, string>} searchParams map of search parameters to get the related data
- * @prop {Object.<string, string>} availableMask only used for makes key it sh bit number value is the description
+ * @prop {string} relatedDataId - a globally unique id made from the plotId and the dataKey - this is added by the client and does
+ * not come from the server
+ * @prop {string} dataKey - should be a unique string key an array of plot of RelatedData, that is all
+ * RelatedData array entries for a plot should have a unqiue dataKey
+ * @prop {string} dataType - one of 'IMAGE_OVERLAY', 'IMAGE_MASK', 'TABLE'
+ * @prop {string} desc - user description of the data
+ * @prop {Object.<string, string>} searchParams - map of search parameters to get the related data
+ * @prop {Object.<string, string>} availableMask - only used for masks- key is the bit number, value is the description
  *
  */
 
@@ -231,8 +234,7 @@ export const PlotAttribute= {
  */
 
 
-const relatedIdRoot= 'RelatedId-';
-var relatedId= 0;
+const relatedIdRoot= '-Related-';
 
 
 /**
@@ -251,15 +253,15 @@ export const WebPlot= {
     makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false) {
 
         const projection= makeProjection(wpInit.projectionJson);
-        var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
-        var zf= plotState.getZoomLevel();
+        const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
+        const zf= plotState.getZoomLevel();
 
-        var webPlot= {
+        const plot= {
             plotId,
             plotImageId     : plotId+'---NEEDS___INIT',
             serverImages    : wpInit.initImages,
             imageCoordSys   : CoordinateSys.parse(wpInit.imageCoordSys),
-            relatedData     : wpInit.relatedData,
+            relatedData     : null,
             plotState,
             projection,
             dataWidth       : wpInit.dataWidth,
@@ -286,14 +288,11 @@ export const WebPlot= {
             asOverlay
         };
 
-        if (webPlot.relatedData) {
-            webPlot.relatedData.forEach( (d) => {
-                d.relatedDataId= relatedIdRoot+relatedId;
-                relatedId++;
-            } );
+        if (wpInit.relatedData) {
+            plot.relatedData= wpInit.relatedData.map( (d) => clone(d,{relatedDataId: plotId+relatedIdRoot+d.dataKey}));
         }
 
-        return webPlot;
+        return plot;
     },
 
 
@@ -305,24 +304,14 @@ export const WebPlot= {
      * @return {*}
      */
     setPlotState(wpData,stateJson,serverImages) {
-        var plotState= PlotState.makePlotStateWithJson(stateJson);
-        var zf= plotState.getZoomLevel();
-        var screenSize= {width:wpData.dataWidth*zf, height:wpData.dataHeight*zf};
-        var plot= Object.assign({},wpData,{plotState, zoomFactor:zf,screenSize});
+        const plotState= PlotState.makePlotStateWithJson(stateJson);
+        const zf= plotState.getZoomLevel();
+        const screenSize= {width:wpData.dataWidth*zf, height:wpData.dataHeight*zf};
+        const plot= Object.assign({},wpData,{plotState, zoomFactor:zf,screenSize});
         if (serverImages) plot.serverImages= serverImages;
         return plot;
     },
 
-
-    /**
-     * Make a viewport object
-     * @param {number} x
-     * @param {number} y
-     * @param {number} width
-     * @param {number} height
-     * @return {ViewPort} the viewport
-     */
-    makeViewPort(x,y,width,height) { return  {dim:{width,height},x,y}; }
 
 };
 
@@ -334,7 +323,7 @@ export const WebPlot= {
  */
 export function isBlankImage(plot) {
     if (plot.plotState.isThreeColor()) return false;
-    var req= plot.plotState.getWebPlotRequest();
+    const req= plot.plotState.getWebPlotRequest();
     return (req && req.getRequestType()===RequestType.BLANK);
 }
 
@@ -346,32 +335,7 @@ export function isBlankImage(plot) {
  */
 export function clonePlotWithZoom(plot,zoomFactor) {
     if (!plot) return null;
-    var screenSize= {width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor};
+    const screenSize= {width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor};
     return Object.assign({},plot,{zoomFactor,screenSize});
-}
-
-
-export function isRotatable(plot) {
-    var proj= plot.getProjection();
-    if (!proj || proj.isWrappingProjection()) return false;
-    return Boolean(plot.attrributes[PlotAttribute.DISABLE_ROTATE_REASON]);
-}
-
-
-export function getNonRotatableReason(plot) {
-    if (isRotatable(plot)) return '';
-    var p= plot.projetion;
-    var reason= plot.attributes[PlotAttribute.DISABLE_ROTATE_REASON];
-    if (reason) {
-        return isString(reason) ? reason : `FITS image can't be rotated`; // eslint-disable-line
-    }
-    else {
-        if (p.isWrappingProjection()) {
-            return `FITS image with projection of type ${p.getProjectionName()} can't be rotated`;
-        }
-        else {
-            return `FITS image can't be rotated`;// eslint-disable-line
-        }
-    }
 }
 

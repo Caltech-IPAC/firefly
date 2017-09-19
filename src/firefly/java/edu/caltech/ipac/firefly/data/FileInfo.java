@@ -93,9 +93,18 @@ public class FileInfo implements HasAccessInfo, Serializable {
     public int getResponseCode() { return StringUtils.getInt(attributes.get(RESPONSE_CODE), 200); }
     public String getResponseCodeMsg() { return attributes.get(RESPONSE_CODE_MSG); }
 
+
+    public void addRelatedDataList(List<RelatedData> rDataList) {
+        if (rDataList==null) return;
+        for(RelatedData rd : rDataList) addRelatedData(rd);
+    }
+
+
     public void addRelatedData(RelatedData rData) {
-        if (relatedData==null) relatedData= new ArrayList<>();
-        relatedData.add(rData);
+        if (rData!=null) {
+            if (relatedData==null) relatedData= new ArrayList<>();
+            relatedData.add(rData);
+        }
     }
 
     public List<RelatedData> getRelatedData() { return relatedData; }

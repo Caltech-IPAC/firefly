@@ -39,7 +39,7 @@ function destroyDrawLayer(plotId)
     const dl = getDrawLayerByType(getDlAry(), typeId);
 
     if (isDrawLayerAttached(dl, plotId)) {
-        dispatchDetachLayerFromPlot(typeId, plotId, false, false);
+        dispatchDetachLayerFromPlot(typeId, plotId, false);
     }
     dispatchDestroyDrawLayer(typeId);
 }
@@ -272,7 +272,7 @@ class ImageAreaStatsTableRow extends PureComponent {
             dispatchAttachLayerToPlot(typeId, plotId);
         }
 
-        dispatchModifyCustomField(typeId, {worldPt}, plotId, false);
+        dispatchModifyCustomField(typeId, {worldPt}, plotId);
     }
 
     onMouseOut() {
@@ -286,7 +286,7 @@ class ImageAreaStatsTableRow extends PureComponent {
         const dl = getDrawLayerByType(getDlAry(), typeId);
 
         if (isDrawLayerAttached(dl, plotId)) {
-            dispatchModifyCustomField(typeId, {}, plotId, false);
+            dispatchModifyCustomField(typeId, {}, plotId);
         }
     }
 

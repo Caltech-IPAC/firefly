@@ -8,6 +8,8 @@
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.RelatedData;
+import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
@@ -26,6 +28,7 @@ import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -126,14 +129,18 @@ public class ServiceRetriever implements FileRetriever {
 
     private FileInfo get2MassPlot(WebPlotRequest request) throws FailedRequestException, GeomException {
         Circle circle = PlotServUtils.getRequestArea(request);
+        WorldPt wp = circle.getCenter();
         // this is really size not radius, i am just using Circle to hold the params
         float sizeInArcSec = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, circle.getRadius());
         if (sizeInArcSec > 500) sizeInArcSec = 500;
         if (sizeInArcSec < 50) sizeInArcSec = 50;
         circle = new Circle(circle.getCenter(), sizeInArcSec);
         String survey = request.getSurveyKey();
+        List<RelatedData> rdList= IbeQueryArtifact.get2MassRelatedData(wp, circle.getRadius()+"");
         FileInfo fi = getIrsaPlot(survey, circle, IrsaImageParams.IrsaTypes.TWOMASS);
-        return fi.copyWithDesc(get2MassDesc(survey));
+        fi=  fi.copyWithDesc(get2MassDesc(survey));
+        for(RelatedData rd : rdList) fi.addRelatedData(rd);
+        return fi;
     }
 
 
@@ -189,7 +196,10 @@ public class ServiceRetriever implements FileRetriever {
         params.setBand(r.getSurveyBand());
         params.setSize((float)circle.getRadius());
         FileInfo fi= getNetworkPlot(params);
-        return fi.copyWithDesc(getWiseDesc(r.getSurveyKey(),r.getSurveyBand()));
+        List<RelatedData> rdList= IbeQueryArtifact.getWiseRelatedData(wp, circle.getRadius()+"", r.getSurveyBand());
+        fi= fi.copyWithDesc(getWiseDesc(r.getSurveyKey(),r.getSurveyBand()));
+        fi.addRelatedDataList(rdList);
+        return fi;
     }
 
     /**

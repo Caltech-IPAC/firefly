@@ -8,6 +8,7 @@ import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.util.DataGroup;
@@ -176,7 +177,9 @@ public class IBE {
                 progressKey= sourceParams.get("ProgressKey");
                 plotId= sourceParams.get("plotId");
             }
-            return URLFileInfoProcessor.retrieveViaURL(url,dir, progressKey, plotId, null, null);
+            Map<String, String> identityCookies = ServerContext.getRequestOwner().getIdentityCookies();
+
+            return URLFileInfoProcessor.retrieveViaURL(url,dir, progressKey, plotId, null, identityCookies);
         } catch (DataAccessException e) {
             throw new IOException(e.getMessage(), e);
         }

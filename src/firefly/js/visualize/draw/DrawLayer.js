@@ -37,13 +37,11 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @prop {DrawingDef} drawingDef
  *
  * @prop {Boolean} canHighlight default: false,  if the layer can highlight
- * @prop {Boolean} canSelect  default: false      // todo if true the the default reducer should  handle it. point data only?
+ * @prop {Boolean} canSelect  default: false
  * @prop {Boolean} dataTooBigForSelection   default: false
- * @prop {Boolean} canFilter  default: false      // todo if true the the default reducer should  handle it
+ * @prop {Boolean} canFilter  default: false
  * @prop {Boolean} canUseMouse  default: false, drawing layer has mouse interaction, must set up actionTypeAry
- * @prop {Boolean} canSubgroup  default: false, can be used with subgrouping   // todo
  * @prop {Boolean} hasPerPlotData  default: false,  drawing layer produces different data for each plot
- * @prop {Boolean} asyncData   default: false  //todo
  * @prop {Boolean} isPointData  default: false
  * @prop {ColorChangeType} canUserChangeColor  default: ColorChangeType.STATIC
  * @prop {Boolean} canUserDelete  default: true
@@ -87,6 +85,7 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  *
  */
 
+
 /**
  *
  * @param {string} drawLayerId
@@ -100,9 +99,7 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @param {boolean} [options.canFilter]    drawing layer can be used with the filter controls,
  *                               only used with canSelect and isPointData
  * @param {boolean} [options.canUseMouse]  drawing layer has mouse interaction, must set up actionTypeAry
- * @param {boolean} [options.canSubgroup]  can be used with subgrouping
  * @param {boolean} [options.hasPerPlotData] drawing layer produces different data for each plot
- * @param {boolean} [options.asyncData] drawing layer uses async operations to get the data
  * @param {boolean} [options.isPointData] drawing layer only uses point data, @see PointDataObj.js
  * @param {boolean|string} [options.canUserChangeColor] drawing layer color can be changed by the user,
  *                                   can be DISABLE,DYNAMIC, or STATIC, default: STATIC
@@ -113,7 +110,7 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @param {object} drawingDef  the defaults that the drawer will use if not overridden by the object @see DrawingDef
  * @param {Array} actionTypeAry extra [actions] that are allow though to the drawing layer reducer
  * @param {object} mouseEventMap object literal with event to function mapping, see documentation below in object
- * @param {object} exclusive
+ * @param {object} exclusiveDef
  * @param {function} getCursor
  * @return {DrawLayer}
  */
@@ -126,7 +123,7 @@ function makeDrawLayer(drawLayerId,
                        mouseEventMap= {},
                        exclusiveDef= null,
                        getCursor= null) {
-    var drawLayer=  {
+    const drawLayer=  {
 
 
          // it section: The types of IDs
@@ -149,22 +146,18 @@ function makeDrawLayer(drawLayerId,
         plotIdAry: [],  // array of plotId that are layered
         visiblePlotIdAry: [], // array of plotId that are visible, only ids in this array are visible
         actionTypeAry,      // what actions that the reducer will allow through the drawing layer reducer
-        dataAvailable : true,  //todo
         drawingDef,
 
         groupingScope: GroupingScope.SUBGROUP, // only applies if a catalog has supportSubgroups
+        titleMatching: false,
 
 
            // The following are the options that the drawing layer supports.
            // should be set in the options parameter
         canHighlight: false,
-        canSelect: false,      // todo if true the the default reducer should  handle it. point data only?
         dataTooBigForSelection : false,
-        canFilter: false,      // todo if true the the default reducer should  handle it
         canUseMouse: false,
-        canSubgroup: false,    // todo
         hasPerPlotData: false,
-        asyncData : false,  //todo
         isPointData: false,
         canUserChangeColor: ColorChangeType.STATIC,
         canUserDelete: true,
@@ -206,7 +199,7 @@ function makeDrawLayer(drawLayerId,
 
 
            //
-           //     mouse type as the key and the function to call when activated @see mousestate
+           //     mouse type as the key and the function to call when activated @see MouseState
            //     if the value is an object the a it should define the properties: exclusive:boolean and func:function
            //     the function usually dispatch type functions, but can be anything
            //     value can be an action string. in that case flux.process is call to dispatch that action.
@@ -249,24 +242,4 @@ function makeDrawLayer(drawLayerId,
     };
 
     return Object.assign(drawLayer,options);
-}
-
-/**
- *
- * @param drawLayerId
- * @param plotId
- * @return if async and !dataAvailable return false otherwise return true
- */
-function isDataAvailable(drawLayerId, plotId) {
-
-}
-
-
-/**
- * may return null is !isDataAvailable()
- * @param drawLayerId
- * @param plotId
- */
-function getData(drawLayerId, plotId) {
-
 }

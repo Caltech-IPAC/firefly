@@ -11,13 +11,14 @@ import {getColValidator} from './ColumnOrExpression.jsx';
 import {getColValStats} from '../TableStatsCntlr.js';
 
 function getToolbarStates(chartId) {
-    const {selection, selected, activeTrace=0, tablesources, layout, data={}} = getChartData(chartId);
+    const {selection, selected, activeTrace=0, tablesources, layout, data=[]} = getChartData(chartId);
     const {tbl_id} = get(tablesources, [activeTrace], {});
     const {columns} = get(getTblById(tbl_id), ['tableData']) || {};
     const hasFilter = tbl_id && !isEmpty(get(getTblById(tbl_id), 'request.filters'));
     const hasSelection = !isEmpty(selection);
     const traceNames = data.map((t) => t.name).toString();
-    return {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected: !!selected,
+    const activeTraceType = get(data, `${activeTrace}.type`);
+    return {hasSelection, hasFilter, activeTrace, activeTraceType, tbl_id, hasSelected: !!selected,
             dragmode: get(layout, 'dragmode'), traceNames, columns};
 }
 
