@@ -314,7 +314,7 @@ export class WebPlotRequest extends ServerRequest {
     static makeISSARequest(worldPt, survey, sizeInDeg) {
         const req= this.makePlotServiceReq(ServiceType.ISSA, worldPt, survey, sizeInDeg);
         req.setTitle('ISSA '+survey);
-        req.setDrawingSubGroupId('irsa');
+        req.setDrawingSubGroupId('iras');
         return req;
     }
 
@@ -331,7 +331,7 @@ export class WebPlotRequest extends ServerRequest {
     static makeIRISRequest(worldPt, survey, sizeInDeg) {
         const req= this.makePlotServiceReq(ServiceType.IRIS, worldPt, survey, sizeInDeg);
         req.setTitle('IRIS '+survey);
-        req.setDrawingSubGroupId('irsa');
+        req.setDrawingSubGroupId('iras');
         return req;
     }
 
