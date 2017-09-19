@@ -7,14 +7,13 @@ import Enum from 'enum';
 import {get,isEmpty,isObject, flattenDeep,values, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
-import {CoordinateSys} from '../CoordSys.js';
 import {cloneRequest} from '../../tables/TableUtil.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
-        TABLE_REMOVE, TBL_RESULTS_ACTIVE, TABLE_SORT} from '../../tables/TablesCntlr.js';
+        TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
-import {doFetchTable, getTblById, getActiveTableId, getColumnIdx, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
@@ -22,6 +21,7 @@ import {computeCentralPointAndRadius} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {getCoverageRequest} from './CoverageChooser.js';
 import {logError} from '../../util/WebUtil.js';
+import {getCornersColumns, getCenterColumns} from '../../tables/TableInfoUtil.js';
 import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
@@ -29,8 +29,6 @@ import {getNextColor} from '../draw/DrawingDef.js';
 
 export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
-
-const DEF_CORNER_COLS= ['ra1;dec1', 'ra2;dec2', 'ra3;dec3', 'ra4;dec4'];
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
 const COVERAGE_RADIUS = 'COVERAGE_RADIUS';
@@ -528,58 +526,10 @@ function getCovColumnsForQuery(options, table) {
     return base+',ROWID';
 }
 
-function getCornersColumns(table) {
-    if (!table) return [];
-    const {tableMeta}= table;
-    if (!tableMeta) return [];
-    if (tableMeta[MetaConst.ALL_CORNERS]) {
-        return makeCoordColAry(tableMeta[MetaConst.ALL_CORNERS].split(','),table);
-    }
-    return makeCoordColAry(DEF_CORNER_COLS,table);
-}
-
-function getCenterColumns(table) {
-    if (!table) return [];
-    const {tableMeta:meta}= table;
-    if (!meta) return [];
-
-    if (meta[MetaConst.CENTER_COLUMN]) return makeCoordCol(meta[MetaConst.CENTER_COLUMN],table);
-    if (meta[MetaConst.CATALOG_COORD_COLS]) return makeCoordCol(meta[MetaConst.CATALOG_COORD_COLS],table);
-    const defCol= guessDefColumns(table);
-
-    return makeCoordCol(defCol,table);
-}
 
 
-
-function guessDefColumns(table) {
-    const {columns}= table.tableData;
-    const colList= columns.map( (c) => c.name.toLowerCase());
-    if (colList.includes('ra') && colList.includes('dec')) return 'ra;dec;EQ_J2000';
-    if (colList.includes('lon') && colList.includes('lat')) return 'lon;lat;EQ_J2000';
-    // if (colList.includes('crval1') && colList.includes('crval2')) return 'crval1;crval2;EQ_J2000';
-    return 'ra;dec;EQ_J2000';
-}
 
 function getQueryCenter(table) { // eslint-disable-line no-unused-vars  //todo not supported yet,
-}
-
-const makeCoordColAry= (cAry, table) => cAry.map( (c) => makeCoordCol(c,table)).filter( (cCol) => cCol);
-
-function makeCoordCol(def, table) {
-    const s = def.split(';');
-    if (s.length!== 3 && s.length!==2) return null;
-    const s0Idx= getColumnIdx(table,s[0]);
-    const s1Idx= getColumnIdx(table,s[1]);
-    if (s0Idx===-1 || s1Idx=== -1) return null;
-    return {
-        lonCol: s[0],
-        latCol: s[1],
-        lonIdx: s0Idx,
-        latIdx: s1Idx,
-        csys : s[2] ? CoordinateSys.parse(s[2]) : CoordinateSys.EQ_J2000
-    };
-    
 }
 
 function cleanUpOptions(options) {

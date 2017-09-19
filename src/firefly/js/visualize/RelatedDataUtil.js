@@ -6,8 +6,13 @@ import {isEmpty, difference,get, flatten, values, uniq} from 'lodash';
 import {primePlot, getPlotViewIdListInGroup, getPlotViewById, operateOnOthersInGroup} from './PlotViewUtil.js';
 import {WPConst} from './WebPlotRequest.js';
 import {RDConst} from './WebPlot.js';
-import {Operation} from './PlotState.js';
 import {visRoot, dispatchPlotMask, dispatchOverlayPlotChangeAttributes, dispatchPlotMaskLazyLoad} from './ImagePlotCntlr.js';
+import {dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from './DrawLayerCntlr.js';
+import Artifact from '../drawingLayers/Artifact.js';
+
+
+
+
 
 
 
@@ -21,19 +26,32 @@ import {visRoot, dispatchPlotMask, dispatchOverlayPlotChangeAttributes, dispatch
 /**
  * Find any related data that is associated with the PlotView that is supported has not be activated
  * (activated means turned into an overlay).
- * @param pv
+ * @param {PlotView} pv
  * @return {RelatedData[]} all the unactivated related data the the UI supports
  */
-export function findRelatedData(pv) {
+export function findUnactivatedRelatedData(pv) {
     const plot= primePlot(pv);
     if (!plot) return [];
-    const {plotState}= plot;
-    if (plotState.isFlippedY()) return [];
-    if (plotState.hasOperation(Operation.CROP)) return [];
-    const relatedData= flatten(pv.plots.map( (p) =>  p.relatedData))
-        .filter( (r,idx) => dataTypeMatches(r,idx,pv));
+    const relatedData= flatten(pv.plots
+        .map( (p) =>  p.relatedData))
+        .filter( (r,idx) => unactivatedDataTypeMatches(r,idx,pv));
     return relatedData;
 }
+
+
+/**
+ *
+ * @param {PlotView} pv
+ * @param {String} relatedDataId
+ * @return {Array.<RelatedData>}
+ */
+export function getRelatedDataById(pv, relatedDataId) {
+    if (!pv) return undefined;
+    return flatten(pv.plots.map( (p) =>  p.relatedData))
+        .find( (r) => r.relatedDataId===relatedDataId);
+}
+
+
 
 /**
  * For the related data that is passed check to see if is supported and has not been completely activated.
@@ -43,7 +61,7 @@ export function findRelatedData(pv) {
  * @param {PlotView} pv
  * @return {boolean}
  */
-function dataTypeMatches(r,idx, pv) {
+function unactivatedDataTypeMatches(r,idx, pv) {
     const dataType= get(r,'dataType');
     if (!RDConst.SUPPORTED_DATATYPES.includes(dataType)) return false;
 
@@ -52,6 +70,9 @@ function dataTypeMatches(r,idx, pv) {
         if (!opvAry.length) return true;
         const maskNumberAry= values(r.availableMask);
         if (maskNumberAry.length!==opvAry.length) return true;
+    }
+    else if (dataType===RDConst.TABLE) {
+        return false;
     }
     else {
         return true;
@@ -104,6 +125,7 @@ export function enableRelatedDataLayer(vr, pv, relatedData) {
         case RDConst.IMAGE_OVERLAY:
             break;
         case RDConst.TABLE:
+            enableRelatedDataLayerTableOverlay(pv,relatedData);
             break;
     }
 }
@@ -114,7 +136,7 @@ function enableRelatedDataLayerMaskInGroup(vr, pv,relatedData) {
     enableRelatedDataLayerMask(pv,relatedData);
 
     operateOnOthersInGroup(vr, pv, (aPv) => {
-        const rd= findRelatedData(aPv).filter( (aRd) => aRd.dataType===RDConst.IMAGE_MASK);
+        const rd= findUnactivatedRelatedData(aPv).filter( (aRd) => aRd.dataType===RDConst.IMAGE_MASK);
         if (rd[0]) enableRelatedDataLayerMask(aPv,rd[0]);
     } );
 }
@@ -140,7 +162,7 @@ function enableRelatedDataLayerMask(pv, relatedData) {
 }
 
 const maskIdRoot= 'AUTO_LOADED_MASK';
-var maskCnt= 0;
+let maskCnt= 0;
 
 function addMaskLayer(pv, maskNumber, hdu, fileKey, relatedData) {
 
@@ -158,7 +180,7 @@ function addMaskLayer(pv, maskNumber, hdu, fileKey, relatedData) {
 
 function makeMaskTitle(maskNumber, availableMask) {
     const titleRoot= 'bit # '+maskNumber;
-    var maskDesc= Object.keys(availableMask)
+    let maskDesc= Object.keys(availableMask)
         .filter( (k) => k.includes('MP'))
         .find( (k) => parseInt(availableMask[k])===maskNumber);
     if (maskDesc) {
@@ -175,13 +197,18 @@ function enableRelatedDataLayerImageOverlay(pv, relatedData) { // eslint-disable
     console.log('todo: ImageOverlay');
 }
 
-function enableRelatedDataLayerTableOverlay(pv, relatedData) {// eslint-disable-line no-unused-vars
-    //todo
-    console.log('todo: artifact overlay');
+function enableRelatedDataLayerTableOverlay(pv, relatedData) {
+    dispatchCreateDrawLayer(Artifact.TYPE_ID,{relatedDataId:relatedData.relatedDataId,
+                                              title:relatedData.desc,
+                                              dataKey: relatedData.dataKey,
+                                              plotId:pv.plotId} );
+
+    dispatchAttachLayerToPlot(relatedData.relatedDataId, pv.plotId, false, 'inherit');
 }
 
 
 /**
+ *
  * search matchOverlayPlotViews array and find any related data in the passed PlotView. Enable the layers
  * that match.
  * This function has side effect of dispatching actions
@@ -190,7 +217,7 @@ function enableRelatedDataLayerTableOverlay(pv, relatedData) {// eslint-disable-
  */
 export function enableMatchingRelatedData(pv, matchOverlayPlotViews) {
     const overTypes= uniq(matchOverlayPlotViews.map( (opv) => opv.opvType));
-    const relatedData= findRelatedData(pv).filter( (rd) => overTypes.includes(rd.dataType));
+    const relatedData= findUnactivatedRelatedData(pv).filter( (rd) => overTypes.includes(rd.dataType));
     if (!relatedData.length) return;
     relatedData.forEach( (r) => enableRelatedDataLayer(visRoot(), pv, r));
 
@@ -211,14 +238,14 @@ export function enableMatchingRelatedData(pv, matchOverlayPlotViews) {
  * Are the plot view overlays active
  * @param {VisRoot|PlotView} ref
  */
-export function isOverlayLayersActive(ref) {
+export function isImageOverlayLayersActive(ref) {
     if (!ref) return false;
-    var pv;
+    let pv;
     if (ref.plotViewAry) { // I was passed the visRoot, use either plot it or the active plot id
         pv= getPlotViewById(ref, ref.activePlotId);
     }
     else if (ref.plots) {
-       pv= ref;
+        pv= ref;
     }
     else {
         return false;

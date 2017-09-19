@@ -116,7 +116,8 @@ class ShapePickerWrapper extends PureComponent {
         const newDD = (symbolSize === drawingDef.size) ? clone(drawingDef, {symbol}) :
                                                          clone(drawingDef, {symbol, size: symbolSize});
 
-        dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId);
+        const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
+        dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
         this.setState({drawingDef: newDD});
 
     }
@@ -141,7 +142,8 @@ class ShapePickerWrapper extends PureComponent {
             const newDD = clone(drawingDef, {size: symbolSize});
 
             this.setState({size, validSize, drawingDef: newDD});
-            dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId);
+            const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
+            dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
         }
     }
 
@@ -166,7 +168,8 @@ class ShapePickerWrapper extends PureComponent {
             const symbolSize = DrawUtil.getSymbolSize(isize, isize, drawingDef.symbol);
             const newDD = clone(drawingDef, {size: symbolSize});
 
-            dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId);
+            const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
+            dispatchChangeDrawingDef(this.displayGroupId, newDD, this.plotId, dl.titleMatching);
             this.setState({drawingDef: newDD});
         }
     }
@@ -180,8 +183,9 @@ class ShapePickerWrapper extends PureComponent {
         const isize = Math.floor(parseFloat(size));
         const symbolSize = DrawUtil.getSymbolSize(isize, isize, drawingDef.symbol);
 
-        dispatchChangeDrawingDef(this.displayGroupId, clone(drawingDef, {symbol: drawingDef.symbol,
-                                                                         size: symbolSize}), this.plotId);
+        const dl = getDrawLayersByDisplayGroup(getDlAry(), this.props.displayGroupId);
+        dispatchChangeDrawingDef(this.displayGroupId, clone(drawingDef, {symbol: drawingDef.symbol, size: symbolSize}),
+                                                             this.plotId, dl.titleMatching);
 
     }
 

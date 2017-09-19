@@ -8,8 +8,8 @@ import {getPlotViewIdListInGroup, getPlotViewById, getDrawLayerById,
           getConnectedPlotsIds, getAllPlotViewId} from './PlotViewUtil.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import {without,union,isEmpty} from 'lodash';
-import {clone} from '../util/WebUtil.js';
+import {flatten, uniqBy, without,union,isEmpty} from 'lodash';
+import {clone, toBoolean} from '../util/WebUtil.js';
 
 import {selectAreaEndActionCreator} from '../drawingLayers/SelectArea.js';
 import {distanceToolEndActionCreator} from '../drawingLayers/DistanceTool.js';
@@ -34,7 +34,7 @@ export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
 export const SUBGROUP= 'subgroup';
 
 /** {Enum} can be 'GROUP', 'SUBGROUP', 'SINGLE' */
-export const GroupingScope= new Enum(['GROUP', 'SUBGROUP', 'SINGLE']);
+export const GroupingScope= new Enum(['STANDARD', 'SUBGROUP', 'SINGLE']);
 
 
 
@@ -91,7 +91,7 @@ export const  defaultRegionSelectStyle = RegionSelectStyle[0];
 
 
 export function getRegionSelectStyle(style = defaultRegionSelectStyle) {
-    var idx = RegionSelectStyle.findIndex((val) => {
+    const idx = RegionSelectStyle.findIndex((val) => {
         return val.toLowerCase() === style.toLowerCase();
     });
 
@@ -160,12 +160,10 @@ export default {
     REGION_SELECT,
     MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,
     FOOTPRINT_CREATE, FOOTPRINT_START, FOOTPRINT_END, FOOTPRINT_MOVE,
-    makeReducer, dispatchChangeVisibility,
-    dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
+    makeReducer,
+    dispatchCreateDrawLayer,
     dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
     dispatchAddRegionEntry, dispatchRemoveRegionEntry,
-    dispatchCreateMarkerLayer, dispatchCreateFootprintLayer
 };
 
 
@@ -203,17 +201,24 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
 
 
 /**
- * @summary change the visibility of the drawing layer
- * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
- * @param visible
- * @param plotId
- * @param useGroup If true, get all the plotViews in the group of the plotId, if false use only the one
- * @param subGroupId if defined the list of PlotViews affected will be further filtered by the subGroupId
+ * @summary change the visibility of one more drawing layers on a set of WebPlots.
+ * This function can match the drawing layers using drawLayerId, drawLayerTypeId and further
+ * match using the title of the draw layer. it can match hhe plots by plotId, then all the plots in the group, and then
+ * can limit the plots in the group using subgroupId
+ * @param {Object} p
+ * @param {string|string[]} p.id - make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param {boolean} p.visible
+ * @param {string} p.plotId - the plotId to change the visibility on, if used group is defined then visibility will be
+ * change for all the plotIds in the PlotGroup
+ * @param {boolean} [p.useGroup] - If true, get all the plotViews in the group of the plotId, if false use only the one
+ * @param {string} [p.subGroupId] - if defined the list of PlotViews affected will be filtered by the subGroupId. In other words
+ * it will only change the visibility on PlotView that have a matching subGroupId.
+ * @param {boolean} [p.matchTitle] -  matches any draw layers that have the same title as the one specified by the id
  *  @public
  *  @memberof firefly.action
  *  @function dispatchChangeVisibility
  */
-export function dispatchChangeVisibility(id,visible, plotId, useGroup= true, subGroupId= undefined) {
+export function dispatchChangeVisibility({id,visible, plotId, useGroup= true, subGroupId, matchTitle= false}) {
     let plotIdAry= useGroup ? getPlotViewIdListInGroup(visRoot(), plotId) : [plotId];
     if (subGroupId) {
         const vr= visRoot();
@@ -223,27 +228,28 @@ export function dispatchChangeVisibility(id,visible, plotId, useGroup= true, sub
         });
     }
     if (plotIdAry.length) {
-        getDrawLayerIdAry(dlRoot(),id,useGroup)
+        getDrawLayerIdAry(dlRoot(),id, matchTitle)
             .forEach( (drawLayerId) => {
                 flux.process({type: CHANGE_VISIBILITY, payload: {drawLayerId, visible, plotIdAry} });
             });
     }
 }
 
+
 /**
  * @summary change the drawing definition of the drawing layer
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param drawingDef
  * @param plotId
- * @param useGroup
+ * @param {boolean} [matchTitle] -  matches any draw layers that have the same title as the one specified by the id
  *  @public
  *  @memberof firefly.action
  *  @function dispatchChangeDrawingDef
  */
-export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) {
-    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+export function dispatchChangeDrawingDef(id,drawingDef, plotId, matchTitle= false) {
+    const plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
 
-    getDrawLayerIdAry(dlRoot(),id,useGroup)
+    getDrawLayerIdAry(dlRoot(),id, matchTitle)
         .forEach( (drawLayerId) => {
             flux.process({type: CHANGE_DRAWING_DEF, payload: {drawLayerId, drawingDef, plotIdAry}});
         });
@@ -253,18 +259,17 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) 
 /**
  * @summary create custom changes to the drawing layer
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
- * @param changes
- * @param plotId
- * @param useGroup
+ * @param {Object} changes any object of changes
+ * @param {string} [plotId] a plotId
  * @public
  * @memberof firefly.action
  * @function dispatchModifyCustomField
  */
-export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
+export function dispatchModifyCustomField(id,changes, plotId) {
 
-    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
 
-    getDrawLayerIdAry(dlRoot(),id,useGroup)
+    getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {
             flux.process({type: MODIFY_CUSTOM_FIELD, payload: {drawLayerId, changes, plotIdAry}});
         });
@@ -274,16 +279,15 @@ export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
  * @summary force to update the drawing layer
  * @param id
  * @param plotId
- * @param useGroup
  * @public
  * @memberof firefly.action
  * @function dispatchForceDrawLayerUpdate
  */
-export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
+export function dispatchForceDrawLayerUpdate(id,plotId) {
 
-    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+    const plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
 
-    getDrawLayerIdAry(dlRoot(),id,useGroup)
+    getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {
             flux.process({type: FORCE_DRAW_LAYER_UPDATE, payload: {drawLayerId, plotIdAry}});
         });
@@ -299,7 +303,7 @@ export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
  * @function dispatchDestroyDrawLayer
  */
 export function dispatchDestroyDrawLayer(id) {
-    var drawLayerId= getDrawLayerId(dlRoot(),id);
+    const drawLayerId= getDrawLayerId(dlRoot(),id);
     if (drawLayerId) {
         flux.process({type: DESTROY_DRAWING_LAYER, payload: {drawLayerId} });
     }
@@ -309,13 +313,25 @@ export function dispatchDestroyDrawLayer(id) {
  * @summary attach drawing layer to plot
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|string[]} plotId to attach this may by a string or an array of strings
- * @param attachAllPlot
+ * @param {boolean} attachAllPlot
+ * @param {boolean|string} visible - Can have three values: true: layer is attach visible, false: attach not-visible,
+ * value (string) 'inherit' layer is visible
  * @memberof firefly.action
  * @public
  * @function  dispatchAttachLayerToPlot
  */
-export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false) {
-    var plotIdAry;
+export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false, visible= true) {
+
+    let plotIdAry;
+    let layerVisible;
+
+    if (visible==='inherit') {
+        layerVisible= getDrawLayerIdAry(dlRoot(),id, true).some( (drawLayerId) =>
+                                   getDrawLayerById(dlRoot(),drawLayerId).visiblePlotIdAry.length);
+    }
+    else {
+        layerVisible= toBoolean(visible);
+    }
 
     if (Array.isArray(plotId)) {
         plotIdAry= plotId;
@@ -324,27 +340,25 @@ export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false) {
         plotIdAry = attachAllPlot ? getAllPlotViewId(visRoot(), plotId) : [plotId];
     }
 
-    getDrawLayerIdAry(dlRoot(),id,false)
+    getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {
-            flux.process({type: ATTACH_LAYER_TO_PLOT, payload: {drawLayerId, plotIdAry} });
+            flux.process({type: ATTACH_LAYER_TO_PLOT, payload: {drawLayerId, plotIdAry, visible:layerVisible} });
         });
 }
 
 
 /**
- * @summary Detatch drawing layer from the plot
+ * @summary Detach drawing layer from the plot
  * @param {string|string[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|string[]} plotId to attach this may by a string or an array of string
  * @param detachAllPlot
- * @param useLayerGroup
  * @param destroyWhenAllDetached if all plots are detached then destroy this plot
  * @public
  * @memberof firefly.action
  * @function dispatchDetachLayerFromPlot
  */
-export function dispatchDetachLayerFromPlot(id,plotId, detachAllPlot=false,
-                                            useLayerGroup=true, destroyWhenAllDetached=false) {
-    var plotIdAry;
+export function dispatchDetachLayerFromPlot(id,plotId, detachAllPlot=false, destroyWhenAllDetached=false) {
+    let plotIdAry;
 
     if (Array.isArray(plotId)) {
         plotIdAry= plotId;
@@ -353,7 +367,7 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachAllPlot=false,
         plotIdAry= detachAllPlot ? getAllPlotViewId(visRoot(), plotId) : [plotId];
     }
 
-    getDrawLayerIdAry(dlRoot(),id,useLayerGroup)
+    getDrawLayerIdAry(dlRoot(),id)
         .forEach( (drawLayerId) => {
             flux.process({type: DETACH_LAYER_FROM_PLOT, payload: {drawLayerId,plotIdAry, destroyWhenAllDetached} });
         });
@@ -366,11 +380,10 @@ export function dispatchDetachLayerFromPlot(id,plotId, detachAllPlot=false,
  * @returns {{selectStyle, selectColor, lineWidth}}
  */
 function validateSelectMode(selectMode) {
-    var {selectStyle = defaultRegionSelectStyle, selectColor = defaultRegionSelectColor, lineWidth = 0 } = selectMode;
+    const {selectStyle = defaultRegionSelectStyle, selectColor = defaultRegionSelectColor, lineWidth = 0 } = selectMode;
+    const regSelectStyle = getRegionSelectStyle(selectStyle);
 
-    selectStyle = getRegionSelectStyle(selectStyle);
-
-    return {selectStyle, selectColor, lineWidth};
+    return {selectStyle:regSelectStyle , selectColor, lineWidth};
 }
 
 /**
@@ -490,7 +503,7 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
 /**
  * @summary create drawing layer with footprint
  * @param {string} footprintId - id of the drawing layer
- * @param {string} layerTitle - title of the drawiing layer
+ * @param {string} layerTitle - title of the drawing layer
  * @param {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc.
  * @param {string} instrument - name of instrument for the footprint
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
@@ -507,20 +520,37 @@ export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint,
 }
 
 function getDrawLayerId(dlRoot,id) {
-    var drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerId);
+    let drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerId);
     if (!drawLayer) {
         drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerTypeId);
     }
     return drawLayer ? drawLayer.drawLayerId : null;
 }
 
-function getDrawLayerIdAry(dlRoot,id,useGroup) {
+/**
+ *
+ * @param dlRoot
+ * @param id - drawLayerId or drawLayerTypeId
+ * @param matchTitles
+ * @return {Array.<String>} the list of drawLayerIds
+ */
+function getDrawLayerIdAry(dlRoot,id, matchTitles= false) {
     const idAry= Array.isArray(id) ? id: [id];
-    return dlRoot.drawLayerAry
+    const dlAry= dlRoot.drawLayerAry
         .filter( (dl) => idAry
-            .filter( (id) => id===dl.drawLayerId || id===dl.drawLayerTypeId || (useGroup && id===dl.drawLayerGroupId))
-            .length>0)
-        .map(  (dl) => dl.drawLayerId);
+            .filter( (id) => id===dl.drawLayerId || id===dl.drawLayerTypeId)
+            .length>0);
+
+    let retDlAry= dlAry;
+    if (matchTitles) { //look for any other DrawLayers with titles that match the already found list of layers
+        const matchTitleAry=
+            uniqBy(flatten(dlAry
+                .map( (dl) => dlRoot.drawLayerAry
+                    .filter( (nextDl) => dl.title===nextDl.title && nextDl!==dl) )), 'drawLayerId');
+        retDlAry= [...dlAry, ...matchTitleAry];
+    }
+
+    return retDlAry.map(  (dl) => dl.drawLayerId);
 }
 
 
@@ -531,8 +561,8 @@ function getDrawLayerIdAry(dlRoot,id,useGroup) {
 function makeDetachLayerActionCreator(factory) {
     return (action) => {
         return (dispatcher) => {
-            var {drawLayerId}= action.payload;
-            var drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
+            const {drawLayerId}= action.payload;
+            const drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
             factory.onDetachAction(drawLayer,action);
             dispatcher(action);
         };
@@ -614,8 +644,8 @@ function makeReducer(factory) {
  * @ignore
  */
 function createDrawLayer(state,action) {
-    var {drawLayer}= action.payload;
-    var allowedActions= union(state.allowedActions, drawLayer.actionTypeAry);
+    const {drawLayer}= action.payload;
+    const allowedActions= union(state.allowedActions, drawLayer.actionTypeAry);
 
     return Object.assign({}, state,
         {allowedActions, drawLayerAry: [...state.drawLayerAry, drawLayer] });
@@ -629,7 +659,7 @@ function createDrawLayer(state,action) {
  * @ignore
  */
 function destroyDrawLayer(state,action) {
-    var {drawLayerId}= action.payload;
+    const {drawLayerId}= action.payload;
     return Object.assign({}, state,
         {drawLayerAry: state.drawLayerAry.filter( (c) => c.drawLayerId!==drawLayerId) });
 }
@@ -643,11 +673,11 @@ function destroyDrawLayer(state,action) {
  * @ignore
  */
 function deferToLayerReducer(state,action,dlReducer) {
-    var {drawLayerId}= action.payload;
-    var drawLayer= state.drawLayerAry.find( (dl) => drawLayerId===dl.drawLayerId);
+    const {drawLayerId}= action.payload;
+    const drawLayer= state.drawLayerAry.find( (dl) => drawLayerId===dl.drawLayerId);
 
     if (drawLayer) {
-        var newDl= dlReducer(drawLayer,action);
+        const newDl= dlReducer(drawLayer,action);
         if (newDl!==drawLayer) {
             return Object.assign({}, state,
                 {drawLayerAry: state.drawLayerAry.map( (dl) => dl.drawLayerId===drawLayerId ? newDl : dl) });
@@ -669,9 +699,9 @@ function deferToLayerReducer(state,action,dlReducer) {
  * @ignore
  */
 function determineAndCallLayerReducer(state,action,dlReducer,force) {
-    var newAry= state.drawLayerAry.map( (dl) => {
+    const newAry= state.drawLayerAry.map( (dl) => {
         if (force || (dl.actionTypeAry && dl.actionTypeAry.includes(action.type))) {
-            var newdl= dlReducer(dl,action);
+            const newdl= dlReducer(dl,action);
             return (newdl===dl) ? dl : newdl;  // check to see if there was a change
         }
         else {
@@ -687,16 +717,6 @@ function determineAndCallLayerReducer(state,action,dlReducer,force) {
     }
 }
 
-/*
-function clearPreattachLayer(state,action) {
-    var {drawLayerId}= action.payload;
-    var drawLayer= state.drawLayerAry.find( (dl) => drawLayerId===dl.drawLayerId);
-    if (drawLayer) return state;
-    if (!state.preAttachedTypes[drawLayer.drawLayerTypeId]) return state;
-    const preAttachedTypes= omit(state.preAttachedTypes,drawLayer.drawLayerTypeId);
-    return clone(state, {preAttachedTypes});
-}
-*/
 
 function preattachLayerToPlot(state,action) {
     const {drawLayerTypeId,plotIdAry}= action.payload;
@@ -710,12 +730,12 @@ function preattachLayerToPlot(state,action) {
 function deletePlotView(state,action, dlReducer) {
     const {plotId} = action.payload;
 
+    const drawLayerAry= state.drawLayerAry
+        .map( (dl) => dlReducer(dl, {type:DETACH_LAYER_FROM_PLOT, payload:{plotIdAry:[plotId]}}))
+        .filter( (dl) => !(dl.destroyWhenAllDetached && isEmpty(dl.plotIdAry)));
 
-    const drawLayerAry= state.drawLayerAry.map( (dl) => {
-        return dlReducer(dl, {type:DETACH_LAYER_FROM_PLOT, payload:{plotIdAry:[plotId]}});
-    } );
 
-    return Object.assign({},state, {drawLayerAry});
+    return clone(state, {drawLayerAry});
 }
 
 

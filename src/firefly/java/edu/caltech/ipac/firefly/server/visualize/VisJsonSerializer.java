@@ -86,6 +86,7 @@ public class VisJsonSerializer {
         }
         retObj.put("searchParams", new JSONObject(rData.getSearchParams()));
         retObj.put("desc", rData.getDesc());
+        retObj.put("dataKey", rData.getDataKey());
         return retObj;
     }
 

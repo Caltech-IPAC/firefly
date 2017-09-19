@@ -159,7 +159,12 @@ public class WebPlotReader {
             else {
                 List<List<RelatedData>> relatedDataList= investigateRelations(fd.getFile(),frAry);
                 for (int i = 0; (i < frAry.length); i++) {
-                    List<RelatedData> rd= relatedDataList!=null ? relatedDataList.get(i) : null;
+                    List<RelatedData> rd= null;
+                    if (relatedDataList!=null || fd.getRelatedData()!=null) {
+                        rd= new ArrayList<>();
+                        if (relatedDataList!=null)  rd.addAll(relatedDataList.get(i));
+                        if (fd.getRelatedData()!=null) rd.addAll(fd.getRelatedData());
+                    }
                     retval[i]= new FileReadInfo(originalFile, frAry[i], band, i, fd.getDesc(), uploadedName, rd, null);
                 }
             }
@@ -442,13 +447,13 @@ public class WebPlotReader {
                         if (!extType.equalsIgnoreCase("IMAGE")) {
                             if (frAry[i].getExtType().equalsIgnoreCase("MASK")) {
                                 RelatedData d= RelatedData.makeMaskRelatedData(f.getAbsolutePath(),
-                                        frAry[i].getImageHeader().maskHeaders, i);
+                                        frAry[i].getImageHeader().maskHeaders, i, "mask");
                                 relatedList.add(d);
                             }
                         }
                         if (extType.equalsIgnoreCase("VARIANCE")) {
                             RelatedData d= RelatedData.makeImageOverlayRelatedData(f.getAbsolutePath(),
-                                    "Variance", i);
+                                    "variance", "Variance", i);
                             relatedList.add(d);
                         }
                     }
