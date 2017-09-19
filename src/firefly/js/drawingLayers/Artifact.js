@@ -32,7 +32,7 @@ const defSymbolMap= {
     diff_spikes: {color: 'orange', symbol: DrawSymbol.DOT, size: 1},
     halos : {color: 'yellow', symbol: DrawSymbol.SQUARE, size: 3},
     ghost : {color: 'pink', symbol: DrawSymbol.DIAMOND, size: 3},
-    latents : {color: 'green', symbol: DrawSymbol.X, size: 3},
+    latents : {color: 'cyan', symbol: DrawSymbol.X, size: 3},
     unknown  : {color: 'blue', symbol: DrawSymbol.X, size: 3},
 };
 
