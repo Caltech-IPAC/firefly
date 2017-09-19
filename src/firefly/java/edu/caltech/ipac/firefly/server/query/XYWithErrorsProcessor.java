@@ -67,75 +67,60 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         DataType[] dataTypes = dg.getDataDefinitions();
 
         // create the array of getters, which know how to get double values
-        ArrayList<Col> colsLst = new ArrayList<>();
-        Col xCol = getCol(dataTypes, xColOrExpr, "x", false);
+        ArrayList<XYGenericProcessor.Col> colsLst = new ArrayList<>();
+        XYGenericProcessor.Col xCol = XYGenericProcessor.getCol(dataTypes, xColOrExpr, "x", false);
         colsLst.add(xCol);
-        colsLst.add(getCol(dataTypes, yColOrExpr, "y", false));
+        colsLst.add(XYGenericProcessor.getCol(dataTypes, yColOrExpr, "y", false));
 
         // columns for color and size maps
         if (!StringUtils.isEmpty(colorColOrExpr)) {
-            colsLst.add(getCol(dataTypes, colorColOrExpr, "color", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, colorColOrExpr, "color", true));
         }
         if (!StringUtils.isEmpty(sizeColOrExpr)) {
-            colsLst.add(getCol(dataTypes, sizeColOrExpr, "size", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, sizeColOrExpr, "size", true));
         }
 
 
-        Col sortCol = null;
+        XYGenericProcessor.Col sortCol = null;
         if (hasSortCol) {
             if (sortColOrExpr.equals(xColOrExpr)) {
                 sortCol = xCol;
             } else {
-                sortCol = getCol(dataTypes, sortColOrExpr, "sortBy", true);
+                sortCol = XYGenericProcessor.getCol(dataTypes, sortColOrExpr, "sortBy", true);
                 colsLst.add(sortCol);
             }
         }
 
         if (hasXError) {
-            colsLst.add(getCol(dataTypes, xErrColOrExpr, "xErr", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, xErrColOrExpr, "xErr", true));
         }
         if (hasXLowError) {
-            colsLst.add(getCol(dataTypes, xErrLowColOrExpr, "xErrLow", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, xErrLowColOrExpr, "xErrLow", true));
         }
         if (hasXHighError) {
-            colsLst.add(getCol(dataTypes, xErrHighColOrExpr, "xErrHigh", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, xErrHighColOrExpr, "xErrHigh", true));
         }
         if (hasYError) {
-            colsLst.add(getCol(dataTypes, yErrColOrExpr, "yErr", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, yErrColOrExpr, "yErr", true));
         }
         if (hasYLowError) {
-            colsLst.add(getCol(dataTypes, yErrLowColOrExpr, "yErrLow", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, yErrLowColOrExpr, "yErrLow", true));
         }
         if (hasYHighError) {
-            colsLst.add(getCol(dataTypes, yErrHighColOrExpr, "yErrHigh", true));
+            colsLst.add(XYGenericProcessor.getCol(dataTypes, yErrHighColOrExpr, "yErrHigh", true));
         }
 
-        Col[] cols = colsLst.toArray(new Col[colsLst.size()]);
+        XYGenericProcessor.Col[] cols = colsLst.toArray(new XYGenericProcessor.Col[colsLst.size()]);
 
         // create the array of output columns
-        DataType dt, dtSrc;
+        DataType dt;
         ArrayList<DataType> columnList = new ArrayList<>();
         dt = new DataType("rowIdx", Integer.class);
         dt.setFormatInfo(new DataType.FormatInfo(11)); // max num digits in integer, long - 20
         columnList.add(dt);
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
 
-        for (Col col : cols) {
-            if (col.getter.isExpression()) {
-                dt = new DataType(col.colname, col.colname, Double.class, DataType.Importance.HIGH, "", false);
-                DataType.FormatInfo fi = dt.getFormatInfo();
-                fi.setDataFormat("%.14g");
-                dt.setFormatInfo(fi);
-                columnList.add(dt);
-            } else {
-                dtSrc = dg.getDataDefintion(col.colname);
-                dt = dtSrc.copyWithNoColumnIdx(columnList.size());
-                dt.setMaxDataWidth(dtSrc.getMaxDataWidth());
-                dt.setFormatInfo(dtSrc.getFormatInfo());
-                columnList.add(dt);
-                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), col.colname));
-            }
-        }
+        XYGenericProcessor.createColumnsToList(columnList, dg, cols, colMeta);
         DataType columns [] = columnList.toArray(new DataType[columnList.size()]);
 
         // create the return data group
@@ -143,7 +128,7 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
 
         DataObject retrow;
         int ncols = cols.length;
-        Col col;
+        XYGenericProcessor.Col col;
         double val;
         String formatted;
         DataType dtRowIdx = columns[0];
@@ -178,7 +163,7 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         }
 
 
-        for (Col c : cols) {
+        for (XYGenericProcessor.Col c : cols) {
             colMeta.add(new DataGroup.Attribute(c.exprColName, c.colOrExpr));
         }
         if (xCol == sortCol) {
@@ -198,33 +183,5 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
         return outFile;
     }
 
-    private Col getCol(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) throws DataAccessException {
-        Col col = new Col(dataTypes, colOrExpr, exprColName, canBeNaN);
-        if (!col.getter.isValid()) {
-            throw new DataAccessException("Invalid column or expression: "+colOrExpr);
-        }
-        return col;
-    }
-
-
-    private static class Col {
-        DataObjectUtil.DoubleValueGetter getter;
-        String colname;
-        String exprColName;
-        String colOrExpr;
-        boolean canBeNaN;
-
-        Col(DataType[] dataTypes, String colOrExpr, String exprColName, boolean canBeNaN) {
-            this.colOrExpr = colOrExpr;
-            this.exprColName = exprColName;
-            this.getter = new DataObjectUtil.DoubleValueGetter(dataTypes, colOrExpr);
-            if (getter.isExpression()) {
-                this.colname = exprColName;
-            } else {
-                this.colname = colOrExpr;
-            }
-            this.canBeNaN = canBeNaN;
-        }
-    }
 }
 
