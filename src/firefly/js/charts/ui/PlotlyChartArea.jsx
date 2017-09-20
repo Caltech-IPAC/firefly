@@ -1,12 +1,14 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../../Firefly.js';
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 
 import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
 import {isScatter2d} from '../ChartUtil.js';
+
+
 
 export class PlotlyChartArea extends PureComponent {
 
@@ -63,7 +65,15 @@ export class PlotlyChartArea extends PureComponent {
             doingResize = true;
         }
         const showlegend = data.length > 1;
-        let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
+
+        // put the active trace after all inactive traces
+        let pdata = data.reduce((rdata, e, idx) =>  {
+            (idx !== activeTrace) && rdata.push(e);
+            return rdata;
+        }, []);
+
+        pdata.push(data[activeTrace]);
+        //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
         if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
             // highlight makes sense only for scatter at the moment
             // 3d scatter highlight and selected appear in front - not good: disable for the moment

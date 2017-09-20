@@ -7,7 +7,7 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep, merge} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -327,7 +327,9 @@ export function newTraceFrom(data, selIndexes, newTraceProps) {
     Object.assign(sdata, {showlegend: false, type: get(data, 'type', 'scatter'), mode: 'markers'});
 
     // the rowIdx doesn't exist for generic plotly chart case
-    if (!get(sdata, 'firefly.rowIdx') && get(sdata, 'x.length', 0) !== 0) {
+    if (isScatter2d(get(data, 'type', '')) &&
+        !get(sdata, 'firefly.rowIdx') &&
+        get(sdata, 'x.length', 0) !== 0) {
         const rowIdx = range(get(sdata, 'x.length')).map(String);
         set(sdata, 'firefly.rowIdx', rowIdx);
     }
@@ -472,6 +474,7 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
         const ds = data[traceNum] ? convertToDS(flattenObject(data[traceNum])) : {}; //avoid flattening arrays
         // table id can be a part of fireflyData too
         const tbl_id = get(data, `${traceNum}.tbl_id`) || get(fireflyData, `${traceNum}.tbl_id`);
+
         if (tbl_id) ds.tbl_id = tbl_id;
 
         // we use tblFilePath to see if the table has changed (sorted, filtered, etc.)
@@ -501,9 +504,12 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
 }
 
 // does the default depend on the chart type?
-export function applyDefaults(chartData={}) {
-    const chartType = get(chartData, ['data', '0', 'type']);
-    const noXYAxis = chartType && (chartType === 'pie');
+export function applyDefaults(chartData={}, resetColor = false) {
+    //const chartType = get(chartData, ['data', '0', 'type']);
+    //const noXYAxis = chartType && (chartType === 'pie');
+
+    const nonPieChart = isEmpty(chartData) || !has(chartData, 'data') || chartData.data.find((d) => get(d, 'type') !== 'pie');
+    const noXYAxis = Boolean(!nonPieChart);
 
     const defaultLayout = {
         hovermode: 'closest',
@@ -545,16 +551,50 @@ export function applyDefaults(chartData={}) {
 
     chartData.layout = merge(defaultLayout, chartData.layout);
 
+    chartData.data && chartData.data.forEach((d, idx) => {
+        d.name = setDefaultName(d, idx);
+
+        const type = get(d, 'type') || get(chartData, ['fireflyData', idx, 'dataType']);
+
+        if (idx === 0 && resetColor) {        // reset the color iterator
+            getNextTraceColor(true);
+            getNextTraceColorscale(true);
+        }
+
+        type && Object.entries(setDefaultColor(d, type)).forEach(([k, v]) => set(d, k, v));
+    });
 }
 
+
 // color-blind friendly colors
-const TRACE_COLORS = [  '#333333', '#ff3333', '#00ccff','#336600',
-                        '#9900cc', '#ff9933', '#009999', '#66ff33', '#cc9999',
-                        '#333333', '#b22424', '#008fb2', '#244700',
+export const TRACE_COLORS = [  '#333333', '#ff3333', '#00ccff', '#336600',
+                        '#9900cc', '#ff9933', '#009999', '#66ff33',
+                        '#cc9999', '#b22424', '#008fb2', '#244700',
                         '#6b008f', '#b26b24', '#006b6b', '#47b224', '8F6B6B'];
+export const TRACE_COLORSCALE = [  'Bluered', 'Blues', 'Earth', 'Electric', 'Greens',
+                                'Greys', 'Hot', 'Jet', 'Picnic', 'Portland', 'Rainbow',
+                                'RdBu', 'Reds', 'Viridis', 'YlGnBu', 'YlOrRd' ];
+
+export function *traceColorGenerator(colorList, init = 0) {
+    let nextIdx = init;
+
+    while (true) {
+        const result = yield (nextIdx === -1) ? '' : colorList[nextIdx%colorList.length];
+        result ? nextIdx = -1 : nextIdx++;
+    }
+}
+
+const nextTraceColor = traceColorGenerator(TRACE_COLORS);
+const nextTraceColorscale = traceColorGenerator(TRACE_COLORSCALE);
+const getNextTraceColor = (b) => nextTraceColor.next(b).value;
+const getNextTraceColorscale = (b) => nextTraceColorscale.next(b).value;
+
+
 export function getNewTraceDefaults(type='', traceNum=0) {
+    let   retV;
+
     if (type.includes(SCATTER)) {
-        return {
+        retV = {
             [`data.${traceNum}.type`]: type, //make sure trace type is set
             [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
             [`data.${traceNum}.marker.line`]: 'none',
@@ -563,20 +603,102 @@ export function getNewTraceDefaults(type='', traceNum=0) {
             ['layout.yaxis.range']: undefined //clear out fixed range
         };
     } else if (type.includes(HEATMAP)) {
-        return {
+        retV = {
             [`data.${traceNum}.showlegend`]: true,
             ['layout.xaxis.range']: undefined, //clear out fixed range
             ['layout.yaxis.range']: undefined //clear out fixed range
         };
     } else {
-        return {
+        retV = {
             [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
             [`data.${traceNum}.showlegend`]: true
         };
     }
+
+    const dataKey = `data.${traceNum}.`;
+    const data = Object.entries(retV).reduce((prev, [k, v]) => {
+        if (k.startsWith(dataKey)) {
+            set(prev, k.substring(dataKey.length), v);
+        }
+        return prev;
+    }, {type});
+
+
+    retV = Object.assign(retV,
+                        {[`${dataKey}.name`]: setDefaultName(data, traceNum)},
+                        setDefaultColor(data, type, traceNum));
+
+    return retV;
 }
 
+function setDefaultName(oneChartData, idx) {
+    const name = get(oneChartData, 'name');
+    return name ? name : `trace ${idx}`;
+}
 
+function setDefaultColor(data, type, idx) {
+    if (!type) return {};
+
+    const colorsOnTypes = {
+        bar: [['marker.color', 'error_x.color', 'error_y.color']],
+        fireflyHistogram: [['marker.color']],
+        box: [['marker.color', 'line.color']],
+        heatmap: [['colorscale']],
+        fireflyHeatmap: [['colorscale']],
+        histogram: [['marker.color', 'error_x.color', 'error_y.color']],
+        histogram2d: [['colorscale']],
+        area: [['marker.color']],
+        contour: [['colorscale' ]],
+        histogram2dcontour: [['colorscale']],
+        surface: [['colorscale']],
+        mesh3d: [['colorscale']],
+        chororpleth:  [['colorscale']],
+        scatter: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
+        fireflyScatter: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
+        scatter3d: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
+        scattergl: [['marker.color', 'line.color',  'textfont.color', 'error_x.color', 'error_y.color']],
+        scattergeo: [['marker.color', 'line.color', 'textfont.color']],
+        others: [['marker.color']]
+    };
+
+    const getColorSetting = (attGroup) => {
+        const colorSettingObj = {};
+
+        attGroup.forEach((oneColorGroup) => {
+            const [COLOR, COLORSCALE] = [0, 1];
+            const colorInfo = [{endstr: 'color', idx: COLOR, existingVal: '', next: getNextTraceColor},
+                               {endstr: 'colorscale', idx: COLORSCALE, existingVal: '', next: getNextTraceColorscale}];
+            const getColorType = (typePath) => {
+                return colorInfo.findIndex((colorType) => (typePath.endsWith(colorType.endstr)));
+            };
+            const noValSetAtts = oneColorGroup.filter((colorAtt) => {
+                const color = get(data, colorAtt);
+                if (color) {
+                    colorInfo[getColorType(colorAtt)].existingVal = color;
+                }
+
+                return !color;
+            });
+
+            if (noValSetAtts.length > 0) {
+
+                const defaultColors = colorInfo.map((oneColor) => {
+                    const attIdx = noValSetAtts.findIndex((oneAtt) => (oneAtt.endsWith(oneColor.endstr)));
+
+                    return (attIdx >= 0) ? (oneColor.existingVal || oneColor.next()): '';
+                });
+
+                noValSetAtts.forEach((oneAtt) => {
+                    const colorKey = isNil(idx) ? oneAtt : `data.${idx}.${oneAtt}`;
+                    colorSettingObj[colorKey] = (defaultColors[getColorType(oneAtt)]);
+                });
+            }
+        });
+        return colorSettingObj;
+    };
+    const colorList = Object.keys(colorsOnTypes).includes(type) ? colorsOnTypes[type] : colorsOnTypes.others;
+    return getColorSetting(colorList);
+}
 
 
 

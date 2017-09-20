@@ -323,10 +323,10 @@ function chartAdd(action) {
             const newPayload = handleFireflyTraceTypes(action.payload);
             const actionToDispatch = (newPayload === action.payload) ? action : Object.assign({}, action, {payload: newPayload});
             dispatch(actionToDispatch);
-            const {viewerId='main', data, fireflyData, fireflyLayout} = actionToDispatch.payload;
+            const {viewerId='main', data, fireflyData} = actionToDispatch.payload;
             dispatchAddViewer(viewerId,true,'plot2d',true);
             dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
-            handleTableSourceConnections({chartId, data, fireflyData, fireflyLayout});
+            handleTableSourceConnections({chartId, data, fireflyData});
         } else {
             dispatch(action);
         }
