@@ -404,8 +404,9 @@ function chartSelect(action) {
         // avoid updating chart twice
         // don't update before table select
         if (!chartTrigger) {
+            const hasSelected = !isEmpty(selIndexes);
             selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
-            dispatchChartUpdate({chartId, changes: {selected, selection: undefined}});
+            dispatchChartUpdate({chartId, changes: {hasSelected, selected, selection: undefined}});
         }
     };
 }
