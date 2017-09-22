@@ -3,8 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
+import edu.caltech.ipac.astro.ibe.BaseIbeDataSource;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
+import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
@@ -12,6 +14,7 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.IOException;
@@ -36,7 +39,9 @@ public class IBEUtils {
             ibeDataSource = new PtfIbeDataSource();
         } else if (mission.equals(TwoMassIbeDataSource.TWOMASS)) {
             ibeDataSource = new TwoMassIbeDataSource();
-        } else {
+        } else if (mission.equals(AtlasIbeDataSource.ATLAS)){
+            ibeDataSource = new AtlasIbeDataSource();
+        }else{
             throw new DataAccessException("Unsupported mission: "+mission);
         }
         ibeDataSource.initialize(paramMap);
@@ -129,6 +134,14 @@ public class IBEUtils {
             }
 
 
+        } else if (source instanceof AtlasIbeDataSource) {
+
+                // TODO : explain to me what is used for:
+                sortByCols.put("facility_name", "facility_name, instrument_name, band_name, file_type");
+                //TODO what is 'relatedCols' meant for?
+                // relatedCols = "fname";
+                colsToHide = new String[]{"in_row_id", "in_ra", "in_dec","ra_1", "dec_1",
+                    "ra_2", "dec_2", "ra_3", "dec_3", "ra_4", "dec_4"};
         }
 
         for (String sortCol : sortByCols.keySet()) {

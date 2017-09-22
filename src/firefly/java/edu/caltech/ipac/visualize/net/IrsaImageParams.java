@@ -7,7 +7,7 @@ import edu.caltech.ipac.util.Assert;
 
 public class IrsaImageParams extends BaseIrsaParams  {
 
-    public enum IrsaTypes { ISSA, TWOMASS, TWOMASS6, IRIS, MSX };
+    public enum IrsaTypes { ISSA, TWOMASS, TWOMASS6, IRIS, MSX, ATLAS };
 
     private String _band= "12";
     private float  _size= 5.0F;
@@ -37,6 +37,9 @@ public class IrsaImageParams extends BaseIrsaParams  {
              case IRIS :
                        retval= "iris-" + super.toString() + _band + _size;
                        break;
+             case ATLAS:
+                 retval = "atlas-"+ super.toString();
+                 break;
              default :
                  Assert.tst(false); break;
          }

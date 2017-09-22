@@ -34,7 +34,19 @@ public interface IbeDataSource {
     String getBaseFilesystemPath();
 
 
+    String getDataUrl(IbeDataParam param);
 
+    String getMetaDataUrl();
 
+    String getQueryUrl(IbeQueryParam param);
 
+    Map<String,String> getMulipleQueryParam(IbeQueryParam param);
+
+    String getSearchUrl();
+
+    String getCorners();
+
+    String getCenterCols();
+
+    String[] getColsToHide();
 }

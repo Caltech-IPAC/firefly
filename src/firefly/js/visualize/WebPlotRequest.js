@@ -15,7 +15,7 @@ import {parseResolver} from '../astro/net/Resolver.js';
 import {RangeValues} from './RangeValues.js';
 
 
-export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE'],
+export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'NONE'],
                                               { ignoreCase: true });
 export const TitleOptions= new Enum([
     'NONE',  // use what it in the title
@@ -425,6 +425,28 @@ export class WebPlotRequest extends ServerRequest {
         return req;
     }
 
+    //======================== Atlas =====================================
+    /**
+     *
+     * @param wp
+     * @param survey any atlas combination tables: schema.table, i.e. 'spitzer.seip_science'
+     * @param band any atlas 'band_name' column, i.e 'IRAC2' (which is 2.4 microns channel from IRAC instrument)
+     * @param filter extra filter for particular table, such as 'file_type = 'science' and fname like '%.mosaic.fits' or 'file_type = 'science' and principal=1'
+     * @param sizeInDeg  TODO: wee need to specify a default from the master table
+     * @return {WebPlotRequest}
+     */
+    static makeAtlasRequest(wp, survey, band, filter, sizeInDeg) {
+        const req = this.makePlotServiceReq(ServiceType.ATLAS, wp, survey, sizeInDeg);
+        req.setParam(C.SURVEY_KEY, 'ATLAS' + '.' + survey);
+        req.setParam("schema", survey.split(".")[0]);
+        req.setParam("table", survey.split(".")[1]);
+        req.setParam("filter", filter);
+        req.setParam(C.SURVEY_KEY_BAND, band + '');
+        req.setParam(C.SURVEY_KEY, survey);
+        req.setTitle(survey + "," + band);
+        req.setDrawingSubGroupId(survey); // 'spitzer.seip_science' TODO is it enough for subgroup identification?
+        return req;
+    }
     //======================== DSS or IRIS =====================================
 
     static makeDSSOrIRISRequest(wp, dssSurvey, IssaSurvey, sizeInDeg) {

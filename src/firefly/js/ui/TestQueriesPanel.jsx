@@ -90,6 +90,9 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='2Mass Search' id='2massImage'>
                                 <div>{render2MassSearch(fields)}</div>
                             </Tab>
+                            <Tab name='Atlas Search' id='atlasImage'>
+                                <div>{renderAtlasSearch(fields)}</div>
+                            </Tab>
                             {
                             <Tab name='Periodogram' id='periodogram'>
                                 <div>{renderPeriodogram(fields)}</div>
@@ -342,6 +345,43 @@ function renderWiseSearch(fields) {
     );
 }
 
+function renderAtlasSearch(fields) {
+
+// See value of band and instruments here as SEIP example:
+// https://irsadev.ipac.caltech.edu/IBE?table=spitzer.seip_science&POS=56.86909,24.10531
+    return (
+        <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+            <RadioGroupInputField
+                fieldKey='ds'
+                alignment='vertical'
+                initialState={{
+                    tooltip: 'Spacial Type',
+                    value: 'Cone'
+                }}
+                options={[
+                    {label: 'SEIP', value: 'seip'},
+                ]}
+            />
+            <RadioGroupInputField
+                fieldKey='band'
+                alignment='horizontal'
+                initialState={{
+                    tooltip: 'Return Band',
+                    value: 'IRAC1'
+                }}
+                options={[
+                    {label : 'IRAC 2.4', value: 'IRAC1'},
+                    {label : 'IRAC 3.6', value: 'IRAC2'},
+                    {label : 'IRAC 5.8', value: 'IRAC3'},
+                    {label : 'IRAC 8', value: 'IRAC4'},
+                    {label : 'MIPS 24', value: 'MIPS24'},
+                ]}
+            />
+        </div>
+    );
+
+}
+
 
 function render2MassSearch(fields) {
 
@@ -450,6 +490,8 @@ function onSearchSubmit(request) {
     }
     else if (request.Tabs === '2massImage') {
         do2Mass(request);
+    }else if (request.Tabs === 'atlasImage') {
+        doAtlas(request);
     }
     else if (request.Tabs === 'loadRegion') {
         doRegionLoad(request);
@@ -589,6 +631,24 @@ function do2Mass(request) {
             mission: 'twomass',
             ds: request.ds,
             band: request.band
+        });
+    dispatchTableSearch(reqParams);
+}
+
+function doAtlas(request) {
+    console.log('atlas', request);
+    const reqParams = makeTblRequest('ibe_processor', 'ATLAS-' + request[ServerParams.USER_TARGET_WORLD_PT],
+        {
+            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
+            mission: 'atlas',
+            ds: request.ds, // map the ENUM string key DS_KEY
+            mcenter:true,
+            /* TODO Atlas source has only seip ds defined, for all the ATLAS dataset, use instead:
+            schema:'spitzer',
+            table:'seip_science'
+            */
+            band: request.bands
+            // instrument: 'IRAC' // NOT USED YET
         });
     dispatchTableSearch(reqParams);
 }

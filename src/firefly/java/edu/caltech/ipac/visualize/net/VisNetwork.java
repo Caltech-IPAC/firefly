@@ -30,6 +30,8 @@ public class VisNetwork {
         File f;
         if (params.getType()== IrsaImageParams.IrsaTypes.TWOMASS) {
             f= getIbeImage(params);
+        }else if(params.getType()== IrsaImageParams.IrsaTypes.ATLAS){
+            f = getIbe2Image(params);
         }
         else {
             f= getTraditionIrsaImage(params);
@@ -54,7 +56,18 @@ public class VisNetwork {
 
         return f;
     }
-
+    private static File getIbe2Image(BaseIrsaParams params) throws FailedRequestException {
+        File f= CacheHelper.getFile(params);
+        if (f == null)  {          // if not in cache
+            try {
+                f= AtlasImageGetter.lowlevelGetIbe2Image(params);
+            } catch (IOException e) {
+                throw ResponseMessage.simplifyNetworkCallException(e);
+            }
+            CacheHelper.getFileCache().put(params,f);
+        }
+        return f;
+    }
 
     private static File getIbeImage(BaseIrsaParams params) throws FailedRequestException {
         File f= CacheHelper.getFile(params);

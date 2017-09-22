@@ -28,6 +28,35 @@ export const initPanelCatalogs = [
         'range': {'min': 1, 'max': 12.5, 'unit': 'deg'},
         'size': 5
     },
+    /*
+    {
+        'id':'atlas',
+        'Title':'Atlas',
+        'Symbol': 'ATLAS',
+        'CatalogId': 8,
+        'fields': ['types', 'bands'],
+        'types': {
+            'Title': 'Atlas:',
+            'Items': [
+                {'item':'spitzer.seip_science', 'id': 0, 'name': 'Spitzer SEIP'},
+                {'item':'spitzer.fls_irac', 'id': 1, 'name': 'Spitzer FLS'}
+                ],
+            'Default': 'spitzer.seip_science'
+        },
+        'bands': {
+            'Title': 'Choose Band:',
+            'Items': [
+                {'item':`'IRAC1'`, 'id': 0, 'name': 'IRAC 1'},
+                {'item':`'IRAC2'`, 'id': 1, 'name': 'IRAC 2'},
+                {'item':`'IRAC3'`, 'id': 2, 'name': 'IRAC 3'},
+                {'item':`'IRAC4'`, 'id': 3, 'name': 'IRAC 4'},
+                {'item':`'MIPS24'`, 'id': 4, 'name': 'MIPS 1'}],
+            'Default': `'IRAC1'`
+        },
+        'range': {'min':.008, 'max':5, 'unit': 'deg'},
+        'size':.5
+    },
+    */
     {
         'id':'2mass',
         'Title':'2MASS',
@@ -190,6 +219,7 @@ export const initPanelCatalogs = [
 
 
 const defaultOrder= [
+    'atlas',
     'iras',
     '2mass',
     'wise',

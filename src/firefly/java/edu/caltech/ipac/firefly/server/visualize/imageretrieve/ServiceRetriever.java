@@ -7,6 +7,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
+import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
@@ -18,10 +19,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.visualize.net.DssImageParams;
-import edu.caltech.ipac.visualize.net.IrsaImageParams;
-import edu.caltech.ipac.visualize.net.SloanDssImageParams;
-import edu.caltech.ipac.visualize.net.WiseImageParams;
+import edu.caltech.ipac.visualize.net.*;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.GeomException;
@@ -64,6 +62,9 @@ public class ServiceRetriever implements FileRetriever {
                 break;
             case WISE:
                 retval = getWisePlot(request);
+                break;
+            case ATLAS:
+                retval = getAtlasPlot(request);
                 break;
             default:
                 retval = null;
@@ -182,7 +183,22 @@ public class ServiceRetriever implements FileRetriever {
         return getNetworkPlot(params);
     }
 
-
+    private FileInfo getAtlasPlot(WebPlotRequest r) throws FailedRequestException, GeomException {
+        Circle circle = PlotServUtils.getRequestArea(r);
+        WorldPt wp = circle.getCenter();
+        wp = Plot.convert(wp, CoordinateSys.EQ_J2000);
+        AtlasImageParams params = new AtlasImageParams();
+        params.setRaJ2000(wp.getLon());
+        params.setDecJ2000(wp.getLat());
+        params.setBand(r.getSurveyBand());
+        params.setSchema(r.getParam(AtlasIbeDataSource.SCHEMA_KEY));
+        params.setTable(r.getParam(AtlasIbeDataSource.TABLE_KEY));
+        params.setInstrument(r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY));
+        params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
+        params.setSize((float)circle.getRadius());
+        FileInfo fi= getNetworkPlot(params);
+        return fi.copyWithDesc(getAtlasDesc(r.getParam(AtlasIbeDataSource.SCHEMA_KEY),r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY),r.getSurveyBand()));
+    }
 
 
     private FileInfo getWisePlot(WebPlotRequest r) throws FailedRequestException, GeomException {
@@ -328,6 +344,9 @@ public class ServiceRetriever implements FileRetriever {
     }
 
 
+    private static String getAtlasDesc(String schema, String instrument, String band) {
+        return schema + " "+instrument+ " " + band;
+    }
 
     private static String getWiseDesc(String survey, String band) {
         return "WISE "+survey+ " " + band;

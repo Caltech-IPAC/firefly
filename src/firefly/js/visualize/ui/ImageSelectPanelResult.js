@@ -80,7 +80,7 @@ function imagePlotOnBlank(request) {
 // image plot on IRAS, 2MASS, WISE, MSX, DSS, SDSS
 function imagePlotOnSurvey(crtCatalogId, request) {
 
-    const {IRAS, TWOMASS, WISE, MSX, DSS, SDSS}= getTabsIndexes();
+    const {ATLAS, IRAS, TWOMASS, WISE, MSX, DSS, SDSS}= getTabsIndexes();
     var wp = parseWorldPt(request.UserTargetWorldPt);
     var sym = getPanelCatalogs()[crtCatalogId].Symbol.toLowerCase();
 
@@ -89,7 +89,9 @@ function imagePlotOnSurvey(crtCatalogId, request) {
     var survey = get(request, keyMap[t]);
     var band = get(request, keyMap[b]);
     var sizeInDeg = parseFloat(request[keyMap['sizefield']]);
-
+    // TODO This should go soon by using 'principal' and file_type in IbeDataSource server side:
+    var filter = `file_type='science' and fname like '%.mosaic.fits'`; //extra filter?
+    var xtraFilter = getPanelCatalogs()[crtCatalogId].Symbol.toLowerCase();
     var wpr = null;
 
     switch(crtCatalogId) {
@@ -107,7 +109,9 @@ function imagePlotOnSurvey(crtCatalogId, request) {
         case TWOMASS:
             wpr = WebPlotRequest.make2MASSRequest(wp, survey, sizeInDeg);
             break;
-
+        case ATLAS:
+            wpr = WebPlotRequest.makeAtlasRequest(wp, survey, band,filter,sizeInDeg);
+            break;
         case WISE:
             if (band) {
                 wpr = WebPlotRequest.makeWiseRequest(wp, survey, band, sizeInDeg);

@@ -31,7 +31,7 @@ import java.util.List;
 public class WebPlotRequest extends ServerRequest {
 
     public enum
-            ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
+            ServiceType {IRIS, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
     public enum TitleOptions {NONE,  // use what it in the title
                               PLOT_DESC, // use the plot description key
                               FILE_NAME, // use the file name or analyze the URL and make a title from that

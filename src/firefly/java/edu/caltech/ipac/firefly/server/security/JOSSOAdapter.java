@@ -232,10 +232,12 @@ public class JOSSOAdapter implements SsoAdapter {
     public Map<String, String> getIdentities() {
         HashMap<String, String> idCookies = new HashMap<String, String>();
         RequestAgent http = ServerContext.getRequestOwner().getRequestAgent();
-        for (String name : ID_COOKIE_NAMES) {
-            String value = http.getCookieVal(name);
-            if (!StringUtils.isEmpty(value)) {
-                idCookies.put(name, value);
+        if(http!=null){
+            for (String name : ID_COOKIE_NAMES) {
+                String value = http.getCookieVal(name);
+                if (!StringUtils.isEmpty(value)) {
+                    idCookies.put(name, value);
+                }
             }
         }
         return idCookies.size() == 0 ? null : idCookies;

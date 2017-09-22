@@ -6,6 +6,7 @@
 import {get, isEmpty} from 'lodash';
 import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
+import {makeAtlasPlotRequest} from './AtlasRequestList.js';
 import {makeLsstSdssPlotRequest, makeLsstWisePlotRequest} from './LsstSdssRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
@@ -37,6 +38,12 @@ export const converters = {
             b3 : {color : null, title: 'Band 3'},
             b4 : {color : Band.BLUE, title: 'Band 4'}
         }
+    },
+    'atlas' : {
+        hasRelatedBands : true,
+        canGrid : true,
+        maxPlots : 5,
+        makeRequest : makeAtlasPlotRequest
     },
     'twomass' : {
         threeColor : true,
