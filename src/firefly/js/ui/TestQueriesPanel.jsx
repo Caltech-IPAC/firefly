@@ -351,23 +351,23 @@ function renderAtlasSearch(fields) {
 // https://irsadev.ipac.caltech.edu/IBE?table=spitzer.seip_science&POS=56.86909,24.10531
     return (
         <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-            <RadioGroupInputField
+            <CheckboxGroupInputField
                 fieldKey='ds'
                 alignment='vertical'
                 initialState={{
                     tooltip: 'Spacial Type',
-                    value: 'Cone'
+                    value: 'seip'
                 }}
                 options={[
                     {label: 'SEIP', value: 'seip'},
                 ]}
             />
-            <RadioGroupInputField
+            <CheckboxGroupInputField
                 fieldKey='band'
                 alignment='horizontal'
                 initialState={{
                     tooltip: 'Return Band',
-                    value: 'IRAC1'
+                    value: 'IRAC1,IRAC2,IRAC3,IRAC4,MIPS24'
                 }}
                 options={[
                     {label : 'IRAC 2.4', value: 'IRAC1'},
@@ -642,7 +642,7 @@ function doAtlas(request) {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
             mission: 'atlas',
             ds: request.ds, // map the ENUM string key DS_KEY
-            mcenter:true,
+            //mcenter:true, returned 1 image
             /* TODO Atlas source has only seip ds defined, for all the ATLAS dataset, use instead:
             schema:'spitzer',
             table:'seip_science'

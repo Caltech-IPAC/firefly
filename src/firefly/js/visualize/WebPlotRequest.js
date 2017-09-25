@@ -444,7 +444,7 @@ export class WebPlotRequest extends ServerRequest {
         req.setParam(C.SURVEY_KEY_BAND, band + '');
         req.setParam(C.SURVEY_KEY, survey);
         req.setTitle(survey + "," + band);
-        req.setDrawingSubGroupId(survey); // 'spitzer.seip_science' TODO is it enough for subgroup identification?
+        req.setDrawingSubGroupId('seip'); // 'spitzer.seip_science' TODO is it enough for subgroup identification?
         return req;
     }
     //======================== DSS or IRIS =====================================
