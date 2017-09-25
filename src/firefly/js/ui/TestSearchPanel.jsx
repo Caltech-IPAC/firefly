@@ -45,7 +45,7 @@ export const TestSearchPanel = (props) => {
                                           label : 'dbType:',
                                           labelWidth : 120
                                       }}
-                                       options={[{value: 'h2'},{value: 'sqlite'},{value: 'hsql'}]}
+                                       options={[{value: 'hsql'},{value: 'h2'},{value: 'sqlite'}]}
                                        multiple={false}
                                        fieldKey='dbType'
                     />

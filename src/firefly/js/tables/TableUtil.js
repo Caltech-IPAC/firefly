@@ -12,7 +12,7 @@ import {FilterInfo} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
 import {encodeServerUrl} from '../util/WebUtil.js';
-import {fetchTable, findTableIndex, selectedValues} from '../rpc/SearchServicesJson.js';
+import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.js';
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
@@ -426,7 +426,10 @@ export function findIndex(tbl_id, filterInfo) {
     if (idx >= 0) {
         return Promise.resolve(idx);
     } else {
-        return findTableIndex(tableModel.request, filterInfo);
+        const inclCols = 'ROWID';
+        return queryTable(tableModel.request, {filterInfo, inclCols}).then( (tableModel) => {
+            return get(getColumnValues(tableModel, inclCols), '0', -1);
+        });
     }
 }
 
@@ -522,11 +525,7 @@ export function getActiveTableId(tbl_group='main') {
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
         const colIdx = getColumnIdx(tableModel, colName);
-        if (colIdx < 0 && colName === 'ROW_IDX') {
-            return rowIdx;
-        } else {
-            return get(tableModel, ['tableData', 'data', rowIdx, colIdx]);
-        }
+        return get(tableModel, ['tableData', 'data', rowIdx, colIdx]);
     }
 }
 
@@ -714,7 +713,7 @@ export function processRequest(origTableModel, tableRequest, hlRowIdx) {
     var {data, columns} = nTable.tableData;
 
     if (filters || sortInfo) {      // need to track original rowId.
-        columns.push({name: 'ROW_IDX', type: 'int', visibility: 'hidden'});
+        columns.push({name: 'ORIG_IDX', type: 'int', visibility: 'hidden'});
         data.forEach((r, idx) => r.push(String(idx)));
     }
 

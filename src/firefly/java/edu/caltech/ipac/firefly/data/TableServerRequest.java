@@ -269,7 +269,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     }
 
     /**
-     * returns the parameters used to modified this dataset.  This includes filtering and sorting.
+     * returns the parameters used to modified this dataset.  This includes filtering, sorting, and decimate info.
      * @return
      */
     @NotNull
@@ -280,6 +280,9 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
         if (getSortInfo() != null) {
             params.add(new Param(SORT_INFO, getSortInfo().toString()));
+        }
+        if (getDecimateInfo() != null) {
+            params.add(new Param(DECIMATE_INFO, getDecimateInfo().toString()));
         }
         return params;
     }

@@ -302,36 +302,32 @@ public class GatorQuery extends BaseGator {
             if (param.getName().equals(CatalogRequest.DBMS)) req.setParam(param);
         }
 
-        SearchManager sm = new SearchManager();
-        DataGroupPart dgp = new DataGroupPart();
-
         try {
-            dgp = sm.getDataGroup(req);
-        } catch (Exception e) {
-        }
+            DataGroupPart dgp = new SearchManager().getDataGroup(req);
+            DataGroup dg = dgp.getData();
+            if (dg != null) {
+                for (int i = 0; i < dg.size(); i++) {
+                    DataObject dObj = dg.get(i);
+                    String tipStr = "";
 
-        DataGroup dg = dgp.getData();
-        if (dg != null) {
-            for (int i = 0; i < dg.size(); i++) {
-                DataObject dObj = dg.get(i);
-                String tipStr = "";
-
-                String descStr = (String) dObj.getDataElement("description");
-                if (!StringUtils.isEmpty(descStr) && !descStr.equalsIgnoreCase("null")) {
-                    tipStr += descStr;
-                }
-
-                String unitStr = (String) dObj.getDataElement("units");
-                if (!StringUtils.isEmpty(unitStr) && !unitStr.equalsIgnoreCase("null")) {
-                    if (tipStr.length() > 0) {
-                        tipStr += " ";
+                    String descStr = (String) dObj.getDataElement("DESCRIPTION");
+                    if (!StringUtils.isEmpty(descStr) && !descStr.equalsIgnoreCase("null")) {
+                        tipStr += descStr;
                     }
-                    tipStr += "(" + unitStr + ")";
-                }
 
-                String nameStr = (String) dObj.getDataElement("name");
-                meta.setAttribute(makeAttribKey(DESC_TAG, nameStr.toLowerCase()), tipStr);
+                    String unitStr = (String) dObj.getDataElement("UNITS");
+                    if (!StringUtils.isEmpty(unitStr) && !unitStr.equalsIgnoreCase("null")) {
+                        if (tipStr.length() > 0) {
+                            tipStr += " ";
+                        }
+                        tipStr += "(" + unitStr + ")";
+                    }
+
+                    String nameStr = (String) dObj.getDataElement("NAME");
+                    meta.setAttribute(makeAttribKey(DESC_TAG, nameStr.toLowerCase()), tipStr);
+                }
             }
+        } catch (Exception e) {
         }
     }
 

@@ -405,9 +405,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         int pageSize = request.getPageSize();
         DataGroup dg = DataGroupReader.read(inFile, true, false, true);
         // if this file does not contain ROW_IDX, add it.
-        if (!dg.containsKey(DataGroup.ROWID_NAME)) {
-            dg.addDataDefinition(DataGroup.makeRowId());
-            dg.addAttribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden");
+        if (!dg.containsKey(DataGroup.ROW_IDX)) {
+            dg.addDataDefinition(DataGroup.makeRowIdx());
+            dg.addAttribute("col." + DataGroup.ROW_IDX + ".Visibility", "hidden");
         }
         timer.printLog("read");
         timer.start("sort");

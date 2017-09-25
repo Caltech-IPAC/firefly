@@ -29,7 +29,7 @@ public class DataObject implements Serializable, Cloneable {
     }
 
     public int getRowIdx() {
-        DataType dtype = getDataType(DataGroup.ROWID_NAME);
+        DataType dtype = getDataType(DataGroup.ROW_IDX);
         if (dtype != null && dtype.getColumnIdx() < _data.length) {
             try {
                 return Integer.parseInt(String.valueOf(_data[dtype.getColumnIdx()]));
@@ -76,7 +76,7 @@ public class DataObject implements Serializable, Cloneable {
 
     public Object getDataElement(DataType fdt) {
         checkSize();
-        if (fdt != null && fdt.getKeyName().equals(DataGroup.ROWID_NAME)) {
+        if (fdt != null && fdt.getKeyName().equals(DataGroup.ROW_IDX)) {
             return getRowIdx();
         } else {
             return _data[fdt.getColumnIdx()];

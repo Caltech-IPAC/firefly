@@ -16,8 +16,7 @@ import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServCommand;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.TableDbUtil;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -25,6 +24,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
@@ -52,16 +52,19 @@ public class SearchServerCommands {
         }
     }
 
-    public static class TableFindIndex extends ServCommand {
+    public static class QueryTable extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            TableServerRequest tsr = params.getTableServerRequest();
-            List<String> filterInfo = Arrays.asList(params.getRequired("filterInfo").split(";"));
-            tsr.setPageSize(Integer.MAX_VALUE);
-            tsr.setStartIndex(0);
-            CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(filterInfo);
-            DataGroupPart dgp = new SearchManager().getDataGroup(tsr);
-            return String.valueOf(CollectionUtil.findIndex(dgp.getData().values(), filters));
+            TableServerRequest treq = (TableServerRequest) params.getTableServerRequest().cloneRequest();
+            treq.setParam(TableServerRequest.INCL_COLUMNS, params.getOptional(TableServerRequest.INCL_COLUMNS));
+            treq.setFilters(StringUtils.asList(params.getOptional(TableServerRequest.FILTERS), ","));
+            String sortInfo = params.getOptional(TableServerRequest.SORT_INFO);
+            if (!StringUtils.isEmpty(sortInfo)) {
+                treq.setSortInfo(SortInfo.parse(sortInfo));
+            }
+
+            DataGroupPart page = new SearchManager().getDataGroup(treq);
+            return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
         }
     }
 
@@ -75,13 +78,13 @@ public class SearchServerCommands {
                 List<String> cols = StringUtils.asList(params.getRequired("columnNames"), ",");
                 List<Integer> rows = StringUtils.convertToListInteger(params.getRequired("selectedRows"), ",");
                 // hitting the database directly.
-                String select = "select " + (cols.size() > 0 ? StringUtils.toString(cols) : "*");
-                String where = "where " + (rows.size() > 0 ? "ROWID in (" + StringUtils.toString(rows) + ")" : "");
-                String from = TableDbUtil.getDatasetID(treq);
-                from = "from " + (StringUtils.isEmpty(from) ? "data" : from);
+                String selCols = cols.size() > 0 ? StringUtils.toString(cols) : "*";
+                String tblName = EmbeddedDbUtil.getDatasetID(treq) ;
+                tblName = StringUtils.isEmpty(tblName) ? "data" : tblName ;
+                String inRows = rows.size() > 0 ? StringUtils.toString(rows) : "-1";
 
-                String sql = String.format("%s %s %s", select, from, where);
-                DataGroupPart page = TableDbUtil.getResults(treq, sql);
+                String sql = String.format("select %s from %s where %s in (%s)", selCols, tblName, DataGroup.ROW_NUM, inRows);
+                DataGroupPart page = EmbeddedDbUtil.getResults(treq, sql);
 
                 return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
             } catch (IOException e) {

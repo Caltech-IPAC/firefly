@@ -163,7 +163,7 @@ public class SearchManager {
 
         if (processor instanceof IpacTablePartProcessor) {
             // switch all ipac table processor to use DbProcessor  -- there is a small overhead, but it will get added features.
-            processor = new DbProcessorWrapper((IpacTablePartProcessor) processor);
+            processor = new EmbeddedDbProcessorWrapper((IpacTablePartProcessor) processor);
         }
 
         Assert.argTst(processor != null, "Search implementation is not defined for "+requestId);

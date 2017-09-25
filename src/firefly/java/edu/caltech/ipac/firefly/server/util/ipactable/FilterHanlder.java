@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -14,12 +13,9 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.IpacTableUtil;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,9 +47,9 @@ public class FilterHanlder extends BgIpacTableHandler {
             }
         }
         // if this file does not contain ROWID, add it.
-        if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROWID_NAME)) {
-            headers.add(DataGroup.makeRowId());
-            attributes.add(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
+        if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROW_IDX)) {
+            headers.add(DataGroup.makeRowIdx());
+            attributes.add(new DataGroup.Attribute("col." + DataGroup.ROW_IDX + ".Visibility", "hidden"));
         }
         dg = new DataGroup(null, headers);
     }

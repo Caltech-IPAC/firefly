@@ -6,7 +6,7 @@
  * Date: 3/5/12
  */
 
-import {get, set} from 'lodash';
+import {get, set, omitBy} from 'lodash';
 
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
@@ -65,18 +65,15 @@ export function fetchTable(tableRequest, hlRowIdx) {
 }
 
 /**
- * tableRequest will be sent to the server as a json string.
+ * a utility function used to query data from the given tableRequest without altering the table.
  * @param {TableRequest} tableRequest is a table request params object
- * @param {string} filterInfo filter info string used to find the first row that matches it.
+ * @param {TableRequest} queryRequest filters, sortInfo, and inclCols are used on the tableRequest to return the results
  * @returns {Promise.<number>}
  */
-export function findTableIndex(tableRequest, filterInfo) {
+export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
 
-    const params = {
-        [ServerParams.REQUEST]: JSON.stringify(tableRequest),
-        filterInfo
-    };
-    return doJsonRequest(ServerParams.TABLE_FIND_INDEX, params)
+    const params = Object.assign(omitBy({filters, sortInfo, inclCols}), {[ServerParams.REQUEST]: JSON.stringify(tableRequest)});
+    return doJsonRequest(ServerParams.QUERY_TABLE, params)
         .then( (index) => {
             return index;
         });

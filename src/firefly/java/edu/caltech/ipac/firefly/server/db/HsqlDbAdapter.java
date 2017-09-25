@@ -18,15 +18,16 @@ public class HsqlDbAdapter extends BaseDbAdapter{
     }
 
     public DbInstance getDbInstance(File dbFile) {
-        String dbUrl = String.format("jdbc:hsqldb:file:%s;sql.syntax_ora=true;hsqldb.cache_rows=1000000;hsqldb.cache_size=1048576", dbFile.getPath());
-        return new DbInstance(false, null, dbUrl, null, null, "org.hsqldb.jdbc.JDBCDriver", getName());
+        String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.cache_size=256000;hsqldb.log_size=256;sql.syntax_ora=true", dbFile.getPath());
+        return new EmbeddedDbInstance(getName(), dbUrl, "org.hsqldb.jdbc.JDBCDriver");
+    }
+
+    public File getStorageFile(File dbFile) {
+        return dbFile == null ? null : new File(dbFile.getParent(), dbFile.getName() + ".log");
     }
 
     public String createTableFromSelect(String tblName, String selectSql) {
         return String.format("CREATE TABLE IF NOT EXISTS %s AS (%s) WITH DATA", tblName, selectSql);
     }
 
-    public String translateSql(String sql) {
-        return sql.replaceAll("ROWID", "ROWNUM");
-    }
 }

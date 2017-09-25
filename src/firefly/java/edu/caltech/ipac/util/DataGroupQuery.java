@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -771,7 +770,7 @@ public class DataGroupQuery {
             _colNameIsExpression = false;
             _optype = optype;
             _compareTo = compareTo == null || compareTo.toLowerCase().equals("null") ? "" : compareTo.toLowerCase();
-            _isNumber = _colName != null && _colName.equals(DataGroup.ROWID_NAME) ? true : isNumber;
+            _isNumber = _colName != null && _colName.equals(DataGroup.ROW_IDX) ? true : isNumber;
             if (_optype.equals(OpType.IN)) {
                 String v = _compareTo.replaceAll("[(|)|\"|']", "");
                 String[] vals = v.split(",");
@@ -794,7 +793,7 @@ public class DataGroupQuery {
 
         @Override
         public boolean isRowIndexBased() {
-            return _colName != null && _colName.equals(DataGroup.ROWID_NAME);
+            return _colName != null && _colName.equals(DataGroup.ROW_IDX);
         }
 
         public boolean accept(DataObject dataObject) {
@@ -810,7 +809,7 @@ public class DataGroupQuery {
                 }
                 return isTrue(_expression.getValue(), _optype, Double.parseDouble(_compareTo));
             }
-            Object val = _colName.equals(DataGroup.ROWID_NAME) ? dataObject.getRowIdx() : dataObject.getDataElement(_dataType);
+            Object val = _colName.equals(DataGroup.ROW_IDX) ? dataObject.getRowIdx() : dataObject.getDataElement(_dataType);
             val = val == null || val.toString().toLowerCase().equals("null") ? "" : val;
             if (_optype.equals(OpType.LIKE)) {
                 return String.valueOf(val).toLowerCase().indexOf(_compareTo) >= 0;
@@ -871,7 +870,7 @@ public class DataGroupQuery {
 
         private void ensureType(DataObject data) {
 
-            if (_colName != null && _colName.equals(DataGroup.ROWID_NAME)) {
+            if (_colName != null && _colName.equals(DataGroup.ROW_IDX)) {
                 return;
             }
 

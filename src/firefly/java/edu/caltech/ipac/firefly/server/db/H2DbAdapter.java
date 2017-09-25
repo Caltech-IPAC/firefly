@@ -19,7 +19,7 @@ public class H2DbAdapter extends BaseDbAdapter{
 
     public DbInstance getDbInstance(File dbFile) {
         String dbUrl = String.format("jdbc:h2:%s;CACHE_SIZE=1048576;LOG=0;UNDO_LOG=0;MVCC=true", dbFile.getPath());
-        return new DbInstance(false, null, dbUrl, null, null, "org.h2.Driver", getName());
+        return new EmbeddedDbInstance(getName(), dbUrl, "org.h2.Driver");
     }
 
     public File getStorageFile(File dbFile) {
@@ -30,7 +30,4 @@ public class H2DbAdapter extends BaseDbAdapter{
         return String.format("CREATE TABLE IF NOT EXISTS %s AS (%s)", tblName, selectSql);
     }
 
-    public String translateSql(String sql) {
-        return sql.replaceAll("ROWID", "ROWNUM");
-    }
 }

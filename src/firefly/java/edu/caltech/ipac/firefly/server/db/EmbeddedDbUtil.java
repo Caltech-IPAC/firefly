@@ -4,17 +4,17 @@
 package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.util.DataSetParser;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,18 +28,22 @@ import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.firefly.util.DataSetParser.*;
-import static edu.caltech.ipac.util.DataGroup.ROWID_NAME;
+import static edu.caltech.ipac.util.DataGroup.ROW_IDX;
+import static edu.caltech.ipac.util.DataGroup.ROW_NUM;
 
 /**
  * @author loi
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
-public class TableDbUtil {
+public class EmbeddedDbUtil {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
     /**
@@ -133,11 +137,13 @@ public class TableDbUtil {
             JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", datasetID));
         } catch (Exception e) {
             // does not exists.. create table from orignal 'data' table
+            List<String> cols = JdbcFactory.getSimpleTemplate(dbInstance).query("select cname from DD", (rs, i) -> rs.getString(1));
             String wherePart = dbAdapter.wherePart(treq);
             String orderBy = dbAdapter.orderByPart(treq);
 
-            String datasetSql = String.format("select * from data %s %s", wherePart, orderBy);
-            String sql = dbAdapter.createTableFromSelect(getDatasetID(treq), datasetSql);
+            String datasetSql = String.format("select %s, %s from data %s %s", StringUtils.toString(cols), DataGroup.ROW_IDX, wherePart, orderBy);
+            String datasetSqlWithIdx = String.format("select b.*, (ROWNUM-1) as %s from (%s) as b", DataGroup.ROW_NUM, datasetSql);
+            String sql = dbAdapter.createTableFromSelect(getDatasetID(treq), datasetSqlWithIdx);
             JdbcFactory.getSimpleTemplate(dbInstance).update(sql);
         }
 
@@ -148,11 +154,6 @@ public class TableDbUtil {
         return ServerContext.convertToFile(treq.getMeta(TBL_FILE_PATH));
     }
 
-    public static File getStorageFile(TableServerRequest treq) {
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        return dbAdapter.getStorageFile(getDbFile(treq));
-    }
-
     public static void setDbMetaInfo(TableServerRequest treq, DbAdapter dbAdapter, File dbFile) {
         treq.setMeta(TBL_FILE_PATH, ServerContext.replaceWithPrefix(dbFile));
         treq.setMeta(TBL_FILE_TYPE, dbAdapter.getName());
@@ -161,7 +162,7 @@ public class TableDbUtil {
     @NotNull
     public static String getDatasetID(TableServerRequest treq) {
         String id = StringUtils.toString(treq.getDataSetParam(), "|");
-        return StringUtils.isEmpty(id) ? "" : "ds_" + DigestUtils.md5Hex(id);
+        return StringUtils.isEmpty(id) ? "" : "view_" + DigestUtils.md5Hex(id);
     }
 
     public static DataGroupPart getResults(TableServerRequest treq, String sql) {
@@ -178,23 +179,17 @@ public class TableDbUtil {
 
     public static int createDataTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String tblName) {
 
-        boolean insertRowId = insertRowIdIfNeeded(dg);
+        DataType[] colsAry = makeDbCols(dg);
         int totalRows = dg.size();
 
-        String createDataSql = dbAdapter.createDataSql(dg.getDataDefinitions(), tblName);
+        String createDataSql = dbAdapter.createDataSql(colsAry, tblName);
         logger.briefDebug("createDataSql:" + createDataSql);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createDataSql);
-        DataType rowid = dg.getDataDefintion(ROWID_NAME);
-        for(int i = 0; i < dg.size(); i++) {
-            DataObject row = dg.get(i);
-            if (insertRowId) {
-                row.setDataElement(rowid, i);
-            }
-        }
-        String[] var = new String[dg.getDataDefinitions().length];
+
+        String[] var = new String[colsAry.length];
         Arrays.fill(var , "?");
 
-        String insertDataSql = dbAdapter.insertDataSql(dg.getDataDefinitions(), tblName);
+        String insertDataSql = dbAdapter.insertDataSql(colsAry, tblName);
         logger.briefDebug("insertDataSql:" + insertDataSql);
 
 
@@ -226,7 +221,7 @@ public class TableDbUtil {
         // insert DD info into the results
         try {
             String ddSql = dbAdapter.getDDSql();
-            jdbc.query(ddSql, (rs, i) -> TableDbUtil.insertDD(dg, rs));
+            jdbc.query(ddSql, (rs, i) -> EmbeddedDbUtil.insertDD(dg, rs));
         } catch (Exception e) {
             // ignore.. may not have DD table
         }
@@ -234,7 +229,7 @@ public class TableDbUtil {
         // insert table meta info into the results
         try {
             String metaSql = dbAdapter.getMetaSql();
-            jdbc.query(metaSql, (rs, i) -> TableDbUtil.insertMeta(dg, rs));
+            jdbc.query(metaSql, (rs, i) -> EmbeddedDbUtil.insertMeta(dg, rs));
         } catch (Exception e) {
             // ignore.. may not have meta table
         }
@@ -247,10 +242,16 @@ public class TableDbUtil {
 //====================================================================
 
     private static void doTableLoad(JdbcTemplate jdbc, String insertDataSql, DataGroup data) {
+
         jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                Object[] r = data.get(i).getData();
-                for (int cidx = 0; cidx < r.length; cidx++) ps.setObject(cidx+1, r[cidx]);
+                Object[] row = data.get(i).getData();
+                Object[] rowWithIdx = new Object[ row.length + 2];
+                System.arraycopy(row, 0, rowWithIdx, 0, row.length);
+                rowWithIdx[row.length] = i;
+                rowWithIdx[row.length+1] = i;
+
+                for (int cidx = 0; cidx < rowWithIdx.length; cidx++) ps.setObject(cidx+1, rowWithIdx[cidx]);
             }
             public int getBatchSize() {
                 return data.size();
@@ -279,7 +280,7 @@ public class TableDbUtil {
 
     public static void createDDTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter) {
 
-        insertRowIdIfNeeded(dg);
+        makeDbCols(dg);
         String createDDSql = dbAdapter.createDDSql(dg.getDataDefinitions());
         logger.debug("createDDSql:" + createDDSql);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createDDSql);
@@ -291,7 +292,7 @@ public class TableDbUtil {
             width = width > 0 ? width : dt.getFormatInfo().getWidth();
             String format = getStrVal(meta, FORMAT_TAG, dt, null);
             format = format == null ? dt.getFormatInfo().getDataFormatStr() : format;
-            String visi = dt.getKeyName().equals(ROWID_NAME) ? VISI_HIDDEN :
+            String visi = dt.getKeyName().equals(ROW_IDX) ? VISI_HIDDEN :
                             getStrVal(meta, VISI_TAG, dt, VISI_SHOW);
 
             data.add( new Object[]
@@ -314,12 +315,17 @@ public class TableDbUtil {
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
 
-    private static boolean insertRowIdIfNeeded(DataGroup dg) {
-        if (dg.getDataDefintion(ROWID_NAME) == null) {
-            dg.addDataDefinition(DataGroup.makeRowId());
-            return true;
+    private static DataType[] makeDbCols(DataGroup dg) {
+        DataType[] cols = new DataType[dg.getDataDefinitions().length + 2];
+        if (dg.getDataDefintion(ROW_IDX) == null) {
+            logger.error("Datagroup should not have ROW_IDX in it at the start.");
         }
-        return false;
+        System.arraycopy(dg.getDataDefinitions(), 0, cols, 0, cols.length-2);
+        cols[cols.length-2] = DataGroup.makeRowIdx();
+        cols[cols.length-1] = DataGroup.makeRowNum();
+        dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, ROW_IDX), DataSetParser.VISI_HIDDEN);
+        dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, ROW_NUM), DataSetParser.VISI_HIDDEN);
+        return cols;
     }
 
     private static String getStrVal(Map<String, DataGroup.Attribute> meta, String tag, DataType col, String def) {

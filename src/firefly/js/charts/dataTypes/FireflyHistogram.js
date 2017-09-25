@@ -143,7 +143,7 @@ function validateData(histogramData, logScale) {
         });
         if (histogramData) {
             for (var i = 0; i < histogramData.length; i++) {
-                if (histogramData[i].length !== 3) {
+                if (histogramData[i].length < 3) {
                     logError(`Invalid histogram data in row ${i} [${histogramData[i]}]`);
                     valid = false;
                 } else if (histogramData[i][1]>histogramData[i][2]) {

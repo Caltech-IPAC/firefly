@@ -26,14 +26,6 @@ public interface DbAdapter {
     String getName();
 
     /**
-     * Some database may store the data in a different file than from what
-     * treqed in the connection string.
-     * @param dbFile
-     * @return the storage file given the file in the connection string
-     */
-    File getStorageFile(File dbFile);
-
-    /**
      * @param dbFile
      * @return a new DbInstance for the given dbFile
      */
@@ -75,7 +67,7 @@ public interface DbAdapter {
 //
 //====================================================================
 
-    static String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", SQLITE);
+    static String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", HSQL);
 
     static DbAdapter getAdapter(TableServerRequest treq) {
         return getAdapter(treq.getMeta(TBL_FILE_TYPE));
@@ -91,7 +83,7 @@ public interface DbAdapter {
             case HSQL:
                 return new HsqlDbAdapter();
             default:
-                return new SqliteDbAdapter();   // when an unrecognized type is given.
+                return new HsqlDbAdapter();   // when an unrecognized type is given.
         }
     }
 

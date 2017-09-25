@@ -17,10 +17,14 @@ public class SqliteDbAdapter extends BaseDbAdapter {
 
     public DbInstance getDbInstance(File dbFile) {
         String dbUrl = String.format("jdbc:sqlite:%s", dbFile.getPath());
-        return new DbInstance(false, null, dbUrl, null, null, "org.sqlite.JDBC", "sqlite");
+        return new EmbeddedDbInstance(getName(), dbUrl, "org.sqlite.JDBC");
     }
 
     public boolean useTxnDuringLoad() {
         return true;
+    }
+
+    public String translateSql(String sql) {
+        return sql.replaceAll("ROWNUM", "ROWID");
     }
 }

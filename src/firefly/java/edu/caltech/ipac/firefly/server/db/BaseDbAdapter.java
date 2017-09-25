@@ -65,7 +65,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         tblName = StringUtils.isEmpty(tblName) ? "data" : tblName;
         List<String> coldefs = new ArrayList<>();
         for(DataType dt : dtTypes) {
-            coldefs.add( dt.getKeyName() + " " + getDataType(dt.getDataType()));
+            coldefs.add( String.format("\"%s\" %s", dt.getKeyName().toUpperCase(),getDataType(dt.getDataType())));
         }
 
         return String.format("create table if not exists %s (%s)", tblName, StringUtils.toString(coldefs, ","));
@@ -94,7 +94,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String fromPart(TableServerRequest treq) {
-        String from = TableDbUtil.getDatasetID(treq);
+        String from = EmbeddedDbUtil.getDatasetID(treq);
         from = StringUtils.isEmpty(from) ? treq.getParam(TableServerRequest.SQL_FROM) : from;
         from = "from " + (StringUtils.isEmpty(from) ? "data" : from);
         return from;
@@ -161,6 +161,24 @@ abstract public class BaseDbAdapter implements DbAdapter {
             return "date";
         } else {
             return "varchar(1023)";
+        }
+    }
+
+
+    static class EmbeddedDbInstance extends DbInstance {
+
+        public EmbeddedDbInstance(String name, String dbUrl, String driver) {
+            super(false, null, dbUrl, null, null, driver, name);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return StringUtils.areEqual(this.dbUrl,((EmbeddedDbInstance)obj).dbUrl);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.dbUrl.hashCode();
         }
     }
 }

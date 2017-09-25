@@ -6,15 +6,18 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbInstance;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,8 +30,127 @@ import java.util.List;
  */
 
 @SearchProcessorImpl(id = "StatisticsProcessor")
+public class StatisticsProcessor extends EmbeddedDbProcessor {
+    private static final String SEARCH_REQUEST = "searchRequest";
+    private static DataType[] columns = new DataType[]{
+            new DataType("columnName", String.class),
+            new DataType("description", String.class),
+            new DataType("unit", String.class),
+            new DataType("min", Double.class),
+            new DataType("max", Double.class),
+            new DataType("numPoints", Integer.class),
+    };
 
-public class StatisticsProcessor extends IpacTablePartProcessor {
+    /**
+     *  recreate the table database if does not exists.  otherwise, return the table's database
+     */
+    @Override
+    public FileInfo createDbFile(TableServerRequest treq) throws DataAccessException {
+        TableServerRequest sreq = getSearchRequest(treq);
+        File dbFile = EmbeddedDbUtil.getDbFile(sreq);
+        if (dbFile == null || !dbFile.canRead()) {
+            sreq.setPageSize(1);
+            sreq.setStartIndex(0);
+            new SearchManager().getDataGroup(sreq).getData();
+            dbFile = EmbeddedDbUtil.getDbFile(sreq);
+        }
+        EmbeddedDbUtil.setDbMetaInfo(treq, DbAdapter.getAdapter(treq), dbFile);
+        return new FileInfo(dbFile);
+    }
+
+    /**
+     * generate stats for the given search request if not exists.  otherwise, return the stats
+     */
+    @Override
+    protected DataGroupPart getDataset(TableServerRequest treq, File dbFile) throws DataAccessException {
+
+        TableServerRequest sreq = getSearchRequest(treq);
+        String dsTblName = EmbeddedDbUtil.getDatasetID(sreq);
+        dsTblName = StringUtils.isEmpty(dsTblName) ? "data" : dsTblName;
+        String statsTblName = dsTblName + "_stats";
+
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
+        String tblExists = String.format("select count(*) from %s", statsTblName);
+        try {
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
+        } catch (Exception e) {
+            // does not exists.. fetch data and populate
+            generateStatsTable(dsTblName, dbFile, dbAdapter, statsTblName);
+        }
+
+        treq.setParam(TableServerRequest.SQL_FROM, statsTblName);
+        treq.setPageSize(Integer.MAX_VALUE);
+        treq.setStartIndex(0);
+        String sql = String.format("%s %s %s", dbAdapter.selectPart(treq), dbAdapter.fromPart(treq), dbAdapter.wherePart(treq));
+        sql = dbAdapter.translateSql(sql);
+
+        DataGroup dg = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, sql);
+        TableDef tm = new TableDef();
+        tm.setStatus(DataGroupPart.State.COMPLETED);
+        return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());
+    }
+
+    private void generateStatsTable(String dsTblName, File dbFile, DbAdapter dbAdapter, String statsTblName) {
+
+        // check to see if a dataset table exists... if not, use orginal data table.
+        DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
+        String tblExists = String.format("select count(*) from %s", dsTblName);
+        try {
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
+        } catch (Exception e) {
+            dsTblName = "data";
+        }
+
+        // get all cols from dd table
+        DataGroup stats = null;
+        DataGroup dd = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select * from DD"));
+        if (dd.size() > 0) {
+            String statSql = "select '%s' as \"columnName\", '%s' as \"description\", '%s' as \"unit\", min(%5$s) as \"min\", max(%5$s) as \"max\", count(%5$s) as \"numPoints\" from %s";
+            for (int i =0; i < dd.size(); i++) {
+                DataObject row = dd.get(i);
+                String type = (String) row.getDataElement("TYPE");
+                String visi = (String) row.getDataElement("VISIBILITY");
+                if (DataType.NUMERIC_TYPES.contains(type) && !StringUtils.areEqual(visi, "hidden")) {
+                    String cname = (String) row.getDataElement("CNAME");
+                    String desc = (String) row.getDataElement("DESC");
+                    String units = (String) row.getDataElement("UNITS");
+                    DataGroup aStat = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format(statSql, cname, desc, units, dsTblName, cname));
+                    if (stats == null) {
+                        stats = aStat;
+                    } else {
+                        stats.add(aStat.get(0));
+                    }
+                }
+            }
+        }
+        EmbeddedDbUtil.createDataTbl(dbFile, stats, dbAdapter, statsTblName);
+    }
+
+    private TableServerRequest getSearchRequest(TableServerRequest treq) throws DataAccessException {
+        String searchRequestJson = treq.getParam(SEARCH_REQUEST);
+        if (searchRequestJson == null) {
+            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
+        }
+        TableServerRequest sreq = QueryUtil.convertToServerRequest(searchRequestJson);
+        if (sreq.getRequestId() == null) {
+            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
+        }
+        return sreq;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+class StatisticsProcessorOld extends IpacTablePartProcessor {
     private static final String SEARCH_REQUEST = "searchRequest";
     private static DataType[] columns = new DataType[]{
             new DataType("columnName", String.class),
@@ -42,7 +164,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     /**
      * empty constructor
      */
-    public StatisticsProcessor(){}
+    public StatisticsProcessorOld(){}
 
     /**
      * Add this method to run unit test
@@ -216,7 +338,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
             if (args.length > 0) {
                 try {
                     File inFile = new File(args[0]);
-                    StatisticsProcessor sp = new StatisticsProcessor();
+                    StatisticsProcessorOld sp = new StatisticsProcessorOld();
                     DataGroup outDg = sp.createTableStatistic(inFile);
                     String outFileName = path+"statistics_output_"+inFileName;
                     File outFile = new File(outFileName);

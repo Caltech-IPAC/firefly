@@ -13,22 +13,17 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.TableDbUtil;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
-import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.DbProcessor;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtils;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,22 +51,30 @@ import java.util.List;
                 @ParamDoc(name = CatalogRequest.SERVICE_ROOT, desc = "the part of the URL string that specifies the service and first params. " +
                         "optional: almost never used")
         })
-public class GatorDD extends DbProcessor {
+public class GatorDD extends EmbeddedDbProcessor {
 
     public FileInfo createDbFile(TableServerRequest treq) throws DataAccessException {
+
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         File dbFile = new File(ServerContext.getPermWorkDir(), "GatorDD." + dbAdapter.getName());
-        DataGroup dd = new DataGroup("DD for GatorDD", new DataType[]{
-                new DataType("name", String.class),
-                new DataType("description", String.class),
-                new DataType("units", String.class),
-                new DataType("indx", String.class),
-                new DataType("dbtype", String.class),
-                new DataType("tableflg", Integer.class),
-                new DataType("sel", String.class)
-        });
-        TableDbUtil.createDDTbl(dbFile, dd, dbAdapter);
-        TableDbUtil.setDbMetaInfo(treq, DbAdapter.getAdapter(treq), dbFile);
+        try {
+            if (dbFile.createNewFile()) {
+                // created for the first time... populate dd and meta tables
+                DataGroup dd = new DataGroup("DD for GatorDD", new DataType[]{
+                        new DataType("name", String.class),
+                        new DataType("description", String.class),
+                        new DataType("units", String.class),
+                        new DataType("indx", String.class),
+                        new DataType("dbtype", String.class),
+                        new DataType("tableflg", Integer.class),
+                        new DataType("sel", String.class)
+                });
+                EmbeddedDbUtil.createDDTbl(dbFile, dd, dbAdapter);
+                EmbeddedDbUtil.setDbMetaInfo(treq, DbAdapter.getAdapter(treq), dbFile);
+            }
+        } catch (IOException e) {
+            // should not happen.
+        }
         return new FileInfo(dbFile);
     }
 
@@ -79,13 +82,13 @@ public class GatorDD extends DbProcessor {
     protected DataGroupPart getDataset(TableServerRequest treq, File dbFile) throws DataAccessException {
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
-        String tblName = "ds_" + DigestUtils.md5Hex(StringUtils.toString(treq.getSearchParams(), "|"));
+        String tblName = treq.getParam(CatalogRequest.CATALOG);
 
         String tblExists = String.format("select count(*) from %s", tblName);
         try {
             JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
         } catch (Exception e) {
-            // does not exists.. fetch data and populate
+            // DD for this catalog does not exists.. fetch data and populate
             fetchDataIntoTable(treq, tblName, dbFile, dbAdapter);
         }
 
@@ -94,17 +97,22 @@ public class GatorDD extends DbProcessor {
         String sql = String.format("%s %s %s", dbAdapter.selectPart(treq), dbAdapter.fromPart(treq), dbAdapter.wherePart(treq));
         sql = dbAdapter.translateSql(sql);
 
-        DataGroup dg = TableDbUtil.runQuery(dbAdapter, dbFile, sql);
+        DataGroup dg = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, sql);
         TableDef tm = new TableDef();
         tm.setStatus(DataGroupPart.State.COMPLETED);
         return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());
+    }
+
+    @Override
+    public boolean doLogging() {
+        return false;
     }
 
     private void fetchDataIntoTable(TableServerRequest treq, String tblName, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
         TableServerRequest ntreq = (TableServerRequest) treq.cloneRequest();
         ntreq.keepBaseParamOnly();
         DataGroupPart dgp = new GatorDDImpl().getData(treq);
-        TableDbUtil.createDataTbl(dbFile, dgp.getData(), dbAdapter, tblName);
+        EmbeddedDbUtil.createDataTbl(dbFile, dgp.getData(), dbAdapter, tblName);
     }
 }
 

@@ -140,7 +140,7 @@ export const ServerParams = {
         ACTION: 'action',
         PACKAGE_REQUEST: 'packageRequest',
         TABLE_SEARCH: 'tableSearch',
-        TABLE_FIND_INDEX: 'tableFindIndex',
+        QUERY_TABLE: 'queryTable',
         SELECTED_VALUES: 'selectedValues',
         TABLE_SAVE: 'tableSave',
         UPLOAD: 'upload',

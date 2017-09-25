@@ -169,7 +169,7 @@ public class ServerParams {
 
     public static final String PACKAGE_REQUEST = "packageRequest";
     public static final String TABLE_SEARCH = "tableSearch";
-    public static final String TABLE_FIND_IDX = "tableFindIndex";
+    public static final String QUERY_TABLE = "queryTable";
     public static final String SELECTED_VALUES = "selectedValues";
     public static final String TABLE_SAVE = "tableSave";
     public static final String UPLOAD = "upload";

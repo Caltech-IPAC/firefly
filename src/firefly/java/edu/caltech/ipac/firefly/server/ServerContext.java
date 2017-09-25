@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
+import edu.caltech.ipac.firefly.server.filters.CommonFilter;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
@@ -87,6 +88,7 @@ public class ServerContext {
             ServerContext.contextName = contextName;
 
             configInit();
+
             initVisSearchPath();
 
             PERM_FILE_PATH_STR = getPermWorkDir().getPath();
@@ -211,7 +213,7 @@ public class ServerContext {
      * @return
      */
     public static File getConfigFile(String fname) {
-        
+
         File f = null;
         if (appConfigDir != null) {
             f = new File(appConfigDir, fname) ;

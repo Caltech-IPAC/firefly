@@ -25,7 +25,8 @@ public class DataGroup implements Serializable,
     /**
      * ROW_IDX is the original row index of the dataset prior to sorting and filtering.  it starts from 0
      */
-    public static final String ROWID_NAME = "ROW_IDX";
+    public static final String ROW_IDX = "ROW_IDX";               // this contains the original row index of the table before any sorting or filtering
+    public static final String ROW_NUM = "ROW_NUM";               // this is row number of the current dataset. (oracle's rownum)
     private final ArrayList<DataObject> _objects = new ArrayList<DataObject>(200);
     private final ArrayList<DataType> _dataDefinitions = new ArrayList<DataType>(30);
     private String _title;
@@ -48,8 +49,12 @@ public class DataGroup implements Serializable,
         this(title, dataDefs.toArray(new DataType[dataDefs.size()]));
     }
 
-    public static DataType makeRowId() {
-        return new DataType(ROWID_NAME, Integer.class);
+    public static DataType makeRowIdx() {
+        return new DataType(ROW_IDX, Integer.class);
+    }
+
+    public static DataType makeRowNum() {
+        return new DataType(ROW_NUM, Integer.class);
     }
 
     public static boolean containsKey(DataType[] dataTypes, String key) {

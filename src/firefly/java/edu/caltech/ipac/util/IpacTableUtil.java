@@ -108,7 +108,7 @@ public class IpacTableUtil {
         for (DataType dt : headers) {
             String v = row.getFormatedData(dt);
             // when writing out the IPAC table.. if ROWID is given, and data is not found. use the getRowId() value instead.
-            if (v == null && dt.getKeyName().equals(DataGroup.ROWID_NAME)) {
+            if (v == null && dt.getKeyName().equals(DataGroup.ROW_IDX)) {
                 v = dt.getFormatInfo().formatData(row.getRowIdx());
             }
             if (dt.getDataType() == String.class && v != null) {
