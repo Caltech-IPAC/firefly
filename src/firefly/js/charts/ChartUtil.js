@@ -504,7 +504,12 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
 }
 
 // does the default depend on the chart type?
-export function applyDefaults(chartData={}, resetColor = false) {
+/**
+ * set default value for layout and data
+ * @param chartData
+ * @param resetColor reset color generator for default color assignment of the chart
+ */
+export function applyDefaults(chartData={}, resetColor = true) {
     //const chartType = get(chartData, ['data', '0', 'type']);
     //const noXYAxis = chartType && (chartType === 'pie');
 
@@ -566,17 +571,19 @@ export function applyDefaults(chartData={}, resetColor = false) {
 }
 
 
-// color-blind friendly colors
-export const TRACE_COLORS = [  '#333333', '#ff3333', '#00ccff', '#336600',
-                        '#9900cc', '#ff9933', '#009999', '#66ff33',
-                        '#cc9999', '#b22424', '#008fb2', '#244700',
-                        '#6b008f', '#b26b24', '#006b6b', '#47b224', '8F6B6B'];
+// plotly default color (items 0-7) + color-blind friendly colors
+export const TRACE_COLORS = [  '#1f77b4', '#2ca02c', '#d62728', '#9467bd',
+                               '#8c564b', '#e377c2', '#7f7f7f', '#17becf',
+                               '#333333', '#ff3333', '#00ccff', '#336600',
+                               '#9900cc', '#ff9933', '#009999', '#66ff33',
+                               '#cc9999', '#b22424', '#008fb2', '#244700',
+                               '#6b008f', '#b26b24', '#006b6b', '#47b224', '8F6B6B'];
 export const TRACE_COLORSCALE = [  'Bluered', 'Blues', 'Earth', 'Electric', 'Greens',
                                 'Greys', 'Hot', 'Jet', 'Picnic', 'Portland', 'Rainbow',
                                 'RdBu', 'Reds', 'Viridis', 'YlGnBu', 'YlOrRd' ];
 
-export function *traceColorGenerator(colorList, init = 0) {
-    let nextIdx = init;
+export function *traceColorGenerator(colorList) {
+    let nextIdx = -1;
 
     while (true) {
         const result = yield (nextIdx === -1) ? '' : colorList[nextIdx%colorList.length];

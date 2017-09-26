@@ -67,12 +67,14 @@ export class PlotlyChartArea extends PureComponent {
         const showlegend = data.length > 1;
 
         // put the active trace after all inactive traces
+
         let pdata = data.reduce((rdata, e, idx) =>  {
-            (idx !== activeTrace) && rdata.push(e);
+            (idx !== activeTrace) && rdata.push(Object.assign({}, e));
             return rdata;
         }, []);
 
-        pdata.push(data[activeTrace]);
+        pdata.push(Object.assign({}, data[activeTrace]));
+
         //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
         if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
             // highlight makes sense only for scatter at the moment
@@ -133,10 +135,19 @@ function onClick(chartId) {
     return (evData) => {
         // for scatter, points array has one element, for the top trace only,
         // we should have active trace, its related selected, and its highlight traces on top
+        const {activeTrace, curveNumberMap} = getChartData(chartId);
         const curveNumber = get(evData.points, `${0}.curveNumber`);
         const highlighted = get(evData.points, `${0}.pointNumber`);
         const curveName = get(evData.points, `${0}.data.name`);
-        dispatchChartHighlighted({chartId, traceNum: curveNumber, traceName: curveName, highlighted, chartTrigger: true});
+        if (curveNumberMap && activeTrace === curveNumberMap[curveNumber]) {
+            dispatchChartHighlighted({
+                chartId,
+                traceNum: activeTrace,
+                traceName: curveName,
+                highlighted,
+                chartTrigger: true
+            });
+        }
     };
 }
 
@@ -145,13 +156,12 @@ function onSelect(chartId) {
         if (evData) {
             let points = undefined;
             // this is for range selection only... lasso selection is not implemented yet.
-            const {activeTrace=0}  = getChartData(chartId);
+            const {activeTrace=0, curveNumberMap}  = getChartData(chartId);
             const [xMin, xMax] = get(evData, 'range.x', []);
             const [yMin, yMax] = get(evData, 'range.y', []);
-            if (xMin !== xMax && yMin !== yMax) {
-
+            if (xMin !== xMax && yMin !== yMax && curveNumberMap) {
                 points = get(evData, 'points', []).filter((o) => {
-                    return o.curveNumber === activeTrace;
+                    return curveNumberMap[o.curveNumber] === activeTrace;
                 }).map((o) => {
                     return o.pointNumber;
                 });

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isEmpty, isString, isUndefined, omit, omitBy, set} from 'lodash';
+import {cloneDeep, has, get, isEmpty, isString, isUndefined, omit, omitBy, set, range} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -438,10 +438,11 @@ function chartFilterSelection(action) {
 function setActiveTrace(action) {
     return (dispatch) => {
         const {chartId, activeTrace} = action.payload;
-        const {data, tablesources} = getChartData(chartId) || {};
+        const {data, tablesources, curveNumberMap} = getChartData(chartId) || {};
         const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
         let selected = undefined;
         let highlighted = undefined;
+        let curveMap = undefined;
         if (tbl_id) {
             const {selectInfo, highlightedRow} = getTblById(tbl_id) || {};
             if (selectInfo) {
@@ -452,8 +453,12 @@ function setActiveTrace(action) {
                 }
             }
             highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS);
+            if (curveNumberMap) {
+                curveMap = range(curveNumberMap.length).filter((idx) => (idx !== activeTrace));
+                curveMap.push(activeTrace);
+            }
         }
-        const changes = {activeTrace, selected, highlighted, selection: undefined};
+        const changes = {activeTrace, selected, highlighted, selection: undefined, curveNumberMap: curveMap};
         dispatchChartUpdate({chartId, changes});
     };
 }
@@ -692,6 +697,7 @@ function reduceData(state={}, action={}) {
                 rest['_original'] = cloneDeep(action.payload);
                 applyDefaults(rest);
                 useScatterGL && changeToScatterGL(rest);
+                set(rest, 'curveNumberMap', range(rest.data.length));
             }
             state = updateSet(state, chartId,
                 omitBy({

@@ -199,6 +199,8 @@ export class PlotlyWrapper extends Component {
 
             if (!useScatterGL) {
                 // when using SVG, it's actually faster to redraw then to do multiple updates
+                // if renderType is restyle, plotly render the inactive trace on top of the active trace
+                // for chart with type histogram2d or histogram2dcontour
                 if (renderType === RenderType.RESTYLE_AND_RELAYOUT || dataUpdate.length > 1 ||
                     (data.find((d) => get(d, 'type').includes('histogram2d')))) {
                     renderType = RenderType.NEW_PLOT;
