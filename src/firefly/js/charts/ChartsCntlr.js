@@ -699,8 +699,10 @@ function reduceData(state={}, action={}) {
                 useScatterGL && changeToScatterGL(rest);
 
                 // the first trace is put as the last curve for plotly rendering
-                const curveNumberMap = range(1, rest.data.length).concat([0]);
-                Object.assign(rest, {curveNumberMap});
+                const tData = get(rest, ['data', 'length']);
+                if (tData) {
+                    Object.assign(rest, {activeTrace: tData-1, curveNumberMap: range(tData)});
+                }
             }
             state = updateSet(state, chartId,
                 omitBy({

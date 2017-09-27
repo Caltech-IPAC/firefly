@@ -145,8 +145,7 @@ function onClick(chartId) {
         const highlighted = get(evData.points, `${0}.pointNumber`);
         const curveName = get(evData.points, `${0}.data.name`);
 
-        const traceNum = curveNumber >= curveNumberMap.length ? curveNumber :
-                         curveNumberMap.find((tNum, idx) => idx === curveNumber);
+        const traceNum = curveNumber >= curveNumberMap.length ? curveNumber : curveNumberMap[curveNumber];
 
         // traceNum is related to any of trace data or SELECTED trace or HIGHLIGHTED trace
         // if traceNUm is between [0, curveNumberMap.length-1], then curveNumber is mapped to one of the trace data
