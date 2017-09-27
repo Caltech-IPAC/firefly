@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterData;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
@@ -40,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -468,6 +468,28 @@ public class VisServerCommands {
         }
     }
 
+    public static class GetMasterImageData extends ServCommand {
+
+        public String doCommand(SrvParam sp) throws IllegalArgumentException {
+            String imageSources = sp.getRequired(ServerParams.IMAGE_SOURCES);
+            String sortOrder = sp.getOptional(ServerParams.SORT_ORDER);
+            String imageSourcesAry[] = imageSources.split(",");
+            String sortOrderAry[]= (sortOrder!=null) ? sortOrder.split(",") : null;
+            JSONArray result= ImageMasterData.getJson(imageSourcesAry, sortOrderAry);
+            JSONObject obj= new JSONObject();
+            if (result!=null) {
+                obj.put("success", true);
+                obj.put("data", result);
+            }
+            else {
+                obj.put("success", false);
+                obj.put("data", null);
+                obj.put("message", "Could not generate data");
+            }
+
+            return obj.toJSONString();
+        }
+    }
 
 }
 
