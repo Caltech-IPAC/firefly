@@ -65,7 +65,7 @@ export class FireflyViewer extends PureComponent {
 
     componentDidMount() {
         dispatchOnAppReady((state) => {
-            onReady({state, menu: this.props.menu, views: this.props.views});
+            onReady({state, menu: this.props.menu, views: this.props.views, options:this.props.options});
         });
         this.removeListener = flux.addListener(() => this.storeUpdate());
     }
@@ -125,7 +125,8 @@ FireflyViewer.propTypes = {
     showViewsSwitch: PropTypes.bool,
     leftButtons: PropTypes.arrayOf( PropTypes.func ),
     centerButtons: PropTypes.arrayOf( PropTypes.func ),
-    rightButtons: PropTypes.arrayOf( PropTypes.func )
+    rightButtons: PropTypes.arrayOf( PropTypes.func ),
+    options: PropTypes.object,
 };
 
 FireflyViewer.defaultProps = {
@@ -133,9 +134,10 @@ FireflyViewer.defaultProps = {
     views: 'images | tables | xyPlots'
 };
 
-function onReady({menu, views}) {
+function onReady({menu, views, options={}}) {
     if (menu) {
-        dispatchSetMenu({menuItems: menu});
+        const {backgroundMonitor= true}= options;
+        dispatchSetMenu({menuItems: menu, showBgMonitor:backgroundMonitor});
     }
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (!(hasImages || hasTables || hasXyPlots)) {

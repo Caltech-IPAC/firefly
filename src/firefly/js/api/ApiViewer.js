@@ -29,6 +29,7 @@ import {getWsChannel, getWsConnId} from '../core/messaging/WebSocketClient.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {modifyURLToFull} from '../util/BrowserUtil.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
@@ -327,7 +328,8 @@ function doViewerOperation(channel,file,f) {
         f && f();
     } else {
         dispatchAddSaga(doOnWindowConnected, {channel, f});
-        const url= `${getRootURL()}${file};wsch=${channel}`;
+        // const url= `${getRootURL()}${file};wsch=${channel}`;
+        const url= `${modifyURLToFull(file,getRootURL())};wsch=${channel}`;
         viewerWindow = window.open(url, channel);
     }
 }
