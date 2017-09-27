@@ -133,8 +133,9 @@ Some unsupported plotly charts:
 
             var trace2 = {
                 tbl_id: "wiseCatTbl",
-                x: "tables::w1mpro-w2mpro",
-                y: "tables::w2mpro-w3mpro",
+                x: "tables::w2mpro-w3mpro",
+                y: "tables::w3mpro-w4mpro",
+                name: 'w2-w3 vs. w3-w4',
                 mode: 'markers',
                 type: 'scatter',
                 error_x : {array: "tables::w3sigmpro"},

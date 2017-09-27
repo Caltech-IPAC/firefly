@@ -697,7 +697,10 @@ function reduceData(state={}, action={}) {
                 rest['_original'] = cloneDeep(action.payload);
                 applyDefaults(rest);
                 useScatterGL && changeToScatterGL(rest);
-                set(rest, 'curveNumberMap', range(rest.data.length));
+
+                // the first trace is put as the last curve for plotly rendering
+                const curveNumberMap = range(1, rest.data.length).concat([0]);
+                Object.assign(rest, {curveNumberMap});
             }
             state = updateSet(state, chartId,
                 omitBy({

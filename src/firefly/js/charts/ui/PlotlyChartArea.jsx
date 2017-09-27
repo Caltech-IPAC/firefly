@@ -131,18 +131,30 @@ function calculateChartSize(widthPx, heightPx, xyratio, stretch) {
     return {chartWidth, chartHeight};
 }
 
+/**
+ * plotly chart click callback, updata chart highlight in case the click falls on active trace or selected trace
+ * @param chartId
+ * @returns {Function}
+ */
 function onClick(chartId) {
     return (evData) => {
         // for scatter, points array has one element, for the top trace only,
         // we should have active trace, its related selected, and its highlight traces on top
-        const {activeTrace, curveNumberMap} = getChartData(chartId);
+        const {activeTrace=0, curveNumberMap} = getChartData(chartId);
         const curveNumber = get(evData.points, `${0}.curveNumber`);
         const highlighted = get(evData.points, `${0}.pointNumber`);
         const curveName = get(evData.points, `${0}.data.name`);
-        if (curveNumberMap && activeTrace === curveNumberMap[curveNumber]) {
+
+        const traceNum = curveNumber >= curveNumberMap.length ? curveNumber :
+                         curveNumberMap.find((tNum, idx) => idx === curveNumber);
+
+        // traceNum is related to any of trace data or SELECTED trace or HIGHLIGHTED trace
+        // if traceNUm is between [0, curveNumberMap.length-1], then curveNumber is mapped to one of the trace data
+        // if traceNum is greater than curveNumberMap.length-1, then curveNumber is mapped to either SELECTED trace or HIGHLIGHTED trace
+        if (traceNum === activeTrace || traceNum === curveNumberMap.length ) {
             dispatchChartHighlighted({
                 chartId,
-                traceNum: activeTrace,
+                traceNum,
                 traceName: curveName,
                 highlighted,
                 chartTrigger: true
@@ -151,6 +163,11 @@ function onClick(chartId) {
     };
 }
 
+/**
+ * plotly chart, select area callback, update chart by collecting all points on active trace enclosed by selected area
+ * @param chartId
+ * @returns {Function}
+ */
 function onSelect(chartId) {
     return (evData) => {
         if (evData) {
