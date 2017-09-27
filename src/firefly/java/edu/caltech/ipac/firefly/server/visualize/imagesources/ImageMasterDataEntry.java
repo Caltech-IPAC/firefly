@@ -7,21 +7,18 @@
  */
 
 package edu.caltech.ipac.firefly.server.visualize.imagesources;
-/**
- * User: roby
- * Date: 9/20/17
- * Time: 12:07 PM
- */
 
-
-import org.json.simple.JSONObject;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Trey Roby
  */
 public class ImageMasterDataEntry {
 
-    private JSONObject map= new JSONObject();
+    public static final String PLOT_REQUEST_PARAMS= "plotRequestParams";
+    private Map<String,Object> map= new HashMap<>();
+
 
     public void setProject(String p) { map.put("project", p);}
     public void setSubProject(String p) { map.put("subProject", p);}
@@ -35,18 +32,21 @@ public class ImageMasterDataEntry {
     public void setProjectTypeDesc(String desc) { map.put("projectTypeDesc", desc);}
     public void setMinRangeDeg(String minRangeDeg) { map.put("minRangeDEg", minRangeDeg);}
     public void setMaxRangeDeg(String maxRangeDeg) { map.put("maxRangeDEg", maxRangeDeg);}
-    public void setPlotRequestParams(JSONObject params) { map.put("plotRequestParams", params);}
+    public void setPlotRequestParams(Map<String,String> params) { map.put(PLOT_REQUEST_PARAMS, params);}
 
-
-    public JSONObject getJsonObject() { return map;}
+    public Map<String,Object> getDataMap() {
+        return map;
+    }
 
     /**
      * This method should only used for experimenting.
-     * @param j
+     * @param m the map to ingest
      */
-    public static ImageMasterDataEntry makefromJson(JSONObject j) {
+    public static ImageMasterDataEntry makeFromMap(Map<String,Object> m) {
         ImageMasterDataEntry retval= new ImageMasterDataEntry();
-        retval.map= j;
+        Map params= (Map)m.get(PLOT_REQUEST_PARAMS);
+        retval.map= new HashMap<>(m);
+        retval.map.put(PLOT_REQUEST_PARAMS, new HashMap<String,String>(params));
         return retval;
     }
 

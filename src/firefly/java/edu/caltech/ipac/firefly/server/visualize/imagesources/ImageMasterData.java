@@ -8,6 +8,7 @@ package edu.caltech.ipac.firefly.server.visualize.imagesources;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.HashMap;
 import java.util.List;
@@ -54,11 +55,23 @@ public class ImageMasterData {
             if (sources.get(source)!=null) {
                 List<ImageMasterDataEntry> sourceData= sources.get(source).getImageMasterData();
                 if (sourceData!=null) {
-                    for( ImageMasterDataEntry sd : sourceData) jsonData.add(sd.getJsonObject());
+                    for( ImageMasterDataEntry sd : sourceData) jsonData.add(makeJsonObj(sd.getDataMap()));
                 }
 
             }
         }
         return jsonData;
     }
+
+    public static JSONObject makeJsonObj(Map<String,Object> map) {
+        JSONObject jo= new JSONObject();
+        jo.putAll(map);
+        Map params= (Map)jo.get(ImageMasterDataEntry.PLOT_REQUEST_PARAMS);
+        JSONObject prJo= new JSONObject();
+        prJo.putAll(params);
+        jo.put(ImageMasterDataEntry.PLOT_REQUEST_PARAMS, prJo);
+        return jo;
+    }
 }
+
+

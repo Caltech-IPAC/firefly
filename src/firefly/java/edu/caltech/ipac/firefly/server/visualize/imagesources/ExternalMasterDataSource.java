@@ -7,17 +7,11 @@
  */
 
 package edu.caltech.ipac.firefly.server.visualize.imagesources;
-/**
- * User: roby
- * Date: 9/20/17
- * Time: 12:42 PM
- */
-
-
-import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -37,7 +31,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     }
 
     static private List<ImageMasterDataEntry> sdss() {
-        JSONObject params;
+        Map<String,String> params;
 
 
         ImageMasterDataEntry u= sdssTemplate();
@@ -46,7 +40,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         u.setTitle("u");
         u.setTooltip("This is SDSS u");
         u.setImageId("sdss-u");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "SDSS");
         params.put("SurveyKey", "u");
         params.put("title", "SDSS u");
@@ -61,7 +55,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         g.setTitle("g");
         g.setTooltip("This is SDSS g");
         g.setImageId("sdss-g");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "SDSS");
         params.put("SurveyKey", "g");
         params.put("title", "SDSS g");
@@ -74,7 +68,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         r.setTitle("r");
         r.setTooltip("This is SDSS r");
         r.setImageId("sdss-r");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "SDSS");
         params.put("SurveyKey", "r");
         params.put("title", "SDSS r");
@@ -87,7 +81,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         i.setTitle("i");
         i.setTooltip("This is SDSS i");
         i.setImageId("sdss-i");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "SDSS");
         params.put("SurveyKey", "i");
         params.put("title", "SDSS i");
@@ -100,7 +94,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         z.setTitle("z");
         z.setTooltip("This is SDSS Z");
         z.setImageId("sdss-z");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "SDSS");
         params.put("SurveyKey", "z");
         params.put("title", "SDSS z");
@@ -119,7 +113,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
 
     static private List<ImageMasterDataEntry> msx() {
-        JSONObject params;
+        Map<String,String> params;
 
 
         ImageMasterDataEntry a = msxTemplate();
@@ -128,7 +122,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         a.setTitle("A (8.28 microns)");
         a.setTooltip("This is MSX A");
         a.setImageId("MSXA3");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "MSX");
         params.put("SurveyKey", "3");
         params.put("title", "MSX A");
@@ -142,7 +136,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         c.setTitle("C (12.13 microns)");
         c.setTooltip("This is MSX C");
         c.setImageId("MSXC4");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "MSX");
         params.put("SurveyKey", "4");
         params.put("title", "MSX C");
@@ -155,7 +149,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         d.setTitle("D (14.65 microns)");
         d.setTooltip("This is MSX D");
         d.setImageId("MSXD5");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "MSX");
         params.put("SurveyKey", "5");
         params.put("title", "MSX D");
@@ -169,7 +163,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.setTitle("E (21.3 microns)");
         e.setTooltip("This is MSX E");
         e.setImageId("MSXE6");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "MSX");
         params.put("SurveyKey", "6");
         params.put("title", "MSX E");
@@ -186,7 +180,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     }
 
     static private List<ImageMasterDataEntry> dss() {
-        JSONObject params;
+        Map<String,String> params;
 
 
         ImageMasterDataEntry red = dssTemplate();
@@ -195,7 +189,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         red.setTitle("POSS2/UKSTU Red");
         red.setTooltip("This is DSS poss2ukstu_red");
         red.setImageId("dss-poss2ukstu_red");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "poss2ukstu_red");
         params.put("title", "DSS poss2ukstu_red");
@@ -208,7 +202,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         ir.setTitle("POSS2/UKSTU Infrared");
         ir.setTooltip("This is DSS poss2ukstu_ir");
         ir.setImageId("dss-poss2ukstu_ir");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "poss2ukstu_ir");
         params.put("title", "DSS poss2ukstu_ir");
@@ -221,7 +215,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         blue.setTitle("POSS2/UKSTU Blue");
         blue.setTooltip("This is DSS poss2ukstu_blue");
         blue.setImageId("dss-poss2ukstu_blue");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "poss2ukstu_blue");
         params.put("title", "DSS poss2ukstu_blue");
@@ -234,7 +228,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         pred.setTitle("POSS1 Red");
         pred.setTooltip("This is DSS poss1_red");
         pred.setImageId("dss-poss1_red");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "poss1_red");
         params.put("title", "DSS poss1_red");
@@ -247,7 +241,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         pblue.setTitle("POSS1 Blue");
         pblue.setTooltip("This is DSS poss1_blue");
         pblue.setImageId("dss-poss1_blue");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "poss1_blue");
         params.put("title", "DSS poss1_blue");
@@ -260,7 +254,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         quick.setTitle("Quick-V Survey");
         quick.setTooltip("This is DSS quickv");
         quick.setImageId("dss-quickv");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "quickv");
         params.put("title", "DSS quickv");
@@ -273,7 +267,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         phase2.setTitle("HST Phase 2 (GSC 2)");
         phase2.setTooltip("This is DSS phase2_gsc2");
         phase2.setImageId("dss-phase2_gsc2");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "phase2_gsc2");
         params.put("title", "DSS phase2_gsc2");
@@ -286,7 +280,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         phase1.setTitle("HST Phase 1 (GSC 1)");
         phase1.setTooltip("This is DSS phase2_gsc1");
         phase1.setImageId("dss-phase1_gsc1");
-        params= new JSONObject();
+        params= new HashMap<>();
         params.put("Service", "DSS");
         params.put("SurveyKey", "phase2_gsc1");
         params.put("title", "DSS phase2_gsc1");

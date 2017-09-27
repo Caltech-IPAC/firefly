@@ -15,7 +15,9 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -31,7 +33,9 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
             JSONArray data= (JSONArray)parser.parse(dataStr);
             List<ImageMasterDataEntry>  retList= new ArrayList<>();
             for(Object obj : data) {
-                retList.add( ImageMasterDataEntry.makefromJson((JSONObject)obj));
+                Map<String,Object> map= new HashMap<>();
+                map.putAll((JSONObject)obj);
+                retList.add( ImageMasterDataEntry.makeFromMap(map));
             }
             return retList;
         } catch (FailedRequestException  | IOException  | ParseException e) {
