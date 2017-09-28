@@ -11,10 +11,18 @@ import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.DownloadEvent;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.NetParams;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
-import edu.caltech.ipac.visualize.net.VisNetwork;
+import edu.caltech.ipac.visualize.net.DssImageGetter;
+import edu.caltech.ipac.visualize.net.DssImageParams;
+import edu.caltech.ipac.visualize.net.IbeImageGetter;
+import edu.caltech.ipac.visualize.net.ImageServiceParams;
+import edu.caltech.ipac.visualize.net.IrsaImageGetter;
+import edu.caltech.ipac.visualize.net.IrsaImageParams;
+import edu.caltech.ipac.visualize.net.SloanDssImageGetter;
+import edu.caltech.ipac.visualize.net.SloanDssImageParams;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +59,7 @@ public class LockingVisNetwork {
 //----------------------- Private Methods ------------------------------
 //======================================================================
 
-    private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip)
-            throws FailedRequestException, SecurityException {
+    private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip) throws FailedRequestException {
         Objects.requireNonNull(params);
         FileInfo retval;
         try {
@@ -63,37 +70,77 @@ public class LockingVisNetwork {
                                                      // todo: it could be generalized by passing a DownloadListener
                     dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
                 }
-                FileInfo fd;
-                if (params instanceof AnyUrlParams) {
-                    fd = retrieveURL((AnyUrlParams)params, dl);
-                }
-                else {
-                    fd = VisNetwork.getImage(params, dl);
-                }
+                FileInfo fd= fullFillRequest(params, dl);
 
                 if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode(), fd.getResponseCodeMsg());
                 else       retval= fd;
 
             }
+        } catch (IOException | SecurityException e) {
+            throw ResponseMessage.simplifyNetworkCallException(e);
         } finally {
             _activeRequest.remove(params);
         }
         return retval;
     }
 
-    private static File unzip(File f) throws FailedRequestException {
+    private static File unzip(File f) throws IOException, FailedRequestException {
         File retval = f;
         if (FileUtil.getExtension(f).equalsIgnoreCase(FileUtil.GZ)) {
-            try {
-                if (!FileUtil.computeUnzipFileName(f).canRead()) {
-                    retval = FileUtil.gUnzipFile(f);
-                }
-            } catch (IOException e) {
-                throw new FailedRequestException("Could not unzip file", "Unzipping failed", e);
+            if (!FileUtil.computeUnzipFileName(f).canRead()) {
+                retval = FileUtil.gUnzipFile(f);
             }
         }
         return retval;
     }
+
+    private static FileInfo fullFillRequest(NetParams params, DownloadListener dl) throws IOException, FailedRequestException {
+        if (params instanceof AnyUrlParams) {
+            return retrieveURL((AnyUrlParams)params, dl);
+        }
+        else if (params instanceof ImageServiceParams) {
+            File f= CacheHelper.getFile(params);
+            if (f == null)  {
+                f= callService((ImageServiceParams)params);
+                CacheHelper.putFile(params,f);
+            }
+            return new FileInfo(f);
+        }
+        else {
+            throw new FailedRequestException("Unrecognized Param Type");
+        }
+    }
+
+
+    private static File callService(ImageServiceParams params) throws  IOException, FailedRequestException {
+        File f= CacheHelper.makeFitsFile(params);
+        ImageServiceParams.ImageSourceTypes type= params.getType();
+
+        switch (type ) {
+
+            case ISSA:
+            case IRIS:
+            case MSX:
+                IrsaImageGetter.lowlevelGetIrsaImage((IrsaImageParams) params, f);
+                break;
+            case TWOMASS:
+            case TWOMASS6:
+                f= IbeImageGetter.lowlevelGetIbeImage(params);
+                break;
+            case WISE:
+                f= IbeImageGetter.lowlevelGetIbeImage(params);
+                break;
+            case DSS:
+                DssImageGetter.lowlevelGetDssImage((DssImageParams)params, f);
+                break;
+            case SDSS:
+                SloanDssImageGetter.lowlevelGetSloanDssImage((SloanDssImageParams)params, f);
+                break;
+        }
+        return f;
+
+    }
+
 
 
 

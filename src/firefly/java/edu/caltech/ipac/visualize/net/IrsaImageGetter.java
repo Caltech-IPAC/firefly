@@ -16,7 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.*;
+import static edu.caltech.ipac.visualize.net.ImageServiceParams.ImageSourceTypes.*;
 
 /**
  * @author Trey Roby
@@ -42,7 +42,11 @@ public class IrsaImageGetter {
 
         URLParms parms  = new URLParms();
 
-        parms.add(  "objstr", params.getIrsaObjectString() );
+
+        String objstr= params.getRaJ2000String() + " " + params.getDecJ2000String() +  " eq j2000";
+        
+
+        parms.add(  "objstr", objstr);
         parms.add(    "size", params.getSize() + ""  );
         parms.add(    "band", params.getBand()  + "" );
 
@@ -55,7 +59,7 @@ public class IrsaImageGetter {
                               String           app,
                               URLParms         parms,
                               String           fileName,
-                              IrsaImageParams.IrsaTypes type) throws IOException, FailedRequestException {
+                              IrsaImageParams.ImageSourceTypes type) throws IOException, FailedRequestException {
         URL url;
         URLConnection conn;
         File                  file= new File(fileName);
@@ -67,12 +71,8 @@ public class IrsaImageGetter {
             req = req + "?";
 
             for(int i=0; i<parms.getLength(); ++i) {
-                if(i != 0)
-                    req = req + "&";
-
-                req = req + parms.getKeyword(i);
-                req = req + "=";
-                req = req + parms.getValue(i);
+                if(i != 0) req+= "&";
+                req+= parms.getKeyword(i) + "="+parms.getValue(i);
             }
         }
 
@@ -109,7 +109,7 @@ public class IrsaImageGetter {
                 throw new FailedRequestException( msg, "The IRSA server is reporting an error- " + htmlErr );
             }
 
-            URLDownload.getDataToFile(conn, file, null);
+            URLDownload.getDataToFile(conn, file);
 
 
         } catch (MalformedURLException e){

@@ -59,7 +59,7 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
             URLConnection uc = URLDownload.makeConnection(new URL(url));
             uc.setRequestProperty("Accept", "text/plain");
             File file = createFile(request, ".json");
-            URLDownload.getDataToFile(uc, file, null);
+            URLDownload.getDataToFile(uc, file);
             _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
 
             DataGroup dg = JsonToDataGroup.parse(file);

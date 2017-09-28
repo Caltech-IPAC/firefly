@@ -9,6 +9,7 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +56,7 @@ public class DssImageGetter {
          }
 
 
-         URLDownload.getDataToFile(conn, outFile, null);
+         URLDownload.getDataToFile(conn, outFile);
 
       } catch (SocketTimeoutException timeOutE){
           if (outFile.exists() && outFile.canWrite()) {
@@ -72,29 +73,6 @@ public class DssImageGetter {
                                          String         cgiapp, 
                                          DssImageParams params) {
        String retval;
-       /*
-       if (params.getSurvey() == DssImageParams.HST_PHASE_2_SURVEY) {
-           retval=  "http://" + 
-                 server.getHost() + ":" + server.getPort() + cgiapp    +
-                 "?r="         + params.getRaJ2000String()  + 
-                 "&d="         + params.getDecJ2000String() + 
-                 "&e=J2000&h=" + params.getHeight()         + 
-                 "&w="         + params.getWidth()          + 
-                 "&v=4&f=fits&s=on" +
-                 "&c=gz";
-       }
-       else {
-           retval=  "http://" + 
-                  server.getHost() + ":" + server.getPort() + cgiapp    +
-                 "?r="         + params.getRaJ2000String()  + 
-                 "&d="         + params.getDecJ2000String() + 
-                 "&e=J2000&h=" + params.getHeight()         + 
-                 "&w="         + params.getWidth()          + 
-                 "&f=FITS&v="  + params.getSurvey()         +
-                 "&s=ON"       +
-                 "&c=gz";
-       }
-       */
        retval=  "http://" +
                server.getHost() + ":" + server.getPort() + cgiapp    +
                "?r="         + params.getRaJ2000String()  +
@@ -113,8 +91,7 @@ public class DssImageGetter {
         params.setHeight(30.0F);
         params.setWidth(30.0F);
         params.setSurvey("poss2Red");
-        params.setRaJ2000(10.672);
-        params.setDecJ2000(41.259);
+        params.setWorldPt(new WorldPt(10.672, 41.259));
         try {
           lowlevelGetDssImage(params, new File("./a.fits.gz") );
         }

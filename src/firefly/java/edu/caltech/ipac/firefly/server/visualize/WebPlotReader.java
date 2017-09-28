@@ -162,7 +162,9 @@ public class WebPlotReader {
                     List<RelatedData> rd= null;
                     if (relatedDataList!=null || fd.getRelatedData()!=null) {
                         rd= new ArrayList<>();
-                        if (relatedDataList!=null)  rd.addAll(relatedDataList.get(i));
+                        if (relatedDataList!=null && i<relatedDataList.size() && relatedDataList.get(i)!=null)  {
+                            rd.addAll(relatedDataList.get(i));
+                        }
                         if (fd.getRelatedData()!=null) rd.addAll(fd.getRelatedData());
                     }
                     retval[i]= new FileReadInfo(originalFile, frAry[i], band, i, fd.getDesc(), uploadedName, rd, null);

@@ -85,7 +85,8 @@ public class URLFileRetriever implements FileRetriever {
         } catch (Exception e) {
             throw ResponseMessage.simplifyNetworkCallException(e);
         }
-        return fitsFileInfo.copyWithDesc(urlStr);
+        fitsFileInfo.setDesc(urlStr);
+        return fitsFileInfo;
     }
 
 }

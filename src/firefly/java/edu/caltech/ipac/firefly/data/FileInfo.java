@@ -128,6 +128,9 @@ public class FileInfo implements HasAccessInfo, Serializable {
 
     public void setSizeInBytes(long sizeInBytes) { putAttribute(SIZE_IN_BYTES,sizeInBytes+""); }
 
+    public void setDesc(String desc) { putAttribute(DESC,desc); }
+
+
     @Override
     public boolean equals(Object o) {
         if (o instanceof FileInfo) {
@@ -173,20 +176,17 @@ public class FileInfo implements HasAccessInfo, Serializable {
         return fi;
     }
 
-    public FileInfo copyWith(String... valuePairs) {
-        FileInfo fi= copy();
-        if (valuePairs != null && valuePairs.length > 0) {
-            for(int i= 0; (i<valuePairs.length); i+=2) {
-                if (valuePairs[i]!=null && valuePairs.length<i+1) {
-                    fi.putAttribute(valuePairs[i], valuePairs[i+1]);
-                }
-            }
-        }
-        return fi;
-    }
-    public FileInfo copyWithDesc(String desc) {
-        return copyWith(DESC, desc);
-    }
+//    public FileInfo copyWith(String... valuePairs) {
+//        FileInfo fi= copy();
+//        if (valuePairs != null && valuePairs.length > 0) {
+//            for(int i= 0; (i<valuePairs.length); i+=2) {
+//                if (valuePairs[i]!=null && valuePairs.length<i+1) {
+//                    fi.putAttribute(valuePairs[i], valuePairs[i+1]);
+//                }
+//            }
+//        }
+//        return fi;
+//    }
 
     public interface FileNameResolver {
         String getResolvedName(String input);

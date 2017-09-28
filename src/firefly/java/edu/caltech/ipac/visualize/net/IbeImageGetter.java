@@ -32,7 +32,7 @@ import java.util.Map;
 public class IbeImageGetter {
 
 
-    public static File lowlevelGetIbeImage(BaseIrsaParams  params)
+    public static File lowlevelGetIbeImage(ImageServiceParams params)
                                            throws FailedRequestException,
                                                   IOException {
         boolean isWise= false;
@@ -40,13 +40,13 @@ public class IbeImageGetter {
 
       try  {
           String sizeStr= null;
-          Map<String,String> queryMap= new HashMap<String,String>(11);
+          Map<String,String> queryMap= new HashMap<>(11);
           IbeDataSource ibeSource= null;
 
           if (params instanceof WiseImageParams) {
               WiseImageParams wiseParams= (WiseImageParams)params;
 
-              WiseIbeDataSource.DataProduct product= wiseParams.getType().equals(WiseImageParams.WISE_3A) ?
+              WiseIbeDataSource.DataProduct product= wiseParams.getProductLevel().equals(WiseImageParams.WISE_3A) ?
                                                      WiseIbeDataSource.DataProduct.ALLWISE_MULTIBAND_3A :
                                                      WiseIbeDataSource.DataProduct.ALLSKY_4BAND_1B;
 
@@ -58,13 +58,13 @@ public class IbeImageGetter {
           }
           else if (params instanceof IrsaImageParams) {
               IrsaImageParams irsaParams= (IrsaImageParams)params;
-              if (irsaParams.getType()== IrsaImageParams.IrsaTypes.TWOMASS || irsaParams.getType()== IrsaImageParams.IrsaTypes.TWOMASS6) {
+              if (params.getType()== ImageServiceParams.ImageSourceTypes.TWOMASS || params.getType()== ImageServiceParams.ImageSourceTypes.TWOMASS6) {
 
                   ibeSource= new TwoMassIbeDataSource();
 
 
-                  Map<String,String> m= new HashMap<String, String>(1);
-                  if (irsaParams.getType()== IrsaImageParams.IrsaTypes.TWOMASS)  {
+                  Map<String,String> m= new HashMap<>();
+                  if (params.getType()== ImageServiceParams.ImageSourceTypes.TWOMASS)  {
                       m.put(TwoMassIbeDataSource.DS_KEY, "ASKY");
                   }
                   else {
@@ -91,7 +91,7 @@ public class IbeImageGetter {
           File queryTbl= File.createTempFile("IbeQuery-", ".tbl", CacheHelper.getDir());
 
           IbeQueryParam queryParam= ibeSource.makeQueryParam(queryMap);
-          queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000());
+          queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000String());
           queryParam.setMcen(true);
           queryParam.setIntersect(IbeQueryParam.Intersect.CENTER);
           ibe.query(queryTbl, queryParam);

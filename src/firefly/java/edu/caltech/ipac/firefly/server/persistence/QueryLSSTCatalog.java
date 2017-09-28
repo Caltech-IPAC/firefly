@@ -59,7 +59,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             try {
                 URLConnection uc = URLDownload.makeConnection(new URL(url));
                 uc.setRequestProperty("Accept", "text/plain");
-                URLDownload.getDataToFile(uc, new File("/tmp/result.json"), null);
+                URLDownload.getDataToFile(uc, new File("/tmp/result.json"));
             } catch (FailedRequestException e) {
                 throw new IOException("Request Failed", e);
             }
@@ -187,7 +187,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             try {
                 URLConnection uc = URLDownload.makeConnection(new URL(url));
                 uc.setRequestProperty("Accept", "text/plain");
-                URLDownload.getDataToFile(uc, oFile, null);
+                URLDownload.getDataToFile(uc, oFile);
             } catch (FailedRequestException e) {
                 throw new IOException("Request Failed", e);
             }

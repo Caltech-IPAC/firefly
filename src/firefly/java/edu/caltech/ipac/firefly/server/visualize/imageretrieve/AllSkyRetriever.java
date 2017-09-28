@@ -58,7 +58,8 @@ public class AllSkyRetriever implements FileRetriever {
         }  catch (Exception e) {
             throw new FailedRequestException("No data",null,e);
         }
-        return fitsFileInfo.copyWithDesc(RESERVED_IMAGES[DEFAULT_ALLSKY].getDescription());
+        fitsFileInfo.setDesc(RESERVED_IMAGES[DEFAULT_ALLSKY].getDescription());
+        return fitsFileInfo;
     }
 
 //===================================================================
