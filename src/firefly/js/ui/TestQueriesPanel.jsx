@@ -352,14 +352,15 @@ function renderAtlasSearch(fields) {
     return (
         <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
             <CheckboxGroupInputField
-                fieldKey='ds'
+                fieldKey='ds1'
                 alignment='vertical'
                 initialState={{
                     tooltip: 'Spacial Type',
-                    value: 'seip'
+                    value: 'spitzer.seip_science'
                 }}
                 options={[
-                    {label: 'SEIP', value: 'seip'},
+                    {label: 'MSX', value: 'msx.msx_images'},
+                    {label: 'SEIP', value: 'spitzer.seip_science'}
                 ]}
             />
             <CheckboxGroupInputField
@@ -367,7 +368,7 @@ function renderAtlasSearch(fields) {
                 alignment='horizontal'
                 initialState={{
                     tooltip: 'Return Band',
-                    value: 'IRAC1,IRAC2,IRAC3,IRAC4,MIPS24'
+                    value: 'IRAC1'
                 }}
                 options={[
                     {label : 'IRAC 2.4', value: 'IRAC1'},
@@ -375,6 +376,10 @@ function renderAtlasSearch(fields) {
                     {label : 'IRAC 5.8', value: 'IRAC3'},
                     {label : 'IRAC 8', value: 'IRAC4'},
                     {label : 'MIPS 24', value: 'MIPS24'},
+                    {label : 'E', value: 'E'},
+                    {label : 'A', value: 'A'},
+                    {label : 'C', value: 'C'},
+                    {label : 'D', value: 'D'},
                 ]}
             />
         </div>
@@ -641,14 +646,14 @@ function doAtlas(request) {
         {
             [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
             mission: 'atlas',
-            ds: request.ds, // map the ENUM string key DS_KEY
             //mcenter:true, returned 1 image
-            /* TODO Atlas source has only seip ds defined, for all the ATLAS dataset, use instead:
-            schema:'spitzer',
-            table:'seip_science'
-            */
-            band: request.bands
-            // instrument: 'IRAC' // NOT USED YET
+            // TODO Not yet fully working, see AtlasRequestList
+            ds:request.ds1,
+            band: request.band,
+            subsize:0.05,
+            sizeUnit:'deg',
+            mcenter:true
+            // filter:''
         });
     dispatchTableSearch(reqParams);
 }

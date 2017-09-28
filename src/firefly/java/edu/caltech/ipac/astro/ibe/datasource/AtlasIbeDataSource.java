@@ -46,14 +46,19 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
     public static final String INSTRUMENT_KEY = "instrument"; //example: IRAC or MIPS
     public static final String FILE_TYPE_KEY = "file_type";// example: 'science' for seip (see princiapl column for prefered image to display = '1'
     public static final String TABLE_KEY = "table";// example: seip_science
-    public static final String SCHEMA_KEY = "schema"; //Example:spitzer
+    public static final String DATASET_KEY = "dataset"; //Example:spitzer
     public static final String XTRA_KEY = "filter"; //Example:fname like '%.mosaic.fits'
     private static final String PRINCIPAL_KEY = "principal";
 
     private DS ds;
 
+    /**
+     * ATLAS has hundreds of dataproducts: herschel, spitzer, planck, dss, cosmos, ETC.
+     * TODO Have this 2 datasets as example but the information has to come from the client itself
+     */
     public enum DS {
-        SEIP("SEIP", "spitzer", "seip_science", FILE_TYPE_KEY + "='science' and fname like \'%.mosaic.fits\'");
+        SEIP("SEIP", "spitzer", "seip_science", FILE_TYPE_KEY + "='science' and fname like \'%.mosaic.fits\'"),
+        MSX("MSX", "msx", "msx_images", "");
         private final String extraFilter;
         private String name;
         private String schema;
@@ -137,15 +142,29 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
     @Override
     public void initialize(Map<String, String> dsInfo) {
 
+        //For example using key
+        // TODO this should me removed in favor of survey = schema.table
         ds = DS.getDS(dsInfo.get(DS_KEY));
         String schema = null, table = null;
         if (ds != null) {
             schema = ds.getSchema();
             table = ds.getTable();
         } else {
-            // When info comes from edu.caltech.ipac.visualize.net.BaseIrsaParams
-            schema = dsInfo.get(SCHEMA_KEY);
-            table = dsInfo.get(TABLE_KEY);
+            if (dsInfo.get(DATASET_KEY) != null && dsInfo.get(TABLE_KEY) != null) {
+                // When info comes from edu.caltech.ipac.visualize.net.BaseIrsaParams
+                // WebPlotRquest should also have the information from master table (see IRSA-816)
+                schema = dsInfo.get(DATASET_KEY);
+                table = dsInfo.get(TABLE_KEY);
+            } else {
+                if (!StringUtils.isEmpty(dsInfo.get(DS_KEY))) {
+                    String[] defs = dsInfo.get(DS_KEY).split("\\.");
+                    if (defs.length == 2) {
+                        schema = defs[0];
+                        table = defs[1];
+                    }
+                }
+
+            }
         }
         setupDS(null, schema, table);
     }
@@ -153,7 +172,7 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
     private void setupDS(String ibeHost, String dataset, String table) {
 
         if (StringUtils.isEmpty(ibeHost)) {
-            ibeHost = AppProperties.getProperty("atlas.ibe.host", "https://irsadev.ipac.caltech.edu");
+            ibeHost = AppProperties.getProperty("atlas.ibe.host", "https://irsa.ipac.caltech.edu");
         }
         setIbeHost(ibeHost);
         setMission(ATLAS);
@@ -257,28 +276,25 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
         String bands = queryInfo.get(BAND_KEY);
         // process BAND - ENUMSTRING
         if (!StringUtils.isEmpty(bands)) {
-            constraints.add("band_name IN (" + bands + ")");
+            String checkedBands = checkAndConvert2StringSingleQuote(bands);
+            constraints.add("band_name IN (" + checkedBands + ")");
         }
         String inst = queryInfo.get(INSTRUMENT_KEY);
         if (!StringUtils.isEmpty(inst)) {
             constraints.add("instrument_name=\'" + inst + "\'");
         }
 
-        // Some image datasets have many images for same file_type and band, so we need to distinguish which one to plot
-        // Atlas metadata search will have a column named 'principal' is added, the filter need to take car of 'file_type' and look for principal = 1 (prefered image to display)
-        String ftype = queryInfo.get(FILE_TYPE_KEY);
-        if (!StringUtils.isEmpty(ftype)) {
-            constraints.add(FILE_TYPE_KEY + "=\'" + ftype + "\'");
-        }
+        // Main image to be displayed is controlled with 'principal' colummn = 1 for each file_type
+        // TODO remove that when 'principal' is available in metadata (IRSA-822) and assign to 1.
         String pvalue = queryInfo.get(PRINCIPAL_KEY);
         if (!StringUtils.isEmpty(pvalue)) {
             constraints.add(PRINCIPAL_KEY + "=" + pvalue);
         }
 
-        // TODO for now , extra filter is passed from the request client but
-        // TODO ultimatetly it should be passed above:
+        // extra filter is passed from the request client or the example ENUM defined
+        // This can be different for different ATLAS dataset: cosmos, herschel, spitzer, etc.
         String xtraFilter = ds == null ? queryInfo.get(XTRA_KEY) : ds.getSpecificFilter();
-        if (xtraFilter != null) {
+        if (!StringUtils.isEmpty(xtraFilter)) {
             constraints.add(xtraFilter);
         }
         // compile all constraints
@@ -300,6 +316,33 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
             constrStr = where;
         }
         return constrStr;
+    }
+
+    /**
+     * Check and convert if needed to single quote value to be used in where=band in (...)
+     *
+     * @param str CSV string
+     * @return CSV single quoted values
+     */
+    private String checkAndConvert2StringSingleQuote(String str) {
+        String res = "";
+        int i = 0;
+        String[] split = str.split(",");
+        for (String b : split) {
+            b = b.trim();
+            if (b.lastIndexOf("'") < 0) {
+                b += "\'";
+            }
+            if (!b.startsWith("'")) {
+                b = "\'" + b;
+            }
+            res += b;
+            if (i < split.length - 1) {
+                res += ",";
+            }
+            i++;
+        }
+        return res;
     }
 
     @Override

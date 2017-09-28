@@ -191,13 +191,13 @@ public class ServiceRetriever implements FileRetriever {
         params.setRaJ2000(wp.getLon());
         params.setDecJ2000(wp.getLat());
         params.setBand(r.getSurveyBand());
-        params.setSchema(r.getParam(AtlasIbeDataSource.SCHEMA_KEY));
+        params.setSchema(r.getParam(AtlasIbeDataSource.DATASET_KEY));
         params.setTable(r.getParam(AtlasIbeDataSource.TABLE_KEY));
         params.setInstrument(r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY));
         params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
         params.setSize((float)circle.getRadius());
         FileInfo fi= getNetworkPlot(params);
-        return fi.copyWithDesc(getAtlasDesc(r.getParam(AtlasIbeDataSource.SCHEMA_KEY),r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY),r.getSurveyBand()));
+        return fi.copyWithDesc(getAtlasDesc(r.getParam(AtlasIbeDataSource.DATASET_KEY),r.getParam(AtlasIbeDataSource.TABLE_KEY),r.getSurveyBand()));
     }
 
 

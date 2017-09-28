@@ -52,7 +52,7 @@ public class AtlasImageGetter {
                 if(atlasParams.getDs()!=null){ // using AtlasIbeSource defined datasets
                     m.put(AtlasIbeDataSource.DS_KEY, atlasParams.getDs());
                 }else{
-                    m.put(AtlasIbeDataSource.SCHEMA_KEY, atlasParams.getSchema());
+                    m.put(AtlasIbeDataSource.DATASET_KEY, atlasParams.getSchema());
                     m.put(AtlasIbeDataSource.TABLE_KEY, atlasParams.getTable());
                     //Extra filter for querying images for now - see IRSA-
                     queryMap.put(AtlasIbeDataSource.XTRA_KEY, atlasParams.getXtraFilter());
@@ -95,21 +95,5 @@ public class AtlasImageGetter {
             throw new FailedRequestException("Could not parse results", "Details in exception", me);
         }
 
-    }
-
-
-    public static void main(String args[]) {
-//       WiseImageParams params= new WiseImageParams();
-//       params.setSize(.33F);
-//       params.setBand("1");
-//       params.setBand(WiseImageParams.WISE_3A);
-//       params.setRaJ2000(10.672);
-//       params.setDecJ2000(41.259);
-//       try {
-//           lowlevelGetIbeImage(params, new File("./a.fits.gz"), null);
-//       }
-//       catch (Exception e) {
-//           System.out.println(e);
-//       }
     }
 }

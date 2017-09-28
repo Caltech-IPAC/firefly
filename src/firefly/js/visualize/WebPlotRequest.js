@@ -432,19 +432,19 @@ export class WebPlotRequest extends ServerRequest {
      * @param survey any atlas combination tables: schema.table, i.e. 'spitzer.seip_science'
      * @param band any atlas 'band_name' column, i.e 'IRAC2' (which is 2.4 microns channel from IRAC instrument)
      * @param filter extra filter for particular table, such as 'file_type = 'science' and fname like '%.mosaic.fits' or 'file_type = 'science' and principal=1'
-     * @param sizeInDeg  TODO: wee need to specify a default from the master table
+     * @param sizeInDeg
      * @return {WebPlotRequest}
      */
     static makeAtlasRequest(wp, survey, band, filter, sizeInDeg) {
         const req = this.makePlotServiceReq(ServiceType.ATLAS, wp, survey, sizeInDeg);
-        req.setParam(C.SURVEY_KEY, 'ATLAS' + '.' + survey);
-        req.setParam("schema", survey.split(".")[0]);
+        req.setParam(C.SURVEY_KEY, survey.split(".")[0]);
+        req.setParam("dataset", survey.split(".")[0]);
         req.setParam("table", survey.split(".")[1]);
-        req.setParam("filter", filter);
+        req.setParam("filter", filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
         req.setParam(C.SURVEY_KEY_BAND, band + '');
-        req.setParam(C.SURVEY_KEY, survey);
         req.setTitle(survey + "," + band);
-        req.setDrawingSubGroupId('seip'); // 'spitzer.seip_science' TODO is it enough for subgroup identification?
+        // TODO drawingSubGroupId TO BE SET OUTSIDE here! ATLAS has many dataset and it will depend on the app to group those images, example: See ImageSelectPanelResult.js, Finderrchart...
+        //req.setDrawingSubGroupId(survey.split(".")[1]); // 'spitzer.seip_science'
         return req;
     }
     //======================== DSS or IRIS =====================================

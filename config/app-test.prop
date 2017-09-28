@@ -18,3 +18,5 @@ workspace.protocol.irsa.webdav=edu.caltech.ipac.firefly.server.WebDAVWorkspaceMa
 # Another Impl?-> See edu.caltech.ipac.firefly.server.ws.WebDAVWorkspaceHandler#withCredentials
 # workspace.protocol.irsa.webdav=edu.caltech.ipac.firefly.server.ws.WebdavImpl
 
+atlas.ibe.host=irsadev.ipac.caltech.edu
+

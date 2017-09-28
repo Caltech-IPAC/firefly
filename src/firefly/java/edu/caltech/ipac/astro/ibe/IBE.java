@@ -6,8 +6,6 @@ package edu.caltech.ipac.astro.ibe;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
-import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
-import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -22,12 +20,9 @@ import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.Map;
 
 import static edu.caltech.ipac.astro.ibe.BaseIbeDataSource.addUrlParam;
