@@ -1,12 +1,14 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../../Firefly.js';
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 
 import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
 import {isScatter2d} from '../ChartUtil.js';
+
+
 
 export class PlotlyChartArea extends PureComponent {
 
@@ -63,7 +65,17 @@ export class PlotlyChartArea extends PureComponent {
             doingResize = true;
         }
         const showlegend = data.length > 1;
-        let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
+
+        // put the active trace after all inactive traces
+
+        let pdata = data.reduce((rdata, e, idx) =>  {
+            (idx !== activeTrace) && rdata.push(Object.assign({}, e));
+            return rdata;
+        }, []);
+
+        pdata.push(Object.assign({}, data[activeTrace]));
+
+        //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
         if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
             // highlight makes sense only for scatter at the moment
             // 3d scatter highlight and selected appear in front - not good: disable for the moment
@@ -119,29 +131,53 @@ function calculateChartSize(widthPx, heightPx, xyratio, stretch) {
     return {chartWidth, chartHeight};
 }
 
+/**
+ * plotly chart click callback, updata chart highlight in case the click falls on active trace or selected trace
+ * @param chartId
+ * @returns {Function}
+ */
 function onClick(chartId) {
     return (evData) => {
         // for scatter, points array has one element, for the top trace only,
         // we should have active trace, its related selected, and its highlight traces on top
+        const {activeTrace=0, curveNumberMap} = getChartData(chartId);
         const curveNumber = get(evData.points, `${0}.curveNumber`);
         const highlighted = get(evData.points, `${0}.pointNumber`);
         const curveName = get(evData.points, `${0}.data.name`);
-        dispatchChartHighlighted({chartId, traceNum: curveNumber, traceName: curveName, highlighted, chartTrigger: true});
+
+        const traceNum = curveNumber >= curveNumberMap.length ? curveNumber : curveNumberMap[curveNumber];
+
+        // traceNum is related to any of trace data or SELECTED trace or HIGHLIGHTED trace
+        // if traceNUm is between [0, curveNumberMap.length-1], then curveNumber is mapped to one of the trace data
+        // if traceNum is greater than curveNumberMap.length-1, then curveNumber is mapped to either SELECTED trace or HIGHLIGHTED trace
+        if (traceNum === activeTrace || traceNum === curveNumberMap.length ) {
+            dispatchChartHighlighted({
+                chartId,
+                traceNum,
+                traceName: curveName,
+                highlighted,
+                chartTrigger: true
+            });
+        }
     };
 }
 
+/**
+ * plotly chart, select area callback, update chart by collecting all points on active trace enclosed by selected area
+ * @param chartId
+ * @returns {Function}
+ */
 function onSelect(chartId) {
     return (evData) => {
         if (evData) {
             let points = undefined;
             // this is for range selection only... lasso selection is not implemented yet.
-            const {activeTrace=0}  = getChartData(chartId);
+            const {activeTrace=0, curveNumberMap}  = getChartData(chartId);
             const [xMin, xMax] = get(evData, 'range.x', []);
             const [yMin, yMax] = get(evData, 'range.y', []);
-            if (xMin !== xMax && yMin !== yMax) {
-
+            if (xMin !== xMax && yMin !== yMax && curveNumberMap) {
                 points = get(evData, 'points', []).filter((o) => {
-                    return o.curveNumber === activeTrace;
+                    return curveNumberMap[o.curveNumber] === activeTrace;
                 }).map((o) => {
                     return o.pointNumber;
                 });

@@ -28,7 +28,7 @@
 
 
 <div style="font-size: 16pt; padding:0 0 10px 10px;">
-    Test Firefly Blank Slate Viewer (for generic column expression)
+    Test Firefly Blank Slate Viewer (for Plotly chart with multi-traces of same type)
 </div>
 
 <pre>
@@ -79,19 +79,25 @@ Some unsupported plotly charts:
         <a href='javascript:load2DScatter(0,0,2,2)'>Show Plotly Scatter </a> <span class='smallCoords'>at row: 0, col: 0, w:2 h: 2</span>
     </li>
     <li>
-        <a href="javascript:loadSurface(0,2,2,2)">Show Surface </a><span class='smallCoords'>at row: 0, col: 2, w: 2, h: 2</span>
+        <a href="javascript:loadSurface(0,2,2,2)">Show 3D </a><span class='smallCoords'>at row: 0, col: 2, w: 2, h: 2</span>
     </li>
     <li>
-        <a href="javascript:loadBar(2,0,3,3)">Show Bar chart </a><span class='smallCoords'>at row: 2, col: 0, w: 3, h: 3</span>
+        <a href="javascript:loadNewHeatmapCharts(2,0,2,3)">Show Heatmap chart </a><span class='smallCoords'>at row: 2, col: 0, w: 2, h: 3</span>
     </li>
     <li>
-        <a href="javascript:loadPie(2,3,3,3)">Show Pie Chart </a><span class='smallCoords'>at row: 2, col: 3, w: 3. h: 3</span>
+        <a href="javascript:loadHistogramCharts(2,2,2,3)">Show Histogram Chart </a><span class='smallCoords'>at row: 2, col: 2, w: 2. h: 3</span>
     </li>
     <li>
-        <a href="javascript:loadDensity(5,0,3,3)">Show Histogram2dContour </a><span class='smallCoords'>at row: 5, col: 0, w: 3, h: 3</span>
+        <a href="javascript:loadPie(2,4,2,3)">Show Pie Chart </a><span class='smallCoords'>at row: 2, col: 4, w: 2. h: 3</span>
     </li>
     <li>
-        <a href="javascript:loadBox(5,3,3,3)">Show Box </a><span class='smallCoords'>at row: 5, col: 3, w: 3, h: 3</span>
+        <a href="javascript:loadDensity(5,0,2,3)">Show Histogram2dContour </a><span class='smallCoords'>at row: 5, col: 0, w: 2, h: 3</span>
+    </li>
+    <li>
+        <a href="javascript:loadHistogram2d(5,2,2,3)">Show Histogram2d </a><span class='smallCoords'>at row: 5, col: 2, w: 2, h: 3</span>
+    </li>
+    <li>
+        <a href="javascript:loadBox(5,4,2,3)">Show Box </a><span class='smallCoords'>at row: 5, col: 4, w: 2, h: 3</span>
     </li>
 </ul>
 </body>
@@ -125,6 +131,29 @@ Some unsupported plotly charts:
                 marker: {size: 4, opacity: 0.5}
             };
 
+            var trace2 = {
+                tbl_id: "wiseCatTbl",
+                x: "tables::w2mpro-w3mpro",
+                y: "tables::w3mpro-w4mpro",
+                name: 'w2-w3 vs. w3-w4',
+                mode: 'markers',
+                type: 'scatter',
+                error_x : {array: "tables::w3sigmpro"},
+                error_y : {array: "tables::w4sigmpro"},
+                marker: {size: 4, opacity: 0.5}
+            };
+
+            var trace3 = {
+                tbl_id: "wiseCatTbl",
+                x: "tables::w1mpro-w2mpro",
+                y: "tables::w2mpro-w3mpro",
+                mode: 'markers',
+                type: 'scatter',
+                error_x : {array: "tables::w3sigmpro"},
+                error_y : {array: "tables::w4sigmpro"},
+                marker: {size: 4, opacity: 0.5}
+            };
+
             var layoutS = {
                 title: 'Color-Color',
                 xaxis: {title: 'w1mpro-w2mpro (mag)'},
@@ -134,7 +163,7 @@ Some unsupported plotly charts:
 
 
             firefly.getViewer().showChart(
-                    {chartId: 'newChart1', layout: layoutS, data: [trace1]},
+                    {chartId: 'newChart1', layout: layoutS, data: [trace1, trace2, trace3]},
                     'newChartContainer');
 
         }
@@ -147,21 +176,30 @@ Some unsupported plotly charts:
                 {
                     tbl_id: "wiseCatTbl",
                     type: 'scatter3d',
-                    name: 'color-color-color',
+                    name: 'color-1',
                     x: "tables::w1mpro-w2mpro",
                     y: "tables::w2mpro-w3mpro",
                     z: "tables::w3mpro-w4mpro",
                     mode : 'markers',
                     marker : {
-                        size: 3,
-                        line: {
-                            color: 'rgb(127, 127, 127, 0.14)',
-                            width: 1
-                        }
+                        size: 3
+                    },
+                    hoverinfo: 'x+y+z'
+                },
+                {
+                    tbl_id: "wiseCatTbl",
+                    type: 'scatter3d',
+                    name: 'color-2',
+                    x: "tables::w1mpro-w2mpro",
+                    y: "tables::w2mpro-w3mpro",
+                    z: "tables::w3mpro-w4mpro",
+                    mode: 'markers',
+                    marker: {
+                        size: 3
                     },
                     hoverinfo: 'x+y+z'
                 }
-            ];
+           ];
 
             var tfont = {size: 11};
             var layout3d = {
@@ -187,8 +225,8 @@ Some unsupported plotly charts:
                     '3dChartContainer');
         }
 
-        function loadHistogramCharts(r,c,w,h) {
-            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'histContainer');
+        function loadFireflyHistogramCharts(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'fireflyHistContainer');
 
             var dataH = [
                 {
@@ -202,8 +240,7 @@ Some unsupported plotly charts:
                             columnOrExpr: 'w1mpro'
                         }
                     },
-                    name: 'w1mpro',
-                    marker: {color: 'rgba(153, 51, 153, 0.8)'}
+                    name: 'w1mpro'
                 },
                 {
                     type: 'fireflyHistogram',
@@ -216,8 +253,8 @@ Some unsupported plotly charts:
                             columnOrExpr: 'w2mpro'
                         }
                     },
-                    name: 'w2mpro',
-                    marker: {color: 'rgba(102,153,0, 0.7)'}}
+                    name: 'w2mpro'
+                }
             ];
 
             var layoutHist = {
@@ -228,8 +265,36 @@ Some unsupported plotly charts:
 
             firefly.getViewer().showChart(
                     {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH},
+                    'fireflyHistContainer');
+        }
+
+        function loadHistogramCharts(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'histContainer');
+
+            var dataH = [
+                {
+                    type: 'histogram',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro"
+                },
+                {
+                    type: 'histogram',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro"
+                }
+            ];
+
+            var layoutHist = {
+                title: 'Photometry histogram',
+                xaxis: {title: 'photometry (mag)'},
+                yaxis: {title: ''}
+            };
+
+            firefly.getViewer().showChart(
+                    {chartId: 'hist-tbl', layout: layoutHist, data: dataH},
                     'histContainer');
         }
+
 
         function loadBar(r, c, w, h) {
             firefly.getViewer().addCell(r, c, w, h, 'xyPlots', 'barContainer');
@@ -239,10 +304,32 @@ Some unsupported plotly charts:
                 {
                     tbl_id: "wiseCatTbl",
                     type: 'bar',
-                    name: 'w1nm',
+                    name: 'w1nm_1',
                     orientation: 'h',
                     y: "tables::clon",
-                    x: "tables::w1nm"
+                    x: "tables::w1nm",
+                    error_x : {array: "tables::w3sigmpro"},
+                    error_y : {array: "tables::w4sigmpro"}
+                },
+                {
+                    tbl_id: "wiseCatTbl",
+                    type: 'bar',
+                    name: 'w1nm_2',
+                    orientation: 'h',
+                    y: "tables::clon",
+                    x: "tables::w1nm",
+                    error_x : {array: "tables::w3sigmpro"},
+                    error_y : {array: "tables::w4sigmpro"}
+                },
+                {
+                    tbl_id: "wiseCatTbl",
+                    type: 'bar',
+                    name: 'w1nm_3',
+                    orientation: 'h',
+                    y: "tables::clon",
+                    x: "tables::w1nm",
+                    error_x : {array: "tables::w3sigmpro"},
+                    error_y : {array: "tables::w4sigmpro"}
                 }
             ];
 
@@ -262,15 +349,24 @@ Some unsupported plotly charts:
             var dataPie = [
                 {
                     tbl_id: "wiseCatTbl",
-                    name: 'Stats for (w1+w2)',
+                    name: 'pie: (w1+w2)',
                     type: 'pie',
                     values: "tables::w1mpro+w2mpro",
                     labels:  "tables::clon",
                     textinfo: 'none'
-                }];
+                },
+                {
+                    tbl_id: "wiseCatTbl",
+                    name: 'pie: (w3+w4)',
+                    type: 'pie',
+                    values: "tables::w3mpro+w4mpro",
+                    labels:  "tables::clon",
+                    textinfo: 'none'
+                }
+            ];
 
             var layoutPie = {
-                title: 'pie: w1+w2 vs. clon',
+                title: 'pie: (w1+w2)|(w3+w4) vs. clon',
                 showlegend: true
             };
 
@@ -284,12 +380,21 @@ Some unsupported plotly charts:
             var dataContour = [
                 {
                     tbl_id: "wiseCatTbl",
-                    name: 'contour',
+                    name: 'contour 1',
                     type: 'histogram2dcontour',
                     x: "tables::ra",
                     y: "tables::dec",
                     ncontours: 20
-                }];
+                },
+                {
+                    tbl_id: "wiseCatTbl",
+                    name: 'contour 2',
+                    type: 'histogram2dcontour',
+                    x: "tables::ra",
+                    y: "tables::dec",
+                    ncontours: 30
+                }
+            ];
 
             var layoutContour = {
                 title: 'histogram2dcontour: ra vs. dec',
@@ -301,6 +406,61 @@ Some unsupported plotly charts:
                     {chartId: 'newhist2dcontour', data: dataContour, layout: layoutContour}, 'h2dcontourContainer');
         }
 
+        function loadHistogram2d(r, c, w, h) {
+            firefly.getViewer().addCell(r, c, w, h, 'xyPlots', 'h2dContainer');
+
+            var dataContour = [
+                {
+                    tbl_id: "wiseCatTbl",
+                    name: 'hist2d 1',
+                    type: 'histogram2d',
+                    x: "tables::ra",
+                    y: "tables::dec",
+                    z: "tables::w1snr"
+                },
+                {
+                    tbl_id: "wiseCatTbl",
+                    name: 'hist2d 2',
+                    type: 'histogram2d',
+                    x: "tables::ra",
+                    y: "tables::dec",
+                    z: "tables::w1snr"
+                }
+            ];
+
+            // contour example
+            /*
+            var dataContour = [
+                {
+                    type: 'contour',
+                    name: 'contour 1',
+                    z: [[10, 10.625, 12.5, 15.625, 20],
+                        [5.625, 6.25, 8.125, 11.25, 15.625],
+                        [2.5, 3.125, 5., 8.125, 12.5],
+                        [0.625, 1.25, 3.125, 6.25, 10.625],
+                        [0, 0.625, 2.5, 5.625, 10]],
+                },
+                {
+                    type: 'contour',
+                    name: 'contour 2',
+                    z: [[10, 10.625, 12.5, 15.625, 20],
+                        [5.625, 6.25, 8.125, 11.25, 15.625],
+                        [2.5, 3.125, 5., 8.125, 12.5],
+                        [0.625, 1.25, 3.125, 6.25, 10.625],
+                        [0, 0.625, 2.5, 5.625, 10]],
+                }
+            ];
+            */
+            var layoutContour = {
+                title: 'histogram2d: ra vs. dec',
+                xaxis: {title: 'ra'},
+                yaxis: {title: 'dec'}
+            };
+
+            firefly.getViewer().showChart(
+                    {chartId: 'newhist2d', data: dataContour, layout: layoutContour}, 'h2dContainer');
+        }
+
         function loadSurface(r,c,w,h) {
             firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'surfaceContainer');
 
@@ -308,7 +468,16 @@ Some unsupported plotly charts:
             var dataSurface = [
                 {
                     type: 'surface',
-                    name: 'w1-w2-w3',
+                    name: 'surfcace 1',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro-w2mpro",
+                    y: "tables::w2mpro-w3mpro",
+                    z: "tables::w1mpro",
+                    hoverinfo: 'x+y+z'
+                },
+                {
+                    type: 'surface',
+                    name: 'surface 2',
                     tbl_id: "wiseCatTbl",
                     x: "tables::w1mpro-w2mpro",
                     y: "tables::w2mpro-w3mpro",
@@ -319,7 +488,7 @@ Some unsupported plotly charts:
 
             var tfont = {size: 11};
             var layoutSurface = {
-                title: 'Surface on w1-w2 & w2-w3',
+                title: 'Surface on (w1-w2) & (w2-w3)',
                 scene:{
                     xaxis: {
                         title: 'w1-w2 (deg)',
@@ -367,6 +536,54 @@ Some unsupported plotly charts:
                     'boxContainer');
         }
 
+        function loadNewHeatmapCharts(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'heatMapContainer');
+
+
+            var dataHM = [
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro",
+                    y: "tables::w2mpro",
+                    name: 'w1-w2'
+                },
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro",
+                    y: "tables::w3mpro",
+                    name: 'w1-w3',
+                    reversescale: true
+                },
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro",
+                    y: "tables::w4mpro",
+                    name: 'w1-w4'
+                }
+            ];
+            var layoutHM = {
+                title: 'Magnitude-magnitude densities',
+                xaxis: {title: 'w1 photometry (mag)'},
+                yaxis: {title: ''},
+                firefly: { // user boundaries - so that heatmaps will be calculated in the same XY space
+                    xaxis: {
+                        min: 5,
+                        max: 20
+                    },
+                    yaxis: {
+                        min: 4,
+                        max: 18
+                    }
+                }
+            };
+
+            firefly.getViewer().showChart(
+                    {chartId: 'newHeatmapChart', layout: layoutHM,  data: dataHM},
+                    'heatMapContainer');
+        }
 
         function showATable(sTarget,r,c,w,h) {
             firefly.getViewer().addCell(r,c,w,h, 'tables');
