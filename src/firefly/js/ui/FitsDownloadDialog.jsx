@@ -66,7 +66,7 @@ export function showFitsDownloadDialog() {
  */
 function getInitialPlotState() {
 
-    const plotView= getActivePlotView(visRoot())
+    const plotView= getActivePlotView(visRoot());
     var plot = primePlot(plotView);
 
 
@@ -103,13 +103,15 @@ function getInitialPlotState() {
     var isCrop = plotState.hasOperation(Operation.CROP);
     var isRotation = plotState.hasOperation(Operation.ROTATE);
     var cropNotRotate = isCrop && !isRotation ? true : false;
+    var fileLocation ='isLocal'; //set default file location
 
     return {
         plotView,
         plot,
         colors,
         hasThreeColorBand: threeColorBandUsed,
-        hasOperation: cropNotRotate
+        hasOperation: cropNotRotate,
+        fileLocation
     };
 
 }
@@ -236,15 +238,41 @@ function renderThreeBand(hasThreeColorBand, colors) {
     }
 }
 
+function renderDownloadButton(plotView) {
+    const fieldKey = FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM');
+
+    if (fieldKey && (fieldKey.fileLocation.value==='isLocal') ){
+        return (
+            <div style={{'textAlign':'center', marginBottom: 20}}>
+                < CompleteButton
+                    text='Download'
+                    onSuccess={ (request) => resultsSuccess(request, plotView )}
+                    onFail={resultsFail}
+                    dialogId='fitsDownloadDialog'
+                />
+            </div>
+        );
+    }
+    else if (fieldKey && (fieldKey.fileLocation.value==='isWs')) {
+        return (
+            <div>
+                <div style={{display:'inline-block', whiteSpace:'nowrap'}}>
+                    <button type='button' className='button std hl' disabled
+                            onClick={ (request) => resultsSuccess(request, plotView )}>{'Save to WS'}</button>
+                </div>
+                <div style={{padding:20, fontSize:'100%'}}>The WS file pick panel should be here.</div>
+            </div>);
+    }
+}
+
 function FitsDownloadDialogForm() {
 
 
-    const { plotView, plot, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
+    const { plotView, plot, colors, hasThreeColorBand, hasOperation, fileLocation} = getInitialPlotState();
 
     var renderOperationButtons = renderOperationOption(hasOperation);
 
     var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']);
-
 
     var leftColumn = { display: 'inline-block', paddingLeft:63, verticalAlign:'middle', paddingBottom:30};
 
@@ -275,6 +303,24 @@ function FitsDownloadDialogForm() {
 
                         </div>
 
+                        <div style={leftColumn}  title='Select saved file location'> Save to:  </div>
+                        <div style={rightColumn}>
+                            <RadioGroupInputField
+                                initialState={{
+                                    tooltip: 'Select saved file location',
+                                    value : 'isLocal'
+                                   }}
+                                options={ [
+                                      {label: 'Local File', value: 'isLocal'},
+                                      {label: 'Workspace',  value: 'isWs' },
+                                    ]}
+                                alignment={'vertical'}
+                                fieldKey='fileLocation'
+
+                            />
+
+                        </div>
+
 
 
                 </div>
@@ -293,14 +339,7 @@ function FitsDownloadDialogForm() {
                     <tr>
                         <td></td>
                         <td>
-                            <div style={{'textAlign':'center', marginBottom: 20}}>
-                                < CompleteButton
-                                    text='Download'
-                                    onSuccess={ (request) => resultsSuccess(request, plotView )}
-                                    onFail={resultsFail}
-                                    dialogId='fitsDownloadDialog'
-                                />
-                            </div>
+                            {renderDownloadButton(plotView)}
                         </td>
                         <td>
                             <div style={{ textAlign:'center', marginBottom: 20}}>
@@ -322,7 +361,7 @@ function resultsFail(request) {
 /**
  * This function process the request
  * @param request
- * @param plot
+ * @param plotView
  */
 function resultsSuccess(request, plotView) {
     // var rel = showResults(true, request);

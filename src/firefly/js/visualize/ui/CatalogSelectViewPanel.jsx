@@ -28,7 +28,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-
+import {FileUploadViewPanel} from './FileUploadViewPanel.jsx';
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -418,21 +418,9 @@ class CatalogSelectView extends PureComponent {
                         <CatalogDDList {...this.props} {...this.state} />
                     </Tab>
                     <Tab name='Load Catalog' id='loadcat'>
-                        <div
-                            style={{padding:5, width:'800px', height:'300px'}}>
-                            <FileUpload
-                                wrapperStyle={{margin: '5px 0'}}
-                                fieldKey='fileUpload'
-                                initialState={{
-                                            tooltip: 'Select an IPAC catalog table file to upload',
-                                            label: 'File:'}}
-                            />
-                            <div>
-                                <em style={{color:'gray'}}>Custom catalog in IPAC table format</em>
-                                <HelpIcon
-                                    helpId={'basics.loadcatalog'}/>
-                            </div>
-                        </div>
+
+                        <FileUploadViewPanel fieldKey='loadcatpanel' />
+
                     </Tab>
                     <Tab name='VO Catalog' id='vosearch'>
 

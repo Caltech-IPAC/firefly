@@ -61,6 +61,9 @@ import RegionPlot from '../drawingLayers/RegionPlot.js';
 import MarkerTool from '../drawingLayers/MarkerTool.js';
 import FootprintTool from '../drawingLayers/FootprintTool.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
+import {showFileUploadDialog} from '../ui/FileUploadDialog.jsx';
+import {DownloadOptionPanel} from '../ui/DownloadDialog.jsx';
+
 
 //==============
 // import Perf from 'react-addons-perf';
@@ -157,6 +160,16 @@ actionCreators.set(ChartsCntlr.CHART_OPTIONS_UPDATE, ChartsCntlr.makeChartOption
 
 actionCreators.set('exampleDialog', (rawAction) => {
     showExampleDialog();
+    return rawAction;
+});
+
+actionCreators.set('fileuploadDialog', (rawAction) => {
+    showFileUploadDialog();
+    return rawAction;
+});
+
+actionCreators.set('downloadDialog', (rawAction) => {
+    DownloadOptionPanel();
     return rawAction;
 });
 

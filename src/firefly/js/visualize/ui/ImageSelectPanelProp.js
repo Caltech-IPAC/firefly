@@ -138,12 +138,23 @@ export const initPanelCatalogs = [
         'Title': 'FITS File',
         'Symbol': 'FITS',
         'CatalogId': 6,
-        'fields': ['upload', 'list', 'extinput'],
+        'fields': ['upload', 'list', 'extinput','filelocation'],
+        'types': {
+                 'Title': 'Upload File Container:',
+                 'Items': [
+                     {'item': 'isLocal', 'id': 0, 'name': 'Upload Local File'},
+                     {'item': 'isWs', 'id': 1, 'name': 'Upload from Workspace'}
+                ],
+                 'Default':'isLocal'
+        },
         'button': {
             'Title': 'Enter URL of a FITS File:',
             'nullallowed': false
         },
         'upload': {
+            'Title': ''
+        },
+        'filelocation': {
             'Title': ''
         },
         'list': {
