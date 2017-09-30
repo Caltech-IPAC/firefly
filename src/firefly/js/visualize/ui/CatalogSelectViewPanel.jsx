@@ -8,13 +8,14 @@ import {FormPanel} from '../../ui/FormPanel.jsx';
 import { get, merge, isEmpty, isFunction, set} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {doFetchTable, makeTblRequest, makeIrsaCatalogRequest, makeVOCatalogRequest, DataTagMeta} from '../../tables/TableUtil.js';
+import {doFetchTable, makeTblRequest, makeFileRequest,makeIrsaCatalogRequest, makeVOCatalogRequest, DataTagMeta} from '../../tables/TableUtil.js';
 import {CatalogTableListField} from './CatalogTableListField.jsx';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
@@ -782,6 +783,10 @@ function fieldInit() {
         },
         'vourl': {
             fieldKey: 'vourl',
+            value: ''
+        },
+        'catupload':{
+            fieldKey: 'fileUpload',
             value: ''
         }
 

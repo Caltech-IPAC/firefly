@@ -4,30 +4,30 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get, set, isNil, isEqual} from 'lodash';
+import {get, isNil, isEqual} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
-import {getTblInfoById, getTblById, calcColumnWidths, makeTblRequest, getColumnIdx} from '../../tables/TableUtil.js';
-import {dispatchTableSearch, dispatchTableRemove} from '../../tables/TablesCntlr.js';
+import {getTblInfoById, getTblById, calcColumnWidths} from '../../tables/TableUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
-import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
-import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage } from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
-
+import CompleteButton from '../../ui/CompleteButton.jsx';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import './ImageSelectPanel.css';
 
-export const panelKey = 'FileUploadAnalysis';
+export const panelKey = 'FileUploadSelect';
 const  fileId = 'fileUpload';
 const  wsurlId = 'wsurlUpload';
 const  urlId = 'urlUpload';
+
 
 const SUMMARY_INDEX_COL = 0;
 const SUMMARY_TYPE_COL = 2;
@@ -147,7 +147,7 @@ const getSelectionResult = (model, limit) => {
 };
 
 
-export class FileUploadViewPanel extends PureComponent {
+export class FileUploadSelectPanel extends PureComponent {
 
     constructor(props) {
         super(props);
@@ -156,7 +156,7 @@ export class FileUploadViewPanel extends PureComponent {
             const bInit = !analysisFields;
             if (!analysisFields) analysisFields = FieldGroupUtils.getGroupFields(panelKey);
 
-            const uploadSrc = get(analysisFields, ['uploadTabs', 'value'], fileId);
+            const uploadSrc = get(analysisFields, ['uploadSrc', 'value'], fileId);
             const displayValue = get(analysisFields, [uploadSrc, 'displayValue']);
             const currentAnaResult = get(analysisFields, [uploadSrc, 'analysisResult'], '');
             const analysisResultObj = currentAnaResult ? JSON.parse(currentAnaResult) : {};
@@ -212,7 +212,7 @@ export class FileUploadViewPanel extends PureComponent {
     storeUpdate() {
         if (this.iAmMounted) {
             const analysisFields = FieldGroupUtils.getGroupFields(panelKey);
-            const uploadSrc = get(analysisFields, ['uploadTabs', 'value']);
+            const uploadSrc = get(analysisFields, ['uploadSrc', 'value']);
             const {analysisResult='', valid=true, displayValue} = get(analysisFields, uploadSrc) || {};
 
             if (!valid) {  // upload fails
@@ -507,7 +507,7 @@ export class FileUploadViewPanel extends PureComponent {
                     <div style={{display:'flex',  flexDirection: 'column', marginTop: 10, paddingLeft: 20,paddingBottom: 20}}>
                         <RadioGroupInputField
                             initialState={{value: uploadMethod[0].value}}
-                            fieldKey='uploadTabs'
+                            fieldKey='uploadSrc'
                             alignment={'horizontal'}
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
@@ -516,7 +516,14 @@ export class FileUploadViewPanel extends PureComponent {
                     </div>
                     {fileResultArea(fileId) }
                 </div>
+
                 {helpIcon() }
+                <CompleteButton style={{ padding: 5, fontSize: 12}} groupKey={panelKey}
+                                onSuccess={resultsSuccess}
+                                onFail={resultsFail}
+                                dialogId='FileUploadDialog'
+                                includeUnmounted={false}
+                />
             </FieldGroup>
         );
     }
@@ -555,11 +562,11 @@ const returnValidate = (retVal) => {
 
 /**
  * validate the table or extension selection
- * @param uploadTabs
+ * @param uploadSrc
  */
-export function validateModelSelection(uploadTabs) {
+export function validateModelSelection(uploadSrc) {
         const analysisFields = FieldGroupUtils.getGroupFields(panelKey);
-        const {valid=false, analysisResult='', displayValue}  = get(analysisFields, uploadTabs) || {};
+        const {valid=false, analysisResult='', displayValue}  = get(analysisFields, uploadSrc) || {};
 
         if (!valid || !analysisResult || analysisTblIds.length === 0) {    // no file uploaded yet
             return returnValidate({
@@ -678,173 +685,6 @@ function selectRowFromSummaryTable(tblModel) {
     return selectInfoCls.data;
 }
 
-/**
- * send request to get the data of table unit, for votable and fits, the table index is mapped to be
- * that at the server side
- * @param fileCacheKey
- * @param fName
- * @param idx
- * @param extMap
- * @param totalRows
- */
-function sendTableRequest(fileCacheKey, fName, idx, extMap, totalRows) {
-    const title = !isNil(idx)&&!isNil(totalRows)&&(totalRows !== 1) ? `${fName}-${idx}` : `${fName}`;
-    const tblReq = makeTblRequest('userCatalogFromFile', title, {
-        filePath: fileCacheKey
-    });
-
-    if (!(isNil(idx))) {
-        set(tblReq, 'tbl_index', extMap[idx]);
-    }
-
-    dispatchTableSearch(tblReq);
-}
-
-/**
- * send request to get the data of image unit, the extension index is mapped to be that at
- * the server side
- * @param fileCacheKey
- * @param fName
- * @param idx
- * @param extMap
- * @param imageDisplay
- */
-function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
-    const wpr = WebPlotRequest.makeFilePlotRequest(fileCacheKey);
-
-    const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
-    const mapToExtensionNo = () => {
-        return idx.reduce( (prev, oneExt) => {
-            prev.push(extMap[oneExt]);           // convert to extension number at the server
-            return prev;
-        }, []);
-    };
-
-
-    if (viewerId) {
-        wpr.setPlotGroupId(viewerId);
-
-        let plotId;
-        const allExt = mapToExtensionNo();
-
-        // all in one window
-        if (isNil(imageDisplay) || imageDisplay.startsWith('one')) {
-            const extList = allExt.join();
-
-            wpr.setMultiImageExts(extList);
-            if (!allExt.includes(-1)) {
-                wpr.setPostTitle(`- ext. ${extList}`);
-            }
-
-            plotId = `${fName}-${idx.join('_')}`;
-            dispatchPlotImage({plotId, wpRequest: wpr, viewerId});
-        } else {
-
-            idx.forEach( (oneExt, id) => {
-                plotId = `${fName}-${oneExt}`;
-
-                if (allExt[id] !== -1) {   // not primary
-                    wpr.setPostTitle(`- ext. ${oneExt}`);
-                }
-
-                wpr.setMultiImageExts(`${allExt[id]}`);
-
-                dispatchPlotImage({plotId, wpRequest: wpr, viewerId});
-            });
-        }
-    }
-}
-
-/*
-    the map which maps summary table row index to table index and image extension number at the server
- */
-function getExtensionMap(model) {
-    const {tableData} = model;
-    const tableMap = {};
-    const imageMap = {};
-    const typeIdx = getColumnIdx(model, 'Type');
-
-    tableData.data.forEach((row, idx) => {
-        const type = row[typeIdx];
-
-        if (type.toLowerCase().includes('table')) {
-            tableMap[idx] = Object.keys(tableMap).length;
-        } else if (type.toLowerCase().includes('image')) {
-            imageMap[idx] = idx === 0 ? -1 : idx;     // the extension number is -1 for primary HDU
-        }
-    });
-
-    return {imageMap, tableMap};
-}
-
-/**
- * render the selected tables or extensions (votable/fits) or the file(csv, tsv, ipac)
- * @returns {Function}
- */
-export function resultSuccess() {
-    const tableTitle = (displayValue, uploadTabs) => {
-        const n = displayValue.lastIndexOf((uploadTabs === fileId ? '\\' : '\/'));
-        return  displayValue.slice(n+1);   // n = -1 or n >= 0
-    };
-
-    return (request) => {
-        const {uploadTabs, imageDisplay} = request;
-        const retVal = validateModelSelection(uploadTabs);
-        if (!retVal.valid) return false;
-
-        const {analysisModel, displayValue, selectResults} = retVal;
-        const {fileUpload, urlUpload} = request;
-        const uploadName = uploadTabs === fileId ? fileUpload : urlUpload;
-
-        if (selectResults) {    // votable or fits
-            const extensionMap = getExtensionMap(analysisModel);
-
-            if (selectResults.image.length !== 0) {
-                sendImageRequest(uploadName, displayValue, selectResults.image, extensionMap.imageMap, imageDisplay);
-            }
-            if (selectResults.table.length !== 0) {
-                selectResults.table.forEach((idx) => {
-                    sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,
-                                     analysisModel.totalRows);
-                });
-            }
-        } else {    // csv, tsv, ipac
-            sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs));
-        }
-
-        removeAnalysisTable(analysisTblIds.length-1);   // keep the current analysisModel
-    };
-}
-
-export function resultFail() {
-    return (request) =>
-    {
-        returnValidate({
-            valid: false,
-            message: errorMsg.invalidFile
-        });
-        return false;
-    };
-}
-
-function removeAnalysisTable(noRemoved) {
-
-    let len = noRemoved;
-    for (let i = 0; i < len; i++) {
-        const id = analysisTblIds.shift();
-        if (getTblById(id)) {
-            dispatchTableRemove(id);
-        }
-    }
-
-    len = headerTblIds.length;         // remove all
-    for (let i = 0; i < len; i++) {
-        const id = headerTblIds.shift();
-        if (getTblById(id)) {
-            dispatchTableRemove(id);
-        }
-    }
-}
 
 const fieldReducer = function () {
     return (inFields, action) => {
@@ -856,14 +696,14 @@ const fieldReducer = function () {
 
                 const {fieldKey, value} = action.payload;
 
-                if (fieldKey === 'uploadTabs' && (!get(inFields, [value, 'valid'], true))) {
+                if (fieldKey === 'uploadSrc' && (!get(inFields, [value, 'valid'], true))) {
                     inFields = updateMerge(inFields, value,
                                            {value: '', displayValue: '', analysisResult: '', valid: true});
                 }
                 break;
             case FieldGroupCntlr.MOUNT_FIELD_GROUP:
 
-                const {value: uploadMethod} = get(inFields, 'uploadTabs');
+                const {value: uploadMethod} = get(inFields, 'uploadSrc');
 
                 if (uploadMethod && (!get(inFields, [uploadMethod, 'valid'], true))) {
                     inFields = updateMerge(inFields, uploadMethod,
@@ -877,6 +717,49 @@ const fieldReducer = function () {
     };
 };
 
+
+function showResults(success, request) {
+    var statStr= `validate state: ${success}`;
+    console.log(statStr);
+    console.log(request);
+
+
+    var resolver= null;
+    var closePromise= new Promise(function(resolve) {
+        resolver= resolve;
+    });
+
+    var results= (
+        <PopupPanel title={'Get the file upload info'} closePromise={closePromise} >
+            {makeResultInfoContent(statStr,resolver)}
+        </PopupPanel>
+    );
+
+    DialogRootContainer.defineDialog('ResultsFromExampleDialog', results);
+    dispatchShowDialog('ResultsDialog');
+
+}
+
+function makeResultInfoContent(statStr,closePromiseClick) {
+    return (
+        <div style={{padding:'5px'}}>
+            <br/>{statStr}<br/><br/>
+            <button type='button' onClick={closePromiseClick}>Close</button>
+            <CompleteButton dialogId='ResultsDialog' />
+        </div>
+    );
+}
+
+
+function resultsFail(request) {
+    showResults(false,request);
+}
+
+function resultsSuccess(request) {
+    showResults(true,request);
+}
+
+
 function fieldInit() {
     return (
         {
@@ -884,8 +767,8 @@ function fieldInit() {
                 fieldKey: 'imageDisplay',
                 value: 'oneWindow'
             },
-            'uploadTabs': {
-                fieldKey: 'uploadTabs',
+            'uploadSrc': {
+                fieldKey: 'uploadSrc',
                 value: fileId
             },
             [fileId]: {
