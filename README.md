@@ -1,12 +1,12 @@
 # Firefly
 
-Firefly is IPAC's Advanced Astronomy WEB UI Framework. It is for building a web-based Front end to access science archives. It provides sophisticated interactive data visualization capabilities. Our efforts to create a tightly integrated and user-friendly interface has generated numerous positive feedback from scientists. Users can browse and understand large volumes of archive data in a fraction of the time it took in the past.
+Firefly is IPAC's Advanced Astronomy WEB UI Framework. It is for building a web-based Front end to access science archives. It provides sophisticated interactive data visualization capabilities. Our efforts to create a tightly integrated and user-friendly interface have generated numerous positive feedback from scientists. Users can browse and understand large volumes of archive data in a fraction of the time it took in the past.
 
 Note - if you are pulling, look at the [branches section](#branches)
 
 
 #### Firefly Framework
-Firefly is being reused for various archives because it is a framework of archive components. This has allowed us now to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive. Firefly has under gone an extensive re-write since then, adopted React/Reduc framework for the client side, making it much  easier to work with other JavaScript libraries. Recently we have adopted Plotly.js graphing library.
+Firefly is being reused for various archives because it is a framework of archive components. This has allowed us now to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive. Firefly has undergone an extensive re-write since then, adopted React/Redux framework for the client side, making it much  easier to work with other JavaScript libraries. Recently we have adopted Plotly.js graphing library.
 
 #### Firefly Viewer
 
@@ -29,7 +29,7 @@ Firefly has implemented “Excel-like” tables on the webpage. In an easy, inte
 Firefly provides a first-class FITS visualization on the Web without any plugins. All of the significant components you would expect to see in a basic desktop FITS application are available with data that Firefly displays. The FITS visualizer allows for plotting any table data with Lon(RA) and Lat(Dec). Therefore, users can overlay multiple catalogs over their FITS image and interact with it.
 
 #### 2D Graphs
-Firefly shows 2D graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define expressions from the columns for the XY Plot, such as (col1*col2/tan(col3)). Firefly also supports histogram and heatmap graph. 
+Firefly shows 2D graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define expressions from the columns for the XY Plot, such as (col1*col2/tan(col3)). Table based charts share their data model with the table, so both table and chart can trigger or respond to the common events, such as filtering of the data. Firefly also supports histogram and heatmap graph. 
 
 
 ## Branches
