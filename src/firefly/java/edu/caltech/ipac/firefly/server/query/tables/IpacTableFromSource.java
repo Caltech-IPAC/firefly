@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.*;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -28,6 +29,7 @@ import java.util.List;
 public class IpacTableFromSource extends IpacTablePartProcessor {
     public static final String TBL_TYPE = "tblType";
     public static final String TYPE_CATALOG = "catalog";
+    public static final String URL_CHECK_FOR_NEWER = WebPlotRequest.URL_CHECK_FOR_NEWER;
     //public static final String TBL_INDEX = TableServerRequest.TBL_INDEX;     // the table to show if it's a multi-table file.
     private static final String SEARCH_REQUEST = "searchRequest";
 
@@ -38,6 +40,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         String altSource = request.getParam(ServerParams.ALT_SOURCE);
         String processor = request.getParam("processor");
         String searchRequestJson = request.getParam(SEARCH_REQUEST);
+        boolean checkForUpdates = request.getBooleanParam(URL_CHECK_FOR_NEWER, true);
 
         if (StringUtils.isEmpty(source) && processor != null) {
             return getByProcessor(processor, request);
@@ -46,9 +49,9 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             return SearchRequestUtils.fileFromSearchRequest(searchRequestJson);
         } else {
             // get source by source key
-            File inf = getSourceFile(source, request);
+            File inf = getSourceFile(source, request, checkForUpdates);
             if (inf == null) {
-                inf = getSourceFile(altSource, request);
+                inf = getSourceFile(altSource, request, checkForUpdates);
             }
 
             if (inf == null) {
@@ -90,9 +93,10 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
      * if it's a url, download it into the application's workarea
      * @param source source file
      * @param request table request
+     * @param checkForUpdates
      * @return file
      */
-    private File getSourceFile(String source, TableServerRequest request) {
+    private File getSourceFile(String source, TableServerRequest request, boolean checkForUpdates) {
         if (source == null) return null;
         try {
             URL url = makeUrl(source);
@@ -110,18 +114,24 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             } else {
                 StringKey key = new StringKey(getUniqueID(request), url);
                 File res  = (File) getCache().get(key);
-                long lastmod = res == null ? 0 : res.lastModified();
-                if (res == null) {
-                    String ext = FileUtil.getExtension(url.getPath());
-                    ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
-                    res = createFile(request, ext);
-                }
+
+                String ext = FileUtil.getExtension(url.getPath());
+                ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
+                File nFile = createFile(request, ext);
+
                 HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
-                URLDownload.getDataToFile(conn, res, null, false, true, true, Long.MAX_VALUE);
-                if (lastmod != res.lastModified()) {
-                    // only convert when source file changes
-                    res = convertToIpacTable(res, request);
+                if (res == null) {
+                    URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
+                    res = convertToIpacTable(nFile, request);
                     getCache().put(key, res);
+                } else if (checkForUpdates) {
+                    FileUtil.writeStringToFile(nFile, "workaround");
+                    nFile.setLastModified(res.lastModified());
+                    FileInfo finfo = URLDownload.getDataToFile(conn, nFile, null, false, true, true, Long.MAX_VALUE);
+                    if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                        res = convertToIpacTable(nFile, request);
+                        getCache().put(key, res);
+                    }
                 }
                 return res;
             }
