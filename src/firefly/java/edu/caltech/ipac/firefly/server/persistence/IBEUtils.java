@@ -136,10 +136,7 @@ public class IBEUtils {
 
         } else if (source instanceof AtlasIbeDataSource) {
 
-                // TODO : explain to me what is used for:
-                sortByCols.put("facility_name", "facility_name, instrument_name, band_name, file_type");
-                //TODO what is 'relatedCols' meant for?
-                // relatedCols = "fname";
+                sortByCols.put("facility_name", "facility_name,instrument_name,band_name,file_type");
                 colsToHide = new String[]{"in_row_id", "in_ra", "in_dec","ra_1", "dec_1",
                     "ra_2", "dec_2", "ra_3", "dec_3", "ra_4", "dec_4"};
         }

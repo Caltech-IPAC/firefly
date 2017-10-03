@@ -16,6 +16,15 @@ import java.util.Map;
  */
 public interface IbeDataSource {
 
+    public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
+    public static final String POS = "POS";
+    public static final String REF_BY = "refby";
+    public static final String INTERSECT = "INTERSECT";
+    public static final String SIZE = "SIZE";
+    public static final String MCEN = "mcen";
+    public static final String COLUMNS = "columns";
+    public static final String WHERE = "where";
+
     String getIbeHost();
     String getMission();
     String getDataset();
