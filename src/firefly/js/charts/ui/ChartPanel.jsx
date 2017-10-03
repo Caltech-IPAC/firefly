@@ -55,25 +55,29 @@ class ChartPanelView extends PureComponent {
     }
 
     componentDidMount() {
-        const {chartId} = this.props;
-        ChartsCntlr.dispatchChartMounted(chartId);
+        const {chartId, showChart} = this.props;
+        if (showChart) {
+            ChartsCntlr.dispatchChartMounted(chartId);
+        }
         this.iAmMounted = true;
     }
 
     componentWillReceiveProps(nextProps) {
-        const {chartId} = nextProps;
+        const {chartId, showChart} = nextProps;
         if (!chartId) { return; }
 
         if (chartId !== this.props.chartId) {
-            ChartsCntlr.dispatchChartUnmounted(this.props.chartId);
-            ChartsCntlr.dispatchChartMounted(chartId);
+            if (this.props.showChart) { ChartsCntlr.dispatchChartUnmounted(this.props.chartId); }
+            if (showChart) { ChartsCntlr.dispatchChartMounted(chartId); }
         }
     }
 
     componentWillUnmount() {
         this.iAmMounted = false;
-        const {chartId} = this.props;
-        ChartsCntlr.dispatchChartUnmounted(chartId);
+        const {chartId, showChart} = this.props;
+        if (showChart) {
+            ChartsCntlr.dispatchChartUnmounted(chartId);
+        }
     }
 
     render() {
