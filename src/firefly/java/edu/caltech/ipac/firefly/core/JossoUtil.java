@@ -55,6 +55,8 @@ public class JossoUtil {
     }
 
     public static String makeVerifyUrl(String backTo) {
+        if(contextPath==null)
+            return null;
         int idx = backTo.indexOf(contextPath);
         if (idx >= 0) {
             String base = backTo.substring(0, idx);

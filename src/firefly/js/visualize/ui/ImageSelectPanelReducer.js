@@ -51,7 +51,7 @@ function getTypeData(keyMapId, key, id,value) {
 
 // tab fields initialization
 function initTabFields(crtCatalogId) {
-    const {IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE}= getTabsIndexes();
+    const {ATLAS, IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE}= getTabsIndexes();
     const panelCatalogs= getPanelCatalogs();
     return (
     {
@@ -62,7 +62,9 @@ function initTabFields(crtCatalogId) {
         [keyMap['irastypes']]: getTypeData('irastypes', 'types', IRAS),
         [keyMap['twomasstypes']]: getTypeData('twomasstypes', 'types', TWOMASS),
         [keyMap['wisetypes']]: getTypeData('wisetypes', 'types', WISE),
+        [keyMap['atlastypes']]: getTypeData('atlastypes', 'types', ATLAS),
         [keyMap['wisebands']]: getTypeData('wisebands', 'bands', WISE),
+        [keyMap['atlasbands']]: getTypeData('atlasbands', 'bands', ATLAS),
         [keyMap['msxtypes']]: getTypeData('msxtypes', 'types', MSX),
         [keyMap['dsstypes']]: getTypeData('dsstypes', 'types', DSS),
         [keyMap['sdsstypes']]: getTypeData('sdsstypes', 'types', SDSS),

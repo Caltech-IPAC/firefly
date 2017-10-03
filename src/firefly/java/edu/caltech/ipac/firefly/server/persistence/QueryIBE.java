@@ -12,6 +12,7 @@ import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
+import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -124,16 +125,12 @@ public class QueryIBE extends IpacTablePartProcessor {
             meta.setAttribute("table", source.getTableName());
             meta.setAttribute("subsize", request.getParam("subsize"));
             meta.setAttribute(MetaConst.DATASET_CONVERTER, source.getMission());
-            meta.setAttribute("ALL_CORNERS", "ra1;dec1;EQ_J2000,ra2;dec2;EQ_J2000,ra3;dec3;EQ_J2000,ra4;dec4;EQ_J2000");
-            meta.setAttribute("CENTER_COLUMN", "crval1;crval2;EQ_J2000");
+            meta.setAttribute("ALL_CORNERS", source.getCorners());
+            meta.setAttribute("CENTER_COLUMN", source.getCenterCols());
             meta.setAttribute("PREVIEW_COLUMN", "download");
             meta.setAttribute("RESOURCE_TYPE", "URL");
 
-            String [] colsToHide = {"in_row_id", "in_ra", "in_dec",
-                        "crval1", "crval2",
-                        "ra1", "ra2", "ra3", "ra4",
-                        "dec1", "dec2", "dec3", "dec4"
-            };
+            String [] colsToHide = source.getColsToHide();
 
             for (String c : colsToHide) {
                 meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, c), DataSetParser.VISI_HIDE);
@@ -143,7 +140,9 @@ public class QueryIBE extends IpacTablePartProcessor {
             meta.setAttributes(IBEUtils.getMissionSpecificTableMeta(source));
 
         }
-        catch (Exception ignored) {}
+        catch (Exception ignored) {
+            LOGGER.error(ignored,"Error ignored");
+        }
     }
 
     private boolean exists(List<DataType> cols, String name) {

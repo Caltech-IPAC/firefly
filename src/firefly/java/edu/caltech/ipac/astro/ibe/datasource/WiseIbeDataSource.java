@@ -230,7 +230,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         // source search
         IbeQueryParam queryParam = new IbeQueryParam();
 
-        String userTargetWorldPt = queryInfo.get(IBE.USER_TARGET_WORLD_PT);
+        String userTargetWorldPt = queryInfo.get(USER_TARGET_WORLD_PT);
         String refSourceId = queryInfo.get("refSourceId");
         String sourceId = queryInfo.get("sourceId");
 
@@ -244,7 +244,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
                     queryParam.setIntersect(IbeQueryParam.Intersect.valueOf(queryInfo.get("intersect")));
                 }
                 String mcen = queryInfo.get("mcenter");
-                if (mcen != null && mcen.equalsIgnoreCase(IBE.MCEN)) {
+                if (mcen != null && mcen.equalsIgnoreCase(MCEN)) {
                     queryParam.setMcen(true);
 
                 } else {

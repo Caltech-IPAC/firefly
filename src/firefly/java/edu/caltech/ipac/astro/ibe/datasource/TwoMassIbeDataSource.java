@@ -165,7 +165,7 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
                     queryParam.setIntersect(IbeQueryParam.Intersect.valueOf(queryInfo.get("intersect")));
                 }
                 String mcen = queryInfo.get("mcenter");
-                if (mcen != null && (mcen.equalsIgnoreCase(IBE.MCEN) || Boolean.parseBoolean(mcen))) {
+                if (mcen != null && (mcen.equalsIgnoreCase(MCEN) || Boolean.parseBoolean(mcen))) {
                     queryParam.setMcen(true);
 
                 } else {

@@ -90,6 +90,9 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='2Mass Search' id='2massImage'>
                                 <div>{render2MassSearch(fields)}</div>
                             </Tab>
+                            <Tab name='Atlas Search' id='atlasImage'>
+                                <div>{renderAtlasSearch(fields)}</div>
+                            </Tab>
                             {
                             <Tab name='Periodogram' id='periodogram'>
                                 <div>{renderPeriodogram(fields)}</div>
@@ -342,6 +345,48 @@ function renderWiseSearch(fields) {
     );
 }
 
+function renderAtlasSearch(fields) {
+
+// See value of band and instruments here as SEIP example:
+// https://irsadev.ipac.caltech.edu/IBE?table=spitzer.seip_science&POS=56.86909,24.10531
+    return (
+        <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+            <CheckboxGroupInputField
+                fieldKey='ds1'
+                alignment='vertical'
+                initialState={{
+                    tooltip: 'Spacial Type',
+                    value: 'spitzer.seip_science'
+                }}
+                options={[
+                    {label: 'MSX', value: 'msx.msx_images'},
+                    {label: 'SEIP', value: 'spitzer.seip_science'}
+                ]}
+            />
+            <CheckboxGroupInputField
+                fieldKey='band'
+                alignment='horizontal'
+                initialState={{
+                    tooltip: 'Return Band',
+                    value: 'IRAC1'
+                }}
+                options={[
+                    {label : 'IRAC 2.4', value: 'IRAC1'},
+                    {label : 'IRAC 3.6', value: 'IRAC2'},
+                    {label : 'IRAC 5.8', value: 'IRAC3'},
+                    {label : 'IRAC 8', value: 'IRAC4'},
+                    {label : 'MIPS 24', value: 'MIPS24'},
+                    {label : 'E', value: 'E'},
+                    {label : 'A', value: 'A'},
+                    {label : 'C', value: 'C'},
+                    {label : 'D', value: 'D'},
+                ]}
+            />
+        </div>
+    );
+
+}
+
 
 function render2MassSearch(fields) {
 
@@ -450,6 +495,8 @@ function onSearchSubmit(request) {
     }
     else if (request.Tabs === '2massImage') {
         do2Mass(request);
+    }else if (request.Tabs === 'atlasImage') {
+        doAtlas(request);
     }
     else if (request.Tabs === 'loadRegion') {
         doRegionLoad(request);
@@ -589,6 +636,24 @@ function do2Mass(request) {
             mission: 'twomass',
             ds: request.ds,
             band: request.band
+        });
+    dispatchTableSearch(reqParams);
+}
+
+function doAtlas(request) {
+    console.log('atlas', request);
+    const reqParams = makeTblRequest('ibe_processor', 'ATLAS-' + request[ServerParams.USER_TARGET_WORLD_PT],
+        {
+            [ServerParams.USER_TARGET_WORLD_PT]: request[ServerParams.USER_TARGET_WORLD_PT],
+            mission: 'atlas',
+            //mcenter:true, returned 1 image
+            // TODO Not yet fully working, see AtlasRequestList
+            ds:request.ds1,
+            band: request.band,
+            subsize:0.05,
+            sizeUnit:'deg',
+            mcenter:true
+            // filter:''
         });
     dispatchTableSearch(reqParams);
 }

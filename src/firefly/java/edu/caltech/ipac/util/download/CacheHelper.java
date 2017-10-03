@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.cache.CacheManager;
 
 import java.io.File;
 /**
@@ -32,7 +33,7 @@ public class CacheHelper {
     public static void setCacheDir(File dir) { _cacheDir= dir; }
 
     public static Cache getFileCache() {
-        return _fileCache;
+        return _fileCache!=null?_fileCache: CacheManager.getCache();
     }
 
     public static void putFile(CacheKey key, Object value) {
@@ -117,6 +118,9 @@ public class CacheHelper {
 
     public static FileInfo getFileData(CacheKey key)   {
         Cache cache= getFileCache();
+        if(cache == null){
+           return null;
+        }
         Object cacheObj= cache.get(key);
         FileInfo fd;
 
