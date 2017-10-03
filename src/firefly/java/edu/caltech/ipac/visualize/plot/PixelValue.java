@@ -58,7 +58,7 @@ public class PixelValue {
 	{
 	    HDU_offset =  myHDUs[i].getFileOffset();
 	    System.out.println("getFileOffset = " + myHDUs[i].getFileOffset());
-            myHDUs[i].info();
+            myHDUs[i].info(System.out);
 	    Header header = myHDUs[i].getHeader();
 	    header_size = header.getOriginalSize();
 	    System.out.println("header.getSize() = " + header.getSize());

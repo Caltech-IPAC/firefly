@@ -13,6 +13,7 @@ import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
+import nom.tam.image.compression.hdu.*;
 
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
@@ -21,6 +22,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.nio.Buffer;
 
 
 /**
@@ -75,6 +77,7 @@ public class FitsRead implements Serializable {
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private Histogram hist;
     private  double defBetaValue= Double.NaN;
+    private boolean tileCompress = false;
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -155,6 +158,7 @@ public class FitsRead implements Serializable {
             throw new FitsException("Bad format in FITS file");
         }
 
+        boolean isCompressed = anyCompressedImage(HDUs);
 
         ArrayList<BasicHDU> HDUList = getHDUList(HDUs);
 
@@ -165,6 +169,7 @@ public class FitsRead implements Serializable {
         for (int i = 0; i < HDUList.size(); i++) {
             fitsReadAry[i] = new FitsRead((ImageHDU) HDUList.get(i), clearHdu);
             fitsReadAry[i].indexInFile = i;
+            fitsReadAry[i].tileCompress = isCompressed;
         }
 
         return fitsReadAry;
@@ -188,6 +193,8 @@ public class FitsRead implements Serializable {
         }
 
         BasicHDU[] HDUs={hdu};
+
+        boolean isCompressed = anyCompressedImage(HDUs);
         ArrayList<BasicHDU> HDUList = getHDUList(HDUs);
 
         if (HDUList.size() == 0)
@@ -197,7 +204,7 @@ public class FitsRead implements Serializable {
         for (int i = 0; i < HDUList.size(); i++) {
             fitsReadAry[i] = new FitsRead( (ImageHDU) HDUList.get(i), false);
             fitsReadAry[i].indexInFile = i;
-
+            fitsReadAry[i].tileCompress = isCompressed;
         }
 
 
@@ -537,40 +544,55 @@ public class FitsRead implements Serializable {
     }
 
 
+    private static boolean anyCompressedImage(BasicHDU[] HDUs) {
+        for (int j = 0; j < HDUs.length; j++) {
+            if (HDUs[j] instanceof CompressedImageHDU)
+                return true;
+        }
+        return false;
+    }
+
     private static ArrayList<BasicHDU> getHDUList(BasicHDU[] HDUs) throws FitsException {
         ArrayList<BasicHDU> HDUList = new ArrayList<BasicHDU>();
 
         boolean hasExtension = HDUs.length > 1 ? true : false;
         for (int j = 0; j < HDUs.length; j++) {
-            if (!(HDUs[j] instanceof ImageHDU)) {
-                continue;   //ignor non-image extensions
+            if (!(HDUs[j] instanceof ImageHDU) && !(HDUs[j] instanceof CompressedImageHDU)) {
+                continue;   //ignore non-image extensions
             }
-            //process image HDU
-            Header header = HDUs[j].getHeader();
+            //process image HDU or compressed image HDU as ImageHDU
+
+            ImageHDU hdu = null;
+
+            try {
+                hdu = (HDUs[j] instanceof ImageHDU) ? (ImageHDU) HDUs[j] : ((CompressedImageHDU) HDUs[j]).asImageHDU();
+            } catch(Exception e) {
+                throw new FitsException(e.toString());
+            }
+
+            Header header = (hdu != null) ? hdu.getHeader() : null;
             if (header == null)
                 throw new FitsException("Missing header in FITS file");
-
-
 
             int naxis = header.getIntValue("NAXIS", -1);
             boolean goodImage = isImageGood(header);
 
             if (goodImage) {
                 if (hasExtension) { // update this hdu by adding keywords/values
-                    updateHeader(header, j, HDUs[j].getFileOffset());
+                    updateHeader(header, j, hdu.getFileOffset());
                 }
 
                 int naxis3 = header.getIntValue("NAXIS3", -1);
                 if ((naxis > 2) && (naxis3 > 1)) { //it is a cube data
                     if (SUTDebug.isDebug())
                         System.out.println("GOT A FITS CUBE");
-                    BasicHDU[] splitHDUs = splitFitsCube( (ImageHDU) HDUs[j]);
+                    BasicHDU[] splitHDUs = splitFitsCube( hdu );
                     /* for each plane of cube */
                     for (int jj = 0; jj < splitHDUs.length; jj++) {
                         HDUList.add(splitHDUs[jj]);
                     }
                 } else {
-                    HDUList.add(HDUs[j]);
+                    HDUList.add(hdu);
                 }
             }
 
@@ -1673,6 +1695,7 @@ public class FitsRead implements Serializable {
         return extension_number;
     }
 
+    public boolean isTileCompress() { return tileCompress; }
     /**
      * The Bscale  keyword shall be used, along with the BZERO keyword, when the array pixel values are not the true  physical  values,
      * to transform the primary data array  values to the true physical values they represent, using Eq. 5.3. The value field shall contain a

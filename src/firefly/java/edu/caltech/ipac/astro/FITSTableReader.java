@@ -10,6 +10,7 @@ import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import nom.tam.fits.FitsException;
+import nom.tam.fits.FitsFactory;
 import uk.ac.starlink.table.*;
 
 import java.io.File;
@@ -212,14 +213,28 @@ public final class FITSTableReader
      * @return List of star tables.
      * @throws IOException
      */
-    public static List getStarTableList(String fits_filename) throws IOException {
+    public static List getStarTableList(String fits_filename) {
 
-        TableSequence tseq;
-        StarTableFactory stFactory = new StarTableFactory();
-        tseq = stFactory.makeStarTables(fits_filename, null);
-        List tList = new ArrayList();
-        for (StarTable tbl; (tbl = tseq.nextTable()) != null; ) {
-            tList.add(tbl);
+        ArrayList<StarTable> tList = new ArrayList<>();
+
+        // disable long string for HeaderCard create while collecting tables from StarTableFactory to work around the exception error
+        // sent from nom.tam.fits.
+        FitsFactory.setLongStringsEnabled(false);
+
+        try {
+            TableSequence tseq;
+            StarTableFactory stFactory = new StarTableFactory();
+            tseq = stFactory.makeStarTables(fits_filename, null);
+
+            for (StarTable tbl; (tbl = tseq.nextTable()) != null; ) {
+                DescribedValue dValue = tbl.getParameterByName("ZIMAGE");   // check if 'BINTABLE' is actually compressed image HDU
+                if (dValue == null || dValue.getValue() != Boolean.TRUE) {
+                    tList.add(tbl);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("unable to get table from fits file " + fits_filename + ", reason: " + e.getMessage());
         }
         return tList;
     }

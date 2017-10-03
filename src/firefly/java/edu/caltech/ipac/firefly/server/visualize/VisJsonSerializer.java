@@ -379,6 +379,7 @@ public class VisJsonSerializer {
         map.put("fitsHeader", serializeClientFitsHeader(b.getHeader()));
         map.put("bandVisible", b.isBandVisible());
         map.put("multiImageFile", b.isMultiImageFile());
+        map.put("tileCompress", b.isTileCompress());
         map.put("cubeCnt", b.getCubeCnt());
         map.put("cubePlaneNumber", b.getCubePlaneNumber());
         return map;
@@ -398,6 +399,7 @@ public class VisJsonSerializer {
             b.setFitsHeader(deserializeClientFitsHeader((JSONObject)map.get("fitsHeader")));
             b.setBandVisible((Boolean) map.get("bandVisible"));
             b.setMultiImageFile((Boolean) map.get("multiImageFile"));
+            b.setTileCompress((Boolean) map.get("tileCompress"));
             b.setCubeCnt(getInt(map,"cubeCnt"));
             b.setCubePlaneNumber(getInt(map, "cubePlaneNumber"));
             return b;

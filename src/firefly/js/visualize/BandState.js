@@ -24,6 +24,7 @@ const SPLIT_TOKEN= '--BandState--';
  * @prop fitsHeader
  * @prop bandVisible
  * @prop multiImageFile
+ * @prop tileCompress
  * @prop cubeCnt
  * @prop cubePlaneNumber
  */
@@ -40,6 +41,7 @@ export class BandState {
         this.fitsHeader= null;
         this.bandVisible= true;
         this.multiImageFile = false;
+        this.tileCompress = false;
         this.cubeCnt = 0;
         this.cubePlaneNumber = 0;
 
@@ -60,6 +62,11 @@ export class BandState {
      */
     isMultiImageFile() { return this.multiImageFile; }
 
+    /**
+     * check if the image is with  tile compression
+     * @returns {BandState.isTileCompress}
+     */
+    isTileCompress() { return this.tileCompress; }
     /**
      *
      */
@@ -157,6 +164,7 @@ export class BandState {
             this.fitsHeaderSerialize,
             this.bandVisible,
             this.multiImageFile,
+            this.tileCompress,
             this.cubeCnt,
             this.cubePlaneNumber],
             SPLIT_TOKEN);
@@ -190,6 +198,7 @@ export class BandState {
         bState.fitsHeader= makeClientFitsHeader(bsJson.fitsHeader);
         bState.bandVisible= bsJson.bandVisible;
         bState.multiImageFile= bsJson.multiImageFile;
+        bState.tileCompress = bsJson.tileCompress;
         bState.cubeCnt= bsJson.cubeCnt;
         bState.cubePlaneNumber= bsJson.cubePlaneNumber;
         return bState;
@@ -211,6 +220,7 @@ export class BandState {
         json.fitsHeader= bs.fitsHeader.headers;
         json.bandVisible= bs.bandVisible;
         json.multiImageFile= bs.multiImageFile;
+        json.tileCompress = bs.tileCompress;
         json.cubeCnt= bs.cubeCnt;
         json.cubePlaneNumber= bs.cubePlaneNumber;
         return json;
