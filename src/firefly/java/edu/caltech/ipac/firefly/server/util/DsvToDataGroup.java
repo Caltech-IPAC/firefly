@@ -29,13 +29,13 @@ import java.util.List;
  * @version $Id: DsvToDataGroup.java,v 1.2 2012/10/23 18:37:22 loi Exp $
  *
  * 09/28/17
- * LZ added another method to sue InputStream to read data
+ * LZ added another method in order to read file through an InputStream
  *
  */
 public class DsvToDataGroup {
 
     public static DataGroup parse(InputStream inf, CSVFormat format) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inf, "UTF-8"), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         return getData(reader, format);
     }
     public static DataGroup parse(File inf, CSVFormat format) throws IOException {
@@ -43,33 +43,6 @@ public class DsvToDataGroup {
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         return getData(reader, format);
 
-       /* List<DataType> columns = new ArrayList<DataType>();
-        CSVParser parser = new CSVParser(reader, format);
-        List<CSVRecord> records = parser.getRecords();
-        if (records !=null && records.size() > 0) {
-
-            // parse the column info
-            CSVRecord cols = records.get(0);
-            for(Iterator<String> itr = cols.iterator(); itr.hasNext(); ) {
-                String s = itr.next();
-                if (!StringUtils.isEmpty(s)) {
-                    columns.add(new DataType(s, null)); // unknown type
-                }
-            }
-
-            DataGroup dg = new DataGroup(null, columns);
-
-            // parse the data
-            for (int i = 1; i < records.size(); i++) {
-                DataObject row = parseRow(dg, records.get(i));
-                if (row != null) {
-                    dg.add(row);
-                }
-            }
-            dg.shrinkToFitData();
-            return dg;
-        }
-        return null;*/
     }
 
 
@@ -83,6 +56,9 @@ public class DsvToDataGroup {
             CSVRecord cols = records.get(0);
             for(Iterator<String> itr = cols.iterator(); itr.hasNext(); ) {
                 String s = itr.next();
+                if ("\uFEFF".charAt(0) == s.toCharArray()[0]){
+                    s = new String(s.substring(1));//LZ fixed the issue with the BOM character
+                }
                 if (!StringUtils.isEmpty(s)) {
                     columns.add(new DataType(s, null)); // unknown type
                 }
