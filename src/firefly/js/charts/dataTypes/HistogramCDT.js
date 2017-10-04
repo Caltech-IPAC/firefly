@@ -5,7 +5,7 @@
 import {get} from 'lodash';
 
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
-import {getTblById, isFullyLoaded, makeTblRequest, cloneRequest} from '../../tables/TableUtil.js';
+import {getTblById, isFullyLoaded, makeTblRequest, cloneRequest, MAX_ROW} from '../../tables/TableUtil.js';
 import {getChartDataElement, chartDataUpdate} from './../ChartsCntlr.js';
 import {logError} from '../../util/WebUtil.js';
 
@@ -98,7 +98,7 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
     const activeTableServerRequest = activeTableModel['request'];
     const tblSource = get(activeTableModel, 'tableMeta.tblFilePath');
 
-    const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
+    const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : MAX_ROW});
 
     const req = makeTblRequest('HistogramProcessor');
     req.searchRequest = JSON.stringify(sreq);

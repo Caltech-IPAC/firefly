@@ -134,12 +134,17 @@ export class BasicToolbar extends SimpleComponent {
 
 function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) {
     if (! (hasFilter || hasSelection || hasSelected)) return null;   // don't show if nothing to show
+    let showSelectSelection = hasSelection;
+    if (hasSelection) {
+        const {data, activeTrace} = getChartData(chartId);
+        showSelectSelection = get(data, `${activeTrace}.hoverinfo`) !== 'skip';
+    }
     return (
         <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
             {hasFilter    && <ClearFilter {...{tbl_id}} />}
             {hasSelected  && <ClearSelected {...{chartId}} />}
             {hasSelection && <FilterSelection {...{chartId}} />}
-            {hasSelection && <SelectSelection style={{marginRight:10}} {...{chartId}} />}
+            {showSelectSelection && <SelectSelection style={{marginRight:10}} {...{chartId}} />}
         </div>
     );
 }

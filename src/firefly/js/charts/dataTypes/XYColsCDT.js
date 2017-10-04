@@ -9,7 +9,7 @@ import {get, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 
 import {MetaConst} from '../../data/MetaConst.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
-import {getColumn, getTblById, isFullyLoaded, cloneRequest, makeTblRequest} from '../../tables/TableUtil.js';
+import {getColumn, getTblById, isFullyLoaded, cloneRequest, makeTblRequest, MAX_ROW} from '../../tables/TableUtil.js';
 
 import {getChartDataElement, dispatchChartAdd, dispatchChartOptionsUpdate, chartDataUpdate} from './../ChartsCntlr.js';
 import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
@@ -389,7 +389,7 @@ function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
 
     const req = cloneRequest(activeTableServerRequest, {
             'startIdx' : 0,
-            'pageSize' : 1000000,
+            'pageSize' : MAX_ROW,
             //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
             'decimate' : serializeDecimateInfo(...getServerCallParameters(xyPlotParams))
         });
@@ -482,7 +482,7 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
-    const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
+    const sreq = cloneRequest(activeTableServerRequest, {'startIdx' : 0, 'pageSize' : MAX_ROW});
     const req = makeTblRequest('XYWithErrors');
     req.searchRequest = JSON.stringify(sreq);
     req.xColOrExpr = get(xyPlotParams, 'x.columnOrExpr');
@@ -501,7 +501,7 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
     req.yErrLowColOrExpr = get(xyPlotParams, 'y.errorLow');
     req.yErrHighColOrExpr = get(xyPlotParams, 'y.errorHigh');
     req.startIdx = 0;
-    req.pageSize = 1000000;
+    req.pageSize = MAX_ROW;
 
     fetchTable(req).then((tableModel) => {
 
