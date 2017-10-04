@@ -481,7 +481,7 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
     const tblSource = get(activeTableModel, 'tableMeta.datasetID');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
-    const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh'];
+    const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh', 'ROW_IDX', 'ROW_NUM'];
 
     const sreq = cloneRequest(activeTableServerRequest, {'pageSize' : MAX_ROW}); // this is not necessary since XYWithErrors should know what to do given a source request
     const req = makeTblRequest('XYWithErrors');

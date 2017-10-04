@@ -537,7 +537,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             table_name: LC.PERIODOGRAM_TABLE
             /* Should we do the same for Power column in Periodogram? */
             /*sortInfo: sortInfoString('Power', false)*/
-        }, {tbl_id: LC.PERIODOGRAM_TABLE, inclCols : 'Period, Power'});
+        }, {tbl_id: LC.PERIODOGRAM_TABLE, inclCols : '"PERIOD", "POWER"'});
 
 
         if (tReq !== null) {

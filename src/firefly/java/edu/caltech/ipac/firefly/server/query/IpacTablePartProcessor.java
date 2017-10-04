@@ -48,6 +48,12 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     private static final Map<StringKey, Object> _activeRequests =
                 Collections.synchronizedMap(new HashMap<>());
 
+    boolean doLogging = true;
+
+    protected void setDoLogging(boolean flg) {
+        doLogging = flg;
+    }
+
     protected static IOException makeException(Exception e, String reason) {
         IOException eio = new IOException(reason);
         eio.initCause(e);
@@ -229,7 +235,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     public boolean doLogging() {
-        return true;
+        return doLogging;
     }
 
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {

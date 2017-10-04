@@ -4,8 +4,15 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.util.StringUtils;
+
+import java.util.List;
+import java.util.SortedSet;
+import java.util.stream.Collectors;
 
 /**
  * Date: July 21, 2014
@@ -46,5 +53,22 @@ public interface QueryDescResolver {
 
     }
 
+
+    public static class StatsLogResolver implements QueryDescResolver {
+
+        public String getTitle(ServerRequest req) {
+            return req.getRequestId();
+        }
+
+        public String getDesc(ServerRequest req) {
+            TableServerRequest treq = (TableServerRequest) req;
+            // limit each params to no more than 50 chars
+            List<String> params = treq.getSearchParams().stream()
+                                    .map((p) -> String.valueOf(p).length() > 50 ? String.valueOf(p).substring(0,50) + " <truncated>" : String.valueOf(p))
+                                    .collect(Collectors.toList());
+
+            return StringUtils.toString(params, "; ");
+        }
+    }
 
 }

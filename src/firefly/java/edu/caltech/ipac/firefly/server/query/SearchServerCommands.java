@@ -84,7 +84,7 @@ public class SearchServerCommands {
                 String inRows = rows.size() > 0 ? StringUtils.toString(rows) : "-1";
 
                 String sql = String.format("select %s from %s where %s in (%s)", selCols, tblName, DataGroup.ROW_NUM, inRows);
-                DataGroupPart page = EmbeddedDbUtil.getResults(treq, sql);
+                DataGroupPart page = EmbeddedDbUtil.getResults(treq, sql ,tblName);
 
                 return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
             } catch (IOException e) {

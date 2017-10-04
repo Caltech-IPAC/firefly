@@ -33,7 +33,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
-    public static final List<String> SYS_PARAMS = Arrays.asList(new String[]{INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO,SQL_FROM});
+    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO,SQL_FROM);
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
 
     private int pageSize;
@@ -260,8 +260,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public SortedSet<Param> getSearchParams() {
         TreeSet<Param> params = new TreeSet<>();
         for (Param p : getParams()) {
-            if (!SYS_PARAMS.contains(p.getName()) ||
-                    p.getName().equals(SORT_INFO)) {
+            if (!SYS_PARAMS.contains(p.getName())) {
                 params.add(p);
             }
         }

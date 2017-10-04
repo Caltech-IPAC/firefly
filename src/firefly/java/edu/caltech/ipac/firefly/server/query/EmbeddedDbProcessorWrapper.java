@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -44,19 +43,16 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
             DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
 
             TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
-            nreq.keepBaseParamOnly();
             StopWatch.getInstance().start("getBaseData: " + treq.getRequestId());
-            File dataFile = processor.getDataFile(nreq);
+            File dataFile = processor.loadDataFile(nreq);       // this should fetch the data directly without any caching, sorting, filtering, etc.
             DataGroup dg = IpacTableReader.readIpacTable(dataFile, "temp");
             StopWatch.getInstance().stop("getBaseData: " + treq.getRequestId()).printLog("getBaseData: " + treq.getRequestId());
 
             setupMeta(dg, treq);
 
-            String fname = dataFile.getName();
-            fname = fname.substring(0, fname.indexOf('.'));
-            File dbFile = new File( ServerContext.getTempWorkDir(), fname + "." + dbAdapter.getName());
+            File dbFile = EmbeddedDbUtil.getDbFile(treq);
             if (!dbFile.createNewFile()) {
-                dbFile = File.createTempFile(fname + "-",  "." + dbAdapter.getName(), ServerContext.getTempWorkDir());
+                LOGGER.error("This should not happen.. can't create dbFile:" + dbFile.getPath());
             }
             FileInfo finfo = EmbeddedDbUtil.createDbFile(dbFile, dg, dbAdapter);
             return finfo;
@@ -73,6 +69,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
             setupMeta(dgp.getData(), treq);
             return dgp;
         } else {
+            processor.setDoLogging(false);
             return super.getDataset(treq, dbFile);
         }
     }
@@ -84,11 +81,6 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
         processor.onComplete(request, results);
     }
-
-    public boolean doLogging() {
-        return false;
-    }
-
 
     private boolean containsDecimateKey(List<String> filters) {
         if (filters == null || filters.size() == 0) return false;

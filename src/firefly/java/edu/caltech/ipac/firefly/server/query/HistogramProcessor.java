@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
+
 @SearchProcessorImpl(id = "HistogramProcessor")
 /**
  * Created by zhang on 10/16/15.
@@ -123,7 +126,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
         }
 
-        sReq.keepBaseParamOnly();  // getting the full table.. is this right?
+        // get the relevant data
+        sReq.setPageSize(Integer.MAX_VALUE);
+        sReq.setSortInfo(null);
+        sReq.removeParam(INCL_COLUMNS);
+
         DataGroupPart sourceData = new SearchManager().getDataGroup(sReq);
         if (sourceData == null) {
             throw new DataAccessException("Unable to get source data");

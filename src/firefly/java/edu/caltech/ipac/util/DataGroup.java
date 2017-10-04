@@ -3,8 +3,11 @@
  */
 package edu.caltech.ipac.util;
 
+import org.apache.commons.lang.ArrayUtils;
+
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class is the data class for any set of objects that we show on plots.  <i>This class need more
@@ -158,6 +161,36 @@ public class DataGroup implements Serializable,
             throw e;
         }
     }
+
+    /**
+     * remove the given column from this data group if it exists.
+     * @param name
+     */
+    public void removeDataDefinition(String name) {
+        DataType dt = this.getDataDefintion(name);
+        if (dt != null) {
+            int idx = dt.getColumnIdx();
+
+            _dataDefinitions.remove(idx);
+            for(int i = 0; i < _dataDefinitions.size(); i++) {
+                _dataDefinitions.get(i).setColumnIdx(i);
+            }
+
+            _objects.stream().forEach((row) -> {
+                row.setData(ArrayUtils.remove(row.getData(), idx));
+            });
+
+            ArrayList<Attribute> results = new ArrayList<>();
+            for (Attribute a : _attributes) {
+                if (!a.getKey().startsWith("col." + dt.getKeyName())) {
+                    results.add(a);
+                }
+            }
+            _attributes = results;
+            _cachedDataDefinitionsAry = null;
+        }
+    }
+
 
     /**
      * Return the extra data types defined for this group.

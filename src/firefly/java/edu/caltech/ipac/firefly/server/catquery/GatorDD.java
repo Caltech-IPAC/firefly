@@ -69,7 +69,7 @@ public class GatorDD extends EmbeddedDbProcessor {
                         new DataType("tableflg", Integer.class),
                         new DataType("sel", String.class)
                 });
-                EmbeddedDbUtil.createDDTbl(dbFile, dd, dbAdapter);
+                EmbeddedDbUtil.createDDTbl(dbFile, dd, dbAdapter, "data");
                 EmbeddedDbUtil.setDbMetaInfo(treq, DbAdapter.getAdapter(treq), dbFile);
             }
         } catch (IOException e) {
@@ -97,7 +97,7 @@ public class GatorDD extends EmbeddedDbProcessor {
         String sql = String.format("%s %s %s", dbAdapter.selectPart(treq), dbAdapter.fromPart(treq), dbAdapter.wherePart(treq));
         sql = dbAdapter.translateSql(sql);
 
-        DataGroup dg = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, sql);
+        DataGroup dg = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, sql, "data");
         TableDef tm = new TableDef();
         tm.setStatus(DataGroupPart.State.COMPLETED);
         return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());

@@ -45,14 +45,14 @@ public interface DbAdapter {
     String createDataSql(DataType[] dataDefinitions, String tblName);
     String insertDataSql(DataType[] dataDefinitions, String tblName);
 
-    String createMetaSql(DataType[] dataDefinitions);
-    String insertMetaSql(DataType[] dataDefinitions);
+    String createMetaSql(String forTable);
+    String insertMetaSql(String forTable);
 
-    String createDDSql(DataType[] dataDefinitions);
-    String insertDDSql(DataType[] dataDefinitions);
+    String createDDSql(String forTable);
+    String insertDDSql(String forTable);
 
-    String getDDSql();
-    String getMetaSql();
+    String getDDSql(String forTable);
+    String getMetaSql(String forTable);
 
     String selectPart(TableServerRequest treq);
     String fromPart(TableServerRequest treq);

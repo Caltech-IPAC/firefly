@@ -30,6 +30,33 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * NOTE: We're using spring jdbc v2.x.  API changes dramatically in later versions.
  * For v2.x API docs, https://docs.spring.io/spring/docs/2.5.5/javadoc-api/
+ *
+ * Things to be aware of:
+ *
+ * - This processor caches its results based on search parameters plus session ID.
+ *   To fetch new results, simply quit your browser so a new session ID can be assigned
+ *
+ * - There are 3 tables generated for each DataGroup; DATA, DATA_DD, and DATA_META.
+ *   DATA contains the data, DD contains the column's definitions, and META contains the data's meta information
+ *
+ * - ROW_IDX and ROW_NUM are added to every DATA table.  use DataGroup.ROW_IDX and DataGroup.ROW_NUM when referencing it.
+ *   ROW_IDX is the original row index of the data, starting from 0
+ *   ROW_NUM is the natural order of the table, starting from 0
+ *   these are used in row-based operations, ie. highlighting, selecting, filtering.
+ *
+ * - When an operation that changes the results of a table, like filter or sort, a new set of tables
+ *   will be created; DATA_[hash_id], DATA_[hash_id]_DD, and DATA_[hash_id]_META.
+ *   This is done for a couple of reasons:
+ *   1. paging is much faster, since it does not need to re-run the query to get at the results.
+ *   2. storing the original ROW_IDX of DATA in relation to the results.
+ *   [hash_id] is an MD5 hex of the filter/sort parameters.
+ *
+ * - Database columns when not quoted are usually stored as uppercase.  Columns used in an SQL statement when not quoted
+ *   are converted to uppercase in order to match the name of the table's columns.  With that said:
+ *   - DataGroup columns are stored as uppercase
+ *   - DD table is used to convert it back to original casing
+ *   - Every database has its list reserved words.  To reference a column with the same name, enclose it with double-quotes(").
+ *
  */
 abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, CanGetDataFile {
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
@@ -44,7 +71,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      * META table contains meta information taken from the table.
      *
      * @param req  search request
-     * @return the database file with sizeInBytes representing to the number of rows.
      * @throws DataAccessException
      */
     abstract public FileInfo createDbFile(TableServerRequest req) throws DataAccessException;
@@ -55,8 +81,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         String unigueReqID = this.getUniqueID(request);
 
-
-//        lockChecker.lock();
+        lockChecker.lock();
         ReentrantLock lock = null;
         try {
             lock = activeRequests.get(unigueReqID);
@@ -65,28 +90,32 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 activeRequests.put(unigueReqID, lock);
             }
         } finally {
-//            lockChecker.unlock();
+            lockChecker.unlock();
         }
-
 
         // make sure multiple requests for the same data waits for the first one to create before acessing.
         lock.lock();
         try {
+            boolean dbFileCreated = false;
             File dbFile = EmbeddedDbUtil.getDbFile(treq);
             if (dbFile == null || !dbFile.canRead()) {
                 StopWatch.getInstance().start("createDbFile: " + request.getRequestId());
                 FileInfo dbFileInfo = createDbFile(treq);
                 dbFile = dbFileInfo.getFile();
                 EmbeddedDbUtil.setDbMetaInfo(treq, DbAdapter.getAdapter(treq), dbFile);
-
-                if (doLogging()) {
-                    SearchProcessor.logStats(treq.getRequestId(), (int)dbFileInfo.getSizeInBytes(), 0, false, getDescResolver().getDesc(treq));
-                }
+                dbFileCreated = true;
                 StopWatch.getInstance().stop("createDbFile: " + request.getRequestId()).printLog("createDbFile: " + request.getRequestId());
             }
+
             StopWatch.getInstance().start("getDataset: " + request.getRequestId());
             DataGroupPart results = getDataset(treq, dbFile);
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
+
+            if (doLogging() && dbFileCreated) {
+                // no reliable way of capturing cached searches count
+                SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+            }
+
             return  results;
         } finally {
             activeRequests.remove(unigueReqID);
@@ -124,7 +153,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     public String getUniqueID(ServerRequest request) {
-        return SearchProcessor.getUniqueIDDef((TableServerRequest) request);
+        return EmbeddedDbUtil.getUniqueID((TableServerRequest) request);
     }
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
@@ -132,7 +161,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     public QueryDescResolver getDescResolver() {
-        return new QueryDescResolver.DescBySearchResolver(new SearchDescResolver());
+        return new QueryDescResolver.StatsLogResolver();
     }
 
     protected File createTempFile(TableServerRequest request, String fileExt) throws IOException {
@@ -148,11 +177,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
 
         try {
-            EmbeddedDbUtil.setupDatasetTable(treq);
+            String tblName = EmbeddedDbUtil.setupDatasetTable(treq);
 
             // select a page from the dataset table
             String pageSql = getPageSql(dbAdapter, treq);
-            DataGroupPart page = EmbeddedDbUtil.getResults(treq, pageSql);
+            DataGroupPart page = EmbeddedDbUtil.getResults(treq, pageSql, tblName);
 
             // fetch total row count for the query.. datagroup may contain partial results(paging)
             String cntSql = getCountSql(dbAdapter, treq);

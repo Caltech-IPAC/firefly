@@ -167,6 +167,18 @@ public class DataObject implements Serializable, Cloneable {
     public int size() { return _group.getDataDefinitions().length; }
 
 
+    public String getStringData(String name) {
+        return getStringData(name, null);
+    }
+    public String getStringData(String name, String def) {
+        Object v = getDataElement(name);
+        return v == null ? def : v.toString();
+    }
+
+
+
+
+
 
 //======================================================================
 //------------------ Private / Protected / Package Methods --------------

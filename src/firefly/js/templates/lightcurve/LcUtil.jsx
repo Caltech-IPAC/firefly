@@ -73,7 +73,7 @@ export function keepHighlightedRowSynced(tbl_id, highlightedRow=0) {
         } else {
             rowid = getCellValue(tableModel, highlightedRow, 'RAW_ROWID') || highlightedRow;
             actOn = LC.RAW_TABLE;
-            filterInfo = `ROWID = ${rowid}`;
+            filterInfo = `ROW_IDX = ${rowid}`;
         }
         findIndex(actOn, filterInfo)
             .then( (index) => {

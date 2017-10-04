@@ -22,8 +22,8 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  */
 abstract public class BaseDbAdapter implements DbAdapter {
 
-    private static final String DD_INSERT_SQL = "insert into dd values (?,?,?,?,?,?,?,?,?,?)";
-    private static final String DD_CREATE_SQL = "create table if not exists dd "+
+    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?)";
+    private static final String DD_CREATE_SQL = "create table if not exists %s_dd "+
             "(" +
             "  cname    varchar(1023)" +
             ", label    varchar(1023)" +
@@ -37,28 +37,28 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", desc     varchar(1023)" +
             ")";
 
-    private static final String META_INSERT_SQL = "insert into meta values (?,?)";
-    private static final String META_CREATE_SQL = "create table if not exists meta "+
+    private static final String META_INSERT_SQL = "insert into %s_meta values (?,?)";
+    private static final String META_CREATE_SQL = "create table if not exists %s_meta "+
             "(" +
             "  key      varchar(1023)" +
             ", value    varchar(2023)" +
             ")";
 
 
-    public String createMetaSql(DataType[] dataDefinitions) {
-        return META_CREATE_SQL;
+    public String createMetaSql(String forTable) {
+        return String.format(META_CREATE_SQL, forTable);
     }
 
-    public String insertMetaSql(DataType[] dataDefinitions) {
-        return META_INSERT_SQL;
+    public String insertMetaSql(String forTable) {
+        return String.format(META_INSERT_SQL, forTable);
     }
 
-    public String createDDSql(DataType[] dataDefinitions) {
-        return DD_CREATE_SQL;
+    public String createDDSql(String forTable) {
+        return String.format(DD_CREATE_SQL, forTable);
     }
 
-    public String insertDDSql(DataType[] dataDefinitions) {
-        return DD_INSERT_SQL;
+    public String insertDDSql(String forTable) {
+        return String.format(DD_INSERT_SQL, forTable);
     }
 
     public String createDataSql(DataType[] dtTypes, String tblName) {
@@ -79,12 +79,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return String.format("insert into %s values(%s)", tblName, StringUtils.toString(var, ","));
     }
 
-    public String getMetaSql() {
-        return "select * from meta";
+    public String getMetaSql(String forTable) {
+        return String.format("select * from %s_meta", forTable);
     }
 
-    public String getDDSql() {
-        return "select * from dd";
+    public String getDDSql(String forTable) {
+        return String.format("select * from %s_dd", forTable);
     }
 
     public String selectPart(TableServerRequest treq) {

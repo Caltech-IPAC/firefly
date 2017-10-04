@@ -125,11 +125,8 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
         raw_rowid.name = 'RAW_ROWID';
         raw_rowid.visibility = 'hidden';
     } else {
-        raw_rowid = {name: 'RAW_ROWID', type: 'int', visibility: 'hidden'};
-        tPF.tableData.columns.push(raw_rowid);
-        tPF.tableData.data.forEach((row, index) => {
-            row.push(index);
-        });
+        // should not happen.. ROW_IDX is always coming over.
+        console.log('No ROW_IDX found. Need to investigate');
     }
 
     return tPF;
