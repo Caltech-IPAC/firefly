@@ -11,6 +11,7 @@ import {take} from 'redux-saga/effects';
 import {isArray, get} from 'lodash';
 import Enum from 'enum';
 
+import {WSCH} from '../core/History.js';
 import {debug} from './ApiUtil.js';
 import {getRootURL}  from '../util/BrowserUtil.js';
 import {dispatchRemoteAction}  from '../rpc/PushServices.js';
@@ -99,7 +100,7 @@ export function getViewer(channel= getWsChannel(),file=defaultViewerFile) {
     const viewer= Object.assign({dispatch, reinitViewer, channel},
         buildImagePart(channel,file,dispatch),
         buildTablePart(channel,file,dispatch),
-        buildChartPart(channel,file,dispatch),
+        buildChartPart(channel,file,dispatch)
     );
 
 
@@ -328,8 +329,8 @@ function doViewerOperation(channel,file,f) {
         f && f();
     } else {
         dispatchAddSaga(doOnWindowConnected, {channel, f});
-        // const url= `${getRootURL()}${file};wsch=${channel}`;
-        const url= `${modifyURLToFull(file,getRootURL())};wsch=${channel}`;
+        // const url= `${getRootURL()}${file}?__wsch=${channel}`;
+        const url= `${modifyURLToFull(file,getRootURL())}?${WSCH}=${channel}`;
         viewerWindow = window.open(url, channel);
     }
 }
