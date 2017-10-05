@@ -14,7 +14,12 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.cache.StringKey;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -23,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ServerEventManager {
 
+    private static final StringKey REP_LIST = new StringKey("ReplicatedEventQueueList");
     private static final boolean USE_CACHE_EVENT_WORKER = true;
     private static final EventWorker eventWorker = USE_CACHE_EVENT_WORKER ?
                                                     new CacheEventWorker() : new SimpleEventWorker();
@@ -31,6 +37,7 @@ public class ServerEventManager {
     private static long totalEventCnt;
     private static long deliveredEventCnt;
 
+    private static Cache getCache() { return CacheManager.getCache(Cache.TYPE_PERM_SMALL); }
 
     /**
      * Send this action to the calling client, i.e Scope.SELF.
@@ -96,14 +103,27 @@ public class ServerEventManager {
         }
     }
 
-    public static ServerEventQueue addEventQueue(ServerEventQueue queue) {
+    public static void addEventQueue(ServerEventQueue queue) {
         Logger.briefInfo("create new Queue for: "+ queue.getQueueID() );
         evQueueList.add(queue);
-        return queue;
+
+        Cache cache= getCache();
+        List replicatedList= (List)cache.get(REP_LIST);
+        if (replicatedList==null) {
+            replicatedList= new ArrayList<ServerEventQueue>();
+            cache.put(REP_LIST,replicatedList);
+        }
+        replicatedList.add(new ServerEventQueue(queue.getConnID(),queue.getChannel(),queue.getUserKey(),null));
+        cache.put(REP_LIST, replicatedList);
     }
 
     static List<ServerEventQueue> getEvQueueList() {
         return evQueueList;
+    }
+
+    static List<ServerEventQueue> getAllServerEvQueueList() {
+        List replicatedList= (List)getCache().get(REP_LIST);
+        return (replicatedList!=null) ? replicatedList : Collections.emptyList();
     }
 
     static void processEvent(ServerEvent ev) {
@@ -133,6 +153,22 @@ public class ServerEventManager {
 
     public static void removeEventQueue(ServerEventQueue queue) {
         evQueueList.remove(queue);
+
+        Cache cache= getCache();
+        List replicatedList= (List)cache.get(REP_LIST);
+        if (replicatedList==null) return;
+
+        replicatedList= new ArrayList(replicatedList);
+        for(int i=0; i<replicatedList.size(); i++) {
+            ServerEventQueue repQ= (ServerEventQueue )replicatedList.get(i);
+            if (repQ.getChannel().equals(queue.getChannel()) &&
+                    repQ.getConnID().equals(queue.getConnID()) &&
+                    repQ.getUserKey().equals(queue.getUserKey())) {
+                replicatedList.remove(i);
+                cache.put(REP_LIST, replicatedList);
+                break;
+            }
+        }
     }
 
 //====================================================================
