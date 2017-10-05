@@ -1,47 +1,23 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/**
- * @author Trey Roby
- * Date: 3/5/12
- */
 
-/*eslint prefer-template:0 */
-import {get, has} from 'lodash';
-import { getRootURL} from '../util/BrowserUtil.js';
-import { encodeUrl, toBoolean } from '../util/WebUtil.js';
+import {has} from 'lodash';
+import {getRootURL} from '../util/BrowserUtil.js';
+import {fetchUrl, toBoolean} from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
-import {fetchUrl} from '../util/WebUtil.js';
 
-//var http= require('http');
-
-//const TIMEOUT = 10 * 60 * 1000;  // 10 min
 export const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
-
-
-const makeURL= function(baseUrl, cmd, paramList, isJsonp= false) {
-    paramList = cmd ? addParam(paramList, ServerParams.COMMAND, cmd) : paramList;
-    paramList = isJsonp ? addParam(paramList, ServerParams.DO_JSONP, 'true') : paramList;
-    return encodeUrl(baseUrl, paramList);
-};
-
-export const jsonpRequest= function(baseUrl, cmd, paramList) {//TODO - convert
-    var url = makeURL(baseUrl, cmd, paramList, true);
-    // TODO: use the jsonp module here by call the network
-};
-
-export const defaultJsonpRequest= function(cmd, paramList, cb) {
-    jsonpRequest(DEF_BASE_URL, cmd, paramList, cb);
-};
 
 /**
  *
- * @param baseUrl
- * @param cmd
+ * @param {string} baseUrl
+ * @param {string} cmd
  * @param paramList
- * @param doPost
+ * @param {boolean} doPost
+ * @return {Promise} a promise with the results
  */
-export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
+function jsonRequest(baseUrl, cmd, paramList, doPost) {
     const options= {method: doPost?'POST':'GET'};
     options.params = addParam(paramList, ServerParams.COMMAND, cmd);
 
@@ -71,29 +47,31 @@ export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
             reject(err);
         });
     });
-};
+}
 
 /**
  * 
- * @param cmd
+ * @param {string} cmd
  * @param paramList
- * @param doPost
+ * @param {boolean} doPost
+ * @return {Promise} a promise with the results
  */
-export const doJsonRequest= function(cmd, paramList, doPost=true) {
+export function doJsonRequest(cmd, paramList, doPost=true) {
     return jsonRequest(DEF_BASE_URL, cmd, paramList, doPost);
-};
+}
 
-export const doService= function(doJsonP, cmd, paramList) {
-    if (doJsonP) {
-        return defaultJsonpRequest(cmd, paramList);
-    } else {
-        return doJsonRequest(cmd,paramList);
-    }
-};
+/**
+ *
+ * @param channelId
+ * @param action
+ */
+export function dispatchRemoteAction(channelId, action) {
+    const params= {
+        [ServerParams.CHANNEL_ID]: channelId,
+        [ServerParams.ACTION]: JSON.stringify(action) };
+    return doJsonRequest(ServerParams.VIS_PUSH_ACTION, params);
+}
 
-export const doSimpleService= function(doJsonP, cmd, asyncCB) {
-    doService(doJsonP, cmd, [], asyncCB, (s) => s);
-};
 
 /**
  * add the given name-value param into a new paramList.  If a param by a given name exists, it will be replaced.
@@ -106,5 +84,7 @@ function addParam(paramList, name, value) {
     if (!name) return paramList;
     if (Array.isArray(paramList)) {
         return paramList.filter((v) => v.name !== name).concat({name, value});
-    } else return Object.assign({}, paramList, {[name]: value});
+    } else {
+        return Object.assign({}, paramList, {[name]: value});
+    }
 }

@@ -6,7 +6,7 @@ import {isEmpty, isUndefined} from 'lodash';
 import {flux} from '../Firefly.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import {reportUserAction} from '../rpc/SearchServicesJson.js';
-import { parseImagePt, parseWorldPt, parseScreenPt } from '../visualize/Point.js';
+import {parseImagePt, parseWorldPt, parseScreenPt} from '../visualize/Point.js';
 import {getWsChannel} from './messaging/WebSocketClient.js';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {getTblById, getTblRowAsObj} from '../tables/TableUtil.js';
@@ -16,8 +16,8 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 
 const EMPTY_ARRAY=[];
 
-const doExtensionActivate= function(extension, resultData) {
-    activate(getRemoteChannel(),extension,resultData);
+export const doExtensionActivate= function(extension, resultData) {
+    activate(getWsChannel(),extension,resultData);
 };
 
 export const AREA_SELECT= 'AREA_SELECT';
@@ -46,11 +46,6 @@ const activate= function(remoteChannel, extension, resultData) {
     if (remoteChannel && extension.extType !== 'PLOT_MOUSE_READ_OUT') {
         reportUserAction(remoteChannel,'todo- add desc',JSON.stringify(resultData));
     }
-};
-
-export const getRemoteChannel= function() {
-    //return flux.getState()[ExternalAccessCntlr.EXTERNAL_ACCESS_KEY].remoteChannel ;
-    return getWsChannel();
 };
 
 export const getPlotUIExtensionList= function(testPlotId) {
@@ -88,21 +83,6 @@ export const extensionAdd= function(extension) {
 export const extensionRemove= function(extensionId) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_REMOVE, payload: {id: extensionId}});
 };
-
-export const extensionActivate= function(extension, resultData) {
-    flux.process({type: ExternalAccessCntlr.EXTENSION_ACTIVATE, payload: {extension, resultData}});
-};
-
-
-export const channelActivate= function(channelId) {
-    flux.process({type: ExternalAccessCntlr.CHANNEL_ACTIVATE, payload: {channelId}});
-};
-
-
-var ExternalAccessUtils= { doExtensionActivate, extensionAdd, extensionRemove, extensionActivate, channelActivate,
-    getRemoteChannel, getPlotUIExtensionList };
-export default ExternalAccessUtils;
-
 
 
 export function makePlotSelectionExtActivateData(ext, pv, dlAry) {

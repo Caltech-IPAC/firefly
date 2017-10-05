@@ -1,14 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import ExternalAccessUtils from './ExternalAccessUtils.js';
+import {doExtensionActivate} from './ExternalAccessUtils.js';
 import {POINT} from './ExternalAccessUtils.js';
 import {dispatchChangePointSelection} from '../visualize/ImagePlotCntlr.js';
 
 const EXTENSION_ADD= 'ExternalAccessCntlr/extensionAdd';
 const EXTENSION_REMOVE= 'ExternalAccessCntlr/extensionRemove';
 const EXTENSION_ACTIVATE= 'ExternalAccessCntlr/extensionActivate';
-const CHANNEL_ACTIVATE= 'ExternalAccessCntlr/channelActivate';
 
 const EXTERNAL_ACCESS_KEY= 'externalAccess';
 import {flux} from '../Firefly.js';
@@ -35,11 +34,6 @@ export function dispatchExtensionActivate(extension, resultData) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_ACTIVATE, payload: {extension, resultData}});
 }
 
-export function dispatchChannelActivate(channelId) {
-    flux.process({type: ExternalAccessCntlr.CHANNEL_ACTIVATE, payload: {channelId}});
-}
-
-
 
 const extensionActivateActionCreator= function(rawAction) {
     return (dispatcher) => {
@@ -47,7 +41,7 @@ const extensionActivateActionCreator= function(rawAction) {
         if (rawAction.payload) {
             var {payload : {extension, resultData}}= rawAction;
             if (extension && resultData) {
-                ExternalAccessUtils.doExtensionActivate(extension,resultData);
+                doExtensionActivate(extension,resultData);
             }
         }
         dispatcher(rawAction);
@@ -94,14 +88,6 @@ function reducer(state=initState, action={}) {
         case EXTENSION_REMOVE  :
             retState= removeExtension(state,action);
             break;
-        case EXTENSION_ACTIVATE  :
-            retState= state;// todo something
-            break;
-
-        case CHANNEL_ACTIVATE  :
-            retState= updateChannel(state,action);
-            break;
-
     }
     return retState;
 }
@@ -125,21 +111,13 @@ const removeExtension= function(state, action) {
     return Object.assign({}, state, {extensionList:newAry});
 };
 
-const updateChannel= function(state, action) {
-    var {channelId}= action.payload;
-    return Object.assign({}, state, {remoteChannel:channelId});
-};
-
 
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
 var ExternalAccessCntlr = {
-    reducers, actionCreators, extensionActivateActionCreator, EXTENSION_ADD, EXTENSION_REMOVE,
-    EXTENSION_ACTIVATE, CHANNEL_ACTIVATE, EXTERNAL_ACCESS_KEY,
-    ALL_MPW
-    };
+    reducers, actionCreators, EXTENSION_ADD, EXTENSION_REMOVE, EXTENSION_ACTIVATE, EXTERNAL_ACCESS_KEY, ALL_MPW };
 export default ExternalAccessCntlr;
 
 //============ EXPORTS ===========

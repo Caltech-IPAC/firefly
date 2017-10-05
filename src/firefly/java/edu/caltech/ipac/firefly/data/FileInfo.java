@@ -176,18 +176,6 @@ public class FileInfo implements HasAccessInfo, Serializable {
         return fi;
     }
 
-//    public FileInfo copyWith(String... valuePairs) {
-//        FileInfo fi= copy();
-//        if (valuePairs != null && valuePairs.length > 0) {
-//            for(int i= 0; (i<valuePairs.length); i+=2) {
-//                if (valuePairs[i]!=null && valuePairs.length<i+1) {
-//                    fi.putAttribute(valuePairs[i], valuePairs[i+1]);
-//                }
-//            }
-//        }
-//        return fi;
-//    }
-
     public interface FileNameResolver {
         String getResolvedName(String input);
     }

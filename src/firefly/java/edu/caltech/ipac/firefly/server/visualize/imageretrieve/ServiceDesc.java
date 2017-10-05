@@ -32,7 +32,7 @@ public class ServiceDesc {
     private static String getAtlasDesc(WebPlotRequest r) {
 
         String schema= r.getParam(AtlasIbeDataSource.DATASET_KEY);
-        String instrument=r.getParam(AtlasIbeDataSource.TABLE_KEY)
+        String instrument=r.getParam(AtlasIbeDataSource.TABLE_KEY);
         String band= r.getSurveyBand();
         return schema + " "+instrument+ " " + band;
     }
