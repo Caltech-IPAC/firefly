@@ -13,23 +13,29 @@
  *  query_params: key/value pairs.  this is used to populate action.payload.
  */
 
-import {get, pick, isString} from 'lodash';
+import {get, pick, omitBy, pickBy} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
 import {encodeUrl, parseUrl} from '../util/WebUtil.js';
-import {CH_ID} from '../core/messaging/WebSocketClient.js';
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 
 const MAX_HISTORY_LENGTH = 20;
+export const ACTION = '__action';
+export const WSCH = '__wsch';
 const DEF_HANDLER = genericHandler(document.location);
 
 /**
  * a map of all actions that should be in history
  * @type {{}}
  */
-const historyAware = [TABLE_SEARCH, SHOW_DROPDOWN]
-                        .reduce( (o, v) => {o[v] = DEF_HANDLER; return o;}, {});
+const historyAware = (() => {
+            let all;
+            return (a) => {
+                all = all || [TABLE_SEARCH, SHOW_DROPDOWN].reduce((o, v) => { o[v] = DEF_HANDLER; return o; }, {});
+                return all[a];
+            };
+        })();
 
 var isHistoryEvent = false;
 
@@ -59,9 +65,9 @@ export function getActionFromUrl() {
     if (get(window, 'firefly.ignoreHistory', false)) return;
     const urlInfo = parseUrl(document.location);
     if (urlInfo.searchObject) {
-        const type = get(urlInfo, 'pathAry.0.a');
+        var type = get(urlInfo,['searchObject', ACTION]);
         if (type) {
-            const payload = urlInfo.searchObject || {};
+            const payload = omitBy(urlInfo.searchObject, (v,k) => k.startsWith && k.startsWith('__')) || {};
             return {type, payload};
         }
     }
@@ -71,7 +77,7 @@ export function getActionFromUrl() {
 export function recordHistory(action={}) {
     if (get(window, 'firefly.ignoreHistory', false) || isHistoryEvent) return;
 
-    const handler = historyAware[action.type];
+    const handler = historyAware(action.type);
     if (get(handler, 'actionToUrl')) {
         const url = handler.actionToUrl(action);
         try {
@@ -83,14 +89,13 @@ export function recordHistory(action={}) {
 function genericHandler(url='') {
     const urlInfo = parseUrl(url);
     var filename = get(urlInfo,'filename', '');
-    var wsch = get(urlInfo, ['searchObject',CH_ID]);
-    wsch = get(urlInfo,'pathAry.0.wsch', wsch);
-    wsch = wsch ? `;wsch=${wsch}` : '';
+    var wsch = get(urlInfo, `searchObject.${WSCH}`);
 
-    const staticPart = filename + wsch;
+    const staticPart = filename;
     return {
         actionToUrl: (action) => {
-            return encodeUrl(`${staticPart};a=${action.type}?`, action.payload);
+            const params = Object.assign({}, action.payload, pickBy({[WSCH]: wsch, [ACTION]: action.type}));
+            return encodeUrl(`${staticPart}?`, params);
         }
     };
 }

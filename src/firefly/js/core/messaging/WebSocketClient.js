@@ -3,7 +3,8 @@
  */
 
 import {get, pickBy} from 'lodash';
-import {setCookie, parseUrl, getModuleName} from '../../util/WebUtil.js';
+import {parseUrl} from '../../util/WebUtil.js';
+import {WSCH} from '../History.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {dispatchUpdateAppData} from '../AppDataCntlr.js';
 
@@ -25,8 +26,7 @@ export function wsConnect(baseUrl=getRootURL()) {
     connectBaseUrl = baseUrl;
 
     const urlInfo = parseUrl(document.location);
-    var wsch = get(urlInfo,'searchObject.channelID');
-    wsch = get(urlInfo,'pathAry.0.wsch') || wsch;
+    var wsch = get(urlInfo,['searchObject', WSCH]); 
     wsch = wsch ? `?${CH_ID}=${wsch}` : '';
 
     const connUrl = `${baseUrl}/sticky/firefly/events${wsch}`;
