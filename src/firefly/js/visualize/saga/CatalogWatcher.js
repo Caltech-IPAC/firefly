@@ -3,7 +3,7 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {isEmpty, get} from 'lodash';
+import {isEmpty, isNil, get} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
 import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
@@ -177,7 +177,9 @@ function attachToAllCatalogs(pvNewPlotInfoAry) {
             pvNewPlotInfoAry.forEach( (info) => {
                 dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
                 const pv= getPlotViewById(visRoot(), info.plotId);
-                if (dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId')) {
+                const pvSubGroup= get(pv, 'drawingSubGroupId');
+                const tableSubGroup= dl.tableMeta[SUBGROUP];
+                if (!isNil(pvSubGroup) && !isNil(tableSubGroup)  && pvSubGroup!==tableSubGroup) {
                     pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false, plotId:pv.plotId, useGroup:false});
                 }
             });

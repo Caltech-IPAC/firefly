@@ -44,6 +44,8 @@ export const keyMap = {
     'twomasstypes':'SELECTIMAGEPANEL_2MASS_types',
     'wisetypes': 'SELECTIMAGEPANEL_WISE_types',
     'wisebands': 'SELECTIMAGEPANEL_WISE_bands',
+    'atlastypes': 'SELECTIMAGEPANEL_ATLAS_types',
+    'atlasbands': 'SELECTIMAGEPANEL_ATLAS_bands',
     'msxtypes':    'SELECTIMAGEPANEL_MSX_types',
     'dsstypes':    'SELECTIMAGEPANEL_DSS_types',
     'sdsstypes':   'SELECTIMAGEPANEL_SDSS_types',
@@ -72,6 +74,7 @@ const findCatId = (ary, id) => get(ary.find( (p) => p.id===id), 'CatalogId',-1);
 export function getTabsIndexes() {
     const panelCatalogs= getPanelCatalogs();
     return {
+        ATLAS:findCatId(panelCatalogs,'atlas'),
         IRAS: findCatId(panelCatalogs,'iras'),
         TWOMASS: findCatId(panelCatalogs,'2mass'),
         WISE: findCatId(panelCatalogs,'wise'),

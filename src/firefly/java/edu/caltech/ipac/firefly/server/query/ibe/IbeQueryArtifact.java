@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.server.query.ibe;
 
+import edu.caltech.ipac.astro.ibe.BaseIbeDataSource;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
@@ -170,7 +171,7 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
 
     private static DataObject queryIBE(TableServerRequest req) throws IOException, DataAccessException {
         req.setRequestId(QueryIBE.PROC_ID);
-        req.setParam(QueryIBE.MOST_CENTER, IBE.MCEN);
+        req.setParam(QueryIBE.MOST_CENTER, BaseIbeDataSource.MCEN);
         req.setPageSize(1);
 
         SearchManager sman= new SearchManager();

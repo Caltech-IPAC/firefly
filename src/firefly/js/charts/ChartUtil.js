@@ -7,7 +7,7 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {get, uniqueId, isUndefined, omitBy, zip, isEmpty, range, set, isObject, pick, cloneDeep, merge, isNil, has} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -25,7 +25,6 @@ import {HistogramOptions} from './ui/options/PlotlyHistogramOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
 import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {getTraceTSEntries as scatterTSGetter} from './dataTypes/FireflyScatter.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
 import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericData.js';
@@ -289,14 +288,17 @@ export function getOptionsUI(chartId) {
     const {data, fireflyData, activeTrace=0} = getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
     const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
-    if (dataType === 'fireflyScatter' || isScatter2d(type)) {
+    // check firefly types first -
+    // trace type for them is populated
+    // when the data arrive
+    if (dataType === 'fireflyHistogram') {
+                return FireflyHistogramOptions;
+    } else if (dataType === 'fireflyHeatmap') {
+        return HeatmapOptions;
+    } else if (isScatter2d(type)) {
         return ScatterOptions;
     } else if (type === 'histogram') {
         return HistogramOptions;
-    } else if (dataType === 'fireflyHistogram') {
-            return FireflyHistogramOptions;
-    } else if (dataType === 'fireflyHeatmap') {
-            return HeatmapOptions;
     } else {
         return BasicOptions;
     }
@@ -304,7 +306,7 @@ export function getOptionsUI(chartId) {
 
 export function getToolbarUI(chartId, activeTrace=0) {
     const {data} =  getChartData(chartId);
-    const type = get(data, [activeTrace, 'type'], '');
+    const type = get(data, [activeTrace, 'type'], 'scatter');
     if (isScatter2d(type)) {
         return ScatterToolbar;
     } else {
@@ -316,7 +318,10 @@ export function clearChartConn({chartId}) {
     var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
     if (Array.isArray(oldTablesources)) {
         oldTablesources.forEach( (traceTS) => {
-            if (traceTS._cancel) traceTS._cancel();   // cancel the previous watcher if exists
+            if (traceTS._cancel) {
+                traceTS._cancel();
+                traceTS._cancel = undefined;
+            }   // cancel the previous watcher if exists
         });
     }
 }
@@ -353,6 +358,41 @@ export function newTraceFrom(data, selIndexes, newTraceProps) {
     return sdata;
 }
 
+
+
+export function updateSelected(chartId, selectInfo) {
+    const selectInfoCls = SelectInfo.newInstance(selectInfo);
+    const {data, activeTrace=0} = getChartData(chartId);
+    const traceData = data[activeTrace];
+    const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(traceData, e));
+    if (selIndexes) {
+        dispatchChartSelect({chartId, selIndexes});
+    }
+}
+
+export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
+
+    let getDataVal;
+    if (tableModel) {
+        const cols = tableModel.tableData.columns.map((c) => c.name);
+        const transposed = tableModel.tableData.columns.map(() => []);
+        tableModel.tableData.data.forEach((r) => {
+            r.map((e, idx) => transposed[idx].push(e));
+        });
+        getDataVal = (v) => transposed[cols.indexOf(v)];
+    } else {
+        getDataVal = (v) => v;
+    }
+    const changes = {};
+    if (mappings) {
+        Object.entries(mappings).forEach(([k,v]) => {
+            changes[`data.${traceNum}.${k}`] = getDataVal(v);
+        });
+    }
+
+    return changes;
+}
+
 /**
  *
  * @param {object} p
@@ -368,33 +408,49 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
 
     const numTraces = Math.max(tablesources.length, oldTablesources.length);
     range(numTraces).forEach( (idx) => {  // range instead of for-loop is to avoid the idx+1 JS's closure problem
-        const traceTS = tablesources[idx];
+        let traceTS = tablesources[idx];
         const oldTraceTS = oldTablesources[idx] || {};
+
         if (isEmpty(traceTS)) {
             tablesources[idx] = oldTraceTS;     // if no updates.. move the previous one into the new tablesources
         } else {
-            if (!tablesourcesEqual(traceTS, oldTraceTS)) {
-                const {tbl_id} = traceTS;
+            // if mappings are resolved, we need to get info from old tablesource
+            if (!traceTS.fetchData) {
+                traceTS = Object.assign({}, oldTraceTS, traceTS);
+            }
 
-                if (oldTraceTS && oldTraceTS._cancel) oldTraceTS._cancel();   // cancel the previous watcher if exists
-                //creates a new one.. and save the cancel handle
-                updateChartData(chartId, idx, traceTS);
-                traceTS._cancel = watchTableChanges(tbl_id, [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE], (action) => updateChartData(chartId, idx, traceTS, action));
+            if (!tablesourcesEqual(traceTS, oldTraceTS)) {
+                if (oldTraceTS && oldTraceTS._cancel) {
+                    oldTraceTS._cancel(); // cancel the previous watcher if exists
+                    oldTraceTS._cancel = undefined;
+                }
             } else {
                 tablesources[idx] = oldTraceTS;
             }
+        }
+        // make sure table watcher is set for all non-empty table sources
+        if (!isEmpty(tablesources[idx]) && !tablesources[idx]._cancel) {
+            //creates a new one.. and save the cancel handle
+            updateChartData(chartId, idx, tablesources[idx]);
+            tablesources[idx]._cancel = watchTableChanges(tablesources[idx].tbl_id,
+                [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE],
+                (action) => updateChartData(chartId, idx, traceTS, action));
+
         }
     });
     dispatchChartUpdate({chartId, changes:{tablesources}});
 }
 
 function tablesourcesEqual(newTS, oldTS) {
-    //shallowequal(newTS, omit(oldTS, '_cancel'));
+
+    // checking if the table or mappings options have changed
+    // or table watcher has been cancelled
     return get(newTS, 'tbl_id') === get(oldTS, 'tbl_id') &&
         get(newTS, 'tblFilePath') === get(oldTS, 'tblFilePath') &&
         shallowequal(get(newTS, 'mappings'), get(oldTS, 'mappings')) &&
         shallowequal(get(newTS, 'options'), get(oldTS, 'options'));
 }
+
 
 function updateChartData(chartId, traceNum, tablesource, action={}) {
     const {tbl_id, tblFilePath, mappings} = tablesource;
@@ -416,15 +472,19 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
             changes[`data.${traceNum}.${k}`] = [];
         });
         dispatchChartUpdate({chartId, changes});
-        dispatchChartHighlighted({chartId, highlighted: undefined}); 
+        dispatchChartHighlighted({chartId, highlighted: undefined});
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
 
+        const changes = getDataChangesForMappings({mappings, traceNum});
+
         // save original table file path
         const tblFilePathNow = get(tableModel, 'tableMeta.tblFilePath');
         if (tblFilePathNow !== tblFilePath) {
-            const changes = {[`tablesources.${traceNum}.tblFilePath`]: tblFilePathNow};
+            changes[`tablesources.${traceNum}.tblFilePath`] = tblFilePathNow;
+        }
+        if (!isEmpty(changes)) {
             dispatchChartUpdate({chartId, changes});
         }
 
@@ -435,25 +495,7 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
     }
 }
 
-export function updateSelected(chartId, selectInfo) {
-    const selectInfoCls = SelectInfo.newInstance(selectInfo);
-    const {data, activeTrace=0} = getChartData(chartId);
-    const traceData = data[activeTrace];
-    const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(traceData, e));
-    if (selIndexes) {
-        dispatchChartSelect({chartId, selIndexes});
-    }
-}
 
-export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
-    const cols = tableModel.tableData.columns.map( (c) => c.name);
-    const transposed = zip(...tableModel.tableData.data);
-    const changes = {};
-    Object.entries(mappings).forEach(([k,v]) => {
-        changes[`data.${traceNum}.${k}`] = transposed[cols.indexOf(v)];
-    });
-    return changes;
-}
 
 function makeTableSources(chartId, data=[], fireflyData=[]) {
 
@@ -492,9 +534,7 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
 }
 
 function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
-    if (chartDataType === 'fireflyScatter') {
-        return scatterTSGetter({traceTS, chartId, traceNum});
-    } else if (chartDataType === 'fireflyHistogram') {
+    if (chartDataType === 'fireflyHistogram') {
         return histogramTSGetter({traceTS, chartId, traceNum});
     } else if (chartDataType === 'fireflyHeatmap') {
         return heatmapTSGetter({traceTS, chartId, traceNum});
@@ -661,7 +701,6 @@ function setDefaultColor(data, type, idx) {
         mesh3d: [['colorscale']],
         chororpleth:  [['colorscale']],
         scatter: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
-        fireflyScatter: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
         scatter3d: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
         scattergl: [['marker.color', 'line.color',  'textfont.color', 'error_x.color', 'error_y.color']],
         scattergeo: [['marker.color', 'line.color', 'textfont.color']],

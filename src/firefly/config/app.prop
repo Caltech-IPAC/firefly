@@ -5,6 +5,7 @@ visualize.fits.search.path=@visualize.fits.search.path@:@alerts.dir@:@work.direc
 irsa.gator.hostname=@irsa.gator.hostname@
 wise.ibe.host=@wise.ibe.host@
 twomass.ibe.host=@twomass.ibe.host@
+atlas.ibe.host=@atlas.ibe.host@
 
 FireflyTools.Advertise= @FireflyTools.Advertise@
 ignore.auth=true

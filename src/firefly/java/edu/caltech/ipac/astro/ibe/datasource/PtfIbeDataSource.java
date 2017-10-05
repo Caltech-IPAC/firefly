@@ -158,7 +158,7 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
                     queryParam.setIntersect(IbeQueryParam.Intersect.valueOf(queryInfo.get("intersect")));
                 }
                 String mcen = queryInfo.get("mcenter");
-                if (mcen != null && mcen.equalsIgnoreCase(IBE.MCEN)) {
+                if (mcen != null && mcen.equalsIgnoreCase(MCEN)) {
                     queryParam.setMcen(true);
 
                 } else {

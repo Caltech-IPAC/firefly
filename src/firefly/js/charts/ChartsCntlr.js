@@ -42,7 +42,7 @@ export const CHART_UNMOUNTED = `${UI_PREFIX}/unmounted`;
 
 const FIRST_CDEL_ID = '0'; // first data element id (if missing)
 
-const FIREFLY_TRACE_TYPES = ['fireflyScatter', 'fireflyHistogram', 'fireflyHeatmap'];
+const FIREFLY_TRACE_TYPES = ['fireflyHistogram', 'fireflyHeatmap'];
 
 export default {actionCreators, reducers};
 
@@ -326,7 +326,13 @@ function chartAdd(action) {
             const {viewerId='main', data, fireflyData} = actionToDispatch.payload;
             dispatchAddViewer(viewerId,true,'plot2d',true);
             dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
-            handleTableSourceConnections({chartId, data, fireflyData});
+
+            // TODO: lazy table connection
+            // handle reset case - when a chart is already mounted
+            //const {mounted} = getChartData(chartId);
+            //if (mounted > 0) {
+                handleTableSourceConnections({chartId, data, fireflyData});
+            //}
         } else {
             dispatch(action);
         }
@@ -345,7 +351,12 @@ function chartUpdate(action) {
         const {data, fireflyData} = Object.entries(changes)
                              .filter(([k,v]) => (k.startsWith('data') || k.startsWith('fireflyData')))
                              .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
-        handleTableSourceConnections({chartId, data, fireflyData});
+
+        // TODO: lazy table connection
+        //const {mounted} = getChartData(chartId);
+        //if (mounted > 0) {
+            handleTableSourceConnections({chartId, data, fireflyData});
+        //}
     };
 }
 
@@ -354,7 +365,13 @@ function chartHighlight(action) {
         const {chartId, highlighted=0, chartTrigger=false} = action.payload;
         // TODO: activeTrace is not implemented.  switch to trace.. then highlight(?)
         const {data, tablesources, activeTrace:activeDataTrace=0, selected} = getChartData(chartId);
+
         const {traceNum=activeDataTrace, traceName} = action.payload; // highlighted trace can be selected or highlighted trace of the data trace
+
+        // when skipping hover, clicking on chart point produces no event
+        // disable chart highlight in this case
+        if (get(data, `${traceNum}.hoverinfo`) === 'skip') { return; }
+
         const ttype = get(data, [traceNum, 'type'], 'scatter');
 
         if (!isEmpty(tablesources) && ttype.includes('scatter')) {
@@ -390,6 +407,11 @@ function chartSelect(action) {
     return (dispatch) => {
         const {chartId, selIndexes=[], chartTrigger=false} = action.payload;
         const {activeTrace=0, data, tablesources} = getChartData(chartId);
+
+        // when skipping hover, selecting chart points does not work
+        // disable chart select in this case
+        if (get(data, `${activeTrace}.hoverinfo`) === 'skip') { return; }
+
         let selected = undefined;
         if (!isEmpty(tablesources)) {
             const {tbl_id} = tablesources[activeTrace] || {};
@@ -483,7 +505,7 @@ function handleFireflyTraceTypes(payload) {
                 const fd = get(d, 'firefly', {});
                 fd.dataType = d.type;
                 fireflyData.push(fd);
-                plotlyData.push(omit(d, ['type', 'firefly']));
+                plotlyData.push(omit(d, ['firefly']));
             } else {
                 fireflyData.push(undefined);
                 plotlyData.push(d);
@@ -628,13 +650,6 @@ export function chartDataUpdate(payload) {
     return { type : CHART_DATA_UPDATE, payload };
 }
 
-function findNewBar() {
-    const newChart = getChartData('newBar');
-    const l = get(newChart, ['layout', 'xaxis', 'range']);
-    if (l) {
-        console.log(l);
-    }
-}
 
 /*
  Possible structure of store:

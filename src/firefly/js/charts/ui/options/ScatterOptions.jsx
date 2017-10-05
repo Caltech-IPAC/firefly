@@ -221,12 +221,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
 }
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
-    const dataType = (!tbl_id) ? 'scatter' : 'fireflyScatter';
-    const changes = {[`fireflyData.${activeTrace}.dataType`] : dataType};
-    if (dataType === 'fireflyScatter') {
-        // add a mapping for rowIdx
-        changes[`_tables.data.${activeTrace}.firefly.rowIdx`] = 'rowIdx'; // rowIdx is mapping table rows to data points
-    }
+
+    const changes = {[`data.${activeTrace}.type`] : 'scatter'};
 
     // check if size field is a constant
     const sizeMap = fields[`_tables.data.${activeTrace}.marker.size`];

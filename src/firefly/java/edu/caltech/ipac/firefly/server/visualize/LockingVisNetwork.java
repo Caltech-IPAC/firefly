@@ -15,6 +15,7 @@ import edu.caltech.ipac.util.download.NetParams;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
+import edu.caltech.ipac.visualize.net.AtlasImageGetter;
 import edu.caltech.ipac.visualize.net.DssImageGetter;
 import edu.caltech.ipac.visualize.net.DssImageParams;
 import edu.caltech.ipac.visualize.net.IbeImageGetter;
@@ -135,6 +136,9 @@ public class LockingVisNetwork {
                 break;
             case SDSS:
                 SloanDssImageGetter.lowlevelGetSloanDssImage((SloanDssImageParams)params, f);
+                break;
+            case ATLAS:
+                f= AtlasImageGetter.lowlevelGetIbe2Image(params);
                 break;
         }
         return f;

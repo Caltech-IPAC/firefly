@@ -7,7 +7,6 @@ import edu.caltech.ipac.util.Assert;
 
 public class IrsaImageParams extends ImageServiceParams {
 
-    ;
 
     private String _band= "12";
     private float  _size= 5.0F;
@@ -23,17 +22,20 @@ public class IrsaImageParams extends ImageServiceParams {
          String retval= null;
          switch (getType()) {
              case ISSA :
-                       retval= "Issa-" + super.toString() + _band + _size;
-                       break;
+                 retval= "Issa-" + super.toString() + _band + _size;
+                 break;
              case TWOMASS :
-                       retval= "2mass-" + super.toString() + _band + _size;
-                       break;
+                 retval= "2mass-" + super.toString() + _band + _size;
+                 break;
              case MSX :
-                       retval= "msx-" + super.toString() + _band + _size;
-                       break;
+                 retval= "msx-" + super.toString() + _band + _size;
+                 break;
              case IRIS :
-                       retval= "iris-" + super.toString() + _band + _size;
-                       break;
+                 retval= "iris-" + super.toString() + _band + _size;
+                 break;
+             case ATLAS:
+                 retval = "atlas-"+ super.toString();
+                 break;
              default :
                  Assert.tst(false); break;
          }

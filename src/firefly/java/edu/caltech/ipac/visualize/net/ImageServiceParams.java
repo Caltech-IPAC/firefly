@@ -12,7 +12,7 @@ import java.util.Locale;
 
 
 public abstract class ImageServiceParams extends BaseNetParams {
-    public enum ImageSourceTypes { ISSA, TWOMASS, TWOMASS6, IRIS, MSX, WISE, DSS, SDSS }
+    public enum ImageSourceTypes { ISSA, TWOMASS, TWOMASS6, IRIS, MSX, WISE, DSS, SDSS, ATLAS }
 
     private WorldPt wp;
     private final ImageSourceTypes type;

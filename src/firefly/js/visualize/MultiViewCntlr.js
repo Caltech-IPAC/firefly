@@ -1,16 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {without,union,difference, get, includes, has} from 'lodash';
+import {without,union,difference, get, has} from 'lodash';
 import {race,call} from 'redux-saga/effects';
 import {take} from 'redux-saga/effects';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
-import ImagePlotCntlr, {dispatchRecenter, dispatchProcessScroll, dispatchWcsMatch,
+import ImagePlotCntlr, {dispatchRecenter,
                         visRoot, ExpandType, WcsMatchType} from './ImagePlotCntlr.js';
-import {findCurrentCenterPoint} from './reducer/PlotView.js';
-import {makeScreenPt} from './Point.js';
 import {primePlot, getPlotViewById} from './PlotViewUtil.js';
 import Enum from 'enum';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
@@ -599,7 +597,7 @@ function removeItems(state,action) {
         if (has(entry, 'lastActiveItemId')&&rmIdAry.includes(entry.lastActiveItemId)) {
             return {itemIdAry, lastActiveItemId: get(itemIdAry, '0', '')};
         } else {
-            return {itemIdAry}
+            return {itemIdAry};
         }
     };
 

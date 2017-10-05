@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
+import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.net.SloanDssImageParams;
 
@@ -22,10 +23,19 @@ public class ServiceDesc {
             case DSS: return getDssDesc(r);
             case SDSS: return getSloanDssDesc(r);
             case WISE: return getWiseDesc(r);
+            case ATLAS: return getAtlasDesc(r);
             default: return r.getServiceType()+"";
         }
     }
 
+
+    private static String getAtlasDesc(WebPlotRequest r) {
+
+        String schema= r.getParam(AtlasIbeDataSource.DATASET_KEY);
+        String instrument=r.getParam(AtlasIbeDataSource.TABLE_KEY)
+        String band= r.getSurveyBand();
+        return schema + " "+instrument+ " " + band;
+    }
 
 
     private static String getDssDesc(WebPlotRequest r) {

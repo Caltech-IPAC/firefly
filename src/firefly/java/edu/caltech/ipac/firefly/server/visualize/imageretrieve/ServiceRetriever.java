@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
+import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
@@ -12,10 +13,7 @@ import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.visualize.net.DssImageParams;
-import edu.caltech.ipac.visualize.net.IrsaImageParams;
-import edu.caltech.ipac.visualize.net.SloanDssImageParams;
-import edu.caltech.ipac.visualize.net.WiseImageParams;
+import edu.caltech.ipac.visualize.net.*;
 import edu.caltech.ipac.visualize.plot.Circle;
 
 import java.util.List;
@@ -38,6 +36,7 @@ public class ServiceRetriever implements FileRetriever {
             case DSS: return getDssPlot(r);
             case SDSS: return getSloanDSSPlot(r);
             case WISE: return getWisePlot(r);
+            case ATLAS: return getAtlasPlot(r);
             case DSS_OR_IRIS: return getDSSorIris(r);
             default: throw new FailedRequestException("Unsupported Service");
         }
@@ -118,6 +117,21 @@ public class ServiceRetriever implements FileRetriever {
         params.setSize((float) surveyArea.getRadius()); // this is really size not radius, i am just using Circle to hold the params
         FileInfo fi = LockingVisNetwork.retrieve(params);
         fi.setDesc(desc);
+        return fi;
+    }
+
+    private FileInfo getAtlasPlot(WebPlotRequest r) throws FailedRequestException {
+        Circle circle = PlotServUtils.getRequestArea(r);
+        AtlasImageParams params = new AtlasImageParams();
+        params.setWorldPt(circle.getCenter());
+        params.setBand(r.getSurveyBand());
+        params.setSchema(r.getParam(AtlasIbeDataSource.DATASET_KEY));
+        params.setTable(r.getParam(AtlasIbeDataSource.TABLE_KEY));
+        params.setInstrument(r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY));
+        params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
+        params.setSize((float)circle.getRadius());
+        FileInfo fi = LockingVisNetwork.retrieve(params);
+        fi.setDesc(ServiceDesc.get(r));
         return fi;
     }
 
