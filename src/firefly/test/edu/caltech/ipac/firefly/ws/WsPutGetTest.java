@@ -37,7 +37,7 @@ public class WsPutGetTest extends ConfigTest {
 
     @Before
     public void putInit() throws WsException {
-        cred = new WsCredentials(WS_USER_ID);
+        cred = getWsCredentials();
         testFileName = "gaia-binary.vot";
         testFile = resolveFile(WsPutGetTest.class, testFileName);
         sizeTest = testFile.length();

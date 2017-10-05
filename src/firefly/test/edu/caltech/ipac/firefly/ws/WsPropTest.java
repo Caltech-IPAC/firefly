@@ -20,7 +20,6 @@ public class WsPropTest extends ConfigTest {
 
     private String urlHost;
     private String prot;
-    private String userKey;
     private WorkspaceHandler ws;
 
     @Before
@@ -28,7 +27,6 @@ public class WsPropTest extends ConfigTest {
 
         urlHost = AppProperties.getProperty("workspace.host.url");
         prot = AppProperties.getProperty("workspace.protocol.irsa");
-        userKey = WS_USER_ID;
         ws = WorkspaceFactory.getWorkspaceHandler();
     }
     @Ignore
@@ -36,7 +34,7 @@ public class WsPropTest extends ConfigTest {
     public void testProps() {
         try {
             WorkspaceManager.PROPS prop = WorkspaceManager.PROPS.ROOT_URL;
-            WorkspaceManager m = ws.withCredentials(new WsCredentials(userKey));
+            WorkspaceManager m = ws.withCredentials(getWsCredentials());
             Assert.assertTrue(m.getProp(prop).equals(urlHost));
             Assert.assertTrue(m.getProp(WorkspaceManager.PROPS.PROTOCOL).equalsIgnoreCase(prot));
 
@@ -53,18 +51,18 @@ public class WsPropTest extends ConfigTest {
         try {
 
             // get 2 times the workspace manager, the object should be the same if the user key is the same
-            WorkspaceManager ws1 = ws.withCredentials(new WsCredentials(userKey));
+            WorkspaceManager ws1 = ws.withCredentials(getWsCredentials());
 
-            WorkspaceManager ws2 = ws.withCredentials(new WsCredentials(userKey));
+            WorkspaceManager ws2 = ws.withCredentials(getWsCredentials());
 
             Assert.assertTrue(ws1.getCredentials().getWsId().equals(ws2.getCredentials().getWsId()));
             Assert.assertTrue(ws1.getClass().equals(ws2.getClass()));
 
             // get 2 times the workspace manager for same user but different protocol, the object should be different
-            WorkspaceManager ws3 = ws.withCredentials(new WsCredentials(userKey));
+            WorkspaceManager ws3 = ws.withCredentials(getWsCredentials());
 
             WorkspaceManager ws4 = WorkspaceFactory.getWorkspaceHandler(WorkspaceManager.PROTOCOL.LOCAL).
-                    withCredentials(new WsCredentials(userKey));
+                    withCredentials(getWsCredentials());
 
             Assert.assertFalse(ws3.getClass().equals(ws4.getClass()));
 
@@ -79,7 +77,7 @@ public class WsPropTest extends ConfigTest {
     @Test(expected = ResourceNotFoundException.class)
     public void testNotImplementedVospace() {
 
-        WorkspaceFactory.getWorkspaceHandler(WorkspaceManager.PROTOCOL.VOSPACE).withCredentials(new WsCredentials(userKey));
+        WorkspaceFactory.getWorkspaceHandler(WorkspaceManager.PROTOCOL.VOSPACE).withCredentials(getWsCredentials());
 
     }
 

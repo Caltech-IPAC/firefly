@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.BeforeClass;
@@ -77,6 +78,9 @@ public class ConfigTest {
         AppProperties.loadClassPropertiesFromFileToPdb(new File(TEST_PROP_FILE), props);
     }
 
+    public static WsCredentials getWsCredentials() {
+        return new WsCredentials(WS_USER_ID);
+    }
 
     public static void load(String propFile) throws IOException {
         // If there are no file properties, no need to add anything

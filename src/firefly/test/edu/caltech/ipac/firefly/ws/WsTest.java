@@ -40,7 +40,7 @@ public class WsTest extends ConfigTest {
 
     @Before
     public void setUp() {
-        man = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userKey));
+        man = WorkspaceFactory.getWorkspaceHandler().withCredentials(getWsCredentials());
         df = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss Z");
     }
     @Ignore

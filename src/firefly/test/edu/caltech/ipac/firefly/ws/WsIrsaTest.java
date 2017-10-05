@@ -33,7 +33,7 @@ public class WsIrsaTest extends ConfigTest {
     public void init() throws Exception {
 
         //TESTING PUBSPACE
-        WsCredentials cred = new WsCredentials(WS_USER_ID);
+        WsCredentials cred = getWsCredentials();
         f = pickFile(0);
 
         //For TESTING SSOspace, uncomment 2 lines below and add proper password

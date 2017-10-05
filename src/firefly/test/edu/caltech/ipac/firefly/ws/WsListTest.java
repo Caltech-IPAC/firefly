@@ -41,7 +41,7 @@ public class WsListTest extends ConfigTest {
         relFolder[0] = createFolder("/tmp1/");
         relFolder[1] = createFolder("/tmp2/");
         handler = WorkspaceFactory.getWorkspaceHandler();
-        m = handler.withCredentials(new WsCredentials(key));
+        m = handler.withCredentials(getWsCredentials());
 
         testFile[0] = pickFile(0);
         testFile[1] = pickFile(1);
