@@ -52,7 +52,7 @@ public class WsPutGetTest extends ConfigTest {
     public void delRelFolder() throws WsException {
         wsm.delete(WsUtil.ensureUriFolderPath(testRelPathFolder.substring(0,testRelPathFolder.indexOf("/"))));
     }
-
+    @Ignore
     @Test
     public void testPut() throws WsException {
 
@@ -124,6 +124,7 @@ public class WsPutGetTest extends ConfigTest {
             }
         }
     }
+    @Ignore
     @Test
     public void testGet() throws WsException {
 
@@ -152,7 +153,7 @@ public class WsPutGetTest extends ConfigTest {
         WsResponse wsResponse = wsm.getFile(relFolder, f);
         return f;
     }
-
+    @Ignore
     @Test
     public void specialCharsUriException() throws WsException {
 

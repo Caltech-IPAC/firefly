@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.server.ws.*;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -55,7 +56,7 @@ public class WsListTest extends ConfigTest {
         testFolders.add(s);
         return s;
     }
-
+    @Ignore
     @Test
     public void testGetListDepth() throws IOException {
 
