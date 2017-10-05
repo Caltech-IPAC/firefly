@@ -763,7 +763,10 @@ public class FileUtil
     public static String getHostname() {
         String retHost= "UNKNOWN_HOST";
         try {
-            String host= InetAddress.getLocalHost().getCanonicalHostName();
+            String host= InetAddress.getLocalHost().getHostName();
+            if (StringUtils.isEmpty(host)) {
+                host= InetAddress.getLocalHost().getCanonicalHostName();
+            }
             if (host!=null) {
                 int idx= host.indexOf(".");
                 if (idx>-1) {
