@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {uniqBy} from 'lodash';
+import {uniqBy, get} from 'lodash';
 
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
@@ -22,8 +22,7 @@ import WebPlotRequest, {WPConst} from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {imageMasterData} from '../data/ImageMasterData.js';
 import {getImageMasterData} from '../visualize/ui/AllImageSearchConfig.js';
-
-
+import {ImageSelect} from './ImageSelect.jsx';
 
 const FG_KEY= 'MULTI_IMAGE_SEARCH_PANEL';
 
@@ -95,16 +94,6 @@ export class NewImageSearchPanel extends PureComponent {
 
 //todo renderPanel should be updated to include new UI work
 function renderPanel(imageMasterData) {
-    const projects= uniqBy(imageMasterData, 'project').map( (d) => d.project);
-    const imageByProjObj= projects
-        .reduce((obj,p) => {
-                obj[p]= imageMasterData.filter( (d) => p===d.project);
-                return obj;
-            }, {}
-        );
-
-    const projectUIAry= projects.map( (k) => makeProject(k,imageByProjObj[k]));
-
 
     return (
         <div style={{padding: 10}}>
@@ -132,9 +121,9 @@ function renderPanel(imageMasterData) {
                                          }}
                                          label={'Choose Radius'}
                         />
-                        <div style={{padding:'10px 5px 0 5px', display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-                            {projectUIAry}
-                        </div>
+
+                        <ImageSelect key='ImageSelect' {...{groupKey:FG_KEY, imageMasterData, style:{width: 700, height: 300}}} />
+
                     </div>
                 </FieldGroup>
             </FormPanel>
@@ -173,85 +162,6 @@ function searchFailed(request) {
     showInfoPopup(!validInfo.valid ? validInfo.message :'One or more fields are not valid');
 }
 
-
-
-//-------------------------------------------------------------------------
-// ----------- Begin Concept layout - todo: loi will replace all of this
-//-------------------------------------------------------------------------
-
-const toEntryAry= (a) => a.map ( (d) => ({label: d.title, value: d.imageId}));
-
-function makeEntry(title, array, showTitle) {
-    const textCnt= array.reduce( (cnt,d) => d.title.length+cnt,0);
-    let imagesRows;
-    if (textCnt>70) {
-        const a1= toEntryAry(array.filter( (d,idx) => idx< array.length/2));
-        const a2= toEntryAry(array.filter( (d,idx) => idx>= Math.trunc(array.length/2)));
-        imagesRows= [a1,a2];
-    }
-    else {
-        imagesRows= [toEntryAry(array)];
-
-    }
-    return (
-            <div key={title} style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-                <div style={{display:'inline-block'}}>
-                    <div style={{textAlign: 'center', fontSize:'10pt'}}>
-                    {showTitle ? title : ''}
-                    </div>
-                    {
-                        imagesRows.map( (row,idx) => {
-                            const fieldKey= 'IMAGES_'+idx+'_'+title;
-                            return (
-                                <CheckboxGroupInputField
-                                    key={fieldKey}
-                                    fieldKey={fieldKey}
-                                    initialState={{
-                                        value: '',   // workaround for _all_ for now
-                                        tooltip: 'Please select some boxes',
-                                        label : '' }}
-                                    options={row}
-                                    alignment='horizontal'
-                                    labelWidth={35}
-                                />
-                            );
-                        } )
-                    }
-                </div>
-            </div>
-    );
-}
-
-function makeProject(title, array) {
-    let content;
-    if (array.find( (e) => e.subProject)) {
-        const subProjects= uniqBy(array, 'subProject').map( (d) => d.subProject);
-        const imageBySubProjObj= subProjects
-            .reduce((obj,p) => {
-                    obj[p]= array.filter( (d) => p===d.subProject);
-                    return obj;
-                }, {}
-            );
-        content= subProjects.map( (k) => makeEntry(k,imageBySubProjObj[k],true));
-    }
-    else {
-        content= makeEntry(title,array,false);
-    }
-    return (
-        <div key= {title} style={{paddingBottom: 5}}>
-            <div style={{textAlign: 'center', fontSize:'12pt'}}>{title}
-            </div>
-            <div>
-                {content}
-            </div>
-        </div>
-    );
-
-}
-
-//-------------------------------------------------------------------------
-// ----------- End Concept layout
-//-------------------------------------------------------------------------
 
 
 
