@@ -5,19 +5,10 @@
 package edu.caltech.ipac.firefly.server.events;
 
 import edu.caltech.ipac.firefly.data.ServerEvent;
-import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.server.AlertsMonitor;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
@@ -25,6 +16,11 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @ServerEndpoint(value = "/sticky/firefly/events")
 public class WebsocketConnector implements ServerEventQueue.EventConnector {
@@ -116,7 +112,8 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
      * @param channelID
      */
     private void updateClientConnections(String type, String channelID, String userKey) {
-        List<ServerEventQueue> conns = ServerEventManager.getEvQueueList();
+//        List<ServerEventQueue> conns = ServerEventManager.getEvQueueList();
+        List<ServerEventQueue> conns = ServerEventManager.getAllServerEvQueueList();
         for (ServerEventQueue seq : conns) {
             // need to notify clients that are affected by update
             if (seq.getChannel().equals(channelID) || seq.getUserKey().equals(userKey)) {

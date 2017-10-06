@@ -7,10 +7,7 @@ import edu.caltech.ipac.firefly.server.ws.*;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.entity.ContentType;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +43,7 @@ public class WsTest extends ConfigTest {
         man = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userKey));
         df = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss Z");
     }
-
+    @Ignore
     @Test
     public void testHandler() throws WsException, ParseException {
 
@@ -98,7 +95,7 @@ public class WsTest extends ConfigTest {
 //        assertTrue(modDate.equals(modDateRenamedSame));
         assertTrue(man.getMeta(WsUtil.ensureUriFolderPath(relFolder) + renamedSame, WspaceMeta.Includes.ALL_PROPS).getLastModified().equals(man.getMeta(WsUtil.ensureUriFolderPath(relFolder) + renamed, WspaceMeta.Includes.ALL_PROPS).getLastModified()));
     }
-
+    @Ignore
     @Test
     public void testGet() throws WsException {
 
@@ -140,7 +137,7 @@ public class WsTest extends ConfigTest {
 
     }
 
-
+    @Ignore
     @Test
     public void delete() throws WsException {
 

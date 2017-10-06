@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.ws.WsException;
 import edu.caltech.ipac.util.AppProperties;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -30,7 +31,7 @@ public class WsPropTest extends ConfigTest {
         userKey = WS_USER_ID;
         ws = WorkspaceFactory.getWorkspaceHandler();
     }
-
+    @Ignore
     @Test
     public void testProps() {
         try {
@@ -46,7 +47,7 @@ public class WsPropTest extends ConfigTest {
 
 
     }
-
+    @Ignore
     @Test
     public void testPoolWsManager() {
         try {
@@ -74,7 +75,7 @@ public class WsPropTest extends ConfigTest {
 
 
     }
-
+    @Ignore
     @Test(expected = ResourceNotFoundException.class)
     public void testNotImplementedVospace() {
 

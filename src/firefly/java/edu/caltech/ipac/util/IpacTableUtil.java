@@ -182,6 +182,7 @@ public class IpacTableUtil {
 
     public static void guessFormatInfo(DataType dataType, String value, int precision) {
 
+        if (StringUtils.isEmpty(value)) return; //LZ added IRSA-816
         String formatStr = guessFormatStr(dataType, value.trim(), precision);
         if (formatStr != null) {
             DataType.FormatInfo.Align align = value.startsWith(" ") ? DataType.FormatInfo.Align.RIGHT

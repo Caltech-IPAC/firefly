@@ -30,6 +30,7 @@ public class ServerEventManager {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static long totalEventCnt;
     private static long deliveredEventCnt;
+    private static ReplicatedQueueList repQueueList= new ReplicatedQueueList();
 
 
     /**
@@ -96,14 +97,18 @@ public class ServerEventManager {
         }
     }
 
-    public static ServerEventQueue addEventQueue(ServerEventQueue queue) {
+    public static void addEventQueue(ServerEventQueue queue) {
         Logger.briefInfo("create new Queue for: "+ queue.getQueueID() );
         evQueueList.add(queue);
-        return queue;
+        repQueueList.setQueueListForNode(evQueueList);
     }
 
     static List<ServerEventQueue> getEvQueueList() {
         return evQueueList;
+    }
+
+    static List<ServerEventQueue> getAllServerEvQueueList() {
+        return repQueueList.getCombinedNodeList();
     }
 
     static void processEvent(ServerEvent ev) {
@@ -133,6 +138,7 @@ public class ServerEventManager {
 
     public static void removeEventQueue(ServerEventQueue queue) {
         evQueueList.remove(queue);
+        repQueueList.setQueueListForNode(evQueueList);
     }
 
 //====================================================================

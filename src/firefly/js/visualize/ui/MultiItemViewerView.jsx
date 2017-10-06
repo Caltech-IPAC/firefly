@@ -6,7 +6,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
-
+import {get} from  'lodash';
 const flexContainerStyle= {
     display:'flex',
     flexDirection:'column',
@@ -283,7 +283,7 @@ function computeTitleYOffset(sparseGridTitleLocation, itemPosTitle,rowIdx) {
     return titleOffset;
 }
 function computeDataYOffset(sparseGridTitleLocation, itemPosTitle,rowIdx) {
-    let titleOffset= sparseGridTitleLocation==='left' && itemPosTitle[0].hasData ? 0 : 30;
+    let titleOffset= sparseGridTitleLocation==='left' && get(itemPosTitle, '0.hasData') ? 0 : 30;
     for(let i= 0; (i<rowIdx); i++) {
         if (sparseGridTitleLocation==='top') {
             titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize+titleHeight : titleHeight;

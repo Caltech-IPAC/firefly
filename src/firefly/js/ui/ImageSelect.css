@@ -1,0 +1,105 @@
+.ImageSelect {
+    display: inline-flex;
+}
+
+.ImageSelect > * {
+    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04);
+    transition: box-shadow .3s ease-in-out;
+    background-color: #fff;
+    border-radius: 2px;
+    margin: 2px;
+    outline: none;
+}
+
+.FilterPanel {
+    flex-grow: 0;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+}
+
+.FilterPanel__toolbar {
+    flex-grow: 0;
+    background-color: #f5f5f5;
+    border-bottom: solid 1px #f1f1f1;
+    height: 15px;
+    min-height: 15px;
+    color: #005da4;
+    font-size: larger;
+    font-weight: bold;
+    padding: 3px
+}
+
+.FilterPanel__view {
+    padding: 5px;
+    flex-grow: 1;
+    overflow: auto;
+    overflow: auto;
+    margin-right: -2px;
+}
+
+.FilterPanel__item--std {
+}
+
+.FilterPanel__item--exp {
+    box-shadow: 1px 3px 3px 3px rgba(0,0,0,0.16), 0 0 0 3px rgba(0,0,0,0.04);
+    transition: box-shadow .3s ease-in-out;
+    background-color: #fff;
+    border-radius: 2px;
+    outline: none;
+    position: absolute;
+}
+
+
+.DataProductList__view--item {
+    display: inline-flex;
+    margin-bottom: 3px;
+}
+
+.DataProductList {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.DataProductList__toolbar {
+    flex-grow: 0;
+    background-color: #f5f5f5;
+    border-bottom: solid 1px #f1f1f1;
+    height: 15px;
+    min-height: 15px;
+    padding: 3px
+}
+
+.DataProductList__view {
+    flex-grow: 1;
+    overflow: auto;
+    margin-right: -2px;}
+
+.DataProductList__item {
+}
+
+.DataProductList__item--header {
+    margin-left: 5px;
+    font-size: large;
+    font-weight: bold;
+    color: #005da4;
+}
+
+.DataProductList__item--details {
+    margin-left: 5px;
+    display: flex;
+    flex-direction: column;
+    border-bottom: solid 1px lightgrey;
+}
+
+.DataProductList__item--band {
+    display: inline-flex;
+    margin-bottom: 3px;
+}
+
+.DataProductList__item--bandLabel {
+    white-space: nowrap;
+    text-align: right;
+    margin: 2px 2px 0 0;
+}

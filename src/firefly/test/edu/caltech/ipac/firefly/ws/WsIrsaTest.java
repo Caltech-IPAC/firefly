@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.AppProperties;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -47,6 +48,7 @@ public class WsIrsaTest extends ConfigTest {
 
     }
 
+    @Ignore
     @Test
     public void testSSOAuth() throws ClassNotFoundException, IOException {
 

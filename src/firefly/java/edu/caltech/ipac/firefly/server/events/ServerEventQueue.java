@@ -2,16 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.events;
-/**
- * User: roby
- * Date: 2/25/14
- * Time: 4:04 PM
- */
 
 
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
@@ -19,16 +15,14 @@ import org.json.simple.JSONValue;
 
 import java.io.Serializable;
 
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
-
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.BG_STATUS_ACTION;
 
 /**
  * @author Trey Roby
  */
-public class ServerEventQueue {
-    private static final Logger.LoggerImpl LOG = Logger.getLogger();
-    private final EventConnector eventTerminal;
+public class ServerEventQueue implements Serializable {
+    private static final transient Logger.LoggerImpl LOG = Logger.getLogger();
+    private final transient EventConnector eventTerminal;
     private String connID;
     private String channel;
     private String userKey;
@@ -143,10 +137,20 @@ public class ServerEventQueue {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return connID+"--"+channel+"--"+userKey;
+    }
 
-//====================================================================
-//
-//====================================================================
+    @Override
+    public int hashCode()  {
+        return toString().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this.toString().equals(o!=null ? o.toString() : "");
+    }
 
     public static interface EventConnector {
         public void send(String message) throws Exception;
