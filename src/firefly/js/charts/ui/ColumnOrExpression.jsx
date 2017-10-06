@@ -91,6 +91,11 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
     // http://www.charbase.com/1f50d-unicode-left-pointing-magnifying-glass
     // http://www.charbase.com/1f50e-unicode-right-pointing-magnifying-glass
     //const cols = '\ud83d\udd0e';
+    //<div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
+    //     title={`Select ${name} column`}
+    //     onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${name}`,'OK',val)}>
+    //    <ToolbarButton style={{width:'24px', height:'24px'}} icon={MAGNIFYING_GLASS}/>
+    //</div>
     return (
         <div style={{whiteSpace: 'nowrap'}}>
             <SuggestBoxInputField
@@ -111,10 +116,10 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
                 label={label ? label : ''}
                 labelWidth={labelWidth}
             />
-            <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
+            <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 2, verticalAlign: 'top'}}
                  title={`Select ${name} column`}
                  onClick={() => showColSelectPopup(colValStats, onColSelected,`Choose ${name}`,'OK',val)}>
-                <ToolbarButton styyle={{width:'24px', height:'24px'}} icon={MAGNIFYING_GLASS}/>
+                <ToolbarButton icon={MAGNIFYING_GLASS}/>
             </div>
         </div>
     );

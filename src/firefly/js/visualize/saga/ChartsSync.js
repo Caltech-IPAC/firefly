@@ -10,7 +10,7 @@ import * as TableUtil from '../../tables/TableUtil.js';
 import * as ChartsCntlr from '../../charts/ChartsCntlr.js';
 
 import {getDefaultXYPlotOptions, DT_XYCOLS} from '../../charts/dataTypes/XYColsCDT.js';
-import {SCATTER} from '../../charts/ChartUtil.js';
+import {SCATTER, multitraceDesign} from '../../charts/ChartUtil.js';
 
 import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
@@ -20,6 +20,9 @@ import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemove
 export function* syncCharts() {
     while (true) {
         const action= yield take([ChartsCntlr.CHART_ADD, ChartsCntlr.CHART_MOUNTED, ChartsCntlr.CHART_REMOVE, TablesCntlr.TABLE_LOADED]);
+        if (multitraceDesign()) {
+            return;
+        }
         switch (action.type) {
             case ChartsCntlr.CHART_ADD:
             case ChartsCntlr.CHART_MOUNTED:
@@ -61,6 +64,9 @@ export function* syncCharts() {
 export function* syncChartViewer() {
     while (true) {
         const action = yield take([ChartsCntlr.CHART_ADD, TablesCntlr.TBL_RESULTS_ACTIVE]);
+        if (multitraceDesign()) {
+            return;
+        }
         switch (action.type) {
             case ChartsCntlr.CHART_ADD:
             case TablesCntlr.TBL_RESULTS_ACTIVE:
@@ -77,6 +83,9 @@ export function* syncChartViewer() {
 export function* addDefaultScatter() {
     while (true) {
         const action = yield take([TablesCntlr.TABLE_LOADED]);
+        if (multitraceDesign()) {
+            return;
+        }
         const {tbl_id} = action.payload;
         // check if a default chart needs to be added
         if (ChartsCntlr.getNumCharts(tbl_id) === 0) {

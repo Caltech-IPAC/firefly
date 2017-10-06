@@ -4,7 +4,7 @@
 import {get, isArray} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import {getTblById, cloneRequest, doFetchTable, makeTblRequest, MAX_ROW} from '../../tables/TableUtil.js';
-import {dispatchChartUpdate, getChartData} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
 
 import {toMaxFixed} from '../../util/MathUtil.js';
 import Color from '../../util/Color.js';
@@ -100,12 +100,14 @@ function fetchData(chartId, traceNum, tablesource) {
                 // this is to make sure plotly histogram displays fine with firefly histogram
                 changes['layout.barmode'] = 'overlay';
             }
+            changes[`fireflyData.${traceNum}.isLoading`] = false;
 
             dispatchChartUpdate({chartId, changes});
         }
     ).catch(
         (reason) => {
-            console.error(`Failed to fetch histogram data for ${chartId} trace ${traceNum}: ${reason}`);
+            //console.error(`Failed to fetch histogram data for ${chartId} trace ${traceNum}: ${reason}`);
+            dispatchError(chartId, traceNum, reason);
         }
     );
 }

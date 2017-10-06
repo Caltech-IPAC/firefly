@@ -12,18 +12,18 @@ export class FireflyHistogramOptions extends SimpleComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {activeTrace:cActiveTrace} = getChartData(chartId);
+        const {activeTrace:cActiveTrace=0} = getChartData(chartId);
         // activeTrace is passed via property, when used from NewTracePanel
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         return {activeTrace};
     }
 
     render() {
-        const {chartId} = this.props;
+        const {chartId, tbl_id:tblIdProp} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-ffhist-${activeTrace}`;
-        const tablesource = get(tablesources, [cActiveTrace]);
+        const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
         const tbl_id = get(tablesource, 'tbl_id');
         const colValStats = getColValStats(tbl_id);
 
@@ -46,21 +46,17 @@ export function submitChangesFFHistogram({chartId, activeTrace, fields, tbl_id})
 }
 
 function histogramOptionsToChanges(chartId, activeTrace, fields, tbl_id) {
-    const {layout={}} = getChartData(chartId);
     const changes = {};
     changes[`fireflyData.${activeTrace}.dataType`] = 'fireflyHistogram';
     changes[`fireflyData.${activeTrace}.tbl_id`] = tbl_id;
-    const options = {};
     Object.entries(fields).forEach( ([k,v]) => {
-        if (k.startsWith('data') || k.startsWith('layout') || k.startsWith('_')) {
+        if (['data', 'layout', 'fireflyLayout', 'activeTrace', '_'].find((s) => k.startsWith(s))) {
             changes[k] = v;
         } else {
-            options[`${k}`] = v;
+            changes[`fireflyData.${activeTrace}.options.${k}`] = v;
         }
     });
-    changes[`fireflyData.${activeTrace}.options`] = options;
 
-    changes['activeTrace'] = activeTrace;
     return changes;
 }
 

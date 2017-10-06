@@ -3,7 +3,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import Resizable from 'react-component-resizable';
 import {flux} from '../../Firefly.js';
-import {debounce, defer} from 'lodash';
+import {debounce, defer, get, isEmpty, isUndefined} from 'lodash';
 import {reduxFlux} from '../../core/ReduxFlux.js';
 import {isPlotly} from '../ChartUtil.js';
 
@@ -81,9 +81,11 @@ class ChartPanelView extends PureComponent {
     }
 
     render() {
-        const {chartId, deletable, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
+        const {chartId, deletable:deletableProp, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
         const chartData =  ChartsCntlr.getChartData(chartId);
-        if (!chartData) {
+        const deletable = isUndefined(deletableProp) ? get(chartData, 'deletable') : deletableProp;
+
+        if (isEmpty(chartData)) {
             return (
                 <div/>
             );
@@ -123,7 +125,7 @@ class ChartPanelView extends PureComponent {
                                 <img style={{display: 'inline-block', position: 'absolute', top: 29, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                      title='Delete this chart'
                                      src={DELETE}
-                                     onClick={() => {ChartsCntlr.dispatchChartRemove(chartId);}}
+                                     onClick={(ev) => {ChartsCntlr.dispatchChartRemove(chartId); stopPropagation(ev);}}
                                 />}
                             </div>
                         </div>
@@ -147,7 +149,7 @@ class ChartPanelView extends PureComponent {
                             <img style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                  title='Delete this chart'
                                  src={DELETE}
-                                 onClick={() => {ChartsCntlr.dispatchChartRemove(chartId);}}
+                                 onClick={(ev) => {ChartsCntlr.dispatchChartRemove(chartId); stopPropagation(ev);}}
                             />}
                         </div>
                     </div>
@@ -247,10 +249,10 @@ export class ChartPanel extends PureComponent {
     getNextState() {
         const {chartId} = this.props;
         const chartData =  ChartsCntlr.getChartData(chartId);
-        if (chartData) {
+        if (!isEmpty(chartData)) {
             const {chartType, activeTrace, showOptions, optionsKey} = chartData;
             //if (chartType === 'plot.ly') return {};
-            const {Chart,Options,Toolbar,getChartProperties,updateOnStoreChange} = reduxFlux.getChartType(chartType);
+            const {Chart,Options,Toolbar,getChartProperties=()=>{},updateOnStoreChange} = reduxFlux.getChartType(chartType) || {};
             return {
                 chartId, activeTrace, showOptions, optionsKey, ...getChartProperties(chartId),
                 Chart,
@@ -269,7 +271,7 @@ export class ChartPanel extends PureComponent {
             if (!updateOnStoreChange || updateOnStoreChange(this.state)) {
                     this.setState(this.getNextState());
             }  else {
-                const {showOptions, optionsKey} = ChartsCntlr.getChartData(this.props.chartId) || {};
+                const {showOptions, optionsKey} = ChartsCntlr.getChartData(this.props.chartId);
                 if (showOptions !== this.state.showOptions || optionsKey !== this.state.optionsKey) {
                     this.setState({showOptions, optionsKey});
                 }

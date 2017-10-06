@@ -10,7 +10,8 @@ import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import {uniqueChartId} from '../charts/ChartUtil.js';
+import {NewTracePanel} from '../charts/ui/options/NewTracePanel.jsx';
+import {uniqueChartId, multitraceDesign} from '../charts/ChartUtil.js';
 import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
                        setOptions as XYPlotSetOptions} from '../charts/ui/XYPlotOptions.jsx';
@@ -177,8 +178,6 @@ OptionsWrapper.propTypes = {
 };
 
 
-
-
 export class ChartSelectDropdown extends PureComponent {
 
     constructor(props) {
@@ -225,17 +224,21 @@ export class ChartSelectDropdown extends PureComponent {
     render() {
         const {tblId, tblStatsData} = this.state;
 
-        return tblId ? (
-            <ChartSelect {...{tblId, tblStatsData}} {...this.props}/>
-        ) : (
-            <div>
-                <div style={{padding:20, fontSize:'150%'}}>Charts are not available: no active table.</div>
-                <CompleteButton style={{paddingLeft: 20, paddingBottom: 20}}
-                    onSuccess={hideSearchPanel}
-                    text = {'OK'}
-                />
-            </div>
-        );
+        if (tblId) {
+            return multitraceDesign() ?
+                (<NewTracePanel {...{tbl_id: tblId, hideDialog: ()=>dispatchHideDropDown()}}/> ) :
+                (<ChartSelect {...{tblId, tblStatsData}} {...this.props}/>);
+        } else {
+            return (
+                <div>
+                    <div style={{padding:20, fontSize:'150%'}}>Charts are not available: no active table.</div>
+                    <CompleteButton style={{paddingLeft: 20, paddingBottom: 20}}
+                                    onSuccess={hideSearchPanel}
+                                    text = {'OK'}
+                    />
+                </div>
+            );
+        }
     }
 }
 

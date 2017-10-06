@@ -48,7 +48,7 @@ Options.propTypes = {
 
 
 function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
-    const {activeTrace} = getChartData(chartId) || {};
+    const {activeTrace} = getChartData(chartId);
     const ToolbarUI = getToolbarUI(chartId, activeTrace);
     return (
         <div className={`PanelToolbar ChartPanel__toolbar ${expandedMode?'ChartPanel__toolbar--offsetLeft':''}`}>

@@ -33,12 +33,15 @@
 <br/><br/>
 <div id="plotlyDiv" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
 <br/><br/>
+<h3>Default chart for 'allwise' table group below</h3>
+<div id="defaultChart" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
+<br/><br/>
 <div id="table-1" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
 
 <script type="text/javascript">
     if (!window.firefly) window.firefly= {};
-    window.firefly.options= {charts: {chartEngine: 'plotly'}};
+    window.firefly.options= {charts: {chartEngine: 'plotly', chartEngine: 'plotly'}};
 </script>
 
 <script type="text/javascript">
@@ -157,17 +160,28 @@
             firefly.showChart('plotlyDiv', {data: data});
 
 
-            var tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+            var tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise-500', 'WISE', 'allwise_p3as_psd',
                     {   position: '10.68479;41.26906;EQ_J2000',
                         SearchMethod: 'Cone',
                         radius: 300
                     },
-//                    {   position: '202.48;47.23;EQ_J2000',
-//                        SearchMethod: 'Cone',
-//                        radius: 30,
-//                    },
-                    {tbl_id: 'test-tbl'});
-            firefly.showTable('table-1', tblReq);
+                    {   tbl_id: 'test-tbl',
+                         META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w1mpro', y: 'tables::w2mpro', mode: 'markers'}]})}
+                    });
+            var tblReqSm =  firefly.util.table.makeIrsaCatalogRequest('allwise-10', 'WISE', 'allwise_p3as_psd',
+                    {   position: '202.48;47.23;EQ_J2000',
+                        SearchMethod: 'Cone',
+                        radius: 30
+                    },
+                    {   tbl_id: 'test-tbl-sm',
+                        META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w3mpro', y: 'tables::w4mpro', mode: 'markers'}]})}
+                    });
+
+
+            firefly.showTable('table-1', tblReq, {tbl_group: 'allwise'});
+            firefly.showTable('table-1', tblReqSm, {tbl_group: 'allwise'});
+
+            firefly.showChart('defaultChart', {tbl_group: 'allwise'});
 
             trace1 = {
                 tbl_id: 'test-tbl',

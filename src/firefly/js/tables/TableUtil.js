@@ -452,7 +452,7 @@ export function getColumnIdx(tableModel, colName) {
  * @param {TableModel} tableModel
  * @param {string} colName
  * @returns {string}
- * @public getColumnType
+ * @public
  */
 export function getColumnType(tableModel, colName) {
     const cols = get(tableModel, 'tableData.columns', []);

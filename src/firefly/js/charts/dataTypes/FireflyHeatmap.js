@@ -3,7 +3,7 @@
  */
 import {get} from 'lodash';
 import {getTblById, getColumn, cloneRequest, doFetchTable, MAX_ROW} from '../../tables/TableUtil.js';
-import {dispatchChartUpdate, getChartData} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
 
@@ -59,13 +59,15 @@ function fetchData(chartId, traceNum, tablesource) {
         if (tableModel.tableData && tableModel.tableData.data) {
 
             const changes = getChanges({tableModel, mappings, chartId, traceNum});
+            changes[`fireflyData.${traceNum}.isLoading`] = false;
             dispatchChartUpdate({chartId, changes});
 
             // TODO: what should happen on table highlight or cell click?
         }
     }).catch(
         (reason) => {
-            console.error(`Failed to fetch heatmap data for ${chartId} trace ${traceNum}: ${reason}`);
+            //console.error(`Failed to fetch heatmap data for ${chartId} trace ${traceNum}: ${reason}`);
+            dispatchError(chartId, traceNum, reason);
         }
     );
 }

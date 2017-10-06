@@ -406,15 +406,26 @@ function doShowChart(llApi, targetDiv, params={}) {
     const {dispatchChartAdd}= llApi.action;
     const {uniqueChartId} = llApi.util.chart;
     const {renderDOM} = llApi.util;
-    const {MultiChartViewer}= llApi.ui;
+    const {ChartsContainer}= llApi.ui;
 
-    params = Object.assign({chartId: uniqueChartId(`${targetDiv}`), viewerId: targetDiv, chartType: 'plot.ly'}, params);
-    dispatchChartAdd(params);
+    const tbl_group = params.tbl_group;
+    // when tbl_group parameter is set, show a default chart
+    // for an active table in this table group
+    if (!tbl_group) {
+        params = Object.assign({
+            chartId: uniqueChartId(`${targetDiv}`),
+            viewerId: targetDiv,
+            chartType: 'plot.ly'
+        }, params);
+        dispatchChartAdd(params);
+    }
 
-    renderDOM(targetDiv, MultiChartViewer,
+    renderDOM(targetDiv, ChartsContainer,
         {
             key: `${targetDiv}-plot`,
             viewerId: targetDiv,
+            tbl_group,
+            addDefaultChart: Boolean(tbl_group),
             closeable: false,
             expandedMode: false
         }

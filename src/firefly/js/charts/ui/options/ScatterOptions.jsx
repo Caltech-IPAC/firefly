@@ -20,26 +20,29 @@ export class ScatterOptions extends SimpleComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {activeTrace:cActiveTrace} = getChartData(chartId);
+        const {activeTrace:cActiveTrace=0} = getChartData(chartId);
         // activeTrace is passed via property, when used from NewTracePanel
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         return {activeTrace};
     }
 
     render() {
-        const {chartId} = this.props;
+        const {chartId, groupKey:groupKeyProp, activeTrace:activeTraceProp, tbl_id:tblIdProp} = this.props;
         //const {activeTrace=0} = this.state;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
-        const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
-        const groupKey = this.props.groupKey || `${chartId}-scatter-${activeTrace}`;
-        const tablesource = get(tablesources, [cActiveTrace]);
+        const activeTrace = isUndefined(activeTraceProp) ? cActiveTrace : activeTraceProp;
+        const groupKey = groupKeyProp || `${chartId}-scatter-${activeTrace}`;
+        const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
         const tbl_id = get(tablesource, 'tbl_id');
 
         return (
             <div style={{padding:'0 5px 7px'}}>
                 {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesScatter}}/>}
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                    <ListBoxInputField fieldKey={`data.${activeTrace}.mode`} options={[{value:'markers'}, {value:'lines'}, {value:'lines+markers'}]}/>
+                    <ListBoxInputField fieldKey={`data.${activeTrace}.mode`}
+                                       options={[{label: 'points', value:'markers'},
+                                                 {label: 'connected points', value:'lines+markers'},
+                                                 {label: 'lines', value:'lines'}]}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
                                        options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
@@ -222,7 +225,7 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
 
-    const changes = {[`data.${activeTrace}.type`] : 'scatter'};
+    const changes = {[`data.${activeTrace}.type`] : getTraceType(chartId, activeTrace)};
 
     // check if size field is a constant
     const sizeMap = fields[`_tables.data.${activeTrace}.marker.size`];
@@ -239,4 +242,25 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
 
     Object.assign(changes, fields);
     submitChanges({chartId, fields: changes, tbl_id});
+}
+
+/**
+ * Returns gl or non-gl scatter type based on already used trace type
+ * (GL and non-GL traces do not work well together)
+ * @param chartId
+ * @param activeTrace
+ */
+function getTraceType(chartId, activeTrace) {
+    const chartData = getChartData(chartId);
+    let type = get(chartData, `data.${activeTrace}.type`);
+    if (isUndefined(type)) {
+        if (activeTrace > 0) {
+            // check previous trace type
+            const isGL = get(chartData, `data.${activeTrace-1}.type`, 'scatter').endsWith('gl');
+            type = isGL ? 'scattergl' : 'scatter';
+        } else {
+            type = 'scatter';
+        }
+    }
+    return type;
 }
