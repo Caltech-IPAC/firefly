@@ -14,13 +14,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -33,14 +27,26 @@ import java.util.List;
  *
  * @author loi
  * @version $Id: DsvToDataGroup.java,v 1.2 2012/10/23 18:37:22 loi Exp $
+ *
+ * 09/28/17
+ * LZ added another method in order to read file through an InputStream
+ *
  */
 public class DsvToDataGroup {
-    private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
+    public static DataGroup parse(InputStream inf, CSVFormat format) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inf, "UTF-8"), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        return getData(reader, format);
+    }
     public static DataGroup parse(File inf, CSVFormat format) throws IOException {
 
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        return getData(reader, format);
 
+    }
+
+
+    private static DataGroup getData( BufferedReader reader, CSVFormat format)throws IOException{
         List<DataType> columns = new ArrayList<DataType>();
         CSVParser parser = new CSVParser(reader, format);
         List<CSVRecord> records = parser.getRecords();
@@ -50,6 +56,9 @@ public class DsvToDataGroup {
             CSVRecord cols = records.get(0);
             for(Iterator<String> itr = cols.iterator(); itr.hasNext(); ) {
                 String s = itr.next();
+                if ("\uFEFF".charAt(0) == s.toCharArray()[0]){
+                    s = new String(s.substring(1));//LZ fixed the issue with the BOM character
+                }
                 if (!StringUtils.isEmpty(s)) {
                     columns.add(new DataType(s, null)); // unknown type
                 }
@@ -69,7 +78,6 @@ public class DsvToDataGroup {
         }
         return null;
     }
-
     public static void write(File outf, DataGroup data) throws IOException {
         write(new FileWriter(outf), data, CSVFormat.DEFAULT);
     }
@@ -133,9 +141,8 @@ public class DsvToDataGroup {
         return null;
     }
 
-
     public static void main(String[] args) {
-        
+
         try {
             File inf = new File(args[0]);
             DataGroup dg = parse(inf, CSVFormat.DEFAULT);
@@ -147,4 +154,5 @@ public class DsvToDataGroup {
         }
 
     }
+
 }
