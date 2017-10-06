@@ -355,7 +355,7 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
 //                    fd.getSugestedExternalName(),
 //                    fd.getFile().length());
 
-            retval= LockingVisNetwork.retrieve(url);
+            retval= LockingVisNetwork.retrieveURL(url);
 
             // remove authenticator from http requests
             if (USE_HTTP_AUTHENTICATOR) {
@@ -423,7 +423,7 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
                     setAuthenticator();
                 }
 
-                retval= LockingVisNetwork.retrieve(url);
+                retval= LockingVisNetwork.retrieveURL(url);
                 _logger.info("retrieving URL:" + url.toString());
 
                 // remove authenticator from http requests

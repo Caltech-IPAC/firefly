@@ -60,7 +60,8 @@ public class ServiceRetriever implements FileRetriever {
         params.setBand(band);
         params.setSizeInDeg(sizeInDegrees);
         params.setWorldPt(circle.getCenter());
-        FileInfo fi = LockingVisNetwork.retrieve(params);
+        FileInfo fi = LockingVisNetwork.retrieve(params,
+                (p,f) -> SloanDssImageGetter.get((SloanDssImageParams) p,f));
         fi.setDesc(ServiceDesc.get(request));
         return fi;
     }
@@ -80,7 +81,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setWidth(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setHeight(arcMin);// this is really size not radius, i am just using Circle to hold the params
         params.setSurvey(surveyKey);
-        FileInfo fi= LockingVisNetwork.retrieve(params);
+        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> DssImageGetter.get((DssImageParams) p,f));
         fi.setDesc(desc);
         return fi;
     }
@@ -115,7 +116,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setWorldPt(surveyArea.getCenter());
         params.setBand(surveyKey);
         params.setSize((float) surveyArea.getRadius()); // this is really size not radius, i am just using Circle to hold the params
-        FileInfo fi = LockingVisNetwork.retrieve(params);
+        FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> IrsaImageGetter.get((IrsaImageParams) p,f));
         fi.setDesc(desc);
         return fi;
     }
@@ -130,7 +131,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setInstrument(r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY));
         params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
         params.setSize((float)circle.getRadius());
-        FileInfo fi = LockingVisNetwork.retrieve(params);
+        FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> AtlasImageGetter.get(p));
         fi.setDesc(ServiceDesc.get(r));
         return fi;
     }
@@ -142,7 +143,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setProductLevel(r.getSurveyKey());
         params.setBand(r.getSurveyBand());
         params.setSize((float)circle.getRadius());
-        FileInfo fi= LockingVisNetwork.retrieve(params);
+        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> IbeImageGetter.get(p));
         List<RelatedData> rdList= IbeQueryArtifact.getWiseRelatedData(circle.getCenter(), circle.getRadius()+"", r.getSurveyBand());
         fi.setDesc(ServiceDesc.get(r));
         fi.addRelatedDataList(rdList);

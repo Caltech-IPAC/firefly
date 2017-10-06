@@ -25,10 +25,8 @@ import java.net.URLConnection;
 public class DssImageGetter {
 
 
-    public static void lowlevelGetDssImage(DssImageParams params,
-                                           File           outFile) 
-                                           throws FailedRequestException,
-                                                  IOException {
+    public static File get(DssImageParams params, File outFile) throws FailedRequestException,
+                                                                       IOException {
 
       String cgiapp= null;
       String req   = null;
@@ -57,6 +55,7 @@ public class DssImageGetter {
 
 
          URLDownload.getDataToFile(conn, outFile);
+         return outFile;
 
       } catch (SocketTimeoutException timeOutE){
           if (outFile.exists() && outFile.canWrite()) {
@@ -93,7 +92,7 @@ public class DssImageGetter {
         params.setSurvey("poss2Red");
         params.setWorldPt(new WorldPt(10.672, 41.259));
         try {
-          lowlevelGetDssImage(params, new File("./a.fits.gz") );
+          get(params, new File("./a.fits.gz") );
         }
         catch (Exception e) {
           System.out.println(e);

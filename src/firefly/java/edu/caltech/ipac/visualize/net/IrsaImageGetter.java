@@ -25,7 +25,7 @@ import static edu.caltech.ipac.visualize.net.ImageServiceParams.ImageSourceTypes
 public class IrsaImageGetter {
 
 
-    public static void lowlevelGetIrsaImage(IrsaImageParams params, File outFile) throws FailedRequestException, IOException {
+    public static File get(IrsaImageParams params, File outFile) throws FailedRequestException, IOException {
         HostPort hp= NetworkManager.getInstance().getServer(NetworkManager.IRSA);
         String cgiapp= null;
 
@@ -53,6 +53,7 @@ public class IrsaImageGetter {
         String file = outFile.getPath();
 
         getURL(hp, cgiapp, parms, file, params.getType());
+        return outFile;
     }
 
     public static void getURL(HostPort         hp,

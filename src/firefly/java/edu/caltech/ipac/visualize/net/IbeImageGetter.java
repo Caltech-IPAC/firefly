@@ -32,9 +32,7 @@ import java.util.Map;
 public class IbeImageGetter {
 
 
-    public static File lowlevelGetIbeImage(ImageServiceParams params)
-                                           throws FailedRequestException,
-                                                  IOException {
+    public static File get(ImageServiceParams params) throws FailedRequestException, IOException {
         boolean isWise= false;
 
 

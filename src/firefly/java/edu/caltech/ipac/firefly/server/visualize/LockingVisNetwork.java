@@ -15,15 +15,7 @@ import edu.caltech.ipac.util.download.NetParams;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
-import edu.caltech.ipac.visualize.net.AtlasImageGetter;
-import edu.caltech.ipac.visualize.net.DssImageGetter;
-import edu.caltech.ipac.visualize.net.DssImageParams;
-import edu.caltech.ipac.visualize.net.IbeImageGetter;
 import edu.caltech.ipac.visualize.net.ImageServiceParams;
-import edu.caltech.ipac.visualize.net.IrsaImageGetter;
-import edu.caltech.ipac.visualize.net.IrsaImageParams;
-import edu.caltech.ipac.visualize.net.SloanDssImageGetter;
-import edu.caltech.ipac.visualize.net.SloanDssImageParams;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,15 +36,18 @@ public class LockingVisNetwork {
     private static final Map<BaseNetParams, Object> _activeRequest =
             Collections.synchronizedMap(new HashMap<BaseNetParams, Object>());
 
-
-    public static FileInfo retrieve(BaseNetParams params) throws FailedRequestException {
-        return lockingRetrieve(params, false);
+    public static FileInfo retrieveURL(AnyUrlParams params) throws FailedRequestException {
+        return lockingRetrieve(params, false, null);
     }
 
-    public static FileInfo retrieve(URL url) throws FailedRequestException {
+    public static FileInfo retrieve(ImageServiceParams params, ServiceCaller svcCaller) throws FailedRequestException {
+        return lockingRetrieve(params, false, svcCaller);
+    }
+
+    public static FileInfo retrieveURL(URL url) throws FailedRequestException {
         AnyUrlParams p= new AnyUrlParams(url);
         p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
-        return retrieve(p);
+        return retrieveURL(p);
     }
 
 
@@ -60,8 +55,9 @@ public class LockingVisNetwork {
 //----------------------- Private Methods ------------------------------
 //======================================================================
 
-    private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip) throws FailedRequestException {
+    private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip, ServiceCaller svcCaller) throws FailedRequestException {
         Objects.requireNonNull(params);
+        confirmParamsType(params);
         FileInfo retval;
         try {
             Object lockKey= _activeRequest.computeIfAbsent(params, k -> new Object());
@@ -71,7 +67,9 @@ public class LockingVisNetwork {
                                                      // todo: it could be generalized by passing a DownloadListener
                     dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
                 }
-                FileInfo fd= fullFillRequest(params, dl);
+                FileInfo fd= (params instanceof AnyUrlParams) ?
+                        retrieveURL((AnyUrlParams)params, dl) :
+                        retrieveService((ImageServiceParams) params, dl, svcCaller);
 
                 if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode(), fd.getResponseCodeMsg());
                 else       retval= fd;
@@ -85,6 +83,13 @@ public class LockingVisNetwork {
         return retval;
     }
 
+    private static void confirmParamsType(NetParams params) throws FailedRequestException {
+        if (!(params instanceof ImageServiceParams) && !(params instanceof AnyUrlParams) ) {
+            throw new FailedRequestException("Unrecognized Param Type");
+        }
+    }
+
+
     private static File unzip(File f) throws IOException, FailedRequestException {
         File retval = f;
         if (FileUtil.getExtension(f).equalsIgnoreCase(FileUtil.GZ)) {
@@ -95,58 +100,14 @@ public class LockingVisNetwork {
         return retval;
     }
 
-    private static FileInfo fullFillRequest(NetParams params, DownloadListener dl) throws IOException, FailedRequestException {
-        if (params instanceof AnyUrlParams) {
-            return retrieveURL((AnyUrlParams)params, dl);
+    private static FileInfo retrieveService(ImageServiceParams params, DownloadListener dl, ServiceCaller svcCaller) throws IOException, FailedRequestException {
+        File f= CacheHelper.getFile(params);
+        if (f == null)  {
+            f= svcCaller.retrieve(params,CacheHelper.makeFitsFile(params));
+            CacheHelper.putFile(params,f);
         }
-        else if (params instanceof ImageServiceParams) {
-            File f= CacheHelper.getFile(params);
-            if (f == null)  {
-                f= callService((ImageServiceParams)params);
-                CacheHelper.putFile(params,f);
-            }
-            return new FileInfo(f);
-        }
-        else {
-            throw new FailedRequestException("Unrecognized Param Type");
-        }
+        return new FileInfo(f);
     }
-
-
-    private static File callService(ImageServiceParams params) throws  IOException, FailedRequestException {
-        File f= CacheHelper.makeFitsFile(params);
-        ImageServiceParams.ImageSourceTypes type= params.getType();
-
-        switch (type ) {
-
-            case ISSA:
-            case IRIS:
-            case MSX:
-                IrsaImageGetter.lowlevelGetIrsaImage((IrsaImageParams) params, f);
-                break;
-            case TWOMASS:
-            case TWOMASS6:
-                f= IbeImageGetter.lowlevelGetIbeImage(params);
-                break;
-            case WISE:
-                f= IbeImageGetter.lowlevelGetIbeImage(params);
-                break;
-            case DSS:
-                DssImageGetter.lowlevelGetDssImage((DssImageParams)params, f);
-                break;
-            case SDSS:
-                SloanDssImageGetter.lowlevelGetSloanDssImage((SloanDssImageParams)params, f);
-                break;
-            case ATLAS:
-                f= AtlasImageGetter.lowlevelGetIbe2Image(params);
-                break;
-        }
-        return f;
-
-    }
-
-
-
 
     //======================================
     //======================================
@@ -175,6 +136,9 @@ public class LockingVisNetwork {
         }
     }
 
+    public interface ServiceCaller {
+        File retrieve(ImageServiceParams p, File suggestedFile) throws  IOException, FailedRequestException;
+    }
 
 
     private static class DownloadProgress implements DownloadListener {

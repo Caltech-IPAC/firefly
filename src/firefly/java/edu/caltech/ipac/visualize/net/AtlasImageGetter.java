@@ -31,9 +31,7 @@ import java.util.Map;
 public class AtlasImageGetter {
 
 
-    public static File lowlevelGetIbe2Image(ImageServiceParams params)
-            throws FailedRequestException,
-            IOException {
+    public static File get(ImageServiceParams params) throws FailedRequestException, IOException {
 
         try {
             String sizeStr = null;

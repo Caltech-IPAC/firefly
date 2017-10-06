@@ -52,7 +52,7 @@ public class AllSkyRetriever implements FileRetriever {
             URL url= this.getClass().getClassLoader().getResource(urlStr);
             AnyUrlParams p= new AnyUrlParams(url);
             p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
-            fitsFileInfo= LockingVisNetwork.retrieve(p);
+            fitsFileInfo= LockingVisNetwork.retrieveURL(p);
         }  catch (FailedRequestException e) {
             throw e;
         }  catch (Exception e) {
