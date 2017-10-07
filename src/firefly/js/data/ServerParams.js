@@ -2,9 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/**
- * List of constants that are used as the names of parameters passed to the server.
- */
 export const ServerParams = {
         COMMAND : 'cmd',
         DO_JSONP : 'doJsonp',

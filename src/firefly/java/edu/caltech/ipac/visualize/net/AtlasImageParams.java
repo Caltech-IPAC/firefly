@@ -17,9 +17,7 @@ public class AtlasImageParams extends IrsaImageParams {
     private String table = "seip_science";
     private String xtraFilter = ""; // i.e fname like '%.mosaic.fits' or file_tye=science
 
-    public AtlasImageParams() {
-        setType(IrsaTypes.ATLAS);
-    }
+    public AtlasImageParams() { super(ImageSourceTypes.ATLAS); }
 
     public void setInstrument(String b) {
         this._instrument = b;

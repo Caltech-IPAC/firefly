@@ -78,7 +78,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                     params.addCookie(key, identityCookies.get(key));
                 }
             }
-            retval= LockingVisNetwork.retrieve(params);
+            retval= LockingVisNetwork.retrieveURL(params);
             if (retval.getResponseCode()>=500) {
                 File f= new File(retval.getInternalFilename());
                 if (f.length()<800) {

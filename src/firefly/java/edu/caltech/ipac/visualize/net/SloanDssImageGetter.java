@@ -12,6 +12,7 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,10 +27,8 @@ import java.net.URLConnection;
  */
 public class SloanDssImageGetter {
 
-    public static void lowlevelGetSloanDssImage(SloanDssImageParams params,
-                                                File outFile) throws FailedRequestException,
-                                                                           IOException {
-
+    public static File get(SloanDssImageParams params, File outFile) throws FailedRequestException,
+                                                                            IOException {
         NetworkManager manager = NetworkManager.getInstance();
         HostPort server = manager.getServer(NetworkManager.SDSS_SERVER);
         Assert.tst(server);
@@ -53,20 +52,16 @@ public class SloanDssImageGetter {
                             htmlErr,
                             "The SDss server is reporting an error", null);
                 }
-
-                //todo
-
-                //----------------
-
                 String newfile= qParam.getUniqueString() + ".xml";
                 f= CacheHelper.makeFile(newfile);
-                URLDownload.getDataToFile(conn, f, null);
+                URLDownload.getDataToFile(conn, f);
             }
             DataGroup dgAry[]= VoTableUtil.voToDataGroups(f.getAbsolutePath());
             DataGroup dataGroup= dgAry[0];
             if (dataGroup.size() >0) {
                 String urlString= (String)dataGroup.get(0).getDataElement("url");
-                URLDownload.getDataToFile(new URL(urlString), outFile, null, false, true);
+                URLDownload.getDataToFile(new URL(urlString), outFile, true);
+                return outFile;
             }
             else {
                 throw new FailedRequestException("SDSS: Area not covered",
@@ -101,10 +96,9 @@ public class SloanDssImageGetter {
         SloanDssImageParams params = new SloanDssImageParams();
         params.setSizeInDeg(0.1F);
         params.setBand(SloanDssImageParams.SDSSBand.r);
-        params.setRaJ2000(10.672);
-        params.setDecJ2000(41.259);
+        params.setWorldPt(new WorldPt(10.672, 41.259));
         try {
-            lowlevelGetSloanDssImage(params, new File("./a.fits.gz"));
+            get(params, new File("./a.fits.gz"));
         } catch (Exception e) {
             System.out.println(e);
         }

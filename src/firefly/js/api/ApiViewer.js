@@ -14,7 +14,7 @@ import Enum from 'enum';
 import {WSCH} from '../core/History.js';
 import {debug} from './ApiUtil.js';
 import {getRootURL}  from '../util/BrowserUtil.js';
-import {dispatchRemoteAction}  from '../rpc/PushServices.js';
+import {dispatchRemoteAction}  from '../core/JsonUtils.js';
 import {dispatchPlotImage}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
 import {clone, logError}  from '../util/WebUtil.js';

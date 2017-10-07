@@ -11,10 +11,11 @@ import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.DownloadEvent;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.NetParams;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
-import edu.caltech.ipac.visualize.net.VisNetwork;
+import edu.caltech.ipac.visualize.net.ImageServiceParams;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,15 +36,18 @@ public class LockingVisNetwork {
     private static final Map<BaseNetParams, Object> _activeRequest =
             Collections.synchronizedMap(new HashMap<BaseNetParams, Object>());
 
-
-    public static FileInfo retrieve(BaseNetParams params) throws FailedRequestException {
-        return lockingRetrieve(params, false);
+    public static FileInfo retrieveURL(AnyUrlParams params) throws FailedRequestException {
+        return lockingRetrieve(params, false, null);
     }
 
-    public static FileInfo retrieve(URL url) throws FailedRequestException {
+    public static FileInfo retrieve(ImageServiceParams params, ServiceCaller svcCaller) throws FailedRequestException {
+        return lockingRetrieve(params, false, svcCaller);
+    }
+
+    public static FileInfo retrieveURL(URL url) throws FailedRequestException {
         AnyUrlParams p= new AnyUrlParams(url);
         p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
-        return retrieve(p);
+        return retrieveURL(p);
     }
 
 
@@ -51,9 +55,9 @@ public class LockingVisNetwork {
 //----------------------- Private Methods ------------------------------
 //======================================================================
 
-    private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip)
-            throws FailedRequestException, SecurityException {
+    private static FileInfo lockingRetrieve(BaseNetParams params, boolean unzip, ServiceCaller svcCaller) throws FailedRequestException {
         Objects.requireNonNull(params);
+        confirmParamsType(params);
         FileInfo retval;
         try {
             Object lockKey= _activeRequest.computeIfAbsent(params, k -> new Object());
@@ -63,39 +67,47 @@ public class LockingVisNetwork {
                                                      // todo: it could be generalized by passing a DownloadListener
                     dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
                 }
-                FileInfo fd;
-                if (params instanceof AnyUrlParams) {
-                    fd = retrieveURL((AnyUrlParams)params, dl);
-                }
-                else {
-                    fd = VisNetwork.getImage(params, dl);
-                }
+                FileInfo fd= (params instanceof AnyUrlParams) ?
+                        retrieveURL((AnyUrlParams)params, dl) :
+                        retrieveService((ImageServiceParams) params, dl, svcCaller);
 
                 if (unzip) retval= new FileInfo(unzip(fd.getFile()),fd.getExternalName(),fd.getResponseCode(), fd.getResponseCodeMsg());
                 else       retval= fd;
 
             }
+        } catch (IOException | SecurityException e) {
+            throw ResponseMessage.simplifyNetworkCallException(e);
         } finally {
             _activeRequest.remove(params);
         }
         return retval;
     }
 
-    private static File unzip(File f) throws FailedRequestException {
+    private static void confirmParamsType(NetParams params) throws FailedRequestException {
+        if (!(params instanceof ImageServiceParams) && !(params instanceof AnyUrlParams) ) {
+            throw new FailedRequestException("Unrecognized Param Type");
+        }
+    }
+
+
+    private static File unzip(File f) throws IOException, FailedRequestException {
         File retval = f;
         if (FileUtil.getExtension(f).equalsIgnoreCase(FileUtil.GZ)) {
-            try {
-                if (!FileUtil.computeUnzipFileName(f).canRead()) {
-                    retval = FileUtil.gUnzipFile(f);
-                }
-            } catch (IOException e) {
-                throw new FailedRequestException("Could not unzip file", "Unzipping failed", e);
+            if (!FileUtil.computeUnzipFileName(f).canRead()) {
+                retval = FileUtil.gUnzipFile(f);
             }
         }
         return retval;
     }
 
-
+    private static FileInfo retrieveService(ImageServiceParams params, DownloadListener dl, ServiceCaller svcCaller) throws IOException, FailedRequestException {
+        File f= CacheHelper.getFile(params);
+        if (f == null)  {
+            f= svcCaller.retrieve(params,CacheHelper.makeFitsFile(params));
+            CacheHelper.putFile(params,f);
+        }
+        return new FileInfo(f);
+    }
 
     //======================================
     //======================================
@@ -124,6 +136,9 @@ public class LockingVisNetwork {
         }
     }
 
+    public interface ServiceCaller {
+        File retrieve(ImageServiceParams p, File suggestedFile) throws  IOException, FailedRequestException;
+    }
 
 
     private static class DownloadProgress implements DownloadListener {

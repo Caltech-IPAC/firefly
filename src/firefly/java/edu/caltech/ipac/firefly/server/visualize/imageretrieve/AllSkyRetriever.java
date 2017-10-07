@@ -52,13 +52,14 @@ public class AllSkyRetriever implements FileRetriever {
             URL url= this.getClass().getClassLoader().getResource(urlStr);
             AnyUrlParams p= new AnyUrlParams(url);
             p.setLocalFileExtensions(Collections.singletonList(FileUtil.FITS));
-            fitsFileInfo= LockingVisNetwork.retrieve(p);
+            fitsFileInfo= LockingVisNetwork.retrieveURL(p);
         }  catch (FailedRequestException e) {
             throw e;
         }  catch (Exception e) {
             throw new FailedRequestException("No data",null,e);
         }
-        return fitsFileInfo.copyWithDesc(RESERVED_IMAGES[DEFAULT_ALLSKY].getDescription());
+        fitsFileInfo.setDesc(RESERVED_IMAGES[DEFAULT_ALLSKY].getDescription());
+        return fitsFileInfo;
     }
 
 //===================================================================

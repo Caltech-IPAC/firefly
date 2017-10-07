@@ -40,7 +40,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
 
 
     public WebPlotResult getFlux(PlotState state, ImagePt inIpt)  {
-        return VisServerOps.getFlux(state,inIpt);
+        return VisServerOps.getFluxOld(state,inIpt);
     }
 
 

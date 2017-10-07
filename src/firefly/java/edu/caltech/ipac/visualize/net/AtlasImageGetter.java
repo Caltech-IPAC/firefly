@@ -11,8 +11,6 @@ import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
-import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
-import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.DataGroup;
@@ -33,9 +31,7 @@ import java.util.Map;
 public class AtlasImageGetter {
 
 
-    public static File lowlevelGetIbe2Image(BaseIrsaParams params)
-            throws FailedRequestException,
-            IOException {
+    public static File get(ImageServiceParams params) throws FailedRequestException, IOException {
 
         try {
             String sizeStr = null;
@@ -70,7 +66,7 @@ public class AtlasImageGetter {
             File queryTbl = File.createTempFile("Ibe2Query-", ".tbl", CacheHelper.getDir());
 
             IbeQueryParam queryParam = ibeSource.makeQueryParam(queryMap);
-            queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000());
+            queryParam.setPos(params.getRaJ2000String() + "," + params.getDecJ2000String());
             queryParam.setMcen(true);
             //queryParam.setIntersect(IbeQueryParam.Intersect.CENTER);
             ibe.query(queryTbl, queryParam);

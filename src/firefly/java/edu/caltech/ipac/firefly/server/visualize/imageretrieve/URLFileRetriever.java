@@ -75,7 +75,7 @@ public class URLFileRetriever implements FileRetriever {
 
             PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.READING, PlotServUtils.READ_PERCENT_MSG);
 
-            fitsFileInfo = LockingVisNetwork.retrieve(params);
+            fitsFileInfo = LockingVisNetwork.retrieveURL(params);
 
             int responseCode= fitsFileInfo.getResponseCode();
             if (responseCode>=400) {
@@ -85,7 +85,8 @@ public class URLFileRetriever implements FileRetriever {
         } catch (Exception e) {
             throw ResponseMessage.simplifyNetworkCallException(e);
         }
-        return fitsFileInfo.copyWithDesc(urlStr);
+        fitsFileInfo.setDesc(urlStr);
+        return fitsFileInfo;
     }
 
 }

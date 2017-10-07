@@ -18,9 +18,7 @@ import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 
 import {ServerRequest } from './data/ServerRequest.js';
-import PlotState from './visualize/PlotState.js';
 import {getJsonData } from './rpc/SearchServicesJson.js';
-import ExternalAccessUtils from './core/ExternalAccessUtils.js';
 
 import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
@@ -77,25 +75,6 @@ const defConfigOptions = {
 
 
 
-
-/**
- * work around for transition from flummox to redux
- */
-const appFlux= {
-    getActions : function(type) {
-        if (type==='ExternalAccessActions') {
-            return {
-                extensionAdd : ExternalAccessUtils.extensionAdd,
-                extensionActivate : ExternalAccessUtils.extensionActivate,
-                channelActivate : ExternalAccessUtils.channelActivate
-            };
-        }
-        return undefined;
-    }
-
-};
-
-
 function fireflyInit() {
 
     if (! (window.firefly && window.firefly.initialized) ) {
@@ -107,7 +86,6 @@ function fireflyInit() {
 
         if (!window.firefly) window.firefly= {};
 
-        window.firefly.appFlux= appFlux;
         // to call histogram and other react components from GWT
 
         // a method to get JSON data from external task launcher

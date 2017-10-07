@@ -85,25 +85,26 @@ public class VisServerCommands {
             PlotState stateAry[]= sp.getStateAry();
             PlotState state= stateAry[0];
             ImagePt pt = sp.getRequiredImagePt("pt");
-
-            FileAndHeaderInfo fahAry[];
-            List<FileAndHeaderInfo> list = new ArrayList<FileAndHeaderInfo>(state.getBands().length);
-            for(Band b : state.getBands()) {
-                list.add(state.getFileAndHeaderInfo(b));
-            }
-
-            if (stateAry.length>1) {
-                for(int i=1; (i<stateAry.length);i++) {
-                    list.add(stateAry[i].getFileAndHeaderInfo(Band.NO_BAND) );
-                }
-            }
-
-
-
-            fahAry = list.toArray(new FileAndHeaderInfo[list.size()]);
-
-
-            String[] res = VisServerOps.getFileFlux(fahAry, pt);
+//
+//            FileAndHeaderInfo fahAry[];
+//            List<FileAndHeaderInfo> list = new ArrayList<FileAndHeaderInfo>(state.getBands().length);
+//            for(Band b : state.getBands()) {
+//                list.add(state.getFileAndHeaderInfo(b));
+//            }
+//
+//            if (stateAry.length>1) {
+//                for(int i=1; (i<stateAry.length);i++) {
+//                    list.add(stateAry[i].getFileAndHeaderInfo(Band.NO_BAND) );
+//                }
+//            }
+//
+//
+//
+//            fahAry = list.toArray(new FileAndHeaderInfo[list.size()]);
+//
+//
+//            String[] res = VisServerOps.getFileFlux(fahAry, pt);
+            String[] res= VisServerOps.getFlux(stateAry,pt);
 
 
             JSONObject obj= new JSONObject();

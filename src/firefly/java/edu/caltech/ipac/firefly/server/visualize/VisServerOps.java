@@ -78,6 +78,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -241,6 +242,68 @@ public class VisServerOps {
         }
     }
 
+
+    private static boolean isDirectFluxAccessAvailable(PlotState state) {
+        //todo: make this test more sophisticated
+
+        for(Band b : state.getBands()) {
+            if (state.getWorkingFitsFileStr(b).endsWith("gz")) {
+                return false;
+            }
+        }
+        return true;
+
+
+    }
+
+    public static String[] getFlux(PlotState stateAry[], ImagePt ipt) {
+        PlotState state= stateAry[0];
+        FileAndHeaderInfo fahAry[];
+        List<String> fluxList= new ArrayList<>();
+
+
+        // 1. handle primary plot
+        if (isDirectFluxAccessAvailable(state)) {
+            List<FileAndHeaderInfo> list = new ArrayList<>();
+            for(Band b : state.getBands()) {
+                list.add(state.getFileAndHeaderInfo(b));
+            }
+            fahAry = list.toArray(new FileAndHeaderInfo[list.size()]);
+            String[] res = VisServerOps.getFileFlux(fahAry, ipt);
+            fluxList.addAll(Arrays.asList(res));
+        }
+        else {
+            for(Band b : state.getBands()) {
+                try {
+                    fluxList.add(getFluxValueInMemory(state, b, ipt)+"");
+                } catch (IOException e) {
+                    fluxList.add("NaN");
+                }
+            }
+        }
+
+        // 2. handle overlays
+        if (stateAry.length>1) {
+            for(int i=1; (i<stateAry.length);i++) {
+                if (isDirectFluxAccessAvailable(stateAry[i])) {
+                    FileAndHeaderInfo fah[]= new FileAndHeaderInfo[] {stateAry[i].getFileAndHeaderInfo(Band.NO_BAND)};
+                    String[] res = VisServerOps.getFileFlux(fah, ipt);
+                    fluxList.add(res[0]);
+                }
+                else {
+                    try {
+                        fluxList.add(getFluxValueInMemory(stateAry[i],Band.NO_BAND, ipt)+"");
+                    } catch (IOException e) {
+                        fluxList.add("NaN");
+                    }
+                }
+            }
+        }
+
+        // 3. return all the gathered fluxes
+        return fluxList.toArray(new String[fluxList.size()]);
+    }
+
     public static String[] getFileFlux(FileAndHeaderInfo fileAndHeader[], ImagePt ipt) {
         try {
             String retval[] = new String[fileAndHeader.length];
@@ -256,9 +319,9 @@ public class VisServerOps {
     }
 
 
-    private static double getFluxValue(PlotState state,
-                                      Band band,
-                                      ImagePt ipt) throws IOException {
+    private static double getFluxValueInMemory(PlotState state,
+                                               Band band,
+                                               ImagePt ipt) throws IOException {
         if (state == null) throw new IllegalArgumentException("state must not be null");
         double retval;
         if (!CtxControl.isImagePlotAvailable(state.getContextString())) {  // work directly on the file
@@ -280,12 +343,13 @@ public class VisServerOps {
         return retval;
     }
 
-    public static WebPlotResult getFlux(PlotState state, ImagePt ipt) {
+    @Deprecated
+    public static WebPlotResult getFluxOld(PlotState state, ImagePt ipt) {
         try {
             Band bands[] = state.getBands();
             double fluxes[] = new double[bands.length];
             for (int i = 0; (i < bands.length); i++) {
-                fluxes[i] = getFluxValue(state, bands[i], ipt);
+                fluxes[i] = getFluxValueInMemory(state, bands[i], ipt);
             }
             WebPlotResult retval = new WebPlotResult(state.getContextString());
             retval.putResult(WebPlotResult.FLUX_VALUE, new DataEntry.DoubleArray(fluxes));

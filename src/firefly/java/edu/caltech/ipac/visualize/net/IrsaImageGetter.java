@@ -16,7 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.*;
+import static edu.caltech.ipac.visualize.net.ImageServiceParams.ImageSourceTypes.*;
 
 /**
  * @author Trey Roby
@@ -25,7 +25,7 @@ import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.*;
 public class IrsaImageGetter {
 
 
-    public static void lowlevelGetIrsaImage(IrsaImageParams params, File outFile) throws FailedRequestException, IOException {
+    public static File get(IrsaImageParams params, File outFile) throws FailedRequestException, IOException {
         HostPort hp= NetworkManager.getInstance().getServer(NetworkManager.IRSA);
         String cgiapp= null;
 
@@ -42,20 +42,25 @@ public class IrsaImageGetter {
 
         URLParms parms  = new URLParms();
 
-        parms.add(  "objstr", params.getIrsaObjectString() );
+
+        String objstr= params.getRaJ2000String() + " " + params.getDecJ2000String() +  " eq j2000";
+        
+
+        parms.add(  "objstr", objstr);
         parms.add(    "size", params.getSize() + ""  );
         parms.add(    "band", params.getBand()  + "" );
 
         String file = outFile.getPath();
 
         getURL(hp, cgiapp, parms, file, params.getType());
+        return outFile;
     }
 
     public static void getURL(HostPort         hp,
                               String           app,
                               URLParms         parms,
                               String           fileName,
-                              IrsaImageParams.IrsaTypes type) throws IOException, FailedRequestException {
+                              IrsaImageParams.ImageSourceTypes type) throws IOException, FailedRequestException {
         URL url;
         URLConnection conn;
         File                  file= new File(fileName);
@@ -67,12 +72,8 @@ public class IrsaImageGetter {
             req = req + "?";
 
             for(int i=0; i<parms.getLength(); ++i) {
-                if(i != 0)
-                    req = req + "&";
-
-                req = req + parms.getKeyword(i);
-                req = req + "=";
-                req = req + parms.getValue(i);
+                if(i != 0) req+= "&";
+                req+= parms.getKeyword(i) + "="+parms.getValue(i);
             }
         }
 
@@ -109,7 +110,7 @@ public class IrsaImageGetter {
                 throw new FailedRequestException( msg, "The IRSA server is reporting an error- " + htmlErr );
             }
 
-            URLDownload.getDataToFile(conn, file, null);
+            URLDownload.getDataToFile(conn, file);
 
 
         } catch (MalformedURLException e){

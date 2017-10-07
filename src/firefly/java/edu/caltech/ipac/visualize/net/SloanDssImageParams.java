@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.visualize.net;
 
-public class SloanDssImageParams extends  BaseIrsaParams  {
+public class SloanDssImageParams extends ImageServiceParams {
 
 
     public enum SDSSBand {u,g,r,i,z}
@@ -13,7 +13,7 @@ public class SloanDssImageParams extends  BaseIrsaParams  {
     private int  _timeout  = 0;
     private boolean _queryKey= false;
 
-    public SloanDssImageParams() { }
+    public SloanDssImageParams() { super(ImageSourceTypes.SDSS); }
 
     public void  setSizeInDeg(float s)      { _sizeInDeg= s; }
     public float getSizeInDeg()      { return _sizeInDeg; }
@@ -39,8 +39,7 @@ public class SloanDssImageParams extends  BaseIrsaParams  {
         newParam.setSizeInDeg(_sizeInDeg);
         newParam.setBand(_band);
         newParam.setTimeout(_timeout);
-        newParam.setRaJ2000(this.getRaJ2000());
-        newParam.setDecJ2000(this.getDecJ2000());
+        newParam.setWorldPt(this.getWorldPt());
         return newParam;
     }
 }

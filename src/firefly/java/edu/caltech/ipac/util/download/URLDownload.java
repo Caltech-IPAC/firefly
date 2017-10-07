@@ -197,18 +197,7 @@ public class URLDownload {
      * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
      */
     public static FileInfo getDataToFile(URL url, File outfile) throws FailedRequestException {
-        return getDataToFile(url, outfile, null, false, true);
-    }
-
-    /**
-     * @param url     the url to get data from
-     * @param outfile write the url data to this file
-     * @param dl      listen for progress and cancel if necessary
-     * @return an array of FileInfo objects
-     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
-     */
-    public static FileInfo getDataToFile(URL url, File outfile, DownloadListener dl) throws FailedRequestException {
-        return getDataToFile(url, outfile, dl, false, true);
+        return getDataToFile(url, outfile, true);
     }
 
     /**
@@ -220,27 +209,6 @@ public class URLDownload {
      */
     public static FileInfo getDataToFile(URL url, File outfile, boolean uncompress) throws FailedRequestException {
         return getDataToFile(url, outfile, null, null, null, false, uncompress, 0);
-    }
-
-
-    /**
-     * @param url                  the url to get data from
-     * @param outfile              The name of the file to write the data to.  If useSuggestedFilename if false then the
-     *                             data is written to this file.  If it is true then only the directory part of this
-     *                             file is used and the filename come from the Content-disposition of the URL.
-     * @param dl                   listen for progress and cancel if necessary
-     * @param useSuggestedFilename if true then use the name from the Content-disposition of the outfile parameter at
-     *                             the directory. if false then the outfile parameter specifies the filename
-     * @param uncompress           if this data appears to be compressed then uncompress it first
-     * @return an array of FileInfo objects
-     * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
-     */
-    public static FileInfo getDataToFile(URL url,
-                                           File outfile,
-                                           DownloadListener dl,
-                                           boolean useSuggestedFilename,
-                                           boolean uncompress) throws FailedRequestException {
-        return getDataToFile(url, outfile, null, null, dl, useSuggestedFilename, uncompress, 0L);
     }
 
 
