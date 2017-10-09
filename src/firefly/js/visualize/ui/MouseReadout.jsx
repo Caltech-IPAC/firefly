@@ -74,7 +74,7 @@ const column3 = {
 };
 const column3_r2 = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
 
-const column4 = {width: 88, paddingLeft:4, display: 'inline-block', textOverflow: 'ellipsis', overflow:'hidden'};
+const column4 = {width: 115, paddingLeft:4, display: 'inline-block', textOverflow: 'ellipsis', overflow:'hidden'};
 const column5 = {
     width: 74,
     paddingRight: 1,
@@ -199,7 +199,10 @@ export function getFluxInfo(sndReadout){
 
     for (let i = 0; i < fluxObj.length; i++) {
         if (!isNaN(fluxObj[i].value )) {
-            fluxValue = (fluxObj[i].value < 1000) ? `${myFormat(fluxObj[i].value, fluxObj[i].precision)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
+            //IRSA-737
+            const min = Number('0.'+'0'.repeat(fluxObj[i].precision-1)+'1');
+            fluxValue = (Math.abs(fluxObj[i].value) < 1000  &&Math.abs(fluxObj[i].value)>min ) ? `${myFormat(fluxObj[i].value, fluxObj[i].precision)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
+
             if (fluxObj[i].unit && !isNaN(fluxObj[i].value)) fluxValue+= ` ${fluxObj[i].unit}`;
             fluxValueArrays.push(fluxValue);
         }
@@ -215,6 +218,7 @@ export function getFluxInfo(sndReadout){
     return {fluxLabels:fluxLabelArrays, 'fluxValues':fluxValueArrays};
 
 }
+
 /**
  * Get the mouse readouts from the standard readout and convert to the values based on the toCoordinaeName
  * @param readoutItems
