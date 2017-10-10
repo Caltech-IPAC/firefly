@@ -101,7 +101,7 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
     var tPF = {tableData: cloneDeep(tbl.tableData),
                tableMeta: cloneDeep(tbl.tableMeta),
                tbl_id, title};
-    tPF.tableMeta = omit(tPF.tableMeta, ['source', 'datasetID', 'sortInfo', 'isFullyLoaded']);
+    tPF.tableMeta = omit(tPF.tableMeta, ['source', 'resultSetID', 'sortInfo', 'isFullyLoaded']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',
                   name: LC.PHASE_CNAME, type: 'double', width: 6 };

@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -108,7 +107,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             }
 
             StopWatch.getInstance().start("getDataset: " + request.getRequestId());
-            DataGroupPart results = getDataset(treq, dbFile);
+            DataGroupPart results = getResultSet(treq, dbFile);
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 
             if (doLogging() && dbFileCreated) {
@@ -172,7 +171,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {}
     public boolean doLogging() {return true;}
 
-    protected DataGroupPart getDataset(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
 
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
 
@@ -180,15 +179,15 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             String tblName = EmbeddedDbUtil.setupDatasetTable(treq);
 
             // select a page from the dataset table
-            String pageSql = getPageSql(dbAdapter, treq);
+            String pageSql = getPageSql(dbAdapter, treq, tblName);
             DataGroupPart page = EmbeddedDbUtil.getResults(treq, pageSql, tblName);
 
             // fetch total row count for the query.. datagroup may contain partial results(paging)
-            String cntSql = getCountSql(dbAdapter, treq);
+            String cntSql = String.format("select count(*) from %s", tblName);
             int rowCnt = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).queryForInt(cntSql);
 
             page.setRowCount(rowCnt);
-            page.getTableDef().setAttribute(TableServerRequest.DATASET_ID, EmbeddedDbUtil.getDatasetID(treq));
+            page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, tblName);
             if (!StringUtils.isEmpty(treq.getTblTitle())) {
                 page.getData().setTitle(treq.getTblTitle());  // set the datagroup's title to the request title.
             }
@@ -203,18 +202,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 //====================================================================
 
 
-    private String getCountSql(DbAdapter dbAdapter, TableServerRequest treq) {
-        String fromSql = dbAdapter.fromPart(treq);
-        String wherePart = dbAdapter.wherePart(treq);
-        return String.format("select count(*) %s %s", fromSql, wherePart);
-    }
-
-    private String getPageSql(DbAdapter dbAdapter, TableServerRequest treq) {
+    private String getPageSql(DbAdapter dbAdapter, TableServerRequest treq, String fromTable) {
         String selectPart = dbAdapter.selectPart(treq);
-        String fromPart = dbAdapter.fromPart(treq);
         String pagingPart = dbAdapter.pagingPart(treq);
 
-        return String.format("%s %s %s", selectPart, fromPart, pagingPart);
+        return String.format("%s from %s %s", selectPart, fromTable, pagingPart);
     }
 
 }

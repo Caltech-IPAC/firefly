@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
+import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
 import edu.caltech.ipac.firefly.server.Counters;
@@ -50,6 +51,9 @@ public class ServerStatus extends BaseHttpServlet {
 
             displayCacheInfo(writer, prov.getEhcacheManager());
             displayCacheInfo(writer, prov.getSharedManager());
+            skip(writer);
+
+            showDatabaseStatus(writer);
 
         } finally {
             writer.flush();
@@ -86,6 +90,15 @@ public class ServerStatus extends BaseHttpServlet {
             }
             writer.println();
         }
+    }
+
+    private static void showDatabaseStatus(PrintWriter writer) {
+        writer.println("DATABASE INFORMATION");
+        writer.println("--------------------");
+        writer.println("Open: " + BaseDbAdapter.getDbInstances().size());
+        writer.println("Details: touched time is mm:ss");
+        BaseDbAdapter.getDbInstances().values().stream()
+                    .forEach((db) -> writer.println(String.format("\ttouched: %2$tM:%2$tS %s", db.getDbFile().getName(), db.getLastAccessed())));
     }
 
     private static String getStats(Ehcache c) {

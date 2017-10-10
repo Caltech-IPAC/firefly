@@ -310,12 +310,12 @@ public class GatorQuery extends BaseGator {
                     DataObject dObj = dg.get(i);
                     String tipStr = "";
 
-                    String descStr = (String) dObj.getDataElement("DESCRIPTION");
+                String descStr = (String) dObj.getDataElement("description");
                     if (!StringUtils.isEmpty(descStr) && !descStr.equalsIgnoreCase("null")) {
                         tipStr += descStr;
                     }
 
-                    String unitStr = (String) dObj.getDataElement("UNITS");
+                String unitStr = (String) dObj.getDataElement("units");
                     if (!StringUtils.isEmpty(unitStr) && !unitStr.equalsIgnoreCase("null")) {
                         if (tipStr.length() > 0) {
                             tipStr += " ";
@@ -323,11 +323,12 @@ public class GatorQuery extends BaseGator {
                         tipStr += "(" + unitStr + ")";
                     }
 
-                    String nameStr = (String) dObj.getDataElement("NAME");
+                String nameStr = (String) dObj.getDataElement("name");
                     meta.setAttribute(makeAttribKey(DESC_TAG, nameStr.toLowerCase()), tipStr);
                 }
             }
         } catch (Exception e) {
+            LOG.warn("Shouldn't be an exception here:" + e.getMessage());
         }
     }
 

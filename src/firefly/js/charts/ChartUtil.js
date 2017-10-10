@@ -446,14 +446,14 @@ function tablesourcesEqual(newTS, oldTS) {
     // checking if the table or mappings options have changed
     // or table watcher has been cancelled
     return get(newTS, 'tbl_id') === get(oldTS, 'tbl_id') &&
-        get(newTS, 'datasetID') === get(oldTS, 'datasetID') &&
+        get(newTS, 'resultSetID') === get(oldTS, 'resultSetID') &&
         shallowequal(get(newTS, 'mappings'), get(oldTS, 'mappings')) &&
         shallowequal(get(newTS, 'options'), get(oldTS, 'options'));
 }
 
 
 function updateChartData(chartId, traceNum, tablesource, action={}) {
-    const {tbl_id, datasetID, mappings} = tablesource;
+    const {tbl_id, resultSetID, mappings} = tablesource;
     if (action.type === TABLE_HIGHLIGHT) {
         // ignore if traceNum is not active
         const {activeTrace=0} = getChartData(chartId);
@@ -480,9 +480,9 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
         const changes = getDataChangesForMappings({mappings, traceNum});
 
         // save original table file path
-        const datasetIDNow = get(tableModel, 'tableMeta.datasetID');
-        if (datasetIDNow !== datasetID) {
-            changes[`tablesources.${traceNum}.datasetID`] = datasetIDNow;
+        const resultSetIDNow = get(tableModel, 'tableMeta.resultSetID');
+        if (resultSetIDNow !== resultSetID) {
+            changes[`tablesources.${traceNum}.resultSetID`] = resultSetIDNow;
         }
         if (!isEmpty(changes)) {
             dispatchChartUpdate({chartId, changes});
@@ -519,10 +519,10 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
 
         if (tbl_id) ds.tbl_id = tbl_id;
 
-        // we use datasetID to see if the table has changed (sorted, filtered, etc.)
+        // we use resultSetID to see if the table has changed (sorted, filtered, etc.)
         if (ds.tbl_id) {
             const tableModel = getTblById(ds.tbl_id);
-            ds.datasetID = get(tableModel, 'tableMeta.datasetID');
+            ds.resultSetID = get(tableModel, 'tableMeta.resultSetID');
         }
         // set up table server request parameters (options) for firefly specific charts
         const chartDataType = get(fireflyData[traceNum], 'dataType');

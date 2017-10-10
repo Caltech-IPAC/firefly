@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -12,7 +13,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 
@@ -21,9 +28,22 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
 abstract public class BaseDbAdapter implements DbAdapter {
+    private static long MAX_IDLE_TIME = 1000 * 60 * 5;      // cleanup every 5 minutes.
+    private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
+    private static ScheduledFuture cleanupFuture = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> cleanup(), MAX_IDLE_TIME, MAX_IDLE_TIME, TimeUnit.MILLISECONDS);
+    private static Logger.LoggerImpl LOGGER = Logger.getLogger();
 
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+                                 public void run() {
+                                     LOGGER.info("Closing any open database before shutdown.");
+                                     cleanup(true);
+                                 }
+                             }
+                        );
+    }
     private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?)";
-    private static final String DD_CREATE_SQL = "create table if not exists %s_dd "+
+    private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
             "  cname    varchar(1023)" +
             ", label    varchar(1023)" +
@@ -38,7 +58,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ")";
 
     private static final String META_INSERT_SQL = "insert into %s_meta values (?,?)";
-    private static final String META_CREATE_SQL = "create table if not exists %s_meta "+
+    private static final String META_CREATE_SQL = "create table %s_meta "+
             "(" +
             "  key      varchar(1023)" +
             ", value    varchar(2023)" +
@@ -68,7 +88,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             coldefs.add( String.format("\"%s\" %s", dt.getKeyName().toUpperCase(),getDataType(dt.getDataType())));
         }
 
-        return String.format("create table if not exists %s (%s)", tblName, StringUtils.toString(coldefs, ","));
+        return String.format("create table %s (%s)", tblName, StringUtils.toString(coldefs, ","));
     }
 
     public String insertDataSql(DataType[] dtTypes, String tblName) {
@@ -94,8 +114,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String fromPart(TableServerRequest treq) {
-        String from = EmbeddedDbUtil.getDatasetID(treq);
-        from = StringUtils.isEmpty(from) ? treq.getParam(TableServerRequest.SQL_FROM) : from;
+        String from = treq.getParam(TableServerRequest.SQL_FROM);
+        from = from == null ? EmbeddedDbUtil.getResultSetID(treq) : from;
         from = "from " + (StringUtils.isEmpty(from) ? "data" : from);
         return from;
     }
@@ -131,7 +151,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String createTableFromSelect(String tblName, String selectSql) {
-        return String.format("CREATE TABLE IF NOT EXISTS %s AS %s", tblName, selectSql);
+        return String.format("CREATE TABLE %s AS %s", tblName, selectSql);
     }
 
     public String translateSql(String sql) {
@@ -140,10 +160,6 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public boolean useTxnDuringLoad() {
         return false;
-    }
-
-    public File getStorageFile(File dbFile) {
-        return dbFile;
     }
 
     public String getDataType(Class type) {
@@ -164,11 +180,48 @@ abstract public class BaseDbAdapter implements DbAdapter {
         }
     }
 
+    public DbInstance getDbInstance(File dbFile) {
+        EmbeddedDbInstance ins = dbInstances.get(dbFile.getPath());
+        if (ins == null) {
+            ins = createDbInstance(dbFile);
+            dbInstances.put(dbFile.getPath(), ins);
+        }
+        ins.touch();
+        return ins;
 
-    static class EmbeddedDbInstance extends DbInstance {
+    }
 
-        public EmbeddedDbInstance(String name, String dbUrl, String driver) {
-            super(false, null, dbUrl, null, null, driver, name);
+    public void close(File dbFile) {}          // subclass should override this to properly closes the database and cleanup resources.
+
+    protected abstract EmbeddedDbInstance createDbInstance(File dbFile);
+
+    public static Map<String, EmbeddedDbInstance> getDbInstances() { return dbInstances; }
+
+    static void cleanup() {
+        cleanup(false);
+    }
+
+    static void cleanup(boolean force) {
+        List<EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
+                                                    .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
+
+        LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
+        if (toBeRemove.size() > 0) {
+            toBeRemove.forEach((db) -> {
+                DbAdapter.getAdapter(db.name).close(db.dbFile);
+                dbInstances.remove(db.dbFile.getPath());
+            });
+        }
+    }
+
+    public static class EmbeddedDbInstance extends DbInstance {
+        long lastAccessed;
+        File dbFile;
+
+        public EmbeddedDbInstance(String type, File dbFile, String dbUrl, String driver) {
+            super(false, null, dbUrl, null, null, driver, type);
+            lastAccessed = System.currentTimeMillis();
+            this.dbFile = dbFile;
         }
 
         @Override
@@ -179,6 +232,22 @@ abstract public class BaseDbAdapter implements DbAdapter {
         @Override
         public int hashCode() {
             return this.dbUrl.hashCode();
+        }
+
+        public long getLastAccessed() {
+            return lastAccessed;
+        }
+
+        public boolean hasExpired() {
+            return System.currentTimeMillis() - lastAccessed > MAX_IDLE_TIME;
+        }
+
+        public File getDbFile() {
+            return dbFile;
+        }
+
+        public void touch() {
+            lastAccessed = System.currentTimeMillis();
         }
     }
 }

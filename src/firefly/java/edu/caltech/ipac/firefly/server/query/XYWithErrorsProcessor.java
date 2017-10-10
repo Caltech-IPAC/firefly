@@ -3,40 +3,41 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.*;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.SortedSet;
 
 
 @SearchProcessorImpl(id = "XYWithErrors")
 public class XYWithErrorsProcessor extends TableActionProcessor {
 
-    public String getTblPrefix() {
-        return "xy_";
+    @Override
+    public String getResultSetTable(TableServerRequest treq) throws DataAccessException {
+        // for XY.. parameters in treq will produces different returned dataset.
+        SortedSet<Param> params =  getSearchRequest(treq).getResultSetParam();
+        params.addAll(treq.getSearchParams());
+        String id = StringUtils.toString(params, "|");
+        return "xy_data_" + DigestUtils.md5Hex(id);
     }
 
-    protected DataGroup fetchData(TableServerRequest treq, String origDataTblName, File dbFile, DbAdapter dbAdapter) {
+    protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
         try {
             return new XYWithErrorsProcessorImpl().loadDataIntoDataGroup(treq);
-        } catch (IOException | DataAccessException e) {
-            Logger.getLogger().error(e);
+        } catch (IOException e) {
+            throw new DataAccessException(e);
         }
-        return null;
     }
 }
-
 
 
 

@@ -32,6 +32,11 @@ public interface DbAdapter {
     DbInstance getDbInstance(File dbFile);
 
     /**
+     * closes the database.
+     */
+    void close(File dbFile);
+
+    /**
      * @param dataType
      * @return this database's datatype representation of the given java class.
      */

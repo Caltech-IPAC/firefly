@@ -383,7 +383,7 @@ function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.datasetID');
+    const tblSource = get(activeTableModel, 'tableMeta.resultSetID');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
@@ -478,7 +478,7 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
 
     const activeTableModel = getTblById(tblId);
     const activeTableServerRequest = activeTableModel['request'];
-    const tblSource = get(activeTableModel, 'tableMeta.datasetID');
+    const tblSource = get(activeTableModel, 'tableMeta.resultSetID');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
     const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh', 'ROW_IDX', 'ROW_NUM'];

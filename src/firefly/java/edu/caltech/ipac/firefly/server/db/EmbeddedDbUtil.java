@@ -133,39 +133,42 @@ public class EmbeddedDbUtil {
     }
 
     public static String setupDatasetTable(TableServerRequest treq) {
-        String datasetID = getDatasetID(treq);
-        if (StringUtils.isEmpty(datasetID)) return "data";
+        String resultSetID = getResultSetID(treq);
 
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         DbInstance dbInstance = dbAdapter.getDbInstance(getDbFile(treq));
 
         try {
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", datasetID));
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", resultSetID));
         } catch (Exception e) {
             // does not exists.. create table from orignal 'data' table
-            List<String> cols = getColumnNames(dbInstance, "DATA");
+            List<String> cols = treq.getInclColumns() == null ? getColumnNames(dbInstance, "DATA")
+                                    : StringUtils.asList(treq.getInclColumns(), ",");
             String wherePart = dbAdapter.wherePart(treq);
             String orderBy = dbAdapter.orderByPart(treq);
+            String tblName = getResultSetID(treq);
+
+            cols = cols.stream().filter((s) -> !(s.equals(DataGroup.ROW_IDX) || s.equals(DataGroup.ROW_NUM))).collect(Collectors.toList());   // remove this cols because it will be automatically added
 
             // copy data
             String datasetSql = String.format("select %s, %s from data %s %s", StringUtils.toString(cols), DataGroup.ROW_IDX, wherePart, orderBy);
             String datasetSqlWithIdx = String.format("select b.*, (ROWNUM-1) as %s from (%s) as b", DataGroup.ROW_NUM, datasetSql);
-            String sql = dbAdapter.createTableFromSelect(getDatasetID(treq), datasetSqlWithIdx);
+            String sql = dbAdapter.createTableFromSelect(tblName, datasetSqlWithIdx);
             JdbcFactory.getSimpleTemplate(dbInstance).update(sql);
 
             // copy dd
             String ddSql = "select * from data_dd";
-            ddSql = dbAdapter.createTableFromSelect(getDatasetID(treq) + "_dd", ddSql);
+            ddSql = dbAdapter.createTableFromSelect(tblName + "_dd", ddSql);
             JdbcFactory.getSimpleTemplate(dbInstance).update(ddSql);
 
             // copy meta
             String metaSql = "select * from data_meta";
-            metaSql = dbAdapter.createTableFromSelect(getDatasetID(treq) + "_meta", metaSql);
+            metaSql = dbAdapter.createTableFromSelect(tblName + "_meta", metaSql);
             JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
 
         }
 
-        return datasetID;
+        return resultSetID;
     }
 
     public static List<String> getColumnNames(DbInstance dbInstance, String forTable) {
@@ -194,9 +197,9 @@ public class EmbeddedDbUtil {
     }
 
     @NotNull
-    public static String getDatasetID(TableServerRequest treq) {
-        String id = StringUtils.toString(treq.getDataSetParam(), "|");
-        return StringUtils.isEmpty(id) ? "" : "data_" + DigestUtils.md5Hex(id);
+    public static String getResultSetID(TableServerRequest treq) {
+        String id = StringUtils.toString(treq.getResultSetParam(), "|");
+        return StringUtils.isEmpty(id) ? "data" : "data_" + DigestUtils.md5Hex(id);
     }
 
     @NotNull
@@ -222,26 +225,24 @@ public class EmbeddedDbUtil {
         int totalRows = dg.size();
 
         String createDataSql = dbAdapter.createDataSql(colsAry, tblName);
-        logger.briefDebug("createDataSql:" + createDataSql);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createDataSql);
+        if (totalRows > 0) {
+            String[] var = new String[colsAry.length];
+            Arrays.fill(var , "?");
 
-        String[] var = new String[colsAry.length];
-        Arrays.fill(var , "?");
+            String insertDataSql = dbAdapter.insertDataSql(colsAry, tblName);
 
-        String insertDataSql = dbAdapter.insertDataSql(colsAry, tblName);
-        logger.briefDebug("insertDataSql:" + insertDataSql);
-
-
-        JdbcTemplate jdbc = JdbcFactory.getTemplate(dbAdapter.getDbInstance(dbFile));
-        if (dbAdapter.useTxnDuringLoad()) {
-            TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
-            txnJdbc.execute(new TransactionCallbackWithoutResult() {
-                public void doInTransactionWithoutResult(TransactionStatus status) {
-                    doTableLoad(jdbc, insertDataSql, dg);
-                }
-            });
-        } else {
-            doTableLoad(jdbc, insertDataSql, dg);
+            JdbcTemplate jdbc = JdbcFactory.getTemplate(dbAdapter.getDbInstance(dbFile));
+            if (dbAdapter.useTxnDuringLoad()) {
+                TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
+                txnJdbc.execute(new TransactionCallbackWithoutResult() {
+                    public void doInTransactionWithoutResult(TransactionStatus status) {
+                        doTableLoad(jdbc, insertDataSql, dg);
+                    }
+                });
+            } else {
+                doTableLoad(jdbc, insertDataSql, dg);
+            }
         }
 
         return totalRows;
@@ -304,7 +305,6 @@ public class EmbeddedDbUtil {
         if (dg.getAttributeKeys().size() == 0) return;
 
         String createMetaSql = dbAdapter.createMetaSql(forTable);
-        logger.debug("createMetaSql:" + createMetaSql);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createMetaSql);
 
         List<Object[]> data = new ArrayList<>();
@@ -314,7 +314,6 @@ public class EmbeddedDbUtil {
             data.add(new Object[]{key, val});
         }
         String insertDDSql = dbAdapter.insertMetaSql(forTable);
-        logger.debug("insertDDSql:" + insertDDSql);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
 
@@ -323,7 +322,6 @@ public class EmbeddedDbUtil {
 
         makeDbCols(dg);
         String createDDSql = dbAdapter.createDDSql(forTable);
-        logger.debug("createDDSql:" + createDDSql);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createDDSql);
 
         Map<String, DataGroup.Attribute> meta = dg.getAttributes();
@@ -352,13 +350,12 @@ public class EmbeddedDbUtil {
             );
         }
         String insertDDSql = dbAdapter.insertDDSql(forTable);
-        logger.debug("insertDDSql:" + insertDDSql);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
 
     private static DataType[] makeDbCols(DataGroup dg) {
         DataType[] cols = new DataType[dg.getDataDefinitions().length + 2];
-        if (dg.getDataDefintion(ROW_IDX) == null) {
+        if (dg.getDataDefintion(ROW_IDX) != null) {
             logger.error("Datagroup should not have ROW_IDX in it at the start.");
         }
         System.arraycopy(dg.getDataDefinitions(), 0, cols, 0, cols.length-2);

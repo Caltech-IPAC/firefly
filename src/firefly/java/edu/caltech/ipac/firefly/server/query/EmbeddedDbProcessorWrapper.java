@@ -62,7 +62,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
     }
 
     @Override
-    protected DataGroupPart getDataset(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
         if (treq.getDecimateInfo() != null || containsDecimateKey(treq.getFilters())) {
             // this is bad.. need to solve decimation.
             DataGroupPart dgp = processor.getData(treq);
@@ -70,7 +70,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
             return dgp;
         } else {
             processor.setDoLogging(false);
-            return super.getDataset(treq, dbFile);
+            return super.getResultSet(treq, dbFile);
         }
     }
 

@@ -19,7 +19,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
     public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc
-    public static final String DATASET_ID = "datasetID";        // this meta if exists contains the ID of the dataset returned.
+    public static final String RESULTSET_ID = "resultSetID";        // this meta if exists contains the ID of the resultset returned.
 
     public static final String DECIMATE_INFO = "decimate";
     public static final String SQL_FROM = "sqlFrom";
@@ -104,6 +104,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         this.pageSize = pageSize;
     }
 
+    public String getInclColumns() { return getParam(INCL_COLUMNS); }
     public SortInfo getSortInfo() {
         return containsParam(SORT_INFO) ? SortInfo.parse(getParam(SORT_INFO)) : null;
     }
@@ -272,7 +273,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
      * @return
      */
     @NotNull
-    public SortedSet<Param> getDataSetParam() {
+    public SortedSet<Param> getResultSetParam() {
         TreeSet<Param> params = new TreeSet<>();
         if (filters != null && filters.size() > 0) {
             params.add(new Param(FILTERS, toFilterStr(filters)));
@@ -282,6 +283,9 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
         if (getDecimateInfo() != null) {
             params.add(new Param(DECIMATE_INFO, getDecimateInfo().toString()));
+        }
+        if (getInclColumns() != null) {
+            params.add(new Param(INCL_COLUMNS, getInclColumns()));
         }
         return params;
     }

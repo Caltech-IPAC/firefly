@@ -15,7 +15,6 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import nom.tam.fits.Data;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,12 +38,13 @@ public class StatisticsProcessor extends TableActionProcessor {
     };
 
     @Override
-    public String getTblPrefix() {
-        return "stats_";
+    public String getResultSetTable(TableServerRequest treq) throws DataAccessException {
+        return "stats_" + super.getResultSetTable(treq);
     }
 
-    protected DataGroup fetchData(TableServerRequest treq, String origDataTblName, File dbFile, DbAdapter dbAdapter) {
-        // check to see if a dataset table exists... if not, use orginal data table.
+    protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
+        String origDataTblName = EmbeddedDbUtil.getResultSetID(getSearchRequest(treq));
+        // check to see if a resultset table exists... if not, use orginal data table.
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
         String tblExists = String.format("select count(*) from %s", origDataTblName);
         try {
@@ -64,16 +64,17 @@ public class StatisticsProcessor extends TableActionProcessor {
             String type = (String) col.getDataElement("TYPE");
             String visi = (String) col.getDataElement("VISIBILITY");
             if (DataType.NUMERIC_TYPES.contains(type) && !StringUtils.areEqual(visi, "hidden")) {
-                String cname = col.getStringData("CNAME").toUpperCase();
+                String cname = col.getStringData("CNAME");
+                String cnameUC = cname.toUpperCase();
                 String desc = col.getStringData("DESC");
                 String units = col.getStringData("UNITS");
                 DataObject row = new DataObject(stats);
                 row.setDataElement(columns[0], cname);
                 row.setDataElement(columns[1], desc);
                 row.setDataElement(columns[2], units);
-                sqlCols.add(String.format("min(\"%1$s\") as \"%1$s_min\"", cname));
-                sqlCols.add(String.format("max(\"%1$s\") as \"%1$s_max\"", cname));
-                sqlCols.add(String.format("count(\"%1$s\") as \"%1$s_count\"", cname));
+                sqlCols.add(String.format("min(\"%1$s\") as \"%1$s_min\"", cnameUC));
+                sqlCols.add(String.format("max(\"%1$s\") as \"%1$s_max\"", cnameUC));
+                sqlCols.add(String.format("count(\"%1$s\") as \"%1$s_count\"", cnameUC));
                 stats.add(row);
             }
 
@@ -93,7 +94,7 @@ public class StatisticsProcessor extends TableActionProcessor {
         if (v instanceof Double) {
             return (Double) v;
         } else {
-            return Double.valueOf(v.toString());
+            return v == null ? null : Double.valueOf(v.toString());
         }
     }
 }
@@ -344,7 +345,7 @@ class StatisticsProcessorOld extends IpacTablePartProcessor {
      */
     private  DataGroup  createTableStatistic(File file) throws IpacTableException, IOException, DataAccessException  {
 
-        DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable" );
+        DataGroup dg = IpacTableReader.readIpacTable(file, null, "inputTable" );
         return createTableStatistic(dg);
 
     }

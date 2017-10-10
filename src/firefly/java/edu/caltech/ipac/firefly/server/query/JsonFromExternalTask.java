@@ -42,10 +42,6 @@ public class JsonFromExternalTask implements SearchProcessor {
         return uid;
     }
 
-    public String getDatasetID(ServerRequest request) {
-        return getUniqueID(request);
-    }
-
     @Override
     public String getData(ServerRequest request) throws DataAccessException {
         String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);

@@ -94,7 +94,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             if (args.length > 0) {
                 try {
                     File inFile = new File(args[0]);
-                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable");
+                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "inputTable");
 
                     HistogramProcessor hp = new HistogramProcessor();
                     hp.columnExpression = "f_y";

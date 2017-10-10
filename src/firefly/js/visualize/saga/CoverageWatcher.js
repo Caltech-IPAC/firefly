@@ -229,7 +229,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
     const req = cloneRequest(table.request, params);
     req.tbl_id = `cov-${tbl_id}`;
 
-    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.datasetID===table.tableMeta.datasetID*/) { //todo support decimated data
+    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
         updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
     }
     else {

@@ -19,7 +19,7 @@ public abstract class TableActionProcessor extends EmbeddedDbProcessor {
     public static final String SEARCH_REQUEST = "searchRequest";
 
 
-    abstract protected DataGroup fetchData(TableServerRequest treq, String origDataTblName, File dbFile, DbAdapter dbAdapter);
+    abstract protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException;
 
     /**
      *  recreate the table database if does not exists.  otherwise, return the table's database
@@ -41,13 +41,9 @@ public abstract class TableActionProcessor extends EmbeddedDbProcessor {
      * generate stats for the given search request if not exists.  otherwise, return the stats
      */
     @Override
-    protected DataGroupPart getDataset(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
 
-        TableServerRequest sreq = getSearchRequest(treq);
-
-        String origDataTblName = EmbeddedDbUtil.getDatasetID(sreq);
-        origDataTblName = StringUtils.isEmpty(origDataTblName) ? "data" : origDataTblName;
-        String resTblName = getTblPrefix() + origDataTblName;
+        String resTblName = getResultSetTable(treq);
 
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
@@ -56,7 +52,7 @@ public abstract class TableActionProcessor extends EmbeddedDbProcessor {
             JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
         } catch (Exception e) {
             // does not exists.. fetch data and populate
-            DataGroup data = fetchData(treq, origDataTblName, dbFile, dbAdapter);
+            DataGroup data = fetchData(treq, dbFile, dbAdapter);
             EmbeddedDbUtil.createDataTbl(dbFile, data, dbAdapter, resTblName);
             EmbeddedDbUtil.createDDTbl(dbFile, data, dbAdapter, resTblName);
             EmbeddedDbUtil.createMetaTbl(dbFile, data, dbAdapter, resTblName);
@@ -71,7 +67,7 @@ public abstract class TableActionProcessor extends EmbeddedDbProcessor {
         return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());
     }
 
-    private TableServerRequest getSearchRequest(TableServerRequest treq) throws DataAccessException {
+    protected TableServerRequest getSearchRequest(TableServerRequest treq) throws DataAccessException {
         String searchRequestJson = treq.getParam(SEARCH_REQUEST);
         if (searchRequestJson == null) {
             throw new DataAccessException("Action failed: " + SEARCH_REQUEST + " is missing");
@@ -83,9 +79,17 @@ public abstract class TableActionProcessor extends EmbeddedDbProcessor {
         return sreq;
     }
 
-    public String getTblPrefix() {
-        return "act_";
+    /**
+     * returns the table name of the resultset.  the same request should return the same table name so that it
+     * does not need to be recreated.
+     * @param treq
+     * @return
+     * @throws DataAccessException
+     */
+    protected String getResultSetTable(TableServerRequest treq) throws DataAccessException {
+        return EmbeddedDbUtil.getResultSetID(getSearchRequest(treq));
     }
+
 }
 
 

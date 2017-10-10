@@ -97,7 +97,7 @@ public class FileLoader {
         try {
             File inFile = new File(getDataPath(cls) + tblFile);
 
-            return IpacTableReader.readIpacTable(inFile, null, false, "inputTable");
+            return IpacTableReader.readIpacTable(inFile, null, "inputTable");
         }
         catch (Exception e){
             e.printStackTrace();

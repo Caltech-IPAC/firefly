@@ -56,7 +56,7 @@ public class GatorDD extends EmbeddedDbProcessor {
     public FileInfo createDbFile(TableServerRequest treq) throws DataAccessException {
 
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        File dbFile = new File(ServerContext.getPermWorkDir(), "GatorDD." + dbAdapter.getName());
+        File dbFile = new File(ServerContext.getTempWorkDir(), "GatorDD." + dbAdapter.getName());
         try {
             if (dbFile.createNewFile()) {
                 // created for the first time... populate dd and meta tables
@@ -79,7 +79,7 @@ public class GatorDD extends EmbeddedDbProcessor {
     }
 
     @Override
-    protected DataGroupPart getDataset(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
         String tblName = treq.getParam(CatalogRequest.CATALOG);

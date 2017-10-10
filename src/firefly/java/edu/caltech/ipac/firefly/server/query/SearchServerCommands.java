@@ -25,7 +25,6 @@ import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
@@ -79,8 +78,7 @@ public class SearchServerCommands {
                 List<Integer> rows = StringUtils.convertToListInteger(params.getRequired("selectedRows"), ",");
                 // hitting the database directly.
                 String selCols = cols.size() > 0 ? StringUtils.toString(cols) : "*";
-                String tblName = EmbeddedDbUtil.getDatasetID(treq) ;
-                tblName = StringUtils.isEmpty(tblName) ? "data" : tblName ;
+                String tblName = EmbeddedDbUtil.getResultSetID(treq) ;
                 String inRows = rows.size() > 0 ? StringUtils.toString(rows) : "-1";
 
                 String sql = String.format("select %s from %s where %s in (%s)", selCols, tblName, DataGroup.ROW_NUM, inRows);

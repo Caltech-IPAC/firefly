@@ -33,6 +33,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
 
+import static edu.caltech.ipac.firefly.data.TableServerRequest.*;
+
 
 /**
  * Date: Jun 5, 2009
@@ -44,6 +46,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     //public static long logCounter = 0;
+    private static final List<String> PAGE_PARAMS = Arrays.asList(PAGE_SIZE, START_IDX);
+    private static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO}, "|") + "|";
+
+
 
     private static final Map<StringKey, Object> _activeRequests =
                 Collections.synchronizedMap(new HashMap<>());
@@ -93,7 +99,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             // read in any format.. then write it back out as ipac table
             DataGroup dg = DataGroupReader.readAnyFormat(tblFile, tblIdx);
             File convertedFile = File.createTempFile(request.getRequestId(), ".tbl", ServerContext.getTempWorkDir());
-            DataGroupWriter.write(new BgIpacTableHandler(convertedFile, dg, request));
+            DataGroupWriter.write(convertedFile, dg);
             return convertedFile;
         } else {
             throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(tblFile));
@@ -241,8 +247,21 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
     }
 
+    /**
+     * return the unique ID for the original data set of this request.  This means parameters related
+     * to paging, filtering, sorting, decimating, etc or ignored.
+     * @param request
+     * @return
+     */
     public String getUniqueID(ServerRequest request) {
-        return SearchProcessor.getUniqueIDDef((TableServerRequest) request);
+        // parameters to get original data (before filter, sort, etc.)
+        List<Param> srvParams = new ArrayList<>();
+        for (Param p : request.getParams()) {
+             if (!SYS_PARAMS.contains("|" + p.getName() + "|")) {
+                 srvParams.add(p);
+             }
+        }
+        return createUniqueId(request.getRequestId(), srvParams);
     }
 
     /**
@@ -252,13 +271,34 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
      * @return
      */
     public String getDataKey(ServerRequest request) {
-        TableServerRequest treq = (TableServerRequest) request;
-        SortedSet<Param> params = treq.getDataSetParam();
-        return getUniqueID(treq) + StringUtils.toString(params, "|");
+
+        List<Param> srvParams = new ArrayList<>();
+        for (Param p : request.getParams()) {
+            if (!PAGE_PARAMS.contains(p.getName())) {
+                srvParams.add(p);
+            }
+        }
+        return createUniqueId(request.getRequestId(), srvParams);
+    }
+
+    private String createUniqueId(String reqId, List<Param> params) {
+        String uid = reqId + "-";
+        if ( isSecurityAware() &&
+                ServerContext.getRequestOwner().isAuthUser() ) {
+            uid = uid + ServerContext.getRequestOwner().getUserKey();
+        }
+
+        // sort by parameter name
+        Collections.sort(params, (p1, p2) -> p1.getName().compareTo(p2.getName()));
+
+        for (Param p : params) {
+            uid += "|" + p.toString();
+        }
+
+        return uid;
     }
 
     public FileInfo writeData(OutputStream out, ServerRequest sr) throws DataAccessException {
-        LOGGER.warn("<< slow writeData called." + this.getClass().getSimpleName());
         try {
             TableServerRequest request = (TableServerRequest) sr;
 

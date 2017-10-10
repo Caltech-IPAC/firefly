@@ -40,10 +40,6 @@ public class FileFromExternalTask implements SearchProcessor<FileInfo> {
         return uid;
     }
 
-    public String getDatasetID(ServerRequest request) {
-        return getUniqueID(request);
-    }
-
     public FileInfo getData(ServerRequest request) throws DataAccessException {
         String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);
         ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);

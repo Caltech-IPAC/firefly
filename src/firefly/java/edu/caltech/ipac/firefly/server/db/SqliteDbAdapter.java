@@ -15,9 +15,9 @@ public class SqliteDbAdapter extends BaseDbAdapter {
         return SQLITE;
     }
 
-    public DbInstance getDbInstance(File dbFile) {
+    protected EmbeddedDbInstance createDbInstance(File dbFile) {
         String dbUrl = String.format("jdbc:sqlite:%s", dbFile.getPath());
-        return new EmbeddedDbInstance(getName(), dbUrl, "org.sqlite.JDBC");
+        return new EmbeddedDbInstance(getName(), dbFile, dbUrl, "org.sqlite.JDBC");
     }
 
     public boolean useTxnDuringLoad() {

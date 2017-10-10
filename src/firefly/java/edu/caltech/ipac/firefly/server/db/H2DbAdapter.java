@@ -17,17 +17,13 @@ public class H2DbAdapter extends BaseDbAdapter{
         return H2;
     }
 
-    public DbInstance getDbInstance(File dbFile) {
+    protected EmbeddedDbInstance createDbInstance(File dbFile) {
         String dbUrl = String.format("jdbc:h2:%s;CACHE_SIZE=1048576;LOG=0;UNDO_LOG=0;MVCC=true", dbFile.getPath());
-        return new EmbeddedDbInstance(getName(), dbUrl, "org.h2.Driver");
-    }
-
-    public File getStorageFile(File dbFile) {
-        return dbFile == null ? null : new File(dbFile.getParent(), dbFile.getName() + ".mv.db");
+        return new EmbeddedDbInstance(getName(), dbFile, dbUrl, "org.h2.Driver");
     }
 
     public String createTableFromSelect(String tblName, String selectSql) {
-        return String.format("CREATE TABLE IF NOT EXISTS %s AS (%s)", tblName, selectSql);
+        return String.format("CREATE TABLE %s AS (%s)", tblName, selectSql);
     }
 
 }
