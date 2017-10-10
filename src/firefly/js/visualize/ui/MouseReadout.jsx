@@ -74,7 +74,7 @@ const column3 = {
 };
 const column3_r2 = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
 
-const column4 = {width: 115, paddingLeft:4, display: 'inline-block', textOverflow: 'ellipsis', overflow:'hidden'};
+const column4 = {width: 105, paddingLeft:4, display: 'inline-block', textOverflow: 'ellipsis', overflow:'hidden'};
 const column5 = {
     width: 74,
     paddingRight: 1,
