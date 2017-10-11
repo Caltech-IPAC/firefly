@@ -30,7 +30,20 @@ ext {
               ':websocket-api']
 
   mysql_lib = ':mysql-connector-java-5.1.6-bin'
-  starlink_lib = [':rayreg', ':starlink-registry', ':jcdf', ':eag-healpix', ':ndx', ':mirage', ':gbin', ':vecmath', ':commons-compress', ':starlink-pal', ':starlink-cdf', ':starlink-connect', ':starlink-fits', ':starlink-table', ':starlink-util', ':starlink-votable']
+  starlink_lib = [':rayreg',
+                  ':starlink-registry-1.2+2016.05.03',
+                  ':jcdf-1.2.2',
+                  ':eag-healpix-2017.02.26',
+                  ':ndx', ':mirage', ':gbin',
+                  ':vecmath-1.5.2',
+                  ':commons-compress-1.13',
+                  ':starlink-pal-1.0.1+2016.08.11',
+                  ':starlink-cdf-1.0+2017.01.04',
+                  ':starlink-connect-0.1+2016.05.03',
+                  ':starlink-fits-0.1+2017.03.29',
+                  ':starlink-table-3.2',
+                  ':starlink-util-1.0+2017.03.17',
+                  ':starlink-votable-2.0+2016.12.22']
   xbeanfinder_lib = [':xbean-finder-4.1', ':asm-5.0.3']
   spring_lib = [':spring-beans', ':spring-core', ':spring-jdbc', ':spring-tx', ':spring-web']
   fits_io_lib = [':fits_io']
