@@ -8,14 +8,16 @@ import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {makeWorldPt, makeScreenPt} from '../visualize/Point.js';
+import {makeWorldPt, makeScreenPt, makeDevicePt} from '../visualize/Point.js';
 import {primePlot, getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {getTopmostVisiblePoint} from '../visualize/VisUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {makeDirectionArrowDrawObj} from '../visualize/draw/DirectionArrowDrawObj.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {getPixScaleDeg} from '../visualize/WebPlot.js';
 import DrawLayerCntlr, { dispatchForceDrawLayerUpdate} from '../visualize/DrawLayerCntlr.js';
 import Color from '../util/Color.js';
+import {CoordinateSys} from '../visualize/CoordSys.js';
 
 const ID= 'NORTH_UP_COMPASS_TOOL';
 const TYPE_ID= 'NORTH_UP_COMPASS_TYPE';
@@ -70,6 +72,7 @@ function getLayerChanges(drawLayer, action) {
     var rgba = Color.getRGBA(drawingDef.color);
 
     switch(action.type) {
+
         case ImagePlotCntlr.ZOOM_IMAGE_START:
             if (drawingDef && rgba && !drawingDef.preAlpha) {
                 drawingDef.preAlpha = rgba[3];
@@ -79,6 +82,9 @@ function getLayerChanges(drawLayer, action) {
             break;
 
         case ImagePlotCntlr.ZOOM_IMAGE:
+        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
+        case ImagePlotCntlr.CHANGE_HIPS:
+        case ImagePlotCntlr.ANY_REPLOT:
             if (drawingDef && drawingDef.preAlpha && rgba && drawingDef.preAlpha !== rgba[3]) {
                 rgba[3] = drawingDef.preAlpha;
                 drawingDef.color = Color.toRGBAString(rgba);
@@ -142,14 +148,21 @@ function makeCompass(plotId, action){
     // var sptStart = makeScreenPt(sx, sy);
 
 
-    const sptStart= cc.getScreenCoords(getTopmostVisiblePoint(pv, 55, 55));
+    let sptStart= cc.getScreenCoords(getTopmostVisiblePoint(pv, 55, 75));
     if (!sptStart) return null;
 
 
-    var wpStart= cc.getWorldCoords(sptStart);
-    var cdelt1 = cc.getImagePixelScaleInDeg();
+    var wpStart= cc.getWorldCoords(sptStart, CoordinateSys.EQ_J2000);
+
+    if (!wpStart) {
+        wpStart= cc.getWorldCoords( makeDevicePt(cc.viewDim.width/2, cc.viewDim.height/2), CoordinateSys.EQ_J2000);
+        if (!wpStart) return null;
+        sptStart= cc.getScreenCoords(wpStart);
+    }
+
+    const cdelt1 = getPixScaleDeg(plot);
     var zf= cc.zoomFactor || 1;
-    var wpt2= makeWorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(px));
+    var wpt2= makeWorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(px), CoordinateSys.EQ_J2000);
     var spt2= cc.getScreenCoords(wpt2);
     var sptE2 = getEastFromNorthOnScreen(cc, sptStart, spt2, Math.PI/2);
 

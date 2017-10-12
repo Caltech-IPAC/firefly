@@ -8,10 +8,12 @@ import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findCurrentCenterPoint, findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
-import {WebPlot, clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
+import {WebPlot, clonePlotWithZoom, PlotAttribute, isHiPS, isImage,
+    replaceHiPSProjectionUsingProperties, replaceHiPSProjection} from '../WebPlot.js';
+import {changeProjectionCenter} from '../HiPSUtil.js';
 import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
-import {isPlotNorth, getRotationAngle, isRotationMatching} from '../VisUtil.js';
+import {convert, isPlotNorth, getRotationAngle, isRotationMatching} from '../VisUtil.js';
 import {PlotPref} from './../PlotPref.js';
 import {primePlot,
         clonePvAry,
@@ -24,7 +26,8 @@ import {primePlot,
         findPlotGroup,
         isInSameGroup,
         findPlot,
-        getPlotViewById} from '../PlotViewUtil.js';
+        getPlotViewById,
+        getCenterOfProjection} from '../PlotViewUtil.js';
 import {makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
@@ -89,6 +92,14 @@ export function reducer(state, action) {
         case Cntlr.PROCESS_SCROLL  :
             retState= processScroll(state,action);
             break;
+
+        case Cntlr.CHANGE_CENTER_OF_PROJECTION:
+            retState= processProjectionChange(state,action);
+            break;
+        case Cntlr.CHANGE_HIPS :
+            retState= changeHiPS(state,action);
+            break;
+
         case Cntlr.RECENTER:
             retState= recenter(state,action);
             break;
@@ -118,6 +129,8 @@ export function reducer(state, action) {
             retState= changeOverlayPlotAttributes(state,action);
             break;
 
+
+
         case Cntlr.ADD_PROCESSED_TILES:
             retState= addProcessedTileData(state,action);
             break;
@@ -145,7 +158,7 @@ function changePlotAttribute(state,action) {
 
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
-    plotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
+    plotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
         (pv)=> replaceAtt(pv,{[attKey]:attValue},toAll) );
     return clone(state,{plotViewAry});
 }
@@ -246,6 +259,46 @@ function installTiles(state, action) {
 }
 
 
+
+function processProjectionChange(state,action) {
+    const {plotId,centerProjPt}= action.payload;
+    const {plotViewAry}= state;
+    let pv= getPlotViewById(state, plotId);
+    const plot= primePlot(pv);
+    if (!plot) return state;
+    pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
+    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+}
+
+function changeHiPS(state,action) {
+    const {plotId,hipsProperties, hipsUrlRoot, coordSys}= action.payload;
+    let {centerProjPt}= action.payload;
+    const {plotViewAry}= state;
+    let pv= getPlotViewById(state, plotId);
+    let plot= primePlot(pv);
+    if (!plot) return state;
+
+    plot= clone(plot);
+    if (hipsUrlRoot) plot.hipsUrlRoot= hipsUrlRoot;
+    if (hipsProperties) {
+        plot.hipsProperties= hipsProperties;
+        plot.title= hipsProperties.label || 'HiPS';
+        plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
+    }
+    if (coordSys) {
+        plot= replaceHiPSProjection(plot, coordSys, getCenterOfProjection(plot) );
+        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(plot), coordSys);
+    }
+
+    if (centerProjPt) plot= changeProjectionCenter(plot,centerProjPt);
+
+    pv= replacePrimaryPlot(pv, plot);
+    pv.serverCall= 'success';
+    pv.plottingStatus= 'done';
+    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+}
+
+
 function processScroll(state,action) {
     const {plotId,scrollPt}= action.payload;
     const {plotGroupAry, wcsMatchType}= state;
@@ -319,12 +372,12 @@ function updateClientRotation(state,action) {
     if (state.wcsMatchType || rotateType===RotateType.NORTH) {
         plotViewAry= clonePvAryWithPv(plotViewAry, masterPv);
         if (actionScope===ActionScope.GROUP) {
-            plotViewAry= matchPlotView(masterPv,plotViewAry, plotGroup, (pv) => rotatePvToMatch(pv,masterPv, rotateNorthLock));
+            plotViewAry= matchPlotView(masterPv,plotViewAry, plotGroup, false, (pv) => rotatePvToMatch(pv,masterPv, rotateNorthLock));
         }
     }
     else {
         plotViewAry= actionScope===ActionScope.GROUP ?
-            applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, (pv) => rotatePv(pv,targetAngle, rotateNorthLock)) :
+            applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, false, (pv) => rotatePv(pv,targetAngle, rotateNorthLock)) :
             clonePvAryWithPv(plotViewAry, masterPv);
     }
 
@@ -356,7 +409,7 @@ function updateClientFlip(state,action) {
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
     plotViewAry= actionScope===ActionScope.GROUP ?
-        applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, (pv) => flipPv(pv,isY)) :
+        applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, false, (pv) => flipPv(pv,isY)) :
         clonePvAryWithPv(plotViewAry, flipPv(pv,isY));
 
     return clone(state,{plotViewAry});
@@ -379,7 +432,11 @@ function updateViewSize(state,action) {
 
         const masterPv= getPlotViewById(state, state.mpwWcsPrimId);
 
-        if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
+        if (isHiPS(plot)) {
+            const centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
+            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
+        }
+        else if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
             pv= updateScrollToWcsMatch(state.wcsMatchType, masterPv, pv);
         }
         else if (state.wcsMatchType===WcsMatchType.Target) {
@@ -414,13 +471,14 @@ function recenter(state,action) {
     if (state.wcsMatchType) {
         const newPv= recenterPv(centerPt, centerOnImage)(pv);
         plotViewAry= replacePlotView(plotViewAry, newPv);
-        plotViewAry= matchPlotView(newPv, plotViewAry,plotGroup, (pv) => {
+        plotViewAry= matchPlotView(newPv, plotViewAry,plotGroup, false, (pv) => {
             return updateScrollToWcsMatch(state.wcsMatchType, newPv, pv);
         } );
     }
     else {
-        plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup, recenterPv(centerPt, centerOnImage));
+        plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup,true, recenterPv(centerPt, centerOnImage));
     }
+
 
     return clone(state,{plotViewAry, mpwWcsPrimId:plotId});
 }
@@ -455,7 +513,18 @@ function recenterPv(centerPt,  centerOnImage) {
                 centerImagePt = makeImagePt(plot.dataWidth / 2, plot.dataHeight / 2);
             }
         }
-        return updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv, centerImagePt));
+
+        if (isImage(primePlot(pv))) {
+            return updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv, centerImagePt));
+        }
+        else {
+            let cp;
+            if (centerPt) cp= CCUtil.getWorldCoords(plot,centerPt);
+            if (!cp) cp= plot.attributes[PlotAttribute.FIXED_TARGET];
+            if (!cp) cp= makeWorldPt(0,0,plot.imageCoordSys);
+            return replacePrimaryPlot(pv, changeProjectionCenter(plot,cp));
+        }
+
     };
 }
 

@@ -7,7 +7,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Enum from 'enum';
 import numeral from 'numeral';
-import {convertZoomToString} from '../ZoomUtil.js';
+import {convertZoomToString, getZoomDesc} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {getTaskCount} from '../../core/AppDataCntlr.js';
 
@@ -31,7 +31,7 @@ export function PlotTitle({plotView:pv, titleType, brief}) {
             break;
 
     }
-    let zlStr= convertZoomToString(plot.zoomFactor);
+    let zlStr= getZoomDesc(pv);
     let rotString= null;
     if (pv.rotation) {
         if (pv.plotViewCtx.rotateNorthLock) {
@@ -47,7 +47,7 @@ export function PlotTitle({plotView:pv, titleType, brief}) {
     return (
         <div className={styleName} title={plot.title}>
             <div className='plot-title-title'>{plot.title}</div>
-            {!brief ? <div className='plot-title-zoom'>{zlStr}</div> : ''}
+            {!brief ? <div className='plot-title-zoom'><div dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
             {!brief && rotString ? <div className='plot-title-rotation'>{rotString}</div> : ''}
             {showWorking ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
         </div>

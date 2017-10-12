@@ -9,7 +9,7 @@ import {makeProjectionPt, makeImagePt} from '../Point.js';
 export const SansonFlamsteedProjection= {
 
     revProject (lon, lat, hdr, useProjException= false) {
-        var fline, fsamp;
+        let fline, fsamp;
         const celref = [];
         const euler = [];
 
@@ -27,10 +27,9 @@ export const SansonFlamsteedProjection= {
         if (!celsetSuccess && !useProjException)  return null;
 
         const result = sphfwd(lon, lat, euler);
-        var xx = result[0];
-        var yy = result[1];
+        const yy = result[1];
 
-        xx = xx * Math.cos(yy * DtoR);
+        const xx = result[0] * Math.cos(yy * DtoR);
 
         if (using_cd) {
             fsamp = dc1_1 * xx + dc1_2 * yy;
@@ -55,8 +54,7 @@ export const SansonFlamsteedProjection= {
     },
 
     fwdProject(x, y, hdr, useProjException= false) {
-        var lat, lon;
-        var xx, yy;
+        let xx, yy;
         const celref= [];
         const euler = [];
 
@@ -65,8 +63,8 @@ export const SansonFlamsteedProjection= {
         const glat = hdr.crval2;
         const twist = hdr.crota2;
 
-        var fsamp = x - crpix1 + 1;
-        var fline = y - crpix2 + 1;
+        let fsamp = x - crpix1 + 1;
+        let fline = y - crpix2 + 1;
 
 
         const rtwist = -twist * DtoR;
@@ -95,7 +93,7 @@ export const SansonFlamsteedProjection= {
         const celsetSuccess = celset(celref,euler,useProjException);
         if (!celsetSuccess && !useProjException)  return null;
 
-        if (Math.cos(yy * DtoR) == 0) {
+        if (Math.cos(yy * DtoR)===0) {
             xx = 0;
         }
         else {
@@ -103,8 +101,8 @@ export const SansonFlamsteedProjection= {
         }
 
         const result = sphrev(xx, yy, euler);
-        lon = result[0];
-        lat = result[1];
+        const lon = result[0];
+        const lat = result[1];
 
         return makeProjectionPt(lon, lat);
     }

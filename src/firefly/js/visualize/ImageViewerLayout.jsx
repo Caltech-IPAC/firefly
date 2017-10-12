@@ -5,12 +5,12 @@
 import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,get, isString, isFunction, throttle} from 'lodash';
+import {flux} from '../Firefly.js';
 import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
 import {makeScreenPt, makeDevicePt} from './Point.js';
 import {plotMover} from './PlotTransformUtils.js';
-import {flux} from '../Firefly.js';
 import {DrawerComponent}  from './draw/DrawerComponent.jsx';
 import {CysConverter}  from './CsysConverter.js';
 import {UserZoomTypes}  from './ZoomUtil.js';
@@ -26,9 +26,11 @@ import {
     dispatchZoom,
     dispatchRecenter,
     dispatchProcessScroll,
+    dispatchChangeCenterOfProjection,
     dispatchChangeActivePlotView,
     dispatchUpdateViewSize} from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
+import {isHiPS} from './WebPlot.js';
 import Color from '../util/Color.js';
 
 const DEFAULT_CURSOR= 'crosshair';
@@ -160,7 +162,7 @@ export class ImageViewerLayout extends PureComponent {
             else { // fire to all non-exclusive layers, scroll, and determine cursor
                 list.filter( (dl) => !get(dl, 'exclusiveDef.exclusiveOnDown',false))
                     .forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
-                this.scroll(plotView,mouseState,screenX,screenY);
+                this.scroll(plotView,mouseState,screenX,screenY,mouseState===DOWN ? screenPt : null );
                 let cursor = DEFAULT_CURSOR;
                 const cursorCandidate= ownerCandidate || findMouseOwner(drawLayersAry,primePlot(plotView),screenPt);
                 if (MOVE.is(mouseState) && get(cursorCandidate, 'getCursor') ) {
@@ -172,7 +174,7 @@ export class ImageViewerLayout extends PureComponent {
         fireMouseCtxChange(mouseStatePayload);  // this for anyone listening directly to the mouse
     }
 
-    scroll(plotView,mouseState,screenX,screenY) {
+    scroll(plotView,mouseState,screenX,screenY, mouseDownScreenPt) {
          if (!screenX && !screenY) return;
          const {plotId}= plotView;
 
@@ -180,7 +182,7 @@ export class ImageViewerLayout extends PureComponent {
              case DOWN :
                  dispatchChangeActivePlotView(plotId);
                  const {scrollX, scrollY}= plotView;
-                 this.plotDrag= plotMover(screenX,screenY,makeScreenPt(scrollX,scrollY), plotView);
+                 this.plotDrag= plotMover(screenX,screenY,makeScreenPt(scrollX,scrollY), mouseDownScreenPt, plotView);
                  break;
              case DRAG :
                  if (this.plotDrag) {
@@ -257,8 +259,17 @@ ImageViewerLayout.propTypes= {
 
 
 function scrollMove(plotDrag, plotId, screenX,screenY) {
-    const newScrollPt= plotDrag(screenX,screenY);
-    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+    const pv= getPlotViewById(visRoot(), plotId);
+    const newScrollPt= plotDrag(screenX,screenY, pv);
+    if (primePlot(pv).type==='image') {
+        dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+    }
+    else {
+        const cc= CysConverter.make(primePlot(pv));
+        const wp= cc.getWorldCoords(newScrollPt);
+        if (!wp) return;
+        dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});
+    }
 }
 
 const scrollMoveThrottled= BrowserInfo.isFirefox() ? throttle(scrollMove,100) : throttle(scrollMove,30);
@@ -276,6 +287,7 @@ function isImageOnScreen(plotView) {
 
     const {viewDim}= plotView;
     const plot= primePlot(plotView);
+    if (isHiPS(plot)) return true;
 
     if (isNil(plotView.scrollX) || isNil(plotView.scrollY)) return false;
     const cc= CysConverter.make(plot);

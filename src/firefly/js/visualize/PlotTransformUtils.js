@@ -10,6 +10,7 @@ import {get, isNil} from 'lodash';
 import {Matrix} from 'transformation-matrix-js';
 import {primePlot} from './PlotViewUtil.js';
 import {clone, updateSet} from '../util/WebUtil.js';
+import {getCenterOfProjection} from './PlotViewUtil.js';
 
 import {toRadians} from './VisUtil.js';
 import {CysConverter}  from './CsysConverter.js';
@@ -98,36 +99,69 @@ function insertTransform(inPlotView, affTrans) {
  * @param originalDeviceX
  * @param originalDeviceY
  * @param {ScreenPt} originalScrollPt
- * @param {PlotView} plotView
+ * @param mouseDownScreenPt
+ * @param {PlotView} startingPlotView
  * @return {function({number}, {number})}
  */
-export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt,plotView) {
+export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt, mouseDownScreenPt, startingPlotView) {
 
-    const cc= CysConverter.make(primePlot(plotView));
+    const startingPlot= primePlot(startingPlotView);
+    const cc= CysConverter.make(startingPlot);
     const originalScreenPt= cc.getScreenCoords(makeDevicePt(originalDeviceX ,originalDeviceY));
-    const xDir= plotView.flipY ? -1 : 1;
-    const yDir= plotView.flipX ? -1 : 1;
+    const startWp= cc.getWorldCoords(mouseDownScreenPt, startingPlot.imageCoordSys);
+    const xDir= startingPlotView.flipY ? -1 : 1;
+    const yDir= startingPlotView.flipX ? -1 : 1;
+    let xdiff, ydiff;
+    let lastDevPt= makeDevicePt(originalDeviceX ,originalDeviceY);
 
-    return (screenX, screenY) => {
 
-        const newScreenPt= cc.getScreenCoords(makeDevicePt(screenX,screenY));
 
-        const xdiff= (newScreenPt.x- originalScreenPt.x) * xDir;
-        const ydiff= (newScreenPt.y- originalScreenPt.y) * yDir;
+    if (startingPlot.type==='image') {
+        return (screenX, screenY) => {
+            const newDevPt = makeDevicePt(screenX, screenY);
+            const newScreenPt = cc.getScreenCoords(newDevPt);
+            xdiff = (newScreenPt.x - originalScreenPt.x) * xDir;
+            ydiff = (newScreenPt.y - originalScreenPt.y) * yDir;
 
-        const newScrX= originalScrollPt.x -xdiff;
-        const newScrY= originalScrollPt.y -ydiff;
+            const newScrX = originalScrollPt.x - xdiff;
+            const newScrY = originalScrollPt.y - ydiff;
 
-        return makeScreenPt(newScrX,newScrY);
-    };
+            return makeScreenPt(newScrX, newScrY);
+        };
+    }
+    else {
+        return (screenX, screenY, pv) => {
+            const newDevPt= makeDevicePt(screenX,screenY);
+            const plot= primePlot(startingPlotView);
+            if (!startWp) return null;
+
+            xdiff= (newDevPt.x- lastDevPt.x);
+            ydiff= (newDevPt.y- lastDevPt.y);
+
+            const actionPlot= primePlot(pv);
+            const activeCC= CysConverter.make(actionPlot);
+            const centerOfProj= getCenterOfProjection(actionPlot);
+            const originalCenterOfProjDev= activeCC.getDeviceCoords(centerOfProj);
+
+            if (!originalCenterOfProjDev) {
+                // console.log('originalCenterOfProjScreen null');
+                return null;
+            }
+
+            const newCenterOfProjDev= makeDevicePt(originalCenterOfProjDev.x-xdiff, originalCenterOfProjDev.y-ydiff);
+            const newWp= activeCC.getWorldCoords(newCenterOfProjDev,plot.imageCoordSys);
+
+            if (!newWp) return null;
+
+
+            if (newWp.y < -89.7) newWp.y= -89.7;
+            if (newWp.y >  89.7) newWp.y=  89.7;
+
+            lastDevPt= newDevPt;
+
+            return newWp;
+
+        };
+    }
 }
-
-
-
-
-
-
-
-
-
 

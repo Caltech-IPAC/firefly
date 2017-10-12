@@ -9,7 +9,11 @@ import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
 import {makeProjection} from './projection/Projection.js';
 import PlotState from './PlotState.js';
-
+import BandState from './BandState.js';
+import {makeWorldPt, makeScreenPt} from './Point.js';
+import {changeProjectionCenter} from './HiPSUtil.js';
+import {CysConverter} from './CsysConverter.js';
+import {makeImagePt} from './Point';
 
 
 export const RDConst= {
@@ -20,10 +24,10 @@ export const RDConst= {
    // SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE', 'IMAGE_OVERLAY']
 };
 
+const HIPS_DATA_WIDTH= 100000;
+const HIPS_DATA_HEIGHT= 100000;
+
 export const PlotAttribute= {
-
-
-
 
     MOVING_TARGET_CTX_ATTR:   'MOVING_TARGET_CTX_ATTR',
 
@@ -129,17 +133,6 @@ export const PlotAttribute= {
  */
 
 
-
-/**
- * @global
- * @public
- * @typedef {Object} ViewPort
- * @summary Make a viewport object
- * @prop {number} x  - x location that the viewport begins
- * @prop {number} y - y location that the viewport begins
- * @prop {Dimension} dim - dimensions of the viewport
- */
-
 /**
  * @global
  * @public
@@ -160,7 +153,7 @@ export const PlotAttribute= {
  * @prop {number} zoomFactor - the zoom factor
  * @prop {string} title - title of the plot
  * @prop {object} webFitsData -  needs documentation
- * @prop {ImageTileData} serverImages -  object contains the image tile information
+ * @prop {ImageTileData} tileData -  object contains the image tile information
  * @prop {CoordinateSys} imageCoordSys - the image coordinate system
  * @prop {Dimension} screenSize - width/height in screen pixels
  * @prop {Projection} projection - projection routines for this projections
@@ -213,10 +206,32 @@ export const PlotAttribute= {
  * @prop {number} height - height of this tile
  * @prop {number} index - index of this tile
  * @prop {string} url - file key to use in the service to retrieve this tile
- * @prop {number} xoff - pixel offset of this tile
- * @prop {number} yoff - pixel offset of this tile
+ * @prop {number} x - pixel offset of this tile
+ * @prop {number} y - pixel offset of this tile
  *
  */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} HiPSTile
+ * @summary a single hips image tile
+ *  url computed by: NorderK/DirD/NpixN{.ext}
+ *  where
+ *  K= nOrder
+ *  N= tileNumber
+ *  D=(N/10000)*10000 (integer division)
+ *
+ * @prop {Array.<WorldPt>} corners (maybe) in worldPt
+ * @prop {Array.<devpt>} devPtCorners  (maybe) in screenPt (keep here?)
+ * @prop {string} url - root url (maybe, don't  know if necessary)
+ * @props {number} nOrder (K)
+ * @props {number} tileNumber (N)
+ *
+ */
+
+
+
 
 /**
  * @global
@@ -235,6 +250,51 @@ export const PlotAttribute= {
 
 
 const relatedIdRoot= '-Related-';
+
+export const isHiPS= (plot) => Boolean(plot && plot.type==='hips');
+export const isImage= (plot) => Boolean(plot && plot.type==='image');
+export const isKnownType= (plot) => Boolean(plot && (plot.type==='image' || plot.type==='hips'));
+
+/**
+ *
+ * @param plotId
+ * @param type
+ * @param asOverlay
+ * @param imageCoordSys
+ * @return {WebPlot}
+ */
+function makePlotTemplate(plotId, type, asOverlay, imageCoordSys) {
+    return {
+        plotId,
+        type,
+        imageCoordSys,
+        asOverlay,
+        plotImageId     : plotId+'---NEEDS___INIT',
+        tileData    : undefined,
+        relatedData     : undefined,
+        plotState : undefined,
+        projection: undefined,
+        dataWidth : undefined,
+        dataHeight : undefined,
+        imageScaleFactor: undefined,
+        title : '',
+        plotDesc        : '',
+        dataDesc        : '',
+        webFitsData     : undefined,
+        //=== Mutable =====================
+        screenSize: {width:0, height:0},
+        zoomFactor: 1,
+        affTrans : undefined,
+        viewDim  : undefined,
+        attributes: undefined,
+
+        // a note about conversionCache - the caches (using a map) calls to convert WorldPt to ImagePt
+        // have this here breaks the redux paradigm, however it still seems to be the best place. The cache
+        // is completely transient. If we start serializing the store there should not be much of an issue.
+        conversionCache: new Map(),
+        //=== End Mutable =====================
+    };
+}
 
 
 /**
@@ -256,18 +316,16 @@ export const WebPlot= {
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
         const zf= plotState.getZoomLevel();
 
-        const plot= {
-            plotId,
-            plotImageId     : plotId+'---NEEDS___INIT',
-            serverImages    : wpInit.initImages,
-            imageCoordSys   : CoordinateSys.parse(wpInit.imageCoordSys),
+        let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(wpInit.imageCoordSys));
+
+        const imagePlot= {
+            tileData    : wpInit.initImages,
             relatedData     : null,
             plotState,
             projection,
             dataWidth       : wpInit.dataWidth,
             dataHeight      : wpInit.dataHeight,
             imageScaleFactor: wpInit.imageScaleFactor,
-
             title : '',
             plotDesc        : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
@@ -275,18 +333,10 @@ export const WebPlot= {
             //=== Mutable =====================
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,
-            alive    : true,
-            affTrans : null,
-            viewDim  : null,
-            attributes,
-
-                 // a note about conversionCache - the caches (using a map) calls to convert WorldPt to ImagePt
-                 // have this here breaks the redux paradigm, however it still seems to be the best place. The cache
-                 // is completely transient. If we start serializing the store there should not be much of an issue.
-            conversionCache: new Map(),
+            attributes: {},
             //=== End Mutable =====================
-            asOverlay
         };
+        plot= clone(plot, imagePlot);
 
         if (wpInit.relatedData) {
             plot.relatedData= wpInit.relatedData.map( (d) => clone(d,{relatedDataId: plotId+relatedIdRoot+d.dataKey}));
@@ -295,25 +345,171 @@ export const WebPlot= {
         return plot;
     },
 
+    /**
+     *
+     * @param plotId
+     * @param wpRequest
+     * @param hipsProperties
+     * @param desc
+     * @param zoomFactor
+     * @param attributes
+     * @param asOverlay
+     * @return {WebPlot} the new WebPlot object for HiPS
+     */
+    makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, desc, zoomFactor=1, attributes= {}, asOverlay= false) {
+
+        const plotState= PlotState.makePlotState();
+
+        const bandState= BandState.makeBandState();
+
+        bandState.plotRequestTmp= wpRequest;
+        bandState.rangeValuesSerialize = null; // todo
+        bandState.bandVisible= true; //todo
+        bandState.rangeValues= null; //todo
+        plotState.bandStateAry= [bandState,null,null];
+        plotState.ctxStr=null;
+        plotState.newPlot= true;
+        plotState.zoomLevel= 1;
+        plotState.threeColor= false;
+        plotState.colorTableId= 0;
+
+        const hipsCoordSys= getHiPSCoordSysFromProperties(hipsProperties);
+        const projection= makeHiPSProjection(hipsCoordSys, 0,0);
+
+        const plot= makePlotTemplate(plotId,'hips',asOverlay, hipsCoordSys);
+
+        const hipsPlot= {
+            //HiPS specific
+            nside: 3,
+            hipsUrlRoot: wpRequest.getHipsRootUrl(),
+            dataCoordSys : hipsCoordSys,
+            hipsProperties,
+
+            /// other
+            plotState,
+            projection,
+            dataWidth: HIPS_DATA_WIDTH,
+            dataHeight: HIPS_DATA_HEIGHT,
+            imageScaleFactor: 1,
+
+            title : hipsProperties.label || 'HiPS',
+            plotDesc        : desc,
+            dataDesc        : hipsProperties.label || 'HiPS',
+            //=== Mutable =====================
+            screenSize: {width:HIPS_DATA_WIDTH*zoomFactor, height:HIPS_DATA_HEIGHT*zoomFactor},
+            zoomFactor,
+            attributes,
+
+            //=== End Mutable =====================
+
+        };
+
+        return clone(plot, hipsPlot);
+    },
+
 
     /**
      *
      * @param {WebPlot} wpData
      * @param {object} stateJson
-     * @param {object} serverImages
+     * @param {ImageTileData} tileData
      * @return {*}
      */
-    setPlotState(wpData,stateJson,serverImages) {
+    setPlotState(wpData,stateJson,tileData) {
         const plotState= PlotState.makePlotStateWithJson(stateJson);
         const zf= plotState.getZoomLevel();
         const screenSize= {width:wpData.dataWidth*zf, height:wpData.dataHeight*zf};
         const plot= Object.assign({},wpData,{plotState, zoomFactor:zf,screenSize});
-        if (serverImages) plot.serverImages= serverImages;
+        if (tileData) plot.tileData= tileData;
         return plot;
     },
 
 
 };
+
+
+/**
+ *
+ * @param {CoordinateSys} coordinateSys
+ * @param lon
+ * @param lat
+ * @return {Projection}
+ */
+function makeHiPSProjection(coordinateSys, lon=0, lat=0) {
+    const header= {
+        cdelt1: 180/HIPS_DATA_WIDTH,
+        cdelt2: 180/HIPS_DATA_HEIGHT,
+        maptype: 5,
+        crpix1: HIPS_DATA_WIDTH*.5,
+        crpix2: HIPS_DATA_HEIGHT*.5,
+        crval1: lon,
+        crval2: lat
+
+    };
+    return makeProjection({header, coorindateSys:coordinateSys.toString()});
+}
+
+
+function getHiPSCoordSysFromProperties(hipsProperties) {
+    switch (hipsProperties.hips_frame) {
+        case 'equatorial' : return CoordinateSys.EQ_J2000;
+        case 'galactic' :   return CoordinateSys.GALACTIC;
+        case 'ecliptic' :   return CoordinateSys.ECL_B1950;
+        default:            return CoordinateSys.GALACTIC;
+    }
+}
+
+function makeHiPSProjectionUsingProperties(hipsProperties, lon=0, lat=0) {
+    return makeHiPSProjection(getHiPSCoordSysFromProperties(hipsProperties), lon,lat);
+}
+
+
+/**
+ * replace the hips projection if the coordinate system changes
+ * @param {WebPlot} plot
+ * @param hipsProperties
+ * @param {WorldPt} wp
+ */
+export function replaceHiPSProjectionUsingProperties(plot, hipsProperties, wp= makeWorldPt(0,0)) {
+    const projection= makeHiPSProjectionUsingProperties(hipsProperties, wp.x, wp.y);
+    const retPlot= clone(plot);
+    retPlot.imageCoordSys= projection.coordSys;
+    retPlot.dataCoordSys= projection.coordSys;
+    retPlot.projection= projection;
+    return retPlot;
+}
+
+/**
+ * replace the hips projection if the coordinate system changes
+ * @param {WebPlot} plot
+ * @param coordinateSys
+ * @param {WorldPt} wp
+ */
+export function replaceHiPSProjection(plot, coordinateSys, wp= makeWorldPt(0,0)) {
+    const projection= makeHiPSProjection(coordinateSys, wp.x, wp.y);
+    const retPlot= clone(plot);
+    retPlot.imageCoordSys= projection.coordSys;
+    //note- the dataCoordSys stays the same
+    retPlot.projection= projection;
+    return retPlot;
+}
+
+
+/**
+ * replace the header in the transform of the plot object
+ * @param {WebPlot} plot
+ * @param {Object} header
+ * @return {WebPlot}
+ */
+export function replaceHeader(plot, header) {
+    const retPlot= clone(plot);
+    retPlot.conversionCache= new Map();
+    retPlot.projection= makeProjection({header:clone(header), coorindateSys:plot.projection.coordSys.toString()});
+    return retPlot;
+}
+
+
+
 
 
 /**
@@ -338,4 +534,58 @@ export function clonePlotWithZoom(plot,zoomFactor) {
     const screenSize= {width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor};
     return Object.assign({},plot,{zoomFactor,screenSize});
 }
+
+
+/**
+ *
+ * @param {WebPlot|CysConverter} plot
+ * @return {number}
+ */
+export function getScreenPixScaleArcSec(plot) {
+    if (!plot || !plot.projection || !isKnownType(plot)) return 0;
+    if (isImage(plot)) {
+        return plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
+    }
+    else if (isHiPS(plot)) {
+        const pt00= makeWorldPt(0,0, plot.imageCoordSys);
+        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const cc= CysConverter.make(tmpPlot);
+        const scrP= cc.getScreenCoords( pt00);
+        const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
+        return Math.abs(0-pt2.x)*3600;
+    }
+    return 0;
+}
+
+/**
+ *
+ * @param {WebPlot|CysConverter} plot
+ * @return {number}
+ */
+export function getPixScaleArcSec(plot) {
+    return getPixScaleDeg(plot)*3600;
+}
+
+/**
+ *
+ * @param {WebPlot|CysConverter} plot
+ * @return {number}
+ */
+export function getPixScaleDeg(plot) {
+    if (!plot || !plot.projection || !isKnownType(plot) ) return 0;
+    if (!plot || !plot.projection) return 0;
+    if (isImage(plot)) {
+        return plot.projection.getPixelScaleDegree();
+    }
+    else if (isHiPS(plot)) {
+        const pt00= makeWorldPt(0,0, plot.imageCoordSys);
+        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const cc= CysConverter.make(tmpPlot);
+        const imP= cc.getImageCoords( pt00);
+        const pt2= cc.getWorldCoords( makeImagePt(imP.x-1, imP.y), plot.imageCoordSys);
+        return Math.abs(0-pt2.x);
+    }
+    return 0;
+}
+
 

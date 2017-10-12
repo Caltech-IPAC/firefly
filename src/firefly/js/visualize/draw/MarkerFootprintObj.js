@@ -453,8 +453,10 @@ function getRectCorners(pt, width, height, unitType, cc, outUnit = Point.W_PT) {
 export function getMarkerImageSize(rDrawAry, cc) {
     var area = rDrawAry.reduce( (prev, oneDrawObj) => {
         if (get(oneDrawObj, 'isMarker', false)) {
-            var {upperLeft, width, height} = getObjArea(oneDrawObj, cc);  // in image coordinate
-            var [min_x, min_y, max_x, max_y] = [upperLeft.x, upperLeft.y - height, upperLeft.x + width, upperLeft.y];
+            const area = getObjArea(oneDrawObj, cc);  // in image coordinate
+            if (!area) return prev;
+            const {upperLeft, width, height} = area;
+            const [min_x, min_y, max_x, max_y] = [upperLeft.x, upperLeft.y - height, upperLeft.x + width, upperLeft.y];
 
             if ((!has(prev, 'min_x')) || (min_x < prev.min_x)) {
                 prev.min_x = min_x;
@@ -485,8 +487,10 @@ export function getMarkerImageSize(rDrawAry, cc) {
  * @returns {{upperLeft: *, width: *, height: *}}
  */
 function getObjArea(obj, cc) {
-    var {upperLeft, width, height, centerPt, center} = (obj.type === ShapeDataObj.SHAPE_DATA_OBJ) ?
-                                                getDrawobjArea(obj, cc): getPointDataobjArea(obj, cc);
+    const area= (obj.type === ShapeDataObj.SHAPE_DATA_OBJ) ? getDrawobjArea(obj, cc): getPointDataobjArea(obj, cc);
+    if (!area) return null;
+
+    var {upperLeft, width, height, centerPt, center} = area;
 
     if (center) {
         centerPt = center;

@@ -99,6 +99,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
  function getLayerChanges(drawLayer, action) {
 
      switch (action.type){
+         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
          case ImagePlotCntlr.ANY_REPLOT:
              const drawData= Object.assign({},drawLayer.drawData, {data:null});
              return {drawData};

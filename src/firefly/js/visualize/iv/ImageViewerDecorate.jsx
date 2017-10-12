@@ -13,7 +13,7 @@ import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
-import {PlotAttribute} from '../WebPlot.js';
+import {PlotAttribute, isImage, isHiPS} from '../WebPlot.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';
@@ -132,7 +132,7 @@ function contextToolbar(pv,dlAry,extensionList) {
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
         const distAry= extensionList.filter( (ext) => ext.extType===LINE_SELECT);
-        if (!distAry.length && !showMulti) return false;
+        if (!distAry.length && !showMulti && isImage(plot)) return false;
         return (
             <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(distAry)?EMPTY_ARRAY:distAry}
                                showMultiImageController={showMulti}/>
@@ -140,13 +140,13 @@ function contextToolbar(pv,dlAry,extensionList) {
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) {
         const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
-        if (!ptAry.length && !showMulti) return false;
+        if (!ptAry.length && !showMulti && isImage(plot)) return false;
         return (
             <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(ptAry)?EMPTY_ARRAY:ptAry}
                                showMultiImageController={showMulti}/>
         );
     }
-    else if (showMulti) {
+    else if (showMulti || isHiPS(plot)) {
         return (
             <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={EMPTY_ARRAY}
                                showMultiImageController={showMulti}/>

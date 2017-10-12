@@ -34,7 +34,10 @@ import {loadImage, requestIdleCallback} from '../../util/WebUtil.js';
  */
 export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldProcess, processor) {
 
-    if (isString(imageData)) {
+    if (!imageData) {
+        return Promise.resolve(imageData);
+    }
+    else if (isString(imageData)) {
         return loadImage(imageData)
             .then( (image) => modifyImage({image, tileAttributes:nextTileAttributes},nextTileAttributes,true, shouldProcess, processor));
     }

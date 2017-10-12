@@ -87,7 +87,7 @@ const updateActiveTarget= function(state,action) {
 const addTaskCount= function(state,action) {
     var {componentId,taskId}= action.payload;
     if (!componentId && !taskId) return state;
-    var taskArray= state.taskCounters[componentId] | [];
+    var taskArray= state.taskCounters[componentId] || [];
     taskArray= [...taskArray,taskId];
     var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
     return Object.assign({},state, {taskCounters});
@@ -96,7 +96,7 @@ const addTaskCount= function(state,action) {
 const removeTaskCount= function(state,action) {
     var {componentId,taskId}= action.payload;
     if (!componentId && !taskId) return state;
-    var taskArray= state.taskCounters[componentId] | [];
+    var taskArray= state.taskCounters[componentId] || [];
     taskArray= taskArray.filter( (id) => id!==taskId);
     var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
     return Object.assign({},state, {taskCounters});

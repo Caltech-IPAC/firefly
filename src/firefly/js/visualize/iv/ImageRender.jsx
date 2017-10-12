@@ -5,7 +5,9 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
-import {initTileDrawer}  from './CanvasTileDrawer.js';
+import {initImageDrawer}  from './ImageTileDrawer.js';
+import {initHiPSDrawer} from './HiPSTileDrawer.js';
+import {isImage} from '../WebPlot.js';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
@@ -18,6 +20,22 @@ const containerStyle={position:'absolute',
 };
 
 
+
+
+/**
+ * Return a function that should be called on every render to draw the image
+ * @param targetCanvas
+ * @param {WebPlot} plot
+ * @return {*}
+ */
+export function initTileDrawer(targetCanvas, plot) {
+    if (!targetCanvas) return () => undefined;
+    return isImage(plot) ? initImageDrawer(targetCanvas) : initHiPSDrawer(targetCanvas);
+}
+
+
+
+
 export class ImageRender extends Component {
 
 
@@ -25,11 +43,10 @@ export class ImageRender extends Component {
         super(props);
 
         this.drawInit= (canvas) => {
-            this.tileDrawer= initTileDrawer(canvas);
-            const {plot, opacity,plotView, tileAttributes, shouldProcess, processor}= this.props;
-            this.tileDrawer(plot, opacity,plotView, tileAttributes, shouldProcess, processor);
+            const {plot, opacity,plotView, tileAttributes, shouldProcess=false, processor}= this.props;
+            this.tileDrawer= initTileDrawer(canvas, plot);
+            this.tileDrawer(plot, opacity,plotView, {tileAttributes, shouldProcess, processor} );
         };
-
     }
 
 
@@ -54,15 +71,15 @@ export class ImageRender extends Component {
     render() {
         const {plot, opacity,plotView:pv, tileAttributes, shouldProcess, processor}= this.props;
         const {width, height}= pv.viewDim;
-        const tileData = plot.serverImages;
+        const {tileData} = plot;
 
         const scale = plot.zoomFactor/ plot.plotState.getZoomLevel();
         const style = Object.assign({}, containerStyle, {width, height});
-        if (scale < .5 && tileData.images.length > 5) {
+        if (tileData && scale < .5 && tileData.images.length > 5) { // only does check for image plots
             return false;
         }
         else {
-            if (this.tileDrawer) this.tileDrawer(plot, opacity,pv, tileAttributes, shouldProcess, processor);
+            if (this.tileDrawer) this.tileDrawer(plot, opacity,pv, {tileAttributes, shouldProcess, processor} );
 
             return (
                 <div className='tile-drawer' style={style}>

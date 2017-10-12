@@ -39,6 +39,8 @@ function makeReducer(factory) {
 
             case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
             case ImagePlotCntlr.ANY_REPLOT:
+            case ImagePlotCntlr.CHANGE_HIPS:
+            case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
             case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
                 return updateFromLayer(drawLayer,action,factory);
                 break;
@@ -82,7 +84,8 @@ function handleOtherAction(drawLayer,action,factory) {
 }
 
 function updateFromLayer(drawLayer,action,factory) {
-    const {plotIdAry}= action.payload;
+    let {plotIdAry}= action.payload;
+    if (!plotIdAry) plotIdAry= [action.payload.plotId];
     drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
         plotIdAry.forEach( (id) =>

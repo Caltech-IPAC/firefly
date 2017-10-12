@@ -183,6 +183,8 @@ export function markerToolMoveActionCreator(rawAction) {
 
             newSize = [lengthToArcsec(Math.abs(imagePt.x - imageCenter.x)*2, cc, imgUnit),
                        lengthToArcsec(Math.abs(imagePt.y - imageCenter.y)*2, cc, imgUnit)];
+            if (newSize[0] < 2) newSize[0]=2;
+            if (newSize[1] < 2) newSize[1]=2;
             move.newSize = {size: newSize, unitType: ShapeDataObj.UnitType.ARCSEC};   // in world size
             isHandle = { isOutline: true, isResize: true};
         } else if (markerStatus === MarkerStatus.relocate || markerStatus === MarkerStatus.attached_relocate) {

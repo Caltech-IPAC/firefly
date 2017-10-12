@@ -15,6 +15,7 @@ import CsysConverter from '../CsysConverter.js';
 import {has, isNil, get, set} from 'lodash';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
+import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -400,8 +401,8 @@ function getRectCorners(pt, isCenter, width, height, plot) {
 }
 
 
-const imagePixelToArcsec = (val, cc) => val * cc.projection.getPixelScaleArcSec();
-const screenPixelToArcsec = (val, cc) => val * cc.projection.getPixelScaleArcSec()/cc.zoomFactor;
+const imagePixelToArcsec = (val, cc) => val * getPixScaleArcSec(cc);
+const screenPixelToArcsec = (val, cc) => val * getScreenPixScaleArcSec(cc);
 
 /**
  * calculate the rectangle slanted angle on the screen
@@ -503,9 +504,7 @@ function cornerInView(cornerAry, plot) {
 }
 
 export function getValueInScreenPixel(plot, arcsecValue) {
-    const retval= plot ?
-                  arcsecValue/(plot.projection.getPixelScaleArcSec()/plot.zoomFactor) :
-                  arcsecValue;
+    const retval= plot ? arcsecValue/(getScreenPixScaleArcSec(plot)) : arcsecValue;
     return retval<2 ? 2 : Math.round(retval);
 }
 
@@ -1406,7 +1405,7 @@ export function lengthToImagePixel(r, plot, unitType) {
             imageRadius = r;
             break;
         case UnitType.ARCSEC:
-            imageRadius = r/plot.projection.getPixelScaleArcSec();
+            imageRadius = r/getPixScaleArcSec(plot);
             break;
         default:
             imageRadius = r;

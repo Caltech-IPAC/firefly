@@ -624,7 +624,9 @@ function makeReducer(factory) {
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 retState = deletePlotView(state, action, dlReducer);
                 break;
+            case ImagePlotCntlr.CHANGE_HIPS:
             case ImagePlotCntlr.ANY_REPLOT:
+            case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
                 retState = determineAndCallLayerReducer(state, action, dlReducer, true);
                 break;
             default:
@@ -770,7 +772,9 @@ const initState= function() {
         allowedActions: [ CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
                           ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT, MODIFY_CUSTOM_FIELD,
                           CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,TABLE_TO_IGNORE,
-                          ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW
+                          ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW,
+                          ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION,
+                          ImagePlotCntlr.CHANGE_HIPS,
                         ],
         drawLayerAry : [],
         ignoreTables : [],

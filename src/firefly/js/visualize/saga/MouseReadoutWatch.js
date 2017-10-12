@@ -11,11 +11,10 @@ import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadout
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
-import {isBlankImage} from '../WebPlot.js';
 import {primePlot, getPlotStateAry, getPlotViewById} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
-
+import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS} from '../WebPlot.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -40,23 +39,26 @@ export function* watchReadout() {
         lockByClick= isLockByClick(readoutRoot());
         const {plotId,worldPt,screenPt,imagePt,mouseState}= mouseCtx;
 
+        let readout= undefined;
+        plotView= getPlotViewById(visRoot(), plotId);
+        const plot= primePlot(plotView);
         if (usePayload(mouseState,lockByClick)) {
-            plotView= getPlotViewById(visRoot(), plotId);
-            var plot= primePlot(plotView);
 
             if (plot) {
-                var readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, plot.plotState.threeColor);
-                threeColor= plot.plotState.isThreeColor();
-                dispatchReadoutData(plotId,readout, threeColor);
-
-                getNextWithFlux= !isBlankImage(plot);
+                if (isImage(plot)) {
+                    readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, plot.plotState.threeColor);
+                    dispatchReadoutData(plotId,readout, plot.plotState.threeColor);
+                }
+                else {
+                    dispatchReadoutData(plotId,makeReadout(plot,worldPt,screenPt,imagePt), false);
+                }
             }
         }
         else if (!lockByClick) {
             dispatchReadoutData(plotId, {});
         }
 
-        if (getNextWithFlux) { // get the next mouse event or the flux
+        if (isImage(plot)) { // get the next mouse event or the flux
             mouseCtx= lockByClick ? yield call(processImmediateFlux,readout,plotView,imagePt,threeColor) :
                                     yield call(processDelayedFlux,readout,plotView,imagePt,threeColor);
         }
@@ -143,8 +145,8 @@ function makeReadout(plot, worldPt, screenPt, imagePt) {
             screenPt: makePointReadoutItem('Screen Point', screenPt),
             imagePt: makePointReadoutItem('Image Point', imagePt),
             title: makeDescriptionItem(plot.title),
-            pixel: makeValueReadoutItem('Pixel Size',plot.projection.getPixelScaleArcSec(),'arcsec', 3),
-            screenPixel:makeValueReadoutItem('Screen Pixel Size',plot.projection.getPixelScaleArcSec()/plot.zoomFactor,'arcsec', 3)
+            pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
+            screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
         };
     }
     else {
@@ -198,7 +200,7 @@ function getFluxLabels(plot) {
 
 function showSingleBandFluxLabel(plot, band) {
 
-    if (!plot) return '';
+    if (!plot || !plot.webFitsData) return '';
 
     var webFitsData = plot.webFitsData;
     if (!band) return '';

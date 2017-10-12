@@ -199,7 +199,7 @@ export const encodeServerUrl= function(url, params) {
  * @param {boolean} doValidation
  * @return {Promise} a promise of the response when successful, or reject with an Error.
  */
-export function fetchUrl(url, options, doValidation= true) {
+export function fetchUrl(url, options, doValidation= true, enableDefOptions= true) {
 
     if (!url) return;
 
@@ -219,19 +219,22 @@ export function fetchUrl(url, options, doValidation= true) {
 
     // define defaults request options
     options = options || {};
-    const req = { method: 'get',
+
+    if (enableDefOptions) {
+        const req = { method: 'get',
             mode: 'cors',
             credentials: 'include',
             cache: 'default'
         };
-    options = Object.assign(req, options);
+        options = Object.assign(req, options);
 
-    const headers = {
-        [WS_CHANNEL_HD]: getWsChannel(),
-        [WS_CONNID_HD]: getWsConnId(),
-        [REQUEST_WITH]: AJAX_REQUEST
-    };
-    options.headers = Object.assign(headers, options.headers);
+        const headers = {
+            [WS_CHANNEL_HD]: getWsChannel(),
+            [WS_CONNID_HD]: getWsConnId(),
+            [REQUEST_WITH]: AJAX_REQUEST
+        };
+        options.headers = Object.assign(headers, options.headers);
+    }
 
     if (options.params) {
         const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
@@ -270,7 +273,7 @@ export function fetchUrl(url, options, doValidation= true) {
                 return new Error(`${url} failed with status: ${response}.statusText`);
             }
         }).catch( (error) => {
-            return new Error(`Request failed: ${url}`, error);
+            throw new Error(`Request failed: ${url}`, error);
         });
 }
 

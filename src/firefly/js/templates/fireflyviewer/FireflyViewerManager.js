@@ -29,7 +29,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
     yield fork(dropDownManager);        // start the dropdown manager
     while (true) {
         const action = yield take([
-            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
+            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
             ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
             TABLE_REMOVE, TABLE_LOADED, TBL_RESULTS_ADDED, TBL_RESULTS_ACTIVE, TBL_RESULTS_REMOVE,
             CHART_ADD, CHART_REMOVE,
@@ -91,6 +91,7 @@ function onAnyAction(layoutInfo, action, views) {
         case REPLACE_VIEWER_ITEMS:
         case ImagePlotCntlr.PLOT_IMAGE_START :
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
+        case ImagePlotCntlr.PLOT_HIPS:
         case CHART_ADD:
         case CHART_REMOVE:
         {

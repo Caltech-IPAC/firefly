@@ -14,6 +14,7 @@ import {logError} from '../../util/WebUtil.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
+import {getPixScaleArcSec} from '../WebPlot.js';
 import {Band} from '../Band.js';
 const popupIdRoot = 'fitsHeader';
 import numeral from 'numeral';
@@ -170,7 +171,7 @@ function renderCloseAndHelpButtons(popupId){
 function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
 
     const tableModel = fitsHeaderInfo[band];
-    const pt = plot.projection.getPixelScaleArcSec();
+    const pt = getPixScaleArcSec(plot);
     const pixelSize = pt.toFixed(2) + '"';
 
     const  meta = tableModel.tableMeta;

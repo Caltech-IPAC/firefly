@@ -25,6 +25,8 @@ import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {InputGroup} from '../ui/InputGroup.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
+import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../visualize/DrawLayerCntlr.js';
+import HiPSGrid  from '../drawingLayers/HiPSGrid.js';
 
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
@@ -38,9 +40,10 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableRequestUtil.js';
-import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, IMAGE} from '../visualize/MultiViewCntlr.js';
+import {getDrawLayerByType} from '../visualize/PlotViewUtil.js';
+import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, DEFAULT_FITS_VIEWER_ID, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
-import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
+import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 
@@ -49,6 +52,73 @@ const options = [
     {label: '2MASS All-Sky Point Source Catalog (PSC)', value: 'fp_psc', proj: '2MASS'},
     {label: 'IRAS Point Source Catalog v2.1 (PSC)', value: 'iraspsc', proj: 'IRAS'}
 ];
+
+
+
+const hipsSURVEYS = [
+    {
+        url: 'http://alasky.u-strasbg.fr/2MASS/Color',
+        label: '2MASS colored',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/DSS/DSSColor',
+        label: 'DSS colored',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/DSS/DSS2Merged',
+        label: 'DSS2 Red (F+R)',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/Fermi/Color',
+        label: 'Fermi color',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/FinkbeinerHalpha',
+        label: 'Halpha'
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/GALEX/GR6-02-Color',
+        label: 'GALEX Allsky Imaging Survey colored',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/IRISColor',
+        label: 'IRIS colored',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/MellingerRGB',
+        label: 'Mellinger colored',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/SDSS/DR9/color',
+        label: 'SDSS9 colored',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/SpitzerI1I2I4color',
+        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/VTSS/Ha',
+        label: 'VTSS-Ha'
+    },
+    {
+        url: 'http://saada.u-strasbg.fr/xmmallsky',
+        label: 'XMM-Newton stacked EPIC images (no phot. normalization)',
+    },
+    {
+        url: 'http://saada.u-strasbg.fr/xmmallsky/',
+        label: 'XMM PN colored',
+    },
+    {
+        url: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',
+        label: 'AllWISE color',
+    },
+    {
+        url: 'http://www.spitzer.caltech.edu/glimpse360/aladin/data',
+        label: 'GLIMPSE360',
+    }
+];
+
+
 
 
 export class TestQueriesPanel extends PureComponent {
@@ -93,10 +163,13 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='Atlas Search' id='atlasImage'>
                                 <div>{renderAtlasSearch(fields)}</div>
                             </Tab>
-                            {
-                            <Tab name='Periodogram' id='periodogram'>
-                                <div>{renderPeriodogram(fields)}</div>
+                            <Tab name='HiPS' id='hips'>
+                                <div>{renderHiPS(fields)}</div>
                             </Tab>
+                            {
+                                <Tab name='Periodogram' id='periodogram'>
+                                    <div>{renderPeriodogram(fields)}</div>
+                                </Tab>
                             }
                         </FieldGroupTabs>
 
@@ -140,6 +213,36 @@ TestQueriesPanel.defaultProps = {
 function hideSearchPanel() {
     dispatchHideDropDown();
 }
+
+
+function renderHiPS(fields) {
+
+    const options= hipsSURVEYS.map( (s,idx) => ({label:s.label, value:idx+''}));
+
+    return (
+        <div>
+            <div>
+                HiPS Plot
+            </div>
+
+            <RadioGroupInputField
+                fieldKey='hipsSurvey'
+                inline={true}
+                alignment='vertical'
+                initialState={{
+                    tooltip: 'Choose survey',
+                    value: options[0].value
+                }}
+                options={options}
+            />
+
+
+        </div>
+    );
+}
+
+
+
 
 function renderPeriodogram(fields) {
 
@@ -480,7 +583,7 @@ function renderImagesTab() {
 function onSearchSubmit(request) {
     console.log(request);
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
-    if (!wp) {
+    if (!wp && request.Tabs !== 'hips') {
         showInfoPopup('Target is required');
         return;
     }
@@ -504,10 +607,45 @@ function onSearchSubmit(request) {
     else if (request.Tabs === 'lsstDummy') {
         doLSSTDummyLoad(request);
     }
+    else if (request.Tabs === 'hips') {
+        doHiPSLoad(request);
+    }
     else {
         console.log('request no supported');
     }
 }
+
+
+function doHiPSLoad(request) {
+
+    dispatchHideDropDown();
+
+     const rootUrl= hipsSURVEYS[Number(request.hipsSurvey)].url;
+
+
+    // const wpRequest= WebPlotRequest.makeHiPSRequest('http://alasky.u-strasbg.fr/2MASS/Color', null);
+    const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
+    wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
+    wpRequest.setPlotId('aHiPSid');
+
+    const wp = parseWorldPt(request.UserTargetWorldPt);
+    if (wp) wpRequest.setOverlayPosition(wp);
+
+    // dispatchAddViewerItems(DEFAULT_FITS_VIEWER_ID, ['aHiPSid'], IMAGE);
+
+    dispatchPlotHiPS({
+        plotId: 'aHiPSid',
+        wpRequest,
+        viewerId: DEFAULT_FITS_VIEWER_ID
+    });
+
+
+    // const dl = getDrawLayerByType(dlRoot(), HiPSGrid.TYPE_ID);
+    // if (!dl) dispatchCreateDrawLayer(HiPSGrid.TYPE_ID);
+    // dispatchAttachLayerToPlot(HiPSGrid.TYPE_ID, 'aHiPSid', false, false);
+}
+
+
 
 function doCatalog(request) {
     var tReq = makeIrsaCatalogRequest(

@@ -31,10 +31,12 @@ import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
 import { fitsHeaderView} from './FitsHeaderView.jsx';
 import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
+import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
 import {showImageSelPanel} from './ImageSelectPanel.jsx';
 import {showMaskDialog} from './MaskAddPanel.jsx';
+import {isImage,isHiPS} from '../WebPlot.js';
 
 
 //===================================================
@@ -49,6 +51,8 @@ import SELECT_OFF from 'html/images/icons-2014/Marquee.png';
 import SELECT_ON from 'html/images/icons-2014/Marquee-ON.png';
 import GRID_OFF from 'html/images/icons-2014/GreenGrid.png';
 import GRID_ON from 'html/images/icons-2014/GreenGrid-ON.png';
+import HIPS_GRID_OFF from 'html/images/icons-2014/HiPSGrid.png';
+import HIPS_GRID_ON from 'html/images/icons-2014/HiPSGrid-ON.png';
 import COMPASS_OFF from 'html/images/icons-2014/28x28_Compass.png';
 import COMPASS_ON from 'html/images/icons-2014/28x28_CompassON.png';
 import ROTATE_NORTH_OFF from 'html/images/icons-2014/RotateToNorth.png';
@@ -164,6 +168,8 @@ export class VisToolbarView extends PureComponent {
 
         const pv= getActivePlotView(visRoot);
         const plot= primePlot(pv);
+        const image= isImage(plot);
+        const hips= isHiPS(plot);
         const plotGroupAry= visRoot.plotGroupAry;
 
         const mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
@@ -174,6 +180,7 @@ export class VisToolbarView extends PureComponent {
             <div style={rS}>
                 <ToolbarButton icon={SAVE}
                                tip='Save the FITS file, PNG file, or save the overlays as a region'
+                               todo={hips}
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.fitsDownload}
@@ -193,7 +200,7 @@ export class VisToolbarView extends PureComponent {
 
                 <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp}/>
                 <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown}/>
-                <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal}/>
+                <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image}/>
                 <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit}/>
                 <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill}/>
                 <ToolbarHorizontalSeparator/>
@@ -202,30 +209,30 @@ export class VisToolbarView extends PureComponent {
                 <DropDownToolbarButton icon={COLOR}
                                        tip='Change the color table'
                                        enabled={enabled} horizontal={true}
-                                       visible={true}
+                                       visible={image}
                                        dropDown={<ColorTableDropDownView plotView={pv}/>} />
 
                 <DropDownToolbarButton icon={STRETCH}
                                        tip='Quickly change the background image stretch'
                                        enabled={enabled} horizontal={true}
-                                       visible={mi.stretchQuick}
+                                       visible={mi.stretchQuick && image}
                                        dropDown={<StretchDropDownView plotView={pv}/>} />
 
 
-                <ToolbarHorizontalSeparator/>
+                {image && <ToolbarHorizontalSeparator/>}
                 
                 <ToolbarButton icon={ROTATE}
                                tip='Rotate the image to any angle'
                                enabled={enabled}
                                horizontal={true}
-                               visible={mi.rotate}
+                               visible={mi.rotate && image}
                                onClick={showFitsRotationDialog}/>
                 <SimpleLayerOnOffButton plotView={pv}
                                         isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
                                         tip='Rotate this image so that North is up'
                                         iconOn={ROTATE_NORTH_ON}
                                         iconOff={ROTATE_NORTH_OFF}
-                                        visible={mi.rotateNorth}
+                                        visible={mi.rotateNorth && image}
                                         onClick={doRotateNorth}
                 />
 
@@ -234,7 +241,7 @@ export class VisToolbarView extends PureComponent {
                                         tip='Flip the image on the Y Axis (i.e. Invert X)'
                                         iconOn={FLIP_Y_ON}
                                         iconOff={FLIP_Y}
-                                        visible={mi.flipImageY}
+                                        visible={mi.flipImageY && image}
                                         onClick={() => flipY(pv)}
                 />
                 <ToolbarButton icon={RECENTER} tip='Re-center image on last query or center of image'
@@ -274,11 +281,20 @@ export class VisToolbarView extends PureComponent {
                 <SimpleLayerOnOffButton plotView={pv}
                                         typeId={WebGrid.TYPE_ID}
                                         tip='Add grid layer to the image'
+                                        todo={hips}
                                         iconOn={GRID_ON}
                                         iconOff={GRID_OFF}
                                         visible={mi.grid}
                 />
 
+                <SimpleLayerOnOffButton plotView={pv}
+                                        typeId={HiPSGrid.TYPE_ID}
+                                        tip='Add HiPS grid layer to the HiPS display'
+                                        iconOn={HIPS_GRID_ON}
+                                        iconOff={HIPS_GRID_OFF}
+                                        allPlots={false}
+                                        visible={mi.hipsGrid && hips}
+                />
 
 
 
@@ -293,7 +309,7 @@ export class VisToolbarView extends PureComponent {
                                tip='Add mask to image'
                                enabled={enabled}
                                horizontal={true}
-                               visible={mi.maskOverlay}
+                               visible={mi.maskOverlay && image}
                                onClick={showMaskDialog}/>
 
 
@@ -314,6 +330,7 @@ export class VisToolbarView extends PureComponent {
 
                 <ToolbarButton icon={RESTORE}
                                tip='Restore to the defaults'
+                               todo={hips}
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.restore}
@@ -332,6 +349,7 @@ export class VisToolbarView extends PureComponent {
                 <ToolbarButton icon={FITS_HEADER}
                                tip='Show FITS header'
                                enabled={enabled}
+                               todo={hips}
                                horizontal={true}
                                visible={mi.fitsHeader}
                                onClick={() =>  fitsHeaderView(pv)}/>

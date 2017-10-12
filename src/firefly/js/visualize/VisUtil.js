@@ -19,6 +19,7 @@ import {doConv} from '../astro/conv/CoordConv.js';
 import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
                makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
+import {getPixScaleDeg} from './WebPlot.js';
 
 
 export const DtoR = Math.PI / 180.0;
@@ -56,7 +57,7 @@ export const computeScreenDistance= function (x1, y1, x2, y2) {
  * @param p2 WorldPt
  * @return {number}
  */
-const computeDistance= function(p1, p2) {
+export function computeDistance(p1, p2) {
     const lon1Radius = p1.getLon() * DtoR;
     const lon2Radius = p2.getLon() * DtoR;
     const lat1Radius = p1.getLat() * DtoR;
@@ -81,13 +82,28 @@ const computeSimpleDistance= function(p1, p2) {
     return Math.sqrt(dx * dx + dy * dy);
 };
 
+/**
+ * @summary Return a Imge point the represents the passed Image point with a distance in
+ * World coordinates added to it.
+ * @param {WebPlot} plot the plot
+ * @param {ImagePt} pt the x and y coordinate in image coordinates
+ * @param x the x distance away from the point in world coordinates
+ * @param y the y distance away from the point in world coordinates
+ * @return {ImagePt} the new point
+ * @public
+ */
+export function getDistanceCoords(plot, pt, x, y) {
+    if (!plot || !plot.projection) return undefined;
+    const scale= 1/getPixScaleDeg(plot);
+    return makeImagePt ( pt.x+(x * scale), pt.y+(y * scale) );
+}
 
 
 /**
  * Convert from one coordinate system to another.
  *
- * @param {object} wpt the world point to convert
- * @param {object} to CoordSys, the coordinate system to convert to
+ * @param {WorldPt} wpt the world point to convert
+ * @param {CoordinateSys} to CoordSys, the coordinate system to convert to
  * @return WorldPt the world point in the new coordinate system
  */
 export function convert(wpt, to= CoordinateSys.EQ_J2000) {
@@ -387,7 +403,7 @@ export function isPlotNorth(plot) {
     const cc= CysConverter.make(plot);
     const wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
     if (wpt1) {
-        const cdelt1 = cc.getImagePixelScaleInDeg();
+        const cdelt1 = getPixScaleDeg(plot);
         const wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5));
         const spt1 = cc.getScreenCoords(wpt1);
         const spt2 = cc.getScreenCoords(wpt2);
@@ -908,8 +924,6 @@ export function findIntersectionPt(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y
         onSeg2: ub >= 0 && ub <= 1
     };
 }
-
-
 
 export default {
     DtoR,RtoD,FullType,computeScreenDistance, computeDistance,

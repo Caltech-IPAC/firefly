@@ -21,6 +21,7 @@ import {LO_MODE, LO_VIEW, SET_LAYOUT, dispatchSetLayoutMode, dispatchUpdateLayou
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 export const META_VIEWER_ID = 'triViewImageMetaData';
 
@@ -103,8 +104,9 @@ TriViewImageSection.propTypes= {
 };
 
 export function launchImageMetaDataSega() {
+    const useHiPS= get(getAppOptions(), 'hips.useForCoverage',false);
     dispatchAddSaga(watchImageMetaData,{viewerId: META_VIEWER_ID});
-    dispatchAddSaga(watchCoverage, {viewerId:'coverageImages', ignoreCatalogs:true});
+    dispatchAddSaga(watchCoverage, {viewerId:'coverageImages', ignoreCatalogs:true, useHiPS});
     dispatchAddSaga(layoutHandler);
 }
 
@@ -116,7 +118,7 @@ function* layoutHandler(dispatch) {
 
     while (true) {
         const action = yield take([
-            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE,
+            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
             ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
             TBL_RESULTS_ACTIVE, TABLE_LOADED, TBL_RESULTS_ADDED
         ]);
@@ -139,6 +141,7 @@ function* layoutHandler(dispatch) {
         switch (action.type) {
             case ImagePlotCntlr.PLOT_IMAGE_START:
             case ImagePlotCntlr.PLOT_IMAGE :
+            case ImagePlotCntlr.PLOT_HIPS:
             case REPLACE_VIEWER_ITEMS:
                 newLayoutInfo = onNewImage(newLayoutInfo, action);
                 break;
