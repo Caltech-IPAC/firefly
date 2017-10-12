@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {get,isEmpty} from 'lodash';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {makeFileRequest} from '../../../tables/TableUtil.js';
+import {makeFileRequest} from '../../../tables/TableRequestUtil.js';
 import {getColumnIdx, smartMerge,  getColsByType, COL_TYPE} from '../../../tables/TableUtil.js';
 import {ReadOnlyText, getInitialDefaultValues,getMissionInput,getMissionInfo,validate,fileUpdateOnTimeColumn, setValueAndValidator} from '../LcUtil.jsx';
 import {LC, getViewerGroupKey} from '../LcManager.js';

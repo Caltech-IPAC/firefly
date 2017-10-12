@@ -47,7 +47,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     //public static long logCounter = 0;
     private static final List<String> PAGE_PARAMS = Arrays.asList(PAGE_SIZE, START_IDX);
-    private static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO}, "|") + "|";
+    private static final String SYS_PARAMS = "|" + StringUtils.toString(new String[]{FILTERS,SORT_INFO,PAGE_SIZE,START_IDX,INCL_COLUMNS,FIXED_LENGTH,META_INFO,TBL_ID}, "|") + "|";
 
 
 
@@ -341,7 +341,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
 
         // if decimation or sorting is requested, you cannot background writing the file to speed up response time.
-        boolean noBgWrite = request.getDecimateInfo() != null || request.getSortInfo() != null;
+        boolean noBgWrite = DecimationProcessor.getDecimateInfo(request) != null || request.getSortInfo() != null;
 
         int oriPageSize = request.getPageSize();
         if (noBgWrite) {
@@ -384,7 +384,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         }
 
         // do decimation
-        DecimateInfo decimateInfo = request.getDecimateInfo();
+        DecimateInfo decimateInfo = DecimationProcessor.getDecimateInfo(request);
         if (decimateInfo != null) {
             key = key.appendToKey(decimateInfo);
             File deciFile = validateFile((File) cache.get(key));

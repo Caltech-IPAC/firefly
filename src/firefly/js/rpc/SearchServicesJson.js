@@ -10,12 +10,12 @@ import {get, set, omitBy} from 'lodash';
 
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
-import {MAX_ROW, DataTagMeta} from '../tables/TableUtil.js';
 import {getBgEmail} from '../core/background/BackgroundUtil.js';
 import {encodeUrl, download, getModuleName} from '../util/WebUtil.js';
 
 import Enum from 'enum';
 import {getTblById} from '../tables/TableUtil.js';
+import {MAX_ROW, DataTagMeta} from '../tables/TableRequestUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
 

@@ -3,7 +3,8 @@
  */
 import {get, isArray} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import {getTblById, cloneRequest, doFetchTable, makeTblRequest, MAX_ROW} from '../../tables/TableUtil.js';
+import {getTblById, cloneRequest, doFetchTable} from '../../tables/TableUtil.js';
+import {makeTableFunctionRequest} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, getChartData} from '../ChartsCntlr.js';
 
 import {toMaxFixed} from '../../util/MathUtil.js';
@@ -57,10 +58,9 @@ function fetchData(chartId, traceNum, tablesource) {
 
     const tableModel = getTblById(tbl_id);
     const {request} = tableModel;
-    const sreq = cloneRequest(request, {'startIdx': 0, 'pageSize': MAX_ROW});
 
-    const req = makeTblRequest('HistogramProcessor');
-    req.searchRequest = JSON.stringify(sreq);
+    const req = makeTableFunctionRequest(request, 'HistogramProcessor');
+
     Object.entries(options).forEach(([k,v]) => req[k] = v);
 
 

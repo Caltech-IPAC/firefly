@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
@@ -12,10 +13,15 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public abstract class TableActionProcessor extends EmbeddedDbProcessor {
+import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
+
+public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
     public static final String SEARCH_REQUEST = "searchRequest";
 
 
@@ -87,8 +93,17 @@ public abstract class TableActionProcessor extends EmbeddedDbProcessor {
      * @throws DataAccessException
      */
     protected String getResultSetTable(TableServerRequest treq) throws DataAccessException {
-        return EmbeddedDbUtil.getResultSetID(getSearchRequest(treq));
+        TableServerRequest sreq = getSearchRequest(treq);
+        TreeSet<Param> params = new TreeSet<>();
+        if (sreq.getFilters() != null && sreq.getFilters().size() > 0) {
+            params.add(new Param(FILTERS, TableServerRequest.toFilterStr(sreq.getFilters())));
+        }
+        params.addAll(treq.getSearchParams());
+        String id = StringUtils.toString(params, "|");
+        return String.format("%s_data_%s", getResultSetTablePrefix(), DigestUtils.md5Hex(id));
     }
+
+    abstract protected String getResultSetTablePrefix();
 
 }
 

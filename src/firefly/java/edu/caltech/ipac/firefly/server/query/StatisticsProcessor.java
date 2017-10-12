@@ -27,7 +27,7 @@ import java.util.List;
  */
 
 @SearchProcessorImpl(id = "StatisticsProcessor")
-public class StatisticsProcessor extends TableActionProcessor {
+public class StatisticsProcessor extends TableFunctionProcessor {
     private static DataType[] columns = new DataType[]{
             new DataType("columnName", String.class),
             new DataType("description", String.class),
@@ -37,9 +37,8 @@ public class StatisticsProcessor extends TableActionProcessor {
             new DataType("numPoints", Long.class),
     };
 
-    @Override
-    public String getResultSetTable(TableServerRequest treq) throws DataAccessException {
-        return "stats_" + super.getResultSetTable(treq);
+    protected String getResultSetTablePrefix() {
+        return "stats";
     }
 
     protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {

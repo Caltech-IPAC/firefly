@@ -6,7 +6,8 @@ import {updateSet, updateMerge} from '../util/WebUtil.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
-import * as TableUtil from '../tables/TableUtil.js';
+import {makeTblRequest, cloneRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
+import {getTblById, doFetchTable} from '../tables/TableUtil.js';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 
@@ -113,16 +114,16 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     const {tbl_id} = activeTableServerRequest;
 
     // searchRequest
-    const sreq = TableUtil.cloneRequest(activeTableServerRequest, {'startIdx': 0, 'pageSize': TableUtil.MAX_ROW});
+    const sreq = cloneRequest(activeTableServerRequest, {'startIdx': 0, 'pageSize': MAX_ROW});
 
-    const req = TableUtil.makeTblRequest('StatisticsProcessor', `Statistics for ${tbl_id}`,
+    const req = makeTblRequest('StatisticsProcessor', `Statistics for ${tbl_id}`,
         { searchRequest: JSON.stringify(sreq) },
-        {'startIdx': 0, 'pageSize': TableUtil.MAX_ROW});
+        {'startIdx': 0, 'pageSize': MAX_ROW});
 
-    TableUtil.doFetchTable(req).then(
+    doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
-                const columns = get(TableUtil.getTblById(tbl_id), 'tableData.columns', []);
+                const columns = get(getTblById(tbl_id), 'tableData.columns', []);
                 const colStats = tableModel.tableData.data.reduce((colstats, arow) => {
                     const r = new ColValuesStatistics(...arow);
                     const col = columns.find((c)=>{return c.name=== r.name;});

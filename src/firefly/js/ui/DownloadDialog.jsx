@@ -20,11 +20,12 @@ import {ValidationField} from './ValidationField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import {SimpleComponent} from './SimpleComponent.jsx';
 
-import {makeTblRequest, getTblInfoById, getActiveTableId} from '../tables/TableUtil.js';
+import {getTblInfoById, getActiveTableId} from '../tables/TableUtil.js';
+import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {dispatchPackage, dispatchBgSetEmailInfo} from '../core/background/BackgroundCntlr.js';
 import {getBgEmailInfo} from '../core/background/BackgroundUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {DataTagMeta} from '../tables/TableUtil.js';
+import {DataTagMeta} from '../tables/TableRequestUtil.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 

@@ -9,7 +9,8 @@ import {get, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 
 import {MetaConst} from '../../data/MetaConst.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
-import {getColumn, getTblById, isFullyLoaded, cloneRequest, makeTblRequest, MAX_ROW} from '../../tables/TableUtil.js';
+import {getColumn, getTblById, isFullyLoaded} from '../../tables/TableUtil.js';
+import {cloneRequest, makeTblRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 
 import {getChartDataElement, dispatchChartAdd, dispatchChartOptionsUpdate, chartDataUpdate} from './../ChartsCntlr.js';
 import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
@@ -387,12 +388,8 @@ function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
-    const req = cloneRequest(activeTableServerRequest, {
-            'startIdx' : 0,
-            'pageSize' : MAX_ROW,
-            //'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`, // ignored if 'decimate' is present
-            'decimate' : serializeDecimateInfo(...getServerCallParameters(xyPlotParams))
-        });
+    const req = makeTableFunctionRequest(activeTableServerRequest, 'DecimateTable', 'heatmap',  {decimate: serializeDecimateInfo(...getServerCallParameters(xyPlotParams))})
+
     req.tbl_id = `xy-${chartId}`;
 
     fetchTable(req).then((tableModel) => {
@@ -483,9 +480,7 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
     const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh', 'ROW_IDX', 'ROW_NUM'];
 
-    const sreq = cloneRequest(activeTableServerRequest, {'pageSize' : MAX_ROW}); // this is not necessary since XYWithErrors should know what to do given a source request
-    const req = makeTblRequest('XYWithErrors');
-    req.searchRequest = JSON.stringify(sreq);
+    const req = makeTableFunctionRequest(activeTableServerRequest, 'XYWithErrors');
     req.xColOrExpr = get(xyPlotParams, 'x.columnOrExpr');
     req.yColOrExpr = get(xyPlotParams, 'y.columnOrExpr');
     req.sortColOrExpr = get(xyPlotParams, 'sortColOrExpr', req.xColOrExpr);

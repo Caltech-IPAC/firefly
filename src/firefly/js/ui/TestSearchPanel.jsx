@@ -16,7 +16,7 @@ import {FileUpload} from '../ui/FileUpload.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
-import * as TblUtil from '../tables/TableUtil.js';
+import {makeFileRequest} from '../tables/TableRequestUtil.js';
 
 
 export const TestSearchPanel = (props) => {
@@ -93,10 +93,10 @@ function hideSearchPanel() {
 
 function onSearchSubmit(request) {
     if (request.fileUpload) {
-        const treq = TblUtil.makeFileRequest(null, request.fileUpload, null, {...request});
+        const treq = makeFileRequest(null, request.fileUpload, null, {...request});
         dispatchTableSearch(treq);
     } else if (request.srcTable) {
-        const treq = TblUtil.makeFileRequest(request.dbType + ':' + request.srcTable, request.srcTable, null, {filters: request.filters, META_INFO: {tblFileType: request.dbType}});
+        const treq = makeFileRequest(request.dbType + ':' + request.srcTable, request.srcTable, null, {filters: request.filters, META_INFO: {tblFileType: request.dbType}});
         dispatchTableSearch(treq);
     }
 }

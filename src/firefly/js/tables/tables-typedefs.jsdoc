@@ -83,7 +83,6 @@
  *                  operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
  * @prop {string} sortInfo  sort information.  Format:  (ASC|DESC),col_name[,col_name]*
  * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
- * @prop {string} decimate  decimation information.
  * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
  * @prop {string} use       one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
  * @prop {string} tbl_id    a unique id of a table. auto-create if not given.

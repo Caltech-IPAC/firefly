@@ -61,33 +61,12 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
         }
     }
 
-    @Override
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
-        if (treq.getDecimateInfo() != null || containsDecimateKey(treq.getFilters())) {
-            // this is bad.. need to solve decimation.
-            DataGroupPart dgp = processor.getData(treq);
-            setupMeta(dgp.getData(), treq);
-            return dgp;
-        } else {
-            processor.setDoLogging(false);
-            return super.getResultSet(treq, dbFile);
-        }
-    }
-
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
         // no need to do it again.. already did it in createDbFile
     }
 
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
         processor.onComplete(request, results);
-    }
-
-    private boolean containsDecimateKey(List<String> filters) {
-        if (filters == null || filters.size() == 0) return false;
-        for (String s : filters) {
-            if (s != null && s.contains(DecimateKey.DECIMATE_KEY)) return true;
-        }
-        return false;
     }
 
     private void setupMeta(DataGroup dg, ServerRequest req) {

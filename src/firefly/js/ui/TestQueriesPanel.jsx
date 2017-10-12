@@ -37,7 +37,7 @@ import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
-import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableUtil.js';
+import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';

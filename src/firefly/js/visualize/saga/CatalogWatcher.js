@@ -8,7 +8,8 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} fr
 import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
-import {getTblById, doFetchTable, getTableGroup, cloneRequest, isTableUsingRadians, MAX_ROW} from '../../tables/TableUtil.js';
+import {getTblById, doFetchTable, getTableGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById, getPlotViewById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
@@ -116,13 +117,13 @@ function handleCatalogUpdate(tbl_id) {
         inclCols : `${columns.lonCol},${columns.latCol},ROW_IDX`
     };
 
+    let req = cloneRequest(sourceTable.request, params);
     var dataTooBigForSelection= false;
     if (totalRows>5000) {
-        params.decimate=  serializeDecimateInfo(columns.lonCol, columns.latCol, 10000);
+        req = makeTableFunctionRequest(sourceTable.request, 'DecimateTable', 'heatmap',  {decimate: serializeDecimateInfo(columns.lonCol, columns.latCol, 10000)});
         dataTooBigForSelection= true;
     }
 
-    const req = cloneRequest(sourceTable.request, params);
     req.tbl_id = `cat-${tbl_id}`;
 
     doFetchTable(req).then(

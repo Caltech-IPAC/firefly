@@ -8,11 +8,10 @@ import {isEmpty, get, merge, isNil, isArray, cloneDeep, has}from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
-import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
+import {getColumnIdx, getTblById, createErrorTbl} from '../../tables/TableUtil.js';
 import {BasicTableView} from '../../tables/ui/BasicTableView.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
-import * as TblUtil from '../../tables/TableUtil.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
@@ -191,7 +190,7 @@ export class CatalogConstraintsPanel extends PureComponent {
             TblCntlr.dispatchTableReplace(tableModel);
             afterFetch&&afterFetch({tableModel: tableModelFetched});
         }).catch((reason) => {
-                const errTable = TblUtil.createErrorTbl(tblid, `Failed to fetch catalog fields: ${reason.message}`);
+                const errTable = createErrorTbl(tblid, `Failed to fetch catalog fields: ${reason.message}`);
 
                 TblCntlr.dispatchTableReplace(errTable);
                 afterFetch&&afterFetch({tableModel: errTable});

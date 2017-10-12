@@ -33,7 +33,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
-    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID,DECIMATE_INFO,SQL_FROM);
+    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID,SQL_FROM);
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
 
     private int pageSize;
@@ -105,6 +105,10 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     }
 
     public String getInclColumns() { return getParam(INCL_COLUMNS); }
+    public void setInclColumns(String ...cols) {
+        setParam(INCL_COLUMNS, StringUtils.toString(cols, ","));
+    }
+
     public SortInfo getSortInfo() {
         return containsParam(SORT_INFO) ? SortInfo.parse(getParam(SORT_INFO)) : null;
     }
@@ -126,18 +130,6 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         Param p = new Param(name, val);
         boolean wasSet= addPredefinedAttrib(p);
         if (!wasSet) setParam(p);
-    }
-
-    public DecimateInfo getDecimateInfo() {
-        return containsParam(DECIMATE_INFO) ? DecimateInfo.parse(getParam(DECIMATE_INFO)) : null;
-    }
-
-    public void setDecimateInfo(DecimateInfo decimateInfo) {
-        if (decimateInfo == null) {
-            removeParam(DECIMATE_INFO);
-        } else {
-            setParam(DECIMATE_INFO, decimateInfo.toString());
-        }
     }
 
     public List<String> getFilters() {
@@ -269,7 +261,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     }
 
     /**
-     * returns the parameters used to modified this dataset.  This includes filtering, sorting, and decimate info.
+     * returns the parameters used to modified this dataset.  This includes filtering, sorting, and incl_columns.
      * @return
      */
     @NotNull
@@ -280,9 +272,6 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
         if (getSortInfo() != null) {
             params.add(new Param(SORT_INFO, getSortInfo().toString()));
-        }
-        if (getDecimateInfo() != null) {
-            params.add(new Param(DECIMATE_INFO, getDecimateInfo().toString()));
         }
         if (getInclColumns() != null) {
             params.add(new Param(INCL_COLUMNS, getInclColumns()));
