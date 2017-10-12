@@ -179,8 +179,14 @@ public class ServerParams {
     public static final String LOGOUT = "CmdLogout";
 
     //Workspaces
-    public static final String WS_LIST = "wsList";
-    public static final String WS_GET_FILE = "wsGet";
-    public static final String WS_PUT_FILE = "wsPut";
+    public static final String WS_LIST = "wsList"; // Gets the list of content/files
+    public static final String WS_GET_FILE = "wsGet"; // TODO
+    public static final String WS_UPLOAD_FILE = "wsUpload";// to get the path of the file uploaded into firefly server from WS
+    public static final String WS_PUT_IMAGE_FILE = "wsPut"; //FITS, PNG, comes from edu.caltech.ipac.firefly.server.servlets.AnyFileDownload
+    public static final String WS_PUT_TABLE_FILE = "wsPutTable";
+    public static final String WS_DELETE_FILE = "wsDel";
+    public static final String WS_MOVE_FILE = "wsMove";
+    public static final String WS_GET_METADATA = "wsGetMeta";
+    public static final String WS_CREATE_PARENT = "wsParent";
 }
 

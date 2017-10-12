@@ -112,7 +112,7 @@ function imagePlotOnSurvey(crtCatalogId, request) {
         case ATLAS:
             //TODO: Not sure how to combine several dataset with different missions under same ATLAS service type
             // TODO For now: survey = dataset.table, see edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource
-            wpr = WebPlotRequest.makeAtlasRequest(wp, survey, band,sizeInDeg);
+            wpr = WebPlotRequest.makeAtlasRequest(wp, survey, band,'', sizeInDeg);
             wpr.setDrawingSubGroupId(survey.split('.')[1]);
             break;
         case WISE:

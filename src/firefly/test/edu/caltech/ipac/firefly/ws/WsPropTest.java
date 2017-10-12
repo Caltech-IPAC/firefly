@@ -13,6 +13,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.junit.Assume.assumeTrue;
+
 /**
  * Created by ejoliet on 6/16/17.
  */
@@ -24,12 +26,11 @@ public class WsPropTest extends ConfigTest {
 
     @Before
     public void init() throws WsException {
-
+        assumeTrue(getWsCredentials()!=null);
         urlHost = AppProperties.getProperty("workspace.host.url");
-        prot = AppProperties.getProperty("workspace.protocol.irsa");
+        prot = AppProperties.getProperty("workspace.protocol");
         ws = WorkspaceFactory.getWorkspaceHandler();
     }
-    @Ignore
     @Test
     public void testProps() {
         try {
@@ -45,7 +46,6 @@ public class WsPropTest extends ConfigTest {
 
 
     }
-    @Ignore
     @Test
     public void testPoolWsManager() {
         try {
@@ -73,7 +73,6 @@ public class WsPropTest extends ConfigTest {
 
 
     }
-    @Ignore
     @Test(expected = ResourceNotFoundException.class)
     public void testNotImplementedVospace() {
 

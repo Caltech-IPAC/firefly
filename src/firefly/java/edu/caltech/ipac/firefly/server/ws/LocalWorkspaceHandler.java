@@ -13,8 +13,6 @@ import java.util.Map;
  */
 public class LocalWorkspaceHandler implements WorkspaceHandler {
 
-    String p = AppProperties.getProperty("workspace.protocol.irsa.webdav", "edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager");
-
     /**
      * map userKey and ws,
      * TODO we don't want to create a new Wsmanager for every user access, do we?

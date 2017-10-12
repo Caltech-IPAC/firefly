@@ -25,6 +25,7 @@ public class WspaceMeta implements Serializable {
 
     public static final String DESC = "desc";
     public static final String TYPE = "type";
+    private boolean isFile = false; //folder
 
     public void setUrl(String url) {
         this.url = url;
@@ -32,6 +33,10 @@ public class WspaceMeta implements Serializable {
 
     public String getUrl() {
         return url;
+    }
+
+    public boolean isFile() {
+        return this.isFile;
     }
 
     public enum Includes {
@@ -174,6 +179,10 @@ public class WspaceMeta implements Serializable {
             val = props.get(keyname);
         }
         return val;
+    }
+
+    public void setIsFile(boolean isFile) {
+        this.isFile = isFile;
     }
 
     public void setSize(long size) {

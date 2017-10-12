@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Created by ejoliet on 6/26/17.
@@ -26,7 +27,6 @@ public class WsListTest extends ConfigTest {
 
     private static WorkspaceManager m;
     private static File[] testFile = new File[2];
-    private static String key = WS_USER_ID;
     private static String[] relFolder = new String[2];
     private static ArrayList testFolders;
     private static ArrayList testFiles;
@@ -35,7 +35,7 @@ public class WsListTest extends ConfigTest {
 
     @Before
     public void init() throws WsException, ClassNotFoundException {
-
+        assumeTrue(getWsCredentials()!=null);
         testFolders = new ArrayList<>();
         testFiles = new ArrayList<>();
         relFolder[0] = createFolder("/tmp1/");
@@ -43,6 +43,10 @@ public class WsListTest extends ConfigTest {
         handler = WorkspaceFactory.getWorkspaceHandler();
         m = handler.withCredentials(getWsCredentials());
 
+        assumeTrue(!m.getMeta("/", WspaceMeta.Includes.CHILDREN).hasChildNodes());
+        if(m.getMeta("/", WspaceMeta.Includes.CHILDREN).hasChildNodes()){
+            throw new RuntimeException("Workspace user location is not empty to complete the tests");
+        }
         testFile[0] = pickFile(0);
         testFile[1] = pickFile(1);
 
@@ -56,7 +60,6 @@ public class WsListTest extends ConfigTest {
         testFolders.add(s);
         return s;
     }
-    @Ignore
     @Test
     public void testGetListDepth() throws IOException {
 
@@ -133,18 +136,19 @@ public class WsListTest extends ConfigTest {
 
     @After
     public void tearDown() throws IOException {
+        if(m!=null) {
+            // Gets children folder meta under user home ws.
+            // Equivalent to WsResponse wsResponse = m.getSuggestedList("/", 1);
+            //
+            WspaceMeta mMeta = m.getMeta("/", WspaceMeta.Includes.CHILDREN);
+            if (mMeta != null) {
+                List<WspaceMeta> metas = mMeta.getChildNodes();//wsResponse.getWspaceMeta();
 
-        // Gets children folder meta under user home ws.
-        // Equivalent to WsResponse wsResponse = m.getSuggestedList("/", 1);
-        //
-        WspaceMeta mMeta = m.getMeta("/", WspaceMeta.Includes.CHILDREN);
-        if (mMeta != null) {
-            List<WspaceMeta> metas = mMeta.getChildNodes();//wsResponse.getWspaceMeta();
-
-            for (WspaceMeta meta : metas) {
-                WsResponse response = m.delete(meta.getRelPath());
-                if (response.getStatusCode().equals("304")) { //Parent is home, try to delete file then
-                    m.delete(meta.getRelPath());
+                for (WspaceMeta meta : metas) {
+                    WsResponse response = m.delete(meta.getRelPath());
+                    if (response.getStatusCode().equals("304")) { //Parent is home, try to delete file then
+                        m.delete(meta.getRelPath());
+                    }
                 }
             }
         }
