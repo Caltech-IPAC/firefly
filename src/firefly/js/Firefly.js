@@ -16,6 +16,7 @@ import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
+import {showInfoPopup} from './ui/PopupUtil';
 
 import {ServerRequest } from './data/ServerRequest.js';
 import {getJsonData } from './rpc/SearchServicesJson.js';
@@ -150,11 +151,28 @@ function bootstrap(options, viewer, props) {
                 dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
             }
         }
+
         if (viewer) {
-            ReactDOM.render(React.createElement(viewer, props),
-                document.getElementById(props.div));
+            if (window.document.readyState==='complete' || window.document.readyState==='interactive') {
+                renderRoot(viewer, props);
+            }
+            else {
+                console.log('Waiting for document to finish loading');
+                window.addEventListener('load', () => renderRoot(viewer, props) ); // maybe could use: document.addEventListener('DOMContentLoaded'
+            }
         } else {
             initApi();
         }
     });
+}
+
+function renderRoot(viewer, props) {
+    const e= document.getElementById(props.div);
+    if (e)  {
+        ReactDOM.render(React.createElement(viewer, props), e);
+    }
+    else {
+        showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');
+        console.log(`DOM Element "${props.div}" is not found in the document, Firefly cannot start.`);
+    }
 }
