@@ -35,6 +35,7 @@ public class BandState implements Serializable, HandSerialize {
     private String fitsHeaderSerialize = null; // Serialized ClientFitsHeader
     private boolean bandVisible = true;
     private boolean multiImageFile = false;
+    private boolean tileCompress = false;
     private int     cubeCnt = 0;
     private int     cubePlaneNumber = 0;
 
@@ -60,6 +61,11 @@ public class BandState implements Serializable, HandSerialize {
 
     public void setMultiImageFile(boolean multiImageFile) {
         this.multiImageFile = multiImageFile;
+    }
+
+    public boolean isTileCompress() {return tileCompress; }
+    public void setTileCompress(boolean tCompress) {
+        this.tileCompress = tCompress;
     }
 
     public int getCubePlaneNumber() { return cubePlaneNumber; }
@@ -165,6 +171,7 @@ public class BandState implements Serializable, HandSerialize {
                 fitsHeaderSerialize,
                 bandVisible +"",
                 multiImageFile+"",
+                tileCompress+"",
                 cubeCnt+"",
                 cubePlaneNumber+"");
     }
@@ -186,6 +193,7 @@ public class BandState implements Serializable, HandSerialize {
             ClientFitsHeader header=  ClientFitsHeader.parse(sAry[i++]);
             boolean bandVisible=    Boolean.parseBoolean(sAry[i++]);
             boolean multiImageFile= Boolean.parseBoolean(sAry[i++]);
+            boolean tileCompress = Boolean.parseBoolean(sAry[i++]);
             int cubeCnt=            Integer.parseInt(sAry[i++]);
             int cubePlaneNumber=    Integer.parseInt(sAry[i++]);
             if (req!=null && header!=null ) {
@@ -200,6 +208,7 @@ public class BandState implements Serializable, HandSerialize {
                 retval.setFitsHeader(header);
                 retval.setBandVisible(bandVisible);
                 retval.setMultiImageFile(multiImageFile);
+                retval.setTileCompress(tileCompress);
                 retval.setCubeCnt(cubeCnt);
                 retval.setCubePlaneNumber(cubePlaneNumber);
             }

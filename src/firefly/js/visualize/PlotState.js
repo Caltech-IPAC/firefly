@@ -186,8 +186,14 @@ export class PlotState {
      * @return {boolean} the WebPlotRequest
      * @public
      */
-    isMultiImageFile(band) { return this.get(band || this.firstBand()).isMultiImageFile(); }
+    isMultiImageFile(band = undefined) { return this.get(band || this.firstBand()).isMultiImageFile(); }
 
+    /**
+     * @summary check to see if this plot is from a file with tile compress image
+     * @param band
+     * @returns {BandState.isTileCompress}
+     */
+    isTileCompress(band = undefined) { return this.get(band || this.firstBand()).isTileCompress(); }
 
     /**
      * @summary if a cube, checkout how many images it contains
@@ -324,6 +330,7 @@ export class PlotState {
         state.bandStateAry= psJson.bandStateAry.map( (bJ) => BandState.makeBandStateWithJson(bJ));
 
         state.multiImage= psJson.multiImage;
+        state.tileCompress = psJson.tileCompress;
         state.rotationType= RotateType.get(psJson.rotationType);
         state.rotaNorthType= CoordinateSys.parse(psJson.rotaNorthType);
         state.ops= psJson.ops.map( (op) => Operation.get(op) );
@@ -348,6 +355,7 @@ export class PlotState {
         json.JSON=true;
         json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ));
         json.multiImage= s.multiImage;
+        json.tileCompress = s.tileCompress;
         json.rotationType= s.rotationType.key;
         json.rotaNorthType= s.rotaNorthType.toString();
         json.ops= s.ops.map( (op) => op.key );

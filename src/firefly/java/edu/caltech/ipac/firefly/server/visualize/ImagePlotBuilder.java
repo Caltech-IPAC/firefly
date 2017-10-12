@@ -440,6 +440,7 @@ public class ImagePlotBuilder {
             if (state.getContextString() == null) {
                 state.setContextString(CtxControl.makeCachedCtx());
             }
+            state.setTileCompress(fi.getFitsRead().isTileCompress(), band);
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
             PlotStateUtil.setOriginalFitsFile(state, fi.getOriginalFile(), band);
             PlotStateUtil.setWorkingFitsFile(state, fi.getWorkingFile(), band);

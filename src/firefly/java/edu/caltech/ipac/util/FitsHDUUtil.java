@@ -4,6 +4,7 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
+import nom.tam.image.compression.hdu.CompressedImageHDU;
 import org.json.simple.JSONObject;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -123,7 +124,8 @@ public class FitsHDUUtil {
                 JSONObject extensionInfo;
                 List<List<String>> headerRows = new ArrayList<>();
 
-                String name = "NoName";
+                Boolean isCompressed = (hdu instanceof CompressedImageHDU);
+                String name = isCompressed ? "CompressedImage" : "NoName";
                 String type = "IMAGE";
 
                 Header hduHeader = hdu.getHeader();
@@ -144,7 +146,7 @@ public class FitsHDUUtil {
                             type = "";
                         }
                     } else {
-                        if (key.equals("XTENSION")) {
+                        if (key.equals("XTENSION") && (!isCompressed)) {
                             type = val;
                         } else if (key.equals("NAME") || key.equals("EXTNAME")) {
                             name = val;
@@ -169,6 +171,7 @@ public class FitsHDUUtil {
 
                     name = String.format("%s/%d cols x %d rows", name, colNo, rowNo);
                 }
+
                 row.setDataElement(cols.get(1), (index == 0) ? "Primary" : name);
                 row.setDataElement(cols.get(2), type);
                 dg.add(row);

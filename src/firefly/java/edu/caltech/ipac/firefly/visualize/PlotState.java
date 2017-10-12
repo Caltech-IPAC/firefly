@@ -229,6 +229,15 @@ public class PlotState implements DataEntry, HandSerialize {
     public boolean isMultiImageFile() { return get(firstBand()).isMultiImageFile(); }
     public void setMultiImageFile(boolean multiImageFile, Band band) { get(band).setMultiImageFile(multiImageFile); }
 
+    public boolean isTileCompress(Band band) {
+        if (band==null) band= firstBand();
+        return get(band).isTileCompress();
+    }
+
+    @JsNoExport
+    public boolean isTileCompress() { return get(firstBand()).isTileCompress(); }
+    public void setTileCompress(boolean tileCompress, Band band) { get(band).setTileCompress(tileCompress); }
+
     public int getCubeCnt(Band band) {
         if (band==null) band= firstBand();
         return get(band).getCubeCnt();
@@ -342,6 +351,10 @@ public class PlotState implements DataEntry, HandSerialize {
         keyVals.put("workingFile", firstBandState.getWorkingFitsFileStr());
         if (firstBandState.isMultiImageFile()) {
             keyVals.put("multiImageFile", firstBandState.isMultiImageFile()+"");
+            keyVals.put("imageIdx", firstBandState.getImageIdx()+"");
+        }
+        if (firstBandState.isTileCompress()) {
+            keyVals.put("tileCompress", firstBandState.isTileCompress()+"");
             keyVals.put("imageIdx", firstBandState.getImageIdx()+"");
         }
         if (!firstBandState.isFileOriginal()) {

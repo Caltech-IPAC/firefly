@@ -60,6 +60,7 @@ public interface PlotStateCI {
 
 
     boolean isMultiImageFile(Band band);
+    boolean isTileCompress(Band band);
 
     int getCubeCnt(Band band);
 
