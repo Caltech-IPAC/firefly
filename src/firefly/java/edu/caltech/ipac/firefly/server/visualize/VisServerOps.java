@@ -250,7 +250,12 @@ public class VisServerOps {
             if (state.getWorkingFitsFileStr(b).endsWith("gz")) {
                 return false;
             }
+
+            if (state.isTileCompress(b)) {
+                return false;
+            }
         }
+
         return true;
 
 
@@ -303,7 +308,6 @@ public class VisServerOps {
         // 3. return all the gathered fluxes
         return fluxList.toArray(new String[fluxList.size()]);
     }
-
     public static String[] getFileFlux(FileAndHeaderInfo fileAndHeader[], ImagePt ipt) {
         try {
             String retval[] = new String[fileAndHeader.length];
