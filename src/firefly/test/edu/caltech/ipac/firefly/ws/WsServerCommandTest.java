@@ -126,25 +126,25 @@ public class WsServerCommandTest extends ConfigTest {
 
         params.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, "/");
         // should give only 2 folders below "/"
-        List<WspaceMeta> childNodes = utils.getList(params, 1);
+        List<WspaceMeta> childNodes = utils.getList(params, 1).getWspaceMeta();
         JSONArray jsonObject = WsServerUtils.toJson(childNodes);
 
         assertTrue(jsonObject.size() == relFolder.length); // we've added 2 folders
 
         params.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, relFolder[1]);
 
-        childNodes = utils.getList(params, -1);
+        childNodes = utils.getList(params, -1).getWspaceMeta();
         jsonObject = WsServerUtils.toJson(childNodes);
 
         assertTrue(jsonObject.size() == testFile.length); // we've added 2 files to relFolder[1]
 
-        childNodes = utils.getList(params, 0);
+        childNodes = utils.getList(params, 0).getWspaceMeta();
         jsonObject = WsServerUtils.toJson(childNodes);
 
         assertTrue(jsonObject.size() == 1); // only the node
 
 
-        childNodes = utils.getList(params, 1);
+        childNodes = utils.getList(params, 1).getWspaceMeta();
         jsonObject = WsServerUtils.toJson(childNodes);
 
         assertTrue(jsonObject.size() == 2); // only one level below: should return 2 files node

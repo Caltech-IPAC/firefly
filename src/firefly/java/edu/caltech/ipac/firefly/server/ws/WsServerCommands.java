@@ -28,6 +28,7 @@ public class WsServerCommands {
 
     public static WsServerUtils utils = new WsServerUtils();
 
+    enum RESPONSE {TRUE, FALSE};
     public enum WS_PARAM {
         FILE_PATH("relPath"),
         FILE_URL("url"),
@@ -66,8 +67,8 @@ public class WsServerCommands {
             WsServerParams wsParams = convertToWsServerParams(params);
 
             // Full list , depth = -1
-            List<WspaceMeta> childNodes = getWsUtils().getList(wsParams, -1);
-            JSONArray jsonObject = WsServerUtils.toJson(childNodes);
+            WsResponse resp = getWsUtils().getList(wsParams, -1);
+            JSONArray jsonObject = WsServerUtils.toJson(resp.getWspaceMeta());
 
             return jsonObject.toJSONString();
 
@@ -139,11 +140,9 @@ public class WsServerCommands {
             FileInfo f = new SearchManager().getFileInfo(request);
 
             WsServerParams wsParams = convertToWsServerParams(sp);
-            getWsUtils().putFile(wsParams, f.getFile());
+            WsResponse wsResponse = getWsUtils().putFile(wsParams, f.getFile());
 
-            List<WspaceMeta> childNodes = getWsUtils().getList(wsParams, -1);
-
-            return WsServerUtils.toJson(childNodes).toJSONString();
+            return wsResponse.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }
 
@@ -167,9 +166,9 @@ public class WsServerCommands {
 
             getWsUtils().putFile(wsParams, downloadFile);
 
-            List<WspaceMeta> childNodes = getWsUtils().getList(wsParams, -1);
+            WsResponse resp = getWsUtils().getList(wsParams, -1);
 
-            return WsServerUtils.toJson(childNodes).toJSONString();
+            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
 
         }
     }
@@ -192,9 +191,9 @@ public class WsServerCommands {
 
             getWsUtils().deleteFile(wsParams);
 
-            List<WspaceMeta> childNodes = getWsUtils().getList(wsParams, -1);
+            WsResponse resp = getWsUtils().getList(wsParams, -1);
 
-            return WsServerUtils.toJson(childNodes).toJSONString();
+            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }
 
@@ -209,9 +208,9 @@ public class WsServerCommands {
 
             getWsUtils().move(wsParams);
 
-            List<WspaceMeta> childNodes = getWsUtils().getList(wsParams, -1);
+            WsResponse resp = getWsUtils().getList(wsParams, -1);
 
-            return WsServerUtils.toJson(childNodes).toJSONString();
+            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }
 
@@ -253,11 +252,9 @@ public class WsServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             WsServerParams wsParams = convertToWsServerParams(params);
 
-            getWsUtils().createParent(wsParams);
+            WsResponse resp = getWsUtils().createParent(wsParams);
 
-            List<WspaceMeta> childNodes = getWsUtils().getList(wsParams, -1);
-
-            return WsServerUtils.toJson(childNodes).toJSONString();
+            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }
 

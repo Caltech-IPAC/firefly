@@ -32,57 +32,57 @@ public class WsServerUtils {
      *
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
      * @param depth    if -1, give all the folders/files below the parent, 0 return the parent, 1 return children only (one level)
-     * @return list of nodes, see depth
+     * @return response
      * @throws IOException
      */
-    public List<WspaceMeta> getList(WsServerParams wsParams, int depth) throws IOException {
+    public WsResponse getList(WsServerParams wsParams, int depth) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
         WsResponse wsResp = wsm.getList(wsParams.getRelPath(), depth);
 
-        return wsResp.getWspaceMeta();
+        return wsResp;
     }
 
     /**
      * Put file into the workspace {@link WorkspaceManager#putFile(String, File, String)}
      *
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
-     * @return list of nodes, see depth
+     * @return response
      * @throws IOException
      */
-    public List<WspaceMeta> putFile(WsServerParams wsParams, File item) throws IOException {
+    public WsResponse putFile(WsServerParams wsParams, File item) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
         WsResponse wsResp = wsm.putFile(wsParams.getRelPath(), item, null);
 
-        return wsResp.getWspaceMeta();
+        return wsResp;
     }
 
     /**
      * Delete in workspace {@link WorkspaceManager#delete(String)}
      *
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
-     * @return list of nodes, see depth
+     * @return response
      * @throws IOException
      */
-    public List<WspaceMeta> deleteFile(WsServerParams wsParams) throws IOException {
+    public WsResponse deleteFile(WsServerParams wsParams) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
         WsResponse wsResp = wsm.delete(wsParams.getRelPath());
 
-        return wsResp.getWspaceMeta();
+        return wsResp;
     }
 
     /**
      * Move (or rename) expect old and new path. By default overwrite is nor allowed, see {@link WsServerParams#shouldOverwrite()}
      *
      * @param wsParams see {@link edu.caltech.ipac.firefly.server.ws.WsServerParams}
-     * @return list of metadata depending on depth
+     * @return response
      * @throws WsException
      */
-    public List<WspaceMeta> move(WsServerParams wsParams) throws IOException {
+    public WsResponse move(WsServerParams wsParams) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
 
         WsResponse wsResp = wsm.moveFile(wsParams.getRelPath(), wsParams.getNewPath(), wsParams.shouldOverwrite());
 
-        return wsResp.getWspaceMeta();
+        return wsResp;
     }
 
     /**
@@ -104,7 +104,7 @@ public class WsServerUtils {
     /**
      * Get ALL metadata from a node
      * @param wsParams
-     * @return
+     * @return see {@link WspaceMeta}
      * @throws IOException
      */
     public WspaceMeta getMeta(WsServerParams wsParams) throws IOException {
@@ -114,12 +114,19 @@ public class WsServerUtils {
 
         return meta;
     }
-    public List<WspaceMeta> createParent(WsServerParams wsParams) throws WsException {
+
+    /**
+     * Create parent
+     * @param wsParams should contain the new path to create
+     * @return response
+     * @throws WsException
+     */
+    public WsResponse createParent(WsServerParams wsParams) throws WsException {
         WorkspaceManager wsm = getWsManager(wsParams);
 
         WsResponse wsResp = wsm.createParent(wsParams.getNewPath());
 
-        return wsResp.getWspaceMeta();
+        return wsResp;
     }
 
     /**
@@ -173,6 +180,12 @@ public class WsServerUtils {
         return wsm;
     }
 
+    /**
+     * @param wsParams
+     * @return path string
+     * @throws IOException
+     * @throws FailedRequestException
+     */
     public String upload(WsServerParams wsParams) throws IOException, FailedRequestException {
 
         WspaceMeta meta = getMeta(wsParams);
