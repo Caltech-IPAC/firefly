@@ -24,6 +24,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class GatorDD extends EmbeddedDbProcessor {
     public FileInfo createDbFile(TableServerRequest treq) throws DataAccessException {
 
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        File dbFile = new File(ServerContext.getTempWorkDir(), "GatorDD." + dbAdapter.getName());
+        File dbFile = new File(ServerContext.getTempWorkDir(), String.format("GatorDD-%s.%s", FileUtil.getHostname(), dbAdapter.getName()));
         try {
             if (dbFile.createNewFile()) {
                 // created for the first time... populate dd and meta tables

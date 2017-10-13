@@ -96,7 +96,7 @@ public class ServerStatus extends BaseHttpServlet {
         writer.println("DATABASE INFORMATION");
         writer.println("--------------------");
         writer.println("Open: " + BaseDbAdapter.getDbInstances().size());
-        writer.println("Details: touched time is mm:ss");
+        writer.println("Details: touched time in (mm:ss)");
         BaseDbAdapter.getDbInstances().values().stream()
                     .forEach((db) -> writer.println(String.format("\ttouched: %2$tM:%2$tS %s", db.getDbFile().getName(), db.getLastAccessed())));
     }

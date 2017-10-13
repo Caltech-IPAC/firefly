@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.decimate.DecimateKey;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -61,6 +62,7 @@ public class EmbeddedDbUtil {
         dg.removeDataDefinition(DataGroup.ROW_IDX);
         dg.removeDataDefinition(DataGroup.ROW_NUM);
 
+        createCustomFunctions(dbFile, dbAdapter);
         int rowCount = createDataTbl(dbFile, dg, dbAdapter);
         createDDTbl(dbFile, dg, dbAdapter, "data");
         createMetaTbl(dbFile, dg, dbAdapter, "data");
@@ -374,6 +376,22 @@ public class EmbeddedDbUtil {
     private static int getIntVal(Map<String, DataGroup.Attribute> meta, String tag, DataType col, int def) {
         String v = getStrVal(meta, tag, col, null);
         return v == null ? def : Integer.parseInt(v);
+    }
+
+
+    private static void createCustomFunctions(File dbFile, DbAdapter dbAdapter) {
+
+        String decimate_key =
+                "CREATE FUNCTION decimate_key(xVal DOUBLE, yVal DOUBLE, xMin DOUBLE, yMin DOUBLE, nX INT, nY INT, xUnit DOUBLE, yUnit DOUBLE)\n" +
+                        "RETURNS CHAR VARYING(20)\n" +
+                        "LANGUAGE JAVA DETERMINISTIC NO SQL\n" +
+                        "EXTERNAL NAME 'CLASSPATH:edu.caltech.ipac.firefly.server.db.DbCustomFunctions.getDecimateKey'\n";
+        try {
+            JdbcFactory.getTemplate(dbAdapter.getDbInstance(dbFile)).execute(decimate_key);
+        } catch (Exception ex) {
+            logger.error("Fail to create custom function:" + decimate_key);
+        }
+
     }
 
 }

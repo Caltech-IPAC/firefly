@@ -5,7 +5,7 @@ apply from: "$fireflyPath/buildScript/gwt_webapp.gincl"
 
 dependencies {
   compile project(':xstream'), project(':simbad'), project(':firefly_data')
-  webappLib db_lib, mysql_lib, FIREFLY_RUNTIME + ":$jar.baseName"
+  webappLib mysql_lib, FIREFLY_RUNTIME + ":$jar.baseName"
 }
 
 sourceSets {

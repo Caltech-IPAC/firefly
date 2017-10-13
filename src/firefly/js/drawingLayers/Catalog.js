@@ -375,7 +375,7 @@ function doFilter(dl,p,sel) {
     const decimateIdx= findColIdx(dl.tableData.columns,'decimate_key');
     if (decimateIdx>1 && dl.tableMeta['decimate_key']) {
         const idxs= getSelectedPts(sel, p, dl.drawData.data)
-            .map( (idx) => dl.tableData.data[idx][decimateIdx]);
+            .map( (idx) => `'${dl.tableData.data[idx][decimateIdx]}'`);
         filter= `IN (${idxs.toString()})`;
         filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
         newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};

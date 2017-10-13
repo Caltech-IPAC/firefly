@@ -308,21 +308,6 @@ public class SearchServerCommands {
         }
     }
 
-    public static class GetDataFileValues extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            String filePath = params.getRequired(ServerParams.SOURCE);
-            String rowsStr = params.getRequired(ServerParams.ROWS);
-            List<Integer> rows = new ArrayList<Integer>();
-            for (String s : rowsStr.split(", ")) {
-                rows.add(Integer.parseInt(s));
-            }
-            String colName = params.getRequired(ServerParams.COL_NAME);
-            List<String> result = (new SearchManager().getDataFileValues(new File(filePath), rows, colName));
-            return CollectionUtil.toString(result);
-        }
-    }
-
     @Deprecated
     public static class GetRawDataSet extends ServCommand {
 

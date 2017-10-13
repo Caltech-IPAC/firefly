@@ -41,9 +41,6 @@ public class SsoCheckFilter implements Filter {
     public void init(FilterConfig filterConfig) throws ServletException {
 
         try {
-            ServletContext cntx = filterConfig.getServletContext();
-            ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(CommonFilter.WEBAPP_CONFIG_LOC));
-
             String excludes = filterConfig.getInitParameter(EXCLUDE_PATTERN);
             if (!StringUtils.isEmpty(excludes)) {
                 excludePattern = Pattern.compile(excludes);

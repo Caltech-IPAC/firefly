@@ -30,38 +30,28 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 abstract public class BaseDbAdapter implements DbAdapter {
     private static long MAX_IDLE_TIME = 1000 * 60 * 5;      // cleanup every 5 minutes.
     private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
-    private static ScheduledFuture cleanupFuture = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> cleanup(), MAX_IDLE_TIME, MAX_IDLE_TIME, TimeUnit.MILLISECONDS);
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-    static {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-                                 public void run() {
-                                     LOGGER.info("Closing any open database before shutdown.");
-                                     cleanup(true);
-                                 }
-                             }
-                        );
-    }
     private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
-            "  cname    varchar(1023)" +
-            ", label    varchar(1023)" +
-            ", type     varchar(1023)" +
-            ", units    varchar(1023)" +
-            ", format   varchar(1023)" +
+            "  cname    varchar(1024)" +
+            ", label    varchar(1024)" +
+            ", type     varchar(1024)" +
+            ", units    varchar(1024)" +
+            ", format   varchar(1024)" +
             ", width    int" +
-            ", visibility varchar(1023)" +
+            ", visibility varchar(1024)" +
             ", sortable boolean" +
             ", filterable boolean" +
-            ", desc     varchar(1023)" +
+            ", desc     varchar(64000)" +
             ")";
 
     private static final String META_INSERT_SQL = "insert into %s_meta values (?,?)";
     private static final String META_CREATE_SQL = "create table %s_meta "+
             "(" +
-            "  key      varchar(1023)" +
-            ", value    varchar(2023)" +
+            "  key      varchar(1024)" +
+            ", value    varchar(64000)" +
             ")";
 
 
@@ -164,7 +154,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public String getDataType(Class type) {
         if (String.class.isAssignableFrom(type)) {
-            return "varchar(1023)";
+            return "varchar(64000)";
         } else if (Integer.class.isAssignableFrom(type)) {
             return "int";
         } else if (Long.class.isAssignableFrom(type)) {
@@ -176,7 +166,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         } else if (Date.class.isAssignableFrom(type)) {
             return "date";
         } else {
-            return "varchar(1023)";
+            return "varchar(64000)";
         }
     }
 
@@ -197,11 +187,11 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public static Map<String, EmbeddedDbInstance> getDbInstances() { return dbInstances; }
 
-    static void cleanup() {
+    public static void cleanup() {
         cleanup(false);
     }
 
-    static void cleanup(boolean force) {
+    public static void cleanup(boolean force) {
         List<EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
                                                     .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
 

@@ -23,15 +23,8 @@ import java.io.IOException;
  * @version $Id: CommonFilter.java,v 1.39 2012/09/07 18:04:02 loi Exp $
  */
 public class CommonFilter implements Filter {
-    public static final String WEBAPP_CONFIG_LOC = "/WEB-INF/config";
 
     public void init(FilterConfig filterConfig) throws ServletException {
-        try {
-            ServletContext cntx = filterConfig.getServletContext();
-            ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
