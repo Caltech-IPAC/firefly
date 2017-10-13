@@ -1737,7 +1737,6 @@ public class FitsRead implements Serializable {
             cards[i] = card.toString();
             i++;
         }
-
         Header clonedHeader = new Header(cards);
 
         clonedHeader.resetOriginalSize();

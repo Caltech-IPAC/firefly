@@ -54,9 +54,8 @@ public interface Workspaces {
      * @return {@link WsResponse}
      * @throws WsException handle ws error
      */
-    WsResponse putFile(String wspaceRelPath, File item, String contentType) throws WsException;
-
-
+    //WsResponse putFile(String wspaceRelPath, File item, String contentType) throws WsException;
+    WsResponse putFile(String wspaceRelPath, boolean writable, File item, String contentType) throws WsException;
     /**
      * Delete file/folder that is in relative path to ws home
      *

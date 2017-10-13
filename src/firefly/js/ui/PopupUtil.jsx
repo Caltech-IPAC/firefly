@@ -28,9 +28,9 @@ export const MODAL_DIALOG_ID = 'ModalDialog';
 export function showModal(content, show=true) {
     if (show) {
         const dialogContent= (
-            <ModalDialog>
+            <ModasholDialog>
                 {content}
-            </ModalDialog>
+            </ModasholDialog>
         );
         DialogRootContainer.defineDialog(MODAL_DIALOG_ID, dialogContent);
 

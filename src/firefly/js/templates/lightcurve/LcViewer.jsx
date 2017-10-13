@@ -21,6 +21,7 @@ import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
@@ -32,6 +33,8 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {HelpText} from './../../ui/HelpText.jsx';
 import {dispatchAllowDataTag} from '../../core/background/BackgroundCntlr.js';
+import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 
 const vFileKey = LC.FG_FILE_FINDER;
 const DEFAULT_TITLE = 'Time Series Tool';
@@ -52,9 +55,10 @@ export class LcViewer extends PureComponent {
         const menu = getMenu();
         const layoutInfo = getLayouInfo();
         const isReady = isAppReady();
+        const fileLocation = getFieldVal(vFileKey, 'uploadContainer', 'isLocal');
 
         return Object.assign({}, this.props,
-            {menu, isReady, ...layoutInfo});
+            {fileLocation, menu, isReady, ...layoutInfo});
     }
 
     componentDidMount() {
@@ -78,14 +82,14 @@ export class LcViewer extends PureComponent {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown, missionOptions,
-            dropdownPanels=[], footer, style, displayMode, missionEntries} = this.state;
+            dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
             displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
             fluxColName: get(missionEntries, [LC.META_FLUX_CNAME])
         };
 
-        dropdownPanels.push(<UploadPanel {...{missionOptions}}/>);
+        dropdownPanels.push(<UploadPanel {...{missionOptions, fileLocation}}/>);
 
 
         const LcPeriodInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? LcPeriodPlotly : LcPeriod;
@@ -119,7 +123,7 @@ export class LcViewer extends PureComponent {
 
         let title = appTitle ? appTitle : DEFAULT_TITLE; // use default title when appTitle is undefined or ''
         if (displayMode && displayMode.startsWith('period')) {
-            title += ': Period Finder';
+            title = ': Period Finder';
 
         } else if(displayMode && !displayMode.startsWith('period')){
             title += ': Viewer';
@@ -196,76 +200,139 @@ BannerSection.propTypes = {
     props: PropTypes.object
 };
 
+const labelW = 150;
 
 /**
  *  A generic upload panel.
  * @param {Object} props react component's props
  */
-export function UploadPanel(props) {
-    const wrapperStyle = {color:'inherit', margin: '5px 0'};
-    const {missionOptions=getAllConverterIds()} = props || {};
 
-    const instruction = 'Plot time series data, view associated images, find period, and phase fold.';
+export class UploadPanel extends PureComponent {
+    constructor(props) {
+        super(props);
 
-    const options = missionOptions.map((id) => {
-        return {label: getMissionName(id) || capitalize(id), value: id};
-    });
+        this.state={fileLocation: 'isLocal'};
+    }
 
-    return (
-        <div style={{padding: 10}}>
-            <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
-            <FormPanel
-                groupKey={vFileKey}
-                onSubmit={(request) => onSearchSubmit(request)}
-                onCancel={dispatchHideDropDown}
-                submitText={'Upload'}
-                help_id={'loadingTSV'}>
-                <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
-                    <div
-                        style={{padding:5 }}>
-                        <div
-                            style={{padding:5, display:'flex', flexDirection:'row', alignItems:'center' }}>
-                            <div
-                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 13px'}}>
-                                <div> {'Upload time series table:'} </div>
-                                <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'} />
-                                </div>
+    componentWillUnmount() {
+        if (this.unbinder) this.unbinder();
+        this.iAmMounted = false;
+    }
+
+    componentDidMount() {
+        this.iAmMounted = true;
+        this.unbinder = FieldGroupUtils.bindToStore(vFileKey, (fields) => {
+            if (this.iAmMounted) {
+                this.setState((state) => {
+                    state.fileLocation = get(fields, ['uploadContainer', 'value'], 'isLocal');
+                    return state;
+                });
+            }
+        });
+    }
+
+    render() {
+        const wrapperStyle = {color: 'inherit', margin: '5px 0'};
+        const {missionOptions=getAllConverterIds()} = this.props || {};
+
+        const instruction = 'Plot time series data, view associated images, find period, and phase fold.';
+
+        const options = missionOptions.map((id) => {
+            return {label: getMissionName(id) || capitalize(id), value: id};
+        });
+
+        const showUploadLocation = () => {
+            const options = [
+                {'id': 0, label: 'Local File', 'value': 'isLocal'},
+                {'id': 1, label: 'Workspace', 'value': 'isWs'}
+            ];
+            return (
+                <div>
+                    <RadioGroupInputField
+                        fieldKey={'uploadContainer'}
+                        initialState={{value: options[0].value, label: 'Choose Upload from:',
+                                       labelWidth: (labelW-4)}}
+                        alignment={'horizontal'}
+                        options={options}
+                    />
+                </div>
+            );
+        };
+
+        const showFileUploadButton = () => {
+            const {fileLocation} = this.state;
+
+            return (
+                <div style={{padding:5, display:'flex', alignItems:'center', width: 400, height: 50}}>
+                    <div style={{display:'flex', flexDirection:'column', width: labelW}}>
+                        <div> {'Upload time series table:'} </div>
+                        <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'}/>
+                    </div>
+                    { fileLocation === 'isLocal' ? (
                             <FileUpload
                                 wrapperStyle={wrapperStyle}
                                 fieldKey='rawTblSource'
-                                initialState={{
-                            tooltip: 'Select a Time Series Table file to upload',
-                            label: ''
-                        }}
+                                initialState={{ tooltip: 'Select a Time Series Table file to upload',
+                                                label: ''}}
                             />
-                        </div>
-                        <div
-                            style={{padding:5,display:'flex', flexDirection:'row', alignItems:'center' }}>
-                            <div
-                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 10px'}}>
+                        ) :
+                        (
+                            <WorkspaceUpload
+                                wrapperStyle={wrapperStyle}
+                                fieldKey='rawTblSource'
+                                initialState={{ tooltip: 'Select a Time Series Table file from workspace to upload'}}
+                            />
+                        )
+                    }
+                </div>
+            );
+        };
+
+        return (
+            <div style={{padding: 10}}>
+                <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
+                <FormPanel
+                    groupKey={vFileKey}
+                    onSubmit={(request) => onSearchSubmit(request)}
+                    onCancel={dispatchHideDropDown}
+                    submitText={'Upload'}
+                    help_id={'loadingTSV'}>
+                    <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
+                        <div style={{padding:5 }}>
+                            <div style={{padding:5 }}>
+                                {showUploadLocation()}
+                            </div>
+
+                            {showFileUploadButton()}
+
+                            <div style={{padding:5,display:'flex', alignItems:'center' }}>
+                                <div style={{display:'flex', flexDirection:'column', width: labelW}}>
                                     <div>{'Choose mission'}</div>
                                     <div>{'to view associated images:'}</div>
                                 </div>
-                            <ListBoxInputField fieldKey='mission'
-                                               wrapperStyle={wrapperStyle}
-                                               initialState={{
-                            value: 'wise',
-                            tooltip: 'Choose mission to view associated images',
-                            label : '',
-                            labelWidth : 0
-                        }}
-                                               options={options}
-                            />
+                                <ListBoxInputField fieldKey='mission'
+                                                   wrapperStyle={wrapperStyle}
+                                                   initialState={{
+                                                        value: 'wise',
+                                                        tooltip: 'Choose mission to view associated images',
+                                                        label : '',
+                                                        labelWidth : 0
+                                                    }}
+                                                   options={options}
+                                />
+                            </div>
                         </div>
-                    </div>
-                </FieldGroup>
-            </FormPanel>
-        </div>
-    );
+                    </FieldGroup>
+                </FormPanel>
+            </div>
+        );
+    }
 }
 
+
 UploadPanel.propTypes = {
-    name: PropTypes.oneOf(['LCUpload'])
+    name: PropTypes.oneOf(['LCUpload']),
+    fileLocation: PropTypes.string
 };
 
 UploadPanel.defaultProps = {

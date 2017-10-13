@@ -55,13 +55,18 @@ function imagePlotOnURL(request) {
 
 // image plot on specified upload FITS
 function imagePlotOnFITS(request) {
-    var fits = get(request, keyMap['fitsupload']);
+    const fileLoc = get(request, keyMap['fitslocation']);
+
+    var fits = (fileLoc === 'isLocal') ? get(request, keyMap['fitsupload']) : get(request, keyMap['fitswsupload']);
     var wpr = WebPlotRequest.makeFilePlotRequest(fits);
 
 
     if (wpr && request[keyMap['fitslist']] === 'loadOne' && request.hasOwnProperty(keyMap['fitsextinput'])) {
           wpr.setMultiImageIdx(request[keyMap['fitsextinput']]);
     }
+
+    //wpr.setSourceFrom(request[keyMap['fitslocation']]);
+
     return wpr;
 }
 
@@ -171,7 +176,10 @@ export function resultFail(fromFail = true) {
                     if (fromFail) {
                         errMsg = 'invalid file upload';
                     } else {
-                        if (!get(fg, keyMap['fitsupload'])) {
+                        const fileLoc = get(fg, keyMap['fitslocation']);
+                        const fitsKey = (fileLoc === 'isLocal') ?  keyMap['fitsupload']: keyMap['fitswsupload'];
+
+                        if (!get(fg, fitsKey)) {
                             errMsg = msg('nofits', rgbNote);
                         }
                     }

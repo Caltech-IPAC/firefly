@@ -21,7 +21,6 @@ import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {getPanelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {FileUpload} from '../../ui/FileUpload.jsx';
 import {SizeInputFields} from '../../ui/SizeInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
@@ -29,7 +28,7 @@ import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
 import {FieldGroupCollapsible, CollapseBorder, CollapseHeaderCorner} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelReducer.js';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
-
+import {LOCALFILE, UploadOptionsDialog } from '../../ui/UploadOptionsDialog.jsx';
 import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
@@ -56,6 +55,8 @@ export const keyMap = {
     'fitslist':    'SELECTIMAGEPANEL_FITS_list',
     'fitsextinput':'SELECTIMAGEPANEL_FITS_extinput',
     'fitsupload':  'SELECTIMAGEPANEL_FITS_upload',
+    'fitswsupload': 'SELECTIMAGEPANEL_FITS_ws_upload',
+    'fitslocation': 'SELECTIMAGEPANEL_FITS_filelocation',
     'sizefield': 'SELECTIMAGEPANEL_ImgFeature_radius',
     'plotmode':    'SELECTIMAGEPANEL_targetplot',
     'createNewCell':    'createNewCell'
@@ -721,11 +722,13 @@ function CatalogTabView({catalog, fields}) {
         } else if ( fieldname.includes('upload')) {
             return (
                 <div key={index} >
-                    <FileUpload
-                        wrapperStyle={{margin: '15px 10px 21px 10px'}}
-                        fieldKey={keyMap['fitsupload']}
-                        initialState= {{
-                        tooltip: 'Select a file to upload' }}
+                    <UploadOptionsDialog
+                        fromGroupKey={panelKey}
+                        fieldKeys={{local: keyMap['fitsupload'],
+                                    workspace: keyMap['fitswsupload'],
+                                    location: keyMap['fitslocation']}}
+                        tooltips={{local: 'Select a fits file to upload',
+                                   workspace: 'Select a fits file from workspace to upload'}}
                     />
                 </div>
             );

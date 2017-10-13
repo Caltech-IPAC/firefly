@@ -95,7 +95,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
      * @param cred {@link WsCredentials}
      */
     public WebDAVWorkspaceManager(WsCredentials cred) {
-        this(cred.getPassword()!=null?Partition.SSOSPACE:Partition.PUBSPACE, cred, true);
+        this(((cred.getPassword()!=null) || (cred.getCookies() != null))?Partition.SSOSPACE:Partition.PUBSPACE, cred, true);
     }
 
     public WebDAVWorkspaceManager(String pubspaceId) {
@@ -216,13 +216,12 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         return getMeta(relRemoteUri, WspaceMeta.Includes.NONE) != null;
     }
 
-    /**
-     * @param upload
-     * @param relPath expecting uri folder a/b
-     * @return
-     */
+
+    /*
     public WsResponse davPut(File upload, String relPath, String contentType) {
         try {
+            int idx = relPath.lastIndexOf('/');
+            relPath = relPath.substring(0, idx+1);
             String parentPath = WsUtil.ensureUriFolderPath(relPath);
             //if (!exists(parentPath)) {
             WsResponse response = createParent(parentPath);
@@ -235,6 +234,70 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
             if (exists(parentPath + upload.getName())) {
                 return WsUtil.error(304, newUrl);// not modified, already exists
             }
+            PutMethod put = new PutMethod(newUrl);
+
+            // TODO Content Type doesn't seems to be passed on
+            RequestEntity requestEntity = new InputStreamRequestEntity(new BufferedInputStream(
+                    new FileInputStream(upload), HttpServices.BUFFER_SIZE), upload.length(), contentType);
+            put.setRequestEntity(requestEntity);
+            // is to allow a client that is sending a request message with a request body
+            // to determine if the origin server is willing to accept the request
+            // (based on the request headers) before the client sends the request body.
+            // this require server supporting HTTP/1.1 protocol.
+
+            put.getParams().setBooleanParameter(
+                    HttpMethodParams.USE_EXPECT_CONTINUE, true);
+
+            if (!executeMethod(put)) {
+                // handle error
+                LOG.error("Unable to upload file:" + relPath + " -- " + put.getStatusText());
+                return WsUtil.error(put.getStatusCode(), put.getStatusText());
+            }
+
+            return WsUtil.success(put.getStatusCode(), put.getStatusText(), newUrl);
+        } catch (Exception e) {
+            LOG.error(e, "Error while uploading file:" + upload.getPath());
+        }
+        return WsUtil.error(500);
+    }
+    */
+
+    /**
+     * @param upload
+     * @param relPath expecting uri folder with file name attached optionally a/b
+     * @return overWritable
+     */
+    public WsResponse davPut(File upload, String relPath, boolean overWritable, String contentType) {
+        try {
+
+            int idx = relPath.lastIndexOf('/');
+            String newFileName = relPath.substring(idx + 1);
+
+            relPath = relPath.substring(0, idx+1);
+            String parentPath = WsUtil.ensureUriFolderPath(relPath);
+            //if (!exists(parentPath)) {
+            WsResponse response = createParent(parentPath);
+
+            String newPath;
+            String newUrl;
+            if (newFileName.length() == 0) {
+                newPath = parentPath + upload.getName();
+                newUrl =  getResourceUrl(parentPath) + upload.getName();
+            } else {
+                newPath = parentPath + newFileName;
+                newUrl =  getResourceUrl(parentPath) + newFileName;
+            }
+            //}
+            // If parent and file name exists already, stop
+            if (!response.doContinue()) {
+                return WsUtil.error(Integer.parseInt(response.getStatusCode()), response.getStatusText(), parentPath);
+            }
+
+            if (exists(newPath) && (overWritable == false)) {
+                //if (exists(relPath)) {
+                return WsUtil.error(304, newUrl);// not modified, already exists
+            }
+
             PutMethod put = new PutMethod(newUrl);
 
             // TODO Content Type doesn't seems to be passed on
@@ -355,13 +418,15 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         throw new IllegalArgumentException("not implemented");
     }
 
+
     @Override
-    public WsResponse putFile(String relPath, File item, String contentType) throws WsException {
+    public WsResponse putFile(String relPath, boolean overWritable, File item, String contentType) throws WsException {
         String ct = contentType;
         if (contentType == null) {
-            ct = ContentType.DEFAULT_BINARY.getMimeType();
+            //ct = ContentType.DEFAULT_BINARY.getMimeType();
+            //ct="image/fits";
         }
-        return davPut(item, relPath, ct);
+        return davPut(item, relPath, overWritable, ct);
     }
 
     @Override
@@ -655,7 +720,8 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         man.setMeta(m);
 
         String ufilePath = relPath + "gaia-binary.vot";
-        WsResponse wsResponse = man.davPut(new File("/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/firefly/ws/gaia-binary.vot"), ufilePath, null);
+        WsResponse wsResponse = man.davPut(new File("/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/firefly/ws/gaia-binary.vot"),
+                                           ufilePath, false, null);
 
         System.out.println(wsResponse);
 

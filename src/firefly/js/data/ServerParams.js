@@ -158,6 +158,11 @@ export const ServerParams = {
 
         WS_LIST : 'wsList',
         WS_GET_FILE : 'wsGet',
-        WS_PUT_FILE : 'wsPut'
-
+        WS_UPLOAD_FILE : 'wsUpload', // to get the path of the file uploaded into firefly server from WS
+        WS_PUT_IMAGE_FILE : 'wsPut', //FITS, PNG, comes from edu.caltech.ipac.firefly.server.servlets.AnyFileDownload
+        WS_PUT_TABLE_FILE : 'wsPutTable',
+        WS_DELETE_FILE : 'wsDel',
+        WS_MOVE_FILE : 'wsMove',
+        WS_GET_METADATA : 'wsGetMeta',
+        WS_CREATE_FOLDER : 'wsParent'
 };
