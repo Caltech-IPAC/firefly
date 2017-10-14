@@ -80,10 +80,11 @@
 }
 
 .DataProductList__item--header {
-    margin-left: 5px;
-    font-size: large;
-    font-weight: bold;
-    color: #005da4;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: -5px;
 }
 
 .DataProductList__item--details {
@@ -102,4 +103,7 @@
     white-space: nowrap;
     text-align: right;
     margin: 2px 2px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
 }

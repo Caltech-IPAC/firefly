@@ -5,7 +5,7 @@
 import './CollapsiblePanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {isBoolean} from 'lodash';
+import {isBoolean, isFunction} from 'lodash';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
@@ -70,34 +70,36 @@ export class CollapsiblePanel extends PureComponent {
     }
 
     render () {
+        const {header, headerRoundCorner, borderStyle, wrapperStyle, children} = this.props;
+        var {headerStyle, contentStyle} = this.props;
         const contentBorderClassName = ['', ' CollapsiblePanel__Content-oneborder',
                               ' CollapsiblePanel__Content-twoborder', ' CollapsiblePanel__Content-threeborder'];
         var headerClassName = 'CollapsiblePanel__Header';
         var contentClassName = 'CollapsiblePanel__Content';
         var headerCorner = '';
-        var headerStyle, contentStyle;
 
        ['TopLeft', 'TopRight', 'BottomRight', 'BottomLeft'].forEach((corner) => {
-            CollapseHeaderCorner[corner]&this.props.headerRoundCorner ?
+            CollapseHeaderCorner[corner]&headerRoundCorner ?
                                             headerCorner += ' 0.5em' : headerCorner += ' 0em';
        });
 
-        headerStyle = Object.assign({}, this.props.headerStyle, {'borderRadius': headerCorner});
+        headerStyle = Object.assign({}, headerStyle, {'borderRadius': headerCorner});
 
         if (this.state.isOpen) {
             headerClassName += ' CollapsiblePanel__Header--is-open';
-            contentClassName += contentBorderClassName[this.props.borderStyle];
+            contentClassName += contentBorderClassName[borderStyle];
         }
 
-        contentStyle = Object.assign({}, this.props.contentStyle, this.getContentHeight());
+        contentStyle = Object.assign({}, contentStyle, this.getContentHeight());
+        const headerContent = isFunction(header) ? header() : header;
 
         return (
-            <div style={this.props.wrapperStyle}>
+            <div style={wrapperStyle}>
                 <div style={headerStyle} onClick={this.handleClick} className={headerClassName}>
-                    {this.props.header}
+                    {headerContent}
                 </div>
                 <div style={contentStyle} className={contentClassName}>
-                    {this.props.children}
+                    {children}
                 </div>
             </div>
         );
@@ -106,7 +108,7 @@ export class CollapsiblePanel extends PureComponent {
 
 CollapsiblePanel.propTypes = {
     componentKey: PropTypes.string, // if need to preserve state and is not part of the field group
-    header: PropTypes.string,
+    header: PropTypes.oneOfType(PropTypes.string, PropTypes.func),
     isOpen: PropTypes.bool,
     headerRoundCorner: PropTypes.number,
     headerStyle: PropTypes.object,
