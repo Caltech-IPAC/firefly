@@ -326,6 +326,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
 
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"SDSS");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"sdss");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
@@ -338,6 +339,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     static private ImageMasterDataEntry msxTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"MSX");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"msx");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
@@ -352,6 +354,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     static private ImageMasterDataEntry dssTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"DSS");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"dss");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");

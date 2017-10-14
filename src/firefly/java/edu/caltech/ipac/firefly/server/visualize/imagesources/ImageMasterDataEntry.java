@@ -28,15 +28,14 @@ public class ImageMasterDataEntry {
         TITLE("title"),
         WAVELENGTH ("wavelength"),
         WAVELENGTH_DESC("wavelengthDesc"),
+        WAVEBAND_ID("wavebandId"),
         HELP_URL("helpUrl"),
         TOOL_TIP ( "tooltip"),
         IMAGE_ID ("imageId"),
         PROJECT_TYPE_KEY("projectTypeKey"),
         PROJECT_TYPE_DESC("projectTypeDesc"),
         MISSION_ID("missionId"),
-        INSTRUMENT_ID("instrumentId"),
         ACRONYM("acronym"),
-        NAME("name"),
         DATA_TYPE("dataType");
 
         private String key;

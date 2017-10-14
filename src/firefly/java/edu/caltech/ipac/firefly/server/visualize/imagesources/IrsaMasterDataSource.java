@@ -10,8 +10,12 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import org.apache.commons.csv.CSVFormat;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -19,6 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterDataEntry.PARAMS;
+import org.apache.commons.io.FileUtils;
+
+import static edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterData.makeJsonObj;
 
 /**
  * @author Trey Roby
@@ -51,11 +58,10 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
     private HashMap<String, String> getParameterMaps(){
 
         HashMap<String, String> paramMaps = new HashMap<>();
-        paramMaps.put("ProjectTypeDesc", "type");
         paramMaps.put("apiType", "Service");
-        paramMaps.put("dataProductId", "surveyKey");
-        paramMaps.put("waveBandId", "surveyKeyBand");
-        paramMaps.put("waveBandDesc", "title");
+        paramMaps.put("surveyKey", "SurveyKey");
+        paramMaps.put(PARAMS.WAVEBAND_ID.getKey(), "SurveyKeyBand");
+        paramMaps.put("title", "title");
         paramMaps.put("filter", "filter");
         return paramMaps;
     }
@@ -78,7 +84,7 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
     * @throws IOException
     * @throws FailedRequestException
     */
-     public List createDataList(String masterTable) throws Exception {
+     public List<ImageMasterDataEntry> createDataList(String masterTable) throws Exception {
          List<ImageMasterDataEntry>  retList= new ArrayList();
          DataGroup inDg = getDataFromMasterTable(masterTable);
          List<DataObject> dataRows = inDg.values();
@@ -97,10 +103,10 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
                      String val = obj != null ? String.valueOf(obj) : null;
 
                      //make a temporary missionId
-                     if (val==null && parameters[i].getKey().equals("missionId")){
-                         val = "m_"+String.valueOf(row.getDataElement("acronym"))+
-                                 String.valueOf(row.getDataElement("waveBandId"))+
-                                 String.valueOf(row.getDataElement("wavelength"));
+                     if (val==null && parameters[i].getKey().equals("imageId")){
+                         val = String.valueOf(row.getDataElement(PARAMS.MISSION_ID.getKey()))
+                                 +String.valueOf(row.getDataElement(PARAMS.ACRONYM.getKey()))
+                                 +String.valueOf(row.getDataElement(PARAMS.WAVEBAND_ID.getKey()));
                          if( missionIdList.contains(val)){
                              val=val.concat(new String("_"+i));
                          }
@@ -138,6 +144,8 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
                  }
              }
          }
+         //For IRSA, type is SERVICE for now.
+         params.put("type",  "SERVICE");
          return params;
      }
 
@@ -146,6 +154,22 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
          InputStream inf= IrsaMasterDataSource.class.getResourceAsStream(masterTableName);
          DataGroup dg = DsvToDataGroup.parse(inf, CSVFormat.DEFAULT);
          return dg;
+     }
+
+     public static void main(String[] args) throws Exception {
+       IrsaMasterDataSource s = new IrsaMasterDataSource(){
+           @Override
+           DataGroup getDataFromMasterTable(String masterTableName) throws IOException, FailedRequestException {
+               FileInputStream inf = FileUtils.openInputStream(new File(masterTableName));//
+               DataGroup dg = DsvToDataGroup.parse(inf, CSVFormat.DEFAULT);
+               return dg;
+           }
+       };
+         List<ImageMasterDataEntry> dataList = s.createDataList("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/java/edu/caltech/ipac/firefly/resources/irsa-master-table-test.csv");
+//         ImageMasterDataEntry o = (ImageMasterDataEntry) dataList.get(0);
+         for(ImageMasterDataEntry o:dataList){
+             System.out.println(makeJsonObj(o.getDataMap()));
+         }
      }
 
 }
