@@ -28,7 +28,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
 abstract public class BaseDbAdapter implements DbAdapter {
-    private static long MAX_IDLE_TIME = 1000 * 60 * 5;      // cleanup every 5 minutes.
+    private static long MAX_IDLE_TIME = 1000 * 60 * 5;      // will be cleaned up if idle more than 5 minutes.
     private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
 
@@ -194,9 +194,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
     public static void cleanup(boolean force) {
         List<EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
                                                     .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
-
-        LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
         if (toBeRemove.size() > 0) {
+            LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
             toBeRemove.forEach((db) -> {
                 DbAdapter.getAdapter(db.name).close(db.dbFile);
                 dbInstances.remove(db.dbFile.getPath());

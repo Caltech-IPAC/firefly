@@ -38,9 +38,7 @@ public class CommonFilter implements Filter {
         StopWatch.clear();
     }
 
-    public void destroy() {
-        ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
-    }
+    public void destroy() {}
 
     public static void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
 

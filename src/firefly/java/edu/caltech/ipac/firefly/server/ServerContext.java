@@ -748,7 +748,7 @@ public class ServerContext {
         public static final String WEBAPP_CONFIG_LOC = "/WEB-INF/config";
 
         public void contextInitialized(ServletContextEvent servletContextEvent) {
-System.out.println("Initializing server...");
+            System.out.println("contextInitialized...");
             ServletContext cntx = servletContextEvent.getServletContext();
             ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
             Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> BaseDbAdapter.cleanup(), 1, 1, TimeUnit.MINUTES);   // check every minute
@@ -756,8 +756,9 @@ System.out.println("Initializing server...");
         }
 
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
-System.out.println("Shutting down server...");
+            System.out.println("contextDestroyed...");
             BaseDbAdapter.cleanup(true);
+            ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
         }
     }
 
