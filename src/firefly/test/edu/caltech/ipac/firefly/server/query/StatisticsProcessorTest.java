@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class StatisticsProcessorTest {
 
-    private static StatisticsProcessor sp;
+    private static StatisticsProcessorOld sp;
     private static DataGroup inDg;
     private DataGroup outDg;
     private String fileName = "ipacTableTestFile.tbl";
@@ -27,7 +27,7 @@ public class StatisticsProcessorTest {
     @Before
     public void setup()  {
 
-         sp = new StatisticsProcessor();
+         sp = new StatisticsProcessorOld();
          inDg = FileLoader.loadIpacTable(StatisticsProcessor.class, fileName );
 
     }

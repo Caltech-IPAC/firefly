@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
+import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
 import edu.caltech.ipac.firefly.server.filters.CommonFilter;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -14,6 +15,10 @@ import org.apache.log4j.PropertyConfigurator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.HandshakeResponse;
@@ -21,6 +26,9 @@ import javax.websocket.server.HandshakeRequest;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A static server-centric class used hold server related information.
@@ -213,7 +221,7 @@ public class ServerContext {
      * @return
      */
     public static File getConfigFile(String fname) {
-        
+
         File f = null;
         if (appConfigDir != null) {
             f = new File(appConfigDir, fname) ;
@@ -734,5 +742,24 @@ public class ServerContext {
         }
     }
 
+
+    @WebListener
+    public static class ContextListener implements ServletContextListener {
+        public static final String WEBAPP_CONFIG_LOC = "/WEB-INF/config";
+
+        public void contextInitialized(ServletContextEvent servletContextEvent) {
+            System.out.println("contextInitialized...");
+            ServletContext cntx = servletContextEvent.getServletContext();
+            ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
+            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> BaseDbAdapter.cleanup(), 1, 1, TimeUnit.MINUTES);   // check every minute
+
+        }
+
+        public void contextDestroyed(ServletContextEvent servletContextEvent) {
+            System.out.println("contextDestroyed...");
+            BaseDbAdapter.cleanup(true);
+            ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
+        }
+    }
 
 }

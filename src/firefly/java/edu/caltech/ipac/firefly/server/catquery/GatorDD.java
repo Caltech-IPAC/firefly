@@ -6,14 +6,25 @@ package edu.caltech.ipac.firefly.server.catquery;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbInstance;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +37,9 @@ import java.util.List;
 
 
 /**
- * @author Trey Roby
+ * This is a wrapper around GatorDDImpl.  It uses the original code to retrieve Gator's DD
+ * information, but stores it into a database.  Unlike our single-results per database,
+ * this database will contains all of the DD information retrieved by GatorDDImpl.
  */
 @SearchProcessorImpl(id = "GatorDD", params =
         {@ParamDoc(name = CatalogRequest.CATALOG, desc = "the catalog name to search"),
@@ -39,7 +52,76 @@ import java.util.List;
                 @ParamDoc(name = CatalogRequest.SERVICE_ROOT, desc = "the part of the URL string that specifies the service and first params. " +
                         "optional: almost never used")
         })
-public class GatorDD extends BaseGator {
+public class GatorDD extends EmbeddedDbProcessor {
+
+    public FileInfo createDbFile(TableServerRequest treq) throws DataAccessException {
+
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        File dbFile = new File(ServerContext.getTempWorkDir(), String.format("GatorDD-%s.%s", FileUtil.getHostname(), dbAdapter.getName()));
+        try {
+            if (dbFile.createNewFile()) {
+                // created for the first time... populate dd and meta tables
+                DataGroup dd = new DataGroup("DD for GatorDD", new DataType[]{
+                        new DataType("name", String.class),
+                        new DataType("description", String.class),
+                        new DataType("units", String.class),
+                        new DataType("indx", String.class),
+                        new DataType("dbtype", String.class),
+                        new DataType("tableflg", Integer.class),
+                        new DataType("sel", String.class)
+                });
+                EmbeddedDbUtil.createDDTbl(dbFile, dd, dbAdapter, "data");
+                EmbeddedDbUtil.setDbMetaInfo(treq, DbAdapter.getAdapter(treq), dbFile);
+            }
+        } catch (IOException e) {
+            // should not happen.
+        }
+        return new FileInfo(dbFile);
+    }
+
+    @Override
+    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
+        String tblName = treq.getParam(CatalogRequest.CATALOG);
+
+        String tblExists = String.format("select count(*) from %s", tblName);
+        try {
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
+        } catch (Exception e) {
+            // DD for this catalog does not exists.. fetch data and populate
+            fetchDataIntoTable(treq, tblName, dbFile, dbAdapter);
+        }
+
+        treq.setParam(TableServerRequest.SQL_FROM, tblName);
+        treq.setPageSize(Integer.MAX_VALUE);
+        String sql = String.format("%s %s %s", dbAdapter.selectPart(treq), dbAdapter.fromPart(treq), dbAdapter.wherePart(treq));
+        sql = dbAdapter.translateSql(sql);
+
+        DataGroup dg = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, sql, "data");
+        TableDef tm = new TableDef();
+        tm.setStatus(DataGroupPart.State.COMPLETED);
+        return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());
+    }
+
+    @Override
+    public boolean doLogging() {
+        return false;
+    }
+
+    private void fetchDataIntoTable(TableServerRequest treq, String tblName, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
+        TableServerRequest ntreq = (TableServerRequest) treq.cloneRequest();
+        ntreq.keepBaseParamOnly();
+        DataGroupPart dgp = new GatorDDImpl().getData(treq);
+        EmbeddedDbUtil.createDataTbl(dbFile, dgp.getData(), dbAdapter, tblName);
+    }
+}
+
+
+/**
+ * @author Trey Roby
+ */
+class GatorDDImpl extends BaseGator {
 
     private static final String DEF_DD_SERVICE = AppProperties.getProperty("irsa.gator.service.dd",
             "/cgi-bin/Gator/nph-dd");

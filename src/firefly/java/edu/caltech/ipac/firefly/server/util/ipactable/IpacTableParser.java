@@ -40,8 +40,8 @@ public class IpacTableParser {
             selCols = meta.getCols().stream().map(DataType::copyOf).collect(Collectors.toList());
         } else {
             selCols = Arrays.stream(colNames).map( (s -> {
-                if (s.equals(DataGroup.ROWID_NAME)) {
-                    return DataGroup.makeRowId();
+                if (s.equals(DataGroup.ROW_IDX)) {
+                    return DataGroup.makeRowIdx();
                 } else {
                     DataType dt = meta.getColByName(s);
                     return dt != null ? dt.copyOf() : new DataType(s, String.class);
@@ -58,7 +58,7 @@ public class IpacTableParser {
             Collections.sort(sortedIndices);
 
             DataGroup dg = new DataGroup("dummy", meta.getCols());
-            boolean hasRowid = dg.containsKey(DataGroup.ROWID_NAME);
+            boolean hasRowid = dg.containsKey(DataGroup.ROW_IDX);
             long cidx = 0, pidx = -1;
             for(int idx : sortedIndices) {
                 cidx = idx;
@@ -69,7 +69,7 @@ public class IpacTableParser {
                     DataObject resRow = new DataObject(results);
                     for (String s : colNames) {
                         Object val = null;
-                        if (s.equals(DataGroup.ROWID_NAME) && !hasRowid) {
+                        if (s.equals(DataGroup.ROW_IDX) && !hasRowid) {
                             val = (int)cidx;
                         } else if (dg.containsKey(s)) {
                             val = row.getDataElement(s);
@@ -105,7 +105,7 @@ public class IpacTableParser {
             Collections.sort(sortedIndices);
 
             DataGroup dg = new DataGroup("dummy", meta.getCols());
-            boolean hasRowid = dg.containsKey(DataGroup.ROWID_NAME);
+            boolean hasRowid = dg.containsKey(DataGroup.ROW_IDX);
             long cidx = 0, pidx = -1;
             for(int idx : sortedIndices) {
                 cidx = idx;
@@ -115,7 +115,7 @@ public class IpacTableParser {
                     DataObject row = IpacTableUtil.parseRow(dg, line);
                     for (String s : colNames) {
                         Object val = null;
-                        if (s.equals(DataGroup.ROWID_NAME) && !hasRowid) {
+                        if (s.equals(DataGroup.ROW_IDX) && !hasRowid) {
                             val = cidx;
                         } else if (dg.containsKey(s)) {
                             val = row.getDataElement(s);

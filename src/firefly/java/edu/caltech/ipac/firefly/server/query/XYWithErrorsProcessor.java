@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.*;
@@ -14,11 +15,28 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 
+@SearchProcessorImpl(id = "XYWithErrors")
+public class XYWithErrorsProcessor extends TableFunctionProcessor {
+
+    protected String getResultSetTablePrefix() {
+        return "xy";
+    }
+
+    protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
+        try {
+            return new XYWithErrorsProcessorImpl().loadDataIntoDataGroup(treq);
+        } catch (IOException e) {
+            throw new DataAccessException(e);
+        }
+    }
+}
+
+
+
 /**
  * @author tatianag
  */
-@SearchProcessorImpl(id = "XYWithErrors")
-public class XYWithErrorsProcessor extends IpacTablePartProcessor {
+class XYWithErrorsProcessorImpl extends IpacTablePartProcessor {
     private static final String SEARCH_REQUEST = "searchRequest";
     private static final String X_COL_EXPR = "xColOrExpr";
     private static final String Y_COL_EXPR = "yColOrExpr";
@@ -35,8 +53,20 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+        DataGroup data = loadDataIntoDataGroup(request);
+        // should not shrink, otherwise the formatted data will be lost
+        // retval.shrinkToFitData();
+        File outFile = createFile(request);
+        DataGroupWriter.write(outFile, data);
+        return outFile;
+    }
+
+    protected DataGroup loadDataIntoDataGroup(TableServerRequest request) throws IOException, DataAccessException {
         String searchRequestJson = request.getParam(SEARCH_REQUEST);
-        DataGroup dg = SearchRequestUtils.dataGroupFromSearchRequest(searchRequestJson);
+        TableServerRequest treq = QueryUtil.convertToServerRequest(searchRequestJson);
+        treq.setPageSize(Integer.MAX_VALUE);
+        DataGroup dg = new SearchManager().getDataGroup(treq).getData();
+
         String xColOrExpr = request.getParam(X_COL_EXPR);
         String yColOrExpr = request.getParam(Y_COL_EXPR);
         String xErrColOrExpr = request.getParam(XERR_COL_EXPR);
@@ -144,16 +174,17 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
                     break;
                 } else {
                     dt = columns[c+1];
-                    formatted = col.getter.getFormattedValue(row);
-                    if (formatted == null) {
-                        retrow.setDataElement(dt, QueryUtil.convertData(dt.getDataType(), val));
-                    } else {
-                        retrow.setFormattedData(dt, formatted);
-                        // we need to have data in the sort column
-                        if (col == sortCol) {
-                            retrow.setDataElement(dt, QueryUtil.convertData(dt.getDataType(), val));
-                        }
-                    }
+                    retrow.setDataElement(dt, QueryUtil.convertData(dt.getDataType(), val));
+//                    formatted = col.getter.getFormattedValue(row);
+//                    if (formatted == null) {
+//                        retrow.setDataElement(dt, QueryUtil.convertData(dt.getDataType(), val));
+//                    } else {
+//                        retrow.setFormattedData(dt, formatted);
+//                        // we need to have data in the sort column
+//                        if (col == sortCol) {
+//                            retrow.setDataElement(dt, QueryUtil.convertData(dt.getDataType(), val));
+//                        }
+//                    }
                 }
             }
             if (retrow != null) {
@@ -176,11 +207,7 @@ public class XYWithErrorsProcessor extends IpacTablePartProcessor {
             QueryUtil.doSort(retval, new SortInfo(sortCol.colname));
         }
 
-        // should not shrink, otherwise the formatted data will be lost
-        // retval.shrinkToFitData();
-        File outFile = createFile(request);
-        DataGroupWriter.write(outFile, retval);
-        return outFile;
+        return retval;
     }
 
 }

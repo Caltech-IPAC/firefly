@@ -288,7 +288,7 @@ public class GatorQuery extends BaseGator {
     protected void setColumnTips(TableMeta meta, ServerRequest request) {
 
         CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
-        req.setPageSize(1000);
+        req.setPageSize(Integer.MAX_VALUE);
         for (Param param : request.getParams()) {
             if (param.getName().equals(CatalogRequest.CATALOG)) req.setParam(param);
             if (param.getName().equals(CatalogRequest.DATABASE)) req.setParam(param);
@@ -302,36 +302,33 @@ public class GatorQuery extends BaseGator {
             if (param.getName().equals(CatalogRequest.DBMS)) req.setParam(param);
         }
 
-        SearchManager sm = new SearchManager();
-        DataGroupPart dgp = new DataGroupPart();
-
         try {
-            dgp = sm.getDataGroup(req);
-        } catch (Exception e) {
-        }
-
-        DataGroup dg = dgp.getData();
-        if (dg != null) {
-            for (int i = 0; i < dg.size(); i++) {
-                DataObject dObj = dg.get(i);
-                String tipStr = "";
+            DataGroupPart dgp = new SearchManager().getDataGroup(req);
+            DataGroup dg = dgp.getData();
+            if (dg != null) {
+                for (int i = 0; i < dg.size(); i++) {
+                    DataObject dObj = dg.get(i);
+                    String tipStr = "";
 
                 String descStr = (String) dObj.getDataElement("description");
-                if (!StringUtils.isEmpty(descStr) && !descStr.equalsIgnoreCase("null")) {
-                    tipStr += descStr;
-                }
+                    if (!StringUtils.isEmpty(descStr) && !descStr.equalsIgnoreCase("null")) {
+                        tipStr += descStr;
+                    }
 
                 String unitStr = (String) dObj.getDataElement("units");
-                if (!StringUtils.isEmpty(unitStr) && !unitStr.equalsIgnoreCase("null")) {
-                    if (tipStr.length() > 0) {
-                        tipStr += " ";
+                    if (!StringUtils.isEmpty(unitStr) && !unitStr.equalsIgnoreCase("null")) {
+                        if (tipStr.length() > 0) {
+                            tipStr += " ";
+                        }
+                        tipStr += "(" + unitStr + ")";
                     }
-                    tipStr += "(" + unitStr + ")";
-                }
 
                 String nameStr = (String) dObj.getDataElement("name");
-                meta.setAttribute(makeAttribKey(DESC_TAG, nameStr.toLowerCase()), tipStr);
+                    meta.setAttribute(makeAttribKey(DESC_TAG, nameStr.toLowerCase()), tipStr);
+                }
             }
+        } catch (Exception e) {
+            LOG.warn("Shouldn't be an exception here:" + e.getMessage());
         }
     }
 

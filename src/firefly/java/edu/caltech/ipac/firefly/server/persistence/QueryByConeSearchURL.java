@@ -36,11 +36,6 @@ public class QueryByConeSearchURL extends QueryVOTABLE {
 
 
     @Override
-    protected String getWspaceSaveDirectory() {
-        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.CATALOGS;
-    }
-
-    @Override
     protected String getFilePrefix(TableServerRequest request) {
         return "conesearch-";
     }

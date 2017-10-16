@@ -129,12 +129,6 @@ public abstract class BaseGator extends DynQueryProcessor {
         return req;
     }
 
-    @Override
-    protected String getWspaceSaveDirectory() {
-        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.CATALOGS;
-
-    }
-
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
         CatalogRequest req = QueryUtil.assureType(CatalogRequest.class, request);
         return searchGator(req);

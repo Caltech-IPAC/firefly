@@ -29,6 +29,7 @@ ext {
               ':servlet-api',
               ':websocket-api']
 
+  db_lib = [':h2-1.4.194', ':sqlite-jdbc-3.20.0', ':hsqldb-2.4.0']
   mysql_lib = ':mysql-connector-java-5.1.6-bin'
   starlink_lib = [':rayreg',
                   ':starlink-registry-1.2+2016.05.03',
@@ -71,7 +72,7 @@ ext {
 
   FIREFLY_RUNTIME = [':firefly_data'] + fits_io_lib + apache_lib + spring_lib + webservices_lib + oidc_lib +
                      log4j_lib + josso_lib + xstream_lib + xbeanfinder_lib +
-                     gwt_lib_rt + ehcache_lib + starlink_lib + j2ee_rt_lib + json_lib
+                     gwt_lib_rt + ehcache_lib + starlink_lib + j2ee_rt_lib + json_lib + db_lib
 
   FIREFLY_COMPILE = j2ee_lib + gwt_lib + FIREFLY_RUNTIME
 }
@@ -103,6 +104,7 @@ repositories {
           "$libPath/oidc",
           "$libPath/json",
           "$libPath/log4j",
+          "$libPath/db",
           "$libPath/mysql",
           "$libPath/sdss",
           "$libPath/spring",

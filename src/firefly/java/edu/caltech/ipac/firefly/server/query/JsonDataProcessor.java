@@ -34,28 +34,14 @@ abstract public class JsonDataProcessor implements SearchProcessor<String> {
 
     public void onComplete(ServerRequest request, String results) throws DataAccessException {}
 
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException {}
+    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException { return null; }
 
     public boolean doCache() { return false; }
 
     public boolean doLogging() { return false; }
 
-
     public String getUniqueID(ServerRequest request) {
-        String uid = request.getRequestId() + "-";
-
-        // parameters to get original data (before filter, sort, etc.)
-        List<Param> srvParams = new ArrayList<>();
-        for (Param p : request.getParams()) {
-            srvParams.add(p);
-        }
-
-        // sort by parameter name
-        Collections.sort(srvParams, (p1, p2) -> p1.getName().compareTo(p2.getName()));
-        for (Param p : srvParams) {
-            uid += "|" + p.toString();
-        }
-        return uid;
+        return SearchProcessor.getUniqueIDDef((TableServerRequest) request);
     }
 
     abstract public String getData(ServerRequest request) throws DataAccessException;

@@ -570,7 +570,7 @@ function doChartDataFetch(dispatch, payload, getChartDataType) {
             return;
         }
 
-        const tblSource = get(tblModel, 'tableMeta.tblFilePath');
+        const tblSource = get(tblModel, 'tableMeta.resultSetID');
         const tblSourceChart = get(meta, 'tblSource');
 
         if (tblSourceChart !== tblSource) {

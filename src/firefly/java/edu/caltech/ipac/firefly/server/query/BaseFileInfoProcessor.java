@@ -69,8 +69,9 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
         return request.getRequestId() + "-" + StringUtils.toString(request.getParams());
     }
 
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
         /* does not apply.. do nothing */
+        return null;
     }
 
     public boolean doCache() {

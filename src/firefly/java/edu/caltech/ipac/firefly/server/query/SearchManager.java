@@ -117,12 +117,12 @@ public class SearchManager {
         }
     }
 
-    public void save(OutputStream saveTo, TableServerRequest dataRequest) throws DataAccessException {
+    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest) throws DataAccessException {
         try {
             SearchProcessor processor = getProcessor(dataRequest.getRequestId());
             ServerRequest req = processor.inspectRequest(dataRequest);
             if (req != null) {
-                processor.writeData(saveTo, req);
+                return processor.writeData(saveTo, req);
             } else {
                 throw new DataAccessException("Request fail inspection.  Operation aborted.");
             }
@@ -160,6 +160,12 @@ public class SearchManager {
 
     public SearchProcessor getProcessor(String requestId) {
         SearchProcessor processor = SearchProcessorFactory.getProcessor(requestId);
+
+        if (processor instanceof IpacTablePartProcessor) {
+            // switch all ipac table processor to use DbProcessor  -- there is a small overhead, but it will get added features.
+            processor = new EmbeddedDbProcessorWrapper((IpacTablePartProcessor) processor);
+        }
+
         Assert.argTst(processor != null, "Search implementation is not defined for "+requestId);
         assert processor != null;
         return processor;
@@ -180,8 +186,8 @@ public class SearchManager {
         SearchProcessor processor = getProcessor(request.getRequestId());
         if (processor != null) {
             try {
-                if (processor instanceof IpacTablePartProcessor) {
-                    File dgFile = ((IpacTablePartProcessor)processor).getDataFile(request);
+                if (processor instanceof CanGetDataFile) {
+                    File dgFile = ((CanGetDataFile)processor).getDataFile(request);
                     // page size will not be taken into account
                     return new FileInfo(dgFile);
                 } else {
@@ -240,7 +246,8 @@ public class SearchManager {
         }
 
         public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
-            RawDataSet data= getRawDataSet(request);
+            DataGroupPart data= getDataGroup(request);
+
             BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundState.SUCCESS, BackgroundStatus.BgType.SEARCH);
             if (request != null) {
                 bgStat.setParam(SERVER_REQ, JsonTableUtil.toJsonTableRequest(request).toJSONString());
@@ -248,7 +255,7 @@ public class SearchManager {
             if (clientRequest != null) {
                 bgStat.setParam(CLIENT_REQ, JsonTableUtil.toJsonTableRequest(clientRequest).toJSONString());
             }
-            if (data.getTotalRows() > 0)  bgStat.setFilePath(data.getMeta().getSource());
+            if (data.getRowCount() > 0)  bgStat.setFilePath(data.getTableDef().getSource());
             return bgStat;
         }
     }

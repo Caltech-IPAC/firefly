@@ -5,14 +5,16 @@ import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbInstance;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,8 +27,81 @@ import java.util.List;
  */
 
 @SearchProcessorImpl(id = "StatisticsProcessor")
+public class StatisticsProcessor extends TableFunctionProcessor {
+    private static DataType[] columns = new DataType[]{
+            new DataType("columnName", String.class),
+            new DataType("description", String.class),
+            new DataType("unit", String.class),
+            new DataType("min", Double.class),
+            new DataType("max", Double.class),
+            new DataType("numPoints", Long.class),
+    };
 
-public class StatisticsProcessor extends IpacTablePartProcessor {
+    protected String getResultSetTablePrefix() {
+        return "stats";
+    }
+
+    protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
+        String origDataTblName = EmbeddedDbUtil.getResultSetID(getSearchRequest(treq));
+        // check to see if a resultset table exists... if not, use orginal data table.
+        DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
+        String tblExists = String.format("select count(*) from %s", origDataTblName);
+        try {
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
+        } catch (Exception e) {
+            origDataTblName = "data";
+        }
+
+        // get all cols from dd table
+        DataGroup dd = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select * from data_dd"), null);
+
+        //generate one sql for all the columns.  each as cname_min, cname_max, cname_count
+        DataGroup stats = new DataGroup("stats", columns);
+        List<String> sqlCols = new ArrayList<>();
+        for (int i = 0; i < dd.size(); i++) {
+            DataObject col = dd.get(i);
+            String type = (String) col.getDataElement("TYPE");
+            String visi = (String) col.getDataElement("VISIBILITY");
+            if (DataType.NUMERIC_TYPES.contains(type) && !StringUtils.areEqual(visi, "hidden")) {
+                String cname = col.getStringData("CNAME");
+                String cnameUC = cname.toUpperCase();
+                String desc = col.getStringData("DESC");
+                String units = col.getStringData("UNITS");
+                DataObject row = new DataObject(stats);
+                row.setDataElement(columns[0], cname);
+                row.setDataElement(columns[1], desc);
+                row.setDataElement(columns[2], units);
+                sqlCols.add(String.format("min(\"%1$s\") as \"%1$s_min\"", cnameUC));
+                sqlCols.add(String.format("max(\"%1$s\") as \"%1$s_max\"", cnameUC));
+                sqlCols.add(String.format("count(\"%1$s\") as \"%1$s_count\"", cnameUC));
+                stats.add(row);
+            }
+
+        }
+        DataObject data = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
+        for (int i = 0; i < stats.size(); i++) {
+            DataObject col = stats.get(i);
+            String cname = col.getStringData("columnName").toUpperCase();
+            col.setDataElement(columns[3], getDouble(data.getDataElement(cname + "_min")));
+            col.setDataElement(columns[4], getDouble(data.getDataElement(cname + "_max")));
+            col.setDataElement(columns[5], data.getDataElement(cname + "_count"));
+        }
+        return stats;
+    }
+
+    private Double getDouble(Object v) {
+        if (v instanceof Double) {
+            return (Double) v;
+        } else {
+            return v == null ? null : Double.valueOf(v.toString());
+        }
+    }
+}
+
+
+
+@Deprecated
+class StatisticsProcessorOld extends IpacTablePartProcessor {
     private static final String SEARCH_REQUEST = "searchRequest";
     private static DataType[] columns = new DataType[]{
             new DataType("columnName", String.class),
@@ -40,7 +115,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     /**
      * empty constructor
      */
-    public StatisticsProcessor(){}
+    public StatisticsProcessorOld(){}
 
     /**
      * Add this method to run unit test
@@ -214,7 +289,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
             if (args.length > 0) {
                 try {
                     File inFile = new File(args[0]);
-                    StatisticsProcessor sp = new StatisticsProcessor();
+                    StatisticsProcessorOld sp = new StatisticsProcessorOld();
                     DataGroup outDg = sp.createTableStatistic(inFile);
                     String outFileName = path+"statistics_output_"+inFileName;
                     File outFile = new File(outFileName);
@@ -243,33 +318,14 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         if (searchRequestJson == null) {
             throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
         }
-        JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_REQUEST));
-        String searchId = (String) searchRequestJSON.get(ServerParams.ID);
-        if (searchId == null) {
+        TableServerRequest sReq = QueryUtil.convertToServerRequest(searchRequestJson);
+
+        if (sReq.getRequestId() == null) {
             throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
         }
-        TableServerRequest sReq = new TableServerRequest(searchId);
-
-        String value;
-        for (Object param : searchRequestJSON.keySet()) {
-            String name = (String) param;
-            if (!name.equalsIgnoreCase(ServerParams.ID)) {
-                value = searchRequestJSON.get(param).toString();
-                sReq.setTrueParam(name, value);
-            }
-        }
-
-        FileInfo fi = new SearchManager().getFileInfo(sReq);
-        if (fi == null) {
-            throw new DataAccessException("Unable to get file location info");
-        }
-        if (fi.getInternalFilename() == null) {
-            throw new DataAccessException("File not available");
-        }
-        if (!fi.hasAccess()) {
-            throw new SecurityException("Access is not permitted.");
-        }
-        DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+        sReq.setPageSize(Integer.MAX_VALUE);
+        sReq.setStartIndex(0);
+        DataGroup sourceDataGroup = new SearchManager().getDataGroup(sReq).getData();
         DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
         statisticsDataGroup.addAttribute("searchRequest", sReq.toString());
         File statisticsFile = createFile(request);
@@ -288,7 +344,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
      */
     private  DataGroup  createTableStatistic(File file) throws IpacTableException, IOException, DataAccessException  {
 
-        DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable" );
+        DataGroup dg = IpacTableReader.readIpacTable(file, null, "inputTable" );
         return createTableStatistic(dg);
 
     }

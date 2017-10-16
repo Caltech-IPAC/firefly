@@ -27,11 +27,15 @@ public class IpacTableUtil {
     private static final String STRING_TYPE[]= {"cha.*", "str.*", "s", "c"};
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
+        writeAttributes(writer, attribs, false, ignoreList);
+    }
+
+    public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, boolean ignoreSysMeta, String... ignoreList) {
         if (attribs == null) return;
         // write attributes first
         for (DataGroup.Attribute kw : attribs) {
             if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
-                if (!kw.isComment()) {
+                if ( !(kw.isComment() || (ignoreSysMeta && isSysMeta(kw.getKey()))) ) {
                     writer.println(kw.toString());
                 }
             }
@@ -44,6 +48,13 @@ public class IpacTableUtil {
                 }
             }
         }
+    }
+
+    public static boolean isSysMeta(String m) {
+        return m != null && (
+                m.startsWith("col.") ||
+                m.startsWith("Loading")
+            );
     }
 
     public static void writeHeader(PrintWriter writer, List<DataType> headers) {
@@ -97,7 +108,7 @@ public class IpacTableUtil {
         for (DataType dt : headers) {
             String v = row.getFormatedData(dt);
             // when writing out the IPAC table.. if ROWID is given, and data is not found. use the getRowId() value instead.
-            if (v == null && dt.getKeyName().equals(DataGroup.ROWID_NAME)) {
+            if (v == null && dt.getKeyName().equals(DataGroup.ROW_IDX)) {
                 v = dt.getFormatInfo().formatData(row.getRowIdx());
             }
             if (dt.getDataType() == String.class && v != null) {

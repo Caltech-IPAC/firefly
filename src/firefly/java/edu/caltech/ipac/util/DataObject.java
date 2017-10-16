@@ -24,8 +24,12 @@ public class DataObject implements Serializable, Cloneable {
         _group= group;
     }
 
+    public void setData(Object[] data) {
+        _data = data;
+    }
+
     public int getRowIdx() {
-        DataType dtype = getDataType(DataGroup.ROWID_NAME);
+        DataType dtype = getDataType(DataGroup.ROW_IDX);
         if (dtype != null && dtype.getColumnIdx() < _data.length) {
             try {
                 return Integer.parseInt(String.valueOf(_data[dtype.getColumnIdx()]));
@@ -72,7 +76,7 @@ public class DataObject implements Serializable, Cloneable {
 
     public Object getDataElement(DataType fdt) {
         checkSize();
-        if (fdt != null && fdt.getKeyName().equals(DataGroup.ROWID_NAME)) {
+        if (fdt != null && fdt.getKeyName().equals(DataGroup.ROW_IDX)) {
             return getRowIdx();
         } else {
             return _data[fdt.getColumnIdx()];
@@ -87,9 +91,7 @@ public class DataObject implements Serializable, Cloneable {
      */
     public Object[] getData() {
         checkSize();
-        Object[] retval = new Object[_data.length];
-        System.arraycopy(_data, 0, retval, 0, retval.length);
-        return retval;
+        return _data;
     }
 
     /**
@@ -163,6 +165,18 @@ public class DataObject implements Serializable, Cloneable {
     }
 
     public int size() { return _group.getDataDefinitions().length; }
+
+
+    public String getStringData(String name) {
+        return getStringData(name, null);
+    }
+    public String getStringData(String name, String def) {
+        Object v = getDataElement(name);
+        return v == null ? def : v.toString();
+    }
+
+
+
 
 
 

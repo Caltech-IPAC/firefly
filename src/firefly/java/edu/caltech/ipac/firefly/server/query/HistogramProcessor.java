@@ -7,6 +7,8 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.util.DataSetParser;
@@ -22,6 +24,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
+
 @SearchProcessorImpl(id = "HistogramProcessor")
 /**
  * Created by zhang on 10/16/15.
@@ -89,7 +94,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             if (args.length > 0) {
                 try {
                     File inFile = new File(args[0]);
-                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable");
+                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "inputTable");
 
                     HistogramProcessor hp = new HistogramProcessor();
                     hp.columnExpression = "f_y";
@@ -114,35 +119,24 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         if (searchRequestJson == null) {
             throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " is missing");
         }
-        JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_REQUEST));
-        String searchId = (String) searchRequestJSON.get(ServerParams.ID);
-        if (searchId == null) {
+
+        TableServerRequest sReq = QueryUtil.convertToServerRequest(searchRequestJson);
+
+        if (sReq.getRequestId() == null) {
             throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
         }
-        TableServerRequest sReq = new TableServerRequest(searchId);
 
-        String value;
-        //Assign all the rest parameters (except ID) from the request to the TableServerRequest object
-        for (Object param : searchRequestJSON.keySet()) {
-            String name = (String) param;
-            if (!name.equalsIgnoreCase(ServerParams.ID)) {
-                value = searchRequestJSON.get(param).toString();
-                sReq.setTrueParam(name, value);
-            }
-        }
+        // get the relevant data
+        sReq.setPageSize(Integer.MAX_VALUE);
+        sReq.setSortInfo(null);
+        sReq.removeParam(INCL_COLUMNS);
 
-        FileInfo fi = new SearchManager().getFileInfo(sReq);
-        if (fi == null) {
-            throw new DataAccessException("Unable to get file location info");
+        DataGroupPart sourceData = new SearchManager().getDataGroup(sReq);
+        if (sourceData == null) {
+            throw new DataAccessException("Unable to get source data");
         }
-        if (fi.getInternalFilename() == null) {
-            throw new DataAccessException("File not available");
-        }
-        if (!fi.hasAccess()) {
-            throw new SecurityException("Access is not permitted.");
-        }
+        DataGroup sourceDataGroup = sourceData.getData();
         getParameters(request);
-        DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
         double[] columnData = getColumnData(sourceDataGroup);
         DataGroup histogramDataGroup = createHistogramTable(columnData);
         histogramDataGroup.addAttribute("column", columnExpression);

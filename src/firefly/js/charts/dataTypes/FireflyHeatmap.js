@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get} from 'lodash';
-import {getTblById, getColumn, cloneRequest, doFetchTable, MAX_ROW} from '../../tables/TableUtil.js';
+import {getTblById, getColumn, cloneRequest, doFetchTable} from '../../tables/TableUtil.js';
+import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, getChartData} from '../ChartsCntlr.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
@@ -52,8 +53,7 @@ function fetchData(chartId, traceNum, tablesource) {
 
     const {xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax} = options;
     // min rows for decimation is 0
-    const req = cloneRequest(request, {startIdx: 0, pageSize: MAX_ROW,
-        'decimate' : serializeDecimateInfo(xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax, 0)});
+    const req = makeTableFunctionRequest(request, 'DecimateTable', 'heatmap',  {decimate: serializeDecimateInfo(xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax, 0)})
 
     doFetchTable(req).then((tableModel) => {
         if (tableModel.tableData && tableModel.tableData.data) {

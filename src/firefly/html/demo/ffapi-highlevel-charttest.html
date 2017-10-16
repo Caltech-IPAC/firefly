@@ -169,6 +169,13 @@
                     {tbl_id: 'test-tbl'});
             firefly.showTable('table-1', tblReq);
 
+            // using column expressions
+            var tblReqXpr =  Object.assign({}, tblReq, {inclCols: 'ra + dec as radec, ra, dec, ln(dec) as LnOfDec, power(ra, 2) as ra_sq'});
+            tblReqXpr.META_INFO.tbl_id = 'tblwithXpr';
+            tblReqXpr.META_INFO.title = 'table with expressions';
+            tblReqXpr.tbl_id = 'tblwithXpr';
+            firefly.showTable('table-1', tblReqXpr);
+
             trace1 = {
                 tbl_id: 'test-tbl',
                 x: 'tables::ra',

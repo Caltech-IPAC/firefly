@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.db.spring.mapper;
 
 
+import com.google.gwt.dom.client.Style;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -13,6 +14,7 @@ import edu.caltech.ipac.util.StringUtils;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -31,11 +33,11 @@ public class DataGroupUtil {
     }
 
     public static DataGroup processResults(ResultSet rs) throws SQLException {
-        return processResults(rs, null);
+        return processResults(rs, null, Integer.MIN_VALUE);
     }
 
     public static DataGroup processResults(ResultSet rs, DataGroup dg) throws SQLException {
-        return processResults(rs, dg, 0);
+        return processResults(rs, dg, Integer.MIN_VALUE);
     }
 
     public static DataGroup processResults(ResultSet rs, DataGroup dg, int nullNum) throws SQLException {
@@ -46,27 +48,48 @@ public class DataGroupUtil {
         int columnWidth [] = new int[numColumns];
         Arrays.fill(columnWidth, 0);
 
+        if (rs.isBeforeFirst()) {
+            rs.next();
+        }
+        if (!rs.isFirst()) return dataGroup;    // no row found
+
         Object obj;
-
-
         do {
             dataObj = new DataObject(dataGroup);
             for (int i = 0; i < numColumns; i++) {
-                obj = rs.getObject(i + 1);
                 DataType dt = dataGroup.getDataDefinitions()[i];
-                if (obj == null) {
-                    if (dt.getDataType() == Short.class) {
-                        short s_value = (short) nullNum;
-                        obj = new Short(s_value);
-                    } else if (dt.getDataType() == Double.class) {
-                        obj = new Double(nullNum);
-                    } else if (dt.getDataType() == Float.class) {
-                        obj = new Float(nullNum);
-                    } else if (dt.getDataType() == Integer.class) {
-                        obj = new Integer(nullNum);
-                    } else if (dt.getDataType() == String.class) {
-                        obj = "";
-                    }
+                int idx = i+1;
+                // from edu.caltech.ipac.util.DataType.isKnownType()
+                switch (dt.getDataType().getSimpleName()) {
+                    case "Boolean":
+                        obj = rs.getBoolean(idx);
+                        break;
+                    case "String":
+                        obj = rs.getString(idx);
+                        break;
+                    case "Double":
+                        obj = rs.getDouble(idx);
+                        break;
+                    case "Float":
+                        obj = rs.getFloat(idx);
+                        break;
+                    case "Integer":
+                        obj = rs.getInt(idx);
+                        break;
+                    case "Short":
+                        obj = rs.getShort(idx);
+                        break;
+                    case "Long":
+                        obj = rs.getLong(idx);
+                        break;
+                    case "HREF":
+                        obj = rs.getString(idx);
+                        break;
+                    default:
+                        obj = rs.getObject(idx);
+                }
+                if (rs.wasNull()) {
+                    obj = (nullNum != Integer.MIN_VALUE && obj instanceof Number) ? nullNum : null;
                 }
                 dataObj.setDataElement(dt, obj);
                 if (obj instanceof String) {
@@ -100,95 +123,66 @@ public class DataGroupUtil {
         Class columnClass = null;
         int displaySize;
         FormatInfo fi;
-        try {
-            for (int i=1; i<=numCols; i++) {
-                columnName = rsmd.getColumnName(i);
-                columnClass = Class.forName(rsmd.getColumnClassName(i));
-                dataType= new DataType(columnName, columnName,
-                                       columnClass,
-                                       DataType.Importance.HIGH,
-                                       "",     // no unit info
-                                       true); // columns may be null
+        for (int i=1; i<=numCols; i++) {
+            columnName = rsmd.getColumnName(i);
+            columnClass = convertToClass( rsmd.getColumnType(i));
+            dataType= new DataType(columnName, columnName,
+                                   columnClass,
+                                   DataType.Importance.HIGH,
+                                   "",     // no unit info
+                                   true); // columns may be null
 
-                displaySize = Math.max(columnName.length(), 6);
-                displaySize = Math.max(displaySize, rsmd.getColumnDisplaySize(i));
-                fi = dataType.getFormatInfo();
-                fi.setWidth(displaySize);
+            int cdsize = rsmd.getColumnDisplaySize(i) == Integer.MAX_VALUE ? 0: rsmd.getColumnDisplaySize(i);
+            displaySize = Math.max(columnName.length(), Math.max(6, cdsize));
+            fi = dataType.getFormatInfo();
+            fi.setWidth(displaySize);
 
-                // format info - for numeric types only
-                if (!(columnClass==String.class)) {
-                    if (columnClass == Double.class || columnClass == Float.class) {
-                        int scale = Math.max(rsmd.getScale(i), 6);
-                        int prec = Math.max(rsmd.getPrecision(i), displaySize);
-                        fi.setDataFormat("%" + prec + "." + scale + "f"); // double or float
-                    } else if (Date.class.isAssignableFrom(columnClass)) {
-                        fi.setDataFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date
-                    }
-                    fi.setDataAlign(FormatInfo.Align.LEFT);
-                    dataType.setFormatInfo(fi);
+            // format info - for numeric types only
+            if (!(columnClass==String.class)) {
+                if (columnClass == Double.class || columnClass == Float.class) {
+                    int scale = Math.max(rsmd.getScale(i), 6);
+                    fi.setDataFormat("%." + scale + "f"); // double or float
+                } else if (Date.class.isAssignableFrom(columnClass)) {
+                    fi.setDataFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date
                 }
-                extraData.add(dataType);
+                fi.setDataAlign(FormatInfo.Align.LEFT);
+                dataType.setFormatInfo(fi);
+            }
+            extraData.add(dataType);
             }
 
            // System.out.println("extraData: "+ extraData.toString());
             
-        } catch (ClassNotFoundException ex) {
-            throw new SQLException("Unreferenceable class name for column "+columnName+": "+ex.getMessage());
-        }
         return extraData;
     }
 
-
-    public static Map<String,Object> getHashMap (ResultSet rs) {
-        Map<String, Object> map = new HashMap();
-
-        try {
-        List<DataType> extraData = getExtraData(rs.getMetaData());
-
-
-        int numColumns = extraData.size();
-        int columnWidth [] = new int[numColumns];
-        Arrays.fill(columnWidth, 0);
-
-        // avoid firing property change events for each DataObject add
-
-
-        Object obj;
-
-
-            for(int i=0; i<numColumns; i++) {
-                obj = rs.getObject(i+1);
-                if (obj == null) {
-                     DataType dt = extraData.get(i);
-                     if (dt.getDataType() == Short.class) {
-                         short s_value = 0;
-                         obj = new Short(s_value);
-                     } else if (dt.getDataType() == Double.class) {
-                          obj = new Double(0);
-                     } else if (dt.getDataType() == Float.class) {
-                          obj = new Float(0);
-                     } else if (dt.getDataType() == Integer.class) {
-                          obj = new Integer(0);
-                     } else if (dt.getDataType() == String.class) {
-                          obj = new String("NA");
-                     } else {
-                        obj = new String("na");
-                     }
-                }
-
-                map.put(extraData.get(i).getKeyName(),obj);
-                if (obj instanceof String) {
-                    columnWidth[i] = Math.max(columnWidth[i], obj.toString().length());
-                }
-          }
-
-
-        } catch (Exception e ) {
-            System.out.println("getHashMap: "+e.getMessage());
+    private static Class convertToClass(int columnType) {
+        switch (columnType) {
+            case Types.BIGINT:
+            case Types.ROWID:
+                return Long.class;
+            case Types.BIT:
+            case Types.INTEGER:
+            case Types.SMALLINT:
+                return Integer.class;
+            case Types.BOOLEAN:
+                return Boolean.class;
+            case Types.DATE:
+            case Types.TIME:
+            case Types.TIMESTAMP:
+                return Date.class;
+            case Types.DECIMAL:
+            case Types.DOUBLE:
+            case Types.REAL:
+                return Double.class;
+            case Types.FLOAT:
+            case Types.NUMERIC:
+                return Float.class;
+            default:
+                return String.class;
         }
-        return map;
     }
-    
+
     public static Comparator<String> getComparator(final DataType dt) {
         Comparator<String> comparator = new Comparator<String>(){
             public int compare(String s, String s1) {

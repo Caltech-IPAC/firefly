@@ -21,7 +21,7 @@ import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest, makeLsstCatalogRequest} from '../../tables/TableUtil.js';
+import {makeTblRequest, makeLsstCatalogRequest} from '../../tables/TableRequestUtil.js';
 import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
 import {validateSql, validateConstraints} from './CatalogSelectViewPanel.jsx';
 import {LSSTImageSpatialType} from './LSSTImageSpatialType.jsx';

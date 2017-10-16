@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandler;
@@ -73,8 +74,9 @@ public class JsonFromExternalTask implements SearchProcessor {
     }
 
     @Override
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
         /* does not apply.. do nothing */
+        return null;
     }
 
     @Override

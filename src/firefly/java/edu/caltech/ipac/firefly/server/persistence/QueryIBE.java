@@ -54,11 +54,6 @@ public class QueryIBE extends IpacTablePartProcessor {
     public static final String RADIUS = "radius";
     public static final String MOST_CENTER = "mcenter";
 
-    @Override
-    protected String getWspaceSaveDirectory() {
-        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;
-    }
-
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {

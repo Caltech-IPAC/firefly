@@ -12,7 +12,8 @@ import {getTypeData} from './LcUtil.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
-import {makeTblRequest, getTblById} from '../../tables/TableUtil.js';
+import {getTblById} from '../../tables/TableUtil.js';
+import {makeTblRequest} from '../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch, dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
@@ -503,7 +504,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
     return (request) => {
         const tbl = getTblById(LC.RAW_TABLE);
         const layoutInfo = getLayouInfo();
-        const srcFile = get(tbl, ['tableMeta', 'tblFilePath']);
+        const srcFile = get(tbl, ['tableMeta', 'source']);
 
         const pMin = get(request, [pKeyDef.min.fkey]);
         const pMax = get(request, [pKeyDef.max.fkey]);
@@ -522,7 +523,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             peaks: get(request, [pKeyDef.peaks.fkey]),
             table_name: LC.PEAK_TABLE,
             sortInfo: sortInfoString('SDE', false)                 // sort peak table by column SDE, descending
-        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), inclCols : 'Peak, Period, Power, SDE'}); //, noPeriodUpdate: true //see LcManager#getPeriodFromTable
+        }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), inclCols : '"PEAK", "PERIOD", "POWER", "SDE"'});   // period and power are reserved words in sql.. put them in quotes
 
         var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM_TABLE, {
             original_table: srcFile,
@@ -537,7 +538,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             table_name: LC.PERIODOGRAM_TABLE
             /* Should we do the same for Power column in Periodogram? */
             /*sortInfo: sortInfoString('Power', false)*/
-        }, {tbl_id: LC.PERIODOGRAM_TABLE, inclCols : 'Period, Power'});
+        }, {tbl_id: LC.PERIODOGRAM_TABLE, inclCols : '"PERIOD", "POWER"'});
 
 
         if (tReq !== null) {

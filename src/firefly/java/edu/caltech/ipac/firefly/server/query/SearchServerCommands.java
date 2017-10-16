@@ -16,17 +16,15 @@ import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServCommand;
-import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
@@ -53,35 +51,40 @@ public class SearchServerCommands {
         }
     }
 
-    public static class TableFindIndex extends ServCommand {
+    public static class QueryTable extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            TableServerRequest tsr = params.getTableServerRequest();
-            List<String> filterInfo = Arrays.asList(params.getRequired("filterInfo").split(";"));
-            tsr.setPageSize(Integer.MAX_VALUE);
-            tsr.setStartIndex(0);
-            CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(filterInfo);
-            DataGroupPart dgp = new SearchManager().getDataGroup(tsr);
-            return String.valueOf(CollectionUtil.findIndex(dgp.getData().values(), filters));
+            TableServerRequest treq = (TableServerRequest) params.getTableServerRequest().cloneRequest();
+            treq.setParam(TableServerRequest.INCL_COLUMNS, params.getOptional(TableServerRequest.INCL_COLUMNS));
+            treq.setFilters(StringUtils.asList(params.getOptional(TableServerRequest.FILTERS), ","));
+            String sortInfo = params.getOptional(TableServerRequest.SORT_INFO);
+            if (!StringUtils.isEmpty(sortInfo)) {
+                treq.setSortInfo(SortInfo.parse(sortInfo));
+            }
+
+            DataGroupPart page = new SearchManager().getDataGroup(treq);
+            return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
         }
     }
 
     public static class SelectedValues extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String filePath = params.getRequired("filePath");
+            String requestJson = params.getRequired(ServerParams.REQUEST);
+            TableServerRequest treq = QueryUtil.convertToServerRequest(requestJson);
+            treq.setPageSize(Integer.MAX_VALUE);
             try {
-                String selRows = params.getRequired("selectedRows");
-                List<String> columnNames = StringUtils.asList(params.getRequired("columnNames"), ",");
-                List<Integer> rows = StringUtils.convertToListInteger(selRows, ",");
-                File file = ServerContext.convertToFile(filePath);
+                List<String> cols = StringUtils.asList(params.getRequired("columnNames"), ",");
+                List<Integer> rows = StringUtils.convertToListInteger(params.getRequired("selectedRows"), ",");
+                // hitting the database directly.
+                String selCols = cols.size() > 0 ? StringUtils.toString(cols) : "*";
+                String tblName = EmbeddedDbUtil.getResultSetID(treq) ;
+                String inRows = rows.size() > 0 ? StringUtils.toString(rows) : "-1";
 
-                if (!file.canRead() ||
-                        !file.getAbsolutePath().startsWith(ServerContext.getWorkingDir().getAbsolutePath())) {
-                    throw new DataAccessException("Unable to access this file:" + file.getAbsolutePath());
-                }
-                DataGroup data = IpacTableParser.getSelectedData(file, rows, columnNames.toArray(new String[0]));
-                return JsonTableUtil.toJsonTableModel(new DataGroupPart(null, data, 0, data.size()), null).toJSONString();
+                String sql = String.format("select %s from %s where %s in (%s)", selCols, tblName, DataGroup.ROW_NUM, inRows);
+                DataGroupPart page = EmbeddedDbUtil.getResults(treq, sql ,tblName);
+
+                return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
             } catch (IOException e) {
                 throw new DataAccessException("Unable to resolve a search processor for this request.  SelectedValues aborted.");
             }
@@ -302,21 +305,6 @@ public class SearchServerCommands {
             }
             BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(id, file, source, attList);
             return retval!=null ? retval.getServlet() : null;
-        }
-    }
-
-    public static class GetDataFileValues extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            String filePath = params.getRequired(ServerParams.SOURCE);
-            String rowsStr = params.getRequired(ServerParams.ROWS);
-            List<Integer> rows = new ArrayList<Integer>();
-            for (String s : rowsStr.split(", ")) {
-                rows.add(Integer.parseInt(s));
-            }
-            String colName = params.getRequired(ServerParams.COL_NAME);
-            List<String> result = (new SearchManager().getDataFileValues(new File(filePath), rows, colName));
-            return CollectionUtil.toString(result);
         }
     }
 

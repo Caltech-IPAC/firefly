@@ -388,7 +388,7 @@ Thread.sleep(1000);
         final List<String> namesLst = Arrays.asList(names);
         File newFile = null;
         try {
-            DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "Result Table", true);
+            DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "Result Table");
             Map<String, DataGroup.Attribute> attrMap = dg.getAttributes();
 
 

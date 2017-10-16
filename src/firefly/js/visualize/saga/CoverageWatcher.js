@@ -7,13 +7,13 @@ import Enum from 'enum';
 import {get,isEmpty,isObject, flattenDeep,values, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
-import {cloneRequest} from '../../tables/TableUtil.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
@@ -217,19 +217,20 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 
     const params= {
         startIdx : 0,
-        pageSize : 1000000,
+        pageSize : MAX_ROW,
         inclCols : getCovColumnsForQuery(options, table)
     };
+
+    let req = cloneRequest(table.request, params);
     if (table.totalRows>10000) {
         const cenCol= options.getCenterColumns(table);
         params.decimate=  serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
+        req = makeTableFunctionRequest(table.request, 'DecimateTable', 'coverage',  {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000)});
     }
 
-
-    const req = cloneRequest(table.request, params);
     req.tbl_id = `cov-${tbl_id}`;
 
-    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.tblFilePath===table.tableMeta.tblFilePath*/) { //todo support decimated data
+    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
         updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
     }
     else {
@@ -523,7 +524,7 @@ function getCovColumnsForQuery(options, table) {
                     s += (c ? `${idx > 0 ? ',' : ''}${c.lonCol},${c.latCol}` : '');
                     return s;
                 }, '');
-    return base+',ROWID';
+    return base+',ROW_IDX';
 }
 
 

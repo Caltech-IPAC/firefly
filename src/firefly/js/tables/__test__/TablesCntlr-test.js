@@ -3,7 +3,7 @@
 import {expect} from 'chai';
 import {assert} from 'chai';
 
-//mport { makeTblRequest} from '../TableUtil.js';
+//mport { makeTblRequest} from '../TableRequestUtil.js';
 
 describe('A test suite for tables/TablesCntlr.js', function () {
     var request;

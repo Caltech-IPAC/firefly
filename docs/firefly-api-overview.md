@@ -492,7 +492,6 @@ options - table request options, object with the following properties:
 | filters  | string | list of conditions separted by comma`(,)`. Format:  `(col_name|index) operator value. Operator is one of '> < = ! >= <= IN'` |
 | sortInfo | string | sort information.  Format:  `(ASC|DESC),col_name[,col_name]*` |
 | inclCols | string | list of columns to select: column names separted by comma `(,)`|
-| decimate | string | decimation information |
 | META_INFO | object | meta information passed as key/value pair to server then returned as tableMeta |
 | use | string | optional, one of 'catalog_overlay', 'catalog_primary', 'data_primary' |
 | tbl_id | string | a unique id of a table, auto-created if not given |

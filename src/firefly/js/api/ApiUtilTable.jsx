@@ -5,7 +5,8 @@
 export {getTblInfo, getActiveTableId, getTblById, getTableUiByTblId, getTblInfoById,
         getTableGroup, findGroupByTblId, getTblIdsByGroup, 
         uniqueTblId, getTableSourceUrl, onTableLoaded,
-        makeTblRequest, makeFileRequest, makeIrsaCatalogRequest,
-        cloneRequest, doFetchTable, getTblRowAsObj,
+        doFetchTable, getTblRowAsObj,
         getColumnIdx, getColumn, getColumns, getCellValue, 
         getColumnValues, getRowValues, getSelectedData} from '../tables/TableUtil.js';
+
+export {makeTblRequest, makeFileRequest, makeIrsaCatalogRequest, cloneRequest, makeTableFunctionRequest} from '../tables/TableRequestUtil.js';

@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, isArray} from 'lodash';
-import {getTblById, getColumn, cloneRequest, doFetchTable, makeTblRequest, MAX_ROW} from '../../tables/TableUtil.js';
+import {getTblById, getColumn, cloneRequest, doFetchTable} from '../../tables/TableUtil.js';
+import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
 import {getDataChangesForMappings, getPointIdx, updateSelected, isScatter2d} from '../ChartUtil.js';
 
@@ -38,12 +39,12 @@ function fetchData(chartId, traceNum, tablesource) {
     const {tbl_id, options, mappings} = tablesource;
     const originalTableModel = getTblById(tbl_id);
     const {request, highlightedRow, selectInfo} = originalTableModel;
-    const sreq = cloneRequest(request, {startIdx: 0, pageSize: MAX_ROW});
 
-    const req = makeTblRequest('XYGeneric');
-    req.searchRequest = JSON.stringify(sreq);
+    const req = makeTableFunctionRequest(request, 'XYGeneric');
     req.startIdx = 0;
     req.pageSize = MAX_ROW;
+    
+    
     Object.entries(options).forEach(([k,v]) => v && (req[k]=v));
 
     doFetchTable(req).then((tableModel) => {

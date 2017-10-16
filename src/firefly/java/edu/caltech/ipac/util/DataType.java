@@ -4,7 +4,9 @@
 package edu.caltech.ipac.util;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class DataType implements Serializable, Cloneable {
@@ -25,6 +27,8 @@ public class DataType implements Serializable, Cloneable {
     private static final String S_CHAR = "c";
     private static final String S_BOOL = "b";
     private static final String DEF_NULL_STR = "";
+    public static final List<String> NUMERIC_TYPES = Arrays.asList(DOUBLE, FLOAT, INTEGER, LONG, S_DOUBLE, S_FLOAT, S_INTEGER, S_LONG);
+
 
     private       Class      _type;
     private       String     _units;

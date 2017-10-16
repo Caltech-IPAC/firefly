@@ -95,7 +95,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CREATE_DOWNLOAD_SCRIPT, new SearchServerCommands.CreateDownloadScript());
         _cmdMap.put(ServerParams.PACKAGE_REQUEST,        new SearchServerCommands.PackageRequest());
         _cmdMap.put(ServerParams.TABLE_SEARCH,           new SearchServerCommands.TableSearch());
-        _cmdMap.put(ServerParams.TABLE_FIND_IDX,         new SearchServerCommands.TableFindIndex());
+        _cmdMap.put(ServerParams.QUERY_TABLE,         new SearchServerCommands.QueryTable());
         _cmdMap.put(ServerParams.SELECTED_VALUES,        new SearchServerCommands.SelectedValues());
         _cmdMap.put(ServerParams.JSON_SEARCH,            new SearchServerCommands.JsonSearch());
 

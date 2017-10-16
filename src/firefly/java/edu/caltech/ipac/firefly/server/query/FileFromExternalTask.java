@@ -63,8 +63,9 @@ public class FileFromExternalTask implements SearchProcessor<FileInfo> {
         }
     }
 
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
         /* does not apply.. do nothing */
+        return null;
     }
 
     public boolean doCache() {

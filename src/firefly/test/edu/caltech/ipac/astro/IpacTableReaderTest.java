@@ -34,10 +34,8 @@ public class IpacTableReaderTest extends ConfigTest{
     //Input parameters:
     private static final String catName = "catalogName";
     String[] onlyColumns = null;
-    private boolean useFloatsForDoubles = false;
     private boolean isHeadersOnlyAllow = false;
     private boolean noAttributes = false;
-    private int estFileSize = 0;
 
     //Expected parameters in the data group:
     private String[] attributeKeys = null;
@@ -91,29 +89,18 @@ public class IpacTableReaderTest extends ConfigTest{
 
         //Test the following methods:
         //public static DataGroup readIpacTable(Reader fr, String catName)
-        //public static DataGroup readIpacTable(Reader fr, String catName, long estFileSize)
-        //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[],boolean useFloatsForDoubles,long estFileSize)
-        //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[],boolean useFloatsForDoubles,long estFileSize, boolean isHeadersOnlyAllow)
+        //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[], boolean isHeadersOnlyAllow)
 
         DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
         checkResult(dataGroup);
 
-        estFileSize = 100;
-        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, estFileSize);
-        checkResult(dataGroup); //estFileSize is never used.
-
-        useFloatsForDoubles = true;
-        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize);
-        checkResult(dataGroup); //useFloatForDoubles is never used.
-
         isHeadersOnlyAllow = true;
-        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
+        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, isHeadersOnlyAllow);
         checkResult(dataGroup); //isHeadersOnlyAllow = true is never use.
 
         //Test the following methods:
         //public static DataGroup readIpacTable(File f, String catName)
-        //public static DataGroup readIpacTable(File f, String onlyColumns[], boolean useFloatsForDoubles, String catName)
-        //public static DataGroup readIpacTable(File f, String onlyColumns[], boolean useFloatsForDoubles, String catName, boolean isHeadersOnlyAllow)
+        //public static DataGroup readIpacTable(File f, String onlyColumns[], String catName, boolean isHeadersOnlyAllow)
 
         File tempFile = new File("./temp.tbl");
         tempFile.deleteOnExit();
@@ -121,11 +108,10 @@ public class IpacTableReaderTest extends ConfigTest{
         IpacTableWriter.save(tempFile, dataGroup);
         dataGroup = IpacTableReader.readIpacTable(tempFile, catName);
         checkResult(dataGroup);
-        useFloatsForDoubles = true;
-        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, useFloatsForDoubles, catName);
+        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, catName);
         checkResult(dataGroup); //useFloatsForDoubles has never be used!
         isHeadersOnlyAllow = true;
-        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, useFloatsForDoubles, catName, isHeadersOnlyAllow);
+        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, catName, isHeadersOnlyAllow);
         checkResult(dataGroup); //isHeadersOnlyAllow=true has never be used!
 
         //Test result: This IPAC table is read correctly.
@@ -174,7 +160,7 @@ public class IpacTableReaderTest extends ConfigTest{
         dataValues = new String[][]{{"165.466279", "-34.70473"}, {"123.4", "5.67"}};
 
         //Read the table and generate the dataGroup:
-        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
+        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, isHeadersOnlyAllow);
 
         //Check the result:
         checkResult(dataGroup);
@@ -204,7 +190,7 @@ public class IpacTableReaderTest extends ConfigTest{
 
         noAttributes = true;
 
-        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, useFloatsForDoubles, estFileSize, isHeadersOnlyAllow);
+        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, isHeadersOnlyAllow);
 
         List<DataGroup.Attribute> comments = dataGroup.getKeywords();
         Assert.assertEquals("There should be 0 comments", 0, comments.size());
@@ -405,7 +391,7 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         try{
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, null, false);
             Assert.fail("No exception thrown out.");
         } catch (IpacTableException e){
 

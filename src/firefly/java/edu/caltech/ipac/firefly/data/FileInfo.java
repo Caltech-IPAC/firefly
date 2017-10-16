@@ -34,7 +34,7 @@ public class FileInfo implements HasAccessInfo, Serializable {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    private FileInfo() {}
+    protected FileInfo() {}
 
     public FileInfo(String internalFilename, String externalName, long sizeInBytes) {
         setInternalName(internalFilename);

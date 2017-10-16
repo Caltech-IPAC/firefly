@@ -6,16 +6,16 @@
  * Date: 3/5/12
  */
 
-import {get, set} from 'lodash';
+import {get, set, omitBy} from 'lodash';
 
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
-import {MAX_ROW, DataTagMeta} from '../tables/TableUtil.js';
 import {getBgEmail} from '../core/background/BackgroundUtil.js';
 import {encodeUrl, download, getModuleName} from '../util/WebUtil.js';
 
 import Enum from 'enum';
 import {getTblById} from '../tables/TableUtil.js';
+import {MAX_ROW, DataTagMeta} from '../tables/TableRequestUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
 
@@ -65,18 +65,15 @@ export function fetchTable(tableRequest, hlRowIdx) {
 }
 
 /**
- * tableRequest will be sent to the server as a json string.
+ * a utility function used to query data from the given tableRequest without altering the table.
  * @param {TableRequest} tableRequest is a table request params object
- * @param {string} filterInfo filter info string used to find the first row that matches it.
+ * @param {TableRequest} queryRequest filters, sortInfo, and inclCols are used on the tableRequest to return the results
  * @returns {Promise.<number>}
  */
-export function findTableIndex(tableRequest, filterInfo) {
+export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
 
-    const params = {
-        [ServerParams.REQUEST]: JSON.stringify(tableRequest),
-        filterInfo
-    };
-    return doJsonRequest(ServerParams.TABLE_FIND_INDEX, params)
+    const params = Object.assign(omitBy({filters, sortInfo, inclCols}), {[ServerParams.REQUEST]: JSON.stringify(tableRequest)});
+    return doJsonRequest(ServerParams.QUERY_TABLE, params)
         .then( (index) => {
             return index;
         });
@@ -86,14 +83,14 @@ export function findTableIndex(tableRequest, filterInfo) {
  * returns the table data for the given parameters
  * @param {Object} p  parameters object
  * @param {string[]} p.columnNames an array of column names
- * @param {string} p.filePath   location of the file on the server
+ * @param {TableRequest} p.request   location of the file on the server
  * @param {string} p.selectedRows   a comma-separated string of indices of the rows to get the data from
  * @return {Promise<TableModel>}
  */
-export const selectedValues = function({columnNames, filePath, selectedRows}) {
+export const selectedValues = function({columnNames, request, selectedRows}) {
     columnNames = Array.isArray(columnNames) ? columnNames.join() : String(columnNames);
     selectedRows = Array.isArray(selectedRows) ? selectedRows.join() : String(selectedRows);
-    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, filePath, selectedRows})
+    return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, request: JSON.stringify(request), selectedRows})
             .then((tableModel) => {
                 return tableModel;
             });

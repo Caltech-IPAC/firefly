@@ -3,8 +3,11 @@
  */
 package edu.caltech.ipac.util;
 
+import org.apache.commons.lang.ArrayUtils;
+
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class is the data class for any set of objects that we show on plots.  <i>This class need more
@@ -22,8 +25,11 @@ public class DataGroup implements Serializable,
 //----------------------- Private / Protected variables ----------------
 //======================================================================
 
-    //TODO: take this out!!!
-    public static final String ROWID_NAME = "ROWID";         // all row ids and indexes start from 0
+    /**
+     * ROW_IDX is the original row index of the dataset prior to sorting and filtering.  it starts from 0
+     */
+    public static final String ROW_IDX = "ROW_IDX";               // this contains the original row index of the table before any sorting or filtering
+    public static final String ROW_NUM = "ROW_NUM";               // this is row number of the current dataset. (oracle's rownum)
     private final ArrayList<DataObject> _objects = new ArrayList<DataObject>(200);
     private final ArrayList<DataType> _dataDefinitions = new ArrayList<DataType>(30);
     private String _title;
@@ -46,8 +52,12 @@ public class DataGroup implements Serializable,
         this(title, dataDefs.toArray(new DataType[dataDefs.size()]));
     }
 
-    public static DataType makeRowId() {
-        return new DataType(ROWID_NAME, Integer.class);
+    public static DataType makeRowIdx() {
+        return new DataType(ROW_IDX, Integer.class);
+    }
+
+    public static DataType makeRowNum() {
+        return new DataType(ROW_NUM, Integer.class);
     }
 
     public static boolean containsKey(DataType[] dataTypes, String key) {
@@ -153,6 +163,36 @@ public class DataGroup implements Serializable,
     }
 
     /**
+     * remove the given column from this data group if it exists.
+     * @param name
+     */
+    public void removeDataDefinition(String name) {
+        DataType dt = this.getDataDefintion(name);
+        if (dt != null) {
+            int idx = dt.getColumnIdx();
+
+            _dataDefinitions.remove(idx);
+            for(int i = 0; i < _dataDefinitions.size(); i++) {
+                _dataDefinitions.get(i).setColumnIdx(i);
+            }
+
+            _objects.stream().forEach((row) -> {
+                row.setData(ArrayUtils.remove(row.getData(), idx));
+            });
+
+            ArrayList<Attribute> results = new ArrayList<>();
+            for (Attribute a : _attributes) {
+                if (!a.getKey().startsWith("col." + dt.getKeyName())) {
+                    results.add(a);
+                }
+            }
+            _attributes = results;
+            _cachedDataDefinitionsAry = null;
+        }
+    }
+
+
+    /**
      * Return the extra data types defined for this group.
      *
      * @return DataDataType[]  the extra data types.
@@ -166,9 +206,14 @@ public class DataGroup implements Serializable,
     }
 
     public DataType getDataDefintion(String key) {
+        return getDataDefintion(key, false);
+    }
+
+    public DataType getDataDefintion(String key, boolean ignoreCase) {
         getDataDefinitions();
         for (DataType a : _cachedDataDefinitionsAry) {
-            if (a.getKeyName().equals(key)) {
+            if (a.getKeyName().equals(key) ||
+                    (ignoreCase && a.getKeyName().equalsIgnoreCase(key))) {
                 return a;
             }
         }

@@ -44,7 +44,7 @@ public class SearchDescResolver {
             }
 
         }
-        return retval.toString();
+        return retval.length() > 100 ? retval.substring(0, 100) : retval.toString();
     }
 
     public String getDownloadDesc(Request req) {

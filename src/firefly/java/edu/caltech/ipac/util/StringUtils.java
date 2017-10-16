@@ -375,6 +375,7 @@ public class StringUtils {
      * @param separatedBy
      * @return
      */
+    @NotNull
     public static String toString(Collection c, String separatedBy) {
         if (c == null || c.size() == 0) return "";
 

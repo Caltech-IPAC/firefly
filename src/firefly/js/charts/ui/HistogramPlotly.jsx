@@ -222,7 +222,7 @@ export class HistogramPlotly extends Component {
             });
             if (data) {
                 for (var i = 0; i < data.length; i++) {
-                    if (data[i].length !== 3) {
+                    if (data[i].length < 3) {
                         logError(`Invalid histogram data in row ${i} [${data[i]}]`);
                         valid = false;
                     } else if (data[i][1]>data[i][2]) {

@@ -138,7 +138,7 @@ public class DataGroupQueryStatement {
     public DataGroup getFromData() throws IpacTableException {
         if (getFromFile() == null) return null;
 
-        return IpacTableReader.readIpacTable(getFromFile(), null, false, "Source Table", true);
+        return IpacTableReader.readIpacTable(getFromFile(), null, "Source Table");
     }
 
     public DataGroup getIntoData() throws IpacTableException {

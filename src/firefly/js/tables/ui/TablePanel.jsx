@@ -265,7 +265,7 @@ TablePanel.defaultProps = {
     expandedMode: false,
     expandable: true,
     border: true,
-    pageSize: 50
+    pageSize: 100
 };
 
 // eslint-disable-next-line

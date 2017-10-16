@@ -7,7 +7,8 @@ import {doUpload} from '../../ui/FileUpload.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {tableToIpac, makeFileRequest, getColumnIdx} from '../../tables/TableUtil.js';
+import {tableToIpac, getColumnIdx} from '../../tables/TableUtil.js';
+import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {LC, getFullRawTable, getConverterId} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import {getConverter} from './LcConverterFactory.js';
@@ -101,7 +102,7 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
     var tPF = {tableData: cloneDeep(tbl.tableData),
                tableMeta: cloneDeep(tbl.tableMeta),
                tbl_id, title};
-    tPF.tableMeta = omit(tPF.tableMeta, ['source', 'tblFilePath', 'sortInfo', 'isFullyLoaded']);
+    tPF.tableMeta = omit(tPF.tableMeta, ['source', 'resultSetID', 'sortInfo', 'isFullyLoaded']);
 
     var phaseC = {desc: 'number of period elapsed since starting time.',
                   name: LC.PHASE_CNAME, type: 'double', width: 6 };
@@ -120,16 +121,13 @@ function addPhaseToTable(tbl, timeName, tzero, period) {
 
 
     // add reference to raw_table original row
-    var raw_rowid = get(tPF, 'tableData.columns', []).find((el) => el.name === 'ROWID');
+    var raw_rowid = get(tPF, 'tableData.columns', []).find((el) => el.name === 'ROW_IDX');
     if (raw_rowid) {
         raw_rowid.name = 'RAW_ROWID';
         raw_rowid.visibility = 'hidden';
     } else {
-        raw_rowid = {name: 'RAW_ROWID', type: 'int', visibility: 'hidden'};
-        tPF.tableData.columns.push(raw_rowid);
-        tPF.tableData.data.forEach((row, index) => {
-            row.push(index);
-        });
+        // should not happen.. ROW_IDX is always coming over.
+        console.log('No ROW_IDX found. Need to investigate');
     }
 
     return tPF;

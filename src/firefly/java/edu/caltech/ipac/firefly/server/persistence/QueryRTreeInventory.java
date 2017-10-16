@@ -56,11 +56,6 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
 
 
     @Override
-    protected String getWspaceSaveDirectory() {
-        return "/" + WorkspaceManager.SEARCH_DIR + "/" + WspaceMeta.IMAGESET;
-    }
-
-    @Override
     protected String getFilePrefix(TableServerRequest request) {
         String ds;
         String dataset = request.getParam("dataset");

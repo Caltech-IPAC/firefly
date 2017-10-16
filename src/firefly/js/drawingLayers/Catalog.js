@@ -375,7 +375,7 @@ function doFilter(dl,p,sel) {
     const decimateIdx= findColIdx(dl.tableData.columns,'decimate_key');
     if (decimateIdx>1 && dl.tableMeta['decimate_key']) {
         const idxs= getSelectedPts(sel, p, dl.drawData.data)
-            .map( (idx) => dl.tableData.data[idx][decimateIdx]);
+            .map( (idx) => `'${dl.tableData.data[idx][decimateIdx]}'`);
         filter= `IN (${idxs.toString()})`;
         filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
         newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
@@ -384,12 +384,12 @@ function doFilter(dl,p,sel) {
         console.log(idxs);
     }
     else {
-        const rowidIdx= findColIdx(dl.tableData.columns,'ROWID');
+        const rowidIdx= findColIdx(dl.tableData.columns,'ROW_IDX');
         let idxs= getSelectedPts(sel, p, dl.drawData.data);
         idxs = rowidIdx < 0 ? idxs : idxs.map( (idx) => get(dl,`tableData.data[${idx}][${rowidIdx}]`) );
         filter= `IN (${idxs.toString()})`;
         // filterInfoCls.setFilter(filter);
-        filterInfoCls.setFilter('ROWID', filter);
+        filterInfoCls.setFilter('ROW_IDX', filter);
         newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);
     }

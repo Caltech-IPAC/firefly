@@ -761,18 +761,8 @@ public class QueryUtil {
 
             if (!doDecimation) {
                 DataObject retrow = new DataObject(retval);
-                String xvalFormatted = xValGetter.getFormattedValue(row);
-                if (xvalFormatted == null) {
-                    retrow.setDataElement(columns[0], convertData(xColClass, xval));
-                } else {
-                    retrow.setFormattedData(columns[0], xvalFormatted);
-                }
-                String yvalFormatted = yValGetter.getFormattedValue(row);
-                if (yvalFormatted == null) {
-                    retrow.setDataElement(columns[1], convertData(yColClass, yval));
-                } else {
-                    retrow.setFormattedData(columns[1], yvalFormatted);
-                }
+                retrow.setDataElement(columns[0], convertData(xColClass, xval));
+                retrow.setDataElement(columns[1], convertData(yColClass, yval));
                 retrow.setDataElement(columns[2], rIdx); // natural index
                 retval.add(retrow);
             } else if (checkDeciLimits) {
@@ -825,18 +815,8 @@ public class QueryUtil {
 
                     if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
                     DataObject retrow = new DataObject(retval);
-                    String xvalFormatted = xValGetter.getFormattedValue(row);
-                    if (xvalFormatted == null) {
-                        retrow.setDataElement(columns[0], convertData(xColClass, xval));
-                    } else {
-                        retrow.setFormattedData(columns[0], xvalFormatted);
-                    }
-                    String yvalFormatted = yValGetter.getFormattedValue(row);
-                    if (yvalFormatted == null) {
-                        retrow.setDataElement(columns[1], convertData(yColClass, yval));
-                    } else {
-                        retrow.setFormattedData(columns[1], yvalFormatted);
-                    }
+                    retrow.setDataElement(columns[0], convertData(xColClass, xval));
+                    retrow.setDataElement(columns[1], convertData(yColClass, yval));
                     retrow.setDataElement(columns[2], rIdx);
                     retval.add(retrow);
                 }
@@ -899,16 +879,8 @@ public class QueryUtil {
                     if (weight<minWeight) minWeight = weight;
                     if (weight>maxWeight) maxWeight = weight;
 
-                    if (pt.getFormattedX() == null) {
-                        row.setDataElement(columns[0], convertData(xColClass, pt.getX()));
-                    } else {
-                        row.setFormattedData(columns[0], pt.getFormattedX());
-                    }
-                    if (pt.getFormattedY() == null) {
-                        row.setDataElement(columns[1], convertData(yColClass, pt.getY()));
-                    } else {
-                        row.setFormattedData(columns[1],pt.getFormattedY());
-                    }
+                    row.setDataElement(columns[0], convertData(xColClass, pt.getX()));
+                    row.setDataElement(columns[1], convertData(yColClass, pt.getY()));
                     row.setDataElement(columns[2], pt.getRowIdx());
                     row.setDataElement(columns[3], weight);
                     row.setDataElement(columns[4], key);

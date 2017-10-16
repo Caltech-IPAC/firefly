@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.query.DecimationProcessor;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
@@ -33,7 +34,7 @@ public class IpacTableTest {
     public static void setup() {
         request = new TableServerRequest("searchProcID");
         request.setMeta("test-meta", "test-meta-value");
-        request.setDecimateInfo(new DecimateInfo("ra", "dec", 1234, .5f));
+        DecimationProcessor.setDecimateInfo(request, new DecimateInfo("ra", "dec", 1234, .5f));
         request.setSortInfo(new SortInfo("ra", "dec"));
         request.setFilters(Arrays.asList("ra > 0", "dec > 0"));
 

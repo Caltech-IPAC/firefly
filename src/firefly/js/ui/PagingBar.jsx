@@ -6,7 +6,7 @@ import {omit} from 'lodash';
 import {InputField} from './InputField.jsx';
 import {intValidator} from '../util/Validate.js';
 import LOADING from 'html/images/gxt/loading.gif';
-import {MAX_ROW} from '../tables/TableUtil.js';
+import {MAX_ROW} from '../tables/TableRequestUtil.js';
 
 export class PagingBar extends Component {
     constructor(props) {
@@ -76,6 +76,6 @@ PagingBar.propTypes = {
 PagingBar.defaultProps = {
     currentPage: 1,
     showLoading: false,
-    pageSize: 10
+    pageSize: 100
 };
 
