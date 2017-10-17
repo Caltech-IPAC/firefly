@@ -22,18 +22,18 @@ export class HistogramOptions extends SimpleComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {activeTrace:cActiveTrace} = getChartData(chartId);
+        const {activeTrace:cActiveTrace=0} = getChartData(chartId);
         // activeTrace is passed via property, when used from NewTracePanel
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         return {activeTrace};
     }
 
     render() {
-        const {chartId} = this.props;
+        const {chartId, tbl_id:tblIdProp} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-ffhist-${activeTrace}`;
-        const tablesource = get(tablesources, [cActiveTrace]);
+        const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
         const tbl_id = get(tablesource, 'tbl_id');
         const colValStats = getColValStats(tbl_id);
         const xProps = {fldPath:`_tables.data.${activeTrace}.x`, label: 'X:', name: 'X', nullAllowed: false, colValStats, groupKey, labelWidth: 62};

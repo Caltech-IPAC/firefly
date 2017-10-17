@@ -4,8 +4,8 @@
 import {get, isArray} from 'lodash';
 import {getTblById, getColumn, cloneRequest, doFetchTable} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
-import {getDataChangesForMappings, getPointIdx, updateSelected, isScatter2d} from '../ChartUtil.js';
+import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
+import {getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
 
 /**
  * This function creates table source entries to get plotly chart data from the server
@@ -43,8 +43,8 @@ function fetchData(chartId, traceNum, tablesource) {
     const req = makeTableFunctionRequest(request, 'XYGeneric');
     req.startIdx = 0;
     req.pageSize = MAX_ROW;
-    
-    
+
+
     Object.entries(options).forEach(([k,v]) => v && (req[k]=v));
 
     doFetchTable(req).then((tableModel) => {
@@ -65,13 +65,12 @@ function fetchData(chartId, traceNum, tablesource) {
             addOtherChanges({changes, chartId, traceNum, tablesource, tableModel});
 
             dispatchChartUpdate({chartId, changes});
-            const traceData = get(getChartData(chartId), `data.${traceNum}`);
-            dispatchChartHighlighted({chartId, highlighted: getPointIdx(traceData,highlightedRow)});   // update highlighted point in chart
+            updateHighlighted(chartId, traceNum, highlightedRow);
             updateSelected(chartId, selectInfo);
         }
     }).catch(
         (reason) => {
-            console.error(`Failed to fetch data for ${chartId} trace ${traceNum}: ${reason}`);
+            dispatchError(chartId, traceNum, reason);
         }
     );
 }
@@ -115,6 +114,12 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
 
 
     const {layout, data} = getChartData(chartId) || {};
+
+    // legend group is used to show/hide traces together
+    // highlight and selected traces should have the same legend group as the active scatter
+    if (!get(data, `${traceNum}.legendgroup`)) {
+        changes[`data.${traceNum}.legendgroup`] = `grp${traceNum}`;
+    }
 
     if (!get(data, `${traceNum}.type`)) {
         changes[`data.${traceNum}.type`] = 'scatter';

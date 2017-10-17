@@ -9,6 +9,7 @@ import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js
 import {downloadChart} from './PlotlyWrapper.jsx';
 import {getColValidator} from './ColumnOrExpression.jsx';
 import {getColValStats} from '../TableStatsCntlr.js';
+import {HelpIcon} from '../../ui/HelpIcon.jsx';
 
 function getToolbarStates(chartId) {
     const {selection, hasSelected, activeTrace=0, tablesources, layout, data=[]} = getChartData(chartId);
@@ -33,6 +34,7 @@ export class ScatterToolbar extends SimpleComponent {
         const {chartId, expandable, toggleOptions} = this.props;
         const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
         const hasSelectionMode = Boolean(tbl_id);
+        const help_id=get(getChartData(chartId), 'help_id');
 
         return (
             <div className='ChartToolbar'>
@@ -46,6 +48,7 @@ export class ScatterToolbar extends SimpleComponent {
                     <OptionsBtn {...{chartId, toggleOptions}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
+                { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
             </div>
         );
     }
@@ -110,6 +113,8 @@ export class BasicToolbar extends SimpleComponent {
         const showDragPart = !type.includes('pie');
         const is3d = type.endsWith('3d') || type === 'surface'; // scatter3d, mesh3d, surface
 
+        const help_id=get(getChartData(chartId), 'help_id');
+
         return (
             <div className='ChartToolbar'>
                 <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
@@ -126,6 +131,7 @@ export class BasicToolbar extends SimpleComponent {
                     <OptionsBtn {...{chartId, toggleOptions}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
+                { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
             </div>
         );
     }

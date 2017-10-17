@@ -22,18 +22,18 @@ export class HeatmapOptions extends SimpleComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {activeTrace:cActiveTrace} = getChartData(chartId);
+        const {activeTrace:cActiveTrace=0} = getChartData(chartId);
         // activeTrace is passed via property, when used from NewTracePanel
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         return {activeTrace};
     }
 
     render() {
-        const {chartId} = this.props;
+        const {chartId, tbl_id:tblIdProp} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-heatmap-${activeTrace}`;
-        const tablesource = get(tablesources, [cActiveTrace]);
+        const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
         const tbl_id = get(tablesource, 'tbl_id');
 
         return (
@@ -82,7 +82,7 @@ export function fieldReducer({chartId, activeTrace}) {
         },
         [`data.${activeTrace}.reversescale`]: {
             fieldKey: `data.${activeTrace}.reversescale`,
-            value: String(get(data, `${activeTrace}.reversescale`, '')),
+            value: get(data, `${activeTrace}.reversescale`) ? 'true' : undefined,
             tooltip: 'Reverse colorscale for color map',
             label: ' ',
             labelWidth: 10

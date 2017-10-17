@@ -5,16 +5,35 @@ import {get, set} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 
-import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
-import {isScatter2d} from '../ChartUtil.js';
+import {CHART_ADD, CHART_UPDATE, dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
+import {isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
+import {monitorChanges} from '../../tables/TableUtil.js';
 
+const X_TICKLBL_PX = 60;
+const TITLE_PX = 30;
+const MIN_MARGIN_PX = 10;
+
+function adjustLayout(layout={}) {
+    const hasTitle = get(layout, 'title');
+    const yaxis = get(layout, 'yaxis', {});
+    const hasOppositeY = get(yaxis, 'side') === 'right';
+
+    const xaxis = get(layout, 'xaxis', {});
+    const hasOppositeX = get(xaxis, 'side') === 'top';
+
+    set(layout, 'yaxis.tickprefix', hasOppositeY ? '' : '  ');
+    set(layout, 'yaxis.ticksuffix', hasOppositeY ? '  ' : '');
+    set(layout, 'margin.b', hasOppositeX ? MIN_MARGIN_PX: X_TICKLBL_PX);
+    set(layout, 'margin.t', hasOppositeX ? X_TICKLBL_PX: MIN_MARGIN_PX + (hasTitle ? TITLE_PX: 0));
+    return layout;
+}
 
 
 export class PlotlyChartArea extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = this.getNextState();
+        this.state = {};
         this.afterRedraw = this.afterRedraw.bind(this);
     }
 
@@ -25,19 +44,34 @@ export class PlotlyChartArea extends PureComponent {
         return !(propsEqual && stateEqual);
     }
 
+    componentWillMount() {
+        const {chartId} = this.props;
+        const {data, fireflyData, mounted} = getChartData(chartId);
+        if (mounted === 1) {
+            handleTableSourceConnections({chartId, data, fireflyData});
+        }
+        this.setState(this.getNextState());
+    }
+
     componentDidMount() {
         this.removeListener = flux.addListener(() => this.storeUpdate());
+
     }
 
     componentWillUnmount() {
         this.isUnmounted=true;
         this.removeListener && this.removeListener();
+        const {chartId} = this.props;
+        const {mounted} = getChartData(chartId);
+        if (mounted === 0) {
+            clearChartConn({chartId});
+        }
     }
 
     getNextState() {
         const {chartId} = this.props;
-        const {data, highlighted, layout, fireflyLayout={}, selected, activeTrace} = getChartData(chartId);
-        return  {data, highlighted, selected, layout, activeTrace, xyratio: fireflyLayout.xyratio, stretch: fireflyLayout.stretch};
+        const {data, fireflyData=[], highlighted, layout, fireflyLayout={}, selected, activeTrace} = getChartData(chartId);
+        return  {data, isLoading: fireflyData.some((e)=>get(e, 'isLoading')), highlighted, selected, layout, activeTrace, xyratio: fireflyLayout.xyratio, stretch: fireflyLayout.stretch};
     }
 
     storeUpdate() {
@@ -56,8 +90,18 @@ export class PlotlyChartArea extends PureComponent {
     }
 
     render() {
-        var {widthPx, heightPx} = this.props;
-        const {data=[], highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = this.state;
+        var {widthPx, heightPx, } = this.props;
+        const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = this.state;
+        if (isLoading) {
+            return (
+                <div style={{position: 'relative', width: '100%', height: '100%'}}>
+                    <div className='loading-mask'/>
+                </div>
+            );
+        } else if (data.length === 0) {
+            return null;
+        }
+
         let doingResize = false;
         if (widthPx !== this.widthPx || heightPx !== this.heightPx) {
             this.widthPx = widthPx;
@@ -83,7 +127,7 @@ export class PlotlyChartArea extends PureComponent {
             pdata = highlighted ? pdata.concat([highlighted]) : pdata;
         }
         const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
-        const playout = Object.assign({showlegend}, layout, {width: chartWidth, height: chartHeight});
+        const playout = Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight});
 
         const style = {float: 'left'};
         if (chartWidth > widthPx || chartHeight > heightPx) {

@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {get, isUndefined, reverse, set} from 'lodash';
+import {get, isUndefined, isEmpty, reverse, set} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartAdd, getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -20,6 +20,10 @@ import {addColorbarChanges} from '../../dataTypes/FireflyHeatmap.js';
 import {getColumnType, getTblById} from '../../../tables/TableUtil.js';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {getColValidator} from '../ColumnOrExpression.jsx';
+import {uniqueChartId, TRACE_COLORS, toRGBA, colorsOnTypes} from '../../ChartUtil.js';
+
+import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
+import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
 
 const fieldProps = {labelWidth: 50, size: 25};
 const boundariesFieldProps = {labelWidth: 35, size: 10};
@@ -96,16 +100,16 @@ export class BasicOptions extends SimpleComponent {
 
     getNextState() {
         const {chartId} = this.props;
-        const {activeTrace} = getChartData(chartId);
+        const {activeTrace=0} = getChartData(chartId);
         return {activeTrace};
     }
 
     render() {
-        const {chartId} = this.props;
+        const {chartId, tbl_Id:tblIdProp} = this.props;
         const {activeTrace=0} = this.state;
         const {tablesources, data={}} = getChartData(chartId);
         const groupKey = `${chartId}-basic-${activeTrace}`;
-        const tablesource = get(tablesources, [activeTrace]);
+        const tablesource = get(tablesources, [activeTrace], tblIdProp ? {tbl_id: tblIdProp} : undefined);
         const tbl_id = get(tablesource, 'tbl_id');
         const type = get(data, `${activeTrace}.type`, 'scatter');
         const noColor = !hasMarkerColor(type);
@@ -167,6 +171,10 @@ export function basicFieldReducer({chartId, activeTrace}) {
             label : 'X Label:',
             ...fieldProps
         },
+        ['__xreset']: {  // invisible helper field
+            fieldKey: '__xreset',
+            value: ''
+        },
         ['__xoptions']: {
             fieldKey: '__xoptions',
             value: getOptions('x', layout),
@@ -180,6 +188,10 @@ export function basicFieldReducer({chartId, activeTrace}) {
             tooltip: 'Y axis label',
             label : 'Y Label:',
             ...fieldProps
+        },
+        ['__yreset']: { // invisible helper field
+            fieldKey: '__yreset',
+            value: ''
         },
         ['__yoptions']: {
             fieldKey: '__yoptions',
@@ -250,6 +262,7 @@ export function basicFieldReducer({chartId, activeTrace}) {
                         inFields = updateSet(inFields, [`layout.${a}axis.title`, 'value'], undefined);
                         inFields = updateSet(inFields, [`fireflyLayout.${a}axis.min`, 'value'], undefined);
                         inFields = updateSet(inFields, [`fireflyLayout.${a}axis.max`, 'value'], undefined);
+                        inFields = updateSet(inFields, [`__${a}reset`, 'value'], 'true');
                         const optFldName = `__${a}options`;
                         const currOptions = get(inFields, [optFldName, 'value']);
                         // do not reset grid selection
@@ -333,7 +346,7 @@ export class BasicOptionFields extends Component {
                 {!noColor && <div style={{whiteSpace: 'nowrap'}}>
                     <ValidationField inline={true} fieldKey={colorFldPath}/>
                     <div
-                        style={{display: 'inline-block', cursor:'pointer', paddingLeft: 3, verticalAlign: 'middle', fontSize: 'larger'}}
+                        style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
                         title='Select trace color'
                         onClick={() => showColorPickerDialog(getFieldVal(groupKey, colorFldPath), true, false,
                              (ev) => {
@@ -341,7 +354,7 @@ export class BasicOptionFields extends Component {
                                  const rgbStr= `rgba(${r},${g},${b},${a})`;
                                  dispatchValueChange({fieldKey: colorFldPath, groupKey, value: rgbStr, valid: true});
                              }, groupKey)}>
-                        {'\ud83d\udd0e'}
+                        <ToolbarButton icon={MAGNIFYING_GLASS}/>
                     </div>
                 </div>}
                 <br/>
@@ -398,6 +411,10 @@ export class BasicOptionFields extends Component {
                                           {label: 'width', value: 'fill'}
                                       ]}/>
                     </div>}
+                </div>
+                <div style={{overflow: 'hidden', height: 0, width: 0}}>
+                    <ValidationField fieldKey='__xreset'/>
+                    <ValidationField fieldKey='__yreset'/>
                 </div>
             </div>
         );
@@ -457,7 +474,8 @@ OptionTopBar.propTypes = {
  */
 export function submitChanges({chartId, fields, tbl_id}) {
     if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
-    const {layout={}, data} = getChartData(chartId);
+    if (!chartId) chartId = uniqueChartId();
+    const {layout={}, data=[], activeTrace:traceNum=0} = getChartData(chartId, {});
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
@@ -470,7 +488,10 @@ export function submitChanges({chartId, fields, tbl_id}) {
             ['x','y'].forEach((a) => {
                 if (k === `__${a}options`) {
                     const opts = v || '';
-                    const range = get(layout, `${a}axis.range`);
+
+                    // helper hidden fields __xreset and __yreset keep track of whether x and y have changed
+                    // if this field is set, we'd like to clear range
+                    const range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
 
                     if (opts.includes('flip')) {
                         if (range) {  
@@ -497,8 +518,30 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     } else if (get(layout, `${a}axis.type`, '') === 'log') {
                         changes[`layout.${a}axis.type`] = 'linear';
                     }
+                } else if (k === `__${a}reset` && v) {
+                    changes[`layout.${a}axis.range`] = undefined;
                 }
             });
+        } else if (k===`data.${traceNum}.marker.color`) {
+            if (!v) {
+                // make sure color is set to default - otherwise active trace change changes the color of the trace
+                // after using colormap option, the color might not be set
+                if (!fields[`_tables.data.${traceNum}.marker.color`]) {
+                    changes[k] = toRGBA(TRACE_COLORS[traceNum]);
+                }
+            } else {
+                const d = data[traceNum];
+                if (d) {
+                    const type = get(d, 'type');
+                    const prevMarkerColor = get(d, 'marker.color');
+                    if (prevMarkerColor && prevMarkerColor !== v && type && colorsOnTypes[type]) {
+                        // when changing color, change all color attributes
+                        colorsOnTypes[type][0].filter((att) => att.endsWith('color')).
+                        forEach((att) => changes[`data.${traceNum}.${att}`] = v);
+                    }
+                }
+            }
+
         }
 
         // move colorbar to the other side of the chart
@@ -516,7 +559,17 @@ export function submitChanges({chartId, fields, tbl_id}) {
 
     });
     adjustAxesRange(layout, changes);
-    dispatchChartUpdate({chartId, changes});
+
+    if (isEmpty(getChartData(chartId))) {
+        // chart dropdown scenario
+        // create chart data from changes and add chart
+        const newChartData = {chartId, groupId: tbl_id};
+        Object.entries(changes).forEach(([k,v]) => set(newChartData, k, v));
+        dispatchChartAdd({chartId, chartType: 'plot.ly', groupId: tbl_id, deletable: true, ...newChartData});
+    } else {
+        // update chart from options scenario
+        dispatchChartUpdate({chartId, changes});
+    }
 }
 
 function adjustAxesRange(layout, changes) {
@@ -526,7 +579,8 @@ function adjustAxesRange(layout, changes) {
         if (!Number.isNaN(minUser) || !Number.isNaN(maxUser)) {
             if (Number.isNaN(minUser) || Number.isNaN(maxUser)) {
                 // range values of a log axis are logs - convert them back
-                const range = get(layout, `${a}axis.range`, []).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e);
+                const range = changes[`layout.${a}axis.range`] &&
+                    (get(layout, `${a}axis.range`, []).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e));
                 if (Number.isNaN(minUser)) {
                     minUser = Math.min(range[0], range[1]);
                 } else if (Number.isNaN(maxUser)) {

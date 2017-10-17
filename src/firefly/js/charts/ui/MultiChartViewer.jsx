@@ -19,6 +19,10 @@ import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js
 
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
 
+export function getActiveViewerItemId(viewerId) {
+    return getViewer(getMultiViewRoot(), viewerId).customData.activeItemId;
+}
+
 export class MultiChartViewer extends PureComponent {
 
     constructor(props) {
@@ -41,18 +45,21 @@ export class MultiChartViewer extends PureComponent {
         this.iAmMounted= false;
         if (this.removeListener) this.removeListener();
         dispatchViewerUnmounted(this.props.viewerId);
+
     }
 
     componentWillMount() {
         this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
-        var {viewerId, canReceiveNewItems}= this.props;
+        var {viewerId, canReceiveNewItems, expandedMode}= this.props;
         dispatchAddViewer(viewerId,canReceiveNewItems,PLOT2D,true);
-        if (this.props.expandedMode) {
+        if (expandedMode) {
             const {chartId} = getExpandedChartProps();
             dispatchUpdateCustom(viewerId, {activeItemId: chartId});
         }
+
     }
+
 
     storeUpdate(props) {
         var {state}= this;
@@ -68,7 +75,7 @@ export class MultiChartViewer extends PureComponent {
         const {viewer}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.itemIdAry)) return false;
-        let activeItemId = getViewer(getMultiViewRoot(), viewerId).customData.activeItemId;
+        let activeItemId = getActiveViewerItemId(viewerId);
         if (isUndefined(activeItemId) || !getChartData(activeItemId)) {
             activeItemId = viewer.itemIdAry[0];
         }
@@ -136,7 +143,6 @@ MultiChartViewer.propTypes= {
     gridDefFunc : PropTypes.func,
     insideFlex : PropTypes.bool,
     closeable : PropTypes.bool,
-
     expandedMode: PropTypes.bool
 
 };

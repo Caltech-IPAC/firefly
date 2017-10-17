@@ -18,6 +18,7 @@ export const MetaConst = {
     POSITION_COORD_COLS : 'positionCoordColumns',
     POSITION_COORD: 'positionCoord',
     DATASET_CONVERTER : 'datasetInfoConverterId',
+    DEFAULT_CHART_DEF : 'defaultChartDef',
     DEFAULT_COLOR : 'DEFAULT_COLOR',
     DATA_SOURCE : 'DataSource',
     TS_DATASET : 'TSDatasetId'

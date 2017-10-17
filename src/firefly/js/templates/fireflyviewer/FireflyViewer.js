@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy} from 'lodash';
+import {get, pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
@@ -26,6 +26,7 @@ import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 
 // import {deepDiff} from '../util/WebUtil.js';
+
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.

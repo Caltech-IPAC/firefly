@@ -14,26 +14,28 @@ import {flux} from '../Firefly.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getTblById, getColumnIdx, getCellValue, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
-import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
+import {dispatchLoadTblStats} from './TableStatsCntlr.js';
+import {UI_PREFIX, dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
-import {UI_PREFIX} from './ChartsCntlr.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
 import {HeatmapOptions} from './ui/options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './ui/options/FireflyHistogramOptions.jsx';
-import {HistogramOptions} from './ui/options/PlotlyHistogramOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
 import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
 import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericData.js';
+import Color from '../util/Color.js';
+
+export const DEFAULT_ALPHA = 0.5;
 
 export const SCATTER = 'scatter';
 export const HEATMAP = 'heatmap';
 export const HISTOGRAM = 'histogram';
 
-export const SELECTED_COLOR = '#ffc800';
+export const SELECTED_COLOR = 'rgba(255, 200, 0, 1)';
 export const SELECTED_PROPS = {
     name: '__SELECTED',
     marker: {color: SELECTED_COLOR},
@@ -41,10 +43,10 @@ export const SELECTED_PROPS = {
     error_y: {color: SELECTED_COLOR}
 };
 
-export const HIGHLIGHTED_COLOR = '#ffa500';
+export const HIGHLIGHTED_COLOR = 'rgba(255, 165, 0, 1)';
 export const HIGHLIGHTED_PROPS = {
     name: '__HIGHLIGHTED',
-    marker: {color: HIGHLIGHTED_COLOR, line: {width: 2, color: '#ffa500'}}, // increase highlight marker with line border
+    marker: {color: HIGHLIGHTED_COLOR, line: {width: 2, color: HIGHLIGHTED_COLOR}}, // increase highlight marker with line border
     error_x: {color: HIGHLIGHTED_COLOR},
     error_y: {color: HIGHLIGHTED_COLOR}
 };
@@ -55,6 +57,10 @@ export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
 export function isPlotly() {
     return get(getAppOptions(), 'charts.chartEngine')==='plotly';
+}
+
+export function multitraceDesign() {
+    return get(getAppOptions(), 'charts.multitrace');
 }
 
 /**
@@ -297,8 +303,6 @@ export function getOptionsUI(chartId) {
         return HeatmapOptions;
     } else if (isScatter2d(type)) {
         return ScatterOptions;
-    } else if (type === 'histogram') {
-        return HistogramOptions;
     } else {
         return BasicOptions;
     }
@@ -328,7 +332,7 @@ export function clearChartConn({chartId}) {
 
 export function newTraceFrom(data, selIndexes, newTraceProps) {
 
-    const sdata = cloneDeep(pick(data, ['x', 'y', 'z', 'error_x', 'error_y', 'text', 'marker', 'hoverinfo', 'firefly' ]));
+    const sdata = cloneDeep(pick(data, ['x', 'y', 'z', 'legendgroup', 'error_x', 'error_y', 'text', 'marker', 'hoverinfo', 'firefly' ]));
     Object.assign(sdata, {showlegend: false, type: get(data, 'type', 'scatter'), mode: 'markers'});
 
     // the rowIdx doesn't exist for generic plotly chart case
@@ -370,9 +374,16 @@ export function updateSelected(chartId, selectInfo) {
     }
 }
 
+export function updateHighlighted(chartId, traceNum, highlightedRow) {
+    const traceData = get(getChartData(chartId), `data.${traceNum}`);
+    dispatchChartHighlighted({chartId, highlighted: getPointIdx(traceData,highlightedRow)});
+}
+
 export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
 
     let getDataVal;
+    const changes = {};
+    changes[`fireflyData.${traceNum}.isLoading`] = !Boolean(tableModel);
     if (tableModel) {
         const cols = tableModel.tableData.columns.map((c) => c.name);
         const transposed = tableModel.tableData.columns.map(() => []);
@@ -383,7 +394,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
     } else {
         getDataVal = (v) => v;
     }
-    const changes = {};
+
     if (mappings) {
         Object.entries(mappings).forEach(([k,v]) => {
             changes[`data.${traceNum}.${k}`] = getDataVal(v);
@@ -401,7 +412,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
  */
 export function handleTableSourceConnections({chartId, data, fireflyData}) {
     var tablesources = makeTableSources(chartId, data, fireflyData);
-    var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
+    const {tablesources:oldTablesources=[], activeTrace, curveNumberMap=[]} = getChartData(chartId);
 
     const hasTablesources = Array.isArray(tablesources) && tablesources.find((ts) => !isEmpty(ts));
     if (!hasTablesources) return;
@@ -411,8 +422,9 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
         let traceTS = tablesources[idx];
         const oldTraceTS = oldTablesources[idx] || {};
 
+        let doUpdate = false;
         if (isEmpty(traceTS)) {
-            tablesources[idx] = oldTraceTS;     // if no updates.. move the previous one into the new tablesources
+            traceTS = oldTraceTS;     // if no updates.. move the previous one into the new tablesources
         } else {
             // if mappings are resolved, we need to get info from old tablesource
             if (!traceTS.fetchData) {
@@ -423,23 +435,48 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
                 if (oldTraceTS && oldTraceTS._cancel) {
                     oldTraceTS._cancel(); // cancel the previous watcher if exists
                     oldTraceTS._cancel = undefined;
+                    traceTS._cancel = undefined;
                 }
+                doUpdate = true;
             } else {
-                tablesources[idx] = oldTraceTS;
+                traceTS = oldTraceTS;
             }
         }
         // make sure table watcher is set for all non-empty table sources
-        if (!isEmpty(tablesources[idx]) && !tablesources[idx]._cancel) {
+        if (!isEmpty(traceTS) && !traceTS._cancel) {
             //creates a new one.. and save the cancel handle
-            updateChartData(chartId, idx, tablesources[idx]);
-            tablesources[idx]._cancel = watchTableChanges(tablesources[idx].tbl_id,
+            if (doUpdate) {
+                // fetch data syncs highlighted and selected with the table
+                updateChartData(chartId, idx, traceTS);
+            } else {
+                if (idx === activeTrace && isFullyLoaded(traceTS.tbl_id)) {
+                    // update highlighted and selected
+                    const tableModel = getTblById(traceTS.tbl_id);
+                    const {highlightedRow, selectInfo={}} = tableModel;
+                    updateHighlighted(chartId, idx, highlightedRow);
+                    updateSelected(chartId, selectInfo);
+                }
+            }
+            traceTS._cancel = watchTableChanges(traceTS.tbl_id,
                 [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE],
                 (action) => updateChartData(chartId, idx, traceTS, action));
 
         }
+        tablesources[idx] = traceTS;
     });
-    dispatchChartUpdate({chartId, changes:{tablesources}});
+
+    const changes = {tablesources};
+
+    // update curveNumberMap if it does not contain all the traces
+    if (curveNumberMap.length < tablesources.length) {
+        const curveMap = range(tablesources.length).filter((idx) => (idx !== activeTrace));
+        curveMap.push(activeTrace);
+        changes['curveNumberMap'] = curveMap;
+    }
+
+    dispatchChartUpdate({chartId, changes});
 }
+
 
 function tablesourcesEqual(newTS, oldTS) {
 
@@ -453,14 +490,15 @@ function tablesourcesEqual(newTS, oldTS) {
 
 
 function updateChartData(chartId, traceNum, tablesource, action={}) {
+    // make sure the chart is not yet removed
+    if (isEmpty(getChartData(chartId))) { return; }
     const {tbl_id, resultSetID, mappings} = tablesource;
     if (action.type === TABLE_HIGHLIGHT) {
         // ignore if traceNum is not active
         const {activeTrace=0} = getChartData(chartId);
         if (traceNum !== activeTrace) return;
         const {highlightedRow} = action.payload;
-        const traceData = get(getChartData(chartId), `data.${traceNum}`);
-        dispatchChartHighlighted({chartId, highlighted: getPointIdx(traceData,highlightedRow)});
+        updateHighlighted(chartId, traceNum, highlightedRow);
     } else if (action.type === TABLE_SELECT) {
         const {activeTrace=0} = getChartData(chartId);
         if (traceNum !== activeTrace) return;
@@ -468,14 +506,17 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
         updateSelected(chartId, selectInfo);
     } else if (action.type === TABLE_REMOVE) {
         const changes = {};
-        Object.entries(mappings).forEach(([k,v]) => {
-            changes[`data.${traceNum}.${k}`] = [];
-        });
+        // TODO remove trace, when no traces left remove chart
+        tablesource._cancel && tablesource._cancel();
+        changes[`data.${traceNum}`] = {};
+        changes[`fireflyData.${traceNum}`] = {};
+        changes[`tablesources.${traceNum}`] = {};
         dispatchChartUpdate({chartId, changes});
         dispatchChartHighlighted({chartId, highlighted: undefined});
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
+        dispatchLoadTblStats(tableModel.request);
 
         const changes = getDataChangesForMappings({mappings, traceNum});
 
@@ -576,7 +617,8 @@ export function applyDefaults(chartData={}, resetColor = true) {
             ticks: noXYAxis ? '' : 'outside',
             showline: !noXYAxis,
             showticklabels: !noXYAxis,
-            zeroline: false
+            zeroline: false,
+            exponentformat:'e'
         },
         yaxis: {
             autorange:true,
@@ -590,7 +632,8 @@ export function applyDefaults(chartData={}, resetColor = true) {
             ticks: noXYAxis ? '' : 'outside',
             showline: !noXYAxis,
             showticklabels: !noXYAxis,
-            zeroline: false
+            zeroline: false,
+            exponentformat:'e'
         }
     };
 
@@ -599,7 +642,7 @@ export function applyDefaults(chartData={}, resetColor = true) {
     chartData.data && chartData.data.forEach((d, idx) => {
         d.name = setDefaultName(d, idx);
 
-        const type = get(d, 'type') || get(chartData, ['fireflyData', idx, 'dataType']);
+        const type = get(chartData, ['fireflyData', `${idx}.dataType`]) || get(d, 'type', 'scatter');
 
         if (idx === 0 && resetColor) {        // reset the color iterator
             getNextTraceColor(true);
@@ -622,16 +665,24 @@ export const TRACE_COLORSCALE = [  'Bluered', 'Blues', 'Earth', 'Electric', 'Gre
                                 'Greys', 'Hot', 'Jet', 'Picnic', 'Portland', 'Rainbow',
                                 'RdBu', 'Reds', 'Viridis', 'YlGnBu', 'YlOrRd' ];
 
-export function *traceColorGenerator(colorList) {
+export function toRGBA(c, alpha) {
+    if (!alpha) { alpha = DEFAULT_ALPHA; }
+    const [r, g, b, a] = Color.toRGBA(c, alpha);
+    return `rgba(${r},${g},${b},${a})`;
+}
+
+export function *traceColorGenerator(colorList, isColor) {
     let nextIdx = -1;
 
+    const f = (c) => isColor ? toRGBA(c, DEFAULT_ALPHA) : c;
+
     while (true) {
-        const result = yield (nextIdx === -1) ? '' : colorList[nextIdx%colorList.length];
+        const result = yield (nextIdx === -1) ? '' : f(colorList[nextIdx%colorList.length]);
         result ? nextIdx = -1 : nextIdx++;
     }
 }
 
-const nextTraceColor = traceColorGenerator(TRACE_COLORS);
+const nextTraceColor = traceColorGenerator(TRACE_COLORS, true);
 const nextTraceColorscale = traceColorGenerator(TRACE_COLORSCALE);
 const getNextTraceColor = (b) => nextTraceColor.next(b).value;
 const getNextTraceColorscale = (b) => nextTraceColorscale.next(b).value;
@@ -643,7 +694,7 @@ export function getNewTraceDefaults(type='', traceNum=0) {
     if (type.includes(SCATTER)) {
         retV = {
             [`data.${traceNum}.type`]: type, //make sure trace type is set
-            [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
+            [`data.${traceNum}.marker.color`]: toRGBA(TRACE_COLORS[traceNum]),
             [`data.${traceNum}.marker.line`]: 'none',
             [`data.${traceNum}.showlegend`]: true,
             ['layout.xaxis.range']: undefined, //clear out fixed range
@@ -657,7 +708,7 @@ export function getNewTraceDefaults(type='', traceNum=0) {
         };
     } else {
         retV = {
-            [`data.${traceNum}.marker.color`]: TRACE_COLORS[traceNum] || undefined,
+            [`data.${traceNum}.marker.color`]: toRGBA(TRACE_COLORS[traceNum]),
             [`data.${traceNum}.showlegend`]: true
         };
     }
@@ -683,29 +734,29 @@ function setDefaultName(oneChartData, idx) {
     return name ? name : `trace ${idx}`;
 }
 
-function setDefaultColor(data, type, idx) {
-    if (!type) return {};
+export const colorsOnTypes = {
+    bar: [['marker.color', 'error_x.color', 'error_y.color']],
+    fireflyHistogram: [['marker.color']],
+    box: [['marker.color', 'line.color']],
+    heatmap: [['colorscale']],
+    fireflyHeatmap: [['colorscale']],
+    histogram: [['marker.color', 'error_x.color', 'error_y.color']],
+    histogram2d: [['colorscale']],
+    area: [['marker.color']],
+    contour: [['colorscale' ]],
+    histogram2dcontour: [['colorscale']],
+    surface: [['colorscale']],
+    mesh3d: [['colorscale']],
+    chororpleth:  [['colorscale']],
+    scatter: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
+    scatter3d: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
+    scattergl: [['marker.color', 'line.color',  'textfont.color', 'error_x.color', 'error_y.color']],
+    scattergeo: [['marker.color', 'line.color', 'textfont.color']],
+    others: [['marker.color']]
+};
 
-    const colorsOnTypes = {
-        bar: [['marker.color', 'error_x.color', 'error_y.color']],
-        fireflyHistogram: [['marker.color']],
-        box: [['marker.color', 'line.color']],
-        heatmap: [['colorscale']],
-        fireflyHeatmap: [['colorscale']],
-        histogram: [['marker.color', 'error_x.color', 'error_y.color']],
-        histogram2d: [['colorscale']],
-        area: [['marker.color']],
-        contour: [['colorscale' ]],
-        histogram2dcontour: [['colorscale']],
-        surface: [['colorscale']],
-        mesh3d: [['colorscale']],
-        chororpleth:  [['colorscale']],
-        scatter: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
-        scatter3d: [['marker.color', 'line.color', 'textfont.color', 'error_x.color', 'error_y.color']],
-        scattergl: [['marker.color', 'line.color',  'textfont.color', 'error_x.color', 'error_y.color']],
-        scattergeo: [['marker.color', 'line.color', 'textfont.color']],
-        others: [['marker.color']]
-    };
+export function setDefaultColor(data, type, idx) {
+    if (!type) return {};
 
     const getColorSetting = (attGroup) => {
         const colorSettingObj = {};

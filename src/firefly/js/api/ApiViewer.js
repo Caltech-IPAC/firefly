@@ -31,7 +31,7 @@ import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/Ap
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {modifyURLToFull} from '../util/BrowserUtil.js';
-import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 
@@ -362,7 +362,7 @@ function plotRemoteChart(params, viewerId, dispatch) {
 
     const dispatchParams= clone({
         groupId: viewerId || 'default',
-        viewerId:viewerId || 'default',
+        viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
         chartId: params.chartId || uniqueChartId(),
         chartType: 'plot.ly',
         closeable: true,
@@ -401,7 +401,7 @@ function plotRemoteXYPlot(params, viewerId, dispatch) {
     // SCATTER
     dispatchChartAdd({chartId, chartType: SCATTER,
         groupId: viewerId || 'default',
-        viewerId:viewerId || 'default',
+        viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
         chartDataElements: [
             {
                 type: DT_XYCOLS,
@@ -441,7 +441,7 @@ function plotRemoteHistogram(params, viewerId, dispatch) {
     dispatchChartAdd({chartId,
         chartType: HISTOGRAM,
         groupId: viewerId || 'default',
-        viewerId:viewerId || 'default',
+        viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
         chartDataElements: [
             {
                 type: DT_HISTOGRAM,

@@ -34,7 +34,13 @@ export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
-    dispatcher({type: LOAD_TBL_STATS, payload: {searchRequest}});
+    const {tbl_id} = searchRequest;
+    // use resultSetID to determine if a call needs to be placed
+    const resultSetID = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id, 'resultSetID']);
+    const resultSetIDNow = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+    if (resultSetID !== resultSetIDNow) {
+        dispatcher({type: LOAD_TBL_STATS, payload: {searchRequest}});
+    }
 }
 
 /*
@@ -78,7 +84,12 @@ export function reducer(state=getInitState(), action={}) {
         }
         case (LOAD_TBL_STATS)  :
         {
-            return updateSet(state, action.payload.tblId, {isColStatsReady: false});
+            const tblId = action.payload.tblId;
+
+            // save original table file path
+            const resultSetID = get(getTblById(tblId), 'tableMeta.resultSetID');
+
+            return updateSet(state, tblId, {resultSetID, isColStatsReady: false});
         }
         case (UPDATE_TBL_STATS)  :
         {
@@ -113,6 +124,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
 
     const {tbl_id} = activeTableServerRequest;
 
+
     // searchRequest
     const sreq = cloneRequest(activeTableServerRequest, {'startIdx': 0, 'pageSize': MAX_ROW});
 
@@ -146,6 +158,13 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     ).catch(
         (reason) => {
             console.error(`Failed to fetch table statistics: ${reason}`);
+            dispatch(updateTblStats(
+                {
+                    tblId: tbl_id,
+                    isColStatsReady: true,
+                    resultSetID: undefined,
+                    colStats: undefined
+                }));
         }
     );
 }

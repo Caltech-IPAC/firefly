@@ -13,7 +13,6 @@ import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {ScatterOptions, submitChangesScatter} from './ScatterOptions.jsx';
 import {HeatmapOptions, submitChangesHeatmap} from './HeatmapOptions.jsx';
-import {HistogramOptions} from './PlotlyHistogramOptions.jsx';
 import {FireflyHistogramOptions, submitChangesFFHistogram} from './FireflyHistogramOptions.jsx';
 import {BasicOptionFields, basicFieldReducer, submitChanges, hasMarkerColor} from './BasicOptions.jsx';
 
@@ -34,18 +33,16 @@ function getSubmitChangesFunc(traceType) {
     }
 }
 
-function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
+function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id}) {
     const noColor = !hasMarkerColor(traceType);
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
-            return (<ScatterOptions {...{chartId, activeTrace, groupKey}}/>);
+            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         case 'heatmap':
-            return (<HeatmapOptions {...{chartId, activeTrace, groupKey}}/>);
+            return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         case 'fireflyHistogram':
-            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey}}/>);
-        case 'histogram':
-            return (<HistogramOptions {...{chartId, activeTrace, groupKey}}/>);
+            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         default:
             return (
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
@@ -60,8 +57,8 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey}) {
 export class NewTracePanel extends SimpleComponent {
 
     getNextState(np) {
-        const {tbl_id, chartId} = this.props;
-        const {data} = getChartData(chartId);
+        const {chartId} = this.props;
+        const {data=[]} = getChartData(chartId);
         const activeTrace = data.length;        //setting activeTrace to next available index.
         const type = getFieldVal('new-trace', 'type') || 'scatter';
         const groupKey = `${chartId}-new-trace-${type}`;
@@ -69,7 +66,7 @@ export class NewTracePanel extends SimpleComponent {
     }
 
     render() {
-        const {tbl_id, chartId} = this.props;
+        const {tbl_id, chartId, hideDialog=()=>dispatchHideDialog(dialogNameNewTrace)} = this.props;
         const {groupKey, activeTrace, type} = this.state;
         const doAdd = (fields) => {
             const traceType = type;
@@ -83,7 +80,7 @@ export class NewTracePanel extends SimpleComponent {
                     .forEach(([k,v]) => !fields[k] && (fields[k] = v));
             
             // need to hide before the changes are submitted to avoid React Internal error too much recursion (mounting/unmouting fields)
-            dispatchHideDialog(dialogNameNewTrace);
+            hideDialog();
             submitChangesFunc({chartId, activeTrace, fields, tbl_id});
         };
 
@@ -94,21 +91,20 @@ export class NewTracePanel extends SimpleComponent {
                         options={[
                             {label: 'Scatter', value: 'scatter'},
                             {label: 'Heatmap', value: 'heatmap'},
-                            {label: 'Firefly histogram', value: 'fireflyHistogram'},
-                            {label: 'Plotly histogram', value: 'histogram'}
+                            {label: 'Histogram', value: 'fireflyHistogram'}
                         ]}
                         {...fieldProps} />
                 </FieldGroup>
                 <br/>
-                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey})}
+                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id})}
                 <div style={{display: 'inline-flex', marginTop: 10, justifyContent: 'space-between'}}>
                     <CompleteButton groupKey={groupKey}
                                     onSuccess={doAdd}
-                                    onFail={() => alert('to be implemented')}
+                                    onFail={() => {}}    //invalid fields highlighted, anything else?
                                     text='ADD'
                     />
                     <button type='button' className='button std'
-                            onClick={() => dispatchHideDialog(dialogNameNewTrace)}>Cancel
+                            onClick={hideDialog}>Cancel
                     </button>
                 </div>
             </div>
