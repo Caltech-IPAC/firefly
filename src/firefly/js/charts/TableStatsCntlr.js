@@ -59,8 +59,8 @@ const dispatchUpdateTblStats = function(tblId,isColStatsReady,colStats) {
  */
 export const loadTblStats = function(rawAction) {
     return (dispatch) => {
-        dispatch({ type : LOAD_TBL_STATS, payload : rawAction.payload });
         if (rawAction.payload.searchRequest) {
+            dispatch({ type : LOAD_TBL_STATS, payload : rawAction.payload });
             fetchTblStats(dispatch, rawAction.payload.searchRequest);
         }
     };
@@ -84,7 +84,7 @@ export function reducer(state=getInitState(), action={}) {
         }
         case (LOAD_TBL_STATS)  :
         {
-            const tblId = action.payload.tblId;
+            const tblId = get(action.payload, ['searchRequest', 'tbl_id']);
 
             // save original table file path
             const resultSetID = get(getTblById(tblId), 'tableMeta.resultSetID');
