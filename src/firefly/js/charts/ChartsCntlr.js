@@ -10,7 +10,7 @@ import {updateSet, updateMerge, updateObject, toBoolean} from '../util/WebUtil.j
 import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
-import {dispatchAddViewer, dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
+import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
 import {getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
@@ -45,6 +45,8 @@ const FIRST_CDEL_ID = '0'; // first data element id (if missing)
 const FIREFLY_TRACE_TYPES = ['fireflyHistogram', 'fireflyHeatmap'];
 
 export default {actionCreators, reducers};
+
+const isDebug = () => get(window, 'firefly.debug', false);
 
 function actionCreators() {
     return {
@@ -323,16 +325,18 @@ function chartAdd(action) {
             const newPayload = handleFireflyTraceTypes(action.payload);
             const actionToDispatch = (newPayload === action.payload) ? action : Object.assign({}, action, {payload: newPayload});
             dispatch(actionToDispatch);
-            const {viewerId='main', data, fireflyData} = actionToDispatch.payload;
-            dispatchAddViewer(viewerId,true,'plot2d',true);
-            dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
+            const {viewerId, data, fireflyData} = actionToDispatch.payload;
+            if (viewerId) {
+                // viewer will be added if it does not exist already
+                dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
+            }
 
-            // TODO: lazy table connection
+            // lazy table connection
             // handle reset case - when a chart is already mounted
-            //const {mounted} = getChartData(chartId);
-            //if (mounted > 0) {
+            const {mounted} = getChartData(chartId);
+            if (mounted > 0) {
                 handleTableSourceConnections({chartId, data, fireflyData});
-            //}
+            }
         } else {
             dispatch(action);
         }
@@ -352,11 +356,11 @@ function chartUpdate(action) {
                              .filter(([k,v]) => (k.startsWith('data') || k.startsWith('fireflyData')))
                              .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
 
-        // TODO: lazy table connection
-        //const {mounted} = getChartData(chartId);
-        //if (mounted > 0) {
+        // lazy table connection
+        const {mounted} = getChartData(chartId);
+        if (mounted > 0) {
             handleTableSourceConnections({chartId, data, fireflyData});
-        //}
+        }
     };
 }
 
@@ -460,7 +464,7 @@ function chartFilterSelection(action) {
 function setActiveTrace(action) {
     return (dispatch) => {
         const {chartId, activeTrace} = action.payload;
-        const {data, tablesources, curveNumberMap} = getChartData(chartId) || {};
+        const {data, tablesources, curveNumberMap} = getChartData(chartId);
         const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
         let selected = undefined;
         let highlighted = undefined;
@@ -495,6 +499,7 @@ function isFireflyType(type) {
  * @return updated action payload
  */
 function handleFireflyTraceTypes(payload) {
+    if (payload['fireflyData']) return payload;
     const {data=[], layout={}} = payload;
     let newPayload = payload;
     if (data.find((d) => isFireflyType(d.type))) {
@@ -726,12 +731,13 @@ function reduceData(state={}, action={}) {
                     chartDataElements: chartDataElementsToObj(chartDataElements),
                     ...rest
                 }, isUndefined));
+            isDebug() && console.log(`ADD ${chartId} mounted ${nMounted}`);
             return state;
         }
         case (CHART_UPDATE) :
         {
             const {chartId, changes}  = action.payload;
-            var chartData = getChartData(chartId) || {};
+            var chartData = getChartData(chartId);
             chartData = updateObject(chartData, changes);
             useScatterGL && changeToScatterGL(chartData);
 
@@ -740,6 +746,7 @@ function reduceData(state={}, action={}) {
         case (CHART_REMOVE)  :
         {
             const {chartId} = action.payload;
+            isDebug() && console.log('REMOVE '+chartId);
             clearChartConn(chartId);
             return omit(state, chartId);
         }
@@ -784,7 +791,9 @@ function reduceData(state={}, action={}) {
             if (has(state, chartId)) {
                 const n = get(state, [chartId,'mounted'], 0);
                 state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
+                isDebug() && console.log(`MOUNTED ${chartId} mounted ${state[chartId].mounted}`);
             }
+
             return state;
         }
         case (CHART_UNMOUNTED) :
@@ -797,6 +806,7 @@ function reduceData(state={}, action={}) {
                 } else {
                     logError(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
                 }
+                isDebug() && console.log(`UNMOUNTED ${chartId} mounted ${state[chartId].mounted}`);
             }
             return state;
         }
@@ -871,8 +881,8 @@ function reduceUI(state={}, action={}) {
 }
 
 
-export function getChartData(chartId) {
-    return get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId]);
+export function getChartData(chartId, defaultChartData={}) {
+    return get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId], defaultChartData);
 }
 
 export function getChartDataElement(chartId, chartDataElementId=FIRST_CDEL_ID) {
@@ -885,17 +895,40 @@ export function getChartDataElement(chartId, chartDataElementId=FIRST_CDEL_ID) {
  * @returns {Array<{message:string, reason:object}>} an array of error objects
  */
 export function getErrors(chartId) {
-    const chartDataElements = get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId, 'chartDataElements']);
     const errors = [];
-    if (chartDataElements) {
-        Object.keys(chartDataElements).forEach((id) => {
-            const error = chartDataElements[id].error;
-            if (error) {
-                errors.push(error);
-            }
+    const chartData = get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId], {});
+    if (chartData.chartType === 'plot.ly') {
+        get(chartData, 'fireflyData', []).forEach((d) => {
+            const error = get(d, 'error');
+            error && errors.push(error);
         });
+    } else {
+        const chartDataElements = chartData.chartDataElements;
+        if (chartDataElements) {
+            Object.keys(chartDataElements).forEach((id) => {
+                const error = chartDataElements[id].error;
+                error && errors.push(error);
+            });
+        }
     }
     return errors;
+}
+
+export function dispatchError(chartId, traceNum, reason) {
+    const message = `Failed to fetch trace${traceNum > 0 && traceNum} data`;
+    logError(`${message}: ${reason}`);
+    let reasonStr = `${reason}`.toLowerCase();
+    if (reasonStr.match(/not supported/)) {
+        reasonStr = 'Unsupported feature requested. Please choose valid options.';
+    } else if (reasonStr.match(/invalid column/)) {
+        reasonStr = 'Non-existent column or invalid expression. Please choose valid X and Y.';
+    } else {
+        reasonStr = 'Please contact Help Desk. Check browser console for more information.';
+    }
+    const changes = [];
+    changes.push(`fireflyData.${traceNum}.error`, {message, reason: reasonStr});
+    changes.push(`fireflyData.${traceNum}.isLoading`, false);
+    dispatchChartUpdate({chartId, changes});
 }
 
 export function getExpandedChartProps() {

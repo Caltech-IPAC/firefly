@@ -172,7 +172,7 @@ export class PlotlyWrapper extends Component {
     }
 
     optimize(graphDiv, renderType, {chartId, data, layout, dataUpdate=[], layoutUpdate, dataUpdateTraces, ...rest}) {
-        const {lastUpdated} = getChartData(chartId) || {};
+        const {lastUpdated} = getChartData(chartId);
 
         if (!useChartRedraw && lastUpdated && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
             // omitting 'firefly' from data[*] for now
@@ -261,7 +261,7 @@ const now = Date.now();
                         break;
                 }
                 set(getChartData(chartId), 'lastUpdated', Date.now());
-isDebug() && console.log(`${renderType.toString()} ${dataUpdateTraces} elapsed: ${Date.now() - now}`);
+                isDebug() && console.log(`${renderType.toString()} ${dataUpdateTraces} elapsed: ${Date.now() - now}`);
             }
         } ).catch( (e) => {
             console.log('Plotly not loaded',e);
@@ -276,7 +276,7 @@ isDebug() && console.log(`${renderType.toString()} ${dataUpdateTraces} elapsed: 
      * @param changes
      */
     syncLayout(chartId, changes) {
-        const {layout} = getChartData(chartId) || {};
+        const {layout} = getChartData(chartId);
         if (layout) {
             Object.entries(changes).forEach( ([k, v]) => {
                 if (k === 'xaxis' && Array.isArray(v)) {

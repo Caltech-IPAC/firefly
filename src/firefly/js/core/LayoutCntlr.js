@@ -207,7 +207,7 @@ export function getLayouInfo() {
     const layout = get(flux.getState(), 'layout', {});
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
     const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
-    const hasXyPlots = !isEmpty(get(flux.getState(), 'charts.data', {}));
+    const hasXyPlots = hasTables || !isEmpty(get(flux.getState(), 'charts.data', {}));
     return clone(layout, {hasImages, hasTables, hasXyPlots});
 }
 

@@ -394,7 +394,7 @@ function highlightRow(action) {
     return (dispatch) => {
         const {tbl_id, highlightedRow, request={}} = action.payload;
         var tableModel = TblUtil.getTblById(tbl_id);
-        if (highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
+        if (!tableModel || highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
         if (highlightedRow === tableModel.highlightedRow && !request.pageSize) return;   // nothing to change
 
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);

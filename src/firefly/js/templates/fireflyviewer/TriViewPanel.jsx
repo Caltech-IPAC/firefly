@@ -50,7 +50,9 @@ export class TriViewPanel extends PureComponent {
         if (showXyPlots) {
             content.xyPlot = (<ChartsContainer key='res-xyplots'
                                                closeable={closeable}
-                                               expandedMode={expanded===LO_VIEW.xyPlots}/>);
+                                               expandedMode={expanded===LO_VIEW.xyPlots}
+                                               tbl_group='main'
+                                               addDefaultChart={true}/>);
         }
         if (showTables) {
             content.tables = (<TablesContainer key='res-tables'
