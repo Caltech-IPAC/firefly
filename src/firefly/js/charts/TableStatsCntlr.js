@@ -35,10 +35,10 @@ export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
  */
 export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
     const {tbl_id} = searchRequest;
-    // use resultSetId to determine if a call needs to be placed
-    const resultSetId = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id, 'resultSetId']);
-    const resultSetIdNow = get(getTblById(tbl_id), 'tableMeta.resultSetId');
-    if (resultSetId !== resultSetIdNow) {
+    // use resultSetID to determine if a call needs to be placed
+    const resultSetID = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id, 'resultSetID']);
+    const resultSetIDNow = get(getTblById(tbl_id), 'tableMeta.resultSetID');
+    if (resultSetID !== resultSetIDNow) {
         dispatcher({type: LOAD_TBL_STATS, payload: {searchRequest}});
     }
 }
@@ -87,9 +87,9 @@ export function reducer(state=getInitState(), action={}) {
             const tblId = action.payload.tblId;
 
             // save original table file path
-            const resultSetId = get(getTblById(tblId), 'tableMeta.resultSetId');
+            const resultSetID = get(getTblById(tblId), 'tableMeta.resultSetID');
 
-            return updateSet(state, tblId, {resultSetId, isColStatsReady: false});
+            return updateSet(state, tblId, {resultSetID, isColStatsReady: false});
         }
         case (UPDATE_TBL_STATS)  :
         {
@@ -162,7 +162,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                 {
                     tblId: tbl_id,
                     isColStatsReady: true,
-                    resultSetId: undefined,
+                    resultSetID: undefined,
                     colStats: undefined
                 }));
         }
