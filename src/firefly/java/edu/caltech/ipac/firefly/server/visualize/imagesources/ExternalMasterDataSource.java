@@ -274,7 +274,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         params.put("SurveyKey", "quickv");
         params.put("title", "DSS quickv");
         params.put("drawingSubgroupID", "dss");
-        quick.setPlotRequestParams(params);
+        //quick.setPlotRequestParams(params);
 
         ImageMasterDataEntry phase2 = dssTemplate();
         phase2.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
@@ -289,7 +289,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         params.put("SurveyKey", "phase2_gsc2");
         params.put("title", "DSS phase2_gsc2");
         params.put("drawingSubgroupID", "dss");
-        phase2.setPlotRequestParams(params);
+        //phase2.setPlotRequestParams(params);
 
         ImageMasterDataEntry phase1 = dssTemplate();
         phase1.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
@@ -304,7 +304,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         params.put("SurveyKey", "phase2_gsc1");
         params.put("title", "DSS phase2_gsc1");
         params.put("drawingSubgroupID", "dss");
-        phase1.setPlotRequestParams(params);
+        //phase1.setPlotRequestParams(params);
 
 
         List<ImageMasterDataEntry> retval= new ArrayList<>();
@@ -326,9 +326,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
 
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"SDSS");
-        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"sdss");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"SDSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"Galactic");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
@@ -339,9 +339,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     static private ImageMasterDataEntry msxTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"MSX");
-        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"msx");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"MSX");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"Galactic");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.01");
@@ -354,9 +354,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     static private ImageMasterDataEntry dssTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"DSS");
-        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"dss");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"DSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"Galactic");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
