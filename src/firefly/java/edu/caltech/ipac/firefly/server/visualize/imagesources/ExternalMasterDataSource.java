@@ -313,9 +313,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         retval.add(blue);
         retval.add(pred);
         retval.add(pblue);
-        retval.add(quick);
-        retval.add(phase2);
-        retval.add(phase1);
+//        retval.add(quick);
+//        retval.add(phase2);
+//        retval.add(phase1);
         return retval;
 
     }
