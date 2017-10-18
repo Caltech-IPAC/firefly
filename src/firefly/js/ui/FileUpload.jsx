@@ -13,7 +13,7 @@ const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerPar
 
 
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  message, onChange, value, labelWidth,
-                         innerStyle, isFromURL, isFromWsURL, isFromFile, uploadSrc, onUrlAnalysis, fileNameStyle}) {
+                         innerStyle, isFromURL, isFromWsURL, uploadSrc, onUrlAnalysis, fileNameStyle}) {
     var style = (!isFromURL && !isFromWsURL) ? Object.assign({color: 'transparent', border: 'none', background: 'none'}, innerStyle) : (innerStyle || {});
     var fileName = ((!isFromURL && !isFromWsURL) && value) ?  value.split(/(\\|\/)/g).pop() : 'No file chosen';
 
@@ -57,7 +57,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 </div>
 
             );
-        } else if (isFromFile) {
+        } else {
             let fPos = {marginLeft: -150};
 
             if (!isNil(fileNameStyle)) fPos = Object.assign(fPos, fileNameStyle);
@@ -88,9 +88,8 @@ FileUploadView.propTypes = {
     labelWidth: PropTypes.number,
     valid: PropTypes.bool,
     wrapperStyle: PropTypes.object,
-    isFromURL: PropTypes.bool,
-    isFromWsURL: PropTypes.bool,
-    isFromFile: PropTypes.bool,
+    isFromURL: PropTypes.bool.isRequired,
+    isFromWsURL: PropTypes.bool.isRequired,
     onUrlAnalysis: PropTypes.func,
     fileNameStyle: PropTypes.object
 };
@@ -98,7 +97,6 @@ FileUploadView.propTypes = {
 FileUploadView.defaultProps = {
     fileType: 'TABLE',
     isLoading: false,
-    isFromFile: true,
     isFromURL: false,
     isFromWsURL: false,
     labelWidth: 0
@@ -138,7 +136,7 @@ function getProps(params, fireValueChange) {
                     params.fileAnalysis)
             }
         );
-    } else if (has(params, 'isFromFile') && params.isFromFile) {
+    } else {
         return Object.assign({}, params,
             {
                 value: params.displayValue,
@@ -165,7 +163,7 @@ function handleChange(ev, fireValueChange, type, fileAnalysis) {
 
 function makeDoUpload(file, type, isFromURL, isFromWsURL, fileAnalysis) {
     return () => {
-        return doUpload(file, {type, isFromURL, fileAnalysis}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
+        return doUpload(file, {type, isFromURL, isFromWsURL, fileAnalysis}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
             let valid = status === '200';
             if (valid) {        // json file is not supported currently
                 if (!isNil(fileFormat)) {
