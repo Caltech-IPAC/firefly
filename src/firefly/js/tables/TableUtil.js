@@ -3,10 +3,10 @@
  */
 
 import {take, fork, cancel} from 'redux-saga/effects';
-import {get, set, unset, has, isEmpty, isUndefined, uniqueId, cloneDeep, omit, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
+import {get, set, has, isEmpty, isUndefined, uniqueId, cloneDeep, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
 import Enum from 'enum';
 
-import {MAX_ROW} from './TableRequestUtil.js';
+import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo} from './FilterInfo.js';

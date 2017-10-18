@@ -78,13 +78,15 @@ public class StatisticsProcessor extends TableFunctionProcessor {
             }
 
         }
-        DataObject data = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
-        for (int i = 0; i < stats.size(); i++) {
-            DataObject col = stats.get(i);
-            String cname = col.getStringData("columnName").toUpperCase();
-            col.setDataElement(columns[3], getDouble(data.getDataElement(cname + "_min")));
-            col.setDataElement(columns[4], getDouble(data.getDataElement(cname + "_max")));
-            col.setDataElement(columns[5], data.getDataElement(cname + "_count"));
+        if (sqlCols.size() > 0) {
+            DataObject data = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
+            for (int i = 0; i < stats.size(); i++) {
+                DataObject col = stats.get(i);
+                String cname = col.getStringData("columnName").toUpperCase();
+                col.setDataElement(columns[3], getDouble(data.getDataElement(cname + "_min")));
+                col.setDataElement(columns[4], getDouble(data.getDataElement(cname + "_max")));
+                col.setDataElement(columns[5], data.getDataElement(cname + "_count"));
+            }
         }
         return stats;
     }
