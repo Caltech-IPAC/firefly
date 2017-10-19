@@ -4,7 +4,6 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {uniqBy, get} from 'lodash';
 
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
@@ -16,11 +15,9 @@ import {showInfoPopup} from './PopupUtil.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import WebPlotRequest, {WPConst} from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
-import {imageMasterData} from '../data/ImageMasterData.js';
 import {getImageMasterData} from '../visualize/ui/AllImageSearchConfig.js';
 import {ImageSelect} from './ImageSelect.jsx';
 
@@ -100,11 +97,13 @@ function renderPanel(imageMasterData) {
             <FormPanel
                 width='640px' height='500px'
                 groupKey={FG_KEY}
+                includeUnmounted={true}
                 params={{hideOnInvalid: false}}
-                onSubmit={(request) => onSearchSubmit(request)}
+                onSubmit={(request) => onSearchSubmit(request, imageMasterData)}
                 onError={(request) => searchFailed(request)}
                 onCancel={hideSearchPanel}>
-                <FieldGroup groupKey={FG_KEY} validatorFunc={null} keepState={true}>
+                <FieldGroup groupKey={FG_KEY} validatorFunc={null}
+                            reducerFunc={mainReducer} keepState={true}>
                     <div style={{padding:'5px 0 0 0', display: 'flex', textAlign:'center', justifyContent: 'center' }}>
                         <TargetPanel/>
                     </div>
@@ -122,7 +121,7 @@ function renderPanel(imageMasterData) {
                                          label={'Choose Radius'}
                         />
 
-                        <ImageSelect key='ImageSelect' {...{groupKey:FG_KEY, imageMasterData, style:{width: 700, height: 300}}} />
+                        <ImageSelect key='ImageSelect' {...{groupKey:FG_KEY, addChangeListener, imageMasterData, style:{width: 800, height: 400}}} />
 
                     </div>
                 </FieldGroup>
@@ -141,20 +140,33 @@ NewImageSearchPanel.defaultProps = {
 };
 
 
+// map of key/listener
+const changeListeners = {};
+function addChangeListener(key, changeListener) {
+    changeListeners[key] = changeListener;
+}
+function mainReducer(inFields, action) {
+    // put reducing logic here is any
+
+    // call all listeners for
+    inFields = Object.values(changeListeners).reduce( (p, l) => l(p, action), inFields);
+    return inFields;
+};
+
+
 function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
 
-function onSearchSubmit(request) {
+function onSearchSubmit(request, imageMasterData) {
     console.log(request);
     const validInfo= validateInput(request);
     if (!validInfo.valid)  {
         showInfoPopup(validInfo.message);
         return false;
     }
-    doImageSearch(request);
-    console.log(request.imageSelection);
+    doImageSearch(request, imageMasterData);
 }
 
 function searchFailed(request) {
@@ -185,7 +197,7 @@ function validateInput(request) {
 
 
 //todo: after UI changes: needs to come up with list of plotRequestParams to make into WebPlotRequest
-function doImageSearch(request) {
+function doImageSearch(request, imageMasterData) {
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
     const radius= request.conesize;
 
@@ -198,6 +210,8 @@ function doImageSearch(request) {
 
     const paramAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId));
     loadImages(wp,radius,paramAry);
+    console.log(paramAry);
+
 }
 
 //-------------------------------------------------------------------------

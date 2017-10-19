@@ -54,7 +54,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 
 export const FormPanel = function (props) {
     var {children, onSubmit, onCancel, onError, groupKey, action, params, title,
-        submitText='Search', help_id, changeMasking} = props;
+        submitText='Search', help_id, changeMasking, includeUnmounted=false} = props;
 
     const style = {
         backgroundColor: 'white',
@@ -74,6 +74,7 @@ export const FormPanel = function (props) {
             <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}}>
                 <div>
                     <CompleteButton style={{display: 'inline-block', marginRight: 10}}
+                                    includeUnmounted={includeUnmounted}
                                     groupKey={groupKey}
                                     onSuccess={createSuccessHandler(action, params, title, onSubmit)}
                                     onFail={onError || handleFailfure}
@@ -102,7 +103,8 @@ FormPanel.propTypes = {
     action: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     params: PropTypes.object,
     help_id: PropTypes.string,
-    changeMasking: PropTypes.func
+    changeMasking: PropTypes.func,
+    includeUnmounted: PropTypes.bool
 };
 
 function handleChartAdd(request) {

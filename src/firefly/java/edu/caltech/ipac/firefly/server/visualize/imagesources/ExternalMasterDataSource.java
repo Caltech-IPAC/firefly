@@ -35,8 +35,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
 
         ImageMasterDataEntry u= sdssTemplate();
-        u.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        u.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        u.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.2910");
+        u.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.2910 micron");
         u.set(ImageMasterDataEntry.PARAMS.TITLE,"u");
         u.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS u");
         u.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-u");
@@ -50,8 +50,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
 
         ImageMasterDataEntry g= sdssTemplate();
-        g.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        g.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        g.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.4810");
+        g.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.4810 micron");
         g.set(ImageMasterDataEntry.PARAMS.TITLE,"g");
         g.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS g");
         g.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-g");
@@ -64,8 +64,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         g.setPlotRequestParams(params);
 
         ImageMasterDataEntry r= sdssTemplate();
-        r.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        r.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        r.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.6230");
+        r.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.6230 micron");
         r.set(ImageMasterDataEntry.PARAMS.TITLE,"r");
         r.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS r");
         r.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-r");
@@ -78,8 +78,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         r.setPlotRequestParams(params);
 
         ImageMasterDataEntry i= sdssTemplate();
-        i.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        i.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        i.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.7640");
+        i.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.7640 micron");
         i.set(ImageMasterDataEntry.PARAMS.TITLE,"i");
         i.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS i");
         i.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-i");
@@ -92,8 +92,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         i.setPlotRequestParams(params);
 
         ImageMasterDataEntry z= sdssTemplate();
-        z.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        z.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        z.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.9060");
+        z.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.9060 micron");
         z.set(ImageMasterDataEntry.PARAMS.TITLE,"z");
         z.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS z");
         z.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-z");
@@ -192,8 +192,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
 
         ImageMasterDataEntry red = dssTemplate();
-        red.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        red.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        red.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.65");
+        red.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.65 micron");
         red.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Red");
         red.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss2ukstu_red");
         red.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss2ukstu_red");
@@ -207,8 +207,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         red.setPlotRequestParams(params);
 
         ImageMasterDataEntry ir = dssTemplate();
-        ir.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        ir.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        ir.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.85");
+        ir.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.85 micron");
         ir.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Infrared");
         ir.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss2ukstu_ir");
         ir.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss2ukstu_ir");
@@ -221,8 +221,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         ir.setPlotRequestParams(params);
 
         ImageMasterDataEntry blue = dssTemplate();
-        blue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        blue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        blue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.41");
+        blue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.41 micron");
         blue.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Blue");
         blue.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss2ukstu_blue");
         blue.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss2ukstu_blue");
@@ -235,8 +235,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         blue.setPlotRequestParams(params);
 
         ImageMasterDataEntry pred = dssTemplate();
-        pred.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        pred.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        pred.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.65");
+        pred.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.65 micron");
         pred.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS1 Red");
         pred.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss1_red");
         pred.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss1_red");
@@ -249,8 +249,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         pred.setPlotRequestParams(params);
 
         ImageMasterDataEntry pblue = dssTemplate();
-        pblue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
-        pblue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0 micron");
+        pblue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.48");
+        pblue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.48 micron");
         pblue.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS1 Blue");
         pblue.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss1_blue");
         pblue.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss1_blue");
@@ -274,7 +274,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         params.put("SurveyKey", "quickv");
         params.put("title", "DSS quickv");
         params.put("drawingSubgroupID", "dss");
-        quick.setPlotRequestParams(params);
+        //quick.setPlotRequestParams(params);
 
         ImageMasterDataEntry phase2 = dssTemplate();
         phase2.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
@@ -289,7 +289,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         params.put("SurveyKey", "phase2_gsc2");
         params.put("title", "DSS phase2_gsc2");
         params.put("drawingSubgroupID", "dss");
-        phase2.setPlotRequestParams(params);
+        //phase2.setPlotRequestParams(params);
 
         ImageMasterDataEntry phase1 = dssTemplate();
         phase1.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0");
@@ -304,7 +304,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         params.put("SurveyKey", "phase2_gsc1");
         params.put("title", "DSS phase2_gsc1");
         params.put("drawingSubgroupID", "dss");
-        phase1.setPlotRequestParams(params);
+        //phase1.setPlotRequestParams(params);
 
 
         List<ImageMasterDataEntry> retval= new ArrayList<>();
@@ -313,9 +313,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         retval.add(blue);
         retval.add(pred);
         retval.add(pblue);
-        retval.add(quick);
-        retval.add(phase2);
-        retval.add(phase1);
+//        retval.add(quick);
+//        retval.add(phase2);
+//        retval.add(phase1);
         return retval;
 
     }
@@ -326,9 +326,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
 
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"SDSS");
-        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"sdss");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"SDSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"Galactic");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
@@ -339,9 +339,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     static private ImageMasterDataEntry msxTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"MSX");
-        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"msx");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"MSX");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"Galactic");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.01");
@@ -354,9 +354,9 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     static private ImageMasterDataEntry dssTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
         e.set(ImageMasterDataEntry.PARAMS.PROJECT,"DSS");
-        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"dss");
+        e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"DSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
-        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu/stuff");
+        e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"Galactic");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");

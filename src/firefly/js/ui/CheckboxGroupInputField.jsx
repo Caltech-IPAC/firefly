@@ -55,7 +55,7 @@ function getProps(params, fireValueChange) {
 
     var {value,options}= params;
     value= convertValue(value,options);
-    
+
     return Object.assign({}, params,
         { value,
           onChange: (ev) => handleOnChange(ev,params, fireValueChange)
@@ -79,7 +79,6 @@ function handleOnChange(ev, params, fireValueChange) {
     else {
         if (idx > -1) curValueArr.splice(idx, 1); // remove val from the array
     }
-
     var {valid,message} = params.validator(curValueArr.toString());
 
     fireValueChange({ value: curValueArr.toString(), message, valid });
