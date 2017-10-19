@@ -104,7 +104,7 @@ FormPanel.propTypes = {
     params: PropTypes.object,
     help_id: PropTypes.string,
     changeMasking: PropTypes.func,
-    includeUnmounted: PropTypes.boolean
+    includeUnmounted: PropTypes.bool
 };
 
 function handleChartAdd(request) {

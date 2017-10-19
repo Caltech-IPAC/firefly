@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {uniqBy, get, countBy, isNil, xor} from 'lodash';
+import {uniqBy, uniq, get, countBy, isNil, xor} from 'lodash';
 
 
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -37,7 +37,11 @@ export class ImageSelect extends PureComponent {
 
         filteredImageData = filterMission.length > 0 ? filteredImageData.filter( (d) => filterMission.includes(d.missionId)) : filteredImageData;
         filteredImageData = filterProjectType.length > 0 ? filteredImageData.filter( (d) => filterProjectType.includes(d.projectTypeKey)) : filteredImageData;
-        filteredImageData = filterwaveBand.length > 0 ? filteredImageData.filter( (d) => filterwaveBand.includes(d.wavelength)) : filteredImageData;
+        if (filterwaveBand.length > 0) {
+            // filtering by waveband
+            const projWithWB = uniq(filteredImageData.filter( (d) => filterwaveBand.includes(d.wavelength)).map( (d) => d.project));  // may contains duplicates..
+            filteredImageData = filteredImageData.filter( (d) => projWithWB.includes(d.project));
+        }
 
         return (
             <div style={style} className='ImageSelect'>

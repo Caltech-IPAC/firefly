@@ -108,7 +108,7 @@ export class CollapsiblePanel extends PureComponent {
 
 CollapsiblePanel.propTypes = {
     componentKey: PropTypes.string, // if need to preserve state and is not part of the field group
-    header: PropTypes.oneOfType(PropTypes.string, PropTypes.func),
+    header: PropTypes.node,
     isOpen: PropTypes.bool,
     headerRoundCorner: PropTypes.number,
     headerStyle: PropTypes.object,
