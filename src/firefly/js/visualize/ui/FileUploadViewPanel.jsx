@@ -27,6 +27,7 @@ import './ImageSelectPanel.css';
 
 export const panelKey = 'FileUploadAnalysis';
 const  fileId = 'fileUpload';
+const  wsurlId = 'wsurlUpload';
 const  urlId = 'urlUpload';
 
 const SUMMARY_INDEX_COL = 0;
@@ -436,6 +437,7 @@ export class FileUploadViewPanel extends PureComponent {
 
         const uploadStyle = {marginTop: 12, marginBottom: 20};
         const uploadMethod = [{value: fileId, label: 'Upload file'},
+                              {value: wsurlId, label: 'Upload from WorkSpace'},
                               {value: urlId, label: 'Upload from URL'}];
         const {uploadSrc} = this.state;
         const lineH = 16;
@@ -452,6 +454,18 @@ export class FileUploadViewPanel extends PureComponent {
                             initialState={{tooltip: 'Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format',
                                            label: ''
                                            }}/>
+                );
+            } else if (uploadSrc === wsurlId) {
+                return (
+                        <FileUpload
+                            wrapperStyle={{...uploadStyle, marginRight: 32, width: '50%'}}
+                            fieldKey={wsurlId}
+                            fileAnalysis={this.onLoading}
+                            isFromWsURL={true}
+                            innerStyle={{width: '60%'}}
+                            initialState={{tooltip: 'Select a file from WorkSpace',
+                                           label: 'file URL from Workspace:', value: 'https://sample/urlupload'
+                                         }}/>
                 );
             } else if (uploadSrc === urlId) {
                 return (
@@ -486,8 +500,8 @@ export class FileUploadViewPanel extends PureComponent {
             <FieldGroup groupKey={panelKey}
                         reducerFunc={fieldReducer()}
                         keepState={true}>
-                <div style={{width:988, height:'calc(100% - 20px)'}}>
-                    <div style={{display:'flex',  flexDirection: 'column', marginTop: 10, paddingLeft: '30%'}}>
+                <div style={{width:800, height:'calc(100% - 20px)'}}>
+                    <div style={{display:'flex',  flexDirection: 'column', marginTop: 10, paddingLeft: 20,paddingBottom: 20}}>
                         <RadioGroupInputField
                             initialState={{value: uploadMethod[0].value}}
                             fieldKey='uploadTabs'
@@ -873,6 +887,10 @@ function fieldInit() {
             },
             [fileId]: {
                 fieldKey: fileId,
+                value: ''
+            },
+            [wsurlId]: {
+                fieldKey: wsurlId,
                 value: ''
             },
             [urlId]: {

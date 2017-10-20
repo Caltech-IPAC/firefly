@@ -29,7 +29,7 @@ import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
 import {FieldGroupCollapsible, CollapseBorder, CollapseHeaderCorner} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelReducer.js';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
-
+import {FileUploadViewPanel} from '../ui/FileUploadViewPanel.jsx';
 import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
@@ -56,6 +56,7 @@ export const keyMap = {
     'fitslist':    'SELECTIMAGEPANEL_FITS_list',
     'fitsextinput':'SELECTIMAGEPANEL_FITS_extinput',
     'fitsupload':  'SELECTIMAGEPANEL_FITS_upload',
+    'fitslocation': 'SELECTIMAGEPANEL_FITS_filelocation',
     'sizefield': 'SELECTIMAGEPANEL_ImgFeature_radius',
     'plotmode':    'SELECTIMAGEPANEL_targetplot',
     'createNewCell':    'createNewCell'
@@ -718,21 +719,54 @@ function CatalogTabView({catalog, fields}) {
             }
 
             return inputfield(fieldname, index);
-        } else if ( fieldname.includes('upload')) {
-            return (
-                <div key={index} >
-                    <FileUpload
-                        wrapperStyle={{margin: '15px 10px 21px 10px'}}
-                        fieldKey={keyMap['fitsupload']}
-                        initialState= {{
-                        tooltip: 'Select a file to upload' }}
-                    />
-                </div>
-            );
-        } else {
-            return undefined;
-        }
-    };
+        } else if (fieldname.includes('upload')) {
+
+            var showUploadLocation = () => {
+                var options = [
+                    {'id': 0, label: 'Local File', 'value': 'isLocal'},
+                    {'id': 1, label: 'Workspace', 'value': 'isWs'}
+                ];
+
+
+                return (
+                    <div>
+                        <RadioGroupInputField
+                            initialState={{value: options[0].value,
+                                              fieldKey: keyMap['filelocation'] }}
+                            alignment={'horizontal'}
+                            fieldKey={keyMap['filelocation']}
+                            options={options}
+                        />
+                    </div>
+                );
+
+            };
+
+
+                return (
+                    <div key={index} style={{padding:5}}>
+                        <div
+                            style={{padding:5,display:'flex', flexDirection:'row', alignItems:'center' }}>
+                            <div
+                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 10px'}}>
+                                <div>{'Choose Upload from: '}</div>
+                            </div>
+
+                            {showUploadLocation()}
+                        </div>
+
+                        <FileUpload 
+                            wrapperStyle={{margin: '15px 10px 21px 10px'}} 
+                            fieldKey={keyMap['fitsupload']} 
+                            initialState={{     tooltip: 'Select a file to upload' }}     /> 
+
+                   </div>
+                );
+
+            } else {
+                    return undefined;
+            }
+        };
 
     return (
         <div className={'tabview'}>

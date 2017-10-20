@@ -22,6 +22,7 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
@@ -210,6 +211,24 @@ export function UploadPanel(props) {
     const options = missionOptions.map((id) => {
         return {label: getMissionName(id) || capitalize(id), value: id};
     });
+    var showUploadLocation = () => {
+        var options = [
+            {'id': 0, label: 'Local File', 'value': 'isLocal'},
+            {'id': 1, label: 'Workspace', 'value': 'isWs'}
+        ];
+        return (
+            <div>
+                <RadioGroupInputField
+                    initialState={{value: options[0].value,
+                                      fieldKey: 'uploadContainer' }}
+                    alignment={'horizontal'}
+                    options={options}
+                />
+            </div>
+        );
+
+    };
+
 
     return (
         <div style={{padding: 10}}>
@@ -222,7 +241,16 @@ export function UploadPanel(props) {
                 help_id={'loadingTSV'}>
                 <FieldGroup groupKey={vFileKey} validatorFunc={null} keepState={true}>
                     <div
-                        style={{padding:5 }}>
+                        style={{padding:5}}>
+                        <div
+                            style={{padding:5,display:'flex', flexDirection:'row', alignItems:'center' }}>
+                            <div
+                                style={{display:'flex', flexDirection:'column', alignItems: 'flex-end', margin:'0px 10px'}}>
+                                <div>{'Choose Upload from: '}</div>
+                            </div>
+
+                            {showUploadLocation()}
+                        </div>
                         <div
                             style={{padding:5, display:'flex', flexDirection:'row', alignItems:'center' }}>
                             <div
@@ -230,14 +258,16 @@ export function UploadPanel(props) {
                                 <div> {'Upload time series table:'} </div>
                                 <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'} />
                                 </div>
-                            <FileUpload
-                                wrapperStyle={wrapperStyle}
-                                fieldKey='rawTblSource'
-                                initialState={{
-                            tooltip: 'Select a Time Series Table file to upload',
-                            label: ''
-                        }}
-                            />
+                            <div>
+                                <FileUpload
+                                    wrapperStyle={wrapperStyle}
+                                    fieldKey='rawTblSource'
+                                    initialState={{
+                                tooltip: 'Select a Time Series Table file to upload',
+                                label: ''
+                                }}
+                                />
+                            </div>
                         </div>
                         <div
                             style={{padding:5,display:'flex', flexDirection:'row', alignItems:'center' }}>
