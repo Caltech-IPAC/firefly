@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.BeforeClass;
@@ -25,7 +26,8 @@ public class ConfigTest {
     public static String LOG4J_PROP_FILE = "./config/log4j-test.properties";
     public static String LOGGING_PROP_FILE = "./config/logging-test.properties";
     public static String TEST_PROP_FILE = "./config/app-test.prop";
-    public static String WS_USER_ID = "test-ws";
+    public static String WS_USER_ID = AppProperties.getProperty("workspace.user","test@ipac.caltech.edu");
+
     /**
      * Use the logger in the test case that would extends this class.
      */
@@ -77,6 +79,17 @@ public class ConfigTest {
         AppProperties.loadClassPropertiesFromFileToPdb(new File(TEST_PROP_FILE), props);
     }
 
+    /**
+     * Only return loggedin user because tests
+     * @return
+     */
+    public static WsCredentials getWsCredentials() {
+        if(AppProperties.getProperty("workspace.pass")!=null){
+            return new WsCredentials(WS_USER_ID, AppProperties.getProperty("workspace.pass"));
+        }else{
+            return null;
+        }
+    }
 
     public static void load(String propFile) throws IOException {
         // If there are no file properties, no need to add anything

@@ -141,6 +141,11 @@ public class LocalFSWorkspace implements WorkspaceManager {
     }
 
     @Override
+    public WsResponse moveFile(String originalFileRelPath, String newfilepath, boolean shouldOverwrite) throws WsException {
+        throw new IllegalArgumentException("not implemented");
+    }
+
+    @Override
     public WspaceMeta getMeta(String uri, WspaceMeta.Includes includes) {
         throw new IllegalArgumentException("not implemented");
     }

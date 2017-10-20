@@ -3,12 +3,13 @@ package edu.caltech.ipac.firefly.ws;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
-import edu.caltech.ipac.firefly.server.ws.*;
+import edu.caltech.ipac.firefly.server.ws.WorkspaceFactory;
+import edu.caltech.ipac.firefly.server.ws.WsCredentials;
+import edu.caltech.ipac.firefly.server.ws.WsException;
+import edu.caltech.ipac.firefly.server.ws.WsResponse;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.AppProperties;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -16,8 +17,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Test SSO @ IRSA
@@ -27,17 +28,20 @@ public class WsIrsaTest extends ConfigTest {
 
 
     private static File f;
-    private static WorkspaceManager workspaceManager;
+    private static WorkspaceManager workspaceManager = null;
 
     @Before
-    public void init() throws Exception {
+    public void init() {
+        //Check first if i can run test
+        assumeTrue(getWsCredentials()!=null);
+        WsCredentials cred = getWsCredentials();
+        try {
+            f = pickFile(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        //TESTING PUBSPACE
-        WsCredentials cred = new WsCredentials(WS_USER_ID);
-        f = pickFile(0);
-
-        //For TESTING SSOspace, uncomment 2 lines below and add proper password
-      //cred = new WsCredentials("test@ipac.caltech.edu", "Ask irsa");
+        //For TESTING SSOspace,
       //f = FileLoader.resolveFile(WsIrsaTest.class, "wstest.fits"); // Test adding fits >1Mb (only SSO quota ok)
 
 
@@ -48,12 +52,9 @@ public class WsIrsaTest extends ConfigTest {
 
     }
 
-    @Ignore
     @Test
     public void testSSOAuth() throws ClassNotFoundException, IOException {
-
         LOG.info(workspaceManager.getWsHome());
-
 
         workspaceManager.putFile("", f, null);
         WsResponse r = workspaceManager.getList("", 1);
@@ -75,8 +76,10 @@ public class WsIrsaTest extends ConfigTest {
 
     @After
     public void clean() throws WsException {
-        LOG.info("deleting " + f.getName());
-        workspaceManager.delete(f.getName());
+        if(workspaceManager!=null){
+            LOG.info("deleting " + f.getName());
+            workspaceManager.delete(f.getName());
+        }
 
     }
 

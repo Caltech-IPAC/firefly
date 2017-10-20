@@ -269,7 +269,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         try {
             if (!executeMethod(get, false)) {
                 // handle error
-                LOG.error("Unable to download file:" + fromPath + " -- " + get.getStatusText());
+                LOG.error("Unable to download file:" + fromPath + " , url " +url+" -- "+ get.getStatusText());
                 return WsUtil.error(get.getStatusCode(), get.getStatusText());
             }
             if (get.getResponseContentLength() > 0) {
@@ -374,7 +374,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         try {
             if (!executeMethod(rm, true)) {
                 // handle error
-                LOG.error("Unable to delete file:" + uri + " -- " + rm.getStatusText());
+                LOG.error("Unable to delete file uri:" + uri + " -- " + rm.getStatusText());
                 return WsUtil.error(rm);
             }
         } catch (Exception e) {
@@ -407,6 +407,25 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         return WsUtil.success(200, "Created", getResourceUrl(newRelPath));
     }
 
+    public WsResponse moveFile(String originalFileRelPath, String newPath, boolean overwrite) throws WsException {
+        WspaceMeta meta = new WspaceMeta(newPath);
+        String parent = meta.getParentPath();
+
+        //WARNING: WEBDAv forces me to create new parent first! UGLY!
+        createParent(parent);
+
+        String newUrl = getResourceUrl(newPath);
+
+        // This doesn't create parent , you must create the parent folder in order to move it
+        MoveMethod move = new MoveMethod(getResourceUrl(originalFileRelPath), newUrl, overwrite);
+        if (!executeMethod(move)) {
+            // handle error
+            LOG.error("Unable to move:" + originalFileRelPath + " based on url -- " +newUrl+" -- "+ move.getStatusText());
+            return WsUtil.error(move.getStatusCode(), move.getStatusLine().getReasonPhrase());
+        }
+        return WsUtil.success(move.getStatusCode(), move.getStatusText(), newUrl);
+    }
+
     @Override
     public WsResponse renameFile(String originalFileRelPath, String newfileName, boolean overwrite) throws WsException {
         WspaceMeta meta = new WspaceMeta(originalFileRelPath);
@@ -417,7 +436,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         MoveMethod move = new MoveMethod(getResourceUrl(originalFileRelPath), newUrl, overwrite);
         if (!executeMethod(move)) {
             // handle error
-            LOG.error("Unable to move:" + originalFileRelPath + " -- " + move.getStatusText());
+            LOG.error("Unable to move:" + originalFileRelPath + " based on url -- " +newUrl+" -- "+ move.getStatusText());
             return WsUtil.error(move.getStatusCode(), move.getStatusLine().getReasonPhrase());
         }
         return WsUtil.success(move.getStatusCode(), move.getStatusText(), newUrl);
@@ -425,34 +444,6 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
     public WspaceMeta getMeta(String relPath) {
         return getMeta(relPath, WspaceMeta.Includes.ALL);
-    }
-
-    public WsResponse search(String relPath) throws IOException {
-        String query = "" +
-                "  " +
-                " SELECT *" +
-                "  " +
-                "";
-        query = "//element(*,rep:root)";
-
-        OptionsMethod options = new OptionsMethod(getResourceUrl(relPath));
-        executeMethod(options);
-        String okMethod = "SEARCH";
-        if (!options.isAllowed(okMethod)) {
-            String s = "";
-            String[] allowedMethods = options.getAllowedMethods();
-            for (String method : allowedMethods) {
-                s += method + "\n";
-            }
-            return WsUtil.error(options.getStatusCode(), options.getStatusText(), okMethod + " is not allowed - only:\n" + s);
-        }
-        SearchMethod m = new SearchMethod(getResourceUrl(relPath), query, "xpath");
-        if (!executeMethod(m)) {
-            // handle error
-            LOG.error("Unable to move:" + relPath + " -- " + m.getStatusText());
-            return WsUtil.error(m.getStatusCode(), m.getStatusLine().getReasonPhrase());
-        }
-        return WsUtil.success(m.getStatusCode(), m.getStatusText(), relPath);
     }
 
     public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) {
@@ -594,7 +585,9 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
                     if (name.equals(DavConstants.PROPERTY_GETLASTMODIFIED)) {
                         meta.setLastModified(v);
                     } else if (name.equals(DavConstants.PROPERTY_GETCONTENTLENGTH)) {
-                        meta.setSize(Long.parseLong(v));
+                        long size = Long.parseLong(v);
+                        meta.setSize(size);
+                        meta.setIsFile(true); // WEBDAV/IRSA only set cvontent length for files. (?)TODO: is it WEBDav general behaviour?
                     } else if (name.equals(DavConstants.PROPERTY_GETCONTENTTYPE)) {
                         meta.setContentType(v);
                     } else if (p.getName().getNamespace().equals(IRSA_NS)) {
@@ -635,45 +628,45 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
     }
 
-//    public static void main(String[] args) {
-//        WebDAVWorkspaceManager man = null;
-////        man = (WebDAVWorkspaceManager) ServerContext.getRequestOwner().getWsManager();
-//
-//        man = new WebDAVWorkspaceManager("ejoliet-tmp2");
-//
+    public static void main(String[] args) {
+        WebDAVWorkspaceManager man = null;
+//        man = (WebDAVWorkspaceManager) ServerContext.getRequestOwner().getWsManager();
+
+        man = new WebDAVWorkspaceManager("ejoliet-tmp2");
+
+        simpleTest(man);
+
+//        AppProperties.setProperty("sso.server.url", "http://irsa.ipac.caltech.edu/account/");
+//        String session = JOSSOAdapter.createSession("", "");
+//        Map<String, String> cookies = new HashMap<String, String>();
+//        cookies.put(WebAuthModule.AUTH_KEY, session);
+//        WorkspaceManager man = new WorkspaceManager("<someuser>@ipac.caltech.edu", cookies);
 //        simpleTest(man);
-//
-////        AppProperties.setProperty("sso.server.url", "http://irsa.ipac.caltech.edu/account/");
-////        String session = JOSSOAdapter.createSession("", "");
-////        Map<String, String> cookies = new HashMap<String, String>();
-////        cookies.put(WebAuthModule.AUTH_KEY, session);
-////        WorkspaceManager man = new WorkspaceManager("<someuser>@ipac.caltech.edu", cookies);
-////        simpleTest(man);
-//    }
-//
-//    private static void simpleTest(WebDAVWorkspaceManager man) {
-//        String relPath = "124/";
-//        File f = man.davMakeDir(relPath);
-//        System.out.println("new directory: " + String.valueOf(f));
-//
-//        WspaceMeta m = new WspaceMeta(null, relPath);
-//        m.setProperty("test1", "an awesome idea");
-//        m.setProperty("test", null);
-//        man.setMeta(m);
-//
-//        String ufilePath = relPath + "gaia-binary.vot";
-//        WsResponse wsResponse = man.davPut(new File("/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/firefly/ws/gaia-binary.vot"), ufilePath, null);
-//
-//        System.out.println(wsResponse);
-//
-//        WspaceMeta meta = new WspaceMeta(null, ufilePath);
-//        meta.setProperty("added_by", man.userHome);
-//        man.setMeta(meta);
-//        man.setMeta(ufilePath, "added_by", man.userHome);
-//
-//        WspaceMeta meta2 = man.getMeta("/", WspaceMeta.Includes.ALL_PROPS);
-//        System.out.println(meta2.getNodesAsString());
-//    }
+    }
+
+    private static void simpleTest(WebDAVWorkspaceManager man) {
+        String relPath = "124/";
+        File f = man.davMakeDir(relPath);
+        System.out.println("new directory: " + String.valueOf(f));
+
+        WspaceMeta m = new WspaceMeta(null, relPath);
+        m.setProperty("test1", "an awesome idea");
+        m.setProperty("test", null);
+        man.setMeta(m);
+
+        String ufilePath = relPath + "gaia-binary.vot";
+        WsResponse wsResponse = man.davPut(new File("/Users/ejoliet/devspace/branch/dev/firefly_test_data/edu/caltech/ipac/firefly/ws/gaia-binary.vot"), ufilePath, null);
+
+        System.out.println(wsResponse);
+
+        WspaceMeta meta = new WspaceMeta(null, ufilePath);
+        meta.setProperty("added_by", man.userHome);
+        man.setMeta(meta);
+        man.setMeta(ufilePath, "added_by", man.userHome);
+
+        WspaceMeta meta2 = man.getMeta("/", WspaceMeta.Includes.ALL_PROPS);
+        System.out.println(meta2.getNodesAsString());
+    }
 
 
     class WebDAVGetMethod extends DavMethodBase {

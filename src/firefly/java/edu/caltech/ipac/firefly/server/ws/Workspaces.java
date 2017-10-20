@@ -86,6 +86,16 @@ public interface Workspaces {
      */
     WsResponse renameFile(String originalFileRelPath, String newfileName, boolean shouldOverwrite) throws WsException;
 
+    /**
+     * @param originalFileRelPath relative current path
+     * @param newfilepath new path
+     * @param shouldOverwrite
+     * @return
+     * @throws WsException
+     */
+    WsResponse moveFile(String originalFileRelPath, String newfilepath, boolean shouldOverwrite) throws WsException;
+
+
     WspaceMeta getMeta(String uri, WspaceMeta.Includes includes);
 
     boolean setMeta(WspaceMeta... metas);

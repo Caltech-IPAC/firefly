@@ -72,7 +72,13 @@ public class ServerCommandAccess {
         //Workspaces
         _cmdMap.put(ServerParams.WS_LIST,               new WsServerCommands.WsList());
         _cmdMap.put(ServerParams.WS_GET_FILE,           new WsServerCommands.WsGetFile());
-        _cmdMap.put(ServerParams.WS_PUT_FILE,           new WsServerCommands.WsPutFile());
+        _cmdMap.put(ServerParams.WS_UPLOAD_FILE,           new WsServerCommands.WsUploadFile());
+        _cmdMap.put(ServerParams.WS_DELETE_FILE,        new WsServerCommands.WsDeleteFile());
+        _cmdMap.put(ServerParams.WS_MOVE_FILE,          new WsServerCommands.WsMoveFile());
+        _cmdMap.put(ServerParams.WS_GET_METADATA,       new WsServerCommands.WsGetMeta());
+        _cmdMap.put(ServerParams.WS_CREATE_FOLDER,      new WsServerCommands.WsCreateParent());
+        _cmdMap.put(ServerParams.WS_PUT_TABLE_FILE,     new WsServerCommands.WsPutTableFile());
+        _cmdMap.put(ServerParams.WS_PUT_IMAGE_FILE,     new WsServerCommands.WsPutImgFile());
 
         _cmdMap.put(ServerParams.RAW_DATA_SET,           new SearchServerCommands.GetRawDataSet());
         _cmdMap.put(ServerParams.JSON_DATA,              new SearchServerCommands.GetJSONData());

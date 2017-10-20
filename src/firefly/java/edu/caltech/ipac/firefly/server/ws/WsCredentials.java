@@ -27,7 +27,6 @@ public class WsCredentials {
 
     public WsCredentials(String wsId, Map<String, String> cookies) {
         this.wsId = wsId;
-
         this.cookies = cookies;
     }
 

@@ -10,10 +10,11 @@ import edu.caltech.ipac.util.AppProperties;
  */
 public class WorkspaceFactory {
 
-    static String protocolProp = AppProperties.getProperty("workspace.protocol.irsa", "webdav");
+    static String protocolProp = AppProperties.getProperty("workspace.protocol", "webdav");
+    private static WebDAVWorkspaceHandler webDavHdlr;
 
     /**
-     * @return Handler based on protocol read from properties workspace.protocol.irsa
+     * @return Handler based on protocol read from properties workspace.protocol
      * @throws WsException
      */
     public static WorkspaceHandler getWorkspaceHandler() {
@@ -31,7 +32,10 @@ public class WorkspaceFactory {
             case LOCAL:
                 return new LocalWorkspaceHandler();
             case WEBDAV:
-                return new WebDAVWorkspaceHandler();
+                if(webDavHdlr==null){
+                    webDavHdlr = new WebDAVWorkspaceHandler();
+                }
+                return webDavHdlr;
             case VOSPACE:
                 throw new ResourceNotFoundException(p.name() + " not implemented yet ");
         }

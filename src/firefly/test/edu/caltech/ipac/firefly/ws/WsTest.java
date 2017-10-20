@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Created by ejoliet on 6/15/17.
@@ -40,10 +41,10 @@ public class WsTest extends ConfigTest {
 
     @Before
     public void setUp() {
-        man = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userKey));
+        assumeTrue(getWsCredentials() != null);
+        man = WorkspaceFactory.getWorkspaceHandler().withCredentials(getWsCredentials());
         df = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss Z");
     }
-    @Ignore
     @Test
     public void testHandler() throws WsException, ParseException {
 
@@ -95,7 +96,6 @@ public class WsTest extends ConfigTest {
 //        assertTrue(modDate.equals(modDateRenamedSame));
         assertTrue(man.getMeta(WsUtil.ensureUriFolderPath(relFolder) + renamedSame, WspaceMeta.Includes.ALL_PROPS).getLastModified().equals(man.getMeta(WsUtil.ensureUriFolderPath(relFolder) + renamed, WspaceMeta.Includes.ALL_PROPS).getLastModified()));
     }
-    @Ignore
     @Test
     public void testGet() throws WsException {
 
@@ -137,7 +137,6 @@ public class WsTest extends ConfigTest {
 
     }
 
-    @Ignore
     @Test
     public void delete() throws WsException {
 
@@ -162,7 +161,8 @@ public class WsTest extends ConfigTest {
 
     @AfterClass
     public static void cleanUp() throws IOException {
-        LOG.info("Cleaning " + userKey);
+        if(man!=null) {
+            LOG.info("Cleaning " + userKey);
 //
 ////      Clean up using resource list
 //
@@ -174,16 +174,17 @@ public class WsTest extends ConfigTest {
 //        }
 //
 
-        // OR using getSuggestedList from manager get children of root
+            // OR using getSuggestedList from manager get children of root
 
-        WsResponse response = man.getList("/", 1);
-        List meta = response.getWspaceMeta();
+            WsResponse response = man.getList("/", 1);
+            List meta = response.getWspaceMeta();
 
-        Iterator iterator1 = meta.iterator();
-        while (iterator1.hasNext()) {
-            WspaceMeta next = (WspaceMeta) iterator1.next();
+            Iterator iterator1 = meta.iterator();
+            while (iterator1.hasNext()) {
+                WspaceMeta next = (WspaceMeta) iterator1.next();
 
-            del(next.getRelPath());
+                del(next.getRelPath());
+            }
         }
 
     }

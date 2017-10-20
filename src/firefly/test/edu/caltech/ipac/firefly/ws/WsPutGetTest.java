@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import static edu.caltech.ipac.firefly.util.FileLoader.resolveFile;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Created by ejoliet on 6/16/17.
@@ -37,7 +38,8 @@ public class WsPutGetTest extends ConfigTest {
 
     @Before
     public void putInit() throws WsException {
-        cred = new WsCredentials(WS_USER_ID);
+        assumeTrue(getWsCredentials() != null);
+        cred = getWsCredentials();
         testFileName = "gaia-binary.vot";
         testFile = resolveFile(WsPutGetTest.class, testFileName);
         sizeTest = testFile.length();
@@ -50,9 +52,11 @@ public class WsPutGetTest extends ConfigTest {
 
     @After
     public void delRelFolder() throws WsException {
-        wsm.delete(WsUtil.ensureUriFolderPath(testRelPathFolder.substring(0,testRelPathFolder.indexOf("/"))));
+        if(wsm!=null){
+            wsm.delete(WsUtil.ensureUriFolderPath(testRelPathFolder.substring(0,testRelPathFolder.indexOf("/"))));
+        }
     }
-    @Ignore
+
     @Test
     public void testPut() throws WsException {
 
@@ -88,7 +92,6 @@ public class WsPutGetTest extends ConfigTest {
         return new byte[0];
     }
 
-    @Ignore
     @Test
     public void testGetAllLeaves() throws WsException {
 
@@ -108,9 +111,9 @@ public class WsPutGetTest extends ConfigTest {
     private void printPath(WspaceMeta parent, boolean avoidFolders) {
 
         if(avoidFolders && parent.getContentType()==null || (parent.getContentType()!=null && !parent.getContentType().contains("directory"))){
-            System.out.println("File: "+parent.getUrl());
+            LOG.info("File: "+parent.getUrl());
         }else if(!avoidFolders){
-            System.out.println("Folder: "+parent.getUrl());
+            LOG.info("Folder: "+parent.getUrl());
         }
         WspaceMeta pMeta = wsm.getMeta(parent.getRelPath(), WspaceMeta.Includes.CHILDREN_PROPS);
 
@@ -124,7 +127,7 @@ public class WsPutGetTest extends ConfigTest {
             }
         }
     }
-    @Ignore
+
     @Test
     public void testGet() throws WsException {
 
@@ -153,7 +156,7 @@ public class WsPutGetTest extends ConfigTest {
         WsResponse wsResponse = wsm.getFile(relFolder, f);
         return f;
     }
-    @Ignore
+
     @Test
     public void specialCharsUriException() throws WsException {
 

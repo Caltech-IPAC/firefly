@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class WebDAVWorkspaceHandler implements WorkspaceHandler {
 
-    String managerClass = AppProperties.getProperty("workspace.protocol.irsa.webdav", "edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager");
+
 
     /**
      * map userKey and ws,
@@ -31,10 +31,13 @@ public class WebDAVWorkspaceHandler implements WorkspaceHandler {
 
         synchronized (cred) {
             String id = cred.getWsId();
+            String protocol = AppProperties.getProperty("workspace.protocol", "webdav");
+            String managerClass = AppProperties.getProperty("workspace.protocol."+protocol.toLowerCase(), "edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager");
 
-            if (wsPool.containsKey(id)) {
+            //TODO The problem is how do i know that the cookkie/session is authtenticated at this point?
+            /*if (wsPool.containsKey(id)) {
                 return wsPool.get(id);
-            }
+            }*/
             WorkspaceManager ws = null;//new WebDAVWorkspaceManager(cred.getWsId(), cred.getCookies());
             try {
                 Class clazz = Class.forName(managerClass);
