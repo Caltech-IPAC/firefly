@@ -269,7 +269,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         try {
             if (!executeMethod(get, false)) {
                 // handle error
-                LOG.error("Unable to download file:" + fromPath + " -- " + get.getStatusText());
+                LOG.error("Unable to download file:" + fromPath + " , url " +url+" -- "+ get.getStatusText());
                 return WsUtil.error(get.getStatusCode(), get.getStatusText());
             }
             if (get.getResponseContentLength() > 0) {
@@ -374,7 +374,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         try {
             if (!executeMethod(rm, true)) {
                 // handle error
-                LOG.error("Unable to delete file:" + uri + " -- " + rm.getStatusText());
+                LOG.error("Unable to delete file uri:" + uri + " -- " + rm.getStatusText());
                 return WsUtil.error(rm);
             }
         } catch (Exception e) {
@@ -420,7 +420,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         MoveMethod move = new MoveMethod(getResourceUrl(originalFileRelPath), newUrl, overwrite);
         if (!executeMethod(move)) {
             // handle error
-            LOG.error("Unable to move:" + originalFileRelPath + " -- " + move.getStatusText());
+            LOG.error("Unable to move:" + originalFileRelPath + " based on url -- " +newUrl+" -- "+ move.getStatusText());
             return WsUtil.error(move.getStatusCode(), move.getStatusLine().getReasonPhrase());
         }
         return WsUtil.success(move.getStatusCode(), move.getStatusText(), newUrl);
@@ -436,7 +436,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         MoveMethod move = new MoveMethod(getResourceUrl(originalFileRelPath), newUrl, overwrite);
         if (!executeMethod(move)) {
             // handle error
-            LOG.error("Unable to move:" + originalFileRelPath + " -- " + move.getStatusText());
+            LOG.error("Unable to move:" + originalFileRelPath + " based on url -- " +newUrl+" -- "+ move.getStatusText());
             return WsUtil.error(move.getStatusCode(), move.getStatusLine().getReasonPhrase());
         }
         return WsUtil.success(move.getStatusCode(), move.getStatusText(), newUrl);

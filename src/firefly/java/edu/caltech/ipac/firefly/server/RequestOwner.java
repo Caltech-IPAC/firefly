@@ -119,8 +119,8 @@ public class RequestOwner implements Cloneable {
         Map<String, String> cmap = null;
         if(requestAgent!=null) {
             Map<String, Cookie> cookies = requestAgent.getCookies();
+            cmap = new HashMap<>(cookies.size());
             for (Cookie c : cookies.values()) {
-                cmap = new HashMap<>(cookies.size());
                 String v = c == null ? null : c.getValue();
                 if (v != null) {
                     cmap.put(c.getName(), c.getValue());

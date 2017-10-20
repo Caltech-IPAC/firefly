@@ -76,7 +76,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.WS_DELETE_FILE,        new WsServerCommands.WsDeleteFile());
         _cmdMap.put(ServerParams.WS_MOVE_FILE,          new WsServerCommands.WsMoveFile());
         _cmdMap.put(ServerParams.WS_GET_METADATA,       new WsServerCommands.WsGetMeta());
-        _cmdMap.put(ServerParams.WS_CREATE_PARENT,      new WsServerCommands.WsCreateParent());
+        _cmdMap.put(ServerParams.WS_CREATE_FOLDER,      new WsServerCommands.WsCreateParent());
         _cmdMap.put(ServerParams.WS_PUT_TABLE_FILE,     new WsServerCommands.WsPutTableFile());
         _cmdMap.put(ServerParams.WS_PUT_IMAGE_FILE,     new WsServerCommands.WsPutImgFile());
 
