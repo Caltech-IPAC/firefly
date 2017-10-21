@@ -266,9 +266,9 @@ function PackageItem(progress) {
     var pct= BY_SIZE ? (processedBytes / totalBytes) :
                          (processedFiles / totalFiles);
     pct = Math.round(100 * pct);
-    const pctOf = BY_SIZE ? Math.round(totalBytes/1024/1024) + ' MB' :
+    const pctOf = BY_SIZE ? Math.round(Math.max(totalBytes/1024/1024,1)) + ' MB' :
                     totalFiles + ' files';
-    const finalSize = Math.round(finalCompressedBytes/1024/1024, -1);
+    const finalSize = Math.round(Math.max(finalCompressedBytes/1024/1024,1));
     const dlmsg = SINGLE ? 'Download Now' : `Download Part #${INDEX+1}`;
 
     if (isSuccess(STATE) || pct === 100) {      // because when there is only 1 item, state is set to success but pct does not calculate to 100%

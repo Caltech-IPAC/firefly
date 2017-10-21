@@ -70,7 +70,6 @@ public class Packager {
         backgroundInfoCacher = packageInfo;
         _fgList = fgList;
         _maxBundleBytes = maxBundleBytes;
-        resolveUrlData();
         computeEstimate();
     }
 
@@ -271,33 +270,25 @@ public class Packager {
         return _packageID;
     }
 
-    private void resolveUrlData() {
-
-        for (FileGroup fg : _fgList) {
-            for (FileInfo f : fg) {
-                String urlStr = f.getInternalFilename();
-                if (urlStr.contains("://")) {
-                    long size = f.getSizeInBytes();
-                    if (size == 0) {
-                        size = DEFAULT_DATA_BYTES;
-                        f.setSizeInBytes(size);
-                        fg.setSizeInBytes(fg.getSizeInBytes() + size);
-                    }
-                }
-            }
-        }
-    }
-
     private void computeEstimate() {
         long totalSize = 0;
         int totalFiles = 0;
 
         // use dynamically created bundles
         for (FileGroup fg : _fgList) {
-            totalSize += fg.getSizeInBytes();
-            for (FileInfo f : fg) {
-                totalFiles++;
+            if(fg.getSizeInBytes()==0) {
+                long size = 0;
+                for (FileInfo f : fg) {
+                    size = f.getSizeInBytes();
+                    if (size == 0) {
+                        size = DEFAULT_DATA_BYTES;
+                        f.setSizeInBytes(size);
+                    }
+                    fg.setSizeInBytes(fg.getSizeInBytes() + size);
+                }
             }
+            totalSize += fg.getSizeInBytes();
+            totalFiles +=fg.getSize();
         }
         PackagedBundle bundle= new PackagedBundle(0, 0, totalFiles, totalSize);
         bundleList.add(bundle);

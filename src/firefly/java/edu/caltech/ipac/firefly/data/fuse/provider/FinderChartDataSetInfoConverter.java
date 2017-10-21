@@ -334,10 +334,14 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
                 else if (band.endsWith("3")) retID= ID.WISE_3.name();
                 else if (band.endsWith("4")) retID= ID.WISE_4.name();
                 break;
+            case SEIP:
+            case AKARI:
+            case ATLAS: retID= ID.WISE_1.name();
+                break;
             case MSX:
             case NONE:
             default:
-                retID= ID.TWOMASS_J.name();
+                retID= service.name()+"-"+band;
                 break;
         }
         return retID;

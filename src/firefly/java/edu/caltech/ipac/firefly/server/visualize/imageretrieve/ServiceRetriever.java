@@ -36,6 +36,8 @@ public class ServiceRetriever implements FileRetriever {
             case DSS: return getDssPlot(r);
             case SDSS: return getSloanDSSPlot(r);
             case WISE: return getWisePlot(r);
+            case AKARI:
+            case SEIP:
             case ATLAS: return getAtlasPlot(r);
             case DSS_OR_IRIS: return getDSSorIris(r);
             default: throw new FailedRequestException("Unsupported Service");
@@ -126,8 +128,18 @@ public class ServiceRetriever implements FileRetriever {
         AtlasImageParams params = new AtlasImageParams();
         params.setWorldPt(circle.getCenter());
         params.setBand(r.getSurveyBand());
-        params.setSchema(r.getParam(AtlasIbeDataSource.DATASET_KEY));
-        params.setTable(r.getParam(AtlasIbeDataSource.TABLE_KEY));
+        // New image search deals with atlas surveyKey formatted such as 'schema.table'
+        String datasetAtlas = r.getSurveyKey();
+        String schema, table;
+        if(datasetAtlas!=null && datasetAtlas.split("\\.").length==2){
+            schema = datasetAtlas.split("\\.")[0];
+            table = datasetAtlas.split("\\.")[1];
+        }else{
+            schema = r.getParam(AtlasIbeDataSource.DATASET_KEY);
+            table = r.getParam(AtlasIbeDataSource.TABLE_KEY);
+        }
+        params.setSchema(schema);
+        params.setTable(table);
         params.setInstrument(r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY));
         params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
         params.setSize((float)circle.getRadius());
