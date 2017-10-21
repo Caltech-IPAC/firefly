@@ -662,10 +662,6 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
             <div style={styleItem}>
                 <div style={innerItem}>
                     <ValidationField fieldKey={fKeyDef.period.fkey} label='Enter manually:'/>
-                    <button type='button' className='button std hl'
-                            onClick={() => resetPeriodDefaults(defPeriod)}>
-                        <b>Reset</b>
-                    </button>
                 </div>
             </div>
             <div style={styleItem}>
