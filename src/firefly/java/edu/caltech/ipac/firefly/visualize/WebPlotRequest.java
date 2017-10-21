@@ -30,8 +30,9 @@ import java.util.List;
  */
 public class WebPlotRequest extends ServerRequest {
 
+    // TODO this is actually coupled with edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet.ImageSet and so we need to add imageset here although SEIP, AKARI are using ATLAS services.
     public enum
-            ServiceType {IRIS, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
+            ServiceType {IRIS, SEIP, AKARI, ATLAS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
     public enum TitleOptions {NONE,  // use what it in the title
                               PLOT_DESC, // use the plot description key
                               FILE_NAME, // use the file name or analyze the URL and make a title from that
@@ -377,6 +378,29 @@ public class WebPlotRequest extends ServerRequest {
         return req;
     }
 
+    /**
+     * @param wp
+     * @param survey for atlas, survey is in form of 'schema.table'
+     * @param band SEIP exmaple 'irac1'
+     * @param filter for SEIP, it should loo like type=science and fname like %.mosaic.fits
+     * @param sizeInDeg
+     * @return
+     */
+    public static WebPlotRequest makeAtlasRequest(WorldPt wp,
+                                   String survey,
+                                   String band, String filter,
+                                   float sizeInDeg) {
+        WebPlotRequest req = makePlotServiceReq(ServiceType.ATLAS, wp, survey, sizeInDeg);
+        req.setParam(SURVEY_KEY, survey.split("\\.")[0]);
+        req.setParam("dataset", survey.split("\\.")[0]);
+        req.setParam("table", survey.split("\\.")[1]);
+        req.setParam("filter", filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
+        req.setParam(SURVEY_KEY_BAND, band + "");
+        req.setTitle(survey + "," + band);
+        // TODO drawingSubGroupId TO BE SET OUTSIDE here! ATLAS has many dataset and it will depend on the app to group those images, example: See ImageSelectPanelResult.js, Finderrchart...
+        //req.setDrawingSubGroupId(survey.split(".")[1]); // 'spitzer.seip_science'
+        return req;
+    }
     //======================== DSS or IRIS =====================================
 
     public static WebPlotRequest makeDSSOrIRISRequest(WorldPt wp,

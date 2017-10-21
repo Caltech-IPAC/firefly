@@ -23,6 +23,8 @@ public class ServiceDesc {
             case DSS: return getDssDesc(r);
             case SDSS: return getSloanDssDesc(r);
             case WISE: return getWiseDesc(r);
+            case AKARI:
+            case SEIP:
             case ATLAS: return getAtlasDesc(r);
             default: return r.getServiceType()+"";
         }
@@ -32,9 +34,9 @@ public class ServiceDesc {
     private static String getAtlasDesc(WebPlotRequest r) {
 
         String schema= r.getParam(AtlasIbeDataSource.DATASET_KEY);
-        String instrument=r.getParam(AtlasIbeDataSource.TABLE_KEY);
+        String table=r.getParam(AtlasIbeDataSource.TABLE_KEY);
         String band= r.getSurveyBand();
-        return schema + " "+instrument+ " " + band;
+        return schema + " "+table+ " " + band;
     }
 
 

@@ -68,6 +68,38 @@ public class FinderChartRequestUtil {
             "3a.2;w2",
             "3a.3;w3",
             "3a.4;w4"};
+
+
+    /**
+     * TODO For FC4, need to use config table and new image search, see IRSA-794 and IRSA-816
+     * Add reader to parse IRSA configuration table and return a combo depending on the imageset
+     * For FC3: SEIP + AKARI, we use fixed values for the combos below:
+     *
+     * SEIP metadata sent from client (or TODO read from master table)
+     * thru request so it can be split into schema.table and band, and title.
+     * THis is passed from the client
+     * Expected format :  metadata expected to be as "schema.table-band;title"
+     */
+    private final static String seipCombo[]={
+            "spitzer.seip_science:IRAC1;SEIP IRAC1 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:IRAC2;SEIP IRAC2 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:IRAC3;SEIP IRAC3 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:IRAC4;SEIP IRAC4 (2.4 microns);file_type='science' and fname like '%.mosaic.fits'",
+            "spitzer.seip_science:MIPS24;SEIP MIPS (2.4 microns);file_type='science' and fname like '%.mosaic.fits'"
+    };
+
+    /**
+     * AKARI metadata sent from client thru request so it can be split into schema.table, band on one hand, label title on another hand, all separated by ';'.
+     * THis is passed from the client
+     * Expected format :  metadata expected to be as "schema.table-band;title"
+     */
+    private final static String akariCombo[]={
+            "akari.images_tbl:N60;FIS N60 (65 micron)",
+            "akari.images_tbl:WideS;FIS WideS (90 micron)",
+            "akari.images_tbl:WideL;FIS WideL (140 micron)",
+            "akari.images_tbl:N160;FIS N160 (160 micron)"
+    };
+
     private final static String sDssCombo[]={
             "u;u","g;g","r;r","i;i","z;z"
     };
@@ -78,15 +110,26 @@ public class FinderChartRequestUtil {
             put("large",256);
         }
     };
+    private static String regExAtlasKey = ":";
+    private static String regExSplitKey = ";";
 
+    /**
+     * @param pt
+     * @param radius
+     * @param width
+     * @param key string combination of value to be splitted for convenience
+     * @param expandedTitle
+     * @param service
+     * @return
+     */
     public static WebPlotRequest makeWebPlotRequest(WorldPt pt,
                                                     float radius,
                                                     int width,
-                                                    String band,
+                                                    String key,
                                                     String expandedTitle,
                                                     WebPlotRequest.ServiceType service ) {
 
-        WebPlotRequest wpReq= getWebPlotRequest(service, band, pt, radius);
+        WebPlotRequest wpReq= getWebPlotRequest(service, key, pt, radius);
         if (!StringUtils.isEmpty(expandedTitle)) wpReq.setExpandedTitle(expandedTitle);
         wpReq.setExpandedTitleOptions(WebPlotRequest.ExpandedTitleOptions.PREFIX);
         wpReq.setZoomType(ZoomType.TO_WIDTH);
@@ -99,48 +142,100 @@ public class FinderChartRequestUtil {
         wpReq.setHideTitleDetail(true);
         wpReq.setPreferenceColorKey("FcColorKey");
         wpReq.setTitleOptions(WebPlotRequest.TitleOptions.SERVICE_OBS_DATE);
-        wpReq.setTitle(getComboTitle(band));
+        wpReq.setTitle(getComboTitle(key));
         return wpReq;
     }
 
-    private static WebPlotRequest getWebPlotRequest(WebPlotRequest.ServiceType service, String band, WorldPt pt, Float radius) {
+    private static WebPlotRequest getWebPlotRequest(WebPlotRequest.ServiceType service, String key, WorldPt pt, Float radius) {
         WebPlotRequest wpReq=null;
         switch (service) {
             case DSS:
-                wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(band),radius);
+                wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(key),radius);
                 break;
             case IRIS:
-                wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(band), radius);
+                wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(key), radius);
                 break;
             case ISSA:
-                wpReq= WebPlotRequest.makeISSARequest(pt, getComboValue(band),radius);
+                wpReq= WebPlotRequest.makeISSARequest(pt, getComboValue(key),radius);
                 break;
             case MSX:
-                wpReq= WebPlotRequest.makeMSXRequest(pt, getComboValue(band),radius);
+                wpReq= WebPlotRequest.makeMSXRequest(pt, getComboValue(key),radius);
                 break;
             case SDSS:
-                wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(band), radius);
+                wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(key), radius);
                 break;
             case TWOMASS:
-                wpReq= WebPlotRequest.make2MASSRequest(pt, getComboValue(band),radius);
+                wpReq= WebPlotRequest.make2MASSRequest(pt, getComboValue(key),radius);
+                break;
+            case AKARI:
+            case SEIP:
+            case ATLAS:
+                String surveyKey = extractSurveyKey(getComboValue(key));
+                String surveyKeyBand = extractSurveyKeyBand(getComboValue(key));
+                String filter = extractFilter(key);
+                wpReq = WebPlotRequest.makeAtlasRequest(pt, surveyKey, surveyKeyBand, filter, radius);
+//                if (wpReq != null)
+//                    wpReq.setDrawingSubGroupId(surveyKey.split("\\.")[1]);// Set dataset (table) name as subgroup
                 break;
             case WISE:
-                String[] pair= getComboValue(band).split("\\.");
+                String[] pair= getComboValue(key).split("\\.");
                 wpReq= WebPlotRequest.makeWiseRequest(pt, pair[0], pair[1], radius);
                 break;
         }
-        if (wpReq!=null) wpReq.setDrawingSubGroupId(ImageSet.lookup(service).subgroup);
+        if (wpReq != null)
+            wpReq.setDrawingSubGroupId(ImageSet.lookup(service).subgroup);
         return wpReq;
     }
 
-    public static String getComboValue(String combo) {
-        String sAry[]= combo.split(";");
-        return sAry.length>0 ? sAry[0] : combo;
+    /**
+     * Get ATLAS values from schema.table-band (out of the {@link #seipCombo} for example)
+     *
+     * @param metadata expected to be as "schema.table:band;title"
+     * @return the surveyKey, i.e schema.table
+     */
+    public static String extractSurveyKey(String metadata) {
+        String sAry[] = metadata.split(regExAtlasKey);
+        return sAry[0];
     }
 
+    /**
+     * @param metadata key expected to be as "schema.table:band;title"
+     * @return the surveyKeyBand, i.e irac1 for SEIP
+     */
+    public static String extractSurveyKeyBand(String metadata) {
+        String sAry[] = metadata.split(regExAtlasKey);
+        return sAry[1];
+    }
+
+    /**
+     * @param metadata expected to be as "schema.table:band;title;filter"
+     * @return filter value
+     */
+    public static String extractFilter(String metadata) {
+        String sAry[] = metadata.split(regExSplitKey);
+        return sAry.length > 1 ? sAry[2] : "";
+    }
+
+    /**
+     * Value part is the left side of "datax;datay" combo
+     *
+     * @param combo string value expected to be of a form "datax;datay"
+     * @return the first element of the array after splitting the combo into ";" pieces
+     */
+    public static String getComboValue(String combo) {
+        String sAry[] = combo.split(regExSplitKey);
+        return sAry.length > 0 ? sAry[0] : combo;
+    }
+
+    /**
+     * Title part is the right side of "datax;datay" combo
+     *
+     * @param combo string value expected to be of the form  "datax;datay"
+     * @return the second element of the array after splitting the combo into ";" pieces
+     */
     public static String getComboTitle(String combo) {
-        String sAry[]= combo.split(";");
-        return sAry.length>1 ? sAry[1] : combo;
+        String sAry[] = combo.split(regExSplitKey);
+        return sAry.length > 1 ? sAry[1] : combo;
     }
 
     public static int getPlotWidth(String sizeKey) {
@@ -155,15 +250,17 @@ public class FinderChartRequestUtil {
 
 
 
-    public static enum ImageSet {DSS(DEF, "dss", "dss_bands", dssCombo, null, DEF),
-                                 IRIS("IRAS (IRIS)", "iris", "iras_bands", irisCombo, "iraspsc", "IRAS"),
-                                 ISSA(DEF, "issa", null, issaCombo, null, DEF),
-                                 MSX(DEF, "msx", null, msxCombo, null, DEF),
-                                 TWOMASS("2MASS", "2mass","twomass_bands", twoMassCombo, "fp_psc", DEF),
-                                 WISE("WISE (AllWISE)", "wise", "wise_bands", wiseCombo, "allwise_p3as_psd", DEF),
-                                 SDSS("SDSS (DR7)", "sdss", "sdss_bands",sDssCombo, null, "SDSS (DR10)");
+    public static enum ImageSet {DSS(WebPlotRequest.ServiceType.DSS, DEF, "dss", "dss_bands", dssCombo, null, DEF ),
+                                 IRIS(WebPlotRequest.ServiceType.IRIS,"IRAS (IRIS)", "iris", "iras_bands", irisCombo, "iraspsc", "IRAS"),
+                                 ISSA(WebPlotRequest.ServiceType.ISSA, DEF, "issa", null, issaCombo, null, DEF),
+                                 MSX(WebPlotRequest.ServiceType.MSX, DEF, "msx", null, msxCombo, null, DEF),
+                                 TWOMASS(WebPlotRequest.ServiceType.TWOMASS,"2MASS", "2mass","twomass_bands", twoMassCombo, "fp_psc", DEF),
+                                 WISE(WebPlotRequest.ServiceType.WISE, "WISE (AllWISE)", "wise", "wise_bands", wiseCombo, "allwise_p3as_psd", DEF),
+                                 SEIP(WebPlotRequest.ServiceType.ATLAS, "Spitzer SEIP","seip","seip_bands",seipCombo,"slphotdr4",DEF),
+                                 AKARI(WebPlotRequest.ServiceType.ATLAS, "AKARI","akari","akari_bands",akariCombo,"slphotdr4",DEF),
+                                 SDSS(WebPlotRequest.ServiceType.SDSS, "SDSS (DR7)", "sdss", "sdss_bands",sDssCombo, null, "SDSS (DR10)");
 
-        public WebPlotRequest.ServiceType srvType = WebPlotRequest.ServiceType.valueOf(this.name());
+        public WebPlotRequest.ServiceType srvType;
         public String title;
         public String subgroup;
         public String band;
@@ -171,7 +268,8 @@ public class FinderChartRequestUtil {
         public String catalog;
         public String catalogTitle;
 
-        ImageSet(String title, String subgroup, String band, String[] comboAry, String catalog, String catalogTitle) {
+        ImageSet(WebPlotRequest.ServiceType serviceType, String title, String subgroup, String band, String[] comboAry, String catalog, String catalogTitle) {
+            srvType = serviceType;
             this.title = title.equals(DEF) ? srvType.toString() : title;
             this.subgroup = subgroup;
             this.band = band;
@@ -183,8 +281,23 @@ public class FinderChartRequestUtil {
         public static ImageSet lookup(WebPlotRequest.ServiceType srvType) {
             return valueOf(srvType.name());
         }
+        public static ImageSet match(String word) {
+            for (ImageSet s: values()){
+                if(word.toLowerCase().contains(s.name().toLowerCase())){
+                    return s;
+                }
+            }
+            return null;
+        }
     }
 
+    public static void main(String[] args) {
+        String[] split = new String("schema.table").split("\\.");
+
+        for (String s:split){
+            System.out.println(s);
+        }
+    }
 
     public static enum Artifact {
         diff_spikes_3("WISE Diffraction Spikes (dots)", "Wise.Artifact.Spikes.level3.Selected"),
@@ -212,9 +325,20 @@ public class FinderChartRequestUtil {
         }
     }
 
-    public static enum Source {DSS, IRIS, twomass, WISE, SDSS}
-    public static enum Band {dss_bands, iras_bands, twomass_bands, wise_bands, SDSS_bands}
-
+    /**
+     * TODO remove that if not needed, i couldn't find any reference but please double check before rmeoving it!
+     * @deprecated
+     */
+    public static enum Source {DSS, IRIS, twomass, WISE, ATLAS, SDSS}
+    /**
+     * TODO remove that if not needed, i couldn't find any reference but please double check before rmeoving it!
+     * @deprecated
+     */
+    public static enum Band {dss_bands, iras_bands, twomass_bands, wise_bands, spitzer_bands, SDSS_bands}
+    /**
+     * TODO remove that if not needed, i couldn't find any reference but please double check before rmeoving it!
+     * @deprecated
+     */
     public static enum Radius {iras_radius, twomass_radius, wise_radius, sdss_radius}
 
 }

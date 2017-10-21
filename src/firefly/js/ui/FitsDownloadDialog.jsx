@@ -485,6 +485,9 @@ function  makeServiceFileName(req,plot, band) {
         case ServiceType.WISE:
             retval= 'wise-'+req.getSurveyKey()+'-'+req.getSurveyBand()+'.fits';
             break;
+        case ServiceType.ATLAS:
+            retval= 'atlas-'+req.getSurveyKey()+'-'+req.getSurveyBand()+'.fits';
+            break;
         case ServiceType.NONE:
             retval= makeTitleFileName(plot, band);
             break;
