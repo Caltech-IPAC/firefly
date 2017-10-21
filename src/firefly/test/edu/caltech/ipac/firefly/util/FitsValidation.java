@@ -67,7 +67,10 @@ public class FitsValidation extends ConfigTest{
          for (int i=0; i<keys.length; i++){
              HeaderCard expectedCard =expectedHeader.findCard(keys[i]);
              HeaderCard calculatedCard =calculatedHeader.findCard(keys[i]);
-
+             if (isBlank(expectedCard.getValue())){
+                 LOG.debug("expectedCard.getValue() is null, key = "+keys[i]+", skipping test");
+                 continue;
+             }
              //OK for both are null
              if (expectedCard==null && calculatedCard==null) continue;
 
@@ -91,7 +94,6 @@ public class FitsValidation extends ConfigTest{
                  //compare strings
                  Assert.assertEquals(expectedValue, calculatedValue);
              }
-
          }
 
     }
