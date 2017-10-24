@@ -12,14 +12,13 @@ import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {FilterInfo} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../Firefly.js';
-import {encodeServerUrl} from '../util/WebUtil.js';
+import {encodeServerUrl, uniqueID} from '../util/WebUtil.js';
 import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.js';
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {dispatchAddSaga, dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
-import {Keys} from '../core/background/BackgroundStatus.js';
 
 export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
 
@@ -814,25 +813,14 @@ export function watchTableChanges(tbl_id, actions, callback) {
 export function monitorChanges(actions, accept, callback) {
     if (!Array.isArray(actions) || actions.length === 0 || !callback) return;
 
-    var stopWatching = false;
-    const watcher = function* () {
-        const task = yield fork(function* () {
-            while (true) {
-                const action = yield take(actions);
-                if (!accept || accept(action)) {
-                    callback && callback(action);
-                }
-            };
-        });
-        while(!stopWatching) {
-            yield take();  // watch for all actions
-            if (stopWatching) {
-                yield cancel(task);
-            }
+    const id = uniqueID();
+    const mCallback = (action) => {
+        if (accept(action)) {
+            callback(action);
         }
     };
-    dispatchAddSaga(watcher);
-    return () => stopWatching = true;
+    dispatchAddActionWatcher({id, actions, callback:mCallback});
+    return () => dispatchCancelActionWatcher(id);
 }
 
 

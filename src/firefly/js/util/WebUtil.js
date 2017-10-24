@@ -611,6 +611,10 @@ export function isBooleanString(val) {
     return s === 'true' || s === 'false';
 }
 
+export function uniqueID() {
+    return Date.now() + '_' + Math.floor(Math.random() * 1000);
+}
+
 /**
  * A shim about requestIdleFrame
  * @param callback the callback to happens when idle
