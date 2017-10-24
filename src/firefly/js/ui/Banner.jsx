@@ -8,6 +8,7 @@ import {SimpleComponent} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
 import {getRootURL} from '../util/BrowserUtil.js';
+import {getProp} from '../util/WebUtil.js';
 import './Banner.css';
 
 
@@ -62,8 +63,7 @@ export class UserInfo extends SimpleComponent {
     }
 
     render() {
-        /*global __$sso_redirect_uri*/
-        var logoutUri = typeof __$sso_redirect_uri === 'undefined' ? undefined : __$sso_redirect_uri;
+        const logoutUri = getProp('sso_redirect_uri', '');
 
         const {loginName='Guest', firstName, lastName, login_url} = this.state || {};
         const isGuest = loginName === 'Guest';

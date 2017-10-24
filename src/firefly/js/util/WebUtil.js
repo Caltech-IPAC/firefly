@@ -2,8 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*global __MODULE_NAME__*/
-
 import Enum from 'enum';
 import shallowequal from 'shallowequal';
 import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
@@ -35,8 +33,22 @@ export const WS_CONNID_HD  = 'FF-connID';
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
 
 
+
+
+
+
+/*global __PROPS__*/
+
+
+const GLOBAL_PROPS = (typeof __PROPS__ === 'undefined') ? undefined : __PROPS__;
+
+export function getProp(key, def) {
+    if (!GLOBAL_PROPS) return def;
+    return get(GLOBAL_PROPS, [key], def);
+}
+
 export function getModuleName() {
-    return (typeof __MODULE_NAME__ === 'undefined') ? undefined : __MODULE_NAME__;
+    return getProp('MODULE_NAME');
 }
 
 
@@ -199,12 +211,12 @@ export function fetchUrl(url, options, doValidation= true) {
 
 
     // ?info=json&access_token_refresh_interval=<seconds>
-    /*global __$sso_redirect_uri*/
-    if (typeof __$sso_redirect_uri !== 'undefined') {
-        const refreshUrl =  `${getRootURL()}${__$sso_redirect_uri}?info=json&access_token_refresh_interval=0`;
+    const ssoRedirect = getProp('sso_redirect_uri');
+    if (ssoRedirect) {
+        const refreshUrl =  `${getRootURL()}${ssoRedirect}?info=json&access_token_refresh_interval=0`;
         fetch(refreshUrl).then( (resp) =>  {
             resp.text().then( (text) => {
-                console.log( text );
+                //console.log( text );
             });
         });
     }

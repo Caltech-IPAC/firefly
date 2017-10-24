@@ -26,6 +26,7 @@ import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {dispatchAppOptions} from './core/AppDataCntlr.js';
 import {init} from './rpc/CoreServices.js';
+import {getProp} from './util/WebUtil.js';
 
 export const flux = reduxFlux;
 
@@ -109,7 +110,7 @@ function fireflyInit() {
 }
 
 export function getVersion() {
-  return typeof __$version_tag === 'undefined' ? 'unknown' : __$version_tag;
+  return getProp('version_tag', 'unknown');
 } 
 
 
