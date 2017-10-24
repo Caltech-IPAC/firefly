@@ -22,7 +22,6 @@ export const BG_JOB_ADD         = `${BACKGROUND_PATH}.bgJobAdd`;
 export const BG_JOB_UPDATE         = `${BACKGROUND_PATH}.bgJobUpdate`;
 export const BG_JOB_REMOVE      = `${BACKGROUND_PATH}.bgJobRemove`;
 export const BG_JOB_CANCEL      = `${BACKGROUND_PATH}.bgJobCancel`;
-export const BG_JOB_IMMEDIATE   = `${BACKGROUND_PATH}.bgJobImmediate`;
 export const BG_SET_EMAIL       = `${BACKGROUND_PATH}.bgSetEmail`;
 export const BG_Package         = `${BACKGROUND_PATH}.bgPackage`;
 export const BG_ALLOW_DATA_TAG  = `${BACKGROUND_PATH}.bgAllowDataTag`;
@@ -119,22 +118,6 @@ export function dispatchPackage(dlRequest, searchRequest, selectionInfo) {
 }
 
 
-/**
- * this saga will trigger callback when a package request is either added or handled immediately
- * @param {Object} p   props
- * @param {string} p.title  download request's title
- * @param {function} p.callback  callback to execute when package request returned.
- */
-export function* doOnPackage({title, callback}) {
-
-    var isDone = false;
-    while (!(isDone)) {
-        const action = yield take([BG_JOB_IMMEDIATE, BG_JOB_ADD]);
-        isDone = !title || title === get(action, 'payload.Title');
-    }
-    callback && callback();
-}
-
 /*---------------------------- private -----------------------------*/
 
 
@@ -190,11 +173,10 @@ function bgPackage(action) {
         SearchServices.packageRequest(dlRequest, searchRequest, selectionInfo)
             .then((bgStatus) => {
                 if (bgStatus) {
-                    bgStatus = transform(bgStatus);
+                    bgStatus = bgStatusTransform(bgStatus);
                     const url = get(bgStatus, ['ITEMS', 0, 'url']);
                     if (url && isSuccess(get(bgStatus, 'STATE'))) {
                         download(url);
-                        dispatch({type: BG_JOB_IMMEDIATE, payload: bgStatus});       // allow saga to catch flow.
                     } else {
                         dispatchJobAdd(bgStatus);
                     }
@@ -244,7 +226,7 @@ function handleBgStatusUpdate(state, action) {
 
 function handleBgJobAdd(state, action) {
     var bgstats = action.payload;
-    bgstats = transform(bgstats);
+    bgstats = bgStatusTransform(bgstats);
     const nState = set({}, ['jobs', bgstats.ID], bgstats);
     if (!nState.email && !isNil(bgstats.email)) nState.email = bgstats.email;       // use email from server if one is not set
     return smartMerge(state, nState);
@@ -264,7 +246,7 @@ function handleBgJobRemove(state, action) {
  * @param bgStatus
  * @returns {{ITEMS: Array.<*>}}
  */
-function transform(bgStatus) {
+export function bgStatusTransform(bgStatus) {
     const ITEMS = Object.keys(bgStatus)
         .filter( (k) => k.startsWith('ITEMS_') )
         .map( (k) => {

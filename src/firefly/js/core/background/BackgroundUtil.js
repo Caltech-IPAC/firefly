@@ -4,10 +4,16 @@
 
 import {get, omit, isNil} from 'lodash';
 import Enum from 'enum';
+import {take} from 'redux-saga/effects';
 
 import {flux} from '../../Firefly.js';
 import {BACKGROUND_PATH} from './BackgroundCntlr.js';
 import {getModuleName} from '../../util/WebUtil.js';
+import {packageRequest} from '../../rpc/SearchServicesJson.js';
+import {SelectInfo} from '../../tables/SelectInfo.js';
+import {dispatchComponentStateChange} from '../ComponentCntlr.js';
+import {dispatchAddActionWatcher} from '../MasterSaga.js';
+import {BG_JOB_ADD, BG_STATUS, bgStatusTransform} from './BackgroundCntlr.js';
 
 
 /**
@@ -144,3 +150,45 @@ export const BG_STATE  = new Enum([
      */
     'UNKNOWN_PACKAGE_ID'
 ]);
+
+
+export function bgDownload({dlRequest, searchRequest, selectInfo}, {key, onComplete, sentToBg}) {
+    dispatchComponentStateChange(key, {inProgress:false, bgStatus:undefined});
+    packageRequest(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString())
+        .then((bgStatus) => {
+            if (bgStatus) {
+                dispatchComponentStateChange(key, {bgStatus});
+                bgStatus = bgStatusTransform(bgStatus);
+                if (isSuccess(get(bgStatus, 'STATE'))) {
+                    onComplete && onComplete(bgStatus);
+                    dispatchComponentStateChange(key, {inProgress:false, bgStatus:undefined});
+                } else {
+                    dispatchAddActionWatcher({  actions:[BG_STATUS,BG_JOB_ADD],
+                                                callback: bgTracker,
+                                                params: {bgID:bgStatus.ID, key, onComplete, sentToBg}});
+                }
+            }
+        });
+}
+
+function bgTracker(action, cancelSelf, params={}) {
+    const {bgID, key, onComplete, sentToBg} = params;
+    const bgStatus = bgStatusTransform(action.payload || {});
+    const {STATE, ID} = bgStatus;
+    if (ID === bgID) {
+        switch (action.type) {
+            case BG_STATUS:
+                if (isSuccess(STATE)) {
+                    cancelSelf();
+                    dispatchComponentStateChange(key, {inProgress:false, bgStatus:undefined});
+                    onComplete && onComplete(bgStatus);
+                }
+                break;
+            case BG_JOB_ADD:
+                cancelSelf();
+                dispatchComponentStateChange(key, {inProgress:false});
+                sentToBg && sentToBg(bgStatus);
+                break;
+        }
+    }
+}

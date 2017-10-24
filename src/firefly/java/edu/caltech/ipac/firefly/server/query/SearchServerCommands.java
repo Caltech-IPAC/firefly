@@ -161,8 +161,7 @@ public class SearchServerCommands {
             TableServerRequest serverRequest = params.getTableServerRequest();
             int waitMil = params.getRequiredInt(ServerParams.WAIT_MILS);
 
-            BackgroundStatus bgStat= new SearchServicesImpl().submitBackgroundSearch(
-                    serverRequest, null,waitMil);
+            BackgroundStatus bgStat =  new SearchManager().getRawDataSetBackground(serverRequest, null, waitMil);
             return QueryUtil.convertToJsonObject(bgStat).toJSONString();
         }
     }

@@ -42,8 +42,7 @@
     </filter-mapping>
 
 
-
-    <!-- Servlet and its mappings -->
+    <!-- Firefly servlet and its mappings -->
     <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.servlets.AnyFileDownload</servlet-class>
         <servlet-name>FireFly Any FileDownload</servlet-name>
@@ -89,11 +88,14 @@
         <url-pattern>/sticky/CmdSrv</url-pattern>
     </servlet-mapping>
 
-
     <servlet>
         <servlet-name>H2Console</servlet-name>
         <servlet-class>org.h2.server.web.WebServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
+        <init-param>
+            <param-name>-webAllowOthers</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>2</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>H2Console</servlet-name>
