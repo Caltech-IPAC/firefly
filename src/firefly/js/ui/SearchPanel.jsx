@@ -4,11 +4,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {set} from 'lodash';
+import {set, get} from 'lodash';
 import {dispatchUpdateAppData} from '../core/AppDataCntlr.js';
 import {getSearchInfo} from '../core/AppDataCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
 import {SimpleComponent} from './SimpleComponent.jsx';
+import {Tabs, Tab} from './panel/TabPanel.jsx';
 
 export class SearchPanel extends SimpleComponent {
 
@@ -18,29 +19,60 @@ export class SearchPanel extends SimpleComponent {
 
     render() {
         const {style={}} = this.props;
-        const {activeSearch, groups} = this.state;
+        const {activeSearch, groups, flow='vertical'} = this.state;
         if (!groups) return null;
         const {allSearchItems} = getSearchInfo();
 
         const sideBar = Object.keys(allSearchItems).length > 1 ? <SideBar {...{activeSearch, groups}}/> : null;
         const searchItem = allSearchItems[activeSearch];
 
-        return (
-            <div className='SearchPanel' style={style}>
-                {sideBar}
-                {searchItem &&
+        const onTabSelect = () => undefined;
+
+        if (flow === 'vertical') {
+            return (
+                <div className='SearchPanel' style={style}>
+                    {sideBar}
+                    {searchItem &&
                     <div className='SearchPanel__form'>
                         <SearchForm searchItem={searchItem} />
                     </div>
-                }
-            </div>
-        );
+                    }
+                </div>
+            );
+        } else {
+            const title = get(groups, [0, 'title']);
+            return (
+                <div>
+                    {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
+                    <Tabs onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
+                        {searchesAsTabs(allSearchItems)}
+                    </Tabs>
+                </div>
+            );
+        }
     }
 }
 
 SearchPanel.propTypes = {
-    style:      PropTypes.object
+    style:  PropTypes.object
 };
+
+
+function searchesAsTabs(allSearchItems) {
+
+    return allSearchItems &&
+        Object.values(allSearchItems).map( (searchItem) => {
+            const label = searchItem.title || searchItem.name;
+            return  (
+                <Tab key={label} name={label}>
+                    <div className='SearchPanel__form'>
+                        <SearchForm searchItem={searchItem} />
+                    </div>
+                </Tab>
+            );
+        } );
+}
+
 
 
 function SearchForm({searchItem}) {

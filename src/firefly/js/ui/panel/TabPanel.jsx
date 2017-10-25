@@ -59,7 +59,7 @@ class TabsHeader extends PureComponent {
             });
         }
         return (
-            <div style={{flexGrow: 0, height: 18}}>
+            <div style={{flexGrow: 0, height: 20}}>
                 {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
                     {sizedChildren}
                 </ul> : <div/>}
@@ -107,7 +107,7 @@ export class Tabs extends PureComponent {
 
     render () {
         var { selectedIdx}= this.state;
-        const {children, useFlex, resizable} = this.props;
+        const {children, useFlex, resizable, borderless, contentStyle={}} = this.props;
         const numTabs = React.Children.count(children);
 
         var content;
@@ -128,11 +128,11 @@ export class Tabs extends PureComponent {
                     {content}
                 </div>
             );
-
+        const contentClsName = borderless ? 'TabPanel__Content borderless' : 'TabPanel__Content';
         return (
             <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
                 <TabsHeader {...{resizable}}>{newChildren}</TabsHeader>
-                <div ref='contentRef' className='TabPanel__Content'>
+                <div ref='contentRef' style={contentStyle} className={contentClsName}>
                     {(content)?contentDiv:''}
                 </div>
             </div>
@@ -147,13 +147,16 @@ Tabs.propTypes= {
     defaultSelected:  PropTypes.any,
     onTabSelect: PropTypes.func,
     useFlex: PropTypes.bool,
-    resizable: PropTypes.bool
+    resizable: PropTypes.bool,
+    contentStyle: PropTypes.object,
+    borderless: PropTypes.bool
 };
 
 Tabs.defaultProps= {
     defaultSelected: 0,
     useFlex: false,
-    resizable: false
+    resizable: false,
+    borderless: false
 };
 
 
