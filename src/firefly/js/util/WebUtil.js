@@ -33,16 +33,10 @@ export const WS_CONNID_HD  = 'FF-connID';
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
 
 
-
-
-
-
-/*global __PROPS__*/
-
-
-const GLOBAL_PROPS = (typeof __PROPS__ === 'undefined') ? undefined : __PROPS__;
-
+let GLOBAL_PROPS;
 export function getProp(key, def) {
+    /*global __PROPS__*/
+    GLOBAL_PROPS = GLOBAL_PROPS || (typeof __PROPS__ === 'undefined') ? undefined : __PROPS__;
     if (!GLOBAL_PROPS) return def;
     return get(GLOBAL_PROPS, [key], def);
 }
