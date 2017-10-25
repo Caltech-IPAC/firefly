@@ -26,8 +26,6 @@ export class SearchPanel extends SimpleComponent {
         const sideBar = Object.keys(allSearchItems).length > 1 ? <SideBar {...{activeSearch, groups}}/> : null;
         const searchItem = allSearchItems[activeSearch];
 
-        const onTabSelect = () => undefined;
-
         if (flow === 'vertical') {
             return (
                 <div className='SearchPanel' style={style}>
@@ -41,10 +39,12 @@ export class SearchPanel extends SimpleComponent {
             );
         } else {
             const title = get(groups, [0, 'title']);
+            const onTabSelect = (index,id,name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
+
             return (
                 <div>
                     {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                    <Tabs onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
+                    <Tabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
                         {searchesAsTabs(allSearchItems)}
                     </Tabs>
                 </div>
