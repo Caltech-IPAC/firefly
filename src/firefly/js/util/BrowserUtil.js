@@ -6,12 +6,12 @@
  * Created by roby on 4/3/15.
  */
 
-/*global __SCRIPT_NAME__*/
+import {getProp} from './WebUtil.js';
 
-
-const SCRIPT_NAME = (typeof __SCRIPT_NAME__ === 'undefined') ? undefined : __SCRIPT_NAME__;
+const SCRIPT_NAME = getProp('SCRIPT_NAME');
 
 var getScriptURL = (function() {
+    
     var scripts = document.getElementsByTagName('script');
     var myScript;
     for(var i=0; (i<scripts.length); i++) {

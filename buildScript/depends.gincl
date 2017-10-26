@@ -300,7 +300,6 @@ ext.NODE = { ...cmd ->
   // this is a way send config info to JS code.
   def res = exec {
     environment '__$version_tag': tag
-    environment '__$help_base_url': project.appConfigProps['help.base.url']
     environment 'WP_BUILD_DIR': wpBuildDir
     environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
     commandLine cmd

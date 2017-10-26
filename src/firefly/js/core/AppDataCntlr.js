@@ -11,6 +11,7 @@ import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
 import {getWsChannel} from './messaging/WebSocketClient.js';
+import {getProp} from '../util/WebUtil.js';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
@@ -248,8 +249,7 @@ function grabWindowFocus() {
 function onlineHelpLoad( action )
 {
     return () => {
-        /*global __$help_base_url*/
-        var url = typeof __$help_base_url === 'undefined' ? 'unknown' : __$help_base_url;       // this is a global var.. ending with '/'
+        var url = getProp('help.base.url');
         var windowName = 'onlineHelp';
         var moduleName = getModuleName();
 

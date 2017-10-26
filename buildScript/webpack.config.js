@@ -59,13 +59,16 @@ export default function makeWebpackConfig(config) {
     const globals = {
         'process.env'   : {NODE_ENV : JSON.stringify(config.env)},
         NODE_ENV        : config.env,
-        __SCRIPT_NAME__ : JSON.stringify(script_names),
-        __MODULE_NAME__ : JSON.stringify(config.name),
+        __PROPS__       : {
+            SCRIPT_NAME : JSON.stringify(script_names),
+            MODULE_NAME : JSON.stringify(config.name)
+        }
+
     };
 
-    // add all of the env that starts with '__' into globals
+    // add all of the env that starts with '__$' as global props
     Object.keys(process.env).filter((k) => k.startsWith('__$')).forEach((k) => {
-        globals[k] = JSON.stringify(process.env[k]);
+        globals.__PROPS__[k.substring(3)] = JSON.stringify(process.env[k]);
     });
 
     const DEBUG    = config.env === 'development' && process.env.DEBUG;
