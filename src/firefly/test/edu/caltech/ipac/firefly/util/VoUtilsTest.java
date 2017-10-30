@@ -5,6 +5,7 @@ import java.util.List;
 import edu.caltech.ipac.firefly.ConfigTest;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.VoRegistryUtil;
@@ -14,11 +15,13 @@ public class VoUtilsTest extends ConfigTest {
 
 	private List<VOResourceEndpoint> endpoints;
 
+	@Ignore
 	@Test
 	public void testRegistryEndPoint(){
 		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "iphas");
 		Assert.assertTrue("No endpoints found!" ,endpoints.size()>0);
 	}
+	@Ignore
 	@Test
 	public void testAnotherRegistryEndPoint(){
 		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "spitzer");
