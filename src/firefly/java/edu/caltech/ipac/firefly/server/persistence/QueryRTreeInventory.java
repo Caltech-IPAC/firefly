@@ -92,36 +92,8 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
     }
 
     @Override
-    public boolean doCache() {
-        return true;
-    }
-
-    @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
-        long start = System.currentTimeMillis();
-
-        String fromCacheStr = "";
-
-        StringKey key = new StringKey(this.getClass().getName(), getUniqueID(request));
-        Cache cache = CacheManager.getCache(Cache.TYPE_PERM_FILE);
-        File retFile = (File) cache.get(key);
-        if (retFile == null) {
-            retFile = doQuery(request);  // all the work is done here
-            cache.put(key, retFile);
-        } else {
-            fromCacheStr = "   (from Cache)";
-        }
-
-        long elaspe = System.currentTimeMillis() - start;
-        String sizeStr = FileUtil.getSizeAsString(retFile.length());
-        String timeStr = UTCTimeUtil.getHMSFromMills(elaspe);
-
-        _log.info("catalog: " + timeStr + fromCacheStr,
-                "filename: " + retFile.getPath(),
-                "size:     " + sizeStr);
-
-        return retFile;
+        return doQuery(request);  // all the work is done here
     }
 
     private File doQuery(TableServerRequest req) throws IOException, DataAccessException {

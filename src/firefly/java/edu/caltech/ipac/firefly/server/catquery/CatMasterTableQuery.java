@@ -25,9 +25,6 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -257,17 +254,7 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
     }
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        File retFile;
-
-        StringKey key = new StringKey(CatMasterTableQuery.class.getName(), getUniqueID(request));
-        Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
-        retFile = (File) cache.get(key);
-        if (retFile == null) {
-            retFile = getMasterCatalogFile(request);
-            cache.put(key, retFile);
-        }
-
-        return retFile;
+        return getMasterCatalogFile(request);
     }
 
 }

@@ -60,7 +60,6 @@ public interface DbAdapter {
     String getMetaSql(String forTable);
 
     String selectPart(TableServerRequest treq);
-    String fromPart(TableServerRequest treq);
     String wherePart(TableServerRequest treq);
     String orderByPart(TableServerRequest treq) ;
     String pagingPart(TableServerRequest treq) ;

@@ -105,7 +105,7 @@ public class DecimateKey {
 
     @Override
     public String toString() {
-        return DECIMATE_KEY+"("+xColNameOrExpr+","+yColNameOrExpr+","+
+        return DECIMATE_KEY+"(\""+xColNameOrExpr+"\",\""+yColNameOrExpr+"\","+
                 xMin+","+yMin+","+nX+","+nY+","+xUnit+","+yUnit+")";
     }
 }

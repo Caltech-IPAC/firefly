@@ -5,28 +5,24 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 public abstract class IBESearchProcessor extends DynQueryProcessor {
+    private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     abstract protected String getDDUrl(ServerRequest request);
 
@@ -71,13 +67,20 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
         setXmlParams(request);
         String url = getDDUrl(request);
         if (url != null) {
-            DataGroup template = getTemplate(url);
-            for (DataObject row : template) {
-                String col = String.valueOf(row.getDataElement("name"));
-                if (exists(columns, col)) {
-                    String desc = String.valueOf(row.getDataElement("description"));
-                    meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, col), desc);
+            try {
+                TableServerRequest treg = new TableServerRequest(IbeTemplateProcessor.PROC_ID);
+                treg.setParam("url", url);
+                DataGroup template = new SearchManager().getDataGroup(treg).getData();
+                for (DataObject row : template) {
+                    String col = String.valueOf(row.getDataElement("name"));
+                    if (exists(columns, col)) {
+                        String desc = String.valueOf(row.getDataElement("description"));
+                        meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, col), desc);
+                    }
                 }
+            } catch (DataAccessException e) {
+                // cannot find template..  this is not normal
+                LOGGER.error(e);
             }
         }
     }
@@ -198,46 +201,5 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
         return eio;
     }
 
-
-    private DataGroup getTemplate(String url) {
-
-        if (StringUtils.isEmpty(url)) {
-            return null;
-        }
-        try {
-            CacheKey cacheKey = new StringKey("IBETemplateGenerator", url);
-            Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
-            DataGroup template = (DataGroup) cache.get(cacheKey);
-            if (template == null) {
-                template = loadTemplate(url);
-                cache.put(cacheKey, template);
-            }
-            return template;
-        } catch (Exception e) {
-            LOGGER.warn(e, "Unable to get template for url:" + url);
-        }
-        return null;
-    }
-
-    private DataGroup loadTemplate(String urlStr) {
-
-        DataGroup template = null;
-        try {
-            URL url = new URL(urlStr);
-            File ofile = File.createTempFile("IBETemplateGenerator", ".tbl", ServerContext.getTempWorkDir());
-            downloadFile(url, ofile);
-
-            if (ofile.canRead()) {
-                template = DataGroupReader.read(ofile);
-            }
-        } catch (MalformedURLException e) {
-            LOGGER.error(e, "not a valid url:" + urlStr);
-        } catch (EndUserException e) {
-            LOGGER.error(e, "Unable to connect to service url:" + urlStr);
-        } catch (IOException e) {
-            LOGGER.error(e);
-        }
-        return template;
-    }
 }
 

@@ -14,6 +14,7 @@ import edu.caltech.ipac.util.expr.Expression;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @SearchProcessorImpl(id = "DecimateTable")
@@ -39,12 +40,16 @@ public class DecimationProcessor extends TableFunctionProcessor {
             requestedCols.addAll(xColExpr.getParsedVariables());
             requestedCols.addAll(yColExpr.getParsedVariables());
         }
+        requestedCols = requestedCols.stream().map(c -> "\"" + c + "\"").collect(Collectors.toList());      // column name need to be in quotes
         sreq.setInclColumns(requestedCols.toArray(new String[requestedCols.size()]));
         DataGroup dg = new SearchManager().getDataGroup(sreq).getData();
 
 
         if (decimateInfo != null) {
             DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
+            dg.getAttributeKeys().stream().forEach(k -> {
+                retval.addAttribute(k, dg.getAttribute(k).getValue());
+            });
             return retval;
         } else {
             return dg;

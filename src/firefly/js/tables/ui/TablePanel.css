@@ -14,11 +14,15 @@
 
 .TablePanel_NoData {
     position: absolute;
-    top: 50%;
-    left: 42%;
+    top: 45px;
     z-index: 1;
     color: gray;
     font-size: large;
+    height: calc(100% - 45px);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .TablePanel__wrapper {

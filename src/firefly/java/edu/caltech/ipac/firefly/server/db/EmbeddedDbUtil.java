@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
@@ -16,8 +17,6 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.decimate.DecimateKey;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -27,6 +26,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.validation.constraints.NotNull;
 import java.io.File;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -50,22 +50,37 @@ public class EmbeddedDbUtil {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
     /**
+     * setup a database
+     * @param dbFile  the file to save the database to.
+     * @param dbAdapter DbAdapter to use.. ie sqlite, h2, etc.
+     */
+    public static void createDbFile(File dbFile, DbAdapter dbAdapter) throws IOException {
+        dbAdapter.close(dbFile);                    // in case database exists in memory.
+        File[] toRemove = dbFile.getParentFile().listFiles((dir, name) -> name.startsWith(dbFile.getName()));
+        if (toRemove != null && toRemove.length > 0) {
+            Arrays.stream(toRemove).forEach(f -> f.delete());
+        }
+        dbFile.createNewFile();                     // creates the file
+        createCustomFunctions(dbFile, dbAdapter);   // add custom functions
+    }
+
+    /**
      * ingest the given datagroup into a database file using the provided DbAdpater.
      * @param dbFile  the file to save the database to.
      * @param dg the datagroup containing the data
      * @param dbAdapter DbAdapter to use.. ie sqlite, h2, etc.
+     * @param forTable the name of the table to ingest to
      * @return  a FileInfo with sizeInBytes representing to the number of rows.
      */
-    public static FileInfo createDbFile(File dbFile, DataGroup dg, DbAdapter dbAdapter) {
+    public static FileInfo ingestDataGroup(File dbFile, DataGroup dg, DbAdapter dbAdapter, String forTable) {
 
         // remove ROW_IDX or ROW_NUM if exists
         dg.removeDataDefinition(DataGroup.ROW_IDX);
         dg.removeDataDefinition(DataGroup.ROW_NUM);
 
-        createCustomFunctions(dbFile, dbAdapter);
-        int rowCount = createDataTbl(dbFile, dg, dbAdapter);
-        createDDTbl(dbFile, dg, dbAdapter, "data");
-        createMetaTbl(dbFile, dg, dbAdapter, "data");
+        createDataTbl(dbFile, dg, dbAdapter, forTable);
+        createDDTbl(dbFile, dg, dbAdapter, forTable);
+        createMetaTbl(dbFile, dg, dbAdapter, forTable);
         FileInfo finfo = new FileInfo(dbFile);
         return finfo;
     }
@@ -134,91 +149,46 @@ public class EmbeddedDbUtil {
         return 0;
     }
 
-    public static String setupDatasetTable(TableServerRequest treq) {
-        String resultSetID = getResultSetID(treq);
-
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        DbInstance dbInstance = dbAdapter.getDbInstance(getDbFile(treq));
-
-        try {
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", resultSetID));
-        } catch (Exception e) {
-            // does not exists.. create table from orignal 'data' table
-            List<String> cols = treq.getInclColumns() == null ? getColumnNames(dbInstance, "DATA")
-                                    : StringUtils.asList(treq.getInclColumns(), ",");
-            String wherePart = dbAdapter.wherePart(treq);
-            String orderBy = dbAdapter.orderByPart(treq);
-            String tblName = getResultSetID(treq);
-
-            cols = cols.stream().filter((s) -> !(s.equals(DataGroup.ROW_IDX) || s.equals(DataGroup.ROW_NUM))).collect(Collectors.toList());   // remove this cols because it will be automatically added
-
-            // copy data
-            String datasetSql = String.format("select %s, %s from data %s %s", StringUtils.toString(cols), DataGroup.ROW_IDX, wherePart, orderBy);
-            String datasetSqlWithIdx = String.format("select b.*, (ROWNUM-1) as %s from (%s) as b", DataGroup.ROW_NUM, datasetSql);
-            String sql = dbAdapter.createTableFromSelect(tblName, datasetSqlWithIdx);
-            JdbcFactory.getSimpleTemplate(dbInstance).update(sql);
-
-            // copy dd
-            String ddSql = "select * from data_dd";
-            ddSql = dbAdapter.createTableFromSelect(tblName + "_dd", ddSql);
-            JdbcFactory.getSimpleTemplate(dbInstance).update(ddSql);
-
-            // copy meta
-            String metaSql = "select * from data_meta";
-            metaSql = dbAdapter.createTableFromSelect(tblName + "_meta", metaSql);
-            JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
-
-        }
-
-        return resultSetID;
-    }
-
-    public static List<String> getColumnNames(DbInstance dbInstance, String forTable) {
-        List<String> cols = JdbcFactory.getSimpleTemplate(dbInstance).query(String.format("select cname from %s_DD", forTable), (rs, i) -> rs.getString(1));
-        cols = cols.stream().map((s) -> "\"" + s.toUpperCase() + "\"").collect(Collectors.toList());      //  internally.. columns are stored as uppercase.  adding quotes to avoid db reserved words.
-        return cols;
-    }
-
-    /**
-     * return the DB file this request mapped to.
-     * @param treq
-     * @return
-     */
-    public static File getDbFile(TableServerRequest treq) {
-        String fname = String.format("%s_%s.%s", treq.getRequestId(), DigestUtils.md5Hex(getUniqueID(treq)), DbAdapter.getAdapter(treq).getName());
-        return new File(ServerContext.getTempWorkDir(), fname);
-    }
-
     public static void setDbMetaInfo(TableServerRequest treq, DbAdapter dbAdapter, File dbFile) {
         treq.setMeta(TBL_FILE_PATH, ServerContext.replaceWithPrefix(dbFile));
         treq.setMeta(TBL_FILE_TYPE, dbAdapter.getName());
     }
 
-    public static String getTblFileType(TableServerRequest treq) {
-        return treq.getMeta(TBL_FILE_TYPE);
-    }
-
-    @NotNull
-    public static String getResultSetID(TableServerRequest treq) {
-        String id = StringUtils.toString(treq.getResultSetParam(), "|");
-        return StringUtils.isEmpty(id) ? "data" : "data_" + DigestUtils.md5Hex(id);
-    }
 
     @NotNull
     public static String getUniqueID(TableServerRequest treq) {
         return SearchProcessor.getUniqueIDDef(treq);
     }
 
-    public static DataGroupPart getResults(TableServerRequest treq, String sql, String tblName) {
-        DataGroup dg = runQuery(DbAdapter.getAdapter(treq), getDbFile(treq), sql, tblName);
+    public static DataGroupPart getResultForTable(TableServerRequest treq, File dbFile, String tblName) throws DataAccessException {
+        try {
+            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+
+            // select a page from the dataset table
+            String pageSql = getPageSql(dbAdapter, treq, tblName);
+            DataGroupPart page = EmbeddedDbUtil.getResults(treq, pageSql, dbFile, tblName);
+
+            // fetch total row count for the query.. datagroup may contain partial results(paging)
+            String cntSql = String.format("select count(*) from %s", tblName);
+            int rowCnt = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).queryForInt(cntSql);
+
+            page.setRowCount(rowCnt);
+            page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, tblName);
+            if (!StringUtils.isEmpty(treq.getTblTitle())) {
+                page.getData().setTitle(treq.getTblTitle());  // set the datagroup's title to the request title.
+            }
+            return page;
+        } catch (Exception ex) {
+            throw new DataAccessException(ex);
+        }
+    }
+
+    public static DataGroupPart getResults(TableServerRequest treq, String sql, File dbFile, String tblName) {
+        DataGroup dg = runQuery(DbAdapter.getAdapter(treq), dbFile, sql, tblName);
         TableDef tm = new TableDef();
         tm.setStatus(DataGroupPart.State.COMPLETED);
         tm.setRowCount(dg.size());
         return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());
-    }
-
-    public static int createDataTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter) {
-        return createDataTbl(dbFile, dg, dbAdapter, null);
     }
 
     public static int createDataTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String tblName) {
@@ -319,16 +289,21 @@ public class EmbeddedDbUtil {
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
 
+    /**
+     * @param dbFile
+     * @param dg
+     * @param dbAdapter
+     * @param tblName
+     */
+    public static void createDDTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String tblName) {
 
-    public static void createDDTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String forTable) {
-
-        makeDbCols(dg);
-        String createDDSql = dbAdapter.createDDSql(forTable);
+        DataType[] colsAry = makeDbCols(dg);
+        String createDDSql = dbAdapter.createDDSql(tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createDDSql);
 
         Map<String, DataGroup.Attribute> meta = dg.getAttributes();
         List<Object[]> data = new ArrayList<>();
-        for(DataType dt : dg.getDataDefinitions()) {
+        for(DataType dt : colsAry) {
             int width = getIntVal(meta, WIDTH_TAG, dt, 0);
             width = width > 0 ? width : dt.getFormatInfo().getWidth();
             String format = getStrVal(meta, FORMAT_TAG, dt, null);
@@ -351,8 +326,19 @@ public class EmbeddedDbUtil {
                     }
             );
         }
-        String insertDDSql = dbAdapter.insertDDSql(forTable);
+        String insertDDSql = dbAdapter.insertDDSql(tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
+    }
+
+//====================================================================
+//
+//====================================================================
+
+    private static String getPageSql(DbAdapter dbAdapter, TableServerRequest treq, String fromTable) {
+        String selectPart = dbAdapter.selectPart(treq);
+        String pagingPart = dbAdapter.pagingPart(treq);
+
+        return String.format("%s from %s %s", selectPart, fromTable, pagingPart);
     }
 
     private static DataType[] makeDbCols(DataGroup dg) {
@@ -369,7 +355,7 @@ public class EmbeddedDbUtil {
     }
 
     private static String getStrVal(Map<String, DataGroup.Attribute> meta, String tag, DataType col, String def) {
-        DataGroup.Attribute val = meta.get(makeAttribKey(LABEL_TAG, col.getKeyName()));
+        DataGroup.Attribute val = meta.get(makeAttribKey(tag, col.getKeyName()));
         return val == null ? def : val.getValue();
     }
 

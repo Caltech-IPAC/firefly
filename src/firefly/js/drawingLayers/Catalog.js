@@ -387,8 +387,7 @@ function doFilter(dl,p,sel) {
         const rowidIdx= findColIdx(dl.tableData.columns,'ROW_IDX');
         let idxs= getSelectedPts(sel, p, dl.drawData.data);
         idxs = rowidIdx < 0 ? idxs : idxs.map( (idx) => get(dl,`tableData.data[${idx}][${rowidIdx}]`) );
-        filter= `IN (${idxs.toString()})`;
-        // filterInfoCls.setFilter(filter);
+        filter= `IN (${idxs.length === 0 ? -1 : idxs.toString()})`;     //  ROW_IDX is always positive.. use -1 to force no row selected 
         filterInfoCls.setFilter('ROW_IDX', filter);
         newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);

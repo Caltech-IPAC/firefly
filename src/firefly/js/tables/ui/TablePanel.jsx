@@ -4,13 +4,13 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, truncate, get} from 'lodash';
+import {isEmpty, truncate, get, cloneDeep, omit} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../../Firefly.js';
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableRemove, dispatchTblExpanded, dispatchTblResultsRemove} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchTblExpanded, dispatchTblResultsRemove, dispatchTableSearch} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
@@ -130,7 +130,7 @@ export class TablePanel extends PureComponent {
                 filterInfo, filterCount, sortInfo, data, bgStatus} = this.state;
         var {leftButtons, rightButtons} =  this.state;
 
-        if (error) return <div className='TablePanel__error'>{error}</div>;
+        if (error) return <TableError {...{error, tbl_id, message: error}}/>;
         if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable, bgStatus}}/>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
@@ -316,6 +316,21 @@ function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
                 </div>
                 }
             </div>
+        </div>
+    );
+}
+
+function TableError({error, tbl_id, message}) {
+    const {request} = TblUtil.getTblById(tbl_id);
+    const canReset = get(request, 'filters') || get(request, 'sortInfo');
+    const reloadTable = () => {
+        const origRequest = omit(cloneDeep(request), 'filters', 'sortInfo');
+        dispatchTableSearch(origRequest);
+    };
+    return (
+        <div className='TablePanel__error'>
+            <div>{message}</div>
+            {canReset && <button type='button' className='button std' onClick={reloadTable}>Reload</button>}
         </div>
     );
 }

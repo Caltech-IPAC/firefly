@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +37,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
     }
 
 
-    public FileInfo createDbFile(TableServerRequest treq) throws DataAccessException {
+    public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
         try {
             DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
 
@@ -50,11 +49,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
 
             setupMeta(dg, treq);
 
-            File dbFile = EmbeddedDbUtil.getDbFile(treq);
-            if (!dbFile.createNewFile()) {
-                LOGGER.error("This should not happen.. can't create dbFile:" + dbFile.getPath());
-            }
-            FileInfo finfo = EmbeddedDbUtil.createDbFile(dbFile, dg, dbAdapter);
+            FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
             return finfo;
         } catch (IpacTableException | IOException | DataAccessException ex) {
             throw new DataAccessException(ex);
