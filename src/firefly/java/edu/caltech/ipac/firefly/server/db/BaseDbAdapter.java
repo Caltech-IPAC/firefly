@@ -28,7 +28,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
 abstract public class BaseDbAdapter implements DbAdapter {
-    private static long MAX_IDLE_TIME = 1000 * 60 * 5;      // will be cleaned up if idle more than 5 minutes.
+    private static long MAX_IDLE_TIME = 1000 * 60 * 15;      // will be purged up if idle more than 5 minutes.
     private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
 
@@ -75,7 +75,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         tblName = StringUtils.isEmpty(tblName) ? "data" : tblName;
         List<String> coldefs = new ArrayList<>();
         for(DataType dt : dtTypes) {
-            coldefs.add( String.format("\"%s\" %s", dt.getKeyName().toUpperCase(),getDataType(dt.getDataType())));
+            coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), getDataType(dt.getDataType())));       // add quotes to avoid reserved words clashes
         }
 
         return String.format("create table %s (%s)", tblName, StringUtils.toString(coldefs, ","));
@@ -101,13 +101,6 @@ abstract public class BaseDbAdapter implements DbAdapter {
         String cols = treq.getParam(INCL_COLUMNS);
         cols = "select " + (StringUtils.isEmpty(cols) ? "*" : cols);
         return cols;
-    }
-
-    public String fromPart(TableServerRequest treq) {
-        String from = treq.getParam(TableServerRequest.SQL_FROM);
-        from = from == null ? EmbeddedDbUtil.getResultSetID(treq) : from;
-        from = "from " + (StringUtils.isEmpty(from) ? "data" : from);
-        return from;
     }
 
     public String wherePart(TableServerRequest treq) {
@@ -171,12 +164,16 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public DbInstance getDbInstance(File dbFile) {
+        return getDbInstance(dbFile, true);
+    }
+
+    public DbInstance getDbInstance(File dbFile, boolean create) {
         EmbeddedDbInstance ins = dbInstances.get(dbFile.getPath());
-        if (ins == null) {
+        if (ins == null && create) {
             ins = createDbInstance(dbFile);
             dbInstances.put(dbFile.getPath(), ins);
         }
-        ins.touch();
+        if (ins != null ) ins.touch();
         return ins;
 
     }

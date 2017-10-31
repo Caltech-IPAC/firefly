@@ -81,7 +81,7 @@ public class HttpServices {
      * @return
      */
     public static int getData(String url, File results) {
-        return getData(url, results);
+        return getData(url, results, null);
     }
 
     public static int getData(String url, OutputStream results) {

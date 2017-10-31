@@ -46,8 +46,8 @@ export const parseDecimateInfo = function(str) {
         const [xColumnName,yColumnName,maxPoints,xyRatio,xMin,xMax,yMin,yMax,deciEnableLimit='-1'] = kv[1].split(',');
         if (xColumnName && yColumnName) {
             return {
-                xColumnName,
-                yColumnName,
+                xColumnName: xColumnName.replace(/^"(.+)"$/, '$1'),
+                yColumnName: yColumnName.replace(/^"(.+)"$/, '$1'),
                 maxPoints : Number.parseInt(maxPoints,10),
                 xyRatio: Number.parseFloat(xyRatio),
                 xMin: Number.parseFloat(xMin),
@@ -76,8 +76,8 @@ export const parseDecimateKey = function(str) {
     v = v.substring(1,v.length-1); // remove outer braces
     const parts = v.split(',');
     if (parts.length === 8) {
-        const xColNameOrExpr= parts[0];
-        const yColNameOrExpr = parts[1];
+        const xColNameOrExpr= parts[0].replace(/^"(.+)"$/, '$1');
+        const yColNameOrExpr = parts[1].replace(/^"(.+)"$/, '$1');
         const xMin = Number(parts[2]);
         const yMin = Number(parts[3]);
         const nX = Number(parts[4]);

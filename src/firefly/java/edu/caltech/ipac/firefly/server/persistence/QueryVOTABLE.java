@@ -15,9 +15,6 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.*;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 import java.io.File;
@@ -50,30 +47,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
-        long start = System.currentTimeMillis();
-
-        String fromCacheStr = "";
-
-        StringKey key = new StringKey(this.getClass().getName(), getUniqueID(request));
-        Cache cache = CacheManager.getCache(Cache.TYPE_PERM_FILE);
-        File retFile = (File) cache.get(key);
-        if (retFile == null) {
-            retFile = queryVOSearchService(request);  // all the work is done here
-            cache.put(key, retFile);
-        } else {
-            fromCacheStr = "   (from Cache)";
-        }
-
-        long elaspe = System.currentTimeMillis() - start;
-        String sizeStr = FileUtil.getSizeAsString(retFile.length());
-        String timeStr = UTCTimeUtil.getHMSFromMills(elaspe);
-
-        _log.info("catalog: " + timeStr + fromCacheStr,
-                "filename: " + retFile.getPath(),
-                "size:     " + sizeStr);
-
-        return retFile;
+            return queryVOSearchService(request);  // all the work is done here
     }
 
     protected abstract String getQueryString(TableServerRequest req) throws DataAccessException;
@@ -151,53 +125,45 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
             _log.error(e, e.toString());
             throw new EndUserException("query failed - bad url: "+urlQuery, e.toString());
         }
-        StringKey cacheKey = new StringKey(url);
-        File f = (File) getCache().get(cacheKey);
-        if (f != null && f.canRead()) {
-            return f;
-        } else {
-            URLConnection conn = null;
+        URLConnection conn = null;
 
-            //File outFile = createFile(req, ".xml");
-            File outFile = File.createTempFile(filePrefix, ".xml", ServerContext.getPermWorkDir());
-            try {
-                conn = URLDownload.makeConnection(url);
-                conn.setRequestProperty("Accept", "*/*");
+        //File outFile = createFile(req, ".xml");
+        File outFile = File.createTempFile(filePrefix, ".xml", ServerContext.getPermWorkDir());
+        try {
+            conn = URLDownload.makeConnection(url);
+            conn.setRequestProperty("Accept", "*/*");
 
-                URLDownload.getDataToFile(conn, outFile);
-                getCache().put(cacheKey, outFile, 60 * 60 * 24);    // 1 day
+            URLDownload.getDataToFile(conn, outFile);
 
-            } catch (MalformedURLException e) {
-                _log.error(e, "Bad URL");
-                throw makeException(e, "query failed - bad url.");
+        } catch (MalformedURLException e) {
+            _log.error(e, "Bad URL");
+            throw makeException(e, "query failed - bad url.");
 
-            } catch (IOException e) {
-                _log.error(e, e.toString());
-                if (conn != null && conn instanceof HttpURLConnection) {
-                    HttpURLConnection httpConn = (HttpURLConnection) conn;
-                    int respCode = httpConn.getResponseCode();
-                    if (respCode == 400 || respCode == 404 || respCode == 500) {
-                        InputStream is = httpConn.getErrorStream();
-                        if (is != null) {
-                            String msg = parseMessageFromServer(DynServerUtils.convertStreamToString(is));
-                            throw new EndUserException("query failed: " + msg, msg);
+        } catch (IOException e) {
+            _log.error(e, e.toString());
+            if (conn != null && conn instanceof HttpURLConnection) {
+                HttpURLConnection httpConn = (HttpURLConnection) conn;
+                int respCode = httpConn.getResponseCode();
+                if (respCode == 400 || respCode == 404 || respCode == 500) {
+                    InputStream is = httpConn.getErrorStream();
+                    if (is != null) {
+                        String msg = parseMessageFromServer(DynServerUtils.convertStreamToString(is));
+                        throw new EndUserException("query failed: " + msg, msg);
 
-                        } else {
-                            String msg = httpConn.getResponseMessage();
-                            throw new EndUserException("query failed: " + msg, msg);
-                        }
+                    } else {
+                        String msg = httpConn.getResponseMessage();
+                        throw new EndUserException("query failed: " + msg, msg);
                     }
-
-                } else {
-                    throw makeException(e, "query failed - network error.");
                 }
 
-            } catch (Exception e) {
-                throw makeException(e, "query failed");
+            } else {
+                throw makeException(e, "query failed - network error.");
             }
-            return outFile;
-        }
 
+        } catch (Exception e) {
+            throw makeException(e, "query failed");
+        }
+        return outFile;
     }
 
 

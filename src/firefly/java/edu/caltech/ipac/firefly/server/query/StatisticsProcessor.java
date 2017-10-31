@@ -42,7 +42,8 @@ public class StatisticsProcessor extends TableFunctionProcessor {
     }
 
     protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
-        String origDataTblName = EmbeddedDbUtil.getResultSetID(getSearchRequest(treq));
+        EmbeddedDbProcessor proc = getSearchProcessor(getSearchRequest(treq));
+        String origDataTblName = proc.getResultSetID(treq);
         // check to see if a resultset table exists... if not, use orginal data table.
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
         String tblExists = String.format("select count(*) from %s", origDataTblName);
@@ -64,16 +65,15 @@ public class StatisticsProcessor extends TableFunctionProcessor {
             String visi = (String) col.getDataElement("VISIBILITY");
             if (DataType.NUMERIC_TYPES.contains(type) && !StringUtils.areEqual(visi, "hidden")) {
                 String cname = col.getStringData("CNAME");
-                String cnameUC = cname.toUpperCase();
                 String desc = col.getStringData("DESC");
                 String units = col.getStringData("UNITS");
                 DataObject row = new DataObject(stats);
                 row.setDataElement(columns[0], cname);
                 row.setDataElement(columns[1], desc);
                 row.setDataElement(columns[2], units);
-                sqlCols.add(String.format("min(\"%1$s\") as \"%1$s_min\"", cnameUC));
-                sqlCols.add(String.format("max(\"%1$s\") as \"%1$s_max\"", cnameUC));
-                sqlCols.add(String.format("count(\"%1$s\") as \"%1$s_count\"", cnameUC));
+                sqlCols.add(String.format("min(\"%1$s\") as \"%1$s_min\"", cname));
+                sqlCols.add(String.format("max(\"%1$s\") as \"%1$s_max\"", cname));
+                sqlCols.add(String.format("count(\"%1$s\") as \"%1$s_count\"", cname));
                 stats.add(row);
             }
 
@@ -82,7 +82,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
             DataObject data = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
             for (int i = 0; i < stats.size(); i++) {
                 DataObject col = stats.get(i);
-                String cname = col.getStringData("columnName").toUpperCase();
+                String cname = col.getStringData("columnName");
                 col.setDataElement(columns[3], getDouble(data.getDataElement(cname + "_min")));
                 col.setDataElement(columns[4], getDouble(data.getDataElement(cname + "_max")));
                 col.setDataElement(columns[5], data.getDataElement(cname + "_count"));

@@ -100,6 +100,12 @@ public class DataGroupReader {
         return doRead(bufferedReader, tableDef, isFixedLength, readAsString, saveFormattedData, onlyColumns);
     }
 
+    public static DataGroup read(InputStream inputStream, String... onlyColumns) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        TableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
+        return  doRead(bufferedReader, tableDef, true, false, false, onlyColumns);
+    }
+
     public static DataGroup read(Reader  reader, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(reader, IpacTableUtil.FILE_IO_BUFFER_SIZE);
         TableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
