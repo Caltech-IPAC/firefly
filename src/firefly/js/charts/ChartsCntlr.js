@@ -962,8 +962,12 @@ export function getErrors(chartId) {
 }
 
 export function dispatchError(chartId, traceNum, reason) {
-    const message = `Failed to fetch trace${traceNum > 0 && traceNum} data`;
+
+    const {data=[]} = getChartData(chartId);
+    const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
+    const message = `Failed to fetch ${name} data`;
     logError(`${message}: ${reason}`);
+
     let reasonStr = `${reason}`.toLowerCase();
     if (reasonStr.match(/not supported/)) {
         reasonStr = 'Unsupported feature requested. Please choose valid options.';
@@ -972,9 +976,9 @@ export function dispatchError(chartId, traceNum, reason) {
     } else {
         reasonStr = 'Please contact Help Desk. Check browser console for more information.';
     }
-    const changes = [];
-    changes.push(`fireflyData.${traceNum}.error`, {message, reason: reasonStr});
-    changes.push(`fireflyData.${traceNum}.isLoading`, false);
+    const changes = {};
+    changes[`fireflyData.${traceNum}.error`] = {message, reason: reasonStr};
+    changes[`fireflyData.${traceNum}.isLoading`] = false;
     dispatchChartUpdate({chartId, changes});
 }
 

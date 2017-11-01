@@ -22,10 +22,12 @@ export class ModalDialog extends PureComponent {
 
     render() {
         const {width, height, scrollY} = this.state;
-
+        // position dialog in the middle unless scroll in involved
+        const dialogStyle = (scrollY > 0 || window.innerHeight < height) ?
+            {position: 'absolute', width: '100%', top: scrollY} : {};
         return (
             <div className='ModalWindow' style={{width, height}}>
-                <div className='ModalDialog' style={{top: scrollY}}>
+                <div className='ModalDialog' style={dialogStyle}>
                     <div className='ModalDialog__content'>
                         {this.props.children}
                     </div>
