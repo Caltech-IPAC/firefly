@@ -7,7 +7,6 @@
 
 .ModalDialog {
     display: flex;
-    z-index: 110;
     position: absolute;
     width: 100%;
     flex-direction: column;

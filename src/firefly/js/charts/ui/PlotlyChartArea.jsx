@@ -4,6 +4,7 @@ import {flux} from '../../Firefly.js';
 import {get, set} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
 import {isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
@@ -227,10 +228,14 @@ function onSelect(chartId) {
             }
 
             if (points) {
-                dispatchChartUpdate({
-                    chartId,
-                    changes: {'selection': {points, range: {x: [xMin, xMax], y: [yMin, yMax]}}}
-                });
+                if (points.length < 1) {
+                    showInfoPopup((<div>No active trace points in the selection area.</div>), 'Warning');
+                } else {
+                    dispatchChartUpdate({
+                        chartId,
+                        changes: {'selection': {points, range: {x: [xMin, xMax], y: [yMin, yMax]}}}
+                    });
+                }
             } else {
                 const {selection} = getChartData(chartId);
                 if (selection) {

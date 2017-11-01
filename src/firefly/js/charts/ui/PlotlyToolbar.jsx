@@ -216,13 +216,18 @@ function SelectBtn({style={}, chartId, dragmode}) {
 }
 
 function ResetZoomBtn({style={}, chartId}) {
-    const {_original, layout} = getChartData(chartId) || {};
     const doClick = () => {
+        const {_original, layout} = getChartData(chartId) || {};
+
         // 2d axes
         const changes = ['xaxis','yaxis'].reduce((pv, axis) => {
             if (get(layout, `${axis}`)) {
-                pv[`layout.${axis}.autorange`] = get(_original, `layout.${axis}.autorange`, true);
-                pv[`layout.${axis}.range`] = get(_original, `layout.${axis}.range`);
+                const range = get(layout, `${axis}.range`) || [];
+                const autorange = get(layout, `${axis}.autorange`);
+                const reversed = (autorange === 'reversed') || (range[1] < range[0]);
+
+                pv[`layout.${axis}.autorange`] = reversed ? 'reversed' : true;
+                pv[`layout.${axis}.range`] = undefined;
             }
             return pv;
         }, {});
