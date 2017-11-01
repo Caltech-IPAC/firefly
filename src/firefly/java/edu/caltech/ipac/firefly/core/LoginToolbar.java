@@ -45,7 +45,7 @@ public class LoginToolbar extends Composite {
         user = new Label("");
         user.setWidth("125px");
         user.setStyleName("user-name");
-        GwtUtil.setStyles(user, "padding", "10px 3px", "textAlign", "right", "textOverflow", "ellipsis", "overflow", "hidden");
+        GwtUtil.setStyles(user, "padding", "3px 3px", "textAlign", "right", "textOverflow", "ellipsis", "overflow", "hidden");
 
 
         linkButtonFactory.makeIntoLinkButton(user);
@@ -69,7 +69,7 @@ public class LoginToolbar extends Composite {
                     }
                 });
         signing.setWidth("50px");
-        GwtUtil.setStyles(signing, "padding", "10px 3px", "textAlign", "center");
+        GwtUtil.setStyles(signing, "padding", "3px 3px", "textAlign", "center");
 
         user.setVisible(false);
         refreshUserInfo(false);
