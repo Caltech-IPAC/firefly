@@ -1,8 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray} from 'lodash';
-import {getTblById, getColumn, cloneRequest, doFetchTable} from '../../tables/TableUtil.js';
+import {get, isArray, uniqueId} from 'lodash';
+import {getTblById, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
 import {getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
@@ -118,7 +118,7 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     // legend group is used to show/hide traces together
     // highlight and selected traces should have the same legend group as the active scatter
     if (!get(data, `${traceNum}.legendgroup`)) {
-        changes[`data.${traceNum}.legendgroup`] = `grp${traceNum}`;
+        changes[`data.${traceNum}.legendgroup`] = uniqueId('grp');
     }
 
     if (!get(data, `${traceNum}.type`)) {
