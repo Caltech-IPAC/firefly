@@ -15,7 +15,7 @@ import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getTblById, getColumnIdx, getCellValue, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
-import {UI_PREFIX, dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
+import {UI_PREFIX, dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, dispatchChartRemove, removeTrace, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
@@ -298,7 +298,7 @@ export function getOptionsUI(chartId) {
     // trace type for them is populated
     // when the data arrive
     if (dataType === 'fireflyHistogram') {
-                return FireflyHistogramOptions;
+        return FireflyHistogramOptions;
     } else if (dataType === 'fireflyHeatmap') {
         return HeatmapOptions;
     } else if (isScatter2d(type)) {
@@ -505,14 +505,15 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
         const {selectInfo={}} = action.payload;
         updateSelected(chartId, selectInfo);
     } else if (action.type === TABLE_REMOVE) {
-        const changes = {};
-        // TODO remove trace, when no traces left remove chart
+        // remove trace or remove chart if the last trace
         tablesource._cancel && tablesource._cancel();
-        changes[`data.${traceNum}`] = {};
-        changes[`fireflyData.${traceNum}`] = {};
-        changes[`tablesources.${traceNum}`] = {};
-        dispatchChartUpdate({chartId, changes});
-        dispatchChartHighlighted({chartId, highlighted: undefined});
+        const {data} = getChartData(chartId, 'data', []);
+        if (data.length === 1) {
+            dispatchChartRemove(chartId);
+        } else {
+            removeTrace(chartId, traceNum);
+        }
+
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
@@ -640,7 +641,7 @@ export function applyDefaults(chartData={}, resetColor = true) {
     chartData.layout = merge(defaultLayout, chartData.layout);
 
     chartData.data && chartData.data.forEach((d, idx) => {
-        d.name = setDefaultName(d, idx);
+        d.name = defaultTraceName(d, idx, '');
 
         const type = get(chartData, ['fireflyData', `${idx}.dataType`]) || get(d, 'type', 'scatter');
 
@@ -688,13 +689,13 @@ const getNextTraceColor = (b) => nextTraceColor.next(b).value;
 const getNextTraceColorscale = (b) => nextTraceColorscale.next(b).value;
 
 
-export function getNewTraceDefaults(type='', traceNum=0) {
+export function getNewTraceDefaults(chartId, type='', traceNum=0) {
     let   retV;
 
     if (type.includes(SCATTER)) {
         retV = {
             [`data.${traceNum}.type`]: type, //make sure trace type is set
-            [`data.${traceNum}.marker.color`]: toRGBA(TRACE_COLORS[traceNum]),
+            [`data.${traceNum}.marker.color`]: defaultTraceColor({}, traceNum, chartId),
             [`data.${traceNum}.marker.line`]: 'none',
             [`data.${traceNum}.showlegend`]: true,
             ['layout.xaxis.range']: undefined, //clear out fixed range
@@ -703,35 +704,72 @@ export function getNewTraceDefaults(type='', traceNum=0) {
     } else if (type.includes(HEATMAP)) {
         retV = {
             [`data.${traceNum}.showlegend`]: true,
+            [`data.${traceNum}.colorscale`]: TRACE_COLORSCALE[traceNum % TRACE_COLORSCALE.length],
             ['layout.xaxis.range']: undefined, //clear out fixed range
             ['layout.yaxis.range']: undefined //clear out fixed range
         };
     } else {
         retV = {
-            [`data.${traceNum}.marker.color`]: toRGBA(TRACE_COLORS[traceNum]),
+            [`data.${traceNum}.marker.color`]: defaultTraceColor({}, traceNum, chartId),
             [`data.${traceNum}.showlegend`]: true
         };
     }
+    retV[`data.${traceNum}.name`] = defaultTraceName({}, traceNum, chartId);
 
-    const dataKey = `data.${traceNum}.`;
-    const data = Object.entries(retV).reduce((prev, [k, v]) => {
-        if (k.startsWith(dataKey)) {
-            set(prev, k.substring(dataKey.length), v);
-        }
-        return prev;
-    }, {type});
-
-
-    retV = Object.assign(retV,
-                        {[`${dataKey}.name`]: setDefaultName(data, traceNum)},
-                        setDefaultColor(data, type, traceNum));
+    //const dataKey = `data.${traceNum}.`;
+    //const data = Object.entries(retV).reduce((prev, [k, v]) => {
+    //    if (k.startsWith(dataKey)) {
+    //        set(prev, k.substring(dataKey.length), v);
+    //    }
+    //    return prev;
+    //}, {type});
+    //
+    //
+    //retV = Object.assign(retV,
+    //                    {[`${dataKey}.name`]: setDefaultName(data, traceNum, chartId)},
+    //                    setDefaultColor(data, type, traceNum));
 
     return retV;
 }
 
-function setDefaultName(oneChartData, idx) {
-    const name = get(oneChartData, 'name');
-    return name ? name : `trace ${idx}`;
+function defaultTraceName(oneChartData, idx, chartId) {
+    let name = get(oneChartData, 'name');
+    if (name) { return name; }
+    else {
+        // make sure that the name is unique
+        const {data=[]} = getChartData(chartId);
+        let i = idx;
+        let unique = false;
+        while (!unique) {
+            name = `trace ${i}`;
+            // make sure the trace name is unique
+            if (data.findIndex((d) => (get(d, 'name') === name)) < 0) {
+                unique = true;
+            }
+            i++;
+        }
+        return name;
+    }
+}
+
+function defaultTraceColor(oneChartData, idx, chartId) {
+    let color = get(oneChartData, 'marker.color');
+    if (color) { return color; }
+    else {
+        // make sure the color is unique
+        const {data=[]} = getChartData(chartId);
+        let i = idx;
+        let unique = false;
+        while (!unique) {
+            color = toRGBA(TRACE_COLORS[i % TRACE_COLORS.length]);
+            // make sure the trace name is unique
+            if (data.findIndex((d) => (get(d, 'marker.color') === color)) < 0) {
+                unique = true;
+            }
+            i++;
+        }
+        return color;
+    }
 }
 
 export const colorsOnTypes = {

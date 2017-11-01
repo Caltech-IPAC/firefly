@@ -116,6 +116,10 @@
     padding: 2px;
 }
 
+.ChartToolbar__restore {
+    background-image: url("/images/icons-2014/RevertToDefault-24x24.png");
+}
+
 .ChartToolbar__zoom {
     background-image: url("/images/icons-2014/24x24_ZoomIn.png");
 }

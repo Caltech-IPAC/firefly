@@ -53,7 +53,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 }
 
 export const FormPanel = function (props) {
-    var {children, onSubmit, onCancel, onError, groupKey, action, params, title,
+    var {children, onSuccess, onSubmit, onCancel, onError, groupKey, action, params, title,
         submitText='Search', help_id, changeMasking, includeUnmounted=false} = props;
 
     const style = {
@@ -76,7 +76,7 @@ export const FormPanel = function (props) {
                     <CompleteButton style={{display: 'inline-block', marginRight: 10}}
                                     includeUnmounted={includeUnmounted}
                                     groupKey={groupKey}
-                                    onSuccess={createSuccessHandler(action, params, title, onSubmit)}
+                                    onSuccess={onSuccess||createSuccessHandler(action, params, title, onSubmit)}
                                     onFail={onError || handleFailfure}
                                     text = {submitText} changeMasking={changeMasking}
                     />
@@ -92,11 +92,15 @@ export const FormPanel = function (props) {
 };
 
 
+// Use onSubmit, action, param, and title props when the callback expects a table request
+// Use onSuccess for a generic callback, expecting object with key-values for group fields
+// If onSuccess is provided, onSubmit, action, param, and title properties are ignored
 FormPanel.propTypes = {
     submitText: PropTypes.string,
     width: PropTypes.string,
     height: PropTypes.string,
-    onSubmit: PropTypes.func,
+    onSubmit: PropTypes.func, // onSubmit(request) - callback that accepts table request, use with action, params, and title props
+    onSuccess: PropTypes.func, // onSuccess(fields) - callback that takes fields object, its keys are the field keys for fields in the given group
     onCancel: PropTypes.func,
     onError: PropTypes.func,
     groupKey: PropTypes.any,

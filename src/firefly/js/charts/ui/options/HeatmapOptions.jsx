@@ -10,7 +10,7 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-import {BasicOptionFields, OptionTopBar, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 
@@ -37,14 +37,11 @@ export class HeatmapOptions extends SimpleComponent {
         const tbl_id = get(tablesource, 'tbl_id');
 
         return (
-            <div style={{padding:'0 5px 7px'}}>
-                {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesHeatmap}}/>}
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                    {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
-                    <br/>
-                    <BasicOptionFields {...{activeTrace, groupKey, noColor: true}}/>
-                </FieldGroup>
-            </div>
+            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
+                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
+                <br/>
+                <BasicOptionFields {...{activeTrace, groupKey, noColor: true}}/>
+            </FieldGroup>
         );
     }
 }

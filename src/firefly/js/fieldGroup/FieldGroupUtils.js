@@ -28,6 +28,7 @@ function validateResolvedSingle(groupKey,includeUnmounted) {
  */
 var validateSingle= function(groupKey, includeUnmounted) {
     var fields= getGroupFields(groupKey);
+    if (!fields) return Promise.resolve(true);
 
     //====== clear out all functions
     Object.keys(fields).forEach( (key) => {
@@ -64,7 +65,6 @@ var validateSingle= function(groupKey, includeUnmounted) {
 
 
     //===============
-    if (!fields) return Promise.resolve(true);
     return Promise.all( Object.keys(fields).map( (key) => Promise.resolve(fields[key].value),this ) )
         .then( () =>
         {

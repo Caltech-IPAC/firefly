@@ -179,7 +179,7 @@ export class PlotlyWrapper extends Component {
             const ndata = data.map((d) => omit(d, 'firefly'));
             const nlayout = omit(layout, 'lastInputTime');
 
-            const dataDelta = deltas(ndata, graphDiv.data || {});
+            const dataDelta = deltas(ndata, graphDiv.data || []);
             const layoutDelta = flattenObject(deltas(nlayout, graphDiv.layout || {}, false));
 
             const hasLayout = !isEmpty(layoutDelta);
@@ -195,6 +195,11 @@ export class PlotlyWrapper extends Component {
             }
             if (hasData && hasLayout) {
                 renderType = RenderType.RESTYLE_AND_RELAYOUT;
+            }
+
+            // handling trace removal – replot
+            if (ndata.length < graphDiv.data.length) {
+                renderType = RenderType.NEW_PLOT;
             }
 
             if (!useScatterGL) {

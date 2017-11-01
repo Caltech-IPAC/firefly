@@ -38,10 +38,11 @@
 <br/><br/>
 <div id="table-1" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
+<div id="table-2" style="width: 800px; height: 550px; border: solid 1px;"></div>
 
 <script type="text/javascript">
     if (!window.firefly) window.firefly= {};
-    window.firefly.options= {charts: {chartEngine: 'plotly', chartEngine: 'plotly'}};
+    window.firefly.options= {charts: {chartEngine: 'plotly', multitrace: true}};
 </script>
 
 <script type="text/javascript">
@@ -132,14 +133,29 @@
             firefly.showChart('histogramHere', {data: dataH});
 
 
-            // show scatter chart
+            // show scatter chart, which has no table on display
             firefly.debug= true;
-            chartParams = {
-                source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                xCol: 'ra1',
-                yCol: 'dec1'
-            };
-            firefly.showXYPlot('xyplotHere', chartParams);
+            var searchRequest = firefly.util.table.makeFileRequest(
+                    'WiseDemoTable', // title
+                    'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',  // source
+                    null,  // alt_source
+                    {pageSize: 1} // options
+            );
+            var tblIdDemo = searchRequest.tbl_id;
+            firefly.action.dispatchTableFetch(searchRequest);
+
+            var traces = [];
+            var i;
+            for (i = 1; i <= 4; i++) {
+                traces.push({
+                    name: 'corner '+i,
+                    tbl_id: tblIdDemo,
+                    x: 'tables::ra'+i,
+                    y: 'tables::dec'+i,
+                    mode: 'markers'
+                });
+            }
+            firefly.showChart('xyplotHere', {data: traces});
 
 
             var trace1 = {
@@ -174,7 +190,7 @@
                         radius: 30
                     },
                     {   tbl_id: 'test-tbl-sm',
-                        META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w3mpro', y: 'tables::w4mpro', mode: 'markers'}]})}
+                        //META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w3mpro', y: 'tables::w4mpro', mode: 'markers'}]})}
                     });
 
 
@@ -188,7 +204,7 @@
             tblReqXpr.META_INFO.tbl_id = 'tblwithXpr';
             tblReqXpr.META_INFO.title = 'table with expressions';
             tblReqXpr.tbl_id = 'tblwithXpr';
-            firefly.showTable('table-1', tblReqXpr);
+            firefly.showTable('table-2', tblReqXpr);
 
             trace1 = {
                 tbl_id: 'test-tbl',
@@ -211,26 +227,26 @@
             var dataHM = [
                 {
                     type: 'fireflyHeatmap',
-                    tbl_id: "test-tbl-lg",
-                    x: "tables::w1mpro",
-                    y: "tables::w2mpro",
+                    tbl_id: 'test-tbl-lg',
+                    x: 'tables::w1mpro',
+                    y: 'tables::w2mpro',
                     name: 'w1-w2',
                     colorscale: 'Blues'
                 },
                 {
                     type: 'fireflyHeatmap',
-                    tbl_id: "test-tbl-lg",
-                    x: "tables::w1mpro",
-                    y: "tables::w3mpro",
+                    tbl_id: 'test-tbl-lg',
+                    x: 'tables::w1mpro',
+                    y: 'tables::w3mpro',
                     name: 'w1-w3',
                     colorscale: 'Reds',
                     reversescale: true
                 },
                 {
                     type: 'fireflyHeatmap',
-                    tbl_id: "test-tbl-lg",
-                    x: "tables::w1mpro",
-                    y: "tables::w4mpro",
+                    tbl_id: 'test-tbl-lg',
+                    x: 'tables::w1mpro',
+                    y: 'tables::w4mpro',
                     name: 'w1-w4',
                     colorscale: 'Greens'
                 }
