@@ -52,8 +52,10 @@ function getOptions(a, layout) {
     if ( (isUndefined(showgrid) && get(layout, `${a}axis.gridwidth`)) || showgrid) {
         opts.push('grid');
     }
-    if (get(layout, `${a}axis.autorange`) === 'reversed' ||
-        (get(layout, `${a}axis.range.1`) < get(layout, `${a}axis.range.0`))) {
+    const range = get(layout, `${a}axis.range`) || [];
+    const autorange = get(layout, `${a}axis.autorange`);
+    const reversed = (autorange === 'reversed') || (range[1] < range[0]);
+    if (reversed) {
         opts.push('flip');
     }
     if (get(layout, `${a}axis.side`) === (a==='x'?'top':'right')) {
@@ -494,14 +496,18 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     if (opts.includes('flip')) {
                         if (range) {  
                             if (range[0]<range[1]) changes[`layout.${a}axis.range`] = reverse(range);
+                            changes[`layout.${a}axis.autorange`] = false;
                         } else {
                             changes[`layout.${a}axis.autorange`] = 'reversed';
+                            changes[`layout.${a}axis.range`] = undefined;
                         }
                     } else {
                         if (range) {
                             if (range[1]<range[0]) changes[`layout.${a}axis.range`] = reverse(range);
+                            changes[`layout.${a}axis.autorange`] = false;
                         } else {
                             changes[`layout.${a}axis.autorange`] = true;
+                            changes[`layout.${a}axis.range`] = undefined;
                         }
                     }
                     if (opts.includes('opposite')) {
@@ -586,11 +592,11 @@ function adjustAxesRange(layout, changes) {
                 }
             }
             const range = changes[`layout.${a}axis.range`] || [];
-            const reversed = (changes[`layout.${a}axis.autorange`] === 'reversed') || (range[1] < range[0]);
+            const autorange = changes[`layout.${a}axis.autorange`];
+            const reversed = (autorange === 'reversed') || (!autorange && range[1] < range[0]);
+
             changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', reversed);
             changes[`layout.${a}axis.autorange`] = false;
-        } else {
-            //changes[`layout.${a}axis.autorange`] = true;
         }
     });
 }
