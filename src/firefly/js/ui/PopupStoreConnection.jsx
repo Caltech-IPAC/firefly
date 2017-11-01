@@ -6,6 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {dispatchHideDialog,isDialogVisible} from '../core/ComponentCntlr.js';
 import {flux} from '../Firefly.js';
+import {get} from 'lodash';
 
 
 export class PopupStoreConnection extends PureComponent {
@@ -36,7 +37,7 @@ export class PopupStoreConnection extends PureComponent {
         var {visible}= this.state;
         if (!visible) return false;
         var {dialogId,popupPanel,requestOnTop,zIndex}= this.props;
-        return  React.cloneElement(popupPanel,
+        return  get(popupPanel, 'type.name') !== 'PopupPanel' ? popupPanel : React.cloneElement(popupPanel,
             {
                 visible, requestOnTop, dialogId, zIndex,
                 requestToClose : () => dispatchHideDialog(dialogId)

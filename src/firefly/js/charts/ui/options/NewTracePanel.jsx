@@ -1,11 +1,12 @@
 import React from 'react';
 
+import {get} from 'lodash';
 import {getChartData} from '../../ChartsCntlr.js';
 import {getNewTraceDefaults} from '../../ChartUtil.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import CompleteButton from '../../../ui/CompleteButton.jsx';
+//import CompleteButton from '../../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../../ui/PopupPanel.jsx';
@@ -19,7 +20,7 @@ import {BasicOptionFields, basicFieldReducer, submitChanges, hasMarkerColor} fro
 const fieldProps = {labelWidth: 62, size: 15};
 const dialogNameNewTrace = 'NewTracePanel';
 
-function getSubmitChangesFunc(traceType) {
+export function getSubmitChangesFunc(traceType) {
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
@@ -54,36 +55,54 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id}
     }
 }
 
+export function getNewTraceType() {
+    return getFieldVal('new-trace', 'type') || 'scatter';
+}
+
+export function addNewTrace({chartId, tbl_id, fields, hideDialog}) {
+    const type = getNewTraceType();
+    const submitChangesFunc =  getSubmitChangesFunc(type);
+    const data = get(getChartData(chartId), 'data', []);
+    const activeTrace = data.length;
+
+    fields = Object.assign({activeTrace}, fields);  // make the newly added trace active
+    fields[`data.${activeTrace}.type`] = type; // make sure trace type is set
+
+    // apply defaults settings
+    Object.entries(getNewTraceDefaults(chartId, type, activeTrace))
+        .forEach(([k,v]) => !fields[k] && (fields[k] = v));
+
+    // need to hide before the changes are submitted to avoid React Internal error:
+    //    too much recursion (mounting/unmouting fields)
+    hideDialog();
+    submitChangesFunc({chartId, activeTrace, fields, tbl_id});
+}
+
 export class NewTracePanel extends SimpleComponent {
 
     getNextState(np) {
-        const {chartId} = this.props;
+        const {chartId} = np || this.props;
         const {data=[]} = getChartData(chartId);
         const activeTrace = data.length;        //setting activeTrace to next available index.
         const type = getFieldVal('new-trace', 'type') || 'scatter';
-        const groupKey = `${chartId}-new-trace-${type}`;
-        return {groupKey, activeTrace, type};
+        return {activeTrace, type};
     }
 
     render() {
-        const {tbl_id, chartId, hideDialog=()=>dispatchHideDialog(dialogNameNewTrace)} = this.props;
-        const {groupKey, activeTrace, type} = this.state;
-        const doAdd = (fields) => {
-            const traceType = type;
-            const submitChangesFunc =  getSubmitChangesFunc(traceType);
+        const {tbl_id, chartId, groupKey, hideDialog=()=>dispatchHideDialog(dialogNameNewTrace)} = this.props;
+        const {activeTrace, type} = this.state;
 
-            fields = Object.assign({activeTrace}, fields);  // make the newly added trace active
-            fields[`data.${activeTrace}.type`] = type; // make sure trace type is set
 
-            // apply defaults settings
-            Object.entries(getNewTraceDefaults(type, activeTrace))
-                    .forEach(([k,v]) => !fields[k] && (fields[k] = v));
-            
-            // need to hide before the changes are submitted to avoid React Internal error too much recursion (mounting/unmouting fields)
-            hideDialog();
-            submitChangesFunc({chartId, activeTrace, fields, tbl_id});
-        };
-
+        //<div style={{display: 'inline-flex', marginTop: 10, justifyContent: 'space-between'}}>
+        //    <CompleteButton groupKey={groupKey}
+        //                    onSuccess={doAdd}
+        //                    onFail={() => {}}    //invalid fields highlighted, anything else?
+        //                    text='ADD'
+        //    />
+        //    <button type='button' className='button std'
+        //            onClick={hideDialog}>Cancel
+        //    </button>
+        //</div>
         return (
             <div style={{padding: 10}}>
                 <FieldGroup className='FieldGroup__vertical' style={{padding: 5}} keepState={true} groupKey='new-trace'>
@@ -97,16 +116,7 @@ export class NewTracePanel extends SimpleComponent {
                 </FieldGroup>
                 <br/>
                 {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id})}
-                <div style={{display: 'inline-flex', marginTop: 10, justifyContent: 'space-between'}}>
-                    <CompleteButton groupKey={groupKey}
-                                    onSuccess={doAdd}
-                                    onFail={() => {}}    //invalid fields highlighted, anything else?
-                                    text='ADD'
-                    />
-                    <button type='button' className='button std'
-                            onClick={hideDialog}>Cancel
-                    </button>
-                </div>
+
             </div>
         );
     }

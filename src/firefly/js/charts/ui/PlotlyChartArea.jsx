@@ -5,9 +5,8 @@ import {get, set} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 
-import {CHART_ADD, CHART_UPDATE, dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
 import {isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
-import {monitorChanges} from '../../tables/TableUtil.js';
 
 const X_TICKLBL_PX = 60;
 const TITLE_PX = 30;

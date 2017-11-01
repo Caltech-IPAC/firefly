@@ -465,28 +465,32 @@ function setActiveTrace(action) {
     return (dispatch) => {
         const {chartId, activeTrace} = action.payload;
         const {data, tablesources, curveNumberMap} = getChartData(chartId);
-        const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
-        let selected = undefined;
-        let highlighted = undefined;
-        let curveMap = undefined;
-        if (tbl_id) {
-            const {selectInfo, highlightedRow} = getTblById(tbl_id) || {};
-            if (selectInfo) {
-                const selectInfoCls = SelectInfo.newInstance(selectInfo);
-                const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(data[activeTrace], e));
-                if (selIndexes.length > 0) {
-                    selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
-                }
-            }
-            highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS);
-            if (curveNumberMap) {
-                curveMap = range(curveNumberMap.length).filter((idx) => (idx !== activeTrace));
-                curveMap.push(activeTrace);
-            }
-        }
-        const changes = {activeTrace, selected, highlighted, selection: undefined, curveNumberMap: curveMap};
+        const changes = getActiveTraceChanges({activeTrace, data, tablesources, curveNumberMap});
         dispatchChartUpdate({chartId, changes});
     };
+}
+
+function getActiveTraceChanges({activeTrace, data, tablesources, curveNumberMap}) {
+    const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
+    let selected = undefined;
+    let highlighted = undefined;
+    let curveMap = undefined;
+    if (tbl_id) {
+        const {selectInfo, highlightedRow} = getTblById(tbl_id) || {};
+        if (selectInfo) {
+            const selectInfoCls = SelectInfo.newInstance(selectInfo);
+            const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(data[activeTrace], e));
+            if (selIndexes.length > 0) {
+                selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
+            }
+        }
+        highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS);
+        if (curveNumberMap) {
+            curveMap = range(curveNumberMap.length).filter((idx) => (idx !== activeTrace));
+            curveMap.push(activeTrace);
+        }
+    }
+    return {activeTrace, selected, highlighted, selection: undefined, curveNumberMap: curveMap};
 }
 
 function isFireflyType(type) {
@@ -880,6 +884,49 @@ function reduceUI(state={}, action={}) {
     }
 }
 
+/**
+ * Reset chart to the original
+ * @param chartId
+ */
+export function resetChart(chartId) {
+    const {_original} = getChartData(chartId);
+    _original && dispatchChartAdd(_original);
+}
+
+export function removeTrace({chartId, traceNum}) {
+    const {activeTrace, data, fireflyData, tablesources, curveNumberMap} = getChartData(chartId);
+    const changes = {};
+
+    [[data, 'data'], [fireflyData, 'fireflyData'], [tablesources, 'tablesources']].forEach(([arr,name]) => {
+        if (arr && traceNum < arr.length) {
+            changes[name] = arr.filter((e,i) => i !== traceNum);
+        }
+    });
+
+    if (curveNumberMap && traceNum < curveNumberMap.length) {
+        // new curve map has the same order of traces as the old curve map
+        const newCurveMap = curveNumberMap.filter((e) => (e !== traceNum)).map((e) => (e > traceNum ? e-1 : e));
+        changes['curveNumberMap'] = newCurveMap;
+        if (newCurveMap.length > 0) {
+            const newActiveTrace = newCurveMap[newCurveMap.length-1];
+            if (newActiveTrace !== activeTrace) {
+                changes['activeTrace'] = newActiveTrace;
+            }
+            if (traceNum === activeTrace) {
+                Object.assign(changes,
+                    getActiveTraceChanges({activeTrace: newActiveTrace,
+                        data: changes['data'],
+                        tablesources: changes['tablesources'],
+                        curveNumberMap: newCurveMap})
+                );
+            }
+        }
+    }
+
+    if (!isEmpty(changes)) {
+        dispatchChartUpdate({chartId, changes});
+    }
+}
 
 export function getChartData(chartId, defaultChartData={}) {
     return get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId], defaultChartData);

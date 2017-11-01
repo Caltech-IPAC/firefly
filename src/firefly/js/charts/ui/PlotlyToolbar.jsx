@@ -2,7 +2,7 @@ import './ChartPanel.css';
 import React from 'react';
 import {get, isEmpty} from 'lodash';
 
-import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
 import {getTblById, clearFilters, getColumnIdx, getColumnType} from '../../tables/TableUtil.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
@@ -10,6 +10,7 @@ import {downloadChart} from './PlotlyWrapper.jsx';
 import {getColValidator} from './ColumnOrExpression.jsx';
 import {getColValStats} from '../TableStatsCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
+import {showChartsDialog} from './ChartSelectPanel.jsx';
 
 function getToolbarStates(chartId) {
     const {selection, hasSelected, activeTrace=0, tablesources, layout, data=[]} = getChartData(chartId);
@@ -44,8 +45,9 @@ export class ScatterToolbar extends SimpleComponent {
                 <div className='ChartToolbar__buttons'>
                     <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <SaveBtn {...{chartId}} />
+                    <RestoreBtn {...{chartId}} />
                     {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
-                    <OptionsBtn {...{chartId, toggleOptions}} />
+                    <OptionsBtn {...{chartId}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
                 { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
@@ -127,8 +129,9 @@ export class BasicToolbar extends SimpleComponent {
                 <div className='ChartToolbar__buttons'>
                     {showDragPart && <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />}
                     <SaveBtn {...{chartId}} />
+                    <RestoreBtn {...{chartId}} />
                     {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
-                    <OptionsBtn {...{chartId, toggleOptions}} />
+                    <OptionsBtn {...{chartId}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
                 { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
@@ -236,6 +239,14 @@ function ResetZoomBtn({style={}, chartId}) {
     );
 }
 
+function RestoreBtn({style={}, chartId}) {
+    return (
+        <div style={style} onClick={() => { resetChart(chartId);}}
+             title='Reset chart to the original'
+             className='ChartToolbar__restore'/>
+    );
+}
+
 function SaveBtn({style={}, chartId}) {
     return (
         <div style={style} onClick={() => { downloadChart(chartId);}}
@@ -252,9 +263,9 @@ function FiltersBtn({style={}, chartId, toggleOptions}) {
     );
 }
 
-function OptionsBtn({style={}, chartId, toggleOptions}) {
+function OptionsBtn({style={}, chartId}) {
     return (
-        <div style={style} onClick={() => toggleOptions('options')}
+        <div style={style} onClick={() => showChartsDialog(chartId)}
              title='Chart options and tools'
              className='ChartToolbar__options'/>
     );

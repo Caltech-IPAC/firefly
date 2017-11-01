@@ -5,7 +5,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
-import {BasicOptionFields, OptionTopBar, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 import {getChartData} from '../../ChartsCntlr.js';
 
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
@@ -38,9 +38,7 @@ export class HistogramOptions extends SimpleComponent {
         const colValStats = getColValStats(tbl_id);
         const xProps = {fldPath:`_tables.data.${activeTrace}.x`, label: 'X:', name: 'X', nullAllowed: false, colValStats, groupKey, labelWidth: 62};
         return (
-            <div style={{padding:'0 5px 7px'}}>
-                {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChanges}}/>}
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
+            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                     <ColumnOrExpression {...xProps}/>
                     <ListBoxInputField fieldKey={`data.${activeTrace}.histfunc`} options={[{value:'count'}, {value:'sum'}, {value:'avg'}, {value:'min'}, {value:'max'}]}/>
                     <ValidationField fieldKey={`data.${activeTrace}.nbinsx`}/>
@@ -50,7 +48,6 @@ export class HistogramOptions extends SimpleComponent {
                     <br/>
                     <BasicOptionFields {...{activeTrace, groupKey}}/>
                 </FieldGroup>
-            </div>
         );
     }
 }

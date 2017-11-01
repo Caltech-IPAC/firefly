@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {get, isUndefined, omit} from 'lodash';
 
 import {Expression} from '../../../util/expr/Expression.js';
@@ -7,7 +8,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import {BasicOptionFields, OptionTopBar, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
@@ -28,33 +29,28 @@ export class ScatterOptions extends SimpleComponent {
 
     render() {
         const {chartId, groupKey:groupKeyProp, activeTrace:activeTraceProp, tbl_id:tblIdProp} = this.props;
-        //const {activeTrace=0} = this.state;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(activeTraceProp) ? cActiveTrace : activeTraceProp;
         const groupKey = groupKeyProp || `${chartId}-scatter-${activeTrace}`;
         const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
-        const tbl_id = get(tablesource, 'tbl_id');
 
         return (
-            <div style={{padding:'0 5px 7px'}}>
-                {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesScatter}}/>}
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                    <ListBoxInputField fieldKey={`data.${activeTrace}.mode`}
-                                       options={[{label: 'points', value:'markers'},
+            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
+                <ListBoxInputField fieldKey={`data.${activeTrace}.mode`}
+                                   options={[{label: 'points', value:'markers'},
                                                  {label: 'connected points', value:'lines+markers'},
                                                  {label: 'lines', value:'lines'}]}/>
-                    <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
-                                       options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
+                <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
+                                   options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
                                                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
-{/* TODO: scattergl does not support 'open' symbols as of v1..28.2.  we'll add them back at a later time when they do.
-                                       options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
-                                                 {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
-*/}
-                    {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
-                    <br/>
-                    <BasicOptionFields {...{activeTrace, groupKey}}/>
-                </FieldGroup>
-            </div>
+                {/* TODO: scattergl does not support 'open' symbols as of v1..28.2.  we'll add them back at a later time when they do.
+                 options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
+                 {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
+                 */}
+                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
+                <br/>
+                <BasicOptionFields {...{activeTrace, groupKey}}/>
+            </FieldGroup>
         );
     }
 }
@@ -222,6 +218,12 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
         </div>
     );
 }
+
+TableSourcesOptions.propTypes = {
+    tablesource: PropTypes.object,
+    activeTrace: PropTypes.number,
+    groupKey: PropTypes.string
+};
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
 

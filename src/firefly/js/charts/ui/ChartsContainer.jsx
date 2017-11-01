@@ -73,17 +73,19 @@ function doUpdateViewer(viewerId, tblGroup, chartId) {
     chartIds.push(...getChartIdsInGroup(tblId), ...getChartIdsInGroup('default'));
     const currentIds = getViewerItemIds(getMultiViewRoot(), viewerId);
     if (!isEqual(chartIds, currentIds)) {
+        dispatchRemoveViewerItems(viewerId, currentIds);
+        dispatchAddViewerItems(viewerId, chartIds, PLOT2D);
+
+        // update active chart
         if (chartId && isEmpty(getChartData(chartId))) {
             //removed chart - do not change active chartId unless
             if (getActiveViewerItemId(viewerId) === chartId) {
-                dispatchUpdateCustom(viewerId, {activeItemId: undefined});
+                dispatchUpdateCustom(viewerId, {activeItemId: chartIds[0]});
             }
         } else {
-            const activeItemId = chartIds.includes(chartId) ? chartId : undefined;
+            const activeItemId = chartIds.includes(chartId) ? chartId : chartIds[0];
             dispatchUpdateCustom(viewerId, {activeItemId});
         }
-        dispatchRemoveViewerItems(viewerId, currentIds);
-        dispatchAddViewerItems(viewerId, chartIds, PLOT2D);
     }
 }
 
