@@ -18,6 +18,10 @@ import './TablePanel.css';
 
 const {Table, Column} = FixedDataTable;
 
+
+const noDataMsg = 'No Data Found';
+const noDataFromFilter = 'No data match these criteria';
+
 export class BasicTableView extends PureComponent {
     constructor(props) {
         super(props);
@@ -167,7 +171,7 @@ export class BasicTableView extends PureComponent {
                     </Table>
                 }
                 {!error && showMask && <div style={{top: 0}} className='loading-mask'/>}
-                {!error && !showMask && isEmpty(data) && <div className='TablePanel_NoData'> No Data Found </div>}
+                {!error && !showMask && isEmpty(data) && <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>}
             </Resizable>
         );
     }

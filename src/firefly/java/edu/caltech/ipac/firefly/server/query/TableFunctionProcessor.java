@@ -21,25 +21,50 @@ import java.util.TreeSet;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
 
+/**
+ * This is a base class for processors which perform a task on the original table
+ * and then save the results into the original table's database.
+ */
 public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
     public static final String SEARCH_REQUEST = "searchRequest";
 
-
+    /**
+     * results will be saved as a new set of tables(data, dd, meta) with the returned prefix.
+     * @return
+     */
+    abstract protected String getResultSetTablePrefix();
     abstract protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException;
 
+    @Override
+    public File getDbFile(TableServerRequest treq) {
+        try {
+            TableServerRequest sreq = getSearchRequest(treq);
+            return getSearchProcessor(sreq).getDbFile(sreq);
+        } catch (DataAccessException e) {
+            // should not happen
+            return super.getDbFile(treq);
+        }
+    }
+
+    @Override
+    public File createDbFile(TableServerRequest treq) throws DataAccessException {
+        try {
+            TableServerRequest sreq = getSearchRequest(treq);
+            return getSearchProcessor(sreq).createDbFile(sreq);
+        } catch (DataAccessException e) {
+            // should not happen
+            return super.createDbFile(treq);
+        }
+    }
+
     /**
-     *  recreate the table database if does not exists.  otherwise, return the table's database
+     * original database no longer available.. recreate it.
      */
     @Override
-    public FileInfo createDbFile(TableServerRequest treq) throws DataAccessException {
+    public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
         TableServerRequest sreq = getSearchRequest(treq);
-        File dbFile = EmbeddedDbUtil.getDbFile(sreq);
-        if (dbFile == null || !dbFile.canRead()) {
-            sreq.setPageSize(1);
-            sreq.setStartIndex(0);
-            new SearchManager().getDataGroup(sreq).getData();
-        }
-        EmbeddedDbUtil.setDbMetaInfo(treq, DbAdapter.getAdapter(treq), dbFile);
+        sreq.setPageSize(1);  // set to small number it's not used.
+        new SearchManager().getDataGroup(sreq).getData();
         return new FileInfo(dbFile);
     }
 
@@ -64,7 +89,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
             EmbeddedDbUtil.createMetaTbl(dbFile, data, dbAdapter, resTblName);
         }
         treq.setParam(TableServerRequest.SQL_FROM, resTblName);
-        String sql = String.format("%s %s %s", dbAdapter.selectPart(treq), dbAdapter.fromPart(treq), dbAdapter.wherePart(treq));
+        String sql = String.format("%s from %s %s", dbAdapter.selectPart(treq), resTblName, dbAdapter.wherePart(treq));
         sql = dbAdapter.translateSql(sql);
 
         DataGroup dg = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, sql, resTblName);
@@ -103,7 +128,10 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         return String.format("%s_data_%s", getResultSetTablePrefix(), DigestUtils.md5Hex(id));
     }
 
-    abstract protected String getResultSetTablePrefix();
+    protected EmbeddedDbProcessor getSearchProcessor(TableServerRequest searchReq) throws DataAccessException {
+        return (EmbeddedDbProcessor) new SearchManager().getProcessor(searchReq.getRequestId());
+    }
+
 
 }
 

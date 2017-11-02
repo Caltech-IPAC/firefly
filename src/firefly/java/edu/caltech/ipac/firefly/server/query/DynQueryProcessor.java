@@ -30,7 +30,7 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 
 abstract public class DynQueryProcessor extends IpacTablePartProcessor {
 
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+    public File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         File dataFile = loadDynDataFile(request);
 

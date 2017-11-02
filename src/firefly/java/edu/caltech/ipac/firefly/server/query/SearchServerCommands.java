@@ -23,7 +23,6 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
-import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
@@ -72,17 +71,18 @@ public class SearchServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             String requestJson = params.getRequired(ServerParams.REQUEST);
             TableServerRequest treq = QueryUtil.convertToServerRequest(requestJson);
+            EmbeddedDbProcessor proc = (EmbeddedDbProcessor) new SearchManager().getProcessor(treq.getRequestId());
             treq.setPageSize(Integer.MAX_VALUE);
             try {
                 List<String> cols = StringUtils.asList(params.getRequired("columnNames"), ",");
                 List<Integer> rows = StringUtils.convertToListInteger(params.getRequired("selectedRows"), ",");
                 // hitting the database directly.
                 String selCols = cols.size() > 0 ? StringUtils.toString(cols) : "*";
-                String tblName = EmbeddedDbUtil.getResultSetID(treq) ;
+                String tblName = proc.getResultSetID(treq) ;
                 String inRows = rows.size() > 0 ? StringUtils.toString(rows) : "-1";
 
                 String sql = String.format("select %s from %s where %s in (%s)", selCols, tblName, DataGroup.ROW_NUM, inRows);
-                DataGroupPart page = EmbeddedDbUtil.getResults(treq, sql ,tblName);
+                DataGroupPart page = EmbeddedDbUtil.getResults(treq, sql , proc.getDbFile(treq), tblName);
 
                 return JsonTableUtil.toJsonTableModel(page, treq).toJSONString();
             } catch (IOException e) {

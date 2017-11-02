@@ -44,12 +44,13 @@ export class FilterInfo {
      */
     static parse(filterString) {
         var filterInfo = new FilterInfo();
-        if (filterString) {
-            filterString && filterString.split(';').forEach( (v) => {
-                    const [, cname, op, val] = v.trim().match(filter_regex) || [];
-                    if (cname) filterInfo.addFilter(cname, `${op} ${val}`);
-                });
-        }
+        filterString && filterString.split(';').forEach( (v) => {
+                let [, cname, op, val] = v.trim().match(filter_regex) || [];
+                if (cname && op) {
+                    cname = cname.replace(/^"(.+)"$/, '$1');      // strip quotes if any
+                    filterInfo.addFilter(cname, `${op} ${val}`);
+                }
+            });
         return filterInfo;
     }
 
@@ -214,14 +215,12 @@ export class FilterInfo {
     }
 
     serialize() {
-        return Object.keys(this).reduce( (rval, key) => {
-            this[key].split(';').forEach((v) => {
-                if (v.length) {
-                rval = (rval.length ? rval + ';': '') + `${key} ${v.trim()}`;
-                }
-            } );
-            return rval;
-        }, '');
+        return Object.entries(this)
+                    .map(([k,v]) => v.split(';')
+                                    .filter((f) => f)
+                                    .map( (f) => k.includes('"') ? `${k} ${f}` : `"${k}" ${f}`)         // add quotes to key if it does not contains quotes
+                                    .join(';'))
+                    .join(';');
     }
 
     /**

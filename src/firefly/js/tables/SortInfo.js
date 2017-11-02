@@ -33,6 +33,7 @@ export function sortInfoString(colName, isAscending=true) {
      * @returns {*}
      */
     getDirection(colName) {
+        colName = colName.replace(/^"(.+)"$/, '$1');           // strip quotes is any;
         if (this.sortColumns[0] === colName) {
             return this.direction;
         } else {
@@ -51,11 +52,11 @@ export function sortInfoString(colName, isAscending=true) {
         const direction = dir === UNSORTED ? SORT_ASC :
                           dir === SORT_ASC ? SORT_DESC : UNSORTED;
         const sortColumns = UNSORTED ? [] : [colName];
-        return direction === UNSORTED ? '' : `${direction},${sortColumns.toString()}`;
+        return new SortInfo(direction, sortColumns).serialize();
     }
 
     serialize() {
-        return this.direction === UNSORTED ? '' : `${this.direction},${this.sortColumns.toString()}`;
+        return this.direction === UNSORTED ? '' : `${this.direction},${this.sortColumns.map( (c) => `"${c}"`).join()}`;
     }
 
     static parse(sortInfo) {
@@ -63,7 +64,7 @@ export function sortInfoString(colName, isAscending=true) {
             const parts = sortInfo.split(',').map((s) => s.trim());
             if (parts) {
                 const direction = parts[0] && parts[0].toUpperCase();
-                const sortColumns = parts[1] && parts.slice(1);
+                const sortColumns = parts[1] && parts.slice(1).map( (c) => c.replace(/^"(.+)"$/, '$1'));           // strip quotes is any
                 return new SortInfo(direction, sortColumns);
             }
         } else {

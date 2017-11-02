@@ -114,7 +114,7 @@ function handleCatalogUpdate(tbl_id) {
     const params= {
         startIdx : 0,
         pageSize : MAX_ROW,
-        inclCols : `${columns.lonCol},${columns.latCol},ROW_IDX`
+        inclCols : `"${columns.lonCol}","${columns.latCol}","ROW_IDX"`        // column names should be in quotes
     };
 
     let req = cloneRequest(sourceTable.request, params);

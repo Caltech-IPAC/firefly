@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.server.network;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -107,6 +108,14 @@ public class HttpServiceInput {
             sb.append("files: ").append(files.toString()).append("\n");
         }
         return sb.toString();
+    }
+
+
+    public static HttpServiceInput createWithCredential() {
+        HttpServiceInput input = new HttpServiceInput();
+        Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
+        cookies.entrySet().stream().forEach( entry -> input.setCookie(entry.getKey(), entry.getValue()));
+        return input;
     }
 
 }
