@@ -28,7 +28,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
 abstract public class BaseDbAdapter implements DbAdapter {
-    private static long MAX_IDLE_TIME = 1000 * 60 * 15;      // will be purged up if idle more than 5 minutes.
+    private static long MAX_IDLE_TIME = 1000 * 60 * 15;      // will be purged up if idle more than 15 minutes.
     private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
 
