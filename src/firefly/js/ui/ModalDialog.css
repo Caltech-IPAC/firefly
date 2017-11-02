@@ -1,8 +1,10 @@
 .ModalWindow {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    background-color: rgba(0, 0, 0, 0.25);
+    bottom: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -16,8 +18,10 @@
 }
 
 .ModalDialog__content {
-    box-shadow:0 0 1px #000000;
+    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.30);
     background-color: #E5E5E5;
     margin: 5px 3px;
     padding: 3px;
+    border: 1px solid rgba(0,0,0, .75);
+    border-radius: 3px;
 }

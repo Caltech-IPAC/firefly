@@ -95,14 +95,14 @@ export class PlotlyWrapper extends Component {
         this.preMask= show;
         if (show) {
             setTimeout( () => {
-                if (!this.state.showMask && this.preMask) {
+                if (!this.isUnmounted && !this.state.showMask && this.preMask) {
                     this.setState(() => ({showMask:true}));
                 }
             }, MASKING_DELAY);
         }
         else {
             setTimeout( () => {
-                if (this.state.showMask) {
+                if (!this.isUnmounted && this.state.showMask) {
                     this.setState(() => ({showMask:false}));
                 }
             },0);
@@ -331,6 +331,8 @@ const now = Date.now();
     }
 
     componentDidMount() { this.draw(); }
+
+    componentWillUnmount() { this.isUnmounted = true; }
 
     componentDidUpdate() { this.draw(); }
 

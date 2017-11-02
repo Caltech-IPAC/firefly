@@ -37,7 +37,7 @@ export class PopupStoreConnection extends PureComponent {
         var {visible}= this.state;
         if (!visible) return false;
         var {dialogId,popupPanel,requestOnTop,zIndex}= this.props;
-        return  get(popupPanel, 'type.name') !== 'PopupPanel' ? popupPanel : React.cloneElement(popupPanel,
+        return React.cloneElement(popupPanel,
             {
                 visible, requestOnTop, dialogId, zIndex,
                 requestToClose : () => dispatchHideDialog(dialogId)

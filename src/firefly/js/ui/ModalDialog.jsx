@@ -6,29 +6,32 @@ export class ModalDialog extends PureComponent {
         super(props);
         this.state = {
             width: getDocWidth(),
-            height: getDocHeight(),
-            scrollY: window.scrollY
+            height: getDocHeight()
+        };
+        this.browserResizeCallback = () => {
+            if (!this.isUnmounted) {
+                this.setState({width: getDocWidth(), height: getDocHeight()});
+            }
         };
     }
 
     componentDidMount() {
-        this.browserResizeCallback = () => { this.setState({width: getDocWidth(), height: getDocHeight()}); };
         window.addEventListener('resize', this.browserResizeCallback);
     }
 
     componentWillUnmount() {
+        this.isUnmounted = true;
         window.removeEventListener('resize', this.browserResizeCallback);
     }
 
     render() {
-        const {width, height, scrollY} = this.state;
-        // position dialog in the middle unless scroll in involved
-        const dialogStyle = (scrollY > 0 || window.innerHeight < height) ?
-            {position: 'absolute', width: '100%', top: scrollY} : {};
+        const {width, height} = this.state;
+        // make sure the modal fits into the viewport
+        const wrapperStyle = {maxWidth: width, maxHeight: height, overflow: 'auto'};
         return (
-            <div className='ModalWindow' style={{width, height}}>
-                <div className='ModalDialog' style={dialogStyle}>
-                    <div className='ModalDialog__content'>
+            <div className='ModalWindow'>
+                <div className='ModalDialog'>
+                    <div className='ModalDialog__content' style={wrapperStyle}>
                         {this.props.children}
                     </div>
                 </div>
@@ -38,17 +41,9 @@ export class ModalDialog extends PureComponent {
 }
 
 function getDocHeight() {
-    let appEl = document.querySelector('div#App.rootStyle');
-    if (!appEl) {
-        appEl = document.body;
-    }
-    return Math.max(appEl.clientHeight, appEl.scrollHeight);
+    return window.innerHeight;
 }
 
 function getDocWidth() {
-    let appEl = document.querySelector('div#App.rootStyle');
-    if (!appEl) {
-        appEl = document.body;
-    }
-    return Math.max(appEl.clientWidth, appEl.scrollWidth);
+    return window.innerWidth;
 }
