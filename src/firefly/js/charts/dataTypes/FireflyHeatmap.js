@@ -19,6 +19,9 @@ import BrowserInfo from  '../../util/BrowserInfo.js';
  */
 export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     const {mappings} = traceTS;
+
+    if (!mappings) return {}; 
+
     const {fireflyData, fireflyLayout} = getChartData(chartId) || {};
     // server call parameters
     const xbins = get(fireflyData, `${traceNum}.nbins.x`);

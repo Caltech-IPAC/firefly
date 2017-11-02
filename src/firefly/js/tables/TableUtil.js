@@ -642,13 +642,10 @@ export function getAsyncTableSourceUrl(tbl_ui_id) {
 
 function makeTableSourceUrl(columns, request) {
     const tableRequest = Object.assign(cloneDeep(request), {startIdx: 0,pageSize : MAX_ROW});
-    const visiCols = columns.filter( (col) => {
-        return get(col, 'visibility', 'show') === 'show';
-    }).map( (col) => {
-        return col.name;
-    } );
+    const visiCols = columns.filter( (col) => get(col, 'visibility', 'show') === 'show')
+                            .map( (col) => col.name);
     if (visiCols.length !== columns.length) {
-        tableRequest['inclCols'] = visiCols.toString();
+        tableRequest['inclCols'] = visiCols.map( (c) => c.includes('"') ? c : '"' + c + '"');  // add quotes to cname unless it's already quoted.
     }
     Reflect.deleteProperty(tableRequest, 'tbl_id');
     const params = omitBy({
