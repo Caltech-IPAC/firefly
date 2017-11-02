@@ -122,7 +122,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
     public String orderByPart(TableServerRequest treq) {
         if (treq.getSortInfo() != null) {
             String dir = treq.getSortInfo().getDirection() == SortInfo.Direction.DESC ? " desc" : "";
-            return  "order by " + treq.getSortInfo().getPrimarySortColumn() + dir;
+            String cols = treq.getSortInfo().getSortColumns().stream()
+                    .map(c -> c.contains("\"") ? c : "\"" + c + "\"")
+                    .collect(Collectors.joining(","));
+            return  "order by " + cols + dir;
         }
         return "";
     }

@@ -32,6 +32,17 @@ public class RequestAgent {
     private String remoteIP;
     private String sessId;
 
+    public RequestAgent() {}
+
+    public RequestAgent(Map<String, Cookie> cookies, String protocol, String requestUrl, String baseUrl, String remoteIP, String sessId) {
+        this.cookies = cookies;
+        this.protocol = protocol;
+        this.requestUrl = requestUrl;
+        this.baseUrl = baseUrl;
+        this.remoteIP = remoteIP;
+        this.sessId = sessId;
+    }
+
     public void setCookies(Map<String, Cookie> cookies) {
         this.cookies = cookies;
     }

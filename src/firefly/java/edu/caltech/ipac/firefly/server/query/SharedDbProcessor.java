@@ -60,7 +60,7 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
             DataGroup data = fetchData(treq);
             EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, tblName);
         }
-        return EmbeddedDbUtil.getResultForTable(treq, dbFile, tblName);
+        return EmbeddedDbUtil.execRequestQuery(treq, dbFile, tblName);
     }
 }
 

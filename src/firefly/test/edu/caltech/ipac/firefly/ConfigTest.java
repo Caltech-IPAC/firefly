@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly;
 
+import edu.caltech.ipac.firefly.server.RequestAgent;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
@@ -12,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.logging.LogManager;
 
 /**
@@ -118,4 +121,15 @@ public class ConfigTest {
             props.load(configUrl.openStream());
         }
     }
+
+    protected static void setupServerContext() {
+        setupServerContext("build/firefly/war/WEB-INF/config/", "/", "localhost:8080/");
+    }
+    protected static void setupServerContext(String webappConfigPath, String reqUrl, String baseUrl) {
+        System.setProperty("stats.log.dir", System.getProperty("java.io.tmpdir"));
+        ServerContext.getRequestOwner().setRequestAgent(new RequestAgent(null, "HTTP", reqUrl, baseUrl, "unknow", UUID.randomUUID().toString()));
+        ServerContext.init("/firefly", "firefly", webappConfigPath);
+
+    }
+
 }

@@ -18,4 +18,5 @@ workspace.protocol.webdav=edu.caltech.ipac.firefly.server.WebDAVWorkspaceManager
 # workspace.protocol.webdav=edu.caltech.ipac.firefly.server.ws.WebdavImpl
 
 atlas.ibe.host=irsadev.ipac.caltech.edu
+visualize.fits.Security=false
 

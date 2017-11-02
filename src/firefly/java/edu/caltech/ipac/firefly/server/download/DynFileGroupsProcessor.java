@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.download;
 
 
 import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -57,8 +58,7 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
     }
 
     private List<FileGroup> computeFileGroup(DownloadRequest request) throws IOException, IpacTableException, DataAccessException {
-        Collection<Integer> selectedRows = request.getSelectedRows();
-        DataGroupPart dgp = new SearchManager().getDataGroup(request.getSearchRequest());
+        ArrayList<Integer> selectedRows = new ArrayList<>(request.getSelectedRows());
 
         String urlDownloadColumn = request.getParam("URL_DOWNLOAD_COLUMN");
         if (urlDownloadColumn == null) {
@@ -70,7 +70,7 @@ public class DynFileGroupsProcessor extends FileGroupsProcessor {
             urlParamFilename = "name";
         }
 
-        IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
+        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(),
                 selectedRows, urlDownloadColumn);
 
         Logger.LoggerImpl logger = Logger.getLogger();

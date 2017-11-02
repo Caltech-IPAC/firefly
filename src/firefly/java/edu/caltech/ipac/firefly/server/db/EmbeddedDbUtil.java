@@ -4,17 +4,22 @@
 package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -85,70 +90,6 @@ public class EmbeddedDbUtil {
         return finfo;
     }
 
-    public static int insertMeta(DataGroup dg, ResultSet rs) {
-        try {
-            do {
-                dg.addAttribute(rs.getString("key"), rs.getString("value"));
-            } while (rs.next());
-        } catch (SQLException e) {
-            logger.error(e);
-        }
-        return 0;
-    }
-
-    public static int insertDD(DataGroup dg, ResultSet rs) {
-        try {
-            do {
-                String cname = rs.getString("cname");
-                String label = rs.getString("label");
-                String units = rs.getString("units");
-                String format = rs.getString("format");
-                int width = rs.getInt("width");
-                String visibility = rs.getString("visibility");
-                String desc = rs.getString("desc");
-                boolean sortable = rs.getBoolean("sortable");
-                boolean filterable = rs.getBoolean("filterable");
-
-                DataType dtype = dg.getDataDefintion(cname, true);
-                if (dtype != null) {
-                    dtype.setKeyName(cname);
-                    if (!StringUtils.areEqual(label, cname)) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.LABEL_TAG, cname);
-                        dg.addAttribute(attr, label);
-                    }
-                    if (!StringUtils.isEmpty(units)) {
-                        dtype.setUnits(units);
-                    }
-                    if (!StringUtils.isEmpty(format)) {
-                        dtype.getFormatInfo().setDataFormat(format);
-                    }
-                    if (width > 0) {
-                        dtype.getFormatInfo().setWidth(width);
-                    }
-                    if (!StringUtils.areEqual(visibility, VISI_SHOW)) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, cname);
-                        dg.addAttribute(attr, visibility);
-                    }
-                    if (!StringUtils.isEmpty(desc)) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, cname);
-                        dg.addAttribute(attr, desc);
-                    }
-                    if (!sortable) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, cname);
-                        dg.addAttribute(attr, String.valueOf(false));
-                    }
-                    if (!filterable) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.FILTERABLE_TAG, cname);
-                        dg.addAttribute(attr, String.valueOf(false));
-                    }
-                }
-            } while (rs.next());
-        } catch (SQLException e) {
-            logger.error(e);
-        }
-        return 0;
-    }
-
     public static void setDbMetaInfo(TableServerRequest treq, DbAdapter dbAdapter, File dbFile) {
         treq.setMeta(TBL_FILE_PATH, ServerContext.replaceWithPrefix(dbFile));
         treq.setMeta(TBL_FILE_TYPE, dbAdapter.getName());
@@ -158,37 +99,6 @@ public class EmbeddedDbUtil {
     @NotNull
     public static String getUniqueID(TableServerRequest treq) {
         return SearchProcessor.getUniqueIDDef(treq);
-    }
-
-    public static DataGroupPart getResultForTable(TableServerRequest treq, File dbFile, String tblName) throws DataAccessException {
-        try {
-            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-
-            // select a page from the dataset table
-            String pageSql = getPageSql(dbAdapter, treq, tblName);
-            DataGroupPart page = EmbeddedDbUtil.getResults(treq, pageSql, dbFile, tblName);
-
-            // fetch total row count for the query.. datagroup may contain partial results(paging)
-            String cntSql = String.format("select count(*) from %s", tblName);
-            int rowCnt = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).queryForInt(cntSql);
-
-            page.setRowCount(rowCnt);
-            page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, tblName);
-            if (!StringUtils.isEmpty(treq.getTblTitle())) {
-                page.getData().setTitle(treq.getTblTitle());  // set the datagroup's title to the request title.
-            }
-            return page;
-        } catch (Exception ex) {
-            throw new DataAccessException(ex);
-        }
-    }
-
-    public static DataGroupPart getResults(TableServerRequest treq, String sql, File dbFile, String tblName) {
-        DataGroup dg = runQuery(DbAdapter.getAdapter(treq), dbFile, sql, tblName);
-        TableDef tm = new TableDef();
-        tm.setStatus(DataGroupPart.State.COMPLETED);
-        tm.setRowCount(dg.size());
-        return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());
     }
 
     public static int createDataTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String tblName) {
@@ -220,7 +130,51 @@ public class EmbeddedDbUtil {
         return totalRows;
     }
 
-    public static DataGroup runQuery(DbAdapter dbAdapter, File dbFile, String sql, String tblName) {
+    /**
+     * Similar to execQuery, except this method creates the SQL statement from the given request object.
+     * It need to take filter, sort, and paging into consideration.
+     * @param treq      request parameters used for select, where, order by, and limit
+     * @param dbFile    database file
+     * @param forTable  table to run the query on.  the from part of the statement
+     * @return
+     */
+    public static DataGroupPart execRequestQuery(TableServerRequest treq, File dbFile, String forTable) {
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        String selectPart = dbAdapter.selectPart(treq);
+        String wherePart = dbAdapter.wherePart(treq);
+        String orderByPart = dbAdapter.orderByPart(treq);
+        String pagingPart = dbAdapter.pagingPart(treq);
+
+        String sql = String.format("%s from %s %s %s %s", selectPart, forTable, wherePart, orderByPart, pagingPart);
+        DataGroup data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, forTable);
+
+        int rowCnt = data.size();
+        if (!StringUtils.isEmpty(pagingPart)) {
+            // fetch total row count for the query.. datagroup may contain partial results(paging)
+            String cntSql = String.format("select count(*) from %s %s", forTable, wherePart);
+            rowCnt = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).queryForInt(cntSql);
+        }
+
+        DataGroupPart page = EmbeddedDbUtil.toDataGroupPart(data, treq);
+        page.setRowCount(rowCnt);
+        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, forTable);
+        if (!StringUtils.isEmpty(treq.getTblTitle())) {
+            page.getData().setTitle(treq.getTblTitle());  // set the datagroup's title to the request title.
+        }
+        return page;
+    }
+
+
+    /**
+     * Executes the give sql and returns the results as a DataGroup.  If refTable is provided, it will query the
+     * ?_dd and ?_meta tables of this refTable and add the information into the returned DataGroup.
+     * @param dbAdapter     adapter to use
+     * @param dbFile        database file
+     * @param sql           complete SQL statement
+     * @param refTable      use meta information from this table
+     * @return
+     */
+    public static DataGroup execQuery(DbAdapter dbAdapter, File dbFile, String sql, String refTable) {
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
         sql = dbAdapter.translateSql(sql);
 
@@ -230,10 +184,10 @@ public class EmbeddedDbUtil {
 
         SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
 
-        if (tblName != null) {
+        if (refTable != null) {
             // insert DD info into the results
             try {
-                String ddSql = dbAdapter.getDDSql(tblName);
+                String ddSql = dbAdapter.getDDSql(refTable);
                 jdbc.query(ddSql, (rs, i) -> EmbeddedDbUtil.insertDD(dg, rs));
             } catch (Exception e) {
                 // ignore.. may not have DD table
@@ -241,7 +195,7 @@ public class EmbeddedDbUtil {
 
             // insert table meta info into the results
             try {
-                String metaSql = dbAdapter.getMetaSql(tblName);
+                String metaSql = dbAdapter.getMetaSql(refTable);
                 jdbc.query(metaSql, (rs, i) -> EmbeddedDbUtil.insertMeta(dg, rs));
             } catch (Exception e) {
                 // ignore.. may not have meta table
@@ -251,27 +205,83 @@ public class EmbeddedDbUtil {
         return dg;
     }
 
+
 //====================================================================
-//
+//  common util functions
 //====================================================================
 
-    private static void doTableLoad(JdbcTemplate jdbc, String insertDataSql, DataGroup data) {
+    /**
+     * returns a DataGroup containing of the given cols from the selRows
+     * @param searchRequest     search request to query
+     * @param selRows           a list of selected rows
+     * @param cols              columns to return.  Will return all columns if not given.
+     * @return
+     */
+    public static DataGroup getSelectedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
+        TableServerRequest treq = (TableServerRequest)searchRequest;
+        EmbeddedDbProcessor proc = (EmbeddedDbProcessor) new SearchManager().getProcessor(searchRequest.getRequestId());
+        String selCols = cols == null || cols.length == 0 ? "*" : Arrays.stream(cols).map( c -> (c.contains("\"") ? c : "\"" + c + "\"")).collect(Collectors.joining(","));
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        File dbFile = proc.getDbFile(treq);
+        String tblName = proc.getResultSetID(treq);
+        String inRows = selRows != null && selRows.size() > 0 ? StringUtils.toString(selRows) : "-1";
 
-        jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                Object[] row = data.get(i).getData();
-                Object[] rowWithIdx = new Object[ row.length + 2];
-                System.arraycopy(row, 0, rowWithIdx, 0, row.length);
-                rowWithIdx[row.length] = i;
-                rowWithIdx[row.length+1] = i;
+        try {
+            DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", tblName));
+        } catch (Exception e) {
+            try {
+                // data does not exists.. recreate it
+                new SearchManager().getDataGroup(treq);
+            } catch (DataAccessException e1) {
+                logger.error(e1);
+            }
+        }
 
-                for (int cidx = 0; cidx < rowWithIdx.length; cidx++) ps.setObject(cidx+1, rowWithIdx[cidx]);
-            }
-            public int getBatchSize() {
-                return data.size();
-            }
-        });
+        String sql = String.format("select %s from %s where %s in (%s)", selCols, tblName, DataGroup.ROW_NUM, inRows);
+        return EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql ,tblName);
     }
+
+    /**
+     * Same as getSelectedData but in a MappedData structure.
+     * @param searchRequest     search request to query
+     * @param selRows           a list of selected rows
+     * @param cols              columns to return.  Will return all columns if not given.
+     * @return
+     */
+    public static IpacTableParser.MappedData getSelectedMappedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
+        if (cols != null && cols.length > 0) {
+            ArrayList<String> colsAry = new ArrayList<>(Arrays.asList(cols));
+            if (!colsAry.contains(DataGroup.ROW_NUM)) {
+                // add ROW_NUM into the returned results if not asked
+                colsAry.add(DataGroup.ROW_NUM);
+                cols = colsAry.toArray(new String[colsAry.size()]);
+            }
+        }
+        IpacTableParser.MappedData results = new IpacTableParser.MappedData();
+        DataGroup data = getSelectedData(searchRequest, selRows, cols);
+        for (DataObject row : data) {
+            int idx = row.getIntData(DataGroup.ROW_NUM);
+            for (DataType dt : data.getDataDefinitions()) {
+                if (!dt.getKeyName().equals(DataGroup.ROW_NUM)) {
+                    results.put(idx, dt.getKeyName(), row.getDataElement(dt));
+                }
+            }
+        }
+        return results;
+    }
+
+    public static DataGroupPart getSelectedDataAsDGPart(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
+        return toDataGroupPart(getSelectedData(searchRequest, selRows, cols), (TableServerRequest) searchRequest);
+    }
+
+    public static DataGroupPart toDataGroupPart(DataGroup data, TableServerRequest treq) {
+        TableDef tm = new TableDef();
+        tm.setStatus(DataGroupPart.State.COMPLETED);
+        tm.setRowCount(data.size());
+        return new DataGroupPart(tm, data, treq.getStartIndex(), data.size());
+    }
+
 
     public static void createMetaTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String forTable) {
         if (dg.getAttributeKeys().size() == 0) return;
@@ -334,11 +344,86 @@ public class EmbeddedDbUtil {
 //
 //====================================================================
 
-    private static String getPageSql(DbAdapter dbAdapter, TableServerRequest treq, String fromTable) {
-        String selectPart = dbAdapter.selectPart(treq);
-        String pagingPart = dbAdapter.pagingPart(treq);
+    private static int insertMeta(DataGroup dg, ResultSet rs) {
+        try {
+            do {
+                dg.addAttribute(rs.getString("key"), rs.getString("value"));
+            } while (rs.next());
+        } catch (SQLException e) {
+            logger.error(e);
+        }
+        return 0;
+    }
 
-        return String.format("%s from %s %s", selectPart, fromTable, pagingPart);
+    private static int insertDD(DataGroup dg, ResultSet rs) {
+        try {
+            do {
+                String cname = rs.getString("cname");
+                String label = rs.getString("label");
+                String units = rs.getString("units");
+                String format = rs.getString("format");
+                int width = rs.getInt("width");
+                String visibility = rs.getString("visibility");
+                String desc = rs.getString("desc");
+                boolean sortable = rs.getBoolean("sortable");
+                boolean filterable = rs.getBoolean("filterable");
+
+                DataType dtype = dg.getDataDefintion(cname, true);
+                if (dtype != null) {
+                    dtype.setKeyName(cname);
+                    if (!StringUtils.areEqual(label, cname)) {
+                        String attr = DataSetParser.makeAttribKey(DataSetParser.LABEL_TAG, cname);
+                        dg.addAttribute(attr, label);
+                    }
+                    if (!StringUtils.isEmpty(units)) {
+                        dtype.setUnits(units);
+                    }
+                    if (!StringUtils.isEmpty(format)) {
+                        dtype.getFormatInfo().setDataFormat(format);
+                    }
+                    if (width > 0) {
+                        dtype.getFormatInfo().setWidth(width);
+                    }
+                    if (!StringUtils.areEqual(visibility, VISI_SHOW)) {
+                        String attr = DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, cname);
+                        dg.addAttribute(attr, visibility);
+                    }
+                    if (!StringUtils.isEmpty(desc)) {
+                        String attr = DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, cname);
+                        dg.addAttribute(attr, desc);
+                    }
+                    if (!sortable) {
+                        String attr = DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, cname);
+                        dg.addAttribute(attr, String.valueOf(false));
+                    }
+                    if (!filterable) {
+                        String attr = DataSetParser.makeAttribKey(DataSetParser.FILTERABLE_TAG, cname);
+                        dg.addAttribute(attr, String.valueOf(false));
+                    }
+                }
+            } while (rs.next());
+        } catch (SQLException e) {
+            logger.error(e);
+        }
+        return 0;
+    }
+
+    private static void doTableLoad(JdbcTemplate jdbc, String insertDataSql, DataGroup data) {
+
+        jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                Object[] row = data.get(i).getData();
+                Object[] rowWithIdx = new Object[ row.length + 2];
+                System.arraycopy(row, 0, rowWithIdx, 0, row.length);
+                rowWithIdx[row.length] = i;
+                rowWithIdx[row.length+1] = i;
+
+                for (int cidx = 0; cidx < rowWithIdx.length; cidx++) ps.setObject(cidx+1, rowWithIdx[cidx]);
+            }
+            public int getBatchSize() {
+                return data.size();
+            }
+        });
     }
 
     private static DataType[] makeDbCols(DataGroup dg) {
@@ -365,6 +450,11 @@ public class EmbeddedDbUtil {
     }
 
 
+    /**
+     * This is where you create stored function or procedure.
+     * @param dbFile
+     * @param dbAdapter
+     */
     private static void createCustomFunctions(File dbFile, DbAdapter dbAdapter) {
 
         String decimate_key =

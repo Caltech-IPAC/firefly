@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.util;
 
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
+
 import java.io.Serializable;
 
 /**
@@ -175,7 +177,11 @@ public class DataObject implements Serializable, Cloneable {
         return v == null ? def : v.toString();
     }
 
-
+    public int getIntData(String name) { return QueryUtil.getInt(getDataElement(name)); }
+    public int getIntData(String name, int def) {
+        int v = getIntData(name);
+        return v == Integer.MIN_VALUE ? def : v;
+    }
 
 
 

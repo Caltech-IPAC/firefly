@@ -5,6 +5,7 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
@@ -57,8 +58,7 @@ public class WiseLightCurveFileGroupsProcessor extends FileGroupsProcessor {
         // create unique list of filesystem-based and url-based files
         Set<String> zipFiles = new HashSet<String>();
 
-        Collection<Integer> selectedRows = request.getSelectedRows();
-        DataGroupPart dgp = new SearchManager().getDataGroup(request.getSearchRequest());
+        ArrayList<Integer> selectedRows = new ArrayList<>(request.getSelectedRows());
 
         ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
         ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
@@ -106,8 +106,10 @@ public class WiseLightCurveFileGroupsProcessor extends FileGroupsProcessor {
         // For LC viewer we only want single exposure - product level = 1b
         String pl = request.getSafeParam("ProductLevel");
         String productLevel = pl != null ? pl : "1b";
-        IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, "source_id_mf", "source_id", "frame_id", "scan_id", "frame_num", "ra", "dec");
+        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
+        // some of these columns may not exists depending on the data type and therefore cannot be queried.
+        // in this case, we select all columns.
+        //"source_id_mf", "source_id", "frame_id", "scan_id", "frame_num", "ra", "dec"
 
 
         String frameidRegex = "(\\d+)([0-9][a-z])(\\w+)";

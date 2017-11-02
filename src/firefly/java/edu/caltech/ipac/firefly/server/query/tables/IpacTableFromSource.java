@@ -24,9 +24,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 
-@SearchProcessorImpl(id = "IpacTableFromSource")
+
+@SearchProcessorImpl(id = PROC_ID)
 public class IpacTableFromSource extends IpacTablePartProcessor {
+    public static final String PROC_ID = "IpacTableFromSource";
     public static final String TBL_TYPE = "tblType";
     public static final String TYPE_CATALOG = "catalog";
     public static final String URL_CHECK_FOR_NEWER = WebPlotRequest.URL_CHECK_FOR_NEWER;
