@@ -283,17 +283,7 @@ public class CropAndCenter  {
 
     static Header clone_header(Header header)
     {
-        // first collect cards from old header
-        Cursor iter = header.iterator();
-        String cards[] = new String[header.getNumberOfCards()];
-        int i = 0;
-        while (iter.hasNext())
-        {
-            HeaderCard card = (HeaderCard) iter.next();
-             cards[i] = card.toString();
-             i++;
-        }
-        return(new Header(cards));
+        return FitsRead.cloneHeaderFrom(header);
     }
 
 

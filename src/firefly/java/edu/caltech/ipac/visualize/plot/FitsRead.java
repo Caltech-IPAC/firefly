@@ -652,17 +652,7 @@ public class FitsRead implements Serializable {
             throws FitsException {
         Header header = hdu.getHeader();
 
-        // first clone the header
-        Cursor iter = header.iterator();
-        String cards[] = new String[header.getNumberOfCards()];
-        HeaderCard card;
-        int i = 0;
-        while (iter.hasNext()) {
-            card = (HeaderCard) iter.next();
-            cards[i] = card.toString();
-            i++;
-        }
-        Header newHeader = new Header(cards);
+        Header newHeader = cloneHeaderFrom(header);
 
         newHeader.deleteKey("BITPIX");
         newHeader.setBitpix(-32);
@@ -1727,18 +1717,21 @@ public class FitsRead implements Serializable {
 
 
     }
-    static Header cloneHeader(Header header) {
-        // first collect cards from old header
+
+
+    static Header cloneHeaderFrom(Header header) {
         Cursor iter = header.iterator();
-        String cards[] = new String[header.getNumberOfCards()];
-        int i = 0;
+        Header clonedHeader = new Header();
+
         while (iter.hasNext()) {
             HeaderCard card = (HeaderCard) iter.next();
-            cards[i] = card.toString();
-            i++;
+            clonedHeader.addLine(card);
         }
+        return clonedHeader;
+    }
 
-        Header clonedHeader = new Header(cards);
+    static Header cloneHeader(Header header) {
+        Header clonedHeader = cloneHeaderFrom(header);
 
         clonedHeader.resetOriginalSize();
         return clonedHeader;
