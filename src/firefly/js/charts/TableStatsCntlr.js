@@ -170,6 +170,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
 }
 
 export function getColValStats(tblId) {
+    if (!tblId) { return undefined; }
     const tblStatsData = flux.getState()[TBLSTATS_DATA_KEY][tblId];
     if (get(tblStatsData,'isColStatsReady')) {
         return tblStatsData.colStats;
