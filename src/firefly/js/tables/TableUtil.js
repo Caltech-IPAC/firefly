@@ -645,7 +645,7 @@ function makeTableSourceUrl(columns, request) {
     const visiCols = columns.filter( (col) => get(col, 'visibility', 'show') === 'show')
                             .map( (col) => col.name);
     if (visiCols.length !== columns.length) {
-        tableRequest['inclCols'] = visiCols.map( (c) => c.includes('"') ? c : '"' + c + '"');  // add quotes to cname unless it's already quoted.
+        tableRequest['inclCols'] = visiCols.map( (c) => c.includes('"') ? c : '"' + c + '"').join();  // add quotes to cname unless it's already quoted.
     }
     Reflect.deleteProperty(tableRequest, 'tbl_id');
     const params = omitBy({
