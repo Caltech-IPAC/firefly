@@ -250,11 +250,12 @@ export class ChartPanel extends PureComponent {
         const {chartId} = this.props;
         const chartData =  ChartsCntlr.getChartData(chartId);
         if (!isEmpty(chartData)) {
+            const errors = ChartsCntlr.getErrors(chartId);
             const {chartType, activeTrace, showOptions, optionsKey} = chartData;
             //if (chartType === 'plot.ly') return {};
             const {Chart,Options,Toolbar,getChartProperties=()=>{},updateOnStoreChange} = reduxFlux.getChartType(chartType) || {};
             return {
-                chartId, activeTrace, showOptions, optionsKey, ...getChartProperties(chartId),
+                chartId, activeTrace, showOptions, optionsKey, errors, ...getChartProperties(chartId),
                 Chart,
                 Options,
                 Toolbar,

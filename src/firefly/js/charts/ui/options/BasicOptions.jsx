@@ -11,8 +11,7 @@ import Validate from '../../../util/Validate.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
-import CompleteButton from '../../../ui/CompleteButton.jsx';
-import {NewTracePanelBtn} from './NewTracePanel.jsx';
+
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
@@ -52,8 +51,10 @@ function getOptions(a, layout) {
     if ( (isUndefined(showgrid) && get(layout, `${a}axis.gridwidth`)) || showgrid) {
         opts.push('grid');
     }
-    if (get(layout, `${a}axis.autorange`) === 'reversed' ||
-        (get(layout, `${a}axis.range.1`) < get(layout, `${a}axis.range.0`))) {
+    const range = get(layout, `${a}axis.range`) || [];
+    const autorange = get(layout, `${a}axis.autorange`);
+    const reversed = (autorange === 'reversed') || (range[1] < range[0]);
+    if (reversed) {
         opts.push('flip');
     }
     if (get(layout, `${a}axis.side`) === (a==='x'?'top':'right')) {
@@ -119,14 +120,12 @@ export class BasicOptions extends SimpleComponent {
         const xNoLog = type.includes('histogram') ? true : undefined;          // histogram2d or histogram2dcontour
         const yNoLog = type.includes('histogram') ? true : undefined;
 
+        //<OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
         return (
-            <div style={{minWidth: 250, padding:'0 5px 7px'}}>
-                <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id}}/>
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
-                            reducerFunc={basicFieldReducer({chartId, activeTrace})}>
-                    <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, isXNotNumeric, isYNotNumeric, xNoLog, yNoLog}}/>
-                </FieldGroup>
-            </div>
+            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
+                        reducerFunc={basicFieldReducer({chartId, activeTrace})}>
+                <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, isXNotNumeric, isYNotNumeric, xNoLog, yNoLog}}/>
+            </FieldGroup>
         );
     }
 }
@@ -138,7 +137,7 @@ export function basicFieldReducer({chartId, activeTrace}) {
     const fields = {
         [`data.${activeTrace}.name`]: {
             fieldKey: `data.${activeTrace}.name`,
-            value: get(data, `${activeTrace}.name`, 'trace ' + activeTrace),
+            value: get(data, `${activeTrace}.name`,''),
             tooltip: 'The name of this new series',
             label : 'Name:',
             ...fieldProps
@@ -434,34 +433,6 @@ BasicOptionFields.propTypes = {
 };
 
 
-
-export function OptionTopBar({groupKey, activeTrace, chartId, tbl_id, submitChangesFunc=submitChanges}) {
-    return (
-        <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
-            <CompleteButton style={{flexGrow: 0}}
-                            groupKey={groupKey}
-                            onSuccess={(fields) => submitChangesFunc({chartId, activeTrace, fields, tbl_id})}
-                            onFail={() => alert('to be implemented')}
-                            text = 'Apply'
-            />
-            <div style={{flexGrow: 1}}/>
-            {tbl_id && <div style={{flexGrow: 0}}><NewTracePanelBtn {...{chartId, tbl_id}}/></div>}
-            <div style={{flexGrow: 0}}>
-                <button type='button' className='button std' onClick={() => resetChart(chartId)}>Reset</button>
-            </div>
-        </div>
-
-    );
-}
-
-OptionTopBar.propTypes = {
-    groupKey: PropTypes.string.isRequired,
-    activeTrace: PropTypes.number.isRequired,
-    chartId: PropTypes.string,
-    tbl_id: PropTypes.string,
-    submitChangesFunc: PropTypes.func
-};
-
 /**
  * This is a default implementation of an option pane's apply changes function.
  * It assume the fieldId is the 'path' to the chart data and the value of the field is the value you want to change.
@@ -479,7 +450,7 @@ export function submitChanges({chartId, fields, tbl_id}) {
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
-            const [,activeTrace] = /^_tables.data.(\d)/.exec(k) || [,];
+            const [,activeTrace] = /^_tables.data.(\d)/.exec(k) || [];
             if (!isUndefined(activeTrace)) set(changes, [`data.${activeTrace}.tbl_id`], tbl_id);
             k = k.replace('_tables.', '');
             v = v ? `tables::${v}` : undefined;
@@ -496,14 +467,18 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     if (opts.includes('flip')) {
                         if (range) {  
                             if (range[0]<range[1]) changes[`layout.${a}axis.range`] = reverse(range);
+                            changes[`layout.${a}axis.autorange`] = false;
                         } else {
                             changes[`layout.${a}axis.autorange`] = 'reversed';
+                            changes[`layout.${a}axis.range`] = undefined;
                         }
                     } else {
                         if (range) {
                             if (range[1]<range[0]) changes[`layout.${a}axis.range`] = reverse(range);
+                            changes[`layout.${a}axis.autorange`] = false;
                         } else {
                             changes[`layout.${a}axis.autorange`] = true;
+                            changes[`layout.${a}axis.range`] = undefined;
                         }
                     }
                     if (opts.includes('opposite')) {
@@ -588,11 +563,11 @@ function adjustAxesRange(layout, changes) {
                 }
             }
             const range = changes[`layout.${a}axis.range`] || [];
-            const reversed = (changes[`layout.${a}axis.autorange`] === 'reversed') || (range[1] < range[0]);
+            const autorange = changes[`layout.${a}axis.autorange`];
+            const reversed = (autorange === 'reversed') || (!autorange && range[1] < range[0]);
+
             changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', reversed);
             changes[`layout.${a}axis.autorange`] = false;
-        } else {
-            //changes[`layout.${a}axis.autorange`] = true;
         }
     });
 }
@@ -624,7 +599,3 @@ function filterOptions(options, opts) {
     return opts.filter((opt) => options.includes(opt) || options.includes('_all_')).toString();
 }
 
-function resetChart(chartId) {
-    const {_original} = getChartData(chartId);
-    _original && dispatchChartAdd(_original);
-}

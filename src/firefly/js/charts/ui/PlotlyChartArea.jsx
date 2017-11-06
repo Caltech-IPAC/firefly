@@ -4,10 +4,10 @@ import {flux} from '../../Firefly.js';
 import {get, set} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
-import {CHART_ADD, CHART_UPDATE, dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
 import {isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
-import {monitorChanges} from '../../tables/TableUtil.js';
 
 const X_TICKLBL_PX = 60;
 const TITLE_PX = 30;
@@ -228,10 +228,14 @@ function onSelect(chartId) {
             }
 
             if (points) {
-                dispatchChartUpdate({
-                    chartId,
-                    changes: {'selection': {points, range: {x: [xMin, xMax], y: [yMin, yMax]}}}
-                });
+                if (points.length < 1) {
+                    showInfoPopup((<div>No active trace points in the selection area.</div>), 'Warning');
+                } else {
+                    dispatchChartUpdate({
+                        chartId,
+                        changes: {'selection': {points, range: {x: [xMin, xMax], y: [yMin, yMax]}}}
+                    });
+                }
             } else {
                 const {selection} = getChartData(chartId);
                 if (selection) {

@@ -5,7 +5,8 @@
 import React from 'react';
 import CompleteButton from './CompleteButton.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import {dispatchShowDialog} from '../core/ComponentCntlr.js';
+import {ModalDialog} from './ModalDialog.jsx';
+import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 
 export const INFO_POPUP= 'InfoPopup';
@@ -16,6 +17,28 @@ export const INFO_POPUP= 'InfoPopup';
 // More types of popup can be added here
 // ------------------------------------------------------------
 // ------------------------------------------------------------
+
+export const MODAL_DIALOG_ID = 'ModalDialog';
+
+/**
+ * Creates and shows the modal dialog.
+ * @param {string | object}  content can be a string or a react component
+ * @param {boolean} [show=true] show or hide this dialog
+ */
+export function showModal(content, show=true) {
+    if (show) {
+        const dialogContent= (
+            <ModalDialog>
+                {content}
+            </ModalDialog>
+        );
+        DialogRootContainer.defineDialog(MODAL_DIALOG_ID, dialogContent);
+
+        dispatchShowDialog(MODAL_DIALOG_ID);
+    } else {
+        dispatchHideDialog(MODAL_DIALOG_ID);
+    }
+}
 
 
 /**
@@ -46,3 +69,4 @@ function makeContent(content) {
         </div>
     );
 }
+

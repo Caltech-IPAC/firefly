@@ -10,7 +10,6 @@ import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import {NewTracePanel} from '../charts/ui/options/NewTracePanel.jsx';
 import {uniqueChartId, multitraceDesign} from '../charts/ChartUtil.js';
 import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
@@ -18,6 +17,9 @@ import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
 import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 import {HistogramOptions, resultsSuccess as onHistogramOptsSelected,
                           setOptions as HistogramSetOptions} from '../charts/ui/HistogramOptions.jsx';
+import {ChartSelectPanel, CHART_ADDNEW} from './../charts/ui/ChartSelectPanel.jsx';
+import {getActiveViewerItemId} from '../charts/ui/MultiChartViewer.jsx';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 
 import {FormPanel} from './FormPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
@@ -226,7 +228,11 @@ export class ChartSelectDropdown extends PureComponent {
 
         if (tblId) {
             return multitraceDesign() ?
-                (<NewTracePanel {...{tbl_id: tblId, hideDialog: ()=>dispatchHideDropDown()}}/> ) :
+                (<ChartSelectPanel {...{
+                    tbl_id: tblId,
+                    chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
+                    chartAction: CHART_ADDNEW,
+                    hideDialog: ()=>dispatchHideDropDown()}}/> ) :
                 (<ChartSelect {...{tblId, tblStatsData}} {...this.props}/>);
         } else {
             return (

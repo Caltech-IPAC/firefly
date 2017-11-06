@@ -10,7 +10,7 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-import {BasicOptionFields, OptionTopBar, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 
@@ -34,17 +34,13 @@ export class HeatmapOptions extends SimpleComponent {
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-heatmap-${activeTrace}`;
         const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
-        const tbl_id = get(tablesource, 'tbl_id');
 
         return (
-            <div style={{padding:'0 5px 7px'}}>
-                {isUndefined(this.props.activeTrace) && <OptionTopBar {...{groupKey, activeTrace, chartId, tbl_id, submitChangesFunc: submitChangesHeatmap}}/>}
-                <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                    {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
-                    <br/>
-                    <BasicOptionFields {...{activeTrace, groupKey, noColor: true}}/>
-                </FieldGroup>
-            </div>
+            <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
+                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
+                <br/>
+                <BasicOptionFields {...{activeTrace, groupKey, noColor: true}}/>
+            </FieldGroup>
         );
     }
 }
@@ -127,8 +123,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
     return (
         <div className='FieldGroup__vertical'>
             <br/>
-            <ColumnOrExpression {...xProps}/>
-            <ColumnOrExpression {...yProps}/>
+            {colValStats && <ColumnOrExpression {...xProps}/>}
+            {colValStats && <ColumnOrExpression {...yProps}/>}
             <div style={{whiteSpace: 'nowrap'}}>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.colorscale`}
                                    inline={true}
@@ -143,8 +139,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
                         ]}
                 />
             </div>
-            <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.x`}/>
-            <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.y`}/>
+            {colValStats && <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.x`}/>}
+            {colValStats && <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.y`}/>}
         </div>
     );
 }
