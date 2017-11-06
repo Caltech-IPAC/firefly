@@ -3,7 +3,7 @@
  */
 import {get, isArray} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import {getTblById, cloneRequest, doFetchTable} from '../../tables/TableUtil.js';
+import {getTblById, doFetchTable} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
 
@@ -12,7 +12,6 @@ import {toMaxFixed} from '../../util/MathUtil.js';
 import Color from '../../util/Color.js';
 
 const HIST_DEC = 6;
-const A = 0.85;
 
 /**
  * This function creates table source entries to get aggregated firefly histogram data from the server
@@ -210,7 +209,7 @@ function createXY(data, binColor) { // removed '#d1d1d1' to use default colors
                             return prev;
                         }, startW*0.02) : 1.0;
 
-    var lastX = data[0][1]-1.0;
+    //var lastX = data[0][1]-1.0;
     //var prevColor = 0;
 
     var addBin = (xySeries, x1, x2, y) => {
@@ -228,7 +227,7 @@ function createXY(data, binColor) { // removed '#d1d1d1' to use default colors
             `${x1 !== x2 ? '<b>Range: </b>' + toMaxFixed(x1, HIST_DEC) + ' to ' + toMaxFixed(x2, HIST_DEC) + '<br>' : ''}` +
             `<b>Count:</b> ${y}</span>`);
 
-        lastX = x2;
+        //lastX = x2;
     };
 
     return data.reduce((xy, oneData) => {

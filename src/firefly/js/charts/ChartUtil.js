@@ -10,12 +10,11 @@
 import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
-import {flux} from '../Firefly.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getTblById, getColumnIdx, getCellValue, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
-import {UI_PREFIX, dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, dispatchChartRemove, removeTrace, getChartData} from './ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, dispatchChartRemove, removeTrace, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
@@ -256,10 +255,6 @@ export function makeHistogramParams(params) {
         };
         return histogramParams;
     }
-}
-
-export function getChartUi(chartId) {
-    return get(flux.getState(), `${UI_PREFIX}.${chartId}`);
 }
 
 /**

@@ -176,13 +176,3 @@
     background-image: url("/images/icons-2014/24x24_CheckmarkOff_Circle.png");
 }
 
-.ChartOptions {
-    position: absolute;
-    top: 0;
-    right: 0;
-    min-width: 200px;
-    height: 100%;
-    background-color: beige;
-}
-
-

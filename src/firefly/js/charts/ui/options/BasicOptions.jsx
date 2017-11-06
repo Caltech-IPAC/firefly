@@ -11,8 +11,7 @@ import Validate from '../../../util/Validate.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
-//import CompleteButton from '../../../ui/CompleteButton.jsx';
-//import {NewTracePanelBtn} from './NewTracePanel.jsx';
+
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
@@ -434,34 +433,6 @@ BasicOptionFields.propTypes = {
 };
 
 
-
-//export function OptionTopBar({groupKey, activeTrace, chartId, tbl_id, submitChangesFunc=submitChanges}) {
-//    return (
-//        <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
-//            <CompleteButton style={{flexGrow: 0}}
-//                            groupKey={groupKey}
-//                            onSuccess={(fields) => submitChangesFunc({chartId, activeTrace, fields, tbl_id})}
-//                            onFail={() => alert('to be implemented')}
-//                            text = 'Apply'
-//            />
-//            <div style={{flexGrow: 1}}/>
-//            {tbl_id && <div style={{flexGrow: 0}}><NewTracePanelBtn {...{chartId, tbl_id}}/></div>}
-//            <div style={{flexGrow: 0}}>
-//                <button type='button' className='button std' onClick={() => resetChart(chartId)}>Reset</button>
-//            </div>
-//        </div>
-//
-//    );
-//}
-//
-//OptionTopBar.propTypes = {
-//    groupKey: PropTypes.string.isRequired,
-//    activeTrace: PropTypes.number.isRequired,
-//    chartId: PropTypes.string,
-//    tbl_id: PropTypes.string,
-//    submitChangesFunc: PropTypes.func
-//};
-
 /**
  * This is a default implementation of an option pane's apply changes function.
  * It assume the fieldId is the 'path' to the chart data and the value of the field is the value you want to change.
@@ -479,7 +450,7 @@ export function submitChanges({chartId, fields, tbl_id}) {
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
-            const [,activeTrace] = /^_tables.data.(\d)/.exec(k) || [,];
+            const [,activeTrace] = /^_tables.data.(\d)/.exec(k) || [];
             if (!isUndefined(activeTrace)) set(changes, [`data.${activeTrace}.tbl_id`], tbl_id);
             k = k.replace('_tables.', '');
             v = v ? `tables::${v}` : undefined;

@@ -33,22 +33,25 @@ export class FireflyHistogramOptions extends SimpleComponent {
         const basicFieldsReducer = basicFieldReducer({chartId, activeTrace});
         return (
             <div style={{padding:'0 5px 7px'}}>
-                <HistogramOptions {...{key: activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/>
+                {colValStats ?
+                    <HistogramOptions {...{key: activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/> :
+                    'Loading...'
+                }
             </div>
         );
     }
 }
 
 export function submitChangesFFHistogram({chartId, activeTrace, fields, tbl_id}) {
-    const changes = histogramOptionsToChanges(chartId, activeTrace, fields, tbl_id);
+    const changes = histogramOptionsToChanges(activeTrace, fields, tbl_id);
     submitChanges({chartId, fields: changes, tbl_id});
 }
 
-function histogramOptionsToChanges(chartId, activeTrace, fields, tbl_id) {
+function histogramOptionsToChanges(activeTrace, fields, tbl_id) {
     const changes = {};
     changes[`fireflyData.${activeTrace}.dataType`] = 'fireflyHistogram';
     changes[`fireflyData.${activeTrace}.tbl_id`] = tbl_id;
-    Object.entries(fields).forEach( ([k,v]) => {
+    fields && Object.entries(fields).forEach( ([k,v]) => {
         if (['data', 'layout', 'fireflyLayout', 'activeTrace', '_'].find((s) => k.startsWith(s))) {
             changes[k] = v;
         } else {

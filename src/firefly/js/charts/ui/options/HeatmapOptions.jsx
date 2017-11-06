@@ -34,7 +34,6 @@ export class HeatmapOptions extends SimpleComponent {
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-heatmap-${activeTrace}`;
         const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
-        const tbl_id = get(tablesource, 'tbl_id');
 
         return (
             <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
@@ -124,8 +123,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
     return (
         <div className='FieldGroup__vertical'>
             <br/>
-            <ColumnOrExpression {...xProps}/>
-            <ColumnOrExpression {...yProps}/>
+            {colValStats && <ColumnOrExpression {...xProps}/>}
+            {colValStats && <ColumnOrExpression {...yProps}/>}
             <div style={{whiteSpace: 'nowrap'}}>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.colorscale`}
                                    inline={true}
@@ -140,8 +139,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
                         ]}
                 />
             </div>
-            <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.x`}/>
-            <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.y`}/>
+            {colValStats && <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.x`}/>}
+            {colValStats && <ValidationField fieldKey={`fireflyData.${activeTrace}.nbins.y`}/>}
         </div>
     );
 }

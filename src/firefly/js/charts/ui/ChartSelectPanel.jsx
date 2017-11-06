@@ -57,9 +57,10 @@ function onChartAction({chartAction, tbl_id, chartId, hideDialog}) {
                 addNewTrace({fields, tbl_id, chartId, hideDialog});
                 break;
             case CHART_TRACE_MODIFY:
-                const {activeTrace, data} = getChartData(chartId);
+                const {activeTrace, data, fireflyData} = getChartData(chartId);
                 const type = get(data, `${activeTrace}.type`, 'scatter');
-                const submitChangesFunc = getSubmitChangesFunc(type);
+                const ftype = get(fireflyData, `${activeTrace}.dataType`);
+                const submitChangesFunc = getSubmitChangesFunc(type, ftype);
                 hideDialog();
                 submitChangesFunc && submitChangesFunc({chartId, activeTrace, fields, tbl_id});
                 break;
@@ -106,7 +107,7 @@ export class ChartSelectPanel extends SimpleComponent {
         }
         if (newChartAction !== oldChartAction) {
             if (oldChartAction) {
-                dispatchValueChange({groupKey: chartActionPanelKey, fieldKey: chartActionKey, value: newChartAction});
+                dispatchValueChange({fieldKey: chartActionKey, groupKey: chartActionPanelKey, value: newChartAction, valid: true});
             }
             this.setState({chartAction: newChartAction});
         }
@@ -233,8 +234,8 @@ ChartActionOptions.propTypes = {
  * @param {string}  chartId
  */
 export function showChartsDialog(chartId) {
-    const {data, activeTrace} = getChartData(chartId);
-    const tbl_id = get(data, `${activeTrace}.tbl_id`);
+    const {data, fireflyData, activeTrace} = getChartData(chartId);
+    const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
 
     const content= (
             <ChartSelectPanel {...{

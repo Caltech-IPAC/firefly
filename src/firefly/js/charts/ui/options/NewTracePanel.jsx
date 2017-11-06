@@ -6,10 +6,6 @@ import {getNewTraceDefaults} from '../../ChartUtil.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-//import CompleteButton from '../../../ui/CompleteButton.jsx';
-import DialogRootContainer from '../../../ui/DialogRootContainer.jsx';
-import {dispatchShowDialog, dispatchHideDialog} from '../../../core/ComponentCntlr.js';
-import {PopupPanel} from '../../../ui/PopupPanel.jsx';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {ScatterOptions, submitChangesScatter} from './ScatterOptions.jsx';
@@ -18,14 +14,14 @@ import {FireflyHistogramOptions, submitChangesFFHistogram} from './FireflyHistog
 import {BasicOptionFields, basicFieldReducer, submitChanges, hasMarkerColor} from './BasicOptions.jsx';
 
 const fieldProps = {labelWidth: 62, size: 15};
-const dialogNameNewTrace = 'NewTracePanel';
 
-export function getSubmitChangesFunc(traceType) {
-    switch(traceType) {
+export function getSubmitChangesFunc(traceType, fireflyType) {
+    const type = fireflyType || traceType;
+    switch(type) {
         case 'scatter':
         case 'scattergl':
             return submitChangesScatter;
-        case 'heatmap':
+        case 'fireflyHeatmap':
             return submitChangesHeatmap;
         case 'fireflyHistogram':
             return submitChangesFFHistogram;
@@ -40,7 +36,7 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id}
         case 'scatter':
         case 'scattergl':
             return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
-        case 'heatmap':
+        case 'fireflyHeatmap':
             return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         case 'fireflyHistogram':
             return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
@@ -89,27 +85,16 @@ export class NewTracePanel extends SimpleComponent {
     }
 
     render() {
-        const {tbl_id, chartId, groupKey, hideDialog=()=>dispatchHideDialog(dialogNameNewTrace)} = this.props;
+        const {tbl_id, chartId, groupKey} = this.props;
         const {activeTrace, type} = this.state;
 
-
-        //<div style={{display: 'inline-flex', marginTop: 10, justifyContent: 'space-between'}}>
-        //    <CompleteButton groupKey={groupKey}
-        //                    onSuccess={doAdd}
-        //                    onFail={() => {}}    //invalid fields highlighted, anything else?
-        //                    text='ADD'
-        //    />
-        //    <button type='button' className='button std'
-        //            onClick={hideDialog}>Cancel
-        //    </button>
-        //</div>
         return (
             <div style={{padding: 10}}>
                 <FieldGroup className='FieldGroup__vertical' style={{padding: 5}} keepState={true} groupKey='new-trace'>
                     <ListBoxInputField fieldKey='type' tooltip='Select plot type' label='Plot Type:'
                         options={[
                             {label: 'Scatter', value: 'scatter'},
-                            {label: 'Heatmap', value: 'heatmap'},
+                            {label: 'Heatmap', value: 'fireflyHeatmap'},
                             {label: 'Histogram', value: 'fireflyHistogram'}
                         ]}
                         {...fieldProps} />
@@ -120,21 +105,6 @@ export class NewTracePanel extends SimpleComponent {
             </div>
         );
     }
-}
-
-export function NewTracePanelBtn({tbl_id, chartId}) {
-    function showNewTracePanel() {
-        const content= (
-            <PopupPanel title={'Add a new series to existing chart'} >
-                <NewTracePanel {...{tbl_id, chartId}}/>
-            </PopupPanel>
-        );
-        DialogRootContainer.defineDialog(dialogNameNewTrace, content);
-        dispatchShowDialog(dialogNameNewTrace);
-    }
-    return (
-        <button type='button' className='button std' onClick={showNewTracePanel}>Add Series</button>
-    );
 }
 
 function fieldReducer({chartId, activeTrace}) {
