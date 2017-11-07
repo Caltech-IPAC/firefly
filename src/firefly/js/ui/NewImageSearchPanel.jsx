@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get, includes, isNil,countBy} from 'lodash';
-
+import {flux} from '../Firefly.js';
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
@@ -20,12 +20,14 @@ import {FileUpload} from './FileUpload.jsx';
 import {ValidationField} from './ValidationField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {parseWorldPt} from '../visualize/Point.js';
-import WebPlotRequest, {WPConst} from '../visualize/WebPlotRequest.js';
+import WebPlotRequest, {WPConst,TitleOptions} from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {getImageMasterData} from '../visualize/ui/AllImageSearchConfig.js';
 import {ImageSelect} from './ImageSelect.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {logError} from '../util/WebUtil.js';
+
+const [RED, GREEN, BLUE] = [0, 1, 2];
 
 const rgbFieldGroup = ['REDFieldGroup','GREENFieldGroup','BLUEFieldGroup'];
 const rgb = ['red', 'green', 'blue'];
@@ -54,14 +56,25 @@ const maskWrapper= {
     width:'100%',
     height:'100%'
 };
-var outputMessage = (errMsg) => errMsg&&showInfoPopup(errMsg, 'Load Selected Image Error');
 
+var outputMessage = (errMsg) => errMsg&&showInfoPopup(errMsg, 'Load Selected Image Error');
+function getAllGroupFields(...keys) {
+    return keys.reduce((prev, fg) => (Object.assign(prev, {[fg]: FieldGroupUtils.getGroupFields(fg)})), {});
+}
 export class NewImageSearchPanel extends PureComponent {
 
     constructor(props) {
 
             super(props);
-            this.state= {imageMasterData:null, showError: false};
+            this.groupKey=FG_KEY;
+            this.allfields = getAllGroupFields(this.groupKey,...rgbFieldGroup);
+
+            this.state= {imageMasterData:null, showError: false,
+                fields: this.allfields[this.groupKey],
+                [rgbFieldGroup[RED]]: this.allfields[rgbFieldGroup[RED]],
+                [rgbFieldGroup[GREEN]]: this.allfields[rgbFieldGroup[GREEN]],
+                [rgbFieldGroup[BLUE]]: this.allfields[rgbFieldGroup[BLUE]],
+              allFields: getAllGroupFields(this.groupKey,...rgbFieldGroup)};
             this.updateData();
 
     }
@@ -81,6 +94,17 @@ export class NewImageSearchPanel extends PureComponent {
         },10);
 
     }
+    componentWillReceiveProps (nextProps) {
+        this.allfields = getAllGroupFields(this.groupKey,...rgbFieldGroup);
+
+        this.setState({
+            fields: this.allfields[this.groupKey],
+            [rgbFieldGroup[RED]]: this.allfields[rgbFieldGroup[RED]],
+            [rgbFieldGroup[GREEN]]: this.allfields[rgbFieldGroup[GREEN]],
+            [rgbFieldGroup[BLUE]]: this.allfields[rgbFieldGroup[BLUE]]
+
+        });
+    }
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
         this.iAmMounted = false;
@@ -88,14 +112,47 @@ export class NewImageSearchPanel extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
-        this.removeListener = FieldGroupUtils.bindToStore(FG_KEY, (fields) => {
+        /*this.removeListener = FieldGroupUtils.bindToStore(FG_KEY, (fields) => {
             if (this.iAmMounted && fields) this.setState(fields);
-        });
+        });*/
+        this.removeListener= flux.addListener(() => this.stateUpdate());
     }
 
+    stateUpdate() {
+        var allfields = getAllGroupFields(this.groupKey,...rgbFieldGroup);
+
+        var isfieldChanged = (allfields) =>
+        {
+            var fields = rgbFieldGroup.find((fg) =>
+                (this.state[fg] && allfields[fg] && this.state[fg] !== allfields[fg]));
+
+            return (fields) ? true : (((allfields[this.groupKey]) || (this.state.fields))&&
+                ( allfields[this.groupKey] !== this.state.fields ));
+        };
+
+        if (isfieldChanged(allfields) ) {
+
+            if (this.iAmMounted) {
+                this.setState({
+                    fields: allfields[this.groupKey],
+                    [rgbFieldGroup[RED]]: allfields[rgbFieldGroup[RED]],
+                    [rgbFieldGroup[GREEN]]: allfields[rgbFieldGroup[GREEN]],
+                    [rgbFieldGroup[BLUE]]: allfields[rgbFieldGroup[BLUE]]
+                });
+            }
+        }
+    }
     render() {
         const {imageMasterData, showError= false}= this.state;
-        const fields = FieldGroupUtils.getGroupFields(FG_KEY);
+        //const fields = FieldGroupUtils.getGroupFields(FG_KEY);
+        const fields = this.state.fields;
+
+        //const fs= this.state.fields;
+
+        //const allFields = getAllGroupFields(FG_KEY,...rgbFieldGroup);
+       // const mainPanel = allFields[FG_KEY];
+
+      // const imageType1 = mainPanel && mainPanel['imageTypeOptions']?  mainPanel['imageTypeOptions']:'scImage';
 
         const imageType = FieldGroupUtils.getFldValue(fields, 'imageTypeOptions', 'scImage');
         const imageSource = FieldGroupUtils.getFldValue(fields, 'imageSourceOptions', 'irsa');
@@ -249,12 +306,12 @@ const imageSourceOptions  = (groupKey) => {
 
 };
 
-function renderSingleColor(groupKey, imageMasterData, imageSource, multiSelect=true){
+function renderSingleColor(groupKey, imageMasterData, imageSource){
 
     var sourcePanel;
     switch (imageSource) {
         case 'irsa':
-            sourcePanel=  <ImageSelect key='ImageSelect' {...{groupKey:{groupKey}, multiSelect, addChangeListener, imageMasterData, style:{width: 800, height: 400}}} />;
+            sourcePanel=  <ImageSelect key='ImageSelect' {...{groupKey:{groupKey},  addChangeListener, imageMasterData, style:{width: 800, height: 400}}} />;
             break;
 
         case 'upLoad':
@@ -299,7 +356,7 @@ function renderThreeColors(imageMasterData,imageSource) {
     var corner = CollapseHeaderCorner.BottomLeft;
     const RGB = ['rgb(255, 51, 51)', 'rgb(51, 153, 51)', 'rgb(51, 51, 255)'];
     const threeColorTabs = rgb.map((color, index) => {
-        const gKey = FG_KEY+ '_'+rgbFieldGroup[index];
+        //const gKey = FG_KEY+ '_'+rgbFieldGroup[index];
         return (
             <Tab name= {rgb[index]} id={rgbFieldGroup[index]}>
 
@@ -323,7 +380,7 @@ function renderThreeColors(imageMasterData,imageSource) {
                 >
                     <FieldGroup groupKey={rgbFieldGroup[index]} reducerFunc={ImageSelPanelChangeOneColor}
                                 keepState={true}>
-                        {renderSingleColor(gKey,imageMasterData, imageSource, false)}
+                        {renderSingleColor(rgbFieldGroup[index],imageMasterData, imageSource)}
                     </FieldGroup>
                 </FieldGroupCollapsible>
 
@@ -405,8 +462,9 @@ function getWPRArray(req, imageMasterData,wp, radius, isThreeColor=false){
 
     Object.keys(req).filter((k) => k.startsWith('IMAGES_')).forEach((p) => {
 
-        const missionId = p.split('_')[1];
-        const list = isThreeColor? (req['PROJ_ALL_'+ missionId].value ? req[p].value.split(','):null) :req[p].split(',');
+        const missionId = p.split('_')[1].split('||')[0]; //remove the trailing || symbol if any
+
+        const list = isThreeColor? (req['PROJ_ALL_'+ missionId] && req['PROJ_ALL_'+ missionId].value ? req[p].value.split(','):null) :req[p].split(',');
         if(list && list.length>0) {
             list.forEach((e) => imageIdList.push(e));
         }
@@ -441,57 +499,52 @@ function loadSingleChannelImage(request, imageMasterData,wp, radius){
 
     }
 }
+
+
+
 function loadThreeColorImages(request, imageMasterData){
     var wpSet = [];
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
     const radius= request.conesize;
-    if (request.imageSourceOptions === 'upLoad') {
-         rgbFieldGroup.map((item) => {
-            const req = FieldGroupUtils.getGroupFields(item);
-             const wpr = makeFitsWebRequest(req);
-             wpSet.push(wpr);
-         });
+    rgbFieldGroup.map((item, index) => {
+        var fgRequest = Object.assign({}, request[item],
+            {
+                UserTargetWorldPt: get(request[FG_KEY], 'UserTargetWorldPt')
 
-        dispatchPlotImage({wpRequest: wpSet});
-    }
-    else if (request.imageSourceOptions === 'url') {
-        rgbFieldGroup.map((item) => {
-            const req = FieldGroupUtils.getGroupFields(item);
-            const wpr = makeURLWebRequest(req);
-            wpSet.push(wpr);
-        });
-        dispatchPlotImage({wpRequest: wpSet});
-    }
-    else {
+            });
 
-        rgbFieldGroup.map((item, index) => {
-            const req = FieldGroupUtils.getGroupFields(item);
-            var wpr=null;
-            if (!isNil(req) && request['collapsible'+index]==='open') {
-                //temporary, the UI will be updated so that only one mission/band is allowed
-                  wpr= getWPRArray(req, imageMasterData,wp, radius, true)[0];
+        const req = FieldGroupUtils.getGroupFields(item);
+        var wpr=null;
+        if (!isNil(req) && request['collapsible'+index]==='open') {
+            switch (request.imageSourceOptions){
+                case 'upLoad':
+                    wpr = makeFitsWebRequest(req);
+                    break;
+                case 'url':
+                    wpr = makeURLWebRequest(req);
+                    break;
+                case 'irsa':
+                    wpr= getWPRArray(req, imageMasterData,wp, radius, true)[0];
+                    if (wpr) {
+                        wpr.setTitle('3-Color Image');
+
+                    }
+                    break;
+
             }
-            if (!wpr) {
-                logError(' no image on ' +  rgb[index] + ' is selected');
-            }
-            wpSet.push(wpr);
-
-        });
-
-
-        if (countBy(wpSet)[null]===3){
-            return outputMessage('No image source is selected');
         }
-        wpSet.forEach((item) => {
-            if (item) {
-                    item.setTitle('3-Color Image');
+        if (!wpr) {
+            logError(' no image on ' +  rgb[index] + ' is selected');
+        }
+        wpSet.push(wpr);
 
-            }
-        });
-        dispatchPlotImage({wpRequest: wpSet});
+    });
 
-
+    if (countBy(wpSet)[null]===3){
+        return outputMessage('No image source is selected');
     }
+
+    dispatchPlotImage({wpRequest: wpSet});
 
 }
 //-------------------------------------------------------------------------
@@ -527,7 +580,7 @@ function makeURLWebRequest(request) {
     var url = get(request, 'txURL');
     const params = {
         [WPConst.PLOT_ID] : rootId+rootIdCnt,
-        [WPConst.URL] : url,
+        [WPConst.URLKEY] : url,
         [WPConst.PLOT_GROUP_ID] : 'multiImageGroup',
         [WPConst.GROUP_LOCKED] : 'true'
     };
@@ -536,13 +589,16 @@ function makeURLWebRequest(request) {
     return  WebPlotRequest.makeFromObj(params);
 }
 
-function makeFitsWebRequest(request) {
+function makeFitsWebRequest(request, color='') {
+
     var fits = get(request, 'fileUpload');
+
     const params = {
         [WPConst.PLOT_ID] : rootId+rootIdCnt,
         [WPConst.FILE] : fits,
         [WPConst.PLOT_GROUP_ID] : 'multiImageGroup',
         [WPConst.GROUP_LOCKED] : 'true'
+       // [WPConst.TITLE_OPTIONS] : TitleOptions.FILE_NAME
     };
     rootIdCnt++;
     return  WebPlotRequest.makeFromObj(params);
