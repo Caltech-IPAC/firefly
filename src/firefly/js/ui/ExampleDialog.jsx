@@ -18,6 +18,7 @@ import {FieldGroup} from './FieldGroup.jsx';
 import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../fieldGroup/FieldGroupCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
+import {showModal} from './PopupUtil.jsx';
 import FieldGroupUtils, {revalidateFields} from '../fieldGroup/FieldGroupUtils';
 
 import {CollapsiblePanel} from './panel/CollapsiblePanel.jsx';
@@ -399,6 +400,9 @@ function FieldGroupTestView ({fields}) {
                 <button type='button' className='button std hl'  onClick={() => resetDefaults()}>
                     <b>Reset All Defaults</b>
                 </button>
+                <button type='button' className='button std hl' onClick={()=>showModal(sampleModal())}>
+                    Display Modal Dialog
+                </button>
 
                 <CompleteButton groupKey='DEMO_FORM'
                                 onSuccess={resultsSuccess}
@@ -466,6 +470,16 @@ function makeResultInfoContent(statStr,s,closePromiseClick) {
     );
 }
 
+function sampleModal() {
+    return (
+        <div style={{padding: 5, align: 'center'}}>
+            <div style={{padding: 5}}>
+                Important message here
+            </div>
+            <button type='button' onClick={() => showModal(null, false)}>OK</button>
+        </div>
+    );
+}
 
 
 function resultsFail(request) {
