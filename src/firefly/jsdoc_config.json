@@ -6,7 +6,7 @@
     "source": {
         "include": [
           "./js/",
-          "../../docs/firefly-api-overview.md"
+          "./docs/firefly-api-overview.md"
         ],
       "exclude": [
           // enter the excluded files here as an array
@@ -31,8 +31,8 @@
         "extensions": ["js", "jsx"]
     },
    "staticFiles": {
-        "include": ["../../docs"],
-        "exclude": ["../../docs/firefly-api-code-examples.md"],
+        "include": ["./docs"],
+        "exclude": ["./docs/firefly-api-code-examples.md"],
         "includePattern": ".+\\.md?$",
         "recursive": true
 
@@ -43,7 +43,7 @@
         "template": "../../node_modules/ink-docstrap/template", //use the docstrap template insetad of the default
         "encoding": "utf8",                               // same as -e utf8
         "recurse": true ,                                 // same as -r
-        "tutorials": "../../tutorial/",                      // same as -u path/to/tutorials
+        "tutorials": "tutorial/",                      // same as -u path/to/tutorials
         "access": "public"                                  //same as -a  <value>, values are all, public, private etc
 
     },

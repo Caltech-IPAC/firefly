@@ -684,4 +684,4 @@ firefly.showHistogram('histogram2_div', {tbl_id: tblReq.tbl_id, col: 'w2mpro'});
 
 ### More Code Examples
 
-[see firefly-api-code-examples.md](../tutorial/firefly-api-code-examples.md)
+[see firefly-api-code-examples.md](firefly-api-code-examples.md)

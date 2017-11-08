@@ -1,4 +1,4 @@
-#Parameters for plotting FITS images
+## Parameters for plotting FITS images
 
 The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server.
 Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. 
