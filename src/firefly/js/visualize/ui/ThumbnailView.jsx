@@ -20,6 +20,7 @@ import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
+import {getPixScaleDeg} from '../WebPlot.js';
 
 
 export class ThumbnailView extends PureComponent {
@@ -58,8 +59,8 @@ export class ThumbnailView extends PureComponent {
     eventCallBack(plotId,mouseState,pt) {
         const {plotView:pv}= this.props;
         const plot= primePlot(pv);
-        if (!plot) return;
-        const {width,height}= plot.serverImages.thumbnailImage;
+        if (!plot || !plot.tileData) return;
+        const {width,height}= plot.tileData.thumbnailImage;
         eventCB(mouseState,pt,pv,width,height);
     }
     
@@ -76,10 +77,10 @@ export class ThumbnailView extends PureComponent {
         };
 
         const plot= primePlot(pv);
-        if (!plot) return  <div style={s}/>;
+        if (!plot || !plot.tileData) return  <div style={s}/>;
 
         s.border= '1px solid rgb(187, 187, 187)';
-        const {width,height}= plot.serverImages.thumbnailImage;
+        const {width,height}= plot.tileData.thumbnailImage;
         this.drawData= makeDrawing(pv,width,height);
 
 
@@ -154,7 +155,7 @@ function scrollPlot(pt,pv,width,height) {
 
 function makeImageTag(pv, onImageLoad) {
     const plot= primePlot(pv);
-    const {url,width,height}= plot.serverImages.thumbnailImage;
+    const {url,width,height}= plot.tileData.thumbnailImage;
     const s= { position : 'absolute', left : 0, top : 0, width, height };
     const transFormCss= makeThumbnailTransformCSS(pv.rotation,pv.flipX, pv.flipY);
     
@@ -217,7 +218,7 @@ function makeDrawing(pv,width,height) {
 
     const arrowLength= (width+height)/3;
     const thumbZoomFact= getThumbZoomFact(plot,width,height);
-    const cdelt1 = cc.getImagePixelScaleInDeg();
+    const cdelt1 = getPixScaleDeg(plot);
     const wpt2= makeWorldPt(wptC.getLon(), wptC.getLat() + (Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/1.6));
     //const wptE2= makeWorldPt(wptC.getLon()+(Math.abs(cdelt1)/thumbZoomFact)*(arrowLength/2), wptC.getLat());
     const wptE1= wptC;

@@ -127,6 +127,7 @@ const C= {
     PLOT_ID : 'plotId',
     OVERLAY_IDS: 'PredefinedOverlayIds',
     RELATED_TABLE_ROW : 'RELATED_TABLE_ROW',
+    HIPS_ROOT_URL: 'hipsRootUrl',
 
 
 
@@ -437,12 +438,12 @@ export class WebPlotRequest extends ServerRequest {
      */
     static makeAtlasRequest(wp, survey, band, filter, sizeInDeg) {
         const req = this.makePlotServiceReq(ServiceType.ATLAS, wp, survey, sizeInDeg);
-        req.setParam(C.SURVEY_KEY, survey.split(".")[0]);
-        req.setParam("dataset", survey.split(".")[0]);
-        req.setParam("table", survey.split(".")[1]);
-        req.setParam("filter", filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
+        req.setParam(C.SURVEY_KEY, survey.split('.')[0]);
+        req.setParam('dataset', survey.split('.')[0]);
+        req.setParam('table', survey.split('.')[1]);
+        req.setParam('filter', filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
         req.setParam(C.SURVEY_KEY_BAND, band + '');
-        req.setTitle(survey + "," + band);
+        req.setTitle(survey + ',' + band);
         // TODO drawingSubGroupId TO BE SET OUTSIDE here! ATLAS has many dataset and it will depend on the app to group those images, example: See ImageSelectPanelResult.js, Finderrchart...
         //req.setDrawingSubGroupId(survey.split(".")[1]); // 'spitzer.seip_science'
         return req;
@@ -472,6 +473,15 @@ export class WebPlotRequest extends ServerRequest {
         r.setBlankPlotWidth(plotWidth);
         r.setBlankPlotHeight(plotHeight);
         r.setGridOn(GridOnStatus.TRUE);
+        return r;
+    }
+
+    //======================== HiPS =====================================
+    static makeHiPSRequest(rootUrl, wp= undefined, sizeInDeg= 180) {
+        const r= new WebPlotRequest(RequestType.HiPS, '');
+        r.setHipsRootUrl(rootUrl);
+        if (wp) r.setWorldPt(wp);
+        r.setSizeInDeg(sizeInDeg);
         return r;
     }
 
@@ -1302,6 +1312,9 @@ export class WebPlotRequest extends ServerRequest {
 
 
 
+
+    setHipsRootUrl(url) { this.setParam(C.HIPS_ROOT_URL, url);}
+    getHipsRootUrl() { return this.getParam(C.HIPS_ROOT_URL);}
 
 
     /**

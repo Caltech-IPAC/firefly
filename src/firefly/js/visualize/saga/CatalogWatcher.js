@@ -34,7 +34,7 @@ import {logError} from '../../util/WebUtil.js';
 export function* watchCatalogs() {
 
 
-    yield take(ImagePlotCntlr.PLOT_IMAGE);
+    yield take([ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]);
 
     const tableGroup= get(getTableGroup(), 'tables', {});  // get the main table group.
     if (!isEmpty(tableGroup)) {
@@ -44,7 +44,7 @@ export function* watchCatalogs() {
 
     while (true) {
         const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
-                                  TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE]);
+                                  TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]);
         const {tbl_id}= action.payload;
         switch (action.type) {
             case TABLE_LOADED:
@@ -64,6 +64,7 @@ export function* watchCatalogs() {
                 dispatchDestroyDrawLayer(tbl_id);
                 break;
 
+            case ImagePlotCntlr.PLOT_HIPS:
             case ImagePlotCntlr.PLOT_IMAGE:
                 attachToAllCatalogs(action.payload.pvNewPlotInfoAry);
                 break;
@@ -119,7 +120,7 @@ function handleCatalogUpdate(tbl_id) {
 
     let req = cloneRequest(sourceTable.request, params);
     var dataTooBigForSelection= false;
-    if (totalRows>5000) {
+    if (totalRows>50000) {
         req = makeTableFunctionRequest(sourceTable.request, 'DecimateTable', 'heatmap',  {decimate: serializeDecimateInfo(columns.lonCol, columns.latCol, 10000)});
         dataTooBigForSelection= true;
     }

@@ -120,6 +120,7 @@ function createSaga({id, actions=[], callback, params, dispatch, getState}) {
                 callback(action, cancelSelf, params, dispatch, getState);
             } catch (e) {
                 console.log(`Encounter error while executing watcher: ${id}  error: ${e}`);
+                console.log(e);
             }
         }
     };

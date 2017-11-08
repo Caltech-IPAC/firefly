@@ -10,34 +10,16 @@ package edu.caltech.ipac.util;
 
 
 import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.util.dd.ContainsOptions;
-import edu.caltech.ipac.util.dd.Global;
-import edu.caltech.ipac.util.dd.RegionFileElement;
-import edu.caltech.ipac.util.dd.RegParseException;
-import edu.caltech.ipac.util.dd.Region;
-import edu.caltech.ipac.util.dd.RegionAnnulus;
-import edu.caltech.ipac.util.dd.RegionBox;
-import edu.caltech.ipac.util.dd.RegionBoxAnnulus;
-import edu.caltech.ipac.util.dd.RegionCsys;
-import edu.caltech.ipac.util.dd.RegionDimension;
-import edu.caltech.ipac.util.dd.RegionEllipse;
-import edu.caltech.ipac.util.dd.RegionEllipseAnnulus;
-import edu.caltech.ipac.util.dd.RegionFont;
-import edu.caltech.ipac.util.dd.RegionLines;
-import edu.caltech.ipac.util.dd.RegionOptions;
-import edu.caltech.ipac.util.dd.RegionPoint;
-import edu.caltech.ipac.util.dd.RegionText;
-import edu.caltech.ipac.util.dd.RegionValue;
+import edu.caltech.ipac.util.dd.*;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 
 /**
@@ -818,6 +800,7 @@ public class RegionFactory {
         else if (csys.equals(CoordinateSys.EQ_J2000))     retval= "J2000";
         else if (csys.equals(CoordinateSys.ECL_J2000))    retval= "ECLIPTIC";
         else if (csys.equals(CoordinateSys.ECL_J2000))    retval= "ECLIPTIC";
+        else if (csys.equals(CoordinateSys.GALACTIC))     retval= "GALACTIC";
         else if (csys.equals(CoordinateSys.PIXEL))        retval= "IMAGE";
         else if (csys.equals(CoordinateSys.SCREEN_PIXEL)) retval= "PHYSICAL";
         else  retval= "PHYSICAL";

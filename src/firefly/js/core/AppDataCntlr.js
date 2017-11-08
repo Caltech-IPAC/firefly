@@ -88,6 +88,13 @@ export function dispatchAddTaskCount(componentId,taskId) {
     flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId}});
 }
 
+
+let taskCnt= 0;
+export function makeTaskId() {
+    taskCnt++;
+    return `task-${taskCnt}`;
+}
+
 /**
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, create with makeTaskId()

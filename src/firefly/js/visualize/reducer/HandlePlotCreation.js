@@ -6,6 +6,7 @@ import {uniqBy,unionBy, isEmpty} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import {replacePlots, makePlotView, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
+import {WebPlot} from '../WebPlot';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import PlotGroup from '../PlotGroup.js';
@@ -13,6 +14,7 @@ import {PlotAttribute} from '../WebPlot.js';
 import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
+import {makeImagePt} from '../Point.js';
 
 
 //============ EXPORTS ===========
@@ -26,29 +28,24 @@ const clone = (obj,params={}) => Object.assign({},obj,params);
 export function reducer(state, action) {
 
     let retState= state;
-    let plotViewAry;
-    let plotGroupAry;
-    let plotRequestDefaults;
-    const {setNewPlotAsActive=true}= action.payload;
     switch (action.type) {
         case Cntlr.PLOT_IMAGE_START  :
-            plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
-            plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
-            plotViewAry= preNewPlotPrep(state.plotViewAry,action);
-            if (plotGroupAry || plotViewAry || plotRequestDefaults) {
-                retState= clone(state);
-                if (plotViewAry) retState.plotViewAry= plotViewAry;
-                if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
-                if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
-                if (setNewPlotAsActive) retState.activePlotId= action.payload.plotId;
-            }
+            retState= startPlot(state,action);
             break;
         case Cntlr.PLOT_IMAGE_FAIL  :
             retState= plotFail(state,action);
             break;
         case Cntlr.PLOT_IMAGE  :
+            const {setNewPlotAsActive=true}= action.payload;
             retState= addPlot(state,action, action.payload.setNewPlotAsActive, setNewPlotAsActive);
-            // todo: also process adding to history
+            break;
+
+        case Cntlr.PLOT_HIPS  :
+            retState= addHiPS(state,action);
+            break;
+
+        case Cntlr.PLOT_HIPS_FAIL  :
+            retState= hipsFail(state,action);
             break;
 
         case Cntlr.PLOT_MASK_START:
@@ -99,11 +96,68 @@ const updateDefaults= function(plotRequestDefaults, action) {
     }
     else {
         const {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
+        if (!wpRequest || !redReq || !greenReq || !blueReq) return plotRequestDefaults;
         return threeColor ?
             clone(plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}}) :
             clone(plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
     }
 };
+
+
+function startPlot(state, action) {
+    const plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
+    const plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
+    const plotViewAry= preNewPlotPrep(state.plotViewAry,action);
+    let retState= state;
+    if (plotGroupAry || plotViewAry || plotRequestDefaults) {
+        retState= clone(state);
+        if (plotViewAry) retState.plotViewAry= plotViewAry;
+        if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
+        if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
+        if (action.payload.setNewPlotAsActive) retState.activePlotId= action.payload.plotId;
+    }
+    return retState;
+}
+
+
+function addHiPS(state,action, setActive= true, newPlot= true) {
+    let {plotViewAry, activePlotId, prevActivePlotId, processedTiles}= state;
+    const {plotId, wpRequest, hipsProperties, attributes}= action.payload;
+
+
+    if (setActive) {
+        const pv= getPlotViewById(state,plotId);
+        prevActivePlotId = state.activePlotId;
+        activePlotId = pv.plotId;
+    }
+
+    plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId, and cleaning processedTiles
+        if ((pv.plotId!==plotId)) return pv;
+        const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', 1, attributes, false);
+        Object.assign(plot.attributes,attributes);
+        pv = replacePlots(pv, [plot], null, state.expandedMode, newPlot);
+        pv.serverCall= 'success';
+        pv.plottingStatus= 'done';
+
+
+        if (pv.viewDim) {
+            const centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
+            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
+        }
+
+
+        return pv;
+
+    });
+
+                     //todo: this is where parameter come from the request
+    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId, processedTiles});
+
+    return newState;
+}
+
+
+
 
 function addPlot(state,action, setActive, newPlot) {
     const {wcsMatchType}= state;
@@ -254,6 +308,17 @@ function plotFail(state,action) {
     const changes= {plottingStatus:description,serverCall:'fail' };
     return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
 }
+
+function hipsFail(state,action) {
+    const {description, plotId}= action.payload;
+    const {plotViewAry}= state;
+    const plotView=  getPlotViewById(state,plotId);
+    if (!plotView) return state;
+    const changes= {plottingStatus:description,serverCall:'fail' };
+    return clone(state,  {plotViewAry:clonePvAry(plotViewAry,plotId,changes)});
+}
+
+
 
 /**
  /**

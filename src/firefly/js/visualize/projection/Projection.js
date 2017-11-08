@@ -3,7 +3,7 @@
  */
 
 import {get} from 'lodash';
-import {makeImagePt, makeWorldPt} from '../Point.js';
+import {makeImagePt, makeProjectionPt, makeWorldPt} from '../Point.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {AitoffProjection} from './AitoffProjection.js';
 import {NCPProjection} from './NCPProjection.js';
@@ -15,6 +15,7 @@ import {CartesianProjection} from './CartesianProjection.js';
 import {OrthographicProjection} from './OrthographicProjection.js';
 import {CylindricalProjection} from './CylindricalProjection.js';
 import {PlateProjection} from './PlateProjection.js';
+import {Projection as AladinProjection} from './aladinProj/AladinProjections.js';
 
 
 
@@ -33,6 +34,12 @@ export const SFL          = 1009; // TESTED
 export const CEA          = 1010;
 export const UNSPECIFIED  = 1998; // TESTED
 export const UNRECOGNIZED = 1999; // TESTED
+
+
+
+export const ALADIN_SIN     = 5;
+
+
 
 const projTypes= {
 	[GNOMONIC] : {
@@ -89,7 +96,7 @@ const projTypes= {
 		name: 'SFL',
 		fwdProject: SansonFlamsteedProjection.fwdProject,
 		revProject: SansonFlamsteedProjection.revProject,
-		wrapping : false
+		wrapping : true
 	},
 	[LINEAR] : {
 		name: 'LINEAR',
@@ -118,7 +125,17 @@ const projTypes= {
 		revProject: unimplementedProject,
 		implemented : false,
 		wrapping : false
-	}
+	},
+
+    [ALADIN_SIN] : {
+        name: 'ALADIN_SIN',
+        fwdProject : fwdAladinSinProject,
+        revProject : revAladinSinProject,
+        implemented : true,
+        wrapping : false,
+    },
+
+
 };
 
 
@@ -153,11 +170,7 @@ function getWorldCoordsInternal(x, y, header, coordSys)  {
  * @return ImagePt with X,Y in 'Skyview Screen' coordinates
  */
 function getImageCoordsInternal(ra, dec, header) {
-	//console.log('in Project.js');
-	//console.log(header);
-	//console.log(header.maptype);
 	if (!projTypes[header.maptype]) return null;
-	//console.log(projTypes[header.maptype]);
 	const image_pt = projTypes[header.maptype].revProject( ra, dec, header);
 	return image_pt;
 }
@@ -184,11 +197,9 @@ export class Projection {
 	 */
     constructor(header, coordSys)  {
         this.header= header;
-        this.scale1= 1/header.cdelt1;
-        this.scale2= 1/header.cdelt2;
-        this.pixelScaleArcSec= Math.abs(header.cdelt1) * 3600.0;
+        this.pixelScaleDeg= Math.abs(this.header.cdelt1);
+        this.pixelScaleArcSec= this.pixelScaleDeg* 3600.0;
         this.coordSys= coordSys;
-		// console.log('Projection: '+translateProjectionName(header.maptype));
     }
 
 	/**
@@ -196,14 +207,8 @@ export class Projection {
 	 * @return {number}
 	 * @public
 	 */
-	getPixelWidthDegree() { return Math.abs(this.header.cdelt1); }
+	getPixelScaleDegree() { return this.pixelScaleDeg; }
 
-	/**
-	 *
-	 * @return {number}
-	 * @public
-	 */
-    getPixelHeightDegree() { return Math.abs(this.header.cdelt2); }
 
 	/**
 	 * @summary the scale of an image pixel in arcsec
@@ -212,18 +217,6 @@ export class Projection {
 	 */
 	getPixelScaleArcSec() { return this.pixelScaleArcSec; }
 
-    /**
-     * @summary Return a point the represents the passed point with a distance in
-     * World coordinates added to it.
-     * @param pt the x and y coordinate in image coordinates
-     * @param x the x distance away from the point in world coordinates
-     * @param y the y distance away from the point in world coordinates
-     * @return ImagePt the new point
-     * @public
-     */
-    getDistanceCoords(pt, x, y) {
-        return makeImagePt ( pt.x+(x * this.scale1), pt.y+(y * this.scale2) );
-    }
 
 	/**
 	 * @summary convert from a world point to a image point
@@ -272,3 +265,49 @@ export function makeProjection(projJSON) {
 	return new Projection(projJSON.header, CoordinateSys.parse(projJSON.coorindateSys));
 }
 
+
+function fwdAladinSinProject(x, y, header) {
+
+    const widthHalf = header.crpix1;
+    const heightHalf = header.crpix2;
+    const yshift = 20;
+
+    const height = header.crpix2 * 2;
+    const yFlip = height - y;
+
+
+    let pX = (x - widthHalf) / widthHalf;
+    if (pX === -1) pX = -.99;
+    else if (pX === 1) pX = .99;
+    const pY = (yFlip - heightHalf) / (heightHalf + yshift);
+
+
+    const p = new AladinProjection(header.crval1, header.crval2);
+    p.setProjection(AladinProjection.PROJ_SIN);
+    try {
+        const pt = p.unproject(pX, pY);
+        const retPt = makeProjectionPt(pt.ra, pt.dec);
+        return retPt;
+    } catch (e) {
+        return null;
+    }
+}
+
+function revAladinSinProject(ra, dec,  header) {
+        const widthHalf= header.crpix1;
+        const heightHalf= header.crpix2;
+        const width= header.crpix1*2;
+        const height= header.crpix2*2;
+        const yshift= 20;
+
+        const p= new AladinProjection(header.crval1, header.crval2);
+        p.setProjection(AladinProjection.PROJ_SIN);
+        const pt= p.project(ra,dec);
+        if (!pt) return null;
+        const x= pt.X;
+        const y= pt.Y;
+
+        const imX= x*widthHalf +widthHalf;
+        const imY= y*(heightHalf+yshift) + heightHalf;
+        return makeImagePt(  imX, height - imY);
+}

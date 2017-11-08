@@ -61,13 +61,18 @@ export function atan2d(y, x) {
  *  compute the distance between two positions (lon1, lat1)
  *  and (lon2, lat2), the lon and lat are in decimal degrees.
  *  the unit of the distance is degree
+ * @param {number} lon1
+ * @param {number} lat1
+ * @param {number} lon2
+ * @param {number} lat2
+ * @return {number}
  */
 export function computeDistance(lon1, lat1, lon2, lat2) {
     const lon1Radians= lon1 * DtoR;
     const lat1Radians= lat1 * DtoR;
     const lon2Radians= lon2 * DtoR;
     const lat2Radians= lat2 * DtoR;
-    var cosine = Math.cos(lat1Radians)*Math.cos(lat2Radians)*
+    let cosine = Math.cos(lat1Radians)*Math.cos(lat2Radians)*
         Math.cos(lon1Radians-lon2Radians)
         + Math.sin(lat1Radians)*Math.sin(lat2Radians);
 
@@ -84,7 +89,7 @@ export function computeDistance(lon1, lat1, lon2, lat2) {
  */
 export function celset(celref,euler,useProjException) {
     const tol = 1.0e-10;
-    var latp;
+    let latp;
 
     // Compute celestial coordinates of the native pole.
     // Reference point away from the native pole.
@@ -100,11 +105,11 @@ export function celset(celref,euler,useProjException) {
     const cthe0 = 1.0;
     const sthe0 = 0.0;
 
-    var x = cthe0*cphip;
-    var y = sthe0;
-    var z = Math.sqrt(x*x + y*y);
-    if (z == 0.0) {
-        if (slat0 != 0.0) {
+    let x = cthe0*cphip;
+    let y = sthe0;
+    let z = Math.sqrt(x*x + y*y);
+    if (z===0.0) {
+        if (slat0!==0.0) {
             if (useProjException) throw new Error('failure in projection');
             else return false;
         }
@@ -119,14 +124,14 @@ export function celset(celref,euler,useProjException) {
         const u = atan2d(y,x);
         const v = acosd(slat0/z);
 
-        var latp1 = u + v;
+        let latp1 = u + v;
         if (latp1 > 180.0) {
             latp1 -= 360.0;
         } else if (latp1 < -180.0) {
             latp1 += 360.0;
         }
 
-        var latp2 = u - v;
+        let latp2 = u - v;
         if (latp2 > 180.0) {
             latp2 -= 360.0;
         } else if (latp2 < -180.0) {
@@ -170,7 +175,7 @@ export function celset(celref,euler,useProjException) {
     } else {
         x = (sthe0 - sind(latp)*slat0)/z;
         y =  sphip*cthe0/clat0;
-        if (x == 0.0 && y == 0.0) {
+        if (x===0.0 && y===0.0) {
             if (useProjException) throw new Error('failure in projection');
             else return false;
         }
@@ -200,9 +205,9 @@ export function celset(celref,euler,useProjException) {
  */
 export function sphfwd(lng, lat, euler) {
     const tol = 1.0e-5;
-    var theta;
-    var result = [];
-    var dphi, x, y, z;
+    let theta;
+    const result = [];
+    let dphi, z;
 
     const coslat = cosd(lat);
     const sinlat = sind(lat);
@@ -212,19 +217,19 @@ export function sphfwd(lng, lat, euler) {
     const sinlng = sind(dlng);
 
     /* Compute native coordinates. */
-    x = sinlat*euler[4] - coslat*euler[3]*coslng;
+    let x = sinlat*euler[4] - coslat*euler[3]*coslng;
     if (Math.abs(x) < tol) {
         /* Rearrange formula to reduce roundoff errors. */
         x = -cosd(lat+euler[1]) + coslat*euler[3]*(1.0 - coslng);
     }
-    y = -coslat*sinlng;
-    if (x != 0.0 || y != 0.0) {
+    const y = -coslat*sinlng;
+    if (x!==0.0 || y!==0.0) {
         dphi = atan2d(y, x);
     } else {
         // Change of origin of longitude.
         dphi = dlng - 180.0;
     }
-    var phi = euler[2] + dphi;
+    let phi = euler[2] + dphi;
 
     // Normalize.
     if (phi > 180.0) {
@@ -233,7 +238,7 @@ export function sphfwd(lng, lat, euler) {
         phi += 360.0;
     }
 
-    if (dlng % 180.0 == 0.0) {
+    if (dlng % 180.0===0.0) {
         theta = lat + coslng*euler[1];
         if (theta >  90.0) theta =  180.0 - theta;
         if (theta < -90.0) theta = -180.0 - theta;
@@ -264,9 +269,9 @@ export function sphfwd(lng, lat, euler) {
  */
 export function sphrev(phi, theta, euler) {
     const tol = 1.0e-5;
-    var lng, lat;
-    var retval= [];
-    var dlng;
+    let lng, lat;
+    const retval= [];
+    let dlng;
 
     const costhe = cosd(theta);
     const sinthe = sind(theta);
@@ -276,7 +281,7 @@ export function sphrev(phi, theta, euler) {
     const sinphi = sind(dphi);
 
     // Compute celestial coordinates. 
-    var x = sinthe*euler[4] - costhe*euler[3]*cosphi;
+    let x = sinthe*euler[4] - costhe*euler[3]*cosphi;
     if (Math.abs(x) < tol) {
         // Rearrange formula to reduce roundoff errors.
         x = -cosd(theta+euler[1]) + costhe*euler[3]*(1.0 - cosphi);

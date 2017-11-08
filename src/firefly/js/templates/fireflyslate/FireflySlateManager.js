@@ -20,6 +20,7 @@ import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {REPLACE_VIEWER_ITEMS, DEFAULT_FITS_VIEWER_ID, IMAGE, PLOT2D, dispatchAddViewer, dispatchAddViewerItems,
     getViewer, getViewerItemIds, getMultiViewRoot, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 /**
  * this manager manages what main components get display on the screen.
@@ -114,7 +115,8 @@ function startSpecialViewerSaga(action, alreadyStarted) {
             dispatchAddSaga(watchImageMetaData,{viewerId: cellId, paused:false});
             break;
         case SPECIAL_VIEWER.coverageImage:
-            dispatchAddSaga(watchCoverage, {viewerId:cellId, ignoreCatalogs:true, paused:false});
+            const useHiPS= get(getAppOptions(), 'hips.useForCoverage',false);
+            dispatchAddSaga(watchCoverage, {viewerId:cellId, ignoreCatalogs:true, paused:false, useHiPS});
             break;
 
     }

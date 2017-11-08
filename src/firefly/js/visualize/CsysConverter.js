@@ -7,6 +7,7 @@ import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeImagePt,
                makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
+import {getPixScaleDeg} from './WebPlot.js';
 
 
 function convertToCorrect(wp) {
@@ -58,6 +59,7 @@ export class CysConverter {
         this.screenSize= plot.screenSize;
         this.affTrans= altAffTrans || plot.affTrans;
         this.viewDim= plot.viewDim;
+        this.type= plot.type;
     }
 
     // isRotated() { return !Matrix.from(this.affTrans).isIdentity(); }
@@ -430,9 +432,9 @@ export class CysConverter {
 
 
     /**
-     * @desc An optimized conversion of WorldPt to viewport point.
-     * @param {Object} wpt a world pt
-     * @param {Object} retPt mutable returned ViewPort Point, this object will be written to
+     * @desc An optimized conversion of WorldPt to Screen point.
+     * @param {WorldPt} wpt a world pt
+     * @param {ScreenPt} retPt mutable returned Screen Point, this object will be written to
      * @return {boolean} success or failure
      */
     getScreenCoordsOptimize(wpt, retPt) {
@@ -494,7 +496,7 @@ export class CysConverter {
 
     /**
      *
-     * @param {Object} iwpt ImageWorkspacePt
+     * @param {ImageWorkspacePt} iwpt ImageWorkspacePt
      * @param {number} [altZoomLevel]
      */
     makeSPtFromIWPt(iwpt, altZoomLevel) {
@@ -565,7 +567,7 @@ export class CysConverter {
         let retval= false;
         if (this.projection.isWrappingProjection()) {
             const  worldDist= VisUtil.computeDistance(wp1, wp2);
-            const pix= this.projection.getPixelWidthDegree();
+            const pix= getPixScaleDeg(this);
             const value1= worldDist/pix;
 
             const ip1= this.getImageWorkSpaceCoords(wp1);
@@ -582,8 +584,6 @@ export class CysConverter {
         }
         return retval;
     }
-
-    getImagePixelScaleInDeg(){ return this.projection.getPixelScaleArcSec()/3600.0; }
 
     /**
      *

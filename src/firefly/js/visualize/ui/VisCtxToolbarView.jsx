@@ -4,10 +4,10 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty} from 'lodash';
+import {isEmpty, get} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
-import {PlotAttribute} from '../WebPlot.js';
+import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
 import {makeImagePt, makeScreenPt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -15,7 +15,8 @@ import {logError} from '../../util/WebUtil.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
 
 import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import {dispatchCrop, dispatchChangePrimePlot, dispatchZoom, dispatchProcessScroll} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
+    dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
@@ -24,7 +25,10 @@ import SelectArea from '../../drawingLayers/SelectArea.js';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CoordUtil from '../CoordUtil.js';
+import {CoordinateSys} from '../CoordSys.js';
 import { parseImagePt } from '../Point.js';
+import {getDefaultHiPSSurveys} from '../HiPSUtil.js';
+import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -229,14 +233,18 @@ function recenterToSelection(pv) {
 
     const sp0=  cc.getScreenCoords(sel.pt0);
     const sp2=  cc.getScreenCoords(sel.pt1);
-
-
     const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
-                                  Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
+        Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
 
-    const newScrollPt= makeScreenPt(centerPt.x - viewDim.width/2, centerPt.y - viewDim.height/2);
+    if (p.type==='image') {
+        const newScrollPt= makeScreenPt(centerPt.x - viewDim.width/2, centerPt.y - viewDim.height/2);
+        dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+    }
+    else { // hips
+        const centerProjPt= cc.getWorldCoords(centerPt, p.imageCoordSys);
+        if (centerProjPt) dispatchChangeCenterOfProjection({plotId,centerProjPt});
+    }
 
-    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
 }
 
 
@@ -251,14 +259,95 @@ function zoomIntoSelection(pv) {
 
     const sp0=  cc.getScreenCoords(sel.pt0);
     const sp2=  cc.getScreenCoords(sel.pt1);
-    const newScrollPt= cc.getImageCoords(makeScreenPt(Math.min(sp0.x,sp2.x), Math.min(sp0.y,sp2.y)));
+
 
     const level= (viewDim.width / Math.abs(sp0.x-sp2.x)) * p.zoomFactor;
-
     dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
-    dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+
+
+    if (p.type==='image') {
+        const newScrollPt= cc.getImageCoords(makeScreenPt(Math.min(sp0.x,sp2.x), Math.min(sp0.y,sp2.y)));
+        dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+    }
+    else {
+        const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
+                                      Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
+        const centerProjPt= cc.getWorldCoords(centerPt, p.imageCoordSys);
+        if (centerProjPt) dispatchChangeCenterOfProjection({plotId,centerProjPt});
+
+    }
     dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
+
+
 }
+
+
+
+function makeHiPSImageSelect(pv) {
+    const plot= primePlot(pv);
+    if (!plot) return null;
+
+
+    const surveyList= plot.surveyList || getDefaultHiPSSurveys();
+
+
+    let selectedIdx= surveyList.findIndex( (s) => s.url===plot.hipsUrlRoot);
+    if (selectedIdx===-1) selectedIdx= 0;
+
+    const options= surveyList.map( (s,idx) => ({label: s.label, value:idx}) );
+
+
+    return (
+        <ListBoxInputFieldView
+
+            inline={true}
+            value={selectedIdx}
+            onChange={(ev) =>
+                dispatchChangeHiPS( {plotId:pv.plotId,  hipsUrlRoot:surveyList[Number(ev.target.value)].url})}
+            labelWidth={10}
+            label={' '}
+            tooltip={ 'Choose a differ HiPS survey'}
+            options={options}
+            multiple={false}
+        />
+        );
+}
+
+
+
+function makeHiPSCoordSelect(pv) {
+    const plot= primePlot(pv);
+    if (!plot) return null;
+
+    const options= [
+        {label: 'Galactic', value:0, c: CoordinateSys.GALACTIC},
+        {label: 'Eq J2000', value:1, c: CoordinateSys.EQ_J2000},
+    ];
+
+    let selectedIdx= options.findIndex( (s) => s.c===plot.imageCoordSys);
+
+    if (selectedIdx===-1) selectedIdx= 0;
+
+
+
+    return (
+        <ListBoxInputFieldView
+
+            inline={true}
+            value={selectedIdx}
+            onChange={(ev) =>
+                dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: options[Number(ev.target.value)].c})}
+            labelWidth={10}
+            label={' '}
+            tooltip={ 'Choose a differ HiPS survey'}
+            options={options}
+            multiple={false}
+        />
+    );
+}
+
+
+
 
 
 /**
@@ -304,8 +393,9 @@ export class VisCtxToolbarView extends PureComponent {
 
         };
 
+        const plot= primePlot(pv);
         const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
-                           showFilter || showClearFilter || !isEmpty(extensionAry);
+                           showFilter || showClearFilter || !isEmpty(extensionAry) || isHiPS(plot);
 
         return (
             <div style={rS}>
@@ -318,13 +408,13 @@ export class VisCtxToolbarView extends PureComponent {
                 <ToolbarButton icon={CROP}
                                tip='Crop the image to the selected area'
                                horizontal={true}
-                               visible={showSelectionTools}
+                               visible={showSelectionTools && isImage(plot)}
                                onClick={() => crop(pv)}/>
 
                 <ToolbarButton icon={STATISTICS}
                                tip='Show statistics for the selected area'
                                horizontal={true}
-                               visible={showSelectionTools}
+                               visible={showSelectionTools && isImage(plot)}
                                onClick={() => stats(pv)}/>
 
                 <ToolbarButton icon={SELECTED}
@@ -358,6 +448,9 @@ export class VisCtxToolbarView extends PureComponent {
 
 
                 {makeExtensionButtons(extensionAry,pv,dlAry)}
+
+                {isHiPS(plot) && makeHiPSImageSelect(pv)}
+                {isHiPS(plot) && makeHiPSCoordSelect(pv)}
 
             </div>
         );

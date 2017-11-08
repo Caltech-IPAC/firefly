@@ -222,8 +222,8 @@ public class VisJsonSerializer {
             imageMap = new JSONObject();
 
             imageMap.put("url", image.getURL());
-            imageMap.put("xoff", image.getXoff());
-            imageMap.put("yoff", image.getYoff());
+            imageMap.put("x", image.getXoff());
+            imageMap.put("y", image.getYoff());
             imageMap.put("width", image.getWidth());
             imageMap.put("height", image.getHeight());
             imageMap.put("index", image.getIndex());

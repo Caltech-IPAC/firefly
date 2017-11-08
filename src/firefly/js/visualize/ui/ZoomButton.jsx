@@ -11,6 +11,7 @@ import {getZoomMax, getNextZoomLevel} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {showZoomOptionsPopup} from '../../ui/ZoomOptionsPopup.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {isImage} from '../WebPlot.js';
 
 import zoomDown from 'html/images/icons-2014/ZoomOut.png';
 import zoomUp from 'html/images/icons-2014/ZoomIn.png';
@@ -35,19 +36,20 @@ const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoo
 function getZoomer() {
     var lastClick= Date.now();
     return (pv,zType) => {
-        var time= Date.now();
-        var deltaClick= time-lastClick;
+        const time= Date.now();
+        const deltaClick= time-lastClick;
+        const plot= primePlot(pv);
         lastClick= time;
 
         if (zType===ZoomType.UP) {
             if (isZoomMax(pv)) {
                 console.log('show max zoom info popup ');
-                showInfoPopup('You may not zoom beyond ' + getZoomMax() + 'x', 'Zoom Info');
+                showInfoPopup('You may not zoom beyond ' + getZoomMax(plot) + 'x', 'Zoom Info');
                 return;
             }
         }
 
-        if (deltaClick < CLICK_TIME) {
+        if (deltaClick < CLICK_TIME   && isImage(plot)) {
             console.log('show zoom options popup');
             showZoomOptionsPopup();
             return;
@@ -65,12 +67,13 @@ const zoom= getZoomer();
 
 
 export function isZoomMax(pv) {
-    var zMax= getZoomMax();
-    var {zoomFactor}= primePlot(pv);
+    const plot= primePlot(pv);
+    const {zoomFactor}= plot;
+    const zMax= getZoomMax(plot);
     if (zoomFactor>=zMax) return true;
 
-    var nextZ= getNextZoomLevel(zoomFactor,UserZoomTypes.UP);
-    return (nextZ>=zMax );
+    var nextZ= getNextZoomLevel(plot,UserZoomTypes.UP);
+    return (nextZ>zMax );
 }
 
 export function ZoomButton({plotView:pv,zoomType,visible}) {

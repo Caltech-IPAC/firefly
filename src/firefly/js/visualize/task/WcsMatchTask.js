@@ -75,7 +75,7 @@ export function wcsMatchActionCreator(action) {
                 payload: {wcsMatchCenterWP:null,wcsMatchType:matchType,mpwWcsPrimId:plotId}
             });
             if (matchType) {
-                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
+                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group, false,
                     (pv) => {
                         if (masterPv.plotId!==pv.plotId) {
                             dispatchAddSaga( watchForCompletedPlot, {plotId:pv.plotId, masterPlotId:plotId, wcsMatchType:matchType});
@@ -85,7 +85,7 @@ export function wcsMatchActionCreator(action) {
             }
             else {
                 dispatchRotate({ plotId, rotateType: RotateType.UNROTATE, actionScope: ActionScope.GROUP});
-                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
+                applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group, false,
                     (pv) => dispatchUpdateViewSize(pv.plotId) );
             }
             return;
@@ -120,7 +120,7 @@ export function wcsMatchActionCreator(action) {
             if (ft) dispatchRecenter({plotId:masterPv.plotId, centerPt:ft});
         }
 
-        applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group,
+        applyToOnePvOrGroup(visRoot.plotViewAry, masterPv.plotId, group, false,
                      (pv) => {
                          if (masterPv.plotId!==pv.plotId) {
                              syncPlotToLevel(pv, masterPv, asPerPix);

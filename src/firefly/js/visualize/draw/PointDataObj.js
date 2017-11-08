@@ -484,6 +484,7 @@ export function makeHighlightPointDataObj(drawObj, cc, def) {
     }
 
     var area = getPointDataobjArea(drawObj, cc);
+    if (!area) return null;
     var w = ((DELTA + 1) * 2 + area.width);
     var h = ((DELTA + 1) * 2 + area.height);
     var wCenter = cc.getWorldCoords(area.centerPt);
@@ -503,10 +504,13 @@ export function makeHighlightPointDataObj(drawObj, cc, def) {
  * @returns {{inside: *, dist: *}}
  */
 export function isInPointDataobj(drawObj, cc, pt) {
+    let dist;
     var sPt = cc.getScreenCoords(pt);
+    if (!area) return false;
     var area = getPointDataobjArea(drawObj, cc);
+    if (!area) return {inside:false, dist};
+    
     var {centerPt, width: w, height: h} = area;
-    var dist;
 
     var inside = isWithinPolygon(sPt,
                                 [ makeScreenPt(centerPt.x - w/2, centerPt.y - h/2),

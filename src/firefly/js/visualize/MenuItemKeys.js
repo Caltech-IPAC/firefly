@@ -25,13 +25,14 @@ export const MenuItemKeys= {
     markerToolDD : 'markerToolDD',
     northArrow : 'northArrow',
     grid : 'grid',
+    hipsGrid: 'hipsGrid',
     ds9Region : 'ds9Region',
     maskOverlay : 'maskOverlay',
     layer : 'layer',
     irsaCatalog : 'irsaCatalog',
     restore : 'restore',
     lockRelated: 'lockRelated',
-    fitsHeader: 'fitsHeader'
+    fitsHeader: 'fitsHeader',
 };
 
 const defaultOff = [MenuItemKeys.lockImage, MenuItemKeys.irsaCatalog, MenuItemKeys.maskOverlay];

@@ -5,6 +5,7 @@
 import {take} from 'redux-saga/effects';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchZoom, dispatchProcessScroll} from './ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from './PlotViewUtil.js';
+import {getPixScaleArcSec, getScreenPixScaleArcSec} from './WebPlot.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {UserZoomTypes, getZoomLevelForScale} from './ZoomUtil.js';
 import {CysConverter} from './CsysConverter.js';
@@ -19,7 +20,7 @@ function matcher(oldP,newP) {
         isProjection: oldP.projection.isSpecified() && newP.projection.isSpecified(),
         isSameScale: oldP.projection && oldP.projection.isSpecified() &&
                      newP.projection && newP.projection.isSpecified() &&
-                     oldP.projection.getPixelScaleArcSec()===newP.projection.getPixelScaleArcSec()
+                     getPixScaleArcSec(oldP)===getPixScaleArcSec(newP)
     };
 }
 
@@ -91,7 +92,7 @@ function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {
     const zoomOp= getZoomDecision(oldP,newP);
     if (zoomOp.zoom) {
         if (zoomOp.zoomByScale) {
-            const targetArcSecPix= oldP.projection.getPixelScaleArcSec() / oldP.zoomFactor;
+            const targetArcSecPix= getScreenPixScaleArcSec(oldP);
             const level= getZoomLevelForScale(newP,targetArcSecPix);
             dispatchAddSaga(zoomCompleteSega,{plotId,scrollToImagePt});
             dispatchZoom({

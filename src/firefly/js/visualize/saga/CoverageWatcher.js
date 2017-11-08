@@ -6,10 +6,10 @@ import {take} from 'redux-saga/effects';
 import Enum from 'enum';
 import {get,isEmpty,isObject, flattenDeep,values, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
-import {TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
+import {WebPlotRequest, TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView, dispatchPlotHiPS} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
@@ -93,7 +93,7 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
  */
 export function* watchCoverage(options) {
 
-    const {viewerId='DefCoverageId'}= options;
+    const {viewerId='DefCoverageId', useHiPS=false}= options;
     let {paused=true}= options;
     const decimatedTables=  {};
     let tbl_id;
@@ -107,7 +107,7 @@ export function* watchCoverage(options) {
 
     if (paused) {
         const firstId= getActiveTableId();
-        if (firstId) displayedTableId = updateCoverage(firstId, viewerId, decimatedTables, options);
+        if (firstId) displayedTableId = updateCoverage(useHiPS, firstId, viewerId, decimatedTables, options);
     }
 
 
@@ -118,7 +118,8 @@ export function* watchCoverage(options) {
                                   TBL_RESULTS_ACTIVE, REINIT_RESULT_VIEW,
                                   DrawLayerCntlr.ATTACH_LAYER_TO_PLOT,
                                   ImagePlotCntlr.PLOT_IMAGE,
-                                  MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED, 
+                                  ImagePlotCntlr.PLOT_HIPS,
+                                  MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
                                   MultiViewCntlr.VIEWER_UNMOUNTED]);
         
 
@@ -141,12 +142,12 @@ export function* watchCoverage(options) {
             case TABLE_LOADED:
                 if (!getTableInGroup(tbl_id)) continue;
                 decimatedTables[tbl_id]= null;
-                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
                 break;
 
             case TBL_RESULTS_ACTIVE:
                 if (!getTableInGroup(tbl_id)) continue;
-                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
                 break;
 
             case TABLE_REMOVE:
@@ -156,7 +157,7 @@ export function* watchCoverage(options) {
                 previousDisplayedTableId = null;
                 tbl_id = getActiveTableId();
                 if (!isEmpty(decimatedTables)) {
-                    displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+                    displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
                 }
                 break;
 
@@ -165,7 +166,7 @@ export function* watchCoverage(options) {
                 if (action.payload.viewerId === viewerId) {
                     paused = false;
                     tbl_id = getActiveTableId();
-                    displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+                    displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
                 }
                 break;
 
@@ -182,6 +183,7 @@ export function* watchCoverage(options) {
                 if (action.payload.viewerId === viewerId) paused = true;
                 break;
             case ImagePlotCntlr.PLOT_IMAGE:
+            case ImagePlotCntlr.PLOT_HIPS:
                 if (action.payload.plotId===PLOT_ID) overlayCoverageDrawing(decimatedTables,options);
                 break;
         }
@@ -206,7 +208,7 @@ function removeCoverage(tbl_id, decimatedTables) {
  * @param {CoverageOptions} options
  * @return {Array}
  */
-function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
+function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
 
     if (!tbl_id) return null;
     const table= getTblById(tbl_id);
@@ -231,7 +233,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
     req.tbl_id = `cov-${tbl_id}`;
 
     if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
-        updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
+        updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
     }
     else {
         decimatedTables[tbl_id]= 'WORKING';
@@ -239,7 +241,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
             (allRowsTable) => {
                 if (get(allRowsTable, ['tableData', 'data'],[]).length>0) {
                     decimatedTables[tbl_id]= allRowsTable;
-                    updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
+                    updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
                 }
             }
         ).catch(
@@ -264,44 +266,70 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
  * @param decimatedTables
  * @param usesRadians
  */
-function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
+function updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
     const {centralPoint, maxRadius}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
 
     if (!centralPoint || maxRadius<=0) return;
 
-    const wpRequest= getCoverageRequest(centralPoint,maxRadius,
-                                        options.getCoverageBaseTitle(allRowsTable), 
-                                        false, options.gridOn);
-    wpRequest.setPlotId(PLOT_ID);
-    wpRequest.setPlotGroupId(viewerId);
-    if (!isUndefined(options.overlayPosition)) wpRequest.setOverlayPosition(options.overlayPosition);
-    if (options.title) {
-        wpRequest.setTitleOptions(TitleOptions.NONE);
-        wpRequest.setTitle(options.title);
-    }
+    if (useHiPS) {
+        const pv= getPlotViewById(visRoot(), PLOT_ID);
+        if (!pv) {
+            const rootUrl= 'http://alasky.u-strasbg.fr/DSS/DSSColor';
+            const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
+            wpRequest.setPlotGroupId(viewerId);
+            wpRequest.setPlotId(PLOT_ID);
+            wpRequest.setOverlayPosition(centralPoint);
+            wpRequest.setSizeInDeg(Math.max(maxRadius*2.2, 600/3600));
+            dispatchPlotHiPS({
+                plotId: PLOT_ID,
+                wpRequest,
+                viewerId,
+                attributes: {
+                    [COVERAGE_TARGET]: centralPoint,
+                    [COVERAGE_RADIUS]: maxRadius,
+                    [COVERAGE_TABLE]: tbl_id,
+                    [COVERAGE_CREATED]: true,
+                },
+            });
+        }
 
-    const plot= primePlot(visRoot(), PLOT_ID);
-    if (plot &&
-        pointEquals(centralPoint,plot.attributes[COVERAGE_TARGET]) &&
-        plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
-        overlayCoverageDrawing(decimatedTables, options);
     }
     else {
-        if (!isPlotted(wpRequest)) {
-            dispatchPlotImage({
-                    wpRequest,
-                    viewerId,
-                    attributes: {
-                        [COVERAGE_TARGET]: centralPoint,
-                        [COVERAGE_RADIUS]: maxRadius,
-                        [COVERAGE_TABLE]: tbl_id,
-                        [COVERAGE_CREATED]: true,
-                    },
-                    pvOptions: { userCanDeletePlots: false}
-                }
-            );
+        const wpRequest= getCoverageRequest(centralPoint,maxRadius,
+            options.getCoverageBaseTitle(allRowsTable),
+            false, options.gridOn);
+        wpRequest.setPlotId(PLOT_ID);
+        wpRequest.setPlotGroupId(viewerId);
+        if (!isUndefined(options.overlayPosition)) wpRequest.setOverlayPosition(options.overlayPosition);
+        if (options.title) {
+            wpRequest.setTitleOptions(TitleOptions.NONE);
+            wpRequest.setTitle(options.title);
+        }
+
+        const plot= primePlot(visRoot(), PLOT_ID);
+        if (plot &&
+            pointEquals(centralPoint,plot.attributes[COVERAGE_TARGET]) &&
+            plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
+            overlayCoverageDrawing(decimatedTables, options);
+        }
+        else {
+            if (!isPlotted(wpRequest)) {
+                dispatchPlotImage({
+                        wpRequest,
+                        viewerId,
+                        attributes: {
+                            [COVERAGE_TARGET]: centralPoint,
+                            [COVERAGE_RADIUS]: maxRadius,
+                            [COVERAGE_TABLE]: tbl_id,
+                            [COVERAGE_CREATED]: true,
+                        },
+                        pvOptions: { userCanDeletePlots: false}
+                    }
+                );
+            }
         }
     }
+
 }
 
 

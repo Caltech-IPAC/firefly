@@ -326,15 +326,16 @@ function makeSelectObj(firstPt,currentPt, posAngle,cc) {
     if (world) {
         anyPt1 = cc.getWorldCoords(ptAry[0]);
         anyPt2 = cc.getWorldCoords(ptAry[1]);
+        if (!anyPt1 || !anyPt2) return null;
         dist= VisUtil.computeDistance(anyPt1,anyPt2);
     }
     else {
         anyPt1 = ptAry[0];
         anyPt2 = ptAry[1];
+        if (!anyPt1 || !anyPt2) return null;
         dist= screenDistance(anyPt1,anyPt2);
     }
 
-    if (!anyPt1 || !anyPt2) return null;
 
     var obj= ShapeDataObj.makeLine(anyPt1,anyPt2);
     obj.style= Style.HANDLED;

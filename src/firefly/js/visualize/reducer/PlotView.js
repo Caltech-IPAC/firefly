@@ -3,7 +3,7 @@
  */
 
 import update from 'immutability-helper';
-import {PlotAttribute} from './../WebPlot.js';
+import {PlotAttribute, isImage} from './../WebPlot.js';
 import {get, isUndefined} from 'lodash';
 import Enum from 'enum';
 import {clone} from '../../util/WebUtil.js';
@@ -11,7 +11,8 @@ import {WPConst} from './../WebPlotRequest.js';
 import {makeScreenPt, makeDevicePt} from './../Point.js';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
-import {getPlotViewById, matchPlotView, primePlot, findPlotGroup} from './../PlotViewUtil.js';
+import {getPlotViewById, matchPlotView, primePlot, primePlotType, findPlotGroup} from './../PlotViewUtil.js';
+import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
 import {PlotPref} from './../PlotPref.js';
@@ -145,8 +146,22 @@ function makeMenuItemKeys(req,pvOptions,defMenuItemKeys) {
     return Object.assign({},defMenuItemKeys, pvOptions.menuItemKeys);
 }
 
-export const initScrollCenterPoint= (pv) =>
-                       updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));
+/**
+ *
+ * @param pv
+ * @return {PlotView}
+ */
+export function initScrollCenterPoint(pv)  {
+    if (isImage(primePlot(pv))) {
+        return updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));
+    }
+    else {
+        const plot= primePlot(pv);
+        if (!plot || !plot.attributes[PlotAttribute.FIXED_TARGET]) return pv;
+        const wp= CCUtil.getWorldCoords(plot, plot.attributes[PlotAttribute.FIXED_TARGET]);
+        return replacePrimaryPlot(pv, changeProjectionCenter(plot,wp));
+    }
+}
 
 
 export function changePrimePlot(pv, nextIdx) {
@@ -290,7 +305,7 @@ export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAr
     plotViewAry= replacePlotView(plotViewAry, plotView);
     const plotGroup= findPlotGroup(plotView.plotGroupId,plotGroupAry);
     if (get(plotGroup,'lockRelated')) {
-        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView, visRoot));
+        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,false, makeScrollPosMatcher(plotView, visRoot));
     }
     return plotViewAry;
 }
@@ -391,6 +406,7 @@ function getNewAttributes(plot) {
     //todo: figure out active target and how to set it
     const attributes= {};
     const req= plot.plotState.getWebPlotRequest();
+    if (!req) return attributes;
 
     let worldPt;
     const circle = req.getRequestArea();

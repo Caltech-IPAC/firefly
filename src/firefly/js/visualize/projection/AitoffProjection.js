@@ -50,7 +50,7 @@ export const AitoffProjection = {
 		return makeImagePt(x, y);
 	},
 
-	fwdProject( x, y, hdr, useProjException= false) {
+	fwdProject( x, y, hdr) {
 		var asin_arg;
 		var fsamp, fline;
 		var lat, lon;
@@ -68,9 +68,8 @@ export const AitoffProjection = {
 		const xx = (fsamp / 2.) * rpp1;
 		const yy = (fline / 2.) * rpp2;
 
-		if (((4.- xx * xx - 4.* yy * yy) < 2) || (glat != 0.0)) {
-			if (useProjException) throw Error('undefined location');
-			else                  return null;
+		if (((4.- xx * xx - 4.* yy * yy) < 2) || (glat !==0.0)) {
+			return null;
 		}
 
 		temp = Math.sqrt(4.- xx * xx - 4.* yy * yy);

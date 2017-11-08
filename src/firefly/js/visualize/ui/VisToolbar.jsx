@@ -6,11 +6,11 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {take} from 'redux-saga/effects';
-import {omit,pick} from 'lodash';
+import {omit,pick, get} from 'lodash';
 import shallowequal from 'shallowequal';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
-import {getAllDrawLayersForPlot,getActivePlotView} from '../PlotViewUtil.js';
+import {getAllDrawLayersForPlot,getActivePlotView, primePlot} from '../PlotViewUtil.js';
 import {flux} from '../../Firefly.js';
 import {VisToolbarViewWrapper} from './VisToolbarView.jsx';
 import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
@@ -59,6 +59,7 @@ export class VisToolbar extends PureComponent {
         const vr= visRoot();
         let dlCount= 0;
         const newPv= getActivePlotView(vr);
+        const oldPv= getActivePlotView(this.state.visRoot);
         if (vr.activePlotId) {
             dlCount= getAllDrawLayersForPlot(getDlAry(),vr.activePlotId).length + newPv.overlayPlotViews.length;
         }
@@ -71,10 +72,17 @@ export class VisToolbar extends PureComponent {
         if (!needsUpdate) needsUpdate= !shallowequal(omit(vr,omList),omit(this.state.visRoot,omList));
 
         if (!needsUpdate) {
-            const oldPv= getActivePlotView(this.state.visRoot);
             if (oldPv===newPv) return;
             needsUpdate= !shallowequal(pick(oldPv,pvPickList),pick(newPv,pvPickList));
         }
+
+        if (!needsUpdate) {
+            const oldPlot= primePlot(oldPv);
+            const newPlot= primePlot(newPv);
+            needsUpdate= get(oldPlot, 'zoomFactor')!==get(newPlot, 'zoomFactor');
+        }
+
+
         if (needsUpdate && this.iAmMounted) {
             this.setState({visRoot:visRoot(), dlCount});
         }

@@ -5,7 +5,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
-import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
+import {makeScreenPt} from '../Point.js';
 import {MouseState} from '../VisMouseSync.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
 import {isBlankImage} from '../WebPlot.js';
@@ -62,18 +62,18 @@ MagnifiedView.propTypes= {
  */
 function getImagesAt(plot, spt, size) {
 
-    if (!plot.serverImages) return {};
+    if (!plot.tileData) return {};
 
     const scale= plot.zoomFactor / plot.plotState.getZoomLevel();
 
-    var tiles= plot.serverImages.images
+    var tiles= plot.tileData.images
         .filter( (tile) => isTileVisible(tile,spt.x,spt.y,size,size,scale))
         .sort(compareFourTileSort);
 
     if (!tiles.length) return null;
 
-    var newX = spt.x - tiles[0].xoff;
-    var newY = spt.y - tiles[0].yoff;
+    const newX = spt.x - tiles[0].x;
+    const newY = spt.y - tiles[0].y;
     return {tiles, newX, newY};
 }
 
@@ -81,10 +81,13 @@ function getImagesAt(plot, spt, size) {
 
 /**
  * This Comparator is for the very specific case that you want to arrange 4 tiles in a specific order
+ * @param o1
+ * @param o2
+ * @return {number}
  */
 function compareFourTileSort(o1, o2) {
-    var {xoff:x1, yoff:y1}= o1;
-    var {xoff:x2, yoff:y2}= o2;
+    const {x:x1, y:y1}= o1;
+    const {x:x2, y:y2}= o2;
 
     if (x1===x2) {
         if (y1===y2)      return 0;
@@ -147,7 +150,7 @@ function showMag(spt,pv, plot,size) {
         results= firstImage;
     }
     else if (tiles.length===2) {
-        if (t1.xoff < t2.xoff) {  // tiles are horizontal
+        if (t1.x < t2.x) {  // tiles are horizontal
             pt2= makeScreenPt(-2 * newX - sizeOffX + t1.width * 2, -2 * newY - sizeOffY); // to the right
         } else { // tiles are vertical
             pt2= makeScreenPt( -2 * newX - sizeOffX, -2 * newY - sizeOffY + t1.height * 2); // below
@@ -181,6 +184,6 @@ function showMag(spt,pv, plot,size) {
         <div style={style}>
             {results}
         </div>
-     )
+     );
 }
 

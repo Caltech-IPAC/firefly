@@ -6,7 +6,7 @@ import {get,has,isArray} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
-import PlotImageTask from './task/PlotImageTask.js';
+import {makePlotImageAction, makePlotHiPSAction, makeChangeHiPSAction} from './task/PlotImageTask.js';
 import {UserZoomTypes} from './ZoomUtil.js';
 import {ZoomType} from './ZoomType.js';
 import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
@@ -65,6 +65,14 @@ const PLOT_IMAGE_FAIL= `${PLOTS_PREFIX}.PlotImageFail`;
 /** Action Type: plot of new image completed */
 const PLOT_IMAGE= `${PLOTS_PREFIX}.PlotImage`;
 
+/** Action Type: plot of new HiPS image */
+const PLOT_HIPS= `${PLOTS_PREFIX}.PlotHiPS`;
+const CHANGE_HIPS= `${PLOTS_PREFIX}.ChangeHiPS`;
+
+const PLOT_HIPS_FAIL= `${PLOTS_PREFIX}.PlotHiPSFail`;
+
+
+
 /** Action Type: A image replot occurred */
 const ANY_REPLOT= `${PLOTS_PREFIX}.Replot`;
 
@@ -106,6 +114,7 @@ const CROP_FAIL= `${PLOTS_PREFIX}.CropFail`;
 
 const UPDATE_VIEW_SIZE= `${PLOTS_PREFIX}.UpdateViewSize`;
 const PROCESS_SCROLL= `${PLOTS_PREFIX}.ProcessScroll`;
+const CHANGE_CENTER_OF_PROJECTION= `${PLOTS_PREFIX}.changeCenterOfProjection`;
 /** Action Type: Recenter in image on the active target */
 const RECENTER= `${PLOTS_PREFIX}.recenter`;
 /** Action Type: replot the image with the original plot parameters */
@@ -241,8 +250,8 @@ const initState= function() {
  * @prop {number} height - height of this tile
  * @prop {number} index - index of this tile
  * @prop {string} url - original file key to use in the service to retrieve this tile
- * @prop {number} xoff - pixel offset of this tile
- * @prop {number} yoff - pixel offset of this tile
+ * @prop {number} x - pixel offset of this tile
+ * @prop {number} y - pixel offset of this tile
  */
 
 
@@ -258,6 +267,8 @@ function reducers() {
 
 function actionCreators() {
     return {
+        [PLOT_HIPS]: plotHiPSActionCreator,
+        [CHANGE_HIPS]: changeHiPSActionCreator,
         [PLOT_IMAGE]: plotImageActionCreator,
         [PLOT_MASK]: plotImageMaskActionCreator,
         [PLOT_MASK_LAZY_LOAD]: plotImageMaskLazyActionCreator,
@@ -279,8 +290,9 @@ function actionCreators() {
 export default {
     reducers, actionCreators,
     ANY_REPLOT,
-    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CHANGE_HIPS,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
+    CHANGE_CENTER_OF_PROJECTION,
     ROTATE, FLIP,
     CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
@@ -507,6 +519,19 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
 
 
 /**
+ *
+ * @param {Object}  p
+ * @param {string} p.plotId
+ * @param {WorldPt} p.centerProjPt
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchChangeCenterOfProjection({plotId,centerProjPt, dispatcher= flux.process}) {
+    dispatcher({type: CHANGE_CENTER_OF_PROJECTION, payload: {plotId, centerProjPt} });
+}
+
+
+
+/**
  * @summary recenter the images on the plot center or the ACTIVE_TARGET
  *
  * Note - function parameter is a single object
@@ -595,6 +620,28 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
                                    dispatcher= flux.process}) {
     dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, attributes, setNewPlotAsActive, holdWcsMatch, viewerId} });
 }
+
+
+export function dispatchPlotHiPS({plotId,wpRequest, viewerId, fitsToSmallestDim,
+                                     pvOptions= {}, attributes={},
+                                     setNewPlotAsActive= true, dispatcher= flux.process }) {
+    dispatcher( { type: PLOT_HIPS, payload: {wpRequest, plotId, pvOptions, attributes, setNewPlotAsActive, viewerId} });
+}
+
+/**
+ *
+ * @param {Object}  p this function takes a single parameter
+ * @param {string} p.plotId
+ * @param {string} p.hipsUrlRoot
+ * @param {CoordinateSys} p.coordSys
+ * @param {WorldPt} p.centerProjPt
+ * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ */
+export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt, dispatcher= flux.process }) {
+    dispatcher( { type: CHANGE_HIPS, payload: {plotId, hipsUrlRoot, coordSys, centerProjPt} });
+}
+
+
 
 
 /**
@@ -791,7 +838,9 @@ export function dispatchChangeExpandedMode(expandedMode) {
     const enable= expandedMode!==ExpandType.COLLAPSE;
     visRoot().plotViewAry.forEach( (pv) => {
         const p= primePlot(pv);
-        const zlEnabled= enable && p && p.plotState.getWebPlotRequest().getZoomType()!==ZoomType.LEVEL;
+        const zlEnabled= enable && p &&
+            p.plotState.getWebPlotRequest() &&
+            p.plotState.getWebPlotRequest().getZoomType()!==ZoomType.LEVEL;
         dispatchZoomLocking(pv.plotId,zlEnabled,pv.plotViewCtx.zoomLockingType);
     });
 
@@ -816,8 +865,6 @@ export function dispatchChangeExpandedMode(expandedMode) {
  */
 export function dispatchExpandedAutoPlay(autoPlayOn) {
     flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
-
-
 }
 
 
@@ -867,7 +914,16 @@ function deletePlotViewActionCreator(rawAction) {
  * @returns {Function}
  */
 function plotImageActionCreator(rawAction) {
-    return PlotImageTask.makePlotImageAction(rawAction);
+    return makePlotImageAction(rawAction);
+}
+
+
+function plotHiPSActionCreator(rawAction) {
+    return makePlotHiPSAction(rawAction);
+}
+
+function changeHiPSActionCreator(rawAction) {
+    return makeChangeHiPSAction(rawAction);
 }
 
 
@@ -882,7 +938,7 @@ function restoreDefaultsActionCreator(rawAction) {
         const {plotGroupAry,plotViewAry}= vr;
         const pv= getPlotViewById(vr,plotId);
         const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-        applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
+        applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
                     if (pv.rotation) dispatchRotate({plotId:pv.plotId, rotateType:RotateType.UNROTATE});
@@ -995,6 +1051,8 @@ function reducer(state=initState(), action={}) {
         case PLOT_IMAGE_START  :
         case PLOT_IMAGE_FAIL  :
         case PLOT_IMAGE  :
+        case PLOT_HIPS:
+        case PLOT_HIPS_FAIL:
         case CROP_START:
         case CROP_FAIL:
         case CROP:
@@ -1026,6 +1084,8 @@ function reducer(state=initState(), action={}) {
         case PLOT_PROGRESS_UPDATE  :
         case OVERLAY_PLOT_CHANGE_ATTRIBUTES :
         case CHANGE_PRIME_PLOT  :
+        case CHANGE_CENTER_OF_PROJECTION:
+        case CHANGE_HIPS:
         case ADD_PROCESSED_TILES:
             retState= plotChangeReducer(state,action);
             break;

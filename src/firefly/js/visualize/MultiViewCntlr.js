@@ -456,6 +456,7 @@ function reducer(state=initState(), action={}) {
             retState= deleteSingleItem(state,payload.plotId, IMAGE);
             break;
 
+        case ImagePlotCntlr.PLOT_HIPS:
         case ImagePlotCntlr.PLOT_IMAGE_START:
             const {viewerId, plotId} = payload;
             if (imageViewerCanAdd(state,viewerId, plotId)) {

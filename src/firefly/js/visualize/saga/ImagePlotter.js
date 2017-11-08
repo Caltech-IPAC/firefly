@@ -31,12 +31,14 @@ export function* imagePlotter(params, dispatch, getState) {
         var action= yield take([ImagePlotCntlr.PLOT_IMAGE_START,ImagePlotCntlr.UPDATE_VIEW_SIZE]);
         switch (action.type) {
             case ImagePlotCntlr.PLOT_IMAGE_START:
-                if (canContinue(action)) {
-                    continuePlotting(makeContinueAction(action),dispatch);
-                }
-                else {
-                    waitingPlotActions= unionWith(waitingPlotActions,[action],
-                                                   (a1,a2) => a1.payload.requestKey===a2.payload.requestKey);
+                if (action.payload.type==='image') {
+                    if (canContinue(action)) {
+                        continuePlotting(makeContinueAction(action),dispatch);
+                    }
+                    else {
+                        waitingPlotActions= unionWith(waitingPlotActions,[action],
+                            (a1,a2) => a1.payload.requestKey===a2.payload.requestKey);
+                    }
                 }
                 break;
 

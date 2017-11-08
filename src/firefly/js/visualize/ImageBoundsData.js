@@ -5,7 +5,7 @@
 import CoordinateSys from './CoordSys.js';
 import VisUtil from './VisUtil.js';
 import {makeImagePt} from './Point';
-
+import {getPixScaleDeg} from './WebPlot.js';
 
 
 function getJ2XY(wp) {
@@ -33,7 +33,7 @@ export const makeRoughGuesser= function(cc) {
     const topRight= cc.getWorldCoords(makeImagePt(dataWidth,0));
     const bottomRight= cc.getWorldCoords(makeImagePt(dataWidth,dataHeight));
     const bottomLeft= cc.getWorldCoords(makeImagePt(0,dataHeight));
-    const scale= cc.getImagePixelScaleInDeg();
+    const scale= getPixScaleDeg(cc);
 
 
     const wPad= 25;

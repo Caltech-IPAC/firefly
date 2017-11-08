@@ -7,21 +7,27 @@ import Enum from 'enum';
 import {get} from 'lodash';
 import numeral from 'numeral';
 import {logError} from '../util/WebUtil.js';
-import {PlotAttribute} from './WebPlot.js';
+import {PlotAttribute, isImage, isHiPS} from './WebPlot.js';
 import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY,
                        dispatchUpdateViewSize, dispatchRecenter} from './ImagePlotCntlr.js';
 import {getPlotViewById,primePlot,getPlotStateAry,
         operateOnOthersInGroup, applyToOnePvOrGroup, findPlotGroup} from './PlotViewUtil.js';
 import {callSetZoomLevel} from '../rpc/PlotServicesJson.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
+import {getHiPSFoV} from './HiPSUtil.js';
+import {getPixScaleArcSec} from './WebPlot.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
 
 
-export const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
-                7,8, 9, 10, 11, 12, 13, 14, 15, 16, 32];
+export const levels= [.03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
+                       7,8, 9, 10, 11, 12, 13, 14, 15, 16, 32];
 
-const zoomMax= levels[levels.length-1];
+export const hiPSLevels= [0.00390625,  .0078125, .015625, .03125, .0625, .125,.25,
+                          .5, .75, 1,2, 4, 8, 10, 14, 16, 32];
+
+const IMAGE_ZOOM_MAX= levels[levels.length-1];
+const HIPS_ZOOM_MAX= hiPSLevels[levels.length-1];
 
 /**
  * can be 'UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'
@@ -65,7 +71,7 @@ export function zoomActionCreator(rawAction) {
             goodParams= true;
         }
         else if ([UserZoomTypes.UP,UserZoomTypes.DOWN,UserZoomTypes.ONE].includes(userZoomType)) {
-            level= getNextZoomLevel(plot.zoomFactor,userZoomType);
+            level= getNextZoomLevel(plot,userZoomType);
             isFullScreen= false;
             useDelay= true; //todo
             goodParams= true;
@@ -135,7 +141,7 @@ function alignWCS(visRoot, pv) {
         }
         else {
             const pg= findPlotGroup(pv.plotGroupId, visRoot.plotGroupAry);
-            applyToOnePvOrGroup(visRoot.plotViewAry, pv.plotId, pg,
+            applyToOnePvOrGroup(visRoot.plotViewAry, pv.plotId, pg, false,
                                                (pv) => dispatchUpdateViewSize(pv.plotId) );
         }
 
@@ -186,6 +192,11 @@ function doZoom(dispatcher,visRoot,plot,zoomLevel,isFullScreen, zoomLockingEnabl
     const {plotId}= plot;
     dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
                   payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType} } );
+
+    if (isHiPS(plot)) {
+        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotId} } );
+        return; // if HiPS success - no server call needed
+    }
 
 
      // note - this filter has a side effect of canceling the timer. There might be a better way to do this.
@@ -282,23 +293,30 @@ function processZoomSuccess(dispatcher, originalVisRoot, plotId, zoomLevel, resu
 }
 
 
-
-
-export function getNextZoomLevel(currLevel, zoomType) {
+/**
+ *
+ * @param {WebPlot} plot
+ * @param {ZoomType} zoomType
+ * @return {number}
+ */
+export function getNextZoomLevel(plot, zoomType) {
+    const {zoomFactor, type}= plot;
+    const availableLevels= (type==='image')  ? levels : hiPSLevels;
+    const zoomMax= (type==='image')  ? IMAGE_ZOOM_MAX : HIPS_ZOOM_MAX;
     let newLevel= 1;
     if (zoomType===UserZoomTypes.UP) {
-        newLevel= currLevel>=zoomMax ? zoomMax : levels.find( (l) => l>currLevel);
+        newLevel= zoomFactor>=zoomMax ? zoomMax : availableLevels.find( (l) => l>zoomFactor);
     }
     else if (zoomType===UserZoomTypes.ONE) {
         newLevel= 1;
     }
     else if (zoomType===UserZoomTypes.DOWN) {
-        newLevel= levels[0];
+        newLevel= availableLevels[0];
         let found= false;
-        for(let i= levels.length-1; (i>=0); i--) {
-            found= (levels[i]<currLevel);
+        for(let i= availableLevels.length-1; (i>=0); i--) {
+            found= (availableLevels[i]<zoomFactor);
             if (found) {
-                newLevel= levels[i];
+                newLevel= availableLevels[i];
                 break;
             }
         }
@@ -330,7 +348,7 @@ export function getEstimatedFullZoomFactor(plot, screenDim, fullType, tryMinFact
 }
 
 
-export function getZoomMax() { return levels[levels.length-1]; }
+export function getZoomMax(plot) { return isImage(plot) ? levels[levels.length-1] : hiPSLevels[hiPSLevels.length-1]; }
 
 
 
@@ -347,11 +365,11 @@ function getOnePlusLevelDesc(level) {
 }
 
 export function getArcSecPerPix(plot, zoomFact) {
-    return plot.projection.getPixelScaleArcSec() / zoomFact;
+    return getPixScaleArcSec(plot) / zoomFact;
 }
 
 export function getZoomLevelForScale(plot, arcsecPerPix) {
-    return plot.projection.getPixelScaleArcSec() / arcsecPerPix;
+    return getPixScaleArcSec(plot) / arcsecPerPix;
 }
 
 export function convertZoomToString(level) {
@@ -359,12 +377,48 @@ export function convertZoomToString(level) {
     const zfInt= Math.floor(level*10000);
 
     if (zfInt>=10000)      retval= getOnePlusLevelDesc(level); // if level > then 1.0
+    else if (zfInt===39)   retval= '1/256x';    // 1/256
+    else if (zfInt===78)   retval= '1/128x';    // 1/128
+    else if (zfInt===156)  retval= '1/64x';     // 1/64
     else if (zfInt===312)  retval= '1/32x';     // 1/32
     else if (zfInt===625)  retval= '1/16x';     // 1/16
     else if (zfInt===1250) retval= '1/8x';      // 1/8
     else if (zfInt===2500) retval= String.fromCharCode(188) +'x'; // 1/4
     else if (zfInt===7500) retval= String.fromCharCode(190) +'x';   // 3/4
     else if (zfInt===5000) retval= String.fromCharCode(189) +'x';   // 1/2
+    else if (level<.125)   retval= numeral(level).format('0.000')+'x';
     else                   retval= numeral(level).format('0.0')+'x';
     return retval;
+}
+
+
+const SHOW_ZOOM_PREFIX= false; // for hips debugging
+
+export function getZoomDesc(pv) {
+    const plot= primePlot(pv);
+    if (!plot) return '';
+    const zstr= convertZoomToString(plot.zoomFactor);
+    if (isImage(plot)) {
+        return zstr;
+    }
+    else {
+        if (!plot.viewDim) return '';
+        const zprefix= SHOW_ZOOM_PREFIX ? zstr+', ' : '';
+        // const degPerPix= getArcSecPerPix(plot,plot.zoomFactor)/3600;
+        // const fov= degPerPix * plot.viewDim.width;
+        const fov= getHiPSFoV(pv);
+        if (fov>10) {
+            return `${zprefix}FOV: ${numeral(fov).format('0')}${String.fromCharCode(176)}`;
+        }
+        else if (fov>5) {
+            return `${zprefix}FOV: ${numeral(fov).format('0.0')}${String.fromCharCode(176)}`;
+        }
+        else if (fov>1) {
+            return `${zprefix}FOV: ${numeral(fov).format('0.00')}${String.fromCharCode(176)}`;
+        }
+        else {
+            return `${zprefix}FOV: ${numeral(fov*3600).format('0')}"`;
+        }
+    }
+
 }

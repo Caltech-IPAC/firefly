@@ -4,7 +4,7 @@
 
 
 import Point, {makeScreenPt,makeImagePt,pointEquals} from '../Point.js';
-import * as AppDataCntlr from '../../core/AppDataCntlr.js';
+import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
 import DrawUtil from './DrawUtil.js';
 import Color from '../../util/Color.js';
@@ -109,6 +109,7 @@ class Drawer {
         if (data && !Array.isArray(data)) data= [data];
         var cWidth, cHeight, dWidth, oldDWidth, dHeight;
         var oldDHeight, zfact, oldZfact, oldTestPtStr, testPtStr, pt;
+        let oldProjection, newProjection;
 
         width= Math.floor(width);
         height= Math.floor(height);
@@ -120,6 +121,9 @@ class Drawer {
         if (plot) {
             dWidth= plot.dataWidth;
             dHeight= plot.dataHeight;
+            newProjection= plot.projection;
+
+
             zfact= Math.round(plot.zoomFactor*100000)/100000;
             pt= CCUtil.getWorldCoords(plot,makeImagePt(1,1));
             testPtStr= pt ? pt.toString() : '';
@@ -128,6 +132,7 @@ class Drawer {
         if (this.plot) {
             oldDWidth= this.plot.dataWidth;
             oldDHeight= this.plot.dataHeight;
+            oldProjection= this.plot.projection;
             oldZfact= Math.round(this.plot.zoomFactor*100000)/100000;
             pt= CCUtil.getWorldCoords(this.plot,makeImagePt(1,1));
             oldTestPtStr= pt ? pt.toString() : '';
@@ -135,7 +140,7 @@ class Drawer {
 
         var viewUpdated= true;
 
-        if (drawingDef===this.drawingDef &&
+        if (drawingDef===this.drawingDef && oldProjection===newProjection &&
             cWidth===width && cHeight===height &&
             dWidth===oldDWidth && dHeight===oldDHeight  &&
             zfact===oldZfact  && testPtStr===oldTestPtStr ) {
@@ -451,7 +456,7 @@ class Drawer {
     removeTask() {
         var {plot,plotTaskId}= this;
         if (plot && plotTaskId) {
-            setTimeout( () => AppDataCntlr.dispatchRemoveTaskCount(plot.plotId,plotTaskId) ,0);
+            setTimeout( () => dispatchRemoveTaskCount(plot.plotId,plotTaskId) ,0);
             this.plotTaskId= null;
         }
     }
@@ -459,8 +464,8 @@ class Drawer {
     addTask() {
         var {plot}= this;
         if (plot) {
-            this.plotTaskId= AppDataCntlr.makeTaskId();
-            setTimeout( () => AppDataCntlr.dispatchAddTaskCount(plot.plotId,this.plotTaskId) ,0);
+            this.plotTaskId= makeTaskId();
+            setTimeout( () => dispatchAddTaskCount(plot.plotId,this.plotTaskId) ,0);
         }
     }
 
