@@ -71,9 +71,11 @@ public class TestAtlasIbe extends ConfigTest {
         } catch (IOException e) {
             LOG.error("problem ", e.getMessage());
             e.printStackTrace();
+            Assert.fail(e.getMessage());
         } catch (IpacTableException e) {
             LOG.error("problem ", e.getMessage());
             e.printStackTrace();
+            Assert.fail(e.getMessage());
         }
     }
 }

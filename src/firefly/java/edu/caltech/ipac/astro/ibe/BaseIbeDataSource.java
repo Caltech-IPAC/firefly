@@ -52,7 +52,7 @@ public class BaseIbeDataSource implements IbeDataSource {
     public void setIbeHost(String ibeHost) {
         if (!StringUtils.isEmpty(ibeHost) &&
                 !ibeHost.toLowerCase().startsWith("http")) {
-            ibeHost = "http://" + ibeHost.trim();
+            ibeHost = "https://" + ibeHost.trim();
         }
         this.ibeHost = ibeHost;
     }
