@@ -12,6 +12,8 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -184,11 +186,27 @@ public class AtlasIbeDataSource extends BaseIbeDataSource {
         return ds;
     }
 
+    //this method encode the file name in case it has + or some other sign
+    private String getEncodedFileName(String fname){
+
+            String[] fpArray =fname.split("/");
+
+            try {
+                String str=new String();
+                for (int i=0; i<fpArray.length; i++){
+                    str += URLEncoder.encode(fpArray[i], "UTF-8") + "/";
+                }
+                return str;
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            return null;
+    }
     @Override
     public IbeDataParam makeDataParam(Map<String, String> pathInfo) {
         IbeDataParam dataParam = new IbeDataParam();
 
-        String fname = pathInfo.get("fname");
+        String fname = getEncodedFileName( pathInfo.get("fname") );
 
         String root = getImageRoot();
 
