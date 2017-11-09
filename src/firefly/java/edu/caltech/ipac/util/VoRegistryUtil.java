@@ -68,7 +68,7 @@ public class VoRegistryUtil {
 			for (String w : words) {
 				// adqls += " and ( (identifier like '%" + w + "%' OR title like
 				// '%" + w + "%') )";
-				adqls += " and ( (shortName LIKE '%" + w + "%') OR ( content/description LIKE '%" + w
+				adqls += " and ( (content/subject LIKE '%" + w + "%') OR (shortName LIKE '%" + w + "%') OR ( content/description LIKE '%" + w
 						+ "%') OR (identifier like '%" + w + "%') OR (title like '%" + w + "%') )";
 			}
 			adqls += " and ( content/contentLevel like '%research%' )";
