@@ -65,8 +65,9 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
         List<String> types = new ArrayList<String>();
 
-        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(),
-                selectedRows, "oid", "pfilename", "fid", "pid", "ccdid", "ra", "dec");
+        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
+// because some columns below may not be in the resultset, we will select all(*) then determine if they exists.
+//                selectedRows, "oid", "pfilename", "fid", "pid", "ccdid", "ra", "dec");
 
         if (request.getParam("ProductLevel") == null) {
             request.setParam("ProductLevel", "l1");
