@@ -186,7 +186,7 @@ A FITS image viewer is created by calling the following method:
 
 The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server. Others control the zoom, stretch, and color, title, and default overlays. There are also parameters to pre-process an image, such as crop, rotate or flip. You can also specify three color parameters and the associated files.
 
-For the details of FITS plotting parameters see: [see fits-plotting-parameters.md](fits-plotting-parameters.md)
+For the details of FITS plotting parameters see: [fits-plotting-parameters.md](fits-plotting-parameters.md)
  
 <br>
 *Examples:* 
@@ -684,4 +684,4 @@ firefly.showHistogram('histogram2_div', {tbl_id: tblReq.tbl_id, col: 'w2mpro'});
 
 ### More Code Examples
 
-[see firefly-api-code-examples.md](../tutorial/firefly-api-code-examples.md)
+[firefly-api-code-examples.md](firefly-api-code-examples.md)

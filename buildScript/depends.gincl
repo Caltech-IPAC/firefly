@@ -154,11 +154,48 @@ task buildJsDoc (dependsOn: loadConfig) {
   inputs.dir "${fireflyPath}/src/firefly"
 
   doLast {
+    // copy sources to jsdocs build directory
+    copy {
+      from ("${fireflyPath}/src/firefly") {include "js/**"}
+      from ("${fireflyPath}/src/firefly/jsdoc_config.json")
+      into "${buildDir}/jsdocs/"
+    }
+    // copy md files to jsdocs build directory replacing .md links to tutorial
+    copy {
+      from ("${fireflyPath}") {include "docs/*"}
+      into "${buildDir}/jsdocs/"
+      filter{
+        // replace md's link to point to docstrap's tutorial.  ie   [a link](a_file.md) -> [a link](tutorial-a_file.html)
+        String line -> line.replaceAll("(\\[.+\\])\\s*\\((.*)\\.md\\)", "\$1(tutorial-\$2.html)")
+      }
+    }
+    // setup tutorials
+    copy {
+      from ("${fireflyPath}/docs") {
+        include 'firefly-api-code-examples.md', 'firefly-external-task-launcher.md', 'fits-plotting-parameters.md'
+      }
+      into "${buildDir}/jsdocs/tutorial"
+      filter{
+          // replace md's link to point to docstrap's tutorial.  ie   [a link](a_file.md) -> [a link](tutorial-a_file.html)
+        String line -> line.replaceAll("(\\[.+\\])\\s*\\((.*)\\.md\\)", "\$1(tutorial-\$2.html)")
+      }
+    }
+    // copy files referenced by files in ./docs
+    copy {
+      from ("${fireflyPath}/docs") {
+        include 'firefly-api-code-examples.md', 'fits-plotting-parameters.md'
+      }
+      into "${outdir}/docs/js"
+    }
+
     if (!file("jsdoc_config.json").exists()) {
       println ">> jsdoc_config.json not found.  Skipping buildJsDoc."
       throw new StopExecutionException("jsdoc_config.json not found.  Skipping buildJsDoc.")
     }
-    def res = project.ext.NODE "${fireflyPath}/node_modules/.bin/jsdoc", '-c', 'jsdoc_config.json', '-d', "${outdir}/docs/js"
+    def res = exec {
+      workingDir = "${buildDir}/jsdocs/"
+      commandLine "${fireflyPath}/node_modules/.bin/jsdoc", '-c', "${buildDir}/jsdocs/jsdoc_config.json", '-d', "${outdir}/docs/js"
+    }
     if (res.getExitValue() != 0) {
       throw new GradleException("Fail to build Client")
     }
