@@ -51,7 +51,7 @@ const fKeyDef = {
     opOption: {fKey: 'operationOption', label: 'FITS file:'},
     colorBand:{fKey: 'threeBandColor', label: 'Color Band:'},
     fileName: {fKey: 'fileName', label: 'Save as:'},
-    location: {fKey: 'fileLocation', label: 'Where:'},
+    location: {fKey: 'fileLocation', label: 'File Location:'},
     wsSelect: {fKey: 'wsSelect', label: ''},
     overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
 };

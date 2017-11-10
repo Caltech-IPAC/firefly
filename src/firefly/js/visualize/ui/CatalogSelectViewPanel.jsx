@@ -786,6 +786,8 @@ function fieldInit() {
         },
         'fileLocation': {
             fieldKey: 'fileLocation',
+            label: 'Table file location:',
+            labelWidth: 100,
             value: LOCALFILE
         }
 

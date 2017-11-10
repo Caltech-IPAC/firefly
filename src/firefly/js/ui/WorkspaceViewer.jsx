@@ -33,13 +33,12 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 export function onRenameFile() {
     return (oldKey, newKey) => {
-        dispatchWorkspaceRenamePath();
+        dispatchWorkspaceMovePath({oldKey, newKey, isFile: true});
     };
 }
 
 export function onRenameFolder() {
     return (oldKey, newKey) => {
-        dispatchWorkspaceRenamePath();
     };
 }
 
@@ -52,7 +51,6 @@ export function onMoveFile() {
 
 export function onMoveFolder() {
     return (oldKey, newKey) => {
-        dispatchWorkspaceMovePath();
     };
 }
 
@@ -299,7 +297,7 @@ export function showWorkspaceUploadPopup({onClickUpload, files, value}) {
                         marginBottom: VMargin,
                         marginLeft: HMargin,
                         marginRight: HMargin,
-                        width: 500,
+                        width: 550,
                         height: 300,
                         overflow: 'auto',
                         padding: 10,

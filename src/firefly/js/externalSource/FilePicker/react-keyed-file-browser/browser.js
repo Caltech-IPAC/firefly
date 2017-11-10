@@ -462,11 +462,14 @@ class FileBrowser extends React.Component {
             </li>
           );
         }
+
+        // fix some error in the original code, selectionIsFolder && this.props.onRenameFile => onRenameFolder
+        // !selectionOsFolder && this.props.onRenameFolder => onRenameFile
         if (
           selectedItem.keyDerived
           && (
-            (selectionIsFolder && typeof this.props.onRenameFile === 'function')
-            || (!selectionIsFolder && typeof this.props.onRenameFolder === 'function')
+            (selectionIsFolder && typeof this.props.onRenameFolder === 'function')
+            || (!selectionIsFolder && typeof this.props.onRenameFile === 'function')
           )
         ) {
           actions.push(

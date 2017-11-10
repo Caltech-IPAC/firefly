@@ -351,7 +351,7 @@ function TableError({error, tbl_id, message}) {
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'Save as:'},
-    location: {fKey: 'fileLocation', label: 'Where:'},
+    location: {fKey: 'fileLocation', label: 'File Location:'},
     wsSelect: {fKey: 'wsSelect', label: ''},
     overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
 };

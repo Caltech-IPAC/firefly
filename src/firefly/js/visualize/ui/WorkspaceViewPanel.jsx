@@ -110,13 +110,15 @@ export class WorkspaceViewPanel extends PureComponent {
 
         const displayList = (wsList) => {
             return (
-                <div style={{border: '1px solid #a3aeb9', height: 300, overflow: 'auto', padding: 10}} >
+                <div style={{border: '1px solid #a3aeb9', height: 500, overflow: 'auto', padding: 10}} >
                     <FieldGroup groupKey={workspacePopup} keepState={true}>
                         <WorkspaceViewField
                             files={wsList}
                             onCreateFolder={onCreateFolder()}
                             onCreateFiles={onCreateFiles}
                             onDeleteFile={onDeleteFile()}
+                            onRenameFile={onRenameFile()}
+                            onMoveFile={onRenameFile()}
                             wrapperStyle={{width: 'calc(100%-10px)'}} />
                     </FieldGroup>
                 </div>
