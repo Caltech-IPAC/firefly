@@ -105,6 +105,7 @@ export function wcsMatchActionCreator(action) {
         group= findPlotGroup(masterPv.plotGroupId, visRoot.plotGroupAry);
         masterPv= getPlotViewById(visRoot, plotId);
         const masterPlot= primePlot(masterPv);
+        if (!masterPlot) return;
 
         const level = matchType===WcsMatchType.Standard  || matchType===WcsMatchType.Target ?
                   masterPlot.zoomFactor :
