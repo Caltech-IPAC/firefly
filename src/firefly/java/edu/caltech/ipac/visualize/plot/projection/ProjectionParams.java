@@ -31,6 +31,9 @@ public class ProjectionParams implements Serializable {
     public double cd1_1, cd1_2, cd2_1, cd2_2;
     public double dc1_1, dc1_2, dc2_1, dc2_2;
     public boolean using_cd = false;
+    public boolean using_tpv = false;
+    public double pv1[]= null;
+    public double pv2[]= null;
 
     /* the following are for PLATE projection */
     public double plate_ra, plate_dec;

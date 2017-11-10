@@ -15,6 +15,7 @@ import {CartesianProjection} from './CartesianProjection.js';
 import {OrthographicProjection} from './OrthographicProjection.js';
 import {CylindricalProjection} from './CylindricalProjection.js';
 import {PlateProjection} from './PlateProjection.js';
+import {TpvProjection} from './TpvProjection.js';
 import {Projection as AladinProjection} from '../../externalSource/aladinProj/AladinProjections.js';
 
 
@@ -32,6 +33,7 @@ export const PLATE        = 1007; // TESTED
 export const ARC          = 1008;
 export const SFL          = 1009; // TESTED
 export const CEA          = 1010;
+export const TPV          = 1011;
 export const UNSPECIFIED  = 1998; // TESTED
 export const UNRECOGNIZED = 1999; // TESTED
 
@@ -49,6 +51,13 @@ const projTypes= {
 		implemented : true,
 		wrapping : false
 	},
+    [TPV] : {
+        name: 'TPV',
+        fwdProject: TpvProjection.fwdProject,
+        revProject: TpvProjection.revProject,
+        implemented : true,
+        wrapping : false
+    },
 	[ORTHOGRAPHIC] : {
 		name: 'ORTHOGRAPHIC',
 		fwdProject: OrthographicProjection.fwdProject,

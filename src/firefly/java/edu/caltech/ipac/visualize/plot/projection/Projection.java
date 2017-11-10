@@ -36,6 +36,7 @@ public class Projection implements Serializable {
     static public final int ARC          = 1008;
     static public final int SFL          = 1009;
     static public final int CEA          = 1010;
+    static public final int TPV          = 1011;
     static public final int UNSPECIFIED  = 1998;
     static public final int UNRECOGNIZED = 1999;
 

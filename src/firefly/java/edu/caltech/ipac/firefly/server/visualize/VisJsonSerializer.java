@@ -131,6 +131,9 @@ public class VisJsonSerializer {
         map.put("dc2_1", p.dc2_1);
         map.put("dc2_2", p.dc2_2);
         map.put("using_cd", p.using_cd);
+        map.put("using_tpv", p.using_tpv);
+        map.put("pv1", makeJAry(p.pv1));
+        map.put("pv2", makeJAry(p.pv2));
         map.put("plate_ra", p.plate_ra);
         map.put("plate_dec", p.plate_dec);
         map.put("x_pixel_offset", p.x_pixel_offset);

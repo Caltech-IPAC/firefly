@@ -76,6 +76,9 @@ public class ImageHeader implements Serializable
     public double b[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
     public double bp[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
     public boolean map_distortion = false;
+    public double pv1[]= null;
+	public double pv2[]= null;
+	public boolean using_tpv= false;
     public String keyword;
 	public Map<String,String> maskHeaders= new HashMap<>(23);
 	public Map<String,String> sendToClientHeaders = new HashMap<>(23);
@@ -148,33 +151,37 @@ public class ImageHeader implements Serializable
 	    ctype2 = header.getStringValue("CTYPE2") + "        ";
 	    ctype1_trim = ctype1.trim();
 	    String ctype1_tail = ctype1.substring(4, 8);
-	    if (ctype1_trim.indexOf("-TAN") >= 0)
-		maptype = Projection.GNOMONIC;
-	    else if (ctype1_trim.indexOf("-SIN") >= 0)
-		maptype = Projection.ORTHOGRAPHIC;
-	    else if (ctype1_trim.endsWith("-NCP"))
-		maptype = Projection.NCP;
-	    else if (ctype1_trim.endsWith("-ARC"))
-		maptype = Projection.ARC;
-	    else if (ctype1_trim.endsWith("-AIT"))
-		maptype = Projection.AITOFF;
-	    else if (ctype1_trim.endsWith("-ATF"))
-		maptype = Projection.AITOFF;
-	    else if (ctype1_trim.endsWith("-CAR"))
-		maptype = Projection.CAR;
-	    else if (ctype1_trim.endsWith("-CEA"))
-		maptype = Projection.CEA;
-	    else if (ctype1_trim.endsWith("-SFL"))
-		maptype = Projection.SFL;
-	    else if (ctype1_trim.endsWith("-GLS"))
-		maptype = Projection.SFL;
-	    else if (ctype1_trim.endsWith("----"))
-		maptype = Projection.LINEAR;
-	    else if (ctype1_tail.equals("    "))
-		maptype = Projection.LINEAR;
-	    else 
-		maptype = Projection.UNRECOGNIZED;
-	    
+		if (ctype1_trim.indexOf("-TAN") >= 0)
+			maptype = Projection.GNOMONIC;
+		else if (ctype1_trim.indexOf("-TPV") >= 0) {
+			maptype = Projection.TPV;
+			using_tpv= true;
+		}
+		else if (ctype1_trim.indexOf("-SIN") >= 0)
+			maptype = Projection.ORTHOGRAPHIC;
+		else if (ctype1_trim.endsWith("-NCP"))
+			maptype = Projection.NCP;
+		else if (ctype1_trim.endsWith("-ARC"))
+			maptype = Projection.ARC;
+		else if (ctype1_trim.endsWith("-AIT"))
+			maptype = Projection.AITOFF;
+		else if (ctype1_trim.endsWith("-ATF"))
+			maptype = Projection.AITOFF;
+		else if (ctype1_trim.endsWith("-CAR"))
+			maptype = Projection.CAR;
+		else if (ctype1_trim.endsWith("-CEA"))
+			maptype = Projection.CEA;
+		else if (ctype1_trim.endsWith("-SFL"))
+			maptype = Projection.SFL;
+		else if (ctype1_trim.endsWith("-GLS"))
+			maptype = Projection.SFL;
+		else if (ctype1_trim.endsWith("----"))
+			maptype = Projection.LINEAR;
+		else if (ctype1_tail.equals("    "))
+			maptype = Projection.LINEAR;
+		else
+			maptype = Projection.UNRECOGNIZED;
+
 	    if ((ctype1_trim.startsWith("DEC")) ||
 		(ctype1_trim.startsWith("MM")) ||
 		(ctype1_trim.startsWith("GLAT")) ||
@@ -303,6 +310,12 @@ public class ImageHeader implements Serializable
 		cd2_2 = cdelt2 * pc2_2;
 		got_cd2_2 = true;
 	    }
+	}
+
+	if (using_tpv) {
+	    using_cd= false;
+		pv1= getPVArray(header,"1");
+		pv2= getPVArray(header,"2");
 	}
 
 
@@ -641,6 +654,7 @@ public class ImageHeader implements Serializable
 		cdelt2 = plt_scale * y_pixel_size / 1000 / 3600;
 	    }
 	}
+	if (using_tpv) using_cd= false;
 
     }
 
@@ -723,6 +737,14 @@ public class ImageHeader implements Serializable
 	return jsys;
     }
 
+    public double[] getPVArray(Header header, String idxStr) {
+    	double retval[]= new double[40];
+		for(int i=0; i<40; i++) {
+			retval[i]= header.getDoubleValue("PV"+idxStr+"_"+i, i==1?1D:0D);
+		}
+		return retval;
+	}
+
     public Projection createProjection(CoordinateSys csys) {
         ProjectionParams params= createProjectionParams(this);
         return new Projection(params,csys);
@@ -765,6 +787,9 @@ public class ImageHeader implements Serializable
         params.dc2_1= hdr.dc2_1;
         params.dc2_2= hdr.dc2_2;
         params.using_cd= hdr.using_cd;
+		params.using_tpv= hdr.using_tpv;
+		params.pv1= hdr.pv1;
+		params.pv2= hdr.pv2;
 
         params.plate_ra= hdr.plate_ra;
         params.plate_dec= hdr.plate_dec;
