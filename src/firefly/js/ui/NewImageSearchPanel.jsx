@@ -387,7 +387,7 @@ function renderThreeColors(imageMasterData,imageSource) {
                 <FieldGroupCollapsible initialState= {{value:'open'}}
                                        fieldKey={`collapsible${index}`}
                                        key={index}
-                                       header={rgb[index].toUpperCase()}
+                                       
                                        isOpen={index===0}
                                        borderStyle={CollapseBorder.Oneborder}
                                        headerRoundCorner={index === 0 ? corner | CollapseHeaderCorner.TopRight : corner}
@@ -412,6 +412,7 @@ function renderThreeColors(imageMasterData,imageSource) {
         );
 
     });
+
 
     return  (<div>
             <FieldGroupTabs fieldKey='threeColor'>
