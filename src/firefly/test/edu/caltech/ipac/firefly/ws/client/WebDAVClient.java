@@ -296,7 +296,7 @@ public class WebDAVClient {
         AppProperties.setProperty("workspace.host.url", "https://irsadev.ipac.caltech.edu");
         WorkspaceManager workspaceManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(cred);
         File f = pickFile(0);
-        workspaceManager.putFile("", f, null);
+        workspaceManager.putFile("",true, f, null);
         WsResponse r = workspaceManager.getList("", 1);
 
         List<WspaceMeta> wsmeta = r.getWspaceMeta();
