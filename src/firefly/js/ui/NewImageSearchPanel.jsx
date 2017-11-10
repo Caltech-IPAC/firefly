@@ -13,19 +13,20 @@ import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
 import {FieldGroupCollapsible, CollapseBorder, CollapseHeaderCorner} from '../ui/panel/CollapsiblePanel.jsx';
-import {ImageSelPanelChangeOneColor} from '../visualize/ui/ImageSelectPanelReducer.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {FileUpload} from './FileUpload.jsx';
 import {ValidationField} from './ValidationField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {parseWorldPt} from '../visualize/Point.js';
-import WebPlotRequest, {WPConst,TitleOptions} from '../visualize/WebPlotRequest.js';
+import WebPlotRequest, {WPConst} from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {getImageMasterData} from '../visualize/ui/AllImageSearchConfig.js';
 import {ImageSelect} from './ImageSelect.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {logError} from '../util/WebUtil.js';
+import './NewImageSearchPanel.css';
+
 
 const [RED, GREEN, BLUE] = [0, 1, 2];
 
@@ -47,6 +48,7 @@ const imageSources =
         {label: 'URL', value: 'url'}
 
     ];
+
 
 
 const maskWrapper= {
@@ -177,6 +179,7 @@ export class NewImageSearchPanel extends PureComponent {
 }
 
 
+
 //todo renderPanel should be updated to include new UI work
 function renderPanel(imageMasterData, imageType,imageSource) {
 
@@ -209,13 +212,15 @@ function renderPanel(imageMasterData, imageType,imageSource) {
                                              max: 1,
                                          }}
                                          label={'Choose Radius'}
-                        />
-                        <div >
-                           {imageTypeOptions(FG_KEY)}
+                       />
 
-                        </div>
-                           {imagePanel}
-                        </div>
+                    </div>
+
+                    <ImageTypeOptionPanel groupKey={FG_KEY}/>
+                    <div >
+                        {imagePanel}
+                    </div>
+
                 </FieldGroup>
             </FormPanel>
         </div>
@@ -266,44 +271,58 @@ function searchFailed(request) {
     showInfoPopup(!validInfo.valid ? validInfo.message :'One or more fields are not valid');
 }
 
-const imageTypeOptions  = (groupKey) => {
+function ImageTypeOptionPanel({groupKey}) {
     return (
-        <div style = {{marginBottom:'8px'}}>
+         <div >
+           <div className='OptionPanelsToolbar'>2. Choose image type</div>
+           <div  className = 'OptionPanels' >
+             <RadioGroupInputField
+              initialState= {{
+                  value: 'scImage',
+                  tooltip: 'Please select the image type'
+
+              }}
+              options={imageTypes}
+              alignment='horizontal'
+              hPaddingRight={80}
+              fieldKey='imageTypeOptions'
+              groupKey={groupKey}/>
+           </div>
+
+         </div>
+    );
+
+};
+
+ImageTypeOptionPanel.propTypes = {
+    groupKey: PropTypes.string
+};
+//
+function ImageSourceOptionPanel ({groupKey}){
+
+    return (
+        <div >
+            <div className='OptionPanelsToolbar'>3. Select image source</div>
+            <div  className = 'OptionPanels' >
             <RadioGroupInputField
                 initialState= {{
-                                value: 'scImage',
-                                tooltip: 'Please select the image type',
-                                label: 'Choose image type:'
-                            }}
-                options={imageTypes}
+                    value: 'irsa',
+                    tooltip: 'Please select the image source',
+                }}
+                options={imageSources}
                 alignment='horizontal'
-                labelWidth={110}
-                fieldKey='imageTypeOptions'
+                fieldKey='imageSourceOptions'
+                hPaddingRight={60}
                 groupKey={groupKey}/>
+          </div>
         </div>
     );
 
 };
 
 
-const imageSourceOptions  = (groupKey) => {
-
-    return (
-        <div >
-            <RadioGroupInputField
-                initialState= {{
-                                value: 'irsa',
-                                tooltip: 'Please select the image source',
-                                label: 'Select image source:'
-                            }}
-                options={imageSources}
-                alignment='horizontal'
-                labelWidth={110}
-                fieldKey='imageSourceOptions'
-                groupKey={groupKey}/>
-        </div>
-    );
-
+ImageSourceOptionPanel.propTypes = {
+    groupKey: PropTypes.string
 };
 
 function renderSingleColor(groupKey, imageMasterData, imageSource){
@@ -342,25 +361,30 @@ function renderSingleColor(groupKey, imageMasterData, imageSource){
     };
 
     return (
-        <div   style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-            <div style = {{marginTop:'20px', marginBottom:'20px'}}>
-                {imageSourceOptions(FG_KEY)}
-            </div>
-            <div> {sourcePanel}</div>
-        </div>
+          <div >
+            <ImageSourceOptionPanel groupKey={FG_KEY}/>
+            {sourcePanel}
+         </div>
     );
 
 }
 
 function renderThreeColors(imageMasterData,imageSource) {
+
+ {/*   <FieldGroup groupKey={rgbFieldGroup[index]} reducerFunc={ImageSelPanelChangeOneColor}
+                keepState={true}>
+        {renderSingleColor(rgbFieldGroup[index],imageMasterData, imageSource)}
+    </FieldGroup>*/}
+
+
     var corner = CollapseHeaderCorner.BottomLeft;
     const RGB = ['rgb(255, 51, 51)', 'rgb(51, 153, 51)', 'rgb(51, 51, 255)'];
     const threeColorTabs = rgb.map((color, index) => {
-        //const gKey = FG_KEY+ '_'+rgbFieldGroup[index];
-        return (
-            <Tab name= {rgb[index]} id={rgbFieldGroup[index]}>
 
-                <FieldGroupCollapsible initialState= {{value: index === 0 ? 'open' : 'closed'}}
+        return (
+            <Tab name= {rgb[index]} id={rgbFieldGroup[index]}  >
+
+                <FieldGroupCollapsible initialState= {{value:'open'}}
                                        fieldKey={`collapsible${index}`}
                                        key={index}
                                        header={rgb[index].toUpperCase()}
@@ -378,11 +402,10 @@ function renderThreeColors(imageMasterData,imageSource) {
                                            paddingBottom: 10,
                                            margin: '0px 0px 0px 10px'}}
                 >
-                    <FieldGroup groupKey={rgbFieldGroup[index]} reducerFunc={ImageSelPanelChangeOneColor}
-                                keepState={true}>
-                        {renderSingleColor(rgbFieldGroup[index],imageMasterData, imageSource)}
-                    </FieldGroup>
-                </FieldGroupCollapsible>
+
+               {renderSingleColor(rgbFieldGroup[index],imageMasterData, imageSource)}
+
+               </FieldGroupCollapsible>
 
             </Tab>
 
@@ -503,16 +526,14 @@ function loadSingleChannelImage(request, imageMasterData,wp, radius){
 
 
 function loadThreeColorImages(request, imageMasterData){
+
+    const allfields = getAllGroupFields(FG_KEY,...rgbFieldGroup);
     var wpSet = [];
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
     const radius= request.conesize;
+    const threeColorPanel = FieldGroupUtils.getGroupFields('threeColor');
     rgbFieldGroup.map((item, index) => {
-        var fgRequest = Object.assign({}, request[item],
-            {
-                UserTargetWorldPt: get(request[FG_KEY], 'UserTargetWorldPt')
-
-            });
-
+        const r = allfields[item];
         const req = FieldGroupUtils.getGroupFields(item);
         var wpr=null;
         if (!isNil(req) && request['collapsible'+index]==='open') {
