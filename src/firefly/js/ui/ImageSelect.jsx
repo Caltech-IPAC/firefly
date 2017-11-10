@@ -13,7 +13,7 @@ import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 
-import './ImageSelect.css';
+import './NewImageSearchPanel.css';
 
 
 export class ImageSelect extends PureComponent {
