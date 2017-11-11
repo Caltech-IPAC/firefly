@@ -65,7 +65,7 @@ public class LocalWsGetTest extends ConfigTest {
         LOG.info(wsm.getClass().getCanonicalName());
 
 
-        WsResponse wsResponse = wsm.putFile(testUri,
+        WsResponse wsResponse = wsm.putFile(testUri,true,
                 testFile,
                 ContentType.DEFAULT_BINARY.getMimeType());
 

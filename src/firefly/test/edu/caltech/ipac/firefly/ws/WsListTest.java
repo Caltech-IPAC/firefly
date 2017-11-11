@@ -50,10 +50,10 @@ public class WsListTest extends ConfigTest {
         testFile[0] = pickFile(0);
         testFile[1] = pickFile(1);
 
-        m.putFile(relFolder[0], testFile[0], null);
+        m.putFile(relFolder[0], true, testFile[0], null);
 
-        m.putFile(relFolder[1], testFile[0], null);
-        m.putFile(relFolder[1], testFile[1], null);
+        m.putFile(relFolder[1], true, testFile[0], null);
+        m.putFile(relFolder[1], true, testFile[1], null);
     }
 
     private String createFolder(String s) {

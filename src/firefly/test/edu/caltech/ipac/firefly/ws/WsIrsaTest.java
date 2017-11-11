@@ -56,7 +56,7 @@ public class WsIrsaTest extends ConfigTest {
     public void testSSOAuth() throws ClassNotFoundException, IOException {
         LOG.info(workspaceManager.getWsHome());
 
-        workspaceManager.putFile("", f, null);
+        workspaceManager.putFile("",true, f, null);
         WsResponse r = workspaceManager.getList("", 1);
         if (!r.getStatusCode().equals("200")) {
             LOG.error(r.getStatusText());

@@ -60,7 +60,7 @@ public class WsPutGetTest extends ConfigTest {
     @Test
     public void testPut() throws WsException {
 
-        WsResponse wsResponse = wsm.putFile(testRelPathFolder,
+        WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
                 testFile,
                 ContentType.DEFAULT_BINARY.getMimeType());
 
@@ -95,7 +95,7 @@ public class WsPutGetTest extends ConfigTest {
     @Test
     public void testGetAllLeaves() throws WsException {
 
-        WsResponse wsResponse = wsm.putFile(testRelPathFolder,
+        WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
                 testFile,
                 ContentType.DEFAULT_BINARY.getMimeType());
 
@@ -131,7 +131,7 @@ public class WsPutGetTest extends ConfigTest {
     @Test
     public void testGet() throws WsException {
 
-        WsResponse wsResponse = wsm.putFile(testRelPathFolder,
+        WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
                 testFile,
                 ContentType.DEFAULT_BINARY.getMimeType());
 
@@ -162,7 +162,7 @@ public class WsPutGetTest extends ConfigTest {
 
         testRelPathFolder = "tmp-" + UUID.randomUUID().toString() + "/tmp1?/t2#$%^&*9";
 
-        WsResponse wsResponse = wsm.putFile(testRelPathFolder,
+        WsResponse wsResponse = wsm.putFile(testRelPathFolder,true,
                 testFile,
                 ContentType.DEFAULT_BINARY.getMimeType());
         if (wsResponse.getStatusCode().endsWith("301")) {
