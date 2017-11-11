@@ -6,12 +6,13 @@ import React, {PureComponent} from 'react';
 import {flux} from '../../Firefly.js';
 import {onCreateFolder, onCreateFiles, onRenameFile, onRenameFolder,  onMoveFile, onMoveFolder,
         onDeleteFile, onDeleteFolder,  WorkspaceViewField}  from '../../ui/WorkspaceViewer.jsx';
-import {initWorkspace, getWorkspaceList} from '../WorkspaceCntlr.js';
+import {initWorkspace, getWorkspaceList, isExistWorkspaceList} from '../WorkspaceCntlr.js';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {workspacePopupMsg} from '../../ui/WorkspaceViewer.jsx';
 
 const workspacePopup = 'workspacePopup';
 
@@ -50,7 +51,11 @@ function displayWorkspacePopup() {
         dispatchShowDialog(popupId);
     };
 
-    startWorkspacePopup();
+    if (!isExistWorkspaceList()) {
+        workspacePopupMsg('Workspace access error', 'Workspace access');
+    } else {
+        startWorkspacePopup();
+    }
 }
 
 function onSuccess(popupId) {
@@ -110,7 +115,8 @@ export class WorkspaceViewPanel extends PureComponent {
 
         const displayList = (wsList) => {
             return (
-                <div style={{border: '1px solid #a3aeb9', height: 500, overflow: 'auto', padding: 10}} >
+                isExistWorkspaceList() ?
+                (<div style={{border: '1px solid #a3aeb9', height: 500, overflow: 'auto', padding: 10}} >
                     <FieldGroup groupKey={workspacePopup} keepState={true}>
                         <WorkspaceViewField
                             files={wsList}
@@ -121,7 +127,7 @@ export class WorkspaceViewPanel extends PureComponent {
                             onMoveFile={onRenameFile()}
                             wrapperStyle={{width: 'calc(100%-10px)'}} />
                     </FieldGroup>
-                </div>
+                </div>) : workspacePopupMsg('Workspace access error', 'Workspace access')
             );
         };
 

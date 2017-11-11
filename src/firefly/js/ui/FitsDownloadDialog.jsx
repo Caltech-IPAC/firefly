@@ -33,10 +33,9 @@ import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
-import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName} from './DownloadOptionsDialog.jsx';
+import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName, WORKSPACE} from './DownloadOptionsDialog.jsx';
 import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder} from '../visualize/WorkspaceCntlr.js';
 import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
-import {WORKSPACE} from './DownloadOptionsDialog.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {INFO_POPUP} from './PopupUtil.jsx';
 
@@ -395,7 +394,6 @@ const FitsDLReducer = ({band, fileName, currentBandFileName}) => {
     return (inFields, action) => {
         if (!inFields) {
             const defV = Object.assign({}, defValues);
-            //const item = getWorspaceFolder();
 
             set(defV, [fKeyDef.colorBand.fKey, 'value'], (band !== Band.NO_BAND.key) ? band : '');
             set(defV, [fKeyDef.fileName.fKey, 'value'], fileName);

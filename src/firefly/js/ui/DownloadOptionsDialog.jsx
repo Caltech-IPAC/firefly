@@ -4,6 +4,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
+import {isEmpty} from 'lodash';
 import {ValidationField} from './ValidationField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
@@ -78,6 +79,25 @@ export class DownloadOptionsDialog extends PureComponent {
     render() {
         const {where, wsSelect, wsList} = this.state;
         const {children, labelWidth=100, dialogWidth=400} = this.props;
+        const showWorkspace = () => {
+            return (
+                (!isEmpty(wsList)) ?
+                (
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <div style={{marginTop: 10,
+                                         width: (dialogWidth-30), height: 200,
+                                         overflow: 'auto',
+                                         padding: 10,
+                                         border:'1px solid #a3aeb9'
+                                         }}>
+                            <WorkspaceSave fieldKey={'wsSelect'}
+                                           files={wsList}
+                                           value={wsSelect}
+                            />
+                        </div>
+                    </div>
+                ) : workspacePopupMsg('Workspace access error', 'Workspace access'));
+        };
 
         return (
             <div style={{width: dialogWidth}}>
@@ -98,20 +118,7 @@ export class DownloadOptionsDialog extends PureComponent {
                  </div>
 
                 <div>
-                    {(where === WORKSPACE) && (
-                        <div style={{display: 'flex', flexDirection: 'column'}}>
-                            <div style={{marginTop: 10,
-                                         width: (dialogWidth-30), height: 200,
-                                         overflow: 'auto',
-                                         padding: 10,
-                                         border:'1px solid #a3aeb9'
-                                         }}>
-                                <WorkspaceSave fieldKey={'wsSelect'}
-                                               files={wsList}
-                                               value={wsSelect}
-                                               />
-                            </div>
-                        </div>)}
+                    {where === WORKSPACE && showWorkspace()}
                 </div>
             </div>
         );

@@ -2,14 +2,13 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
 import {get} from 'lodash';
-import {isFunction, isNil} from 'lodash';
+import {isFunction, isNil, isEmpty} from 'lodash';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {FilePicker} from '../externalSource/FilePicker/FilePicker.jsx';
 import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceDeletePath,
         dispatchWorkspaceMovePath,
-        dispatchWorkspaceRenamePath,
         getWorkspaceList, getFolderUnderLevel,
         getWorkspacePath, isWsFolder, WS_SERVER_PARAM} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
@@ -346,7 +345,11 @@ export function showWorkspaceUploadPopup({onClickUpload, files, value}) {
             dispatchShowDialog(wsUploadPopupId);
         };
 
-        startWorkspaceReadPopup();
+        if (!newList || isEmpty(newList)) {
+            workspacePopupMsg('Workspace access error', 'Workspace access');
+        } else {
+            startWorkspaceReadPopup();
+        }
     };
 }
 

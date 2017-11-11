@@ -30,8 +30,10 @@ import {CompleteButton} from '../../ui/CompleteButton.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {doDownloadWorkspace, workspacePopupMsg} from '../../ui/WorkspaceViewer.jsx';
-import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName, WORKSPACE} from '../../ui/DownloadOptionsDialog.jsx';
-import {getWorkspaceList, WS_SERVER_PARAM, isWsFolder, isValidWSFolder, getWorkspacePath} from  '../../visualize/WorkspaceCntlr.js';
+import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
+        WORKSPACE} from '../../ui/DownloadOptionsDialog.jsx';
+import {WS_SERVER_PARAM, isWsFolder, isValidWSFolder,
+        getWorkspacePath} from  '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
@@ -420,9 +422,8 @@ function TableDLReducer(tbl_ui_id) {
 
         if (!inFields) {
             const defV = Object.assign({}, defValues);
-            const files = getWorkspaceList();
 
-            set(defV, [fKeyDef.wsSelect.fKey, 'value'], get(files, [0, 'key'], ''));
+            set(defV, [fKeyDef.wsSelect.fKey, 'value'], '');
             set(defV, [fKeyDef.wsSelect.fKey, 'validator'], isWsFolder());
             set(defV, [fKeyDef.fileName.fKey, 'validator'], fileNameValidator(tblDownloadGroupKey));
             set(defV, [fKeyDef.fileName.fKey, 'value'], get(request, 'META_INFO.title'));

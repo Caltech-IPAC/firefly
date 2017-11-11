@@ -3,7 +3,7 @@
  */
 
 import {flux} from '../Firefly.js';
-import {get, set, flattenDeep} from 'lodash';
+import {get, set, flattenDeep, isEmpty} from 'lodash';
 import {fetchUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
@@ -61,10 +61,6 @@ export function dispatchWorkspaceMovePath(options, dispatcher=flux.process) {
 
 }
 
-export function dispatchWorkspaceRenamePath(request, options, dispatcher=flux.process) {
-
-}
-
 
 function movePath(action) {
     return (dispatch) => {
@@ -93,7 +89,7 @@ function movePath(action) {
                     }
                 });
             }).catch( (error) => {
-                workspacePopupMsg('Move workspace file fails',
+                workspacePopupMsg('Move workspace file fails: ' + error.message,
                                   'Move workspace file');
             });
 
@@ -127,7 +123,7 @@ function deletePath(action) {
                     }
                 });
             }).catch( (error) => {
-                workspacePopupMsg('Delete workspace file fails',
+                workspacePopupMsg('Delete workspace file fails: ' + error.message,
                                   'Delete workspace file');
             });
 
@@ -160,7 +156,7 @@ function createPath(action) {
                         }
                     });
                 }).catch( (error) => {
-                    workspacePopupMsg('Create workspace path fails',
+                    workspacePopupMsg('Create workspace path fails" ' + error.message,
                         '             Create workspace foloder');
                 });
             }
@@ -177,11 +173,19 @@ function getPathList(action) {
 
             fetchUrl(WS_URL, {params}).then((response) => {
                 response.json().then( (value) => {
-                    set(action, ['payload', 'files'], value);
-                    dispatch(action);
+                    if (value.result === 'true') {
+                        set(action, ['payload', 'files'], value.response);
+                        dispatch(action);
+                    } else {
+                        set(action, ['payload', 'files'], []);
+                        dispatch(action);
+                        //workspacePopupMsg('Workspace access error: '+ value.response,
+                        //                  'Workspace error');
+                    }
                 });
             }).catch( (error) => {
-                console.log(error);
+                workspacePopupMsg('Workspace access request sending error: ' + error.message,
+                                  'Workspace error');
             });
         } else {
             dispatch(action);
@@ -198,6 +202,11 @@ export function getWorkspaceList() {
     return get(flux.getState(), [WORKSPACE_PATH, 'data']);
 }
 
+export function isExistWorkspaceList() {
+    const list = getWorkspaceList();
+
+    return (!list || !isEmpty(list));
+}
 /**
  * get full path for FilePicker based on the given path (file or foloder) plus filename
  * the full path is compliant to the path from the server
@@ -399,6 +408,10 @@ function convertFilesToList(wFiles) {
 }
 
 function createWorkspaceList(wFiles = [], state) {
+    if (isEmpty(wFiles)) {
+        return Object.assign({}, {data: [], files: []});
+    }
+
     const list = convertFilesToList(wFiles);
     const root = list.find((oneItem) => oneItem.key === (WS_HOME+'/'));
 

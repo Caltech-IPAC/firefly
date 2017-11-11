@@ -71,9 +71,21 @@ public class WsServerCommands {
 
             // Full list , depth = -1
             WsResponse resp = getWsUtils().getList(wsParams, -1);
-            JSONArray jsonObject = WsServerUtils.toJson(resp.getWspaceMeta());
 
-            return jsonObject.toJSONString();
+            JSONObject resultJson = new JSONObject();
+            Integer status = Integer.parseInt(resp.getStatusCode());
+
+            if (status >= 200 && status <= 300) {
+                JSONArray jsonOArray = WsServerUtils.toJson(resp.getWspaceMeta());
+
+                resultJson.put("result", RESPONSE.TRUE.name().toLowerCase());
+                resultJson.put("response", jsonOArray);
+            } else {
+                resultJson.put("result", RESPONSE.FALSE.name().toLowerCase());
+                resultJson.put("response", resp.getStatusText());
+            }
+
+            return resultJson.toJSONString();
 
         }
     }
