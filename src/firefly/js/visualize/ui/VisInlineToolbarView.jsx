@@ -9,19 +9,27 @@ import {LayerButton} from './VisToolbarView.jsx';
 import {showTools} from './VisToolbar.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {dispatchChangeExpandedMode, dispatchChangeActivePlotView, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
+import {ExpandType, dispatchChangeExpandedMode, dispatchChangeActivePlotView,
+        dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
+import GRID_EXPAND from 'html/images/icons-2014/24x24_ExpandArrows-grid-3.png';
 import DELETE from 'html/images/blue_delete_10x10.png';
 import WRENCH from 'html/images/wrench-24x24.png';
 
 
 
 
-function expand(plotId) {
+function expand(plotId, grid) {
     dispatchChangeActivePlotView(plotId);
     dispatchSetLayoutMode( LO_MODE.expanded, LO_VIEW.images );
-    dispatchChangeExpandedMode(true);
+
+    if (grid) {
+        dispatchChangeExpandedMode(ExpandType.GRID);
+    }
+    else {
+        dispatchChangeExpandedMode(true);
+    }
 }
 
 // function showTools() {
@@ -58,11 +66,11 @@ export class VisInlineToolbarView extends PureComponent {
     }
 
     deleteClick() {dispatchDeletePlotView({plotId:this.props.pv && this.props.pv.plotId});}
-    expandClick() {expand(this.props.pv && this.props.pv.plotId);}
+    expandClick() {expand(this.props.pv && this.props.pv.plotId, this.props.expandGrid);}
     // showToolsClick() {showTools();}
 
     render() {
-        const {pv, dlAry, showLayer, showExpand, showDelete, showToolbarButton, help_id}= this.props;
+        const {pv, dlAry, showLayer, expandGrid, showExpand, showDelete, showToolbarButton, help_id}= this.props;
 
         return (
             <div style={rS}>
@@ -75,7 +83,7 @@ export class VisInlineToolbarView extends PureComponent {
                                visible={showToolbarButton && showExpand}
                                onClick={showTools}/>
                 {help_id && <div style={{marginRight: 20}}><HelpIcon helpId={help_id}/></div>}
-                <ToolbarButton icon={OUTLINE_EXPAND}
+                <ToolbarButton icon={expandGrid? GRID_EXPAND : OUTLINE_EXPAND}
                                tip='Expand this panel to take up a larger area'
                                horizontal={true}
                                visible={showExpand}
@@ -100,6 +108,7 @@ VisInlineToolbarView.propTypes= {
     extensionAry : PropTypes.arrayOf(PropTypes.object),
     showLayer : PropTypes.bool,
     showExpand : PropTypes.bool,
+    expandGrid : PropTypes.bool,
     showDelete : PropTypes.bool,
     showToolbarButton : PropTypes.bool
 };
