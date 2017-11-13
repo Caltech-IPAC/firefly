@@ -121,7 +121,7 @@ function renderPanel(imageMasterData) {
                                          label={'Choose Radius'}
                         />
 
-                        <ImageSelect key='ImageSelect' {...{groupKey:FG_KEY, addChangeListener, imageMasterData, style:{width: 800, height: 400}}} />
+                        <ImageSelect key='ImageSelect' {...{groupKey:FG_KEY, addChangeListener, imageMasterData, multiSelect: false, style:{width: 800, height: 400}}} />
 
                     </div>
                 </FieldGroup>

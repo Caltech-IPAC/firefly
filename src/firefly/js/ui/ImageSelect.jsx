@@ -8,6 +8,7 @@ import {uniqBy, uniq, get, countBy, isNil, xor} from 'lodash';
 
 
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
+import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {CollapsiblePanel} from '../ui/panel/CollapsiblePanel.jsx';
 import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
@@ -25,7 +26,7 @@ export class ImageSelect extends PureComponent {
     }
 
     render() {
-        const {style, imageMasterData, groupKey} = this.props;
+        const {style, imageMasterData, groupKey, multiSelect=true} = this.props;
         imageMasterData.forEach((d)=> {
             ['missionId', 'project', 'subProject'].forEach((k) => d[k] = d[k] || '');
         });
@@ -46,12 +47,26 @@ export class ImageSelect extends PureComponent {
         return (
             <div style={style} className='ImageSelect'>
                 <FilterPanel {...{imageMasterData}}/>
-                <DataProductList {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
+                <DataProductList {...{filteredImageData, groupKey, multiSelect, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
             </div>
         );
     }
-
 }
+
+ImageSelect.propTypes = {
+    imageMasterData: PropTypes.arrayOf(PropTypes.object).isRequired,
+    groupKey: PropTypes.string.isRequired,
+    // this component needs to be wrapped by a FieldGroup.  User of this component need to provide
+    // a function so this component can handle field change event from reducing function.
+    addChangeListener: PropTypes.func.isRequired,
+    style: PropTypes.object,
+    title: PropTypes.string,
+    multiSelect: PropTypes.bool
+};
+
+const toFilterSelectAry = (groupKey, s) => getFieldVal(groupKey, `Filter_${s}`, '').split(',').map((d) => d.trim()).filter((d) => d);
+
+
 function fieldsReducer(imageMasterData={}) {
     return (inFields, action) => {
         const {fieldKey='', options={}, value=''} = action.payload;
@@ -72,7 +87,7 @@ function fieldsReducer(imageMasterData={}) {
         } else if (fieldKey.startsWith('IMAGES_')) {
             // one item changed, update project selectAll checkbox
             const matcher = fieldKey.split('||')[0];
-            const cbGroups = Object.values(inFields).filter((f) => f.fieldKey.startsWith(matcher));  // array of subproject in this project
+            const cbGroups = Object.values(inFields).filter((f) => get(f, 'fieldKey', '').startsWith(matcher));  // array of subproject in this project
             const allSelected = cbGroups.reduce((p, f) => {
                             const selAry = get(f,'value','').split(',');
                             const allAry = get(f,'options',[]).map((o) => o.value);
@@ -86,18 +101,6 @@ function fieldsReducer(imageMasterData={}) {
     };
 }
 
-
-ImageSelect.propTypes = {
-    imageMasterData: PropTypes.arrayOf(PropTypes.object).isRequired,
-    groupKey: PropTypes.string.isRequired,
-    // this component needs to be wrapped by a FieldGroup.  User of this component need to provide
-    // a function so this component can handle field change even from reducing function.
-    addChangeListener: PropTypes.func.isRequired,
-    style: PropTypes.object,
-    title: PropTypes.string
-};
-
-const toFilterSelectAry = (groupKey, s) => getFieldVal(groupKey, `Filter_${s}`, '').split(',').map((d) => d.trim()).filter((d) => d);
 
 
 /*--------------------------- Filter Panel ---------------------------------------------*/
@@ -214,7 +217,7 @@ const toFilterSummary = (master, key, desc) => Object.entries(countBy(master, (d
 /*--------------------------- Data Product List ---------------------------------------*/
 
 // eslint-disable-next-line
-function DataProductList({filteredImageData, groupKey, onChange}) {
+function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
     const setDSListMode = (flg) => {
                                 projects.forEach((k) => dispatchComponentStateChange(k, {isOpen:flg}));
@@ -230,7 +233,7 @@ function DataProductList({filteredImageData, groupKey, onChange}) {
             <div className='DataProductList__view'>
                 {
                     projects.map((p) =>
-                        <DataProduct key={p} {...{groupKey, project:p, filteredImageData}}/>
+                        <DataProduct key={p} {...{groupKey, project:p, filteredImageData, multiSelect}}/>
                     )
                 }
             </div>
@@ -239,7 +242,7 @@ function DataProductList({filteredImageData, groupKey, onChange}) {
 }
 
 // eslint-disable-next-line
-function DataProduct({groupKey, project, filteredImageData}) {
+function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
 
     // filter projects ... projects is like dataproduct or dataset.. i.e SEIP
     const projectData= filteredImageData.filter((d) => d.project === project);
@@ -249,11 +252,11 @@ function DataProduct({groupKey, project, filteredImageData}) {
 
     return (
         <div className='DataProductList__item'>
-            <CollapsiblePanel componentKey={project} header={<Header {...{project}}/>} isOpen={isOpen}>
+            <CollapsiblePanel componentKey={project} header={<Header {...{project, multiSelect}}/>} isOpen={isOpen}>
                 <div className='DataProductList__item--details'>
                     {
                         subProjects.map((sp) =>
-                            <BandSelect key={'sub_' + sp} {...{subProject:sp, projectData, labelMaxWidth}}/>
+                            <BandSelect key={'sub_' + sp} {...{groupKey, subProject:sp, projectData, labelMaxWidth, multiSelect}}/>
                         )
                     }
                 </div>
@@ -263,8 +266,10 @@ function DataProduct({groupKey, project, filteredImageData}) {
 
 }
 
-function Header({project}) {
+function Header({project, multiSelect}) {
     const fieldKey= `PROJ_ALL_${project}`;
+
+    if (!multiSelect) return <div style={{display: 'inline-block'}}>{project}</div>;
     return (
         <div className='DataProductList__item--header' onClick={(e) => e.stopPropagation()}>
             <CheckboxGroupInputField
@@ -285,12 +290,12 @@ function Header({project}) {
 
 const hasImageSelection = (groupKey, proj) => {
     const fields = FieldGroupUtils.getGroupFields(groupKey) || {};
-    return Object.values(fields).some((fld) => fld.fieldKey.startsWith(`IMAGES_${proj}`) && fld.value);
+    return Object.values(fields).some((fld) => get(fld, 'fieldKey', '').startsWith(`IMAGES_${proj}`) && fld.value);
 };
 
 
 // eslint-disable-next-line
-function BandSelect({subProject, projectData, labelMaxWidth}) {
+function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSelect}) {
     subProject = isNil(subProject) ? '' : subProject;
     const fieldKey= `IMAGES_${get(projectData, [0, 'project'])}||${subProject}`;
     const options = toImageOptions(projectData.filter( (p) => p.subProject === subProject));
@@ -300,24 +305,46 @@ function BandSelect({subProject, projectData, labelMaxWidth}) {
                              className='DataProductList__item--bandLabel'>{subProject}</div>
                         <span>:</span>
                     </div>);
-    return (
-        <div className='DataProductList__item--band'>
-            {label}
-            <CheckboxGroupInputField
-                key={fieldKey}
-                fieldKey={fieldKey}
-                initialState={{
+    if (multiSelect) {
+        return (
+            <div className='DataProductList__item--band'>
+                {label}
+                <CheckboxGroupInputField
+                    key={fieldKey}
+                    fieldKey={fieldKey}
+                    initialState={{
                         options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
                         value: '',
                         tooltip: 'Please select some boxes',
                         label : '' }}
-                options={options}
-                alignment='horizontal'
-                labelWidth={35}
-                wrapperStyle={{whiteSpace: 'normal'}}
-            />
-        </div>
-    );
+                    options={options}
+                    alignment='horizontal'
+                    labelWidth={35}
+                    wrapperStyle={{whiteSpace: 'normal'}}
+                />
+            </div>
+        );
+    } else {
+        return (             
+            <div className='DataProductList__item--band'>
+                {label}
+                <RadioGroupInputField
+                    key={fieldKey}
+                    fieldKey={`IMAGES_${groupKey}`}
+                    initialState={{
+                            options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
+                            value: '',
+                            tooltip: 'Please select some boxes',
+                            label : '' }}
+                    options={options}
+                    defaultValue=''
+                    alignment='horizontal'
+                    labelWidth={35}
+                    wrapperStyle={{whiteSpace: 'normal'}}
+                />
+            </div>
+        );
+    }
 }
 
 const toImageOptions= (a) => a.map ( (d) => ({label: d.title, value: d.imageId}));
