@@ -54,7 +54,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
         }
 
         // get all cols from dd table
-        DataGroup dd = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select * from data_dd"), null);
+        DataGroup dd = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, String.format("select * from data_dd"), null);
 
         //generate one sql for all the columns.  each as cname_min, cname_max, cname_count
         DataGroup stats = new DataGroup("stats", columns);
@@ -79,7 +79,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
 
         }
         if (sqlCols.size() > 0) {
-            DataObject data = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
+            DataObject data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
             for (int i = 0; i < stats.size(); i++) {
                 DataObject col = stats.get(i);
                 String cname = col.getStringData("columnName");

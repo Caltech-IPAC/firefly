@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
+
 /**
  * NOTE: We're using spring jdbc v2.x.  API changes dramatically in later versions.
  * For v2.x API docs, https://docs.spring.io/spring/docs/2.5.5/javadoc-api/
@@ -249,7 +251,12 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
 
         }
-        return EmbeddedDbUtil.getResultForTable(treq, dbFile, resultSetID);
+        // resultSetID is a table created with sort and filter in consideration.  no need to re-apply.
+        TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
+        nreq.setFilters(null);
+        nreq.setSortInfo(null);
+
+        return execRequestQuery(nreq, dbFile, resultSetID);
     }
 
     public boolean isSecurityAware() { return false; }
@@ -262,6 +269,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         List<String> cols = JdbcFactory.getSimpleTemplate(dbInstance).query(String.format("select cname from %s_DD", forTable), (rs, i) -> "\"" + rs.getString(1) + "\"");
         return cols;
     }
-    
+
 }
 

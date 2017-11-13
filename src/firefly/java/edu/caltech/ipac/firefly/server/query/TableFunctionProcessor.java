@@ -16,7 +16,6 @@ import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
@@ -88,14 +87,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
             EmbeddedDbUtil.createDDTbl(dbFile, data, dbAdapter, resTblName);
             EmbeddedDbUtil.createMetaTbl(dbFile, data, dbAdapter, resTblName);
         }
-        treq.setParam(TableServerRequest.SQL_FROM, resTblName);
-        String sql = String.format("%s from %s %s", dbAdapter.selectPart(treq), resTblName, dbAdapter.wherePart(treq));
-        sql = dbAdapter.translateSql(sql);
-
-        DataGroup dg = EmbeddedDbUtil.runQuery(dbAdapter, dbFile, sql, resTblName);
-        TableDef tm = new TableDef();
-        tm.setStatus(DataGroupPart.State.COMPLETED);
-        return new DataGroupPart(tm, dg, treq.getStartIndex(), dg.size());
+        return EmbeddedDbUtil.execRequestQuery(treq, dbFile, resTblName);
     }
 
     protected TableServerRequest getSearchRequest(TableServerRequest treq) throws DataAccessException {

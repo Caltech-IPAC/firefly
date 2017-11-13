@@ -4,6 +4,7 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.*;
@@ -49,8 +50,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
     private List<FileGroup> computeFileGroup(DownloadRequest request) throws IOException, IpacTableException, DataAccessException {
 
-        Collection<Integer> selectedRows = request.getSelectedRows();
-        DataGroupPart dgp = new SearchManager().getDataGroup(request.getSearchRequest());
+        ArrayList<Integer> selectedRows = new ArrayList<>(request.getSelectedRows());
 
         ArrayList<FileGroup> fgArr = new ArrayList<>();
 
@@ -71,8 +71,9 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
         String[] deeoCoaddCols={"deepCoaddId","tract", "patch", "filterName"};
         String[] columns= isDeepCoadd?deeoCoaddCols:sccdCols;
 
-        IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
+        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(),
                 selectedRows, columns);
+
         ArrayList<FileInfo> fiArr = new ArrayList<>();
 
 
