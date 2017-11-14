@@ -219,12 +219,14 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
 
     /**
-     * @param upload file at firefly server
-     * @param relPath expecting uri folder with file name attached optionally a/b
-     * @param shouldOverwrite overwrittable in case the same file exist
+     *
+     * @param upload
+     * @param relPath   expecting uri folder with file name attached optionally a/b
+     * @param overwrite when true, put will overwrite existing file with the same name
      * @param contentType
+     * @return
      */
-    public WsResponse davPut(File upload, String relPath, boolean shouldOverwrite, String contentType) {
+    public WsResponse davPut(File upload, String relPath, boolean overwrite, String contentType) {
         try {
 
             int idx = relPath.lastIndexOf('/');
@@ -250,7 +252,8 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
                 return WsUtil.error(Integer.parseInt(response.getStatusCode()), response.getStatusText(), parentPath);
             }
 
-            if (exists(newPath) && (shouldOverwrite == false)) {
+
+            if (exists(newPath) && (!overwrite)) {
                 //if (exists(relPath)) {
                 return WsUtil.error(304, newUrl);// not modified, already exists
             }
@@ -377,13 +380,14 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
 
     @Override
-    public WsResponse putFile(String relPath, boolean shouldOverwrite, File item, String contentType) throws WsException {
+    public WsResponse putFile(String relPath, boolean overwrite, File item, String contentType) throws WsException {
         String ct = contentType;
         if (contentType == null) {
             //ct = ContentType.DEFAULT_BINARY.getMimeType();
             //ct="image/fits";
         }
-        return davPut(item, relPath, shouldOverwrite, ct);
+
+        return davPut(item, relPath, overwrite, ct);
     }
 
     @Override
