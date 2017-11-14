@@ -217,57 +217,14 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
     }
 
 
-    /*
-    public WsResponse davPut(File upload, String relPath, String contentType) {
-        try {
-            int idx = relPath.lastIndexOf('/');
-            relPath = relPath.substring(0, idx+1);
-            String parentPath = WsUtil.ensureUriFolderPath(relPath);
-            //if (!exists(parentPath)) {
-            WsResponse response = createParent(parentPath);
-            //}
-            // If parent and file name exists already, stop
-            if (!response.doContinue()) {
-                return WsUtil.error(Integer.parseInt(response.getStatusCode()), response.getStatusText(), parentPath);
-            }
-            String newUrl = getResourceUrl(parentPath) + upload.getName();
-            if (exists(parentPath + upload.getName())) {
-                return WsUtil.error(304, newUrl);// not modified, already exists
-            }
-            PutMethod put = new PutMethod(newUrl);
-
-            // TODO Content Type doesn't seems to be passed on
-            RequestEntity requestEntity = new InputStreamRequestEntity(new BufferedInputStream(
-                    new FileInputStream(upload), HttpServices.BUFFER_SIZE), upload.length(), contentType);
-            put.setRequestEntity(requestEntity);
-            // is to allow a client that is sending a request message with a request body
-            // to determine if the origin server is willing to accept the request
-            // (based on the request headers) before the client sends the request body.
-            // this require server supporting HTTP/1.1 protocol.
-
-            put.getParams().setBooleanParameter(
-                    HttpMethodParams.USE_EXPECT_CONTINUE, true);
-
-            if (!executeMethod(put)) {
-                // handle error
-                LOG.error("Unable to upload file:" + relPath + " -- " + put.getStatusText());
-                return WsUtil.error(put.getStatusCode(), put.getStatusText());
-            }
-
-            return WsUtil.success(put.getStatusCode(), put.getStatusText(), newUrl);
-        } catch (Exception e) {
-            LOG.error(e, "Error while uploading file:" + upload.getPath());
-        }
-        return WsUtil.error(500);
-    }
-    */
 
     /**
-     * @param upload
+     * @param upload file at firefly server
      * @param relPath expecting uri folder with file name attached optionally a/b
-     * @return overWritable
+     * @param shouldOverwrite overwrittable in case the same file exist
+     * @param contentType
      */
-    public WsResponse davPut(File upload, String relPath, boolean overWritable, String contentType) {
+    public WsResponse davPut(File upload, String relPath, boolean shouldOverwrite, String contentType) {
         try {
 
             int idx = relPath.lastIndexOf('/');
@@ -293,7 +250,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
                 return WsUtil.error(Integer.parseInt(response.getStatusCode()), response.getStatusText(), parentPath);
             }
 
-            if (exists(newPath) && (overWritable == false)) {
+            if (exists(newPath) && (shouldOverwrite == false)) {
                 //if (exists(relPath)) {
                 return WsUtil.error(304, newUrl);// not modified, already exists
             }
@@ -420,13 +377,13 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
 
     @Override
-    public WsResponse putFile(String relPath, boolean overWritable, File item, String contentType) throws WsException {
+    public WsResponse putFile(String relPath, boolean shouldOverwrite, File item, String contentType) throws WsException {
         String ct = contentType;
         if (contentType == null) {
             //ct = ContentType.DEFAULT_BINARY.getMimeType();
             //ct="image/fits";
         }
-        return davPut(item, relPath, overWritable, ct);
+        return davPut(item, relPath, shouldOverwrite, ct);
     }
 
     @Override

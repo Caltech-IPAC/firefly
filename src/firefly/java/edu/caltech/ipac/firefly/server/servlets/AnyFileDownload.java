@@ -12,7 +12,6 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
-import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,32 +35,15 @@ public class AnyFileDownload extends BaseHttpServlet {
     public static final String LOG_PARAM   = "log";
     public static final String TRACK_PARAM = "track";
     public static final String USE_SERVER_NAME = "USE_SERVER_NAME";
-    public static final String FILE_LOCATION = "fileLocation";
-    public static final String WS_CMD = "wsCmd";
 
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         SrvParam sp= new SrvParam(req.getParameterMap());
         String fname= sp.getRequired(FILE_PARAM);
         String local= sp.getOptional(RETURN_PARAM);
-        //String fileLocation = sp.getOptional(FILE_LOCATION);
         boolean log= sp.getOptionalBoolean(LOG_PARAM,false);
         boolean track= sp.getOptionalBoolean(TRACK_PARAM,false);
-/*
-        if (fileLocation != null && fileLocation.equals("isWs")) {
-            String wsCmd = sp.getOptional(WS_CMD);
 
-            if (wsCmd != null) {
-                try {
-                    ServerCommandAccess.HttpCommand command = ServerCommandAccess.getCommand(wsCmd);
-                    command.processRequest(req, res, sp);
-                } catch (Exception ex) {
-                    _log.warn("Cannot downlod file " + fname + " to workspace");
-                }
-            }
-            return;
-        }
-        */
         File downloadFile= ServerContext.convertToFile(fname);
         if (downloadFile==null) {
             res.sendError(HttpServletResponse.SC_NOT_FOUND,"Could not convert input to a file" );

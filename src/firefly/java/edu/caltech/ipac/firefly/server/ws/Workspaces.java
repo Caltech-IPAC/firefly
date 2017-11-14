@@ -49,13 +49,14 @@ public interface Workspaces {
      * Put the file item in a relative remote location from home directory with same name as file item
      *
      * @param wspaceRelPath relative path location to ws home
+     * @param shouldOverwrite
      * @param item
      * @param contentType
      * @return {@link WsResponse}
      * @throws WsException handle ws error
      */
     //WsResponse putFile(String wspaceRelPath, File item, String contentType) throws WsException;
-    WsResponse putFile(String wspaceRelPath, boolean writable, File item, String contentType) throws WsException;
+    WsResponse putFile(String wspaceRelPath, boolean shouldOverwrite, File item, String contentType) throws WsException;
     /**
      * Delete file/folder that is in relative path to ws home
      *

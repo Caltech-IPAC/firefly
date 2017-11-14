@@ -122,7 +122,7 @@ public class LocalFSWorkspace implements WorkspaceManager {
     */
 
     @Override
-    public WsResponse putFile(String relUri, boolean writable, File item, String contentType) throws WsException {
+    public WsResponse putFile(String relUri, boolean shouldOverwrite, File item, String contentType) throws WsException {
 
         int idx = relUri.lastIndexOf('/');
         String newFileName = relUri.substring(idx + 1);
