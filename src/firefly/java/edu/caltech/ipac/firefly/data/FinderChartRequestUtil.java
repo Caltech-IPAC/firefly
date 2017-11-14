@@ -94,10 +94,10 @@ public class FinderChartRequestUtil {
      * Expected format :  metadata expected to be as "schema.table-band;title"
      */
     private final static String akariCombo[]={
-            "akari.images_tbl:N60;FIS N60 (65 micron)",
-            "akari.images_tbl:WideS;FIS WideS (90 micron)",
-            "akari.images_tbl:WideL;FIS WideL (140 micron)",
-            "akari.images_tbl:N160;FIS N160 (160 micron)"
+            "akari.akari_images:N60;FIS N60 (65 micron)",
+            "akari.akari_images:WideS;FIS WideS (90 micron)",
+            "akari.akari_images:WideL;FIS WideL (140 micron)",
+            "akari.akari_images:N160;FIS N160 (160 micron)"
     };
 
     private final static String sDssCombo[]={
@@ -213,7 +213,7 @@ public class FinderChartRequestUtil {
      */
     public static String extractFilter(String metadata) {
         String sAry[] = metadata.split(regExSplitKey);
-        return sAry.length > 1 ? sAry[2] : "";
+        return sAry.length > 2 ? sAry[2] : "";
     }
 
     /**
