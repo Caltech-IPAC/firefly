@@ -6,7 +6,7 @@ import {get} from 'lodash';
 
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
 import {getTblById, isFullyLoaded} from '../../tables/TableUtil.js';
-import {makeTableFunctionRequest} from '../../tables/TableRequestUtil.js';
+import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {getChartDataElement, chartDataUpdate} from './../ChartsCntlr.js';
 import {logError} from '../../util/WebUtil.js';
 
@@ -99,7 +99,7 @@ function fetchColData(dispatch, chartId, chartDataElementId) {
     const activeTableServerRequest = activeTableModel['request'];
     const tblSource = get(activeTableModel, 'tableMeta.resultSetID');
 
-    const req = makeTableFunctionRequest(activeTableServerRequest, 'HistogramProcessor');
+    const req = makeTableFunctionRequest(activeTableServerRequest, 'HistogramProcessor', 'histogram', {pageSize: MAX_ROW});
 
     // histogram parameters
     req.columnExpression = histogramParams.columnOrExpr;

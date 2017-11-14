@@ -40,10 +40,7 @@ function fetchData(chartId, traceNum, tablesource) {
     const originalTableModel = getTblById(tbl_id);
     const {request, highlightedRow, selectInfo} = originalTableModel;
 
-    const req = makeTableFunctionRequest(request, 'XYGeneric');
-    req.startIdx = 0;
-    req.pageSize = MAX_ROW;
-
+    const req = makeTableFunctionRequest(request, 'XYGeneric', 'chart', {pageSize: MAX_ROW});
 
     Object.entries(options).forEach(([k,v]) => v && (req[k]=v));
 

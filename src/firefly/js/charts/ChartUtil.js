@@ -387,6 +387,8 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
         });
         getDataVal = (v) => transposed[cols.indexOf(v)];
     } else {
+        // no tableModel case is for pre-fetch changes
+        changes[`fireflyData.${traceNum}.error`] = undefined;
         getDataVal = (v) => v;
     }
 

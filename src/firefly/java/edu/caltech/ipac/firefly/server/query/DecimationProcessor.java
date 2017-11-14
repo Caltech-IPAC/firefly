@@ -28,8 +28,6 @@ public class DecimationProcessor extends TableFunctionProcessor {
 
     protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
 
-        treq.setPageSize(Integer.MAX_VALUE);
-
         DecimateInfo decimateInfo = getDecimateInfo(treq);
         TableServerRequest sreq = getSearchRequest(treq);
         sreq.setPageSize(Integer.MAX_VALUE);        // we want all of the data.  no paging
