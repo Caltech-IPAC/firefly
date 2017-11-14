@@ -123,7 +123,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             lockChecker.unlock();
         }
 
-        // make sure multiple requests for the same data waits for the first one to create before acessing.
+        // make sure multiple requests for the same data waits for the first one to create before accessing.
         lock.lock();
         try {
             boolean dbFileCreated = false;

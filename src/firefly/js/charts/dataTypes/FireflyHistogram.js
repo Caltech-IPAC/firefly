@@ -4,7 +4,7 @@
 import {get, isArray} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import {getTblById, doFetchTable} from '../../tables/TableUtil.js';
-import {makeTableFunctionRequest} from '../../tables/TableRequestUtil.js';
+import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
 
 
@@ -59,7 +59,7 @@ function fetchData(chartId, traceNum, tablesource) {
     const tableModel = getTblById(tbl_id);
     const {request} = tableModel;
 
-    const req = makeTableFunctionRequest(request, 'HistogramProcessor');
+    const req = makeTableFunctionRequest(request, 'HistogramProcessor', 'histogram', {pageSize: MAX_ROW});
 
     Object.entries(options).forEach(([k,v]) => req[k] = v);
 
@@ -106,7 +106,6 @@ function fetchData(chartId, traceNum, tablesource) {
         }
     ).catch(
         (reason) => {
-            //console.error(`Failed to fetch histogram data for ${chartId} trace ${traceNum}: ${reason}`);
             dispatchError(chartId, traceNum, reason);
         }
     );
