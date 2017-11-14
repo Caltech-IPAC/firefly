@@ -7,9 +7,9 @@ const vStyle={paddingLeft: 3, paddingRight: 8};
 const hStyle={paddingLeft: 0, paddingRight: 12};
 
 
-function makeOptions(options,alignment ,value,onChange,tooltip) {
+function makeOptions(options,alignment ,value,onChange,tooltip, labelStyle) {
 
-    const labelStyle= alignment==='vertical' ? vStyle : hStyle;
+    const style = labelStyle?labelStyle:(alignment==='vertical' ? vStyle : hStyle);
     return options.map((option) => (
         <span key={option.value}>
             <div style={{display:'inline-block'}} title={option.tooltip || tooltip}>
@@ -18,7 +18,7 @@ function makeOptions(options,alignment ,value,onChange,tooltip) {
                        value={option.value}
                        checked={value===option.value}
                        onChange={onChange}
-                /> <span style={labelStyle}>{option.label}</span>
+                /> <span style={style}>{option.label}</span>
             </div>
             {alignment==='vertical' ? <br/> : ''}
          </span>
@@ -27,7 +27,7 @@ function makeOptions(options,alignment ,value,onChange,tooltip) {
 
 export function RadioGroupInputFieldView({options,alignment,value,
                                           onChange,label,inline,tooltip,
-                                          labelWidth, wrapperStyle={}}) {
+                                          labelWidth, wrapperStyle={}, labelStyle=undefined}) {
     const style= Object.assign({whiteSpace:'nowrap',display: inline?'inline-block':'block'},wrapperStyle);
     const radioStyle = (alignment && alignment==='vertical') ? {display: 'block', marginTop: (label ? 10 : 0)}
                                                              : {display: 'inline-block'};
@@ -36,7 +36,7 @@ export function RadioGroupInputFieldView({options,alignment,value,
         <div style={style}>
             {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} /> }
             <div style={radioStyle} >
-                {makeOptions(options,alignment,value,onChange,tooltip)}
+                {makeOptions(options,alignment,value,onChange,tooltip,labelStyle)}
             </div>
         </div>
     );
@@ -51,6 +51,7 @@ RadioGroupInputFieldView.propTypes= {
     tooltip : PropTypes.string,
     inline : PropTypes.bool,
     labelWidth : PropTypes.number,
-    wrapperStyle: PropTypes.object
+    wrapperStyle: PropTypes.object,
+    labelStyle: PropTypes.object
 };
 

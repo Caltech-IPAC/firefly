@@ -33,7 +33,9 @@ const propTypes= {
     inline : PropTypes.bool,
     options: PropTypes.array.isRequired,
     alignment:  PropTypes.string,
-    labelWidth : PropTypes.number
+    labelWidth : PropTypes.number,
+    labelStyle: PropTypes.object
+
 };
 
 function checkForUndefined(v,props) {
