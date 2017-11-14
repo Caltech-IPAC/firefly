@@ -330,7 +330,7 @@ function getCatalogSelectView (groupKey, imageMasterData, imageSource){
     var sourcePanel;
     switch (imageSource) {
         case 'irsa':
-            sourcePanel=  <ImageSelect key='ImageSelect' {...{groupKey:{groupKey},  addChangeListener, imageMasterData, style:{width: 800, height: 400}}} />;
+            sourcePanel=  <ImageSelect key='ImageSelect' {...{groupKey, addChangeListener, imageMasterData, multiSelect: false, style:{width: 800, height: 400}}} />;
             break;
 
         case 'upLoad':
