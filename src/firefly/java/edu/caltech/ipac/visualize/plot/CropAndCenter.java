@@ -9,7 +9,7 @@ import nom.tam.fits.*;
 import nom.tam.fits.ImageData;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.BufferedDataOutputStream;
-import nom.tam.util.Cursor;
+import nom.tam.fits.HeaderCardException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -281,7 +281,7 @@ public class CropAndCenter  {
 
     }
 
-    static Header clone_header(Header header)
+    static Header clone_header(Header header) throws HeaderCardException
     {
         return FitsRead.cloneHeaderFrom(header);
     }

@@ -23,6 +23,7 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
+import nom.tam.fits.HeaderCardException;
 
 import java.io.File;
 import java.io.IOException;
@@ -221,7 +222,7 @@ public class ImagePlotCreator {
                                       ImagePlot plot,
                                       ActiveFitsReadGroup frGroup,
                                       String dataDesc,
-                                      boolean isMultiImage) {
+                                      boolean isMultiImage) throws HeaderCardException {
 
         WebPlotRequest req= state.getWebPlotRequest();
         plot.setPlotDesc("");

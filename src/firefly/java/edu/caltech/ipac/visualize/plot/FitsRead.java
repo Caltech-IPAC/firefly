@@ -6,6 +6,7 @@ import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
+import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.FitsFactory;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
@@ -1605,7 +1606,7 @@ public class FitsRead implements Serializable {
     }
 
 
-    public Header getHeader() {
+    public Header getHeader() throws HeaderCardException {
         return cloneHeader(header);
     }
 
@@ -1719,18 +1720,19 @@ public class FitsRead implements Serializable {
     }
 
 
-    static Header cloneHeaderFrom(Header header) {
+    static Header cloneHeaderFrom(Header header) throws HeaderCardException {
         Cursor iter = header.iterator();
         Header clonedHeader = new Header();
 
         while (iter.hasNext()) {
             HeaderCard card = (HeaderCard) iter.next();
-            clonedHeader.addLine(card);
+            clonedHeader.addLine(card.copy());
         }
+
         return clonedHeader;
     }
 
-    static Header cloneHeader(Header header) {
+    static Header cloneHeader(Header header) throws HeaderCardException {
         Header clonedHeader = cloneHeaderFrom(header);
 
         clonedHeader.resetOriginalSize();
