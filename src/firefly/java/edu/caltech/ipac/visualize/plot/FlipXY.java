@@ -11,6 +11,7 @@ import edu.caltech.ipac.util.SUTDebug;
 import nom.tam.fits.*;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.fits.ImageData;
+import nom.tam.fits.HeaderCardException;
 
 /**
  * This class flips the FitsRead image to either x (naxis2) or y(naxis1) direction
@@ -33,7 +34,7 @@ public class FlipXY {
      * @param inFitsRead - a FitsRead object
      * @param fipDirection - a String, "xAxis" or "yAsix"
      */
-    public FlipXY(FitsRead inFitsRead, String fipDirection) {
+    public FlipXY(FitsRead inFitsRead, String fipDirection) throws HeaderCardException {
         fitsRead = inFitsRead;
         direction = fipDirection;
         inFitsHeader = inFitsRead.getHeader();
