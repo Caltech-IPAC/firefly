@@ -395,14 +395,18 @@ const convertFileToKey = (wsFile) => {
  * @returns {*}
  */
 function convertFilesToList(wFiles) {
-    const list = flattenDeep(wFiles).map((oneFile) => {
+    const list = flattenDeep(wFiles).reduce((prev, oneFile) => {
         const {relPath, modifiedDate:modified, sizeBytes:size, url} = oneFile;
-        const key = convertFileToKey(relPath);
-        const isFolder = key.lastIndexOf('/') === (key.length-1);
 
-        //const key = relPath;
-        return {key, modified, size, url, relPath, isFolder};
-    });
+        if (relPath && !relPath.includes('/.')) {
+            const key = convertFileToKey(relPath);
+            const isFolder = key.lastIndexOf('/') === (key.length - 1);
+
+            //const key = relPath;
+            prev.push({key, modified, size, url, relPath, isFolder});
+        }
+        return prev;
+    }, []);
 
     return list;
 }

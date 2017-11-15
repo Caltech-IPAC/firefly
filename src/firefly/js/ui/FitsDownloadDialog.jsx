@@ -33,7 +33,7 @@ import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
-import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName, WORKSPACE} from './DownloadOptionsDialog.jsx';
+import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName, WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
 import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder} from '../visualize/WorkspaceCntlr.js';
 import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
 import {ServerParams} from '../data/ServerParams.js';
@@ -43,6 +43,7 @@ import HelpIcon from './HelpIcon.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
 const dialogWidth = 500;
+const dialogHeight = 400;
 
 const dialogPopupId = 'fitsDownloadDialog';
 const fKeyDef = {
@@ -74,13 +75,26 @@ const defValues = {
         'File is overwritable', fKeyDef.overWritable.label, labelWidth), {validator: null})
 };
 
+const popupPanelResizableStyle = {
+    width: dialogWidth,
+    minWidth: dialogWidth,
+    minHeight: dialogHeight-100,
+    resize: 'both',
+    overflow: 'hidden',
+    position: 'relative'
+};
+
 function getDialogBuilder() {
+
+    const currentFileLocation = FieldGroupUtils.getFldValue(fitsDownGroup, 'fileLocation', LOCALFILE);
+    const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeight : 500;
+
     var popup = null;
     return () => {
         if (!popup) {
             popup = (
                 <PopupPanel title={'FITS Download Dialog'}>
-                    <div style={{margin:10, width: dialogWidth}}>
+                    <div style={{...popupPanelResizableStyle, height: adHeight}}>
                         < FitsDownloadDialogForm groupKey={'FITS_DOWNLOAD_FORM'} popupId={dialogPopupId}/>
                     </div>
                 </PopupPanel>
@@ -97,27 +111,6 @@ export function showFitsDownloadDialog() {
     dialogBuilder();
     dispatchShowDialog('fitsDownloadDialog');
 }
-
-/*
-export function showFitsDownloadDialog() {
-   // return () => {
-        const startFitsDownloadPopup = () => {
-            const popup = (
-                <PopupPanel title={'FITS Download Dialog'}>
-                    <div style={{margin:10, width: dialogWidth}}>
-                        < FitsDownloadDialogForm groupKey={'FITS_DOWNLOAD_FORM'} popupId={dialogPopupId}/>
-                    </div>
-                </PopupPanel>
-            );
-            DialogRootContainer.defineDialog(dialogPopupId, popup);
-            dispatchShowDialog(dialogPopupId);
-        };
-
-        startFitsDownloadPopup();
-   // };
-}
-*/
-
 
 /**
  * This method is called when the dialog is rendered. Only when an image is loaded, the PlotView is available.
@@ -303,7 +296,6 @@ export class FitsDownloadDialogForm extends PureComponent {
         const renderThreeBandButtons = renderThreeBand(this.hasThreeColorBand, this.colors, labelWidth);//true, ['Green','Red', 'Blue']);
         const {popupId} = this.props;
 
-
         const fileType = () => {
             return (
                 <div style={{display: 'flex', marginTop: 10}}>
@@ -333,15 +325,21 @@ export class FitsDownloadDialogForm extends PureComponent {
 
         return (
 
-            <FieldGroup groupKey={this.props.groupKey} keepState={true}
+            <FieldGroup style={{height: '100%'}}
+                        groupKey={this.props.groupKey} keepState={true}
                         reducerFunc={FitsDLReducer({band: currentBand, fileName,
                                                     currentBandFileName: currentFileName })}>
-                <DownloadOptionsDialog fromGroupKey={this.props.groupKey}
-                                       children={fileOptions()}
-                                       fileName={fileName}
-                                       labelWidth={labelWidth}
-                                       dialogWidth={dialogWidth}/>
-                <table style={{width:(dialogWidth-10), marginTop: 30}}>
+                <div style={{boxSizing: 'border-box', paddingLeft:5,paddingRight:5,
+                             width: '100%', height: 'calc(100% - 80px)',
+                             flexGrow: 1, display: 'flex', resize:'none'}}>
+                    <DownloadOptionsDialog fromGroupKey={this.props.groupKey}
+                                           children={fileOptions()}
+                                           fileName={fileName}
+                                           labelWidth={labelWidth}
+                                           dialogWidth={'calc(100%)'}
+                                           dialogHeight={'calc(100% - 120px)'}/>
+                </div>
+                <table style={{width:(dialogWidth-10), marginTop: 30, marginBottom: 10, marginLeft: 5}}>
                     <colgroup>
                         <col style={{width: '20%'}}/>
                         <col style={{width: '20%'}}/>

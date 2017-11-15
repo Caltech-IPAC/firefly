@@ -78,16 +78,15 @@ export class DownloadOptionsDialog extends PureComponent {
 
     render() {
         const {where, wsSelect, wsList} = this.state;
-        const {children, labelWidth=100, dialogWidth=400} = this.props;
+        const {children, labelWidth=100, dialogWidth=400, dialogHeight=300} = this.props;
         const showWorkspace = () => {
             return (
                 (!isEmpty(wsList)) ?
                 (
-                    <div style={{display: 'flex', flexDirection: 'column'}}>
                         <div style={{marginTop: 10,
-                                         width: (dialogWidth-30), height: 200,
+                                         width: 'calc(100% - 12px)', height: 'calc(100%)',
                                          overflow: 'auto',
-                                         padding: 10,
+                                         padding: 5,
                                          border:'1px solid #a3aeb9'
                                          }}>
                             <WorkspaceSave fieldKey={'wsSelect'}
@@ -95,12 +94,11 @@ export class DownloadOptionsDialog extends PureComponent {
                                            value={wsSelect}
                             />
                         </div>
-                    </div>
                 ) : workspacePopupMsg('Workspace access error', 'Workspace access'));
         };
 
         return (
-            <div style={{width: dialogWidth}}>
+            <div style={{width: dialogWidth, height: dialogHeight}}>
                 <div>
                     {children}
                 </div>
@@ -117,7 +115,7 @@ export class DownloadOptionsDialog extends PureComponent {
                         fieldKey={'fileLocation'}/>
                  </div>
 
-                <div>
+                <div  style={{width: 'calc(100%)', height: 'calc(100%)'}}>
                     {where === WORKSPACE && showWorkspace()}
                 </div>
             </div>
@@ -130,7 +128,8 @@ DownloadOptionsDialog.propTypes = {
     children: PropTypes.object,
     fileName: PropTypes.string,
     labelWidth: PropTypes.number,
-    dialogWidth: PropTypes.number
+    dialogWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    dialogHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 
