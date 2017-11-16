@@ -56,8 +56,11 @@ Projection.prototype = {
 	unproject(X,Y) {
 		X = -X; Y = -Y;
 		const u1 = this.tr_pu(this.PROJECTION, X, Y);	// u1[3]
+		if (!u1) return null;
 		const u2 = this.tr_uu1(u1, this.ROT);	// u2[3]
+        if (!u2) return null;
 		const o = this.tr_uo(u2);	// o[2]
+        if (!o) return null;
 
 		return { ra: o[0], dec: o[1] };
 	},

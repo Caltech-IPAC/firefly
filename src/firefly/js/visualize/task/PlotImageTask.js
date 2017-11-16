@@ -15,7 +15,7 @@ import CsysConverter from '../CsysConverter.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtils from '../VisUtil.js';
-import {fetchUrl, clone} from '../../util/WebUtil.js';
+import {fetchUrl, clone, loadImage} from '../../util/WebUtil.js';
 import {PlotState} from '../PlotState.js';
 import Point, {makeImagePt} from '../Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
@@ -32,6 +32,8 @@ import WebGrid from '../../drawingLayers/WebGrid.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {makeWorldPt} from '../Point.js';
 import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
+import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
+import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot} from '../HiPSUtil.js';
 
 //const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -235,12 +237,36 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
     }
 }
 
+export function addAllSky(plot) {
+    const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
+    const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
+    if (cachedAllSkyImage) return plot;
+    dispatchPlotProgressUpdate(plot.plotId, 'Retrieving AllSky', false, null);
+    return loadImage(makeHiPSAllSkyUrlFromPlot(plot))
+        .then( (allSkyImage) => {
+            addAllSkyCachedImage(allSkyURL, allSkyImage);
+            return plot;
+        });
+}
+
+export function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId) {
+    const exts= get(hipsProperties, 'hips_tile_format', 'jpg');
+    const allSkyURL= makeHiPSAllSkyUrl(hipsUrlRoot, exts);
+    const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
+    if (cachedAllSkyImage) return hipsProperties;
+    dispatchPlotProgressUpdate(plotId, 'Retrieving AllSky', false, null);
+    return loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts))
+        .then( (allSkyImage) => {
+            addAllSkyCachedImage(allSkyURL, allSkyImage);
+            return hipsProperties;
+        });
+}
 
 export function makePlotHiPSAction(rawAction) {
     return (dispatcher, getState) => {
 
         const {payload}= rawAction;
-        const {wpRequest, plotId}= payload;
+        const {wpRequest, plotId, attributes}= payload;
 
         const root= wpRequest.getHipsRootUrl();
         if (!root) {
@@ -255,22 +281,26 @@ export function makePlotHiPSAction(rawAction) {
             .then( (result)=> result.text())
             .then( (s)=> parseProperties(s))
             .then( (hipsProperties) => {
+                const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
+                return plot;
+            })
+            .then( addAllSky)
+            .then( (plot) => {
                 dispatchAddActionWatcher({
                     actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
                     callback:watchForHiPSViewDim,
                     params:{plotId}}
                     );
-                 dispatcher(
-                    { type: ImagePlotCntlr.PLOT_HIPS,
-                        payload: clone(payload, {hipsProperties})
-                    });
+                dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: clone(payload, {plot}) });
             })
-                .catch( (message) => {
-                    console.log(message);
-                    hipsFail(dispatcher, plotId, wpRequest, 'Could not retrieve properties file');
-                } );
+            .catch( (message) => {
+                console.log(message);
+                hipsFail(dispatcher, plotId, wpRequest, 'Could not retrieve properties file');
+            } );
     };
 }
+
+
 
 
 export function makeChangeHiPSAction(rawAction) {
@@ -290,11 +320,14 @@ export function makeChangeHiPSAction(rawAction) {
             fetchUrl(url, {}, true, false)
                 .then( (result)=> result.text())
                 .then( (s)=> parseProperties(s))
+                .then ( (hipsProperties) => addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId))
                 .then( (hipsProperties) => {
                     dispatcher(
                         { type: ImagePlotCntlr.CHANGE_HIPS,
                             payload: clone(payload, {hipsProperties})
                         });
+                })
+                .then( () => {
                     dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
                 })
                 .catch( (message) => {

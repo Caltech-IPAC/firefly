@@ -121,8 +121,8 @@ function startPlot(state, action) {
 
 
 function addHiPS(state,action, setActive= true, newPlot= true) {
-    let {plotViewAry, activePlotId, prevActivePlotId, processedTiles}= state;
-    const {plotId, wpRequest, hipsProperties, attributes}= action.payload;
+    let {plotViewAry, activePlotId, prevActivePlotId}= state;
+    const {plotId, plot}= action.payload;
 
 
     if (setActive) {
@@ -133,25 +133,20 @@ function addHiPS(state,action, setActive= true, newPlot= true) {
 
     plotViewAry = plotViewAry.map((pv) => { // map has side effect of setting active plotId, and cleaning processedTiles
         if ((pv.plotId!==plotId)) return pv;
-        const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', 1, attributes, false);
-        Object.assign(plot.attributes,attributes);
         pv = replacePlots(pv, [plot], null, state.expandedMode, newPlot);
         pv.serverCall= 'success';
         pv.plottingStatus= 'done';
-
 
         if (pv.viewDim) {
             const centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
             pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
         }
-
-
         return pv;
 
     });
 
                      //todo: this is where parameter come from the request
-    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId, processedTiles});
+    const newState = clone(state, {prevActivePlotId, plotViewAry, activePlotId});
 
     return newState;
 }

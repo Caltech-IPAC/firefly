@@ -11,7 +11,7 @@ import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
 import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
-import {getBestHiPSlevel, getMaxDisplayableHiPSLevel} from '../visualize/HiPSUtil.js';
+import {getMaxDisplayableHiPSLevel} from '../visualize/HiPSUtil.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 
 

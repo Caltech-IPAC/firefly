@@ -323,7 +323,7 @@ function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, o
         vpt = plot.getDeviceCoords(pt);
     }
     if (textOffset && (textOffset.x !== 0.0 || textOffset.y !== 0.0)) {
-        drawText(drawObj, drawTextAry, plot, vpt, drawParams);
+        drawText(drawObj, drawTextAry, ctx, plot, vpt, drawParams);
     } else {
         drawObj.textWorldLoc = plot.getImageCoords(vpt);
         const textDevicePt= plot.getDeviceCoords(vpt);

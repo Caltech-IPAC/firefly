@@ -521,7 +521,7 @@ export function drawShape(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddTo
 
     switch (drawObj.sType) {
         case ShapeType.Text:
-            drawText(drawObj,drawTextAry, plot, drawObj.pts[0], drawParams);
+            drawText(drawObj,drawTextAry, ctx, plot, drawObj.pts[0], drawParams);
             break;
         case ShapeType.Line:
             drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
@@ -574,7 +574,7 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
 
     if (!isNil(text) && inView) {
         const textLocPt= makeTextLocationLine(plot, textLoc, fontSize,pts[0], pts[1]);
-        drawText(drawObj, drawTextAry, plot, plot.getDeviceCoords(textLocPt), drawParams);
+        drawText(drawObj, drawTextAry, ctx, plot, plot.getDeviceCoords(textLocPt), drawParams);
     }
 
     if (style===Style.HANDLED && inView) {
@@ -634,7 +634,7 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
 
     if (centerPt && !isNil(text)) {
         const textPt= makeTextLocationCircle(plot,textLoc, fontSize, centerPt, (screenRadius+lineWidth));
-        drawText(drawObj, drawTextAry, plot,textPt, drawParams);
+        drawText(drawObj, drawTextAry, ctx, plot,textPt, drawParams);
     }
 }
 
@@ -645,7 +645,7 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
  * @param inPt
  * @param drawParams
  */
-export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
+export function drawText(drawObj, drawTextAry, ctx, plot, inPt, drawParams) {
     if (!inPt) return;
     
     const {text, textOffset, renderOptions, rotationAngle}= drawObj;
@@ -723,8 +723,15 @@ export function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
             }
 
         }*/
-        DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
+        if (drawObj.canvasText) {
+            DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
                 fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,angle);
+
+        }
+        else {
+            DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
+                fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,angle);
+        }
         drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
     }
 }
@@ -896,7 +903,7 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
 
     if (!isNil(text) && inView) {
         const textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
-        drawText(drawObj, drawTextAry, plot, textPt, drawParams);
+        drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
     }
     if (style === Style.HANDLED && inView) {
         // todo
@@ -990,7 +997,7 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
 
     if (!isNil(text) && inView) {
         const textPt= makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
-        drawText(drawObj, drawTextAry, plot, textPt, drawParams);
+        drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
     }
     if (style === Style.HANDLED && inView) {
         // todo
@@ -1026,7 +1033,7 @@ function drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAd
                             objArea.center,
                             lineWidth);
             if (textPt) {
-                drawText(drawObj, drawTextAry, plot, textPt, drawParams);
+                drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
             }
         }
     }

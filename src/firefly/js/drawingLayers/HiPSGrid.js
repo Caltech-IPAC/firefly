@@ -101,8 +101,8 @@ function computeDrawData(drawLayer, plotId) {
     }
     else {
         const limitByMax= drawLayer.gridType==='match';
-        norder= getBestHiPSlevel(plot, limitByMax);
-        if (norder==='allsky') norder= 3;
+        const {norder:retNorder}= getBestHiPSlevel(plot, limitByMax);
+        norder= retNorder;
     }
 
     const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
@@ -124,7 +124,9 @@ function computeDrawData(drawLayer, plotId) {
             const s1= cc.getImageCoords(c.wpCorners[0]);
             const s2= cc.getImageCoords(c.wpCorners[2]);
             if (!s1 || !s2) return null;
-            return ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6), makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2), `${norder}/${c.ipix}`);
+            const textObj= ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6), makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2), `${norder}/${c.ipix}`);
+            textObj.canvasText= true;
+            return textObj;
         })
         .filter( (v) => v);
     return [FootprintObj.make(fpAry), ...idAry];

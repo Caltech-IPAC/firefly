@@ -15,7 +15,7 @@ import {CartesianProjection} from './CartesianProjection.js';
 import {OrthographicProjection} from './OrthographicProjection.js';
 import {CylindricalProjection} from './CylindricalProjection.js';
 import {PlateProjection} from './PlateProjection.js';
-import {Projection as AladinProjection} from './aladinProj/AladinProjections.js';
+import {Projection as AladinProjection} from '../../externalSource/aladinProj/AladinProjections.js';
 
 
 
@@ -286,6 +286,7 @@ function fwdAladinSinProject(x, y, header) {
     p.setProjection(AladinProjection.PROJ_SIN);
     try {
         const pt = p.unproject(pX, pY);
+        if (!pt) return null;
         const retPt = makeProjectionPt(pt.ra, pt.dec);
         return retPt;
     } catch (e) {
