@@ -73,9 +73,8 @@ public class WsServerCommands {
             WsResponse resp = getWsUtils().getList(wsParams, -1);
 
             JSONObject resultJson = new JSONObject();
-            Integer status = Integer.parseInt(resp.getStatusCode());
 
-            if (status >= 200 && status <= 300) {
+            if (resp.doContinue()) {
                 JSONArray jsonOArray = WsServerUtils.toJson(resp.getWspaceMeta());
 
                 resultJson.put("result", RESPONSE.TRUE.name().toLowerCase());

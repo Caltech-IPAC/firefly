@@ -10,6 +10,7 @@ import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {getWorkspaceList, isExistWorspaceFile, getWorkspacePath} from '../visualize/WorkspaceCntlr.js';
 import {WorkspaceSave, workspacePopupMsg} from './WorkspaceViewer.jsx';
+import {showYesNoPopup} from './PopupUtil.jsx';
 
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
@@ -78,17 +79,18 @@ export class DownloadOptionsDialog extends PureComponent {
 
     render() {
         const {where, wsSelect, wsList} = this.state;
-        const {children, labelWidth=100, dialogWidth=400, dialogHeight=300} = this.props;
+        const {children, labelWidth=100, dialogWidth=500, dialogHeight=300} = this.props;
         const showWorkspace = () => {
             return (
                 (!isEmpty(wsList)) ?
                 (
                         <div style={{marginTop: 10,
-                                         width: 'calc(100% - 12px)', height: 'calc(100%)',
-                                         overflow: 'auto',
-                                         padding: 5,
-                                         border:'1px solid #a3aeb9'
-                                         }}>
+                                     boxSizing: 'border-box',
+                                     width: 'calc(100%)', height: 'calc(100% - 10px)',
+                                     overflow: 'auto',
+                                     padding: 5,
+                                     border:'1px solid #a3aeb9'
+                                     }}>
                             <WorkspaceSave fieldKey={'wsSelect'}
                                            files={wsList}
                                            value={wsSelect}
@@ -98,7 +100,7 @@ export class DownloadOptionsDialog extends PureComponent {
         };
 
         return (
-            <div style={{width: dialogWidth, height: dialogHeight}}>
+            <div style={{height: '100%', width: '100%'}}>
                 <div>
                     {children}
                 </div>
@@ -115,7 +117,7 @@ export class DownloadOptionsDialog extends PureComponent {
                         fieldKey={'fileLocation'}/>
                  </div>
 
-                <div  style={{width: 'calc(100%)', height: 'calc(100%)'}}>
+                <div  style={{width: dialogWidth, height: dialogHeight}}>
                     {where === WORKSPACE && showWorkspace()}
                 </div>
             </div>
@@ -151,13 +153,12 @@ export function fileNameValidator() {
     };
 }
 
-
 export function validateFileName(wsSelect, fileName) {
     const fullPath = getWorkspacePath(wsSelect, fileName);
 
     if (isExistWorspaceFile(fullPath)) {
         workspacePopupMsg(`the file, ${fullPath}, already exists in workspace, please change the file name.`,
-                        'Save to workspace');
+                          'Save to workspace');
         return false;
     } else {
         return true;

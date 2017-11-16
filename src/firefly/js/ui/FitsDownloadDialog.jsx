@@ -34,7 +34,7 @@ import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName, WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
-import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder} from '../visualize/WorkspaceCntlr.js';
+import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, getWorkspaceList} from '../visualize/WorkspaceCntlr.js';
 import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {INFO_POPUP} from './PopupUtil.jsx';
@@ -43,7 +43,8 @@ import HelpIcon from './HelpIcon.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
 const dialogWidth = 500;
-const dialogHeight = 400;
+const dialogHeightWS = 500;
+const dialogHeightLOCAL = 400;
 
 const dialogPopupId = 'fitsDownloadDialog';
 const fKeyDef = {
@@ -78,7 +79,7 @@ const defValues = {
 const popupPanelResizableStyle = {
     width: dialogWidth,
     minWidth: dialogWidth,
-    minHeight: dialogHeight-100,
+    minHeight: dialogHeightLOCAL,
     resize: 'both',
     overflow: 'hidden',
     position: 'relative'
@@ -87,7 +88,7 @@ const popupPanelResizableStyle = {
 function getDialogBuilder() {
 
     const currentFileLocation = FieldGroupUtils.getFldValue(fitsDownGroup, 'fileLocation', LOCALFILE);
-    const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeight : 500;
+    const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeightLOCAL : dialogHeightWS;
 
     var popup = null;
     return () => {
@@ -112,6 +113,7 @@ export function showFitsDownloadDialog() {
     dispatchShowDialog('fitsDownloadDialog');
 }
 
+const mTOP = 10;
 /**
  * This method is called when the dialog is rendered. Only when an image is loaded, the PlotView is available.
  * Then, the color band, plotState etc can be determined.
@@ -170,7 +172,7 @@ function getInitialPlotState() {
 function renderOperationOption(hasOperation) {
     if (hasOperation) {
         return (
-            <div style={{display: 'flex', marginTop: 10}}>
+            <div style={{display: 'flex', marginTop: mTOP}}>
                 <div>
                     <RadioGroupInputField
                         options={[
@@ -206,7 +208,7 @@ function renderThreeBand(hasThreeColorBand, colors) {
         }
 
         return (
-             <div style={{display: 'flex', marginTop: 10}}>
+             <div style={{display: 'flex', marginTop: mTOP}}>
                 <div>
                     <RadioGroupInputField
                         options={optionArray}
@@ -278,6 +280,7 @@ export class FitsDownloadDialogForm extends PureComponent {
                         state.currentOp = op;
                     }
 
+
                     return state;
                 });
             }
@@ -295,10 +298,12 @@ export class FitsDownloadDialogForm extends PureComponent {
         const renderOperationButtons = renderOperationOption(this.hasOperation, labelWidth);
         const renderThreeBandButtons = renderThreeBand(this.hasThreeColorBand, this.colors, labelWidth);//true, ['Green','Red', 'Blue']);
         const {popupId} = this.props;
+        const totalChildren = 3 + (renderOperationButtons ? 1 : 0) + (renderThreeBandButtons ? 1 : 0);
+        const childH = (totalChildren*(20+mTOP));
 
         const fileType = () => {
             return (
-                <div style={{display: 'flex', marginTop: 10}}>
+                <div style={{display: 'flex', marginTop: mTOP}}>
                     <div>
                         <RadioGroupInputField
                             options={ [
@@ -323,23 +328,23 @@ export class FitsDownloadDialogForm extends PureComponent {
             );
         };
 
+
         return (
 
-            <FieldGroup style={{height: '100%'}}
+            <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}}
                         groupKey={this.props.groupKey} keepState={true}
                         reducerFunc={FitsDLReducer({band: currentBand, fileName,
                                                     currentBandFileName: currentFileName })}>
-                <div style={{boxSizing: 'border-box', paddingLeft:5,paddingRight:5,
-                             width: '100%', height: 'calc(100% - 80px)',
-                             flexGrow: 1, display: 'flex', resize:'none'}}>
+                <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
+                             width: '100%', height: 'calc(100% - 70px)'}}>
                     <DownloadOptionsDialog fromGroupKey={this.props.groupKey}
                                            children={fileOptions()}
                                            fileName={fileName}
                                            labelWidth={labelWidth}
-                                           dialogWidth={'calc(100%)'}
-                                           dialogHeight={'calc(100% - 120px)'}/>
+                                           dialogWidth={'100%'}
+                                           dialogHeight={`calc(100% - ${childH}pt)`}/>
                 </div>
-                <table style={{width:(dialogWidth-10), marginTop: 30, marginBottom: 10, marginLeft: 5}}>
+                <table style={{width:'calc(100% - 20px)', margin: '20px 10px 10px 10px'}}>
                     <colgroup>
                         <col style={{width: '20%'}}/>
                         <col style={{width: '20%'}}/>
@@ -384,8 +389,6 @@ FitsDownloadDialogForm.propTypes = {
 };
 
 
-
-
 const FitsDLReducer = ({band, fileName, currentBandFileName}) => {
     const crtFileNameKey = 'currentBandFileName';
 
@@ -422,6 +425,14 @@ const FitsDLReducer = ({band, fileName, currentBandFileName}) => {
 
                         inFields = updateSet(inFields, [crtFileNameKey, 'value', fileKey],
                             action.payload.value);
+                    } else if (action.payload.fieldKey === fKeyDef.wsSelect.fKey) {
+                        // change the filename if a file is selected from the file picker
+                        const val = action.payload.value;
+
+                        if (val && isValidWSFolder(val, false).valid) {
+                            const fName = val.substring(val.lastIndexOf('/') + 1);
+                            inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
+                        }
                     }
                     break;
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
@@ -486,9 +497,6 @@ function resultsSuccess(request, plotView, popupId) {
 
     const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
 
-    if (isWorkspace()) {
-        if (!validateFileName(wsSelect, fileName)) return false;
-    }
     var band = Band.NO_BAND;
     if (bandSelect) {
         band= Band.get(bandSelect);

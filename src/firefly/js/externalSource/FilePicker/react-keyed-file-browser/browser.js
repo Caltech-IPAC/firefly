@@ -244,7 +244,7 @@ class FileBrowser extends React.Component {
   }
   preview(file) {
     this.setState((state) => {
-      state.previewFile = file;
+      state.previewFile = this.props.showPreview ? file : null;
       return state;
     });
   }
@@ -768,7 +768,8 @@ FileBrowser.defaultProps = {
   headerRenderer: TableHeader,
   folderRenderer: TableFolder,
   fileRenderer: TableFile,
-  detailRenderer: DefaultDetail
+  detailRenderer: DefaultDetail,
+  showPreview: true
 };
 FileBrowser.propTypes = {
   showActionBar: PropTypes.bool.isRequired,
@@ -805,7 +806,8 @@ FileBrowser.propTypes = {
   openFolders: PropTypes.object,
   file: PropTypes.object,
   close: PropTypes.func,
-  actions: PropTypes.func
+  actions: PropTypes.func,
+  showPreview: PropTypes.bool.isRequired
 };
 
 export default DragDropContext(HTML5Backend)(FileBrowser);

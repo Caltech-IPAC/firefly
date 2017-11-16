@@ -272,6 +272,7 @@ export function isValidWSFolder(key, isFolderValid=true) {
     return {valid, message};
 }
 
+
 /**
  * get all folders under (including) the given level, used for openFoloder object for FilePicker
  * @param level

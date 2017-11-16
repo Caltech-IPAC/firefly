@@ -106,7 +106,8 @@ export class WorkspaceView extends PureComponent {
 
     render () {
         const {onCreateFolder, onCreateFiles, onMoveFolder, onMoveFile, onRenameFolder, onRenameFile,
-               onDeleteFolder, onDeleteFile, onClickItem, files, wrapperStyle, keepSelect, folderLevel=1} = this.props;
+               onDeleteFolder, onDeleteFile, onClickItem, files, wrapperStyle={width: '100%', height: '100%'},
+               keepSelect, folderLevel=1} = this.props;
         const {selectedItem} = this.props;
         const eventHandlers = {
                 onCreateFolder,
@@ -163,7 +164,6 @@ function getViewProps(params, fireValueChange) {
         {
             selectedItem: params.value,
             onClickItem: (key) => {
-
                 fireValueChange({value: key});
             }
     });
@@ -291,51 +291,65 @@ function resultCancel() {
 export function showWorkspaceUploadPopup({onClickUpload, files, value}) {
     return () => {
         const newList = files || getWorkspaceList() || [];
+        const dialogWidth = 500;
+        const dialogHeight = 350;
+        const popupPanelResizableStyle = {
+                        width: dialogWidth,
+                        height: dialogHeight,
+                        minWidth: dialogWidth,
+                        minHeight: dialogHeight,
+                        resize: 'both',
+                        overflow: 'hidden'};
         const style = {
-                        marginTop: VMargin,
-                        marginBottom: VMargin,
                         marginLeft: HMargin,
                         marginRight: HMargin,
-                        width: 550,
-                        height: 300,
-                        overflow: 'auto',
-                        padding: 10,
+                        marginTop: VMargin,
+                        width: `calc(100% - ${HMargin*2+20}px)`,
+                        height: `calc(100% - ${VMargin+25}px)`,
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        paddingTop: 10,
                         border: '1px solid #a3aeb9',
-                        borderRadius: 5
+                        borderRadius: 5,
+                        overflow: 'auto'
         };
 
         const startWorkspaceReadPopup = () => {
             const popup = (
                 <PopupPanel title={'Read file from workspace'}>
-                    <FieldGroup groupKey={workspaceUploadGroup} keepState={true}>
-                        <div style={style}>
-                            <WorkspaceViewField fieldKey={workspaceUploadDef.file.fkey}
-                                                files={newList}
-                                                keepSelect={true}
-                                                value={value}
-                                                initialState={{validator: isWsFolder(false)}}/>
-                        </div>
-                    </FieldGroup>
-                    <div style={{display: 'flex', justifyContent: 'space-between',
-                                 marginTop: 30, marginLeft: HMargin, marginBottom: VMargin}}>
-                        <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
-                            <div style={{marginRight: 10}}>
-                                <CompleteButton
-                                    groupKey={workspaceUploadGroup}
-                                    onSuccess={onClickUpload}
-                                    onFail={resultFail()}
-                                    text={'Open'}
-                                    dialogId={wsUploadPopupId}
-                                />
+                    <div style={popupPanelResizableStyle}>
+                        <FieldGroup style={{height: 'calc(100% - 80px)', width: '100%'}}
+                                    groupKey={workspaceUploadGroup} keepState={true}>
+                            <div style={style}>
+                                <WorkspaceViewField fieldKey={workspaceUploadDef.file.fkey}
+                                                    files={newList}
+                                                    keepSelect={true}
+                                                    value={value}
+                                                    initialState={{validator: isWsFolder(false)}}/>
                             </div>
-                            <div>
-                                <button type='button' className='button std hl'
-                                        onClick={() => resultCancel()}>Cancel
-                                </button>
+                        </FieldGroup>
+
+                        <div style={{display: 'flex', justifyContent: 'space-between',
+                                     margin: `20px ${HMargin}px ${VMargin}px ${HMargin}px`}}>
+                            <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
+                                <div style={{marginRight: 10}}>
+                                    <CompleteButton
+                                        groupKey={workspaceUploadGroup}
+                                        onSuccess={onClickUpload}
+                                        onFail={resultFail()}
+                                        text={'Open'}
+                                        dialogId={wsUploadPopupId}
+                                    />
+                                </div>
+                                <div>
+                                    <button type='button' className='button std hl'
+                                            onClick={() => resultCancel()}>Cancel
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div style={{ textAlign:'right', marginRight: 10}}>
-                            <HelpIcon helpId={'visualization.imageoptions'}/>
+                            <div style={{ textAlign:'right', marginRight: 10}}>
+                                <HelpIcon helpId={'visualization.imageoptions'}/>
+                            </div>
                         </div>
                     </div>
                 </PopupPanel>

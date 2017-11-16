@@ -12,6 +12,7 @@ export function FilePicker({engine, files, selectedItem, keepSelect, openFolders
                 selectedItem={selectedItem}
                 keepSelect={keepSelect}
                 openFolders={openFolders}
+                showPreview={false}
                 {...eventHandler} />
         );
     }
@@ -30,7 +31,8 @@ FilePicker.propTypes = {
     onClickItem: PropTypes.func,
     files: PropTypes.arrayOf(PropTypes.object),
     selectedItem: PropTypes.string,
-    keepSelect: PropTypes.bool
+    keepSelect: PropTypes.bool,
+    openFolders: PropTypes.array
 };
 
 

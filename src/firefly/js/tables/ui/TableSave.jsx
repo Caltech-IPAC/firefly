@@ -16,13 +16,13 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {doDownloadWorkspace, workspacePopupMsg} from '../../ui/WorkspaceViewer.jsx';
 import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
-        WORKSPACE} from '../../ui/DownloadOptionsDialog.jsx';
+        WORKSPACE, LOCALFILE} from '../../ui/DownloadOptionsDialog.jsx';
 import {WS_SERVER_PARAM, isWsFolder, isValidWSFolder,
         getWorkspacePath} from  '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
-
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'Save as:'},
@@ -45,22 +45,39 @@ const defValues = {
 
 const tblDownloadGroupKey = 'TABLE_DOWNLOAD_FORM';
 
+const dialogWidth = 500;
+const dialogHeightWS = 500;
+const dialogHeightLOCAL = 400;
+
+const popupPanelResizableStyle = {
+    width: dialogWidth,
+    minWidth: dialogWidth,
+    minHeight: dialogHeightLOCAL,
+    resize: 'both',
+    overflow: 'hidden',
+    position: 'relative'
+};
 
 export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
     return () => {
         const popupId = 'TABLE_DOWNLOAD_POPUP';
-        const dialogWidth = 400;
+        const currentFileLocation = FieldGroupUtils.getFldValue(tblDownloadGroupKey, 'fileLocation', LOCALFILE);
+        const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeightLOCAL : dialogHeightWS;
 
         const startTableDownloadPopup = () => {
             const popup = (
                 <PopupPanel title={'Download table'}>
-                    <div style={{margin: 10, width: dialogWidth}}>
-                        <FieldGroup groupKey={tblDownloadGroupKey} keepState={true}
+                    <div style={{...popupPanelResizableStyle, height: adHeight}}>
+                        <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
+                                             height: 'calc(100% - 70px)', width: '100%'}}
+                                    groupKey={tblDownloadGroupKey} keepState={true}
                                     reducerFunc={TableDLReducer(tbl_id)}>
                             <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
-                                                   />
+                                                   dialogWidth={'100%'}
+                                                   dialogHeight={'calc(100% - 60pt)'}/>
                         </FieldGroup>
-                        <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 30}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between',
+                                     marginTop: 30, marginBottom: 10, marginLeft: 5, marginRight: 5}}>
                             <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
                                 <div style={{marginRight: 10}}>
                                     <CompleteButton
@@ -107,6 +124,18 @@ function TableDLReducer(tbl_id) {
             switch (action.type) {
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
                     inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], get(request, 'META_INFO.title'));
+                    break;
+                case FieldGroupCntlr.VALUE_CHANGE:
+                    if (action.payload.fieldKey === fKeyDef.wsSelect.fKey) {
+                        // change the filename if a file is selected from the file picker
+                        const val = action.payload.value;
+
+                        if (val && isValidWSFolder(val, false).valid) {
+                            const fName = val.substring(val.lastIndexOf('/') + 1);
+
+                            inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
+                        }
+                    }
                     break;
             }
             return Object.assign({}, inFields);
