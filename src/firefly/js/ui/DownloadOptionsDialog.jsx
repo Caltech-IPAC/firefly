@@ -95,7 +95,7 @@ export class DownloadOptionsDialog extends PureComponent {
 
     render() {
         const {where, wsSelect, wsList, isUpdating} = this.state;
-        const {children, labelWidth=100, dialogWidth=500, dialogHeight=300} = this.props;
+        const {children, dialogWidth=500, dialogHeight=300} = this.props;
         const showWorkspace = () => {
 
             const loading = () => {

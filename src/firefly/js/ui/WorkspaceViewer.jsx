@@ -234,7 +234,7 @@ export  const WorkspaceUpload =  fieldGroupConnector(WorkspaceReadView, getUploa
 // the value defined is display value as shown on UI
 WorkspaceUpload.propTypes = {
     fieldKey: PropTypes.string.isRequired,
-    fileAnalysis: PropTypes.bool,
+    fileAnalysis: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
     wrapperStyle: PropTypes.object,
     isLoading: PropTypes.bool,
     value: PropTypes.string
@@ -393,9 +393,12 @@ function makeDoUpload(file, fileAnalysis) {
 
             return {isLoading: false, valid, message, value: cacheKey, analysisResult};
         }).catch((err) => {
+            const msg = `Unable to upload file from ${getWorkspacePath(file)}`;
+
+            workspacePopupMsg(msg, 'Workspace upload error');
             return {
                 isLoading: false, valid: false,
-                message: `Unable to upload file from ${file}`
+                message: msg
             };
         });
     };
@@ -424,7 +427,7 @@ function doUploadWorkspace(file, params={}) {
     }
 
     return fetchUrl(UL_URL, options).then( (response) => {
-        return response.text().then( (text) => {
+        return response.text().then((text) => {
             // text is in format ${status}::${message}::${message}::${cacheKey}::${analysisResult}
             const result = text.split('::');
             const [status, message, cacheKey, fileFormat] = result.slice(0, 4);

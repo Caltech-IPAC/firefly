@@ -109,6 +109,7 @@ export function showFitsDownloadDialog() {
 }
 
 const mTOP = 10;
+const crtFileNameKey = 'currentBandFileNames';
 /**
  * This method is called when the dialog is rendered. Only when an image is loaded, the PlotView is available.
  * Then, the color band, plotState etc can be determined.
@@ -229,21 +230,43 @@ export class FitsDownloadDialogForm extends PureComponent {
         this.colors = colors;
         this.hasThreeColorBand = hasThreeColorBand;
         this.hasOperation = hasOperation;
-        const baseName = this.getDefaultFileName(hasOperation, Band.NO_BAND.key);
-        const currentFileName = colors ? colors.reduce((prev, oneColor) => {
-                prev[oneColor] = this.getDefaultFileName(hasOperation, Band.get(oneColor));
-                return prev;
-        }, {}) : {};
+        const {groupKey} = props;
 
-        currentFileName[Band.NO_BAND.key] = baseName;
-        currentFileName['png'] = baseName.replace('.fits', '.png');
-        currentFileName['reg'] = baseName.replace('.fits', '.reg');
-
-        this.state = {currentFileName,
-                      currentBand: hasThreeColorBand ? colors[0] : Band.NO_BAND.key,
-                      currentOp: '',
-                      currentType: 'fits'};
         this.getDefaultFileName = this.getDefaultFileName.bind(this);
+        this.getCurrentBand = () => {
+            return (hasThreeColorBand ? getFieldVal(groupKey, 'threeBandColor', colors[0])
+                                      : Band.NO_BAND.key);
+        };
+        this.getFileNames = () => {
+            let fileNames = getFieldVal(groupKey, crtFileNameKey, []);
+
+            if (!fileNames || isEmpty(fileNames)) {
+                fileNames = colors ? colors.reduce((prev, oneColor) => {
+                    prev[oneColor] = this.getDefaultFileName(hasOperation, Band.get(oneColor));
+                    return prev;
+                }, {}) : {};
+            }
+
+            const baseName = this.getDefaultFileName(hasOperation, Band.NO_BAND);
+
+            fileNames[Band.NO_BAND.key] = baseName;
+            fileNames['png'] = baseName.replace('.fits', '.png');
+            fileNames['reg'] = baseName.replace('.fits', '.reg');
+            return fileNames;
+        };
+
+        this.getCurrentOp = () => {
+            return getFieldVal(groupKey, 'operationOption', '');
+        };
+        this.getCurrentType = () => {
+            return getFieldVal(groupKey, 'fileType', 'fits');
+        };
+
+        this.state = {currentFileNames: this.getFileNames(),
+            currentBand: this.getCurrentBand(),
+            currentOp: this.getCurrentOp(),
+            currentType: this.getCurrentType()};
+
     }
 
     componentWillUnmount() {
@@ -267,8 +290,8 @@ export class FitsDownloadDialogForm extends PureComponent {
                     } else {
                         const fKey = (fileType === 'fits') ? band : fileType;
 
-                        if (fileName !== state.currentFileName[fKey]) {
-                            state.currentFileName[fKey] = fileName;
+                        if (fileName !== state.currentFileNames[fKey]) {
+                            state.currentFileNames[fKey] = fileName;
                         }
                     }
                     if (op !== state.currentOp) {
@@ -287,9 +310,9 @@ export class FitsDownloadDialogForm extends PureComponent {
     }
 
     render() {
-        const {currentType, currentBand, currentFileName} = this.state;
+        const {currentType, currentBand, currentFileNames} = this.state;
         const labelWidth = 100;
-        const fileName = (currentType === 'fits') ? currentFileName[currentBand] : currentFileName[currentType];
+        const fileName = (currentType === 'fits') ? currentFileNames[currentBand] : currentFileNames[currentType];
         const renderOperationButtons = renderOperationOption(this.hasOperation, labelWidth);
         const renderThreeBandButtons = renderThreeBand(this.hasThreeColorBand, this.colors, labelWidth);//true, ['Green','Red', 'Blue']);
         const {popupId} = this.props;
@@ -329,7 +352,7 @@ export class FitsDownloadDialogForm extends PureComponent {
             <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}}
                         groupKey={this.props.groupKey} keepState={true}
                         reducerFunc={FitsDLReducer({band: currentBand, fileName,
-                                                    currentBandFileName: currentFileName })}>
+                                                    currentBandFileNames: currentFileNames })}>
                 <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
                              width: '100%', height: 'calc(100% - 70px)'}}>
                     <DownloadOptionsDialog fromGroupKey={this.props.groupKey}
@@ -379,13 +402,12 @@ export class FitsDownloadDialogForm extends PureComponent {
 }
 
 FitsDownloadDialogForm.propTypes = {
-    groupKey: PropTypes.string,
+    groupKey: PropTypes.string.isRequired,
     popupId: PropTypes.string
 };
 
 
-const FitsDLReducer = ({band, fileName, currentBandFileName}) => {
-    const crtFileNameKey = 'currentBandFileName';
+const FitsDLReducer = ({band, fileName, currentBandFileNames}) => {
 
     return (inFields, action) => {
         if (!inFields) {
@@ -396,7 +418,7 @@ const FitsDLReducer = ({band, fileName, currentBandFileName}) => {
             set(defV, [fKeyDef.wsSelect.fKey, 'value'], '');
             set(defV, [fKeyDef.wsSelect.fKey, 'validator'], isWsFolder());
             set(defV, [fKeyDef.fileName.fKey, 'validator'], fileNameValidator(fitsDownGroup));
-            set(defV, [crtFileNameKey, 'value'], currentBandFileName);
+            set(defV, [crtFileNameKey, 'value'], currentBandFileNames);
             return defV;
         } else {
 
@@ -434,7 +456,7 @@ const FitsDLReducer = ({band, fileName, currentBandFileName}) => {
                     inFields = updateSet(inFields, [fKeyDef.colorBand.fKey, 'value'],
                         ((band !== Band.NO_BAND.key) ? band : ''));
                     inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fileName);
-                    inFields = updateSet(inFields, [crtFileNameKey, 'value'], currentBandFileName);
+                    inFields = updateSet(inFields, [crtFileNameKey, 'value'], currentBandFileNames);
                     break;
             }
             return Object.assign({}, inFields);
@@ -489,6 +511,10 @@ function resultsSuccess(request, plotView, popupId) {
            fileLocation, wsSelect} = request;
 
     let {fileName} = request;
+    var band = Band.NO_BAND;
+    if (bandSelect) {
+        band= Band.get(bandSelect);
+    }
 
     const rebuldFileName = () => {
         if (ext) {
@@ -497,16 +523,11 @@ function resultsSuccess(request, plotView, popupId) {
     };
 
     rebuldFileName();
-    
+
     const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
 
     if (isWorkspace()) {
         if (!validateFileName(wsSelect, fileName)) return false;
-    }
-
-    var band = Band.NO_BAND;
-    if (bandSelect) {
-        band= Band.get(bandSelect);
     }
 
     const getRegionsDes = (bSeperateText) => {
@@ -609,10 +630,11 @@ function  makeFileName(plot,  band) {
             retval= makeServiceFileName(req,plot, band);
             break;
         case RequestType.FILE:
-            retval= 'USE_SERVER_NAME';
+            //retval= 'USE_SERVER_NAME';
+            retval = makeTitleFileName(plot, band);
             break;
         case RequestType.URL:
-            retval= makeTitleFileName(band);
+            retval= makeTitleFileName(plot, band);
             break;
         case RequestType.ALL_SKY:
             retval= 'allsky.fits';
