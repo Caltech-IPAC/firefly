@@ -53,22 +53,23 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 }
 
 export const FormPanel = function (props) {
-    var {children, onSuccess, onSubmit, onCancel, onError, groupKey, action, params, title,
+    var {children, onSuccess, onSubmit, onCancel, onError, groupKey, action, params, title, style, inputStyle,
         submitText='Search', help_id, changeMasking, includeUnmounted=false} = props;
 
-    const style = {
+    const childrenStyle = Object.assign({
         backgroundColor: 'white',
         border: '1px solid rgba(0,0,0,0.2)',
         padding: 5,
         marginBottom: 5,
         boxSizing: 'border-box',
         flexGrow: 1
-    };
+    }, inputStyle);
     onCancel = onCancel || dispatchHideDropDown;
+    const mStyle = Object.assign({height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}, style);
 
     return (
-        <div style={{height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
-            <div style={style}>
+        <div style={mStyle}>
+            <div style={childrenStyle}>
                 {children}
             </div>
             <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}}>
@@ -97,8 +98,9 @@ export const FormPanel = function (props) {
 // If onSuccess is provided, onSubmit, action, param, and title properties are ignored
 FormPanel.propTypes = {
     submitText: PropTypes.string,
-    width: PropTypes.string,
-    height: PropTypes.string,
+    title: PropTypes.string,
+    style: PropTypes.object,
+    inputStyle: PropTypes.object,
     onSubmit: PropTypes.func, // onSubmit(request) - callback that accepts table request, use with action, params, and title props
     onSuccess: PropTypes.func, // onSuccess(fields) - callback that takes fields object, its keys are the field keys for fields in the given group
     onCancel: PropTypes.func,

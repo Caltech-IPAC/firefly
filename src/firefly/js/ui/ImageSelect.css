@@ -74,7 +74,7 @@
 .DataProductList__view {
     flex-grow: 1;
     overflow: auto;
-    margin-right: -2px;}
+}
 
 .DataProductList__item {
 }

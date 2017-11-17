@@ -45,7 +45,7 @@ class TabsHeader extends PureComponent {
 
     render() {
         const {widthPx} = this.state;
-        const {children, resizable} = this.props;
+        const {children, resizable, headerStyle={}} = this.props;
         const numTabs = children.length;
         let maxTitleWidth = undefined;
         let sizedChildren = children;
@@ -58,8 +58,9 @@ class TabsHeader extends PureComponent {
                 return React.cloneElement(child, {maxTitleWidth});
             });
         }
+        const style = Object.assign({flexGrow: 0, height: 20}, headerStyle);
         return (
-            <div style={{flexGrow: 0, height: 20}}>
+            <div style={style}>
                 {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
                     {sizedChildren}
                 </ul> : <div/>}
@@ -70,7 +71,8 @@ class TabsHeader extends PureComponent {
 }
 
 TabsHeader.propTypes= {
-    resizable: PropTypes.bool
+    resizable: PropTypes.bool,
+    headerStyle: PropTypes.object
 };
 
 export class Tabs extends PureComponent {
@@ -107,7 +109,7 @@ export class Tabs extends PureComponent {
 
     render () {
         var { selectedIdx}= this.state;
-        const {children, useFlex, resizable, borderless, contentStyle={}} = this.props;
+        const {children, useFlex, resizable, borderless, headerStyle, contentStyle={}} = this.props;
         const numTabs = React.Children.count(children);
 
         var content;
@@ -131,7 +133,7 @@ export class Tabs extends PureComponent {
         const contentClsName = borderless ? 'TabPanel__Content borderless' : 'TabPanel__Content';
         return (
             <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
-                <TabsHeader {...{resizable}}>{newChildren}</TabsHeader>
+                <TabsHeader {...{resizable, headerStyle}}>{newChildren}</TabsHeader>
                 <div ref='contentRef' style={contentStyle} className={contentClsName}>
                     {(content)?contentDiv:''}
                 </div>
@@ -148,6 +150,7 @@ Tabs.propTypes= {
     onTabSelect: PropTypes.func,
     useFlex: PropTypes.bool,
     resizable: PropTypes.bool,
+    headerStyle: PropTypes.object,
     contentStyle: PropTypes.object,
     borderless: PropTypes.bool
 };
@@ -173,13 +176,13 @@ export class Tab extends PureComponent {
     }
 
     render () {
-        const {name, selected, onSelect, removable, onTabRemove, id, maxTitleWidth} = this.props;
+        const {name, label, selected, onSelect, removable, onTabRemove, id, maxTitleWidth} = this.props;
 
         var tabClassName = 'TabPanel__Tab' ;
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
-
+        const tabTitle = label || name;
         // removable width: 14px
         const textStyle = maxTitleWidth ? {float: 'left', width: maxTitleWidth-(removable?14:0)} : {};
 
@@ -187,7 +190,7 @@ export class Tab extends PureComponent {
             <li className={tabClassName} onClick={() => onSelect(id,name)}>
                 <div style={{height: '100%'}}>
                     <div style={{...textStyle, height: '100%'}} className='text-ellipsis' title={name}>
-                         {name}
+                         {tabTitle}
                     </div>
                     {removable &&
                             <div style={{right: -4, top: -2}} className='btn-close'
@@ -205,6 +208,7 @@ export class Tab extends PureComponent {
 
 Tab.propTypes= {
     name: PropTypes.string.isRequired, //public
+    label: PropTypes.node,      // used for tab label.  if not given, name will be used as text.      
     id: PropTypes.string,
     selected:  PropTypes.bool.isRequired, // private - true is the tab is currently selected
     onSelect: PropTypes.func, // private - called whenever the tab is clicked

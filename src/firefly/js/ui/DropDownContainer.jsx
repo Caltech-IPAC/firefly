@@ -10,7 +10,7 @@ import {get, pick} from 'lodash';
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
-import {NewImageSearchPanel} from './NewImageSearchPanel.jsx';
+import {ImageSearchPanelV2} from './ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
@@ -26,7 +26,7 @@ export const dropDownMap = {
     Search: <SearchPanel />,
     TestSearch: <TestSearchPanel />,
     TestSearches: <TestQueriesPanel />,
-    NewImageSearchPanel: <NewImageSearchPanel/>,
+    ImageSearchPanelV2: <ImageSearchPanelV2/>,
     ImageSelectDropDownCmd: <ImageSelectDropdown />,
     ImageSelectDropDownSlateCmd: <ImageSelectDropdown gridSupport={true}/>,
     ChartSelectDropDownCmd: <ChartSelectDropdown />,
