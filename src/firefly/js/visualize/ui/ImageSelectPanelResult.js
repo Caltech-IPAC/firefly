@@ -57,8 +57,20 @@ function imagePlotOnURL(request) {
 function imagePlotOnFITS(request) {
     const fileLoc = get(request, keyMap['fitslocation']);
 
-    var fits = (fileLoc === 'isLocal') ? get(request, keyMap['fitsupload']) : get(request, keyMap['fitswsupload']);
-    var wpr = WebPlotRequest.makeFilePlotRequest(fits);
+    // var fits = (fileLoc === 'isLocal') ? get(request, keyMap['fitsupload']) : get(request, keyMap['fitswsupload']);
+    let fits, wpr;
+
+    if (fileLoc === 'isLocal') {
+        fits= get(request, keyMap['fitsupload']);
+        wpr = WebPlotRequest.makeFilePlotRequest(fits);
+    }
+    else {
+        fits= get(request, keyMap['fitswsupload']);
+        wpr = WebPlotRequest.makeWorkspaceRequest(fits);
+    }
+
+
+
 
 
     if (wpr && request[keyMap['fitslist']] === 'loadOne' && request.hasOwnProperty(keyMap['fitsextinput'])) {

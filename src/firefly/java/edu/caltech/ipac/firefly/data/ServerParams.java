@@ -188,5 +188,7 @@ public class ServerParams {
     public static final String WS_MOVE_FILE = "wsMove";
     public static final String WS_GET_METADATA = "wsGetMeta";
     public static final String WS_CREATE_FOLDER = "wsParent";
+    public static final String SOURCE_FROM = "sourceFrom";
+    public static final String IS_WS = "isWs";
 }
 

@@ -164,5 +164,7 @@ export const ServerParams = {
         WS_DELETE_FILE : 'wsDel',
         WS_MOVE_FILE : 'wsMove',
         WS_GET_METADATA : 'wsGetMeta',
-        WS_CREATE_FOLDER : 'wsParent'
+        WS_CREATE_FOLDER : 'wsParent',
+        SOURCE_FROM : 'sourceFrom',
+        IS_WS : 'isWs'
 };

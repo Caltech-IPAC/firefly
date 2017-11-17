@@ -36,6 +36,7 @@ import {dispatchAllowDataTag} from '../../core/background/BackgroundCntlr.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {initWorkspace} from '../../visualize/WorkspaceCntlr.js';
+import {ServerParams} from '../../data/ServerParams.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
 const DEFAULT_TITLE = 'Time Series Tool';
@@ -280,6 +281,7 @@ export class UploadPanel extends PureComponent {
                         ) :
                         (
                             <WorkspaceUpload
+                                preloadWsFile={false}
                                 wrapperStyle={wrapperStyle}
                                 fieldKey='rawTblSource'
                                 initialState={{ tooltip: 'Select a Time Series Table file from workspace to upload'}}
@@ -350,6 +352,9 @@ function onSearchSubmit(request) {
         const displayName = fields.rawTblSource.displayValue.split('\\');
         const uploadedFileName = displayName[displayName.length-1];
         const treq = converter.rawTableRequest(converter, request.rawTblSource,uploadedFileName);
+
+        if (request.uploadContainer===ServerParams.IS_WS) treq[ServerParams.SOURCE_FROM]= ServerParams.IS_WS;
+
 
         dispatchTableSearch(treq, {removable: true});
         dispatchHideDropDown();

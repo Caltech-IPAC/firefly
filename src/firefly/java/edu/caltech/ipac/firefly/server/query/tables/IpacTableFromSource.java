@@ -3,13 +3,20 @@
  */
 package edu.caltech.ipac.firefly.server.query.tables;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.query.*;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.query.SearchRequestUtils;
+import edu.caltech.ipac.firefly.server.query.UserCatalogQuery;
+import edu.caltech.ipac.firefly.server.ws.WsServerParams;
+import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
@@ -55,10 +62,12 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             }
 
             if (inf == null) {
-                throw new DataAccessException("Unable to read the source[alt_source] file:" + source + (StringUtils.isEmpty(altSource) ? "" : " [" + altSource + "]") );
+                String sType= isWorkspace(request) ? "workspace" : "file";
+                String altSourceDesc=StringUtils.isEmpty(altSource) ? "" : " [" + altSource + "]";
+                throw new DataAccessException("Unable to read the source[alt_source] "+sType + ":" + source + altSourceDesc);
             }
 
-            if ( !ServerContext.isFileInPath(inf) ) {
+            if ( !isWorkspace(request) && !ServerContext.isFileInPath(inf) ) {
                 throw new SecurityException("Access is not permitted.");
             }
             return inf;
@@ -99,41 +108,51 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     private File getSourceFile(String source, TableServerRequest request, boolean checkForUpdates) {
         if (source == null) return null;
         try {
-            URL url = makeUrl(source);
-            if (url == null) {
-                File f = ServerContext.convertToFile(source);
-                if (f == null || !f.canRead()) return  null;
+            if (isWorkspace(request)) {
+                WsServerParams wsParams = new WsServerParams();
+                wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, source);
+                WsServerUtils wsUtil= new WsServerUtils();
+                String s=  wsUtil.upload(wsParams);
+                return ServerContext.convertToFile(s);
+            }
+            else {
+                URL url = makeUrl(source);
+                if (url == null) {
+                    File f = ServerContext.convertToFile(source);
+                    if (f == null || !f.canRead()) return  null;
 
-                StringKey key = new StringKey(getUniqueID(request), f.lastModified());
-                File cached  = (File) getCache().get(key);
-                if (cached != null) return cached;    // it's cached.. return it.
+                    StringKey key = new StringKey(getUniqueID(request), f.lastModified());
+                    File cached  = (File) getCache().get(key);
+                    if (cached != null) return cached;    // it's cached.. return it.
 
-                File res = convertToIpacTable(f, request);
-                getCache().put(key, res);
-                return res;
-            } else {
-                StringKey key = new StringKey(getUniqueID(request), url);
-                File res  = (File) getCache().get(key);
-
-                String ext = FileUtil.getExtension(url.getPath());
-                ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
-                File nFile = createFile(request, ext);
-
-                HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
-                if (res == null) {
-                    URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
-                    res = convertToIpacTable(nFile, request);
+                    File res = convertToIpacTable(f, request);
                     getCache().put(key, res);
-                } else if (checkForUpdates) {
-                    FileUtil.writeStringToFile(nFile, "workaround");
-                    nFile.setLastModified(res.lastModified());
-                    FileInfo finfo = URLDownload.getDataToFile(conn, nFile, null, false, true, true, Long.MAX_VALUE);
-                    if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    return res;
+                } else {
+                    StringKey key = new StringKey(getUniqueID(request), url);
+                    File res  = (File) getCache().get(key);
+
+                    String ext = FileUtil.getExtension(url.getPath());
+                    ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
+                    File nFile = createFile(request, ext);
+
+                    HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
+                    if (res == null) {
+                        URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
                         res = convertToIpacTable(nFile, request);
                         getCache().put(key, res);
+                    } else if (checkForUpdates) {
+                        FileUtil.writeStringToFile(nFile, "workaround");
+                        nFile.setLastModified(res.lastModified());
+                        FileInfo finfo = URLDownload.getDataToFile(conn, nFile, null, false, true, true, Long.MAX_VALUE);
+                        if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                            res = convertToIpacTable(nFile, request);
+                            getCache().put(key, res);
+                        }
                     }
+                    return res;
                 }
-                return res;
+
             }
         } catch (Exception ex) {
         }
@@ -154,6 +173,10 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         } catch (MalformedURLException e) {
             return null;
         }
+    }
+
+    private boolean isWorkspace(ServerRequest r) {
+        return ServerParams.IS_WS.equals(r.getParam(ServerParams.SOURCE_FROM));
     }
 
 }

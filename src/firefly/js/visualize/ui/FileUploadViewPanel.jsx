@@ -474,6 +474,7 @@ export class FileUploadViewPanel extends PureComponent {
                 return (
                     <WorkspaceUpload
                         wrapperStyle={{...uploadStyle, marginRight: 32}}
+                        preloadWsFile={true}
                         fieldKey={wsId}
                         fileAnalysis={this.onLoading}
                         initialState={{tooltip: 'Select a file in FITS, VOTABLE, CSV, TSV, or IPAC format from workspace',

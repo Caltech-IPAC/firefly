@@ -10,7 +10,7 @@ import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceDeletePath,
         dispatchWorkspaceMovePath,
         getWorkspaceList, getFolderUnderLevel,
-        getWorkspacePath, isWsFolder, WS_SERVER_PARAM} from '../visualize/WorkspaceCntlr.js';
+        getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -242,7 +242,8 @@ WorkspaceUpload.propTypes = {
     fileAnalysis: PropTypes.bool,
     wrapperStyle: PropTypes.object,
     isLoading: PropTypes.bool,
-    value: PropTypes.string
+    value: PropTypes.string,
+    preloadWsFile: PropTypes.bool,
 };
 
 
@@ -250,15 +251,24 @@ function getUploadProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             value: params.displayValue,
-            onClickUpload: resultSuccess(fireValueChange, params.fileAnalysis)
+            onClickUpload: resultSuccess(fireValueChange, params.fileAnalysis, params.preloadWsFile)
         }
     );
 }
 
-function resultSuccess(fireValueChange, fileAnalysis) {
+function resultSuccess(fireValueChange, fileAnalysis, preloadWsFile) {
     return (request) => {
         const itemValue = get(request, workspaceUploadDef.file.fkey);
-        handleUpload(itemValue, fireValueChange, fileAnalysis);
+        const value= (itemValue && itemValue.startsWith(WS_HOME)) && itemValue.substring(WS_HOME.length);
+        if (preloadWsFile) {
+            handleUpload(itemValue, fireValueChange, fileAnalysis);
+        }
+        else {
+            fireValueChange({
+                displayValue: itemValue,
+                value
+            });
+        }
 
         if (isDialogVisible(INFO_POPUP)) {
             dispatchHideDialog(INFO_POPUP);

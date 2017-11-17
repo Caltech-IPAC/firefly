@@ -3,13 +3,17 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.ws.WsServerParams;
+import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 import java.io.File;
@@ -44,8 +48,22 @@ public class UserCatalogQuery extends DynQueryProcessor {
 
         String filePath = req.getParam("filePath");
         if (!StringUtils.isEmpty(filePath)) {
-            File f = ServerContext.convertToFile(filePath);
-            return convertToIpacTable(f, req);
+            if (ServerParams.IS_WS.equals(req.getParam(ServerParams.SOURCE_FROM))) {
+                WsServerParams wsParams = new WsServerParams();
+                wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, filePath);
+                WsServerUtils wsUtil= new WsServerUtils();
+                try {
+                    String s=  wsUtil.upload(wsParams);
+                    return ServerContext.convertToFile(s);
+                } catch (IOException|FailedRequestException e) {
+                    throw new DataAccessException("Could now retrieve file from workspace",e);
+                }
+
+            }
+            else {
+                File f = ServerContext.convertToFile(filePath);
+                return convertToIpacTable(f, req);
+            }
         } else {
             throw new DataAccessException("filePath parameter is not found");
         }
