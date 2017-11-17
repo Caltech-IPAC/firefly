@@ -9,6 +9,7 @@ import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {workspacePopupMsg} from '../ui/WorkspaceViewer.jsx';
 import Enum from 'enum';
+import {updateMerge} from '../util/WebUtil.js';
 
 export const WORKSPACE_PREFIX = 'WorkspaceCntlr';
 
@@ -18,6 +19,8 @@ export const WORKSPACE_RENAME_PATH = `${WORKSPACE_PREFIX}.renamePath`;
 export const WORKSPACE_MOVE_PATH = `${WORKSPACE_PREFIX}.movePath`;
 export const WORKSPACE_DELETE_PATH = `${WORKSPACE_PREFIX}.deletePath`;
 export const WORKSPACE_LIST = `${WORKSPACE_PREFIX}.getList`;
+export const WORKSPACE_LIST_UPDATE = `${WORKSPACE_PREFIX}.updateList`;
+export const WORKSPACE_IN_LOADING = `${WORKSPACE_PREFIX}.inLoading`;
 
 export default {actionCreators, reducers };
 export const WS_HOME = 'WS_Home';
@@ -31,7 +34,8 @@ function actionCreators() {
         [WORKSPACE_RENAME_PATH]: renamePath,
         [WORKSPACE_MOVE_PATH]: movePath,
         [WORKSPACE_DELETE_PATH]: deletePath,
-        [WORKSPACE_LIST]: getPathList
+        [WORKSPACE_LIST]: getPathList,
+        [WORKSPACE_LIST_UPDATE]: updatePathList
     };
 }
 
@@ -41,26 +45,30 @@ function reducers() {
     };
 }
 
-export function dispatchWorkspaceSearch(options, dispatcher=flux.process) {
-    dispatcher({type: WORKSPACE_LIST, payload: {files: get(options, 'files')}});
+export function dispatchWorkspaceSearch(options = {}, dispatcher=flux.process) {
+    dispatcher({type: WORKSPACE_LIST, payload: options});
 }
 
-export function dispatchWorkspaceCreatePath(options, dispatcher=flux.process) {
-    dispatcher({type: WORKSPACE_CREATE_PATH,
-                payload: {files: get(options, 'files'), newPath: get(options, 'newPath')}});
+export function dispatchWorkspaceUpdate(options = {}, dispatcher=flux.process) {
+    dispatcher({type: WORKSPACE_LIST_UPDATE, payload: options});
 }
 
-export function dispatchWorkspaceDeletePath(options, dispatcher=flux.process) {
-    dispatcher({type: WORKSPACE_DELETE_PATH, payload: {file: get(options, 'file'),
-                                                       folder: get(options, 'folder')}});
+export function dispatchWorkspaceCreatePath(options = {}, dispatcher=flux.process) {
+    dispatcher({
+        type: WORKSPACE_CREATE_PATH,
+        payload: options
+    });
+}
+
+export function dispatchWorkspaceDeletePath(options = {}, dispatcher=flux.process) {
+    dispatcher({type: WORKSPACE_DELETE_PATH, payload: options});
 
 }
 
-export function dispatchWorkspaceMovePath(options, dispatcher=flux.process) {
+export function dispatchWorkspaceMovePath(options = {}, dispatcher=flux.process) {
     dispatcher({type: WORKSPACE_MOVE_PATH, payload: options});
 
 }
-
 
 function movePath(action) {
     return (dispatch) => {
@@ -79,12 +87,12 @@ function movePath(action) {
 
             fetchUrl(WS_URL, options).then((response) => {
                 response.json().then((value) => {
-                    if (value.result === 'true') {
+                    if (value.ok === 'true') {
                         set(action, ['payload', 'oldFile'], oldFile);
-                        set(action, ['payload', 'files'], value.response);
+                        set(action, ['payload', 'files'], value.result);
                         dispatch(action);
                     } else {
-                        workspacePopupMsg('Move workspace file fails: '+ value.response,
+                        workspacePopupMsg('Move workspace file fails: '+ value.status,
                                           'Move workspace file');
                     }
                 });
@@ -114,11 +122,11 @@ function deletePath(action) {
 
             fetchUrl(WS_URL, {params}).then((response) => {
                 response.json().then((value) => {
-                    if (value.result === 'true') {
+                    if (value.ok === 'true') {
                         set(action, ['payload', 'file'], wsFile);
                         dispatch(action);
                     } else {
-                        workspacePopupMsg('Delete workspace file fails: '+ value.response,
+                        workspacePopupMsg('Delete workspace file fails: '+ value.status,
                             'Delete workspace file');
                     }
                 });
@@ -129,6 +137,10 @@ function deletePath(action) {
 
         }
     };
+}
+
+function startLoadWorkspace(dispatch) {
+    dispatch({type: WORKSPACE_IN_LOADING, payload: {isLoading: true}});
 }
 
 function createPath(action) {
@@ -147,11 +159,11 @@ function createPath(action) {
 
                 fetchUrl(WS_URL, {params}).then((response) => {
                     response.json().then((value) => {
-                        if (value.result === 'true') {
-                            set(action, ['payload', 'newPath'], value.response);
+                        if (value.ok === 'true') {
+                            set(action, ['payload', 'newPath'], value.result);
                             dispatch(action);
                         } else {
-                            workspacePopupMsg('Create workspace path fails: '+ value.response,
+                            workspacePopupMsg('Create workspace path fails: '+ value.status,
                                              'Create workspace foloder');
                         }
                     });
@@ -160,27 +172,26 @@ function createPath(action) {
                         '             Create workspace foloder');
                 });
             }
-
         }
     };
 }
 
 function getPathList(action) {
     return (dispatch) => {
+        startLoadWorkspace(dispatch);
         if (!get(action, ['payload', 'files'], null)) {
             const params = {[WS_SERVER_PARAM.currentrelpath.key]: '/',
                             [ServerParams.COMMAND]: ServerParams.WS_LIST};
 
             fetchUrl(WS_URL, {params}).then((response) => {
                 response.json().then( (value) => {
-                    if (value.result === 'true') {
-                        set(action, ['payload', 'files'], value.response);
+                    if (value.ok === 'true') {
+                        set(action, ['payload', 'files'], value.result);
                         dispatch(action);
                     } else {
                         set(action, ['payload', 'files'], []);
+                        set(action, ['payload', 'status'], value.status);
                         dispatch(action);
-                        //workspacePopupMsg('Workspace access error: '+ value.response,
-                        //                  'Workspace error');
                     }
                 });
             }).catch( (error) => {
@@ -193,13 +204,57 @@ function getPathList(action) {
     };
 }
 
+
+function updatePathList(action) {
+    return (dispatch) => {
+        startLoadWorkspace(dispatch);
+        const doUpdate = (files, status) => {
+            const result = createWorkspaceList(files, null, status);
+
+            action = updateMerge(action, 'payload', result);
+            dispatch(action);
+            const afterUpdateFunc = get(action, ['payload', 'callback']);
+            if (afterUpdateFunc && typeof afterUpdateFunc === 'function') {
+                afterUpdateFunc(result.data);
+            }
+        };
+
+        if (!get(action, ['payload', 'files'], null)) {
+            const params = {
+                [WS_SERVER_PARAM.currentrelpath.key]: '/',
+                [ServerParams.COMMAND]: ServerParams.WS_LIST
+            };
+
+            fetchUrl(WS_URL, {params}).then((response) => {
+                response.json().then((value) => {
+                    doUpdate(value.result, value.status);
+                });
+            }).catch((error) => {
+                workspacePopupMsg('Workspace update fails" ' + error.message,
+                    'Workspace access');
+            });
+        } else {
+            doUpdate(action.payload.files);
+        }
+    };
+}
+
 export function getWorkspaceFiles() {
     const files = get(flux.getState(), [WORKSPACE_PATH, 'files']);
     return files ? flattenDeep(files) : [];
 }
 
+
 export function getWorkspaceList() {
     return get(flux.getState(), [WORKSPACE_PATH, 'data']);
+}
+
+export function getWorkspaceStatus() {
+    return isEmpty(getWorkspaceList()) && get(flux.getState(), [WORKSPACE_PATH, 'status']);
+}
+
+export function isAccessWorkspace() {
+    return get(flux.getState(), [WORKSPACE_PATH, 'isLoading']);
 }
 
 export function isExistWorkspaceList() {
@@ -412,9 +467,17 @@ function convertFilesToList(wFiles) {
     return list;
 }
 
-function createWorkspaceList(wFiles = [], state) {
+function updateWorkspaceList(wfiles, ws_data, status, state) {
+    const files = wfiles || [];
+    const data = ws_data || [];
+    status = (isEmpty(files)) ? (status||'No Source') : status;
+
+    return Object.assign({}, state, {files, data, status});
+}
+
+function createWorkspaceList(wFiles = [], state, status) {
     if (isEmpty(wFiles)) {
-        return Object.assign({}, {data: [], files: []});
+        return Object.assign({}, {data: [], files: [], status: status||'No source'});
     }
 
     const list = convertFilesToList(wFiles);
@@ -424,7 +487,9 @@ function createWorkspaceList(wFiles = [], state) {
         list.push(itemForHome(list)[0]);
     }
 
-    return Object.assign({}, state, {data: list, files: wFiles});
+    const newData = {data: list, files: wFiles, status: ''};
+
+    return state ? Object.assign({}, state, newData) : Object.assign({}, newData);
 }
 
 function addToWorkspaceList(wFiles = [], state) {
@@ -461,7 +526,7 @@ function reducer(state=initState(), action={}) {
 
     if (!type || !action.payload) return state;
 
-    const {oldFile, file, files, newPath} = action.payload;
+    const {oldFile, file, files, data, newPath, status, isLoading} = action.payload;
     let   retState = state;
 
     switch(type) {
@@ -482,10 +547,16 @@ function reducer(state=initState(), action={}) {
                 retState = deleteWorkspaceFile(file, state);
             }
             break;
+        case WORKSPACE_LIST_UPDATE:
+            retState = updateWorkspaceList(files, data, status, state);
+            retState.isLoading = false;
+            break;
         case WORKSPACE_LIST:
-            if (files) {
-                retState = createWorkspaceList(files, state);
-            }
+            retState = createWorkspaceList(files, state, status);
+            retState.isLoading = false;
+            break;
+        case WORKSPACE_IN_LOADING:
+            retState = Object.assign({}, state, {isLoading});
             break;
     }
     return retState;

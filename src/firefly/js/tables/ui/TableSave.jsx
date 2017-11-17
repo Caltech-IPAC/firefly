@@ -18,11 +18,11 @@ import {doDownloadWorkspace, workspacePopupMsg} from '../../ui/WorkspaceViewer.j
 import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
         WORKSPACE, LOCALFILE} from '../../ui/DownloadOptionsDialog.jsx';
 import {WS_SERVER_PARAM, isWsFolder, isValidWSFolder,
-        getWorkspacePath} from  '../../visualize/WorkspaceCntlr.js';
+        getWorkspacePath, dispatchWorkspaceUpdate} from  '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'Save as:'},
@@ -61,7 +61,10 @@ const popupPanelResizableStyle = {
 export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
     return () => {
         const popupId = 'TABLE_DOWNLOAD_POPUP';
-        const currentFileLocation = FieldGroupUtils.getFldValue(tblDownloadGroupKey, 'fileLocation', LOCALFILE);
+        const currentFileLocation = getFieldVal(tblDownloadGroupKey, 'fileLocation', LOCALFILE);
+        if (currentFileLocation === WORKSPACE) {
+            dispatchWorkspaceUpdate();
+        }
         const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeightLOCAL : dialogHeightWS;
 
         const startTableDownloadPopup = () => {

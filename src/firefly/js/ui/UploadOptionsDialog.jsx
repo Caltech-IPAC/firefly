@@ -3,12 +3,14 @@
  */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {flux} from '../Firefly.js';
 import Enum from 'enum';
 import {get} from 'lodash';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
-import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {FileUpload} from './FileUpload.jsx';
 import {WorkspaceUpload} from './WorkspaceViewer.jsx';
+import {isAccessWorkspace} from '../visualize/WorkspaceCntlr.js';
 
 
 export const LOCALFILE = 'isLocal';
@@ -25,7 +27,7 @@ export class UploadOptionsDialog extends PureComponent {
         this.workspaceUpload = get(props, ['fieldKeys', ULOptionsKey.workspace.key], ULOptionsKey.workspace.key );
 
         const where = getFieldVal(props.fromGroupKey, this.fileLocation, LOCALFILE);
-        this.state = {where};
+        this.state = {where, isLoading: isAccessWorkspace()};
     }
 
     componentWillUnmount() {
@@ -35,25 +37,30 @@ export class UploadOptionsDialog extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
-        if (this.props.fromGroupKey) {
-            this.unbinder = FieldGroupUtils.bindToStore(this.props.fromGroupKey, (fields) => {
-                if (this.iAmMounted) {
-                    this.setState((state) => {
-                        const loc = get(fields, [this.fileLocation, 'value']);
+        this.removeListener= flux.addListener(() => this.storeUpdate());
+    }
 
-                        if (loc !== state.where) {
-                             state.where = loc;
-                        }
+    storeUpdate() {
+        if (this.iAmMounted) {
 
-                        return state;
-                    });
+            const isLoading = isAccessWorkspace();
+            const loc = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, this.fileLocation);
+
+            this.setState((state) => {
+                if (loc !== state.where) {
+                    state.where = loc;
                 }
+
+                if (isLoading !== state.isLoading) {
+                    state.isLoading = isLoading;
+                }
+                return state;
             });
         }
     }
 
     render() {
-        const {where} = this.state;
+        const {where, isLoading} = this.state;
         const {labelWidth, dialogWidth} = this.props;
 
         const showUploadLocation = () => {
@@ -89,6 +96,7 @@ export class UploadOptionsDialog extends PureComponent {
                     <WorkspaceUpload
                         wrapperStyle={{margin: '2px 10px 8px 10px'}}
                         fieldKey={this.workspaceUpload}
+                        isLoading={isLoading}
                         initialState={
                             {tooltip: get(this.props, ['tooltips', ULOptionsKey.workspace.key],
                                                        'Select a file from workspace to upload')}}

@@ -23,7 +23,7 @@ import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot, getActivePlotView} from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
@@ -33,8 +33,9 @@ import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
-import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName, WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
-import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, getWorkspaceList} from '../visualize/WorkspaceCntlr.js';
+import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
+        WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
+import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, dispatchWorkspaceUpdate} from '../visualize/WorkspaceCntlr.js';
 import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {INFO_POPUP} from './PopupUtil.jsx';
@@ -85,32 +86,26 @@ const popupPanelResizableStyle = {
     position: 'relative'
 };
 
-function getDialogBuilder() {
+export function showFitsDownloadDialog() {
+    const currentFileLocation = getFieldVal(fitsDownGroup, 'fileLocation', LOCALFILE);
+    if (currentFileLocation === WORKSPACE) {
+        dispatchWorkspaceUpdate();
+    }
 
-    const currentFileLocation = FieldGroupUtils.getFldValue(fitsDownGroup, 'fileLocation', LOCALFILE);
     const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeightLOCAL : dialogHeightWS;
-
-    var popup = null;
-    return () => {
-        if (!popup) {
-            popup = (
+    const startWorkspacePopup =  () => {
+           const  popup = (
                 <PopupPanel title={'FITS Download Dialog'}>
                     <div style={{...popupPanelResizableStyle, height: adHeight}}>
-                        < FitsDownloadDialogForm groupKey={'FITS_DOWNLOAD_FORM'} popupId={dialogPopupId}/>
+                        < FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId}/>
                     </div>
                 </PopupPanel>
             );
             DialogRootContainer.defineDialog(dialogPopupId , popup);
-        }
-        return popup;
-    };
-}
+            dispatchShowDialog(dialogPopupId);
+        };
 
-const dialogBuilder = getDialogBuilder();
-
-export function showFitsDownloadDialog() {
-    dialogBuilder();
-    dispatchShowDialog('fitsDownloadDialog');
+    startWorkspacePopup();
 }
 
 const mTOP = 10;
@@ -495,7 +490,19 @@ function resultsSuccess(request, plotView, popupId) {
 
     let {fileName} = request;
 
+    const rebuldFileName = () => {
+        if (ext) {
+            fileName = (fileName || makeFileName(plot, band)).replace('.fits', '.'+ ext.toLowerCase());
+        }
+    };
+
+    rebuldFileName();
+    
     const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
+
+    if (isWorkspace()) {
+        if (!validateFileName(wsSelect, fileName)) return false;
+    }
 
     var band = Band.NO_BAND;
     if (bandSelect) {
@@ -537,15 +544,12 @@ function resultsSuccess(request, plotView, popupId) {
 
     };
 
-    let wsCmd;
+    const wsCmd = getWSCommand(fileName);
 
     if (ext && ext.toLowerCase() === 'fits') {
         const fitsFile = !plotState.getOriginalFitsFileStr(band) || !whichOp ?
                           plotState.getWorkingFitsFileStr(band) :
                           plotState.getOriginalFitsFileStr(band);
-
-        fileName = (fileName || makeFileName(plot, band));
-        wsCmd = getWSCommand(fileName);
 
         const param={file: fitsFile, return: fileName, log: true, fileLocation,...wsCmd};
         downloadFile(param);
@@ -558,9 +562,7 @@ function resultsSuccess(request, plotView, popupId) {
             //const imgFile = getReturnName(fileName || get(result, 'ImageFileName'));
 
             const imgFile = get(result, 'ImageFileName');
-            fileName = (fileName || makeFileName(plot, band)).replace('.fits', '.png');
 
-            wsCmd = getWSCommand(fileName);
             if (imgFile) {
                 const param = isWorkspace() ? {file: imgFile,...wsCmd} :
                               {file: imgFile, return: fileName, log: true};
@@ -575,9 +577,6 @@ function resultsSuccess(request, plotView, popupId) {
 
         saveDS9RegionFile(getRegionsDes(false)).then( (result ) => {
             const rgFile = get(result, 'RegionFileName');
-
-            fileName = (fileName || makeFileName(plot, band)).replace('.fits', '.reg');
-            wsCmd = getWSCommand(fileName);
 
             if (rgFile) {
                 const param={file: rgFile, return:fileName, log: true, fileLocation,...wsCmd};

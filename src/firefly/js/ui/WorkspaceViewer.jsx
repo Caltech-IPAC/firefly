@@ -9,6 +9,8 @@ import {FilePicker} from '../externalSource/FilePicker/FilePicker.jsx';
 import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceDeletePath,
         dispatchWorkspaceMovePath,
+        dispatchWorkspaceUpdate,
+        getWorkspaceStatus,
         getWorkspaceList, getFolderUnderLevel,
         getWorkspacePath, isWsFolder, WS_SERVER_PARAM} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
@@ -37,18 +39,6 @@ export function onRenameFile() {
 }
 
 export function onRenameFolder() {
-    return (oldKey, newKey) => {
-    };
-}
-
-export function onMoveFile() {
-    return (oldKey, newKey) => {
-        dispatchWorkspaceMovePath({oldKey, newKey, isFile: true});
-    };
-}
-
-
-export function onMoveFolder() {
     return (oldKey, newKey) => {
     };
 }
@@ -105,15 +95,13 @@ export class WorkspaceView extends PureComponent {
 
 
     render () {
-        const {onCreateFolder, onCreateFiles, onMoveFolder, onMoveFile, onRenameFolder, onRenameFile,
+        const {onCreateFolder, onCreateFiles, onRenameFolder, onRenameFile,
                onDeleteFolder, onDeleteFile, onClickItem, files, wrapperStyle={width: '100%', height: '100%'},
                keepSelect, folderLevel=1} = this.props;
         const {selectedItem} = this.props;
         const eventHandlers = {
                 onCreateFolder,
                 onCreateFiles,
-                onMoveFolder,
-                onMoveFile,
                 onRenameFolder,
                 onRenameFile,
                 onDeleteFolder,
@@ -188,8 +176,16 @@ WorkspaceSave.propTypes = {
     value: PropTypes.string
 };
 
-
-function WorkspaceReadView({files, wrapperStyle, onClickUpload, value, isLoading}) {
+/*
+ * view of WorkspaceUpload
+ * @param wrapperStyle
+ * @param onClickUpload
+ * @param value key from file picker
+ * @param isLoading
+ * @returns {XML}
+ * @constructor
+ */
+function WorkspaceReadView({wrapperStyle, onClickUpload, value, isLoading}) {
     const style = Object.assign({whiteSpace:'nowrap', display: 'inline-block', height: 22}, wrapperStyle);
 
     const inputEntry = () => {
@@ -197,11 +193,12 @@ function WorkspaceReadView({files, wrapperStyle, onClickUpload, value, isLoading
             <div style={style}>
                 <input  type='button'
                         value='Workspace upload'
-                        onClick={showWorkspaceUploadPopup({onClickUpload, value, files})} />
+                        onClick={()=>updateAndShowWorkspace({onClickUpload, value})} />
             </div>
         );
     };
 
+    // value is key from file picker
     const resultFile = () => {
         return (
             <div style={{display:'inline-block', marginLeft: 5}}>
@@ -221,7 +218,6 @@ function WorkspaceReadView({files, wrapperStyle, onClickUpload, value, isLoading
 }
 
 WorkspaceReadView.propTypes = {
-    files: PropTypes.arrayOf(PropTypes.object),
     value: PropTypes.string,
     wrapperStyle: PropTypes.object,
     onClickUpload: PropTypes.func.isRequired,
@@ -238,7 +234,6 @@ export  const WorkspaceUpload =  fieldGroupConnector(WorkspaceReadView, getUploa
 // the value defined is display value as shown on UI
 WorkspaceUpload.propTypes = {
     fieldKey: PropTypes.string.isRequired,
-    files: PropTypes.arrayOf(PropTypes.object),
     fileAnalysis: PropTypes.bool,
     wrapperStyle: PropTypes.object,
     isLoading: PropTypes.bool,
@@ -284,12 +279,16 @@ function resultCancel() {
     }
 }
 
+function updateAndShowWorkspace({onClickUpload, value}) {
+    dispatchWorkspaceUpdate({callback: showWorkspaceUploadPopup({onClickUpload, value})});
+}
+
 /* workspace upload popup */
 /* get displayValue from store => 'value' to WorkspaceUpload => 'value' to WorkspaceReadValue => popup =>
    selectedItem in WorkspaceViewField => WorkspaceView
  */
-export function showWorkspaceUploadPopup({onClickUpload, files, value}) {
-    return () => {
+export function showWorkspaceUploadPopup({onClickUpload, value}) {
+    return (files) => {
         const newList = files || getWorkspaceList() || [];
         const dialogWidth = 500;
         const dialogHeight = 350;
@@ -360,7 +359,7 @@ export function showWorkspaceUploadPopup({onClickUpload, files, value}) {
         };
 
         if (!newList || isEmpty(newList)) {
-            workspacePopupMsg('Workspace access error', 'Workspace access');
+            workspacePopupMsg('Workspace access error: ' + getWorkspaceStatus(), 'Workspace access');
         } else {
             startWorkspaceReadPopup();
         }
@@ -443,10 +442,10 @@ function doUploadWorkspace(file, params={}) {
 export function doDownloadWorkspace(url, options) {
     fetchUrl(url, options).then( (response) => {
         response.json().then( (value) => {
-            if (value.result === 'true') {
-                dispatchWorkspaceCreatePath({files: value.response});
+            if (value.ok === 'true') {
+                dispatchWorkspaceCreatePath({files: value.result});
             } else {
-                workspacePopupMsg('Save error - '+ value.response,
+                workspacePopupMsg('Save error - '+ value.status,
                                  'Save to workspace');
             }
         });

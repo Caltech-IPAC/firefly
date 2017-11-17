@@ -8,10 +8,12 @@ import {isEmpty} from 'lodash';
 import {ValidationField} from './ValidationField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import {getWorkspaceList, isExistWorspaceFile, getWorkspacePath} from '../visualize/WorkspaceCntlr.js';
+import {getWorkspaceList, isExistWorspaceFile, getWorkspacePath, getWorkspaceStatus,
+        dispatchWorkspaceUpdate, isAccessWorkspace} from '../visualize/WorkspaceCntlr.js';
 import {WorkspaceSave, workspacePopupMsg} from './WorkspaceViewer.jsx';
-import {showYesNoPopup} from './PopupUtil.jsx';
 
+
+import LOADING from 'html/images/gxt/loading.gif';
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
 
@@ -33,8 +35,11 @@ export class DownloadOptionsDialog extends PureComponent {
         const where = props.fromGroupKey ? getFieldVal(props.fromGroupKey, 'fileLocation', LOCALFILE)
                                          : LOCALFILE;
         const fileOverwritable =  props.fromGroupKey ? getFieldVal(props.fromGroupKey, 'fileOverwritable', 0) : 0;
-        const wsSelect = getFieldVal(props.fromGroupKey, 'wsSelect', '');
-        this.state = {where, fileName: props.fileName, wsSelect, fileOverwritable, wsList: getWorkspaceList()};
+        const wsSelect = (where === WORKSPACE ) ? getFieldVal(props.fromGroupKey, 'wsSelect', '') : '';
+
+        const wsList = getWorkspaceList();
+        const isUpdating = isAccessWorkspace();
+        this.state = {where, fileName: props.fileName, wsSelect, fileOverwritable, wsList, isUpdating};
     }
 
     componentWillReceiveProps(nextProps) {
@@ -57,19 +62,30 @@ export class DownloadOptionsDialog extends PureComponent {
 
     storeUpdate() {
         if (this.iAmMounted) {
+            const isUpdating = isAccessWorkspace();
             const wsList = getWorkspaceList();
             const loc = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, 'fileLocation');
             const wsSelect = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, 'wsSelect');
 
             this.setState((state) => {
+                if (loc !== state.where) {
+                    state.where = loc;
+                    if (loc ===  WORKSPACE) {
+                        state.isUpdating = true;
+                        dispatchWorkspaceUpdate();
+                    }
+                }
+
                 if (wsList !== state.wsList) {
                     state.wsList = wsList;
                 }
-                if (loc !== state.where) {
-                    state.where = loc;
-                }
+
                 if (wsSelect !== state.wsSelect) {
                     state.wsSelect = wsSelect;
+                }
+
+                if (isUpdating !== state.isUpdating) {
+                    state.isUpdating = isUpdating;
                 }
                 return state;
             });
@@ -78,25 +94,39 @@ export class DownloadOptionsDialog extends PureComponent {
 
 
     render() {
-        const {where, wsSelect, wsList} = this.state;
+        const {where, wsSelect, wsList, isUpdating} = this.state;
         const {children, labelWidth=100, dialogWidth=500, dialogHeight=300} = this.props;
         const showWorkspace = () => {
+
+            const loading = () => {
+                return (
+                    <div style={{width: '100%', height: '100%', display:'flex', justifyContent: 'center', alignItems: 'center'}}>
+                        <img style={{width:14,height:14}} src={LOADING}/>
+                    </div>
+                );
+            };
+
+            const showSave = () => {
+                return (
+                    <div style={{marginTop: 10,
+                                 boxSizing: 'border-box',
+                                 width: 'calc(100%)', height: 'calc(100% - 10px)',
+                                 overflow: 'auto',
+                                 padding: 5,
+                                 border:'1px solid #a3aeb9'
+                                 }}>
+                        <WorkspaceSave fieldKey={'wsSelect'}
+                                       files={wsList}
+                                       value={wsSelect}
+                        />
+                    </div>
+                );
+            };
+
             return (
-                (!isEmpty(wsList)) ?
-                (
-                        <div style={{marginTop: 10,
-                                     boxSizing: 'border-box',
-                                     width: 'calc(100%)', height: 'calc(100% - 10px)',
-                                     overflow: 'auto',
-                                     padding: 5,
-                                     border:'1px solid #a3aeb9'
-                                     }}>
-                            <WorkspaceSave fieldKey={'wsSelect'}
-                                           files={wsList}
-                                           value={wsSelect}
-                            />
-                        </div>
-                ) : workspacePopupMsg('Workspace access error', 'Workspace access'));
+                (isUpdating) ? loading() :
+                    (!isEmpty(wsList) ? showSave() :
+                        workspacePopupMsg('Workspace access error: ' + getWorkspaceStatus(), 'Workspace access')));
         };
 
         return (
@@ -106,7 +136,7 @@ export class DownloadOptionsDialog extends PureComponent {
                 </div>
                 <ValidationField
                     wrapperStyle={{marginTop: 10}}
-                    size={(dialogWidth - labelWidth - 10)/10}
+                    size={40}
                     fieldKey={'fileName'}
                 />
 
@@ -114,7 +144,8 @@ export class DownloadOptionsDialog extends PureComponent {
                    <RadioGroupInputField
                         options={[{label: 'Local File', value: LOCALFILE},
                                   {label: 'Workspace', value: WORKSPACE }] }
-                        fieldKey={'fileLocation'}/>
+                        fieldKey={'fileLocation'}
+                   />
                  </div>
 
                 <div  style={{width: dialogWidth, height: dialogHeight}}>

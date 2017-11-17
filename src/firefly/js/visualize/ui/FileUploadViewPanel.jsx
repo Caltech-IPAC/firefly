@@ -23,6 +23,7 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
+import {isAccessWorkspace} from '../WorkspaceCntlr.js';
 
 import './ImageSelectPanel.css';
 
@@ -262,6 +263,13 @@ export class FileUploadViewPanel extends PureComponent {
                     }
                 }
             }
+            if (uploadSrc === wsId) {
+                const isWsUpdating = isAccessWorkspace();
+
+                if (isWsUpdating !== this.state.isWsUpdating) {
+                    this.setState({isWsUpdating});
+                }
+            }
         }
     }
 
@@ -270,7 +278,7 @@ export class FileUploadViewPanel extends PureComponent {
     }
 
     render() {
-        const {analysisSummary, analysisModel, highlightedRow, hlHeaderTable, isUploading=false} = this.state;
+        const {analysisSummary, analysisModel, highlightedRow, hlHeaderTable, isUploading=false, isWsUpdating=false} = this.state;
         const tableStyle = {width: '100%', height:'calc(100% - 40px)', overflow: 'hidden'};
         const pStyle = {fontWeight: 'bold', fontSize: 12, marginLeft:2, textAlign: 'center', height: 16};
         const summaryStyle = {height: 'calc(100% - 2px)', overflow: 'hidden'};
@@ -475,6 +483,7 @@ export class FileUploadViewPanel extends PureComponent {
                     <WorkspaceUpload
                         wrapperStyle={{...uploadStyle, marginRight: 32}}
                         fieldKey={wsId}
+                        isLoading={isUploading || isWsUpdating}
                         fileAnalysis={this.onLoading}
                         initialState={{tooltip: 'Select a file in FITS, VOTABLE, CSV, TSV, or IPAC format from workspace',
                                        label: ''

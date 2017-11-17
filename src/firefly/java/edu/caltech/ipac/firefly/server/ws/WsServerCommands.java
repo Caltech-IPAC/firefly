@@ -77,11 +77,11 @@ public class WsServerCommands {
             if (resp.doContinue()) {
                 JSONArray jsonOArray = WsServerUtils.toJson(resp.getWspaceMeta());
 
-                resultJson.put("result", RESPONSE.TRUE.name().toLowerCase());
-                resultJson.put("response", jsonOArray);
+                resultJson.put("ok", RESPONSE.TRUE.name().toLowerCase());
+                resultJson.put("result", jsonOArray);
             } else {
-                resultJson.put("result", RESPONSE.FALSE.name().toLowerCase());
-                resultJson.put("response", resp.getStatusText());
+                resultJson.put("ok", RESPONSE.FALSE.name().toLowerCase());
+                resultJson.put("status", resp.getStatusText());
             }
 
             return resultJson.toJSONString();
@@ -134,19 +134,18 @@ public class WsServerCommands {
 
     }
 
-    private static String getPutFileResponse(WsResponse wsResp, WsServerParams wsParams) throws Exception {
+    private static String getResponseOnRelpath(WsResponse wsResp, WsServerParams wsParams) throws Exception {
         JSONObject resultJson = new JSONObject();
-        Integer status = Integer.parseInt(wsResp.getStatusCode());
 
-        if (status >= 200 && status <= 300) {
+        if (wsResp.doContinue()) {
             WsResponse resp = getWsUtils().getList(wsParams, 0);
             JSONArray jsonOArray = WsServerUtils.toJson(resp.getWspaceMeta());
 
-            resultJson.put("result", RESPONSE.TRUE.name().toLowerCase());
-            resultJson.put("response", jsonOArray);
+            resultJson.put("ok", RESPONSE.TRUE.name().toLowerCase());
+            resultJson.put("result", jsonOArray);
         } else {
-            resultJson.put("result", RESPONSE.FALSE.name().toLowerCase());
-            resultJson.put("response", wsResp.getStatusText());
+            resultJson.put("ok", RESPONSE.FALSE.name().toLowerCase());
+            resultJson.put("status", wsResp.getStatusText());
         }
         return resultJson.toJSONString();
 
@@ -154,13 +153,12 @@ public class WsServerCommands {
 
     private static String getResultResponse(WsResponse wsResp) throws Exception {
         JSONObject resultJson = new JSONObject();
-        Integer status = Integer.parseInt(wsResp.getStatusCode());
 
-        if (status >= 200 && status <= 300) {
-            resultJson.put("result", RESPONSE.TRUE.name().toLowerCase());
+        if (wsResp.doContinue()) {
+            resultJson.put("ok", RESPONSE.TRUE.name().toLowerCase());
         } else {
-            resultJson.put("result", RESPONSE.FALSE.name().toLowerCase());
-            resultJson.put("response", wsResp.getStatusText());
+            resultJson.put("ok", RESPONSE.FALSE.name().toLowerCase());
+            resultJson.put("status", wsResp.getStatusText());
         }
         return resultJson.toJSONString();
 
@@ -187,7 +185,7 @@ public class WsServerCommands {
             WsServerParams wsParams = convertToWsServerParams(sp);
             WsResponse wsResponse = getWsUtils().putFile(wsParams, f.getFile());
 
-            return getPutFileResponse(wsResponse, wsParams);
+            return getResponseOnRelpath(wsResponse, wsParams);
             //return wsResponse.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }
@@ -212,7 +210,7 @@ public class WsServerCommands {
 
             WsResponse wsResponse = getWsUtils().putFile(wsParams, downloadFile);
             
-            return getPutFileResponse(wsResponse, wsParams);
+            return getResponseOnRelpath(wsResponse, wsParams);
 
             //return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
 
@@ -253,7 +251,7 @@ public class WsServerCommands {
             WsResponse resp = getWsUtils().move(wsParams);
             wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, wsParams.getNewPath());
 
-            return getPutFileResponse(resp, wsParams);
+            return getResponseOnRelpath(resp, wsParams);
         }
     }
 
@@ -297,7 +295,7 @@ public class WsServerCommands {
 
             WsResponse resp = getWsUtils().createParent(wsParams);
 
-            return getPutFileResponse(resp, wsParams);
+            return getResponseOnRelpath(resp, wsParams);
             //return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }

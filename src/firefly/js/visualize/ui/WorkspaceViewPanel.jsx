@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import {flux} from '../../Firefly.js';
-import {onCreateFolder, onCreateFiles, onRenameFile, onRenameFolder,  onMoveFile, onMoveFolder,
+import {onCreateFolder, onCreateFiles, onRenameFile, onRenameFolder,
         onDeleteFile, onDeleteFolder,  WorkspaceViewField}  from '../../ui/WorkspaceViewer.jsx';
 import {initWorkspace, getWorkspaceList, isExistWorkspaceList} from '../WorkspaceCntlr.js';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
@@ -17,7 +17,7 @@ import {workspacePopupMsg} from '../../ui/WorkspaceViewer.jsx';
 const workspacePopup = 'workspacePopup';
 
 function displayWorkspacePopup() {
-    const newList = getWorkspaceList();
+    const newList = getWorkspaceList(true);
     const aroundButton = {margin: 5};
     const popupId = 'workspaceId';
 
