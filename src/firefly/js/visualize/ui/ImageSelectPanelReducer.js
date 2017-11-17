@@ -69,6 +69,7 @@ function initTabFields(crtCatalogId) {
         [keyMap['dsstypes']]: getTypeData('dsstypes', 'types', DSS),
         [keyMap['sdsstypes']]: getTypeData('sdsstypes', 'types', SDSS),
         [keyMap['fitslist']]: getTypeData('fitslist', 'list', FITS),
+        [keyMap['fitslocation']]: getTypeData('fitslocation', 'filelocation', FITS, 'isLocal'),
         [keyMap['fitsextinput']]: getTypeData('fitsextinput', 'extinput', FITS, '0'),
         /*
         [keyMap['blankinput']]: {

@@ -13,9 +13,9 @@ const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerPar
 
 
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  message, onChange, value, labelWidth,
-                         innerStyle, isFromURL, onUrlAnalysis, fileNameStyle}) {
-    var style = !isFromURL ? Object.assign({color: 'transparent', border: 'none', background: 'none'}, innerStyle) : (innerStyle || {});
-    var fileName = (!isFromURL && value) ?  value.split(/(\\|\/)/g).pop() : 'No file chosen';
+                         innerStyle, isFromURL, isFromWsURL, onUrlAnalysis, fileNameStyle}) {
+    var style = (!isFromURL) ? Object.assign({color: 'transparent', border: 'none', background: 'none'}, innerStyle) : (innerStyle || {});
+    var fileName = ((!isFromURL) && value) ?  value.split(/(\\|\/)/g).pop() : 'No file chosen';
 
     const inputEntry = () => {
         const labelW = isNil(labelWidth) ? 0 : labelWidth;
@@ -26,7 +26,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 visible={true}
                 message={message}
                 onChange={onChange}
-                type={isFromURL ? 'text' : 'file'}
+                type={(isFromURL || isFromWsURL) ? 'text' : 'file'}
                 label={label}
                 value={value}
                 tooltip={value}
@@ -45,6 +45,17 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                     <button type='button' className='button std hl'
                             onClick={() =>  onUrlAnalysis(value)}>{'Upload'}</button>
                 </div>
+            );
+        } else if (isFromWsURL) {
+            return (
+                <div>
+                    <div style={{display:'inline-block', whiteSpace:'nowrap'}}>
+                        <button type='button' className='button std hl' disabled
+                                onClick={() =>  onUrlAnalysis(value)}>{'Upload from WS'}</button>
+                    </div>
+                    <div style={{padding:20, fontSize:'150%'}}>The WS file pick panel should be here.</div>
+                </div>
+
             );
         } else {
             let fPos = {marginLeft: -150};
@@ -78,6 +89,7 @@ FileUploadView.propTypes = {
     valid: PropTypes.bool,
     wrapperStyle: PropTypes.object,
     isFromURL: PropTypes.bool.isRequired,
+    isFromWsURL: PropTypes.bool.isRequired,
     onUrlAnalysis: PropTypes.func,
     fileNameStyle: PropTypes.object
 };
@@ -86,6 +98,7 @@ FileUploadView.defaultProps = {
     fileType: 'TABLE',
     isLoading: false,
     isFromURL: false,
+    isFromWsURL: false,
     labelWidth: 0
 };
 
@@ -114,6 +127,15 @@ function getProps(params, fireValueChange) {
                                                                                 params.fileAnalysis)
             }
         );
+    } else if (has(params, 'isFromWsURL') && params.isFromWsURL) {
+        return Object.assign({}, params,
+            {
+                onChange: (ev) => onUrlChange(ev, params, fireValueChange),
+                value: params.displayValue,
+                onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, params.fileType,
+                    params.fileAnalysis)
+            }
+        );
     } else {
         return Object.assign({}, params,
             {
@@ -135,13 +157,13 @@ function handleChange(ev, fireValueChange, type, fileAnalysis) {
 
     fireValueChange({
         displayValue,
-        value: !fileAnalysis ? makeDoUpload(file, type) : makeDoUpload(file, type, false, fileAnalysis)()
+        value: !fileAnalysis ? makeDoUpload(file, type) : makeDoUpload(file, type, false, false, fileAnalysis)()
     });
 }
 
-function makeDoUpload(file, type, isFromURL, fileAnalysis) {
+function makeDoUpload(file, type, isFromURL, isFromWsURL, fileAnalysis) {
     return () => {
-        return doUpload(file, {type, isFromURL, fileAnalysis}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
+        return doUpload(file, {type, isFromURL, isFromWsURL, fileAnalysis}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
             let valid = status === '200';
             if (valid) {        // json file is not supported currently
                 if (!isNil(fileFormat)) {
@@ -156,7 +178,7 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
             return {isLoading: false, valid, message, value: cacheKey, analysisResult};
         }).catch((err) => {
             return {isLoading: false, valid: false,
-                    message: (isFromURL ? `Unable to upload file from ${file}` : `Unable to upload file: ${get(file, 'name')}`)};
+                    message: ((isFromURL || isFromWsURL) ? `Unable to upload file from ${file}` : `Unable to upload file: ${get(file, 'name')}`)};
         });
     };
 }
@@ -171,6 +193,8 @@ export function doUpload(file, params={}) {
     if (!file) return Promise.reject('Required file parameter not given');
 
     if (has(params, 'isFromURL') && params.isFromURL) {
+        params = Object.assign(params, {URL: file});
+    } else if (has(params, 'isFromWsURL') && params.isFromWsURL) {
         params = Object.assign(params, {URL: file});
     } else {
         params = Object.assign(params, {file});   // file should be the last param due to AnyFileUpload limitation
