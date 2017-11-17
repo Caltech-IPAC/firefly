@@ -422,6 +422,7 @@ class CatalogSelectView extends PureComponent {
                         <div
                             style={{padding:5, width:'800px', height:'300px'}}>
                             <UploadOptionsDialog fromGroupKey={gkey}
+                                                 preloadWsFile={false}
                                                  fieldKeys={{local: 'fileUpload',
                                                             workspace: 'workspaceUpload',
                                                             location: 'fileLocation'}}

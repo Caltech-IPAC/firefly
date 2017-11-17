@@ -724,6 +724,7 @@ function CatalogTabView({catalog, fields}) {
                 <div key={index} >
                     <UploadOptionsDialog
                         fromGroupKey={panelKey}
+                        preloadWsFile={false}
                         fieldKeys={{local: keyMap['fitsupload'],
                                     workspace: keyMap['fitswsupload'],
                                     location: keyMap['fitslocation']}}

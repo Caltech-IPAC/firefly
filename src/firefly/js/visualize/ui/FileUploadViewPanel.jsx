@@ -482,6 +482,7 @@ export class FileUploadViewPanel extends PureComponent {
                 return (
                     <WorkspaceUpload
                         wrapperStyle={{...uploadStyle, marginRight: 32}}
+                        preloadWsFile={true}
                         fieldKey={wsId}
                         isLoading={isUploading || isWsUpdating}
                         fileAnalysis={this.onLoading}
