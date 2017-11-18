@@ -16,7 +16,6 @@ import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.entity.ContentType;
 import org.apache.jackrabbit.webdav.DavConstants;
 import org.apache.jackrabbit.webdav.DavMethods;
 import org.apache.jackrabbit.webdav.MultiStatus;
@@ -26,8 +25,10 @@ import org.apache.jackrabbit.webdav.property.*;
 import org.apache.jackrabbit.webdav.xml.Namespace;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -166,7 +167,14 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
      * @return
      */
     public String getResourceUrl(String relPath) {
-        return WS_HOST_URL + getAbsPath(relPath);
+        String valid = null;
+        try {
+            valid = WsUtil.encode(relPath);
+        } catch (URISyntaxException e) {
+            LOG.error(e, "Continue with relative path as it is: "+relPath);
+            e.printStackTrace();
+        }
+        return WS_HOST_URL + getAbsPath(valid);
     }
 
     public String getWsHome() {
@@ -285,10 +293,10 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
             String newUrl;
             if (newFileName.length() == 0) {
                 newPath = parentPath + upload.getName();
-                newUrl =  getResourceUrl(parentPath) + upload.getName();
+                newUrl =  getResourceUrl(parentPath) + WsUtil.encode(upload.getName());
             } else {
                 newPath = parentPath + newFileName;
-                newUrl =  getResourceUrl(parentPath) + newFileName;
+                newUrl =  getResourceUrl(parentPath) + WsUtil.encode(newFileName);
             }
             //}
             // If parent and file name exists already, stop
@@ -380,7 +388,8 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
         WspaceMeta meta = getMeta(parentUri, prop);
         if (meta == null) {
-            return WsUtil.error(304, "No resource", getResourceUrl(parentUri));
+            WsResponse response = getResponse(parentUri);
+            return response;
         }
         List<WspaceMeta> childNodes = new ArrayList<>();
         childNodes.add(meta);
@@ -461,14 +470,17 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
             if (m == null) {
                 try {
                     URI uri = new URI(getResourceUrl(cdir));
+
+                    DavMethod mkcol = new MkColMethod(uri.toURL().toString());
+                    if (!executeMethod(mkcol)) {
+                        // handle error
+                        LOG.error("Unable to create directory:" + newRelPath + " -- " + mkcol.getStatusText());
+                        return WsUtil.error(mkcol, "Resource already exist");
+                    }
                 } catch (URISyntaxException e) {
                     return WsUtil.error(e);
-                }
-                DavMethod mkcol = new MkColMethod(getResourceUrl(cdir));
-                if (!executeMethod(mkcol)) {
-                    // handle error
-                    LOG.error("Unable to create directory:" + newRelPath + " -- " + mkcol.getStatusText());
-                    return WsUtil.error(mkcol, "Resource already exist");
+                } catch (MalformedURLException e) {
+                    return WsUtil.error(e);
                 }
             }
         }
@@ -499,7 +511,12 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         WspaceMeta meta = new WspaceMeta(originalFileRelPath);
         String parent = meta.getParentPath();
 
-        String newUrl = getResourceUrl(parent) + newfileName;
+        String newUrl = null;
+        try {
+            newUrl = getResourceUrl(parent) + WsUtil.encode(newfileName);
+        } catch (URISyntaxException e) {
+            LOG.error("Unable to convert to URI:" + newfileName);
+        }
 
         MoveMethod move = new MoveMethod(getResourceUrl(originalFileRelPath), newUrl, overwrite);
         if (!executeMethod(move)) {
@@ -541,7 +558,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
             WspaceMeta root = new WspaceMeta(getWsHome(), relPath);
 
             for (MultiStatusResponse res : resps) {
-                if (res.getHref().equals(root.getAbsPath())) {
+                if (res.getHref().equals(WsUtil.encode(root.getAbsPath()))) {
                     convertToWspaceMeta(root, res);
                 } else {
                     addToRoot(root, res);
@@ -637,9 +654,9 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 //
 //====================================================================
 
-    private WspaceMeta convertToWspaceMeta(WspaceMeta meta, MultiStatusResponse res) {
+    private WspaceMeta convertToWspaceMeta(WspaceMeta meta, MultiStatusResponse res) throws UnsupportedEncodingException {
         if (meta == null) {
-            meta = new WspaceMeta(getWsHome(), res.getHref().replaceFirst(getWsHome(), ""));
+            meta = new WspaceMeta(getWsHome(), URLDecoder.decode(res.getHref().replaceFirst(getWsHome(), ""),"UTF-8"));
         }
         if (res.getHref() != null) {
             meta.setUrl(WS_HOST_URL + res.getHref());
@@ -669,7 +686,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         return meta;
     }
 
-    private void addToRoot(WspaceMeta root, MultiStatusResponse res) {
+    private void addToRoot(WspaceMeta root, MultiStatusResponse res) throws UnsupportedEncodingException {
         WspaceMeta meta = convertToWspaceMeta(null, res);
         WspaceMeta p = root.find(meta.getParentPath());
         if (p != null) {
@@ -737,6 +754,29 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
         System.out.println(meta2.getNodesAsString());
     }
 
+    public WsResponse getResponse(String relPath){
+        DavMethod pFind = null;
+        try {
+            pFind = new PropFindMethod(getResourceUrl(relPath), DavConstants.PROPFIND_BY_PROPERTY, WspaceMeta.Includes.ALL_PROPS.depth);
+
+
+            if (!executeMethod(pFind, false)) {
+                // handle error
+                if (pFind.succeeded()){// != 404) {
+                    LOG.error("Unable to get property:" + relPath + " -- " + pFind.getStatusText());
+                }
+                return WsUtil.error(pFind.getStatusCode(), pFind.getStatusText());
+            }
+            return WsUtil.success(pFind.getStatusCode(), pFind.getStatusText(), pFind.getPath());
+        } catch (Exception e) {
+            LOG.error(e, "Error while getting meta for:" + relPath);
+        } finally {
+            if (pFind != null) {
+                pFind.releaseConnection();
+            }
+        }
+        return new WsResponse();
+    }
 
     class WebDAVGetMethod extends DavMethodBase {
         public WebDAVGetMethod(String uri) {
