@@ -12,7 +12,6 @@ import {FileUpload} from './FileUpload.jsx';
 import {WorkspaceUpload} from './WorkspaceViewer.jsx';
 import {isAccessWorkspace} from '../visualize/WorkspaceCntlr.js';
 
-
 export const LOCALFILE = 'isLocal';
 
 const ULOptionsKey = new Enum(['local', 'workspace', 'url', 'location']);
@@ -21,6 +20,8 @@ const ULOptionsKey = new Enum(['local', 'workspace', 'url', 'location']);
 export class UploadOptionsDialog extends PureComponent {
     constructor(props) {
         super(props);
+
+        this.workspace = get(props, 'workspace', false);
         //fieldKey for fileLocation, fileUpload, and workspaceUpload fields
         this.fileLocation = get(props, ['fieldKeys', ULOptionsKey.location.key], ULOptionsKey.location.key );
         this.fileUpload   = get(props, ['fieldKeys', ULOptionsKey.local.key], ULOptionsKey.local.key );
@@ -87,7 +88,7 @@ export class UploadOptionsDialog extends PureComponent {
             return (where === 'isLocal') ?
                 (
                     <FileUpload
-                        wrapperStyle={{margin: '2px 10px 8px 10px'}}
+                        wrapperStyle={{margin: (this.workspace ? '2px 10px 8px 10px' : '15px 10px 21px 10px')}}
                         fieldKey={this.fileUpload}
                         initialState={
                              {tooltip: get(this.props, ['tooltips', ULOptionsKey.local.key], 'Select a file to upload')}}
@@ -109,7 +110,7 @@ export class UploadOptionsDialog extends PureComponent {
         
         return (
             <div style={{width: dialogWidth}} >
-                {showUploadLocation()}
+                {this.workspace && showUploadLocation()}
                 {showFileUploadButton()}
             </div>
         );
@@ -122,5 +123,6 @@ UploadOptionsDialog.propTypes = {
     dialogWidth: PropTypes.number,
     fieldKeys: PropTypes.object,
     tooltips: PropTypes.object,
-    preloadWsFile: PropTypes.bool
+    preloadWsFile: PropTypes.bool,
+    workspace: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };

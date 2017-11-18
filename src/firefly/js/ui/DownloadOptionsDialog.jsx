@@ -4,7 +4,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
-import {isEmpty} from 'lodash';
+import {isEmpty, get} from 'lodash';
 import {ValidationField} from './ValidationField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
@@ -32,13 +32,14 @@ export class DownloadOptionsDialog extends PureComponent {
     constructor(props) {
         super(props);
 
-        const where = props.fromGroupKey ? getFieldVal(props.fromGroupKey, 'fileLocation', LOCALFILE)
-                                         : LOCALFILE;
-        const fileOverwritable =  props.fromGroupKey ? getFieldVal(props.fromGroupKey, 'fileOverwritable', 0) : 0;
-        const wsSelect = (where === WORKSPACE ) ? getFieldVal(props.fromGroupKey, 'wsSelect', '') : '';
+        this.workspace = get(props, 'workspace', false);
+        const where = props.fromGroupKey? getFieldVal(props.fromGroupKey, 'fileLocation', LOCALFILE)
+                                        : LOCALFILE;
 
-        const wsList = getWorkspaceList();
+        const fileOverwritable = props.fromGroupKey ? getFieldVal(props.fromGroupKey, 'fileOverwritable', 0) : 0;
+        const wsSelect = (where === WORKSPACE) ? getFieldVal(props.fromGroupKey, 'wsSelect', '') : '';
         const isUpdating = isAccessWorkspace();
+        const wsList = isUpdating ? '' : getWorkspaceList();
         this.state = {where, fileName: props.fileName, wsSelect, fileOverwritable, wsList, isUpdating};
     }
 
@@ -129,6 +130,18 @@ export class DownloadOptionsDialog extends PureComponent {
                         workspacePopupMsg('Workspace access error: ' + getWorkspaceStatus(), 'Workspace access')));
         };
 
+        const showLocation = () => {
+            return (
+                <div style={{marginTop: 10}}>
+                    <RadioGroupInputField
+                        options={[{label: 'Local File', value: LOCALFILE},
+                                  {label: 'Workspace', value: WORKSPACE }] }
+                        fieldKey={'fileLocation'}
+                    />
+                </div>
+            );
+        };
+
         return (
             <div style={{height: '100%', width: '100%'}}>
                 <div>
@@ -140,13 +153,7 @@ export class DownloadOptionsDialog extends PureComponent {
                     fieldKey={'fileName'}
                 />
 
-                <div style={{marginTop: 10}}>
-                   <RadioGroupInputField
-                        options={[{label: 'Local File', value: LOCALFILE},
-                                  {label: 'Workspace', value: WORKSPACE }] }
-                        fieldKey={'fileLocation'}
-                   />
-                 </div>
+                {this.workspace && showLocation()}
 
                 <div  style={{width: dialogWidth, height: dialogHeight}}>
                     {where === WORKSPACE && showWorkspace()}
@@ -162,7 +169,8 @@ DownloadOptionsDialog.propTypes = {
     fileName: PropTypes.string,
     labelWidth: PropTypes.number,
     dialogWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    dialogHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    dialogHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    workspace: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };
 
 

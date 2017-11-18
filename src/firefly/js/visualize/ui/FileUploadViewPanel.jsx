@@ -23,7 +23,7 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
-import {isAccessWorkspace} from '../WorkspaceCntlr.js';
+import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
 
 import './ImageSelectPanel.css';
 
@@ -200,6 +200,7 @@ export class FileUploadViewPanel extends PureComponent {
 
         this.state = this.getNextState();
         this.onLoading = this.onLoading.bind(this);
+        this.workspace = getWorkspaceConfig();
     }
 
     componentWillUnmount() {
@@ -447,8 +448,8 @@ export class FileUploadViewPanel extends PureComponent {
 
         const uploadStyle = {marginTop: 12, marginBottom: 20};
         const uploadMethod = [{value: fileId, label: 'Upload file'},
-                              {value: urlId, label: 'Upload from URL'},
-                              {value: wsId, label: 'Upload from workspace'}];
+                              {value: urlId, label: 'Upload from URL'}]
+                             .concat(this.workspace ? [{value: wsId, label: 'Upload from workspace'}] : []);
         const {uploadSrc} = this.state;
         const lineH = 16;
 

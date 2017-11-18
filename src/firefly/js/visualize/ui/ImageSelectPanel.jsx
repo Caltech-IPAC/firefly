@@ -29,6 +29,8 @@ import {FieldGroupCollapsible, CollapseBorder, CollapseHeaderCorner} from '../..
 import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelReducer.js';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {LOCALFILE, UploadOptionsDialog } from '../../ui/UploadOptionsDialog.jsx';
+import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
+
 import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
@@ -728,6 +730,7 @@ function CatalogTabView({catalog, fields}) {
                         fieldKeys={{local: keyMap['fitsupload'],
                                     workspace: keyMap['fitswsupload'],
                                     location: keyMap['fitslocation']}}
+                        workspace={getWorkspaceConfig()}
                         tooltips={{local: 'Select a fits file to upload',
                                    workspace: 'Select a fits file from workspace to upload'}}
                     />

@@ -10,6 +10,7 @@ import {ServerParams} from '../data/ServerParams.js';
 import {workspacePopupMsg} from '../ui/WorkspaceViewer.jsx';
 import Enum from 'enum';
 import {updateMerge} from '../util/WebUtil.js';
+import {getAppOptions} from '../core/AppDataCntlr.js';
 
 export const WORKSPACE_PREFIX = 'WorkspaceCntlr';
 
@@ -237,6 +238,10 @@ function updatePathList(action) {
             doUpdate(action.payload.files);
         }
     };
+}
+
+export function getWorkspaceConfig() {
+    return get(getAppOptions(), ['workspace', 'showOptions'], false);
 }
 
 export function getWorkspaceFiles() {

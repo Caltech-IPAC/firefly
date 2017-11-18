@@ -29,6 +29,7 @@ import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {UploadOptionsDialog, LOCALFILE} from '../../ui/UploadOptionsDialog.jsx';
+import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -426,6 +427,7 @@ class CatalogSelectView extends PureComponent {
                                                  fieldKeys={{local: 'fileUpload',
                                                             workspace: 'workspaceUpload',
                                                             location: 'fileLocation'}}
+                                                 workspace={getWorkspaceConfig()}
                                                  tooltips={{local: 'Select an IPAC catalog table file to upload',
                                                  workspace: 'Select an IPAC catalog table file from workspace to upload'}}/>
                             <div>

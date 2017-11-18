@@ -238,7 +238,7 @@ WorkspaceUpload.propTypes = {
     wrapperStyle: PropTypes.object,
     isLoading: PropTypes.bool,
     value: PropTypes.string,
-    preloadWsFile: PropTypes.bool,
+    preloadWsFile: PropTypes.bool
 };
 
 

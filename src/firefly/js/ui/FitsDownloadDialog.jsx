@@ -39,6 +39,7 @@ import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, dispatch
 import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {INFO_POPUP} from './PopupUtil.jsx';
+import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
@@ -80,7 +81,6 @@ const defValues = {
 const popupPanelResizableStyle = {
     width: dialogWidth,
     minWidth: dialogWidth,
-    minHeight: dialogHeightLOCAL,
     resize: 'both',
     overflow: 'hidden',
     position: 'relative'
@@ -92,12 +92,16 @@ export function showFitsDownloadDialog() {
         dispatchWorkspaceUpdate();
     }
 
-    const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeightLOCAL : dialogHeightWS;
+    const isWs = getWorkspaceConfig();
+    const adHeight = (currentFileLocation === WORKSPACE) ? dialogHeightWS
+                                                         : (isWs ? dialogHeightLOCAL : dialogHeightLOCAL - 100);
+    const minHeight = (currentFileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL-100 : dialogHeightLOCAL;
+
     const startWorkspacePopup =  () => {
            const  popup = (
                 <PopupPanel title={'FITS Download Dialog'}>
-                    <div style={{...popupPanelResizableStyle, height: adHeight}}>
-                        < FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId}/>
+                    <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
+                        < FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
                     </div>
                 </PopupPanel>
             );
@@ -311,12 +315,13 @@ export class FitsDownloadDialogForm extends PureComponent {
 
     render() {
         const {currentType, currentBand, currentFileNames} = this.state;
+        const {isWs, popupId} = this.props;
         const labelWidth = 100;
         const fileName = (currentType === 'fits') ? currentFileNames[currentBand] : currentFileNames[currentType];
         const renderOperationButtons = renderOperationOption(this.hasOperation, labelWidth);
         const renderThreeBandButtons = renderThreeBand(this.hasThreeColorBand, this.colors, labelWidth);//true, ['Green','Red', 'Blue']);
-        const {popupId} = this.props;
-        const totalChildren = 3 + (renderOperationButtons ? 1 : 0) + (renderThreeBandButtons ? 1 : 0);
+        const totalChildren = (isWs ? 3 : 2) +  // fileType + save as + (fileLocation)
+                              (renderOperationButtons ? 1 : 0) + (renderThreeBandButtons ? 1 : 0);
         const childH = (totalChildren*(20+mTOP));
 
         const fileType = () => {
@@ -360,7 +365,9 @@ export class FitsDownloadDialogForm extends PureComponent {
                                            fileName={fileName}
                                            labelWidth={labelWidth}
                                            dialogWidth={'100%'}
-                                           dialogHeight={`calc(100% - ${childH}pt)`}/>
+                                           dialogHeight={`calc(100% - ${childH}pt)`}
+                                           workspace={isWs}
+                    />
                 </div>
                 <table style={{width:'calc(100% - 20px)', margin: '20px 10px 10px 10px'}}>
                     <colgroup>
@@ -403,7 +410,8 @@ export class FitsDownloadDialogForm extends PureComponent {
 
 FitsDownloadDialogForm.propTypes = {
     groupKey: PropTypes.string.isRequired,
-    popupId: PropTypes.string
+    popupId: PropTypes.string,
+    isWs: PropTypes.oneOfType([PropTypes.bool, PropTypes.string ])
 };
 
 

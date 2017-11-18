@@ -23,6 +23,8 @@ import {ServerParams} from '../../data/ServerParams.js';
 import {INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
+
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'Save as:'},
@@ -52,7 +54,6 @@ const dialogHeightLOCAL = 400;
 const popupPanelResizableStyle = {
     width: dialogWidth,
     minWidth: dialogWidth,
-    minHeight: dialogHeightLOCAL,
     resize: 'both',
     overflow: 'hidden',
     position: 'relative'
@@ -61,21 +62,25 @@ const popupPanelResizableStyle = {
 export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
     return () => {
         const popupId = 'TABLE_DOWNLOAD_POPUP';
+        const isWs = getWorkspaceConfig();
         const currentFileLocation = getFieldVal(tblDownloadGroupKey, 'fileLocation', LOCALFILE);
         if (currentFileLocation === WORKSPACE) {
             dispatchWorkspaceUpdate();
         }
-        const adHeight = (currentFileLocation === LOCALFILE) ? dialogHeightLOCAL : dialogHeightWS;
+        const adHeight = (currentFileLocation === WORKSPACE) ? dialogHeightWS
+                                                             : (isWs ? dialogHeightLOCAL : dialogHeightLOCAL/2);
+        const minHeight = (currentFileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL/2 : dialogHeightLOCAL;
 
         const startTableDownloadPopup = () => {
             const popup = (
                 <PopupPanel title={'Download table'}>
-                    <div style={{...popupPanelResizableStyle, height: adHeight}}>
+                    <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
                         <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
                                              height: 'calc(100% - 70px)', width: '100%'}}
                                     groupKey={tblDownloadGroupKey} keepState={true}
                                     reducerFunc={TableDLReducer(tbl_id)}>
                             <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
+                                                   workspace={isWs}
                                                    dialogWidth={'100%'}
                                                    dialogHeight={'calc(100% - 60pt)'}/>
                         </FieldGroup>
