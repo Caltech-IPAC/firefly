@@ -89,6 +89,7 @@ public class WsUtil {
      * @return encoded string
      */
     public static String encode(String s) throws URISyntaxException {
+        s = s.replaceAll(":","_");
         String res = s;
         try{
             res = new URI(null, null, s,null).getRawPath();
