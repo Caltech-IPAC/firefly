@@ -74,9 +74,13 @@ export class DownloadOptionsDialog extends PureComponent {
                     if (loc ===  WORKSPACE) {
                         state.isUpdating = true;
                         dispatchWorkspaceUpdate();
+                        return state;
                     }
                 }
 
+                if (isUpdating !== state.isUpdating) {
+                    state.isUpdating = isUpdating;
+                }
                 if (wsList !== state.wsList) {
                     state.wsList = wsList;
                 }
@@ -85,9 +89,6 @@ export class DownloadOptionsDialog extends PureComponent {
                     state.wsSelect = wsSelect;
                 }
 
-                if (isUpdating !== state.isUpdating) {
-                    state.isUpdating = isUpdating;
-                }
                 return state;
             });
         }
@@ -124,10 +125,23 @@ export class DownloadOptionsDialog extends PureComponent {
                 );
             };
 
+            const showNoWSFiles = (message) => {
+                return (
+                    <div style={{marginTop: 10,
+                                 padding: 10,
+                                 boxSizing: 'border-box',
+                                 width: 'calc(100%)',
+                                 textAlign: 'center',
+                                 border:'1px solid #a3aeb9'}}>
+                        {message}
+                    </div>
+                );
+            };
+
             return (
                 (isUpdating) ? loading() :
-                    (!isEmpty(wsList) ? showSave() :
-                        workspacePopupMsg('Workspace access error: ' + getWorkspaceStatus(), 'Workspace access')));
+                    (!isEmpty(wsList) ? showSave() : showNoWSFiles('Workspace access error: ' + getWorkspaceStatus()))
+            );
         };
 
         const showLocation = () => {

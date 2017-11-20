@@ -30,6 +30,8 @@ function handleAction (menuItem) {
  * Create the html for a menu item
  * @param menuItem
  * @param isSelected
+ * @param isWorking
+ * @param badgeCount
  * @returns {XML}
  */
 export function  makeMenuItem(menuItem, isSelected, isWorking, badgeCount) {
