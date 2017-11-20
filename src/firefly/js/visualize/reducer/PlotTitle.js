@@ -36,7 +36,7 @@ export function makePostPlotTitle(plot,r) {
 function computeFileNameBaseTitle(r,state, band, preTitle) {
     var retval= '';
     var rt= r.getRequestType();
-    if (rt===RequestType.FILE || rt===RequestType.TRY_FILE_THEN_URL) {
+    if (rt===RequestType.WORKSPACE || rt===RequestType.FILE || rt===RequestType.TRY_FILE_THEN_URL) {
         if (state.getUploadFileName(band)) {
             retval= preTitle + computeTitleFromFile(state.getUploadFileName(band));
         }
@@ -94,7 +94,7 @@ function computeTitleFromFile(fileStr) {
 function stripFilePath(path) {
     if (!path) return '';
     var i = path.lastIndexOf('/');
-    return (i===-1 || i=== 0)  ? path : path.substring(i+1, path.length);
+    return (i<0)  ? path : path.substring(i+1, path.length);
 }
 
 function getFileBase(s) {
