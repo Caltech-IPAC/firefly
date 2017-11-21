@@ -272,9 +272,10 @@ function doVoSearch(request, providerName = '') {
 }
 
 function doLoadTable(request) {
+    const fileLocation = get(request, 'fileLocation', LOCALFILE);
     var tReq = makeTblRequest('userCatalogFromFile', 'Table Upload', {
-        filePath: (request.fileLocation === LOCALFILE) ? request.fileUpload : request.workspaceUpload,
-        sourceFrom: request.fileLocation
+        filePath: ( fileLocation === LOCALFILE) ? request.fileUpload : request.workspaceUpload,
+        sourceFrom: fileLocation
     });
     dispatchTableSearch(tReq);
 }

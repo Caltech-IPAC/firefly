@@ -15,6 +15,7 @@ import {ZoomType} from '../ZoomType.js';
 import {get} from 'lodash';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
+import {LOCALFILE} from '../../ui/UploadOptionsDialog.jsx';
 
 const loadErrorMsg = {
     'nosize': 'no valid size is specified',
@@ -55,12 +56,12 @@ function imagePlotOnURL(request) {
 
 // image plot on specified upload FITS
 function imagePlotOnFITS(request) {
-    const fileLoc = get(request, keyMap['fitslocation']);
+    const fileLoc = get(request, keyMap['fitslocation'], LOCALFILE);  // fitsLocation is undefined for only local file case
 
     // var fits = (fileLoc === 'isLocal') ? get(request, keyMap['fitsupload']) : get(request, keyMap['fitswsupload']);
     let fits, wpr;
 
-    if (fileLoc === 'isLocal') {
+    if (fileLoc === LOCALFILE) {
         fits= get(request, keyMap['fitsupload']);
         wpr = WebPlotRequest.makeFilePlotRequest(fits);
     }
@@ -76,9 +77,6 @@ function imagePlotOnFITS(request) {
     if (wpr && request[keyMap['fitslist']] === 'loadOne' && request.hasOwnProperty(keyMap['fitsextinput'])) {
           wpr.setMultiImageIdx(request[keyMap['fitsextinput']]);
     }
-
-    //wpr.setSourceFrom(request[keyMap['fitslocation']]);
-
     return wpr;
 }
 
@@ -188,8 +186,8 @@ export function resultFail(fromFail = true) {
                     if (fromFail) {
                         errMsg = 'invalid file upload';
                     } else {
-                        const fileLoc = get(fg, keyMap['fitslocation']);
-                        const fitsKey = (fileLoc === 'isLocal') ?  keyMap['fitsupload']: keyMap['fitswsupload'];
+                        const fileLoc = get(fg, keyMap['fitslocation'], LOCALFILE);
+                        const fitsKey = ( fileLoc === LOCALFILE) ?  keyMap['fitsupload']: keyMap['fitswsupload'];
 
                         if (!get(fg, fitsKey)) {
                             errMsg = msg('nofits', rgbNote);

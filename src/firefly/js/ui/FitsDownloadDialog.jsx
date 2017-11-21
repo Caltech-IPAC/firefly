@@ -249,13 +249,14 @@ export class FitsDownloadDialogForm extends PureComponent {
                     prev[oneColor] = this.getDefaultFileName(hasOperation, Band.get(oneColor));
                     return prev;
                 }, {}) : {};
+
+
+                const baseName = this.getDefaultFileName(hasOperation, Band.NO_BAND);
+
+                fileNames[Band.NO_BAND.key] = baseName;
+                fileNames['png'] = baseName.replace('.fits', '.png');
+                fileNames['reg'] = baseName.replace('.fits', '.reg');
             }
-
-            const baseName = this.getDefaultFileName(hasOperation, Band.NO_BAND);
-
-            fileNames[Band.NO_BAND.key] = baseName;
-            fileNames['png'] = baseName.replace('.fits', '.png');
-            fileNames['reg'] = baseName.replace('.fits', '.reg');
             return fileNames;
         };
 
@@ -432,7 +433,7 @@ const FitsDLReducer = ({band, fileName, currentBandFileNames}) => {
 
             const getFileKey = () => {
                 const fType = get(inFields, [fKeyDef.fileType.fKey, 'value']);
-                return (fType === 'fits') ? get(inFields, [fKeyDef.colorBand.fKey, 'value']) : fType;
+                return (fType === 'fits') ? get(inFields, [fKeyDef.colorBand.fKey, 'value'])|| Band.NO_BAND.key : fType;
             };
 
             switch (action.type) {

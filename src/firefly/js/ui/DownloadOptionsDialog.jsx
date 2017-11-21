@@ -4,7 +4,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
-import {isEmpty, get} from 'lodash';
+import {isEmpty, get, isNil} from 'lodash';
 import {ValidationField} from './ValidationField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
@@ -207,6 +207,9 @@ export function fileNameValidator() {
 }
 
 export function validateFileName(wsSelect, fileName) {
+    if (isNil(wsSelect)) {
+        return false;
+    }
     const fullPath = getWorkspacePath(wsSelect, fileName);
 
     if (isExistWorspaceFile(fullPath)) {
