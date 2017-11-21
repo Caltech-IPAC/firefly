@@ -224,7 +224,7 @@ public class WsTest extends ConfigTest {
         if (!resourceList.contains(ufilePath)) {
             resourceList.add(ufilePath);
         }
-        man.putFile(relFolder, testFile, ContentType.DEFAULT_BINARY.getMimeType());
+        man.putFile(relFolder, true,testFile, ContentType.DEFAULT_BINARY.getMimeType());
         return ufilePath;
     }
 

@@ -289,6 +289,12 @@ export class WebPlotRequest extends ServerRequest {
         return req;
     }
 
+    static makeWorkspaceRequest(filePath, userDesc) {
+        const req = new WebPlotRequest(RequestType.WORKSPACE, userDesc||filePath);
+        req.setTitleOptions(TitleOptions.FILE_NAME);
+        req.setFileName(filePath);
+        return req;
+    };
 
     static makeTblFilePlotRequest(fileName) {
         const req = new WebPlotRequest(RequestType.FILE, 'Table: ' + fileName);

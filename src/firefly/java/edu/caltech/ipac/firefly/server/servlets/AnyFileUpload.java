@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
+import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -20,6 +21,9 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
+import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -53,95 +57,128 @@ public class AnyFileUpload extends BaseHttpServlet {
     }
 
     public static void doFileUpload(HttpServletRequest req, HttpServletResponse res) throws Exception {
+        UploadFileInfo fi = null;
+        File uf;
+        File destDir = null;
+        String ext;
+        String fileName = null;
+        String rPathInfo = "";
+        String fileType;
+        String fileAnalysis;
+        String overrideCacheKey = null;
+        FileType fType = null;
+        FileInfo urlDownloadInfo = null;
+        FileItemStream file = null;
 
         if (! ServletFileUpload.isMultipartContent(req)) {
-            sendReturnMsg(res, 400, "Is not a Multipart request. Request rejected.", "");
-        }
-        StopWatch.getInstance().start("Upload File");
+            SrvParam sp = new SrvParam(req.getParameterMap());
+            String wsCmd = sp.getOptional("wsCmd");
 
-        ServletFileUpload upload = new ServletFileUpload();
-        FileItemIterator iter = upload.getItemIterator(req);
-        FileItemStream file = null;
-        String url = null;
+            if (wsCmd == null) {
+                sendReturnMsg(res, 400, "Is not a Multipart request. Request rejected.", "");
+            }
 
-        HashMap<String, String> params = new HashMap<>();
+            StopWatch.getInstance().start("Upload File");
 
-        while (iter.hasNext()) {
-            FileItemStream item = iter.next();
-            if (!item.isFormField()) {
-                file = item;
-                // file should be the last param.  param after file will be ignored.
-                break;
-            } else {
-                String name = item.getFieldName();
-                String value = FileUtil.readFile(item.openStream());
-                params.put(name, value);
-                if (name.equals("URL")) {
-                    url = new String(value);
+            fileAnalysis = sp.getOptional("fileAnalysis");
+            fileType = sp.getOptional(FILE_TYPE);
+            overrideCacheKey = sp.getOptional(CACHE_KEY);
+            try {
+                WsServerParams params1 = WsServerCommands.convertToWsServerParams(sp);
+                rPathInfo = WsServerCommands.utils.upload(params1);
+                // file in server uploaded from workspace
+                uf = ServerContext.convertToFile(rPathInfo);
+                fileName = params1.getRelPath().substring((params1.getRelPath().lastIndexOf("/")+1));
+                fi = new UploadFileInfo(rPathInfo, uf, fileName, null);
+                destDir = uf.getParentFile();
+                ext = resolveExt(fileName);
+                fType = resolveType(fileType, ext, null);
+            } catch (Exception e) {
+                throw e;
+            }
+
+        } else {
+            StopWatch.getInstance().start("Upload File");
+
+            ServletFileUpload upload = new ServletFileUpload();
+            FileItemIterator iter = upload.getItemIterator(req);
+            String wsSelect = null;
+            String url = null;
+
+            HashMap<String, String> params = new HashMap<>();
+
+            while (iter.hasNext()) {
+                FileItemStream item = iter.next();
+                if (!item.isFormField()) {
+                    file = item;
+                    // file should be the last param.  param after file will be ignored.
+                    break;
+                } else {
+                    String name = item.getFieldName();
+                    String value = FileUtil.readFile(item.openStream());
+                    params.put(name, value);
+                    if (name.equals("URL")) {
+                        url = new String(value);
+                    }
                 }
             }
+
+            String dest = getParam(DEST_PARAM, params, req);
+            String preload = getParam(PRELOAD_PARAM, params, req);
+            overrideCacheKey = getParam(CACHE_KEY, params, req);
+            fileType = getParam(FILE_TYPE, params, req);
+            fileAnalysis = getParam("fileAnalysis", params, req);
+
+            if (file != null || url != null) {
+                if (file != null) {
+                    fileName = file.getName();
+                } else {
+                    int idx = url.lastIndexOf('/');
+                    fileName = (idx >= 0) ? url.substring(idx + 1) : new String(url);
+                }
+                //Check for filename max chars:
+                fileName = fileName.length() > 255 ? fileName.substring(fileName.length() - 255) : fileName;
+                ext = resolveExt(fileName);
+                fType = resolveType(fileType, ext, (file != null ? file.getContentType() : null));
+                destDir = resolveDestDir(dest, fType);
+                uf = File.createTempFile("upload_", ext, destDir); // other parts of system depend on file name starting with "upload_"
+                if (file != null) {
+                    InputStream inStream = new BufferedInputStream(file.openStream(), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+                    FileUtil.writeToFile(inStream, uf);
+                } else {
+                    urlDownloadInfo = URLDownload.getDataToFile(new URL(url), uf);
+
+                    if (url != null && urlDownloadInfo != null &&
+                            !(urlDownloadInfo.getResponseCodeMsg().equals("OK"))) {
+                        throw new Exception("invalid upload from URL: " + urlDownloadInfo.getResponseCodeMsg());
+                    }
+                }
+
+                rPathInfo = ServerContext.replaceWithPrefix(uf);
+                fi = new UploadFileInfo(rPathInfo, uf, fileName, (file != null ? file.getContentType() : null));
+            }
         }
 
-        String dest = getParam(DEST_PARAM, params, req);
-        String preload = getParam(PRELOAD_PARAM, params, req);
-        String overrideCacheKey= getParam(CACHE_KEY, params, req);
-        String fileType= getParam(FILE_TYPE, params, req);
-        String fileAnalysis = getParam("fileAnalysis", params, req);
-
-        if (file != null || url != null) {
-            UploadFileInfo fi;
-            String ext;
-            File destDir;
-            FileType fType;
-            File uf;
-            String fileName;
-            FileInfo urlDownloadInfo = null;
-
-            if (file != null) {
-                fileName = file.getName();
-            } else {
-                int idx = url.lastIndexOf('/');
-                fileName = (idx >= 0) ? url.substring(idx + 1) : new String(url);
-            }
-            //Check for filename max chars:
-            fileName = fileName.length()>255? fileName.substring(fileName.length()-255):fileName;
-            ext = resolveExt(fileName);
-            fType = resolveType(fileType, ext, (file != null ? file.getContentType() : null));
-            destDir = resolveDestDir(dest, fType);
-            uf = File.createTempFile("upload_", ext, destDir); // other parts of system depend on file name starting with "upload_"
-            if (file != null) {
-                InputStream inStream = new BufferedInputStream(file.openStream(), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-                FileUtil.writeToFile(inStream, uf);
-            } else {
-                urlDownloadInfo = URLDownload.getDataToFile(new URL(url), uf);
-            }
-
-            String rPathInfo = ServerContext.replaceWithPrefix(uf);
-            fi = new UploadFileInfo(rPathInfo, uf, fileName, (file != null ? file.getContentType() : null));
-
-            JSONObject analysisResult = null;
+        JSONObject analysisResult = null;
+        if (fi != null) {
             if (fileAnalysis != null && fileAnalysis.equalsIgnoreCase("true")) {
-                if (url != null && urlDownloadInfo != null &&
-                                !(urlDownloadInfo.getResponseCodeMsg().equals("OK"))) {
-                    throw new Exception("invalid upload from URL: " + urlDownloadInfo.getResponseCodeMsg());
-                }
-
                 analysisResult = createAnalysisResult(fi);
             }
 
-            if (fType == FileType.TABLE) {
+            if (fType != null && fType == FileType.TABLE) {
                 uf = File.createTempFile("upload_", ".tbl", destDir); // cleaned ipac file.
                 rPathInfo = ServerContext.replaceWithPrefix(uf);
                 DataGroup dg = DataGroupReader.readAnyFormat(fi.getFile(), 0);
                 DataGroupWriter.write(new DataGroupWriter.IpacTableHandler(uf, dg));
                 fi = new UploadFileInfo(rPathInfo, uf, fileName, (file != null ? file.getContentType() : null));
             }
+
             String fileCacheKey = overrideCacheKey != null ? overrideCacheKey : rPathInfo;
             UserCache.getInstance().put(new StringKey(fileCacheKey), fi);
 
             if (analysisResult != null) {
                 String resultS = analysisResult.toJSONString();
-                String fFormat = (String)analysisResult.get("fileFormat");
+                String fFormat = (String) analysisResult.get("fileFormat");
 
                 if (!StringUtils.isEmpty(resultS)) {
                     fileCacheKey = fileCacheKey + "::" + fFormat + "::" + resultS;

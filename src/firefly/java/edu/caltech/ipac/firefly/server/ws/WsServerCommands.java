@@ -13,11 +13,14 @@ import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.util.List;
+import java.util.HashMap;
 
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.FILE_PARAM;
+import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.RETURN_PARAM;
 
 /**
  * Handle the commands to manage ws
@@ -68,9 +71,20 @@ public class WsServerCommands {
 
             // Full list , depth = -1
             WsResponse resp = getWsUtils().getList(wsParams, -1);
-            JSONArray jsonObject = WsServerUtils.toJson(resp.getWspaceMeta());
 
-            return jsonObject.toJSONString();
+            JSONObject resultJson = new JSONObject();
+
+            if (resp.doContinue()) {
+                JSONArray jsonOArray = WsServerUtils.toJson(resp.getWspaceMeta());
+
+                resultJson.put("ok", RESPONSE.TRUE.name().toLowerCase());
+                resultJson.put("result", jsonOArray);
+            } else {
+                resultJson.put("ok", RESPONSE.FALSE.name().toLowerCase());
+                resultJson.put("status", resp.getStatusText());
+            }
+
+            return resultJson.toJSONString();
 
         }
     }
@@ -120,6 +134,35 @@ public class WsServerCommands {
 
     }
 
+    private static String getResponseOnRelpath(WsResponse wsResp, WsServerParams wsParams) throws Exception {
+        JSONObject resultJson = new JSONObject();
+
+        if (wsResp.doContinue()) {
+            WsResponse resp = getWsUtils().getList(wsParams, 0);
+            JSONArray jsonOArray = WsServerUtils.toJson(resp.getWspaceMeta());
+
+            resultJson.put("ok", RESPONSE.TRUE.name().toLowerCase());
+            resultJson.put("result", jsonOArray);
+        } else {
+            resultJson.put("ok", RESPONSE.FALSE.name().toLowerCase());
+            resultJson.put("status", wsResp.getStatusText());
+        }
+        return resultJson.toJSONString();
+
+    }
+
+    private static String getResultResponse(WsResponse wsResp) throws Exception {
+        JSONObject resultJson = new JSONObject();
+
+        if (wsResp.doContinue()) {
+            resultJson.put("ok", RESPONSE.TRUE.name().toLowerCase());
+        } else {
+            resultJson.put("ok", RESPONSE.FALSE.name().toLowerCase());
+            resultJson.put("status", wsResp.getStatusText());
+        }
+        return resultJson.toJSONString();
+
+    }
     /**
      * Use for saving to workspace a table file download
      * Basically getting the stream/cache file from firefly server workarea.
@@ -142,7 +185,8 @@ public class WsServerCommands {
             WsServerParams wsParams = convertToWsServerParams(sp);
             WsResponse wsResponse = getWsUtils().putFile(wsParams, f.getFile());
 
-            return wsResponse.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
+            return getResponseOnRelpath(wsResponse, wsParams);
+            //return wsResponse.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }
 
@@ -161,14 +205,14 @@ public class WsServerCommands {
          */
         public String doCommand(SrvParam sp) throws Exception {
             WsServerParams wsParams = convertToWsServerParams(sp);
-            String fname = sp.getRequired(FILE_PARAM); // Logic should follow from FitsDownloadDialog.jsx
+            String fname = sp.getRequired(FILE_PARAM); // Logic should follow from FitsDownloadDialog.jsx. file in the server
             File downloadFile = ServerContext.convertToFile(fname);
 
-            getWsUtils().putFile(wsParams, downloadFile);
+            WsResponse wsResponse = getWsUtils().putFile(wsParams, downloadFile);
+            
+            return getResponseOnRelpath(wsResponse, wsParams);
 
-            WsResponse resp = getWsUtils().getList(wsParams, -1);
-
-            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
+            //return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
 
         }
     }
@@ -189,13 +233,12 @@ public class WsServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             WsServerParams wsParams = convertToWsServerParams(params);
 
-            getWsUtils().deleteFile(wsParams);
+            WsResponse resp = getWsUtils().deleteFile(wsParams);
 
-            WsResponse resp = getWsUtils().getList(wsParams, -1);
-
-            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
+            return getResultResponse(resp);
         }
     }
+
 
     /**
      * Move file from current path to new path
@@ -205,12 +248,10 @@ public class WsServerCommands {
         public String doCommand(SrvParam params) throws Exception {
 
             WsServerParams wsParams = convertToWsServerParams(params);
+            WsResponse resp = getWsUtils().move(wsParams);
+            wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, wsParams.getNewPath());
 
-            getWsUtils().move(wsParams);
-
-            WsResponse resp = getWsUtils().getList(wsParams, -1);
-
-            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
+            return getResponseOnRelpath(resp, wsParams);
         }
     }
 
@@ -229,7 +270,7 @@ public class WsServerCommands {
         }
     }
 
-    /**
+    /*
      * Sets metadata props of relative path
      */
     public static class WsSetMeta extends ServCommand {
@@ -254,7 +295,8 @@ public class WsServerCommands {
 
             WsResponse resp = getWsUtils().createParent(wsParams);
 
-            return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
+            return getResponseOnRelpath(resp, wsParams);
+            //return resp.doContinue()?RESPONSE.TRUE.name().toLowerCase():RESPONSE.FALSE.name().toLowerCase();
         }
     }
 
@@ -267,6 +309,5 @@ public class WsServerCommands {
 
         return params1;
     }
-
 }
 

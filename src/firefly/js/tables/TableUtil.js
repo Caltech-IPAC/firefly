@@ -608,39 +608,39 @@ export function getTblRowAsObj(tableModel, rowIdx= undefined) {
           }, {});
 }
 
-
-
 /**
  * returns the url to download a snapshot of the current table data.
  * @param {string} tbl_ui_id  UI id of the table
+ * @param {object} params supplement parameter setting such as the information for workspace
  * @returns {string}
  * @public
  * @memberof firefly.util.table
  * @func getTableSourceUrl
  */
-export function getTableSourceUrl(tbl_ui_id) {
+export function getTableSourceUrl(tbl_ui_id, params) {
     const {columns, request} = getTableUiById(tbl_ui_id) || {};
-    return makeTableSourceUrl(columns, request);
+    return makeTableSourceUrl(columns, request, params);
 }
 
 /**
  * Async version of getTableSourceUrl.  If the given tbl_ui_id is backed by a local TableModel,
  * then we need to push/upload the content of the server before it can be referenced via url.
  * @param {string} tbl_ui_id  UI id of the table
+ * @param {object} params supplement parameter setting such as the information for workspace
  * @returns {Promise.<string, Error>}
  */
-export function getAsyncTableSourceUrl(tbl_ui_id) {
+export function getAsyncTableSourceUrl(tbl_ui_id, params) {
     const {tbl_id, columns} = getTableUiById(tbl_ui_id) || {};
     const ipacTable = tableToIpac(getTblById(tbl_id));
     const blob = new Blob([ipacTable]);
     //const file = new File([new Blob([ipacTable])], filename);
     return doUpload(blob).then( ({status, cacheKey}) => {
         const request = makeFileRequest('save as text', cacheKey, {pageSize: MAX_ROW});
-        return makeTableSourceUrl(columns, request);
+        return makeTableSourceUrl(columns, request, params);
     });
 }
 
-function makeTableSourceUrl(columns, request) {
+function makeTableSourceUrl(columns, request, otherParams) {
     const tableRequest = Object.assign(cloneDeep(request), {startIdx: 0,pageSize : MAX_ROW});
     const visiCols = columns.filter( (col) => get(col, 'visibility', 'show') === 'show')
                             .map( (col) => col.name);
@@ -648,12 +648,18 @@ function makeTableSourceUrl(columns, request) {
         tableRequest['inclCols'] = visiCols.map( (c) => c.includes('"') ? c : '"' + c + '"').join();  // add quotes to cname unless it's already quoted.
     }
     Reflect.deleteProperty(tableRequest, 'tbl_id');
+    const {wsCmd, file_name} = otherParams || {};
+
     const params = omitBy({
-        [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
+        [ServerParams.COMMAND]: (!wsCmd ? ServerParams.TABLE_SAVE : ServerParams.WS_PUT_TABLE_FILE),
         [ServerParams.REQUEST]: JSON.stringify(tableRequest),
-        file_name: get(tableRequest, 'META_INFO.title')
+        file_name: (!wsCmd) && (file_name || get(tableRequest, 'META_INFO.title'))
     }, isNil);
-    return encodeServerUrl(DEF_BASE_URL, params);
+
+    if (otherParams) {
+        Object.assign(params, omitBy(otherParams, isNil));
+    }
+    return wsCmd ? params : encodeServerUrl(DEF_BASE_URL, params);
 }
 
 /**

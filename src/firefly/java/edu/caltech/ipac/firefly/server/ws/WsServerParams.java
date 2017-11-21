@@ -1,7 +1,5 @@
 package edu.caltech.ipac.firefly.server.ws;
 
-import edu.caltech.ipac.firefly.server.SrvParam;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +25,7 @@ public class WsServerParams {
         }
     }
 
-    WsServerParams() {
+    public WsServerParams() {
         this.map = new HashMap<String, String>();
     }
 

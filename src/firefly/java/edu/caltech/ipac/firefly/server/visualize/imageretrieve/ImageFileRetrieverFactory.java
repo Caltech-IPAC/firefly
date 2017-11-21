@@ -20,6 +20,7 @@ public final class ImageFileRetrieverFactory {
 
     private ImageFileRetrieverFactory() {
         _types.put(RequestType.FILE,      new LocalFileRetriever());
+        _types.put(RequestType.WORKSPACE, new WorkdspaceImageFileRetriever());
         _types.put(RequestType.URL,       new URLFileRetriever());
         _types.put(RequestType.SERVICE,   new ServiceRetriever());
         _types.put(RequestType.ALL_SKY,   new AllSkyRetriever());

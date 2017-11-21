@@ -8,8 +8,12 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
+import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +55,9 @@ public class WsServerUtils {
      */
     public WsResponse putFile(WsServerParams wsParams, File item) throws IOException {
         WorkspaceManager wsm = getWsManager(wsParams);
-        WsResponse wsResp = wsm.putFile(wsParams.getRelPath(), item, null);
-
+        //WsResponse wsResp = wsm.putFile(wsParams.getRelPath(), item, null);
+        //WsResponse wsResp = wsm.putFile(wsParams.getRelPath(), wsParams.shouldOverwrite(), item, null);
+        WsResponse wsResp = wsm.putFile(wsParams.getRelPath(), wsParams.shouldOverwrite(), item, null);
         return wsResp;
     }
 
@@ -140,8 +145,9 @@ public class WsServerUtils {
         String loginUid = null;
         if (ro != null) {
             cookies = ro.getCookieMap();
-            loginUid = ro.getUserKey();
+            loginUid = ro.getUserInfo().getLoginName();
         }
+        //loginUid = "test@ipac.caltech.edu";
         return new WsCredentials(loginUid, cookies);
     }
 
@@ -188,21 +194,38 @@ public class WsServerUtils {
      */
     public String upload(WsServerParams wsParams) throws IOException, FailedRequestException {
 
-        WspaceMeta meta = getMeta(wsParams);
-        File file = getTempUploadFile();
-        URLConnection conn = URLDownload.makeConnection(new URL(meta.getUrl()), getCredentials().getCookies());
-        conn.setRequestProperty("Accept", "*/*");
+        String url = getMeta(wsParams).getUrl();
+        Map<String, String> cookies = getCredentials().getCookies();
+        HttpServiceInput input = new HttpServiceInput();
 
-        File f = getTempUploadFile();
-        URLDownload.getDataToFile(conn, f);
+        input.setUserId("x");
+        input.setPasswd("x");
+        if (cookies != null) {
+            for (Map.Entry<String, String> entry : cookies.entrySet()) {
+                input.setCookie(entry.getKey(), entry.getValue());
+            }
+        }
+
+//      URLConnection conn = URLDownload.makeConnection(new URL(meta.getUrl()), getCredentials().getCookies());
+//      conn.setRequestProperty("Accept", "*/*");
+
+        String relPath = wsParams.getRelPath();
+        int idx = wsParams.getRelPath().lastIndexOf('/');
+        String fileName =  (idx >= 0) ? relPath.substring(idx + 1) : new String(relPath);
+        File f = getTempUploadFile(fileName);
+
+        HttpServices.getData(url, f, input);
+
+        //URLDownload.getDataToFile(conn, f);
 
         String rPathInfo = ServerContext.replaceWithPrefix(f);
-
         return rPathInfo;
     }
 
-    public File getTempUploadFile() throws IOException {
-        return File.createTempFile("ws-upload", ".tmp", ServerContext.getTempWorkDir());
+    public File getTempUploadFile(String fileName) throws IOException {
+        String ext = resolveExt(fileName);
+
+        return File.createTempFile("ws-upload", ext, ServerContext.getTempWorkDir());
     }
 
     public static class WsJson {

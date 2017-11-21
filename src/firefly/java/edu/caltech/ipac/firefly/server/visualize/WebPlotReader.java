@@ -135,7 +135,9 @@ public class WebPlotReader {
         else {
             File originalFile = fd.getFile();
             String uploadedName= null;
-            if (ServerContext.isInUploadDir(originalFile) || originalFile.getName().startsWith("upload_")) {
+            // note: add case for upload from workspace
+            if (ServerContext.isInUploadDir(originalFile) || originalFile.getName().startsWith("upload_") ||
+                                                             originalFile.getName().startsWith("ws-upload")) {
                 uploadedName= fd.getDesc();
             }
 

@@ -70,3 +70,34 @@ function makeContent(content) {
     );
 }
 
+export function showYesNoPopup(content, clickSelection,  title='Information') {
+    var results= (
+        <PopupPanel title={title} >
+            {makeYesNoContent(content, clickSelection)}
+        </PopupPanel>
+    );
+    DialogRootContainer.defineDialog(INFO_POPUP, results);
+    dispatchShowDialog(INFO_POPUP);
+}
+
+function makeYesNoContent(content, clickSelection) {
+    return (
+        <div style={{padding:5}}>
+            <div style={{minWidth:190, maxWidth: 400, padding:10, fontSize:'120%'}}>
+                {content}
+            </div>
+            <div style={{display: 'flex'}}>
+                <div style={{padding:'0 0 5px 10px'}}>
+                    <button type='button' className='button std hl'
+                            onClick={clickSelection(INFO_POPUP, true)}>Yes
+                    </button>
+                </div>
+                <div style={{padding:'0 0 5px 10px'}}>
+                    <button type='button' className='button std hl'
+                            onClick={clickSelection(INFO_POPUP, false)}>No
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -50,7 +50,7 @@ export class InputField extends PureComponent {
 
     componentWillReceiveProps(nProps) {
         //this.setState(newState({value: nProps.value}));
-        this.setState({value: nProps.value})
+        this.setState({value: nProps.value});
     }
 
     render() {

@@ -1,10 +1,11 @@
 package edu.caltech.ipac.firefly.server.ws;
 
-import edu.caltech.ipac.firefly.data.WspaceMeta;
-import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import org.apache.commons.httpclient.HttpMethod;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Created by ejoliet on 6/20/17.
@@ -66,13 +67,6 @@ public class WsUtil {
         }
     }
 
-    public static String buildRemoteUri(WorkspaceManager m, String relFilePath) {
-        String wsUrl = m.getProp(WorkspaceManager.PROPS.ROOT_URL);
-        String wsHome = WspaceMeta.ensureWsHomePath(m.getWsHome());
-
-        return wsUrl + wsHome + WspaceMeta.ensureRelPath(relFilePath);
-    }
-
     /**
      * Adds "/" at the end if not present
      *
@@ -85,5 +79,23 @@ public class WsUtil {
             okUri += "/";
         }
         return okUri;
+    }
+
+    /**
+     * Encode element to be url friendly
+     * i.e. chars such space will be converted into '+'
+     *
+     * @param s
+     * @return encoded string
+     */
+    public static String encode(String s) throws URISyntaxException {
+        s = s.replaceAll(":","_");
+        String res = s;
+        try{
+            res = new URI(null, null, s,null).getRawPath();
+        } catch (URISyntaxException e){
+            e.printStackTrace();
+        }
+        return res;
     }
 }

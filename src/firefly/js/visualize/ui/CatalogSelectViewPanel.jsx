@@ -25,11 +25,11 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {parseWorldPt} from '../../visualize/Point.js';
 import {VoSearchPanel} from '../../ui/VoSearchPanel.jsx';
 import {NedSearchPanel} from '../../ui/NedSearchPanel.jsx';
-import {FileUpload} from '../../ui/FileUpload.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-
+import {UploadOptionsDialog, LOCALFILE} from '../../ui/UploadOptionsDialog.jsx';
+import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 
 import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -272,8 +272,10 @@ function doVoSearch(request, providerName = '') {
 }
 
 function doLoadTable(request) {
+    const fileLocation = get(request, 'fileLocation', LOCALFILE);
     var tReq = makeTblRequest('userCatalogFromFile', 'Table Upload', {
-        filePath: request.fileUpload
+        filePath: ( fileLocation === LOCALFILE) ? request.fileUpload : request.workspaceUpload,
+        sourceFrom: fileLocation
     });
     dispatchTableSearch(tReq);
 }
@@ -421,13 +423,14 @@ class CatalogSelectView extends PureComponent {
                     <Tab name='Load Catalog' id='loadcat'>
                         <div
                             style={{padding:5, width:'800px', height:'300px'}}>
-                            <FileUpload
-                                wrapperStyle={{margin: '5px 0'}}
-                                fieldKey='fileUpload'
-                                initialState={{
-                                            tooltip: 'Select an IPAC catalog table file to upload',
-                                            label: 'File:'}}
-                            />
+                            <UploadOptionsDialog fromGroupKey={gkey}
+                                                 preloadWsFile={false}
+                                                 fieldKeys={{local: 'fileUpload',
+                                                            workspace: 'workspaceUpload',
+                                                            location: 'fileLocation'}}
+                                                 workspace={getWorkspaceConfig()}
+                                                 tooltips={{local: 'Select an IPAC catalog table file to upload',
+                                                 workspace: 'Select an IPAC catalog table file from workspace to upload'}}/>
                             <div>
                                 <em style={{color:'gray'}}>Custom catalog in IPAC table format</em>
                                 <HelpIcon
@@ -784,6 +787,12 @@ function fieldInit() {
         'vourl': {
             fieldKey: 'vourl',
             value: ''
+        },
+        'fileLocation': {
+            fieldKey: 'fileLocation',
+            label: 'Table file location:',
+            labelWidth: 100,
+            value: LOCALFILE
         }
 
     }

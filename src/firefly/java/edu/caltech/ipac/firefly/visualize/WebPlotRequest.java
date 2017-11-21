@@ -287,6 +287,14 @@ public class WebPlotRequest extends ServerRequest {
         return req;
     }
 
+
+    public static WebPlotRequest makeWorkspaceRequest(String filePath, String userDesc) {
+        WebPlotRequest req = new WebPlotRequest(RequestType.WORKSPACE, userDesc==null? filePath : userDesc);
+        req.setTitleOptions(TitleOptions.FILE_NAME);
+        req.setFileName(filePath);
+        return req;
+    };
+
     public static WebPlotRequest makeTblFilePlotRequest(String fileName) {
         WebPlotRequest req = new WebPlotRequest(RequestType.FILE, "Table: " + fileName);
         req.setParam(FILE, fileName);

@@ -61,7 +61,9 @@ const defaults = {
         {label:'Images', action:'ImageSelectDropDownCmd'},
         {label:'Charts', action:'ChartSelectDropDownCmd'},
         {label:'Help', action:HELP_LOAD, type:'COMMAND'},
-        {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'}
+        {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'},
+        {label:'Upload', action: 'FileUploadDropDownCmd'},
+        {label:'Workspace', action: 'WorkspaceDropDownCmd'}
     ]
 };
 

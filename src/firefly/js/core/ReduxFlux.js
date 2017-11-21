@@ -21,6 +21,7 @@ import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import ChartsCntlrDef from '../charts/ChartsCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
+import WorkspaceCntlr from '../visualize/WorkspaceCntlr.js';
 
 import {chartTypeFactory} from '../charts/ChartType.js';
 import {PLOTLY_CHART} from '../charts/chartTypes/PlotlyChart.jsx';
@@ -143,6 +144,7 @@ registerCntlr(TablesCntlr);
 registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
 registerCntlr(ChartsCntlrDef);
 registerCntlr(MultiViewCntlr);
+registerCntlr(WorkspaceCntlr);
 
 
 let redux = null;

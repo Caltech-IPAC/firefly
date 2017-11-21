@@ -101,6 +101,7 @@ public class LocalFSWorkspace implements WorkspaceManager {
         return getWsHome() + "/" + res;
     }
 
+    /*
     @Override
     public WsResponse putFile(String relUri, File item, String contentType) throws WsException {
 
@@ -111,6 +112,29 @@ public class LocalFSWorkspace implements WorkspaceManager {
         }
         try {
             String newFile = parent.getAbsolutePath() + File.separator + item.getName();
+            Files.copy(fileUpload, new FileOutputStream(newFile));
+            return WsUtil.success(200, "Created", newFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return WsUtil.error(500);
+    }
+    */
+
+    @Override
+    public WsResponse putFile(String relUri, boolean overwrite, File item, String contentType) throws WsException {
+        int idx = relUri.lastIndexOf('/');
+        String newFileName = relUri.substring(idx + 1);
+
+        relUri = relUri.substring(0, idx+1);
+        File parent = new File(getResourceUrl(relUri));
+        Path fileUpload = Paths.get("", item.getAbsolutePath());
+        if (!parent.exists()) {
+            createIfNotExist(relUri);
+        }
+        try {
+            String newName = (newFileName.length() != 0) ? newFileName : item.getName();
+            String newFile = parent.getAbsolutePath() + File.separator + newName;
             Files.copy(fileUpload, new FileOutputStream(newFile));
             return WsUtil.success(200, "Created", newFile);
         } catch (IOException e) {

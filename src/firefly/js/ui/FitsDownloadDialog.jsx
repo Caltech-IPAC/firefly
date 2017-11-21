@@ -12,53 +12,108 @@
  *  DM-8963
  */
 import React, {PureComponent} from 'react';
-import {dispatchShowDialog} from '../core/ComponentCntlr.js';
+import PropTypes from 'prop-types';
+import {get, set, isEmpty} from 'lodash';
+import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
-import {download} from '../util/WebUtil.js';
+import {download, encodeUrl} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot, getActivePlotView} from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import {RequestType} from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
 import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
-import {get} from 'lodash';
+import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
+import {updateSet} from '../util/WebUtil.js';
+import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
+        WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
+import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, dispatchWorkspaceUpdate} from '../visualize/WorkspaceCntlr.js';
+import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
+import {ServerParams} from '../data/ServerParams.js';
+import {INFO_POPUP} from './PopupUtil.jsx';
+import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
+const dialogWidth = 500;
+const dialogHeightWS = 500;
+const dialogHeightLOCAL = 400;
 
+const dialogPopupId = 'fitsDownloadDialog';
+const fKeyDef = {
+    fileType: {fKey: 'fileType', label: 'Type of files:'},
+    opOption: {fKey: 'operationOption', label: 'FITS file:'},
+    colorBand:{fKey: 'threeBandColor', label: 'Color Band:'},
+    fileName: {fKey: 'fileName', label: 'Save as:'},
+    location: {fKey: 'fileLocation', label: 'File Location:'},
+    wsSelect: {fKey: 'wsSelect', label: ''},
+    overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
+};
 
-function getDialogBuilder() {
-    var popup = null;
-    return () => {
-        if (!popup) {
-            const popup = (
-                <PopupPanel title={'FITS Download Dialog'}>
-                    <FitsDownloadDialog groupKey={'FITS_DOWNLOAD_FORM'}/>
-                </PopupPanel>
-            );
-            DialogRootContainer.defineDialog('fitsDownloadDialog', popup);
-        }
-        return popup;
-    };
-}
+const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
+const labelWidth = 100;
+const defValues = {
+    [fKeyDef.fileType.fKey]: Object.assign(getTypeData(fKeyDef.fileType.fKey, 'fits',
+        'Please select an file type', fKeyDef.fileType.label, labelWidth), {validator: null}),
+    [fKeyDef.opOption.fKey]: Object.assign(getTypeData(fKeyDef.opOption.fKey, 'fileTypeOrig',
+        'Please select an option', fKeyDef.opOption.label, labelWidth), {validator: null}),
+    [fKeyDef.colorBand.fKey]: Object.assign(getTypeData(fKeyDef.colorBand.fKey, '',
+        'Please select a color option', fKeyDef.colorBand.label, labelWidth), {validator: null}),
+    [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
+        'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
+    [fKeyDef.location.fKey]: Object.assign(getTypeData(fKeyDef.location.fKey, 'isLocal',
+        'select the location where the file is downloaded to', fKeyDef.location.label, labelWidth), {validator: null}),
+    [fKeyDef.wsSelect.fKey]: Object.assign(getTypeData(fKeyDef.wsSelect.fKey, '',
+        'workspace file system', fKeyDef.wsSelect.label, labelWidth), {validator: null}),
+    [fKeyDef.overWritable.fKey]: Object.assign(getTypeData(fKeyDef.overWritable.fKey, '0',
+        'File is overwritable', fKeyDef.overWritable.label, labelWidth), {validator: null})
+};
 
-const dialogBuilder = getDialogBuilder();
+const popupPanelResizableStyle = {
+    width: dialogWidth,
+    minWidth: dialogWidth,
+    resize: 'both',
+    overflow: 'hidden',
+    position: 'relative'
+};
 
 export function showFitsDownloadDialog() {
-    dialogBuilder();
-    dispatchShowDialog('fitsDownloadDialog');
+    const currentFileLocation = getFieldVal(fitsDownGroup, 'fileLocation', LOCALFILE);
+    if (currentFileLocation === WORKSPACE) {
+        dispatchWorkspaceUpdate();
+    }
+
+    const isWs = getWorkspaceConfig();
+    const adHeight = (currentFileLocation === WORKSPACE) ? dialogHeightWS
+                                                         : (isWs ? dialogHeightLOCAL : dialogHeightLOCAL - 100);
+    const minHeight = (currentFileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL-100 : dialogHeightLOCAL;
+
+    const startWorkspacePopup =  () => {
+           const  popup = (
+                <PopupPanel title={'FITS Download Dialog'}>
+                    <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
+                        < FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
+                    </div>
+                </PopupPanel>
+            );
+            DialogRootContainer.defineDialog(dialogPopupId , popup);
+            dispatchShowDialog(dialogPopupId);
+        };
+
+    startWorkspacePopup();
 }
 
+const mTOP = 10;
+const crtFileNameKey = 'currentBandFileNames';
 /**
  * This method is called when the dialog is rendered. Only when an image is loaded, the PlotView is available.
  * Then, the color band, plotState etc can be determined.
@@ -66,7 +121,7 @@ export function showFitsDownloadDialog() {
  */
 function getInitialPlotState() {
 
-    const plotView= getActivePlotView(visRoot())
+    const plotView= getActivePlotView(visRoot());
     var plot = primePlot(plotView);
 
 
@@ -77,7 +132,7 @@ function getInitialPlotState() {
 
         var bands = plotState.getBands();//array of Band
 
-        if (bands != Band.NO_BAND) {
+        if (bands !== Band.NO_BAND) {
             var colors = [];
             for (var i=0; i<bands.length; i++) {
                 switch (bands[i]){
@@ -114,61 +169,17 @@ function getInitialPlotState() {
 
 }
 
-
-class FitsDownloadDialog extends PureComponent {
-
-    constructor(props) {
-        super(props);
-        this.state = {fields: FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM')};
-
-    }
-
-
-    componentWillUnmount() {
-
-        this.iAmMounted= false;
-        if (this.unbinder) this.unbinder();
-    }
-
-
-    componentDidMount() {
-
-        this.iAmMounted= true;
-        this.unbinder = FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields) => {
-            if (this.iAmMounted) this.setState({fields});
-        });
-    }
-
-    render() {
-        return <FitsDownloadDialogForm  />;
-    }
-
-
-}
-
-
 function renderOperationOption(hasOperation) {
-
-    var leftColumn = { display: 'inline-block', paddingLeft:85, paddingBottom:15, verticalAlign:'middle'};
-    var rightColumn = {display: 'inline-block', paddingLeft:20};
-
     if (hasOperation) {
         return (
-            <div  style={{ minWidth : 300, minHeight: 100} }>
-                <div title = 'Please select an option'  style={leftColumn}>FITS file: </div>
-                <div style={rightColumn}>
+            <div style={{display: 'flex', marginTop: mTOP}}>
+                <div>
                     <RadioGroupInputField
-                        labelWidth={0}
-                        initialState={{
-                                    tooltip: 'Please select an option'
-                                    //move the label as InputFieldLabel above
-                                   }}
                         options={[
                             { label:'Original', value:'fileTypeOrig'},
                             { label:'Cropped', value:'fileTypeCrop'}
 
                             ]}
-                        alignment={'vertical'}
                         fieldKey='operationOption'
 
                     />
@@ -177,7 +188,7 @@ function renderOperationOption(hasOperation) {
         );
     }
     else {
-        return <br/>;
+        return false;
     }
 }
 
@@ -185,146 +196,316 @@ function renderThreeBand(hasThreeColorBand, colors) {
 
     const fieldKey = FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM');
 
-    if (fieldKey && (fieldKey.fileType.value==='png' || fieldKey.fileType.value==='reg') ){
-        return <br/>;
+    if (isEmpty(colors) ||
+        (fieldKey && (fieldKey.fileType.value==='png' || fieldKey.fileType.value==='reg')) ){
+        return false;
     }
-    
-
-    var rightColumn={display: 'inline-block', paddingLeft:18};
-    var leftColumn;
-
 
     if (hasThreeColorBand) {
-        switch (colors.length){
-            case 1:
-                leftColumn= { display: 'inline-block', paddingLeft:75};
-                break;
-            case 2:
-                leftColumn = { display: 'inline-block', paddingLeft:75, verticalAlign: 'middle', paddingBottom:20};
-                break;
-            case 3:
-                leftColumn ={ display: 'inline-block', paddingLeft:75,verticalAlign: 'middle', paddingBottom:40};
-                break;
-        }
-
         var optionArray=[];
         for (var i=0; i<colors.length; i++){
             optionArray[i]={label: colors[i], value: colors[i]};
         }
 
         return (
-             <div  style={{ minWidth:300, minHeight: 100} }>
-                <div title ='Please select an option' style={leftColumn}> Color Band:   </div>
-                <div style={rightColumn}>
+             <div style={{display: 'flex', marginTop: mTOP}}>
+                <div>
                     <RadioGroupInputField
-                        initialState={{
-                                    tooltip: 'Please select an option'
-                                     //move the label as InputFieldLabel above
-                                     }}
                         options={optionArray}
-
-                        alignment={'vertical'}
                         fieldKey='threeBandColor'
                     />
                 </div>
-
             </div>
         );
     }
     else {
-        return <br/>;
+        return false;
     }
 }
 
-function FitsDownloadDialogForm() {
+export class FitsDownloadDialogForm extends PureComponent {
+    constructor(props) {
+        super(props);
+
+        const { plotView, plot, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
+
+        this.plotView = plotView;
+        this.plot = plot;
+        this.colors = colors;
+        this.hasThreeColorBand = hasThreeColorBand;
+        this.hasOperation = hasOperation;
+        const {groupKey} = props;
+
+        this.getDefaultFileName = this.getDefaultFileName.bind(this);
+        this.getCurrentBand = () => {
+            return (hasThreeColorBand ? getFieldVal(groupKey, 'threeBandColor', colors[0])
+                                      : Band.NO_BAND.key);
+        };
+        this.getFileNames = () => {
+            let fileNames = getFieldVal(groupKey, crtFileNameKey, []);
+
+            if (!fileNames || isEmpty(fileNames)) {
+                fileNames = colors ? colors.reduce((prev, oneColor) => {
+                    prev[oneColor] = this.getDefaultFileName(hasOperation, Band.get(oneColor));
+                    return prev;
+                }, {}) : {};
 
 
-    const { plotView, plot, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
+                const baseName = this.getDefaultFileName(hasOperation, Band.NO_BAND);
 
-    var renderOperationButtons = renderOperationOption(hasOperation);
+                fileNames[Band.NO_BAND.key] = baseName;
+                fileNames['png'] = baseName.replace('.fits', '.png');
+                fileNames['reg'] = baseName.replace('.fits', '.reg');
+            }
+            return fileNames;
+        };
 
-    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']);
+        this.getCurrentOp = () => {
+            return getFieldVal(groupKey, 'operationOption', '');
+        };
+        this.getCurrentType = () => {
+            return getFieldVal(groupKey, 'fileType', 'fits');
+        };
+
+        this.state = {currentFileNames: this.getFileNames(),
+            currentBand: this.getCurrentBand(),
+            currentOp: this.getCurrentOp(),
+            currentType: this.getCurrentType()};
+
+    }
+
+    componentWillUnmount() {
+        if (this.unbinder) this.unbinder();
+        this.iAmMounted = false;
+    }
+
+    componentDidMount() {
+        this.iAmMounted = true;
+        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => {
+            if (this.iAmMounted) {
+                this.setState((state) => {
+                    const band = get(fields, ['threeBandColor', 'value'], '');
+                    const op = get(fields, ['operationOption', 'value'], '');
+                    const fileName = get(fields, ['fileName', 'value'], '');
+                    const fileType = get(fields, ['fileType', 'value'], 'fits');
+
+                    if (band !== state.currentBand || fileType !== state.currentType) {
+                        state.currentBand = band;
+                        state.currentType = fileType;
+                    } else {
+                        const fKey = (fileType === 'fits') ? band : fileType;
+
+                        if (fileName !== state.currentFileNames[fKey]) {
+                            state.currentFileNames[fKey] = fileName;
+                        }
+                    }
+                    if (op !== state.currentOp) {
+                        state.currentOp = op;
+                    }
 
 
-    var leftColumn = { display: 'inline-block', paddingLeft:63, verticalAlign:'middle', paddingBottom:30};
+                    return state;
+                });
+            }
+        });
+    }
 
-    var rightColumn = {display: 'inline-block',  paddingLeft:14};
+    getDefaultFileName(op, band) {
+        return makeFileName(this.plot, band);
+    }
 
-	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:'15px 5px 5px 5px'};
-    return (
+    render() {
+        const {currentType, currentBand, currentFileNames} = this.state;
+        const {isWs, popupId} = this.props;
+        const labelWidth = 100;
+        const fileName = (currentType === 'fits') ? currentFileNames[currentBand] : currentFileNames[currentType];
+        const renderOperationButtons = renderOperationOption(this.hasOperation, labelWidth);
+        const renderThreeBandButtons = renderThreeBand(this.hasThreeColorBand, this.colors, labelWidth);//true, ['Green','Red', 'Blue']);
+        const totalChildren = (isWs ? 3 : 2) +  // fileType + save as + (fileLocation)
+                              (renderOperationButtons ? 1 : 0) + (renderThreeBandButtons ? 1 : 0);
+        const childH = (totalChildren*(20+mTOP));
 
-        <FieldGroup groupKey='FITS_DOWNLOAD_FORM' keepState={true}>
-                <div style={ dialogStyle}>
-                        <div style={leftColumn}  title='Please select an option'> Type of files:  </div>
-                        <div style={rightColumn}>
-                            <RadioGroupInputField
-                                initialState={{
-                                    tooltip: 'Please select an option',
-                                    value : 'FITS'
-                                    //move the label as a InputFieldLabel
-                                   }}
-                                options={ [
-                                      {label: 'FITS File', value: 'fits'},
-                                      {label: 'PNG File', value: 'png' },
-                                       {label: 'Region File', value: 'reg'}
-                                    ]}
-                                alignment={'vertical'}
-                                fieldKey='fileType'
-
-                            />
-
-                        </div>
-
-
-
+        const fileType = () => {
+            return (
+                <div style={{display: 'flex', marginTop: mTOP}}>
+                    <div>
+                        <RadioGroupInputField
+                            options={ [
+                                          {label: 'FITS File', value: 'fits'},
+                                          {label: 'PNG File', value: 'png' },
+                                          {label: 'Region File', value: 'reg'}
+                                        ]}
+                            fieldKey='fileType'
+                        />
+                    </div>
                 </div>
-                <div>
-                    {renderOperationButtons}
+            );
+        };
 
+        const fileOptions = () => {
+            return (
+                <div>
+                    {fileType()}
+                    {renderOperationButtons}
                     {renderThreeBandButtons}
                 </div>
-                <table style={{width:300}}>
+            );
+        };
+
+
+        return (
+
+            <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}}
+                        groupKey={this.props.groupKey} keepState={true}
+                        reducerFunc={FitsDLReducer({band: currentBand, fileName,
+                                                    currentBandFileNames: currentFileNames })}>
+                <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
+                             width: '100%', height: 'calc(100% - 70px)'}}>
+                    <DownloadOptionsDialog fromGroupKey={this.props.groupKey}
+                                           children={fileOptions()}
+                                           fileName={fileName}
+                                           labelWidth={labelWidth}
+                                           dialogWidth={'100%'}
+                                           dialogHeight={`calc(100% - ${childH}pt)`}
+                                           workspace={isWs}
+                    />
+                </div>
+                <table style={{width:'calc(100% - 20px)', margin: '20px 10px 10px 10px'}}>
                     <colgroup>
-                        <col style={{width: '20%'}} />
-                        <col style={{width: '60%'}} />
-                        <col style={{width: '20%'}} />
+                        <col style={{width: '20%'}}/>
+                        <col style={{width: '20%'}}/>
+                        <col style={{width: '60%'}}/>
                     </colgroup>
                     <tbody>
                     <tr>
-                        <td></td>
                         <td>
-                            <div style={{'textAlign':'center', marginBottom: 20}}>
+                            <div style={{textAlign:'left'}}>
                                 < CompleteButton
                                     text='Download'
-                                    onSuccess={ (request) => resultsSuccess(request, plotView )}
-                                    onFail={resultsFail}
-                                    dialogId='fitsDownloadDialog'
+                                    onSuccess={ (request) => resultsSuccess(request, this.plotView, popupId )}
+                                    onFail={resultsFail()}
+
                                 />
                             </div>
                         </td>
                         <td>
-                            <div style={{ textAlign:'center', marginBottom: 20}}>
-                               <HelpIcon helpId={'visualization.imageoptions'} />
+                            <div style={{textAlign:'left'}}>
+                                <button type='button' className='button std hl'
+                                        onClick={() => closePopup(popupId)}>Cancel
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <div style={{ textAlign:'right'}}>
+                                <HelpIcon helpId={'visualization.imageoptions'}/>
                             </div>
                         </td>
                     </tr>
                     </tbody>
-                 </table>
-        </FieldGroup>
-    );
+                </table>
+            </FieldGroup>
+        );
+    }
 
 }
 
+FitsDownloadDialogForm.propTypes = {
+    groupKey: PropTypes.string.isRequired,
+    popupId: PropTypes.string,
+    isWs: PropTypes.oneOfType([PropTypes.bool, PropTypes.string ])
+};
 
-function resultsFail(request) {
-    console.log(request + ': Error');
+
+const FitsDLReducer = ({band, fileName, currentBandFileNames}) => {
+
+    return (inFields, action) => {
+        if (!inFields) {
+            const defV = Object.assign({}, defValues);
+
+            set(defV, [fKeyDef.colorBand.fKey, 'value'], (band !== Band.NO_BAND.key) ? band : '');
+            set(defV, [fKeyDef.fileName.fKey, 'value'], fileName);
+            set(defV, [fKeyDef.wsSelect.fKey, 'value'], '');
+            set(defV, [fKeyDef.wsSelect.fKey, 'validator'], isWsFolder());
+            set(defV, [fKeyDef.fileName.fKey, 'validator'], fileNameValidator(fitsDownGroup));
+            set(defV, [crtFileNameKey, 'value'], currentBandFileNames);
+            return defV;
+        } else {
+
+            const getFileKey = () => {
+                const fType = get(inFields, [fKeyDef.fileType.fKey, 'value']);
+                return (fType === 'fits') ? get(inFields, [fKeyDef.colorBand.fKey, 'value'])|| Band.NO_BAND.key : fType;
+            };
+
+            switch (action.type) {
+                case FieldGroupCntlr.VALUE_CHANGE:
+                    if (action.payload.fieldKey === fKeyDef.colorBand.fKey ||
+                        action.payload.fieldKey === fKeyDef.fileType.fKey) {
+
+                        const fileKey = getFileKey();
+
+                        inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'],
+                            get(inFields, [crtFileNameKey, 'value'])[fileKey]);
+
+                    } else if (action.payload.fieldKey === fKeyDef.fileName.fKey) {
+                        const fileKey = getFileKey();
+
+                        inFields = updateSet(inFields, [crtFileNameKey, 'value', fileKey],
+                            action.payload.value);
+                    } else if (action.payload.fieldKey === fKeyDef.wsSelect.fKey) {
+                        // change the filename if a file is selected from the file picker
+                        const val = action.payload.value;
+
+                        if (val && isValidWSFolder(val, false).valid) {
+                            const fName = val.substring(val.lastIndexOf('/') + 1);
+                            inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
+                        }
+                    }
+                    break;
+                case FieldGroupCntlr.MOUNT_FIELD_GROUP:
+                    inFields = updateSet(inFields, [fKeyDef.colorBand.fKey, 'value'],
+                        ((band !== Band.NO_BAND.key) ? band : ''));
+                    inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fileName);
+                    inFields = updateSet(inFields, [crtFileNameKey, 'value'], currentBandFileNames);
+                    break;
+            }
+            return Object.assign({}, inFields);
+        }
+    };
+};
+
+
+function resultsFail() {
+    return (request) => {
+        const {wsSelect, fileLocation} = request;
+
+        if (fileLocation === WORKSPACE) {
+            if (!wsSelect) {
+                workspacePopupMsg('please select a workspace folder', 'Save to workspace');
+            } else {
+                const isAFolder = isValidWSFolder(wsSelect);
+                if (!isAFolder.valid) {
+                    workspacePopupMsg(isAFolder.message, 'Save to workspace');
+                }
+            }
+        }
+    };
 }
+
+function closePopup(popupId) {
+    dispatchHideDialog(popupId);
+    if (isDialogVisible(INFO_POPUP)) {
+        dispatchHideDialog(INFO_POPUP);
+    }
+}
+
+
 /**
  * This function process the request
  * @param request
- * @param plot
+ * @param plotView
+ * @param popupId
  */
-function resultsSuccess(request, plotView) {
+function resultsSuccess(request, plotView, popupId) {
     // var rel = showResults(true, request);
 
     const plot= primePlot(plotView);
@@ -334,57 +515,89 @@ function resultsSuccess(request, plotView) {
         console.log(request);
         return resultsFail(request);
     }
-    var ext;
-    var bandSelect;
-    var whichOp;
-    Object.keys(request).forEach(function (key) {
-        var value = request[key];
-        if (key === 'fileType') {
-            ext = value;
-        }
-        if (key === 'threeBandColor') {
-            bandSelect = value;
 
-        }
-        if (key === 'operationOption') {
-            whichOp = value;
-        }
-    });
+    const {fileType:ext, threeBandColor:bandSelect, operationOption:whichOp,
+           fileLocation, wsSelect} = request;
 
+    let {fileName} = request;
     var band = Band.NO_BAND;
     if (bandSelect) {
         band= Band.get(bandSelect);
     }
 
+    const rebuldFileName = () => {
+        if (ext) {
+            fileName = (fileName || makeFileName(plot, band)).replace('.fits', '.'+ ext.toLowerCase());
+        }
+    };
 
-    var fitsFile = !plotState.getOriginalFitsFileStr(band) || !whichOp ?
-        plotState.getWorkingFitsFileStr(band) :
-        plotState.getOriginalFitsFileStr(band);
+    rebuldFileName();
 
-    var getRegionsDes = (bSeperateText) => {
+    const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
+
+    if (isWorkspace()) {
+        if (!validateFileName(wsSelect, fileName)) return false;
+    }
+
+    const getRegionsDes = (bSeperateText) => {
         var regionDes;
 
         regionDes = makeRegionsFromPlot(plot, bSeperateText);
         return `[${regionDes.join(STRING_SPLIT_TOKEN)}]`;
     };
 
-    if (ext && ext.toLowerCase() == 'fits') {
-        var param={file: fitsFile, return:makeFileName(plot, band), log: true};
-        var  url = encodeUrl(getRootURL() + '/servlet/Download', param);
-        //download(getRootURL() + '/servlet/Download?file=' + fitsFile);
-        download(url);
+    const downloadFile = (params) => {
+        const url = isWorkspace() ? `${getRootURL()}sticky/CmdSrv`
+                                  : getRootURL() + 'servlet/Download';
+
+        if (isWorkspace()) {
+            doDownloadWorkspace(url, {params});
+        } else {
+            download(encodeUrl(url, params));
+        }
+
+        if (popupId) {
+            dispatchHideDialog(popupId);
+            if (isDialogVisible(INFO_POPUP)) {
+                dispatchHideDialog(INFO_POPUP);
+            }
+        }
+    };
+
+    const getWSCommand = (fName) => {
+        return (!isWorkspace()) ? {} :  {wsCmd: ServerParams.WS_PUT_IMAGE_FILE,
+                                        [ServerParams.COMMAND]: ServerParams.WS_PUT_IMAGE_FILE,
+                                        [WS_SERVER_PARAM.currentrelpath.key]: getWorkspacePath(wsSelect, fName),
+                                        [WS_SERVER_PARAM.newpath.key] : fName,
+                                        [WS_SERVER_PARAM.should_overwrite.key]: true};
+
+
+    };
+
+    const wsCmd = getWSCommand(fileName);
+
+    if (ext && ext.toLowerCase() === 'fits') {
+        const fitsFile = !plotState.getOriginalFitsFileStr(band) || !whichOp ?
+                          plotState.getWorkingFitsFileStr(band) :
+                          plotState.getOriginalFitsFileStr(band);
+
+        const param={file: fitsFile, return: fileName, log: true, fileLocation,...wsCmd};
+        downloadFile(param);
+
     } else if (ext && ext.toLowerCase() === 'png') {
 
         const {flipY, rotation, plotViewCtx:{rotateNorthLock} }= plotView;
+
         getImagePng(plotState, getRegionsDes(true), rotateNorthLock, rotation? ((rotation-180)+360)%360 : 0, flipY).then((result) => {
-        // getImagePng(plotState, getRegionsDes(true), rotateNorthLock, rotation, flipY).then((result) => {
-            var imgFile = get(result, 'ImageFileName');
+            //const imgFile = getReturnName(fileName || get(result, 'ImageFileName'));
+
+            const imgFile = get(result, 'ImageFileName');
 
             if (imgFile) {
-                var param = {file: imgFile, log: true};
-                var url = encodeUrl(getRootURL() + '/servlet/Download', param);
+                const param = isWorkspace() ? {file: imgFile,...wsCmd} :
+                              {file: imgFile, return: fileName, log: true};
 
-                download(url);
+                downloadFile(param);
             }
         }, () => {
             console.log('error');
@@ -393,13 +606,12 @@ function resultsSuccess(request, plotView) {
     } else if (ext && ext.toLowerCase() === 'reg') {
 
         saveDS9RegionFile(getRegionsDes(false)).then( (result ) => {
-            var rgFile = get(result, 'RegionFileName');
+            const rgFile = get(result, 'RegionFileName');
 
             if (rgFile) {
-                var param={file: rgFile, log: true};
-                var url = encodeUrl(getRootURL() + '/servlet/Download', param);
+                const param={file: rgFile, return:fileName, log: true, fileLocation,...wsCmd};
 
-                download(url);
+                downloadFile(param);
             }
         }, () => {
             console.log('error');
@@ -410,7 +622,6 @@ function resultsSuccess(request, plotView) {
 }
 
 function  makeFileName(plot,  band) {
-
 
     var plotState = plot.plotState;
     var req= plotState.getWebPlotRequest(band);
@@ -428,10 +639,11 @@ function  makeFileName(plot,  band) {
             retval= makeServiceFileName(req,plot, band);
             break;
         case RequestType.FILE:
-            retval= 'USE_SERVER_NAME';
+            //retval= 'USE_SERVER_NAME';
+            retval = makeTitleFileName(plot, band);
             break;
         case RequestType.URL:
-            retval= makeTitleFileName(band);
+            retval= makeTitleFileName(plot, band);
             break;
         case RequestType.ALL_SKY:
             retval= 'allsky.fits';
@@ -501,7 +713,7 @@ function  makeTitleFileName(plot, band) {
 
 
     var retval = plot.title;
-    if (band!=Band.NO_BAND) {
+    if (band !== Band.NO_BAND) {
         retval= retval + '-'+ band;
     }
     retval= getHyphenatedName(retval);

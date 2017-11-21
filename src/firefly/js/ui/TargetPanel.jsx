@@ -77,7 +77,7 @@ TargetPanelView.propTypes = {
     onChange: PropTypes.func.isRequired,
     value : PropTypes.string.isRequired,
     labelWidth : PropTypes.number,
-    onUnmountCB : PropTypes.func,
+    onUnmountCB : PropTypes.func
 };
 
 

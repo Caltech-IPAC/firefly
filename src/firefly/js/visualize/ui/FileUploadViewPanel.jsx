@@ -22,12 +22,15 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
+import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
+import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
 
 import './ImageSelectPanel.css';
 
 export const panelKey = 'FileUploadAnalysis';
 const  fileId = 'fileUpload';
 const  urlId = 'urlUpload';
+const  wsId = 'wsUpload';
 
 const SUMMARY_INDEX_COL = 0;
 const SUMMARY_TYPE_COL = 2;
@@ -197,6 +200,7 @@ export class FileUploadViewPanel extends PureComponent {
 
         this.state = this.getNextState();
         this.onLoading = this.onLoading.bind(this);
+        this.workspace = getWorkspaceConfig();
     }
 
     componentWillUnmount() {
@@ -227,7 +231,8 @@ export class FileUploadViewPanel extends PureComponent {
                 });
             } else if (uploadSrc !== this.state.uploadSrc) {
                 this.setState(this.getNextState(analysisFields));
-            } else if ((displayValue && displayValue !== this.state.displayValue) && uploadSrc === fileId) {  // in uploading the new file
+            } else if ((displayValue && displayValue !== this.state.displayValue) &&
+                       ((uploadSrc === fileId) || (uploadSrc === wsId))) {  // in uploading the new file, need check wsId case
                 this.setState({
                     isUploading: true,
                     displayValue
@@ -259,6 +264,13 @@ export class FileUploadViewPanel extends PureComponent {
                     }
                 }
             }
+            if (uploadSrc === wsId) {
+                const isWsUpdating = isAccessWorkspace();
+
+                if (isWsUpdating !== this.state.isWsUpdating) {
+                    this.setState({isWsUpdating});
+                }
+            }
         }
     }
 
@@ -267,7 +279,7 @@ export class FileUploadViewPanel extends PureComponent {
     }
 
     render() {
-        const {analysisSummary, analysisModel, highlightedRow, hlHeaderTable, isUploading=false} = this.state;
+        const {analysisSummary, analysisModel, highlightedRow, hlHeaderTable, isUploading=false, isWsUpdating=false} = this.state;
         const tableStyle = {width: '100%', height:'calc(100% - 40px)', overflow: 'hidden'};
         const pStyle = {fontWeight: 'bold', fontSize: 12, marginLeft:2, textAlign: 'center', height: 16};
         const summaryStyle = {height: 'calc(100% - 2px)', overflow: 'hidden'};
@@ -436,37 +448,52 @@ export class FileUploadViewPanel extends PureComponent {
 
         const uploadStyle = {marginTop: 12, marginBottom: 20};
         const uploadMethod = [{value: fileId, label: 'Upload file'},
-                              {value: urlId, label: 'Upload from URL'}];
+                              {value: urlId, label: 'Upload from URL'}]
+                             .concat(this.workspace ? [{value: wsId, label: 'Upload from workspace'}] : []);
         const {uploadSrc} = this.state;
         const lineH = 16;
 
         const uploadSection = () => {
             if (uploadSrc === fileId) {
                 return (
-                        <FileUpload
-                            wrapperStyle={{...uploadStyle, marginRight: 16}}
-                            fileNameStyle={{marginLeft: 0, fontSize: 12}}
-                            fieldKey={fileId}
-                            fileAnalysis={this.onLoading}
-                            innerStyle={{width: 80}}
-                            initialState={{tooltip: 'Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format',
+                    <FileUpload
+                        wrapperStyle={{...uploadStyle, marginRight: 16}}
+                        fileNameStyle={{marginLeft: 0, fontSize: 12}}
+                        fieldKey={fileId}
+                        fileAnalysis={this.onLoading}
+                        innerStyle={{width: 80}}
+                        initialState={{tooltip: 'Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format',
                                            label: ''
                                            }}/>
+
                 );
             } else if (uploadSrc === urlId) {
                 return (
-                        <FileUpload
-                            wrapperStyle={{...uploadStyle, marginRight: 32, width: '50%'}}
-                            fieldKey={urlId}
-                            fileAnalysis={this.onLoading}
-                            isFromURL={true}
-                            innerStyle={{width: '70%'}}
-                            initialState={{tooltip: 'Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format',
+                    <FileUpload
+                        wrapperStyle={{...uploadStyle, marginRight: 32, width: '50%'}}
+                        fieldKey={urlId}
+                        fileAnalysis={this.onLoading}
+                        isFromURL={true}
+                        innerStyle={{width: '70%'}}
+                        initialState={{tooltip: 'Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format',
                                            label: 'Enter URL of a file:'
                                          }}/>
                 );
+            } else if (uploadSrc === wsId) {
+                return (
+                    <WorkspaceUpload
+                        wrapperStyle={{...uploadStyle, marginRight: 32}}
+                        preloadWsFile={true}
+                        fieldKey={wsId}
+                        isLoading={isUploading || isWsUpdating}
+                        fileAnalysis={this.onLoading}
+                        initialState={{tooltip: 'Select a file in FITS, VOTABLE, CSV, TSV, or IPAC format from workspace',
+                                       label: ''
+                                       }}/>
+
+                );
             }
-        };
+        } ;
 
         const showSummary = () => {
             let summaryLine = analysisSummary ? analysisSummary.split('--', 1): ''; // only get one line summary
@@ -497,7 +524,7 @@ export class FileUploadViewPanel extends PureComponent {
                          {uploadSection()}
                          {showSummary()}
                     </div>
-                    {fileResultArea(fileId) }
+                    {fileResultArea() }
                 </div>
                 {helpIcon() }
             </FieldGroup>
@@ -766,7 +793,7 @@ function getExtensionMap(model) {
  */
 export function resultSuccess() {
     const tableTitle = (displayValue, uploadTabs) => {
-        const n = displayValue.lastIndexOf((uploadTabs === fileId ? '\\' : '\/'));
+        const n = displayValue.lastIndexOf((uploadTabs === fileId) ? '\\' : '\/');
         return  displayValue.slice(n+1);   // n = -1 or n >= 0
     };
 
@@ -776,8 +803,9 @@ export function resultSuccess() {
         if (!retVal.valid) return false;
 
         const {analysisModel, displayValue, selectResults} = retVal;
-        const {fileUpload, urlUpload} = request;
-        const uploadName = uploadTabs === fileId ? fileUpload : urlUpload;
+        const {fileUpload, urlUpload, wsUpload} = request;
+        const uploadName = (uploadTabs === fileId) ? fileUpload
+                                                   : ((uploadTabs === wsId) ? wsUpload : urlUpload);
 
         if (selectResults) {    // votable or fits
             const extensionMap = getExtensionMap(analysisModel);

@@ -20,6 +20,9 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchJobAdd} from '../../core/background/BackgroundCntlr.js';
+import {showTableDownloadDialog} from './TableSave.jsx';
+
+
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
@@ -39,7 +42,6 @@ export class TablePanel extends PureComponent {
         this.toggleFilter = this.toggleFilter.bind(this);
         this.toggleTextView = this.toggleTextView.bind(this);
         this.clearFilter = this.clearFilter.bind(this);
-        this.saveTable = this.saveTable.bind(this);
         this.toggleOptions = this.toggleOptions.bind(this);
         this.expandTable = this.expandTable.bind(this);
         this.onOptionUpdate = this.onOptionUpdate.bind(this);
@@ -97,14 +99,6 @@ export class TablePanel extends PureComponent {
     clearFilter() {
         this.tableConnector.onFilter('');
     }
-    saveTable() {
-        const {tbl_ui_id} = this.tableConnector;
-        if (this.tableConnector.tableModel) {
-            TblUtil.getAsyncTableSourceUrl(tbl_ui_id).then((url) => download(url));
-        } else {
-            download(TblUtil.getTableSourceUrl(tbl_ui_id));
-        }
-    }
     toggleOptions() {
         this.tableConnector.onToggleOptions(!this.state.showOptions);
     }
@@ -129,6 +123,7 @@ export class TablePanel extends PureComponent {
                 tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
                 filterInfo, filterCount, sortInfo, data, bgStatus} = this.state;
         var {leftButtons, rightButtons} =  this.state;
+        const {tbl_ui_id} = this.tableConnector;
 
         if (error) return <TableError {...{error, tbl_id, message: error}}/>;
         if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable, bgStatus}}/>;
@@ -171,7 +166,7 @@ export class TablePanel extends PureComponent {
                                         title={TT_VIEW}
                                         className={viewIcoStyle}/>
                                 {showSave &&
-                                    <div onClick={this.saveTable}
+                                    <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
                                             title={TT_SAVE}
                                             className='PanelToolbar__button save'/> }
                                 {showOptionButton &&
