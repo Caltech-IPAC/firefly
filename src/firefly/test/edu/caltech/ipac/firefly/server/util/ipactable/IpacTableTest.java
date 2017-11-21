@@ -64,8 +64,8 @@ public class IpacTableTest {
 
         JSONObject json = JsonTableUtil.toJsonTableModel(page, request);
         Assert.assertNotNull(json);
-        String jsonStr = json.toJSONString();
-        String expected = FileUtil.readFile(jsonResults);
+        String jsonStr = json.toJSONString().trim();
+        String expected = FileUtil.readFile(jsonResults).trim();
         Assert.assertEquals(expected, jsonStr);
 
 

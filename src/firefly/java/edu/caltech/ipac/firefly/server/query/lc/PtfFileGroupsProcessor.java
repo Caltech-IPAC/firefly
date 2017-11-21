@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
@@ -49,8 +50,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
         // create unique list of filesystem-based and url-based files
         Set<String> zipFiles = new HashSet<String>();
 
-        Collection<Integer> selectedRows = request.getSelectedRows();
-        DataGroupPart dgp = new SearchManager().getDataGroup(request.getSearchRequest());
+        ArrayList<Integer> selectedRows = new ArrayList<>(request.getSelectedRows());
 
         ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
         long fgSize = 0;
@@ -65,8 +65,9 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
         List<String> types = new ArrayList<String>();
 
-        IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, "oid", "pfilename", "fid", "pid", "ccdid", "ra", "dec");
+        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
+// because some columns below may not be in the resultset, we will select all(*) then determine if they exists.
+//                selectedRows, "oid", "pfilename", "fid", "pid", "ccdid", "ra", "dec");
 
         if (request.getParam("ProductLevel") == null) {
             request.setParam("ProductLevel", "l1");

@@ -61,7 +61,7 @@ public class CropTest extends FitsValidation{
 
         int min_x = 47, min_y = 50, max_x = 349, max_y = 435;
 
-        Fits  outFits = Crop.do_crop(inFits, min_x, min_y, max_x, max_y);
+        Fits  outFits = CropAndCenter.do_crop(inFits, min_x, min_y, max_x, max_y);
 
         validateFits(expectedFits,outFits);
 
@@ -85,7 +85,7 @@ public class CropTest extends FitsValidation{
 
         int min_x = 47, min_y = 50, max_x = 349, max_y = 435;
 
-        Fits  outFits = Crop.do_crop(inFits, min_x, min_y, max_x, max_y);
+        Fits  outFits = CropAndCenter.do_crop(inFits, min_x, min_y, max_x, max_y);
 
         FileOutputStream fo = new java.io.FileOutputStream(outFitsName);
         BufferedDataOutputStream o = new BufferedDataOutputStream(fo);

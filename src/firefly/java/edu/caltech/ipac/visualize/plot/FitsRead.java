@@ -6,6 +6,7 @@ import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
+import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.FitsFactory;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
@@ -652,17 +653,7 @@ public class FitsRead implements Serializable {
             throws FitsException {
         Header header = hdu.getHeader();
 
-        // first clone the header
-        Cursor iter = header.iterator();
-        String cards[] = new String[header.getNumberOfCards()];
-        HeaderCard card;
-        int i = 0;
-        while (iter.hasNext()) {
-            card = (HeaderCard) iter.next();
-            cards[i] = card.toString();
-            i++;
-        }
-        Header newHeader = new Header(cards);
+        Header newHeader = cloneHeaderFrom(header);
 
         newHeader.deleteKey("BITPIX");
         newHeader.setBitpix(-32);
@@ -1615,7 +1606,7 @@ public class FitsRead implements Serializable {
     }
 
 
-    public Header getHeader() {
+    public Header getHeader() throws HeaderCardException {
         return cloneHeader(header);
     }
 
@@ -1727,17 +1718,22 @@ public class FitsRead implements Serializable {
 
 
     }
-    static Header cloneHeader(Header header) {
-        // first collect cards from old header
+
+
+    static Header cloneHeaderFrom(Header header) throws HeaderCardException {
         Cursor iter = header.iterator();
-        String cards[] = new String[header.getNumberOfCards()];
-        int i = 0;
+        Header clonedHeader = new Header();
+
         while (iter.hasNext()) {
             HeaderCard card = (HeaderCard) iter.next();
-            cards[i] = card.toString();
-            i++;
+            clonedHeader.addLine(card.copy());
         }
-        Header clonedHeader = new Header(cards);
+
+        return clonedHeader;
+    }
+
+    static Header cloneHeader(Header header) throws HeaderCardException {
+        Header clonedHeader = cloneHeaderFrom(header);
 
         clonedHeader.resetOriginalSize();
         return clonedHeader;

@@ -201,7 +201,7 @@ function removeCoverage(tbl_id, decimatedTables) {
 }
 
 /**
- * 
+ * @param {boolean} useHiPS
  * @param {string} tbl_id
  * @param {string} viewerId
  * @param decimatedTables
@@ -227,7 +227,8 @@ function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
     if (table.totalRows>10000) {
         const cenCol= options.getCenterColumns(table);
         params.decimate=  serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
-        req = makeTableFunctionRequest(table.request, 'DecimateTable', 'coverage',  {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000)});
+        req = makeTableFunctionRequest(table.request, 'DecimateTable', 'coverage',
+            {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000), pageSize: MAX_ROW});
     }
 
     req.tbl_id = `cov-${tbl_id}`;
@@ -259,6 +260,7 @@ function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
 /**
  *
  * @param {string} viewerId
+ * @param {boolean} useHiPS
  * @param {TableData} table
  * @param {CoverageOptions} options
  * @param {string} tbl_id

@@ -47,6 +47,7 @@ clean {
   group = DEV_GROUP
 }
 
+
 test {
   description= 'Run Java and JavaScript unit test'
   group = DEV_GROUP
@@ -75,6 +76,16 @@ test {
   // listen to standard out and standard error of the test JVM(s)
   onOutput { descriptor, event ->
     logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+  }
+
+  doFirst {
+    // things needed before test run
+    copy {
+      from("$rootDir/config/log4j-test.properties")
+      into "${gwt.warDir}/WEB-INF/config"
+      rename("log4j-test.properties", "log4j.properties")
+      filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
+    }
   }
 }
 

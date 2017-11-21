@@ -15,6 +15,7 @@ import {getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, ne
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
@@ -674,7 +675,11 @@ export function chartDataUpdate(payload) {
 export function reducer(state={ui:{}, data:{}}, action={}) {
 
     if (!action.type.startsWith(TablesCntlr.DATA_PREFIX) && !action.type.startsWith(CHART_SPACE_PATH)){
-        return state;
+        if (action.type === REINIT_APP) {
+            return {ui:{}, data:{}};
+        } else {
+            return state;
+        }
     }
 
     const nstate = {...state};

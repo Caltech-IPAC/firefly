@@ -40,7 +40,7 @@ export function MultiItemViewerView(props) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {width:'100%', height:'100%'});
     }
     let container;
-    if (viewerItemIds.length===0) {
+    if (!viewerItemIds.length && !gridDefFunc) {
         container= false;
     }
     else if (layoutType==='single' || viewerItemIds.length===1) {  // SINGLE VIEW
@@ -48,7 +48,9 @@ export function MultiItemViewerView(props) {
         container= renderItemViewerFull(makeItemViewerFull,id);
     }
     else if (gridDefFunc) {  // GRID computed by a function
-        container= makeSparseGrid(viewerItemIds, gridDefFunc(viewerItemIds), makeItemViewer, sparseGridTitleLocation);
+        const gridDef= gridDefFunc(viewerItemIds);
+        container=  gridDef.length ?
+            makeSparseGrid(viewerItemIds, gridDef, makeItemViewer, sparseGridTitleLocation) : false;
     }
     else if (forceRowSize) {  // GRID with row size
         const col = viewerItemIds.length / forceRowSize + (viewerItemIds.length % forceRowSize);
@@ -194,20 +196,30 @@ function findAutoGridDim(size) {
  * @param sparseGridTitleLocation
  */
 function makeSparseGrid(viewerItemIds,gridDef,makeItemViewer, sparseGridTitleLocation) {
+
+
+    const sortedGridDef= gridDef.sort( (g1,g2) => {
+        if (!g1.plotIdAry.length && !g2.plotIdAry.length) return 0;
+        else if (g1.plotIdAry.length && g2.plotIdAry.length) return 0;
+        else if (g1.plotIdAry.length && !g2.plotIdAry.length) return -1;
+        else if (!g1.plotIdAry.length && g2.plotIdAry.length) return 1;
+    } );
+
+
     const itemPosAry= viewerItemIds.map( (plotId) => {
-        return gridDef.reduce( (obj, gridRow, idx) => {
+        return sortedGridDef.reduce( (obj, gridRow, idx) => {
             const colIdx= gridRow.plotIdAry.findIndex( (id) => id===plotId);
             if (colIdx>-1) {
                 obj.row= idx;
                 obj.col= colIdx;
-                obj.size= gridDef[idx].size;
+                obj.size= sortedGridDef[idx].size;
                 obj.plotId= plotId;
             }
             return obj;
         },{row:-1,col:-1});
     });
 
-    const itemPosTitle= gridDef.map( (gd,idx) => ({title:gd.title, noDataMessage: gd.noDataMessage,
+    const itemPosTitle= sortedGridDef.map( (gd,idx) => ({title:gd.title, noDataMessage: gd.noDataMessage,
                                                    row:idx, col:0, hasData:gd.plotIdAry.length>0,
                                                    dataSize: gd.size}));
 
@@ -268,17 +280,14 @@ function makeSparseGrid(viewerItemIds,gridDef,makeItemViewer, sparseGridTitleLoc
 const titleHeight= 30;
 
 function computeTitleYOffset(sparseGridTitleLocation, itemPosTitle,rowIdx) {
-    let titleOffset= sparseGridTitleLocation==='left' && itemPosTitle[0].hasData ? itemPosTitle[0].dataSize/2 : 0;
+    let titleOffset= sparseGridTitleLocation==='left' && itemPosTitle[rowIdx].hasData ? itemPosTitle[0].dataSize/2 : 0;
     for(let i= 0; (i<rowIdx); i++) {
-        if (sparseGridTitleLocation==='top') {
+        if (sparseGridTitleLocation==='top' || !itemPosTitle[i].hasData) {
             titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize+titleHeight : titleHeight;
         }
         else if (sparseGridTitleLocation==='left') {
-            titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize  : titleHeight;
+            titleOffset+= itemPosTitle[i].dataSize;
         }
-    }
-    if (!itemPosTitle[rowIdx].hasData && sparseGridTitleLocation==='left') {
-        titleOffset-= itemPosTitle[rowIdx].dataSize/2;
     }
     return titleOffset;
 }

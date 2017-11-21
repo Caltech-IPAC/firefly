@@ -1,16 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty}  from 'lodash';
+import {isEmpty, isUndefined, get}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 
 
-const convertValue= (value,options) => (!value) ? options[0].value : value;
+const convertValue= (value,options,defaultValue) => {
+    if (!value) {
+        return isUndefined(defaultValue) ? options[0].value : defaultValue;
+    } else {
+        return value;
+    }
+};
 
 function getProps(params, fireValueChange) {
 
-    var {value,options}= params;
-    value= convertValue(value,options);
+    var {value,options,defaultValue}= params;
+    value= convertValue(value,options,defaultValue);
 
     return Object.assign({}, params,
         {
@@ -20,8 +26,8 @@ function getProps(params, fireValueChange) {
 }
 
 function handleOnChange(ev, params, fireValueChange) {
-    var val = ev.target.value;
-    var checked = ev.target.checked;
+    var val = get(ev, 'target.value', '');
+    var checked = get(ev, 'target.checked', false);
 
     if (checked) {
         fireValueChange({ value: val, valid: true});
@@ -32,15 +38,21 @@ function handleOnChange(ev, params, fireValueChange) {
 const propTypes= {
     inline : PropTypes.bool,
     options: PropTypes.array.isRequired,
+    defaultValue: PropTypes.string,
     alignment:  PropTypes.string,
-    labelWidth : PropTypes.number
+    labelWidth : PropTypes.number,
+    labelStyle: PropTypes.object
+
 };
 
 function checkForUndefined(v,props) {
-    var optionContain = (v) => props.options.find((op) => op.value === v);
-
-    return isEmpty(props.options) ? v :
-           (!v ? props.options[0].value : (optionContain(v) ? v : props.options[0].value));
+    const {options, defaultValue} = props;
+    var optionContain = (v) => v && options.find((op) => op.value === v);
+    if (isEmpty(options) || optionContain(v)) {
+        return v;
+    } else {
+        return isUndefined(defaultValue) ? options[0].value : defaultValue;
+    }
 }
 
 

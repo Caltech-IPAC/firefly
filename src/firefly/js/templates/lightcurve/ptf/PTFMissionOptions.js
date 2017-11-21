@@ -83,8 +83,8 @@ export function isValidPTFTable() {
         return {errorMsg: undefined, isValid: true};
     }
     else {
-         const errorMsg = `The uploaded table is not valid. The PTF  option requires pid.
-                        Please select the "Other" upload option for tables that do not meet these requirements.`;
+         const errorMsg = `The uploaded table is not valid. The PTF option requires pid.
+                        Please select one of the other upload options`;
         return {errorMsg, isValid:false};
    }
 }

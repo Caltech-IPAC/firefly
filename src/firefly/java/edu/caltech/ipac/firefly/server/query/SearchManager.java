@@ -145,6 +145,8 @@ public class SearchManager {
         }
     }
 
+    // use edu.caltech.ipac.firefly.server.query.SearchServerCommands.SelectedValues instead
+    @Deprecated
     public List<String> getDataFileValues(File file, List<Integer> rows, String colName) throws DataAccessException, IOException {
 
         if (!file.canRead() ||
