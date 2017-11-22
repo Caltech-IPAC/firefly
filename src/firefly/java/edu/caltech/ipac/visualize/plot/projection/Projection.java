@@ -36,6 +36,7 @@ public class Projection implements Serializable {
     static public final int ARC          = 1008;
     static public final int SFL          = 1009;
     static public final int CEA          = 1010;
+    static public final int TPV          = 1011;
     static public final int UNSPECIFIED  = 1998;
     static public final int UNRECOGNIZED = 1999;
 
@@ -112,6 +113,9 @@ public class Projection implements Serializable {
 	case (GNOMONIC):
 	    image_pt = GnomonicProjection.RevProject( ra, dec, _params, useProjException);
 	    break;
+	case (TPV):
+        image_pt = TpvProjection.RevProject( ra, dec, _params, useProjException);
+        break;
 	case (PLATE):
 	    image_pt = PlateProjection.RevProject( ra, dec, _params, useProjException);
 	    break;
@@ -185,6 +189,9 @@ public class Projection implements Serializable {
 	case (GNOMONIC):
 	    pt = GnomonicProjection.FwdProject( x, y, _params);
 	    break;
+    case (TPV):
+        pt = TpvProjection.FwdProject( x, y, _params);
+        break;
 	case (PLATE):
 	    pt = PlateProjection.FwdProject( x, y, _params);
 	    break;
@@ -237,6 +244,7 @@ public class Projection implements Serializable {
 	switch (_params.maptype)
 	{
 	    case (GNOMONIC):
+        case (TPV):
 	    case (PLATE):
 	    case (ORTHOGRAPHIC):
 	    case (NCP):
@@ -269,6 +277,7 @@ public class Projection implements Serializable {
 	switch (_params.maptype)
 	{
 	    case (GNOMONIC):
+        case (TPV):
 	    case (CAR):
 	    case (CEA):
 	    case (SFL):
@@ -423,6 +432,9 @@ public class Projection implements Serializable {
         {
             case (Projection.GNOMONIC):
                 retval = "GNOMONIC";
+                break;
+            case (Projection.TPV):
+                retval = "TPV";
                 break;
             case (Projection.ORTHOGRAPHIC):
                 retval = "ORTHOGRAPHIC";
