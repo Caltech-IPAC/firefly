@@ -153,7 +153,7 @@ export const BG_STATE  = new Enum([
 
 
 export function bgDownload({dlRequest, searchRequest, selectInfo}, {key, onComplete, sentToBg}) {
-    dispatchComponentStateChange(key, {inProgress:false, bgStatus:undefined});
+    dispatchComponentStateChange(key, {inProgress:true, bgStatus:undefined});
     packageRequest(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString())
         .then((bgStatus) => {
             if (bgStatus) {
