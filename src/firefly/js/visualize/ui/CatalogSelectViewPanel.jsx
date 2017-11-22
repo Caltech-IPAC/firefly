@@ -142,7 +142,7 @@ function doCatalog(request) {
     const catPart= request[gkey];
     const spacPart= request[gkeySpacial];
     const {catalog, project, cattable}= catPart;
-    const {spatial}= spacPart;
+    const {spatial='AllSky'}= spacPart;  // if there is no 'spatial' field (catalog with no position information case)
 
     const conesize = convertAngle('deg', 'arcsec', spacPart.conesize);
     var title = `${catPart.project}-${catPart.cattable}`;
@@ -639,11 +639,13 @@ class CatalogDDList extends PureComponent {
         const optList = getSubProjectOptions(catmaster, selProj);
         const catTable = getCatalogOptions(catmaster, selProj, selCat).option;
 
+
         //HERE HERE HERE
         const currentIdx = get(fields, 'cattable.indexClicked', 0);
         const radius = parseFloat(catTable[currentIdx].cat[RADIUS_COL]);
         const coneMax= radius / 3600;
         const boxMax= coneMax*2;
+
         //HERE HERE HERE
 
         let catname0 = get(FieldGroupUtils.getGroupFields(gkey), 'cattable.value', catTable[0].value);
@@ -659,6 +661,13 @@ class CatalogDDList extends PureComponent {
 
         const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpacialOp')==='polygonWhenPlotExist';
 
+        // for 'pos' column
+        const POS_COL = master.cols.findIndex((oneCol) => {
+            const colName = get(oneCol, 'name', '');
+            return (colName && (colName.toLowerCase() === 'pos'));
+        });
+        const posVal = POS_COL >= 0 ? get(catTable, [currentIdx, 'cat', POS_COL], 'n').toLowerCase() : 'n';
+        const withPos = posVal.includes('y');
 
         return (
             <div>
@@ -694,7 +703,8 @@ class CatalogDDList extends PureComponent {
                     </div>
                     <div className='spatialsearch' style={catPanelStyle}>
                         <CatalogSearchMethodType groupKey={gkeySpacial} polygonDefWhenPlot={polygonDefWhenPlot}
-                                                 coneMax={coneMax} boxMax={boxMax} />
+                                                 coneMax={coneMax} boxMax={boxMax} withPos={withPos}
+                        />
                     </div>
                 </div>
                 {/*

@@ -105,7 +105,7 @@ function imagePlotOnSurvey(crtCatalogId, request) {
     var band = get(request, keyMap[b]);
     var sizeInDeg = parseFloat(request[keyMap['sizefield']]);
     // TODO This should go soon by using 'principal' and file_type in IbeDataSource server side:
-    var filter = `file_type='science' and fname like '%.mosaic.fits'`; //extra filter?
+    var filter = 'file_type= \'science\' and fname like \'%.mosaic.fits\''; //extra filter?
     var xtraFilter = getPanelCatalogs()[crtCatalogId].Symbol.toLowerCase();
     var wpr = null;
 

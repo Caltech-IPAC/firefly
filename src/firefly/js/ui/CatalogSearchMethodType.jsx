@@ -70,12 +70,11 @@ export class CatalogSearchMethodType extends PureComponent {
 
     render() {
         const {fields}= this.state;
-        const {groupKey, polygonDefWhenPlot}= this.props;
+        const {groupKey, polygonDefWhenPlot, withPos=true, searchOption}= this.props;
 
         const polyIsDef= polygonDefWhenPlot && primePlot(visRoot());
-
-
-        const searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
+        const searchType = withPos ? get(fields, 'spatial.value', SpatialMethod.Cone.value)
+                                   : SpatialMethod['All Sky'].value;
 
         return (
             <FieldGroup groupKey={groupKey} reducerFunc={searchMethodTypeReducer} keepState={true}
@@ -83,18 +82,7 @@ export class CatalogSearchMethodType extends PureComponent {
                 {renderTargetPanel(groupKey, searchType)}
                 <div
                     style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-                    <ListBoxInputField
-                        fieldKey='spatial'
-                        initialState={{
-                                          tooltip: 'Enter a search method',
-                                          label : 'Method Search:',
-                                          labelWidth: 80,
-                                          value: polyIsDef ? SpatialMethod.Polygon.value : SpatialMethod.Cone.value
-                                      }}
-                        options={ spatialOptions(this.props.searchOption) }
-                        wrapperStyle={{marginRight:'15px', padding:'10px 0 5px 0'}}
-                        multiple={false}
-                    />
+                    {spatialSelection(withPos, polyIsDef, searchOption)}
                     {sizeArea(searchType, get(fields, 'imageCornerCalc.value', 'image'))}
                 </div>
             </FieldGroup>
@@ -128,7 +116,35 @@ const spatialOptions = (searchTypes) => {
     return l;
 };
 
+const spatialSelection = (withPos, polyIsDef, searchOption) => {
+    const spatialWithPos = (
+        <ListBoxInputField
+            fieldKey='spatial'
+            initialState={{
+                              tooltip: 'Enter a search method',
+                              label : 'Method Search:',
+                              labelWidth: 80,
+                              value: polyIsDef ? SpatialMethod.Polygon.value : SpatialMethod.Cone.value
+                         }}
+            options={ spatialOptions(searchOption) }
+            wrapperStyle={{marginRight:'15px', padding:'10px 0 5px 0'}}
+            multiple={false}
+        />
+    );
+    const spatialWithoutPos = (
+        <div style={{display: 'flex',  padding: '13px 0px 9px', marginRight: 15, width: 180}}>
+            <div style={{paddingRight: 4, width: 80}}>
+                Method Search:
+            </div>
+            <div style={{paddingLeft: 4}}>
+                {'All Sky'}
+            </div>
+        </div>
+    );
 
+    return withPos ?  spatialWithPos : spatialWithoutPos;
+
+};
 
 function calcCornerString(pv, method) {
     if (method==='clear' || !pv) return '';
@@ -206,6 +222,11 @@ function radiusInField({label = 'Radius:'}) {
                          label={label}/>
     );
 }
+
+radiusInField.propTypes = {
+   label: PropTypes.string
+};
+
 function sizeArea(searchType, imageCornerCalc) {
 
     if (searchType === SpatialMethod.Cone.value) {
@@ -322,15 +343,17 @@ function sizeArea(searchType, imageCornerCalc) {
     } else {
         return (
 
-            <div style={{border: '1px solid #a3aeb9', padding:'30px 30px'}}>
-                Search the catalog with no spatial constraints
+            <div style={{border: '1px solid #a3aeb9', padding:'30px 30px', whiteSpace: 'pre-line'}}>
+                {'Search the catalog with no spatial constraints'}
             </div>
         );
     }
 }
 
 function renderTargetPanel(groupKey, searchType) {
-    const visible = searchType === SpatialMethod.Cone.value || searchType === SpatialMethod.Box.value || searchType === SpatialMethod.Elliptical.value;
+    const visible = (searchType === SpatialMethod.Cone.value ||
+                     searchType === SpatialMethod.Box.value ||
+                     searchType === SpatialMethod.Elliptical.value);
     return (
         <div className='intarget'>
             {visible && <TargetPanel labelWidth={100} groupKey={groupKey}/>}
@@ -343,7 +366,10 @@ function renderTargetPanel(groupKey, searchType) {
 CatalogSearchMethodType.propTypes = {
     groupKey: PropTypes.string.isRequired,
     polygonDefWhenPlot: PropTypes.bool,
-    searchOption: PropTypes.arrayOf(PropTypes.string)
+    searchOption: PropTypes.arrayOf(PropTypes.string),
+    coneMax: PropTypes.number,
+    boxMax: PropTypes.number,
+    withPos: PropTypes.bool
 };
 
 /*CatalogSearchMethodType.contextTypes = {
@@ -395,8 +421,8 @@ function searchMethodTypeReducer(inFields, action) {
                     if (!sel && cornerCalcV === 'area-selection') {
                         rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'image'});
                     }
-                    const {value:cornerCalcV}= rFields.imageCornerCalc;
-                    const v = calcCornerString(pv, cornerCalcV);
+                    const {value:cornerCalcV2}= rFields.imageCornerCalc;
+                    const v = calcCornerString(pv, cornerCalcV2);
                     rFields.polygoncoords = clone(inFields.polygoncoords, {value: v});
                 }
             }
