@@ -32,7 +32,7 @@ import static edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMaster
  * 10/05/17 LZ modified and added some methods
  */
 public class IrsaMasterDataSource implements ImageMasterDataSourceType {
-    private final static String masterTable = "/edu/caltech/ipac/firefly/resources/irsa-master-table.csv";
+    private final static String masterTable = "/edu/caltech/ipac/firefly/resources/irsa-image-master-table.csv";
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final String IRSA_MASTER_TABLE = AppProperties.getProperty("irsa.mastertable.location",masterTable);
 
@@ -165,7 +165,7 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
                return dg;
            }
        };
-         List<ImageMasterDataEntry> dataList = s.createDataList("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/java/edu/caltech/ipac/firefly/resources/irsa-master-table-test.csv");
+         List<ImageMasterDataEntry> dataList = s.createDataList("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/java/edu/caltech/ipac/firefly/resources/irsa-master-table-rev2.csv");
 //         ImageMasterDataEntry o = (ImageMasterDataEntry) dataList.get(0);
          for(ImageMasterDataEntry o:dataList){
              System.out.println(makeJsonObj(o.getDataMap()));
