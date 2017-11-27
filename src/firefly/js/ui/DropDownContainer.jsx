@@ -10,7 +10,7 @@ import {get, pick} from 'lodash';
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
-import {ImageSearchPanelV2} from './ImageSearchPanelV2.jsx';
+import {ImageSearchPanelV2} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';

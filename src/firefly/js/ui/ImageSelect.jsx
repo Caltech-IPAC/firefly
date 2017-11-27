@@ -331,6 +331,7 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                 <RadioGroupInputField
                     key={`${groupKey}_${fieldKey}`}
                     fieldKey={`IMAGES_${groupKey}`}
+                    isGrouped={true}
                     initialState={{
                             options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
                             value: '',
