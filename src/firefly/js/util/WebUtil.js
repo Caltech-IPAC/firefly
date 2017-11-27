@@ -57,6 +57,7 @@ export function loadScript(scriptName) {
             const head= document.getElementsByTagName('head')[0];
             const script= document.createElement('script');
             script.type= 'text/javascript';
+            script.charset= 'utf-8';
             script.src= scriptName;
             head.appendChild(script);
             script.onload= (ev) => resolve(ev);
