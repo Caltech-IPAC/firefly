@@ -137,7 +137,7 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
                 Method Search:
             </div>
             <div style={{paddingLeft: 4}}>
-                {'All Sky'}
+                All Sky
             </div>
         </div>
     );
@@ -344,7 +344,7 @@ function sizeArea(searchType, imageCornerCalc) {
         return (
 
             <div style={{border: '1px solid #a3aeb9', padding:'30px 30px', whiteSpace: 'pre-line'}}>
-                {'Search the catalog with no spatial constraints'}
+                Search the catalog with no spatial constraints
             </div>
         );
     }
