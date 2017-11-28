@@ -155,7 +155,7 @@ class SizeInputFieldView extends PureComponent {
 
     render() {
         var {displayValue, valid, unit} = this.state;
-        var {min, max, wrapperStyle={}} = this.props;
+        var {min, max, wrapperStyle={}, feedbackStyle={}} = this.props;
         var sign = unitSign[unit];
         var minmsg = `${sizeFromDeg(min, unit)}`;
         var maxmsg = `${sizeFromDeg(max, unit)}`;
@@ -199,7 +199,9 @@ class SizeInputFieldView extends PureComponent {
                         tooltip={'unit of the size'}
                     />
                 </div>
-                {showFeedback()}
+                <div style={feedbackStyle}>
+                    {showFeedback()}
+                </div>
             </div>
         );
     }
@@ -217,7 +219,8 @@ SizeInputFieldView.propTypes = {
     value: PropTypes.string,
     valid: PropTypes.bool,
     showFeedback: PropTypes.bool,
-    wrapperStyle: PropTypes.object
+    wrapperStyle: PropTypes.object,
+    feedbackStyle: PropTypes.object
 };
 
 SizeInputFieldView.defaultProps = {

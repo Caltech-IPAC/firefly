@@ -41,14 +41,14 @@ const propTypes= {
     defaultValue: PropTypes.string,
     alignment:  PropTypes.string,
     labelWidth : PropTypes.number,
-    labelStyle: PropTypes.object
-
+    labelStyle: PropTypes.object,
+    isGrouped: PropTypes.bool
 };
 
 function checkForUndefined(v,props) {
-    const {options, defaultValue} = props;
+    const {options, defaultValue, isGrouped=false} = props;
     var optionContain = (v) => v && options.find((op) => op.value === v);
-    if (isEmpty(options) || optionContain(v)) {
+    if (isEmpty(options) || optionContain(v) || isGrouped) {
         return v;
     } else {
         return isUndefined(defaultValue) ? options[0].value : defaultValue;

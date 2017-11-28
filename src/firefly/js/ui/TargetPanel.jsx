@@ -29,7 +29,7 @@ class TargetPanelView extends PureComponent {
     }
 
     render() {
-        const {showHelp, feedback, valid, message, onChange, value, labelWidth, children, resolver}= this.props;
+        const {showHelp, feedback, valid, message, onChange, value, labelWidth, children, resolver, feedbackStyle}= this.props;
         let positionField = (<InputFieldView
                                 valid={valid}
                                 visible= {true}
@@ -59,7 +59,7 @@ class TargetPanelView extends PureComponent {
                         wrapperStyle={{}}
                     />
                 </div>
-                <TargetFeedback showHelp={showHelp} feedback={feedback}/>
+                <TargetFeedback {...{showHelp, feedback, style:feedbackStyle}}/>
             </div>
         );
     }
@@ -77,7 +77,8 @@ TargetPanelView.propTypes = {
     onChange: PropTypes.func.isRequired,
     value : PropTypes.string.isRequired,
     labelWidth : PropTypes.number,
-    onUnmountCB : PropTypes.func
+    onUnmountCB : PropTypes.func,
+    feedbackStyle: PropTypes.object
 };
 
 

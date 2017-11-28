@@ -26,7 +26,7 @@ export class ImageSelect extends PureComponent {
     }
 
     render() {
-        const {style, imageMasterData, groupKey, multiSelect=true} = this.props;
+        const {style, imageMasterData, groupKey, title, multiSelect=true} = this.props;
         imageMasterData.forEach((d)=> {
             ['missionId', 'project', 'subProject'].forEach((k) => d[k] = d[k] || '');
         });
@@ -46,7 +46,7 @@ export class ImageSelect extends PureComponent {
 
         return (
             <div style={style} className='ImageSelect'>
-                <FilterPanel {...{imageMasterData}}/>
+                <FilterPanel {...{imageMasterData, title}}/>
                 <DataProductList {...{filteredImageData, groupKey, multiSelect, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
             </div>
         );
@@ -106,7 +106,7 @@ function fieldsReducer(imageMasterData={}) {
 /*--------------------------- Filter Panel ---------------------------------------------*/
 
 // eslint-disable-next-line
-function FilterPanel({imageMasterData, title='4. Select Data Set', onChange}) {
+function FilterPanel({imageMasterData, title='Select Data Set', onChange}) {
     return(
         <div className='FilterPanel'>
             <div className='FilterPanel__toolbar'>{title}</div>
@@ -329,8 +329,9 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
             <div className='DataProductList__item--band'>
                 {label}
                 <RadioGroupInputField
-                    key={fieldKey}
+                    key={`${groupKey}_${fieldKey}`}
                     fieldKey={`IMAGES_${groupKey}`}
+                    isGrouped={true}
                     initialState={{
                             options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
                             value: '',
