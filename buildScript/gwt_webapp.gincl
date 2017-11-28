@@ -163,6 +163,15 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
 
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
   }
+  doLast {
+    // plotly script load fails if loaded from amd environment
+    // with a script tag (as firefly loads it)
+    // see DM-11341 for details
+    println ">> updating plotly script"
+    ant.replaceregexp(match:'\\&\\&define\\.amd', replace:'\\&\\&false', flags:'g', byline:true) {
+      fileset(dir: "${buildDir}/war/", includes: 'plotly*min.js')
+    }
+  }
 }
 
 

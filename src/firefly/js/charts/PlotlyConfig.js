@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {loadScript} from '../util/WebUtil.js';
+import {loadScript, logError} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 
 
@@ -21,20 +21,27 @@ function initPlotLyRetriever(loadNow) {
             return loadedPlotly ? Promise.resolve(loadedPlotly) : Promise.reject(Error(LOAD_ERR_MSG));
         }
 
-        const script= `${getRootURL()}/${PLOTLY_SCRIPT}`;
+        const script= `${getRootURL()}${PLOTLY_SCRIPT}`;
         if (!plotlyLoadBegin) {
             plotlyLoadBegin= true;
             loadScript(script).then( () => {
                 loadedPlotly= window.Plotly;
-                waitingResolvers.forEach( (r) => r(loadedPlotly));
-                waitingResolvers= undefined;
-                waitingRejectors= undefined;
+                if (loadedPlotly) {
+                    waitingResolvers.forEach((r) => r(loadedPlotly));
+                } else {
+                    logError(`Plotly object is not available after ${script} is loaded`);
+                    const err= Error(LOAD_ERR_MSG);
+                    loadedPlotlyFailed= true;
+                    waitingRejectors.forEach( (r) => r(err));
+                }
+                waitingResolvers = [];
+                waitingRejectors = [];
             }).catch( () => {
                 const err= Error(LOAD_ERR_MSG);
-                waitingRejectors.forEach( (r) => r(err));
                 loadedPlotlyFailed= true;
-                waitingResolvers= undefined;
-                waitingRejectors= undefined;
+                waitingRejectors.forEach( (r) => r(err));
+                waitingResolvers= [];
+                waitingRejectors= [];
             });
         }
         return new Promise( function(resolve, reject) {
@@ -50,4 +57,4 @@ function initPlotLyRetriever(loadNow) {
 /**
  * function to return a promise to PlotLy
  */
-export const getPlotLy= initPlotLyRetriever(true);
+export const getPlotLy= initPlotLyRetriever(false);
