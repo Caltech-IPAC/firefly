@@ -18,16 +18,23 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {parseWorldPt} from '../../visualize/Point.js';
 import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
-import {dispatchPlotImage} from '../../visualize/ImagePlotCntlr.js';
+import {dispatchPlotImage, visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import {ImageSelect} from '../../ui/ImageSelect.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
+import {NewPlotMode, findViewerWithItemId, getMultiViewRoot, getViewer, getAViewFromMultiView, IMAGE} from '../MultiViewCntlr.js';
+import {getPlotViewById} from '../PlotViewUtil.js';
+
 
 import './ImageSearchPanelV2.css';
 
 
 const FG_KEYS = {
-    image_type: 'ImageSearchPanel_imageType',
+    main: 'ImageSearchPanel_imageType',
     single: 'ImageSearchPanel_single',
     red: 'ImageSearchPanel_red',
     green: 'ImageSearchPanel_green',
@@ -35,6 +42,101 @@ const FG_KEYS = {
 };
 
 
+var imageMasterData;        // latest imageMasterData retrieved from server
+
+/**
+ * @typedef {Object} ContextInfo
+ * @property {string} plotId    The plotId to replace.  undefined to ADD.
+ * @property {string} viewerId  The viewerId to add to.
+ * @property {string} multiSelect ImageSelect mode to render in.
+ */
+/**
+ * returns the context information
+ * @returns {ContextInfo}
+ */
+function getContexInfo() {
+    const mvroot = getMultiViewRoot();
+    let plotId = get(visRoot(), 'activePlotId');
+    let viewerId = plotId && findViewerWithItemId(mvroot, plotId, IMAGE);
+    let viewer = viewerId && getViewer(mvroot, viewerId);
+
+    if (!viewer || canNotUpdatePlot(viewer)) {
+        // viewer does not exists or cannot be updated, find another one that can.
+        viewer = getAViewFromMultiView(mvroot, IMAGE);
+        viewerId =  viewer && viewer.viewerId;
+    }
+    if (canAddNewPlot(viewer)) {
+        // don't replace if add is allowed
+        plotId = undefined;
+    }
+    const multiSelect = !plotId;  // when replace, set to single select mode
+    return {plotId, viewerId, multiSelect};
+}
+
+/*-----------------------------------------------------------------------------------------*/
+/* search panel used in drop-down                                                          */
+/*-----------------------------------------------------------------------------------------*/
+export function ImageSearchDropDown({gridSupport}) {
+    const {plotId, viewerId, multiSelect} = getContexInfo();
+    return (
+        <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+                    groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
+                    params = {{hideOnInvalid: false}}
+                    onSubmit = {(request) => onSearchSubmit({request, plotId, viewerId, gridSupport})}
+                    onError = {searchFailed}
+                    onCancel = {dispatchHideDropDown}>
+            <ImageSearchPanelV2 {...{multiSelect}}/>
+            {gridSupport && <GridSupport/>}
+        </FormPanel>
+    );
+}
+function GridSupport() {
+    return (
+        <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
+            <div className='ImageSearch__section--title' style={{width: 138}}>Add to new grid cell</div>
+            <CheckboxGroupInputField
+                fieldKey='createNewCell'
+                options={[{label: '', value: 'newCell'}]}
+                labelWidth = {0}
+            />
+        </FieldGroup>
+    );
+}
+
+/*-----------------------------------------------------------------------------------------*/
+/* search panel used in pop-up                                                             */
+/*-----------------------------------------------------------------------------------------*/
+const popupId = 'ImageSelectPopup';
+export function showImageSelPanel(popTitle) {
+    const {plotId, viewerId, multiSelect} = getContexInfo();
+    const onSubmit = (request) => {
+        onSearchSubmit({request, plotId, viewerId}) && dispatchHideDialog(popupId);
+    };
+
+    const popup = (
+        <PopupPanel title={popTitle}>
+            <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+                        style = {{padding: '0 5px'}}
+                        groupKey = {Object.values(FG_KEYS)}
+                        includeUnmounted={true}
+                        submitText='Load'
+                        onSubmit = {onSubmit}
+                        onError = {searchFailed}
+                        onCancel = {() => dispatchHideDialog(popupId)}>
+                <ImageSearchPanelV2 {...{title:'', multiSelect}}/>
+            </FormPanel>
+        </PopupPanel>
+    );
+
+    DialogRootContainer.defineDialog(popupId, popup);
+    dispatchShowDialog(popupId);
+}
+/*-----------------------------------------------------------------------------------------*/
+
+
+/**
+ *
+ */
 export class ImageSearchPanelV2 extends PureComponent {
 
     constructor(props) {
@@ -56,8 +158,11 @@ export class ImageSearchPanelV2 extends PureComponent {
                 if (this.iAmMounted && fields) this.setState({[key]: fields});
             }));
         getImageMasterData()
-            .then( (imageMasterData) => {
-                this.iAmMounted && this.setState({imageMasterData});
+            .then( (newImageMasterData) => {
+                if (this.iAmMounted) {
+                    imageMasterData = newImageMasterData;
+                    this.setState({imageMasterData});
+                }
             }).catch( (e) => {
                 console.error(e);
                 this.iAmMounted && this.setState({showError:true});
@@ -65,10 +170,10 @@ export class ImageSearchPanelV2 extends PureComponent {
     }
 
     render() {
-        const {archiveName='Archive', title='Image Search', plotId, plotGroupId}= this.props;
+        const {archiveName='Archive', title='Image Search'}= this.props;
         let {multiSelect=true} = this.props;
         const {imageMasterData, showError= false}= this.state;
-        const isThreeColor = getFieldVal(FG_KEYS.image_type, 'imageType') === 'threeColor';
+        const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
         multiSelect = !isThreeColor && multiSelect;
 
         if (showError) {
@@ -83,16 +188,9 @@ export class ImageSearchPanelV2 extends PureComponent {
             return (
                 <div>
                     <div className='ImageSearch__title'>{title}</div>
-                    <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
-                                groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
-                                params = {{hideOnInvalid: false}}
-                                onSubmit = {(request) => onSearchSubmit(request, imageMasterData, plotId, plotGroupId)}
-                                onError = {(request) => searchFailed(request)}
-                                onCancel = {hideSearchPanel}>
-                        <ImageType/>
-                        { isThreeColor && <ThreeColor {...{imageMasterData, multiSelect, archiveName}}/>}
-                        {!isThreeColor && <SingleChannel {...{groupKey: FG_KEYS.single, imageMasterData, multiSelect, archiveName}}/>}
-                    </FormPanel>
+                    <ImageType/>
+                    { isThreeColor && <ThreeColor {...{imageMasterData, multiSelect, archiveName}}/>}
+                    {!isThreeColor && <SingleChannel {...{groupKey: FG_KEYS.single, imageMasterData, multiSelect, archiveName}}/>}
                 </div>
             );
         } else {
@@ -105,8 +203,6 @@ ImageSearchPanelV2.propTypes = {
     title:       PropTypes.string,
     archiveName: PropTypes.string,
     multiSelect: PropTypes.bool,
-    plotId:      PropTypes.string,
-    plotGroupId: PropTypes.string
 };
 
 // eslint-disable-next-line
@@ -144,7 +240,7 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
 
 function ImageType({}) {
     return (
-        <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.image_type} keepState={true}>
+        <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
             <div className='ImageSearch__section--title'>1. Choose image type</div>
             <RadioGroupInputField
                 initialState= {{ defaultValue: 'singleChannel',
@@ -159,7 +255,7 @@ function ImageType({}) {
 
 // eslint-disable-next-line
 function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive'}) {
-    const isThreeColor = getFieldVal(FG_KEYS.image_type, 'imageType') === 'threeColor';
+    const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
     const options = [   {label: archiveName, value: 'archive'},
                         {label: 'Upload', value: 'upload'},
                         {label: 'URL', value: 'url'}];
@@ -190,7 +286,6 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const style = {width: '100%', height: 350};
     const targetStyle = {height: 40};
     const sizeStyle = {margin: '-5px 0 0 36px'};
-    const fields= get(FieldGroupUtils.getGroupFields(groupKey), [`IMAGES_${groupKey}`]);
 
     return (
         <div>
@@ -252,7 +347,7 @@ function addChangeListener(key, changeListener) {
     changeListeners[key] = changeListener;
 }
 function mainReducer(inFields, action) {
-    // put reducing logic here is any
+    // put reducing logic here if any
 
     // call all listeners for
     inFields = Object.values(changeListeners).reduce( (p, l) => l(p, action), inFields);
@@ -260,18 +355,14 @@ function mainReducer(inFields, action) {
 };
 
 
-function hideSearchPanel() {
-    dispatchHideDropDown();
-}
-
-
-function onSearchSubmit(request, imageMasterData, plotId, plotGroupId) {
+function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId}) {
     const validInfo= validateInput(request);
     if (!validInfo.valid)  {
         showInfoPopup(validInfo.message);
         return false;
     }
-    doImageSearch(request, imageMasterData, plotId, plotGroupId);
+    doImageSearch({imageMasterData, request, gridSupport, plotId, plotGroupId, viewerId});
+    return true;
 }
 
 function searchFailed(request) {
@@ -281,10 +372,8 @@ function searchFailed(request) {
 
 
 //-------------------------------------------------------------------------
-// ----------- validation and successful results Code - todo: needs edit to work with new UI
+// ----------- validation and successful results Code
 //-------------------------------------------------------------------------
-
-
 function getValidatedInfo(request, isThreeColor) {
 
     if (!request) {
@@ -316,7 +405,7 @@ function getValidatedInfo(request, isThreeColor) {
 }
 
 function validateInput(allFields) {
-    const isThreeColor = getFieldVal(FG_KEYS.image_type, 'imageType') === 'threeColor';
+    const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
 
     if (isThreeColor) {
         const resps = [FG_KEYS.red, FG_KEYS.green, FG_KEYS.blue].map((band) => {
@@ -353,14 +442,33 @@ function validateInput(allFields) {
 //------------------------------------------------------------------
 //------ The code below should work in the final product
 //------------------------------------------------------------------
+function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId}) {
 
-function doImageSearch(allFields, imageMasterData, plotId, plotGroupId) {
-    const isThreeColor = getFieldVal(FG_KEYS.image_type, 'imageType') === 'threeColor';
+    if (plotId) {
+        plotGroupId = getPlotViewById(visRoot(), plotId).plotGroupId;
+        viewerId = findViewerWithItemId(getMultiViewRoot(), plotId, IMAGE);
+    } else if (viewerId) {
+        //IRSA-142 LZ 4/07/17
+        //When the image from different groups, the wcsMatch does not work since the match only matches the image within the same group.
+        //If the group id exists, add the image into the same group
+        const viewer = getViewer(getMultiViewRoot(), viewerId);
+        if (viewer && viewer.itemIdAry[0]) {
+            const pv = getPlotViewById(visRoot(), viewer.itemIdAry[0]);
+            if (pv) {
+                plotGroupId = pv.plotGroupId;
+            }
+        }
+    }
 
+    if (get(request, [FG_KEYS.main, 'createNewCell']) === 'newCell')  {
+        viewerId = newCellViewerId();
+    }
+
+    const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
     if (isThreeColor){
-        const redReq = get(allFields, FG_KEYS.red);
-        const greenReq = get(allFields, FG_KEYS.green);
-        const blueReq = get(allFields, FG_KEYS.blue);
+        const redReq = get(request, FG_KEYS.red);
+        const greenReq = get(request, FG_KEYS.green);
+        const blueReq = get(request, FG_KEYS.blue);
 
         const wpSet = [];
         [redReq, greenReq, blueReq].forEach( (req) => {
@@ -369,11 +477,11 @@ function doImageSearch(allFields, imageMasterData, plotId, plotGroupId) {
                 wpSet.push(wprs[0]);
             } else { wpSet.push(undefined); }
         });
-        dispatchPlotImage({threeColor:true, wpRequest: wpSet});
+        dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId});
 
     } else {
-        const wprs = makeWebPlotRequests(get(allFields, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
-        wprs.forEach( (r) => dispatchPlotImage({wpRequest:r}));
+        const wprs = makeWebPlotRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
+        wprs.forEach( (r) => dispatchPlotImage({wpRequest:r, viewerId}));
     }
 }
 
@@ -412,9 +520,25 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
 
 //=========utility?====================
 
-const rootId='conceptPid-';
-let rootIdCnt=1;
-function makeWPRequest(wp, radius, params, plotId=rootId+rootIdCnt, plotGroupId='multiImageGroup', type) {
+const canAddNewPlot = (viewer) => (!viewer.viewerId.includes('RESERVED') && (viewer.canReceiveNewPlots === NewPlotMode.create_replace.key));
+const canNotUpdatePlot = (viewer) => (viewer.viewerId.includes('RESERVED') || (viewer.canReceiveNewPlots === NewPlotMode.none.key));
+
+// this is used by gridSupport
+const newCellViewerId = (() => {
+    let newCellCnt=0;
+    return () => {
+        return `autoCreatedCell--${++newCellCnt}`;
+    };
+})();
+
+const nextPlotId = (() => {
+    let rootIdCnt=0;
+    return () => {
+        return `imageSearchPid-${++rootIdCnt}`;
+    };
+})();
+
+function makeWPRequest(wp, radius, params, plotId=nextPlotId(), plotGroupId='multiImageGroup', type) {
     const inReq= Object.assign( {
         [WPConst.PLOT_ID] : plotId,
         [WPConst.WORLD_PT] : wp.toString(),
@@ -424,11 +548,10 @@ function makeWPRequest(wp, radius, params, plotId=rootId+rootIdCnt, plotGroupId=
         [WPConst.TYPE] : type
     }, params);
 
-    rootIdCnt++;
     return WebPlotRequest.makeFromObj(inReq);
 }
 
-function makeURLWebRequest(request, plotId=rootId+rootIdCnt, plotGroupId='multiImageGroup', type) {
+function makeURLWebRequest(request, plotId=nextPlotId(), plotGroupId='multiImageGroup', type) {
 
     var url = get(request, 'txURL');
     const params = {
@@ -438,12 +561,10 @@ function makeURLWebRequest(request, plotId=rootId+rootIdCnt, plotGroupId='multiI
         [WPConst.GROUP_LOCKED] : 'true',
         [WPConst.TYPE] : type
     };
-    rootIdCnt++;
-
     return  WebPlotRequest.makeFromObj(params);
 }
 
-function makeFitsWebRequest(request, plotId=rootId+rootIdCnt, plotGroupId='multiImageGroup', type) {
+function makeFitsWebRequest(request, plotId=nextPlotId(), plotGroupId='multiImageGroup', type) {
 
     var fits = get(request, 'fileUpload');
 
@@ -454,8 +575,5 @@ function makeFitsWebRequest(request, plotId=rootId+rootIdCnt, plotGroupId='multi
         [WPConst.GROUP_LOCKED] : 'true',
         [WPConst.TYPE] : type
     };
-    rootIdCnt++;
     return  WebPlotRequest.makeFromObj(params);
-
-
 }

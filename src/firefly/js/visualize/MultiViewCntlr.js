@@ -148,7 +148,7 @@ function initState() {
 /**
  *
  * @param {string} viewerId
- * @param {boolean} canReceiveNewPlots
+ * @param {string} canReceiveNewPlots   a string representation of one of NewPlotMode.
  * @param {string} containerType a string with container type, IMAGE and PLOT2D are predefined
  * @param {boolean} mounted
  */

@@ -50,6 +50,8 @@ export {getSelectedRegion} from '../drawingLayers/RegionPlot.js';
 export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';
 export {makeWorldPt, makeScreenPt, makeImagePt, parsePt} from '../visualize/Point.js';
 
+export {IMAGE, NewPlotMode} from '../visualize/MultiViewCntlr';
+
 
 /**
  * Get plot object with the given plot id, when plotId is not included, active plot is returned.

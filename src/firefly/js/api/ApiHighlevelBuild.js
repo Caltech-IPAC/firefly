@@ -334,7 +334,7 @@ function makePlotSimple(llApi, plotId) {
 
 function showImageInMultiViewer(llApi, targetDiv, request) {
     const {dispatchPlotImage, dispatchAddViewer, dispatchAddImages}= llApi.action;
-    const {findInvalidWPRKeys,confirmPlotRequest}= llApi.util.image;
+    const {findInvalidWPRKeys,confirmPlotRequest, IMAGE, NewPlotMode}= llApi.util.image;
     const {renderDOM,debug, getWsConnId, getWsChannel}= llApi.util;
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
 
@@ -347,10 +347,10 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
     request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId(getWsConnId));
 
     const plotId= !Array.isArray(request) ? request.plotId : request.find( (r) => r.plotId).plotId;
-    dispatchAddViewer(targetDiv,'create_replace');
+    dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
     dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv});
     renderDOM(targetDiv, MultiImageViewer,
-        {viewerId:targetDiv, canReceiveNewPlots:'create_replace', Toolbar:MultiViewStandardToolbar });
+        {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
 
 }
 
@@ -358,10 +358,10 @@ function initCoverage(llApi, targetDiv,options= {}) {
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
     const {dispatchAddSaga}= llApi.action;
     const {renderDOM,debug}= llApi.util;
-    const {watchImageMetaData,watchCoverage}= llApi.util.image;
+    const {watchImageMetaData,watchCoverage,NewPlotMode}= llApi.util.image;
     highlevelImageInit(llApi);
 
-    const {canReceiveNewPlots='create_replace'}= options;
+    const {canReceiveNewPlots=NewPlotMode.replace_only.key}= options;
 
 
     renderDOM(targetDiv, MultiImageViewer,
