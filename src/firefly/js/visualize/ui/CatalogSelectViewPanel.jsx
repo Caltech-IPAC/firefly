@@ -666,8 +666,8 @@ class CatalogDDList extends PureComponent {
             const colName = get(oneCol, 'name', '');
             return (colName && (colName.toLowerCase() === 'pos'));
         });
-        const posVal = POS_COL >= 0 ? get(catTable, [currentIdx, 'cat', POS_COL], 'n').toLowerCase() : 'n';
-        const withPos = posVal.includes('y');
+
+        const withPos = (get(catTable, [currentIdx, 'cat', POS_COL]) || 'y').includes('y');
 
         return (
             <div>
