@@ -50,7 +50,7 @@ const group1 = {
                 title: resultDesc,
                 action: TABLE_SEARCH
             },
-            results: Triview
+            renderStandardView: Triview
         },
         'search2 table only': {
             desc: 'a short description of search2',
@@ -60,7 +60,7 @@ const group1 = {
                 title: resultDesc,
                 action: TABLE_SEARCH
             },
-            results: TableOnly
+            renderStandardView: TableOnly
         }
     }
 };
@@ -76,7 +76,7 @@ const group2 = {
                 title: resultDesc,
                 action: TABLE_SEARCH
             },
-            results: TableOnly
+            renderStandardView: TableOnly
         },
         'search4 table-chart': {
             desc: 'a short description of search4',
@@ -86,7 +86,7 @@ const group2 = {
                 title: resultDesc,
                 action: TABLE_SEARCH
             },
-            results: TableChart
+            renderStandardView: TableChart
         }
     }
 };
