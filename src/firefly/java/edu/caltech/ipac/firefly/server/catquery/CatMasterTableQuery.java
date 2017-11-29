@@ -64,7 +64,8 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
     private static File getMasterCatalogFile(TableServerRequest request) throws IOException, DataAccessException {
         File retval;
         try {
-            String colNames = "projectshort, subtitle, description, server, catname, cols, nrows, coneradius, infourl, ddlink";
+            // pos column is added to indicate if the catalog contains position information.
+            String colNames = "projectshort, subtitle, description, server, catname, cols, nrows, coneradius, infourl, ddlink, pos";
             File catOutFile = MASTER_CAT_FILE;
 
             // if hydra, check for additional catalogs
