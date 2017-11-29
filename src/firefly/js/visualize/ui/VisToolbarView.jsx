@@ -37,6 +37,7 @@ import {MarkerDropDownView} from './MarkerDropDownView.jsx';
 import {showImageSelPanel} from './ImageSelectPanel.jsx';
 import {showMaskDialog} from './MaskAddPanel.jsx';
 import {isImage,isHiPS} from '../WebPlot.js';
+import {HiPSPropertyView} from './HiPSPropertyView.jsx';
 
 
 //===================================================
@@ -347,14 +348,12 @@ export class VisToolbarView extends PureComponent {
 
 
                 <ToolbarButton icon={FITS_HEADER}
-                               tip='Show FITS header'
+                               tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
                                enabled={enabled}
-                               todo={hips}
                                horizontal={true}
                                visible={mi.fitsHeader}
-                               onClick={() =>  fitsHeaderView(pv)}/>
-
-
+                               onClick={image ? () => fitsHeaderView(pv) : (hips ? () => HiPSPropertyView(pv) : null)}
+                               />
 
                 <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>
                     <HelpIcon

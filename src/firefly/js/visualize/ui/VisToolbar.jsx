@@ -17,6 +17,7 @@ import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../../core
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
+import {isHiPS} from '../WebPlot.js';
 
 // import {deepDiff} from '../../util/WebUtil.js';
 
@@ -77,9 +78,15 @@ export class VisToolbar extends PureComponent {
         }
 
         if (!needsUpdate) {
-            const oldPlot= primePlot(oldPv);
-            const newPlot= primePlot(newPv);
-            needsUpdate= get(oldPlot, 'zoomFactor')!==get(newPlot, 'zoomFactor');
+            const oldPlot = primePlot(oldPv);
+            const newPlot = primePlot(newPv);
+            needsUpdate = get(oldPlot, 'zoomFactor') !== get(newPlot, 'zoomFactor');
+
+            if (!needsUpdate && isHiPS(oldPlot) && isHiPS(newPlot)) {
+                const hUrl = 'hipsUrlRoot';
+
+                needsUpdate = get(oldPlot,  hUrl) !== get(newPlot, hUrl);
+            }
         }
 
 
