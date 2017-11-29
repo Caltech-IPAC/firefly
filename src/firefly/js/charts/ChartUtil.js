@@ -149,9 +149,10 @@ export function colWithName(cols, name) {
 
 export function getNumericCols(cols) {
     const ncols = [];
+    const excludeNames = ['ROW_IDX', 'ROW_NUM'];
     cols.forEach((c) => {
         if (c.type.match(/^[dfil]/) !== null) {      // int, float, double, long .. or their short form.
-            ncols.push(c);
+            if (!excludeNames.includes(c.name)) { ncols.push(c); }
         }
     });
     return ncols;

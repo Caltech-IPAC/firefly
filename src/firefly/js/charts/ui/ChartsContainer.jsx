@@ -125,36 +125,56 @@ function getDefaultChartProps(tbl_id) {
     //otherwise use the first one-two numeric columns
     if (!isCatalog) {
         const numericCols = getNumericCols(tableData.columns);
-        if (numericCols.length >= 2) {
+        if (numericCols.length > 1) {
             xCol = numericCols[0];
             yCol = numericCols[1];
-        } else if (numericCols.length > 1) {
+        } else if (numericCols.length > 0) {
             xCol = numericCols[0];
             yCol = numericCols[0];
         }
     }
 
     if (xCol && yCol)  {
-        const chartData = {
-            data: [{
-                tbl_id,
-                x: xCol &&`tables::${xCol.name}`,
-                y: yCol && `tables::${yCol.name}`
-            }],
-            layout:{
-                xaxis: {
-                    autorange: isCatalog ? 'reversed' : 'true'
-                },
-                yaxis: {showgrid: false}
-            }
-        };
-        const maxRowsForScatter = get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
-        if (totalRows > maxRowsForScatter) {
-            Object.assign(chartData.data[0], {type: 'fireflyHeatmap', colorscale: 'Greys', reversescale: true});
+        if (xCol === yCol) {
+            // if only one numeric column is available, do histogram
+            const chartData = {
+                data: [{
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id,
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 20,
+                            columnOrExpr: `${xCol.name}`
+                        }
+                    },
+                    name: xCol.name
+                }]
+            };
+            return chartData;
         } else {
-            Object.assign(chartData.data[0], {mode: 'markers', marker: {color: DATAPOINTS_COLOR}});
+            const chartData = {
+                data: [{
+                    tbl_id,
+                    x: xCol && `tables::${xCol.name}`,
+                    y: yCol && `tables::${yCol.name}`
+                }],
+                layout: {
+                    xaxis: {
+                        autorange: isCatalog ? 'reversed' : 'true'
+                    },
+                    yaxis: {showgrid: false}
+                }
+            };
+            const maxRowsForScatter = get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
+            if (totalRows > maxRowsForScatter) {
+                Object.assign(chartData.data[0], {type: 'fireflyHeatmap', colorscale: 'Greys', reversescale: true});
+            } else {
+                Object.assign(chartData.data[0], {mode: 'markers', marker: {color: DATAPOINTS_COLOR}});
+            }
+            return chartData;
         }
-        return chartData;
     } else {
         return {};
     }

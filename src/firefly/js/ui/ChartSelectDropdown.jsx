@@ -10,7 +10,7 @@ import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import {uniqueChartId, multitraceDesign} from '../charts/ChartUtil.js';
+import {uniqueChartId, multitraceDesign, getNumericCols} from '../charts/ChartUtil.js';
 import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
                        setOptions as XYPlotSetOptions} from '../charts/ui/XYPlotOptions.jsx';
@@ -226,7 +226,19 @@ export class ChartSelectDropdown extends PureComponent {
     render() {
         const {tblId, tblStatsData} = this.state;
 
+        let noChartReason='';
         if (tblId) {
+            const {tableData, totalRows}= TblUtil.getTblById(tblId);
+            if (!totalRows) {
+                noChartReason = 'empty table';
+            } else if (getNumericCols(tableData.columns).length < 1) {
+                noChartReason = 'tha table has no numeric columns';
+            }
+        } else {
+            noChartReason = 'no active table';
+        }
+
+        if (!noChartReason) {
             return multitraceDesign() ?
                 (<ChartSelectPanel {...{
                     tbl_id: tblId,
@@ -235,9 +247,10 @@ export class ChartSelectDropdown extends PureComponent {
                     hideDialog: ()=>dispatchHideDropDown()}}/> ) :
                 (<ChartSelect {...{tblId, tblStatsData}} {...this.props}/>);
         } else {
+            const msg = `Charts are not available: ${noChartReason}.`;
             return (
                 <div>
-                    <div style={{padding:20, fontSize:'150%'}}>Charts are not available: no active table.</div>
+                    <div style={{padding:20, fontSize:'150%'}}>{msg}</div>
                     <CompleteButton style={{paddingLeft: 20, paddingBottom: 20}}
                                     onSuccess={hideSearchPanel}
                                     text = {'OK'}
