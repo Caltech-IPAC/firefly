@@ -3,12 +3,12 @@
  */
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.astro.target.PositionJ2000;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.visualize.draw.FixedObject;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroupUtils;
@@ -33,8 +33,7 @@ public class NedNameResolver {
 
    public static PositionJ2000 getPositionVOTable(String objname) throws FailedRequestException {
       PositionJ2000 pos = null;
-      ClientLog.message("Requesting name resolution for \"" +
-            objname + "\"...");
+      Logger.info("Requesting name resolution for \"" + objname + "\"...");
 
       HostPort hp = NetworkManager.getInstance().getServer(
             NetworkManager.NED_SERVER);

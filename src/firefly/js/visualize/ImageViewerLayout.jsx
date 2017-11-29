@@ -333,11 +333,12 @@ function makeTileDrawers(pv) {
 
     const plot= primePlot(pv);
     const rootDrawer= (
-        <ImageRender opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} />
+        <ImageRender opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} idx={0}/>
     );
-    const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv) => {
+    const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv,idx) => {
         return (
             <ImageRender opacity={opv.opacity} plot={opv.plot} plotView={pv}
+                         idx={idx+1}
                          tileAttributes={opv.colorAttributes}
                          shouldProcess={(im, newData, imState, nextImState) => {
                                   if (newData) return imState.color!== imState.srcImageColor;
@@ -516,9 +517,9 @@ class DrawingLayers extends Component {
         let drawingAry= null;
         const {width,height}= pv.viewDim;
         if (dlIdAry) {
-            drawingAry= dlIdAry.map( (dlId) => <DrawerComponent plot={plot} drawLayerId={dlId}
-                                                                width={width} height={height}
-                                                                key={dlId}/> );
+            drawingAry= dlIdAry.map( (dlId, idx) => <DrawerComponent plot={plot} drawLayerId={dlId}
+                                                                     width={width} height={height}
+                                                                     idx={idx} key={dlId}/> );
         }
         return (
             <div className='drawingArea'

@@ -33,7 +33,7 @@ import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {makeWorldPt} from '../Point.js';
 import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
 import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
-import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot} from '../HiPSUtil.js';
+import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot, makeHipsUrl} from '../HiPSUtil.js';
 
 //const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -216,11 +216,12 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
     const {plotId}= action.payload;
     if (plotId!==params.plotId) return;
     const pv= getPlotViewById(visRoot(), plotId);
-    if (pv.viewDim.width && pv.viewDim.height) {
+    const {width,height}= pv.viewDim;
+    if (width && height && width>30 && height>30) {
         const plot= primePlot(pv);
         if (!plot) return;
 
-        const size= pv.request.getSizeInDeg();
+        const size= pv.request.getSizeInDeg()  || 180;
         if (size) {
             if (size>70) {
                 dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
@@ -249,13 +250,13 @@ export function addAllSky(plot) {
         });
 }
 
-export function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId) {
+export function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, proxyHips) {
     const exts= get(hipsProperties, 'hips_tile_format', 'jpg');
     const allSkyURL= makeHiPSAllSkyUrl(hipsUrlRoot, exts);
     const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
     if (cachedAllSkyImage) return hipsProperties;
     dispatchPlotProgressUpdate(plotId, 'Retrieving HiPS Data', false, null);
-    return loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts))
+    return loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts, proxyHips))
         .then( (allSkyImage) => {
             addAllSkyCachedImage(allSkyURL, allSkyImage);
             return hipsProperties;
@@ -266,22 +267,26 @@ export function makePlotHiPSAction(rawAction) {
     return (dispatcher, getState) => {
 
         const {payload}= rawAction;
-        const {wpRequest, plotId, attributes}= payload;
+        const {plotId, attributes}= payload;
+        const wpRequest= ensureWPR(payload.wpRequest);
+        const newPayload= clone(payload, {wpRequest, type:'hips', wpRequestAry:[wpRequest]});
 
         const root= wpRequest.getHipsRootUrl();
         if (!root) {
             hipsFail(dispatcher, plotId, wpRequest, 'No Root URL');
             return;
         }
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:clone(payload, {type:'hips'}) } );
+        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
         dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
 
-        const url= `${root}/properties`;
+        const proxy= true;
+        const url= makeHipsUrl(`${root}/properties`, proxy);
         fetchUrl(url, {}, true, false)
             .then( (result)=> result.text())
             .then( (s)=> parseProperties(s))
             .then( (hipsProperties) => {
                 const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
+                plot.proxyHips= proxy;
                 return plot;
             })
             .then( addAllSky)
@@ -291,7 +296,10 @@ export function makePlotHiPSAction(rawAction) {
                     callback:watchForHiPSViewDim,
                     params:{plotId}}
                     );
-                dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: clone(payload, {plot}) });
+                const pvNewPlotInfoAry= [
+                    {plotId, plotAry: [plot]}
+                ];
+                dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: clone(newPayload, {plot,pvNewPlotInfoAry}) });
             })
             .catch( (message) => {
                 console.log(message);
@@ -320,7 +328,7 @@ export function makeChangeHiPSAction(rawAction) {
             fetchUrl(url, {}, true, false)
                 .then( (result)=> result.text())
                 .then( (s)=> parseProperties(s))
-                .then ( (hipsProperties) => addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId))
+                .then ( (hipsProperties) => addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, plot.proxyHips))
                 .then( (hipsProperties) => {
                     dispatcher(
                         { type: ImagePlotCntlr.CHANGE_HIPS,
@@ -485,7 +493,7 @@ function addDrawLayers(request, plot ) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
         const useLabels= request.getGridOn()===GridOnStatus.TRUE;
         if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});
-        dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, true);
+        dispatchAttachLayerToPlot(WebGrid.TYPE_ID, plotId, false);
     }
 
     if (plot.relatedData) {

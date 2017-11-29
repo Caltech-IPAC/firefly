@@ -392,7 +392,7 @@ export const WebPlot= {
             dataHeight: HIPS_DATA_HEIGHT,
             imageScaleFactor: 1,
 
-            title : hipsProperties.label || 'HiPS',
+            title : hipsProperties.obs_title || hipsProperties.label || 'HiPS',
             plotDesc        : desc,
             dataDesc        : hipsProperties.label || 'HiPS',
             //=== Mutable =====================

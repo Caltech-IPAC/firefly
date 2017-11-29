@@ -8,6 +8,7 @@ import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
 import {initImageDrawer}  from './ImageTileDrawer.js';
 import {createHiPSDrawer} from './HiPSTileDrawer.js';
 import {isImage} from '../WebPlot.js';
+import {CANVAS_IMAGE_ID_START} from '../PlotViewUtil.js';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
 const BACKGROUND_STYLE = `url(+ ${BG_IMAGE} ) top left repeat`;
@@ -69,7 +70,7 @@ export class ImageRender extends Component {
 
 
     render() {
-        const {plot, opacity,plotView:pv, tileAttributes, shouldProcess, processor}= this.props;
+        const {plot, idx, opacity,plotView:pv, tileAttributes, shouldProcess, processor}= this.props;
         const {width, height}= pv.viewDim;
         const {tileData} = plot;
 
@@ -83,7 +84,8 @@ export class ImageRender extends Component {
 
             return (
                 <div className='tile-drawer' style={style}>
-                    <SimpleCanvas drawIt={this.drawInit} width={width} height={height} />
+                    <SimpleCanvas drawIt={this.drawInit} width={width} height={height}
+                                  id={`${CANVAS_IMAGE_ID_START}${idx}-${pv.plotId}`}/>
                 </div>
             );
         }
@@ -97,5 +99,6 @@ ImageRender.propTypes= {
     plotView : PropTypes.object.isRequired,
     tileAttributes : PropTypes.object,
     shouldProcess : PropTypes.func,
+    idx : PropTypes.number,
     processor : PropTypes.func,
 };

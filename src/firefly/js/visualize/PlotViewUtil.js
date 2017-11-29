@@ -10,6 +10,9 @@ import {getDlAry, dispatchDestroyDrawLayer} from './DrawLayerCntlr.js';
 import {makeWorldPt} from './Point.js';
 
 
+
+export const CANVAS_IMAGE_ID_START= 'image-';
+export const CANVAS_DL_ID_START= 'dl-';
 /**
  * 
  * @param {VisRoot | PlotView[]} ref
@@ -598,4 +601,39 @@ export function getPvNewPlotIdAry(pvNewPlotInfoAry) {
  */
 export function isPlotIdInPvNewPlotInfoAry(pvNewPlotInfoAry, plotId) {
     return pvNewPlotInfoAry.some( (npi) => npi.plotId===plotId);
+}
+
+
+/**
+ *
+ * @param {Canvas} c
+ * @param {number} start
+ * @param {String} plotId
+ * @return {number}
+ */
+const getCanvasIdx= (c,start,plotId) => Number(c.id.substr(0, c.id.length - plotId.length - 1).substr(start));
+
+
+/**
+ *
+ * @param plotId
+ * @return {Array.<canvas>}
+ */
+export function getAllCanvasLayersForPlot(plotId) {
+    const cAry= [...document.getElementsByTagName('canvas')];
+    const layers= cAry.filter( (canvas) => canvas.id && canvas.id.endsWith(plotId));
+
+    const imageLayers= layers.filter( (canvas) => canvas.id.startsWith(CANVAS_IMAGE_ID_START))
+        .sort( (c1,c2) => {
+            const n1= getCanvasIdx(c1,CANVAS_IMAGE_ID_START,plotId);
+            const n2= getCanvasIdx(c2,CANVAS_IMAGE_ID_START,plotId);
+            return n1<n2;
+        });
+    const dlLayers= layers.filter( (canvas) => canvas.id.startsWith(CANVAS_DL_ID_START))
+        .sort( (c1,c2) => {
+            const n1= getCanvasIdx(c1,CANVAS_DL_ID_START,plotId);
+            const n2= getCanvasIdx(c2,CANVAS_DL_ID_START,plotId);
+            return n1<n2;
+        });
+    return [...imageLayers,...dlLayers];
 }

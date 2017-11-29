@@ -20,7 +20,7 @@ import update from 'react-addons-update';
 
 
 
-const  MEG          = 1048576;
+const MEG          = 1048576;
 const GIG          = 1048576 * 1024;
 const MEG_TENTH    = MEG / 10;
 const GIG_HUNDREDTH= GIG / 100;
@@ -337,7 +337,7 @@ export function downloadWithProgress(url, numTries=1000) {
 }
 
 export function download(url) {
-    var nullFrame = document.getElementById('null_frame');
+    let nullFrame = document.getElementById('null_frame');
     if (!nullFrame) {
         nullFrame = document.createElement('iframe');
         nullFrame.id = 'null_frame';
@@ -348,6 +348,22 @@ export function download(url) {
     }
     nullFrame.src = url;
 }
+
+export function downloadViaAnchor(url, filename) {
+    let downloadAnchor = document.getElementById('download_anchor');
+    if (!downloadAnchor) {
+        downloadAnchor = document.createElement('a');
+        downloadAnchor.id = 'download_anchor';
+        downloadAnchor.style.display = 'block';
+        downloadAnchor.style.width = '0px';
+        downloadAnchor.style.height = '0px';
+        document.body.appendChild(downloadAnchor);
+    }
+    downloadAnchor.download = filename;
+    downloadAnchor.href = url;
+    downloadAnchor.click();
+}
+
 
 export function parseUrl(url) {
     const parser = document.createElement('a');

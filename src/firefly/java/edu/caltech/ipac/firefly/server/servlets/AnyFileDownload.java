@@ -5,18 +5,20 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 /**
  * Date: Feb 11, 2007
@@ -30,6 +32,7 @@ public class AnyFileDownload extends BaseHttpServlet {
     private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.DOWNLOAD_LOGGER);
 
 
+    public static final String HIPS_PARAM  = "hipsUrl";
     public static final String FILE_PARAM  = "file";
     public static final String RETURN_PARAM= "return";
     public static final String LOG_PARAM   = "log";
@@ -39,12 +42,20 @@ public class AnyFileDownload extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         SrvParam sp= new SrvParam(req.getParameterMap());
-        String fname= sp.getRequired(FILE_PARAM);
+        String hips= sp.getOptional(HIPS_PARAM);
+        String fname= hips==null ? sp.getRequired(FILE_PARAM): null;
         String local= sp.getOptional(RETURN_PARAM);
         boolean log= sp.getOptionalBoolean(LOG_PARAM,false);
         boolean track= sp.getOptionalBoolean(TRACK_PARAM,false);
+        File downloadFile;
 
-        File downloadFile= ServerContext.convertToFile(fname);
+        if (hips!=null) {
+            downloadFile= retrieveHiPSData(hips);
+        }
+        else {
+            downloadFile= ServerContext.convertToFile(fname);
+        }
+
         if (downloadFile==null) {
             res.sendError(HttpServletResponse.SC_NOT_FOUND,"Could not convert input to a file" );
             _log.warn("Cannot convert file: "+ fname + " to valid path, returning 404");
@@ -101,4 +112,16 @@ public class AnyFileDownload extends BaseHttpServlet {
     }
 
     public static Cache getCache() { return UserCache.getInstance(); }
+
+    private static File retrieveHiPSData(String urlStr) throws Exception {
+
+        URL url= new URL(urlStr);
+
+        File dir= new File(ServerContext.getHiPSDir(),new File(url.getHost()+"/"+url.getPath()).getParent());
+        if (!dir.exists()) dir.mkdirs();
+        File targetFile= new File(dir, new File(url.getFile()).getName());
+//        if (targetFile.canRead()) return targetFile;
+        URLDownload.getDataToFile(url,targetFile);
+        return targetFile;
+    }
 }

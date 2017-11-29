@@ -181,7 +181,6 @@ export class VisToolbarView extends PureComponent {
             <div style={rS}>
                 <ToolbarButton icon={SAVE}
                                tip='Save the FITS file, PNG file, or save the overlays as a region'
-                               todo={hips}
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.fitsDownload}
@@ -331,7 +330,6 @@ export class VisToolbarView extends PureComponent {
 
                 <ToolbarButton icon={RESTORE}
                                tip='Restore to the defaults'
-                               todo={hips}
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.restore}

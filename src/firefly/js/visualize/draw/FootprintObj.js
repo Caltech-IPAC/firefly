@@ -98,7 +98,7 @@ const draw=  {
 		return Math.sqrt(minDistSq);
 	},
 
-	draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
+	draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
 		const drawParams= makeDrawParams(drawObj,def);
 		drawFootprint(ctx, plot, drawObj.footprintAry, drawParams, drawObj.renderOptions, onlyAddToPath);
 	},

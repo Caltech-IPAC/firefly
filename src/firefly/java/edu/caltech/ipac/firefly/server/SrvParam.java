@@ -24,6 +24,7 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,13 +35,27 @@ public class SrvParam {
 
     private final Map<String, String[]> paramMap;
 
-    public SrvParam(Map<String, String[]> paramMap) {
-        this.paramMap=paramMap;
-    }
+    public SrvParam(Map<String, String[]> paramMap) { this.paramMap=new HashMap<>(paramMap); }
 
 
     public Map<String, String[]> getParamMap() {
         return paramMap;
+    }
+
+    public static SrvParam makeSrvParamSimpleMap(Map<String, String> map) {
+        Map<String, String[]> targetMap= new HashMap<>();
+        for( Map.Entry<String,String> entry : map.entrySet()) {
+            targetMap.put(entry.getKey(), new String[] {entry.getValue()} );
+        }
+        return new SrvParam(targetMap);
+    }
+
+    public void addParams(Map<String, String> map) {
+        for( Map.Entry<String,String> entry : map.entrySet()) {
+            if (!paramMap.containsKey(entry.getKey())) {
+                paramMap.put(entry.getKey(), new String[] {entry.getValue()} );
+            }
+        }
     }
 
     public boolean contains(String key) { return paramMap.containsKey(key); }

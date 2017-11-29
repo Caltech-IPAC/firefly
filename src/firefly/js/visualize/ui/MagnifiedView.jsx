@@ -11,6 +11,7 @@ import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHe
 import {isBlankImage} from '../WebPlot.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
+import {isHiPS} from '../WebPlot';
 
 
 var defStyle= {
@@ -28,6 +29,7 @@ const EMPTY= <div style={defStyle}></div>;
 export function MagnifiedView({plotView:pv,size,mouseState}) {
     if (!pv || !mouseState) return EMPTY;
     const p= primePlot(pv);
+    if (isHiPS(p)) return EMPTY;
     if (!p) return EMPTY;
 
     if (!magMouse.includes(mouseState.mouseState)) return EMPTY;

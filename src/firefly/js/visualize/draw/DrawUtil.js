@@ -1,11 +1,12 @@
 
+import numeral from 'numeral';
+import {isNil, set} from 'lodash';
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
-import {isNil, set} from 'lodash';
 import {toRadians} from '../VisUtil.js';
 
 
-var FALLBACK_COLOR = 'red';
+const FALLBACK_COLOR = 'red';
 
 export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawTextCanvas, drawPath, makeShadow,
                 drawHandledLine, drawInnerRecWithHandles, rotateAroundScreenPt,
@@ -15,10 +16,10 @@ export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, draw
                 getSymbolSize, getSymbolSizeBasedOn};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
-    var slope= NaN;
+    let slope= NaN;
 
-    if (ex-sx!=0) slope= (ey-sy) / (ex-sx);
-    var x, y;
+    if (ex-sx!==0) slope= (ey-sy) / (ex-sx);
+    let x, y;
     if (!onlyAddToPath) beginPath(ctx,color,3);
 
     if (isNaN(slope)) {
@@ -62,19 +63,19 @@ function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
 
 function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) {
 
-    var x0= Math.min(inX1,inX2)+lineWidth;
-    var y0= Math.min(inY1,inY2)+lineWidth;
-    var width= Math.abs(inX1-inX2)-(2*lineWidth);
-    var height= Math.abs(inY1-inY2)-(2*lineWidth);
+    const x0= Math.min(inX1,inX2)+lineWidth;
+    const y0= Math.min(inY1,inY2)+lineWidth;
+    const width= Math.abs(inX1-inX2)-(2*lineWidth);
+    const height= Math.abs(inY1-inY2)-(2*lineWidth);
     strokeRec(ctx,color, lineWidth, x0,y0,width,height);
-    var x2= x0+width;
-    var y2= y0+height;
+    const x2= x0+width;
+    const y2= y0+height;
 
-    var x1= x0+width;
-    var y1= y0;
+    const x1= x0+width;
+    const y1= y0;
 
-    var x3= x0;
-    var y3= y0+height;
+    const x3= x0;
+    const y3= y0+height;
 
     beginPath(ctx,color,3);
 
@@ -112,12 +113,12 @@ function drawText(drawTextAry,text, x,y,color,
     //todo
     // it I don't use canvas I need to set css and shadow
     if (renderOptions && renderOptions.translation) {
-        var {translation}= renderOptions;
+        const {translation}= renderOptions;
         x+= translation.x;
         y+= translation.y;
     }
 
-    var style= {
+    const style= {
         position:'absolute',
         color,
         left:x,
@@ -138,14 +139,31 @@ function drawText(drawTextAry,text, x,y,color,
     drawTextAry.push({text,style});
 }
 
-function drawTextCanvas(ctx, text, x,y,color, renderOptions,
-                  fontFamily='helvetica', size='9px',
-                  fontWeight='normal', fontStyle='normal',
-                  backGroundColor, padDing,rotationAngle=undefined ) {
-
+/**
+ *
+ * @param ctx
+ * @param {String} text
+ * @param {number} x
+ * @param {number} y
+ * @param {String} color
+ * @param {Object} renderOptions
+ * @param {Object} locationOptions
+ * @param {String} locationOptions.textBaseline
+ * @param {String} locationOptions.textAlign
+ * @param {number} locationOptions.rotationAngle angle in degrees
+ * @param {Object} fontOptions
+ * @param {String} [fontOptions.fontFamily]
+ * @param {String} [fontOptions.size]
+ * @param {String} [fontOptions.fontWeight]
+ * @param {String} [fontOptions.fontStyle]
+ */
+function drawTextCanvas(ctx, text, x,y,color= 'red', renderOptions= {}, locationOptions= {}, fontOptions= {} ) {
 
     ctx.save();
 
+
+    const {textBaseline= 'top', textAlign= 'start', rotationAngle=0} = locationOptions;
+    const {fontFamily='helvetica', size='9px', fontWeight='normal', fontStyle='normal'} = fontOptions;
 
     ctx.font= `${fontStyle} ${size} ${fontFamily}`;
     // offscreenCtx.fillStyle= 'rgba(0,0,0,.4)';
@@ -153,9 +171,18 @@ function drawTextCanvas(ctx, text, x,y,color, renderOptions,
     // ctx.textAlign= 'center';
     // ctx.translate(x+w/2,y+h/2);
     ctx.fillStyle = color;
-    ctx.textBaseline= 'top';
-    if (rotationAngle) ctx.rotate(toRadians(rotationAngle));
-    ctx.fillText(text,x,y);
+    ctx.textBaseline= textBaseline;
+    ctx.textAlign= textAlign;
+    addStyle(ctx,renderOptions);
+    if (rotationAngle) {
+        ctx.translate(x,y);
+        const rotate= numeral(rotationAngle).value();
+        if (rotate) ctx.rotate(toRadians(rotate));
+        ctx.fillText(text,0,0);
+    }
+    else {
+        ctx.fillText(text,x,y);
+    }
     ctx.restore();
 }
 
@@ -205,13 +232,14 @@ function stroke(ctx) {
 }
 
 function addStyle(ctx,renderOptions) {
-    var {shadow,rotAngle,translation, lineDash}= renderOptions;
+    if (!ctx || !renderOptions) return;
+    const {shadow,rotAngle,translation, lineDash}= renderOptions;
 
     if (lineDash) {
         ctx.setLineDash(lineDash);
     }
     if (shadow) {
-        var {blur,color,offX,offY} = shadow;
+        const {blur,color,offX,offY} = shadow;
         if (blur) ctx.shadowBlur= blur;
         if (color) ctx.shadowColor= color;
         if (offX) ctx.shadowOffsetX= offX;
@@ -288,15 +316,15 @@ function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
 
 
 function rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) {
-    var pti = plot.getScreenCoords(worldPt);
-    var xc = centerScreenPt.x;
-    var x1 = pti.x - xc;
-    var yc = centerScreenPt.y;
-    var y1 = pti.y - yc;
+    const pti = plot.getScreenCoords(worldPt);
+    const xc = centerScreenPt.x;
+    const x1 = pti.x - xc;
+    const yc = centerScreenPt.y;
+    const y1 = pti.y - yc;
 
     // APPLY ROTATION
-    var temp_x1 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
-    var temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
+    const temp_x1 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
+    const temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
 
     // TRANSLATE BACK
     return plot.getWorldCoords(makeScreenPt(temp_x1 + xc, temp_y1 + yc));
@@ -379,11 +407,11 @@ function drawDiamond(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPa
 
 
 function drawDot(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath) {
-    var begin= size>1 ? y- (size/2) : y;
-    var end= size>1 ? y+ (size/2) : y;
+    const begin= size>1 ? y- (size/2) : y;
+    const end= size>1 ? y+ (size/2) : y;
 
     if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
-    for(var i=begin; (i<=end); i++) {
+    for(let i=begin; (i<=end); i++) {
         ctx.moveTo(x-size/2,i);
         ctx.lineTo(x+size/2,i);
     }
@@ -420,10 +448,10 @@ function drawArrow(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPat
  * @param onlyAddToPath
  */
 function drawRotate(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath) {
-    var r = size/4;
-    var aoff = (r/2 < 1) ? 1 : r/2;
-    var xc = 3*r;
-    var yc = 0;
+    const r = size/4;
+    const aoff = (r/2 < 1) ? 1 : r/2;
+    const xc = 3*r;
+    const yc = 0;
 
     if (renderOptions) {
         set(renderOptions, 'translation', {x, y});
@@ -466,7 +494,7 @@ function drawEllipse(ctx, x, y, color, lineWidth, r1, r2, angle, renderOptions, 
 }
 
 function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
-    var {color,size, lineWidth}= drawParams;
+    const {color,size, lineWidth}= drawParams;
     switch (drawParams.symbol) {
         case DrawSymbol.X :
             drawX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
@@ -510,7 +538,7 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
 }
 
 function getDrawingSize(size, symbol) {
-    var width = 10, height = 10;
+    let width = 10;
 
     size += 1;
     switch (symbol) {
@@ -536,7 +564,7 @@ function getDrawingSize(size, symbol) {
             break;
     }
     width = Math.ceil(width);
-    height = width;
+    const height = width;
     return {width, height};
 }
 
@@ -548,7 +576,7 @@ function getDrawingSize(size, symbol) {
  * @returns {number}
  */
 function getSymbolSize(width, height, symbol) {
-    var size = 5;
+    let size = 5;
 
     switch (symbol) {
         case DrawSymbol.X :
@@ -578,7 +606,7 @@ function getSymbolSize(width, height, symbol) {
 }
 
 function getSymbolSizeBasedOn(symbol, drawingDef) {
-    var {width, height} = getDrawingSize(drawingDef.size, drawingDef.symbol);
+    const {width, height} = getDrawingSize(drawingDef.size, drawingDef.symbol);
 
     return getSymbolSize(width, height, symbol);
 }
@@ -595,7 +623,7 @@ function getSymbolSizeBasedOn(symbol, drawingDef) {
  * @param onlyAddToPath
  */
 function drawCircle(ctx, x, y, color,  size,lineWidth, renderOptions= null, onlyAddToPath= false) {
-    var radius= size;
+    const radius= size;
     if (onlyAddToPath) {
         ctx.moveTo(x+radius,y);
     }
@@ -618,17 +646,11 @@ function fillRec(ctx, color, x, y, width, height, renderOptions) {
 
 function clear(ctx,width,height) {
     if (!ctx) return;
-    //for(CanvasLabelShape label : _labelList) {
-    //    panel.removeLabel(label.getLabel());
-    //}
     ctx.clearRect(0,0,width,height);
-    //_labelList.clear();
 }
 
 
 function clearCanvas(canvas) {
     if (!canvas) return;
-    var ctx= canvas.getContext('2d');
-    clear(ctx,canvas.width,canvas.height);
-
+    clear(canvas.getContext('2d'),canvas.width,canvas.height);
 }

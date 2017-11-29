@@ -19,7 +19,6 @@ function makeDrawObj() {
                             // rotAngle - the angle, a number
 
         type : 'DrawObj',
-        canvasText : false,
         //getCanUsePathEnabledOptimization : () => false,
         //getScreenDist: (plot,pt) => 0,
         //getCenterPt : () => null,

@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.SUTDebug;
 
 import java.awt.image.IndexColorModel;
@@ -747,7 +747,7 @@ static IndexColorModel _defaultColorModel = null;
      try {
         retval= getColorModel(color_table_id + "", null);
      } catch( IOException e) {
-        ClientLog.warning("should never happen",e.toString());
+        Logger.warn("should never happen",e.toString());
      }
      return retval;
   }

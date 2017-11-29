@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.download.CacheHelper;
@@ -131,7 +131,7 @@ public class LockingVisNetwork {
             if (fileInfo.getResponseCode()==200) CacheHelper.putFile(params,fileInfo);
             return fileInfo;
         } catch (Exception e) {
-            ClientLog.warning(e.toString());
+            Logger.warn(e.toString());
             throw ResponseMessage.simplifyNetworkCallException(e);
         }
     }
