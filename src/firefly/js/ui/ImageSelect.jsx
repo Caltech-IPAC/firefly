@@ -115,12 +115,19 @@ function FilterPanel({imageMasterData, title='Select Data Set', onChange}) {
     );
 }
 
+function filter(t){
+    const mid = t.missionId;
+    const p = t.project;
+
+    return `${t.missionId};${t.project}`;
+
+}
 // eslint-disable-next-line
 function FilterPanelView({onChange, imageMasterData}) {
     const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project}`);
     const missions = toFilterSummary(forSummary, 'missionId', 'missionId');
     const projectTypes = toFilterSummary(forSummary, 'projectTypeKey', 'projectTypeDesc');
-    const waveBands = toFilterSummary(forSummary, 'wavelength', 'wavelengthDesc');
+    const waveBands = toFilterSummary(imageMasterData, 'wavelength', 'wavelengthDesc');
 
     return (
         <div className='FilterPanel__view'>
