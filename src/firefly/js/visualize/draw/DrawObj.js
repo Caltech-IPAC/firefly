@@ -18,7 +18,8 @@ function makeDrawObj() {
                             // translation - a ScreenPt use Point.makeScreenPt
                             // rotAngle - the angle, a number
 
-        type : 'DrawObj'
+        type : 'DrawObj',
+        canvasText : false,
         //getCanUsePathEnabledOptimization : () => false,
         //getScreenDist: (plot,pt) => 0,
         //getCenterPt : () => null,

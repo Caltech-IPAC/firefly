@@ -227,7 +227,8 @@ export class ImageViewerLayout extends PureComponent {
         const {plotView:pv}= this.props;
         const {viewDim:{width,height}}= pv;
         let insideStuff;
-        const plotShowing= Boolean(width && height && primePlot(this.props.plotView));
+        const plot= primePlot(this.props.plotView);
+        const plotShowing= Boolean(width && height && plot);
         let onScreen= true;
 
         if (plotShowing ) {
@@ -272,7 +273,7 @@ function scrollMove(plotDrag, plotId, screenX,screenY) {
     }
 }
 
-const scrollMoveThrottled= BrowserInfo.isFirefox() ? throttle(scrollMove,100) : throttle(scrollMove,30);
+const scrollMoveThrottled= BrowserInfo.isFirefox() ? throttle(scrollMove,30) : throttle(scrollMove,15);
 
 
 /**

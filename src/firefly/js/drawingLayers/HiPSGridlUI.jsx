@@ -1,6 +1,3 @@
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
@@ -11,13 +8,13 @@ import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
 import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
-import {getBestHiPSlevel, getMaxDisplayableHiPSLevel} from '../visualize/HiPSUtil.js';
+import {getMaxDisplayableHiPSLevel, getBestHiPSlevel} from '../visualize/HiPSUtil.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 
 
 const options= [ {label: 'Auto', value: 'auto'},
-    {label: 'Match Image Depth', value: 'match'},
-    {label: 'Lock', value: 'lock'}
+    {label: 'Grid Match Image Depth', value: 'match'},
+    {label: 'Grid Level Lock', value: 'lock'}
 ];
 
 
@@ -58,7 +55,7 @@ function showLevelOp(drawLayer, pv) {
 
     const norder= getMaxDisplayableHiPSLevel(plot);
 
-    const {gridLockLevel}= drawLayer;
+    const {gridLockLevel=getBestHiPSlevel(plot).norder }= drawLayer;
     const value= Math.min(norder, Number(gridLockLevel));
     
     const lockOp= [];
@@ -82,7 +79,9 @@ function showLevelOp(drawLayer, pv) {
 
 
 function changeHipsPref(drawLayer,pv,value) {
-    dispatchModifyCustomField(drawLayer.drawLayerId, {gridType:value,gridLockLevel:drawLayer.gridLockLevel},pv.plotId);
+    const plot= primePlot(pv);
+    const gridLockLevel= drawLayer.gridLockLevel || getBestHiPSlevel(plot).norder;
+    dispatchModifyCustomField(drawLayer.drawLayerId, {gridType:value,gridLockLevel},pv.plotId);
 }
 
 function changeLockLevelPref(drawLayer,pv,value) {

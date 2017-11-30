@@ -2,11 +2,12 @@
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
 import {isNil, set} from 'lodash';
+import {toRadians} from '../VisUtil.js';
 
 
 var FALLBACK_COLOR = 'red';
 
-export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawPath, makeShadow,
+export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawTextCanvas, drawPath, makeShadow,
                 drawHandledLine, drawInnerRecWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
@@ -137,6 +138,26 @@ function drawText(drawTextAry,text, x,y,color,
     drawTextAry.push({text,style});
 }
 
+function drawTextCanvas(ctx, text, x,y,color, renderOptions,
+                  fontFamily='helvetica', size='9px',
+                  fontWeight='normal', fontStyle='normal',
+                  backGroundColor, padDing,rotationAngle=undefined ) {
+
+
+    ctx.save();
+
+
+    ctx.font= `${fontStyle} ${size} ${fontFamily}`;
+    // offscreenCtx.fillStyle= 'rgba(0,0,0,.4)';
+    // offscreenCtx.strokeStyle='rgba(0,0,0,.2)';
+    // ctx.textAlign= 'center';
+    // ctx.translate(x+w/2,y+h/2);
+    ctx.fillStyle = color;
+    ctx.textBaseline= 'top';
+    if (rotationAngle) ctx.rotate(toRadians(rotationAngle));
+    ctx.fillText(text,x,y);
+    ctx.restore();
+}
 
 /**
  * create a shadow object to use with DrawObj

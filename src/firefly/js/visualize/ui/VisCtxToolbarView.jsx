@@ -306,7 +306,7 @@ function makeHiPSImageSelect(pv) {
                 dispatchChangeHiPS( {plotId:pv.plotId,  hipsUrlRoot:surveyList[Number(ev.target.value)].url})}
             labelWidth={10}
             label={' '}
-            tooltip={ 'Choose a differ HiPS survey'}
+            tooltip={ 'Choose a different HiPS survey'}
             options={options}
             multiple={false}
         />
@@ -339,7 +339,7 @@ function makeHiPSCoordSelect(pv) {
                 dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: options[Number(ev.target.value)].c})}
             labelWidth={10}
             label={' '}
-            tooltip={ 'Choose a differ HiPS survey'}
+            tooltip={ 'Choose a different HiPS survey'}
             options={options}
             multiple={false}
         />

@@ -174,18 +174,14 @@ export function isQuadTileOnScreen(corners, viewDim) {
             {x: minX, y: maxY}
         ];
         if (!boundBoxAry.some ((mP) => contains(0,0,width,height,mP.x,mP.y))) {
-            const cenX= corners.map( (p) => p.x).reduce( (pX,sum) => sum+pX, 0)/ corners.length;
-            const cenY= corners.map( (p) => p.y).reduce( (pY,sum) => sum+pY, 0)/ corners.length;
-            if (!contains(0,0,width,height,cenX,cenY)) {
-                const bbWidth= maxX-minX;
-                const bbHeight= maxY-minY;
-                if (!contains(minX,minY, bbWidth, bbHeight, 0,0) &&
-                    !contains(minX,minY, bbWidth, bbHeight, width, 0) &&
-                    !contains(minX,minY, bbWidth, bbHeight, width, height) &&
-                    !contains(minX,minY, bbWidth, bbHeight, 0, height) ) {
-                    if (!intersects(minX,minY, bbWidth, bbHeight, 0,0,width,height)) {
-                        return false;
-                    }
+            const bbWidth= maxX-minX;
+            const bbHeight= maxY-minY;
+            if (!contains(minX,minY, bbWidth, bbHeight, 0,0) &&
+                !contains(minX,minY, bbWidth, bbHeight, width, 0) &&
+                !contains(minX,minY, bbWidth, bbHeight, width, height) &&
+                !contains(minX,minY, bbWidth, bbHeight, 0, height) ) {
+                if (!intersects(minX,minY, bbWidth, bbHeight, 0,0,width,height)) {
+                    return false;
                 }
             }
         }

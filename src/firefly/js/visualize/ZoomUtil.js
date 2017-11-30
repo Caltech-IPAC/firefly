@@ -38,7 +38,7 @@ export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL'
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds
 
-let zoomTimers= []; // todo: should I use a map? should it be in the redux store?
+let zoomTimers= [];
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -73,7 +73,7 @@ export function zoomActionCreator(rawAction) {
         else if ([UserZoomTypes.UP,UserZoomTypes.DOWN,UserZoomTypes.ONE].includes(userZoomType)) {
             level= getNextZoomLevel(plot,userZoomType);
             isFullScreen= false;
-            useDelay= true; //todo
+            useDelay= true;
             goodParams= true;
         }
         else {
@@ -106,7 +106,7 @@ export function zoomActionCreator(rawAction) {
 
 
         let zoomActive= true;
-        if (Math.floor(plot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
+        if (isImage(plot) && Math.floor(plot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
             if (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL) {
                 dispatchRecenter({plotId, centerOnImage:true});
             }
@@ -186,7 +186,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,z
 function doZoom(dispatcher,visRoot,plot,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay,getState) {
 
 
-   if (Math.floor(plot.zoomFactor*1000)===Math.floor(zoomLevel*1000)) return;
+   if (isImage(plot) && Math.floor(plot.zoomFactor*1000)===Math.floor(zoomLevel*1000)) return;
 
 
     const {plotId}= plot;

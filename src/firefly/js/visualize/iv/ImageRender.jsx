@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {SimpleCanvas}  from '../draw/SimpleCanvas.jsx';
 import {initImageDrawer}  from './ImageTileDrawer.js';
-import {initHiPSDrawer} from './HiPSTileDrawer.js';
+import {createHiPSDrawer} from './HiPSTileDrawer.js';
 import {isImage} from '../WebPlot.js';
 
 const BG_IMAGE= 'image-working-background-24x24.png';
@@ -30,7 +30,7 @@ const containerStyle={position:'absolute',
  */
 export function initTileDrawer(targetCanvas, plot) {
     if (!targetCanvas) return () => undefined;
-    return isImage(plot) ? initImageDrawer(targetCanvas) : initHiPSDrawer(targetCanvas);
+    return isImage(plot) ? initImageDrawer(targetCanvas) : createHiPSDrawer(targetCanvas);
 }
 
 

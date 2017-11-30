@@ -990,7 +990,7 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
             DrawOp.draw(oneDrawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath);
         });
 
-        drawFootprintText(newObj, plot, def, drawTextAry);
+        drawFootprintText(newObj, plot, def, drawTextAry, ctx);
         set(drawObjP, 'textWorldLoc', newObj.textWorldLoc);
     }
 }
@@ -1001,8 +1001,9 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
  * @param plot
  * @param def
  * @param drawTextAry
+ * @param ctx
  */
-function drawFootprintText(drawObj, plot, def, drawTextAry) {
+function drawFootprintText(drawObj, plot, def, drawTextAry, ctx) {
 
     var drawParams = makeDrawParams(drawObj, def);
     var {text, textLoc} = drawObj;
@@ -1028,7 +1029,7 @@ function drawFootprintText(drawObj, plot, def, drawTextAry) {
                         objArea.height * plot.zoomFactor,
                         objArea.centerPt);
         if (textPt) {
-            drawText(drawObj, drawTextAry, plot, textPt, drawParams);
+            drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
         }
     }
 }
