@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {uniqBy, uniq, get, countBy, isNil, xor} from 'lodash';
+import {uniqBy, uniq, get, countBy, isNil, xor, sortBy} from 'lodash';
 
 
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -115,20 +115,15 @@ function FilterPanel({imageMasterData, title='Select Data Set', onChange}) {
     );
 }
 
-function filter(t){
-    const mid = t.missionId;
-    const p = t.project;
-
-    return `${t.missionId};${t.project}`;
-
-}
 // eslint-disable-next-line
 function FilterPanelView({onChange, imageMasterData}) {
     const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project}`);
     const missions = toFilterSummary(forSummary, 'missionId', 'missionId');
     const projectTypes = toFilterSummary(forSummary, 'projectTypeKey', 'projectTypeDesc');
+    //LZ added and commented out these two lines while fix IRSA-1055
+   // const sortedImageData = sortBy(imageMasterData, 'wavelength');
+   // const waveBands = toFilterSummary(sortedImageData, 'wavelength', 'wavelengthDesc');
     const waveBands = toFilterSummary(imageMasterData, 'wavelength', 'wavelengthDesc');
-
     return (
         <div className='FilterPanel__view'>
             <CollapsiblePanel componentKey='missionFilter' header='MISSION:' isOpen={true}>
