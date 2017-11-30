@@ -17,11 +17,13 @@ import {dispatchShowDialog,dispatchHideDialog, isDialogVisible} from '../../core
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
+import {isHiPS} from '../WebPlot.js';
 
 // import {deepDiff} from '../../util/WebUtil.js';
 
 const omList= ['plotViewAry'];
 const pvPickList= ['plotViewCtx','primeIdx', 'flipY'];
+const hipsUrl = 'hipsUrlRoot';
 
 export class VisToolbar extends PureComponent {
     constructor(props) {
@@ -77,9 +79,13 @@ export class VisToolbar extends PureComponent {
         }
 
         if (!needsUpdate) {
-            const oldPlot= primePlot(oldPv);
-            const newPlot= primePlot(newPv);
-            needsUpdate= get(oldPlot, 'zoomFactor')!==get(newPlot, 'zoomFactor');
+            const oldPlot = primePlot(oldPv);
+            const newPlot = primePlot(newPv);
+            needsUpdate = get(oldPlot, 'zoomFactor') !== get(newPlot, 'zoomFactor');
+
+            if (!needsUpdate && isHiPS(oldPlot) && isHiPS(newPlot)) {
+                needsUpdate = get(oldPlot,  hipsUrl) !== get(newPlot, hipsUrl);
+            }
         }
 
 

@@ -49,9 +49,9 @@ const tableOnTabStyle = {boxSizing: 'border-box',paddingLeft:5,paddingRight:5, w
 //define the size of the text on the tableInfo style in the title div
 
 //define the complete button
-const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:10, width: '90%'};
+export const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:10, width: '90%'};
 //define the helpButton
-const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
+export const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
 //3-color styles
