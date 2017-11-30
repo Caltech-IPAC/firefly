@@ -42,8 +42,8 @@ export function getMaxDisplayableHiPSLevel(plot) {
 
 /**
  *
- * @param plot
- * @param limitToImageDepth
+ * @param {WebPlot} plot
+ * @param {boolean} [limitToImageDepth]
  * @return {{useAllSky:boolean, norder:number}}
  */
 export function getBestHiPSlevel(plot, limitToImageDepth= false) {
@@ -160,37 +160,49 @@ export function getHiPSFoV(pv) {
 }
 
 
+function makeCorners(hpIdx, pixList, coordSys) {
+    const spVec = new SpatialVector();
+    return pixList.map( (ipix) => {
+        const corners = hpIdx.corners_nest(ipix, 1);
+        const wpCorners= corners.map( (c) => {
+            spVec.setXYZ(c.x, c.y, c.z);
+            return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
+        });
+        return { ipix, wpCorners };
+    });
+}
+
+
+
+
 /**
  * This function make an object (with functions) to cache allsky type computations.
  * @return {*}
  */
 function makeSimpleHpxCornerCache() {
-    let tmpHealpixIdx = new HealpixIndex(8);
-    tmpHealpixIdx.init();
+    const tmpHealpixIdx3 = new HealpixIndex(8);
+    tmpHealpixIdx3.init();
+    const tmpHealpixIdx2 = new HealpixIndex(4);
+    tmpHealpixIdx2.init();
     const npix = HealpixIndex.nside2Npix(8);
     const cachedCorners8= [];
     for (let ipix=0; ipix<npix; ipix++) {
-        cachedCorners8.push(tmpHealpixIdx.corners_nest(ipix, 1));
+        cachedCorners8.push(tmpHealpixIdx3.corners_nest(ipix, 1));
     }
 
-    function makeCorners(pixList, coordSys) {
-        const spVec = new SpatialVector();
-        return pixList.map( (ipix) => {
-            const corners = tmpHealpixIdx.corners_nest(ipix, 1);
-            const wpCorners= corners.map( (c) => {
-                spVec.setXYZ(c.x, c.y, c.z);
-                return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
-            });
-            return { ipix, wpCorners };
-        });
-    }
 
     const level3pixelCnt = HealpixIndex.nside2Npix(8);
+    const level2pixelCnt = HealpixIndex.nside2Npix(4);
     const cachedLevel3FullPixelList= [];
+    const cachedLevel2FullPixelList= [];
     for (let ipix=0; ipix<level3pixelCnt; ipix++) cachedLevel3FullPixelList[ipix]= ipix;
-    const j2000Leve3Corners= makeCorners(cachedLevel3FullPixelList, CoordinateSys.EQ_J2000);
-    const galLevel3Corners= makeCorners(cachedLevel3FullPixelList, CoordinateSys.GALACTIC);
-    tmpHealpixIdx= undefined;
+    const j2000Leve3Corners= makeCorners(tmpHealpixIdx3, cachedLevel3FullPixelList, CoordinateSys.EQ_J2000);
+    const galLevel3Corners= makeCorners(tmpHealpixIdx3, cachedLevel3FullPixelList, CoordinateSys.GALACTIC);
+
+
+    for (let ipix=0; ipix<level2pixelCnt; ipix++) cachedLevel2FullPixelList[ipix]= ipix;
+    const j2000Leve2Corners= makeCorners(tmpHealpixIdx2, cachedLevel2FullPixelList, CoordinateSys.EQ_J2000);
+    const galLevel2Corners= makeCorners(tmpHealpixIdx2, cachedLevel2FullPixelList, CoordinateSys.GALACTIC);
 
 
     return {
@@ -201,6 +213,13 @@ function makeSimpleHpxCornerCache() {
             switch (coordSys) {
                 case CoordinateSys.EQ_J2000: return j2000Leve3Corners;
                 case CoordinateSys.GALACTIC: return galLevel3Corners;
+                default: return null;
+            }
+        },
+        getFullLevel2CornerList(coordSys)  {
+            switch (coordSys) {
+                case CoordinateSys.EQ_J2000: return j2000Leve2Corners;
+                case CoordinateSys.GALACTIC: return galLevel2Corners;
                 default: return null;
             }
         }
@@ -240,6 +259,9 @@ export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
     let pixList;
     if (fov>80 && norder===3) { // this case if so common, don't recompute, use cache
         return filterAllSky(dataCenterWp, healpixCache.getFullLevel3CornerList(dataCoordSys));
+    }
+    else if (fov>80 && norder===2) { // this case if so common, don't recompute, use cache
+        return filterAllSky(dataCenterWp, healpixCache.getFullLevel2CornerList(dataCoordSys));
     }
     else if (fov>80) { // with norder 1 or 2
         hpxIdx = new HealpixIndex(nside);

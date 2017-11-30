@@ -29,6 +29,7 @@ export function createHiPSDrawer(targetCanvas) {
     if (!targetCanvas) return () => undefined;
     let abortLastDraw= null;
     let lastNorder= 0;
+    let lastFov;
     let lastUsedAllSky= false;
 
 
@@ -42,13 +43,13 @@ export function createHiPSDrawer(targetCanvas) {
         const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp);
         let drawTiming= DrawTiming.ASYNC;
 
-
         if (useAllSky || tilesToLoad.every( (tile)=> findTileCachedImage(createImageUrl(plot,tile))) ) {
             drawTiming= DrawTiming.IMMEDIATE;
         }
 
-        if (drawTiming===DrawTiming.ASYNC && showZoomChangeDisplay(useAllSky,lastUsedAllSky,norder,lastNorder)) {
-            drawTransitionalImage(fov,centerWp,targetCanvas,plot, plotView,norder, lastNorder, opacity, tileProcessInfo);
+        console.log(`redraw at: ${norder}, zoom change: ${showZoomChangeDisplay(useAllSky,lastUsedAllSky,fov,lastFov)}`);
+        if (drawTiming===DrawTiming.ASYNC && showZoomChangeDisplay(useAllSky,lastUsedAllSky,fov,lastFov)) {
+            drawTransitionalImage(fov,lastFov, centerWp,targetCanvas,plot, plotView,norder, lastNorder, opacity, tileProcessInfo);
             drawTiming= DrawTiming.DELAY;
         }
 
@@ -56,12 +57,13 @@ export function createHiPSDrawer(targetCanvas) {
             opacity, tileProcessInfo, drawTiming);
         lastNorder= norder;
         lastUsedAllSky= useAllSky;
+        lastFov= fov;
     };
 }
 
 
 /**
- *
+ * this is used for temporary image when zooming
  * @param fov
  * @param centerWp
  * @param targetCanvas
@@ -72,34 +74,39 @@ export function createHiPSDrawer(targetCanvas) {
  * @param opacity
  * @param tileProcessInfo
  */
-function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView, norder, lastNorder, opacity, tileProcessInfo) {
+function drawTransitionalImage(fov, lastFov, centerWp, targetCanvas, plot, plotView, norder, lastNorder, opacity, tileProcessInfo) {
     const {viewDim}= plotView;
     let tilesToLoad;
     if (norder<=3) {
         tilesToLoad= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         drawDisplay(targetCanvas, plot, plotView, lastNorder, tilesToLoad, true,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
+        console.log('Transitional init drawing all sky 3');
     }
-    else if (norder > lastNorder) {
+    else if (fov < lastFov) {
         let lookMore= true;
         for( let testNo= lastNorder; (testNo>=3 && lookMore); testNo--) {
             tilesToLoad= findCellOnScreen(plot,viewDim,testNo, fov, centerWp);
             if (tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile)))) {
+                console.log(`Transitional drawing: ${testNo}`);
                 drawDisplay(targetCanvas, plot, plotView, testNo, tilesToLoad, false,
                     opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
                 lookMore= false;
             }
             if (lookMore && testNo===3){
+                console.log(`Transitional fallback drawing: ${testNo}`);
                 drawDisplay(targetCanvas, plot, plotView, testNo, tilesToLoad, true,
                     opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
                 lookMore= false;
             }
         }
+        if (lookMore) console.log(`no Transitional image`);
     }
     else {
         tilesToLoad= findCellOnScreen(plot,viewDim,lastNorder, fov, centerWp);
         drawDisplay(targetCanvas, plot, plotView, lastNorder, tilesToLoad, false,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
+        console.log(`Transitional fallback for going out: ${lastNorder}`);
     }
 
 }
@@ -108,11 +115,10 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView, nord
 
 
 
-function showZoomChangeDisplay(useAlSky, lastUsedAllSky, norder, lastNorder) {
-    if (!lastNorder || useAlSky) return false;
-    if (useAlSky!==lastUsedAllSky) return true;
-    if (lastNorder!==norder) return true;
-
+function showZoomChangeDisplay(useAlSky, lastUsedAllSky, fov, lastFov) {
+    if (!lastFov || useAlSky) return false;
+    if (useAlSky!==lastUsedAllSky || lastFov!==fov) return true;
+    return false;
 }
 
 function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {

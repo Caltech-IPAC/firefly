@@ -42,7 +42,6 @@ function creator(initPayload, presetDefaults) {
         isPointData:false,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         gridType: 'auto',
-        gridLockLevel: 3,
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
 }
@@ -76,14 +75,14 @@ function getLayerChanges(drawLayer, action) {
 
 
 function getTitle() {
-    return 'HiPS';
+    return 'HiPS Grid';
 }
 
 
 function dealWithMods(drawLayer,action) {
     const {changes}= action.payload;
     if (changes.gridType) {
-       return {gridType:changes.gridType, gridLockLevel: changes.gridLockLevel || 3};
+       return {gridType:changes.gridType, gridLockLevel: changes.gridLockLevel || drawLayer.gridLockLevel};
     }
     return null;
 }

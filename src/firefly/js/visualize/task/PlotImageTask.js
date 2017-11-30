@@ -241,7 +241,7 @@ export function addAllSky(plot) {
     const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
     const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
     if (cachedAllSkyImage) return plot;
-    dispatchPlotProgressUpdate(plot.plotId, 'Retrieving AllSky', false, null);
+    dispatchPlotProgressUpdate(plot.plotId, 'Retrieving HiPS Data', false, null);
     return loadImage(makeHiPSAllSkyUrlFromPlot(plot))
         .then( (allSkyImage) => {
             addAllSkyCachedImage(allSkyURL, allSkyImage);
@@ -254,7 +254,7 @@ export function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId) {
     const allSkyURL= makeHiPSAllSkyUrl(hipsUrlRoot, exts);
     const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
     if (cachedAllSkyImage) return hipsProperties;
-    dispatchPlotProgressUpdate(plotId, 'Retrieving AllSky', false, null);
+    dispatchPlotProgressUpdate(plotId, 'Retrieving HiPS Data', false, null);
     return loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts))
         .then( (allSkyImage) => {
             addAllSkyCachedImage(allSkyURL, allSkyImage);
