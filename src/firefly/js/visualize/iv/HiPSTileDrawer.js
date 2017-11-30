@@ -47,7 +47,6 @@ export function createHiPSDrawer(targetCanvas) {
             drawTiming= DrawTiming.IMMEDIATE;
         }
 
-        console.log(`redraw at: ${norder}, zoom change: ${showZoomChangeDisplay(useAllSky,lastUsedAllSky,fov,lastFov)}`);
         if (drawTiming===DrawTiming.ASYNC && showZoomChangeDisplay(useAllSky,lastUsedAllSky,fov,lastFov)) {
             drawTransitionalImage(fov,lastFov, centerWp,targetCanvas,plot, plotView,norder, lastNorder, opacity, tileProcessInfo);
             drawTiming= DrawTiming.DELAY;
@@ -65,6 +64,7 @@ export function createHiPSDrawer(targetCanvas) {
 /**
  * this is used for temporary image when zooming
  * @param fov
+ * @param lastFov
  * @param centerWp
  * @param targetCanvas
  * @param plot
@@ -81,32 +81,27 @@ function drawTransitionalImage(fov, lastFov, centerWp, targetCanvas, plot, plotV
         tilesToLoad= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         drawDisplay(targetCanvas, plot, plotView, lastNorder, tilesToLoad, true,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
-        console.log('Transitional init drawing all sky 3');
     }
     else if (fov < lastFov) {
         let lookMore= true;
         for( let testNo= lastNorder; (testNo>=3 && lookMore); testNo--) {
             tilesToLoad= findCellOnScreen(plot,viewDim,testNo, fov, centerWp);
             if (tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile)))) {
-                console.log(`Transitional drawing: ${testNo}`);
                 drawDisplay(targetCanvas, plot, plotView, testNo, tilesToLoad, false,
                     opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
                 lookMore= false;
             }
             if (lookMore && testNo===3){
-                console.log(`Transitional fallback drawing: ${testNo}`);
                 drawDisplay(targetCanvas, plot, plotView, testNo, tilesToLoad, true,
                     opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
                 lookMore= false;
             }
         }
-        if (lookMore) console.log(`no Transitional image`);
     }
     else {
         tilesToLoad= findCellOnScreen(plot,viewDim,lastNorder, fov, centerWp);
         drawDisplay(targetCanvas, plot, plotView, lastNorder, tilesToLoad, false,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
-        console.log(`Transitional fallback for going out: ${lastNorder}`);
     }
 
 }
