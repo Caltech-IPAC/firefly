@@ -4,13 +4,14 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {uniqBy, uniq, get, countBy, isNil, xor, sortBy} from 'lodash';
+import {uniqBy, uniq, get, countBy, isNil, xor} from 'lodash';
 
 
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {CollapsiblePanel} from '../ui/panel/CollapsiblePanel.jsx';
 import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 
@@ -22,11 +23,11 @@ export class ImageSelect extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {lastMod:new Date().getTime()};
-        props.addChangeListener && props.addChangeListener('ImageSelect', fieldsReducer(props.imageMasterData));
+        props.addChangeListener && props.addChangeListener('ImageSelect', fieldsReducer);
     }
 
     render() {
-        const {style, imageMasterData, groupKey, title, multiSelect=true} = this.props;
+        const {style, imageMasterData, groupKey, multiSelect=true} = this.props;
         imageMasterData.forEach((d)=> {
             ['missionId', 'project', 'subProject'].forEach((k) => d[k] = d[k] || '');
         });
@@ -46,8 +47,15 @@ export class ImageSelect extends PureComponent {
 
         return (
             <div style={style} className='ImageSelect'>
-                <FilterPanel {...{imageMasterData, title}}/>
-                <DataProductList {...{filteredImageData, groupKey, multiSelect, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
+                <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
+                <div style={{flexGrow: 1, display: 'flex'}}>
+                    <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
+                        <FilterPanel {...{imageMasterData, groupKey}}/>
+                    </div>
+                    <div className='ImageSelect__panels' style={{flexGrow: 1}}>
+                        <DataProductList {...{filteredImageData, groupKey, multiSelect}}/>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -60,56 +68,95 @@ ImageSelect.propTypes = {
     // a function so this component can handle field change event from reducing function.
     addChangeListener: PropTypes.func.isRequired,
     style: PropTypes.object,
-    title: PropTypes.string,
     multiSelect: PropTypes.bool
 };
 
 const toFilterSelectAry = (groupKey, s) => getFieldVal(groupKey, `Filter_${s}`, '').split(',').map((d) => d.trim()).filter((d) => d);
 
 
-function fieldsReducer(imageMasterData={}) {
-    return (inFields, action) => {
-        const {fieldKey='', options={}, value=''} = action.payload;
-
-        if (fieldKey.startsWith('PROJ_ALL_')) {
-            // a project checkbox is clicked
-            const proj = fieldKey.replace('PROJ_ALL_', '');
-            Object.entries(inFields).forEach( ([k, f]) => {
-                if (k.startsWith(`IMAGES_${proj}`)) {
-                    if (value === '_all_') {
-                        const allVals = f.options ? f.options.map((o) => o.value).join() : '';
-                        inFields = updateSet(inFields, [k, 'value'], allVals);
-                    } else {
-                        inFields = updateSet(inFields, [k, 'value'], '');
-                    }
+function doWhenValueChanged(fieldKey, inFields, value) {
+    if (fieldKey.startsWith('PROJ_ALL_')) {
+        // a project checkbox is clicked
+        const proj = fieldKey.replace('PROJ_ALL_', '');
+        Object.entries(inFields).forEach( ([k, f]) => {
+            if (k.startsWith(`IMAGES_${proj}`)) {
+                if (value === '_all_') {
+                    const allVals = f.options ? f.options.map((o) => o.value).join() : '';
+                    inFields = updateSet(inFields, [k, 'value'], allVals);
+                } else {
+                    inFields = updateSet(inFields, [k, 'value'], '');
                 }
-            });
-        } else if (fieldKey.startsWith('IMAGES_')) {
-            // one item changed, update project selectAll checkbox
-            const matcher = fieldKey.split('||')[0];
-            const cbGroups = Object.values(inFields).filter((f) => get(f, 'fieldKey', '').startsWith(matcher));  // array of subproject in this project
-            const allSelected = cbGroups.reduce((p, f) => {
-                            const selAry = get(f,'value','').split(',');
-                            const allAry = get(f,'options',[]).map((o) => o.value);
-                            return p && xor(selAry, allAry).length === 0;
-                        }, true);
-            const proj = matcher.substring(7);
-            inFields = updateSet(inFields, ['PROJ_ALL_' + proj, 'value'], (allSelected ? '_all_' : ''));
-        }
+            }
+        });
+    } else if (fieldKey.startsWith('IMAGES_')) {
+        // one item changed, update project selectAll checkbox
+        const matcher = fieldKey.split('||')[0];
+        const cbGroups = Object.values(inFields).filter((f) => get(f, 'fieldKey', '').startsWith(matcher));  // array of subproject in this project
+        const allSelected = cbGroups.reduce((p, f) => {
+            const selAry = get(f,'value','').split(',');
+            const allAry = get(f,'options',[]).map((o) => o.value);
+            return p && xor(selAry, allAry).length === 0;
+        }, true);
+        const proj = matcher.substring(7);
+        inFields = updateSet(inFields, ['PROJ_ALL_' + proj, 'value'], (allSelected ? '_all_' : ''));
+    }
+    return inFields;
+}
 
-        return inFields;
+function fieldsReducer(inFields, action) {
+    const {fieldKey='', fieldAry, value=''} = action.payload;
+    if (fieldKey) {
+        return (doWhenValueChanged(fieldKey, inFields, value));
+    } else if (get(fieldAry, 'length')) {
+        inFields = fieldAry.reduce( (p, f) => doWhenValueChanged(f.fieldKey, p, f.value), inFields);
     };
+    return inFields;
 }
 
 
+// eslint-disable-next-line
+function ToolBar({filteredImageData, groupKey, onChange}) {
+    const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
+    const setDSListMode = (flg) => {
+        projects.forEach((k) => dispatchComponentStateChange(k, {isOpen:flg}));
+        onChange && onChange();
+    };
+    const clearFields = (type) => {
+        const fields = Object.values(FieldGroupUtils.getGroupFields(groupKey))
+                            .filter( (f) => get(f, 'fieldKey','').startsWith(type))
+                            .filter( (f) => get(f, 'value'));        // look for all selected filters
+        if (fields.length > 0) {
+            fields.forEach((f) => f.value = '');
+            dispatchMultiValueChange(groupKey, fields);
+        }
+    };
+
+    return (
+        <div className='ImageSelect__toolbar'>
+            <div>
+                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields('Filter_')}>Clear Filters</a>
+            </div>
+            <div>
+                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields('IMAGES_')}>Clear Selections</a>
+                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => setDSListMode(true)}>Expand All</a>
+                &bull;<a className='ff-href' onClick={() => setDSListMode(false)}>Collapse All</a>
+            </div>
+        </div>
+    );
+}
 
 /*--------------------------- Filter Panel ---------------------------------------------*/
-
 // eslint-disable-next-line
-function FilterPanel({imageMasterData, title='Select Data Set', onChange}) {
+function FilterPanel({imageMasterData, groupKey, onChange}) {
+    const allSelect = Object.values(FieldGroupUtils.getGroupFields(groupKey))
+        .filter( (f) => get(f, 'fieldKey','').startsWith('Filter_'))
+        .filter( (f) => get(f, 'value'))                                    // look for only selected fields
+        .map( (f) => f.value).join();                                       // get the value of the selected fields
+
     return(
         <div className='FilterPanel'>
-            <div className='FilterPanel__toolbar'>{title}</div>
+            <div className='ImageSelect__title'>Filter By:</div>
+            <div className='ImageSelect__info'>{pretty(allSelect, 25)}</div>
             <FilterPanelView {...{onChange, imageMasterData}}/>
         </div>
     );
@@ -170,10 +217,10 @@ class FilterSelect extends PureComponent {
                 <CheckboxGroupInputField
                     key={fieldKey}
                     fieldKey={fieldKey}
-                    initialState={{
-                                            value: '',   // workaround for _all_ for now
-                                            tooltip: 'Please select some boxes',
-                                            label : '' }}
+                    initialState={{ options: dispOptions,
+                                    value: '',   // workaround for _all_ for now
+                                    tooltip: 'Please select some boxes',
+                                    label : '' }}
                     options={dispOptions}
                     alignment='vertical'
                     labelWidth={35}
@@ -221,24 +268,29 @@ const toFilterSummary = (master, key, desc) => Object.entries(countBy(master, (d
 // eslint-disable-next-line
 function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
-    const setDSListMode = (flg) => {
-                                projects.forEach((k) => dispatchComponentStateChange(k, {isOpen:flg}));
-                                onChange && onChange();
-                            };
+
+    const allSelect = Object.values(FieldGroupUtils.getGroupFields(groupKey))
+                            .filter( (f) => get(f, 'fieldKey','').startsWith('IMAGES_'))
+                            .filter( (f) => get(f, 'value'))                                    // look for only selected fields
+                            .map( (f) => f.options.filter( (o) => f.value.includes(o.value))
+                                                  .map((o) => o.label).join() )                 // takes the label of the selected field
+                            .join();
+    let content;
+    if (projects.length > 1) {
+        content = projects.map((p) => <DataProduct key={p} {...{groupKey, project:p, filteredImageData, multiSelect}}/>);
+    } else {
+        content = (
+            <div style={{display:'flex', justifyContent:'center', marginTop: 40}}>
+                <div>No data match these criteria</div>
+            </div>
+        );
+    }
 
     return (
         <div className='DataProductList'>
-            <div className='DataProductList__toolbar'>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => setDSListMode(true)}>Expand All</a>
-                &bull;<a className='ff-href' onClick={() => setDSListMode(false)}>Collapse All</a>
-            </div>
-            <div className='DataProductList__view'>
-                {
-                    projects.map((p) =>
-                        <DataProduct key={p} {...{groupKey, project:p, filteredImageData, multiSelect}}/>
-                    )
-                }
-            </div>
+            <div className='ImageSelect__title'>Selection:</div>
+            <div className='ImageSelect__info'>{pretty(allSelect, 100)}</div>
+            <div className='DataProductList__view'>{content}</div>
         </div>
     );
 }
@@ -351,3 +403,16 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
 }
 
 const toImageOptions= (a) => a.map ( (d) => ({label: d.title, value: d.imageId}));
+
+function pretty(str, max) {
+    const words = str.split(',');
+    let pretty = '';
+    for(var i=0; i< words.length; i++) {
+        if (pretty.length + words[i].length > max) {
+            pretty += ` (${words.length-i} more)`;
+            break;
+        }
+        pretty += words[i] + (i === words.length-1 ? '' : ',');
+    }
+    return pretty;
+}

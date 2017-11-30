@@ -80,6 +80,7 @@ export function ImageSearchDropDown({gridSupport}) {
     const {plotId, viewerId, multiSelect} = getContexInfo();
     return (
         <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+                    submitBarStyle = {{padding: '0 4px 3px'}}
                     groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
                     params = {{hideOnInvalid: false}}
                     onSubmit = {(request) => onSearchSubmit({request, plotId, viewerId, gridSupport})}
@@ -116,7 +117,8 @@ export function showImageSelPanel(popTitle) {
     const popup = (
         <PopupPanel title={popTitle}>
             <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
-                        style = {{padding: '0 5px'}}
+                        submitBarStyle = {{padding: '0 4px 3px'}}
+                        style = {{padding: '0 2px'}}
                         groupKey = {Object.values(FG_KEYS)}
                         includeUnmounted={true}
                         submitText='Load'
@@ -209,7 +211,7 @@ ImageSearchPanelV2.propTypes = {
 function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName}) {
     return (
         <div style={{width:'100%'}}>
-            <FieldGroup groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
+            <FieldGroup groupKey={groupKey} reducerFunc={mainReducer} keepState={false}>
                 <ImageSource {...{groupKey, imageMasterData, multiSelect, archiveName}}/>
             </FieldGroup>
         </div>
@@ -221,9 +223,9 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
 
     return (
         <div style={{marginTop: 5}}>
-            <Tabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true}
-                            borderless={true} contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
-                            headerStyle={{display:'inline-flex', justifyContent:'center'}}>
+            <Tabs resizable={false} useFlex={true} borderless={true}
+                  contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
+                  headerStyle={{display:'inline-flex', justifyContent:'center'}}>
                 <Tab key='ImageSearchRed' name='red' label={<div style={{width:40, color:'red'}}>Red</div>}>
                     <SingleChannel {...{groupKey: FG_KEYS.red, imageMasterData, multiSelect, archiveName}}/>
                 </Tab>
@@ -303,11 +305,14 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                                              min: 1 / 3600,
                                              max: 1,
                                          }}
-                                     label={'Choose Radius'}
+                                     label={'Choose Radius:'}
                     />
                 </div>
             </div>
-            <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, style, addChangeListener, imageMasterData, multiSelect}} />
+            <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset'}}>
+                <div className='ImageSearch__section--title'>4. Select Data Set</div>
+                <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, style, addChangeListener, imageMasterData, multiSelect}} />
+            </div>
         </div>
     );
 }
@@ -499,10 +504,12 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
     if (get(request, 'imageSource', 'none') === 'none') {
         return [];
     } else if (request.imageSource === 'upload') {
-        return [makeFitsWebRequest(request, plotId, plotGroupId)];
+        const fileName = get(request, 'fileUpload');
+        return [addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), plotId, plotGroupId)];
 
     } else if (request.imageSource === 'url') {
-        return [makeURLWebRequest(request, plotId, plotGroupId)];
+        const url = get(request, 'txURL');
+        return [addStdParams(WebPlotRequest.makeURLPlotRequest(url), plotId, plotGroupId)];
     } else {
         const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
         const radius= request.conesize;
@@ -538,42 +545,18 @@ const nextPlotId = (() => {
     };
 })();
 
-function makeWPRequest(wp, radius, params, plotId=nextPlotId(), plotGroupId='multiImageGroup', type) {
+function makeWPRequest(wp, radius, params, plotId, plotGroupId) {
     const inReq= Object.assign( {
-        [WPConst.PLOT_ID] : plotId,
         [WPConst.WORLD_PT] : wp.toString(),
         [WPConst.SIZE_IN_DEG] : radius+'',
-        [WPConst.PLOT_GROUP_ID] : plotGroupId,
-        [WPConst.GROUP_LOCKED] : 'true',
-        [WPConst.TYPE] : type
     }, params);
 
-    return WebPlotRequest.makeFromObj(inReq);
+    return addStdParams(WebPlotRequest.makeFromObj(inReq), plotId, plotGroupId);
 }
 
-function makeURLWebRequest(request, plotId=nextPlotId(), plotGroupId='multiImageGroup', type) {
-
-    var url = get(request, 'txURL');
-    const params = {
-        [WPConst.PLOT_ID] : plotId,
-        [WPConst.URLKEY] : url,
-        [WPConst.PLOT_GROUP_ID] : plotGroupId,
-        [WPConst.GROUP_LOCKED] : 'true',
-        [WPConst.TYPE] : type
-    };
-    return  WebPlotRequest.makeFromObj(params);
-}
-
-function makeFitsWebRequest(request, plotId=nextPlotId(), plotGroupId='multiImageGroup', type) {
-
-    var fits = get(request, 'fileUpload');
-
-    const params = {
-        [WPConst.PLOT_ID] : plotId,
-        [WPConst.FILE] : fits,
-        [WPConst.PLOT_GROUP_ID] : plotGroupId,
-        [WPConst.GROUP_LOCKED] : 'true',
-        [WPConst.TYPE] : type
-    };
-    return  WebPlotRequest.makeFromObj(params);
+function addStdParams(wpreq, plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
+    wpreq.setPlotId(plotId);
+    wpreq.setPlotGroupId(plotGroupId);
+    wpreq.setGroupLocked('true');
+    return wpreq;
 }

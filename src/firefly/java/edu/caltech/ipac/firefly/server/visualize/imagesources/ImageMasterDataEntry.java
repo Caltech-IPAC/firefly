@@ -52,8 +52,15 @@ public class ImageMasterDataEntry {
     public void setPlotRequestParams(Map<String,String> params) { map.put(PLOT_REQUEST_PARAMS, params);}
 
 
-    public void set(PARAMS key, String val){map.put(key.getKey(), val);}
+    public String getParamString(PARAMS key) {
+        if (key != null) {
+            Object v = map.get(key.getKey());
+            return  v == null ? null : v.toString();
+        }
+        return null;
+    }
 
+    public void set(PARAMS key, String val){map.put(key.getKey(), val);}
 
     public Map<String,Object> getDataMap() {
         return map;

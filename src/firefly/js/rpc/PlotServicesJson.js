@@ -185,9 +185,10 @@ export function callGetImageMasterData(imageSources, projectSortOrder='') {
     const sortOrderStr= isArray(projectSortOrder) ? projectSortOrder.join(',') : projectSortOrder.toString();
     const imageSourcesStr= isArray(imageSources) ? imageSources.join(',') : imageSources.toString();
     return doJsonRequest(ServerParams.GET_IMAGE_MASTER_DATA,
-        {[ServerParams.IMAGE_SOURCES] : imageSourcesStr},
-        {[ServerParams.SORT_ORDER] : sortOrderStr},
-        true);
+                {[ServerParams.IMAGE_SOURCES] : imageSourcesStr,
+                 [ServerParams.SORT_ORDER] : sortOrderStr
+                },
+                true);
 }
 
 export function getDS9Region(fileKey) {
