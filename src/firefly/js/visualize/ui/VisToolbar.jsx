@@ -23,6 +23,7 @@ import {isHiPS} from '../WebPlot.js';
 
 const omList= ['plotViewAry'];
 const pvPickList= ['plotViewCtx','primeIdx', 'flipY'];
+const hipsUrl = 'hipsUrlRoot';
 
 export class VisToolbar extends PureComponent {
     constructor(props) {
@@ -83,9 +84,7 @@ export class VisToolbar extends PureComponent {
             needsUpdate = get(oldPlot, 'zoomFactor') !== get(newPlot, 'zoomFactor');
 
             if (!needsUpdate && isHiPS(oldPlot) && isHiPS(newPlot)) {
-                const hUrl = 'hipsUrlRoot';
-
-                needsUpdate = get(oldPlot,  hUrl) !== get(newPlot, hUrl);
+                needsUpdate = get(oldPlot,  hipsUrl) !== get(newPlot, hipsUrl);
             }
         }
 
