@@ -120,10 +120,8 @@ function FilterPanelView({onChange, imageMasterData}) {
     const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project}`);
     const missions = toFilterSummary(forSummary, 'missionId', 'missionId');
     const projectTypes = toFilterSummary(forSummary, 'projectTypeKey', 'projectTypeDesc');
-    //LZ added and commented out these two lines while fix IRSA-1055
-   // const sortedImageData = sortBy(imageMasterData, 'wavelength');
-   // const waveBands = toFilterSummary(sortedImageData, 'wavelength', 'wavelengthDesc');
-    const waveBands = toFilterSummary(imageMasterData, 'wavelength', 'wavelengthDesc');
+    const sortedImageData = sortBy(imageMasterData, (item) => parseFloat(item.wavelength));
+    const waveBands = toFilterSummary(sortedImageData, 'wavelength', 'wavelengthDesc');
     return (
         <div className='FilterPanel__view'>
             <CollapsiblePanel componentKey='missionFilter' header='MISSION:' isOpen={true}>
