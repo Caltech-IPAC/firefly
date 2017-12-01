@@ -74,7 +74,8 @@ ImageSelect.propTypes = {
 const toFilterSelectAry = (groupKey, s) => getFieldVal(groupKey, `Filter_${s}`, '').split(',').map((d) => d.trim()).filter((d) => d);
 
 
-function doWhenValueChanged(fieldKey='', inFields, value) {
+function fieldsReducer(inFields, action) {
+    const {fieldKey='', value=''} = action.payload;
     if (fieldKey.startsWith('PROJ_ALL_')) {
         // a project checkbox is clicked
         const proj = fieldKey.replace('PROJ_ALL_', '');
@@ -103,16 +104,6 @@ function doWhenValueChanged(fieldKey='', inFields, value) {
     return inFields;
 }
 
-function fieldsReducer(inFields, action) {
-    const {fieldKey='', fieldAry, value=''} = action.payload;
-    if (fieldKey) {
-        return (doWhenValueChanged(fieldKey, inFields, value));
-    } else if (get(fieldAry, 'length')) {
-        inFields = fieldAry.reduce( (p, f) => doWhenValueChanged(f.fieldKey, p, f.value), inFields);
-    };
-    return inFields;
-}
-
 
 function ToolBar({filteredImageData, groupKey, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
@@ -120,9 +111,9 @@ function ToolBar({filteredImageData, groupKey, onChange}) {
         projects.forEach((k) => dispatchComponentStateChange(k, {isOpen:flg}));
         onChange && onChange();
     };
-    const clearFields = (type) => {
+    const clearFields = (types) => {
         const fields = Object.values(FieldGroupUtils.getGroupFields(groupKey))
-                            .filter( (f) => get(f, 'fieldKey','').startsWith(type))
+                            .filter( (f) => types.some( (t) => get(f, 'fieldKey','').startsWith(t)))
                             .filter( (f) => get(f, 'value'));        // look for all selected filters
         if (fields.length > 0) {
             fields.forEach((f) => f.value = '');
@@ -133,10 +124,10 @@ function ToolBar({filteredImageData, groupKey, onChange}) {
     return (
         <div className='ImageSelect__toolbar'>
             <div>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields('Filter_')}>Clear Filters</a>
+                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields(['Filter_'])}>Clear Filters</a>
             </div>
             <div>
-                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields('IMAGES_')}>Clear Selections</a>
+                &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields(['IMAGES_', 'PROJ_ALL_'])}>Clear Selections</a>
                 &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => setDSListMode(true)}>Expand All</a>
                 &bull;<a className='ff-href' onClick={() => setDSListMode(false)}>Collapse All</a>
             </div>
