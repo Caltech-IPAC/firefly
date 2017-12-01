@@ -34,17 +34,20 @@ export function makePostPlotTitle(plot,r) {
 }
 
 function computeFileNameBaseTitle(r,state, band, preTitle) {
-    var retval= '';
-    var rt= r.getRequestType();
+    let retval= '';
+    const rt= r.getRequestType();
     if (rt===RequestType.WORKSPACE || rt===RequestType.FILE || rt===RequestType.TRY_FILE_THEN_URL) {
-        if (state.getUploadFileName(band)) {
+        if (r.getFileName()) {
+            retval= preTitle + computeTitleFromFile(r.getFileName());
+        }
+        else if (state.getUploadFileName(band)) {
             retval= preTitle + computeTitleFromFile(state.getUploadFileName(band));
         }
         else {
-            retval= preTitle + computeTitleFromFile(r.getFileName());
+            retval= 'FITS';
         }
     }
-    else if (r.getRequestType()== RequestType.URL) {
+    else if (rt===RequestType.URL) {
         retval= computeTitleFromURL(r.getURL(),r,preTitle);
     }
     return retval;
