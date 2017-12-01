@@ -111,6 +111,7 @@ public class ImagePlotCreator {
                 if (state.isThreeColor()) {
                     plot.setThreeColorBand(state.isBandVisible(band) ? readInfo.getFitsRead() :null,
                             band,frGroup);
+                    stretchBand(band,state,plot,frGroup);
                 }
                 if (readInfo.getModFileWriter()!=null) fileWriterMap.put(band,readInfo.getModFileWriter());
                 first= false;
@@ -209,13 +210,19 @@ public class ImagePlotCreator {
             FitsCacher.addFitsReadToCache(retval.getTargetFile(), new FitsRead[]{tmpFR});
         }
 
-        RangeValues rv= state.getRangeValues(readInfo.getBand());
+        stretchBand(band,state, plot,frGroup);;
+        return retval;
+    }
+
+    private static void stretchBand(Band band, PlotState state, ImagePlot plot, ActiveFitsReadGroup frGroup) {
+        RangeValues rv= state.getRangeValues(band);
+        HistogramOps histOps= plot.getHistogramOps(band,frGroup);
         if (rv==null) {
             rv= FitsRead.getDefaultFutureStretch();
-            state.setRangeValues(rv, readInfo.getBand());
+            state.setRangeValues(rv, band);
         }
         histOps.recomputeStretch(rv, true);
-        return retval;
+
     }
 
     private static void initPlotTitle(PlotState state,

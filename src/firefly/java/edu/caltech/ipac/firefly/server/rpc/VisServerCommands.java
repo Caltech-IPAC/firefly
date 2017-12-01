@@ -126,7 +126,7 @@ public class VisServerCommands {
             }
 
 
-            data.put("success", true);
+//            data.put("success", true);
 
             JSONArray wrapperAry= new JSONArray();
             obj.put("data", data);
