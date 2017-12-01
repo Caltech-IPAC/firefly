@@ -28,7 +28,7 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {NewPlotMode, findViewerWithItemId, getMultiViewRoot, getViewer, getAViewFromMultiView, IMAGE} from '../MultiViewCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
-
+import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 
 import './ImageSearchPanelV2.css';
 
@@ -207,23 +207,21 @@ ImageSearchPanelV2.propTypes = {
     multiSelect: PropTypes.bool,
 };
 
-// eslint-disable-next-line
 function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName}) {
     return (
         <div style={{width:'100%'}}>
-            <FieldGroup groupKey={groupKey} reducerFunc={mainReducer} keepState={false}>
+            <FieldGroup groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
                 <ImageSource {...{groupKey, imageMasterData, multiSelect, archiveName}}/>
             </FieldGroup>
         </div>
     );
 }
 
-// eslint-disable-next-line
 function ThreeColor({imageMasterData, multiSelect, archiveName}) {
 
     return (
         <div style={{marginTop: 5}}>
-            <Tabs resizable={false} useFlex={true} borderless={true}
+            <Tabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true} borderless={true}
                   contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
                   headerStyle={{display:'inline-flex', justifyContent:'center'}}>
                 <Tab key='ImageSearchRed' name='red' label={<div style={{width:40, color:'red'}}>Red</div>}>
@@ -255,12 +253,12 @@ function ImageType({}) {
     );
 }
 
-// eslint-disable-next-line
 function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive'}) {
     const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
     const options = [   {label: archiveName, value: 'archive'},
                         {label: 'Upload', value: 'upload'},
-                        {label: 'URL', value: 'url'}];
+                        {label: 'URL', value: 'url'},
+                        {label: 'Workspace', value: ServerParams.IS_WS}];
     isThreeColor && (options.push({label: 'None', value: 'none'}));
     const defaultValue = isThreeColor ? 'none' : 'archive';
     const imageSource = getFieldVal(groupKey, 'imageSource', defaultValue);
@@ -275,14 +273,14 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
                     options = {options}
                     fieldKey = 'imageSource'/>
             </div>
-            {imageSource === 'url'    && <SelectUrl {...{groupKey, imageMasterData, multiSelect}}/>}
+            {imageSource === 'url'    && <SelectUrl />}
             {imageSource === 'archive'   && <SelectArchive {...{groupKey, imageMasterData, multiSelect}}/>}
-            {imageSource === 'upload' && <SelectUpload {...{groupKey, imageMasterData, multiSelect}}/>}
+            {imageSource === 'upload' && <SelectUpload />}
+            {imageSource === ServerParams.IS_WS && <SelectWorkspace />}
         </div>
     );
 }
 
-// eslint-disable-next-line
 function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const title = '4. Select Data Set';
     const style = {width: '100%', height: 350};
@@ -317,22 +315,32 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     );
 }
 
-// eslint-disable-next-line
-function SelectUpload({groupKey,  imageMasterData, multiSelect}) {
+function SelectUpload() {
     return (
-        <div className='ImageSearch__section' style={{height: 35, alignItems: 'center'}}>
+        <div className='ImageSearch__section' style={{alignItems: 'center'}}>
             <div className='ImageSearch__section--title'>3. Select Image</div>
             <FileUpload
                 fieldKey='fileUpload'
-                initialState= {{
-                            tooltip: 'Select a file to upload' }}
+                initialState= {{tooltip: 'Select a image to upload' }}
             />
         </div>
     );
 }
 
-// eslint-disable-next-line
-function SelectUrl({groupKey,  imageMasterData, multiSelect}) {
+function SelectWorkspace() {
+    return (
+        <div className='ImageSearch__section' style={{alignItems: 'center'}}>
+            <div className='ImageSearch__section--title'>3. Select Image</div>
+            <WorkspaceUpload
+                preloadWsFile={false}
+                fieldKey='wsFilepath'
+                initialState= {{tooltip: 'Select an image from workspace to upload' }}
+            />
+        </div>
+    );
+}
+
+function SelectUrl() {
     return (
         <div className='ImageSearch__section' style={{height: 35, alignItems: 'center'}}>
             <div className='ImageSearch__section--title'>3. Enter URL</div>
@@ -388,6 +396,11 @@ function getValidatedInfo(request, isThreeColor) {
     switch (request.imageSource) {
         case 'upload' :
             if(!includes(request.fileUpload, 'fits') ){
+                return ({valid:false, message:'FITS file is required'});
+            }
+            break;
+        case ServerParams.IS_WS :
+            if(!includes(request.wsFilepath, 'fits') ){
                 return ({valid:false, message:'FITS file is required'});
             }
             break;
@@ -503,13 +516,19 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
 
     if (get(request, 'imageSource', 'none') === 'none') {
         return [];
+
     } else if (request.imageSource === 'upload') {
         const fileName = get(request, 'fileUpload');
         return [addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), plotId, plotGroupId)];
 
+    } else if (request.imageSource === ServerParams.IS_WS) {
+        const fileName = get(request, 'wsFilepath');
+        return [addStdParams(WebPlotRequest.makeWorkspaceRequest(fileName), plotId, plotGroupId)];
+
     } else if (request.imageSource === 'url') {
         const url = get(request, 'txURL');
         return [addStdParams(WebPlotRequest.makeURLPlotRequest(url), plotId, plotGroupId)];
+
     } else {
         const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
         const radius= request.conesize;

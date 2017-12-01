@@ -263,7 +263,6 @@ TablePanel.defaultProps = {
     pageSize: 100
 };
 
-// eslint-disable-next-line
 function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     const style = {display: 'flex'};
     if (leftButtons) {
@@ -277,7 +276,6 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     );
 }
 
-// eslint-disable-next-line
 function Title({title, removable, tbl_id}) {
     return (
         <div className='TablePanel__title'>
@@ -292,7 +290,6 @@ function Title({title, removable, tbl_id}) {
     );
 }
 
-// eslint-disable-next-line
 function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
     const toBg = () => {
         dispatchTblResultsRemove(tbl_id);

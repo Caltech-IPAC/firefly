@@ -106,7 +106,6 @@ export class LcResult extends PureComponent {
     }
 }
 
-// eslint-disable-next-line
 const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
     const view = expanded === LO_VIEW.tables ? tables
         : expanded === LO_VIEW.xyPlots ? xyPlot
@@ -118,7 +117,6 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 
 const buttonW = 650;
 
-// eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
 
     const converterId = get(settingBox, ['props', 'missionEntries', LC.META_MISSION]);

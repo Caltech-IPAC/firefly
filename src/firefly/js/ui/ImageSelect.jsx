@@ -74,7 +74,7 @@ ImageSelect.propTypes = {
 const toFilterSelectAry = (groupKey, s) => getFieldVal(groupKey, `Filter_${s}`, '').split(',').map((d) => d.trim()).filter((d) => d);
 
 
-function doWhenValueChanged(fieldKey, inFields, value) {
+function doWhenValueChanged(fieldKey='', inFields, value) {
     if (fieldKey.startsWith('PROJ_ALL_')) {
         // a project checkbox is clicked
         const proj = fieldKey.replace('PROJ_ALL_', '');
@@ -114,7 +114,6 @@ function fieldsReducer(inFields, action) {
 }
 
 
-// eslint-disable-next-line
 function ToolBar({filteredImageData, groupKey, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
     const setDSListMode = (flg) => {
@@ -146,7 +145,6 @@ function ToolBar({filteredImageData, groupKey, onChange}) {
 }
 
 /*--------------------------- Filter Panel ---------------------------------------------*/
-// eslint-disable-next-line
 function FilterPanel({imageMasterData, groupKey, onChange}) {
     const allSelect = Object.values(FieldGroupUtils.getGroupFields(groupKey))
         .filter( (f) => get(f, 'fieldKey','').startsWith('Filter_'))
@@ -162,7 +160,6 @@ function FilterPanel({imageMasterData, groupKey, onChange}) {
     );
 }
 
-// eslint-disable-next-line
 function FilterPanelView({onChange, imageMasterData}) {
     const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project}`);
     const missions = toFilterSummary(forSummary, 'missionId', 'missionId');
@@ -203,7 +200,6 @@ class FilterSelect extends PureComponent {
     }
 
     render() {
-        // eslint-disable-next-line
         const {type, dataList, onChange, maxShown=3} = this.props;
         const {showExpanded} = this.state;
         const fieldKey= `Filter_${type}`;
@@ -239,7 +235,6 @@ class FilterSelect extends PureComponent {
 }
 
 // save in case we want to do it this way
-// eslint-disable-next-line
 function FilterSelectExpanded({selections, onClose}) {
     return (
         <div className='FilterPanel__item--exp'>
@@ -265,7 +260,6 @@ const toFilterSummary = (master, key, desc) => Object.entries(countBy(master, (d
 
 /*--------------------------- Data Product List ---------------------------------------*/
 
-// eslint-disable-next-line
 function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
 
@@ -295,7 +289,6 @@ function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
     );
 }
 
-// eslint-disable-next-line
 function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
 
     // filter projects ... projects is like dataproduct or dataset.. i.e SEIP
@@ -348,7 +341,6 @@ const hasImageSelection = (groupKey, proj) => {
 };
 
 
-// eslint-disable-next-line
 function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSelect}) {
     subProject = isNil(subProject) ? '' : subProject;
     const fieldKey= `IMAGES_${get(projectData, [0, 'project'])}||${subProject}`;

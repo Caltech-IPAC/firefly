@@ -74,7 +74,6 @@ TablesContainer.defaultProps = {
 
 
 function ExpandedView(props) {
-    // eslint-disable-next-line
     const {tables, closeable} = props;
     return (
         <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
@@ -95,7 +94,6 @@ function ExpandedView(props) {
 
 
 function StandardView(props) {
-    // eslint-disable-next-line
     const {tables, tableOptions, expandedMode, active, tbl_group} = props;
 
     var activeIdx = Object.keys(tables).findIndex( (tbl_ui_id) => get(tables,[tbl_ui_id,'tbl_id']) === active);
@@ -116,7 +114,6 @@ function StandardView(props) {
     }
 }
 
-// eslint-disable-next-line
 function SingleTable({table, tableOptions, expandedMode}) {
     var {tbl_id, title, removable, tbl_ui_id, options={}} = table;
 
