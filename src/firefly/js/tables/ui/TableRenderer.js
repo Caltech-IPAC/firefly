@@ -19,9 +19,6 @@ import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 const {Cell} = FixedDataTable;
 const html_regex = /<.+>/;
 
-// the components here are small and used by table only.  not all props are defined.
-/* eslint-disable react/prop-types */
-
 /*---------------------------- COLUMN HEADER RENDERERS ----------------------------*/
 function Label({sortable, label, name, sortByCols, sortInfoCls, onSort}) {
     const sortDir = sortInfoCls.getDirection(name);

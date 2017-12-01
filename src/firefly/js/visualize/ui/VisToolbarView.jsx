@@ -34,7 +34,7 @@ import WebGrid from '../../drawingLayers/WebGrid.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
-import {showImageSelPanel} from './ImageSelectPanel.jsx';
+import {showImageSelPanel} from './ImageSearchPanelV2.jsx';
 import {showMaskDialog} from './MaskAddPanel.jsx';
 import {isImage,isHiPS} from '../WebPlot.js';
 import {HiPSPropertyView} from './HiPSPropertyView.jsx';

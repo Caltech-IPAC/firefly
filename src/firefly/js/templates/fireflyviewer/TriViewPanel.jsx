@@ -34,7 +34,6 @@ export class TriViewPanel extends PureComponent {
     }
 
     render() {
-        // eslint-disable-next-line
         const {showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.props;
         const {title, mode, showTables, showImages, showXyPlots, images={}} = this.state;
         const {expanded, standard, closeable} = mode || {};
@@ -91,7 +90,6 @@ TriViewPanel.defaultProps = {
 };
 
 
-// eslint-disable-next-line
 function searchDesc({viewSwitch, leftButtons, centerButtons, rightButtons}) {
 
     const hasContent = viewSwitch || leftButtons || centerButtons || rightButtons;

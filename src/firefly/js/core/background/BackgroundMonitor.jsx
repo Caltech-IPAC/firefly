@@ -143,7 +143,6 @@ function SearchItem(bgStatus) {
     );
 }
 
-// eslint-disable-next-line
 function SearchStatus({ID, STATE, Title, SERVER_REQ}) {
     var progress;
     if (BG_STATE.WAITING.is(STATE)) {
@@ -185,7 +184,6 @@ function PackageStatus(bgStatus) {
     );
 }
 
-// eslint-disable-next-line
 function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
     var progress;
     if (BG_STATE.WAITING.is(STATE)) {
@@ -203,7 +201,6 @@ function SinglePackage({ID, Title, STATE, ITEMS=[]}) {
     );
 }
 
-// eslint-disable-next-line
 function MultiPackage({ID, Title, STATE, ITEMS}) {
     var progress = BG_STATE.CANCELED.is(STATE) && <div>User aborted this request</div>;
     const packages = ITEMS.map( (pi, INDEX) => {
@@ -220,7 +217,6 @@ function MultiPackage({ID, Title, STATE, ITEMS}) {
     );
 }
 
-// eslint-disable-next-line
 function PackageHeader({ID, Title, progress, STATE}) {
     const removeBgStatus = () => {
         dispatchJobRemove(ID);

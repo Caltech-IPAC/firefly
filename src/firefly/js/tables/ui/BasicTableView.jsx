@@ -221,8 +221,6 @@ BasicTableView.defaultProps = {
 };
 
 
-// components here on down are private.  not all props are defined.
-/* eslint-disable react/prop-types */
 const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
     const text = tableTextView(columns, data, showUnits);
     return (

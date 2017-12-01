@@ -50,7 +50,6 @@ ResultsPanel.propTypes = {
 };
 
 
-// eslint-disable-next-line
 const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
     const view = expanded === LO_VIEW.tables ? tables
                 : expanded === LO_VIEW.xyPlots ? xyPlot
@@ -63,7 +62,6 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 };
 
 
-// eslint-disable-next-line
 const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlot, tables}) => {
     standard = LO_VIEW.get(standard) || LO_VIEW.none;
     const components = resolveComponents(standard, imagePlot, xyPlot, tables);

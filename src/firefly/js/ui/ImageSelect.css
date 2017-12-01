@@ -1,15 +1,41 @@
 .ImageSelect {
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
+    background-color: #f5f5f5;
 }
 
-.ImageSelect > * {
+.ImageSelect__panels {
+    display: flex;
     box-shadow: 0 1px 3px 0 rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04);
     transition: box-shadow .3s ease-in-out;
     background-color: #fff;
-    border-radius: 2px;
-    margin: 2px;
+    border-bottom-right-radius: 2px;
+    border-bottom-left-radius: 2px;
     outline: none;
 }
+
+.ImageSelect__info {
+    color: saddlebrown;
+    font-style: italic;
+    font-size: smaller;
+    padding: 0 4px 2px;
+}
+
+.ImageSelect__title {
+    font-weight: bold;
+    padding: 4px;
+}
+
+.ImageSelect__toolbar {
+    flex-grow: 0;
+    background-color: #f5f5f5;
+    height: 15px;
+    min-height: 15px;
+    padding: 3px 6px;
+    display: inline-flex;
+    justify-content: space-between;
+}
+
 
 .FilterPanel {
     flex-grow: 0;
@@ -18,22 +44,8 @@
     flex-direction: column;
 }
 
-.FilterPanel__toolbar {
-    flex-grow: 0;
-    background-color: #f5f5f5;
-    border-bottom: solid 1px #f1f1f1;
-    height: 15px;
-    min-height: 15px;
-    color: #005da4;
-    font-size: larger;
-    font-weight: bold;
-    padding: 3px
-}
-
 .FilterPanel__view {
-    padding: 5px;
     flex-grow: 1;
-    overflow: auto;
     overflow: auto;
     margin-right: -2px;
 }
@@ -60,15 +72,6 @@
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-}
-
-.DataProductList__toolbar {
-    flex-grow: 0;
-    background-color: #f5f5f5;
-    border-bottom: solid 1px #f1f1f1;
-    height: 15px;
-    min-height: 15px;
-    padding: 3px
 }
 
 .DataProductList__view {

@@ -53,8 +53,9 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 }
 
 export const FormPanel = function (props) {
-    var {children, onSuccess, onSubmit, onCancel, onError, groupKey, action, params, title, style, inputStyle,
-        submitText='Search', help_id, changeMasking, includeUnmounted=false} = props;
+    const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey,
+            action, params, title, style, inputStyle, submitBarStyle,
+            submitText='Search', help_id, changeMasking, includeUnmounted=false} = props;
 
     const childrenStyle = Object.assign({
         backgroundColor: 'white',
@@ -64,15 +65,15 @@ export const FormPanel = function (props) {
         boxSizing: 'border-box',
         flexGrow: 1
     }, inputStyle);
-    onCancel = onCancel || dispatchHideDropDown;
     const mStyle = Object.assign({height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}, style);
-
+    const barStyle = Object.assign({flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', boxSizing: 'border-box',
+                                  width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}, submitBarStyle);
     return (
         <div style={mStyle}>
             <div style={childrenStyle}>
                 {children}
             </div>
-            <div style={{flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}}>
+            <div style={barStyle}>
                 <div>
                     <CompleteButton style={{display: 'inline-block', marginRight: 10}}
                                     includeUnmounted={includeUnmounted}
@@ -101,6 +102,7 @@ FormPanel.propTypes = {
     title: PropTypes.string,
     style: PropTypes.object,
     inputStyle: PropTypes.object,
+    submitBarStyle: PropTypes.object,
     onSubmit: PropTypes.func, // onSubmit(request) - callback that accepts table request, use with action, params, and title props
     onSuccess: PropTypes.func, // onSuccess(fields) - callback that takes fields object, its keys are the field keys for fields in the given group
     onCancel: PropTypes.func,

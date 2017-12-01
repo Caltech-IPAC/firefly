@@ -42,11 +42,12 @@ export function* watchReadout() {
         let readout= undefined;
         plotView= getPlotViewById(visRoot(), plotId);
         const plot= primePlot(plotView);
+        threeColor= plot.plotState.threeColor;
         if (usePayload(mouseState,lockByClick)) {
 
             if (plot) {
                 if (isImage(plot)) {
-                    readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, plot.plotState.threeColor);
+                    readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, threeColor);
                     dispatchReadoutData(plotId,readout, plot.plotState.threeColor);
                 }
                 else {

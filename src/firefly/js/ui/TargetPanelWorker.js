@@ -5,7 +5,7 @@
 //-----------------
 import PositionParser from '../util/PositionParser';
 import PositionFieldDef from '../data/form/PositionFieldDef';
-import Point from '../visualize/Point';
+import {getRootPath} from '../util/BrowserUtil.js';
 import {fetchUrl} from '../util/WebUtil.js';
 import {parseWorldPt} from '../visualize/Point';
 
@@ -55,7 +55,7 @@ var makeResolverPromise= function(objName, resolver) {
 
 function makeSearchPromise(objName, resolver= 'nedthensimbad') {
     var rejectFunc= null;
-    var url= `sticky/CmdSrv?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
+    var url= `${getRootPath()}sticky/CmdSrv?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
     var searchPromise= new Promise(
         function(resolve, reject) {
             fetchUrl(url).then( (response) => {
