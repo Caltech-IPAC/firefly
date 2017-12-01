@@ -261,7 +261,7 @@ function DataProductList({filteredImageData, groupKey, multiSelect, onChange}) {
                                                   .map((o) => o.label).join() )                 // takes the label of the selected field
                             .join();
     let content;
-    if (projects.length > 1) {
+    if (projects.length > 0) {
         content = projects.map((p) => <DataProduct key={p} {...{groupKey, project:p, filteredImageData, multiSelect}}/>);
     } else {
         content = (
