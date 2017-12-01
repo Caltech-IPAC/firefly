@@ -29,6 +29,7 @@ import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.
 import {NewPlotMode, findViewerWithItemId, getMultiViewRoot, getViewer, getAViewFromMultiView, IMAGE} from '../MultiViewCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
+import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 
 import './ImageSearchPanelV2.css';
 
@@ -257,8 +258,10 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
     const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
     const options = [   {label: archiveName, value: 'archive'},
                         {label: 'Upload', value: 'upload'},
-                        {label: 'URL', value: 'url'},
-                        {label: 'Workspace', value: ServerParams.IS_WS}];
+                        {label: 'URL', value: 'url'}];
+    if (getWorkspaceConfig()) {
+        options.push({label: 'Workspace', value: ServerParams.IS_WS});
+    }
     isThreeColor && (options.push({label: 'None', value: 'none'}));
     const defaultValue = isThreeColor ? 'none' : 'archive';
     const imageSource = getFieldVal(groupKey, 'imageSource', defaultValue);
