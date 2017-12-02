@@ -37,6 +37,7 @@ public class AtlasImageGetter {
             String sizeStr = null;
             IbeDataSource ibeSource = null;
             Map<String, String> queryMap = new HashMap<String, String>(11);
+            String errorMsg ="";
             if (params instanceof AtlasImageParams) {
                 AtlasImageParams atlasParams = (AtlasImageParams) params;
                 sizeStr= atlasParams.getSize()+"";
@@ -55,11 +56,14 @@ public class AtlasImageGetter {
                     queryMap.put(AtlasIbeDataSource.BAND_KEY, atlasParams.getBand());
                     queryMap.put(AtlasIbeDataSource.INSTRUMENT_KEY, atlasParams.getInstrument());
                 }
+                errorMsg = atlasParams.getSchema()+"/"+atlasParams.getTable()+"/"+atlasParams.getBand();
+
                 ibeSource.initialize(m);
 
             } else {
                 Assert.argTst(false, "unknown request type");
             }
+
             IBE ibe = new IBE(ibeSource);
 
 
@@ -84,7 +88,7 @@ public class AtlasImageGetter {
                 FileInfo result = ibe.getData(dataParam, null);
                 return new File(result.getInternalFilename());
             } else {
-                throw new FailedRequestException("Area not covered, images #"+data.values().size());
+                throw new FailedRequestException("Area not covered "+errorMsg);
             }
 
         } catch (IpacTableException me) {

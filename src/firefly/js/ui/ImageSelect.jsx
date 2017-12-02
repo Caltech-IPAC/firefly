@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {uniqBy, uniq, get, countBy, isNil, xor} from 'lodash';
+import {uniqBy, uniq, get, countBy, isNil, xor, sortBy} from 'lodash';
 
 
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
