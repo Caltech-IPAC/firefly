@@ -48,7 +48,7 @@ export class ImageSelect extends PureComponent {
         return (
             <div style={style} className='ImageSelect'>
                 <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
-                <div style={{flexGrow: 1, display: 'flex'}}>
+                <div style={{flexGrow: 1, display: 'flex', minHeight: 1}}>
                     <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
                         <FilterPanel {...{imageMasterData, groupKey}}/>
                     </div>
