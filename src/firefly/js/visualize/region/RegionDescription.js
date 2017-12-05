@@ -10,6 +10,7 @@ import DrawOp from '../draw/DrawOp.js';
 import Point from '../Point.js';
 import {RegionType, regionPropsList, getRegionDefault, RegionValue, RegionValueUnit} from './Region.js';
 import {get, has, isNil, isEmpty} from 'lodash';
+import {MARKER_DATA_OBJ, markerToRegion} from '../draw/MarkerFootprintObj.js';
 
 
 const RegionPropertyName = {
@@ -52,6 +53,7 @@ var fontObjToStr = (v) => (`"${v.name} ${v.point} ${v.weight} ${v.slant}"` );
 /**
  * make region descript array from plot DrawObj of all visible DrawLayer
  * @param plot
+ * @param bSeperateText denote to not use default text loc setting
  */
 export function makeRegionsFromPlot(plot, bSeperateText = false)
 {
@@ -80,18 +82,24 @@ export function makeRegionsFromPlot(plot, bSeperateText = false)
     //rgDesAry.push(DS9Global);
 
     dlAry.forEach( (dl) => {
-        var data = ['drawData', DataTypes.DATA];
-        var drawObjs = dl.hasPerPlotData ? get(dl, [...data, plotId]) : get(dl, data);
+        const data = ['drawData', DataTypes.DATA];
+        const drawObjs = dl.hasPerPlotData ? get(dl, [...data, plotId]) : get(dl, data);
 
-
-        drawObjs.forEach( (dObj) => {
-            dObj.bSeperateText = bSeperateText;
-            oneRegionDes = DrawOp.toRegion(dObj, plot, dl.drawingDef);
+        if (get(drawObjs, 'type') === MARKER_DATA_OBJ) {
+            oneRegionDes = markerToRegion(drawObjs, plot, dl, bSeperateText);
             if (!isEmpty(oneRegionDes)) {
                 rgDesAry.push(...oneRegionDes);
             }
-            dObj.bSeperateText = null;
-         } );
+        } else {
+            drawObjs.forEach((dObj) => {
+                dObj.bSeperateText = bSeperateText;
+                oneRegionDes = DrawOp.toRegion(dObj, plot, dl.drawingDef);
+                if (!isEmpty(oneRegionDes)) {
+                    rgDesAry.push(...oneRegionDes);
+                }
+                dObj.bSeperateText = null;
+            });
+        }
     });
     return rgDesAry;
 
