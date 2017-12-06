@@ -18,8 +18,6 @@ import DrawObj from './DrawObj.js';
 import DrawOp from './DrawOp.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {clone} from '../../util/WebUtil.js';
-import {getPlotViewById} from '../PlotViewUtil.js';
-import {visRoot} from '../ImagePlotCntlr.js';
 import Enum from 'enum';
 import {has, isNil, get, isEmpty, isArray, set} from 'lodash';
 
@@ -27,8 +25,8 @@ const HANDLER_BOX = 6;        // handler size (square size in screen coordinate)
 const CENTER_BOX = 60;
 const CROSS_BOX = 12;
 const HANDLE_COLOR = '#DAA520';
-const MARKER_DATA_OBJ= 'MarkerObj';
 const DEF_WIDTH = 1;
+export const MARKER_DATA_OBJ= 'MarkerObj';
 
 const DEFAULT_STYLE= Style.STANDARD;
 
@@ -991,7 +989,9 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
         });
 
         drawFootprintText(newObj, plot, def, drawTextAry, ctx);
+        // create text object to record marker/footprint label
         set(drawObjP, 'textWorldLoc', newObj.textWorldLoc);
+        set(drawObjP, 'textObj', ShapeDataObj.makeText(plot.getWorldCoords(newObj.textWorldLoc), newObj.text));
     }
 }
 
@@ -1410,3 +1410,25 @@ export function getScreenDistToMarker(drawObj, plot, pt) {
 }
 
 
+export function markerToRegion(drawObj, plot, dl, bSeperateText = false) {
+    const rgDesAry = [];
+    let oneRegionDes;
+
+    get(drawObj, 'drawObjAry', []).forEach( (dObj) => {
+        dObj.bSeperateText = bSeperateText;
+        // only render marker/footprint elements (no rotate handle or outline) if it is 'MarkerObj'
+        if (dObj.isMarker) {
+            oneRegionDes = DrawOp.toRegion(dObj, plot, dl.drawingDef);
+            if (!isEmpty(oneRegionDes)) {
+                rgDesAry.push(...oneRegionDes);
+            }
+        }
+        dObj.bSeperateText = null;
+    });
+
+    oneRegionDes = drawObj.textObj && DrawOp.toRegion(drawObj.textObj, plot, dl.drawingDef);
+    if (!isEmpty(oneRegionDes)) {
+        rgDesAry.push(...oneRegionDes);
+    }
+    return rgDesAry;
+}
