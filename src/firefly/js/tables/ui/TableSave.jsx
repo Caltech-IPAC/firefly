@@ -92,7 +92,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
                                         groupKey={tblDownloadGroupKey}
                                         onSuccess={resultSuccess(tbl_id, tbl_ui_id, popupId)}
                                         onFail={resultFail()}
-                                        text={'Download'}/>
+                                        text={'Save'}/>
                                 </div>
                                 <div>
                                     <button type='button' className='button std hl'
