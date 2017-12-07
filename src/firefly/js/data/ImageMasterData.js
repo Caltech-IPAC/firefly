@@ -55,7 +55,7 @@ const irasIssaTemplate= clone( template,
         subProject: 'issa',
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: 1,
         maxRangeDeg:12.5,
     });
@@ -66,7 +66,7 @@ const irasIrisTemplate= clone( template,
         subProject: 'iris',
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: 1,
         maxRangeDeg:12.5,
     });
@@ -77,7 +77,7 @@ const wiseAtlasTemplate= clone( template,
                subProject: 'Atlas',
                helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
                projectTypeKey: 'galactic',
-               projectTypeDesc: 'Galactic',
+               projectTypeDesc: 'galactic',
                minRangeDeg: .01,
                maxRangeDeg: .2
            });
@@ -88,7 +88,7 @@ const wiseLevel1Template= clone( template,
         subProject: '4 Band Level 1',
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .01,
         maxRangeDeg: .2
     });
@@ -100,7 +100,7 @@ const twoMastsTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .008,
         maxRangeDeg: .139
     });
@@ -111,7 +111,7 @@ const dssTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .016,
         maxRangeDeg: .5
     });
@@ -122,7 +122,7 @@ const msxTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .01,
         maxRangeDeg: 1.5
     });
@@ -133,7 +133,7 @@ const sdssTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .016,
         maxRangeDeg: .5
     });
