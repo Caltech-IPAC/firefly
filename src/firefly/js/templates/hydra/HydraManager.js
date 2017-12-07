@@ -80,14 +80,14 @@ function handleNewSearch(layoutInfo, action) {
     const {activeSearch} = getSearchInfo();
     var {showTables=true, showXyPlots=true, showImages=true, images={}} = layoutInfo;
 
-    if (currentSearch && currentSearch !== activeSearch) {
+    if (currentSearch && currentSearch !== activeSearch ) {
         cleanup();
         // remove all charts
         removeChartsInGroup();
         showTables=showXyPlots=showImages=true;
-        images= {};
     }
-
+    //reset image object for every new search
+    images= undefined;
     layoutInfo = Object.assign({}, layoutInfo, {showTables, showXyPlots, showImages, currentSearch:activeSearch, images});
     return layoutInfo;
 }
