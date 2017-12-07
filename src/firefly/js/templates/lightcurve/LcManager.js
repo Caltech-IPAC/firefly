@@ -427,6 +427,7 @@ function clearResults(layoutInfo) {
         missionEntries: null,
         generalEntries: null,
         fullRawTable: null,
+        rawTableColumns:null,
         error:''
     });
 }
