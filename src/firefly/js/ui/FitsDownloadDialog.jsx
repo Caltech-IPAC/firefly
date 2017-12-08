@@ -51,7 +51,7 @@ const dialogHeightLOCAL = 400;
 const dialogPopupId = 'fitsDownloadDialog';
 const fKeyDef = {
     fileType: {fKey: 'fileType', label: 'Type of files:'},
-    opOption: {fKey: 'operationOption', label: 'FITS file:'},
+    opOption: {fKey: 'operationOption', label: 'FITS Image:'},
     colorBand:{fKey: 'threeBandColor', label: 'Color Band:'},
     fileName: {fKey: 'fileName', label: 'Save as:'},
     location: {fKey: 'fileLocation', label: 'File Location:'},
@@ -99,7 +99,7 @@ export function showFitsDownloadDialog() {
 
     const startWorkspacePopup =  () => {
            const  popup = (
-                <PopupPanel title={'FITS Download Dialog'}>
+                <PopupPanel title={'Save Image'}>
                     <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
                         < FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
                     </div>
@@ -331,7 +331,7 @@ export class FitsDownloadDialogForm extends PureComponent {
                     <div>
                         <RadioGroupInputField
                             options={ [
-                                          {label: 'FITS File', value: 'fits'},
+                                          {label: 'FITS Image', value: 'fits'},
                                           {label: 'PNG File', value: 'png' },
                                           {label: 'Region File', value: 'reg'}
                                         ]}
@@ -379,9 +379,9 @@ export class FitsDownloadDialogForm extends PureComponent {
                     <tbody>
                     <tr>
                         <td>
-                            <div style={{textAlign:'left'}}>
+                            <div style={{textAlign:'right'}}>
                                 < CompleteButton
-                                    text='Download'
+                                    text='Save'
                                     onSuccess={ (request) => resultsSuccess(request, this.plotView, popupId )}
                                     onFail={resultsFail()}
 
