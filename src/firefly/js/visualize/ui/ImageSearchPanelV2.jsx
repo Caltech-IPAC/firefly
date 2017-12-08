@@ -246,8 +246,8 @@ function ImageType({}) {
             <RadioGroupInputField
                 initialState= {{ defaultValue: 'singleChannel',
                              tooltip: 'Please select the image type'}}
-                options={[  {label: 'Single channel image', value: 'singleChannel'},
-                        {label: '3-color', value: 'threeColor'}]}
+                options={[  {label: 'View Images', value: 'singleChannel'},
+                        {label: 'create 3-color composite', value: 'threeColor'}]}
                 fieldKey='imageType'
             />
         </FieldGroup>
@@ -257,7 +257,7 @@ function ImageType({}) {
 function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive'}) {
     const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
     const options = [   {label: archiveName, value: 'archive'},
-                        {label: 'Upload', value: 'upload'},
+                        {label: 'Use my image', value: 'upload'},
                         {label: 'URL', value: 'url'}];
     if (getWorkspaceConfig()) {
         options.push({label: 'Workspace', value: ServerParams.IS_WS});
@@ -293,7 +293,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     return (
         <div>
             <div className='ImageSearch__section'>
-                <div className='ImageSearch__section--title'>3. Set spatial constraints</div>
+                <div className='ImageSearch__section--title'>3. Select Target</div>
                 <div>
                     <TargetPanel labelWidth={100} feedbackStyle={targetStyle}/>
                     <SizeInputFields fieldKey='conesize' showFeedback={true}
@@ -306,7 +306,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                                              min: 1 / 3600,
                                              max: 1,
                                          }}
-                                     label={'Choose Radius:'}
+                                     label={'Cutout size:'}
                     />
                 </div>
             </div>
