@@ -9,17 +9,17 @@ import DrawLayer, {DataTypes,ColorChangeType}  from '../visualize/draw/DrawLayer
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getDrawLayerById, getPlotViewIdListInGroup} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getWorldOrImage, makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
         updateFootprintDrawobjText, updateFootprintOutline,  lengthSizeUnit,
         MARKER_DISTANCE, OutlineType, MarkerType, ROTATE_BOX} from '../visualize/draw/MarkerFootprintObj.js';
 import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
 import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
-import ShapeDataObj, {lengthToScreenPixel, lengthToArcsec, lengthToImagePixel} from '../visualize/draw/ShapeDataObj.js';
+import ShapeDataObj, {lengthToScreenPixel, lengthToArcsec} from '../visualize/draw/ShapeDataObj.js';
 import {makeDevicePt, makeImagePt} from '../visualize/Point.js';
 import {clone} from '../util/WebUtil.js';
-import {get, set, has, isArray, isNil, isEmpty} from 'lodash';
+import {get, set, has, isArray, isEmpty} from 'lodash';
 import Enum from 'enum';
 
 const editHelpText='Click the marker and drag to move, click corner and drag to resize';
@@ -34,10 +34,12 @@ export const markerInterval = 3000; // time interval for showing marker with han
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
 export var cancelTimeoutProcess = (toP) => { if (toP) clearTimeout(toP); };
+export const getPlot = (pId) => ( primePlot(visRoot(), pId) );
 export var getCC = (plotId) => {
     var plot = primePlot(visRoot(), plotId);
     return CsysConverter.make(plot);
 };
+export const isGoodPlot = (pId) => (Boolean(getPlot(pId)));
 
 export var initMarkerPos = (plot, cc) => {
     var pos = plot.attributes[PlotAttribute.FIXED_TARGET];
@@ -272,17 +274,15 @@ function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
         case DrawLayerCntlr.MARKER_CREATE:
-            //plotIdAry = getPlotViewIdListInGroup(visRoot(), plotId);
-
-            var ccPlotId = CsysConverter.make(primePlot(visRoot(), plotId));
-            var sizePlot = lengthToArcsec(MARKER_SIZE, ccPlotId, ShapeDataObj.UnitType.PIXEL);
+            const ccPlotId = getCC(plotId);
+            const sizePlot = lengthToArcsec(MARKER_SIZE, ccPlotId, ShapeDataObj.UnitType.PIXEL);
 
             plotIdAry.forEach((pId) => {
-                const plot = primePlot(visRoot(), pId);
-                const cc = CsysConverter.make(plot);
-                wpt = initMarkerPos(plot, cc);
-
-                retV = createMarkerObjs(action, drawLayer, pId, wpt, sizePlot, retV);
+                const plot = getPlot(pId);
+                if (plot) {
+                    wpt = initMarkerPos(plot);
+                    retV = createMarkerObjs(action, drawLayer, pId, wpt, sizePlot, retV);
+                }
             });
 
             return retV;
@@ -291,10 +291,12 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.MARKER_MOVE:
         case DrawLayerCntlr.MARKER_END:
             var wptObj;
-            //plotIdAry = getPlotViewIdListInGroup(visRoot(), plotId);
+
             plotIdAry.forEach((pId) => {
-                wptObj = (pId === plotId) ? wpt : get(dd, ['data', pId, 'pts', '0']);
-                retV = createMarkerObjs(action, drawLayer, pId, wptObj, size, retV);
+                if (isGoodPlot(pId)) {
+                    wptObj = (pId === plotId) ? wpt : get(dd, ['data', pId, 'pts', '0']);
+                    retV = createMarkerObjs(action, drawLayer, pId, wptObj, size, retV);
+                }
             });
 
             return retV;
@@ -307,7 +309,6 @@ function getLayerChanges(drawLayer, action) {
 
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             const {markerText, markerTextLoc} = action.payload.changes;
-            //plotIdAry = getPlotViewIdListInGroup(visRoot(), activePlotId);
             if (plotIdAry) {
                 return updateMarkerText(markerText, markerTextLoc, dd[DataTypes.DATA], plotIdAry);
             }
@@ -355,10 +356,12 @@ function getCursor(plotView, screenPt) {
 export function updateMarkerText(text, textLoc, markerDrawObj, plotIdAry) {
 
     plotIdAry.forEach((pId) => {
-        var textUpdatedObj = updateFootprintDrawobjText(markerDrawObj[pId], text, textLoc);
+        if (isGoodPlot(pId)) {
+            const textUpdatedObj = updateFootprintDrawobjText(markerDrawObj[pId], text, textLoc);
 
-        if (textUpdatedObj) {
-            markerDrawObj[pId] = textUpdatedObj;
+            if (textUpdatedObj) {
+                markerDrawObj[pId] = textUpdatedObj;
+            }
         }
     });
 
@@ -522,7 +525,6 @@ function createMarkerObjs(action, dl, plotId, wpt, size, prevRet) {
  * @param markObj marker/footprint object
  * @param move    object with translation info.
  * @param cc
- * @param plotId  plot id of active plot
  * @returns {*}
  */
 export function translateForRelocate(markObj, move, cc) {
@@ -536,7 +538,6 @@ export function translateForRelocate(markObj, move, cc) {
  * @param currentPt current center position of the object
  * @param imagePt location where the object to be moved to on image coordinate
  * @param cc
- * @param plotId plot id of active plot
  * @returns {{}}
  */
 export function getMovement(currentPt, imagePt, cc) {

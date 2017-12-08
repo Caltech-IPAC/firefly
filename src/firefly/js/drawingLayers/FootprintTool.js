@@ -8,13 +8,13 @@ import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getDrawLayerById, getPlotViewIdListInGroup} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {ANGLE_UNIT, OutlineType, getWorldOrImage, findClosestIndex, makeFootprint,
         lengthSizeUnit, updateFootprintDrawobjAngle,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
-import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos,
-        updateVertexInfo, updateMarkerText, translateForRelocate, getMovement} from './MarkerTool.js';
+import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos, getPlot,
+        updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {clone} from '../util/WebUtil.js';
@@ -286,12 +286,11 @@ function getLayerChanges(drawLayer, action) {
     switch (action.type) {
 
         case DrawLayerCntlr.FOOTPRINT_CREATE:
-            //plotIdAry = getPlotViewIdListInGroup(visRoot(), plotId);
             plotIdAry.forEach((pId) => {
-                const plot = primePlot(visRoot(), pId);
-                const cc = CsysConverter.make(plot);
-
-                retV = createFootprintObjs(action, drawLayer, pId, initMarkerPos(plot, cc), retV);
+                const plot = getPlot(pId);
+                if (plot) {
+                    retV = createFootprintObjs(action, drawLayer, pId, initMarkerPos(plot), retV);
+                }
             });
 
             return retV;
@@ -302,17 +301,17 @@ function getLayerChanges(drawLayer, action) {
             var wptObj;
             const {wpt} = action.payload;
 
-            //plotIdAry = getPlotViewIdListInGroup(visRoot(), plotId);
             plotIdAry.forEach((pId) => {
-                wptObj = (pId === plotId) ? wpt : get(dd, ['data', pId, 'pts', '0']);
-                retV = createFootprintObjs(action, drawLayer, pId, wptObj, retV);
+                if (isGoodPlot(pId)) {
+                    wptObj = (pId === plotId) ? wpt : get(dd, ['data', pId, 'pts', '0']);
+                    retV = createFootprintObjs(action, drawLayer, pId, wptObj, retV);
+                }
             });
             return retV;
 
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             const {fpText, fpTextLoc, angleDeg} = action.payload.changes;
 
-            //plotIdAry = getPlotViewIdListInGroup(visRoot(), activePlotId);
             if (plotIdAry) {
                 if (!isNil(angleDeg)) {
                     return updateFootprintAngle(angleDeg, dd[DataTypes.DATA], plotIdAry);
@@ -376,13 +375,15 @@ function updateFootprintAngle(angleDegStr, footprintDrawObj, plotIdAry) {
     }
 
     plotIdAry.forEach((plotId) => {
-        var cc = getCC(plotId);
+        if (isGoodPlot(plotId)) {
+            const cc = getCC(plotId);
 
-        var angleUpdatedObj = updateFootprintDrawobjAngle(footprintDrawObj[plotId], cc,
-            footprintDrawObj[plotId].pts[0], angleDeg, ANGLE_UNIT.degree, true);
-        if (angleUpdatedObj) {
-            angleUpdatedObj.angleFromUI = true;
-            footprintDrawObj[plotId] = angleUpdatedObj;
+            const angleUpdatedObj = updateFootprintDrawobjAngle(footprintDrawObj[plotId], cc,
+                                    footprintDrawObj[plotId].pts[0], angleDeg, ANGLE_UNIT.degree, true);
+            if (angleUpdatedObj) {
+                angleUpdatedObj.angleFromUI = true;
+                footprintDrawObj[plotId] = angleUpdatedObj;
+            }
         }
     });
 
@@ -551,7 +552,7 @@ function attachToNewPlot(drawLayer, newPlotId) {
     let footprintObj = makeFootprint(regions, wpt,
                                   {isOutline: drawData? drawData.isOutline : false,
                                    isRotate: drawData? drawData.isRorate : false},
-                                  cc, text, textLoc);
+                                   cc, text, textLoc);
 
     if (!isEmpty(translation)) {
         footprintObj = updateFootprintTranslate(footprintObj, cc, translation);

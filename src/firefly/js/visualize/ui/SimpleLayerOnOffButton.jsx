@@ -4,8 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty} from 'lodash';
-import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
+import {getDrawLayerByType, isDrawLayerAttached, primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {dispatchCreateDrawLayer,
      getDlAry,
@@ -15,7 +14,7 @@ import {dispatchCreateDrawLayer,
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,
                                             todo, isIconOn, onClick,allPlots= true }) {
-    var enabled= pv ? true : false;
+    var enabled= primePlot(pv) ? true : false;
     var isOn= isIconOn;
     if (typeId && pv) {
         const distLayer= getDrawLayerByType(getDlAry(),typeId);

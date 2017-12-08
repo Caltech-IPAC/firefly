@@ -169,13 +169,13 @@ export class VisToolbarView extends PureComponent {
 
         const pv= getActivePlotView(visRoot);
         const plot= primePlot(pv);
-        const image= isImage(plot);
+        const image= !isHiPS(plot);
         const hips= isHiPS(plot);
         const plotGroupAry= visRoot.plotGroupAry;
 
         const mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
 
-        const enabled= Boolean(pv);
+        const enabled= Boolean(plot);
 
         return (
             <div style={rS}>
@@ -409,7 +409,7 @@ function showImagePopup() {
 //==================================================================================
 
 export function LayerButton({pv,visible}) {
-    const layerCnt=  pv ? (getAllDrawLayersForPlot(getDlAry(),pv.plotId).length + pv.overlayPlotViews.length) : 0;
+    const layerCnt=  primePlot(pv) ? (getAllDrawLayersForPlot(getDlAry(),pv.plotId).length + pv.overlayPlotViews.length) : 0;
     const enabled= Boolean(layerCnt || findUnactivatedRelatedData(pv).length);
     return (
         <ToolbarButton icon={LAYER_ICON}
