@@ -43,10 +43,6 @@ export function reducer(state={}, action={}) {
             if( dropDown ) {
                 action.payload.dropDown.view = getSelView(state, dropDown);
             }
-            //LZ 11/22/17  BUG here, the smart merge combine two table columns to one, if the target have n1  columns
-            //and the source has n2 columns, where n1>n2, the results is that the target first n2 columns were replaced
-            //by the source columns, the n1-n2 columns remain unchanged.  Thus, even though new table only has n2 columns,
-            // the state stored n1 columns.  This caused the search issue.
             return smartMerge(state, action.payload);
 
         case SET_LAYOUT_MODE :
