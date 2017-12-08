@@ -122,7 +122,7 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
             fieldKey='spatial'
             initialState={{
                               tooltip: 'Enter a search method',
-                              label : 'Method Search:',
+                              label : 'Search Method:',
                               labelWidth: 80,
                               value: polyIsDef ? SpatialMethod.Polygon.value : SpatialMethod.Cone.value
                          }}
@@ -134,7 +134,7 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
     const spatialWithoutPos = (
         <div style={{display: 'flex',  padding: '13px 0px 9px', marginRight: 15, width: 180}}>
             <div style={{paddingRight: 4, width: 80}}>
-                Method Search:
+                Search Method:
             </div>
             <div style={{paddingLeft: 4}}>
                 All Sky
