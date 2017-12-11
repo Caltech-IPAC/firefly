@@ -73,7 +73,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
 
         const startTableDownloadPopup = () => {
             const popup = (
-                <PopupPanel title={'Download table'}>
+                <PopupPanel title={'Save table'}>
                     <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
                         <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
                                              height: 'calc(100% - 70px)', width: '100%'}}
@@ -92,7 +92,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
                                         groupKey={tblDownloadGroupKey}
                                         onSuccess={resultSuccess(tbl_id, tbl_ui_id, popupId)}
                                         onFail={resultFail()}
-                                        text={'Download'}/>
+                                        text={'Save'}/>
                                 </div>
                                 <div>
                                     <button type='button' className='button std hl'

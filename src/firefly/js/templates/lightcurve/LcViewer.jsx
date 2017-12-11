@@ -126,7 +126,7 @@ export class LcViewer extends PureComponent {
 
         let title = appTitle ? appTitle : DEFAULT_TITLE; // use default title when appTitle is undefined or ''
         if (displayMode && displayMode.startsWith('period')) {
-            title = ': Period Finder';
+            title += ': Period Finder';
 
         } else if(displayMode && !displayMode.startsWith('period')){
             title += ': Viewer';

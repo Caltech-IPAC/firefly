@@ -30,6 +30,7 @@ import {NewPlotMode, findViewerWithItemId, getMultiViewRoot, getViewer, getAView
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import './ImageSearchPanelV2.css';
 
@@ -79,6 +80,8 @@ function getContexInfo() {
 /*-----------------------------------------------------------------------------------------*/
 export function ImageSearchDropDown({gridSupport}) {
     const {plotId, viewerId, multiSelect} = getContexInfo();
+    const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
+
     return (
         <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                     submitBarStyle = {{padding: '0 4px 3px'}}
@@ -87,7 +90,7 @@ export function ImageSearchDropDown({gridSupport}) {
                     onSubmit = {(request) => onSearchSubmit({request, plotId, viewerId, gridSupport})}
                     onError = {searchFailed}
                     onCancel = {dispatchHideDropDown}>
-            <ImageSearchPanelV2 {...{multiSelect}}/>
+            <ImageSearchPanelV2 {...{multiSelect, archiveName}}/>
             {gridSupport && <GridSupport/>}
         </FormPanel>
     );
@@ -111,6 +114,8 @@ function GridSupport() {
 const popupId = 'ImageSelectPopup';
 export function showImageSelPanel(popTitle) {
     const {plotId, viewerId, multiSelect} = getContexInfo();
+    const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
+
     const onSubmit = (request) => {
         onSearchSubmit({request, plotId, viewerId}) && dispatchHideDialog(popupId);
     };
@@ -126,7 +131,7 @@ export function showImageSelPanel(popTitle) {
                         onSubmit = {onSubmit}
                         onError = {searchFailed}
                         onCancel = {() => dispatchHideDialog(popupId)}>
-                <ImageSearchPanelV2 {...{title:'', multiSelect}}/>
+                <ImageSearchPanelV2 {...{title:'', multiSelect, archiveName}}/>
             </FormPanel>
         </PopupPanel>
     );
@@ -173,7 +178,7 @@ export class ImageSearchPanelV2 extends PureComponent {
     }
 
     render() {
-        const {archiveName='Archive', title='Image Search'}= this.props;
+        const {archiveName='Search', title='Image Search'}= this.props;
         let {multiSelect=true} = this.props;
         const {imageMasterData, showError= false}= this.state;
         const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
@@ -246,8 +251,8 @@ function ImageType({}) {
             <RadioGroupInputField
                 initialState= {{ defaultValue: 'singleChannel',
                              tooltip: 'Please select the image type'}}
-                options={[  {label: 'Single channel image', value: 'singleChannel'},
-                        {label: '3-color', value: 'threeColor'}]}
+                options={[  {label: 'View Images', value: 'singleChannel'},
+                        {label: 'create 3-color composite', value: 'threeColor'}]}
                 fieldKey='imageType'
             />
         </FieldGroup>
@@ -257,7 +262,7 @@ function ImageType({}) {
 function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive'}) {
     const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
     const options = [   {label: archiveName, value: 'archive'},
-                        {label: 'Upload', value: 'upload'},
+                        {label: 'Use my image', value: 'upload'},
                         {label: 'URL', value: 'url'}];
     if (getWorkspaceConfig()) {
         options.push({label: 'Workspace', value: ServerParams.IS_WS});
@@ -293,7 +298,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     return (
         <div>
             <div className='ImageSearch__section'>
-                <div className='ImageSearch__section--title'>3. Set spatial constraints</div>
+                <div className='ImageSearch__section--title'>3. Select Target</div>
                 <div>
                     <TargetPanel labelWidth={100} feedbackStyle={targetStyle}/>
                     <SizeInputFields fieldKey='conesize' showFeedback={true}
@@ -306,7 +311,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                                              min: 1 / 3600,
                                              max: 1,
                                          }}
-                                     label={'Choose Radius:'}
+                                     label={'Cutout size:'}
                     />
                 </div>
             </div>

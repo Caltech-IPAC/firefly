@@ -135,7 +135,7 @@ task buildClient (dependsOn: loadConfig) {
       println ">> webpack.config.js not found.  Skipping buildClient."
       throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
     }
-    def res = project.ext.NODE 'yarn', 'run', 'build'
+    def res = project.ext.NODE 'yarn', 'run', 'build', "--", "--baseWarName=${webapp.baseWarName}", "--app-name=${project.ext["app-name"]}"
     if (res.getExitValue() != 0) {
       throw new GradleException("Fail to build Client")
     }

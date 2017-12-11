@@ -192,7 +192,7 @@ function WorkspaceReadView({wrapperStyle, onClickUpload, value, isLoading}) {
         return (
             <div style={style}>
                 <input  type='button'
-                        value='Workspace upload'
+                        value='Choose Workspace File'
                         onClick={()=>updateAndShowWorkspace({onClickUpload, value})} />
             </div>
         );

@@ -34,7 +34,7 @@ const template = {
     subProject: '',
     title : '',
     wavelength: 0,
-    wavelengthDesc: '0 micron',
+    wavelengthDesc: '0 microns',
     helpUrl: 'http://irsa.ipac.caltech.edu',
     tooltip: 'Add help here',
     imageId : 'XXXXXX-need-id',
@@ -55,7 +55,7 @@ const irasIssaTemplate= clone( template,
         subProject: 'issa',
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: 1,
         maxRangeDeg:12.5,
     });
@@ -66,7 +66,7 @@ const irasIrisTemplate= clone( template,
         subProject: 'iris',
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: 1,
         maxRangeDeg:12.5,
     });
@@ -77,7 +77,7 @@ const wiseAtlasTemplate= clone( template,
                subProject: 'Atlas',
                helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
                projectTypeKey: 'galactic',
-               projectTypeDesc: 'Galactic',
+               projectTypeDesc: 'galactic',
                minRangeDeg: .01,
                maxRangeDeg: .2
            });
@@ -88,7 +88,7 @@ const wiseLevel1Template= clone( template,
         subProject: '4 Band Level 1',
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .01,
         maxRangeDeg: .2
     });
@@ -100,7 +100,7 @@ const twoMastsTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .008,
         maxRangeDeg: .139
     });
@@ -111,7 +111,7 @@ const dssTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .016,
         maxRangeDeg: .5
     });
@@ -122,7 +122,7 @@ const msxTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .01,
         maxRangeDeg: 1.5
     });
@@ -133,7 +133,7 @@ const sdssTemplate= clone( template,
         subProject: null,
         helpUrl: 'http://irsa.ipac.caltech.edu/stuff',
         projectTypeKey: 'galactic',
-        projectTypeDesc: 'Galactic',
+        projectTypeDesc: 'galactic',
         minRangeDeg: .016,
         maxRangeDeg: .5
     });
@@ -142,7 +142,7 @@ const wiseMasterData = [
     clone (wiseAtlasTemplate, {
         title : 'band 1',
         wavelength: 41,
-        wavelengthDesc: '41 micron',
+        wavelengthDesc: '41 microns',
         tooltip: 'This is wise band 1',
         imageId : 'wiseAtlasBand1',
         plotRequestParams  : {
@@ -156,7 +156,7 @@ const wiseMasterData = [
     clone (wiseAtlasTemplate, {
         title : 'band 2',
         wavelength: 42,
-        wavelengthDesc: '42 micron',
+        wavelengthDesc: '42 microns',
         tooltip: 'This is wise band 2',
         imageId : 'wiseAtlasBand2',
         plotRequestParams  : {
@@ -170,7 +170,7 @@ const wiseMasterData = [
     clone (wiseAtlasTemplate, {
         title : 'band 3',
         wavelength: 43,
-        wavelengthDesc: '43 micron',
+        wavelengthDesc: '43 microns',
         tooltip: 'This is wise band 3',
         imageId : 'wiseAtlasBand3',
         plotRequestParams  : {
@@ -184,7 +184,7 @@ const wiseMasterData = [
     clone (wiseAtlasTemplate, {
         title : 'band 4',
         wavelength: 44,
-        wavelengthDesc: '44 micron',
+        wavelengthDesc: '44 microns',
         tooltip: 'This is wise band 4',
         imageId : 'wiseAtlasBand4',
         plotRequestParams  : {
@@ -198,7 +198,7 @@ const wiseMasterData = [
     clone (wiseLevel1Template, {
         title : 'Level 1 band 1',
         wavelength: 41,
-        wavelengthDesc: '41 micron',
+        wavelengthDesc: '41 microns',
         tooltip: 'This is wise band 1',
         imageId : 'wiseLevel1Band1',
         plotRequestParams  : {
@@ -212,7 +212,7 @@ const wiseMasterData = [
     clone (wiseLevel1Template, {
         title : 'Level 1 band 2',
         wavelength: 42,
-        wavelengthDesc: '42 micron',
+        wavelengthDesc: '42 microns',
         tooltip: 'This is wise band 2',
         imageId : 'wiseLevel1Band2',
         plotRequestParams  : {
@@ -226,7 +226,7 @@ const wiseMasterData = [
     clone (wiseLevel1Template, {
         title : 'Level 1 band 3',
         wavelength: 43,
-        wavelengthDesc: '43 micron',
+        wavelengthDesc: '43 microns',
         tooltip: 'This is wise band 3',
         imageId : 'wiseLevel1Band3',
         plotRequestParams  : {
@@ -240,7 +240,7 @@ const wiseMasterData = [
     clone (wiseLevel1Template, {
         title : 'Level 1 band 4',
         wavelength: 44,
-        wavelengthDesc: '44 micron',
+        wavelengthDesc: '44 microns',
         tooltip: 'This is wise band 4',
         imageId : 'wiseLevel1Band4',
         plotRequestParams  : {
@@ -258,7 +258,7 @@ const twoMastMasterData = [
     clone (twoMastsTemplate, {
         title : 'J',
         wavelength: 1.25,
-        wavelengthDesc: '1.25 micron',
+        wavelengthDesc: '1.25 microns',
         tooltip: 'This is 2MASS J',
         imageId : '2massJ',
         plotRequestParams  : {
@@ -271,7 +271,7 @@ const twoMastMasterData = [
     clone (twoMastsTemplate, {
         title : 'H',
         wavelength: 1.65,
-        wavelengthDesc: '1.65 micron',
+        wavelengthDesc: '1.65 microns',
         tooltip: 'This is 2MASS H',
         imageId : '2massH',
         plotRequestParams  : {
@@ -284,7 +284,7 @@ const twoMastMasterData = [
     clone (twoMastsTemplate, {
         title : 'K',
         wavelength: 2.17,
-        wavelengthDesc: '2.17 micron',
+        wavelengthDesc: '2.17 microns',
         tooltip: 'This is 2MASS K',
         imageId : '2massK',
         plotRequestParams  : {
@@ -301,7 +301,7 @@ const msxMasterData = [
     clone (msxTemplate, {
         title : 'A (8.28 microns)',
         wavelength: 8.28,
-        wavelengthDesc: '8.28 micron',
+        wavelengthDesc: '8.28 microns',
         tooltip: 'This is MSX A tip',
         imageId : 'msxA3',
 
@@ -315,7 +315,7 @@ const msxMasterData = [
     clone (msxTemplate, {
         title : 'C (12.13 microns)',
         wavelength: 12.13,
-        wavelengthDesc: '12.13 micron',
+        wavelengthDesc: '12.13 microns',
         tooltip: 'This is MSX C tip',
         imageId : 'msxC4',
 
@@ -329,7 +329,7 @@ const msxMasterData = [
     clone (msxTemplate, {
         title : 'D (14.65 microns)',
         wavelength: 14.65,
-        wavelengthDesc: '14.65 micron',
+        wavelengthDesc: '14.65 microns',
         tooltip: 'This is MSX D tip',
         imageId : 'msxD5',
 
@@ -343,7 +343,7 @@ const msxMasterData = [
     clone (msxTemplate, {
         title : 'E (21.3 microns)',
         wavelength: 21.3,
-        wavelengthDesc: '21.3 micron',
+        wavelengthDesc: '21.3 microns',
         tooltip: 'This is MSX E tip',
         imageId : 'msxE6',
 
@@ -360,7 +360,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'POSS2/UKSTU Red',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS poss2ukstu_red',
         imageId : 'dss-poss2ukstu_red',
         plotRequestParams  : {
@@ -373,7 +373,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'POSS2/UKSTU Infrared',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS poss2ukstu_ir',
         imageId : 'dss-poss2ukstu_ir',
         plotRequestParams  : {
@@ -386,7 +386,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'POSS2/UKSTU Blue',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS poss2ukstu_blue',
         imageId : 'dss-poss2ukstu_blue',
         plotRequestParams  : {
@@ -399,7 +399,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'POSS1 Red',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS poss1_red',
         imageId : 'dss-poss1_red',
         plotRequestParams  : {
@@ -412,7 +412,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'POSS1 Blue',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS poss1_blue',
         imageId : 'dss-poss1_blue',
         plotRequestParams  : {
@@ -425,7 +425,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'Quick-V Survey',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS quickv',
         imageId : 'dss-quickv',
         plotRequestParams  : {
@@ -438,7 +438,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'HST Phase 2 (GSC 2)',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS phase2_gsc2',
         imageId : 'dss-phase2_gsc2',
         plotRequestParams  : {
@@ -451,7 +451,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'HST Phase 1 (GSC 1)',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS phase2_gsc1',
         imageId : 'dss-phase2_gsc1',
         plotRequestParams  : {
@@ -464,7 +464,7 @@ const dssMastMasterData = [
     clone (dssTemplate, {
         title : 'The best of a combined list',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is DSS phase2_gsc1',
         imageId : 'dss-all',
         plotRequestParams  : {
@@ -481,7 +481,7 @@ const sdssMasterData = [
     clone (sdssTemplate, {
         title : 'u',
         wavelength: 0,
-        wavelengthDesc: '5 micron',
+        wavelengthDesc: '5 microns',
         tooltip: 'This is SDSS u',
         imageId : 'sdss-u',
         plotRequestParams  : {
@@ -494,7 +494,7 @@ const sdssMasterData = [
     clone (sdssTemplate, {
         title : 'g',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is SDSS g',
         imageId : 'sdss-g',
         plotRequestParams  : {
@@ -507,7 +507,7 @@ const sdssMasterData = [
     clone (sdssTemplate, {
         title : 'r',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is SDSS r',
         imageId : 'sdss-r',
         plotRequestParams  : {
@@ -520,7 +520,7 @@ const sdssMasterData = [
     clone (sdssTemplate, {
         title : 'i',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is SDSS i',
         imageId : 'sdss-i',
         plotRequestParams  : {
@@ -533,7 +533,7 @@ const sdssMasterData = [
     clone (sdssTemplate, {
         title : 'z',
         wavelength: 0,
-        wavelengthDesc: '0 micron',
+        wavelengthDesc: '0 microns',
         tooltip: 'This is SDSS z',
         imageId : 'sdss-z',
         plotRequestParams  : {
