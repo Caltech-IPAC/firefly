@@ -30,6 +30,7 @@ import {NewPlotMode, findViewerWithItemId, getMultiViewRoot, getViewer, getAView
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import './ImageSearchPanelV2.css';
 
@@ -79,6 +80,8 @@ function getContexInfo() {
 /*-----------------------------------------------------------------------------------------*/
 export function ImageSearchDropDown({gridSupport}) {
     const {plotId, viewerId, multiSelect} = getContexInfo();
+    const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
+
     return (
         <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                     submitBarStyle = {{padding: '0 4px 3px'}}
@@ -87,7 +90,7 @@ export function ImageSearchDropDown({gridSupport}) {
                     onSubmit = {(request) => onSearchSubmit({request, plotId, viewerId, gridSupport})}
                     onError = {searchFailed}
                     onCancel = {dispatchHideDropDown}>
-            <ImageSearchPanelV2 {...{multiSelect}}/>
+            <ImageSearchPanelV2 {...{multiSelect, archiveName}}/>
             {gridSupport && <GridSupport/>}
         </FormPanel>
     );
@@ -111,6 +114,8 @@ function GridSupport() {
 const popupId = 'ImageSelectPopup';
 export function showImageSelPanel(popTitle) {
     const {plotId, viewerId, multiSelect} = getContexInfo();
+    const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
+
     const onSubmit = (request) => {
         onSearchSubmit({request, plotId, viewerId}) && dispatchHideDialog(popupId);
     };
@@ -126,7 +131,7 @@ export function showImageSelPanel(popTitle) {
                         onSubmit = {onSubmit}
                         onError = {searchFailed}
                         onCancel = {() => dispatchHideDialog(popupId)}>
-                <ImageSearchPanelV2 {...{title:'', multiSelect}}/>
+                <ImageSearchPanelV2 {...{title:'', multiSelect, archiveName}}/>
             </FormPanel>
         </PopupPanel>
     );
@@ -173,7 +178,7 @@ export class ImageSearchPanelV2 extends PureComponent {
     }
 
     render() {
-        const {archiveName='Archive', title='Image Search'}= this.props;
+        const {archiveName='Search', title='Image Search'}= this.props;
         let {multiSelect=true} = this.props;
         const {imageMasterData, showError= false}= this.state;
         const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
