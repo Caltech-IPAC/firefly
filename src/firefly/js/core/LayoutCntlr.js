@@ -25,6 +25,7 @@ export const SPECIAL_VIEWER = new Enum(['tableImageMeta', 'coverageImage'], { ig
 
 /*---------------------------- Actions ----------------------------*/
 
+export const UPDATE_LAYOUT     = `${LAYOUT_PATH}.updateLayout`;
 export const SET_LAYOUT         = `${LAYOUT_PATH}.setLayout`;
 export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
@@ -38,12 +39,13 @@ export function reducer(state={}, action={}) {
     const {mode, view} = action.payload || {};
 
     switch (action.type) {
+        case UPDATE_LAYOUT :
         case SET_LAYOUT :
             const dropDown = get(action, 'payload.dropDown');
             if( dropDown ) {
                 action.payload.dropDown.view = getSelView(state, dropDown);
             }
-            return smartMerge(state, action.payload);
+            return action.type === SET_LAYOUT ? action.payload : smartMerge(state, action.payload);
 
         case SET_LAYOUT_MODE :
             return smartMerge(state, {mode: {[mode]: view}});
@@ -118,11 +120,19 @@ export function dispatchSetLayoutMode(mode=LO_MODE.standard, view) {
 }
 
 /**
- * set the layout info of the application.  data will be merged.
+ * update the layout info of the application.  data will be merged.
  * @param layoutInfo data to be updated
  */
 export function dispatchUpdateLayoutInfo(layoutInfo) {
-    flux.process({type: SET_LAYOUT, payload: {...layoutInfo}});
+    flux.process({type: UPDATE_LAYOUT, payload: {...layoutInfo}});
+}
+
+/**
+ * set the layout info of the application.
+ * @param layoutInfo data to be updated
+ */
+export function dispatchSetLayoutInfo(layoutInfo) {
+    flux.process({type: SET_LAYOUT, payload: layoutInfo});
 }
 
 /**
