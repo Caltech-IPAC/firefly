@@ -395,7 +395,9 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
 
     if (mappings) {
         Object.entries(mappings).forEach(([k,v]) => {
-            changes[`data.${traceNum}.${k}`] = getDataVal(v);
+            // using plotly attribute path (key in the mappings object) as a column name
+            // this makes it possible to use the same column as x and y, for example
+            changes[`data.${traceNum}.${k}`] = getDataVal(k);
         });
     }
 
@@ -652,6 +654,34 @@ export function applyDefaults(chartData={}, resetColor = true) {
     });
 }
 
+/**
+ * Convert column expression to h2 database syntax
+ * @param {string} colOrExpr - column expression
+ * @param {string[]} colNames - valid column names
+ * @returns {*}
+ */
+export function formatColExpr(colOrExpr, colNames) {
+    const expr = new Expression(colOrExpr, colNames);
+    if (expr.isValid()) {
+        // quote columns, assuming column names are alpha-numeric
+        expr.getParsedVariables().forEach( (v) => {
+            const re = new RegExp('([^A-Za-z\d_"]|^)('+v+')([^A-Za-z\d_"]|$)', 'g');
+            colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
+        });
+
+        // substitute functions ceil, lg, ln with the functions h2 understands
+        [
+            //['ceil', 'ceiling'],
+            //['ln', 'log'],
+            ['lg', 'log10']
+        ].map(([f,r]) => {
+            const re = new RegExp(`${f}\\s*\\(`, 'g');
+            colOrExpr = colOrExpr.replace(re, `${r}(`);
+        });
+
+    }
+    return colOrExpr;
+}
 
 // plotly default color (items 0-7) + color-blind friendly colors
 export const TRACE_COLORS = [  '#1f77b4', '#2ca02c', '#d62728', '#9467bd',

@@ -255,6 +255,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
         nreq.setFilters(null);
         nreq.setSortInfo(null);
+        nreq.setInclColumns(new String[0]);
 
         return execRequestQuery(nreq, dbFile, resultSetID);
     }

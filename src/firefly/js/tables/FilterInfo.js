@@ -47,7 +47,7 @@ export class FilterInfo {
         filterString && filterString.split(';').forEach( (v) => {
                 let [, cname, op, val] = v.trim().match(filter_regex) || [];
                 if (cname && op) {
-                    cname = cname.replace(/^"(.+)"$/, '$1');      // strip quotes if any
+                    cname = cname.replace(/"(.+?)"/g, '$1');      // strip quotes if any
                     filterInfo.addFilter(cname, `${op} ${val}`);
                 }
             });

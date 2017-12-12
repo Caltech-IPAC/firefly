@@ -3,9 +3,9 @@
  */
 import {get, isArray, uniqueId} from 'lodash';
 import {getTblById, getColumn, doFetchTable} from '../../tables/TableUtil.js';
-import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
+import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
 
 /**
  * This function creates table source entries to get plotly chart data from the server
@@ -16,56 +16,56 @@ import {getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2
 /**
  * This function creates table source entries to get plotly chart data from the server
  * (The search processor knows how to handle expressions and eliminates null mapping key)
- * For the plotly chart which type is not recognized by Firefly
+ * For the non-firefly plotly chart types
  * @param traceTS
  * @returns {{options: *, fetchData: fetchData}}
  */
 export function getTraceTSEntries({traceTS}) {
     const {mappings} = traceTS || {};
-    const options = {};
 
     if (mappings) {
-        Object.keys(mappings).forEach((key) => {
-            options[`${key}ColOrExp`] = mappings[key];
-        });
-        return {options, fetchData};
+        return {options: mappings, fetchData};
+
     } else {
         return {};
-    }
+   }
 }
 
 function fetchData(chartId, traceNum, tablesource) {
 
-    const {tbl_id, options, mappings} = tablesource;
+    const {tbl_id, mappings} = tablesource;
+    if (!mappings) { return; }
+
     const originalTableModel = getTblById(tbl_id);
     const {request, highlightedRow, selectInfo} = originalTableModel;
 
-    const req = makeTableFunctionRequest(request, 'XYGeneric', 'chart', {pageSize: MAX_ROW});
+    // default behavior
+    const sreq = cloneRequest(request, {
+        startIdx: 0,
+        pageSize: MAX_ROW,
+        inclCols: Object.entries(mappings).map(([k,v]) => {
+            return `${formatColExpr(v)} as "${k}"`;
+        }).join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
+    });
 
-    Object.entries(options).forEach(([k,v]) => v && (req[k]=v));
+    const sreqTblId = uniqueId(request.tbl_id);
+    sreq.META_INFO.tbl_id = sreqTblId;
+    sreq.tbl_id = sreqTblId;
 
-    doFetchTable(req).then((tableModel) => {
-        if (tableModel.tableData && tableModel.tableData.data) {
-            const {tableMeta} = tableModel;
-            const validCols = Object.keys(mappings);
+    doFetchTable(sreq).then(
+        (tableModel) => {
+            if (tableModel.tableData && tableModel.tableData.data) {
+                const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
 
-            tableModel.tableData.columns.forEach((col) => {
-                const name = col.name;
-                if (validCols.includes(name) && tableMeta[name]) {
-                    col.name = tableMeta[name];
-                }
-            });
+                // extra changes based on trace type
+                addOtherChanges({changes, chartId, traceNum, tablesource, tableModel});
 
-            const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
-
-            // extra changes based on trace type
-            addOtherChanges({changes, chartId, traceNum, tablesource, tableModel});
-
-            dispatchChartUpdate({chartId, changes});
-            updateHighlighted(chartId, traceNum, highlightedRow);
-            updateSelected(chartId, selectInfo);
+                dispatchChartUpdate({chartId, changes});
+                updateHighlighted(chartId, traceNum, highlightedRow);
+                updateSelected(chartId, selectInfo);
+            }
         }
-    }).catch(
+    ).catch(
         (reason) => {
             dispatchError(chartId, traceNum, reason);
         }

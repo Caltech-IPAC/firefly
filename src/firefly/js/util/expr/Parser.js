@@ -30,11 +30,11 @@ const rators1 = [
 ];
 
 const procs2 = [
-    'atan2', 'max', 'min'
+    'atan2', 'max', 'min', 'power'
 ];
 
 const rators2 = [
-        Expr.ATAN2, Expr.MAX, Expr.MIN
+    Expr.ATAN2, Expr.MAX, Expr.MIN, Expr.POW
 ];
 
 /**
@@ -86,21 +86,25 @@ const rators2 = [
         this.token = null;
     }
 
-    /** Return the expression denoted by the input string.
+    /**
+     * Return the expression denoted by the input string.
      *
      *  @param input the unparsed expression
-     *  @exception SyntaxException if the input is unparsable */
+     *  @exception SyntaxException if the input is unparsable
+     */
     static parse(input) {
         return new Parser().parseString(input);
     }
 
 
-    /** Adjust the set of allowed variables: create it (if not yet
+    /**
+     * Adjust the set of allowed variables: create it (if not yet
      * existent) and add optVariable (if it's nonnull).  If the
      * allowed-variable set exists, the parser will reject input
      * strings that use any other variables.
      *
-     * @param optVariable the variable to be allowed, or null */
+     * @param optVariable the variable to be allowed, or null
+     */
     allow(optVariable) {
         if (!optVariable) {
             this.allowedVariables = null;
@@ -128,10 +132,12 @@ const rators2 = [
 
 
 
-    /** Return the expression denoted by the input string.
+    /**
+     * Return the expression denoted by the input string.
      *  @param {string} input the unparsed expression
      *  @return expression
-     *  @exception SyntaxException if the input is unparsable */
+     *  @exception SyntaxException if the input is unparsable
+     */
     parseString(input) {
         this.tokens = new Scanner(input, operatorChars);
         return this.reparse();
@@ -143,7 +149,7 @@ const rators2 = [
         this.tokens.index = -1;
         this.nextToken();
         const expr = this.parseExpr(0);
-        if (this.token.ttype != Token.TT_EOF) {
+        if (this.token.ttype !== Token.TT_EOF) {
             throw this.error('Incomplete expression',
                 SyntaxException.INCOMPLETE);
         }
@@ -277,7 +283,7 @@ const rators2 = [
     }
 
     expect(ttype) {
-        if (this.token.ttype != ttype) {
+        if (this.token.ttype !== ttype) {
             throw this.error(ttype + ' expected',
                 SyntaxException.EXPECTED, '' + ttype);
         }

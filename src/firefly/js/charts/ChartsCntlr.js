@@ -11,8 +11,9 @@ import {getTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
-import {getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
+import {formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
+import {getColValStats} from './TableStatsCntlr.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
@@ -354,7 +355,7 @@ function chartUpdate(action) {
 
 
         const {data, fireflyData} = Object.entries(changes)
-                             .filter(([k,v]) => (k.startsWith('data') || k.startsWith('fireflyData')))
+                             .filter(([k,]) => (k.startsWith('data') || k.startsWith('fireflyData')))
                              .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
 
         // lazy table connection
@@ -444,11 +445,20 @@ function chartFilterSelection(action) {
         const {activeTrace=0, selection, tablesources} = getChartData(chartId);
         if (!isEmpty(tablesources)) {
             const {tbl_id, mappings} = tablesources[activeTrace];
-            const {x,y} = mappings;
+            let {x,y} = mappings;
             const [xMin, xMax] = get(selection, 'range.x', []);
             const [yMin, yMax] = get(selection, 'range.y', []);
             const {request} = getTblById(tbl_id);
             const filterInfoCls = FilterInfo.parse(request.filters);
+
+            // filters are processed by db, column expressions need to use syntax db understands
+            const numCols = getColValStats(tbl_id);
+            if (numCols) {
+                const colNames = numCols.map((colVal) => {
+                    return colVal.name;
+                });
+                [x, y] = [x, y].map((v) => formatColExpr(v, colNames));
+            }
 
             filterInfoCls.setFilter(x, '> ' + xMin);
             filterInfoCls.addFilter(x, '< ' + xMax);
