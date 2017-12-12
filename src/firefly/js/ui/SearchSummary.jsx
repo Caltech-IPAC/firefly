@@ -5,32 +5,10 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../../Firefly.js';
-import {parseWorldPt} from '../Point.js';
-import numeral from 'numeral';
 
 export class SearchSummary extends PureComponent {
     constructor(props) {
         super(props);
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted = false;
-        if (this.removeListener) this.removeListener();
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-    }
-
-
-    /**
-     * If the object changed then check if any of the following changed.
-     *  This is a optimization so that the element does not re-render every time
-     */
-    storeUpdate() {
-
     }
 
     render() {
@@ -66,6 +44,6 @@ export class SearchSummary extends PureComponent {
 
 SearchSummary.propTypes = {
     style: PropTypes.object,
-    request: PropTypes.object
+    message: PropTypes.string
 };
 
