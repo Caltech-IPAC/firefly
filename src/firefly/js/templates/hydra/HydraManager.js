@@ -4,7 +4,7 @@
 import {take, fork} from 'redux-saga/effects';
 
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
-        dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
+        dispatchSetLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
 import {removeChartsInGroup} from '../../charts/ChartsCntlr.js';
 import {TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE} from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchDeletePlotView} from '../../visualize/ImagePlotCntlr.js';
@@ -62,7 +62,7 @@ export function* hydraManager() {
         }
 
         if (newLayoutInfo !== layoutInfo) {
-            dispatchUpdateLayoutInfo(newLayoutInfo);
+            dispatchSetLayoutInfo(newLayoutInfo);
         }
     }
 }
@@ -85,8 +85,9 @@ function handleNewSearch(layoutInfo, action) {
         // remove all charts
         removeChartsInGroup();
         showTables=showXyPlots=showImages=true;
-        images= {};
     }
+    //reset image object for every new search
+    images= undefined;
 
     layoutInfo = Object.assign({}, layoutInfo, {showTables, showXyPlots, showImages, currentSearch:activeSearch, images});
     return layoutInfo;
