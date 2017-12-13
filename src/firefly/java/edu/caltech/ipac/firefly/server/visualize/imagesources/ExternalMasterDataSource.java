@@ -36,8 +36,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry u= sdssTemplate();
         u.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.2910");
-        u.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.2910 micron");
-        u.set(ImageMasterDataEntry.PARAMS.TITLE,"u (0.2910 micron)");
+        u.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.2910 microns");
+        u.set(ImageMasterDataEntry.PARAMS.TITLE,"u (0.2910 microns)");
         u.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS u");
         u.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-u");
         params= new HashMap<>();
@@ -51,8 +51,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry g= sdssTemplate();
         g.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.4810");
-        g.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.4810 micron");
-        g.set(ImageMasterDataEntry.PARAMS.TITLE,"g (0.4810 micron)");
+        g.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.4810 microns");
+        g.set(ImageMasterDataEntry.PARAMS.TITLE,"g (0.4810 microns)");
         g.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS g");
         g.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-g");
 
@@ -65,8 +65,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry r= sdssTemplate();
         r.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.6230");
-        r.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.6230 micron");
-        r.set(ImageMasterDataEntry.PARAMS.TITLE,"r (0.6230 micron)");
+        r.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.6230 microns");
+        r.set(ImageMasterDataEntry.PARAMS.TITLE,"r (0.6230 microns)");
         r.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS r");
         r.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-r");
 
@@ -79,8 +79,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry i= sdssTemplate();
         i.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.7640");
-        i.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.7640 micron");
-        i.set(ImageMasterDataEntry.PARAMS.TITLE,"i (0.7640 micron)");
+        i.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.7640 microns");
+        i.set(ImageMasterDataEntry.PARAMS.TITLE,"i (0.7640 microns)");
         i.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS i");
         i.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-i");
 
@@ -93,8 +93,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry z= sdssTemplate();
         z.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.9060");
-        z.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.9060 micron");
-        z.set(ImageMasterDataEntry.PARAMS.TITLE,"z (0.9060 micron)");
+        z.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.9060 microns");
+        z.set(ImageMasterDataEntry.PARAMS.TITLE,"z (0.9060 microns)");
         z.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is SDSS z");
         z.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"sdss-z");
 
@@ -122,7 +122,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry a = msxTemplate();
         a.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "8.28");
-        a.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"8.28 micron");
+        a.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"8.28 microns");
         a.set(ImageMasterDataEntry.PARAMS.TITLE,"A (8.28 microns)");
         a.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is MSX A");
         a.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"MSXA3");
@@ -137,7 +137,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry c = msxTemplate();
         c.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "12.13");
-        c.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"12.13 micron");
+        c.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"12.13 microns");
         c.set(ImageMasterDataEntry.PARAMS.TITLE,"C (12.13 microns)");
         c.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is MSX C");
         c.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"MSXC4");
@@ -151,7 +151,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry d = msxTemplate();
         d.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "14.65");
-        d.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"14.65 micron");
+        d.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"14.65 microns");
         d.set(ImageMasterDataEntry.PARAMS.TITLE,"D (14.65 microns)");
         d.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is MSX D");
         d.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"MSXD5");
@@ -166,7 +166,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry e = msxTemplate();
         e.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "21.3");
-        e.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"21.3 micron");
+        e.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"21.3 microns");
         e.set(ImageMasterDataEntry.PARAMS.TITLE,"E (21.3 microns)");
         e.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is MSX E");
         e.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"MSXE6");
@@ -193,8 +193,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry red = dssTemplate();
         red.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.65");
-        red.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.65 micron");
-        red.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Red (0.65 micron)");
+        red.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.65 microns");
+        red.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Red (0.65 microns)");
         red.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss2ukstu_red");
         red.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss2ukstu_red");
 
@@ -208,8 +208,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry ir = dssTemplate();
         ir.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.85");
-        ir.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.85 micron");
-        ir.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Infrared (0.85 micron)");
+        ir.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.85 microns");
+        ir.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Infrared (0.85 microns)");
         ir.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss2ukstu_ir");
         ir.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss2ukstu_ir");
 
@@ -222,8 +222,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry blue = dssTemplate();
         blue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.41");
-        blue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.41 micron");
-        blue.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Blue (0.41 micron)");
+        blue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.41 microns");
+        blue.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS2/UKSTU Blue (0.41 microns)");
         blue.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss2ukstu_blue");
         blue.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss2ukstu_blue");
 
@@ -236,8 +236,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry pred = dssTemplate();
         pred.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.65");
-        pred.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.65 micron");
-        pred.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS1 Red (0.65 micron)");
+        pred.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.65 microns");
+        pred.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS1 Red (0.65 microns)");
         pred.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss1_red");
         pred.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss1_red");
 
@@ -250,8 +250,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
         ImageMasterDataEntry pblue = dssTemplate();
         pblue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH, "0.48");
-        pblue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.48 micron");
-        pblue.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS1 Blue (0.48 micron)");
+        pblue.set(ImageMasterDataEntry.PARAMS.WAVELENGTH_DESC,"0.48 microns");
+        pblue.set(ImageMasterDataEntry.PARAMS.TITLE,"POSS1 Blue (0.48 microns)");
         pblue.set(ImageMasterDataEntry.PARAMS.TOOL_TIP,"This is DSS poss1_blue");
         pblue.set(ImageMasterDataEntry.PARAMS.IMAGE_ID,"dss-poss1_blue");
 
