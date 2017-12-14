@@ -15,6 +15,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {flux} from '../Firefly.js';
 import {get} from 'lodash';
 
 import {FormPanel} from './FormPanel.jsx';
@@ -25,13 +26,12 @@ import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {InputGroup} from '../ui/InputGroup.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
-import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../visualize/DrawLayerCntlr.js';
 import HiPSGrid  from '../drawingLayers/HiPSGrid.js';
 
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal, getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -46,6 +46,9 @@ import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
+import {onHiPSSurveys, isLoadingHiPSSurverys, HiPSDataType} from '../visualize/HiPSCntlr.js';
+import {showHiPSSurveyList, HiPSSurvey} from './HiPSViewer.jsx';
+import {getTblById, getCellValue} from '../tables/TableUtil.js';
 
 const options = [
     {label: 'AllWISE Source Catalog', value: 'allwise_p3as_psd', proj: 'WISE'},
@@ -58,19 +61,19 @@ const options = [
 const hipsSURVEYS = [
     {
         url: 'http://alasky.u-strasbg.fr/2MASS/Color',
-        label: '2MASS colored',
+        label: '2MASS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/DSS/DSSColor',
-        label: 'DSS colored',
+        label: 'DSS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/DSS/DSS2Merged',
-        label: 'DSS2 Red (F+R)',
+        label: 'DSS2 Red (F+R)'
     },
     {
         url: 'http://alasky.u-strasbg.fr/Fermi/Color',
-        label: 'Fermi color',
+        label: 'Fermi color'
     },
     {
         url: 'http://alasky.u-strasbg.fr/FinkbeinerHalpha',
@@ -78,23 +81,23 @@ const hipsSURVEYS = [
     },
     {
         url: 'http://alasky.u-strasbg.fr/GALEX/GR6-02-Color',
-        label: 'GALEX Allsky Imaging Survey colored',
+        label: 'GALEX Allsky Imaging Survey colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/IRISColor',
-        label: 'IRIS colored',
+        label: 'IRIS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/MellingerRGB',
-        label: 'Mellinger colored',
+        label: 'Mellinger colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/SDSS/DR9/color',
-        label: 'SDSS9 colored',
+        label: 'SDSS9 colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/SpitzerI1I2I4color',
-        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)',
+        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)'
     },
     {
         url: 'http://alasky.u-strasbg.fr/VTSS/Ha',
@@ -102,24 +105,25 @@ const hipsSURVEYS = [
     },
     {
         url: 'http://saada.u-strasbg.fr/xmmallsky',
-        label: 'XMM-Newton stacked EPIC images (no phot. normalization)',
+        label: 'XMM-Newton stacked EPIC images (no phot. normalization)'
     },
     {
         url: 'http://saada.u-strasbg.fr/xmmallsky/',
-        label: 'XMM PN colored',
+        label: 'XMM PN colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',
-        label: 'AllWISE color',
+        label: 'AllWISE color'
     },
     {
         url: 'http://www.spitzer.caltech.edu/glimpse360/aladin/data',
-        label: 'GLIMPSE360',
+        label: 'GLIMPSE360'
     }
 ];
 
 
-
+export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
+const HiPSId = 'hips';
 
 export class TestQueriesPanel extends PureComponent {
 
@@ -134,13 +138,35 @@ export class TestQueriesPanel extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
-        this.removeListener = FieldGroupUtils.bindToStore('TEST_CAT_PANEL', (fields) => {
-            if (this.iAmMounted) this.setState(fields);
-        });
+        this.removeListener = flux.addListener(()=>this.storeUpdate());
+    }
+
+    storeUpdate() {
+        if (this.iAmMounted) {
+            const {fields} = getFieldGroupState('TEST_CAT_PANEL') || {};
+            if (fields !== get(this.state, 'fields')) {
+                this.setState({fields});
+            }
+            if (getFieldVal('TEST_CAT_PANEL', 'Tabs') === HiPSId) {
+                const isUpdatingHips = isLoadingHiPSSurverys(HiPSId);
+
+                if (isUpdatingHips !== get(this.state, 'isUpdatingHips', false)) {
+                    this.setState({isUpdatingHips});
+                }
+            }
+        }
     }
 
     render() {
-        const fields = this.state;
+        //const fields = this.state;
+        const {fields, isUpdatingHips}=this.state || {};
+
+        const onTabSelect = (idx, id, name) => {
+            if (id === HiPSId) {
+                onHiPSSurveys(HiPSData, id);
+            }
+        };
+
         return (
             <div style={{padding: 10}}>
                 <FormPanel
@@ -152,7 +178,7 @@ export class TestQueriesPanel extends PureComponent {
                         <div style={{padding:'5px 0 5px 0'}}>
                             <TargetPanel/>
                         </div>
-                        <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs'>
+                        <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' onTabSelect={onTabSelect}>
                             <Tab name='Test Catalog' id='catalog'>{renderCatalogTab()}</Tab>
                             <Tab name='Wise Search' id='wiseImage'>
                                 <div>{renderWiseSearch(fields)}</div>
@@ -163,14 +189,12 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='Atlas Search' id='atlasImage'>
                                 <div>{renderAtlasSearch(fields)}</div>
                             </Tab>
-                            <Tab name='HiPS' id='hips'>
-                                <div>{renderHiPS(fields)}</div>
+                            <Tab name='HiPS' id={HiPSId}>
+                                <div style={{width: '100%', height: 400}}>{showHiPSSurveyList(HiPSId, isUpdatingHips)}</div>
                             </Tab>
-                            {
-                                <Tab name='Periodogram' id='periodogram'>
-                                    <div>{renderPeriodogram(fields)}</div>
-                                </Tab>
-                            }
+                            <Tab name='Periodogram' id='periodogram'>
+                                 <div>{renderPeriodogram(fields)}</div>
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -179,9 +203,8 @@ export class TestQueriesPanel extends PureComponent {
         );
 
     }
-
-
 }
+
 
 /*
  <Tab name='Images' id='images'>{renderImagesTab()}</Tab>
@@ -482,7 +505,7 @@ function renderAtlasSearch(fields) {
                     {label : 'E', value: 'E'},
                     {label : 'A', value: 'A'},
                     {label : 'C', value: 'C'},
-                    {label : 'D', value: 'D'},
+                    {label : 'D', value: 'D'}
                 ]}
             />
         </div>
@@ -620,13 +643,17 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
-     const rootUrl= hipsSURVEYS[Number(request.hipsSurvey)].url;
+    const tableModel = getTblById(HiPSSurvey + HiPSId);
+    if (!tableModel) {
+        return;
+    }
 
-
-    // const wpRequest= WebPlotRequest.makeHiPSRequest('http://alasky.u-strasbg.fr/2MASS/Color', null);
+    const {highlightedRow=0} = tableModel;
+    const rootUrl= getCellValue(tableModel, highlightedRow, 'url');
     const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
     wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
     wpRequest.setPlotId('aHiPSid');
+    wpRequest.setHipsSurveysId(HiPSId);
 
     const wp = parseWorldPt(request.UserTargetWorldPt);
     if (wp) wpRequest.setOverlayPosition(wp);

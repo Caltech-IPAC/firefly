@@ -4,6 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {flux} from '../../Firefly.js';
 import {isEmpty, get} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
@@ -15,7 +16,7 @@ import {logError} from '../../util/WebUtil.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
 
 import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import ImagePlotCntlr, {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
+import {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
     dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
@@ -29,6 +30,8 @@ import {CoordinateSys} from '../CoordSys.js';
 import { parseImagePt } from '../Point.js';
 import {getDefaultHiPSSurveys} from '../HiPSUtil.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
+import {showHiPSSurverysPopup} from '../../ui/HiPSViewer.jsx';
+import {isLoadingHiPSSurverys} from '../HiPSCntlr.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -41,6 +44,7 @@ import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 
+import LOADING from 'html/images/gxt/loading.gif';
 
 
 //todo move the statistics constants to where they are needed
@@ -282,7 +286,6 @@ function zoomIntoSelection(pv) {
 }
 
 
-
 function makeHiPSImageSelect(pv) {
     const plot= primePlot(pv);
     if (!plot) return null;
@@ -311,6 +314,31 @@ function makeHiPSImageSelect(pv) {
             multiple={false}
         />
         );
+}
+
+function makeHiPSImageTable(pv, isUpdatingHips) {
+    const plot= primePlot(pv);
+    if (!plot) return null;
+
+    const inputEntry = () => {
+        return (
+            <div style={{marginLeft: 10, marginRight: 5}}>
+                <input  type='button'
+                        value='Find HiPS Plot'
+                        onClick={()=>showHiPSSurverysPopup(pv)} />
+            </div>
+        );
+    };
+
+    const styleLoading = {width:14,height:14};
+    return (
+        <div style={{display:'flex'}}>
+            {inputEntry()}
+            {isUpdatingHips ? <img style={styleLoading} src={LOADING}/> :
+                              <div style={styleLoading}/>}
+        </div>
+    );
+
 }
 
 
@@ -369,9 +397,36 @@ export class VisCtxToolbarView extends PureComponent {
 
     constructor(props) {
         super(props);
+
+        const {plotView} = props;
+
+        const hipsId = get(plotView ['request', 'params', 'hipsSurveysId']);
+        if (hipsId) {
+            const isUpdatingHips = isLoadingHiPSSurverys(hipsId);
+
+            this.state = {isUpdatingHips};
+        }
     }
 
+    componentDidMount() {
+        this.iAmMounted = true;
+        this.removeListener = flux.addListener(()=>this.storeUpdate());
+    }
 
+    storeUpdate() {
+
+        if (this.iAmMounted) {
+            const hipsId = get(this.props, ['plotView', 'request', 'params', 'hipsSurveysId']);
+
+            if (hipsId) {
+                const isUpdatingHips = isLoadingHiPSSurverys(hipsId);
+
+                if (isUpdatingHips !== get(this.state, 'isUpdatingHips', false)) {
+                    this.setState({isUpdatingHips});
+                }
+            }
+        }
+    }
 
     render() {
         const {
@@ -393,6 +448,7 @@ export class VisCtxToolbarView extends PureComponent {
 
         };
 
+        const {isUpdatingHips} = this.state || {};
         const plot= primePlot(pv);
         const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
                            showFilter || showClearFilter || !isEmpty(extensionAry) || isHiPS(plot);
@@ -449,7 +505,7 @@ export class VisCtxToolbarView extends PureComponent {
 
                 {makeExtensionButtons(extensionAry,pv,dlAry)}
 
-                {isHiPS(plot) && makeHiPSImageSelect(pv)}
+                {isHiPS(plot) && makeHiPSImageTable(pv, isUpdatingHips)}
                 {isHiPS(plot) && makeHiPSCoordSelect(pv)}
 
             </div>

@@ -226,6 +226,9 @@ function onChange(idx,id, name, params, fireValueChange) {
     if (!value) value= idx;
 
     fireValueChange({ value});
+    if (params.onTabSelect) {
+        params.onTabSelect(idx, id, name);
+    }
 }
 
 function getProps(params, fireValueChange) {

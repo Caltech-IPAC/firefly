@@ -131,7 +131,7 @@ function renderTable(tableModel) {
                height='calc(100% - 42px)'
                showToolbar={false}
                selectable={false}
-               showOptionButton={true}
+               showOptionButton={false}
            />
 
         </div>
