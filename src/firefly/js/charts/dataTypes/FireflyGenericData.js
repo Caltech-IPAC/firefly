@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, isArray, uniqueId} from 'lodash';
-import {getTblById, getColumn, doFetchTable} from '../../tables/TableUtil.js';
+import {COL_TYPE, getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
 import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
@@ -38,13 +38,14 @@ function fetchData(chartId, traceNum, tablesource) {
 
     const originalTableModel = getTblById(tbl_id);
     const {request, highlightedRow, selectInfo} = originalTableModel;
+    const numericCols = getColumns(originalTableModel, COL_TYPE.NUMBER).map((c) => c.name);
 
     // default behavior
     const sreq = cloneRequest(request, {
         startIdx: 0,
         pageSize: MAX_ROW,
         inclCols: Object.entries(mappings).map(([k,v]) => {
-            return `${formatColExpr(v)} as "${k}"`;
+            return `${formatColExpr({colOrExpr: v, quoted: true, colNames: numericCols})} as "${k}"`;
         }).join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
     });
 

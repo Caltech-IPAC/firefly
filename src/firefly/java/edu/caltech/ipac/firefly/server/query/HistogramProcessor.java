@@ -6,18 +6,14 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataObjectUtil;
 import edu.caltech.ipac.util.DataType;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +56,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private final String FIXED_BIN_SIZE_SELECTION="fixedBinSizeSelection";
     private final String BIN_SIZE = "binSize";
     private final String COLUMN = "columnExpression";
+    private final String SORTED_COL_DATA = "sortedColData";
     private final String MIN = "min";
     private final String MAX = "max";
     // private final String ALGORITHM = "algorithm";
@@ -70,6 +67,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private String binSelection=null;
     private String binSize;
     private String columnExpression;
+    private boolean sortedColData = false;
     private double falsePostiveRate = 0.05;
 
     //change to protected so that they can be set by unit test class
@@ -125,18 +123,21 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         if (sReq.getRequestId() == null) {
             throw new DataAccessException("Unable to get histogram: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
         }
+        getParameters(request);
 
         // get the relevant data
         sReq.setPageSize(Integer.MAX_VALUE);
-        sReq.setSortInfo(null);
-        sReq.removeParam(INCL_COLUMNS);
+
+        if (!sortedColData) {
+            sReq.setSortInfo(null);
+            sReq.removeParam(INCL_COLUMNS);
+        }
 
         DataGroupPart sourceData = new SearchManager().getDataGroup(sReq);
         if (sourceData == null) {
             throw new DataAccessException("Unable to get source data");
         }
         DataGroup sourceDataGroup = sourceData.getData();
-        getParameters(request);
         double[] columnData = getColumnData(sourceDataGroup);
         DataGroup histogramDataGroup = createHistogramTable(columnData);
         histogramDataGroup.addAttribute("column", columnExpression);
@@ -171,9 +172,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
               //  if (numBins>0) algorithm = FIXED_SIZE_ALGORITHM;
             } else if (name.equalsIgnoreCase(BIN_SIZE)) {
                 binSize  =  value;
-            }
-            else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
+            } else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
                 falsePostiveRate =  Double.parseDouble(value);
+            } else if (name.equalsIgnoreCase(SORTED_COL_DATA)) {
+                // table request returns a single column with the sorted data
+                sortedColData = Boolean.parseBoolean(value);
             }
             /*05/23/17
               The UI does not have this parameter specified and passed.
@@ -218,6 +221,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         DataGroup HistogramTable;
 
         if (columnData.length > 0) {
+            if (!sortedColData) {
+                //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
+                Arrays.sort(columnData);
+            }
+
             //calculate three arrays, numInBin, binMix and binMax
             Object[] obj;
             if (algorithm != null && algorithm.equalsIgnoreCase(FIXED_SIZE_ALGORITHM)) {
@@ -250,12 +258,10 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * Calculate the numInBin, binMin and binMax arrays
      *
-     * @param columnData an array of doubles
+     * @param columnData a sorted array of doubles
      * @return an array of 3 arrays: numInBin[], min[], max[]
      */
     private Object[] calculateFixedBinSizeDataArray(double[] columnData) {
-        //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
-        Arrays.sort(columnData);
 
         if (Double.isNaN(min)) {
             min = columnData[0];
@@ -369,10 +375,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
 
     private Object[] calculateVariableBinSizeDataArray(double[] columnData) throws DataAccessException {
-
-        //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
-        Arrays.sort(columnData);
-
 
         //get the variable bins
         double[] bins = getBins(columnData);
@@ -583,13 +585,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * variable bin methods
      *
-     * @param data an array of doubles
+     * @param data a sorted array of doubles
      * @return edges
      */
     private double[] getEdges(double[] data) throws DataAccessException {
 
-        //sort the data
-        Arrays.sort(data);
         int n = data.length;
         // create length=(N + 1) array of cell edges
         double[] a1 = Arrays.copyOfRange(data, 0, 1);

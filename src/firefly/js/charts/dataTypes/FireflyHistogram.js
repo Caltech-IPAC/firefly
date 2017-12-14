@@ -1,11 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray} from 'lodash';
+import {get, isArray, uniqueId} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import {getTblById, doFetchTable} from '../../tables/TableUtil.js';
-import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {COL_TYPE, getColumns, getTblById, doFetchTable} from '../../tables/TableUtil.js';
+import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
+import {formatColExpr} from '../ChartUtil.js';
 
 
 import {toMaxFixed} from '../../util/MathUtil.js';
@@ -28,7 +29,7 @@ export function getTraceTSEntries({chartId, traceNum}) {
     // server call parameters
     const {fireflyData, layout} = getChartData(chartId) || {};
     const histogramParams = get(fireflyData, `${traceNum}.options`);
-    options['columnExpression'] = histogramParams.columnOrExpr;
+    options.columnExpression = histogramParams.columnOrExpr;
     if (get(layout, 'xaxis.type') === 'log') {
         options.columnExpression = 'lg('+histogramParams.columnOrExpr+')';
     }
@@ -57,9 +58,20 @@ function fetchData(chartId, traceNum, tablesource) {
     const {tbl_id, options} = tablesource;
 
     const tableModel = getTblById(tbl_id);
-    const {request} = tableModel;
+    const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
 
-    const req = makeTableFunctionRequest(request, 'HistogramProcessor', 'histogram', {pageSize: MAX_ROW});
+    const {request} = tableModel;
+    const sreq = cloneRequest(request, {
+        startIdx: 0,
+        pageSize: MAX_ROW,
+        inclCols: `${formatColExpr({colOrExpr:options.columnExpression, quoted: true, colNames: numericCols})} as "${options.columnExpression}"`,
+        sortInfo: `ASC,"${options.columnExpression}"`
+    });
+    const sreqTblId = uniqueId(request.tbl_id);
+    sreq.META_INFO.tbl_id = sreqTblId;
+    sreq.tbl_id = sreqTblId;
+
+    const req = makeTableFunctionRequest(sreq, 'HistogramProcessor', 'histogram', {sortedColData: true, pageSize: MAX_ROW});
 
     Object.entries(options).forEach(([k,v]) => req[k] = v);
 

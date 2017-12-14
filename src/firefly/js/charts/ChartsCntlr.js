@@ -7,13 +7,12 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 import {updateSet, updateMerge, updateObject, toBoolean} from '../util/WebUtil.js';
-import {getTblById} from '../tables/TableUtil.js';
+import {getTblById, getColumns, COL_TYPE} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
 import {formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
-import {getColValStats} from './TableStatsCntlr.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
@@ -445,27 +444,26 @@ function chartFilterSelection(action) {
         const {activeTrace=0, selection, tablesources} = getChartData(chartId);
         if (!isEmpty(tablesources)) {
             const {tbl_id, mappings} = tablesources[activeTrace];
+            const numericCols = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER).map((c) => c.name);
+
             let {x,y} = mappings;
+            // use standard form without spaces for filter key
+            // to make sure the key is replaced when setFilter is used
+            [x,y] = [x, y].map((v) => formatColExpr({colOrExpr:v, colNames:numericCols}));
             const [xMin, xMax] = get(selection, 'range.x', []);
             const [yMin, yMax] = get(selection, 'range.y', []);
             const {request} = getTblById(tbl_id);
             const filterInfoCls = FilterInfo.parse(request.filters);
-
-            // filters are processed by db, column expressions need to use syntax db understands
-            const numCols = getColValStats(tbl_id);
-            if (numCols) {
-                const colNames = numCols.map((colVal) => {
-                    return colVal.name;
-                });
-                [x, y] = [x, y].map((v) => formatColExpr(v, colNames));
-            }
 
             filterInfoCls.setFilter(x, '> ' + xMin);
             filterInfoCls.addFilter(x, '< ' + xMax);
             filterInfoCls.setFilter(y, '> ' + yMin);
             filterInfoCls.addFilter(y, '< ' + yMax);
 
-            const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize()});
+            // filters are processed by db, column expressions need to use syntax db understands
+            const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:numericCols});
+
+            const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize(formatKey)});
             TablesCntlr.dispatchTableFilter(newRequest);
             dispatchChartUpdate({chartId, changes:{selection: undefined}});
         }

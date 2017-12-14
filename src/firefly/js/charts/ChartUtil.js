@@ -656,30 +656,41 @@ export function applyDefaults(chartData={}, resetColor = true) {
 
 /**
  * Convert column expression to h2 database syntax
- * @param {string} colOrExpr - column expression
- * @param {string[]} colNames - valid column names
+ * @param {object} p
+ * @param {string} p.colOrExpr - column expression
+ * @param {boolean} p.quoted - if true, quote variable names
+ * @param {string[]} p.colNames - valid column names
  * @returns {*}
  */
-export function formatColExpr(colOrExpr, colNames) {
-    const expr = new Expression(colOrExpr, colNames);
-    if (expr.isValid()) {
-        // quote columns, assuming column names are alpha-numeric
-        expr.getParsedVariables().forEach( (v) => {
-            const re = new RegExp('([^A-Za-z\d_"]|^)('+v+')([^A-Za-z\d_"]|$)', 'g');
-            colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
-        });
+export function formatColExpr({colOrExpr, quoted, colNames}) {
 
-        // substitute functions ceil, lg, ln with the functions h2 understands
-        [
-            //['ceil', 'ceiling'],
-            //['ln', 'log'],
-            ['lg', 'log10']
-        ].map(([f,r]) => {
-            const re = new RegExp(`${f}\\s*\\(`, 'g');
-            colOrExpr = colOrExpr.replace(re, `${r}(`);
-        });
+    if (!colOrExpr) return;
 
+    // do not change the expression, if it's matching a column name
+    if (colNames && colNames.find((c) => c===colOrExpr)) {
+        return quoted ? `"${colOrExpr}"` : colOrExpr;
     }
+
+    if (quoted) {
+        const expr = new Expression(colOrExpr, colNames);
+        if (expr.isValid()) {
+            // quote columns, assuming column names are alpha-numeric
+            expr.getParsedVariables().forEach((v) => {
+                const re = new RegExp('([^A-Za-z\d_"]|^)(' + v + ')([^A-Za-z\d_"]|$)', 'g');
+                colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
+            });
+        }
+    }
+
+    // remove white space, otherwise column filters are parsed incorrectly
+    colOrExpr = colOrExpr.replace(/\s+/g, '');
+    // substitute expression functions with the functions db understands
+    [
+        ['lg', 'log10']
+    ].map(([f,r]) => {
+        const re = new RegExp(`${f}\\(`, 'g');
+        colOrExpr = colOrExpr.replace(re, `${r}(`);
+    });
     return colOrExpr;
 }
 
