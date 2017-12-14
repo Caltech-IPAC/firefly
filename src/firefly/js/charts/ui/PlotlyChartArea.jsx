@@ -228,7 +228,10 @@ function onSelect(chartId) {
             }
 
             if (points) {
-                if (points.length < 1) {
+                const {data, activeTrace=0} = getChartData(chartId);
+                const type = get(data, [activeTrace, 'type'], 'scatter');
+                // points are populated only for scatter2d, not for heatmap
+                if (isScatter2d(type) && points.length < 1) {
                     showInfoPopup((<div>No active trace points in the selection area.</div>), 'Warning');
                 } else {
                     dispatchChartUpdate({

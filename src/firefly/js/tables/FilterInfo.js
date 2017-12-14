@@ -3,6 +3,7 @@
  */
 
 import {getColumnIdx, getColumn} from './TableUtil.js';
+import {Expression} from '../util/expr/Expression.js';
 import {isUndefined, get} from 'lodash';
 
 const cond_regex = new RegExp('(!=|>=|<=|<|>|=|like|in)\\s*(.+)');
@@ -47,7 +48,7 @@ export class FilterInfo {
         filterString && filterString.split(';').forEach( (v) => {
                 let [, cname, op, val] = v.trim().match(filter_regex) || [];
                 if (cname && op) {
-                    cname = cname.replace(/^"(.+)"$/, '$1');      // strip quotes if any
+                    cname = cname.replace(/"(.+?)"/g, '$1');      // strip quotes if any
                     filterInfo.addFilter(cname, `${op} ${val}`);
                 }
             });
@@ -135,12 +136,16 @@ export class FilterInfo {
         const rval = [true, ''];
         const allowCols = columns.concat({name:'ROW_IDX'});
         if (filterInfo && filterInfo.trim().length > 0) {
+            filterInfo = filterInfo.replace(/"(.+?)"/g, '$1'); // remove quotes
             return filterInfo.split(';').reduce( ([isValid, msg], v) => {
                 const [, cname] = v.trim().match(filter_regex) || [];
                 if (!cname) {
                         msg += `\n"${v}" is not a valid filter.`;
                     } else if (!allowCols.some( (c) => c.name === cname)) {
-                        msg +=`\n"${v}" column not found.\n`;
+                        const expr = new Expression(cname, allowCols.map((s)=>s.name));
+                        if (!expr.isValid()) {
+                            msg += `\n"${v}" unrecognized column or expression.\n`;
+                        }
                     }
                     return [!msg, msg];
                 }, rval);
@@ -214,11 +219,17 @@ export class FilterInfo {
         };
     }
 
-    serialize() {
+
+
+    serialize(formatKey) {
+        if (!formatKey) {
+            // add quotes to key if it does not contains quotes
+            formatKey = (k) => k.includes('"') ? k : `"${k}"`;
+        }
         return Object.entries(this)
                     .map(([k,v]) => v.split(';')
                                     .filter((f) => f)
-                                    .map( (f) => k.includes('"') ? `${k} ${f}` : `"${k}" ${f}`)         // add quotes to key if it does not contains quotes
+                                    .map( (f) => `${formatKey(k)} ${f}`)
                                     .join(';'))
                     .join(';');
     }

@@ -223,7 +223,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", resultSetID));
         } catch (Exception e) {
-            // does not exists.. create table from orignal 'data' table
+            // does not exists.. create table from original 'data' table
             List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? getColumnNames(dbInstance, "DATA")
                     : StringUtils.asList(treq.getInclColumns(), ",");
             String wherePart = dbAdapter.wherePart(treq);
@@ -255,6 +255,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
         nreq.setFilters(null);
         nreq.setSortInfo(null);
+        nreq.setInclColumns(new String[0]);
 
         return execRequestQuery(nreq, dbFile, resultSetID);
     }

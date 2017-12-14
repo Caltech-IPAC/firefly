@@ -7,11 +7,11 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 import {updateSet, updateMerge, updateObject, toBoolean} from '../util/WebUtil.js';
-import {getTblById} from '../tables/TableUtil.js';
+import {getTblById, getColumns, COL_TYPE} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
-import {getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
+import {formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
@@ -354,7 +354,7 @@ function chartUpdate(action) {
 
 
         const {data, fireflyData} = Object.entries(changes)
-                             .filter(([k,v]) => (k.startsWith('data') || k.startsWith('fireflyData')))
+                             .filter(([k,]) => (k.startsWith('data') || k.startsWith('fireflyData')))
                              .reduce( (p, [k,v]) => set(p, k, v), {}); // take all of the data changes and create an object from it.
 
         // lazy table connection
@@ -444,7 +444,12 @@ function chartFilterSelection(action) {
         const {activeTrace=0, selection, tablesources} = getChartData(chartId);
         if (!isEmpty(tablesources)) {
             const {tbl_id, mappings} = tablesources[activeTrace];
-            const {x,y} = mappings;
+            const numericCols = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER).map((c) => c.name);
+
+            let {x,y} = mappings;
+            // use standard form without spaces for filter key
+            // to make sure the key is replaced when setFilter is used
+            [x,y] = [x, y].map((v) => formatColExpr({colOrExpr:v, colNames:numericCols}));
             const [xMin, xMax] = get(selection, 'range.x', []);
             const [yMin, yMax] = get(selection, 'range.y', []);
             const {request} = getTblById(tbl_id);
@@ -455,7 +460,10 @@ function chartFilterSelection(action) {
             filterInfoCls.setFilter(y, '> ' + yMin);
             filterInfoCls.addFilter(y, '< ' + yMax);
 
-            const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize()});
+            // filters are processed by db, column expressions need to use syntax db understands
+            const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:numericCols});
+
+            const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize(formatKey)});
             TablesCntlr.dispatchTableFilter(newRequest);
             dispatchChartUpdate({chartId, changes:{selection: undefined}});
         }

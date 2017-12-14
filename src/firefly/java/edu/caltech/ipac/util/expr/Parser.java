@@ -191,10 +191,10 @@ public class Parser {
     };
 
     static private final String[] procs2 = {
-            "atan2", "max", "min"
+            "atan2", "max", "min", "power"
     };
     static private final int[] rators2 = {
-            Expr.ATAN2, Expr.MAX, Expr.MIN
+            Expr.ATAN2, Expr.MAX, Expr.MIN, Expr.POW
     };
 
     private Expr parseFactor() throws SyntaxException {
