@@ -655,7 +655,7 @@ export function applyDefaults(chartData={}, resetColor = true) {
 }
 
 /**
- * Convert column expression to h2 database syntax
+ * Convert column expression to internal (database) syntax
  * @param {object} p
  * @param {string} p.colOrExpr - column expression
  * @param {boolean} p.quoted - if true, quote variable names
