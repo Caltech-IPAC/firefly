@@ -491,7 +491,7 @@ class FileBrowser extends React.Component {
           actions = (<ul className='item-actions'>{actions}</ul>);
         }
         else {
-          actions = (<div className='item-actions'>&nbsp;</div>);
+          actions = (<div className='item-actions'><br /></div>);
         }
       }
     }
@@ -518,7 +518,7 @@ class FileBrowser extends React.Component {
         actions = (<ul className='item-actions'>{actions}</ul>);
       }
       else {
-        actions = (<div className='item-actions'>&nbsp;</div>);
+        actions = (<div className='item-actions'><br /></div>);
       }
     }
 

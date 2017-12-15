@@ -165,9 +165,15 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
                return dg;
            }
        };
-         List<ImageMasterDataEntry> dataList = s.createDataList("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/java/edu/caltech/ipac/firefly/resources/irsa-master-table-rev2.csv");
+         List<ImageMasterDataEntry> dataList = s.createDataList("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/java/edu/caltech/ipac/firefly/resources/irsa-image-master-table.csv");
 //         ImageMasterDataEntry o = (ImageMasterDataEntry) dataList.get(0);
          for(ImageMasterDataEntry o:dataList){
+            // System.out.println(makeJsonObj(o.getDataMap()));
+         }
+
+         ExternalMasterDataSource e = new ExternalMasterDataSource();
+         List<ImageMasterDataEntry> imageMasterData = e.getImageMasterData();
+         for(ImageMasterDataEntry o:imageMasterData){
              System.out.println(makeJsonObj(o.getDataMap()));
          }
      }
