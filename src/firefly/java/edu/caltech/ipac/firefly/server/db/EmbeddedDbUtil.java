@@ -60,11 +60,7 @@ public class EmbeddedDbUtil {
      * @param dbAdapter DbAdapter to use.. ie sqlite, h2, etc.
      */
     public static void createDbFile(File dbFile, DbAdapter dbAdapter) throws IOException {
-        dbAdapter.close(dbFile);                    // in case database exists in memory.
-        File[] toRemove = dbFile.getParentFile().listFiles((dir, name) -> name.startsWith(dbFile.getName()));
-        if (toRemove != null && toRemove.length > 0) {
-            Arrays.stream(toRemove).forEach(f -> f.delete());
-        }
+        dbAdapter.close(dbFile, true);              // in case database exists in memory, close it and remove all files related to it.
         dbFile.createNewFile();                     // creates the file
         createCustomFunctions(dbFile, dbAdapter);   // add custom functions
     }

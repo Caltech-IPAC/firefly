@@ -32,9 +32,11 @@ public interface DbAdapter {
     DbInstance getDbInstance(File dbFile);
 
     /**
-     * closes the database.
+     *  closes the database and release resources used by it.
+     * @param dbFile    the database file to disconnect from
+     * @param deleteFile    if true, also remove the file itself.
      */
-    void close(File dbFile);
+    void close(File dbFile, boolean deleteFile);
 
     /**
      * @param dataType

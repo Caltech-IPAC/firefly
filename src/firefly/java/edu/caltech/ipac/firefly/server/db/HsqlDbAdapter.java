@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 
 import java.io.File;
+import java.util.Arrays;
 
 /**
  * @author loi
@@ -26,10 +27,17 @@ public class HsqlDbAdapter extends BaseDbAdapter{
         return String.format("CREATE TABLE %s AS (%s) WITH DATA", tblName, selectSql);
     }
 
-    public void close(File dbFile) {
+    public void close(File dbFile, boolean deleteFile) {
         DbInstance db = getDbInstance(dbFile, false);
         if (db != null) {
             JdbcFactory.getTemplate(db).execute("SHUTDOWN");
+        }
+        if (deleteFile) {
+            Arrays.stream(new String[]{".properties",".script",".log",".data",".backup"})
+                    .map((s) -> new File(dbFile + s))
+                    .forEach((f) -> {
+                        if(dbFile.exists()) f.delete();
+                    });
         }
     }
 
