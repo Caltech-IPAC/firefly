@@ -10,7 +10,7 @@ import {BasicTableView} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {createInputCell} from './TableRenderer.js';
 import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo} from '../FilterInfo.js';
-import {sortTableData, calcColumnWidths} from  '../TableUtil.js';
+import {sortTableData, calcColumnWidths, getTableUiByTblId, getTableUiById} from  '../TableUtil.js';
 import {InputAreaField} from '../../ui/InputAreaField.jsx';
 import {toBoolean} from '../../util/WebUtil.js';
 import {NOT_CELL_DATA} from './TableRenderer.js';
@@ -25,11 +25,16 @@ export class FilterEditor extends PureComponent {
 
     render() {
         const {columns, selectable, onChange, sortInfo, filterInfo= ''} = this.props;
+        let {tbl_ui_id, tbl_id} = this.props;
+        tbl_ui_id = tbl_ui_id || get(getTableUiByTblId(tbl_id), 'tbl_ui_id');
+        tbl_id = tbl_id || get(getTableUiById(tbl_ui_id), 'tbl_id');
+
         if (isEmpty(columns)) return false;
 
         const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo, selectable);
         const callbacks = makeCallbacks(onChange, columns, data, filterInfo);
-        const renderers = makeRenderers(callbacks.onFilter);
+        const renderers = makeRenderers(callbacks.onFilter, tbl_id);
+        
         return (
             <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
                 <div style={{flexGrow: 1, position: 'relative'}}>
@@ -39,7 +44,7 @@ export class FilterEditor extends PureComponent {
                             columns={cols}
                             rowHeight={24}
                             selectable={selectable}
-                            {...{data, selectInfoCls, sortInfo, callbacks, renderers}}
+                            {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id}}
                         />
                     </div>
                 </div>
@@ -62,6 +67,8 @@ export class FilterEditor extends PureComponent {
 }
 
 FilterEditor.propTypes = {
+    tbl_id: PropTypes.string,
+    tbl_ui_id: PropTypes.string,
     columns: PropTypes.arrayOf(PropTypes.object),
     selectable: PropTypes.bool,
     sortInfo: PropTypes.string,
@@ -163,12 +170,17 @@ function collectFilterInfo(data) {
     return filterCls.serialize();
 }
 
-function makeRenderers(onFilter) {
+function makeRenderers(onFilter, tbl_id) {
     const style = {width: '100%', boxSizing: 'border-box'};
+    const validator = (cond, data, rowIndex) => {
+        const cname = get(data, [rowIndex, 0]);
+        return FilterInfo.conditionValidator(cond, tbl_id, cname);
+    };
+    
     const filterCellRenderer = createInputCell(
         FILTER_CONDITION_TTIPS,
         undefined,
-        FilterInfo.conditionValidator,
+        validator,
         onFilter,
         style
     );

@@ -191,7 +191,7 @@ export class TablePanel extends PureComponent {
                                 callbacks={tableConnector}
                                 { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showFilters,
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                    tableConnector, renderers} }
+                                    tableConnector, renderers, tbl_ui_id} }
                             />
                             {showOptionButton && !showToolbar &&
                             <img className='TablePanel__options--small'
@@ -205,7 +205,7 @@ export class TablePanel extends PureComponent {
                                 onChange={this.onOptionUpdate}
                                 onOptionReset={this.onOptionReset}
                                 toggleOptions={this.toggleOptions}
-                                { ...{columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar}}
+                                { ...{columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar, tbl_ui_id}}
                             /> }
                     </div>
                 </div>

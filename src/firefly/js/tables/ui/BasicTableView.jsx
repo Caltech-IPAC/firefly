@@ -8,7 +8,7 @@ import FixedDataTable from 'fixed-data-table-2';
 import Resizable from 'react-component-resizable';
 import {debounce, defer, get, isEmpty} from 'lodash';
 
-import {tableTextView} from '../TableUtil.js';
+import {tableTextView, getTableUiById} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -136,9 +136,10 @@ export class BasicTableView extends PureComponent {
 
     render() {
         const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo, renderers, bgColor,
-            selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask, error} = this.props;
+            selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask, error, tbl_ui_id} = this.props;
         const {widthPx, heightPx, columnWidths} = this.state;
         const {onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected} = this;
+        const {tbl_id} = getTableUiById(tbl_ui_id) || {};
 
         if (!error && isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
 
@@ -147,7 +148,7 @@ export class BasicTableView extends PureComponent {
         //
         const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
                                   columnWidths, filterInfo, sortInfo, showUnits, showFilters,
-                                  onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected};
+                                  onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
 
         const headerHeight = 22 + (showUnits && 8) + (showFilters && 22);
 
@@ -246,7 +247,7 @@ function makeColWidth(columns, showUnits) {
 }
 
 function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers, bgColor='white',
-            selectInfoCls, filterInfo, sortInfo, onRowSelect, onSelectAll, onSort, onFilter, onFilterSelected}) {
+            selectInfoCls, filterInfo, sortInfo, onRowSelect, onSelectAll, onSort, onFilter, onFilterSelected, tbl_id}) {
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
@@ -260,7 +261,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
             <Column
                 key={col.name}
                 columnKey={idx}
-                header={<HeadRenderer {...{col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter}} />}
+                header={<HeadRenderer {...{col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
                 cell={<CellRenderer style={style} data={data} colIdx={idx} />}
                 fixed={fixed}
                 width={columnWidths[idx]}
