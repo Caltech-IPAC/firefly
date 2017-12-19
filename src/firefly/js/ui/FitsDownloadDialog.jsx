@@ -17,7 +17,7 @@ import {get, set, isEmpty, has} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
-import {download, downloadViaAnchor, encodeUrl, updateSet, MEG} from '../util/WebUtil.js';
+import {download, downloadViaAnchor, encodeUrl, updateSet} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -31,7 +31,7 @@ import {RequestType} from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
 import {isImage} from '../visualize/WebPlot.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
-import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
+import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
         WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
@@ -242,10 +242,10 @@ export class FitsDownloadDialogForm extends PureComponent {
             return (hasThreeColorBand ? getFieldVal(groupKey, 'threeBandColor', colors[0])
                                       : Band.NO_BAND.key);
         };
-        this.getFileNames = () => {
+        this.getFileNames = (force= false) => {
             let fileNames = getFieldVal(groupKey, crtFileNameKey, []);
 
-            if (!fileNames || isEmpty(fileNames)) {
+            if (!fileNames || isEmpty(fileNames) || force) {
                 fileNames = colors ? colors.reduce((prev, oneColor) => {
                     prev[oneColor] = this.getDefaultFileName(hasOperation, Band.get(oneColor));
                     return prev;
@@ -271,7 +271,8 @@ export class FitsDownloadDialogForm extends PureComponent {
         this.state = {currentFileNames: this.getFileNames(),
             currentBand: this.getCurrentBand(),
             currentOp: this.getCurrentOp(),
-            currentType: this.getCurrentType()};
+            currentType: this.getCurrentType(),
+            isImage: true};
 
     }
 
@@ -282,6 +283,7 @@ export class FitsDownloadDialogForm extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
+        this.setState( () => ({currentFileNames:this.getFileNames(true)}));
         this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => {
             if (this.iAmMounted) {
                 this.setState((state) => {
@@ -290,22 +292,27 @@ export class FitsDownloadDialogForm extends PureComponent {
                     const fileName = get(fields, ['fileName', 'value'], '');
                     const fileType = get(fields, ['fileType', 'value'], 'fits');
 
-                    if (band !== state.currentBand || fileType !== state.currentType) {
-                        state.currentBand = band;
-                        state.currentType = fileType;
+                    const stateChanges= {};
+                    if (band !== state.currentBand || fileType !== state.currentType ||
+                        isImage(this.plot)!== state.isImage) {
+                        stateChanges.isImage= isImage(this.plot);
+                        stateChanges.currentBand=band;
+                        stateChanges.currentType=fileType;
+                        stateChanges.currentFileNames= this.getFileNames(true);
                     } else {
                         const fKey = (fileType === 'fits') ? band : fileType;
 
                         if (fileName !== state.currentFileNames[fKey]) {
-                            state.currentFileNames[fKey] = fileName;
+                            stateChanges.currentFileNames= Object.assign({}, state.currentFileNames);
+                            stateChanges.currentFileNames[fKey] = fileName;
                         }
                     }
                     if (op !== state.currentOp) {
-                        state.currentOp = op;
+                        stateChanges.currentOp=op;
                     }
 
 
-                    return state;
+                    return stateChanges;
                 });
             }
         });
@@ -370,7 +377,7 @@ export class FitsDownloadDialogForm extends PureComponent {
         return (
 
             <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}}
-                        groupKey={this.props.groupKey} keepState={true}
+                        groupKey={this.props.groupKey} keepState={false}
                         reducerFunc={FitsDLReducer({band: currentBand, fileName,
                                                     currentBandFileNames: currentFileNames })}>
                 <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5,

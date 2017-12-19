@@ -84,8 +84,8 @@ export function dispatchAppOptions(appOptions) {
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, you create with makeTaskId()
  */
-export function dispatchAddTaskCount(componentId,taskId) {
-    flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId}});
+export function dispatchAddTaskCount(componentId,taskId, replace= false) {
+    flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId, replace}});
 }
 
 
@@ -185,8 +185,8 @@ export function getAlerts() {
 export const getActiveTarget= function() { return flux.getState()[APP_DATA_PATH].activeTarget; };
 
 export function getTaskCount(componentId) {
-    var state= flux.getState()[APP_DATA_PATH];
-    return state.taskCounters[componentId] ? state.taskCounters[componentId] : 0;
+    const state= flux.getState()[APP_DATA_PATH];
+    return state.taskCounters[componentId] ? state.taskCounters[componentId].length : 0;
 }
 
 export function getPreference(name) {

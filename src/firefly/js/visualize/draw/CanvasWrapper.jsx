@@ -4,7 +4,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import Drawer from './Drawer.js';
+import {Drawer} from './Drawer.js';
 import {makeDrawingDef} from './DrawingDef.js';
 import {CANVAS_DL_ID_START} from '../PlotViewUtil.js';
 
@@ -15,7 +15,7 @@ function updateDrawer(drawer,plot, width, height, drawLayer,force=false) {
     const {drawData}= drawLayer;
     if (!drawData) return;
     drawer.decimate= drawLayer.decimate;
-    var plotId= plot? plot.plotId : null;
+    const plotId= plot? plot.plotId : null;
     if (Array.isArray(drawData)) {
         data= drawData;
         highlightData= null;
@@ -29,7 +29,7 @@ function updateDrawer(drawer,plot, width, height, drawLayer,force=false) {
     drawer.isPointData= drawLayer.isPointData;
     drawer.setData(data,selectIdxs,plot,width,height,drawLayer.drawingDef,force);
     if (highlightData) {
-        drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotId),width,height);
+        drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotId));
     }
 }
 
@@ -101,7 +101,7 @@ class CanvasWrapper extends Component {
 
     shouldComponentUpdate(nProps) {
 
-        var {plot,width,height}= nProps;
+        const {plot,width,height}= nProps;
         const p= this.props;
 
         const update= (Math.floor(width)!==Math.floor(p.width) ||
@@ -116,8 +116,8 @@ class CanvasWrapper extends Component {
 
     
     updateDrawLayer(props,force=false) {
-        var {plot,drawLayer,width,height,getDrawLayer}= props;
-        var dl= getDrawLayer ? getDrawLayer() : drawLayer;
+        const {plot,drawLayer,width,height,getDrawLayer}= props;
+        let dl= getDrawLayer ? getDrawLayer() : drawLayer;
         if (!force && dl===this.lastDrawLayer) return;
         this.lastDrawLayer= dl;
         if (Array.isArray(dl)) dl= makeDummyDrawLayer(dl);
@@ -141,17 +141,17 @@ class CanvasWrapper extends Component {
 
 
     render() {
-        var {plot, drawLayer,width,height, getDrawLayer, idx}= this.props;
+        const {plot, drawLayer,width,height, getDrawLayer, idx}= this.props;
         this.lastDrawLayer= getDrawLayer ? getDrawLayer() : drawLayer;
-        var dl= this.lastDrawLayer;
+        let dl= this.lastDrawLayer;
         if (plot && !isVisible(dl,plot.plotId)) return false;
         if (!dl) return false;
 
         if (Array.isArray(dl)) dl= makeDummyDrawLayer(this.lastDrawLayer);
 
-        var canvasLayers= makeCanvasLayers(dl, this.drawer,width,height, idx, plot && plot.plotId);
+        const canvasLayers= makeCanvasLayers(dl, this.drawer,width,height, idx, plot && plot.plotId);
 
-        var style= {position:'absolute',left:0,right:0,width,height};
+        const style= {position:'absolute',left:0,right:0,width,height};
         if (!canvasLayers.length) return false;
 
         return (

@@ -163,9 +163,9 @@ function drawTextCanvas(ctx, text, x,y,color= 'red', renderOptions= {}, location
 
 
     const {textBaseline= 'top', textAlign= 'start', rotationAngle=0} = locationOptions;
-    const {fontFamily='helvetica', size='9px', fontWeight='normal', fontStyle='normal'} = fontOptions;
+    const {fontFamily='helvetica', fontSize='9px', fontWeight='normal', fontStyle='normal'} = fontOptions;
 
-    ctx.font= `${fontStyle} ${size} ${fontFamily}`;
+    ctx.font= `${fontStyle} ${fontSize} ${fontFamily}`;
     // offscreenCtx.fillStyle= 'rgba(0,0,0,.4)';
     // offscreenCtx.strokeStyle='rgba(0,0,0,.2)';
     // ctx.textAlign= 'center';

@@ -3,6 +3,7 @@
  */
 
 
+import {get, isFunction, isEmpty, isArray} from 'lodash';
 import Point, {makeScreenPt,makeImagePt,pointEquals} from '../Point.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
@@ -11,15 +12,11 @@ import Color from '../../util/Color.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {POINT_DATA_OBJ} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
-import {get, isFunction} from 'lodash';
-
 
 const ENABLE_COLORMAP= false;
-var drawerCnt=0;
+let drawerCnt=0;
 
-
-
-class Drawer {
+export class Drawer {
 
 
     constructor() {
@@ -35,8 +32,7 @@ class Drawer {
         this.selectCanvas= null;
         this.highlightCanvas= null;
         this.drawingCanceler= null;
-        this.plotTaskId= null;
-        //this.dataUpdater= null;
+        this.plotTaskId= makeTaskId();
         this.isPointData= false;
         this.decimate= false;
 
@@ -45,28 +41,9 @@ class Drawer {
         this.lastDecimationPt= null;
         this.lastDecimationColor= null;
         //this.highPriorityLayer= false;
-        this.drawerId= drawerCnt++;
+        this.drawerId= drawerCnt++; // only used for debugging
         this.deferredDrawingCompletedCB= null;
     }
-
-
-
-
-    //setDataTypeHint(dataTypeHint) { this.dataTypeHint= dataTypeHint; }
-
-    //setHighPriorityLayer(highPriorityLayer) { this.highPriorityLayer = highPriorityLayer; }
-
-
-    /*
-     * TODO - figure this out in the new system
-     * when the image resize, like a zoom, then fire events to redraw
-     * Certain types of data will need to recompute the data when the image size changes so this
-     * methods disables the default automactic handling
-     * By default, this property is true
-     * @param h handle image changes
-     */
-    //setHandleImageChanges(h) { this.handleImagesChanges = h; }
-
 
 
     dispose() {
@@ -78,12 +55,9 @@ class Drawer {
     }
 
 
-    setPointConnector(connector) { this.drawConnect= connector; }
+    setPointConnector(connector) { this.drawConnect= connector; } // future use maybe
 
-    setEnableDecimationDrawing(d) { this.decimate= d; }
-
-    setPlotChangeDataUpdater(dataUpdater) { this.dataUpdater= dataUpdater; }
-
+    setEnableDecimationDrawing(d) { this.decimate= d; } // future use maybe
 
     cancelRedraw() {
         if (this.drawingCanceler) {
@@ -105,8 +79,8 @@ class Drawer {
      */
     setData(data,selectedIndexes,plot,width,height,drawingDef,forceUpdate= false) {
         if (data && !Array.isArray(data)) data= [data];
-        var cWidth, cHeight, dWidth, oldDWidth, dHeight;
-        var oldDHeight, zfact, oldZfact, oldTestPtStr, testPtStr, pt;
+        let cWidth, cHeight, dWidth, oldDWidth, dHeight;
+        let oldDHeight, zfact, oldZfact, oldTestPtStr, testPtStr, pt;
         let oldProjection, newProjection;
 
         width= Math.floor(width);
@@ -136,7 +110,7 @@ class Drawer {
             oldTestPtStr= pt ? pt.toString() : '';
         }
 
-        var viewUpdated= true;
+        let viewUpdated= true;
 
         if (drawingDef===this.drawingDef && oldProjection===newProjection &&
             cWidth===width && cHeight===height &&
@@ -208,7 +182,7 @@ class Drawer {
             this.highlightCanvas= c;
             //console.log(`Drawer ${this.drawerId}: redraw highlight- canvas update`);
             updateCanvasSize(width,height,c);
-            this.updateDataHighlightLayer(this.highlightData, width, height);
+            this.updateDataHighlightLayer(this.highlightData);
         }
     }
 
@@ -234,41 +208,27 @@ class Drawer {
     }
 
     updateDataSelectLayer() {
-        var {plot,selectCanvas,selectedIndexes,data}= this;
-        var sCtx= selectCanvas? selectCanvas.getContext('2d') : null;
-
-        if (sCtx) {
-            var cc= CsysConverter.make(plot);
-            this.redrawSelected(selectCanvas, sCtx, cc, data, selectedIndexes,
-                selectCanvas.width, selectCanvas.height);
-        }
+        const {plot,selectCanvas,selectedIndexes,data}= this;
+        const cc= CsysConverter.make(plot);
+        this.redrawSelected(selectCanvas, cc, data, selectedIndexes);
     }
 
     /**
      *
      * @param highlightData
-     * @param width
-     * @param height
      */
-    updateDataHighlightLayer(highlightData,width,height) {
-        var {highlightCanvas, drawingDef}= this;
+    updateDataHighlightLayer(highlightData) {
+        const {highlightCanvas, drawingDef}= this;
         this.highlightData=highlightData;
-        var hCtx= highlightCanvas? highlightCanvas.getContext('2d') : null;
-        if (hCtx)  {
-            var cc= CsysConverter.make(this.plot);
-            this.redrawHighlight(hCtx, cc, highlightData,drawingDef,width,height);
-        }
+        if (!highlightCanvas) return;
+        const cc= CsysConverter.make(this.plot);
+        this.redrawHighlight(highlightCanvas, cc, highlightData,drawingDef);
     }
 
 
-
-    clearSelectLayer() { DrawUtil.clearCanvas(this.selectCanvas); }
-
-    clearHighlightLayer() { DrawUtil.clearCanvas(this.highlightCanvas); }
-
     clear() {
         this.cancelRedraw();
-        var {primaryCanvas,selectCanvas,highlightCanvas}= this;
+        const {primaryCanvas,selectCanvas,highlightCanvas}= this;
 
         DrawUtil.clearCanvas(primaryCanvas);
         DrawUtil.clearCanvas(selectCanvas);
@@ -278,75 +238,70 @@ class Drawer {
 
 
     redraw() {
-        var {primaryCanvas,selectCanvas,highlightCanvas}= this;
+        const {primaryCanvas,selectCanvas,highlightCanvas}= this;
         if (!primaryCanvas) return;
-
-        var pCtx= primaryCanvas ? primaryCanvas.getContext('2d') : null;
-        var sCtx= selectCanvas? selectCanvas.getContext('2d') : null;
-        var hCtx= highlightCanvas? highlightCanvas.getContext('2d') : null;
-
-        var w= primaryCanvas.width;
-        var h= primaryCanvas.height;
-
-        var cc= CsysConverter.make(this.plot);
-        this.redrawPrimary(primaryCanvas, cc, pCtx, this.data, this.drawingDef, w,h);
-        this.redrawHighlight(hCtx, cc, this.highlightData, this.drawingDef, w,h);
-        this.redrawSelected(selectCanvas, sCtx, cc, this.data, this.selectedIndexes, w, h);
+        const cc= CsysConverter.make(this.plot);
+        this.redrawPrimary(primaryCanvas, cc, this.data, this.drawingDef);
+        this.redrawHighlight(highlightCanvas, cc, this.highlightData, this.drawingDef);
+        this.redrawSelected(selectCanvas, cc, this.data, this.selectedIndexes);
     }
 
 
-    redrawSelected(selectCanvas, ctx, cc, data, selectedIndexes,w,h) {
-        if (!ctx) return;
-        var selectedData;
-        DrawUtil.clear(ctx,w,h);
-        if (canDraw(ctx,data)) {
-            if (!selectedIndexes) return;
-            if (Array.isArray(selectedIndexes)) {
-                selectedData= this.decimateData(this.decimate,
-                             selectedIndexes.map( (dataIdx)=> data[dataIdx]), cc,false,null);
-            }
-            else if (typeof selectedIndexes ==='function') {
-                selectedData= this.decimateData(this.decimate,
-                    data.filter( (d,idx)=> selectedIndexes(idx)), cc,false,null);
-            }
-            else {
-                return;
-            }
-            const selDrawDef= Object.assign({}, this.drawingDef, {color:this.drawingDef.selectedColor});
-            const params= makeDrawingParams(selectCanvas, selDrawDef, cc,selectedData,null, Number.MAX_SAFE_INTEGER);
-            this.doDrawing(params);
+    /**
+     *
+     * @param selectCanvas
+     * @param cc
+     * @param data
+     * @param {Array.<Number> | Function} selectedIndexes
+     */
+    redrawSelected(selectCanvas, cc, data, selectedIndexes) {
+        if (!selectCanvas) return;
+        const ctx= selectCanvas.getContext('2d');
+        DrawUtil.clear(ctx,selectCanvas.width,selectCanvas.height);
+        if (isEmpty(data) || !selectedIndexes) return;
+        let selectedData;
+        if (isArray(selectedIndexes)) {
+            if (isEmpty(selectedIndexes)) return;
+            selectedData= this.decimateData(this.decimate,
+                selectedIndexes.map( (dataIdx)=> data[dataIdx]), cc,false,null);
         }
+        else if (isFunction(selectedIndexes)) {
+            selectedData= this.decimateData(this.decimate,
+                data.filter( (d,idx)=> selectedIndexes(idx)), cc,false,null);
+        }
+        else {
+            return;
+        }
+        const selDrawDef= Object.assign({}, this.drawingDef, {color:this.drawingDef.selectedColor});
+        this.doDrawing(makeDrawingParams(selectCanvas, selDrawDef, cc,selectedData));
     }
 
     /**
      * 
-     * @param ctx
+     * @param highlightCanvas
      * @param cc
      * @param highlightData
      * @param drawingDef
-     * @param w
-     * @param h
      */
-    redrawHighlight(ctx, cc, highlightData,drawingDef,w,h) {
-        if (!ctx) return;
-        DrawUtil.clear(ctx,w,h);
-        if (!highlightData || !highlightData.length) return;
+    redrawHighlight(highlightCanvas, cc, highlightData,drawingDef) {
+        if (!highlightCanvas) return;
+        const ctx= highlightCanvas.getContext('2d');
+        DrawUtil.clear(ctx,highlightCanvas.width,highlightCanvas.height);
+        if (isEmpty(highlightData)) return;
+        const sPtM= makeScreenPt(0,0);
+        highlightData.forEach( (pt) => drawObj(ctx, drawingDef, cc, pt, sPtM, false) );
 
-        if (canDraw(ctx,highlightData)) {
-            var sPtM= makeScreenPt(0,0);
-            highlightData.forEach( (pt) => drawObj(ctx, drawingDef, cc, pt, sPtM, false) );
-        }
     }
 
 
 
-    redrawPrimary(canvas, cc, ctx, data, drawingDef,w,h) {
-        if (!ctx) return;
+    redrawPrimary(canvas, cc, data, drawingDef) {
+        if (!canvas) return;
         this.clear();
-        var params;
-        if (canDraw(ctx,data)) {
+        if (!isEmpty(data)) {
+            let params;
             this.decimatedData= this.decimateData(this.decimate, data, cc,true,this.decimatedData);
-            var drawData= this.decimatedData;
+            const drawData= this.decimatedData;
             if (drawData.length>500) {
                 params= makeDrawingParams(canvas, drawingDef,cc,drawData,
                                          this.drawConnect, getMaxChunk(drawData,this.isPointData),
@@ -389,10 +344,10 @@ class Drawer {
     decimateData(decimate, inData, cc, useColormap, oldDecimatedData) {
         if (!decimate || inData.length<=150) return inData;
 
-        var retData= inData;
-        var dim = cc.viewDim;
-        var spt= cc.getScreenCoords(makeScreenPt(0,0));
-        var defCol= this.drawingDef.color;
+        let retData= inData;
+        const dim = cc.viewDim;
+        const spt= cc.getScreenCoords(makeScreenPt(0,0));
+        const defCol= this.drawingDef.color;
         if (!oldDecimatedData ||
             dim.width!==this.decimateDim.width ||
             dim.height!==this.decimateDim.height ||
@@ -424,13 +379,13 @@ class Drawer {
 
         if (!params.done) {
             if (params.drawConnect) params.drawConnect.beginDrawing();
-            var nextChunk= getNextChuck(params);
+            const nextChunk= getNextChuck(params);
             if (nextChunk.optimize) {
-                drawChunkOptimized(nextChunk.drawList, params, params.ctx);
+                drawChunkOptimized(nextChunk.drawList, params);
                 params.opCnt++;
             }
             else {
-                drawChunkNormal(nextChunk.drawList, params, params.ctx);
+                drawChunkNormal(nextChunk.drawList, params);
             }
             if (params.next.done) { //loop finished
                 params.done= true;
@@ -450,18 +405,16 @@ class Drawer {
 
 
     removeTask() {
-        var {plot,plotTaskId}= this;
+        const {plot,plotTaskId}= this;
         if (plot && plotTaskId) {
             setTimeout( () => dispatchRemoveTaskCount(plot.plotId,plotTaskId) ,0);
-            this.plotTaskId= null;
         }
     }
 
     addTask() {
-        var {plot}= this;
+        const {plot}= this;
         if (plot) {
-            this.plotTaskId= makeTaskId();
-            setTimeout( () => dispatchAddTaskCount(plot.plotId,this.plotTaskId) ,0);
+            setTimeout( () => dispatchAddTaskCount(plot.plotId,this.plotTaskId, true) ,0);
         }
     }
 
@@ -487,8 +440,8 @@ class Drawer {
 
 function nextPt(i,fuzzLevel, max) {
     i= Math.trunc(i);
-    var remainder= i%fuzzLevel;
-    var retval= (remainder===0) ? i : i+(fuzzLevel-remainder);
+    const remainder= i%fuzzLevel;
+    let retval= (remainder===0) ? i : i+(fuzzLevel-remainder);
     if (retval===max) retval= max-1;
     return retval;
 }
@@ -497,17 +450,18 @@ function nextPt(i,fuzzLevel, max) {
  *
  * @param canvas
  * @param drawingDef
- * @param csysConv
+ * @param {CsysConverter} csysConv
  * @param data
  * @param drawConnect
- * @param maxChunk
+ * @param {number} maxChunk
  * @param {Function} deferredDrawingCompletedCB - called when drawing has completed
  * @return {Object}
  */
-function makeDrawingParams(canvas, drawingDef, csysConv, data, drawConnect, maxChunk, deferredDrawingCompletedCB) {
-    var params= {
+function makeDrawingParams(canvas, drawingDef, csysConv, data,
+                           drawConnect= null, maxChunk= Number.MAX_SAFE_INTEGER,
+                           deferredDrawingCompletedCB=null) {
+    const params= {
         canvas,    //const
-        ctx : canvas.getContext('2d'),    //const
         drawingDef,    //const
         csysConv,    //const
         data,    //const
@@ -534,21 +488,19 @@ function makeDrawingParams(canvas, drawingDef, csysConv, data, drawConnect, maxC
  * @return {*}
  */
 function getScreenCoords(pt, mSpPt, cc) {
-    var retval;
     if (pt.type===Point.W_PT) {
-        var success= cc.getScreenCoordsOptimize(pt,mSpPt);
-        retval= success ? mSpPt : null;
+        const success= cc.getScreenCoordsOptimize(pt,mSpPt);
+        return success ? mSpPt : null;
     }
     else {
-        retval= cc.getScreenCoords(pt);
+        return cc.getScreenCoords(pt);
     }
-    return retval;
 }
 
 
 
 function makeDrawingDeferred(drawer,params) {
-    var id= window.setInterval( () => {
+    const id= window.setInterval( () => {
         if (params.done) {
             window.clearInterval(id);
         }
@@ -580,15 +532,10 @@ function drawObj(ctx, def, csysConv, obj, vpPtM, onlyAddToPath) {
  */
 function shouldDrawObj(csysConv, obj) {
     if (!obj) return false;
-    let retval= true;
     if (csysConv && obj.pt && obj.type===POINT_DATA_OBJ) {
-        retval= csysConv.pointOnDisplay(obj.pt);
+        return csysConv.pointOnDisplay(obj.pt);
     }
-    return retval;
-}
-
-function canDraw(ctx,data) {
-    return (ctx && data && data.length);
+    return true;
 }
 
 /**
@@ -603,8 +550,8 @@ function canDraw(ctx,data) {
 function drawConnector(ctx, def, csysConv, dc, obj, lastObj) {
     if (!obj && !lastObj) return;
     if (csysConv) {
-        var wp1= csysConv.getWorldCoords(DrawOp.getCenterPt(lastObj));
-        var wp2= csysConv.getWorldCoords(DrawOp.getCenterPt(obj));
+        const wp1= csysConv.getWorldCoords(DrawOp.getCenterPt(lastObj));
+        const wp2= csysConv.getWorldCoords(DrawOp.getCenterPt(obj));
         if (!csysConv.coordsWrap(wp1,wp2)) {
             dc.draw(ctx,csysConv,def, wp1,wp2);
         }
@@ -616,19 +563,21 @@ function drawConnector(ctx, def, csysConv, dc, obj, lastObj) {
     }
 }
 
-function drawChunkOptimized(drawList, params, ctx) {
+function drawChunkOptimized(drawList, params) {
     if (!drawList.length) return;
+    const ctx=params.canvas.getContext('2d');
     DrawUtil.beginPath(ctx,params.drawingDef.color,params.drawingDef.lineWidth);
-    for(var obj of drawList) {
+    for(const obj of drawList) {
         drawObj(ctx, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
     }
     DrawUtil.stroke(ctx);
 }
 
-function drawChunkNormal(drawList, params, ctx) {
-    var lastObj= null;
-    var {drawingDef,drawConnect,csysConv,vpPtM}= params;
-    for(var obj of drawList) {
+function drawChunkNormal(drawList, params) {
+    let lastObj= null;
+    const {drawingDef,drawConnect,csysConv,vpPtM, canvas}= params;
+    const ctx=canvas.getContext('2d');
+    for(const obj of drawList) {
         if (drawConnect) { // in this case doDraw was already called
             drawObj(ctx, drawingDef, csysConv, obj,vpPtM, false);
         }
@@ -646,17 +595,17 @@ function drawChunkNormal(drawList, params, ctx) {
 
 
 function getNextChuck(params) {
-    var drawList= [];
-    var optimize= params.drawConnect?false:true;
-    var objLineWidth;
-    var objColor;
-    var {drawingDef}= params;
-    var i;
+    const drawList= [];
+    let optimize= params.drawConnect?false:true;
+    let objLineWidth;
+    let objColor;
+    const {drawingDef}= params;
+    let i;
 
 
-    var obj= params.next.value;
-    var color= drawingDef.color;
-    var lineWidth=  get(obj,'lineWidth',false) || drawingDef.lineWidth || 1;
+    let obj= params.next.value;
+    const color= drawingDef.color;
+    const lineWidth=  get(obj,'lineWidth',false) || drawingDef.lineWidth || 1;
 
     for(i= 0; (!params.next.done && i<params.maxChunk ); ) {
         obj= params.next.value;
@@ -686,7 +635,7 @@ function getNextChuck(params) {
 
 
 function getMaxChunk(drawData,isPointData) {
-    var maxChunk= 1;
+    let maxChunk= 1;
     if (!drawData.length) return maxChunk;
     if (isPointData) {
         maxChunk= BrowserInfo.isBrowser(Browser.SAFARI) || BrowserInfo.isBrowser(Browser.CHROME) ? 2000 : 500;
@@ -712,13 +661,13 @@ function makeColorMap(mapSize,color) {
 
 
 function setupColorMap(data, maxEntry) {
-    var colorMap= makeColorMap(maxEntry);
+    const colorMap= makeColorMap(maxEntry);
     if (colorMap)  {
-        var cnt;
-        var obj= null;
-        var idx;
+        let cnt;
+        let obj= null;
+        let idx;
         if (maxEntry>colorMap.length) {
-            var maxCnt = maxEntry+1; // to include draw obj with cnt==maxEntry into the last color band
+            const maxCnt = maxEntry+1; // to include draw obj with cnt==maxEntry into the last color band
             for(obj of data) {
                 cnt= obj.representCnt || 1;
                 idx = cnt*colorMap.length/maxCnt;
@@ -735,37 +684,37 @@ function setupColorMap(data, maxEntry) {
 }
 
 function doDecimation(inData, cc, useColormap) {
-    var i,j;
-    var dim = cc.viewDim;
+    let i,j;
+    const dim = cc.viewDim;
 
-    var supportCmap= useColormap && ENABLE_COLORMAP;
+    const supportCmap= useColormap && ENABLE_COLORMAP;
 
     //var drawArea= dim.width*dim.height;
     //var percentCov= inData.length/drawArea;
 
-    var fuzzLevel= 5;
+    const fuzzLevel= 5;
     //var start = Date.now();
 
-    var {width,height}= dim;
+    const {width,height}= dim;
 
-    var decimateObs= new Array(width);
+    const decimateObs= new Array(width);
     for(i=0; (i<decimateObs.length);i++) decimateObs[i]= new Array(height);
 
-    var seedPt= makeScreenPt(0,0);
-    var sPt;
-    var pt;
-    var maxEntry= -1;
-    var entryCnt;
+    const seedPt= makeScreenPt(0,0);
+    let sPt;
+    let pt;
+    let maxEntry= -1;
+    let entryCnt;
 
 //        GwtUtil.getClientLogger().log(Level.INFO,"doDecimation: " + (enterCnt++) + ",data.size= "+ _data.size() +
 //                ",drawID="+drawerID+
 //                ",data="+Integer.toHexString(_data.hashCode()));
 
-    var first200= [];
-    var decimatedAddCnt= 0;
-    var totalInViewPortCnt= 0;
+    const first200= [];
+    // let decimatedAddCnt= 0;
+    let totalInViewPortCnt= 0;
 
-    for(var obj of inData) {
+    for(const obj of inData) {
         if (obj) {
             pt= DrawOp.getCenterPt(obj);
             if (pt.type===Point.W_PT) {
@@ -790,7 +739,7 @@ function doDecimation(inData, cc, useColormap) {
                         entryCnt= decimateObs[i][j].representCnt;
                         if (entryCnt>maxEntry) maxEntry= entryCnt;
                     }
-                    decimatedAddCnt++;
+                    // decimatedAddCnt++;
                 }
                 else {
                     if (supportCmap) {
@@ -805,7 +754,7 @@ function doDecimation(inData, cc, useColormap) {
         }
     }
 
-    var retData;
+    let retData;
     if (totalInViewPortCnt<200) {
         retData= first200;
     }
@@ -825,4 +774,3 @@ function doDecimation(inData, cc, useColormap) {
     return retData;
 }
 
-export default Drawer;
