@@ -110,9 +110,10 @@ public class Projection implements Serializable {
 
 	switch (_params.maptype)
 	{
-	case (GNOMONIC):
-	    image_pt = GnomonicProjection.RevProject( ra, dec, _params, useProjException);
-	    break;
+//	case (GNOMONIC):
+//	    image_pt = GnomonicProjection.RevProject( ra, dec, _params, useProjException);
+//	    break;
+        case GNOMONIC:
 	case (TPV):
         image_pt = TpvProjection.RevProject( ra, dec, _params, useProjException);
         break;
@@ -187,8 +188,8 @@ public class Projection implements Serializable {
 	switch (_params.maptype)
 	{
 	case (GNOMONIC):
-	    pt = GnomonicProjection.FwdProject( x, y, _params);
-	    break;
+	  //  pt = GnomonicProjection.FwdProject( x, y, _params);
+	    //break;
     case (TPV):
         pt = TpvProjection.FwdProject( x, y, _params);
         break;

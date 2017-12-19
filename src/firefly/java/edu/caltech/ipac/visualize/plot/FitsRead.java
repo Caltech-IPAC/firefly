@@ -69,7 +69,7 @@ public class FitsRead implements Serializable {
     private final BasicHDU hdu;
     private float[] float1d;
     private Fits fits;
-    private ImageHeader imageHeader;
+    private static ImageHeader imageHeader;
     private Header header;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private  short[] masks=null;
@@ -1725,17 +1725,12 @@ public class FitsRead implements Serializable {
         fitsRead0.writeSimpleFitsFile(fo);
         fo.close();
 
-        FitsRead[] fry = FitsRead.createFitsReadArray(fits);
-        fo  = new java.io.FileOutputStream(outFitsName+"fitsRead1ReadAsFitsRead.fits");//"f-32AsFitsRead.fits");//
-        fry[1].writeSimpleFitsFile(fo);
-        fo.close();
 
         Fits newFits = new Fits(outFitsName+"fitsRead1ReadAsFitsRead.fits");
         BasicHDU[] hdus = newFits.read();
 
 
     }
-
 }
 
 /*

@@ -138,7 +138,7 @@ public class TpvProjection {
                     axis2poly[8] * yy * yy * xx +
                     axis2poly[9] * yy * xx * xx +
                     axis2poly[11] * r * r * r;
-
+            System.out.println("iterations "+iter+" "+xx+" "+yy);
         }
 
         return new ProjectionPt(xx, yy);
@@ -179,6 +179,7 @@ public class TpvProjection {
         x = cd11 * (px - rx) + cd12 * (py - ry);
         y = cd21 * (px - rx) + cd22 * (py - ry);
 
+        System.out.println(x+", "+y);
 
         double[] xy = distortion(x, y, hdr);
 
@@ -191,7 +192,7 @@ public class TpvProjection {
         } else if ((x < 0) && (y < 0)) {
             phi = phi + 2 * Math.toRadians(180);
         }
-        double rt = Math.toRadians(Math.sqrt(Math.pow(xy[0], 2 + Math.pow(xy[1], 2))));
+        double rt = Math.toRadians(Math.sqrt(Math.pow(xy[0], 2) + Math.pow(xy[1], 2)));
         double theta = Math.atan(1. / rt);
         double sp = Math.sin(phi);
         double cp = Math.cos(phi);
