@@ -19,7 +19,7 @@ public class HsqlDbAdapter extends BaseDbAdapter{
     }
 
     protected EmbeddedDbInstance createDbInstance(File dbFile) {
-        String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_size=1024;sql.syntax_ora=true", dbFile.getPath());
+        String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_size=1024;sql.syntax_ora=true;sql.ignore_case=true", dbFile.getPath());
         return new EmbeddedDbInstance(getName(), dbFile, dbUrl, "org.hsqldb.jdbc.JDBCDriver");
     }
 

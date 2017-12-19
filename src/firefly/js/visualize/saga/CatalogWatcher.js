@@ -174,7 +174,7 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
 }
 
 
-function attachToAllCatalogs(pvNewPlotInfoAry) {
+function attachToAllCatalogs(pvNewPlotInfoAry=[]) {
     dlRoot().drawLayerAry.forEach( (dl) => {
         if (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog) {
             pvNewPlotInfoAry.forEach( (info) => {

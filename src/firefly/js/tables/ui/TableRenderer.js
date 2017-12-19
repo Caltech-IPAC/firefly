@@ -7,6 +7,7 @@ import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
+import {getColumns} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -45,12 +46,14 @@ export class HeaderCell extends PureComponent {
     }
 
     render() {
-        const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, style} = this.props;
+        const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, style, tbl_id} = this.props;
         const cname = col.name;
         const cdesc = col.desc || col.label || cname;
         const filterStyle = {width: '100%', boxSizing: 'border-box'};
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortInfoCls = SortInfo.parse(sortInfo);
+        const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, cname);
+        
         return (
             <div style={style} title={cdesc} className='TablePanel__header'>
                 <Label {...{sortInfoCls, onSort}} {...col}/>
@@ -59,7 +62,7 @@ export class HeaderCell extends PureComponent {
                 }
                 {showFilters && get(col, 'filterable', true) &&
                 <InputField
-                    validator={FilterInfo.conditionValidator}
+                    validator={validator}
                     fieldKey={cname}
                     tooltip={FILTER_CONDITION_TTIPS}
                     value={filterInfoCls.getFilter(cname)}
@@ -236,7 +239,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
             return (
                 <div style={{margin: 2}}>
                     <InputField
-                        validator={validator}
+                        validator={(v) => validator(v, data, rowIndex, colIdx)}
                         tooltip={tooltips}
                         size={size}
                         style={style}

@@ -21,6 +21,8 @@ import {dispatchAddSaga, dispatchAddActionWatcher, dispatchCancelActionWatcher} 
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 
 export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
+const char_types = ['char', 'c', 's', 'str'];
+const num_types = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
 
 
 /**
@@ -188,10 +190,7 @@ export function getTableUiById(tbl_ui_id) {
  */
 export function getTableUiByTblId(tbl_id) {
     const uiRoot = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui'], {});
-    const tbl_ui_id = Object.keys(uiRoot).find( (ui_id) => {
-        return get(uiRoot, [ui_id, 'tbl_id']) === tbl_id;
-    });
-    return tbl_ui_id || uiRoot[tbl_ui_id];
+    return Object.keys(uiRoot).find( (ui_id) => get(uiRoot, [ui_id, 'tbl_id']) === tbl_id);
 }
 
 /**
@@ -848,14 +847,18 @@ export function getColumns(tableModel, type=COL_TYPE.ALL) {
  * @returns {Array<TableColumn>}
  */
 export function getColsByType(tblColumns=[], type=COL_TYPE.ALL) {
-    const charTypes = ['char', 'c', 's', 'str'];
-    const numTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
-    const matcher = type === COL_TYPE.TEXT ? charTypes : numTypes;
+    const matcher = type === COL_TYPE.TEXT ? isTextType : isNumericType;
     return tblColumns.filter((col) => get(col, 'visibility') !== 'hidden'
-                        && (type === COL_TYPE.ALL || matcher.includes(col.type)));
+                        && (type === COL_TYPE.ALL || matcher(col)));
 }
 
+export function isNumericType(col={}) {
+    return num_types.includes(col.type);
+}
 
+export function isTextType(col={}) {
+    return char_types.includes(col.type);
+}
 
 /*-------------------------------------private------------------------------------------------*/
 /**
