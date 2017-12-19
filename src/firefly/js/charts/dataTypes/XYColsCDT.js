@@ -388,7 +388,7 @@ function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
-    const req = makeTableFunctionRequest(activeTableServerRequest, 'DecimateTable', 'heatmap',  {decimate: serializeDecimateInfo(...getServerCallParameters(xyPlotParams))})
+    const req = makeTableFunctionRequest(activeTableServerRequest, 'DecimateTable', 'heatmap',  {pageSize: MAX_ROW, decimate: serializeDecimateInfo(...getServerCallParameters(xyPlotParams))})
 
     req.tbl_id = `xy-${chartId}`;
 
