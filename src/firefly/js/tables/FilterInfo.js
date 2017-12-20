@@ -275,7 +275,6 @@ function autoCorrectCondition(v, isNumeric=false) {
     if (!op && !val) return v;
 
     op = op ? op.toLowerCase() : isNumeric ? '=' : 'like';      // apply default operator if one is not given.
-
     switch (op) {
         case 'like':
             val = !val.includes('%') ? `%${val}%` : val;
@@ -289,6 +288,7 @@ function autoCorrectCondition(v, isNumeric=false) {
             break;
         case '=':
         case '!=':
+            val = !isNumeric && !val.match("^'.+'$") ? `'${val}'` : val;
             if (isNumeric && ["''", 'null', '""'].includes(val.toLowerCase())) {
                 op = op === '!=' ? 'is not' : 'is';
                 val = 'null';
