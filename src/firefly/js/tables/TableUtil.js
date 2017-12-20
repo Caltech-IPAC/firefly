@@ -17,7 +17,7 @@ import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.
 import {DEF_BASE_URL} from '../core/JsonUtils.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {doUpload} from '../ui/FileUpload.jsx';
-import {dispatchAddSaga, dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 
 export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
@@ -58,8 +58,11 @@ export function onTableLoaded(tbl_id) {
         return Promise.resolve(getTblById(tbl_id));
     } else {
         return new Promise((resolve) => {
-            dispatchAddSaga( doOnTblLoaded, {tbl_id,
-                callback:resolve});
+            dispatchAddActionWatcher({
+                actions:[TblCntlr.TABLE_UPDATE, TblCntlr.TABLE_REPLACE],
+                callback: doOnTblLoaded,
+                params: {tbl_id, resolve}
+            });
         });
     }
 }
@@ -864,26 +867,24 @@ export function isTextType(col={}) {
 /**
  * this saga watches for table update and invoke the given callback when
  * the table given by tbl_id is fully loaded.
+ * @param {Object}   action  action that triggered this watcher
+ * @param {function} cancelSelf  function to cancel this watcher
  * @param {Object}   p  parameters object
  * @param {string}   p.tbl_id  table id to watch
- * @param {function} p.callback  callback to execute when table is loaded.
+ * @param {function} p.resolve  callback to execute when table is loaded.
  */
-function* doOnTblLoaded({tbl_id, callback}) {
+function doOnTblLoaded(action, cancelSelf, {tbl_id, resolve}) {
+    if (!resolve) cancelSelf();
 
-    var isLoaded = false, hasData = false;
-    while (!(isLoaded && hasData)) {
-        const action = yield take([TblCntlr.TABLE_UPDATE, TblCntlr.TABLE_REPLACE]);
-        const a_id = get(action, 'payload.tbl_id');
-        if (tbl_id === a_id) {
-            const tableModel = getTblById(tbl_id);
-            isLoaded = isLoaded || isTableLoaded(tableModel);
-            hasData = hasData || get(tableModel, 'tableData.columns.length');
-            if (get(tableModel, 'error')) {
-                // there was an error loading this table.
-                callback(createErrorTbl(tbl_id, tableModel.error));
-                return;
-            }
+    if (tbl_id === get(action, 'payload.tbl_id')) {
+        const tableModel = getTblById(tbl_id);
+        if (get(tableModel, 'error')) {
+            // there was an error loading this table.
+            resolve(createErrorTbl(tbl_id, tableModel.error));
+            cancelSelf();
+        } else if (isTableLoaded(tableModel) &&  get(tableModel, 'tableData.columns.length')) {
+            resolve(getTblInfoById(tbl_id));
+            cancelSelf();
         }
     }
-    callback && callback(getTblInfoById(tbl_id));
 }

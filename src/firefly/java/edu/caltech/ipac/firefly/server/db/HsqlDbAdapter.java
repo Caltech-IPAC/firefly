@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 
 import java.io.File;
-import java.util.Arrays;
 
 /**
  * @author loi
@@ -17,6 +16,7 @@ public class HsqlDbAdapter extends BaseDbAdapter{
     public String getName() {
         return HSQL;
     }
+    private static final String[] DB_FILES = new String[]{".properties",".script",".log",".data",".backup"};
 
     protected EmbeddedDbInstance createDbInstance(File dbFile) {
         String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_size=1024;sql.syntax_ora=true;sql.ignore_case=true", dbFile.getPath());
@@ -33,11 +33,10 @@ public class HsqlDbAdapter extends BaseDbAdapter{
             JdbcFactory.getTemplate(db).execute("SHUTDOWN");
         }
         if (deleteFile) {
-            Arrays.stream(new String[]{".properties",".script",".log",".data",".backup"})
-                    .map((s) -> new File(dbFile + s))
-                    .forEach((f) -> {
-                        if(dbFile.exists()) f.delete();
-                    });
+            for(String fname : DB_FILES) {
+                File f = new File(dbFile + fname);
+                if (f.exists()) f.delete();
+            }
         }
     }
 
