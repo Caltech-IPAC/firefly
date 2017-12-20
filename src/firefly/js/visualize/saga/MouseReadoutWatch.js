@@ -14,7 +14,7 @@ import {MouseState} from '../VisMouseSync.js';
 import {primePlot, getPlotStateAry, getPlotViewById} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
-import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS} from '../WebPlot.js';
+import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage} from '../WebPlot.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,33 +22,28 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function* watchReadout() {
 
-    var lockByClick;
-    var mouseCtx;
+    let mouseCtx;
     yield call(mouseUpdatePromise);
 
     mouseCtx = yield call(mouseUpdatePromise);
 
-    var getNextWithFlux;
-    var threeColor= false;
-    var plotView;
-
-
     while (true) {
 
-        getNextWithFlux= false;
-        lockByClick= isLockByClick(readoutRoot());
+        let getNextWithFlux= false;
+        const lockByClick= isLockByClick(readoutRoot());
         const {plotId,worldPt,screenPt,imagePt,mouseState}= mouseCtx;
 
         let readout= undefined;
-        plotView= getPlotViewById(visRoot(), plotId);
+        const plotView= getPlotViewById(visRoot(), plotId);
         const plot= primePlot(plotView);
-        threeColor= plot.plotState.threeColor;
+        const threeColor= plot.plotState.threeColor;
         if (usePayload(mouseState,lockByClick)) {
 
             if (plot) {
                 if (isImage(plot)) {
                     readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, threeColor);
-                    dispatchReadoutData(plotId,readout, plot.plotState.threeColor);
+                    dispatchReadoutData(plotId,readout, threeColor);
+                    getNextWithFlux= true;
                 }
                 else {
                     dispatchReadoutData(plotId,makeReadout(plot,worldPt,screenPt,imagePt), false);
@@ -59,7 +54,7 @@ export function* watchReadout() {
             dispatchReadoutData(plotId, {});
         }
 
-        if (isImage(plot)) { // get the next mouse event or the flux
+        if (getNextWithFlux) { // get the next mouse event or the flux
             mouseCtx= lockByClick ? yield call(processImmediateFlux,readout,plotView,imagePt,threeColor) :
                                     yield call(processDelayedFlux,readout,plotView,imagePt,threeColor);
         }
