@@ -10,7 +10,7 @@ import {get, omitBy, isEmpty, isString, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
 import {getColumn, getTblById, isFullyLoaded} from '../../tables/TableUtil.js';
-import {cloneRequest, makeTblRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 
 import {getChartDataElement, dispatchChartAdd, dispatchChartOptionsUpdate, chartDataUpdate} from './../ChartsCntlr.js';
 import {colWithName, getNumericCols, SCATTER} from './../ChartUtil.js';
@@ -388,7 +388,7 @@ function fetchXYLargeTable(dispatch, chartId, chartDataElementId) {
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
 
-    const req = makeTableFunctionRequest(activeTableServerRequest, 'DecimateTable', 'heatmap',  {pageSize: MAX_ROW, decimate: serializeDecimateInfo(...getServerCallParameters(xyPlotParams))})
+    const req = makeTableFunctionRequest(activeTableServerRequest, 'DecimateTable', 'heatmap',  {pageSize: MAX_ROW, decimate: serializeDecimateInfo(...getServerCallParameters(xyPlotParams))});
 
     req.tbl_id = `xy-${chartId}`;
 
@@ -478,7 +478,6 @@ function fetchXYWithErrorsOrSort(dispatch, chartId, chartDataElementId) {
     const tblSource = get(activeTableModel, 'tableMeta.resultSetID');
 
     if (!xyPlotParams) { xyPlotParams = getDefaultXYPlotOptions(tblId); }
-    const validCols = ['rowIdx', 'x', 'y', 'sortBy', 'xErr', 'xErrLow', 'xErrHigh', 'yErr', 'yErrLow', 'yErrHigh', 'ROW_IDX', 'ROW_NUM'];
 
     const req = makeTableFunctionRequest(activeTableServerRequest, 'XYWithErrors');
     req.xColOrExpr = get(xyPlotParams, 'x.columnOrExpr');
@@ -662,7 +661,7 @@ function getUpdatedParams(xyPlotParams, tblId, data) {
 
     // if sortBy is set in the data, save sorting order in parameters
     // needed to avoid server call, when data are already sorted as needed
-    const sortColOrExpr =  data['sortBy'];
+    const sortColOrExpr =  get(data,'sortBy');
     if (sortColOrExpr && sortColOrExpr !== xyPlotParams.sortColOrExpr) {
         newParams = updateSet(newParams, 'sortColOrExpr', sortColOrExpr);
     }
