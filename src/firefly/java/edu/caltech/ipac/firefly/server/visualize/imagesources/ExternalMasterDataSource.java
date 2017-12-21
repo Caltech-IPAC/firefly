@@ -329,8 +329,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"SDSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
-        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
-        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"galactic");
+        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"all-sky");
+        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
         e.set(ImageMasterDataEntry.PARAMS.MAX_RANGE_DEG,"0.5");
         return e;
@@ -357,8 +357,8 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"DSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
-        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"galactic");
-        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"galactic");
+        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_KEY,"all-sky");
+        e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
         e.set(ImageMasterDataEntry.PARAMS.MAX_RANGE_DEG,"0.5");
 
