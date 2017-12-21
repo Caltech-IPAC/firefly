@@ -45,7 +45,9 @@ function fetchData(chartId, traceNum, tablesource) {
         startIdx: 0,
         pageSize: MAX_ROW,
         inclCols: Object.entries(mappings).map(([k,v]) => {
-            return `${formatColExpr({colOrExpr: v, quoted: true, colNames: numericCols})} as "${k}"`;
+            // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
+            const asStr = (numericCols.includes(v)) ? '' : ` as "data[${traceNum}].${k}"`;
+            return `${formatColExpr({colOrExpr: v, quoted: true, colNames: numericCols})}${asStr}`;
         }).join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
     });
 

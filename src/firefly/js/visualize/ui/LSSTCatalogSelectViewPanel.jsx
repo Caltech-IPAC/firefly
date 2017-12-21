@@ -99,96 +99,112 @@ const LSSTTables = [
     {
         project: 'WISE',
         label: 'WISE',
-        subproject: [{
-            database: 'wise_00',
-            label: 'wise 00',
-            project: 'WISE',
+        subproject: [
+            {
+                database: 'wise_00',
+                label: 'AllWISE',
+                project: 'WISE',
 
-            catalogs: [
-                {
-                    id: SOURCE,
-                    label: 'AllWISE Source Catalog',
-                    value: 'allwise_p3as_psd',
-                    type: CATTYPE
-                },
-                {
-                    id: FORCEDSOURCE,
-                    label: 'AllWISE Multiepoch Photometry Table',
-                    value: 'allwise_p3as_mep',
-                    type: CATTYPE
-                },
-                {
-                    id: SINGLEEXPSOURCE,
-                    label: 'WISE All-Sky Single Exposure (L1b) Source Table',
-                    value: 'allsky_4band_p1bs_psd',
-                    type: CATTYPE
-                },
-                {
-                    id: SINGLEEXPSOURCE,
-                    label: 'WISE 3-Band Cryo Single Exposure (L1b) Source Table',
-                    value: 'allsky_3band_p1bs_psd',
-                    type: CATTYPE
-                },
-                {
-                    id: SINGLEEXPSOURCE,
-                    label: 'WISE Post-Cryo Single Exposure (L1b) Source Table',
-                    value: 'allsky_2band_p1bs_psd',
-                    type: IMAGETYPE
-                }
-            ],
-            images: [
-                {
-                    id: COADD,
-                    label: ' AllWISE Atlas Image',
-                    value: 'allwise_p3am_cdd',
-                    type: IMAGETYPE,
-                    cat: {}
-                },
-                {
-                    id: CCDEXPOSURE,
-                    label: 'WISE All-Sky Single Exposure (L1b) Image',
-                    value: 'allsky_4band_p1bm_frm',
-                    type: IMAGETYPE,
-                    cat: {}
-                },
-                {
-                    id: CCDEXPOSURE,
-                    label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
-                    value: 'allsky_3band_p1bm_frm',
-                    type: IMAGETYPE,
-                    cat: {}
-                },
-                {
-                    id: CCDEXPOSURE,
-                    label: 'WISE Post-Cryo Single Exposure (L1b) Image',
-                    value: 'allsky_2band_p1bm_frm',
-                    type: IMAGETYPE,
-                    cat: {}
-                }
-            ]
-        },
-        {
-            database: 'wise_ext_00',
-            label: 'wise_ext_00',
-            project: 'WISE',
+                catalogs: [
+                    {
+                        id: SOURCE,
+                        label: 'AllWISE Source Catalog',
+                        value: 'allwise_p3as_psd',
+                        type: CATTYPE
+                    },
+                    {
+                        id: FORCEDSOURCE,
+                        label: 'AllWISE Multiepoch Photometry Table',
+                        value: 'allwise_p3as_mep',
+                        type: CATTYPE
+                    },
+                    {
+                        id: SINGLEEXPSOURCE,
+                        label: 'WISE All-Sky Single Exposure (L1b) Source Table',
+                        value: 'allsky_4band_p1bs_psd',
+                        type: CATTYPE
+                    },
+                    {
+                        id: SINGLEEXPSOURCE,
+                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Source Table',
+                        value: 'allsky_3band_p1bs_psd',
+                        type: CATTYPE
+                    },
+                    {
+                        id: SINGLEEXPSOURCE,
+                        label: 'WISE Post-Cryo Single Exposure (L1b) Source Table',
+                        value: 'allsky_2band_p1bs_psd',
+                        type: IMAGETYPE
+                    }
+                ],
+                images: [
+                    {
+                        id: COADD,
+                        label: ' AllWISE Atlas Image',
+                        value: 'allwise_p3am_cdd',
+                        type: IMAGETYPE,
+                        cat: {}
+                    },
+                    {
+                        id: CCDEXPOSURE,
+                        label: 'WISE All-Sky Single Exposure (L1b) Image',
+                        value: 'allsky_4band_p1bm_frm',
+                        type: IMAGETYPE,
+                        cat: {}
+                    },
+                    {
+                        id: CCDEXPOSURE,
+                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
+                        value: 'allsky_3band_p1bm_frm',
+                        type: IMAGETYPE,
+                        cat: {}
+                    },
+                    {
+                        id: CCDEXPOSURE,
+                        label: 'WISE Post-Cryo Single Exposure (L1b) Image',
+                        value: 'allsky_2band_p1bm_frm',
+                        type: IMAGETYPE,
+                        cat: {}
+                    }
+                ]
+            },
+            {
+                database: 'wise_ext_00',
+                label: 'AllWISE (Ext)',
+                project: 'WISE',
 
-            catalogs: [
-                {
-                    id: SOURCE,
-                    label: 'AllWISE Reject Table',
-                    value: 'allwise_p3as_psr',
-                    type: CATTYPE
-                }
-            ],
-            images: []
-        }]
+                catalogs: [
+                    {
+                        id: SOURCE,
+                        label: 'AllWISE Reject Table',
+                        value: 'allwise_p3as_psr',
+                        type: CATTYPE
+                    }
+                ],
+                images: []
+            },
+            {
+                database: 'neowiser_yr1_00',
+                label: 'NeoWISE',
+                project: 'WISE',
+
+                catalogs: [
+                    {
+                        id: SOURCE,
+                        label: 'NEOWISE-R Year 1 Single Exposure (L1b) Source Table',
+                        value: 'neowiser_yr1_p1bs_psd',
+                        type: CATTYPE
+                    }
+                ],
+                images: []
+            }]
     }
 ];
 
 
 const LSSTTableTypes = {
-   [CATTYPE]: 'Catalogs',
-   [IMAGETYPE]: 'Images'
+    [CATTYPE]: 'Catalogs',
+    [IMAGETYPE]: 'Images'
 };
 
 const LSSTDDPID = 'LSSTMetaSearch';

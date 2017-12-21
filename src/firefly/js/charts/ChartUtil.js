@@ -386,7 +386,13 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
         tableModel.tableData.data.forEach((r) => {
             r.map((e, idx) => transposed[idx].push(e));
         });
-        getDataVal = (v) => transposed[cols.indexOf(v)];
+        // tableModel columns are named as the paths to the trace arrays
+        getDataVal = (v) => {
+            const idx = cols.indexOf(v);
+            if (idx >= 0) {
+                return transposed[cols.indexOf(v)];
+            }
+        };
     } else {
         // no tableModel case is for pre-fetch changes
         changes[`fireflyData.${traceNum}.error`] = undefined;
@@ -397,7 +403,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
         Object.entries(mappings).forEach(([k,v]) => {
             // using plotly attribute path (key in the mappings object) as a column name
             // this makes it possible to use the same column as x and y, for example
-            changes[`data.${traceNum}.${k}`] = getDataVal(k);
+            changes[`data.${traceNum}.${k}`] = getDataVal(v) || getDataVal(`data[${traceNum}].${k}`);
         });
     }
 
