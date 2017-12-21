@@ -5,8 +5,9 @@
  */
 
 
-import  {isBoolean} from 'lodash';
-import  {visRoot} from '../visualize/ImagePlotCntlr.js';
+import  {get, isBoolean} from 'lodash';
+import {clone} from '../util/WebUtil.js';
+import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import CsysConverter from '../visualize/CsysConverter.js';
@@ -18,8 +19,6 @@ import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-
- import {get} from 'lodash';
 
 
 export const COORDINATE_PREFERENCE = 'coordinate';
@@ -97,11 +96,18 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
   * @returns {*} - a new object which contains the new changes and the null data
   */
  function getLayerChanges(drawLayer, action) {
-
+     let drawData;
      switch (action.type){
-         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
          case ImagePlotCntlr.ANY_REPLOT:
-             const drawData= Object.assign({},drawLayer.drawData, {data:null});
+             if (drawLayer.drawData.data && action.payload.plotIdAry) {
+                 const data= clone(drawLayer.drawData.data);
+                 action.payload.plotIdAry.forEach( (plotId) => data[plotId]= null);
+                 drawData= clone(drawLayer.drawData, {data});
+                 return {drawData};
+             }
+             break;
+         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
+             drawData= Object.assign({},drawLayer.drawData, {data:null});
              return {drawData};
          case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
              const {coordinate}= action.payload.changes;
