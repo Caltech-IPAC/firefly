@@ -16,6 +16,7 @@ import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import {flux} from '../../Firefly.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {isHiPS, isImage} from '../WebPlot';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 
 import {RED_PANEL,
@@ -88,11 +89,27 @@ class ColorDialog extends PureComponent {
         if (!plot) return false;
 
 
-        if (plot.plotState.isThreeColor()) {
-            return renderThreeColorView(plot,rFields,gFields,bFields);
+        if (isImage(plot)) {
+            if (plot.plotState.isThreeColor()) {
+                return renderThreeColorView(plot,rFields,gFields,bFields);
+            }
+            else {
+                return renderStandardView(plot,fields);
+            }
         }
-        else {
-            return renderStandardView(plot,fields);
+        else if (isHiPS(plot)) {
+            return (
+                <div style={ {
+                    fontSize: '12pt',
+                    padding: 10,
+                    width: 350,
+                    textAlign: 'center',
+                    margin: '30px 0 30px 0'
+                }}>
+                    Cannot modify stretch for HiPS Image
+                </div>
+            );
+
         }
     }
 }

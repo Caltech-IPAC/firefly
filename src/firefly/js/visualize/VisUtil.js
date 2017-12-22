@@ -540,6 +540,7 @@ const getArrowCoords= function(x1, y1, x2, y2) {
 
     let extX = x2 + 6;
     let extY = y2 + 6;
+    const textBaseline= 'top';
 
     const diffX = x2 - x1;
     const mult = ((y2 < y1) ? -1 : 1);
@@ -569,7 +570,8 @@ const getArrowCoords= function(x1, y1, x2, y2) {
         barbX2 : barbX,
         barbY2 : barbY,
         textX : extX,
-        textY : extY
+        textY : extY,
+        textBaseline
     };
 };
 

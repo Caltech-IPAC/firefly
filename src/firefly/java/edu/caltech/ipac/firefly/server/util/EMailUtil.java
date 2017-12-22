@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ThrowableUtil;
 
@@ -55,7 +54,7 @@ public class EMailUtil {
         } catch (Exception e) {
             String msg = "Unable to send message, mail session not found on server.  Fail to look up session from " +
                     ( MAIL_SESSION_BY_PROP ? " JNDI name = " + MAIL_SESSION : " prop file." );
-            ClientLog.message(msg+"; "+e.getMessage());
+            Logger.info(msg+"; "+e.getMessage());
             throw new EMailUtilException(msg);
         }
         return session;
@@ -125,9 +124,9 @@ public class EMailUtil {
             msg.setContent(mp);
             Transport.send(msg);
         } catch (MessagingException e) {
-            ClientLog.warning(ThrowableUtil.getStackTraceAsString(e));
+            Logger.warn(ThrowableUtil.getStackTraceAsString(e));
             String msg = "Unable to send message, e-mail system not responding";
-            ClientLog.warning(msg +": "+e.getMessage());
+            Logger.warn(msg +": "+e.getMessage());
             throw new EMailUtilException(msg);
         }
     }

@@ -218,12 +218,12 @@ function getBorderColor(pv,visRoot) {
  * @param pv
  * @return {*}
  */
-function makeInlineTitle(annoOps, expandedMode,pv) {
+function makeInlineTitle(annoOps, expandedMode,pv, working) {
     if (!pv || expandedMode===ExpandType.SINGLE ) return null;
     if (!annoOps || titleBarAnno.includes(annoOps)) return null;
     const brief= briefAnno.includes(annoOps);
     return (
-        <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv} />
+        <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv} working={working}/>
     );
 }
 
@@ -272,7 +272,7 @@ export class ImageViewerDecorate extends Component {
 
     render() {
         const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,
-               handleInlineTools,width,height}= this.props;
+               handleInlineTools,taskCount,width,height}= this.props;
 
         if (!width || !height) return false;
 
@@ -290,7 +290,7 @@ export class ImageViewerDecorate extends Component {
 
         if (plot) {
             titleLineHeader= makeTitleLineHeader(pv.options.annotationOps,expandedMode, pv);
-            inlineTitle= makeInlineTitle(pv.options.annotationOps,expandedMode, pv);
+            inlineTitle= makeInlineTitle(pv.options.annotationOps,expandedMode, pv, taskCount>0);
         }
 
         const outerStyle= {
@@ -353,6 +353,7 @@ ImageViewerDecorate.propTypes= {
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired,
     handleInlineTools : PropTypes.bool,
+    taskCount: PropTypes.number
 };
 
 

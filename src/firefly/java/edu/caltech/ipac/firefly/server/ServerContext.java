@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ServerContext {
 
+    public static final String HIPS_DIR_PREFIX       = "${hips-dir}";
     public static final String CACHE_DIR_PREFIX       = "${cache-dir}";
     public static final String UPLOAD_DIR_PREFIX      = "${upload-dir}";
     public static final String USER_IMAGES_DIR_PREFIX = "${user-images-dir}";
@@ -76,6 +77,7 @@ public class ServerContext {
     private static File[] visSearchPath = null;
     private static boolean isInit = false;
 
+    private volatile static String HIPS_FILE_PATH_STR;
     private volatile static String PERM_FILE_PATH_STR;
     private volatile static String TEMP_FILE_PATH_STR;
     private volatile static String STAGE_FILE_PATH_STR;
@@ -105,6 +107,7 @@ public class ServerContext {
             VIS_UPLOAD_PATH_STR = getVisUploadDir().getPath();
             CACHE_PATH_STR = getVisCacheDir().getPath();
             IRSA_ROOT_PATH_STR = getIrsaRoot().getPath();
+            HIPS_FILE_PATH_STR = getHiPSDir().getPath();
 
             VisContext.init();
 
@@ -298,6 +301,14 @@ public class ServerContext {
         workingDir = workDir;
     }
 
+    public static File getHiPSDir() {
+        File dir = new File(getWorkingDir(), "HiPS");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
     public static File getPermWorkDir() {
         File dir = new File(getWorkingDir(), "perm_files");
         if (!dir.exists()) {
@@ -411,6 +422,9 @@ public class ServerContext {
                 else if (prefix.equals(TEMP_FILES_PATH_PREFIX)) {
                     retval= new File(getTempWorkDir(), relFile);
                 }
+                else if (prefix.equals(HIPS_DIR_PREFIX)) {
+                    retval= new File(getHiPSDir(), relFile);
+                }
                 else if (prefix.equals(IRSA_ROOT_PATH_PREFIX)) {
                     retval= new File(getIrsaRoot(), relFile);
                 }
@@ -520,6 +534,7 @@ public class ServerContext {
                     fileStr.startsWith(getVisSessionDir().getPath()) ||
                     fileStr.startsWith(getUsersBaseDir().getPath())   ||
                     fileStr.startsWith(getPermWorkDir().getPath())   ||
+                    fileStr.startsWith(getHiPSDir().getPath())   ||
                     fileStr.startsWith(getTempWorkDir().getPath())   ||
                     fileStr.startsWith(getStageWorkDir().getPath()) )  {
                     foundFile= new File(fileStr);
@@ -609,6 +624,9 @@ public class ServerContext {
         }
         else if (path.startsWith(STAGE_FILE_PATH_STR)) {
             retval= replacePrefix(path, STAGE_FILE_PATH_STR, STAGE_PATH_PREFIX);
+        }
+        else if (path.startsWith(HIPS_FILE_PATH_STR)) {
+            retval= replacePrefix(path, HIPS_FILE_PATH_STR, HIPS_DIR_PREFIX);
         }
         else if (path.startsWith(IRSA_ROOT_PATH_STR)) {
             retval= replacePrefix(path, IRSA_ROOT_PATH_STR, IRSA_ROOT_PATH_PREFIX);

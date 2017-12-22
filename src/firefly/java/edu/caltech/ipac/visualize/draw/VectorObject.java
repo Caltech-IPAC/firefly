@@ -3,8 +3,8 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
@@ -14,10 +14,8 @@ import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import javax.swing.SwingUtilities;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -243,10 +241,10 @@ public class VectorObject implements ShapeObject {
             }
         }
         else {
-            ClientLog.warning(true, "This Vector Object only " +
-                               "supports Image coordinates, " +
-                               "you must constuct the vector with WorldPt " +
-                               "coordinates to use this method.");
+            Logger.warn("This Vector Object only " +
+                        "supports Image coordinates, " +
+                        "you must constuct the vector with WorldPt " +
+                        "coordinates to use this method.");
         }
     }
 

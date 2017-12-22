@@ -3,10 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.packagedata.Packager;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -40,7 +40,7 @@ public class PackageDownload extends BaseHttpServlet {
         String packageId = req.getParameter(PARAM_ID);
         String partIdx = req.getParameter(PARAM_IDX);
         String browserFileName = req.getParameter(PARAM_NAME);
-        ClientLog.message("Retrieving package id: " + packageId + "/" + partIdx);
+        Logger.info("Retrieving package id: " + packageId + "/" + partIdx);
         if (packageId == null || packageId.length() == 0) {
             throw  new IllegalArgumentException(PARAM_ID+" is a required argument");
         }
@@ -82,8 +82,8 @@ public class PackageDownload extends BaseHttpServlet {
             cache.put(statusKey, SearchServices.DownloadProgress.FAIL);
             throw e;
         } finally {
-            if (buffOS!= null) try {buffOS.close();} catch (Exception e) {ClientLog.warning("Failed to close: "+e.getMessage());}
-            if (buffIS!=null) try {buffIS.close();}  catch (Exception e) {ClientLog.warning("Failed to close: "+e.getMessage());}
+            if (buffOS!= null) try {buffOS.close();} catch (Exception e) {Logger.warn("Failed to close: "+e.getMessage());}
+            if (buffIS!=null) try {buffIS.close();}  catch (Exception e) {Logger.warn("Failed to close: "+e.getMessage());}
         }
     }
 

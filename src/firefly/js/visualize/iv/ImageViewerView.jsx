@@ -56,7 +56,8 @@ ImageViewerView.propTypes= {
     visRoot: PropTypes.object.isRequired,
     extensionList : PropTypes.array.isRequired,
     mousePlotId : PropTypes.string,
-    handleInlineTools : PropTypes.bool
+    handleInlineTools : PropTypes.bool,
+    taskCount: PropTypes.number
 };
 
 

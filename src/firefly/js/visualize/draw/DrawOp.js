@@ -57,9 +57,9 @@ class DrawOp {
      * @param vpPtM
      * @param onlyAddToPath
      */
-    static draw(drawObj,ctx,drawTextAry,csysConv,def,vpPtM,onlyAddToPath) {
+    static draw(drawObj,ctx,csysConv,def,vpPtM,onlyAddToPath) {
         if (!has(drawObj, 'isRendered') || drawObj.isRendered ) {
-            op(drawObj, 'draw')(drawObj, ctx, drawTextAry, csysConv, def, vpPtM, onlyAddToPath);
+            op(drawObj, 'draw')(drawObj, ctx, csysConv, def, vpPtM, onlyAddToPath);
         }
     }
 

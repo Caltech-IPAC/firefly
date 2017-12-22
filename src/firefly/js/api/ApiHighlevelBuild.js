@@ -221,7 +221,7 @@ function buildImagePart(llApi) {
      * @example firefly.showImage
      *
      */
-    const showImage= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request);
+    const showImage= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request, false);
 
     /**
      * @summary A convenience plotting function to plot a file on the server or a url.  If first looks for the file then
@@ -239,7 +239,7 @@ function buildImagePart(llApi) {
                                            {'File' : file,
                                             'URL' : url,
                                             'Type' : RequestType.TRY_FILE_THEN_URL
-                                           });
+                                           }, false);
 
 
     /**
@@ -263,7 +263,9 @@ function buildImagePart(llApi) {
      */
     const showCoverage= (div,options) => initCoverage(llApi,div,options);
 
-    return {showImage, showImageFileOrUrl, setGlobalImageDef, showCoverage};
+    const showHiPS= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request, true);
+
+    return {showImage, showHiPS, showImageFileOrUrl, setGlobalImageDef, showCoverage};
 }
 
 /**
@@ -332,8 +334,8 @@ function makePlotSimple(llApi, plotId) {
     };
 }
 
-function showImageInMultiViewer(llApi, targetDiv, request) {
-    const {dispatchPlotImage, dispatchAddViewer, dispatchAddImages}= llApi.action;
+function showImageInMultiViewer(llApi, targetDiv, request, isHiPS) {
+    const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer, dispatchAddImages}= llApi.action;
     const {findInvalidWPRKeys,confirmPlotRequest, IMAGE, NewPlotMode}= llApi.util.image;
     const {renderDOM,debug, getWsConnId, getWsChannel}= llApi.util;
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
@@ -348,11 +350,19 @@ function showImageInMultiViewer(llApi, targetDiv, request) {
 
     const plotId= !Array.isArray(request) ? request.plotId : request.find( (r) => r.plotId).plotId;
     dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
-    dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv});
+    if (isHiPS) {
+        request.Type= 'HiPS';
+        dispatchPlotHiPS({plotId, wpRequest:request, viewerId:targetDiv});
+    }
+    else {
+        dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv});
+    }
+
     renderDOM(targetDiv, MultiImageViewer,
         {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
 
 }
+
 
 function initCoverage(llApi, targetDiv,options= {}) {
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;

@@ -24,7 +24,7 @@ export const levels= [.03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
                        7,8, 9, 10, 11, 12, 13, 14, 15, 16, 32];
 
 export const hiPSLevels= [0.00390625,  .0078125, .015625, .03125, .0625, .125,.25,
-                          .5, .75, 1,2, 4, 8, 10, 14, 16, 32];
+                          .5, .75, 1,2, 4, 8, 10, 14, 16, 32, 64];
 
 const IMAGE_ZOOM_MAX= levels[levels.length-1];
 const HIPS_ZOOM_MAX= hiPSLevels[levels.length-1];

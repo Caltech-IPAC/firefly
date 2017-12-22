@@ -7,16 +7,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Enum from 'enum';
 import numeral from 'numeral';
-import {convertZoomToString, getZoomDesc} from '../ZoomUtil.js';
+import {getZoomDesc} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
-import {getTaskCount} from '../../core/AppDataCntlr.js';
 
 import './PlotTitle.css';
 import LOADING from 'html/images/gxt/loading.gif';
 
 export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 
-export function PlotTitle({plotView:pv, titleType, brief}) {
+export function PlotTitle({plotView:pv, titleType, brief, working}) {
     let styleName= '';
     const plot= primePlot(pv);
     switch (titleType) {
@@ -42,14 +41,13 @@ export function PlotTitle({plotView:pv, titleType, brief}) {
         }
         zlStr+=',';
     }
-    const showWorking= getTaskCount(pv.plotId);
 
     return (
         <div className={styleName} title={plot.title}>
             <div className='plot-title-title'>{plot.title}</div>
             {!brief ? <div className='plot-title-zoom'><div dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
             {!brief && rotString ? <div className='plot-title-rotation'>{rotString}</div> : ''}
-            {showWorking ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
+            {working ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
         </div>
     );
 }

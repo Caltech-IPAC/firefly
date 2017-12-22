@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -100,7 +100,7 @@ public class Simbad4Client {
                 sobj.setMagnitude(vmag);
             }
 
-            ClientLog.message("results: " + sobj);
+            Logger.info("results: " + sobj);
             return sobj;
         } catch (java.rmi.RemoteException e) {
             throw new SimbadException("Simbad did not find the object: " + objectName);

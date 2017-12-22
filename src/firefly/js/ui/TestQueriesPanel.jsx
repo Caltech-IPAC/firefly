@@ -217,7 +217,13 @@ function hideSearchPanel() {
 
 function renderHiPS(fields) {
 
+    //todo
+    //todo
+    //todo
+    //todo
+    //todo
     const options= hipsSURVEYS.map( (s,idx) => ({label:s.label, value:idx+''}));
+    options.push({label:'Other', value:'other'});
 
     return (
         <div>
@@ -235,6 +241,14 @@ function renderHiPS(fields) {
                 }}
                 options={options}
             />
+            <ValidationField fieldKey='otherUrl'
+                             initialState={{
+                                 fieldKey: 'otherUrl',
+                                 value: '',
+                                 tooltip: 'a url',
+                                 label : 'url:',
+                                 labelWidth : 100
+                             }}/>
 
 
         </div>
@@ -620,7 +634,14 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
-     const rootUrl= hipsSURVEYS[Number(request.hipsSurvey)].url;
+    let rootUrl;
+    if (request.hipsSurvey!=='other') {
+        rootUrl= hipsSURVEYS[Number(request.hipsSurvey)].url;
+
+    }
+    else {
+        rootUrl= request.otherUrl;
+    }
 
 
     // const wpRequest= WebPlotRequest.makeHiPSRequest('http://alasky.u-strasbg.fr/2MASS/Color', null);

@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.AppProperties;
@@ -335,31 +334,5 @@ public class Logger {
     }
 
 
-    @IgnoreStackEntry
-    public static class ClientLogImpl implements ClientLog.Logger {
-
-        public void log(boolean showMethodName, ClientLog.MessageType level, String... messages) {
-
-            if(level.equals(ClientLog.MessageType.ERROR)) {
-                Logger.error(messages);
-            } else if(level.equals(ClientLog.MessageType.WARNING)) {
-                Logger.warn(messages);
-            } else if (level.equals(ClientLog.MessageType.INFORMATION)) {
-                Logger.info(messages);
-            } else if (level.equals(ClientLog.MessageType.BRIEF_INFO)) {
-                Logger.briefInfo(briefMsg(messages));
-            } else {
-                Logger.debug(messages);
-            }
-        }
-
-        private String briefMsg(String... messages) {
-            if(messages == null || messages.length == 0) {
-                return "";
-            } else {
-                return CollectionUtil.toString(messages);
-            }
-        }
-    }
 
 }

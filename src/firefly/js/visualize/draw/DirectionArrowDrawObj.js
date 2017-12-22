@@ -10,6 +10,7 @@ import CsysConverter from '../CsysConverter.js';
 import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
 import {regionPropsList, RegionType} from '../region/Region.js';
 import {isEmpty} from 'lodash';
+import {makeDevicePt} from '../Point';
 
 
 const DIR_ARROW_DRAW_OBJ= 'DirectionArrayDrawObj';
@@ -66,16 +67,15 @@ const draw=  {
      *
      * @param drawObj
      * @param ctx
-     * @param drawTextAry
      * @param plot
      * @param def
      * @param vpPtM
      * @param onlyAddToPath
      */
-    draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
         const drawParams= makeDrawParams(drawObj,def);
         const {startPt,endPt,renderOptions}= drawObj;
-        drawDirectionArrow(ctx,drawTextAry, plot, startPt,endPt,drawParams,renderOptions);
+        drawDirectionArrow(ctx, plot, startPt,endPt,drawParams,renderOptions);
     },
 
     toRegion(drawObj,plot, def) {
@@ -105,32 +105,34 @@ function makeDrawParams(obj,def) {
 /**
  * @summary draw direction arrow on image coordinate
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param startPt
  * @param endPt
  * @param drawParams
  * @param renderOptions
  */
-function drawDirectionArrow(ctx,drawTextAry,plot, startPt,endPt,drawParams,renderOptions) {
-    const pt1= plot ? plot.getScreenCoords(startPt) : startPt;
-    const pt2= plot ? plot.getScreenCoords(endPt) : endPt;
+
+function drawDirectionArrow(ctx,plot, startPt,endPt,drawParams,renderOptions) {
+    const pt1= plot ? plot.getDeviceCoords(startPt) : startPt;
+    const pt2= plot ? plot.getDeviceCoords(endPt) : endPt;
     const {color,text}=  drawParams;
 
     const ret= VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
     const drawList= [];
-    const textScreen = makeScreenPt(ret.textX, ret.textY);
-    const textLoc = plot ? plot.getDeviceCoords(textScreen) : textScreen;
-    const p1Screen = makeScreenPt(ret.x1,ret.y1);
-    const p2Screen = makeScreenPt(ret.x2,ret.y2);
-    const barScreen = makeScreenPt(ret.barbX2,ret.barbY2);
+    const textScreen = makeDevicePt(ret.textX, ret.textY);
+    // const textLoc = plot ? plot.getDeviceCoords(textScreen) : textScreen;
+    const textLoc= textScreen;
+    const p1Screen = makeDevicePt(ret.x1,ret.y1);
+    const p2Screen = makeDevicePt(ret.x2,ret.y2);
+    const barScreen = makeDevicePt(ret.barbX2,ret.barbY2);
 
-    drawList.push(plot ? plot.getDeviceCoords(p1Screen) : p1Screen) ;
-    drawList.push(plot ? plot.getDeviceCoords(p2Screen) : p2Screen);
-    drawList.push(plot ? plot.getDeviceCoords(barScreen) : barScreen);
+    drawList.push(p1Screen) ;
+    drawList.push(p2Screen);
+    drawList.push(barScreen);
 
     DrawUtil.drawPath(ctx, color,2,drawList,false, renderOptions);
-    DrawUtil.drawText(drawTextAry, text, textLoc.x, textLoc.y, color, renderOptions);
+    DrawUtil.drawTextCanvas(ctx, text, textLoc.x, textLoc.y, color,
+                             renderOptions, {textBaseline:ret.textBaseline} );
 }
 
 function toRegion(startPt,endPt,plot,drawParams,renderOptions) {

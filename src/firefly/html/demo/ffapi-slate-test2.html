@@ -95,6 +95,9 @@ Images
     <li>
         <a href="javascript:load3C(getSTarget(),0,2,2,2)">3 Color</a> in cell <span class='smallCoords'>at row: 0, col: 2, w:2 h: 2</span>
     </li>
+    <li>
+        <a href="javascript:loadHiPS(getSTarget(),3,0,6,2)">hips</a> in cell <span class='smallCoords'>at row: 3, col: 0, w:4 h: 2</span>
+    </li>
 </ul>
 </body>
 
@@ -156,6 +159,21 @@ Images
 
             firefly.getViewer().addCell(r,c,w,h, 'images', '3C');
             firefly.getViewer().showImage(threeC, '3C');
+        }
+
+        function loadHiPS(sTarget,r,c,w,h) {
+
+
+            var request= {
+                plotId: 'aHipsID',
+                WorldPt    : sTarget,
+                title     : 'A HiPS',
+                hipsRootUrl: 'http://alasky.u-strasbg.fr/DSS/DSSColor'
+            };
+
+
+            firefly.getViewer().addCell(r,c,w,h, 'images', 'Hips');
+            firefly.getViewer().showHiPS(request, 'Hips');
         }
 
 

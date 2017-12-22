@@ -6,7 +6,7 @@ package edu.caltech.ipac.astro.net;
 import edu.caltech.ipac.astro.target.Ephemeris;
 import edu.caltech.ipac.astro.target.NonStandardEphemeris;
 import edu.caltech.ipac.astro.target.StandardEphemeris;
-import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
@@ -47,7 +47,7 @@ public class HorizonsEphFile {
 
 
 
-        ClientLog.message("Retrieving Ephemeris file");
+        Logger.info("Retrieving Ephemeris file");
         String urlStr=  "https://" +
                  server.getHost() + ":" + server.getPort() + CGI_CMD;
         if (SUTDebug.isDebug()) System.out.println("RBH URL = "+ urlStr);
@@ -73,11 +73,7 @@ public class HorizonsEphFile {
         if (SUTDebug.isDebug())
             System.out.println("RBH suggested_filename = " + suggested_filename);
 
-        byte retval[]= URLDownload.getDataFromOpenURL(conn, null);
-
-
-        ClientLog.message("Done");
-        return retval;
+        return URLDownload.getDataFromOpenURL(conn, null);
     }
 
     public static String getSuggestedFilename()
@@ -122,8 +118,6 @@ public class HorizonsEphFile {
                 addParam("W", params.getLittleOmega(), data, true);
                 addParam("IN", params.getI(), data, false);
             }
-
-            ClientLog.brief("params: " + data);
         } catch (Exception e) {
             throw new FailedRequestException("Could not encode query",
                                              null, e);
