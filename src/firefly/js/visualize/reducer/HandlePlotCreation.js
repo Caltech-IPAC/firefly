@@ -96,7 +96,7 @@ const updateDefaults= function(plotRequestDefaults, action) {
     }
     else {
         const {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
-        if (!wpRequest || !redReq || !greenReq || !blueReq) return plotRequestDefaults;
+        if (!wpRequest && !redReq && !greenReq && !blueReq) return plotRequestDefaults;
         return threeColor ?
             clone(plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}}) :
             clone(plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
