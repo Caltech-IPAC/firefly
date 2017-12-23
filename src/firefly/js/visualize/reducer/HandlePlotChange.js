@@ -6,7 +6,7 @@ import update from 'immutability-helper';
 import {get, isEmpty,isUndefined, isArray, unionBy} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
-        findCurrentCenterPoint, findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
+        findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, PlotAttribute, isHiPS, isImage,
     replaceHiPSProjectionUsingProperties, replaceHiPSProjection} from '../WebPlot.js';
@@ -27,6 +27,7 @@ import {primePlot,
         isInSameGroup,
         findPlot,
         getPlotViewById,
+        findCurrentCenterPoint,
         getCenterOfProjection} from '../PlotViewUtil.js';
 import {makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -271,7 +272,7 @@ function processProjectionChange(state,action) {
 }
 
 function changeHiPS(state,action) {
-    const {plotId,hipsProperties, hipsUrlRoot, coordSys}= action.payload;
+    const {plotId,hipsProperties, hipsUrlRoot, coordSys, cubeIdx}= action.payload;
     let {centerProjPt}= action.payload;
     const {plotViewAry}= state;
     let pv= getPlotViewById(state, plotId);
@@ -291,6 +292,10 @@ function changeHiPS(state,action) {
     }
 
     if (centerProjPt) plot= changeProjectionCenter(plot,centerProjPt);
+
+    if (!isUndefined(cubeIdx)) {
+        plot.cubeIdx= cubeIdx;
+    }
 
     pv= replacePrimaryPlot(pv, plot);
     pv.serverCall= 'success';

@@ -146,9 +146,7 @@ function handleCatalogUpdate(tbl_id) {
 function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
                             highlightedRow, selectInfo, columns, dataTooBigForSelection) {
 
-    const plotIdAry= visRoot().plotViewAry
-        .filter( (pv) => pv.options.acceptAutoLayers)
-        .map( (pv) => pv.plotId);
+    const plotIdAry= visRoot().plotViewAry.map( (pv) => pv.plotId);
 
     const dl= getDrawLayerById(dlRoot(),tbl_id);
     if (dl) { // update drawing layer

@@ -63,6 +63,7 @@ import HiPSGrid from '../drawingLayers/HiPSGrid.js';
 import RegionPlot from '../drawingLayers/RegionPlot.js';
 import MarkerTool from '../drawingLayers/MarkerTool.js';
 import FootprintTool from '../drawingLayers/FootprintTool.js';
+import ImageOutline from '../drawingLayers/ImageOutline.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
 //==============
@@ -112,7 +113,8 @@ const actionCreators = new Map();
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
                                                      Catalog, Artifact, WebGrid, RegionPlot,
-                                                     MarkerTool, FootprintTool, HiPSGrid);
+                                                     MarkerTool, FootprintTool, HiPSGrid,
+                                                     ImageOutline);
 
 const cdtFactory= chartDataTypeFactory([DATATYPE_XYCOLS, DATATYPE_HISTOGRAM]);
 const chartsFactory= chartTypeFactory([PLOTLY_CHART, SCATTER_TBLVIEW, HISTOGRAM_TBLVIEW]);

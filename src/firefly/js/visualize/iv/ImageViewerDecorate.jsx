@@ -110,7 +110,7 @@ function contextToolbar(pv,dlAry,extensionList) {
     const plot= primePlot(pv);
     if (!plot) return;
 
-    const showMulti= pv.plots.length>1;
+    const showMulti= isImage(plot) ? pv.plots.length>1 : plot.cubeDepth>1;
 
     // todo
 
@@ -161,7 +161,7 @@ const bgFFGray= {background: '#e3e3e3'};
 
 function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools, showDelete) {
     if (!pv) return false;
-    const useInlineToolbar = toolsAnno.includes(pv.options.annotationOps);
+    const useInlineToolbar = toolsAnno.includes(pv.plotViewCtx.annotationOps);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
 
     if (!useInlineToolbar) return false;
@@ -289,8 +289,8 @@ export class ImageViewerDecorate extends Component {
         const plot= primePlot(pv);
 
         if (plot) {
-            titleLineHeader= makeTitleLineHeader(pv.options.annotationOps,expandedMode, pv);
-            inlineTitle= makeInlineTitle(pv.options.annotationOps,expandedMode, pv, taskCount>0);
+            titleLineHeader= makeTitleLineHeader(pv.plotViewCtx.annotationOps,expandedMode, pv);
+            inlineTitle= makeInlineTitle(pv.plotViewCtx.annotationOps,expandedMode, pv, taskCount>0);
         }
 
         const outerStyle= {

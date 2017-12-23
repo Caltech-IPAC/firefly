@@ -1,12 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference,isArray,has,isString,get, isEmpty,flatten} from 'lodash';
+import {difference,isArray,has,isString,get, isEmpty,flatten, isUndefined} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
-import {makeImagePt, pointEquals} from './Point.js';
+import {makeImagePt, makeDevicePt, pointEquals} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
 import {clone} from '../util/WebUtil.js';
 import {getDlAry, dispatchDestroyDrawLayer} from './DrawLayerCntlr.js';
+import {makeTransform} from './PlotTransformUtils.js';
 import {makeWorldPt} from './Point.js';
 
 
@@ -584,6 +585,44 @@ export function getCenterOfProjection(plot) {
     return plot && makeWorldPt(plot.projection.header.crval1, plot.projection.header.crval2,  plot.imageCoordSys);
 }
 
+
+/**
+ * Find the point in the plot that is at the center of the display.
+ * The point returned is in ImagePt coordinates.
+ * We return it in and ImagePt not screen because if the plot is zoomed the image point will still
+ * be what we want in the center. A alternate scrollX and scrollY may be passed otherwise the current
+ * scrollX and scrollY is used.
+ *
+ * @param {PlotView} plotView
+ * @param {number} [scrollX] optional scrollX, if not defined use plotView.scrollX
+ * @param {number} [scrollY] optional scrollY, if not defined use plotView.scrollY
+ * @return {ImagePt} the center point
+ */
+export function findCurrentCenterPoint(plotView,scrollX,scrollY) {
+    const plot= primePlot(plotView);
+    if (!plot) return null;
+    const {viewDim}= plotView;
+
+    let cc;
+    if (!isUndefined(scrollX) && isUndefined(!scrollY)) {
+        const trans= makeTransform(0,0, scrollX, scrollY,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
+        cc= CysConverter.make(plot,trans);
+    }
+    else if (isUndefined(plotView.scrollX) || isUndefined(plotView.scrollY)) {
+        const trans= makeTransform(0,0, 0, 0,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
+        cc= CysConverter.make(plot,trans);
+    }
+    else {
+        cc= CysConverter.make(plot);
+    }
+    return cc.getImageCoords(makeDevicePt(viewDim.width/2, viewDim.height/2));
+}
+
+
+
+
+
+
 /**
  *
  * @param {Array.<PvNewPlotInfo>} pvNewPlotInfoAry
@@ -612,6 +651,19 @@ export function isPlotIdInPvNewPlotInfoAry(pvNewPlotInfoAry, plotId) {
  * @return {number}
  */
 const getCanvasIdx= (c,start,plotId) => Number(c.id.substr(0, c.id.length - plotId.length - 1).substr(start));
+
+export function getCorners(plot) {
+    if (!plot) return null;
+    const cc= CysConverter.make(plot);
+    const {dataWidth:w, dataHeight:h} = plot;
+
+    const c1= cc.getWorldCoords(makeImagePt(0,0));
+    const c2= cc.getWorldCoords(makeImagePt(w,0));
+    const c3= cc.getWorldCoords(makeImagePt(w,h));
+    const c4= cc.getWorldCoords(makeImagePt(0,h));
+    if (!c1 || !c2 || !c3 || !c4) return null;
+    return [c1,c2,c3,c4];
+}
 
 
 /**

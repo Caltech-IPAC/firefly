@@ -72,7 +72,7 @@ function getImagesAt(plot, spt, size) {
         .filter( (tile) => isTileVisible(tile,spt.x,spt.y,size,size,scale))
         .sort(compareFourTileSort);
 
-    if (!tiles.length) return null;
+    if (!tiles.length) return {};
 
     const newX = spt.x - tiles[0].x;
     const newY = spt.y - tiles[0].y;

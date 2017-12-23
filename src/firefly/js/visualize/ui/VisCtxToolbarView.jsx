@@ -589,28 +589,47 @@ export function MultiImageControllerView({plotView:pv}) {
 
     const {plots,plotId}= pv;
 
-    if (plots.length<3) {
-        leftImageStyle.visibility='hidden';
-    }
     const plot= primePlot(pv);
+    const image= isImage(plot);
 
-    let cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
+    let cIdx;
+    let nextIdx;
+    let prevIdx;
+    let length;
+    let desc;
+
+    if (image) {
+        let cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
+        if (cIdx<0) cIdx= 0;
+        nextIdx= cIdx===plots.length-1 ? 0 : cIdx+1;
+        prevIdx= cIdx ? cIdx-1 : plots.length-1;
+        length= plots.length;
+        desc= plots[cIdx].plotDesc;
+    }
+    else {
+        cIdx= plot.cubeIdx;
+        nextIdx= cIdx===plot.cubeDepth-1 ? 0 : cIdx+1;
+        prevIdx= cIdx ? cIdx-1 : plot.cubeDepth-1;
+        length= plot.cubeDepth;
+        desc= '';
+    }
+
+    if (length<3) leftImageStyle.visibility='hidden';
     if (cIdx<0) cIdx= 0;
 
-    const nextIdx= cIdx===plots.length-1 ? 0 : cIdx+1;
-    const prevIdx= cIdx ? cIdx-1 : plots.length-1;
-    
+
+
+
     return (
         <div style={mulImStyle}>
             <div style={{fontStyle: 'italic', padding: '8px 0 0 5px', alignSelf:'flex-start'}}>Image:</div>
             <img style={leftImageStyle} src={PAGE_LEFT}
-                 onClick={() => dispatchChangePrimePlot({plotId,primeIdx:prevIdx})} />
+                 onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:prevIdx}) : dispatchChangeHiPS({plotId, cubeIdx:prevIdx})}/>
             <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:3, flex: '0 0 auto'}}
                  src={PAGE_RIGHT}
-                 onClick={() => dispatchChangePrimePlot({plotId,primeIdx:nextIdx})} />
-            {plots[cIdx].plotDesc &&
-                  <div style={{minWidth: '3em', padding:'0 10px 0 5px', fontWeight:'bold'}}>{plots[cIdx].plotDesc}</div>}
-            <div style={{minWidth: '3em', paddingLeft:4}}>{`${cIdx+1}/${plots.length}`}</div>
+                 onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:nextIdx}): dispatchChangeHiPS({plotId, cubeIdx:nextIdx})} />
+            {desc && <div style={{minWidth: '3em', padding:'0 10px 0 5px', fontWeight:'bold'}}>{desc}</div>}
+            <div style={{minWidth: '3em', paddingLeft:4}}>{`${cIdx+1}/${length}`}</div>
         </div>
     );
 }

@@ -5,38 +5,25 @@
 import {flatten, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey,
-    IMAGE_PLOT_KEY, dispatchDeleteOverlayPlot,
-    dispatchChangeCenterOfProjection, dispatchZoom,
-    dispatchPlotProgressUpdate} from '../ImagePlotCntlr.js';
+    IMAGE_PLOT_KEY, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
-import {UserZoomTypes, getEstimatedFullZoomFactor} from '../ZoomUtil.js';
+import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {WebPlot,PlotAttribute, RDConst} from '../WebPlot.js';
 import CsysConverter from '../CsysConverter.js';
-import {CoordinateSys} from '../CoordSys.js';
-import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtils from '../VisUtil.js';
-import {fetchUrl, clone, loadImage} from '../../util/WebUtil.js';
 import {PlotState} from '../PlotState.js';
 import Point, {makeImagePt} from '../Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import ActiveTarget  from '../../drawingLayers/ActiveTarget.js';
-import * as DrawLayerCntlr from '../DrawLayerCntlr.js';
+import {clone} from '../../util/WebUtil.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
-import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
-import {primePlot, getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
+import {dispatchAddViewerItems, getMultiViewRoot, findViewerWithItemId, EXPANDED_MODE_RESERVED, IMAGE, DEFAULT_FITS_VIEWER_ID} from '../MultiViewCntlr.js';
+import {getPlotViewById, getDrawLayerByType, getDrawLayersByType, getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
-import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import {makeWorldPt} from '../Point.js';
-import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
-import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
-import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot, makeHipsUrl} from '../HiPSUtil.js';
-
-//const INIT_STATUS_UPDATE_DELAY= 7000;
-
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -46,7 +33,7 @@ import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot, makeHipsUrl} from '../HiPS
 let firstTime= true;
 
 
-function ensureWPR(inVal) {
+export function ensureWPR(inVal) {
     if (isArray(inVal)) {
         return inVal.map( (v) => WebPlotRequest.makeFromObj(v));
     }
@@ -55,16 +42,34 @@ function ensureWPR(inVal) {
     }
 }
 
+export function determineViewerId(viewerId, plotId) {
+    if (viewerId) return viewerId;
+    const newViewerId= findViewerWithItemId(getMultiViewRoot(), plotId, IMAGE);
+    return newViewerId || DEFAULT_FITS_VIEWER_ID;
+}
+
+export function getHipsImageConversion(hipsImageConversion ) {
+    return hipsImageConversion && {
+        hipsRequestRoot:ensureWPR(hipsImageConversion.hipsRequestRoot),
+        imageRequestRoot:ensureWPR(hipsImageConversion.imageRequestRoot),
+        fovDegFallOver: hipsImageConversion.fovDegFallOver
+    };
+
+}
+
 const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => Boolean(r)) : wpRAry;
 
 
 function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 
-   const {threeColor, viewerId=DEFAULT_FITS_VIEWER_ID, attributes, setNewPlotAsActive= true,
-         holdWcsMatch= false, pvOptions= {}, addToHistory= false,useContextModifications= true}= rawPayload;
-   let {plotId, wpRequest}= rawPayload;
+   const {threeColor, attributes, setNewPlotAsActive= true,
+         holdWcsMatch= false, addToHistory= false,useContextModifications= true}= rawPayload;
+   let {plotId, wpRequest, pvOptions= {}}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);
+
+    const hipsImageConversion= getHipsImageConversion(rawPayload.hipsImageConversion);
+    if (hipsImageConversion) pvOptions= clone(pvOptions, {hipsImageConversion});
 
     const req= getFirstReq(wpRequest);
 
@@ -85,11 +90,12 @@ function makeSinglePlotPayload(vr, rawPayload, requestKey) {
             modifyRequestForWcsMatch(wcsPrim, wpRequest);
     }
 
-
-    const payload= { plotId:req.getPlotId(),
-                     plotGroupId:req.getPlotGroupId(),
-                     groupLocked:req.isGroupLocked(),
-                     requestKey, attributes, viewerId, pvOptions, addToHistory,
+    const payload= { plotId: req.getPlotId(),
+                     plotGroupId: req.getPlotGroupId(),
+                     groupLocked: req.isGroupLocked(),
+                     viewerId: determineViewerId(rawPayload.viewerId, plotId),
+                     hipsImageConversion,
+                     requestKey, attributes, pvOptions, addToHistory,
                      useContextModifications, threeColor, setNewPlotAsActive};
 
     const existingPv= getPlotViewById(vr,plotId);
@@ -188,171 +194,6 @@ export function makePlotImageAction(rawAction) {
         // NOTE - saga ImagePlotter handles next step
     };
 }
-
-
-function hipsFail(dispatcher, plotId, wpRequest, reason) {
-    dispatcher( {
-        type: ImagePlotCntlr.PLOT_HIPS_FAIL,
-        payload:{
-            description: 'HiPS plot failed: '+ reason,
-            plotId,
-            wpRequest
-        }});
-}
-
-function parseProperties(str) {
-    return str.split('\n')
-        .map( (s) => s.trim())
-        .filter( (s) => !s.startsWith('#') && s)
-        .map( (s) => s.split('='))
-        .reduce( (obj, sAry) => {
-            if (sAry.length===2) obj[sAry[0].trim()]= sAry[1].trim();
-            return obj;
-        },{});
-}
-
-
-function watchForHiPSViewDim(action, cancelSelf, params) {
-    const {plotId}= action.payload;
-    if (plotId!==params.plotId) return;
-    const pv= getPlotViewById(visRoot(), plotId);
-    const {width,height}= pv.viewDim;
-    if (width && height && width>30 && height>30) {
-        const plot= primePlot(pv);
-        if (!plot) return;
-
-        const size= pv.request.getSizeInDeg()  || 180;
-        if (size) {
-            if (size>70) {
-                dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
-            }
-            else {
-                const level= getHiPSZoomLevelToFit(pv,size);
-                dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
-            }
-        }
-
-        const wp= plot.attributes[PlotAttribute.FIXED_TARGET];
-        if (wp) dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});
-        cancelSelf();
-    }
-}
-
-export function addAllSky(plot) {
-    const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
-    const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
-    if (cachedAllSkyImage) return plot;
-    dispatchPlotProgressUpdate(plot.plotId, 'Retrieving HiPS Data', false, null);
-    return loadImage(makeHiPSAllSkyUrlFromPlot(plot))
-        .then( (allSkyImage) => {
-            addAllSkyCachedImage(allSkyURL, allSkyImage);
-            return plot;
-        });
-}
-
-export function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, proxyHips) {
-    const exts= get(hipsProperties, 'hips_tile_format', 'jpg');
-    const allSkyURL= makeHiPSAllSkyUrl(hipsUrlRoot, exts);
-    const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
-    if (cachedAllSkyImage) return hipsProperties;
-    dispatchPlotProgressUpdate(plotId, 'Retrieving HiPS Data', false, null);
-    return loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts, proxyHips))
-        .then( (allSkyImage) => {
-            addAllSkyCachedImage(allSkyURL, allSkyImage);
-            return hipsProperties;
-        });
-}
-
-export function makePlotHiPSAction(rawAction) {
-    return (dispatcher, getState) => {
-
-        const {payload}= rawAction;
-        const {plotId, attributes}= payload;
-        const wpRequest= ensureWPR(payload.wpRequest);
-        const newPayload= clone(payload, {wpRequest, type:'hips', wpRequestAry:[wpRequest]});
-
-        const root= wpRequest.getHipsRootUrl();
-        if (!root) {
-            hipsFail(dispatcher, plotId, wpRequest, 'No Root URL');
-            return;
-        }
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
-        dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-
-        const proxy= true;
-        const url= makeHipsUrl(`${root}/properties`, proxy);
-        fetchUrl(url, {}, true, false)
-            .then( (result)=> result.text())
-            .then( (s)=> parseProperties(s))
-            .then( (hipsProperties) => {
-                const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
-                plot.proxyHips= proxy;
-                return plot;
-            })
-            .then( addAllSky)
-            .then( (plot) => {
-                dispatchAddActionWatcher({
-                    actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
-                    callback:watchForHiPSViewDim,
-                    params:{plotId}}
-                    );
-                const pvNewPlotInfoAry= [
-                    {plotId, plotAry: [plot]}
-                ];
-                dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: clone(newPayload, {plot,pvNewPlotInfoAry}) });
-            })
-            .catch( (message) => {
-                console.log(message);
-                hipsFail(dispatcher, plotId, wpRequest, 'Could not retrieve properties file');
-            } );
-    };
-}
-
-
-
-
-export function makeChangeHiPSAction(rawAction) {
-    return (dispatcher, getState) => {
-        const {payload}= rawAction;
-        const {plotId, hipsUrlRoot}= payload;
-        const pv= getPlotViewById(getState()[IMAGE_PLOT_KEY], plotId);
-        const plot= primePlot(pv);
-        if (!plot) return;
-        const {width,height}= pv.viewDim;
-        if (!width || !height) return;
-
-
-        const url= `${hipsUrlRoot}/properties`;
-        if (hipsUrlRoot) {
-            dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-            fetchUrl(url, {}, true, false)
-                .then( (result)=> result.text())
-                .then( (s)=> parseProperties(s))
-                .then ( (hipsProperties) => addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, plot.proxyHips))
-                .then( (hipsProperties) => {
-                    dispatcher(
-                        { type: ImagePlotCntlr.CHANGE_HIPS,
-                            payload: clone(payload, {hipsProperties})
-                        });
-                })
-                .then( () => {
-                    dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
-                })
-                .catch( (message) => {
-                    console.log(message);
-                } );
-        }
-        else {
-            dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload });
-            dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
-        }
-    };
-}
-
-
-
-
-
 
 
 function addRequestKey(r,requestKey) {
@@ -591,7 +432,7 @@ function updateActiveTarget(plot) {
 }
 
 function initBuildInDrawLayers() {
-    DrawLayerCntlr.dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
+    dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
 }
 
 /**

@@ -54,10 +54,10 @@ const defaults = {
     div: 'app',
     template: 'FireflyViewer',
     menu: [
-        {label:'Data Sets: Catalogs & Images', action:'TestSearch'},
+        // {label:'Data Sets: Catalogs & Images', action:'TestSearch'},
         {label:'Catalogs CLASSIC', action:'IrsaCatalogDropDown'},
         {label:'Test Searches', action:'TestSearches'},
-        {label:'Image Concept', action:'ImageSearchPanelV2'},
+        // {label:'Image Concept', action:'ImageSearchPanelV2'},
         {label:'Images', action:'ImageSelectDropDownCmd'},
         {label:'Charts', action:'ChartSelectDropDownCmd'},
         {label:'Help', action:HELP_LOAD, type:'COMMAND'},
