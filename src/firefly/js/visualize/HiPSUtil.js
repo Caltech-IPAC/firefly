@@ -314,22 +314,22 @@ function filterAllSky(centerWp, cells) {
 }
 
 
-const hipsSURVEYS = [
+export const hipsSURVEYS = [
     {
         url: 'http://alasky.u-strasbg.fr/2MASS/Color',
-        label: '2MASS colored',
+        label: '2MASS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/DSS/DSSColor',
-        label: 'DSS colored',
+        label: 'DSS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/DSS/DSS2Merged',
-        label: 'DSS2 Red (F+R)',
+        label: 'DSS2 Red (F+R)'
     },
     {
         url: 'http://alasky.u-strasbg.fr/Fermi/Color',
-        label: 'Fermi color',
+        label: 'Fermi color'
     },
     {
         url: 'http://alasky.u-strasbg.fr/FinkbeinerHalpha',
@@ -337,23 +337,23 @@ const hipsSURVEYS = [
     },
     {
         url: 'http://alasky.u-strasbg.fr/GALEX/GR6-02-Color',
-        label: 'GALEX Allsky Imaging Survey colored',
+        label: 'GALEX Allsky Imaging Survey colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/IRISColor',
-        label: 'IRIS colored',
+        label: 'IRIS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/MellingerRGB',
-        label: 'Mellinger colored',
+        label: 'Mellinger colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/SDSS/DR9/color',
-        label: 'SDSS9 colored',
+        label: 'SDSS9 colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/SpitzerI1I2I4color',
-        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)',
+        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)'
     },
     {
         url: 'http://alasky.u-strasbg.fr/VTSS/Ha',
@@ -365,15 +365,15 @@ const hipsSURVEYS = [
     },
     {
         url: 'http://saada.u-strasbg.fr/xmmallsky/',
-        label: 'XMM PN colored',
+        label: 'XMM PN colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',
-        label: 'AllWISE color',
+        label: 'AllWISE color'
     },
     {
         url: 'http://www.spitzer.caltech.edu/glimpse360/aladin/data',
-        label: 'GLIMPSE360',
+        label: 'GLIMPSE360'
     }
 ];
 

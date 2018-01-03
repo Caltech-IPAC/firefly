@@ -527,6 +527,7 @@ export function processRequest(origTableModel, tableRequest, hlRowIdx) {
     if (filters) {
         filterTable(nTable, filters);
     }
+    data = nTable.tableData.data;
     if (sortInfo) {
         data = sortTableData(data, columns, sortInfo);
     }
@@ -536,8 +537,11 @@ export function processRequest(origTableModel, tableRequest, hlRowIdx) {
         const inclIdices = columns.map( (c) => origTableModel.tableData.indexOf(c));
         data = data.map( (r) =>  r.filters( (c, idx) => inclIdices.includes(idx)));
     }
-    data = data.slice(startIdx, startIdx + pageSize);
+    data = data.slice(startIdx, startIdx + (pageSize ? pageSize : data.length));
     nTable.highlightedRow = hlRowIdx || startIdx;
+    nTable.tableData.data = data;
+    nTable.tableData.columns = columns;
+
     return nTable;
 }
 

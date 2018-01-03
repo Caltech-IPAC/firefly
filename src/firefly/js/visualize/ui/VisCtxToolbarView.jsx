@@ -30,7 +30,7 @@ import {CoordinateSys} from '../CoordSys.js';
 import { parseImagePt } from '../Point.js';
 import {getDefaultHiPSSurveys} from '../HiPSUtil.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
-import {showHiPSSurverysPopup} from '../../ui/HiPSViewer.jsx';
+import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
 import {isLoadingHiPSSurverys} from '../HiPSCntlr.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
@@ -406,6 +406,11 @@ export class VisCtxToolbarView extends PureComponent {
 
             this.state = {isUpdatingHips};
         }
+    }
+
+    componentWillUnmount() {
+        if (this.removeListener) this.removeListener();
+        this.iAmMounted = false;
     }
 
     componentDidMount() {

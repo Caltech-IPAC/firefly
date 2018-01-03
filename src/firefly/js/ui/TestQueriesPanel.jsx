@@ -15,7 +15,6 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../Firefly.js';
 import {get} from 'lodash';
 
 import {FormPanel} from './FormPanel.jsx';
@@ -26,12 +25,11 @@ import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {InputGroup} from '../ui/InputGroup.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
-import HiPSGrid  from '../drawingLayers/HiPSGrid.js';
 
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
-import {getFieldVal, getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -40,15 +38,16 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableRequestUtil.js';
-import {getDrawLayerByType} from '../visualize/PlotViewUtil.js';
 import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, DEFAULT_FITS_VIEWER_ID, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {onHiPSSurveys, isLoadingHiPSSurverys, HiPSDataType} from '../visualize/HiPSCntlr.js';
-import {showHiPSSurveyList, HiPSSurvey} from './HiPSViewer.jsx';
+import {onHiPSSurveys, HiPSDataType, HiPSPopular, updateHiPSId} from '../visualize/HiPSCntlr.js';
+import {HiPSSurvey,  HiPSPopupMsg, HiPSSurveyListSelection, gKeyHiPSPopup, fKeyHiPSPopular} from './HiPSSurveyListDisplay.jsx';
 import {getTblById, getCellValue} from '../tables/TableUtil.js';
+import {visRoot } from '../visualize/ImagePlotCntlr.js';
+import {getActivePlotView} from '../visualize/PlotViewUtil.js';
 
 const options = [
     {label: 'AllWISE Source Catalog', value: 'allwise_p3as_psd', proj: 'WISE'},
@@ -138,34 +137,21 @@ export class TestQueriesPanel extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
-        this.removeListener = flux.addListener(()=>this.storeUpdate());
-    }
-
-    storeUpdate() {
-        if (this.iAmMounted) {
-            const {fields} = getFieldGroupState('TEST_CAT_PANEL') || {};
-            if (fields !== get(this.state, 'fields')) {
-                this.setState({fields});
-            }
-            if (getFieldVal('TEST_CAT_PANEL', 'Tabs') === HiPSId) {
-                const isUpdatingHips = isLoadingHiPSSurverys(HiPSId);
-
-                if (isUpdatingHips !== get(this.state, 'isUpdatingHips', false)) {
-                    this.setState({isUpdatingHips});
-                }
-            }
-        }
+        this.removeListener = FieldGroupUtils.bindToStore('TEST_CAT_PANEL', (fields) => {
+            if (this.iAmMounted) this.setState(fields);
+        });
     }
 
     render() {
         //const fields = this.state;
-        const {fields, isUpdatingHips}=this.state || {};
+        const {fields}=this.state || {};
 
         const onTabSelect = (idx, id, name) => {
             if (id === HiPSId) {
                 onHiPSSurveys(HiPSData, id);
             }
         };
+
 
         return (
             <div style={{padding: 10}}>
@@ -190,7 +176,13 @@ export class TestQueriesPanel extends PureComponent {
                                 <div>{renderAtlasSearch(fields)}</div>
                             </Tab>
                             <Tab name='HiPS' id={HiPSId}>
-                                <div style={{width: '100%', height: 400}}>{showHiPSSurveyList(HiPSId, isUpdatingHips)}</div>
+                                <HiPSSurveyListSelection
+                                    surveysId={HiPSId}
+                                    pv={getActivePlotView(visRoot())}
+                                    wrapperStyle={{width: '100%', height: 400, display: 'flex',
+                                                   flexDirection:'column',
+                                                   alignItems: 'center'}}
+                                />
                             </Tab>
                             <Tab name='Periodogram' id='periodogram'>
                                  <div>{renderPeriodogram(fields)}</div>
@@ -204,7 +196,6 @@ export class TestQueriesPanel extends PureComponent {
 
     }
 }
-
 
 /*
  <Tab name='Images' id='images'>{renderImagesTab()}</Tab>
@@ -643,9 +634,12 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
-    const tableModel = getTblById(HiPSSurvey + HiPSId);
+    const popularHiPS = getFieldVal(gKeyHiPSPopup, fKeyHiPSPopular);
+    const hipsId = updateHiPSId(HiPSId, (popularHiPS === HiPSPopular));
+    const tblId = HiPSSurvey + hipsId;
+    const tableModel = getTblById(tblId);
     if (!tableModel) {
-        return;
+        return HiPSPopupMsg('No HiPS information found', 'HiPS search');
     }
 
     const {highlightedRow=0} = tableModel;
@@ -653,7 +647,7 @@ function doHiPSLoad(request) {
     const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
     wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
     wpRequest.setPlotId('aHiPSid');
-    wpRequest.setHipsSurveysId(HiPSId);
+    wpRequest.setHipsSurveysId(hipsId);
 
     const wp = parseWorldPt(request.UserTargetWorldPt);
     if (wp) wpRequest.setOverlayPosition(wp);

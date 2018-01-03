@@ -1,6 +1,7 @@
 import {flux} from '../Firefly.js';
 import {get, isArray, isEmpty, set} from 'lodash';
 import {fetchUrl} from '../util/WebUtil.js';
+import {hipsSURVEYS} from './HiPSUtil.js';
 import Enum from 'enum';
 
 export const HIPSSURVEY_PREFIX = 'HIPSCntlr';
@@ -9,6 +10,8 @@ export const HIPSSURVEY_CREATE_PATH = `${HIPSSURVEY_PREFIX}.createPath`;
 export const HIPSSURVEY_IN_LOADING = `${HIPSSURVEY_PREFIX}.inLoading`;
 export const HiPSSurveyTableColumm = new Enum(['url', 'title', 'type']);
 export const HiPSSurveysURL = 'http://alasky.unistra.fr/MocServer/query?hips_service_url=*&get=record';
+export const HiPSPopular = 'popular';
+export const _HiPSPopular = '_popular';
 
 export default {actionCreators, reducers };
 
@@ -26,6 +29,18 @@ function reducers() {
 
 export const HiPSDataType= new Enum([ 'image', 'cube', 'catalog'], { ignoreCase: true });
 
+/**
+ * update HiPS surveys id based on if it is for popular surveys
+ * @param id
+ * @param isPopular
+ * @returns {*}
+ */
+export function updateHiPSId(id, isPopular=false) {
+
+    const sId = id.endsWith(_HiPSPopular) ? id.substring(0, (id.length - _HiPSPopular.length)) : id;
+    return isPopular ? sId+_HiPSPopular : sId;
+}
+
 export function dispatchHiPSSurveySearch(dataType, id, callback, dispatcher=flux.process) {
     dispatcher({type: HIPSSURVEY_CREATE_PATH, payload: {dataType, id, callback}});
 }
@@ -34,10 +49,11 @@ export function dispatchHiPSSurveySearch(dataType, id, callback, dispatcher=flux
  * get HiPS list, used as a callback for HiPS selection
  * @param dataType
  * @param id
+ * @param isPopular
  */
-export function onHiPSSurveys(dataType, id) {
-    if (!getHiPSSurveys(id)) {
-        dispatchHiPSSurveySearch(dataType, id);
+export function onHiPSSurveys(dataType, id, isPopular) {
+    if (!getHiPSSurveys(updateHiPSId(id, isPopular))) {
+        dispatchHiPSSurveySearch(dataType, updateHiPSId(id, false));
     }
 }
 
@@ -49,6 +65,11 @@ function endLoadHiPSSurvey(dispatch, id, message) {
     dispatch({type: HIPSSURVEY_IN_LOADING, payload: {isLoading: false, id, message}});
 }
 
+/**
+ * update HiPS surveys set including popular surveys set
+ * @param action
+ * @returns {Function}
+ */
 
 function updateHiPSSurveys(action) {
     return (dispatch) => {
@@ -88,6 +109,7 @@ function updateHiPSSurveys(action) {
             .then((s)=>parseHiPSList(s))
             .then((HiPSSet) => {
                 set(action, ['payload', 'data'], HiPSSet);
+                set(action, ['payload', 'popularData'], getPopularSurveys(HiPSSet));
                 dispatch(action);
             })
             .catch( (error) => {
@@ -96,6 +118,12 @@ function updateHiPSSurveys(action) {
             } );
 
     };
+}
+
+function getPopularSurveys(HiPSList) {
+    const defaultUrls =  hipsSURVEYS.map((oneSurvey) => oneSurvey.url);
+
+    return HiPSList.filter((oneSurvey) => defaultUrls.includes(oneSurvey.url));
 }
 
 function parseHiPSList(str) {
@@ -120,7 +148,17 @@ function parseHiPSList(str) {
                             }
                         }
                         return preHiPS;
+                    }, [])
+                    .reduce( (preHiPS, row) => {
+                        if (row[HiPSSurveyTableColumm.type.key]) {    // remove the item with undefined type
+                            preHiPS.push(row);
+                            if (!row[HiPSSurveyTableColumm.title.key]) {
+                                row[HiPSSurveyTableColumm.title.key] = '';   // reset title to empty string if undefined
+                            }
+                        }
+                        return preHiPS;
                     }, []);
+
 }
 
 /**
@@ -131,6 +169,8 @@ function parseHiPSList(str) {
 export function getHiPSSurveys(id) {
     return get(flux.getState(), [HIPSSURVEY_PATH, id, 'data']);
 }
+
+
 
 /**
  * check if HiPS survey list is under loading
@@ -154,13 +194,13 @@ function reducer(state={}, action={}) {
     const {type} = action;
     if (!type || !action.payload) return state;
 
-    const {data, isLoading, id, message} = action.payload;
+    const {data, popularData, isLoading, id, message} = action.payload;
     let   retState = state;
 
     switch(type) {
         case HIPSSURVEY_CREATE_PATH:
             if (data) {
-                retState = addSurveys(data, id,  state);
+                retState = addSurveys(data, popularData, id,  state);
             }
             set(retState, [id, 'isLoading'], false);
             break;
@@ -174,10 +214,11 @@ function reducer(state={}, action={}) {
     return retState;
 }
 
-function addSurveys(data, id, state ) {
+function addSurveys(data, popularData, id, state ) {
     const newState = Object.assign({}, state);
 
     set(newState, [id, 'data'], data);
+    set(newState, [id+'_popular', 'data'], popularData);
     set(newState, [id, 'valid'], true);
     return newState;
 }
