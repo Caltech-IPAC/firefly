@@ -158,7 +158,13 @@ export class FilterInfo {
     static createComparator(filterStr, tableModel) {
         var [ , cname, op, val] =filterStr.match(filter_regex) || [];
         if (!cname) return () => false;       // bad filter.. returns nothing.
-    
+
+        // remove the double quote around the key
+        const removeQuoteAroundString = (str) => {
+            return str.replace(/^"(.*)"$/, '$1');
+        };
+
+        cname = removeQuoteAroundString(cname);
         op = op.toLowerCase();
         val = val.toLowerCase();
         const cidx = getColumnIdx(tableModel, cname);

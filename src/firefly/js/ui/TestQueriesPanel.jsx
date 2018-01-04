@@ -25,13 +25,11 @@ import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {InputGroup} from '../ui/InputGroup.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
-import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../visualize/DrawLayerCntlr.js';
-import HiPSGrid  from '../drawingLayers/HiPSGrid.js';
 
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -40,12 +38,16 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableRequestUtil.js';
-import {getDrawLayerByType} from '../visualize/PlotViewUtil.js';
 import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, DEFAULT_FITS_VIEWER_ID, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
+import {onHiPSSurveys, HiPSDataType, HiPSPopular, updateHiPSId} from '../visualize/HiPSCntlr.js';
+import {HiPSSurvey,  HiPSPopupMsg, HiPSSurveyListSelection, gKeyHiPSPopup, fKeyHiPSPopular} from './HiPSSurveyListDisplay.jsx';
+import {getTblById, getCellValue} from '../tables/TableUtil.js';
+import {visRoot } from '../visualize/ImagePlotCntlr.js';
+import {getActivePlotView} from '../visualize/PlotViewUtil.js';
 
 const options = [
     {label: 'AllWISE Source Catalog', value: 'allwise_p3as_psd', proj: 'WISE'},
@@ -58,19 +60,19 @@ const options = [
 const hipsSURVEYS = [
     {
         url: 'http://alasky.u-strasbg.fr/2MASS/Color',
-        label: '2MASS colored',
+        label: '2MASS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/DSS/DSSColor',
-        label: 'DSS colored',
+        label: 'DSS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/DSS/DSS2Merged',
-        label: 'DSS2 Red (F+R)',
+        label: 'DSS2 Red (F+R)'
     },
     {
         url: 'http://alasky.u-strasbg.fr/Fermi/Color',
-        label: 'Fermi color',
+        label: 'Fermi color'
     },
     {
         url: 'http://alasky.u-strasbg.fr/FinkbeinerHalpha',
@@ -78,23 +80,23 @@ const hipsSURVEYS = [
     },
     {
         url: 'http://alasky.u-strasbg.fr/GALEX/GR6-02-Color',
-        label: 'GALEX Allsky Imaging Survey colored',
+        label: 'GALEX Allsky Imaging Survey colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/IRISColor',
-        label: 'IRIS colored',
+        label: 'IRIS colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/MellingerRGB',
-        label: 'Mellinger colored',
+        label: 'Mellinger colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/SDSS/DR9/color',
-        label: 'SDSS9 colored',
+        label: 'SDSS9 colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/SpitzerI1I2I4color',
-        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)',
+        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)'
     },
     {
         url: 'http://alasky.u-strasbg.fr/VTSS/Ha',
@@ -102,24 +104,25 @@ const hipsSURVEYS = [
     },
     {
         url: 'http://saada.u-strasbg.fr/xmmallsky',
-        label: 'XMM-Newton stacked EPIC images (no phot. normalization)',
+        label: 'XMM-Newton stacked EPIC images (no phot. normalization)'
     },
     {
         url: 'http://saada.u-strasbg.fr/xmmallsky/',
-        label: 'XMM PN colored',
+        label: 'XMM PN colored'
     },
     {
         url: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',
-        label: 'AllWISE color',
+        label: 'AllWISE color'
     },
     {
         url: 'http://www.spitzer.caltech.edu/glimpse360/aladin/data',
-        label: 'GLIMPSE360',
+        label: 'GLIMPSE360'
     }
 ];
 
 
-
+export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
+const HiPSId = 'hips';
 
 export class TestQueriesPanel extends PureComponent {
 
@@ -140,7 +143,16 @@ export class TestQueriesPanel extends PureComponent {
     }
 
     render() {
-        const fields = this.state;
+        //const fields = this.state;
+        const {fields}=this.state || {};
+
+        const onTabSelect = (idx, id, name) => {
+            if (id === HiPSId) {
+                onHiPSSurveys(HiPSData, id);
+            }
+        };
+
+
         return (
             <div style={{padding: 10}}>
                 <FormPanel
@@ -152,7 +164,7 @@ export class TestQueriesPanel extends PureComponent {
                         <div style={{padding:'5px 0 5px 0'}}>
                             <TargetPanel/>
                         </div>
-                        <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs'>
+                        <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' onTabSelect={onTabSelect}>
                             <Tab name='Test Catalog' id='catalog'>{renderCatalogTab()}</Tab>
                             <Tab name='Wise Search' id='wiseImage'>
                                 <div>{renderWiseSearch(fields)}</div>
@@ -163,14 +175,18 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='Atlas Search' id='atlasImage'>
                                 <div>{renderAtlasSearch(fields)}</div>
                             </Tab>
-                            <Tab name='HiPS' id='hips'>
-                                <div>{renderHiPS(fields)}</div>
+                            <Tab name='HiPS' id={HiPSId}>
+                                <HiPSSurveyListSelection
+                                    surveysId={HiPSId}
+                                    pv={getActivePlotView(visRoot())}
+                                    wrapperStyle={{width: '100%', height: 400, display: 'flex',
+                                                   flexDirection:'column',
+                                                   alignItems: 'center'}}
+                                />
                             </Tab>
-                            {
-                                <Tab name='Periodogram' id='periodogram'>
-                                    <div>{renderPeriodogram(fields)}</div>
-                                </Tab>
-                            }
+                            <Tab name='Periodogram' id='periodogram'>
+                                 <div>{renderPeriodogram(fields)}</div>
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -179,8 +195,6 @@ export class TestQueriesPanel extends PureComponent {
         );
 
     }
-
-
 }
 
 /*
@@ -496,7 +510,7 @@ function renderAtlasSearch(fields) {
                     {label : 'E', value: 'E'},
                     {label : 'A', value: 'A'},
                     {label : 'C', value: 'C'},
-                    {label : 'D', value: 'D'},
+                    {label : 'D', value: 'D'}
                 ]}
             />
         </div>
@@ -634,20 +648,22 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
-    let rootUrl;
-    if (request.hipsSurvey!=='other') {
-        rootUrl= hipsSURVEYS[Number(request.hipsSurvey)].url;
 
+    const popularHiPS = getFieldVal(gKeyHiPSPopup, fKeyHiPSPopular);
+    const hipsId = updateHiPSId(HiPSId, (popularHiPS === HiPSPopular));
+    const tblId = HiPSSurvey + hipsId;
+    const tableModel = getTblById(tblId);
+    if (!tableModel) {
+        return HiPSPopupMsg('No HiPS information found', 'HiPS search');
     }
-    else {
-        rootUrl= request.otherUrl;
-    }
 
 
-    // const wpRequest= WebPlotRequest.makeHiPSRequest('http://alasky.u-strasbg.fr/2MASS/Color', null);
+    const {highlightedRow=0} = tableModel;
+    const rootUrl= getCellValue(tableModel, highlightedRow, 'url');
     const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
     wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
     wpRequest.setPlotId('aHiPSid');
+    wpRequest.setHipsSurveysId(hipsId);
 
     const wp = parseWorldPt(request.UserTargetWorldPt);
     if (wp) wpRequest.setOverlayPosition(wp);
