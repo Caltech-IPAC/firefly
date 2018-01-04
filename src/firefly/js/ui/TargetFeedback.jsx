@@ -29,9 +29,9 @@ export function TargetFeedback ({showHelp, feedback, style={}}) {
                         <i>Examples: </i>
                     </div>
                     <div style={exDivStyle}>
-                        {makeSpan(5)} 'm81' {makeSpan(15)} 'ngc 13' {makeSpan(15)}  '12.34 34.89'  {makeSpan(15)} '46.53, -0.251 gal'
+                        {makeSpan(5)} 'm81' {makeSpan(15)} 'ngc 13' {makeSpan(15)}  '12.34 34.89'  {makeSpan(15)} '46.53 -0.251 gal'
                         <br />
-                        {makeSpan(5)}'19h17m32s 11d58m02s equ j2000' {makeSpan(5)}  '12.3, 8.5 b1950'
+                        {makeSpan(5)}'19h17m32s 11d58m02s equ j2000' {makeSpan(5)}  '12.3 8.5 b1950'
                     </div>
                 </div>
             </div>
