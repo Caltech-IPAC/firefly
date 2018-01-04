@@ -213,8 +213,9 @@ const labelW = 150;
 export class UploadPanel extends PureComponent {
     constructor(props) {
         super(props);
-
-        this.state={fileLocation: 'isLocal'};
+        const fields= FieldGroupUtils.getGroupFields(vFileKey);
+        const fl = FieldGroupUtils.getFldValue(fields, 'uploadContainer', 'isLocal');
+        this.state = {fileLocation: fl};
     }
 
     componentWillUnmount() {
