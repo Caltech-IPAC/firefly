@@ -88,9 +88,9 @@ var draw=  {
         return dist;
     },
 
-    draw(drawObj,ctx,drawTextAry, plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(drawObj,def);
-        drawPt(ctx,drawTextAry,drawObj.pt, plot, drawObj, drawParams,  drawObj.renderOptions,vpPtM,onlyAddToPath);
+        drawPt(ctx,drawObj.pt, plot, drawObj, drawParams,  drawObj.renderOptions,vpPtM,onlyAddToPath);
     },
 
     toRegion(drawObj,plot, def) {
@@ -181,7 +181,6 @@ function makeDrawParams(pointDataObj,def) {
 /**
  *
  * @param ctx
- * @param drawTextAry
  * @param pt
  * @param {WebPlot} plot
  * @param drawObj
@@ -190,11 +189,11 @@ function makeDrawParams(pointDataObj,def) {
  * @param vpPtM
  * @param onlyAddToPath
  */
-function drawPt(ctx, drawTextAry, pt, plot, drawObj, drawParams, renderOptions, vpPtM, onlyAddToPath) {
+function drawPt(ctx, pt, plot, drawObj, drawParams, renderOptions, vpPtM, onlyAddToPath) {
     if (!pt) return;
 
     if (!plot || pt.type===Point.SPT) {
-        drawXY(ctx,drawTextAry, pt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
+        drawXY(ctx,pt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
     }
     else {
         var vpPt;
@@ -206,7 +205,7 @@ function drawPt(ctx, drawTextAry, pt, plot, drawObj, drawParams, renderOptions, 
             vpPt=plot.getScreenCoords(pt);
         }
         if (plot.pointOnDisplay(vpPt)) {
-            drawXY(ctx,drawTextAry, vpPt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
+            drawXY(ctx,vpPt, plot, drawObj, drawParams, renderOptions, onlyAddToPath);
         }
     }
 }
@@ -301,7 +300,7 @@ function makeTextLocationPoint(drawObj, plot, textLoc, fontSize) {
 }
 
 
-function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, onlyAddToPath) {
+function drawXY(ctx, pt, plot, drawObj, drawParams,renderOptions, onlyAddToPath) {
     const {textLoc, fontName, fontSize, fontWeight, fontStyle}= drawParams;
     let {color}= drawParams;
     const {text, textOffset} = drawObj;
@@ -323,12 +322,12 @@ function drawXY(ctx, drawTextAry, pt, plot, drawObj, drawParams,renderOptions, o
         vpt = plot.getDeviceCoords(pt);
     }
     if (textOffset && (textOffset.x !== 0.0 || textOffset.y !== 0.0)) {
-        drawText(drawObj, drawTextAry, ctx, plot, vpt, drawParams);
+        drawText(drawObj, ctx, plot, vpt, drawParams);
     } else {
         drawObj.textWorldLoc = plot.getImageCoords(vpt);
         const textDevicePt= plot.getDeviceCoords(vpt);
-        DrawUtil.drawText(drawTextAry, text, textDevicePt.x, textDevicePt.y, color, renderOptions,
-                          fontName, fontSize, fontWeight, fontStyle);
+        DrawUtil.drawTextCanvas(ctx, text, textDevicePt.x, textDevicePt.y, color, renderOptions, undefined,
+                         {fontName, fontSize, fontWeight, fontStyle} );
     }
  }
 

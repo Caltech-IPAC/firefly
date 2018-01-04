@@ -4,7 +4,7 @@
 import {initOffScreenCanvas} from './TileDrawHelper.jsx';
 
 
-const MAX_TILE_IMAGES= 50;
+const MAX_TILE_IMAGES= 100;
 const MAX_PROPERTIES= 100;
 const MAX_ALLSKY_IMAGES= 10;
 

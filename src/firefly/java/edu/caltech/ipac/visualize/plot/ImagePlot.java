@@ -633,11 +633,9 @@ public class ImagePlot extends Plot implements Serializable {
        acceptFitsRead(fr,frGroup);
        double retval= Double.NaN;
        if (fr!=null) {
-           int iScaleFactor= fr.getImageScaleFactor();
-           double xpass= (sipt.getX()- ((double)getOffsetX()))/iScaleFactor;
-           double ypass= (sipt.getY()- ((double)getOffsetY()))/ iScaleFactor;
+           double xpass= sipt.getX()- ((double)getOffsetX());
+           double ypass= sipt.getY()- ((double)getOffsetY());
            ImagePt ipt = new ImagePt(xpass, ypass);
-
            retval=  fr.getFlux(ipt);
        }
        return retval;

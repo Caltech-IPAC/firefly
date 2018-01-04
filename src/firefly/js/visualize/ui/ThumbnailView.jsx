@@ -20,7 +20,7 @@ import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
-import {getPixScaleDeg} from '../WebPlot.js';
+import {getPixScaleDeg, isHiPS} from '../WebPlot.js';
 
 
 export class ThumbnailView extends PureComponent {
@@ -77,7 +77,7 @@ export class ThumbnailView extends PureComponent {
         };
 
         const plot= primePlot(pv);
-        if (!plot || !plot.tileData) return  <div style={s}/>;
+        if (!plot || !plot.tileData || isHiPS(plot)) return  <div style={s}/>;
 
         s.border= '1px solid rgb(187, 187, 187)';
         const {width,height}= plot.tileData.thumbnailImage;

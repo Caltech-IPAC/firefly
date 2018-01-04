@@ -231,7 +231,13 @@ function hideSearchPanel() {
 
 function renderHiPS(fields) {
 
+    //todo
+    //todo
+    //todo
+    //todo
+    //todo
     const options= hipsSURVEYS.map( (s,idx) => ({label:s.label, value:idx+''}));
+    options.push({label:'Other', value:'other'});
 
     return (
         <div>
@@ -249,6 +255,14 @@ function renderHiPS(fields) {
                 }}
                 options={options}
             />
+            <ValidationField fieldKey='otherUrl'
+                             initialState={{
+                                 fieldKey: 'otherUrl',
+                                 value: '',
+                                 tooltip: 'a url',
+                                 label : 'url:',
+                                 labelWidth : 100
+                             }}/>
 
 
         </div>
@@ -634,6 +648,7 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
+
     const popularHiPS = getFieldVal(gKeyHiPSPopup, fKeyHiPSPopular);
     const hipsId = updateHiPSId(HiPSId, (popularHiPS === HiPSPopular));
     const tblId = HiPSSurvey + hipsId;
@@ -641,6 +656,7 @@ function doHiPSLoad(request) {
     if (!tableModel) {
         return HiPSPopupMsg('No HiPS information found', 'HiPS search');
     }
+
 
     const {highlightedRow=0} = tableModel;
     const rootUrl= getCellValue(tableModel, highlightedRow, 'url');

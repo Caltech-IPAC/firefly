@@ -124,7 +124,6 @@ function computeDrawData(drawLayer, plotId) {
             const s2= cc.getImageCoords(c.wpCorners[2]);
             if (!s1 || !s2) return null;
             const textObj= ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6), makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2), `${norder}/${c.ipix}`);
-            textObj.canvasText= true;
             return textObj;
         })
         .filter( (v) => v);

@@ -687,13 +687,16 @@ public class QueryUtil {
         double xMax = Double.NEGATIVE_INFINITY, xMin = Double.POSITIVE_INFINITY, yMax = Double.NEGATIVE_INFINITY, yMin = Double.POSITIVE_INFINITY;
 
         DataType [] dataTypes = dg.getDataDefinitions();
-        DataObjectUtil.DoubleValueGetter xValGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, decimateInfo.getxColumnName());
-        DataObjectUtil.DoubleValueGetter yValGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, decimateInfo.getyColumnName());
+        String xColOrExpr = decimateInfo.getxColumnName();
+        String yColOrExpr = decimateInfo.getyColumnName();
+        DataObjectUtil.DoubleValueGetter xValGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, xColOrExpr);
+        DataObjectUtil.DoubleValueGetter yValGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, yColOrExpr);
 
         if (!xValGetter.isValid() || !yValGetter.isValid()) {
             System.out.println("QueryUtil.doDecimation: invalid x or y column.");
             throw new DataAccessException("Invalid column or expression");
         }
+        boolean sameXY = xColOrExpr.equals(yColOrExpr);
 
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
@@ -706,14 +709,14 @@ public class QueryUtil {
 
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
         try {
-            if (xValGetter.isExpression()) {
+            if (xValGetter.isExpression() || sameXY) {
                 columns[0] = new DataType("x", "x", xColClass, DataType.Importance.HIGH, "", false);
             } else {
                 columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0);
                 colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getxColumnName()));
             }
 
-            if (yValGetter.isExpression()) {
+            if (yValGetter.isExpression() || sameXY) {
                 columns[1] = new DataType("y", "y", yColClass, DataType.Importance.HIGH, "", false);
             } else {
                 columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1);
@@ -903,7 +906,7 @@ public class QueryUtil {
         }
 
 
-        if (xValGetter.isExpression()) {
+        if (xValGetter.isExpression() || sameXY) {
             DataType.FormatInfo fi = columns[0].getFormatInfo();
             fi.setDataFormat(getFormatterString(xMin, xMax, 6));
             columns[0].setFormatInfo(fi);
@@ -911,7 +914,7 @@ public class QueryUtil {
             retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-COL", "x");
         }
 
-        if (yValGetter.isExpression()) {
+        if (yValGetter.isExpression() || sameXY) {
             DataType.FormatInfo fi = columns[1].getFormatInfo();
             fi.setDataFormat(getFormatterString(xMin, xMax, 6));
             columns[1].setFormatInfo(fi);

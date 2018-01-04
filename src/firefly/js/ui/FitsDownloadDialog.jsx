@@ -13,26 +13,26 @@
  */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get, set, isEmpty} from 'lodash';
+import {get, set, isEmpty, has} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
-import {download, encodeUrl} from '../util/WebUtil.js';
+import {download, downloadViaAnchor, encodeUrl, updateSet} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import {primePlot, getActivePlotView} from '../visualize/PlotViewUtil.js';
+import {primePlot, getActivePlotView, getAllCanvasLayersForPlot} from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {RequestType} from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
+import {isImage} from '../visualize/WebPlot.js';
 import {makeRegionsFromPlot} from '../visualize/region/RegionDescription.js';
-import {saveDS9RegionFile, getImagePng} from '../rpc/PlotServicesJson.js';
+import {saveDS9RegionFile} from '../rpc/PlotServicesJson.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
-import {updateSet} from '../util/WebUtil.js';
 import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
         WORKSPACE, LOCALFILE} from './DownloadOptionsDialog.jsx';
 import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, dispatchWorkspaceUpdate} from '../visualize/WorkspaceCntlr.js';
@@ -42,6 +42,7 @@ import {INFO_POPUP} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
+import {fetchUrl} from '../util/WebUtil';
 
 const STRING_SPLIT_TOKEN= '--STR--';
 const dialogWidth = 500;
@@ -241,10 +242,10 @@ export class FitsDownloadDialogForm extends PureComponent {
             return (hasThreeColorBand ? getFieldVal(groupKey, 'threeBandColor', colors[0])
                                       : Band.NO_BAND.key);
         };
-        this.getFileNames = () => {
+        this.getFileNames = (force= false) => {
             let fileNames = getFieldVal(groupKey, crtFileNameKey, []);
 
-            if (!fileNames || isEmpty(fileNames)) {
+            if (!fileNames || isEmpty(fileNames) || force) {
                 fileNames = colors ? colors.reduce((prev, oneColor) => {
                     prev[oneColor] = this.getDefaultFileName(hasOperation, Band.get(oneColor));
                     return prev;
@@ -270,7 +271,8 @@ export class FitsDownloadDialogForm extends PureComponent {
         this.state = {currentFileNames: this.getFileNames(),
             currentBand: this.getCurrentBand(),
             currentOp: this.getCurrentOp(),
-            currentType: this.getCurrentType()};
+            currentType: this.getCurrentType(),
+            isImage: true};
 
     }
 
@@ -281,6 +283,7 @@ export class FitsDownloadDialogForm extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
+        this.setState( () => ({currentFileNames:this.getFileNames(true)}));
         this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => {
             if (this.iAmMounted) {
                 this.setState((state) => {
@@ -289,22 +292,27 @@ export class FitsDownloadDialogForm extends PureComponent {
                     const fileName = get(fields, ['fileName', 'value'], '');
                     const fileType = get(fields, ['fileType', 'value'], 'fits');
 
-                    if (band !== state.currentBand || fileType !== state.currentType) {
-                        state.currentBand = band;
-                        state.currentType = fileType;
+                    const stateChanges= {};
+                    if (band !== state.currentBand || fileType !== state.currentType ||
+                        isImage(this.plot)!== state.isImage) {
+                        stateChanges.isImage= isImage(this.plot);
+                        stateChanges.currentBand=band;
+                        stateChanges.currentType=fileType;
+                        stateChanges.currentFileNames= this.getFileNames(true);
                     } else {
                         const fKey = (fileType === 'fits') ? band : fileType;
 
                         if (fileName !== state.currentFileNames[fKey]) {
-                            state.currentFileNames[fKey] = fileName;
+                            stateChanges.currentFileNames= Object.assign({}, state.currentFileNames);
+                            stateChanges.currentFileNames[fKey] = fileName;
                         }
                     }
                     if (op !== state.currentOp) {
-                        state.currentOp = op;
+                        stateChanges.currentOp=op;
                     }
 
 
-                    return state;
+                    return stateChanges;
                 });
             }
         });
@@ -325,16 +333,29 @@ export class FitsDownloadDialogForm extends PureComponent {
                               (renderOperationButtons ? 1 : 0) + (renderThreeBandButtons ? 1 : 0);
         const childH = (totalChildren*(20+mTOP));
 
+
+        let fileTypeOps;
+        if (isImage(primePlot(this.plotView))) {
+            fileTypeOps=  [
+                {label: 'FITS Image', value: 'fits'},
+                {label: 'PNG File', value: 'png' },
+                {label: 'Region File', value: 'reg'}
+            ];
+        }
+        else {
+            fileTypeOps=  [
+                {label: 'PNG File', value: 'png' },
+                {label: 'Region File', value: 'reg'}
+            ];
+        }
+
+
         const fileType = () => {
             return (
                 <div style={{display: 'flex', marginTop: mTOP}}>
                     <div>
                         <RadioGroupInputField
-                            options={ [
-                                          {label: 'FITS Image', value: 'fits'},
-                                          {label: 'PNG File', value: 'png' },
-                                          {label: 'Region File', value: 'reg'}
-                                        ]}
+                            options={fileTypeOps}
                             fieldKey='fileType'
                         />
                     </div>
@@ -356,7 +377,7 @@ export class FitsDownloadDialogForm extends PureComponent {
         return (
 
             <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}}
-                        groupKey={this.props.groupKey} keepState={true}
+                        groupKey={this.props.groupKey} keepState={false}
                         reducerFunc={FitsDLReducer({band: currentBand, fileName,
                                                     currentBandFileNames: currentFileNames })}>
                 <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
@@ -585,23 +606,16 @@ function resultsSuccess(request, plotView, popupId) {
         downloadFile(param);
 
     } else if (ext && ext.toLowerCase() === 'png') {
-
-        const {flipY, rotation, plotViewCtx:{rotateNorthLock} }= plotView;
-
-        getImagePng(plotState, getRegionsDes(true), rotateNorthLock, rotation? ((rotation-180)+360)%360 : 0, flipY).then((result) => {
-            //const imgFile = getReturnName(fileName || get(result, 'ImageFileName'));
-
-            const imgFile = get(result, 'ImageFileName');
-
-            if (imgFile) {
-                const param = isWorkspace() ? {file: imgFile,...wsCmd} :
-                              {file: imgFile, return: fileName, log: true};
-
-                downloadFile(param);
-            }
-        }, () => {
-            console.log('error');
-        });
+        if (isWorkspace()) {
+            makePngWorkspace(plotView.plotId, getWorkspacePath(wsSelect, fileName), fileName);
+        }
+        else {
+            makePngLocal(plotView.plotId, fileName);
+        }
+        if (popupId) {
+            dispatchHideDialog(popupId);
+            if (isDialogVisible(INFO_POPUP)) dispatchHideDialog(INFO_POPUP);
+        }
 
     } else if (ext && ext.toLowerCase() === 'reg') {
 
@@ -731,11 +745,66 @@ function  makeTitleFileName(plot, band) {
 function getHyphenatedName(str){
 
 	//filter(Boolean) will only keep the truthy values in the array.
-    var sArray=str.split(/[ :]+/).filter(Boolean);
+    const sArray=str.split(/[ :]+/).filter(Boolean);
 
-    var fName=sArray[0];
-    for(var i=1; i<sArray.length; i++){
+    let fName=sArray[0];
+    for(let i=1; i<sArray.length; i++){
         fName=fName+'-'+sArray[i];
     }
     return fName;
 }
+
+const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
+
+function doUpload(file, params={}) {
+    params = Object.assign(params, {file});   // file should be the last param due to AnyFileUpload limitation
+    const options = {method: 'multipart', params};
+    return fetchUrl(UL_URL, options);
+}
+
+function makePngLocal(plotId, filename= 'a.png') {
+    const canvas= makeImageCanvas(plotId);
+
+    if (canvas) {
+        canvas.toBlob( (blob) => {
+            const url= URL.createObjectURL(blob);
+            downloadViaAnchor(url, filename);
+            URL.revokeObjectURL(url);
+        }, 'image/png');
+    }
+
+
+
+}
+
+function makePngWorkspace(plotId, path, filename= 'a.png') {
+    const canvas= makeImageCanvas(plotId);
+    if (canvas) {
+        canvas.toBlob( (blob) => {
+            const params = {
+                type:'PNG',
+                filename,
+                workspacePut:true,
+                [WS_SERVER_PARAM.currentrelpath.key]: path,
+                [WS_SERVER_PARAM.newpath.key] : filename,
+                [WS_SERVER_PARAM.should_overwrite.key]: true
+            };
+
+            return doUpload(blob, params).then( ({status, cacheKey}) => {
+            });
+        }, 'image/png');
+    }
+}
+
+
+function makeImageCanvas(plotId) {
+    const cAry= getAllCanvasLayersForPlot(plotId);
+    if (isEmpty(cAry)) return;
+    const canvas = document.createElement('canvas');
+    canvas.width= cAry[0].width;
+    canvas.height= cAry[0].height;
+    const ctx= canvas.getContext('2d');
+    cAry.forEach( (c) => ctx.drawImage(c, 0,0));
+    return canvas;
+}
+

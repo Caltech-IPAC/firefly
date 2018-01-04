@@ -181,7 +181,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     }
 
-    public void close(File dbFile) {}          // subclass should override this to properly closes the database and cleanup resources.
+    public void close(File dbFile, boolean deleteFile) {}          // subclass should override this to properly closes the database and cleanup resources.
 
     protected abstract EmbeddedDbInstance createDbInstance(File dbFile);
 
@@ -197,7 +197,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         if (toBeRemove.size() > 0) {
             LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
             toBeRemove.forEach((db) -> {
-                DbAdapter.getAdapter(db.name).close(db.dbFile);
+                DbAdapter.getAdapter(db.name).close(db.dbFile, false);
                 dbInstances.remove(db.dbFile.getPath());
             });
         }

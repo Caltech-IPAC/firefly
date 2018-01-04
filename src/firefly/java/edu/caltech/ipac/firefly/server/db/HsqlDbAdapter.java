@@ -16,9 +16,10 @@ public class HsqlDbAdapter extends BaseDbAdapter{
     public String getName() {
         return HSQL;
     }
+    private static final String[] DB_FILES = new String[]{".properties",".script",".log",".data",".backup"};
 
     protected EmbeddedDbInstance createDbInstance(File dbFile) {
-        String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_size=1024;sql.syntax_ora=true", dbFile.getPath());
+        String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_size=1024;sql.syntax_ora=true;sql.ignore_case=true", dbFile.getPath());
         return new EmbeddedDbInstance(getName(), dbFile, dbUrl, "org.hsqldb.jdbc.JDBCDriver");
     }
 
@@ -26,10 +27,16 @@ public class HsqlDbAdapter extends BaseDbAdapter{
         return String.format("CREATE TABLE %s AS (%s) WITH DATA", tblName, selectSql);
     }
 
-    public void close(File dbFile) {
+    public void close(File dbFile, boolean deleteFile) {
         DbInstance db = getDbInstance(dbFile, false);
         if (db != null) {
             JdbcFactory.getTemplate(db).execute("SHUTDOWN");
+        }
+        if (deleteFile) {
+            for(String fname : DB_FILES) {
+                File f = new File(dbFile + fname);
+                if (f.exists()) f.delete();
+            }
         }
     }
 

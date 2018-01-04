@@ -12,8 +12,8 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.expr.Expression;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -35,12 +35,12 @@ public class DecimationProcessor extends TableFunctionProcessor {
         // only read in the required columns
         Expression xColExpr = new Expression(decimateInfo.getxColumnName(), null);
         Expression yColExpr = new Expression(decimateInfo.getyColumnName(), null);
-        List<String> requestedCols = new ArrayList<>();
+        Set<String> requestedCols = new HashSet<>();
         if (xColExpr.isValid() && yColExpr.isValid()) {
             requestedCols.addAll(xColExpr.getParsedVariables());
             requestedCols.addAll(yColExpr.getParsedVariables());
         }
-        requestedCols = requestedCols.stream().map(c -> "\"" + c + "\"").collect(Collectors.toList());      // column name need to be in quotes
+        requestedCols = requestedCols.stream().map(c -> "\"" + c + "\"").collect(Collectors.toSet());      // column name need to be in quotes
         sreq.setInclColumns(requestedCols.toArray(new String[requestedCols.size()]));
         DataGroup dg = new SearchManager().getDataGroup(sreq).getData();
 

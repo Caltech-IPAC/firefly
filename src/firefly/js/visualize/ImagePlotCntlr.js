@@ -21,6 +21,7 @@ import {isActivePlotView,
         primePlot,
         getDrawLayerByType } from './PlotViewUtil.js';
 import {changePrime} from './ChangePrime.js';
+import {isHiPS, isImage} from './WebPlot.js';
 
 import PointSelection from '../drawingLayers/PointSelection.js';
 import {dispatchAttachLayerToPlot,
@@ -613,7 +614,7 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
- * @param {Function} p.dispatcher only for special dispatching uses such as remote
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
                                    attributes={}, setNewPlotAsActive= true, holdWcsMatch= false,
@@ -622,8 +623,18 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
 }
 
 
-export function dispatchPlotHiPS({plotId,wpRequest, viewerId, fitsToSmallestDim,
-                                     pvOptions= {}, attributes={},
+/**
+ *
+ * @param {Object}  p this function takes a single parameter
+ * @param {string} p.plotId
+ * @param {WebPlotRequest} p.wpRequest
+ * @param {string} p.viewerId
+ * @param {Object} p.pvOptions PlotView init Options
+ * @param {Object} [p.attributes] meta data that is added the plot
+ * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ */
+export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, attributes={},
                                      setNewPlotAsActive= true, dispatcher= flux.process }) {
     dispatcher( { type: PLOT_HIPS, payload: {wpRequest, plotId, pvOptions, attributes, setNewPlotAsActive, viewerId} });
 }
@@ -941,20 +952,27 @@ function restoreDefaultsActionCreator(rawAction) {
         applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {
-                    if (pv.rotation) dispatchRotate({plotId:pv.plotId, rotateType:RotateType.UNROTATE});
-                    if (pv.flipY) dispatchFlip({plotId:pv.plotId});
-
+                    const plot= primePlot(pv);
                     const def= vr.plotRequestDefaults[pv.plotId];
                     const viewerId= findViewerWithItemId(getMultiViewRoot(), pv.plotId, IMAGE);
-                    if (def.threeColor) {
-                        dispatchPlotImage({plotId:pv.plotId,
-                                           viewerId, wpRequest:[def.redReq,def.greenReq,def.blueReq],
-                                           threeColor:true, setNewPlotAsActive:false,
-                                           useContextModifications:false});
+                    if (isImage(plot)) {
+                        if (pv.rotation) dispatchRotate({plotId:pv.plotId, rotateType:RotateType.UNROTATE});
+                        if (pv.flipY) dispatchFlip({plotId:pv.plotId});
+                        if (def.threeColor) {
+                            dispatchPlotImage({plotId:pv.plotId,
+                                viewerId, wpRequest:[def.redReq,def.greenReq,def.blueReq],
+                                threeColor:true, setNewPlotAsActive:false,
+                                useContextModifications:false});
+                        }
+                        else {
+                            dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
+                                viewerId, useContextModifications:false});
+                        }
                     }
-                    else {
-                        dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
-                                           viewerId, useContextModifications:false});
+                    else if (isHiPS(plot)) {
+                        dispatchPlotHiPS({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
+                            viewerId});
+
                     }
                 }
             });

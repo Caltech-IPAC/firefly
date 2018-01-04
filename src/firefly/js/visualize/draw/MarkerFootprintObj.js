@@ -313,8 +313,8 @@ var draw=  {
         return  findClosestIndex(pt, drawObj, plot).distance;
     },
 
-    draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
-        drawMarkerObject(drawObj,ctx,drawTextAry,plot,def,vpPtM, onlyAddToPath);
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+        drawMarkerObject(drawObj,ctx,plot,def,vpPtM, onlyAddToPath);
     },
 
     toRegion(drawObj,plot, def) {
@@ -957,13 +957,12 @@ function updateColorFromDef(drawObj, def) {
  * draw the object which contains drawObj array
  * @param drawObjP
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param def
  * @param vpPtM
  * @param onlyAddToPath
  */
-export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath) {
+export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath) {
     if (has(drawObjP, 'drawObjAry')) {
 
         //markerTextOffset(drawObj, plot);
@@ -985,11 +984,10 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
         // newObj is made for display
         updateColorFromDef(newObj, def);
         newObj.drawObjAry.forEach((oneDrawObj) => {
-            DrawOp.draw(oneDrawObj, ctx, drawTextAry, plot, def, vpPtM, onlyAddToPath);
+            DrawOp.draw(oneDrawObj, ctx, plot, def, vpPtM, onlyAddToPath);
         });
 
-        drawFootprintText(newObj, plot, def, drawTextAry, ctx);
-        // create text object to record marker/footprint label
+        drawFootprintText(newObj, plot, def, ctx);
         set(drawObjP, 'textWorldLoc', newObj.textWorldLoc);
         set(drawObjP, 'textObj', ShapeDataObj.makeText(plot.getWorldCoords(newObj.textWorldLoc), newObj.text));
     }
@@ -1000,10 +998,9 @@ export function drawMarkerObject(drawObjP, ctx, drawTextAry, plot, def, vpPtM, o
  * @param drawObj
  * @param plot
  * @param def
- * @param drawTextAry
  * @param ctx
  */
-function drawFootprintText(drawObj, plot, def, drawTextAry, ctx) {
+function drawFootprintText(drawObj, plot, def, ctx) {
 
     var drawParams = makeDrawParams(drawObj, def);
     var {text, textLoc} = drawObj;
@@ -1029,7 +1026,7 @@ function drawFootprintText(drawObj, plot, def, drawTextAry, ctx) {
                         objArea.height * plot.zoomFactor,
                         objArea.centerPt);
         if (textPt) {
-            drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
+            drawText(drawObj, ctx, plot, textPt, drawParams);
         }
     }
 }

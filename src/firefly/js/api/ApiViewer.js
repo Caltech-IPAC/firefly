@@ -15,7 +15,7 @@ import {WSCH} from '../core/History.js';
 import {debug} from './ApiUtil.js';
 import {getRootURL}  from '../util/BrowserUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
-import {dispatchPlotImage}  from '../visualize/ImagePlotCntlr.js';
+import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
 import {clone, logError}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
@@ -215,6 +215,13 @@ function buildImagePart(channel,file,dispatch) {
         });
     };
 
+    const showHiPS= (request, viewerId) => {
+        doViewerOperation(channel,file, () => {
+            request= clone(request,defP);
+            plotRemoteHiPS(request,viewerId, dispatch);
+        });
+    };
+
     /**
      * @summary show a image in the firefly viewer in another tab, the the file first then the url
      * @param file a file on the server
@@ -243,7 +250,7 @@ function buildImagePart(channel,file,dispatch) {
     //------- End deprecated part ---------------------
 
 
-    return {showImage,showImageFileOrUrl,setDefaultParams, plot,plotURL,plotFile, plotFileOrURL};
+    return {showImage,showHiPS, showImageFileOrUrl,setDefaultParams, plot,plotURL,plotFile, plotFileOrURL};
 }
 
 
@@ -474,6 +481,19 @@ function plotRemoteImage(request, viewerId, dispatch) {
     request= confirmPlotRequest(request,{},'remoteGroup',makePlotId);
     dispatchPlotImage({wpRequest:request, viewerId:viewerId || DEFAULT_FITS_VIEWER_ID, dispatcher:dispatch});
 }
+
+
+function plotRemoteHiPS(request, viewerId, dispatch) {
+
+    const badList= findInvalidWPRKeys(request);
+    if (badList.length) debug(`HiPS request has the following bad keys: ${badList}`);
+
+    request= confirmPlotRequest(request,{Type:'HiPS'},'remoteGroup',makePlotId);
+    dispatchPlotHiPS({plotId:request.plotId, wpRequest:request,
+                      viewerId:viewerId || DEFAULT_FITS_VIEWER_ID, dispatcher:dispatch});
+}
+
+
 
 let plotCnt= 0;
 

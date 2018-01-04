@@ -16,7 +16,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
-import {getHighlighted, isPlotly} from '../ChartUtil.js';
+import {formatColExpr, getHighlighted, isPlotly} from '../ChartUtil.js';
 import {downloadChart} from '../ui/PlotlyWrapper.jsx';
 import {setXYSelection, setZoom} from '../dataTypes/XYColsCDT.js';
 
@@ -337,17 +337,24 @@ function addFilter(chartId, tableModel) {
 
     const options = get(chartDataElement, 'options');
     const selection = get(options, 'selection');
-    const xCol = get(options, 'x.columnOrExpr');
-    const yCol = get(options, 'y.columnOrExpr');
+    let xCol = get(options, 'x.columnOrExpr');
+    let yCol = get(options, 'y.columnOrExpr');
     if (selection && xCol && yCol) {
         const {xMin, xMax, yMin, yMax} = selection;
+        const numericCols = TblUtil.getColumns(tableModel, TblUtil.COL_TYPE.NUMBER).map((c) => c.name);
         const filterInfo = get(tableModel, 'request.filters');
         const filterInfoCls = FilterInfo.parse(filterInfo);
+
+        [xCol,yCol] = [xCol, yCol].map((v) => formatColExpr({colOrExpr:v, colNames:numericCols}));
         filterInfoCls.setFilter(xCol, '> '+xMin);
         filterInfoCls.addFilter(xCol, '< '+xMax);
         filterInfoCls.setFilter(yCol, '> '+yMin);
         filterInfoCls.addFilter(yCol, '< '+yMax);
-        const newRequest = Object.assign({}, tableModel.request, {filters: filterInfoCls.serialize()});
-        TablesCntlr.dispatchTableFilter(newRequest, 0);
+
+        // filters are processed by db, column expressions need to use syntax db understands
+        const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:numericCols});
+
+        const newRequest = Object.assign({}, tableModel.request, {filters: filterInfoCls.serialize(formatKey)});
+        TablesCntlr.dispatchTableFilter(newRequest);
     }
 }

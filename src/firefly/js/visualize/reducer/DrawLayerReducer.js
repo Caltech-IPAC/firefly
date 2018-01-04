@@ -88,8 +88,11 @@ function updateFromLayer(drawLayer,action,factory) {
     if (!plotIdAry) plotIdAry= [action.payload.plotId];
     drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
-        plotIdAry.forEach( (id) =>
-            drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
+        plotIdAry.forEach( (id) => {
+            if (drawLayer.plotIdAry.includes(id)) {
+                drawLayer.drawData= getDrawData(factory,drawLayer, action, id);
+            }
+        });
     }
     else {
         drawLayer.drawData= getDrawData(factory,drawLayer, action);

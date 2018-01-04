@@ -18,7 +18,7 @@ export class TablePanelOptions extends PureComponent {
     }
 
     render() {
-        const {columns, pageSize, showUnits, showFilters, showToolbar=true, onChange, onOptionReset, optSortInfo, filterInfo, toggleOptions} = this.props;
+        const {columns, pageSize, showUnits, showFilters, showToolbar=true, onChange, onOptionReset, optSortInfo, filterInfo, toggleOptions, tbl_ui_id} = this.props;
         if (isEmpty(columns)) return false;
 
         const {onPageSize, onPropChanged} = makeCallbacks(onChange, columns);
@@ -68,11 +68,8 @@ export class TablePanelOptions extends PureComponent {
                     </span>
                 </div>
                 <div style={{height: 'calc(100% - 40px)'}}>
-                    <FilterEditor
-                        columns={columns}
-                        filterInfo={filterInfo}
-                        sortInfo={optSortInfo}
-                        onChange={onChange}
+                    <FilterEditor sortInfo={optSortInfo}
+                        {...{tbl_ui_id, columns, filterInfo, onChange}}
                     />
                 </div>
             </div>
@@ -81,6 +78,7 @@ export class TablePanelOptions extends PureComponent {
 }
 
 TablePanelOptions.propTypes = {
+    tbl_ui_id: PropTypes.string,
     columns: PropTypes.arrayOf(PropTypes.object),
     optSortInfo: PropTypes.string,
     filterInfo: PropTypes.string,

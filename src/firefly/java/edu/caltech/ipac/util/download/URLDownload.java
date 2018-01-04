@@ -4,8 +4,8 @@
 package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.Base64;
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
@@ -51,6 +51,8 @@ public class URLDownload {
 
     public static final String DEFAULT_PATTERNS[] = {PATTERN_ASCTIME, PATTERN_RFC1036, PATTERN_RFC1123};
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
+
+    private static final Logger.LoggerImpl _log = Logger.getLogger();
 
 
     private static final SimpleDateFormat _browserDateParser;
@@ -358,7 +360,7 @@ public class URLDownload {
                         in = new DataInputStream(new InflaterInputStream(makeInStream(conn)));
                     } else {
                         in = makeDataInStream(conn);
-                        ClientLog.warning("unrecognized Content-encoding: " + encodeType, "cannot uncompress");
+                        _log.warn("unrecognized Content-encoding: " + encodeType, "cannot uncompress");
                     }
                 } else if (contentType != null && contentType.toLowerCase().endsWith("gzip")) {
                     in = makeGZipInStream(conn);
@@ -368,7 +370,7 @@ public class URLDownload {
             } else {
                 if (encodeType != null && encodeType.endsWith("gzip")) { //can be x-gzip or gzip
                     if (suggested != null && !suggested.toLowerCase().endsWith(FileUtil.GZ)) {
-                        ClientLog.warning("content encoded without accepting it: " + encodeType,
+                        _log.warn("content encoded without accepting it: " + encodeType,
                                           "added gz to file name");
                         suggested = suggested + "." + FileUtil.GZ;
                         if (useSuggestedFilename) f = new File(f.getParent(), suggested);
@@ -465,7 +467,7 @@ public class URLDownload {
             if (outfile != null && outfile.canRead() && outfile.length() > 0) {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                    ClientLog.message("Not downloading, already have current version");
+                    _log.briefInfo(outfile.getName() + ": Not downloading, already have current version");
                     retval = new FileInfo(outfile, getSugestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED,
                                      ResponseMessage.getHttpResponseMessage(HttpURLConnection.HTTP_NOT_MODIFIED));
                     retval.putAttribute(FileInfo.FILE_DOWNLOADED,false+"");
@@ -592,7 +594,7 @@ public class URLDownload {
             outList.add(String.format("Download Complete: %s : %d bytes%s",
                           retFile.getFile().getName(), retFile.getFile().length(), timeStr));
             outList.add(urlStr);
-            ClientLog.message(outList);
+            _log.info(outList.toArray(new String[outList.size()]));
         }
     }
 
@@ -615,11 +617,11 @@ public class URLDownload {
             strList.add(StringUtils.pad(20,"----------Exception "));
             strList.add(e.toString());
         }
-        ClientLog.warning(false, strList);
+        _log.warn(strList.toArray(new String[strList.size()]));
     }
 
 
-    public static void logHeader(String postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
+    private static void logHeader(String postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
         StringBuffer workBuff;
         try {
             Set hSet= null;
@@ -631,7 +633,6 @@ public class URLDownload {
             }
             Map.Entry entry;
             List values;
-            int i = 0;
             int m;
             String key;
             Iterator k;
@@ -685,9 +686,9 @@ public class URLDownload {
             else {
                 outStr.add("No headers or status received, invalid http response, using work around");
             }
-            ClientLog.message(outStr);
+            _log.info(outStr.toArray(new String[outStr.size()]));
         } catch (Exception e) {
-            ClientLog.message(e.getMessage() + ":" + " url=" + (conn.getURL()!=null ? conn.getURL().toString() : "none"));
+            _log.info(e.getMessage() + ":" + " url=" + (conn.getURL()!=null ? conn.getURL().toString() : "none"));
         }
     }
 
@@ -705,7 +706,7 @@ public class URLDownload {
         String s = String.format("Download Complete- %d bytes%s", size, timeStr);
         String urlString = null;
         if (url != null) urlString = url.toString();
-        ClientLog.message(s, urlString);
+        _log.info(s, urlString);
     }
 
 
@@ -746,7 +747,7 @@ public class URLDownload {
         return new BufferedInputStream(conn.getInputStream(), BUFFER_SIZE);
     }
 
-    private static InputStream makeErrStream(HttpURLConnection conn) throws IOException {
+    private static InputStream makeErrStream(HttpURLConnection conn) {
         return new BufferedInputStream(conn.getErrorStream(), BUFFER_SIZE);
     }
 

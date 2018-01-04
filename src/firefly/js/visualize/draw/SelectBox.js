@@ -77,7 +77,7 @@ const draw=  {
         return dist;
     },
 
-    draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
         const drawParams= makeDrawParams(drawObj,def);
         const {pt1,pt2,renderOptions}= drawObj;
         drawImageBox(ctx,pt1, pt2, plot,drawParams,renderOptions);

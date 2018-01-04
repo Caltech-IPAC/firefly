@@ -14,6 +14,7 @@ import {MouseState} from '../VisMouseSync.js';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {getPlotUIExtensionList} from '../../core/ExternalAccessUtils.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
+import {getTaskCount} from '../../core/AppDataCntlr.js';
 import {flux} from '../../Firefly.js';
 
 
@@ -63,16 +64,18 @@ export class ImageViewer extends PureComponent {
             }
         }
 
-        var drawLayersAry= getAllDrawLayersForPlot(dlAry,this.props.plotId);
+        let drawLayersAry= getAllDrawLayersForPlot(dlAry,this.props.plotId);
         if (shallowequal(drawLayersAry,state.drawLayersAry)) drawLayersAry= state.drawLayersAry;
 
+        const taskCount= getTaskCount(plotId);
         if (changeAffectsPV(plotId,allPlots,state.allPlots)  ||
             mousePlotIdAffectPv(plotId,state.mousePlotId,mousePlotId) ||
             extRoot!==state.extRoot ||
-            drawLayersAry!==state.drawLayersAry) {
+            drawLayersAry!==state.drawLayersAry ||
+            taskCount!==state.taskCount) {
             if (this.alive) {
-                var plotView= getPlotViewById(allPlots,plotId);
-                this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot,mousePlotId});
+                const plotView= getPlotViewById(allPlots,plotId);
+                this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot,mousePlotId, taskCount});
             }
         }
     }
@@ -89,7 +92,7 @@ export class ImageViewer extends PureComponent {
 
 
     render() {
-        var {plotView,allPlots,drawLayersAry,mousePlotId}= this.state;
+        var {plotView,allPlots,drawLayersAry,mousePlotId,taskCount=0}= this.state;
         var {showWhenExpanded, plotId, handleInlineTools}= this.props;
         if (!showWhenExpanded  && allPlots.expandedMode!==ExpandType.COLLAPSE) return false;
         if (!plotView) return false;
@@ -107,6 +110,7 @@ export class ImageViewer extends PureComponent {
                              visRoot={allPlots}
                              mousePlotId={mousePlotId}
                              handleInlineTools={handleInlineTools}
+                             taskCount= {taskCount}
                              extensionList={getPlotUIExtensionList(plotId)} />
         );
     }

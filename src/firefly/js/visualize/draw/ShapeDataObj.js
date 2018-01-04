@@ -283,9 +283,9 @@ const draw=  {
         return dist;
     },
 
-    draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
         const drawParams= makeDrawParams(drawObj,def);
-        drawShape(drawObj,ctx,drawTextAry,plot,drawParams,onlyAddToPath);
+        drawShape(drawObj,ctx,plot,drawParams,onlyAddToPath);
     },
 
     toRegion(drawObj,plot, def) {
@@ -512,34 +512,33 @@ export function getValueInScreenPixel(plot, arcsecValue) {
  *
  * @param drawObj
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param drawParams
  * @param onlyAddToPath
  */
-export function drawShape(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
+export function drawShape(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
 
     switch (drawObj.sType) {
         case ShapeType.Text:
-            drawText(drawObj,drawTextAry, ctx, plot, drawObj.pts[0], drawParams);
+            drawText(drawObj, ctx, plot, drawObj.pts[0], drawParams);
             break;
         case ShapeType.Line:
-            drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
+            drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;
         case ShapeType.Circle:
-            drawCircle(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
+            drawCircle(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;
         case ShapeType.Rectangle:
-            drawRectangle(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
+            drawRectangle(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;
         case ShapeType.Ellipse:
-            drawEllipse(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
+            drawEllipse(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;
         case ShapeType.Annulus:
         case ShapeType.BoxAnnulus:
         case ShapeType.EllipseAnnulus:
         case ShapeType.Polygon:
-            drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath);
+            drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;}
 }
 
@@ -547,12 +546,11 @@ export function drawShape(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddTo
  *
  * @param drawObj
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param drawParams
  * @param onlyAddToPath
  */
-function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
+function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
     const {pts, text, renderOptions}= drawObj;
     const {style, color, lineWidth, textLoc, fontSize}= drawParams;
 
@@ -574,7 +572,7 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
 
     if (!isNil(text) && inView) {
         const textLocPt= makeTextLocationLine(plot, textLoc, fontSize,pts[0], pts[1]);
-        drawText(drawObj, drawTextAry, ctx, plot, plot.getDeviceCoords(textLocPt), drawParams);
+        drawText(drawObj,  ctx, plot, plot.getDeviceCoords(textLocPt), drawParams);
     }
 
     if (style===Style.HANDLED && inView) {
@@ -587,11 +585,10 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
  *
  * @param drawObj
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param drawParams
  */
-function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
+function drawCircle(drawObj, ctx,  plot, drawParams) {
     const {pts, text, radius, renderOptions}= drawObj;
     const {color, lineWidth, fontSize, textLoc, unitType}= drawParams;
 
@@ -634,21 +631,21 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
 
     if (centerPt && !isNil(text)) {
         const textPt= makeTextLocationCircle(plot,textLoc, fontSize, centerPt, (screenRadius+lineWidth));
-        drawText(drawObj, drawTextAry, ctx, plot,textPt, drawParams);
+        drawText(drawObj, ctx, plot,textPt, drawParams);
     }
 }
 
 /**
  * @param drawObj
- * @param drawTextAry
+ * @param ctx
  * @param plot
  * @param inPt
  * @param drawParams
  */
-export function drawText(drawObj, drawTextAry, ctx, plot, inPt, drawParams) {
+export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return;
     
-    const {text, textOffset, renderOptions, rotationAngle}= drawObj;
+    const {text, textOffset, renderOptions, rotationAngle, textBaseline= 'top', textAlign='start'}= drawObj;
     //the angle of the grid line
     var angle=undefined;
     var pvAngle=undefined;
@@ -711,27 +708,11 @@ export function drawText(drawObj, drawTextAry, ctx, plot, inPt, drawParams) {
             y = south;
         }
 
-      /*  if (pvAngle<90) { //adjust the text location after rotation
+        DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
+            {rotationAngle:angle, textBaseline, textAlign},
+            {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
+        );
 
-            if (x > east / 2.0) {
-                x +=textHeight;
-            }
-        }
-        else {
-            if (y > south/2.0) {
-                y+=textHeight;
-            }
-
-        }*/
-        if (drawObj.canvasText) {
-            DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
-                fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,angle);
-
-        }
-        else {
-            DrawUtil.drawText(drawTextAry, text, x, y, color, renderOptions,
-                fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle,null,null,angle);
-        }
         drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
     }
 }
@@ -740,12 +721,11 @@ export function drawText(drawObj, drawTextAry, ctx, plot, inPt, drawParams) {
  *
  * @param drawObj
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param drawParams
  * @param onlyAddToPath
  */
-function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath) {
+function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     const {pts, text, width, height, angleUnit, isCenter = false, isOnWorld = false}= drawObj;
     let {renderOptions}= drawObj;
     const {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
@@ -903,7 +883,7 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
 
     if (!isNil(text) && inView) {
         const textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
-        drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
+        drawText(drawObj, ctx, plot, textPt, drawParams);
     }
     if (style === Style.HANDLED && inView) {
         // todo
@@ -914,12 +894,11 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
  * draw ellipse
  * @param drawObj
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param drawParams
  * @param onlyAddToPath
  */
-function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath) {
+function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     const {pts, text, radius1, radius2, renderOptions, angleUnit, isOnWorld = true}= drawObj;
     const {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
     let {angle= 0}= drawObj;
@@ -997,7 +976,7 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
 
     if (!isNil(text) && inView) {
         const textPt= makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
-        drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
+        drawText(drawObj, ctx, plot, textPt, drawParams);
     }
     if (style === Style.HANDLED && inView) {
         // todo
@@ -1008,18 +987,17 @@ function drawEllipse(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPath
  * draw the object which contains drawObj array
  * @param drawObj
  * @param ctx
- * @param drawTextAry
  * @param plot
  * @param drawParams
  * @param onlyAddToPath
  */
-function drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
+function drawCompositeObject(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     const {drawObjAry, text}= drawObj;
     const {lineWidth, textLoc, fontSize} = drawParams;
 
     // draw the child drawObj
     if (drawObjAry) {
-        drawObjAry.forEach( (oneDrawObj) => drawShape(oneDrawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath));
+        drawObjAry.forEach( (oneDrawObj) => drawShape(oneDrawObj, ctx, plot, drawParams, onlyAddToPath));
     }
 
     // draw the text asscociated with the shape, find the overal covered area first
@@ -1033,7 +1011,7 @@ function drawCompositeObject(drawObj, ctx, drawTextAry, plot, drawParams, onlyAd
                             objArea.center,
                             lineWidth);
             if (textPt) {
-                drawText(drawObj, drawTextAry, ctx, plot, textPt, drawParams);
+                drawText(drawObj, ctx, plot, textPt, drawParams);
             }
         }
     }

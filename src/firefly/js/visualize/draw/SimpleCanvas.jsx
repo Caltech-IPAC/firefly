@@ -25,9 +25,9 @@ export class SimpleCanvas extends PureComponent {
     }
 
     render() {
-        const {width, height, backgroundColor}= this.props;
+        const {width, height, id, backgroundColor}= this.props;
         return (
-            <canvas width={width+''} height={height+''} style={{backgroundColor}} ref={(c) => this.setUpCanvas(c)}/>
+            <canvas width={width+''} height={height+''} id={id} style={{backgroundColor}} ref={(c) => this.setUpCanvas(c)}/>
         );
     }
 }
@@ -36,6 +36,7 @@ SimpleCanvas.propTypes= {
     drawIt : PropTypes.func.isRequired,
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired,
+    id : PropTypes.string,
     backgroundColor: PropTypes.string
 };
 

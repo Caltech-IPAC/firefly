@@ -2,16 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {getColumnIdx, getColumn} from './TableUtil.js';
+import {getColumnIdx, getColumn, isNumericType, getTblById} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {isUndefined, get} from 'lodash';
 
-const cond_regex = new RegExp('(!=|>=|<=|<|>|=|like|in)\\s*(.+)');
+const cond_regex = new RegExp('(!=|>=|<=|<|>|=|like|in|is|is not)?\\s*(.+)');
 const cond_only_regex = new RegExp('^' + cond_regex.source, 'i');
 const filter_regex = new RegExp('(\\S+)\\s*' + cond_regex.source, 'i');
 
 export const FILTER_CONDITION_TTIPS =
-`Valid values are one of (=, >, <, !=, >=, <=, LIKE) followed by a value separated by a space.
+`Valid values are one of (=, >, <, !=, >=, <=, LIKE, IS, IS NOT) followed by a value separated by a space.
 Or 'IN', followed by a list of values separated by commas. 
 Examples:  > 12345; != 3000; IN a,b,c,d`;
 
@@ -31,11 +31,11 @@ ${FILTER_CONDITION_TTIPS}`;
  * in this context:
  * filter is column_name = conditions
  * condition is operator + value(s)
- * multiple conditions are separated by comma.
  * multiple filters are separated by semicolon.
  */
 export class FilterInfo {
     constructor() {
+        this.filters={};
     }
 
     /**
@@ -56,26 +56,6 @@ export class FilterInfo {
     }
 
     /**
-     * given a list of conditions separated by semicolon,
-     * transform them into valid conditions if they are not already so.
-     * @param conditions
-     * @returns {string}
-     */
-    static autoCorrect(conditions) {
-        if (conditions) {
-            const parts = conditions.split(';').map( (v) => {
-                var [, op, val] = v.trim().replace(/[()]/g, '').match(cond_only_regex) || [];
-                [op, val] = op ? [op, val] : [ 'like', v.trim() ];  // defualt to 'like' if no operators found
-                val = op.toLowerCase() === 'in' ? `(${val})` : val;     // add parentheses when 'in' is used.
-                return `${op} ${val}`;
-           });
-            return parts.join(';');
-        } else {
-            return conditions;
-        }
-    }
-
-    /**
      * given a list of filters separated by semicolon,
      * transform them into valid filters if they are not already so.
      * @param filterInfo
@@ -86,7 +66,7 @@ export class FilterInfo {
             const filters = filterInfo.split(';').map( (v) => {
                 const [, cname, op, val] = v.trim().match(filter_regex) || [];
                 if (!cname) return v;
-                return `${cname} ${FilterInfo.autoCorrect(op + ' ' + val)}`;
+                return `${cname} ${FilterInfo.autoCorrectCondition(op + ' ' + val)}`;
             });
             return filters.join(';');
         } else {
@@ -108,10 +88,12 @@ export class FilterInfo {
     /**
      * validator for column's filter.  it validates only the condition portion of the filter.
      * @param conditions
+     * @param tbl_id
+     * @param cname
      * @returns {{valid: boolean, value: (string|*), message: string}}
      */
-    static conditionValidator(conditions) {
-        conditions = FilterInfo.autoCorrect(conditions);
+    static conditionValidator(conditions, tbl_id, cname) {
+        conditions = autoCorrectConditions(conditions, tbl_id, cname);
         const valid = FilterInfo.isConditionValid(conditions);
         return {valid, value: conditions, message: FILTER_CONDITION_TTIPS};
     }
@@ -232,7 +214,7 @@ export class FilterInfo {
             // add quotes to key if it does not contains quotes
             formatKey = (k) => k.includes('"') ? k : `"${k}"`;
         }
-        return Object.entries(this)
+        return Object.entries(this.filters)
                     .map(([k,v]) => v.split(';')
                                     .filter((f) => f)
                                     .map( (f) => `${formatKey(k)} ${f}`)
@@ -246,11 +228,11 @@ export class FilterInfo {
      * @param conditions
      */
     addFilter(colName, conditions) {
-        this[colName] = !this[colName] ? conditions : `${this[colName]}; ${conditions}`;
+        this.filters[colName] = !this.filters[colName] ? conditions : `${this.filters[colName]}; ${conditions}`;
     }
 
     setFilter(colName, conditions) {
-        Reflect.deleteProperty(this, colName);
+        Reflect.deleteProperty(this.filters, colName);
         if (conditions) {
             conditions.split(';').forEach( (v) => {
                 const [, op, val] = v.trim().match(cond_only_regex) || [];
@@ -266,11 +248,57 @@ export class FilterInfo {
      * @returns {string}
      */
     getFilter(colName) {
-        return this[colName] && this[colName].toString();
+        return this.filters[colName] && this.filters[colName].toString();
     }
 
     isEqual(colName, value) {
         const oldVal = this.getFilter(colName);
         return (!oldVal && !value) || oldVal === value;
     }
+}
+
+
+/*-----------------------------------------------------------------------------------------*/
+
+/**
+ * Attempt to auto-correct the given condition(s).
+ * @param {string} conditions  one or more conditions, separated by ';'
+ * @param {string} tbl_id   table ID.
+ * @param {string} cname    column name.
+ * @returns {string}
+ */
+function autoCorrectConditions(conditions, tbl_id, cname) {
+    const isNumeric = isNumericType(getColumn(getTblById(tbl_id), cname));
+    if (conditions) {
+        return conditions.split(';')                                // separate them into parts
+            .map( (v) => autoCorrectCondition(v, isNumeric))      // auto correct if needed
+            .join(';');                                // put them back
+    }
+}
+
+function autoCorrectCondition(v, isNumeric=false) {
+    let [, op, val=''] = v.trim().replace(/[()]/g, '').match(cond_only_regex) || [];
+    if (!op && !val) return v;
+
+    op = op ? op.toLowerCase() : isNumeric ? '=' : 'like';      // apply default operator if one is not given.
+    switch (op) {
+        case 'like':
+            val = !val.includes('%') ? `%${val}%` : val;
+            val = !val.match("^'.+'$") ? `'${val}'` : val;
+            break;
+        case 'in':
+            if (!isNumeric) {
+                val = val.split(',').map((s) => `'${s.trim}'`).join();
+            }
+            val = `(${val})`;
+            break;
+        case '=':
+        case '!=':
+            val = !isNumeric && !val.match("^'.+'$") ? `'${val}'` : val;
+            if (isNumeric && ["''", 'null', '""'].includes(val.toLowerCase())) {
+                op = op === '!=' ? 'is not' : 'is';
+                val = 'null';
+            }
+    }
+    return `${op} ${val}`;
 }

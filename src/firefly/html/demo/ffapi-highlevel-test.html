@@ -50,6 +50,8 @@
     <div id="imageViewHere" style="display: inline-block; width: 550px; height: 550px; margin: 10px;"></div>
     <div id="coverageHere" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>
 </div>
+<div id="hipsHere" style="width: 550px; height: 550px; margin: 10px;">
+</div>
 <!--<div>-->
     <!--<div id="movingDiv" style="display: inline-block; width: 400px; height: 400px; margin: 10px;"></div>-->
 <!--</div>-->
@@ -360,6 +362,14 @@
 
             firefly.showCoverage('coverageHere', {gridOn:true});
 
+            firefly.showHiPS('hipsHere',
+                {
+                    plotId: 'aHipsID',
+                    WorldPt : '148.9;68.8;EQ_J2000',
+                    title     : 'A HiPS',
+                    hipsRootUrl: 'http://alasky.u-strasbg.fr/DSS/DSSColor'
+                }
+            );
 
 
             //-----------------  TABLE DEMO ------------------------//

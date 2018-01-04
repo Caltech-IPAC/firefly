@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -96,9 +97,10 @@ public class ServerStatus extends BaseHttpServlet {
         writer.println("DATABASE INFORMATION");
         writer.println("--------------------");
         writer.println("Open: " + BaseDbAdapter.getDbInstances().size());
-        writer.println("Details: touched time in (mm:ss)");
-        BaseDbAdapter.getDbInstances().values().stream()
-                    .forEach((db) -> writer.println(String.format("\ttouched: %2$tM:%2$tS %s", db.getDbFile().getPath(), db.getLastAccessed())));
+        writer.println("Details: idle time is in (mm:ss)");
+        Collections.unmodifiableCollection(BaseDbAdapter.getDbInstances().values()).stream()
+                    .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
+                    .forEach((db) -> writer.println(String.format("\tidled: %2$tM:%2$tS %s", db.getDbFile().getPath(), System.currentTimeMillis() - db.getLastAccessed())));
     }
 
     private static String getStats(Ehcache c) {

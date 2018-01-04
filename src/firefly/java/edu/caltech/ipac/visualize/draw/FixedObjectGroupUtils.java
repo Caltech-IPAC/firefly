@@ -3,13 +3,13 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import org.apache.xmlbeans.XmlAnySimpleType;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
@@ -255,9 +255,7 @@ public class FixedObjectGroupUtils {
                }
 
             } catch (ColumnException e) {
-                ClientLog.warning("Could not parse VOTABLEDocument.",
-                                  e.toString(),
-                                  "rows: " + dataGroup.size());
+                Logger.warn("Could not parse VOTABLEDocument.", e.toString(), "rows: " + dataGroup.size());
                 throw new FailedRequestException("Could not parse ISO data.",
                                                  "VOTABLEDocument contains unexpected results.",e);
             }
@@ -330,7 +328,7 @@ public class FixedObjectGroupUtils {
                     } else if (valueStr.equalsIgnoreCase("OVERFLOW")) {
                         throw new FailedRequestException("Overflow Error QUERY_STATUS in VOTABLE.", info.getDomNode().getLastChild().getNodeValue());
                     } else if (!valueStr.equalsIgnoreCase("OK")) {
-                        ClientLog.warning("Unrecognized QUERY_STATUS in VOTABLE: "+info.getValue());
+                        Logger.warn("Unrecognized QUERY_STATUS in VOTABLE: "+info.getValue());
                     }
                     break;
                 } else if (info.getName().equalsIgnoreCase("Error")) {
@@ -398,7 +396,7 @@ public class FixedObjectGroupUtils {
             XmlAnySimpleType t= (XmlAnySimpleType)parseCall.invoke( fClass, s);
             retval= (String)getStringValueCall.invoke(t, noObj);
         } catch (Exception e) {
-            ClientLog.warning(true,e.toString());
+            Logger.warn(e.toString());
             e.printStackTrace();
         }
         return retval;

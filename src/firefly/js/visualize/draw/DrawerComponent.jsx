@@ -4,9 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {xor,isEqual} from 'lodash';
 import CanvasWrapper from './CanvasWrapper.jsx';
-import TextDrawer from './TextDrawer.jsx';
 import {getDrawLayerById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import {flux} from '../../Firefly.js';
@@ -15,14 +13,6 @@ import {flux} from '../../Firefly.js';
 const isVisible= (drawLayer,plotId) => drawLayer.visiblePlotIdAry.includes(plotId);
 
 
-function makeTextDrawIfNecessary(textDrawAry,width,height) {
-    if (textDrawAry && textDrawAry.length) {
-        return (<TextDrawer textDrawAry={textDrawAry} width={width} height={height}/>);
-    }
-    else {
-        return null;
-    }
-}
 
 
 export class DrawerComponent extends PureComponent {
@@ -30,7 +20,7 @@ export class DrawerComponent extends PureComponent {
         super(props);
         const {drawLayerId, plot}=  props;
         const drawLayer= (plot && drawLayerId) ? getDrawLayerById(dlRoot(),drawLayerId) : null;
-        this.state= {textDrawAry:[], drawLayer};
+        this.state= {drawLayer};
         this.getDrawLayer= this.getDrawLayer.bind(this);
     }
 
@@ -73,30 +63,14 @@ export class DrawerComponent extends PureComponent {
     }
     
 
-    textUpdateCallback(textDrawAry) {
-        var {textDrawAry:old}= this.state;
-        //if ((!textDrawAry && !old)  || !textDrawAry.length && !old.length) return;
-        // if (!difference(textDrawAry,old).length && !difference(old,textDrawAry).length) return;
-        if (!xor(textDrawAry,old).length) return;
-
-        var doUpdate=
-            old.length!=textDrawAry.length ||
-            textDrawAry.some( (e,idx) =>
-                        !isEqual(e.style,old[idx].style) || e.text!=old[idx].text);
-        if (!doUpdate) return;
-        if (this.iAmMounted) this.setState({textDrawAry});
-    }
-
     render() {
-        var {plot, width, height}= this.props;
+        const {plot, width, height, idx}= this.props;
         if (plot&& !isVisible(this.state.drawLayer,plot.plotId)) return false;
-        var style= {position:'absolute',left:0,right:0,width,height};
+        const style= {position:'absolute',left:0,right:0,width,height};
 
         return (
             <div className='drawerComponent' style={style}>
-                <CanvasWrapper {...this.props} getDrawLayer={this.getDrawLayer}
-                               textUpdateCallback={this.textUpdateCallback.bind(this)}/>
-                {makeTextDrawIfNecessary(this.state.textDrawAry,width,height)}
+                <CanvasWrapper {...this.props} getDrawLayer={this.getDrawLayer} idx={idx}/>
             </div>
         );
     }
@@ -108,6 +82,7 @@ DrawerComponent.propTypes= {
     plot: PropTypes.object, // plot is not used if drawLayer is not passed
     drawLayerId : PropTypes.string, //drawLayer or drawData is Required
     getDrawLayer : PropTypes.func,
+    idx : PropTypes.number,
     setSimpleUpdateNotify : PropTypes.func
 };
 

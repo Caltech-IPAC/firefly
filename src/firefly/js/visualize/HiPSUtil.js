@@ -17,6 +17,8 @@ import {convert, computeDistance} from './VisUtil.js';
 import {replaceHeader} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
 import CoordinateSys from './CoordSys';
+import {encodeServerUrl} from '../util/WebUtil.js';
+import {getRootURL} from '../util/BrowserUtil.js';
 
 
 /**
@@ -73,18 +75,40 @@ export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
     if (!plot) return null;
     const dir= Math.floor(tileNumber/10000)*10000;
     const exts= get(plot, 'hipsProperties.hips_tile_format', 'jpg');
-    return `${plot.hipsUrlRoot}/Norder${nOrder}/Dir${dir}/Npix${tileNumber}.${getHiPSTileExt(exts)}`;
+    return makeHipsUrl(`${plot.hipsUrlRoot}/Norder${nOrder}/Dir${dir}/Npix${tileNumber}.${getHiPSTileExt(exts)}`, plot.proxyHips);
 }
 
-export function makeHiPSAllSkyUrl(urlRoot,exts) {
+/**
+ *
+ * @param urlRoot
+ * @param exts
+ * @param proxy
+ * @return {*}
+ */
+export function makeHiPSAllSkyUrl(urlRoot,exts,proxy= false) {
     if (!urlRoot || !exts) return null;
-    return `${urlRoot}/Norder3/Allsky.${getHiPSTileExt(exts)}`;
+    return makeHipsUrl(`${urlRoot}/Norder3/Allsky.${getHiPSTileExt(exts)}`, proxy);
 }
 
 export function makeHiPSAllSkyUrlFromPlot(plot) {
     if (!plot) return null;
     const exts= get(plot, 'hipsProperties.hips_tile_format', 'jpg');
-    return makeHiPSAllSkyUrl(plot.hipsUrlRoot, exts);
+    return makeHiPSAllSkyUrl(plot.hipsUrlRoot, exts, plot.proxyHips);
+
+}
+
+
+
+export function makeHipsUrl(url, proxy) {
+    if (proxy) {
+        const params= {
+            hipsUrl : url
+        };
+        return encodeServerUrl(getRootURL() + 'servlet/Download', params);
+    }
+    else {
+        return url;
+    }
 
 }
 
