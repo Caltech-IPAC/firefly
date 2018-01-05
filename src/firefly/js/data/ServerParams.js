@@ -81,8 +81,8 @@ export const ServerParams = {
         LSST : 'lsst',
         ALL : 'all',
 
-
-
+        GEOSHAPE : 'shape',
+        ROTATION : 'rotation',
 
         // commands
         FILE_FLUX : 'CmdFileFlux',

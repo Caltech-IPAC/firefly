@@ -20,6 +20,7 @@ import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
                makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
 import {getPixScaleDeg} from './WebPlot.js';
+import {SelectedShape} from '../drawingLayers/SelectArea.js';
 
 
 export const DtoR = Math.PI / 180.0;
@@ -593,13 +594,65 @@ export function getBoundingBox(ptAry) {
 
 
 /**
- *
+ * @param {object} selection obj with two properties pt0 & pt1
+ * @param {WebPlot} plot web plot
+ * @param objList array of DrawObj (must be an array and contain a getCenterPt() method)
+ * @param selectedShape shape of selected area
+ * @return {Array} indexes from the objList array that are selected
+ */
+export function getSelectedPts(selection, plot, objList, selectedShape) {
+
+    if (selectedShape === SelectedShape.circle.key) {
+        return getSelectedPtsFromEllipse(selection, plot, objList);
+    } else {
+        return getSelectedPtsFromRect(selection, plot, objList);
+    }
+}
+
+/**
+ * get selected points from circular selected area
+ * @param selection
+ * @param plot
+ * @param objList
+ * @returns {Array}
+ */
+function getSelectedPtsFromEllipse(selection, plot, objList) {
+    const selectedList= [];
+    if (selection && plot && objList && objList.length) {
+        const cc= CysConverter.make(plot);
+        const pt0= cc.getDeviceCoords(selection.pt0);
+        const pt1= cc.getDeviceCoords(selection.pt1);
+        if (!pt0 || !pt1) return selectedList;
+
+        const c_x = (pt0.x + pt1.x)/2;
+        const c_y = (pt0.y + pt1.y)/2;
+        const r1_2= Math.pow(Math.abs(pt0.x-pt1.x)/2, 2);
+        const r2_2= Math.pow(Math.abs(pt0.y-pt1.y)/2, 2);
+
+        const containsEllipse = (x, y) => {
+            return ((Math.pow((x - c_x), 2)/r1_2) + (Math.pow((y - c_y), 2)/r2_2)) < 1;
+        };
+
+        objList.forEach( (obj,idx) => {
+            const testObj = cc.getDeviceCoords(DrawOp.getCenterPt(obj));
+
+            if (testObj && containsEllipse(testObj.x, testObj.y)) {
+                selectedList.push(idx);
+            }
+        });
+    }
+    return selectedList;
+
+}
+
+/**
+ * get selected points from rectanglur selected area
  * @param {object} selection obj with two properties pt0 & pt1
  * @param {WebPlot} plot web plot
  * @param objList array of DrawObj (must be an array and contain a getCenterPt() method)
  * @return {Array} indexes from the objList array that are selected
  */
-export function getSelectedPts(selection, plot, objList) {
+function getSelectedPtsFromRect(selection, plot, objList) {
     const selectedList= [];
     if (selection && plot && objList && objList.length) {
         const cc= CysConverter.make(plot);

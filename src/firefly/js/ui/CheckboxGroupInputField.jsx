@@ -82,6 +82,10 @@ function handleOnChange(ev, params, fireValueChange) {
     var {valid,message} = params.validator(curValueArr.toString());
 
     fireValueChange({ value: curValueArr.toString(), message, valid });
+
+    if (params.onChange) {
+        params.onChange(ev);
+    }
 }
 
 

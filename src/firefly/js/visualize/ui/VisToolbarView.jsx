@@ -4,11 +4,13 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {get} from 'lodash';
 import {getActivePlotView,
     primePlot,
     hasGroupLock,
     findPlotGroup,
-    getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+    getAllDrawLayersForPlot,
+    getDrawLayerByType} from '../PlotViewUtil.js';
 import {findUnactivatedRelatedData} from '../RelatedDataUtil.js';
 import {dispatchRotate, dispatchFlip, dispatchRecenter,
         dispatchRestoreDefaults,dispatchGroupLocking} from '../ImagePlotCntlr.js';
@@ -26,7 +28,6 @@ import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
-import SelectArea from '../../drawingLayers/SelectArea.js';
 import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
 import { fitsHeaderView} from './FitsHeaderView.jsx';
 import { getDlAry } from '../DrawLayerCntlr.js';
@@ -38,7 +39,8 @@ import {showImageSelPanel} from './ImageSearchPanelV2.jsx';
 import {showMaskDialog} from './MaskAddPanel.jsx';
 import {isImage,isHiPS} from '../WebPlot.js';
 import {HiPSPropertyView} from './HiPSPropertyView.jsx';
-
+import {SelectAreaDropDownView, selectAreaInfo, selectAreas} from './SelectAreaDropDownView.jsx';
+import SelectArea from '../../drawingLayers/SelectArea.js';
 
 //===================================================
 //--------------- Icons --------------------------------
@@ -48,8 +50,6 @@ import {HiPSPropertyView} from './HiPSPropertyView.jsx';
 import LAYER_ICON from 'html/images/icons-2014/TurnOnLayers.png';
 import DIST_ON from 'html/images/icons-2014/Measurement-ON.png';
 import DIST_OFF from 'html/images/icons-2014/Measurement.png';
-import SELECT_OFF from 'html/images/icons-2014/Marquee.png';
-import SELECT_ON from 'html/images/icons-2014/Marquee-ON.png';
 import GRID_OFF from 'html/images/icons-2014/GreenGrid.png';
 import GRID_ON from 'html/images/icons-2014/GreenGrid-ON.png';
 import HIPS_GRID_OFF from 'html/images/icons-2014/HiPSGrid.png';
@@ -155,10 +155,19 @@ VisToolbarViewWrapper.propTypes= {
 export class VisToolbarView extends PureComponent {
     constructor(props) {
         super(props);
+
+        this.selectCallBack = this.selectCallBack.bind(this);
+        const dl = getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
+        this.state = {crtSelectArea: get(dl, 'selectedShape', selectAreas.noselect.key)};
+    }
+
+    selectCallBack(crtSelectArea) {
+        this.setState({crtSelectArea});
     }
 
     render() {
         const {visRoot,dlCount}= this.props;
+        const {crtSelectArea=selectAreas.noselect.key} = this.state || {};
         const rS= {
             display: 'inline-block',
             position: 'relative',
@@ -251,12 +260,16 @@ export class VisToolbarView extends PureComponent {
 
                 <ToolbarHorizontalSeparator/>
 
-                <SimpleLayerOnOffButton plotView={pv}
-                                        typeId={SelectArea.TYPE_ID}
+                <DropDownToolbarButton  icon={selectAreaInfo[crtSelectArea].iconIdSelect}
                                         tip='Select an area for cropping or statistics'
-                                        iconOn={SELECT_ON}
-                                        iconOff={SELECT_OFF}
-                                        visible={mi.selectArea} />
+                                        enabled={enabled}
+                                        horizontal={true}
+                                        visible={mi.selectArea}
+                                        dropDown={<SelectAreaDropDownView plotView={pv}
+                                                                          dropDownCB={this.selectCallBack}
+                                                                          crtSelection={crtSelectArea}/>}
+                />
+
                 <SimpleLayerOnOffButton plotView={pv}
                                         typeId={DistanceTool.TYPE_ID}
                                         tip='Select, then click and drag to measure a distance on the image'

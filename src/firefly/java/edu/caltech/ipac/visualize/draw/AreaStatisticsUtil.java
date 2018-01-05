@@ -24,6 +24,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.Ellipse2D;
 import java.text.NumberFormat;
 import java.util.HashMap;
 
@@ -286,6 +287,21 @@ public class AreaStatisticsUtil {
         }
     }
 
+    private static boolean rotatedEllipseContains(Ellipse2D.Double shape, double x, double y, double rAngle) {
+        double nAngle = Math.PI*2 - rAngle;
+        double x_c = shape.getX() + shape.getWidth()/2;
+        double y_c = shape.getY() + shape.getHeight()/2;
+        double a = shape.getWidth()/2;
+        double b = shape.getHeight()/2;
+
+
+        double xdist = Math.cos(nAngle) * (x - x_c) - Math.sin(nAngle) * (y - y_c);
+        double ydist = Math.sin(nAngle) * (x - x_c) + Math.cos(nAngle) * (y - y_c);
+
+        double r = ((xdist*xdist/(a*a)) + (ydist*ydist/(b*b)));
+
+        return (r <= 1);
+    }
 
     /**
      * Get hash map with Area Statistics Metrics
@@ -295,7 +311,9 @@ public class AreaStatisticsUtil {
      * @param boundingBox if not null, region of calculation will be intersection of shape and boundingBox
      * @return map of calculated metrics by metric id
      */
-    public static HashMap<Metrics, Metric> getStatisticMetrics(ImagePlot plot, ActiveFitsReadGroup frGroup, Band selectedBand, Shape shape, Rectangle2D boundingBox) {
+    public static HashMap<Metrics, Metric> getStatisticMetrics(ImagePlot plot, ActiveFitsReadGroup frGroup,
+                                                               Band selectedBand, Shape shape,
+                                                               Rectangle2D boundingBox, double rAngle) {
 
         //comment    
         if (boundingBox == null) boundingBox = shape.getBounds2D();
@@ -344,22 +362,23 @@ public class AreaStatisticsUtil {
         maxX = iwwspt.getX();
         maxY = iwwspt.getY();
 
-
         // I need to take into account imageScaleFactor from FitsRead
         for (double y=minY; y<=maxY; y+=imageScaleFactor ) {
             for (double x=minX; x<=maxX; x+=imageScaleFactor) {
                 try {
-                    if (!shape.contains(x, y)) continue;
+                    if ((rAngle != 0.0 && !rotatedEllipseContains((Ellipse2D.Double)shape, x, y, rAngle)) ||
+                        (rAngle == 0.0 && !shape.contains(x, y)))
+                        continue;
                     if (selectedBand == Band.NO_BAND) {
                         flux = plot.getFlux(new ImageWorkSpacePt(x, y),frGroup);
                     } else {
                         flux = plot.getFlux(frGroup, selectedBand, new ImageWorkSpacePt(x, y));
                     }
                     //if (SUTDebug.isDebug()) System.out.println("x = "+x+";   y = "+y);
-		    if (Double.isNaN(flux))
-		    {
-			continue;
-		    }
+                    if (Double.isNaN(flux))
+                    {
+                        continue;
+                    }
                     nPixels++;
                     fluxSum += flux;
                     squareSum += flux*flux;

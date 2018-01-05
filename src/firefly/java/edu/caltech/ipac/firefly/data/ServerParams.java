@@ -98,10 +98,8 @@ public class ServerParams {
     public static final String LSST = "lsst";
     public static final String ALL = "all";
 
-
-
-
-
+    public static final String GEOSHAPE = "shape";
+    public static final String ROTATION = "rotation";
 
     // commands
     public static final String FILE_FLUX = "CmdFileFlux";

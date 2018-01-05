@@ -10,6 +10,7 @@ import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {PlotState} from '../visualize/PlotState.js';
+import {SelectedShape} from '../drawingLayers/SelectArea.js';
 
 
 
@@ -85,14 +86,16 @@ export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
 }
 
 
-export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4) {
+export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4, areaShape = SelectedShape.rect.key, rotation = 0) {
     var params= {
         [ServerParams.STATE]: state.toJson(),
         [ServerParams.JSON_DEEP]:'true',
         [ServerParams.PT1]: ipt1.toString(),
         [ServerParams.PT2]: ipt2.toString(),
         [ServerParams.PT3]: ipt3.toString(),
-        [ServerParams.PT4]: ipt4.toString()
+        [ServerParams.PT4]: ipt4.toString(),
+        [ServerParams.GEOSHAPE]: areaShape,
+        [ServerParams.ROTATION]: rotation
     };
     return doJsonRequest(ServerParams.STAT, params, true);
 }

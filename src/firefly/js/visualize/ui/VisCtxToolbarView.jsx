@@ -9,7 +9,7 @@ import {isEmpty, get} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
-import {makeImagePt, makeScreenPt} from '../Point.js';
+import {makeDevicePt, makeScreenPt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {logError} from '../../util/WebUtil.js';
@@ -22,7 +22,7 @@ import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.j
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import SelectArea from '../../drawingLayers/SelectArea.js';
+import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CoordUtil from '../CoordUtil.js';
@@ -32,6 +32,7 @@ import {getDefaultHiPSSurveys} from '../HiPSUtil.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
 import {isLoadingHiPSSurverys} from '../HiPSCntlr.js';
+import {getSelectedShape} from '../../drawingLayers/Catalog.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -154,23 +155,38 @@ function tabulateStatics(wpResult, cc) {
 }
 
 /**
- *
  * @param pv
+ * @param dlAry
  */
-function stats(pv) {
+function stats(pv, dlAry) {
     //console.log('Stats getting: ' + primePlot(pv).title);
     //console.log(Metrics);
     const p= primePlot(pv);
     const cc= CysConverter.make(p);
+    /*
     const sel= p.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION];
 
     const ip0=  cc.getImageCoords(sel.pt0);
     const ip2=  cc.getImageCoords(sel.pt1);
     const ip1=  makeImagePt(ip2.x,ip0.y);
-    const ip3=  makeImagePt(ip1.x,ip2.y);
+    const ip3=  makeImagePt(ip0.x,ip2.y);
+    */
 
+    const sel= p.attributes[PlotAttribute.SELECTION];
 
-    callGetAreaStatistics(p.plotState, ip0,ip1,ip2,ip3)
+    const ip0=  cc.getDeviceCoords(sel.pt0);
+    const ip2=  cc.getDeviceCoords(sel.pt1);
+    const ip1=  makeDevicePt(ip2.x,ip0.y);
+    const ip3=  makeDevicePt(ip0.x,ip2.y);
+    const shape = getSelectedShape(pv, dlAry);
+
+    callGetAreaStatistics(p.plotState,
+                            cc.getImageCoords(ip0),
+                            cc.getImageCoords(ip1),
+                            cc.getImageCoords(ip2),
+                            cc.getImageCoords(ip3),
+                            getSelectedShape(pv, dlAry),
+                            (shape === SelectedShape.rect.key ? 0.0 : pv.rotation))
         .then( (wpResult) => {      // result of area stats
 
             // tabularize stats data
@@ -476,7 +492,7 @@ export class VisCtxToolbarView extends PureComponent {
                                tip='Show statistics for the selected area'
                                horizontal={true}
                                visible={showSelectionTools && isImage(plot)}
-                               onClick={() => stats(pv)}/>
+                               onClick={() => stats(pv, dlAry)}/>
 
                 <ToolbarButton icon={SELECTED}
                                tip='Mark data in area as selected'

@@ -11,7 +11,7 @@ import {Style} from './DrawingDef.js';
 import CsysConverter from '../CsysConverter.js';
 import {RegionValue, RegionDimension, RegionValueUnit, RegionType, regionPropsList} from '../region/Region.js';
 import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
-
+import {SelectedShape} from '../../drawingLayers/SelectArea.js';
 
 const SELECT_BOX= 'SelectBox';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -105,10 +105,13 @@ export default {makeSelectBox,SELECT_BOX,Style,draw};
 function makeDrawParams(selectBox,def) {
     const style= selectBox.style || def.style || DEFAULT_STYLE;
     const innerBoxColor= selectBox.innderBoxColor || def.innderBoxColor || 'white';
+    const {selectedShape, handleColor} = selectBox;
     return {
         color: DrawUtil.getColor(selectBox.color,def.color),
         innerBoxColor,
-        style
+        style,
+        selectedShape,
+        handleColor
     };
 }
 
@@ -174,25 +177,35 @@ function crossesDisplay(plot, devPt1, devPt2) {
  */
 function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
 
-    const {style,color,innerBoxColor}= drawParams;
+    const   {style,color,innerBoxColor, selectedShape=SelectedShape.rect.key}= drawParams;
+    const   {handleColor=color} = drawParams;
     const lineWidth= (style===Style.STANDARD) ? 2 : 1;
 
     const sWidth= pt2.x-pt0.x;
     const sHeight= pt2.y-pt0.y;
-    DrawUtil.strokeRec(ctx,color, lineWidth, pt0.x, pt0.y, sWidth, sHeight);
 
-    if (style===Style.HANDLED) {
-        DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+    if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
+        DrawUtil.strokeRec(ctx, color, lineWidth, pt0.x, pt0.y, sWidth, sHeight);
+    } else if (selectedShape === SelectedShape.circle.key) {
+        DrawUtil.drawEllipse(ctx, (pt2.x + pt0.x)/2, (pt0.y+pt2.y)/2, sWidth/2, sHeight/2, color, lineWidth, 0);
+    }
+
+    if (style === Style.HANDLED) {
+        if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
+            DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+        } else {
+            DrawUtil.drawInnerCircleWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+        }
+
         const pt1= makeDevicePt(pt0.x+sWidth,pt0.y);
         const pt3= makeDevicePt(pt0.x,pt0.y+sHeight);
 
         // const devPt1=  todo
-
-        DrawUtil.beginPath(ctx,color,3,renderOptions);
-        DrawUtil.drawHandledLine(ctx, color, pt0.x, pt0.y, pt1.x, pt1.y, true);
-        DrawUtil.drawHandledLine(ctx, color, pt1.x, pt1.y, pt2.x, pt2.y, true);
-        DrawUtil.drawHandledLine(ctx, color, pt2.x, pt2.y, pt3.x, pt3.y, true);
-        DrawUtil.drawHandledLine(ctx, color, pt3.x, pt3.y, pt0.x, pt0.y, true);
+        DrawUtil.beginPath(ctx, handleColor, 3, renderOptions);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt0.x, pt0.y, pt1.x, pt1.y, true);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt1.x, pt1.y, pt2.x, pt2.y, true);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt2.x, pt2.y, pt3.x, pt3.y, true);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt3.x, pt3.y, pt0.x, pt0.y, true);
         DrawUtil.stroke(ctx);
     }
 }

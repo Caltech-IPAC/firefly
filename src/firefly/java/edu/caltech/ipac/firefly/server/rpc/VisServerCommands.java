@@ -304,7 +304,14 @@ public class VisServerCommands {
             ImagePt pt2= sp.getRequiredImagePt(ServerParams.PT2);
             ImagePt pt3= sp.getRequiredImagePt(ServerParams.PT3);
             ImagePt pt4= sp.getRequiredImagePt(ServerParams.PT4);
-            WebPlotResult result = VisServerOps.getAreaStatistics(state, pt1, pt2, pt3, pt4);
+            String  shape = sp.getOptional(ServerParams.GEOSHAPE);
+            String  rotation = sp.getOptional(ServerParams.ROTATION);
+            if (shape == null) shape = "rect";
+            if (rotation == null) rotation = "0";  // image rotation angle
+
+            double rAngle = Math.toRadians(Double.parseDouble(rotation));
+
+            WebPlotResult result = VisServerOps.getAreaStatistics(state, pt1, pt2, pt3, pt4, shape, rAngle);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }

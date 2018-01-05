@@ -27,6 +27,7 @@ import {getTblById,getCellValue} from '../tables/TableUtil.js';
 import {getUIComponent} from './CatalogUI.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
+import SelectArea, {SelectedShape} from './SelectArea.js';
 
 const TYPE_ID= 'CATALOG_TYPE';
 
@@ -316,6 +317,7 @@ export function selectCatalog(pv,dlAry) {
     const sel= p.attributes[PlotAttribute.SELECTION];
     if (!sel) return;
     const catDlAry= getLayers(pv,dlAry);
+    const selectedShape = getSelectedShape(pv, dlAry);
     if (catDlAry.length) {
         const tooBig= catDlAry.some( (dl) => dl.dataTooBigForSelection);
         if (tooBig) {
@@ -325,7 +327,7 @@ export function selectCatalog(pv,dlAry) {
         else {
             catDlAry.forEach( (dl) => {
                 const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
-                getSelectedPts(sel,p,dl.drawData.data)
+                getSelectedPts(sel,p,dl.drawData.data, selectedShape)
                     .forEach( (idx) => selectInfoCls.setRowSelect(idx, true));
                 dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
             });
@@ -354,7 +356,9 @@ export function filterCatalog(pv,dlAry) {
     if (!sel) return;
     const catDlAry= getLayers(pv,dlAry);
     if (!catDlAry.length) return;
-    catDlAry.forEach((dl) =>doFilter(dl,p,sel));
+
+    const selectedShape = getSelectedShape(pv, dlAry);
+    catDlAry.forEach((dl) =>doFilter(dl,p,sel, selectedShape));
 }
 
 
@@ -363,7 +367,7 @@ function doClearFilter(dl) {
 }
 
 
-function doFilter(dl,p,sel) {
+function doFilter(dl,p,sel, selectedShape) {
 
     const tbl= getTblById(dl.drawLayerId);
     if (!tbl) return;
@@ -374,7 +378,7 @@ function doFilter(dl,p,sel) {
 
     const decimateIdx= findColIdx(dl.tableData.columns,'decimate_key');
     if (decimateIdx>1 && dl.tableMeta['decimate_key']) {
-        const idxs= getSelectedPts(sel, p, dl.drawData.data)
+        const idxs= getSelectedPts(sel, p, dl.drawData.data, selectedShape)
             .map( (idx) => `'${dl.tableData.data[idx][decimateIdx]}'`);
         filter= `IN (${idxs.toString()})`;
         filterInfoCls.addFilter(dl.tableMeta['decimate_key'], filter);
@@ -385,7 +389,7 @@ function doFilter(dl,p,sel) {
     }
     else {
         const rowidIdx= findColIdx(dl.tableData.columns,'ROW_IDX');
-        let idxs= getSelectedPts(sel, p, dl.drawData.data);
+        let idxs= getSelectedPts(sel, p, dl.drawData.data, selectedShape);
         idxs = rowidIdx < 0 ? idxs : idxs.map( (idx) => get(dl,`tableData.data[${idx}][${rowidIdx}]`) );
         filter= `IN (${idxs.length === 0 ? -1 : idxs.toString()})`;     //  ROW_IDX is always positive.. use -1 to force no row selected 
         filterInfoCls.setFilter('ROW_IDX', filter);
@@ -400,4 +404,15 @@ function getLayers(pv,dlAry) {
         .filter( (dl) => dl.drawLayerTypeId===TYPE_ID);
 }
 
+/**
+ * get the selected area shape from the SelectArea layer
+ * @param pv
+ * @param dlAry
+ * @returns {*}
+ */
+export function getSelectedShape(pv, dlAry) {
+    const selectAreaLayer = getAllDrawLayersForPlot(dlAry, pv.plotId,true)
+                            .find( (dl) => dl.drawLayerTypeId===SelectArea.TYPE_ID);
 
+    return get(selectAreaLayer, 'selectedShape', SelectedShape.rect.key);
+}

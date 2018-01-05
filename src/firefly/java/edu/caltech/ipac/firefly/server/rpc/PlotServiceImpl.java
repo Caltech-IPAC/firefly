@@ -89,7 +89,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
                                            ImagePt pt3,
                                            ImagePt pt4){
 
-        return VisServerOps.getAreaStatistics(state, pt1, pt2, pt3, pt4);
+        return VisServerOps.getAreaStatistics(state, pt1, pt2, pt3, pt4, "rect", 0.0);
     }
 
     public WebPlotResult getFitsHeaderInfo(PlotState state){
