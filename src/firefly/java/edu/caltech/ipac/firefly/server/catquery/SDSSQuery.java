@@ -96,36 +96,44 @@ public class SDSSQuery extends IpacTablePartProcessor {
             " from PhotoObj as p JOIN dbo.fGetObjFromRectEq(%RA_MIN%,%DEC_MIN%,%RA_MAX%,%DEC_MAX%) AS R ON P.objID=R.objID";
 
     @Override
+    /**
+     * 1/08/18 LZ
+     * modified this method based on one-step-upload scheme.
+     */
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         File outFile;
         try {
             // votable has utf-16 encoding, which mismatches the returned content type
             // this confuses tools
+
             File csv = createFile(request, ".csv");
             String uploadFname = request.getParam(SDSSRequest.FILE_NAME);
             if (StringUtils.isEmpty(uploadFname)) {
-
                 URL url = createGetURL(request);
 
                 URLConnection conn = URLDownload.makeConnection(url);
                 conn.setRequestProperty("Accept", "*/*");
 
                 URLDownload.getDataToFile(conn, csv);
-            } else {
-                File uploadFile = ServerContext.convertToFile(uploadFname);
+            }
+            else {
+                 String fileLocation = request.containsParam("fitslocation")?request.getParam("fitslocation"):null;
+                 /*If fileLocation is not null, the file is uploaded in the sever, the filename is just a string only.
+                   If the fileLocation is null, the file is already loaded in the UI.
+                 */
+                File uploadFile=fileLocation!=null?doFileUpload(request, fileLocation):ServerContext.convertToFile(uploadFname);
                 File sdssUFile;
                 if (uploadFile.canRead()) {
-                    sdssUFile = getSDSSUploadFile(uploadFile);
+                    sdssUFile = getSDSSUploadFile(uploadFile, fileLocation);
                 } else {
                     throw new EndUserException("SDSS catalog search failed",
-                            "Can not read uploaded file: "+ uploadFname);
+                            "Can not read uploaded file: "+ uploadFile.getName());
                 }
 
                 URL url = new URL(SERVICE_URL_UPLOAD);
                 // use uploadFname
                 //POST http://skyserver.sdss3.org/public/en/tools/crossid/x_crossid.aspx
-
                 _postBuilder = new MultiPartPostBuilder(url.toString());
                 if (_postBuilder == null) {
                     throw new EndUserException("Failed to create HTTP POST request",
@@ -253,8 +261,19 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
     }
 
-    private File getSDSSUploadFile(File uploadFile) throws IOException {
-        DataGroup uDg = DataGroupReader.readAnyFormat(uploadFile);
+    /**
+     * 1/08/18 LZ
+     * modified this method based on one-step-upload scheme.
+     */
+    private File getSDSSUploadFile(File uploadFile, String fileLocation) throws IOException, DataAccessException {
+
+        /*
+        This enables both new way uploading file and old way work.  If the fileLocation is not specified, the file is uploaded
+         in the UI and the uplaoded file already contains row_id column.  If the fileLocation is not null, it is either
+         isLocal or isWs, the file is uploaded in the sever, thus, the row_id is not in.
+         */
+        DataGroup uDg =fileLocation==null? DataGroupReader.readAnyFormat(uploadFile):QueryUtil.getUploadedTargets(uploadFile);
+
         DataType inRowIdType = uDg.getDataDefintion(CatalogRequest.UPDLOAD_ROW_ID);
         DataType raType = uDg.getDataDefintion("ra");
         DataType decType = uDg.getDataDefintion("dec");

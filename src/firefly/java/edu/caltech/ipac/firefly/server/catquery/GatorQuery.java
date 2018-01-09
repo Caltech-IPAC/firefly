@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -205,6 +206,10 @@ public class GatorQuery extends BaseGator {
     }
 
     @Override
+    /**
+     * 1/09/18 LZ
+     * modified this method based on one-step-upload scheme.
+     */
     protected void insertPostParams(CatalogRequest req) throws EndUserException, IOException {
 
         if (req.getMethod() == CatalogRequest.Method.TABLE) {
@@ -235,8 +240,25 @@ public class GatorQuery extends BaseGator {
                 optionalPostParam(CatalogRequest.ONE_TO_ONE, "1");
             }
 
+            String fileLocation = req.containsParam("fitslocation")?req.getParam("fitslocation"):null;
 
-            requiredPostFileCacheParam(CatalogRequest.FILE_NAME, req.getFileName());
+            //1/11/18:  LZ  In finderchart, the fileLocation is not null, for firefly catalog search, fileLocation is null,
+            //because Firefly does not implement to upload file from workspaces yet
+            if (fileLocation!=null){
+                try {
+                    File  uploadFile = doFileUpload(req, fileLocation);
+                    requiredPostFileCacheParam(CatalogRequest.FILE_NAME, uploadFile.getAbsolutePath());
+                } catch (DataAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                requiredPostFileCacheParam(CatalogRequest.FILE_NAME, req.getFileName());
+
+            }
+
+
+
 
         } else {
             throw new EndUserException("Could not do search, internal configuration wrong.",

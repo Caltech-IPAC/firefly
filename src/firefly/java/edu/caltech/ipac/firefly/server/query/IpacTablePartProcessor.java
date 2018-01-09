@@ -17,6 +17,8 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.*;
+import edu.caltech.ipac.firefly.server.ws.WsServerParams;
+import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -588,4 +590,40 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return file;
     }
 
+    /**
+     * 1/08/18  LZ
+     * Add this method to handle file upload either in workspace or local file system
+     * @param request
+     * @param fileLocation
+     * @return
+     * @throws IOException
+     * @throws DataAccessException
+     */
+   public File doFileUpload(TableServerRequest request, String fileLocation) throws IOException, DataAccessException {
+
+        if( !request.containsParam("filename") ){
+             throw new DataAccessException("The filename parameter is not defined");
+        }
+
+        String fileName = request.getParam("filename");
+
+        //if (fileLocation==null)  return  new File(fileName);
+
+        if (fileLocation.equalsIgnoreCase("isLocal")) {
+            File f = ServerContext.convertToFile(fileName);
+            return  convertToIpacTable(f, request);
+        } else {
+            WsServerParams wsParams = new WsServerParams();
+            wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, fileName);
+            WsServerUtils wsUtil = new WsServerUtils();
+            try {
+                String s = wsUtil.upload(wsParams);
+                return  ServerContext.convertToFile(s);
+            } catch (IOException | FailedRequestException e) {
+                throw new DataAccessException("Could now retrieve file from workspace", e);
+            }
+
+        }
+
+    }
 }
