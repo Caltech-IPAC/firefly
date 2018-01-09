@@ -17,25 +17,49 @@ import {get, pick, omitBy, pickBy} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
-import {encodeUrl, parseUrl} from '../util/WebUtil.js';
+import {encodeParams, parseUrl} from '../util/WebUtil.js';
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 
-const MAX_HISTORY_LENGTH = 20;
 export const ACTION = '__action';
 export const WSCH = '__wsch';
-const DEF_HANDLER = genericHandler(document.location);
+export const NO_HISTORY = 'noHistory';
+
+const DEF_HANDLER = {
+    actionToUrl: (action) => {
+        return urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload);
+    }
+};
+
+const urlPrefix = (() => {
+    const  urlInfo = parseUrl(document.location);
+    const filename = get(urlInfo,'filename', '');
+    let wsch = get(urlInfo, `searchObject.${WSCH}`);
+    wsch = wsch ? `${WSCH}=${wsch}&` : '';
+    return filename + '?' + wsch;
+})();
+
+const tableSearchHandler = {
+    actionToUrl: (action) => {
+        const noHistory = get(action, ['payload', 'options', NO_HISTORY], false);
+        return !noHistory && urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload);
+    }
+};
+
+const dropdownHandler = {
+    actionToUrl: (action) => {
+        const history = get(action, 'payload.visible');
+        return history ? urlPrefix + `${ACTION}=${action.type}&` + encodeParams(action.payload) : false;
+    }
+};
 
 /**
  * a map of all actions that should be in history
  * @type {{}}
  */
-const historyAware = (() => {
-            let all;
-            return (a) => {
-                all = all || [TABLE_SEARCH, SHOW_DROPDOWN].reduce((o, v) => { o[v] = DEF_HANDLER; return o; }, {});
-                return all[a];
-            };
-        })();
+const historyAware = {
+    [TABLE_SEARCH]: tableSearchHandler,
+    [SHOW_DROPDOWN]: dropdownHandler
+};
 
 var isHistoryEvent = false;
 
@@ -77,25 +101,15 @@ export function getActionFromUrl() {
 export function recordHistory(action={}) {
     if (get(window, 'firefly.ignoreHistory', false) || isHistoryEvent) return;
 
-    const handler = historyAware(action.type);
+    const handler = historyAware[action.type];
     if (get(handler, 'actionToUrl')) {
         const url = handler.actionToUrl(action);
-        try {
-            history.pushState(pick(action, ['type', 'payload']), url, url);
-        } catch(e) {}
+        if (url) {
+            try {
+                history.pushState(pick(action, ['type', 'payload']), url, url);
+            } catch(e) {}
+        }
     }
 }
 
-function genericHandler(url='') {
-    const urlInfo = parseUrl(url);
-    var filename = get(urlInfo,'filename', '');
-    var wsch = get(urlInfo, `searchObject.${WSCH}`);
 
-    const staticPart = filename;
-    return {
-        actionToUrl: (action) => {
-            const params = Object.assign({}, action.payload, pickBy({[WSCH]: wsch, [ACTION]: action.type}));
-            return encodeUrl(`${staticPart}?`, params);
-        }
-    };
-}

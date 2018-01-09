@@ -43,6 +43,7 @@ import java.util.*;
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.*;
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ACTIVE_REQUEST_CNT;
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.RESPONSE_CNT;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 
 /**
  * Date: Jul 14, 2008
@@ -107,6 +108,10 @@ public class QueryUtil {
                 LOGGER.error(e);
             }
         }
+        if (retval.getTblId() == null) {
+            retval.setTblId(retval.getParam(TBL_ID));
+        }
+
         return retval;
     }
 
