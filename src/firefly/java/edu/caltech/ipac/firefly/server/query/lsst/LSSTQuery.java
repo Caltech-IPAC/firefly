@@ -1,5 +1,5 @@
-/**
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+/*
+  License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server.query.lsst;
 
@@ -41,10 +41,9 @@ import java.util.Map;
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    private static final String PORT = "5000";
-    private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
-    //TODO how to handle the database name??
-    //protected static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
+    public static final String PORT = "5000";
+    public static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+
     //set default timeout to 180 seconds
     private int timeout  = Integer.parseInt(AppProperties.getProperty("lsst.database.timeoutLimit", "180"));
 
@@ -74,29 +73,24 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
         String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
-
-
-        long cTime = System.currentTimeMillis();
         _log.briefDebug("Executing SQL query: " + sql);
         String url = "http://"+HOST +":"+PORT+"/" + LSSTQuery.getDatasetInfo(request.getParam("database"),
                                                                             request.getParam("table_name"),
                                                                             new String[]{"meta"});
-
         File file = createFile(request, ".json");
         Map<String, String> requestHeader=new HashMap<>();
         requestHeader.put("Accept", "application/json");
+
+        long cTime = System.currentTimeMillis();
         FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null, timeout);
+        _log.briefDebug("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");
 
-        if (fileData.getResponseCode()>=500) {
-            throw new DataAccessException("[DAX] "+ LSSTMetaSearch.getErrorMessageFromFile(file));
-
+        if (fileData.getResponseCode() >= 400) {
+            String err = getErrorMessageFromFile(file);
+            throw new DataAccessException("[DAX] " + (err == null ? fileData.getResponseCodeMsg() : err));
         }
 
-        DataGroup dg =  getTableDataFromJson( request,file);
-        _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
-
-        return dg;
-
+        return getTableDataFromJson( request,file);
     }
 
     /**
@@ -104,24 +98,14 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
      * @param request table request
      * @param jsonFile JSON file with the result
      * @return DataGroup
-     * @throws IOException
-     * @throws ParseException
+     * @throws Exception
      */
     private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws Exception {
-
-
 
         JSONParser parser = new JSONParser();
         JSONObject obj = (JSONObject) parser.parse(new FileReader(jsonFile));
         JSONArray data =  (JSONArray) ((JSONObject) ((JSONObject) obj.get("result")).get("table")).get("data");
 
-
-        //search returns empty, throw no data exception
- /*       if (data.size()==0) {
-            throw new DataAccessException("No data is found in the search range");
-
-        }
-*/
         //no data found, return the meta data only
         if (data.size()==0){
             return  null;
@@ -368,7 +352,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
      * @param classType data type from the database
      * @return corresponding Java class
      */
-    public static Class getDataClass(String classType) throws DataAccessException {
+    private static Class getDataClass(String classType) throws DataAccessException {
 
         if (classType.equalsIgnoreCase("double")){
             return Double.class;
@@ -429,8 +413,6 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             InputStream lsstMetaInfo = LSSTQuery.class.getResourceAsStream("/edu/caltech/ipac/firefly/resources/LSSTMetaInfo.json");
             String lsstMetaStr = FileUtil.readFile(lsstMetaInfo);
             obj = (JSONObject) new JSONParser().parse(lsstMetaStr);
-        } catch (ParseException e) {
-            LOGGER.error(e);
         } catch (Exception e) {
             LOGGER.error(e);
         }
@@ -578,5 +560,29 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     static Boolean isCatalogTable(String database, String catTable) {
         String type = (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{"datatype"});
         return (type != null)&&type.startsWith("catalog");
+    }
+
+    /**
+     * Retrieve error message from JSON. If the file is not JSON or error can not be retrieved, null is returned
+     * @param file json result file
+     * @return error string or null
+     */
+    public static  String getErrorMessageFromFile(File file) {
+        try {
+            JSONParser parser = new JSONParser();
+
+            JSONObject obj = (JSONObject) parser.parse(new FileReader(file));
+            Object message = obj.get("message");
+            Object error = obj.get("error");
+            if (error != null && message != null) {
+                String messageStr = message.toString();
+                String errorStr = error.toString();
+                return messageStr.contains(errorStr) ? messageStr : errorStr + " " + messageStr;
+            } else {
+                return (error == null) ? null : error.toString();
+            }
+        } catch (IOException | ParseException e) {
+            return null;
+        }
     }
 }

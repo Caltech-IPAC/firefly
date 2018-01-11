@@ -22,7 +22,7 @@ import {syncChartViewer, addDefaultScatter} from '../../visualize/saga/ChartsSyn
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
-import {initWorkspace} from '../../visualize/WorkspaceCntlr.js';
+import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 
@@ -56,7 +56,7 @@ export class FireflyViewer extends PureComponent {
         dispatchAddSaga(layoutManager,{views: props.views});
         dispatchAddSaga(syncChartViewer);
         dispatchAddSaga(addDefaultScatter);
-        initWorkspace();
+        if (getWorkspaceConfig()) { initWorkspace(); }
     }
 
     getNextState() {

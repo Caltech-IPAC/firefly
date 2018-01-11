@@ -24,7 +24,11 @@ import java.util.ArrayList;
 @SearchProcessorImpl(id = "LSSTImageSearch")
 public class LSSTImageSearch extends URLFileInfoProcessor {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
-    private static String DAX_URL="http://lsst-qserv-dax01.ncsa.illinois.edu:5000/image/v0/";
+    // using ImageServ API v1: https://confluence.lsstcorp.org/display/DM/ImageServ+API+-+v1
+    // image repository (DC_W13_Stripe82) is a part of the URL, but it is not clear where it comes from
+    // and how we should get it: via metaserv or image/v1/capabilities
+    // I am hardcoding it here for now
+    public static String DAX_URL="http://lsst-qserv-dax01.ncsa.illinois.edu:5000/image/v1/DC_W13_Stripe82";
 
     /**
      * Implement the abstract method, "getURL"
@@ -84,12 +88,16 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
         if (imageType.equals("calexp")) {
             String imageId = request.getParam("imageId");
             // width and height in arcseconds
-            return new URL(DAX_URL+imageType+"/"+imageId+"/cutout?ra="+ra+"&dec="+dec+"&widthAng="+subsizeArcSec+"&heightAng="+subsizeArcSec);
+            // ImageServAPI-I11
+            return new URL(DAX_URL+"?ds="+imageType+"&sid="+imageId+
+                    "&ra="+ra+"&dec="+dec+"&width="+subsizeArcSec+"&height="+subsizeArcSec+"&unit=arcsec");
         } else {
             // coadd
             String filterName = request.getParam("filterName");
             // width and height in arcseconds, for pixels use cutoutPixel instead of cutout
-            return new URL(DAX_URL+imageType+"/cutout?ra="+ra+"&dec="+dec+"&filter="+filterName+"&width="+subsizeArcSec+"&height="+subsizeArcSec);
+            // ImageServAPI-I9
+            return new URL(DAX_URL+"?ds="+imageType+
+                    "&ra="+ra+"&dec="+dec+"&filter="+filterName+"&width="+subsizeArcSec+"&height="+subsizeArcSec+"&unit=arcsec");
         }
 
 
@@ -151,11 +159,13 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
 
     private static  String getBaseURL(boolean isDeepCoadd){
         if (isDeepCoadd) {
-            return DAX_URL+"deepCoadd/ids?";
+            // ImageServAPI-I14
+            return DAX_URL+"?ds=deepCoadd&";
 
         }
         else {
-            return DAX_URL+"calexp/ids?";
+            // ImageServAPI-I7
+            return DAX_URL+"?ds=calexp&";
         }
     }
 
