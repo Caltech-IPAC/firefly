@@ -431,12 +431,6 @@ public class ImageHeader implements Serializable
 	    }
 	    
 	}
-	boolean pvExists = true;
-	try{
-		header.getDoubleValue("PV1_0", 0.0);
-	}catch (NumberFormatException e){
-		pvExists = false;
-	}
     /* now do SIRTF distortion corrections */
     if ((ctype1_trim != null) && (ctype1_trim.endsWith("-SIP")))
     {
@@ -522,16 +516,6 @@ public class ImageHeader implements Serializable
 		    }
 		}
 	    }
-	}
-	if(pvExists){
-		for (i = 0; i < pv1poly.length; i++) {
-			pv1poly[i] = 0.0;
-			keyword = "PV1_" + i;
-			pv1poly[i] = header.getDoubleValue(keyword, 0.0);
-			pv2poly[i] = 0.0;
-			keyword = "PV2_" + i;
-			pv2poly[i] = header.getDoubleValue(keyword, 0.0);
-		}
 	}
     }else if((ctype1_trim != null) && ctype1_trim.endsWith("-TPV")){
 		for (i = 0; i < pv1poly.length; i++) {
