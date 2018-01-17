@@ -527,6 +527,10 @@ export const containsCircle= function(x, y, centerX, centerY, radius) {
     return Math.pow((x - centerX), 2) + Math.pow((y - centerY), 2) < radius * radius;
 };
 
+export const containsEllipse=function(x, y, centerX, centerY, radius1, radius2) {
+    return (Math.pow((x - centerX)/radius1, 2) + Math.pow((y - centerY)/radius2, 2)) < 1;
+};
+
 const getArrowCoords= function(x1, y1, x2, y2) {
 
     const barbLength = 10;
@@ -626,17 +630,13 @@ function getSelectedPtsFromEllipse(selection, plot, objList) {
 
         const c_x = (pt0.x + pt1.x)/2;
         const c_y = (pt0.y + pt1.y)/2;
-        const r1_2= Math.pow(Math.abs(pt0.x-pt1.x)/2, 2);
-        const r2_2= Math.pow(Math.abs(pt0.y-pt1.y)/2, 2);
-
-        const containsEllipse = (x, y) => {
-            return ((Math.pow((x - c_x), 2)/r1_2) + (Math.pow((y - c_y), 2)/r2_2)) < 1;
-        };
+        const r1 =  Math.abs(pt0.x-pt1.x)/2;
+        const r2 =  Math.abs(pt0.y-pt1.y)/2;
 
         objList.forEach( (obj,idx) => {
             const testObj = cc.getDeviceCoords(DrawOp.getCenterPt(obj));
 
-            if (testObj && containsEllipse(testObj.x, testObj.y)) {
+            if (testObj &&  containsEllipse(testObj.x, testObj.y, c_x, c_y, r1, r2)) {
                 selectedList.push(idx);
             }
         });
