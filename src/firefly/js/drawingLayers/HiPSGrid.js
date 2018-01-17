@@ -11,18 +11,20 @@ import {getBestHiPSlevel, getVisibleHiPSCells,
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
-import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
+import DrawLayer, {ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {makeImagePt} from '../visualize/Point.js';
 import CysConverter from '../visualize/CsysConverter';
 import {getUIComponent} from './HiPSGridlUI.jsx';
+import {getAllPlotViewId} from '../visualize/PlotViewUtil';
+import {clone} from '../util/WebUtil.js';
 
 const ID= 'HIPS_GRID';
 const TYPE_ID= 'HIPS_GRID_TYPE';
 
 
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,getUIComponent);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null,getUIComponent);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -47,17 +49,12 @@ function creator(initPayload, presetDefaults) {
 }
 
 
-function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    if (!isDrawLayerVisible(drawLayer, plotId)) return null;
-    if (dataType!==DataTypes.DATA) return null;
-    // return isEmpty(lastDataRet) ? computeDrawData(plotId) : lastDataRet;
-    return  computeDrawData(drawLayer, plotId);
-}
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
+        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
         case ImagePlotCntlr.ANY_REPLOT:
-            break;
+            return {drawData:computeDrawData(drawLayer,action, drawLayer.gridType,drawLayer.gridLockLevel)};
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             const {plotId}= action.payload;
             let {plotIdAry}= action.payload;
@@ -65,10 +62,10 @@ function getLayerChanges(drawLayer, action) {
             if (!plotIdAry) plotIdAry= [plotId];
             const title= Object.assign({},drawLayer.title);
             plotIdAry.forEach( (id) => title[id]= getTitle(id));
-            return {title};
+            return {title,
+                drawData:computeDrawData(drawLayer,action,drawLayer.gridType,drawLayer.gridLockLevel) };
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);
-            break;
     }
     return null;
 }
@@ -82,24 +79,47 @@ function getTitle() {
 function dealWithMods(drawLayer,action) {
     const {changes}= action.payload;
     if (changes.gridType) {
-       return {gridType:changes.gridType, gridLockLevel: changes.gridLockLevel || drawLayer.gridLockLevel};
+        const gridLockLevel= changes.gridLockLevel || drawLayer.gridLockLevel;
+       return {gridType:changes.gridType, gridLockLevel,
+              drawData:computeDrawData(drawLayer,action,changes.gridType,gridLockLevel) };
     }
     return null;
 }
 
-function computeDrawData(drawLayer, plotId) {
+function computeDrawData(drawLayer,action, gridType, gridLockLevel) {
+    const {payload}= action;
+    const plotIdAry= payload.plotId ? getAllPlotViewId(visRoot(), payload.plotId, false, true) : payload.plotIdAry;
+    if (plotIdAry) {
+        const drawData= {data: clone(drawLayer.drawData.data)};
+        plotIdAry.forEach( (plotId) => {
+            if (drawLayer.visiblePlotIdAry.includes(plotId)) {
+                drawData.data[plotId]= computeDrawDataForId(drawLayer,plotId, gridType, gridLockLevel);
+            }
+        });
+        return drawData;
+    }
+    else {
+        return drawLayer.drawData;
+    }
+
+
+
+}
+
+function computeDrawDataForId(drawLayer, plotId, gridType, gridLockLevel) {
     if (!plotId) return null;
+    if (!isDrawLayerVisible(drawLayer, plotId)) return null;
     const plot= primePlot(visRoot(),plotId);
     if (!plot) return [];
 
     const cc= CysConverter.make(plot);
 
     let norder;
-    if (drawLayer.gridType==='lock') {
-        norder= Math.min(Number(drawLayer.gridLockLevel), getMaxDisplayableHiPSLevel(plot));
+    if (gridType==='lock') {
+        norder= Math.min(Number(gridLockLevel), getMaxDisplayableHiPSLevel(plot));
     }
     else {
-        const limitByMax= drawLayer.gridType==='match';
+        const limitByMax= gridType==='match';
         const {norder:retNorder}= getBestHiPSlevel(plot, limitByMax);
         norder= retNorder;
     }
@@ -123,7 +143,8 @@ function computeDrawData(drawLayer, plotId) {
             const s1= cc.getImageCoords(c.wpCorners[0]);
             const s2= cc.getImageCoords(c.wpCorners[2]);
             if (!s1 || !s2) return null;
-            const textObj= ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6), makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2), `${norder}/${c.ipix}`);
+            const textObj= ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6),
+                 makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2), `${norder}/${c.ipix}`);
             return textObj;
         })
         .filter( (v) => v);

@@ -1,6 +1,6 @@
 /* eslint prefer-template:0 */
 import {makeWorldPt} from '../visualize/Point.js';
-import * as StringUtils from './StringUtils.js';
+import {crunch, polishString} from './StringUtils.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 
 var PositionParsedInput={Name: 'Name', Position:'Position'};
@@ -45,8 +45,8 @@ var makePositionParser = function(helper) {
         _coordSys = null;
 
         if (s) {
-            s= StringUtils.crunch(s);
-            s= StringUtils.polishString(s); //remove non-standard-ASCII characters.
+            s= crunch(s);
+            s= polishString(s); //remove non-standard-ASCII characters.
             _inputType= determineType(s);
             if (_inputType ===PositionParsedInput.Name) {
                 if (s.trim().length>1) {
@@ -343,7 +343,7 @@ var makePositionParser = function(helper) {
         for(i=0; (i< s.length); i++) {
             c= s.charAt(i);
             if (idx < (dms.length-1)) {
-                if (idx===0 && ((StringUtils.startsWith(dms[idx],'+')) || (StringUtils.startsWith(dms[idx],'-')))) {
+                if (idx===0 && ((dms[idx].startsWith('+')) || (dms[idx].startsWith('-')))) {
                     if (dms[idx].length>2) {
                         idx++;
                     }
@@ -388,13 +388,13 @@ var makePositionParser = function(helper) {
 
         if (s && array.length>0) {
             if (array.length===1 && matches(array[0],COMBINE_SYS)) {
-                if (StringUtils.startsWith(array[0].toUpperCase(),'EC')) {
+                if (array[0].toUpperCase().startsWith('EC')) {
                     if (matches(array[0],ECL_1950)) {
                         retval='EC_B1950';
                     } else if (matches(array[0],ECL_2000)) {
                         retval='EC_J2000';
                     }
-                } else if (StringUtils.startsWith(array[0].toUpperCase(),'EQ')) {
+                } else if (array[0].toUpperCase().startsWith('EQ')) {
                     if (matches(array[0],EQ_1950)) {
                         retval='EQ_B1950';
                     } else if (matches(array[0],EQ_2000)) {
@@ -487,7 +487,7 @@ var makePositionParser = function(helper) {
         var sAry;
 
         if (s.length>=2) {
-            if (StringUtils.startsWith(s,'-') || StringUtils.startsWith(s,'+')) {
+            if (s.startsWith('-') || s.startsWith('+')) {
                 sAry= s.substring(1).split(/[+ ,-]/);
                 firstStr= s.charAt(0) + ((sAry.length>0) ? sAry[0] : '');
 

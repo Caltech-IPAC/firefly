@@ -216,12 +216,15 @@ function buildImagePart(llApi) {
      * @summary The general plotting function to plot a FITS image.
      * @param {String|div} targetDiv to put the image in.
      * @param {Object} request the request object literal with the plotting parameters
+     * @param {HipsImageConversionSettings} [hipsImageConversion= undefined] if defined, use these parameter to
+     *                                                convert between image and HiPS
      * @memberof firefly
      * @public
      * @example firefly.showImage
      *
      */
-    const showImage= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request, false);
+    const showImage= (targetDiv, request, hipsImageConversion)  =>
+                   showImageInMultiViewer(llApi, targetDiv, request, false, hipsImageConversion);
 
     /**
      * @summary A convenience plotting function to plot a file on the server or a url.  If first looks for the file then
@@ -245,7 +248,7 @@ function buildImagePart(llApi) {
     /**
      * @summary set global fallback params for every image plotting call
      * @param {Object} params a object literal such as any image plot or showImage uses
-     * @memberof irefly
+     * @memberof firefly
      * @public
      * @ignore
      * @example firefly.setGlobalImageDef
@@ -257,13 +260,16 @@ function buildImagePart(llApi) {
      *
      * @param div - targetDiv to put the coverage in.
      * @param options - an object literal containing a list of the coverage options
+     * @param {HipsImageConversionSettings} [hipsImageConversion= undefined] if defined, use these parameter to
+     *                                                convert between image and HiPS
      * @memberof firefly
      * @public
      * @example firefly.showCoverage
      */
     const showCoverage= (div,options) => initCoverage(llApi,div,options);
 
-    const showHiPS= (targetDiv, request)  => showImageInMultiViewer(llApi, targetDiv, request, true);
+    const showHiPS= (targetDiv, request, hipsImageConversion)  =>
+                        showImageInMultiViewer(llApi, targetDiv, request, true, hipsImageConversion);
 
     return {showImage, showHiPS, showImageFileOrUrl, setGlobalImageDef, showCoverage};
 }
@@ -334,7 +340,7 @@ function makePlotSimple(llApi, plotId) {
     };
 }
 
-function showImageInMultiViewer(llApi, targetDiv, request, isHiPS) {
+function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion) {
     const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer, dispatchAddImages}= llApi.action;
     const {findInvalidWPRKeys,confirmPlotRequest, IMAGE, NewPlotMode}= llApi.util.image;
     const {renderDOM,debug, getWsConnId, getWsChannel}= llApi.util;
@@ -352,10 +358,16 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS) {
     dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
     if (isHiPS) {
         request.Type= 'HiPS';
-        dispatchPlotHiPS({plotId, wpRequest:request, viewerId:targetDiv});
+        if (hipsImageConversion && !hipsImageConversion.hipsRequestRoot) {
+            hipsImageConversion.hipsRequestRoot= request;
+        }
+        dispatchPlotHiPS({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
     }
     else {
-        dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv});
+        if (hipsImageConversion && !hipsImageConversion.imageRequestRoot) {
+            hipsImageConversion.imageRequestRoot= request;
+        }
+        dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
     }
 
     renderDOM(targetDiv, MultiImageViewer,

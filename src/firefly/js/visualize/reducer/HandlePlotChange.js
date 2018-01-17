@@ -264,11 +264,24 @@ function installTiles(state, action) {
 function processProjectionChange(state,action) {
     const {plotId,centerProjPt}= action.payload;
     const {plotViewAry}= state;
-    let pv= getPlotViewById(state, plotId);
-    const plot= primePlot(pv);
-    if (!plot) return state;
-    pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
-    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+    const pv= getPlotViewById(state, plotId);
+    const {plotGroupAry}= state;
+
+    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+
+    const newPlotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
+         (pv)=> {
+             const plot= primePlot(pv);
+             if (plot) pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
+             return pv;
+         } );
+
+
+    // const plot= primePlot(pv);
+    // if (!plot) return state;
+    // pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
+    // return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+    return clone(state, {plotViewAry : newPlotViewAry});
 }
 
 function changeHiPS(state,action) {

@@ -1,4 +1,4 @@
-import * as StringUtils from '../../util/StringUtils.js';
+import {matchesIgCase} from '../../util/StringUtils.js';
 import PositionParser from '../../util/PositionParser.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import CoordUtil from '../../visualize/CoordUtil.js';
@@ -221,7 +221,7 @@ var makePositionFieldDef= function(properties) {
         };
 
         this.matchesIgnoreCase= function(s, regExp) {
-            return StringUtils.matchesIgCase(s, regExp);
+            return matchesIgCase(s, regExp);
         };
     }
 

@@ -1,5 +1,11 @@
 import validator from 'validator';
 
+
+/**
+ * This File is Deprecated.  It is only used by 3 other modules and that will be cleaned up eventually
+ */
+
+
 /**
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * Created by roby on 12/2/14.
@@ -10,11 +16,11 @@ export function matches(s, regExp, ignoreCase) {
     if (s === null) {
         return false;
     }
-    var re = ignoreCase ? new RegExp(regExp, 'i') : new RegExp(regExp);
-    var result = re.exec(s);
-    var found = false;
+    const re = ignoreCase ? new RegExp(regExp, 'i') : new RegExp(regExp);
+    const result = re.exec(s);
+    let found = false;
     if (result !== null && result.length > 0) {
-        for (var i = 0; (i < result.length); i++) {
+        for (let i = 0; (i < result.length); i++) {
             if (s===result[i]) {
                 found = true;
                 break;
@@ -33,9 +39,10 @@ export function matchesIgCase(s, regExp) {
  * <ul><li><code>" bbb    ccc  ddd"</code></li></ul>
  * should become:
  * <ul><li><code>aaa "bbb ccc ddd" eee</code></li></ul>
+ * @param {String} s
  */
 export function crunch(s) {
-    if (s !== null) {
+    if (s) {
         s = s.replace(/[ \t\n\r\f]/g, ' ');
         s = s.trim();
         s = s.replace(/\s{2,}/g, ' ');
@@ -44,9 +51,7 @@ export function crunch(s) {
 }
 
 export function polishString(str) {
-    if (str!==null && str.length>0) {
-        str = convertExtendedAscii(str);
-    }
+    if (str) return convertExtendedAscii(str);
     return str;
 }
 
@@ -55,9 +60,9 @@ export function convertExtendedAscii(sbOriginal) {
         return null;
     }
 
-    var retval= sbOriginal;
-    var origCharAsInt;
-    for (var isb = 0; isb < retval.length; isb++) {
+    const retval= sbOriginal;
+    let origCharAsInt;
+    for (let isb = 0; isb < retval.length; isb++) {
 
         origCharAsInt = retval.charCodeAt(isb);
         if (origCharAsInt<=255) {
@@ -113,72 +118,6 @@ export function convertExtendedAscii(sbOriginal) {
     return sbOriginal;
 }
 
-export function isEmpty(s) {
-    return s === null || s.trim().length===0;
-}
-
-export function startsWith(s,startStr) {
-    return s.substring(0, startStr.length) === startStr;
-}
-
-export function endsWith (s,endStr) {
-    return (s.indexOf(endStr, s.length - endStr.length) !== -1);
-}
-
-export function parseHelper(s, max, splitToken) {
-
-    var sAry= null;
-    if (s) {
-        sAry= s.split(splitToken,max+1);
-        if (sAry.length>max) { sAry = null; }
-    }
-    if (!sAry) { throw 'wrong number of tokens in String'; }
-    return sAry;
-
-}
-
-export function parseStringList(s,token,max=500) {
-    var retval=[];
-    if (s.startsWith('[') && s.endsWith(']')) {
-        var ss= s.substring(1,s.length-1);
-        var sAry= ss.split(token,max);
-        sAry.forEach(function(item) {
-            if (item) {retval.push(item); }
-        });
-    }
-    return retval;
-}
-
-export function parseStringMap(s,token) {
-    var map= new Map();
-    if (s.startsWith('[') && s.endsWith(']')) {
-        s= s.substring(1,s.length-1);
-        var sAry = s.split(token,500);
-        for(var i= 0; (i<sAry.length-1); i+=2) {
-            if (sAry[i] && sAry[i+1]) {
-                map.set(sAry[i],sAry[i+1]);
-            }
-        }
-    }
-    return map;
-}
-
-export function checkNull(s) {
-    if (!s) { return null; }
-    else if (s==='null') { return null; }
-    else { return s; }
-}
-
 export function parseInt(s,failValue= 0) {
     return (validator.isInt(s)) ? validator.toInt(s) : failValue;
 }
-
-export function parseFloat(s,failValue=0) {
-    return (validator.isFloat(s)) ? validator.toFloat(s) : failValue;
-}
-
-export function parseBoolean(s,failValue= false) {
-    return (validator.isBoolean(s)) ? validator.toBoolean(s) : failValue;
-}
-
-export function getStringWithNull(s) { return (s==='null'|| s==='NaN') ? null : s; }

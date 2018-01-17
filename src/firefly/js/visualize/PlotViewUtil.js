@@ -9,7 +9,7 @@ import {clone} from '../util/WebUtil.js';
 import {getDlAry, dispatchDestroyDrawLayer} from './DrawLayerCntlr.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import {makeWorldPt} from './Point.js';
-
+import {isImage} from './WebPlot.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -118,19 +118,21 @@ export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true, 
  * @param visRoot
  * @param pvOrId
  * @param hasPlots
- * @returns {*}
+ * @param plotTypeMustMatch
+ * @returns {Array.<string>}  plotId Array
  */
-export function getAllPlotViewId(visRoot, pvOrId, hasPlots=false) {
+export function getAllPlotViewId(visRoot, pvOrId, hasPlots=false, plotTypeMustMatch) {
     if (!pvOrId) return [];
-    const pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
-    const gid= pv.plotGroupId;
+    const majorPv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    const gid= majorPv.plotGroupId;
     const group= getPlotGroupById(visRoot,gid);
-    const locked= hasGroupLock(pv,group);
+    const locked= hasGroupLock(majorPv,group);
 
     if (!locked) {
-        return [pv.plotId];
+        return [majorPv.plotId];
     } else {
-        return visRoot.plotViewAry.filter((pv) => (!hasPlots || get(pv, 'plots.length')))
+        return visRoot.plotViewAry.filter((pv) => !hasPlots || get(pv, 'plots.length'))
+                                  .filter((pv) => !plotTypeMustMatch || isImage(primePlot(pv))===isImage(primePlot(majorPv)))
                                   .map((pv) => pv.plotId);
     }
 }
@@ -604,15 +606,15 @@ export function findCurrentCenterPoint(plotView,scrollX,scrollY) {
     const {viewDim}= plotView;
 
     let cc;
-    if (!isUndefined(scrollX) && isUndefined(!scrollY)) {
+    if (!isUndefined(scrollX) && !isUndefined(scrollY)) { //case scrollX && scrollY are passed
         const trans= makeTransform(0,0, scrollX, scrollY,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
         cc= CysConverter.make(plot,trans);
     }
-    else if (isUndefined(plotView.scrollX) || isUndefined(plotView.scrollY)) {
+    else if (isUndefined(plotView.scrollX) || isUndefined(plotView.scrollY)) { //case scrollX && scrollY not pass and that are not defined in plotview, use 0,0
         const trans= makeTransform(0,0, 0, 0,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
         cc= CysConverter.make(plot,trans);
     }
-    else {
+    else { // case scrollX && scrollY not passed and we get then  from plotView
         cc= CysConverter.make(plot);
     }
     return cc.getImageCoords(makeDevicePt(viewDim.width/2, viewDim.height/2));

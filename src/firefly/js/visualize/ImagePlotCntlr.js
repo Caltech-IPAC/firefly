@@ -17,7 +17,7 @@ import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 import {UserZoomTypes} from './ZoomUtil.js';
 import {zoomActionCreator} from './task/ZoomTask.js';
-
+import {convertToIdentityObj} from '../util/WebUtil.js';
 import {changePrime} from './ChangePrime.js';
 import {makePlotImageAction} from './task/PlotImageTask.js';
 import {makePlotHiPSAction, makeChangeHiPSAction, makeImageOrHiPSAction} from './task/PlotHipsTask.js';
@@ -147,8 +147,6 @@ export const IMAGE_PLOT_KEY= 'allPlots';
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 
-
-
 /**
  *
  * @returns {VisRoot}
@@ -203,7 +201,6 @@ const initState= function() {
         wcsMatchCenterWP: null,
         wcsMatchType: false,
         mpwWcsPrimId: null,
-
         processedTiles: []
     };
 
@@ -239,8 +236,6 @@ const initState= function() {
 
 
 
-/*---------------------------- REDUCERS -----------------------------*/
-
 function reducers() {
     return {
         [IMAGE_PLOT_KEY]: reducer,
@@ -272,18 +267,16 @@ function actionCreators() {
 
 export default {
     reducers, actionCreators,
-    ANY_REPLOT,
-    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CHANGE_HIPS,
+    ANY_REPLOT, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CHANGE_HIPS,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     CHANGE_CENTER_OF_PROJECTION, ROTATE, FLIP, CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
-    STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
-    CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
+    STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, CHANGE_POINT_SELECTION, CHANGE_EXPANDED_MODE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER, GROUP_LOCKING,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
-    OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES
+    OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE
 };
 
 const KEY_ROOT= 'progress-';
@@ -338,9 +331,6 @@ export function dispatchGroupLocking(plotId,groupLocked) {
     flux.process({ type: GROUP_LOCKING, payload :{ plotId, groupLocked }});
 }
 
-
-//--------------
-
 /**
  * Change the primary plot for a multi image fits display
  * Note - function parameter is a single object
@@ -352,8 +342,6 @@ export function dispatchGroupLocking(plotId,groupLocked) {
 export function dispatchChangePrimePlot({plotId, primeIdx, dispatcher= flux.process}) {
     dispatcher({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
 }
-
-
 
 /**
  * Show image with new color table loaded
@@ -437,9 +425,6 @@ export function dispatchRotate({plotId, rotateType, angle=-1,
     dispatcher({ type: ROTATE, payload: { plotId, angle, rotateType, actionScope}});
 }
 
-
-
-
 /**
  * @summary Flip
  * Note - function parameter is a single object
@@ -490,7 +475,6 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
     dispatcher({type: PROCESS_SCROLL, payload: {plotId, scrollPt,disableBoundCheck} });
 }
 
-
 /**
  *
  * @param {Object}  p
@@ -501,8 +485,6 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
 export function dispatchChangeCenterOfProjection({plotId,centerProjPt, dispatcher= flux.process}) {
     dispatcher({type: CHANGE_CENTER_OF_PROJECTION, payload: {plotId, centerProjPt} });
 }
-
-
 
 /**
  * @summary recenter the images on the plot center or the ACTIVE_TARGET
@@ -722,7 +704,6 @@ export function dispatchOverlayPlotChangeAttributes({plotId,imageOverlayId, attr
 }
 
 
-
 /**
  * @summary Zoom a image
  * Note - function parameter is a single object
@@ -882,7 +863,6 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
     flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
 }
 
-
 /**
  *
  * @param plotId
@@ -912,19 +892,12 @@ const changePrimeActionCreator= (rawAction) => (dispatcher, getState) => changeP
 //======================================== Reducer =============================
 //======================================== Reducer =============================
 
-function convertToObj(a) {
-    return a.reduce( (obj, v) => {
-        obj[v]= v;
-        return obj;
-    },{});
-}
-
-const creationActions= convertToObj([
+const creationActions= convertToIdentityObj([
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE, PLOT_HIPS, PLOT_HIPS_FAIL, CROP_START,
     CROP_FAIL, CROP, PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, DELETE_OVERLAY_PLOT
 ]);
 
-const changeActions= convertToObj([
+const changeActions= convertToIdentityObj([
     ZOOM_LOCKING, ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
     CHANGE_PLOT_ATTRIBUTE, COLOR_CHANGE, COLOR_CHANGE_START, COLOR_CHANGE_FAIL, ROTATE, FLIP,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, RECENTER, GROUP_LOCKING,
@@ -932,10 +905,12 @@ const changeActions= convertToObj([
     CHANGE_HIPS, ADD_PROCESSED_TILES
 ]);
 
-const adminActions= convertToObj([
+const adminActions= convertToIdentityObj([
     API_TOOLS_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_EXPANDED_MODE, CHANGE_MOUSE_READOUT_MODE,
     EXPANDED_AUTO_PLAY, CHANGE_POINT_SELECTION, DELETE_PLOT_VIEW, WCS_MATCH,
 ]);
+
+
 
 /**
  *
