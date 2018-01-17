@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    public static final String PORT = "5000";
+    public static final String PORT = "5003";
     public static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
 
     //set default timeout to 180 seconds

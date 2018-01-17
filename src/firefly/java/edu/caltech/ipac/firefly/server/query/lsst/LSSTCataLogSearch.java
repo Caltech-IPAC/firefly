@@ -12,10 +12,11 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import java.util.List;
-import java.util.Locale;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import java.util.List;
+import java.util.Locale;
 
 
 /**
