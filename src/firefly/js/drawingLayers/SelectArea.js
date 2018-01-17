@@ -22,9 +22,6 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 
 import Enum from 'enum';
 
-
-
-
 const Corner = new Enum([ 'NE','NW','SE','SW' ]);
 export const SelectedShape = new Enum(['rect', 'circle']);
 
@@ -107,6 +104,7 @@ function creator(initPayload) {
                                      options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
     dl.handleColor = get(initPayload, 'handleColor');
     dl.selectedShape = get(initPayload, 'selectedShape', SelectedShape.rect.key);
+
     return dl;
 }
 
@@ -365,6 +363,7 @@ function makeSelectObj(firstPt,currentPt,cc, rotation, title, dl) {
 
     selectBox.selectedShape = get(dl, 'selectedShape');
     selectBox.handleColor = get(dl, 'handleColor');
+    selectBox.rotAngle = rotation ? (Math.PI * 2 - Math.PI * rotation/180) : 0.0;
     retAry.push(selectBox);
     if (rotation) {
         const textInfo= ShapeDataObj.makeText(fpAry[0], `Selection: ${title} image space`);

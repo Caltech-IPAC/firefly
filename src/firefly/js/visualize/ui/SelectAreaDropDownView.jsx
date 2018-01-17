@@ -4,7 +4,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Enum from 'enum';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {ToolbarButton,
         DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
@@ -13,7 +12,7 @@ import {dispatchCreateDrawLayer,
         getDlAry,
         dispatchAttachLayerToPlot,
         dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import SelectArea from '../../drawingLayers/SelectArea.js';
+import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
 
 import SELECTRECT_DD from 'html/images/icons-2014/28x28_Rect_DD.png';
 import SELECTCIRCLE_DD from 'html/images/icons-2014/28x28_Circle-ON_DD.png';
@@ -22,31 +21,43 @@ import SELECT_RECT from 'html/images/icons-2014/marquee.png';
 import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle.png';
 import SELECT_NONE from 'html/images/icons-2014/28x28_NoSelect.png';
 
-export const selectAreas = new Enum([ 'rect', 'circle', 'noselect']);
+const NONSELECT = 'nonselect';
+
 export const selectAreaInfo = {
-    [selectAreas.noselect.key] : {
+    [NONSELECT] : {
         typeId: '',
         iconId: SELECT_NONE,
         iconIdSelect: SELECT_NONE_DD,
         label: 'None',
         tip: 'turn off area selection'
     },
-    [selectAreas.rect.key] : {
+
+    [SelectedShape.rect.key] : {
         typeId: SelectArea.TYPE_ID,
         iconId: SELECT_RECT,
         iconIdSelect: SELECTRECT_DD,
         label: 'Rectangular Selection',
         tip: 'select rectangular area'
     },
-    [selectAreas.circle.key] : {
+    [SelectedShape.circle.key] : {
         typeId: SelectArea.TYPE_ID,
         iconId:  SELECT_CIRCLE,
         iconIdSelect: SELECTCIRCLE_DD,
         label: 'Elliptical Selection',
         tip: 'select elliptical area',
-        params: {selectedShape: selectAreas.circle.key, handleColor: 'white'}
+        params: {selectedShape: SelectedShape.circle.key, handleColor: 'white'}
     }
 };
+
+export function getSelectedAreaIcon(isSelected = true) {
+
+    if (!isSelected) return SELECT_NONE_DD;
+    const drawLayer = getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
+    return  (drawLayer && drawLayer.selectedShape) ?
+             selectAreaInfo[drawLayer.selectedShape].iconId : SELECT_RECT;
+
+}
+
 
 function updateSelect(pv, ddCB, value, preValue, allPlots=true) {
     const detatchPreSelectArea = (areaToDetach) => {
@@ -66,11 +77,11 @@ function updateSelect(pv, ddCB, value, preValue, allPlots=true) {
 
         if (!pv) return;
 
+        if (preValue && preValue !== NONSELECT) {
+            detatchPreSelectArea(preValue);
+        }
 
-        if (value !== selectAreas.noselect.key && value !== preValue) {
-            if (preValue !== selectAreas.noselect.key) {
-                detatchPreSelectArea(preValue);
-            }
+        if (value !== NONSELECT && (!preValue || value !== preValue)) {
             let dl = getDrawLayerByType(getDlAry(), selectAreaInfo[value].typeId);
 
             if (!dl) {
@@ -80,9 +91,6 @@ function updateSelect(pv, ddCB, value, preValue, allPlots=true) {
             if (!isDrawLayerAttached(dl, pv.plotId)) {
                dispatchAttachLayerToPlot(selectAreaInfo[value].typeId, pv.plotId, allPlots);
             }
-        }
-        if (value === selectAreas.noselect.key && value !== preValue) {
-            detatchPreSelectArea(preValue);
         }
     };
 }
@@ -94,7 +102,8 @@ export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSe
     const ddCB = dropDownCB ? dropDownCB : null;
 
     const selectAreaCommands = () => {
-        return [selectAreas.rect, selectAreas.circle, selectAreas.noselect].reduce((prev, s) => {
+
+        return [SelectedShape.rect, SelectedShape.circle].reduce((prev, s) => {
             const key = s.key;
             prev.push((
                 <ToolbarButton key={key}
@@ -108,6 +117,22 @@ export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSe
             prev.push(<DropDownVerticalSeparator key={sep++}/>);
             return prev;
         }, []);
+        /*
+        return [selectAreas.rect, selectAreas.circle, selectAreas.noselect].map((s) => {
+            const key = s.key;
+            const retv = (
+                <ToolbarButton key={key}
+                               text={selectAreaInfo[key].label}
+                               enabled={enabled}
+                               horizontal={false}
+                               icon={selectAreaInfo[key].iconId }
+                               tip={selectAreaInfo[key].tip}
+                               onClick={updateSelect(pv, ddCB, key, crtSelection, allPlots)}/>
+                <DropDownVerticalSeparator key={sep++}/>)
+            )
+            return prev;
+        }, []);
+        */
     };
 
 
@@ -122,6 +147,5 @@ SelectAreaDropDownView.propTypes= {
     plotView : PropTypes.object,
     allPlots: PropTypes.bool,
     dropDownCB: PropTypes.func,
-    crtSelection: PropTypes.string.isRequired
-
+    crtSelection: PropTypes.string
 };

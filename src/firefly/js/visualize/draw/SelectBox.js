@@ -86,8 +86,9 @@ const draw=  {
     toRegion(drawObj,plot, def) {
         const drawParams= makeDrawParams(drawObj, def);
         const {pt1,pt2,renderOptions}= drawObj;
+        const {rotAngle=0.0} = drawObj;
 
-        return toRegion(pt1, pt2, plot, drawParams, renderOptions);
+        return toRegion(pt1, pt2, plot, drawParams, renderOptions, rotAngle);
     }
 };
 
@@ -211,35 +212,45 @@ function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
 }
 
 
-function toRegion(pt1,pt2,plot, drawParams, renderOptions) {
-    var {innerBoxColor, color, style} = drawParams;
-    var dim, innerDim;
-    var lineWidth= (style===Style.STANDARD) ? 2 : 1;
-    var innerLineWidth = 2;
-    var screenW, screenH;
-    var centerPt;
-    var des;
-    var cc = CsysConverter.make(plot);
-    var retList  = [];
+function toRegion(pt1,pt2,plot, drawParams, renderOptions, rotAngle=0.0) {
+    const {innerBoxColor, color, style, selectedShape=SelectedShape.rect.key} = drawParams;
+    const lineWidth= (style===Style.STANDARD) ? 2 : 1;
+    const cc = CsysConverter.make(plot);
+    const innerLineWidth = 2;
+    let   des;
+    const retList  = [];
 
     // convert to image point, calculate dimension on image pixel
     // make selectbox display invariant on various screen pixel systems
-    var wpt1 = cc.getImageCoords(pt1);
-    var wpt2 = cc.getImageCoords(pt2);
+    const dev1 = cc.getDeviceCoords(pt1);
+    const dev3 = cc.getDeviceCoords(pt2);
+    const dev2 = makeDevicePt(dev3.x, dev1.y);
+    const imgPt1 = cc.getImageCoords(dev1);
+    const imgPt2 = cc.getImageCoords(dev2);
+    const imgPt3 = cc.getImageCoords(dev3);
 
-    screenW = Math.abs(wpt1.x - wpt2.x) * cc.zoomFactor;
-    screenH = Math.abs(wpt1.y - wpt2.y) * cc.zoomFactor;
+    const dist = (pt1, pt2) => {
+        return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y-pt2.y, 2));
+    };
+    const imgW = dist(imgPt1, imgPt2);
+    const imgH = dist(imgPt2, imgPt3);
+    const imgLineWidth = innerLineWidth/cc.zoomFactor;
 
-    centerPt =  makeImagePt((wpt1.x+wpt2.x)/2, (wpt1.y+wpt2.y)/2);
-    dim = RegionDimension(
-              RegionValue(screenW, RegionValueUnit.SCREEN_PIXEL),
-              RegionValue(screenH, RegionValueUnit.SCREEN_PIXEL));
-    innerDim =  RegionDimension(
-              RegionValue((screenW - (2 * innerLineWidth)), RegionValueUnit.SCREEN_PIXEL),
-              RegionValue((screenH - (2 * innerLineWidth)), RegionValueUnit.SCREEN_PIXEL));
+    const centerPt =  makeImagePt((imgPt1.x+imgPt3.x)/2, (imgPt1.y+imgPt3.y)/2);
+    const r1 = selectedShape === SelectedShape.rect.key ? imgW : imgW/2;
+    const r2 = selectedShape === SelectedShape.rect.key ? imgH : imgH/2;
+    const regionType = selectedShape === SelectedShape.rect.key ? RegionType.box : RegionType.ellipse;
+    const angle = rotAngle ? RegionValue(-rotAngle*180.0/Math.PI, RegionValueUnit.DEGREE) : RegionValue(0, RegionValueUnit.DEGREE);
+
+    const dim = RegionDimension(
+        RegionValue(r1, RegionValueUnit.IMAGE_PIXEL),
+        RegionValue(r2, RegionValueUnit.IMAGE_PIXEL));
+    const innerDim = RegionDimension(
+        RegionValue((r1 - (2 * imgLineWidth)), RegionValueUnit.IMAGE_PIXEL),
+        RegionValue((r2 - (2 * imgLineWidth)), RegionValueUnit.IMAGE_PIXEL));
 
     // box in color of 'innerBoxColor'
-    des = startRegionDes(RegionType.box, cc, [centerPt], [innerDim], null, true);
+    des = startRegionDes(regionType, cc, [centerPt], [innerDim], null, true, angle);
     if (des.length === 0) return [];
     des += setRegionPropertyDes(regionPropsList.COLOR, innerBoxColor) +
            setRegionPropertyDes(regionPropsList.LNWIDTH, innerLineWidth);
@@ -248,7 +259,7 @@ function toRegion(pt1,pt2,plot, drawParams, renderOptions) {
 
     // box in color of 'color'
 
-    des = startRegionDes(RegionType.box, cc, [centerPt], [dim], null, true);
+    des = startRegionDes(regionType, cc, [centerPt], [dim], null, true, angle);
     if (des.length === 0) return [];
     des += setRegionPropertyDes(regionPropsList.COLOR, color) +
            setRegionPropertyDes(regionPropsList.LNWIDTH, lineWidth);

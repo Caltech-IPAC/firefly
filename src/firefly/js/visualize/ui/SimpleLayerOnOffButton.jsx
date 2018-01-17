@@ -6,14 +6,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {getDrawLayerByType, isDrawLayerAttached, primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 import {dispatchCreateDrawLayer,
-     getDlAry,
-    dispatchAttachLayerToPlot,
-    dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+        getDlAry,
+        dispatchAttachLayerToPlot,
+        dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,
-                                            todo, isIconOn, onClick,allPlots= true }) {
+                                            todo, isIconOn, onClick, dropDown, allPlots= true }) {
     var enabled= primePlot(pv) ? true : false;
     var isOn= isIconOn;
     if (typeId && pv) {
@@ -21,15 +22,27 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
         isOn=  distLayer && isDrawLayerAttached(distLayer,pv.plotId);
     }
 
-    return (
-        <ToolbarButton icon={isOn ? iconOn : iconOff}
-                       tip={tip}
-                       enabled={enabled}
-                       horizontal={true}
-                       visible={visible}
-                       todo={todo}
-                       onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,typeId,allPlots,todo)}/>
-    );
+    if (dropDown && !isOn) {
+        return (
+            <DropDownToolbarButton  icon={iconOff}
+                                    tip='Select an area for cropping or statistics'
+                                    enabled={enabled}
+                                    horizontal={true}
+                                    visible={visible}
+                                    dropDown={dropDown} />
+        );
+    } else {
+
+        return (
+            <ToolbarButton icon={isOn ? iconOn : iconOff}
+                           tip={tip}
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={visible}
+                           todo={todo}
+                           onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,typeId,allPlots,todo)}/>
+        );
+    }
 }
 
 SimpleLayerOnOffButton.propTypes= {
@@ -42,7 +55,8 @@ SimpleLayerOnOffButton.propTypes= {
     iconOff : PropTypes.string,
     onClick : PropTypes.func,
     isIconOn : PropTypes.bool,
-    allPlots: PropTypes.bool
+    allPlots: PropTypes.bool,
+    dropDown: PropTypes.object
 };
 
 SimpleLayerOnOffButton.defaultProps= {

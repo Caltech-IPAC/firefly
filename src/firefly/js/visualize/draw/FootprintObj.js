@@ -268,17 +268,18 @@ function drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, 
 function toRegion(footprintAry, plot, drawParams) {
 	const {color, lineWidth} = drawParams;
 	const cc = CsysConverter.make(plot);
-	let des;
 
-	const wpAry = footprintAry.map( (footprint) => cc.getWorldCoords(footprint) );
-	des = startRegionDes(RegionType.polygon, cc, wpAry, null, null);
-	if (isEmpty(des)) return [];
+	return footprintAry.map( (footprint) => {
+				const wpAry = footprint.map((onePoint) => cc.getWorldCoords(onePoint));
 
-	des +=  setRegionPropertyDes(regionPropsList.COLOR, color) +
-			setRegionPropertyDes(regionPropsList.LNWIDTH, lineWidth);
-	des = endRegionDes(des);
+				let oneDes = startRegionDes(RegionType.polygon, cc, wpAry, null, null);
+				if (isEmpty(oneDes)) return '';
 
-	return [des];
+				oneDes += setRegionPropertyDes(regionPropsList.COLOR, color) +
+					      setRegionPropertyDes(regionPropsList.LNWIDTH, lineWidth);
+				oneDes = endRegionDes(oneDes);
+				return oneDes;
+			}).filter((oneDes) => !oneDes);
 }
 
 function translateTo(footprintAry, plot, apt) {
