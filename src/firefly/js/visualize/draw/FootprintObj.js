@@ -270,8 +270,16 @@ function toRegion(footprintAry, plot, drawParams) {
 	const cc = CsysConverter.make(plot);
 	let des;
 
-	const wpAry = footprintAry.map( (footprint) => cc.getWorldCoords(footprint) );
-	des = startRegionDes(RegionType.polygon, cc, wpAry, null, null);
+	//DMfootprintAry is array of array
+	//const wpAry = footprintAry.( (footprint) => cc.getWorldCoords(footprint) );
+	var wpAry=[];
+    footprintAry.forEach( (footprint) => {
+        wpAry.push(footprint.map((wp) => cc.getWorldCoords(wp)));
+    });
+
+
+
+    des = startRegionDes(RegionType.polygon, cc, wpAry, null, null);
 	if (isEmpty(des)) return [];
 
 	des +=  setRegionPropertyDes(regionPropsList.COLOR, color) +
