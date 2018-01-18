@@ -68,6 +68,7 @@ import nom.tam.util.Cursor;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.Ellipse2D;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -738,8 +739,19 @@ public class VisServerOps {
 
     }
 
+    // create an ellipse containing the information of ellipse center and length of major and minor axis
+    private static Ellipse2D.Double makeRotatedEllipse(double rAngle, ImagePt pt1, ImagePt pt2, ImagePt pt3) {
+        double a = Math.sqrt(Math.pow((pt1.getX() - pt2.getX()), 2) + Math.pow((pt1.getY() - pt2.getY()), 2));
+        double b = Math.sqrt(Math.pow((pt2.getX() - pt3.getX()), 2) + Math.pow((pt2.getY() - pt3.getY()), 2));
+        double x_c = (pt1.getX() + pt3.getX())/2;
+        double y_c = (pt1.getY() + pt3.getY())/2;
 
-    public static WebPlotResult getAreaStatistics(PlotState state, ImagePt pt1, ImagePt pt2, ImagePt pt3, ImagePt pt4) {
+        Ellipse2D.Double rEllipse = new Ellipse2D.Double(x_c - a/2, y_c - b/2, a, b);
+
+        return rEllipse;
+    }
+
+    public static WebPlotResult getAreaStatistics(PlotState state, ImagePt pt1, ImagePt pt2, ImagePt pt3, ImagePt pt4, String areaShape, double rotateAngle) {
 
 
         try {
@@ -752,15 +764,33 @@ public class VisServerOps {
             for (Band band : state.getBands()) {
                 // modeled after AreaStatisticsUtil.java lines:654 - 721
                 Shape shape;
-                GeneralPath genPath = new GeneralPath();
-                genPath.moveTo((float) pt1.getX(), (float) pt1.getY());
 
-                genPath.lineTo((float) pt4.getX(), (float) pt4.getY());
-                genPath.lineTo((float) pt3.getX(), (float) pt3.getY());
-                genPath.lineTo((float) pt2.getX(), (float) pt2.getY());
-                genPath.lineTo((float) pt1.getX(), (float) pt1.getY());
+                if (areaShape.equals("circle")) {
+                    double x_1 = Math.min(pt1.getX(), pt3.getX());
+                    double x_2 = Math.max(pt1.getX(), pt3.getX());
+                    double y_1 = Math.min(pt1.getY(), pt3.getY());
+                    double y_2 = Math.max(pt1.getY(), pt3.getY());
 
-                shape = genPath;
+                    Ellipse2D.Double ellipseArea;
+
+                    if (rotateAngle != 0.0) {
+                        ellipseArea = makeRotatedEllipse(rotateAngle, pt1, pt2, pt3);
+                    } else {
+                        ellipseArea = new Ellipse2D.Double(x_1, y_1, (x_2 - x_1), (y_2 - y_1));
+                    }
+                    shape = ellipseArea;
+
+                } else { // rectangle
+                    GeneralPath genPath = new GeneralPath();
+                    genPath.moveTo((float) pt1.getX(), (float) pt1.getY());
+
+                    genPath.lineTo((float) pt4.getX(), (float) pt4.getY());
+                    genPath.lineTo((float) pt3.getX(), (float) pt3.getY());
+                    genPath.lineTo((float) pt2.getX(), (float) pt2.getY());
+                    genPath.lineTo((float) pt1.getX(), (float) pt1.getY());
+
+                    shape = genPath;
+                }
 
                 Rectangle2D boundingBox = shape.getBounds2D();
 
@@ -786,7 +816,9 @@ public class VisServerOps {
                 Rectangle2D.Double newBoundingBox = new Rectangle2D.Double(minX, minY, (maxX - minX), (maxY - minY));
                 //what to do about selected band?
                 HashMap<Metrics, Metric> metrics = AreaStatisticsUtil.getStatisticMetrics(plot, ctx.getFitsReadGroup(),
-                        band, shape, newBoundingBox);
+                                                                                          band, shape, newBoundingBox,
+                                                                                          rotateAngle);
+
 
                 String html;
 

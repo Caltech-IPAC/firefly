@@ -163,7 +163,7 @@ export default {
     makeReducer,
     dispatchCreateDrawLayer,
     dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
-    dispatchAddRegionEntry, dispatchRemoveRegionEntry,
+    dispatchAddRegionEntry, dispatchRemoveRegionEntry
 };
 
 

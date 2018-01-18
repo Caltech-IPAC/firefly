@@ -11,7 +11,7 @@ import {Style} from './DrawingDef.js';
 import CsysConverter from '../CsysConverter.js';
 import {RegionValue, RegionDimension, RegionValueUnit, RegionType, regionPropsList} from '../region/Region.js';
 import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
-
+import {SelectedShape} from '../../drawingLayers/SelectArea.js';
 
 const SELECT_BOX= 'SelectBox';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -86,8 +86,9 @@ const draw=  {
     toRegion(drawObj,plot, def) {
         const drawParams= makeDrawParams(drawObj, def);
         const {pt1,pt2,renderOptions}= drawObj;
+        const {rotAngle=0.0} = drawObj;
 
-        return toRegion(pt1, pt2, plot, drawParams, renderOptions);
+        return toRegion(pt1, pt2, plot, drawParams, renderOptions, rotAngle);
     }
 };
 
@@ -105,10 +106,13 @@ export default {makeSelectBox,SELECT_BOX,Style,draw};
 function makeDrawParams(selectBox,def) {
     const style= selectBox.style || def.style || DEFAULT_STYLE;
     const innerBoxColor= selectBox.innderBoxColor || def.innderBoxColor || 'white';
+    const {selectedShape, handleColor} = selectBox;
     return {
         color: DrawUtil.getColor(selectBox.color,def.color),
         innerBoxColor,
-        style
+        style,
+        selectedShape,
+        handleColor
     };
 }
 
@@ -174,59 +178,80 @@ function crossesDisplay(plot, devPt1, devPt2) {
  */
 function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
 
-    const {style,color,innerBoxColor}= drawParams;
+    const   {style,color,innerBoxColor, selectedShape=SelectedShape.rect.key}= drawParams;
+    const   {handleColor=color} = drawParams;
     const lineWidth= (style===Style.STANDARD) ? 2 : 1;
 
-    const sWidth= pt2.x-pt0.x;
-    const sHeight= pt2.y-pt0.y;
-    DrawUtil.strokeRec(ctx,color, lineWidth, pt0.x, pt0.y, sWidth, sHeight);
+    const sWidth= Math.abs(pt2.x-pt0.x);
+    const sHeight= Math.abs(pt2.y-pt0.y);
 
-    if (style===Style.HANDLED) {
-        DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+    if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
+        DrawUtil.strokeRec(ctx, color, lineWidth, pt0.x, pt0.y, sWidth, sHeight);
+    } else if (selectedShape === SelectedShape.circle.key) {
+        DrawUtil.drawEllipse(ctx, (pt2.x + pt0.x)/2, (pt0.y+pt2.y)/2, color, lineWidth, sWidth/2, sHeight/2, 0);
+    }
+
+    if (style === Style.HANDLED) {
+
+        if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
+            DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+        } else {
+            DrawUtil.drawInnerCircleWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+        }
+
         const pt1= makeDevicePt(pt0.x+sWidth,pt0.y);
         const pt3= makeDevicePt(pt0.x,pt0.y+sHeight);
 
         // const devPt1=  todo
-
-        DrawUtil.beginPath(ctx,color,3,renderOptions);
-        DrawUtil.drawHandledLine(ctx, color, pt0.x, pt0.y, pt1.x, pt1.y, true);
-        DrawUtil.drawHandledLine(ctx, color, pt1.x, pt1.y, pt2.x, pt2.y, true);
-        DrawUtil.drawHandledLine(ctx, color, pt2.x, pt2.y, pt3.x, pt3.y, true);
-        DrawUtil.drawHandledLine(ctx, color, pt3.x, pt3.y, pt0.x, pt0.y, true);
+        DrawUtil.beginPath(ctx, handleColor, 3, renderOptions);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt0.x, pt0.y, pt1.x, pt1.y, true);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt1.x, pt1.y, pt2.x, pt2.y, true);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt2.x, pt2.y, pt3.x, pt3.y, true);
+        DrawUtil.drawHandledLine(ctx, handleColor, pt3.x, pt3.y, pt0.x, pt0.y, true);
         DrawUtil.stroke(ctx);
     }
 }
 
 
-function toRegion(pt1,pt2,plot, drawParams, renderOptions) {
-    var {innerBoxColor, color, style} = drawParams;
-    var dim, innerDim;
-    var lineWidth= (style===Style.STANDARD) ? 2 : 1;
-    var innerLineWidth = 2;
-    var screenW, screenH;
-    var centerPt;
-    var des;
-    var cc = CsysConverter.make(plot);
-    var retList  = [];
+function toRegion(pt1,pt2,plot, drawParams, renderOptions, rotAngle=0.0) {
+    const {innerBoxColor, color, style, selectedShape=SelectedShape.rect.key} = drawParams;
+    const lineWidth= (style===Style.STANDARD) ? 2 : 1;
+    const cc = CsysConverter.make(plot);
+    const innerLineWidth = 2;
+    let   des;
+    const retList  = [];
 
     // convert to image point, calculate dimension on image pixel
     // make selectbox display invariant on various screen pixel systems
-    var wpt1 = cc.getImageCoords(pt1);
-    var wpt2 = cc.getImageCoords(pt2);
+    const dev1 = cc.getDeviceCoords(pt1);
+    const dev3 = cc.getDeviceCoords(pt2);
+    const dev2 = makeDevicePt(dev3.x, dev1.y);
+    const imgPt1 = cc.getImageCoords(dev1);
+    const imgPt2 = cc.getImageCoords(dev2);
+    const imgPt3 = cc.getImageCoords(dev3);
 
-    screenW = Math.abs(wpt1.x - wpt2.x) * cc.zoomFactor;
-    screenH = Math.abs(wpt1.y - wpt2.y) * cc.zoomFactor;
+    const dist = (pt1, pt2) => {
+        return Math.sqrt(Math.pow(pt1.x - pt2.x, 2) + Math.pow(pt1.y-pt2.y, 2));
+    };
+    const imgW = dist(imgPt1, imgPt2);
+    const imgH = dist(imgPt2, imgPt3);
+    const imgLineWidth = innerLineWidth/cc.zoomFactor;
 
-    centerPt =  makeImagePt((wpt1.x+wpt2.x)/2, (wpt1.y+wpt2.y)/2);
-    dim = RegionDimension(
-              RegionValue(screenW, RegionValueUnit.SCREEN_PIXEL),
-              RegionValue(screenH, RegionValueUnit.SCREEN_PIXEL));
-    innerDim =  RegionDimension(
-              RegionValue((screenW - (2 * innerLineWidth)), RegionValueUnit.SCREEN_PIXEL),
-              RegionValue((screenH - (2 * innerLineWidth)), RegionValueUnit.SCREEN_PIXEL));
+    const centerPt =  makeImagePt((imgPt1.x+imgPt3.x)/2, (imgPt1.y+imgPt3.y)/2);
+    const r1 = selectedShape === SelectedShape.rect.key ? imgW : imgW/2;
+    const r2 = selectedShape === SelectedShape.rect.key ? imgH : imgH/2;
+    const regionType = selectedShape === SelectedShape.rect.key ? RegionType.box : RegionType.ellipse;
+    const angle = rotAngle ? RegionValue(-rotAngle*180.0/Math.PI, RegionValueUnit.DEGREE) : RegionValue(0, RegionValueUnit.DEGREE);
+
+    const dim = RegionDimension(
+        RegionValue(r1, RegionValueUnit.IMAGE_PIXEL),
+        RegionValue(r2, RegionValueUnit.IMAGE_PIXEL));
+    const innerDim = RegionDimension(
+        RegionValue((r1 - (2 * imgLineWidth)), RegionValueUnit.IMAGE_PIXEL),
+        RegionValue((r2 - (2 * imgLineWidth)), RegionValueUnit.IMAGE_PIXEL));
 
     // box in color of 'innerBoxColor'
-    des = startRegionDes(RegionType.box, cc, [centerPt], [innerDim], null, true);
+    des = startRegionDes(regionType, cc, [centerPt], [innerDim], null, true, angle);
     if (des.length === 0) return [];
     des += setRegionPropertyDes(regionPropsList.COLOR, innerBoxColor) +
            setRegionPropertyDes(regionPropsList.LNWIDTH, innerLineWidth);
@@ -235,7 +260,7 @@ function toRegion(pt1,pt2,plot, drawParams, renderOptions) {
 
     // box in color of 'color'
 
-    des = startRegionDes(RegionType.box, cc, [centerPt], [dim], null, true);
+    des = startRegionDes(regionType, cc, [centerPt], [dim], null, true, angle);
     if (des.length === 0) return [];
     des += setRegionPropertyDes(regionPropsList.COLOR, color) +
            setRegionPropertyDes(regionPropsList.LNWIDTH, lineWidth);

@@ -38,7 +38,7 @@ import {DownloadOptionsDialog, fileNameValidator, getTypeData, validateFileName,
 import {isValidWSFolder, WS_SERVER_PARAM, getWorkspacePath, isWsFolder, dispatchWorkspaceUpdate} from '../visualize/WorkspaceCntlr.js';
 import {doDownloadWorkspace, workspacePopupMsg} from './WorkspaceViewer.jsx';
 import {ServerParams} from '../data/ServerParams.js';
-import {INFO_POPUP} from './PopupUtil.jsx';
+import {INFO_POPUP, showInfoPopup} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
@@ -620,12 +620,16 @@ function resultsSuccess(request, plotView, popupId) {
     } else if (ext && ext.toLowerCase() === 'reg') {
 
         saveDS9RegionFile(getRegionsDes(false)).then( (result ) => {
-            const rgFile = get(result, 'RegionFileName');
+            if (result.success) {
+                const rgFile = get(result, 'RegionFileName');
 
-            if (rgFile) {
-                const param={file: rgFile, return:fileName, log: true, fileLocation,...wsCmd};
+                if (rgFile) {
+                    const param = {file: rgFile, return: fileName, log: true, fileLocation, ...wsCmd};
 
-                downloadFile(param);
+                    downloadFile(param);
+                }
+            } else {
+                showInfoPopup(get(result, 'briefFailReason', 'download region file error'), 'region file download');
             }
         }, () => {
             console.log('error');

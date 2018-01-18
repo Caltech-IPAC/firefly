@@ -7,7 +7,7 @@
  */
 
 import Enum from 'enum';
-import {has, isNil, get, omit} from 'lodash';
+import {has, isNil} from 'lodash';
 
 export const RegionType = new Enum(['circle', 'annulus', 'ellipse', 'ellipseannulus', 'box',
                                     'boxannulus', 'line', 'point', 'polygon', 'text', 'message',
@@ -45,6 +45,7 @@ var cloneArg = (arg) => Object.keys(arg).reduce((prev, key) =>
  * @param {Object} type  RegionType
  * @param {Object} options   RegionOptions, properties of region
  * @param {boolean} highlighted bool
+ * @param {string} desc
  * @param {string} message parsing message
  * @function makeRegion
  */
@@ -281,8 +282,8 @@ export function makeRegionText(worldPoint, options, highlighted) {
 /**
  * @summary create region on box
  * @param {Object} worldPoint
- * @param {Object} angle RegionValue
  * @param {Object} dim   ReginDimension containing width and height
+ * @param {Object} angle RegionValue
  * @param {Object} options
  * @param {boolean} highlighted
  * @returns {Object}
@@ -294,8 +295,8 @@ export function makeRegionBox(worldPoint, dim, angle, options, highlighted) {
 /**
  * @summary create region on boxannulus
  * @param {Object} worldPoint
- * @param {Object} angle  RegionValue
  * @param {Object[]} dimAry array of RegionDimension containing width and height
+ * @param {Object} angle  RegionValue
  * @param {Object} options
  * @param {boolean} highlighted
  * @returns {Object}
@@ -331,8 +332,8 @@ export function makeRegionCircle(worldPoint, radius,  options, highlighted) {
 /**
  * @summary create region on ellipse
  * @param {Object} worldPoint
- * @param {Object} angle  RegionValue
  * @param {Object} dim    RegionDimension containing radius 1 and radius 2
+ * @param {Object} angle  RegionValue
  * @param {Object} options
  * @param {boolean} highlighted
  * @returns {Object}
@@ -346,8 +347,8 @@ export function makeRegionEllipse(worldPoint, dim, angle, options, highlighted) 
 /**
  * @summary create region on ellipseannulus
  * @param {Object} worldPoint
- * @param {Object} angle  RegionValue
  * @param {Object[]} dimAry array of RegionDimension containing radius 1 and radius  2
+ * @param {Object} angle  RegionValue
  * @param {Object} options
  * @param {boolean} highlighted
  * @returns {Object}

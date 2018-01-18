@@ -22,11 +22,8 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 
 import Enum from 'enum';
 
-
-
-
 const Corner = new Enum([ 'NE','NW','SE','SW' ]);
-
+export const SelectedShape = new Enum(['rect', 'circle']);
 
 
 const selHelpText=
@@ -67,17 +64,17 @@ export function selectAreaEndActionCreator(rawAction) {
             const sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
             dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
             // const imBoundSel= pv.rotation ? getImageBoundsSelection(sel,CsysConverter.make(plot)) : sel;
-            const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot));
+            const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), drawLayer.selectedShape, pv.rotation);
             dispatchAttributeChange(plotId,true,PlotAttribute.IMAGE_BOUNDS_SELECTION, imBoundSel,true);
         }
     };
 }
 
 /**
- *
+ * @param initPayload containing the setting for handle color, selected shape like 'rectangle', 'circle'
  * @return {Function}
  */
-function creator() {
+function creator(initPayload) {
 
     const drawingDef= makeDrawingDef('black');
     const pairs= {
@@ -103,8 +100,12 @@ function creator() {
         canUserDelete: true,
         destroyWhenAllDetached: true
     };
-    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Selection Tool',
+    const dl = DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Selection Tool',
                                      options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
+    dl.handleColor = get(initPayload, 'handleColor');
+    dl.selectedShape = get(initPayload, 'selectedShape', SelectedShape.rect.key);
+
+    return dl;
 }
 
 function onDetach(drawLayer,action) {
@@ -266,7 +267,7 @@ function drag(drawLayer,action) {
     const pv= getPlotViewById(visRoot(),plotId);
     const plot= primePlot(pv);
     if (!plot) return;
-    const drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot), pv.rotation, plot.title);
+    const drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot), pv.rotation, plot.title, drawLayer);
     const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
     return {currentPt:imagePt,
             drawData:{data:drawSel},
@@ -331,15 +332,15 @@ function findClosestCorner(cc,ptAry, spt, testDist) {
 
 
 /**
- *
  * @param {object} firstPt
  * @param {object} currentPt
  * @param {CysConverter} cc
- * @param {boolean} rotated is plot rotated
- * @param {string} plot title
+ * @param {boolean} rotation is plot rotated
+ * @param {string} title
+ * @param {object} dl
  * @return {Array}
  */
-function makeSelectObj(firstPt,currentPt,cc, rotated, title) {
+function makeSelectObj(firstPt,currentPt,cc, rotation, title, dl) {
     const fallbackAry= [firstPt,currentPt];
 
     const world= cc.projection.isSpecified();
@@ -347,7 +348,7 @@ function makeSelectObj(firstPt,currentPt,cc, rotated, title) {
 
     if (!twoPtAry[0] || !twoPtAry[1]) twoPtAry= fallbackAry;
 
-    const {x,y,w,h}= makeImageBoundingBox({pt0:firstPt,pt1:currentPt},cc);
+    const {x,y,w,h}= makeImageBoundingBox({pt0:firstPt,pt1:currentPt},cc, dl.selectedShape, rotation);
     const fpScreenAry= [ makeScreenPt(x,y), makeScreenPt(x+w,y), makeScreenPt(x+w,y+h), makeScreenPt(x,y+h) ];
 
     const fpAry= fpScreenAry.map( (p) => world ? cc.getWorldCoords(p) : cc.getImageCoords(p));
@@ -356,9 +357,15 @@ function makeSelectObj(firstPt,currentPt,cc, rotated, title) {
     fpObj.renderOptions.lineDash= [8,5,2,5];
 
     const retAry=  [];
-    if (rotated) retAry.push(fpObj);
-    retAry.push(SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], Style.HANDLED));
-    if (rotated) {
+    if (rotation) retAry.push(fpObj);
+
+    const selectBox = SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], Style.HANDLED);
+
+    selectBox.selectedShape = get(dl, 'selectedShape');
+    selectBox.handleColor = get(dl, 'handleColor');
+    selectBox.rotAngle = rotation ? (Math.PI * 2 - Math.PI * rotation/180) : 0.0;
+    retAry.push(selectBox);
+    if (rotation) {
         const textInfo= ShapeDataObj.makeText(fpAry[0], `Selection: ${title} image space`);
         textInfo.color= 'yellow';
         retAry.push(textInfo);
@@ -366,8 +373,8 @@ function makeSelectObj(firstPt,currentPt,cc, rotated, title) {
     return retAry;
 }
 
-function getImageBoundsSelection(sel,cc) {
-    const {x,y,w,h}=  makeImageBoundingBox(sel,cc);
+function getImageBoundsSelection(sel,cc, shape, rotation) {
+    const {x, y, w, h} = makeImageBoundingBox(sel,cc, shape, rotation);
 
     const sp0= makeScreenPt(x,y);
     const sp1= makeScreenPt(x+w,y+h);
@@ -378,26 +385,64 @@ function getImageBoundsSelection(sel,cc) {
 
 }
 
-function makeImageBoundingBox(sel,cc) {
+function modScreenPt(cc, p) {
+    const {width,height}= cc.screenSize;
+
+    let {x,y}= p;
+    x= x<0 ? 0 : x;
+    x= x> width-1 ? width-1 : x;
+    y= y<0 ? 0 : y;
+    y= y> height-1 ? height-1 : y;
+
+    return makeScreenPt(x, y);
+}
+
+function makeImageBoundingBox(sel,cc, shape, rotation) {
     const {pt0,pt1}= sel;
     const dev0= cc.getDeviceCoords(pt0);
     const dev1= cc.getDeviceCoords(pt1);
+
+    if (shape === SelectedShape.circle.key) {
+        return getEllipseBoundingBox([dev0, dev1], cc, rotation);
+    }
+
     const screenPtVersion= [
         cc.getScreenCoords(dev0),
         cc.getScreenCoords(makeDevicePt(dev0.x,dev1.y)),
         cc.getScreenCoords(dev1),
         cc.getScreenCoords(makeDevicePt(dev1.x,dev0.y))
     ];
-    const {width,height}= cc.screenSize;
 
     const modScreenPtVersion= screenPtVersion.map ( (p) => {
-        let {x,y}= p;
-        x= x<0 ? 0 : x;
-        x= x> width-1 ? width-1 : x;
-        y= y<0 ? 0 : y;
-        y= y> height-1 ? height-1 : y;
-
-        return makeScreenPt( x,y );
+         return modScreenPt(cc, p);
     } );
     return getBoundingBox(modScreenPtVersion);
+}
+
+function getEllipseBoundingBox(devPts, cc, rotation ) {
+    const sortX = devPts.map((pt) => pt.x).sort((v1, v2) => v1-v2);
+    const sortY = devPts.map((pt) => pt.y).sort((v1, v2) => v1-v2);
+    const centerDev =  makeDevicePt((devPts[0].x + devPts[1].x)/2, (devPts[0].y + devPts[1].y)/2);
+
+    const r1_2 = Math.pow(Math.max((sortX[sortX.length-1] - sortX[0])/2, 1), 2);
+    const r2_2 = Math.pow(Math.max((sortY[sortY.length-1] - sortY[0])/2, 1), 2);
+    const angle = Math.PI*2 - (rotation*Math.PI/180);
+    const cos_2 = Math.cos(angle) * Math.cos(angle);
+    const sin_2 = Math.sin(angle) * Math.sin(angle);
+
+    const x = Math.sqrt((r1_2 * cos_2) + (r2_2 * sin_2));  // find x & y where the denominator & numerator of dy/dx is 0
+    const y = Math.sqrt((r1_2 * sin_2) + (r2_2 * cos_2));  // after ellipse is rotated by 'angle'
+
+    const tangentScreenPts = [makeDevicePt(x, y),
+                              makeDevicePt(x, -y),
+                              makeDevicePt(-x, -y),
+                              makeDevicePt(-x, y)].map((p) => {
+        const o_x = Math.cos(-angle) * p.x - Math.sin(-angle) * p.y;   // rotate back
+        const o_y = Math.sin(-angle) * p.x + Math.cos(-angle) * p.y;
+
+        return modScreenPt(cc, cc.getScreenCoords(makeDevicePt(o_x + centerDev.x, o_y + centerDev.y)));
+    });
+
+    return getBoundingBox(tangentScreenPts);
+
 }

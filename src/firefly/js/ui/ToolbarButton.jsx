@@ -144,17 +144,30 @@ export class ToolbarButton extends PureComponent {
 
         }
         else {
-            s.flex= '0 0 auto';
             Object.assign(s,additionalStyle);
-            return (
-                <div title={tip} style={s} className={cName}
-                     ref={this.setupRef}
-                     onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
-                    {icon ? <img style={imageStyle} src={icon} />  : <div className={textCName}>{text}</div>}
-                    {badgeCount ? makeBadge(badgeCount) : ''}
-                    {todo?<div style={todoStyle}>ToDo</div>:false}
-                </div>
-            );
+            if (icon&&text) {  // button in vertical style with both icon and text
+                return (
+                    <div title={tip} style={{display: 'flex', alignItems: 'center'}} className={cName}
+                         ref={this.setupRef}
+                         onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
+                        <img style={imageStyle} src={icon}/>
+                        <span>{text}</span>
+                        {badgeCount ? makeBadge(badgeCount) : ''}
+                        {todo ? <div style={todoStyle}>ToDo</div> : false}
+                    </div>
+                );
+            } else {
+                s.flex= '0 0 auto';
+                return (
+                    <div title={tip} style={s} className={cName}
+                         ref={this.setupRef}
+                         onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
+                        {icon ? <img style={imageStyle} src={icon}/> : <div className={textCName}>{text}</div>}
+                        {badgeCount ? makeBadge(badgeCount) : ''}
+                        {todo?<div style={todoStyle}>ToDo</div> : false}
+                    </div>
+                );
+            }
         }
     }
 }

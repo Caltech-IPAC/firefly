@@ -38,7 +38,7 @@ import {showImageSelPanel} from './ImageSearchPanelV2.jsx';
 import {showMaskDialog} from './MaskAddPanel.jsx';
 import {isImage,isHiPS} from '../WebPlot.js';
 import {HiPSPropertyView} from './HiPSPropertyView.jsx';
-
+import {SelectAreaDropDownView, getSelectedAreaIcon} from './SelectAreaDropDownView.jsx';
 
 //===================================================
 //--------------- Icons --------------------------------
@@ -48,8 +48,6 @@ import {HiPSPropertyView} from './HiPSPropertyView.jsx';
 import LAYER_ICON from 'html/images/icons-2014/TurnOnLayers.png';
 import DIST_ON from 'html/images/icons-2014/Measurement-ON.png';
 import DIST_OFF from 'html/images/icons-2014/Measurement.png';
-import SELECT_OFF from 'html/images/icons-2014/Marquee.png';
-import SELECT_ON from 'html/images/icons-2014/Marquee-ON.png';
 import GRID_OFF from 'html/images/icons-2014/GreenGrid.png';
 import GRID_ON from 'html/images/icons-2014/GreenGrid-ON.png';
 import HIPS_GRID_OFF from 'html/images/icons-2014/HiPSGrid.png';
@@ -75,7 +73,6 @@ import NEW_IMAGE from 'html/images/icons-2014/28x28_FITS_NewImage.png';
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
 import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
-
 
 export const VIS_TOOLBAR_HEIGHT=34;
 export const VIS_TOOLBAR_V_HEIGHT=48;
@@ -174,7 +171,6 @@ export class VisToolbarView extends PureComponent {
         const plotGroupAry= visRoot.plotGroupAry;
 
         const mi= pv ? pv.menuItemKeys : getDefMenuItemKeys();
-
         const enabled= Boolean(plot);
 
         return (
@@ -254,9 +250,10 @@ export class VisToolbarView extends PureComponent {
                 <SimpleLayerOnOffButton plotView={pv}
                                         typeId={SelectArea.TYPE_ID}
                                         tip='Select an area for cropping or statistics'
-                                        iconOn={SELECT_ON}
-                                        iconOff={SELECT_OFF}
-                                        visible={mi.selectArea} />
+                                        iconOn={getSelectedAreaIcon()}
+                                        iconOff={getSelectedAreaIcon(false)}
+                                        visible={mi.selectArea}
+                                        dropDown={<SelectAreaDropDownView plotView={pv} />} />
                 <SimpleLayerOnOffButton plotView={pv}
                                         typeId={DistanceTool.TYPE_ID}
                                         tip='Select, then click and drag to measure a distance on the image'
