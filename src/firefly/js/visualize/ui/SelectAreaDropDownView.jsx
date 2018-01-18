@@ -14,8 +14,10 @@ import {dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
 
-import SELECT_RECT from 'html/images/icons-2014/Marquee-ON.png';
-import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle-ON.png';
+import SELECT_RECT from 'html/images/icons-2014/Marquee.png';
+import SELECT_RECT_ON from 'html/images/icons-2014/Marquee-ON.png';
+import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle.png';
+import SELECT_CIRCLE_ON from 'html/images/icons-2014/28x28_Circle-ON-2.png';
 import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
 
 const NONSELECT = 'nonselect';
@@ -30,13 +32,15 @@ export const selectAreaInfo = {
 
     [SelectedShape.rect.key] : {
         typeId: SelectArea.TYPE_ID,
-        iconId: SELECT_RECT,
+        iconId: SELECT_RECT_ON,
+        iconDropDown: SELECT_RECT,
         label: 'Rectangular Selection',
         tip: 'select rectangular area'
     },
     [SelectedShape.circle.key] : {
         typeId: SelectArea.TYPE_ID,
-        iconId:  SELECT_CIRCLE,
+        iconId:  SELECT_CIRCLE_ON,
+        iconDropDown:  SELECT_CIRCLE,
         label: 'Elliptical Selection',
         tip: 'select elliptical area',
         params: {selectedShape: SelectedShape.circle.key, handleColor: 'white'}
@@ -104,7 +108,7 @@ export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSe
                                text={selectAreaInfo[key].label}
                                enabled={enabled}
                                horizontal={false}
-                               icon={selectAreaInfo[key].iconId }
+                               icon={selectAreaInfo[key].iconDropDown }
                                tip={selectAreaInfo[key].tip}
                                onClick={updateSelect(pv, ddCB, key, crtSelection, allPlots)}/>
             ));
