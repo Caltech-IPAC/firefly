@@ -279,7 +279,7 @@ function toRegion(footprintAry, plot, drawParams) {
 					      setRegionPropertyDes(regionPropsList.LNWIDTH, lineWidth);
 				oneDes = endRegionDes(oneDes);
 				return oneDes;
-			}).filter((oneDes) => !oneDes);
+			}).filter((oneDes) => oneDes);
 }
 
 function translateTo(footprintAry, plot, apt) {
