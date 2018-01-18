@@ -53,6 +53,11 @@ const projTypes= {
 	},
     [TPV] : {
         name: 'TPV',
+<<<<<<< HEAD
+=======
+        // fwdProject: GnomonicProjection.fwdProject,
+        // revProject: GnomonicProjection.revProject,
+>>>>>>> dm-12598: adding tpv projection (IRSA-1009 is gwt counterpart)
         fwdProject: TpvProjection.fwdProject,
         revProject: TpvProjection.revProject,
         implemented : true,

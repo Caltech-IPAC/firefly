@@ -93,7 +93,7 @@ public class ImageHeader implements Serializable
 	this(header, 0L, 0);
     }
 
-    public ImageHeader(Header header, long HDU_offset, int _plane_number) 
+    public ImageHeader(Header header, long HDU_offset, int _plane_number)
 	throws FitsException
     {
 	int i, j;
@@ -287,25 +287,25 @@ public class ImageHeader implements Serializable
 	if ((!got_cd1_1 ) &&
 	    (!got_cd1_2 ) &&
 	    (!got_cd2_1 ) &&
-	    (!got_cd2_2 )) 
+	    (!got_cd2_2 ))
 	{
 	    /* no CD matrix values in header - look for PC matrix values */
-	    if (got_pc1_1 ) 
+	    if (got_pc1_1 )
 	    {
 		cd1_1 = cdelt1 * pc1_1;
 		got_cd1_1 = true;
 	    }
-	    if (got_pc1_2 ) 
+	    if (got_pc1_2 )
 	    {
 		cd1_2 = cdelt1 * pc1_2;
 		got_cd1_2 = true;
 	    }
-	    if (got_pc2_1 ) 
+	    if (got_pc2_1 )
 	    {
 		cd2_1 = cdelt2 * pc2_1;
 		got_cd2_1 = true;
 	    }
-	    if (got_pc2_2 ) 
+	    if (got_pc2_2 )
 	    {
 		cd2_2 = cdelt2 * pc2_2;
 		got_cd2_2 = true;
@@ -313,7 +313,6 @@ public class ImageHeader implements Serializable
 	}
 
 	if (using_tpv) {
-	    using_cd= false;
 		pv1= getPVArray(header,"1");
 		pv2= getPVArray(header,"2");
 	}
@@ -356,7 +355,7 @@ public class ImageHeader implements Serializable
 	blank_value = header.getDoubleValue("BLANK", Double.NaN);
 	if (SUTDebug.isDebug())
 	    System.out.println("blank_value = " + blank_value);
-	
+
 	String telescope = header.getStringValue("TELESCOP");
 	if ((telescope != null) && (telescope.startsWith("ISO")))
 	{
@@ -435,7 +434,7 @@ public class ImageHeader implements Serializable
 		/* dont know what to do with twist */
 		/* will have to wait until I have a sample image */
 	    }
-	    
+
 	}
 
     /* now do SIRTF distortion corrections */
@@ -526,7 +525,7 @@ public class ImageHeader implements Serializable
 	}
 
     }
-    if (using_cd) 
+    if (using_cd)
     {
 	/* need an approximation of cdelt1 and cdelt2 */
 	CoordinateSys in_coordinate_sys = CoordinateSys.makeCoordinateSys(
@@ -545,10 +544,10 @@ public class ImageHeader implements Serializable
 	System.out.println("CENTER lon = " + proj_center.getLon() +
 	    "  lat = " + proj_center.getLat() +
 	    "  one_right lon = " + one_to_right.getLon() +
-	    "  lat = " + one_to_right.getLat() + 
+	    "  lat = " + one_to_right.getLat() +
 	    "  cdelt1 = " + cdelt1 +
 	    "  one_up lon = " + one_up.getLon() +
-	    "  lat = " + one_up.getLat() + 
+	    "  lat = " + one_up.getLat() +
 	    "  cdelt2 = " + cdelt2);
 	}
 	}
@@ -644,7 +643,7 @@ public class ImageHeader implements Serializable
 	    amd_y_coeff[17] = header.getDoubleValue( "AMDY18");
 	    amd_y_coeff[18] = header.getDoubleValue( "AMDY19");
 	    amd_y_coeff[19] = header.getDoubleValue( "AMDY20");
-	    
+
 	    crpix1 = 0.5 - x_pixel_offset;
 	    crpix2 = 0.5 - y_pixel_offset;
 
@@ -654,8 +653,6 @@ public class ImageHeader implements Serializable
 		cdelt2 = plt_scale * y_pixel_size / 1000 / 3600;
 	    }
 	}
-	if (using_tpv) using_cd= false;
-
     }
 
     public String getProjectionName()
@@ -664,8 +661,8 @@ public class ImageHeader implements Serializable
     }
 
 
-    public int getCoordSys() 
-    { 
+    public int getCoordSys()
+    {
 	int retval = -1;
 
 	if (ctype1 != null)
@@ -689,12 +686,12 @@ public class ImageHeader implements Serializable
 	return retval;
     }
 
-    public double getEquinox() 
+    public double getEquinox()
     {
 	return file_equinox;
     }
 
-    public int getJsys() 
+    public int getJsys()
     {
 	int jsys;
 
@@ -839,13 +836,13 @@ public class ImageHeader implements Serializable
     {
 	StringBuffer sb = new StringBuffer();
 	sb.append(
-	    "\n  bitpix = " + bitpix + " naxis = " + naxis + 
-	    " naxis1 = " + naxis1 + " naxis2 = " + naxis2 + 
+	    "\n  bitpix = " + bitpix + " naxis = " + naxis +
+	    " naxis1 = " + naxis1 + " naxis2 = " + naxis2 +
 	    " naxis3 = " + naxis3);
 	sb.append(
-	    "\n  crpix1 = " + crpix1 + " crpix2 = " + crpix2 + 
-	    "\n  crval1 = " + crval1 + " crval2 = " + crval2 + 
-	    "\n  cdelt1 = " + cdelt1 + " cdelt2 = " + cdelt2 + 
+	    "\n  crpix1 = " + crpix1 + " crpix2 = " + crpix2 +
+	    "\n  crval1 = " + crval1 + " crval2 = " + crval2 +
+	    "\n  cdelt1 = " + cdelt1 + " cdelt2 = " + cdelt2 +
 	    " crota2 = " + crota2);
 	if (using_cd)
 	{
