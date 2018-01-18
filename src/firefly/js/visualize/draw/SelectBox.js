@@ -182,16 +182,17 @@ function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
     const   {handleColor=color} = drawParams;
     const lineWidth= (style===Style.STANDARD) ? 2 : 1;
 
-    const sWidth= pt2.x-pt0.x;
-    const sHeight= pt2.y-pt0.y;
+    const sWidth= Math.abs(pt2.x-pt0.x);
+    const sHeight= Math.abs(pt2.y-pt0.y);
 
     if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
         DrawUtil.strokeRec(ctx, color, lineWidth, pt0.x, pt0.y, sWidth, sHeight);
     } else if (selectedShape === SelectedShape.circle.key) {
-        DrawUtil.drawEllipse(ctx, (pt2.x + pt0.x)/2, (pt0.y+pt2.y)/2, sWidth/2, sHeight/2, color, lineWidth, 0);
+        DrawUtil.drawEllipse(ctx, (pt2.x + pt0.x)/2, (pt0.y+pt2.y)/2, color, lineWidth, sWidth/2, sHeight/2, 0);
     }
 
     if (style === Style.HANDLED) {
+
         if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
             DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
         } else {

@@ -14,12 +14,9 @@ import {dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
 
-import SELECTRECT_DD from 'html/images/icons-2014/28x28_Rect_DD.png';
-import SELECTCIRCLE_DD from 'html/images/icons-2014/28x28_Circle-ON_DD.png';
-import SELECT_NONE_DD from 'html/images/icons-2014/28x28_NoSelect_DD.png';
-import SELECT_RECT from 'html/images/icons-2014/marquee.png';
-import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle.png';
-import SELECT_NONE from 'html/images/icons-2014/28x28_NoSelect.png';
+import SELECT_RECT from 'html/images/icons-2014/Marquee-ON.png';
+import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle-ON.png';
+import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
 
 const NONSELECT = 'nonselect';
 
@@ -27,7 +24,6 @@ export const selectAreaInfo = {
     [NONSELECT] : {
         typeId: '',
         iconId: SELECT_NONE,
-        iconIdSelect: SELECT_NONE_DD,
         label: 'None',
         tip: 'turn off area selection'
     },
@@ -35,14 +31,12 @@ export const selectAreaInfo = {
     [SelectedShape.rect.key] : {
         typeId: SelectArea.TYPE_ID,
         iconId: SELECT_RECT,
-        iconIdSelect: SELECTRECT_DD,
         label: 'Rectangular Selection',
         tip: 'select rectangular area'
     },
     [SelectedShape.circle.key] : {
         typeId: SelectArea.TYPE_ID,
         iconId:  SELECT_CIRCLE,
-        iconIdSelect: SELECTCIRCLE_DD,
         label: 'Elliptical Selection',
         tip: 'select elliptical area',
         params: {selectedShape: SelectedShape.circle.key, handleColor: 'white'}
@@ -51,7 +45,7 @@ export const selectAreaInfo = {
 
 export function getSelectedAreaIcon(isSelected = true) {
 
-    if (!isSelected) return SELECT_NONE_DD;
+    if (!isSelected) return SELECT_NONE;
     const drawLayer = getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
     return  (drawLayer && drawLayer.selectedShape) ?
              selectAreaInfo[drawLayer.selectedShape].iconId : SELECT_RECT;
