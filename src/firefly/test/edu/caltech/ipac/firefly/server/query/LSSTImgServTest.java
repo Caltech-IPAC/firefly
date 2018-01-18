@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.lsst.LSSTImageSearch;
 import edu.caltech.ipac.firefly.server.query.lsst.LSSTQuery;
@@ -17,9 +18,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Test getting images from DAX ImageServ, when it's available
+ * Test getting images from DAX ImageServ, when it's available 
  */
-public class LSSTImgServTest {
+public class LSSTImgServTest extends ConfigTest {
 
     @Test
    	public void testDaxImages() {
@@ -38,7 +39,7 @@ public class LSSTImgServTest {
                 boolean passed;
                 for (String url : urls) {
                     passed = getImage(url);
-                    Assert.assertTrue(passed);
+                    Assert.assertTrue("FAILED: "+url, passed);
                 }
             }
    		} catch (Exception e) {
@@ -53,19 +54,18 @@ public class LSSTImgServTest {
 
             long cTime = System.currentTimeMillis();
             FileInfo fileData = URLDownload.getDataToFile(new URL(url), file);
-            System.out.println("Image retrieval took " + (System.currentTimeMillis() - cTime) + "ms");
-            System.out.println(url);
-            System.out.println();
+            LOG.info("Image retrieval took " + (System.currentTimeMillis() - cTime) + "ms");
+            LOG.info(url);
 
             if (fileData.getResponseCode() >= 400) {
                 String err = fileData.getResponseCode()+" "+fileData.getResponseCodeMsg();
-                System.out.println(err);
+                LOG.error(err);
                 return false;
             } else {
                 return true;
             }
         } catch (FailedRequestException | IOException e) {
-            e.printStackTrace();
+            LOG.error(e, url);
             return false;
         }
     }
@@ -78,7 +78,7 @@ public class LSSTImgServTest {
       			urlConn.connect();
       			return urlConn.getResponseCode() == 200;
       		} catch (IOException e) {
-      		    System.out.println("imgserv is not available "+e.getMessage());
+                LOG.info("imgserv is not available "+e.getMessage());
       			return false;
       		}
     }

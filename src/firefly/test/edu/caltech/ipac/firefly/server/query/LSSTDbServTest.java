@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.server.query.lsst.LSSTQuery;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -21,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Test that we can get catalogs and image metadata from DAX dbserv, when it's available
+ * Test that we can get catalogs and image metadata from DAX dbserv, when it's available 
  */
 public class LSSTDbServTest extends ConfigTest {
 
@@ -58,11 +57,7 @@ public class LSSTDbServTest extends ConfigTest {
             "SELECT count(*) FROM sdss_stripe82_01.RunDeepForcedSource WHERE objectId=3448068867358968;"
             
 	};
-
-
-	@BeforeClass
-	public static void setUp() {
-	}
+	
 
 	/**
 	 * test that we can obtain the data for all catalog queries
@@ -75,7 +70,7 @@ public class LSSTDbServTest extends ConfigTest {
                 boolean passed;
                 for (String query : queries) {
                     passed = getJsonData(query);
-                    Assert.assertTrue(passed);
+                    Assert.assertTrue("FAILED: "+query, passed);
                 }
             }
 		} catch (Exception e) {
@@ -96,20 +91,19 @@ public class LSSTDbServTest extends ConfigTest {
 
 			long cTime = System.currentTimeMillis();
 			FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url), sql, null, requestHeader, file, null, 180);
-			System.out.println("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");
-			System.out.println(query);
-			System.out.println();
+			LOG.info("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");
+			LOG.info(query);
 
 			if (fileData.getResponseCode() >= 400) {
 				String err = LSSTQuery.getErrorMessageFromFile(file);
 				err = "[DAX] " + (err == null ? fileData.getResponseCodeMsg() : err);
-				System.out.println(err);
+				LOG.error(err, query);
 				return false;
 			} else {
 				return true;
 			}
 		} catch (FailedRequestException | IOException e) {
-			e.printStackTrace();
+			LOG.error(e, query);
 			return false;
 		}
 	}
@@ -127,7 +121,7 @@ public class LSSTDbServTest extends ConfigTest {
 			urlConn.connect();
 			return urlConn.getResponseCode() == 200;
 		} catch (IOException e) {
-		    System.out.println("dbserv is not available "+e.getMessage());
+		    LOG.info("dbserv is not available "+e.getMessage());
 			return false;
 		}
 	}
@@ -144,7 +138,7 @@ public class LSSTDbServTest extends ConfigTest {
 			urlConn.connect();
 			return urlConn.getResponseCode() == 200;
 		} catch (IOException e) {
-            System.out.println("DAX is not available "+e.getMessage());
+            LOG.info("DAX is not available "+e.getMessage());
 			return false;
 		}
 	}

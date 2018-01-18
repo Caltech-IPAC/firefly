@@ -313,11 +313,14 @@ public class LSSTCataLogSearch extends LSSTQuery {
         String database = request.getParam("database");
 
         if (LSSTQuery.isCatalogTable(database, catTable)) {
-            Object RA = LSSTQuery.getRA(database, catTable);
-            Object DEC = LSSTQuery.getDEC(database, catTable);
+            Object lon = LSSTQuery.getRA(database, catTable);
+            Object lat = LSSTQuery.getDEC(database, catTable);
 
-            TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) RA, (String) DEC, CoordinateSys.EQ_J2000);
-            meta.setCenterCoordColumns(llc);
+            if (lon != null && lat != null) {
+                TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) lon, (String) lat, CoordinateSys.EQ_J2000);
+                meta.setCenterCoordColumns(llc);
+                meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
+            }
             meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
             String col = LSSTQuery.getTableColumn(database, catTable, "objectColumn");
             if (col != null) {
