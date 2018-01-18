@@ -2,21 +2,19 @@ package edu.caltech.ipac.firefly.server.query.lsst;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ConcurrentSearchUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.util.*;
-import edu.caltech.ipac.visualize.plot.WorldPt;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 
 
@@ -95,7 +93,7 @@ public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
             columnNames = request.getParam(CatalogRequest.SELECTED_COLUMNS);
             catTable = request.getParam(CatalogRequest.CATALOG);
             /*If the major is in the input file, use the major/2 as the radius.  Since the major is in
-              archsec convert the major to degree
+              arcsec convert the major to degree
             */
             radius = dataObject.containsKey("major") && dataObject.getDataElement("major")!=null?
                   String.valueOf(Double.parseDouble(dataObject.getDataElement("major").toString())/3600.0)
@@ -112,7 +110,7 @@ public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
                 return "CONE";
             }
             //Search an elliptical area around each of two positions.
-            if ( major.length()!=0  && ratio.length()!=0){
+            else if (major.length()!=0){
                 return "ELIPTICAL";
             }
 

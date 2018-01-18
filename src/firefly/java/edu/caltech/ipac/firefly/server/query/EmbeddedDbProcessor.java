@@ -132,8 +132,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 StopWatch.getInstance().start("createDbFile: " + request.getRequestId());
                 DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
                 dbFile = createDbFile(treq);
-                FileInfo dbFileInfo = ingestDataIntoDb(treq, dbFile);
-                dbFile = dbFileInfo.getFile();
+                try {
+                    FileInfo dbFileInfo = ingestDataIntoDb(treq, dbFile);
+                    dbFile = dbFileInfo.getFile();
+                } catch (DataAccessException e) {
+                    dbFile.delete();
+                    throw e;
+                } catch (Exception e) {
+                    dbFile.delete();
+                    throw new DataAccessException(e);
+                }
                 EmbeddedDbUtil.setDbMetaInfo(treq, dbAdapter, dbFile);
                 dbFileCreated = true;
                 StopWatch.getInstance().stop("createDbFile: " + request.getRequestId()).printLog("createDbFile: " + request.getRequestId());

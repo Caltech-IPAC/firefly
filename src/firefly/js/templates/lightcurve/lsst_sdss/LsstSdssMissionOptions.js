@@ -197,8 +197,8 @@ export function lsstSdssRawTableRequest(converter, source) {
 function makeRawTableRequest(missionEntries, rawTableRequest) {
     const band = missionEntries['band'];
     const filterInfo = new FilterInfo;
-    filterInfo.addFilter('filterName', `LIKE ${band}`);
-    var searchRequest = cloneDeep(rawTableRequest);
+    filterInfo.addFilter('filterName', `LIKE '${band}'`);
+    let searchRequest = cloneDeep(rawTableRequest);
     searchRequest.filters = filterInfo.serialize();
     searchRequest = JSON.stringify(searchRequest);
     const options = {

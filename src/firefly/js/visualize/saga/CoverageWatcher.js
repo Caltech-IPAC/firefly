@@ -550,7 +550,7 @@ function defaultCanDoCorners(table) {// eslint-disable-line no-unused-vars
 
 function getCovColumnsForQuery(options, table) {
     const cAry= [...options.getCornersColumns(table), options.getCenterColumns(table)];
-    const base = cAry.map( (c)=> `"${c.lonCol}","${c.latCol}"`).join();     // column names should be in quotes
+    const base = cAry.filter((c)=>Boolean(c)).map( (c)=> `"${c.lonCol}","${c.latCol}"`).join();     // column names should be in quotes
     return base+',"ROW_IDX"';
 }
 
