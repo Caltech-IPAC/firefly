@@ -433,13 +433,13 @@ function tableFetch(action) {
             dispatch( updateMerge(action, 'payload', {tbl_id}) );
             request.startIdx = 0;
 
+            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy})) );
             const backgroundable = get(request, 'META_INFO.backgroundable', false);
             if (backgroundable) {
                 asyncFetch(request, hlRowIdx, invokedBy, dispatch);
             } else {
                 syncFetch(request, hlRowIdx, invokedBy, dispatch);
             }
-            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy})) );
         }
     };
 }
