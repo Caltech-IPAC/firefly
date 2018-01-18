@@ -17,7 +17,7 @@ import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
 import SELECT_RECT from 'html/images/icons-2014/Marquee.png';
 import SELECT_RECT_ON from 'html/images/icons-2014/Marquee-ON.png';
 import SELECT_CIRCLE from 'html/images/icons-2014/28x28_Circle.png';
-import SELECT_CIRCLE_ON from 'html/images/icons-2014/28x28_Circle-ON-2.png';
+import SELECT_CIRCLE_ON from 'html/images/icons-2014/28x28_Circle-ON.png';
 import SELECT_NONE from 'html/images/icons-2014/28x28_Rect_DD.png';
 
 const NONSELECT = 'nonselect';
