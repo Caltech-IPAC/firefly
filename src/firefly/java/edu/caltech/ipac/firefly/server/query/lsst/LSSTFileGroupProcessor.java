@@ -2,19 +2,23 @@ package edu.caltech.ipac.firefly.server.query.lsst;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.query.*;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
+import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import java.io.File;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static edu.caltech.ipac.firefly.server.util.Logger.getLogger;
 
@@ -119,19 +123,19 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
 
         if (isDeepCoadd){
-            Long tract = (Long) dgData.get(rowIdx,"tract");
+            String tract = dgData.get(rowIdx,"tract").toString();
             String patch = (String) dgData.get(rowIdx,"patch");
             String filterName =(String) dgData.get(rowIdx,"filterName");
 
-            return LSSTImageSearch.createURLForDeepCoadd(tract.toString(), patch, filterName);
+            return LSSTImageSearch.createURLForDeepCoadd(tract, patch, filterName);
         }
         else{
-            Long run =  (Long) dgData.get(rowIdx,"run");
-            Integer camcol =  (Integer)dgData.get(rowIdx,"camcol");
-            Long field =  (Long) dgData.get(rowIdx,"field");
+            String run = dgData.get(rowIdx,"run").toString();
+            String camcol =  dgData.get(rowIdx,"camcol").toString();
+            String field =  dgData.get(rowIdx,"field").toString();
             String filterName =  (String) dgData.get(rowIdx,"filterName");
 
-            return LSSTImageSearch.createURLForScienceCCD(run.toString(), camcol.toString(),field.toString(), filterName);
+            return LSSTImageSearch.createURLForScienceCCD(run, camcol, field, filterName);
         }
 
     }

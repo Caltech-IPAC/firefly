@@ -1,11 +1,10 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
-import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -44,47 +43,31 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
      private static final Logger.LoggerImpl _log = Logger.getLogger();
      private static final String PORT = "5000";
      private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
-    //TODO how to handle the database name??
-    // private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "gapon_sdss_stripe92_patch366_0");
-    //private static final String DATABASE_NAME =AppProperties.getProperty("lsst.database" , "");
+
     //set default timeout to 30seconds
     int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "30")).intValue();
-
-    static  String getErrorMessageFromFile(File file) throws IOException, ParseException {
-        JSONParser parser = new JSONParser();
-
-        JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
-        String message = obj.get("message").toString();
-        String error = obj.get("error").toString();
-        if (error != null && message != null) {
-            return message.contains(error) ? message : error + " " + message;
-        } else {
-            return error;
-        }
-    }
 
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
          String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
-
-         long cTime = System.currentTimeMillis();
          _log.briefDebug("Executing SQL query: " + sql);
+
          String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
 
          File file = createFile(request, ".json");
          Map<String, String> requestHeader=new HashMap<>();
          requestHeader.put("Accept", "application/json");
 
+         long cTime = System.currentTimeMillis();
          FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null,timeout);
-         if (fileData.getResponseCode()>=500) {
-            // throw new DataAccessException("ERROR:" + sql + ";"+ getErrorMessageFromFile(file));
-             throw new DataAccessException("[DAX] "+ getErrorMessageFromFile(file));
+        _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
+
+         if (fileData.getResponseCode() >= 400) {
+             String err = LSSTQuery.getErrorMessageFromFile(file);
+             throw new DataAccessException("[DAX] " + (err == null ? fileData.getResponseCodeMsg() : err));
          }
          DataGroup dg =  getMetaData(file);
-         _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
          return dg;
-
-
     }
 
     @Override
@@ -161,16 +144,9 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         return dg;
     }
 
-
     String buildSqlQueryString(TableServerRequest request) throws Exception {
         String dbTable = String.join(".", LSSTQuery.getDBTableNameFromRequest(request));
-
-        String sql = "SHOW COLUMNS FROM " + dbTable + ";";
-        if (dbTable.length() <= 0) {
-            throw new EndUserException("Error: Search without table name will cause database hanging!!!", sql);
-        } else {
-            return sql;
-        }
+        return "SHOW COLUMNS FROM " + dbTable + ";";
     }
 
     @Override

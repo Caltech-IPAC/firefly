@@ -35,7 +35,7 @@ import {HelpText} from './../../ui/HelpText.jsx';
 import {dispatchAllowDataTag} from '../../core/background/BackgroundCntlr.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
-import {initWorkspace} from '../../visualize/WorkspaceCntlr.js';
+import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -51,7 +51,7 @@ export class LcViewer extends PureComponent {
         dispatchAddSaga(watchCatalogs);
         dispatchAddSaga(lcManager);
         dispatchAddSaga(syncChartViewer);
-        initWorkspace();
+        if (getWorkspaceConfig()) { initWorkspace();}
     }
 
     getNextState() {

@@ -51,7 +51,9 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
 
             FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
             return finfo;
-        } catch (IpacTableException | IOException | DataAccessException ex) {
+        } catch (DataAccessException ex) {
+            throw ex;
+        } catch (IpacTableException | IOException ex) {
             throw new DataAccessException(ex);
         }
     }
