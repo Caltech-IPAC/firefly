@@ -1546,7 +1546,15 @@ public class VisServerOps {
                     throw new IOException("Can't read file, ClientFitsHeader is null");
                 }
                 //If test needed to debug,uncomment line below to test tpv for x,y IRSA-1009
-                //testTpv(f,ipt);
+                if (ServerContext.DEBUG_MODE) {
+                    try {
+                        testTpv(f, ipt);
+                    } catch (FitsException e) {
+                        e.printStackTrace();
+                    } catch (ProjectionException e) {
+                        e.printStackTrace();
+                    }
+                }
                 val= PixelValue.pixelVal(fitsFile,(int)ipt.getX(),(int)ipt.getY(), clientFitsHeader);
             }
             else {
@@ -1561,7 +1569,7 @@ public class VisServerOps {
         return val;
     }
 
-    /*
+
     private static void testTpv(File f,ImagePt ipt) throws FitsException, ProjectionException {
         Fits fits = new Fits(f);
         FitsRead[] fitsReadArray = FitsRead.createFitsReadArray(fits);
@@ -1576,7 +1584,7 @@ public class VisServerOps {
 
         //System.out.println("x,y,proj: lon, lat"+ipt.getX()+", "+ipt.getY()+", "+proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
     }
-*/
+
     private static WebPlotResult createError(String logMsg, PlotState state, Exception e) {
         return createError(logMsg,state, null, e);
     }

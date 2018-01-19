@@ -20,8 +20,8 @@ import edu.caltech.ipac.visualize.plot.Pt;
 public class TpvProjection {
 
 
-    static double dtr = Projection.dtr;
-    static double rtd = Projection.rtd;
+    final static double dtr = Projection.dtr;
+    final static double rtd = Projection.rtd;
     /**
      * Convert world coordinate to projected/image coordinate
      * @param ra

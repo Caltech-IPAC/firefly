@@ -69,7 +69,7 @@ public class FitsRead implements Serializable {
     private final BasicHDU hdu;
     private float[] float1d;
     private Fits fits;
-    private static ImageHeader imageHeader;
+    private ImageHeader imageHeader;
     private Header header;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private  short[] masks=null;
