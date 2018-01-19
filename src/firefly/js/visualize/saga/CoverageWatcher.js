@@ -9,7 +9,8 @@ import {MetaConst} from '../../data/MetaConst.js';
 import {WebPlotRequest, TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView, dispatchPlotHiPS} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
+    dispatchPlotHiPS, dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
@@ -276,15 +277,38 @@ function updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRo
     if (useHiPS) {
         const pv= getPlotViewById(visRoot(), PLOT_ID);
         if (!pv) {
-            const rootUrl= 'http://alasky.u-strasbg.fr/DSS/DSSColor';
+            // const rootUrl= 'http://alasky.u-strasbg.fr/DSS/DSSColor';
+            const rootUrl= 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/';
             const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
+            const size= Math.max(maxRadius*2.2, 600/3600);
             wpRequest.setPlotGroupId(viewerId);
             wpRequest.setPlotId(PLOT_ID);
             wpRequest.setOverlayPosition(centralPoint);
-            wpRequest.setSizeInDeg(Math.max(maxRadius*2.2, 600/3600));
-            dispatchPlotHiPS({
+            wpRequest.setWorldPt(centralPoint);
+            wpRequest.setSizeInDeg(size);
+            // dispatchPlotHiPS({
+            //     plotId: PLOT_ID,
+            //     wpRequest,
+            //     viewerId,
+            //     attributes: {
+            //         [COVERAGE_TARGET]: centralPoint,
+            //         [COVERAGE_RADIUS]: maxRadius,
+            //         [COVERAGE_TABLE]: tbl_id,
+            //         [COVERAGE_CREATED]: true,
+            //     },
+            // });
+            //
+            const hipsRequest= wpRequest;
+            const imageRequest= WebPlotRequest.makeWiseRequest(centralPoint, '3a', '1', size);
+            imageRequest.setPlotId(PLOT_ID);
+            imageRequest.setPlotGroupId(viewerId);
+            imageRequest.setOverlayPosition(centralPoint);
+            wpRequest.setWorldPt(centralPoint);
+            dispatchPlotImageOrHiPS({
                 plotId: PLOT_ID,
-                wpRequest,
+                hipsRequest,
+                imageRequest,
+                fovDegFallOver:.5,
                 viewerId,
                 attributes: {
                     [COVERAGE_TARGET]: centralPoint,

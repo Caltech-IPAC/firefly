@@ -37,6 +37,7 @@ export function createHiPSDrawer(targetCanvas) {
         if (abortLastDraw) abortLastDraw(); // stop any incomplete drawing
 
         const {viewDim}= plotView;
+        let overlayTransparent= false;
 
         const {norder, useAllSky}= getBestHiPSlevel(plot, true);
         const {fov,centerWp}= getPointMaxSide(plot,viewDim);
@@ -50,10 +51,11 @@ export function createHiPSDrawer(targetCanvas) {
         if (drawTiming===DrawTiming.ASYNC && showZoomChangeDisplay(useAllSky,lastUsedAllSky,fov,lastFov)) {
             drawTransitionalImage(fov,lastFov, centerWp,targetCanvas,plot, plotView,norder, lastNorder, opacity, tileProcessInfo);
             drawTiming= DrawTiming.DELAY;
+            overlayTransparent= true;
         }
 
         abortLastDraw= drawDisplay(targetCanvas, plot, plotView, norder, tilesToLoad, useAllSky,
-            opacity, tileProcessInfo, drawTiming);
+            opacity, tileProcessInfo, drawTiming, overlayTransparent);
         lastNorder= norder;
         lastUsedAllSky= useAllSky;
         lastFov= fov;
@@ -74,7 +76,8 @@ export function createHiPSDrawer(targetCanvas) {
  * @param opacity
  * @param tileProcessInfo
  */
-function drawTransitionalImage(fov, lastFov, centerWp, targetCanvas, plot, plotView, norder, lastNorder, opacity, tileProcessInfo) {
+function drawTransitionalImage(fov, lastFov, centerWp, targetCanvas, plot, plotView,
+                               norder, lastNorder, opacity, tileProcessInfo) {
     const {viewDim}= plotView;
     let tilesToLoad;
     if (norder<=3) {
@@ -150,9 +153,10 @@ function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
  * @param opacity
  * @param tileProcessInfo
  * @param drawTiming
+ * @param overlayTransparent
  */
 function drawDisplay(targetCanvas, plot, plotView, norder, tilesToLoad, useAllSky, opacity, tileProcessInfo,
-                     drawTiming= DrawTiming.ASYNC) {
+                     drawTiming= DrawTiming.ASYNC, overlayTransparent= false) {
     const {viewDim}= plotView;
     const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
     const boundingBox= computeBounding(rootPlot,viewDim.width,viewDim.height);
@@ -160,7 +164,7 @@ function drawDisplay(targetCanvas, plot, plotView, norder, tilesToLoad, useAllSk
     const offsetY= boundingBox.y>0 ? boundingBox.y : 0;
 
     const drawer= makeHipsDrawer(plotView, plot, targetCanvas, tilesToLoad.length,
-        offsetX,offsetY, opacity, tileProcessInfo);
+        offsetX,offsetY, opacity, tileProcessInfo, overlayTransparent);
 
     if (useAllSky) {
         const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
@@ -241,10 +245,11 @@ function drawAllSkyFromOneImage(allSkyImage, tilesToLoad, drawer) {
  * @param {number} offsetY
  * @param {number} opacity
  * @param {Object} tileProcessInfo
+ * @param overlayTransparent
  * @return {function(*, *)}
  */
 function makeHipsDrawer(plotView, plot, targetCanvas, totalCnt,
-                        offsetX,offsetY, opacity, tileProcessInfo) {
+                        offsetX,offsetY, opacity, tileProcessInfo, overlayTransparent) {
 
     if (!targetCanvas) return noOp;
 
@@ -253,8 +258,8 @@ function makeHipsDrawer(plotView, plot, targetCanvas, totalCnt,
 
     const {viewDim:{width,height}}=  plotView;
 
-    offscreenCtx.fillStyle = 'rgba(227,227,227,1)';
-    offscreenCtx.fillRect(0, 0, width, height);
+    offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : 'rgba(227,227,227,1)';
+    // offscreenCtx.fillRect(0, 0, width, height);
 
 
     const {fov, centerDevPt}= getPointMaxSide(plot,plotView.viewDim);
@@ -269,7 +274,7 @@ function makeHipsDrawer(plotView, plot, targetCanvas, totalCnt,
         offscreenCtx.closePath();
         offscreenCtx.clip();
     }
-    offscreenCtx.fillStyle = 'rgba(0,0,0,1)';
+    offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : 'rgba(0,0,0,1)';
     offscreenCtx.fillRect(0, 0, width, height);
 
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
@@ -282,6 +287,7 @@ function makeHipsDrawTileObj(screenRenderParams, totalCnt, isBaseImage, tileProc
 
     let renderedCnt=0;
     let abortRender= false;
+    let firstRenderTime= 0;
     let renderComplete=  false;
     const {offscreenCanvas, plotView}= screenRenderParams;
     const offscreenCtx = offscreenCanvas.getContext('2d');
@@ -296,6 +302,7 @@ function makeHipsDrawTileObj(screenRenderParams, totalCnt, isBaseImage, tileProc
             let emptyTile;
 
             const cachedTile= findTileCachedImage(src);
+            if (!firstRenderTime) firstRenderTime= Date.now();
             if (cachedTile) {
                 tileData=  cachedTile.image;
                 emptyTile= cachedTile.emptyTile;
@@ -324,10 +331,13 @@ function makeHipsDrawTileObj(screenRenderParams, totalCnt, isBaseImage, tileProc
                 }
 
 
-                if (renderedCnt === totalCnt) {
-                    renderComplete= true;
-                    renderToScreen(screenRenderParams);
-                }
+                const now= Date.now();
+                const renderNow= (renderedCnt === totalCnt ||
+                                  renderedCnt/totalCnt > .75 && now-firstRenderTime>1000 ||
+                                  now-firstRenderTime>2000);
+                // console.log(`${renderedCnt} of ${totalCnt}, renderNow: ${renderNow}, time diff ${(now-firstRenderTime)/1000}`);
+                if (renderNow) renderToScreen(screenRenderParams);
+                renderComplete= (renderedCnt === totalCnt);
             }).catch(() => {
                 addTileCachedImage(src, null, true);
                 renderedCnt++;

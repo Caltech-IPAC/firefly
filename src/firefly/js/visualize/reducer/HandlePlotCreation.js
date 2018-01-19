@@ -6,7 +6,6 @@ import {uniqBy,unionBy, isEmpty} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import {replacePlots, makePlotView, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
-import {WebPlot} from '../WebPlot';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import PlotGroup from '../PlotGroup.js';
@@ -15,14 +14,9 @@ import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {makeImagePt} from '../Point.js';
+import {clone} from '../../util/WebUtil.js';
 
 
-//============ EXPORTS ===========
-//============ EXPORTS ===========
-
-
-
-const clone = (obj,params={}) => Object.assign({},obj,params);
 
 
 export function reducer(state, action) {

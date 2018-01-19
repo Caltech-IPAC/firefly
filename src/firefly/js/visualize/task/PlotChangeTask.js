@@ -6,7 +6,7 @@ import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from '../PlotViewUtil.js';
-import { callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
+import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import WebPlotResult from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
 
@@ -249,4 +249,3 @@ function processPlotUpdate(dispatcher, getState, oldStore, plotId, result, succA
             payload: {plotId, error:Error('payload failed: '+ failActionType)} } );
     }
 }
-

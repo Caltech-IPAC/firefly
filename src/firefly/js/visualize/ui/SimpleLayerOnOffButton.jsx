@@ -14,9 +14,10 @@ import {dispatchCreateDrawLayer,
 
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible,
-                                            todo, isIconOn, onClick, dropDown, allPlots= true }) {
-    var enabled= primePlot(pv) ? true : false;
-    var isOn= isIconOn;
+                                            plotTypeMustMatch= false,
+                                            todo= false, isIconOn, onClick, dropDown, allPlots= true }) {
+    const enabled= Boolean(primePlot(pv));
+    let isOn= isIconOn;
     if (typeId && pv) {
         const distLayer= getDrawLayerByType(getDlAry(),typeId);
         isOn=  distLayer && isDrawLayerAttached(distLayer,pv.plotId);
@@ -40,7 +41,7 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
                            horizontal={true}
                            visible={visible}
                            todo={todo}
-                           onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,typeId,allPlots,todo)}/>
+                           onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,typeId,allPlots,plotTypeMustMatch,todo)}/>
         );
     }
 }
@@ -56,6 +57,7 @@ SimpleLayerOnOffButton.propTypes= {
     onClick : PropTypes.func,
     isIconOn : PropTypes.bool,
     allPlots: PropTypes.bool,
+    plotTypeMustMatch: PropTypes.bool,
     dropDown: PropTypes.object
 };
 
@@ -65,7 +67,7 @@ SimpleLayerOnOffButton.defaultProps= {
 
 
 
-function onOff(pv,typeId,allPlots, todo) {
+function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo) {
     if (!pv || !typeId) return;
 
     if (todo) {
@@ -77,7 +79,7 @@ function onOff(pv,typeId,allPlots, todo) {
     }
 
     if (!isDrawLayerAttached(dl,pv.plotId)) {
-        dispatchAttachLayerToPlot(typeId,pv.plotId,allPlots);
+        dispatchAttachLayerToPlot(typeId,pv.plotId,allPlots,true, plotTypeMustMatch);
     }
     else {
         dispatchDetachLayerFromPlot(typeId,pv.plotId,allPlots,dl.destroyWhenAllDetached);

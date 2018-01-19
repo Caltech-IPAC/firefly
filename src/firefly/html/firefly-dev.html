@@ -13,10 +13,20 @@
         window.firefly = {
             app: {
                 template: 'FireflyViewer',
+                menu: [
+                    {label:'Images', action:'ImageSelectDropDownCmd'},
+                    {label:'Catalogs', action:'IrsaCatalogDropDown'},
+                    {label:'Charts', action:'ChartSelectDropDownCmd'},
+                    {label:'Upload', action: 'FileUploadDropDownCmd'},
+                    {label:'Workspace', action: 'WorkspaceDropDownCmd'},
+                    {label:'Test Searches', action:'TestSearches'},
+                    {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'},
+                ],
                 options : {
                     MenuItemKeys: {maskOverlay:true},
                     workspace : {showOptions: true},
-                    imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer']
+                    imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
+                    hips : {useForCoverage: true},
                 }
             },
         };

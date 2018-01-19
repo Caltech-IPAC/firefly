@@ -2,10 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Enum from 'enum';
 import shallowequal from 'shallowequal';
 import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
-        last, isPlainObject, forEach, isEmpty, find, omitBy} from 'lodash';
+        last, isPlainObject, forEach, fromPairs} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
@@ -30,7 +29,6 @@ export const REQUEST_WITH = 'X-Requested-With';
 export const AJAX_REQUEST = 'XMLHttpRequest';
 export const WS_CHANNEL_HD = 'FF-channel';
 export const WS_CONNID_HD  = 'FF-connID';
-export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
 
 
 let GLOBAL_PROPS;
@@ -94,15 +92,15 @@ export function loadImage(src) {
  */
 export const encodeUrl= function(url, params) {
 
-    var rval = url.trim();
+    let rval = url.trim();
     if ( !rval.toLowerCase().startsWith('http') ) {
         rval = getRootURL() + rval;
     }
     if (!params) return rval;
 
-    var parts = url.split('?');
-    var baseUrl = parts[0];
-    var queryStr= encodeParams(params);
+    const parts = url.split('?');
+    const baseUrl = parts[0];
+    const queryStr= encodeParams(params);
 
     return encodeURI(baseUrl) + (queryStr.length ? '?' : '') + queryStr;
 };
@@ -151,7 +149,7 @@ export function encodeParams(params) {
  */
 export function decodeParams(queryStr) {
     const toVal = (s) => {
-        var val = s;
+        let val = s;
         try {
             val = JSON.parse(val);
         } catch(e) {
@@ -198,6 +196,7 @@ export const encodeServerUrl= function(url, params) {
  * @param {string} options.method can be one of get, post, or multipart
  *                                when 'multipart', it will post with 'multipart/form-data' encoding.
  * @param {boolean} doValidation
+ * @param {boolean} [enableDefOptions= true]
  * @return {Promise} a promise of the response when successful, or reject with an Error.
  */
 export function fetchUrl(url, options, doValidation= true, enableDefOptions= true) {
@@ -251,7 +250,7 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
                                     .join('&');
                 } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
-                    var data = new FormData();
+                    const data = new FormData();
                     params.forEach( ({name, value}) => {
                         data.append(name, value);
                     });
@@ -310,7 +309,7 @@ export function logErrorWithPrefix(prefix, ...message) {
 export function downloadWithProgress(url, numTries=1000) {
     return new Promise(function(resolve, reject) {
         const {search} = parseUrl(url);
-        var cnt = 0;
+        let cnt = 0;
         const doIt = () => {
             const interval = Math.min(5000, Math.pow(2, 2*cnt/10)*1000);  //gradually increase between 1 and 5 secs
             console.log('Interval: ' + interval);
@@ -403,24 +402,24 @@ export function parseUrl(url) {
     };
 }
 export function getSizeAsString(size) {
-    var  kStr= 'K';
-    var  mStr= 'M';
-    var  gStr= 'G';
+    const  kStr= 'K';
+    const  mStr= 'M';
+    const  gStr= 'G';
 
-    var retval;
-    if (size > 0 && size < (1*MEG)) {
+    let retval;
+    if (size > 0 && size < (MEG)) {
         retval= ((size / K) + 1) + kStr;
     }
-    else if (size >= (1*MEG) && size <  (2*GIG) ) {
-        var megs = Math.round(size / MEG);
-        var  remain=  Math.round(size % MEG);
-        var decimal =  Math.round(remain / MEG_TENTH);
+    else if (size >= (MEG) && size <  (2*GIG) ) {
+        const megs = Math.round(size / MEG);
+        const  remain=  Math.round(size % MEG);
+        const decimal =  Math.round(remain / MEG_TENTH);
         retval= megs +'.'+ decimal + mStr;
     }
     else if (size >= (2*GIG) ) {
-        var  gigs =  Math.round(size / GIG);
-        var remain=  Math.round(size % GIG);
-        var decimal =  Math.round(remain / GIG_HUNDREDTH);
+        const  gigs =  Math.round(size / GIG);
+        const remain=  Math.round(size % GIG);
+        const decimal =  Math.round(remain / GIG_HUNDREDTH);
         retval= gigs +'.'+ decimal + gStr;
     }
     return retval;
@@ -470,7 +469,7 @@ export function deepDiff(o1, o2, p, collapsed=false) {
 }
 /*----------------------------< COOKIES ----------------------------*/
 export function setCookie(name, value, options = {}) {
-    var str = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+    let str = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
 
     if (isNil(value)) options.maxage = -1;
 
@@ -492,8 +491,8 @@ export function getCookie(name) {
 }
 
 function parseCookies(str) {
-    var obj = {},
-        pairs = str.split(/ *; */);
+    const obj = {};
+    const pairs = str.split(/ *; */);
 
     if (!pairs[0]) return obj;
 
@@ -591,6 +590,16 @@ export function updateDelete(object, path, value) {
  */
 export const clone = (obj={},params={}) => Object.assign({},obj,params);
 
+
+/**
+ * Given an array then return an object with the key and value the same from each entry of the array.
+ * @param {Array} ary
+ * @return {Object}
+ */
+export function convertToIdentityObj(ary) {
+   return fromPairs( ary.map( (v) => [v,v] ));
+}
+
 /*---------------------------- update >----------------------------*/
 
 /**
@@ -681,13 +690,13 @@ export function flattenObject(object, testFunc=isPlainObject) {
             )
         );
     }( object ) );
-};
+}
 
 
 export function deltas(a, b, wrapArray=true) {
 
     const diff = (a1, b1, wrapArray) => {
-        var r = {};
+        const r = {};
         doDiff(a1, b1, r, wrapArray);
         return r;
     };

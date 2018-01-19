@@ -289,7 +289,8 @@ export class VisToolbarView extends PureComponent {
                                         tip='Add HiPS grid layer to the HiPS display'
                                         iconOn={HIPS_GRID_ON}
                                         iconOff={HIPS_GRID_OFF}
-                                        allPlots={false}
+                                        allPlots={true}
+                                        plotTypeMustMatch={true}
                                         visible={mi.hipsGrid && hips}
                 />
 

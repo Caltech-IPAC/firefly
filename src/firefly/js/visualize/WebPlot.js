@@ -4,6 +4,7 @@
 
 
 
+import {get} from 'lodash';
 import {RequestType} from './RequestType.js';
 import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
@@ -58,6 +59,10 @@ export const PlotAttribute= {
     SELECTION: 'SELECTION',
 
     IMAGE_BOUNDS_SELECTION: 'IMAGE_BOUNDS_SELECTION',
+
+    LAST_IMAGE_BOUNDS: 'LAST_IMAGE_BOUNDS',
+
+    LAST_IMAGE_TITLE: 'LAST_IMAGE_TITLE',
 
     /**
      * This will probably an object to represent a line {pt0: point,pt1: point}
@@ -397,6 +402,8 @@ export const WebPlot= {
             dataDesc        : hipsProperties.label || 'HiPS',
             //=== Mutable =====================
             screenSize: {width:HIPS_DATA_WIDTH*zoomFactor, height:HIPS_DATA_HEIGHT*zoomFactor},
+            cubeDepth: Number(get(hipsProperties, 'hips_cube_depth')) || 1,
+            cubeIdx: Number(get(hipsProperties, 'hips_cube_firstframe')) || 0,
             zoomFactor,
             attributes,
 

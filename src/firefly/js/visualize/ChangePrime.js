@@ -97,7 +97,7 @@ function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {
             dispatchAddSaga(zoomCompleteSega,{plotId,scrollToImagePt});
             dispatchZoom({
                 plotId,
-                userZoomTypes:UserZoomTypes.LEVEL,
+                userZoomType:UserZoomTypes.LEVEL,
                 maxCheck:false, 
                 level
             });
@@ -106,7 +106,7 @@ function checkZoom(plotId, oldP, newP, scrollToImagePt, visRoot) {
             dispatchAddSaga(zoomCompleteSega,{plotId,scrollToImagePt});
             dispatchZoom({
                 plotId,
-                userZoomTypes:UserZoomTypes.LEVEL,
+                userZoomType:UserZoomTypes.LEVEL,
                 maxCheck:false, 
                 level:oldP.zoomFactor
             });

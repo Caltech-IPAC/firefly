@@ -6,7 +6,7 @@ import update from 'immutability-helper';
 import {get, isEmpty,isUndefined, isArray, unionBy} from 'lodash';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
-        findCurrentCenterPoint, findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
+        findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, PlotAttribute, isHiPS, isImage,
     replaceHiPSProjectionUsingProperties, replaceHiPSProjection} from '../WebPlot.js';
@@ -27,6 +27,7 @@ import {primePlot,
         isInSameGroup,
         findPlot,
         getPlotViewById,
+        findCurrentCenterPoint,
         getCenterOfProjection} from '../PlotViewUtil.js';
 import {makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -263,15 +264,28 @@ function installTiles(state, action) {
 function processProjectionChange(state,action) {
     const {plotId,centerProjPt}= action.payload;
     const {plotViewAry}= state;
-    let pv= getPlotViewById(state, plotId);
-    const plot= primePlot(pv);
-    if (!plot) return state;
-    pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
-    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+    const pv= getPlotViewById(state, plotId);
+    const {plotGroupAry}= state;
+
+    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+
+    const newPlotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
+         (pv)=> {
+             const plot= primePlot(pv);
+             if (plot) pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
+             return pv;
+         } );
+
+
+    // const plot= primePlot(pv);
+    // if (!plot) return state;
+    // pv= replacePrimaryPlot(pv, changeProjectionCenter(plot,centerProjPt));
+    // return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+    return clone(state, {plotViewAry : newPlotViewAry});
 }
 
 function changeHiPS(state,action) {
-    const {plotId,hipsProperties, hipsUrlRoot, coordSys}= action.payload;
+    const {plotId,hipsProperties, hipsUrlRoot, coordSys, cubeIdx}= action.payload;
     let {centerProjPt}= action.payload;
     const {plotViewAry}= state;
     let pv= getPlotViewById(state, plotId);
@@ -291,6 +305,10 @@ function changeHiPS(state,action) {
     }
 
     if (centerProjPt) plot= changeProjectionCenter(plot,centerProjPt);
+
+    if (!isUndefined(cubeIdx)) {
+        plot.cubeIdx= cubeIdx;
+    }
 
     pv= replacePrimaryPlot(pv, plot);
     pv.serverCall= 'success';

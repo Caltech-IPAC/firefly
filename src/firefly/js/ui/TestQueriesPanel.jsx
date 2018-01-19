@@ -666,7 +666,7 @@ function doHiPSLoad(request) {
     wpRequest.setHipsSurveysId(hipsId);
 
     const wp = parseWorldPt(request.UserTargetWorldPt);
-    if (wp) wpRequest.setOverlayPosition(wp);
+    if (wp) wpRequest.setWorldPt(wp);
 
     // dispatchAddViewerItems(DEFAULT_FITS_VIEWER_ID, ['aHiPSid'], IMAGE);
 

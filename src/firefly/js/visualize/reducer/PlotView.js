@@ -2,16 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {get} from 'lodash';
 import update from 'immutability-helper';
-import {PlotAttribute, isImage} from './../WebPlot.js';
-import {get, isUndefined} from 'lodash';
 import Enum from 'enum';
+import {PlotAttribute, isImage} from './../WebPlot.js';
 import {clone} from '../../util/WebUtil.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {makeScreenPt, makeDevicePt} from './../Point.js';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
-import {getPlotViewById, matchPlotView, primePlot, primePlotType, findPlotGroup} from './../PlotViewUtil.js';
+import {getPlotViewById, matchPlotView, primePlot, findCurrentCenterPoint, findPlotGroup} from './../PlotViewUtil.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
@@ -71,13 +71,38 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
  * @prop {boolean} containsMultiImageFits is a multi image fits file
  * @prop {boolean} containsMultipleCubes  is a multi cube
+ * @prop {HipsImageConversionSettings} hipsImageConversion -  if defined, then plotview can convert between hips and image
+ * @prop {number} plotCounter index of how many plots, used for making next ID
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} HipsImageConversionSettings
+ * Parameters to do conversion between hips and images
+ *
+ * @prop {WebPlotRequest} hipsRequestRoot a WebPlotRequest that contains the base parameter to display a HiPS
+ * @prop {WebPlotRequest} imageRequestRoot a WebPlotRequest that contains the base parameter to display an image. It must be a service type.
+ * @prop {fovDegFallOver} The field of view size to determine when to move between and HiPS and an image
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} PVCreateOptions
+ * Object used for creating the PlotView
+ *
+ * @prop {HipsImageConversionSettings} hipsImageConversion If object is defined and populated correctly then
+ * the PlotView will convert between HiPS and Image
+ * @prop {Object} menuItemKeys - defines which menu items shows on the toolbar
+ * @prop {boolean} userCanDeletePlots - default to true, defines if a PlotView can be deleted by the user
  */
 
 
 /**
  * @param {string} plotId
  * @param {WebPlotRequest} req
- * @param {object} pvOptions options for this plot view todo- define what pvOptions is, somewhere
+ * @param {PVCreateOptions} pvOptions options for this plot view
  * @return  {PlotView}
  */
 export function makePlotView(plotId, req, pvOptions= {}) {
@@ -89,25 +114,17 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         request: req && req.makeCopy(),
         plottingStatus:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'
-        primeIdx:-1,
+        primeIdx: -1,
         scrollX : -1,   // in ScreenCoords
         scrollY : -1,   // in ScreenCoords
         affTrans: null,
-        viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
+        viewDim : {width:0, height:0}, // size of viewable area  (i.e. div size: offsetWidth & offsetHeight)
         overlayPlotViews: [],
         menuItemKeys: makeMenuItemKeys(req,pvOptions,getDefMenuItemKeys()), // normally will not change
         plotViewCtx: createPlotViewContextData(req, pvOptions),
         rotation: 0,
         flipY: false,
         flipX: false,
-        options : {
-            acceptAutoLayers : true,
-            workingMsg      : DEF_WORKING_MSG, // the working message that the users sees
-            saveCorners     : req.getSaveCorners(),
-            expandedTitleOptions: req.getExpandedTitleOptions(),
-            annotationOps : req.getAnnotationOps(), // how titles are drawn
-            allowImageLock  : false, // show the image lock button in the toolbar, todo, this may go away
-        }
     };
 
     return pv;
@@ -118,24 +135,30 @@ export function makePlotView(plotId, req, pvOptions= {}) {
 /**
  *
  * @param {WebPlotRequest} req
- * @param {Object} pvOptions
+ * @param {PVCreateOptions} pvOptions
  * @return {PlotViewContextData}
  */
-function createPlotViewContextData(req, pvOptions) {
-    return {
+function createPlotViewContextData(req, pvOptions={}) {
+    const plotViewCtx= {
         userCanDeletePlots: get(pvOptions, 'userCanDeletePlots', true),
+        annotationOps : req.getAnnotationOps(), // how titles are drawn
         rotateNorthLock : false,
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
         lastCollapsedZoomLevel: 0,
         preferenceColorKey: req.getPreferenceColorKey(),
-        preferenceZoomKey:  req.getPreferenceZoomKey(),
+        preferenceZoomKey:  req.getPreferenceZoomKey(), // currently not used
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
         containsMultiImageFits : false,
         containsMultipleCubes : false,
-        lockPlotHint: false, //todo - i may remove this option
         plotCounter:0 // index of how many plots, used for making next ID
     };
+
+    const {hipsImageConversion:hi}= pvOptions;
+    if (hi && hi.hipsRequestRoot && hi.imageRequestRoot && hi.fovDegFallOver) {  // confirm all three parameters are there
+        plotViewCtx.hipsImageConversion= hi;
+    }
+    return plotViewCtx;
 }
 
 
@@ -441,39 +464,6 @@ function getNewAttributes(plot) {
 
 
 
-/**
- * Given the scrollX and scrollY then find the point in the plot that is at the center of
- * the display.  The point returned is in ImagePt coordinates.
- * We return it in and ImagePt not screen because if the plot
- * is zoomed the image point will be what we want in the center.
- * The screen coordinates will be completely different.
- * @param {PlotView} plotView
- * @param {number} [scrollX] optional scrollX if not defined us plotView.scrollX
- * @param {number} [scrollY] optional scrollY if not defined us plotView.scrollY
- * @return {ImagePt} the center point
- */
-export function findCurrentCenterPoint(plotView,scrollX,scrollY) {
-    const plot= primePlot(plotView);
-    if (!plot) return null;
-    const {viewDim}= plotView;
-
-    let cc;
-    if (!isUndefined(scrollX) && isUndefined(!scrollY)) {
-        const trans= makeTransform(0,0, scrollX, scrollY,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
-        cc= CysConverter.make(plot,trans);
-    }
-    else if (isUndefined(plotView.scrollX) || isUndefined(plotView.scrollY)) {
-        const trans= makeTransform(0,0, 0, 0,  plotView.rotation, plotView.flipX, plotView.flipY, viewDim);
-        cc= CysConverter.make(plot,trans);
-    }
-    else {
-        cc= CysConverter.make(plot);
-    }
-    const pt= makeDevicePt(viewDim.width/2, viewDim.height/2);
-    return cc.getImageCoords(pt);
-}
-
-
 
 /**
  *
@@ -525,7 +515,9 @@ export function findScrollPtToCenterImagePt(plotView, ipt) {
 
 
 /**
- * return the scroll point for a PlotView that will place the passed image point on the passed device point
+ * Return the scroll point for a PlotView that will place the given image point on the given device point.
+ * or another way to say it:
+ * Given a device point and an image point, return the scroll point the would make the two line up.
  * @param {PlotView} pv
  * @param {ImagePt} ipt - if this is not an image point it will be converted to one
  * @param {DevicePt} targetDevPtPos - the point on the device that the image

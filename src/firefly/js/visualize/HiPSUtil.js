@@ -75,7 +75,8 @@ export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
     if (!plot) return null;
     const dir= Math.floor(tileNumber/10000)*10000;
     const exts= get(plot, 'hipsProperties.hips_tile_format', 'jpg');
-    return makeHipsUrl(`${plot.hipsUrlRoot}/Norder${nOrder}/Dir${dir}/Npix${tileNumber}.${getHiPSTileExt(exts)}`, plot.proxyHips);
+    const cubeExt= plot.cubeDepth>1 && plot.cubeIdx>0 ? '_'+plot.cubeIdx : '';
+    return makeHipsUrl(`${plot.hipsUrlRoot}/Norder${nOrder}/Dir${dir}/Npix${tileNumber}${cubeExt}.${getHiPSTileExt(exts)}`, plot.proxyHips);
 }
 
 /**
@@ -85,15 +86,17 @@ export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
  * @param proxy
  * @return {*}
  */
-export function makeHiPSAllSkyUrl(urlRoot,exts,proxy= false) {
+export function makeHiPSAllSkyUrl(urlRoot,exts,cubeIdx= 0, proxy= false) {
     if (!urlRoot || !exts) return null;
-    return makeHipsUrl(`${urlRoot}/Norder3/Allsky.${getHiPSTileExt(exts)}`, proxy);
+    const cubeExt= cubeIdx? '_'+cubeIdx : '';
+    return makeHipsUrl(`${urlRoot}/Norder3/Allsky${cubeExt}.${getHiPSTileExt(exts)}`, proxy);
 }
 
 export function makeHiPSAllSkyUrlFromPlot(plot) {
     if (!plot) return null;
     const exts= get(plot, 'hipsProperties.hips_tile_format', 'jpg');
-    return makeHiPSAllSkyUrl(plot.hipsUrlRoot, exts, plot.proxyHips);
+    const cubeIdx= plot.cubeDepth>1 && plot.cubeIdx>0 ? plot.cubeIdx : 0;
+    return makeHiPSAllSkyUrl(plot.hipsUrlRoot, exts, cubeIdx, plot.proxyHips);
 
 }
 

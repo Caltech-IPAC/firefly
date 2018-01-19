@@ -320,7 +320,7 @@ export function dispatchDestroyDrawLayer(id) {
  * @public
  * @function  dispatchAttachLayerToPlot
  */
-export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false, visible= true) {
+export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false, visible= true, plotTypeMustMatch=false) {
 
     let plotIdAry;
     let layerVisible;
@@ -337,7 +337,7 @@ export function dispatchAttachLayerToPlot(id,plotId,  attachAllPlot=false, visib
         plotIdAry= plotId;
     }
     else {
-        plotIdAry = attachAllPlot ? getAllPlotViewId(visRoot(), plotId) : [plotId];
+        plotIdAry = attachAllPlot ? getAllPlotViewId(visRoot(), plotId, false, plotTypeMustMatch) : [plotId];
     }
 
     getDrawLayerIdAry(dlRoot(),id)
