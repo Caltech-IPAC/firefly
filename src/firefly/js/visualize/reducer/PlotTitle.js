@@ -36,20 +36,24 @@ export function makePostPlotTitle(plot,r) {
 function computeFileNameBaseTitle(r,state, band, preTitle) {
     let retval= '';
     const rt= r.getRequestType();
-    if (rt===RequestType.WORKSPACE || rt===RequestType.FILE || rt===RequestType.TRY_FILE_THEN_URL) {
-        if (r.getFileName()) {
-            retval= preTitle + computeTitleFromFile(r.getFileName());
-        }
-        else if (state.getUploadFileName(band)) {
-            retval= preTitle + computeTitleFromFile(state.getUploadFileName(band));
-        }
-        else {
-            retval= 'FITS';
-        }
+
+    switch (rt) {
+        case RequestType.WORKSPACE:
+            if (r.getFileName()) retval= computeTitleFromFile(r.getFileName(), preTitle);
+            else if (state.getUploadFileName(band)) retval= computeTitleFromFile(state.getUploadFileName(band), preTitle);
+            break;
+        case RequestType.FILE:
+        case RequestType.TRY_FILE_THEN_URL:
+            if (state.getUploadFileName(band)) retval= computeTitleFromFile(state.getUploadFileName(band), preTitle);
+            else if (r.getFileName()) retval= computeTitleFromFile(r.getFileName(), preTitle);
+            break;
+        case RequestType.URL:
+            retval= computeTitleFromURL(r.getURL(),r,preTitle);
+            break;
+
     }
-    else if (rt===RequestType.URL) {
-        retval= computeTitleFromURL(r.getURL(),r,preTitle);
-    }
+
+    if (!retval) retval= 'FITS';
     return retval;
 }
 
@@ -59,7 +63,6 @@ function computeTitleFromURL(urlStr, r, preTitle='') {
     var retval= '';
     var qIdx=urlStr.indexOf('?');
     if (qIdx>-1 && urlStr.length>qIdx+1) {
-        // var prepend= r.getTitleFilenameModePfx() ? r.getTitleFilenameModePfx()+ ' ' : 'from ';
         var prepend= preTitle;
         var workStr= urlStr.substring(qIdx+1);
         var fLoc= workStr.toLowerCase().indexOf('.fit');

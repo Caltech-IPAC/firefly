@@ -3,7 +3,9 @@
  */
 
 import {get} from 'lodash';
+import {clone} from '../../util/WebUtil.js';
 import {makeImagePt, makeProjectionPt, makeWorldPt} from '../Point.js';
+import {computeDistance} from '../VisUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {AitoffProjection} from './AitoffProjection.js';
 import {NCPProjection} from './NCPProjection.js';
@@ -53,11 +55,6 @@ const projTypes= {
 	},
     [TPV] : {
         name: 'TPV',
-<<<<<<< HEAD
-=======
-        // fwdProject: GnomonicProjection.fwdProject,
-        // revProject: GnomonicProjection.revProject,
->>>>>>> dm-12598: adding tpv projection (IRSA-1009 is gwt counterpart)
         fwdProject: TpvProjection.fwdProject,
         revProject: TpvProjection.revProject,
         implemented : true,
@@ -210,10 +207,23 @@ export class Projection {
 	 * @public
 	 */
     constructor(header, coordSys)  {
-        this.header= header;
-        this.pixelScaleDeg= Math.abs(this.header.cdelt1);
-        this.pixelScaleArcSec= this.pixelScaleDeg* 3600.0;
+        this.header= clone(header);
         this.coordSys= coordSys;
+        const {crpix1,crpix2, cdelt1}= header;
+        if (!cdelt1 && crpix1 && crpix2) {
+            const proj_center = this.getWorldCoords(crpix1 - 1, crpix2 - 1);
+            const one_to_right = this.getWorldCoords(crpix1, crpix2 - 1);
+            const one_up = this.getWorldCoords(crpix1 - 1, crpix2);
+            if (one_to_right && one_up) {
+                this.header.cdelt1 = - computeDistance( proj_center, one_to_right);
+                this.header.cdelt2 = computeDistance( proj_center, one_up);
+            }
+
+        }
+        this.pixelScaleDeg = Math.abs(this.header.cdelt1);
+        this.pixelScaleArcSec = this.pixelScaleDeg * 3600.0;
+
+
     }
 
 	/**
