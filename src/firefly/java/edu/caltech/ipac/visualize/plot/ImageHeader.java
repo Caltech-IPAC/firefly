@@ -11,8 +11,12 @@ import edu.caltech.ipac.visualize.plot.projection.Projection;
 import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
+import nom.tam.util.Cursor;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ImageHeader implements Serializable
@@ -33,7 +37,8 @@ public class ImageHeader implements Serializable
     public final int EC = 1;
     public final int GA = 2;
     public final int SGAL = 3;
-    public int bitpix, naxis, naxis1, naxis2, naxis3;
+
+	public int bitpix, naxis, naxis1, naxis2, naxis3;
     public double crpix1, crpix2, crval1, crval2, cdelt1, cdelt2, crota2;
     public double crota1;
     public double file_equinox;
@@ -73,7 +78,13 @@ public class ImageHeader implements Serializable
     public double bp[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
+	public Map<String,String> maskHeaders= new HashMap<>(23);
+	public Map<String,String> sendToClientHeaders = new HashMap<>(23);
 
+	/* TPV projection (ctype1 ending in -TPV), 4th order polynomial distortion assumed*/
+
+	public double[] pv1poly = new double[ProjectionParams.MAX_TPV_LENGTH];
+	public double[] pv2poly = new double[ProjectionParams.MAX_TPV_LENGTH];
 
     public ImageHeader()
     {
@@ -101,6 +112,22 @@ public class ImageHeader implements Serializable
 	String ctype1_trim = null;
 
 	long header_size = header.getOriginalSize();
+
+	HeaderCard hc;
+	Cursor extraIter= header.iterator();
+	for(;extraIter.hasNext();) {
+		hc= (HeaderCard)extraIter.next();
+		if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
+			maskHeaders.put(hc.getKey(), hc.getValue());
+			sendToClientHeaders.put(hc.getKey(), hc.getValue());
+		}
+	}
+	hc= header.findCard("EXTTYPE");
+	if (hc!=null) sendToClientHeaders.put(hc.getKey(), hc.getValue());
+
+
+
+
 	data_offset = HDU_offset + header_size;
 	plane_number = _plane_number;
 
@@ -128,6 +155,8 @@ public class ImageHeader implements Serializable
 	    String ctype1_tail = ctype1.substring(4, 8);
 	    if (ctype1_trim.indexOf("-TAN") >= 0)
 		maptype = Projection.GNOMONIC;
+		else if (ctype1_trim.endsWith("-TPV"))
+		maptype = Projection.TPV;
 	    else if (ctype1_trim.indexOf("-SIN") >= 0)
 		maptype = Projection.ORTHOGRAPHIC;
 	    else if (ctype1_trim.endsWith("-NCP"))
@@ -402,7 +431,6 @@ public class ImageHeader implements Serializable
 	    }
 	    
 	}
-
     /* now do SIRTF distortion corrections */
     if ((ctype1_trim != null) && (ctype1_trim.endsWith("-SIP")))
     {
@@ -489,8 +517,17 @@ public class ImageHeader implements Serializable
 		}
 	    }
 	}
+    }else if((ctype1_trim != null) && ctype1_trim.endsWith("-TPV")){
+		for (i = 0; i < pv1poly.length; i++) {
+			pv1poly[i] = 0.0;
+			keyword = "PV1_" + i;
+			pv1poly[i] = header.getDoubleValue(keyword, 0.0);
+			pv2poly[i] = 0.0;
+			keyword = "PV2_" + i;
+			pv2poly[i] = header.getDoubleValue(keyword, 0.0);
+		}
+	}
 
-    }
     if (using_cd) 
     {
 	/* need an approximation of cdelt1 and cdelt2 */
@@ -524,7 +561,7 @@ public class ImageHeader implements Serializable
 	}
     }
 
-	/* now do Digital Sky Survey plate solution cofficients */
+	/* now do Digital Sky Survey plate solution coefficients */
 	if  (header.containsKey("PLTRAH"))
 	{
 	    if (SUTDebug.isDebug())
@@ -709,6 +746,8 @@ public class ImageHeader implements Serializable
     public static ProjectionParams createProjectionParams(ImageHeader hdr) {
         ProjectionParams params= new ProjectionParams();
 
+        //Used in new FF
+		//params.sendToClientHeaders= hdr.sendToClientHeaders;
         params.bitpix= hdr.bitpix;
         params.naxis = hdr.naxis;
         params.naxis1= hdr.naxis1;
@@ -764,6 +803,13 @@ public class ImageHeader implements Serializable
         params.bp= hdr.bp;
         params.map_distortion= hdr.map_distortion;
         params.keyword= hdr.keyword;
+
+        //TPV
+        params.pv1poly = hdr.pv1poly;
+		params.pv2poly = hdr.pv2poly;
+
+		params.a= hdr.a;
+
 
         return params;
 

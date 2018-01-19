@@ -130,6 +130,10 @@ public class ProjectionSerializer {
         map.put("map_distortion", p.map_distortion+"");
         map.put("keyword", p.keyword+"");
 
+        //TPV
+        map.put("pv1poly", arrayToStr(p.pv1poly));
+        map.put("pv2poly", arrayToStr(p.pv2poly));
+
 
     }
 
@@ -212,6 +216,9 @@ public class ProjectionSerializer {
 
         p.map_distortion= Boolean.parseBoolean(map.get("map_distortion"));
         p.keyword= StringUtils.checkNull(map.get("keyword"));
+
+        p.pv1poly= strTo1DimArray(map.get("pv1poly"));
+        p.pv2poly= strTo1DimArray(map.get("pv2poly"));
 
         return p;
     }
