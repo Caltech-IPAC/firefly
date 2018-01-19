@@ -211,19 +211,17 @@ export class Projection {
         this.coordSys= coordSys;
         const {crpix1,crpix2, cdelt1}= header;
         if (!cdelt1 && crpix1 && crpix2) {
-            const proj_center = this.getWorldCoords(crpix1 - 1, crpix2 - 1);
-            const one_to_right = this.getWorldCoords(crpix1, crpix2 - 1);
-            const one_up = this.getWorldCoords(crpix1 - 1, crpix2);
-            if (one_to_right && one_up) {
-                this.header.cdelt1 = - computeDistance( proj_center, one_to_right);
-                this.header.cdelt2 = computeDistance( proj_center, one_up);
+            const projCenter = this.getWorldCoords(crpix1 - 1, crpix2 - 1);
+            const oneToRight = this.getWorldCoords(crpix1, crpix2 - 1);
+            const oneUp = this.getWorldCoords(crpix1 - 1, crpix2);
+            if (oneToRight && oneUp) {
+                this.header.cdelt1 = - computeDistance( projCenter, oneToRight);
+                this.header.cdelt2 = computeDistance( projCenter, oneUp);
             }
 
         }
         this.pixelScaleDeg = Math.abs(this.header.cdelt1);
         this.pixelScaleArcSec = this.pixelScaleDeg * 3600.0;
-
-
     }
 
 	/**

@@ -3,7 +3,7 @@
  */
 
 
-import {DtoR,RtoD, acosd,asind,atan2d,atand,sind,cosd,tand} from './ProjectionUtil.js';
+import {DtoR,RtoD} from './ProjectionUtil.js';
 import {makeProjectionPt,makeImagePt} from '../Point.js';
 
 const DEF_PV1= [0,1];
@@ -22,32 +22,27 @@ export const TpvProjection= {
     revProject (ra, dec, hdr) {
 		let fline, fsamp, rtwist, temp;
 
-		const {crpix1,crpix2,cdelt1,cdelt2, dc1_1, dc1_2, dc2_1, dc2_2, using_cd,
-               ctype1, ctype2, using_tpv=true, pv1= DEF_PV1, pv2=DEF_PV2}= hdr;
+		const {crpix1,crpix2,cdelt1,cdelt2, dc1_1, dc1_2, dc2_1, dc2_2, using_cd, pv1= DEF_PV1, pv2=DEF_PV2}= hdr;
 		const glong  = hdr.crval1;
 		const glat   = hdr.crval2;
 
         // Transform WC Ra,dec to intermediate coordinate (tan plane)
 
-        let lat, lon;
-        let rpp1, rpp2, lat0, lon0;
-        let aa, ff1, ff2;
-        let x, y;
 
         const twist = hdr.crota2;
 
-        lon = ra * DtoR;
-        lat = dec * DtoR;
+        const lon = ra * DtoR;
+        const lat = dec * DtoR;
 
-        rpp1 = -cdelt1 * DtoR;
-        rpp2 = -cdelt2 * DtoR;
+        const rpp1 = -cdelt1 * DtoR;
+        const rpp2 = -cdelt2 * DtoR;
 
-        lon0 = glong * DtoR;
-        lat0 = glat * DtoR;
+        const lon0 = glong * DtoR;
+        const lat0 = glat * DtoR;
 
-        aa = Math.cos(lat) * Math.cos(lon - lon0);
-        ff1 = 1. / (Math.sin(lat0) * Math.sin(lat) + aa * Math.cos(lat0));
-        ff2 = 1. / (Math.sin(lat0) * Math.sin(lat) + aa * Math.cos(lat0));
+        const aa = Math.cos(lat) * Math.cos(lon - lon0);
+        const ff1 = 1. / (Math.sin(lat0) * Math.sin(lat) + aa * Math.cos(lat0));
+        const ff2 = 1. / (Math.sin(lat0) * Math.sin(lat) + aa * Math.cos(lat0));
 
         if (ff1 < 0) {
             /* we're more than 90 degrees from projection center */
@@ -109,8 +104,8 @@ export const TpvProjection= {
                 2 * axis2poly[8] * yy * xx +
                 axis2poly[9] * xx * xx +
                 3 * axis2poly[11] * yy * Math.sqrt(xx * xx + yy * yy);
-            let det = m1 * m4 - m2 * m3;
-            let tmp = m4 / det;
+            const det = m1 * m4 - m2 * m3;
+            const tmp = m4 / det;
             m2 /= -det;
             m3 /= -det;
             m4 = m1 / det;
@@ -168,25 +163,24 @@ export const TpvProjection= {
             fline = (fline / rpp2);
         }
 
-        x = fsamp + crpix1 - 1;
-        y = fline + crpix2 - 1;
+        const x = fsamp + crpix1 - 1;
+        const y = fline + crpix2 - 1;
 		return makeImagePt(x, y);
 	},
 
 	fwdProject( px, py, hdr) {
-        let i, j;
         let lat, lon;
         let x, y; //Intermediate coords undistortioned
 
-        const {crpix1,crpix2,cdelt1,cdelt2, cd1_1, cd1_2, cd2_1, cd2_2, using_cd, map_distortion,
-		       using_tpv=true, pv1= DEF_PV1, pv2=DEF_PV2}= hdr;
+        const {crpix1,crpix2,cdelt1,cdelt2, cd1_1, cd1_2, cd2_1, cd2_2, using_cd,
+		       pv1= DEF_PV1, pv2=DEF_PV2}= hdr;
 		const glong  = hdr.crval1;
 		const glat   = hdr.crval2;
         const twist  = hdr.crota2;
 
         // the intermediate coordinates offset from the distortion-center origin
-        let fsamp = px - crpix1 + 1;
-        let fline = py - crpix2 + 1;
+        const fsamp = px - crpix1 + 1;
+        const fline = py - crpix2 + 1;
 
         //Distortion is applied to intermediate (tangent) world coordinates so lets calculate those
         // by inverting cd matrix
@@ -207,11 +201,11 @@ export const TpvProjection= {
         }
 
         // Apply PV distortion
-        let xy = distortion(x, y, pv1, pv2);
+        const xy = distortion(x, y, pv1, pv2);
 
         //Intermediate coords distorsioned
-        let {xprime, yprime} = xy;
-        let xx = xprime;
+        const {xprime, yprime} = xy;
+        const xx = xprime;
         let yy = yprime;
         const delta = Math.atan(Math.sqrt(xx * xx + yy * yy));
 
@@ -237,6 +231,11 @@ export const TpvProjection= {
 /**
  * 	Correct projection plane coordinates for field distortion;
  * 	Distortion coefficients pv1, pv2
+ * @param x
+ * @param y
+ * @param pv1
+ * @param pv2
+ * @return {{xprime: *, yprime: *}}
  */
 function distortion (x, y, pv1, pv2) {
 
