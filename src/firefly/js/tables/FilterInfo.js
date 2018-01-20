@@ -159,18 +159,35 @@ export class FilterInfo {
         var [ , cname, op, val] =filterStr.match(filter_regex) || [];
         if (!cname) return () => false;       // bad filter.. returns nothing.
 
-        // remove the double quote around the key
-        const removeQuoteAroundString = (str) => {
-            return str.replace(/^"(.*)"$/, '$1');
+        // remove the double quote or the single quote around cname and val (which is added in auto-correction)
+        const removeQuoteAroundString = (str, quote = "'") => {
+            if (str.startsWith(quote)) {
+                const reg = new RegExp('^' + quote + '(.*)' + quote + '$');
+                return str.replace(reg, '$1');
+            } else {
+                return str;
+            }
         };
 
-        cname = removeQuoteAroundString(cname);
+        cname = removeQuoteAroundString(cname, '"');
         op = op.toLowerCase();
         val = val.toLowerCase();
+
         const cidx = getColumnIdx(tableModel, cname);
         const noROWID = cname === 'ROW_IDX' && cidx < 0;
         const colType = noROWID ? 'int' : get(getColumn(tableModel, cname), 'type', 'char');
+
         val = op === 'in' ? val.replace(/[()]/g, '').split(',').map((s) => s.trim()) : val;
+
+        if (colType.match(/^[sc]/)) {
+            if (op === 'in') {
+                val = val.map((s) => {
+                    return removeQuoteAroundString(s);
+                });
+            } else {
+                val = removeQuoteAroundString(val);
+            }
+        }
 
         return (row, idx) => {
             if (!row) return false;
@@ -185,8 +202,10 @@ export class FilterInfo {
             }
 
             switch (op) {
-                case 'like'  :
-                    return compareTo.includes(val);
+                case 'like' :
+                    const reg = likeToRegexp(val);
+
+                    return reg.test(compareTo);
                 case '>'  :
                     return compareTo > val;
                 case '<'  :
@@ -257,6 +276,33 @@ export class FilterInfo {
     }
 }
 
+/**
+ * convert sql like condition to RegExp, usage of wildcard, % & _, escape wildcard, \% and \_ are considered
+ * @param text
+ * @returns {RegExp}
+ */
+function likeToRegexp(text) {
+    const specials = ['/', '.', '*', '+', '?', '|', ':', '!',
+        '(', ')', '[', ']', '{', '}', '\\', '^', '$', '-', '='
+    ];
+
+    const sRE = new RegExp('(\\' + specials.join('|\\') + ')', 'g');
+    const wildcardSqlRegexp = (w) => {
+        return new RegExp('(?<!\\\\)'+ w, 'g');
+    };
+    const escapeWildcardSqlRegexp = (w) => {
+        return new RegExp('\\\\\\\\'+w, 'g');
+    };
+
+    const  newText = text.replace(sRE, '\\$1')
+                       .replace(wildcardSqlRegexp('%'), '.*')
+                       .replace(wildcardSqlRegexp('_'), '.')
+                       .replace(escapeWildcardSqlRegexp('%'), '%')
+                       .replace(escapeWildcardSqlRegexp('_'), '_');
+
+
+    return new RegExp(newText);
+}
 
 /*-----------------------------------------------------------------------------------------*/
 
@@ -288,7 +334,7 @@ function autoCorrectCondition(v, isNumeric=false) {
             break;
         case 'in':
             if (!isNumeric) {
-                val = val.split(',').map((s) => `'${s.trim}'`).join();
+                val = val.split(',').map((s) => `'${s.trim()}'`).join();
             }
             val = `(${val})`;
             break;
