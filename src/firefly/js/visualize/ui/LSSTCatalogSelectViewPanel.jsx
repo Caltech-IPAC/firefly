@@ -102,7 +102,7 @@ const LSSTTables = [
         subproject: [
             {
                 database: 'wise_00',
-                label: 'AllWISE',
+                label: 'WISE Original Mission',
                 project: 'WISE',
 
                 catalogs: [
@@ -170,7 +170,7 @@ const LSSTTables = [
             },
             {
                 database: 'wise_ext_00',
-                label: 'AllWISE (Ext)',
+                label: 'AllWISE Reject Table',
                 project: 'WISE',
 
                 catalogs: [
@@ -185,7 +185,7 @@ const LSSTTables = [
             },
             {
                 database: 'neowiser_yr1_00',
-                label: 'NeoWISE',
+                label: 'NEOWISE Reactivation Mission',
                 project: 'WISE',
 
                 catalogs: [
