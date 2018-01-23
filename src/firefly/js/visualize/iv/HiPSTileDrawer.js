@@ -28,9 +28,8 @@ export const DrawTiming= new Enum(['IMMEDIATE','ASYNC', 'DELAY']);
 export function createHiPSDrawer(targetCanvas) {
     if (!targetCanvas) return () => undefined;
     let abortLastDraw= null;
-    let lastNorder= 0;
+    let transitionNorder= 0;
     let lastFov;
-    let lastUsedAllSky= false;
 
 
     return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
@@ -48,16 +47,17 @@ export function createHiPSDrawer(targetCanvas) {
             drawTiming= DrawTiming.IMMEDIATE;
         }
 
-        if (drawTiming===DrawTiming.ASYNC && showZoomChangeDisplay(useAllSky,lastUsedAllSky,fov,lastFov)) {
-            drawTransitionalImage(fov,lastFov, centerWp,targetCanvas,plot, plotView,norder, lastNorder, opacity, tileProcessInfo);
+        if (drawTiming===DrawTiming.ASYNC) {
+            if (fovEqual(fov, lastFov)) transitionNorder--; // for scroll transitionNorder needs to be set one back
+            drawTransitionalImage(fov,centerWp,targetCanvas,plot, plotView,norder, transitionNorder, opacity, tileProcessInfo, tilesToLoad);
             drawTiming= DrawTiming.DELAY;
             overlayTransparent= true;
         }
 
-        abortLastDraw= drawDisplay(targetCanvas, plot, plotView, norder, tilesToLoad, useAllSky,
-            opacity, tileProcessInfo, drawTiming, overlayTransparent);
-        lastNorder= norder;
-        lastUsedAllSky= useAllSky;
+        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,overlayTransparent);
+        abortLastDraw= drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tilesToLoad, useAllSky,
+            opacity, tileProcessInfo, drawTiming);
+        transitionNorder= norder;
         lastFov= fov;
     };
 }
@@ -66,85 +66,113 @@ export function createHiPSDrawer(targetCanvas) {
 /**
  * this is used for temporary image when zooming
  * @param fov
- * @param lastFov
  * @param centerWp
  * @param targetCanvas
  * @param plot
  * @param plotView
  * @param norder
- * @param lastNorder
+ * @param transitionNorder
  * @param opacity
  * @param tileProcessInfo
+ * @param finalTileToLoad
  */
-function drawTransitionalImage(fov, lastFov, centerWp, targetCanvas, plot, plotView,
-                               norder, lastNorder, opacity, tileProcessInfo) {
+function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
+                               norder, transitionNorder, opacity, tileProcessInfo, finalTileToLoad) {
     const {viewDim}= plotView;
     let tilesToLoad;
-    if (norder<=3) {
-        tilesToLoad= findCellOnScreen(plot,viewDim,3, fov, centerWp);
-        drawDisplay(targetCanvas, plot, plotView, lastNorder, tilesToLoad, true,
+    if (norder<=3) { // norder is always 3, need to fix this if
+        const tilesToLoad2= findCellOnScreen(plot,viewDim,2, fov, centerWp);
+        const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
+        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
+        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 2, tilesToLoad2, true,
+            opacity, tileProcessInfo, DrawTiming.IMMEDIATE, false);
+        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 3, tilesToLoad3, false,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
-    }
-    else if (fov < lastFov) {
-        let lookMore= true;
-        for( let testNo= lastNorder; (testNo>=3 && lookMore); testNo--) {
-            tilesToLoad= findCellOnScreen(plot,viewDim,testNo, fov, centerWp);
-            if (tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile)))) {
-                drawDisplay(targetCanvas, plot, plotView, testNo, tilesToLoad, false,
-                    opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
-                lookMore= false;
-            }
-            if (lookMore && testNo===3){
-                drawDisplay(targetCanvas, plot, plotView, testNo, tilesToLoad, true,
-                    opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
-                lookMore= false;
-            }
-        }
     }
     else {
-        tilesToLoad= findCellOnScreen(plot,viewDim,lastNorder, fov, centerWp);
-        drawDisplay(targetCanvas, plot, plotView, lastNorder, tilesToLoad, false,
+        let lookMore= true;
+        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
+        for( let testNorder= transitionNorder; (testNorder>=3 && lookMore); testNorder--) {
+            tilesToLoad= findCellOnScreen(plot,viewDim,testNorder, fov, centerWp);
+            const hasSomeTiles= tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile)));
+            if (hasSomeTiles || testNorder===3) { // if there are tiles or we need to do the allsky
+                drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, testNorder, tilesToLoad, testNorder===3,
+                    opacity, tileProcessInfo, DrawTiming.IMMEDIATE, false);
+                lookMore= false;
+                // console.log(`draw transi: transitionNorder: ${transitionNorder}, testNorder: ${testNorder}`);
+            }
+        }
+        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, finalTileToLoad, false,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
     }
-
 }
 
 
 
+const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000);
 
 
-function showZoomChangeDisplay(useAlSky, lastUsedAllSky, fov, lastFov) {
-    if (!lastFov || useAlSky) return false;
-    if (useAlSky!==lastUsedAllSky || lastFov!==fov) return true;
-    return false;
-}
+// function findCellOnScreenORGIN(plot, viewDim, norder, fov,centerWp) {
+//     const cells= getVisibleHiPSCells(norder,centerWp, fov, plot.dataCoordSys);
+//     const cc= CysConverter.make(plot);
+//     const retval= cells
+//         .map( (c) => {
+//             let all= true;
+//             const devPtCorners= c.wpCorners.map( (corner) => {
+//                 if (!all) {
+//                     return false;
+//                 }
+//                 const devCoord= cc.getDeviceCoords(corner);
+//                 if (!devCoord) all= false;
+//                 return devCoord;
+//             });
+//             if (!all) return null;
+//             // if (!isQuadTileOnScreen(devPtCorners, viewDim)) return null;
+//             const notOnScreen= !isQuadTileOnScreen(devPtCorners, viewDim);
+//             if (notOnScreen) return null;
+//             return {devPtCorners, tileNumber:c.ipix, dx:0, dy:0, nside: norder};
+//         })
+//         .filter( (c) => c);
+//     return retval;
+// }
 
+
+/**
+ *
+ * @param {WebPlot} plot
+ * @param viewDim
+ * @param {number} norder
+ * @param {number} fov
+ * @param {WorldPt} centerWp
+ * @return {Array}
+ */
 function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
     const cells= getVisibleHiPSCells(norder,centerWp, fov, plot.dataCoordSys);
     const cc= CysConverter.make(plot);
-    const retval= cells
-        .map( (c) => {
-            let all= true;
-            const devPtCorners= c.wpCorners.map( (corner) => {
-                if (!all) {
-                    return false;
-                }
-                const devCoord= cc.getDeviceCoords(corner);
-                if (!devCoord) all= false;
-                return devCoord;
-            });
-            if (!all) return null;
-            if (!isQuadTileOnScreen(devPtCorners, viewDim)) return null;
-            return {devPtCorners, tileNumber:c.ipix, dx:0, dy:0, nside: norder};
-        })
-        .filter( (c) => c);
-    return retval;
+
+    const retCells= [];
+    let devPtCorners;
+                   // this function is performance sensitive, use for loops instead of map and filter
+    for(let i= 0; (i<cells.length); i++) {
+        devPtCorners= [];
+        for(let j=0; (j<cells[i].wpCorners.length); j++)  {
+            devPtCorners[j]= cc.getDeviceCoords(cells[i].wpCorners[j]);
+            if (!devPtCorners[j]) break;
+        }
+        if (isQuadTileOnScreen(devPtCorners, viewDim)) {
+            retCells.push({devPtCorners, tileNumber:cells[i].ipix, dx:0, dy:0, nside: norder});
+        }
+    }
+    return retCells;
 }
+
+
 
 
 /**
  *
  * @param targetCanvas
+ * @param offscreenCanvas
  * @param plot
  * @param plotView
  * @param norder
@@ -153,18 +181,28 @@ function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
  * @param opacity
  * @param tileProcessInfo
  * @param drawTiming
- * @param overlayTransparent
+ * @param screenRenderEnabled
  */
-function drawDisplay(targetCanvas, plot, plotView, norder, tilesToLoad, useAllSky, opacity, tileProcessInfo,
-                     drawTiming= DrawTiming.ASYNC, overlayTransparent= false) {
+function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tilesToLoad, useAllSky, opacity, tileProcessInfo,
+                     drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true) {
     const {viewDim}= plotView;
     const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
     const boundingBox= computeBounding(rootPlot,viewDim.width,viewDim.height);
     const offsetX= boundingBox.x>0 ? boundingBox.x : 0;
     const offsetY= boundingBox.y>0 ? boundingBox.y : 0;
 
-    const drawer= makeHipsDrawer(plotView, plot, targetCanvas, tilesToLoad.length,
-        offsetX,offsetY, opacity, tileProcessInfo, overlayTransparent);
+
+
+    if (!targetCanvas) return noOp;
+    // if (!offscreenCanvas) offscreenCanvas = makeOffScreenCanvas(plotView,plot,overlayTransparent);
+    const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
+    const drawer= makeHipsDrawer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
+                                      tileProcessInfo, screenRenderEnabled);
+    
+
+
+    // const drawer= makeHipsDrawer(plotView, plot, targetCanvas, tilesToLoad.length,
+    //     offsetX,offsetY, opacity, tileProcessInfo, overlayTransparent);
 
     if (useAllSky) {
         const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
@@ -234,24 +272,7 @@ function drawAllSkyFromOneImage(allSkyImage, tilesToLoad, drawer) {
 }
 
 
-
-/**
- * return a object with two functions drawTile and abort
- * @param {PlotView} plotView
- * @param {WebPlot} plot
- * @param {Object} targetCanvas
- * @param {number} totalCnt
- * @param {number} offsetX
- * @param {number} offsetY
- * @param {number} opacity
- * @param {Object} tileProcessInfo
- * @param overlayTransparent
- * @return {function(*, *)}
- */
-function makeHipsDrawer(plotView, plot, targetCanvas, totalCnt,
-                        offsetX,offsetY, opacity, tileProcessInfo, overlayTransparent) {
-
-    if (!targetCanvas) return noOp;
+function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
 
     const offscreenCanvas = initOffScreenCanvas(plotView.viewDim);
     const offscreenCtx = offscreenCanvas.getContext('2d');
@@ -276,14 +297,21 @@ function makeHipsDrawer(plotView, plot, targetCanvas, totalCnt,
     }
     offscreenCtx.fillStyle = overlayTransparent ? 'rgba(0,0,0,0)'  : 'rgba(0,0,0,1)';
     offscreenCtx.fillRect(0, 0, width, height);
-
-    const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
-
-    return makeHipsDrawTileObj(screenRenderParams, totalCnt, !plot.asOverlay, tileProcessInfo);
-
+    return offscreenCanvas;
 }
 
-function makeHipsDrawTileObj(screenRenderParams, totalCnt, isBaseImage, tileProcessInfo) {
+
+/**
+ *
+ * @param {{plotView:PlotView, plot:WebPlot, targetCanvas:Canvas, offscreenCanvas:Canvas,
+ *          opacity:number, offsetX:number, offsetY:number}} screenRenderParams
+ * @param totalCnt
+ * @param isBaseImage
+ * @param tileProcessInfo
+ * @param screenRenderEnabled
+ * @return {{drawTile(*=, *=): undefined, drawTileImmediate(*=, *, *=): void, abort(): void}}
+ */
+function makeHipsDrawer(screenRenderParams, totalCnt, isBaseImage, tileProcessInfo, screenRenderEnabled) {
 
     let renderedCnt=0;
     let abortRender= false;
@@ -336,14 +364,14 @@ function makeHipsDrawTileObj(screenRenderParams, totalCnt, isBaseImage, tileProc
                                   renderedCnt/totalCnt > .75 && now-firstRenderTime>1000 ||
                                   now-firstRenderTime>2000);
                 // console.log(`${renderedCnt} of ${totalCnt}, renderNow: ${renderNow}, time diff ${(now-firstRenderTime)/1000}`);
-                if (renderNow) renderToScreen(screenRenderParams);
+                if (renderNow && screenRenderEnabled) renderToScreen(screenRenderParams);
                 renderComplete= (renderedCnt === totalCnt);
             }).catch(() => {
                 addTileCachedImage(src, null, true);
                 renderedCnt++;
                 if (abortRender) return;
                 drawEmptyTile(offscreenCtx, tile);
-                if (renderedCnt === totalCnt) {
+                if (renderedCnt === totalCnt && screenRenderEnabled) {
                     renderComplete= true;
                     renderToScreen(screenRenderParams);
                 }
@@ -360,7 +388,7 @@ function makeHipsDrawTileObj(screenRenderParams, totalCnt, isBaseImage, tileProc
                     tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
             }
             renderedCnt++;
-            if (renderedCnt === totalCnt) {
+            if (renderedCnt === totalCnt && screenRenderEnabled) {
                 renderComplete= true;
                 renderToScreen(screenRenderParams);
             }
@@ -368,7 +396,7 @@ function makeHipsDrawTileObj(screenRenderParams, totalCnt, isBaseImage, tileProc
 
         abort()  {
             abortRender = true;
-            if (isBaseImage && !renderComplete && renderedCnt>0) renderToScreen(screenRenderParams);
+            if (isBaseImage && !renderComplete && renderedCnt>0 && screenRenderEnabled) renderToScreen(screenRenderParams);
         }
     };
 }
