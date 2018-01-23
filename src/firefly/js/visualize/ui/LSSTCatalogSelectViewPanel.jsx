@@ -163,7 +163,7 @@ const LSSTTables = [
                 project: 'WISE',
                 value: 'single-epoch',
                 infourl: 'http://wise2.ipac.caltech.edu/docs/release/neowise/expsup/',
-                infodesc: 'Documentation on the NeoWISE data releases',
+                infodesc: 'Documentation on the NEOWISE data releases',
                 catalogs: [
                     {
                         id: SINGLEEXPSOURCE,
@@ -414,7 +414,8 @@ function doImage(request, imgPart) {
     const noSizeMethod = ['ALLSKY', 'CENTER'];
     const noSubsizeMethod = ['ALLSKY', 'ENCLOSED'];
     const noTargetMethod = ['ALLSKY'];
-    const {cattable} = request[gkey] || {};
+    const {project, cattable} = request[gkey] || {};
+    const [,tableName] = cattable ? cattable.split('\.') : [];
     const spatial =  get(imgPart, ['spatial', 'value']);
     const intersect = get(imgPart, ['intersect', 'value']);
     const size = (!noSizeMethod.includes(intersect)) ? get(imgPart, ['size', 'value']) : '';
@@ -422,7 +423,7 @@ function doImage(request, imgPart) {
     const subsize = (!noSubsizeMethod.includes(intersect)) ? get(imgPart, ['subsize', 'value']) : ''; // in degrees
     const wp = (!noTargetMethod.includes(intersect)) && get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
-    let title = `${projectName}-${cattable}-${capitalize(intersect)}`;
+    let title = `${projectName}-${tableName}-${capitalize(intersect)}`;
     const loc = wp && wp.split(';').slice(0, 2).join();
 
     if (!noSizeMethod.includes(intersect)) {
@@ -449,16 +450,21 @@ function doImage(request, imgPart) {
                             cutoutSize = {size}
                             dlParams = {{
                                     Title: title,
-                                    FilePrefix: cattable,
-                                    BaseFileName: cattable,
-                                    DataSource: cattable,
+                                    FilePrefix: tableName,
+                                    BaseFileName: tableName,
+                                    DataSource: tableName,
                                     FileGroupProcessor: 'LSSTFileGroupProcessor'     // insert FileGroupProcessor's ID here.
                                 }}/>
                     </DownloadButton>
 
                 );
             };
-    dispatchTableSearch(tReq, {leftButtons: [downloadButton], backgroundable:true});
+    const tblOptions = {backgroundable: true};
+    // currently, download is only implemented for SDSS
+    if (project.includes('sdss')) {
+        tblOptions.leftButtons = [downloadButton];
+    }
+    dispatchTableSearch(tReq, tblOptions);
 }
 
 /**
@@ -470,13 +476,14 @@ function doCatalog(request, spatPart) {
 
     const catPart = request[gkey];
     const {cattable} = catPart;
+    const [,tableName] = cattable ? cattable.split('\.') : [];
     const spatial =  get(spatPart, ['spatial', 'value']);
     const conesize = get(spatPart, ['conesize', 'value']);
     const wp = get(spatPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
     const sizeUnit = 'deg';
     const conestr = formatNumberString(conesize);
 
-    let title = `${projectName}-${catPart.cattable}`;
+    let title = `${projectName}-${tableName}`;
     let tReq;
 
     if (spatial === SpatialMethod.get('Multi-Object').value) {
@@ -702,7 +709,7 @@ function getCatalogs(catmaster, project, cattype) {
 }
 
 /**
- * @summry get the default table value fromt the project's catalog (and image meta) list
+ * @summary get the default table value fromt the project's catalog (and image meta) list
  * @param catmaster
  * @param project
  * @param cattype
