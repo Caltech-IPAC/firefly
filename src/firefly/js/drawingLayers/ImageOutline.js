@@ -97,9 +97,10 @@ function computeDrawData(drawLayer, plotId) {
     const cc= CysConverter.make(plot);
     const s1= cc.getDeviceCoords(wpAry[0]);
     const s2= cc.getDeviceCoords(wpAry[2]);
+    if (!s1 || !s2) return [];
     const loc= cc.getWorldCoords(makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2));
     const retObj= [FootprintObj.make([wpAry])];
-    if (lastTitle) {
+    if (lastTitle && loc) {
         const textObj= ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6), loc, lastTitle);
         retObj.push(textObj);
     }
