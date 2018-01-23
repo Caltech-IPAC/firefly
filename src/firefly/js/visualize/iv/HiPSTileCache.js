@@ -4,49 +4,52 @@
 import {initOffScreenCanvas} from './TileDrawHelper.jsx';
 
 
-const MAX_TILE_IMAGES= 100;
-const MAX_PROPERTIES= 100;
-const MAX_ALLSKY_IMAGES= 10;
+const MAX_TILE_IMAGES= 150;
+const MAX_ALLSKY_IMAGES= 20;
 
-const cachedImages= [];
-const cachedAllSkyImages=[];
-const cachedProperties=[];
+let cachedImages= new Map();
+let cachedAllSkyImages= new Map();
 
 
 
 export function findAllSkyCachedImage(url) {
-     const result= cachedAllSkyImages.find( (v) => v.url===url);
-     return result;
+    const result=  cachedAllSkyImages.get(url);
+    if (result) result.time= Date.now();
+    return result;
 }
 
 export function addAllSkyCachedImage(url, image) {
     const order2AllSky= makeOrder2AllSkyImages(image);
-    cachedAllSkyImages.unshift( {url, order3:image, order2Array: order2AllSky, colorTable: 'todo'});
-    if (cachedAllSkyImages.length>MAX_ALLSKY_IMAGES) cachedAllSkyImages.length= MAX_ALLSKY_IMAGES;
+    cachedAllSkyImages.set(url, {url, order3:image, order2Array: order2AllSky, colorTable: 'todo', time: Date.now()});
+    if (cachedAllSkyImages.size>MAX_ALLSKY_IMAGES+(MAX_ALLSKY_IMAGES*.1)) {
+        cachedAllSkyImages= cleanupCache(cachedAllSkyImages,MAX_ALLSKY_IMAGES);
+    }
 }
-
 
 
 export function findTileCachedImage(url) {
-    return cachedImages.find( (v) => v.url===url);
+    const result=  cachedImages.get(url);
+    if (result) result.time= Date.now();
+    return result;
 }
+
 
 export function addTileCachedImage(url, image, emptyTile= false) {
-    cachedImages.unshift( {url, image, emptyTile, colorTable: 'todo'});
-    if (cachedImages.length>MAX_TILE_IMAGES) cachedImages.length= MAX_TILE_IMAGES;
-}
-
-export function findCachedPropertiesJSON(url,prop) {
-    const result= cachedProperties.find( (v) => v.prop===prop);
-    return result && result.prop;
-}
-
-export function addCachedPropertiesJSON(url,prop) {
-    cachedProperties.unshift( {url, prop});
-    if (cachedProperties.length>MAX_PROPERTIES) cachedProperties.length= MAX_PROPERTIES;
+    cachedImages.set(url, {url, image, emptyTile, colorTable: 'todo', time: Date.now()});
+    if (cachedImages.size>MAX_TILE_IMAGES+(MAX_TILE_IMAGES*.25)) {
+        cachedImages= cleanupCache(cachedImages, MAX_TILE_IMAGES);
+    }
 }
 
 
+
+
+
+function cleanupCache(cacheMap, maxEntries) {
+    const entries= Array.from(cacheMap.entries()).sort( (e1, e2) => e2[1].time-e1[1].time);
+    if (entries.length>maxEntries) entries.length= maxEntries;
+    return new Map(entries);
+}
 
 
 
