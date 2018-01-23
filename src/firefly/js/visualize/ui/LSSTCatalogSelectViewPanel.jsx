@@ -65,6 +65,8 @@ const LSSTTables = [
             label: 'SDSS Stripe 82, 2013 LSST Processing',
             project: 'SDSS',
             value: 'sdss',
+            infourl: 'https://confluence.lsstcorp.org/display/DM/Properties+of+the+2013+SDSS+Stripe+82+reprocessing',
+            infodesc: 'Documentation on the Stripe 82 reprocessing dataset',
             catalogs: [
                 {
                     id: SOURCE,
@@ -103,6 +105,8 @@ const LSSTTables = [
                 label: 'AllWISE Processing of WISE pre-hibernation (2010-2011)',
                 project: 'WISE',
                 value: 'allwise',
+                infourl: 'http://wise2.ipac.caltech.edu/docs/release/allwise/expsup/',
+                infodesc: 'Documentation on the AllWISE dataset',
                 catalogs: [
                     {
                         id: SOURCE,
@@ -157,7 +161,9 @@ const LSSTTables = [
             {
                 label: 'WISE & NEOWISE Single-Epoch Photometry (2010-2014)',
                 project: 'WISE',
-                value: 'reject',
+                value: 'single-epoch',
+                infourl: 'http://wise2.ipac.caltech.edu/docs/release/neowise/expsup/',
+                infodesc: 'Documentation on the NeoWISE data releases',
                 catalogs: [
                     {
                         id: SINGLEEXPSOURCE,
@@ -205,7 +211,8 @@ const LSSTTables = [
                         value: 'wise_00.allsky_2band_p1bm_frm',
                         type: IMAGETYPE,
                         cat: {}
-                    }]
+                    }],
+                imagenote: 'Single-epoch images for the NEOWISE-R mission are not currently available on the PDAC.'
             }]
     }
 ];
@@ -798,20 +805,21 @@ class LsstCatalogDDList extends PureComponent {
 
         const spatialH = 300;
         const spatialPanelStyle = {height: spatialH, width: 550, paddingLeft: 2, paddingRight: 2};
-        const catPanelStyle = {paddingLeft: 20, paddingRight: 20, height: spatialH, width: 400};
+        const catPanelStyle = {paddingLeft: 20, paddingRight: 20, height: spatialH, width: 450};
 
         const metadataSelector = () => {
 
                 const typeOptions = Object.keys(LSSTTableTypes).map((t) => {
                         return {value: t, label: LSSTTableTypes[t]};
                 });
-
-                const projOptions = getAllProjects(catmaster).map((proj) => {
+                const allProjects = getAllProjects(catmaster);
+                const projOptions = allProjects.map((proj) => {
                     return {label: proj.label, value: proj.value, tooltip: `project: ${proj.value}`};
                 }) || [];
                 const options = getCatalogs(catmaster, project, cattype).map((cat) => {
                     return {label: cat.label, value: cat.value, tooltip: `table name: ${cat.value}`};
                 }) || [];
+                const {infourl, infodesc, imagenote} = allProjects.find((proj) => proj.value === project);
 
                 return (
                     <div className='ddselectors' style={catPanelStyle}>
@@ -845,6 +853,14 @@ class LsstCatalogDDList extends PureComponent {
                                 wrapperStyle={{marginLeft: 15, marginTop: 10}}
                             />
                         }
+
+                        {isEmpty(imagenote) || cattype === CATTYPE ? false :
+                            <div style={{paddingLeft: 15, paddingTop: 5, color: 'gray'}}>{imagenote}</div>
+                        }
+
+                        <div style={{paddingTop: 10}}>
+                            <a href={infourl} target='info'>{infodesc}</a>
+                        </div>
                      </div>
                 );
         };
