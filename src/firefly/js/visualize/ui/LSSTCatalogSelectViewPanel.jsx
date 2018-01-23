@@ -53,7 +53,6 @@ export const LSSTCatalogTableType = {
     [SINGLEEXPSOURCE]: 'singleExpSource'
 };
 
-
 const CATTYPE = '0';
 const IMAGETYPE = '1';
 
@@ -63,20 +62,20 @@ const LSSTTables = [
         project: 'SDSS',
         label: 'SDSS',
         subproject: [{
-            database: 'sdss_stripe82_01',
-            label: 'SDSS Stripe 82',
+            label: 'SDSS Stripe 82, 2013 LSST Processing',
             project: 'SDSS',
+            value: 'sdss',
             catalogs: [
                 {
                     id: SOURCE,
                     label: 'Object (Measurements on coadds)',
-                    value: 'RunDeepSource',
+                    value: 'sdss_stripe82_01.RunDeepSource',
                     type: CATTYPE
                 },
                 {
                     id: FORCEDSOURCE,
                     label: 'Forced photometry based on i-band coadds',
-                    value: 'RunDeepForcedSource',
+                    value: 'sdss_stripe82_01.RunDeepForcedSource',
                     type: CATTYPE
                 }
             ],
@@ -84,13 +83,13 @@ const LSSTTables = [
                 {
                     id: COADD,
                     label: 'Single-band coadded image metadata',
-                    value: 'DeepCoadd',
+                    value: 'sdss_stripe82_01.DeepCoadd',
                     type: IMAGETYPE
                 },
                 {
                     id: CCDEXPOSURE,
                     label: 'Calibrated single-epoch image metadata',
-                    value: 'Science_Ccd_Exposure',
+                    value: 'sdss_stripe82_01.Science_Ccd_Exposure',
                     type: IMAGETYPE
                 }
             ]
@@ -101,102 +100,112 @@ const LSSTTables = [
         label: 'WISE',
         subproject: [
             {
-                database: 'wise_00',
-                label: 'WISE Original Mission',
+                label: 'AllWISE Processing of WISE pre-hibernation (2010-2011)',
                 project: 'WISE',
-
+                value: 'allwise',
                 catalogs: [
                     {
                         id: SOURCE,
-                        label: 'AllWISE Source Catalog',
-                        value: 'allwise_p3as_psd',
+                        label: 'AllWISE Source Catalog (comparable to LSST Object)',
+                        value: 'wise_00.allwise_p3as_psd',
                         type: CATTYPE
                     },
                     {
                         id: FORCEDSOURCE,
-                        label: 'AllWISE Multiepoch Photometry Table',
-                        value: 'allwise_p3as_mep',
+                        label: 'AllWISE Multiepoch Photometry Table (comparable to ForcedSource)',
+                        value: 'wise_00.allwise_p3as_mep',
                         type: CATTYPE
                     },
                     {
-                        id: SINGLEEXPSOURCE,
-                        label: 'WISE All-Sky Single Exposure (L1b) Source Table',
-                        value: 'allsky_4band_p1bs_psd',
+                        id: SOURCE,
+                        label: 'AllWISE Reject Table (no LSST analog)',
+                        value: 'wise_ext_00.allwise_p3as_psr',
                         type: CATTYPE
-                    },
-                    {
-                        id: SINGLEEXPSOURCE,
-                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Source Table',
-                        value: 'allsky_3band_p1bs_psd',
-                        type: CATTYPE
-                    },
-                    {
-                        id: SINGLEEXPSOURCE,
-                        label: 'WISE Post-Cryo Single Exposure (L1b) Source Table',
-                        value: 'allsky_2band_p1bs_psd',
-                        type: IMAGETYPE
                     }
                 ],
                 images: [
                     {
                         id: COADD,
                         label: ' AllWISE Atlas Image',
-                        value: 'allwise_p3am_cdd',
+                        value: 'wise_00.allwise_p3am_cdd',
                         type: IMAGETYPE,
                         cat: {}
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE All-Sky Single Exposure (L1b) Image',
-                        value: 'allsky_4band_p1bm_frm',
+                        value: 'wise_00.allsky_4band_p1bm_frm',
                         type: IMAGETYPE,
                         cat: {}
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
-                        value: 'allsky_3band_p1bm_frm',
+                        value: 'wise_00.allsky_3band_p1bm_frm',
                         type: IMAGETYPE,
                         cat: {}
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE Post-Cryo Single Exposure (L1b) Image',
-                        value: 'allsky_2band_p1bm_frm',
+                        value: 'wise_00.allsky_2band_p1bm_frm',
                         type: IMAGETYPE,
                         cat: {}
                     }
                 ]
             },
             {
-                database: 'wise_ext_00',
-                label: 'AllWISE Reject Table',
+                label: 'WISE & NEOWISE Single-Epoch Photometry (2010-2014)',
                 project: 'WISE',
-
+                value: 'reject',
                 catalogs: [
                     {
-                        id: SOURCE,
-                        label: 'AllWISE Reject Table',
-                        value: 'allwise_p3as_psr',
+                        id: SINGLEEXPSOURCE,
+                        label: 'WISE All-Sky Single Exposure (L1b) Source Table',
+                        value: 'wise_4band_00.allsky_4band_p1bs_psd',
                         type: CATTYPE
-                    }
-                ],
-                images: []
-            },
-            {
-                database: 'neowiser_yr1_00',
-                label: 'NEOWISE Reactivation Mission',
-                project: 'WISE',
-
-                catalogs: [
+                    },
                     {
-                        id: SOURCE,
+                        id: SINGLEEXPSOURCE,
+                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Source Table',
+                        value: 'wise_3band_00.allsky_3band_p1bs_psd',
+                        type: CATTYPE
+                    },
+                    {
+                        id: SINGLEEXPSOURCE,
+                        label: 'WISE Post-Cryo Single Exposure (L1b) Source Table',
+                        value: 'wise_2band_00.allsky_2band_p1bs_psd',
+                        type: IMAGETYPE
+                    },
+                    {
+                        id: SINGLEEXPSOURCE,
                         label: 'NEOWISE-R Year 1 Single Exposure (L1b) Source Table',
-                        value: 'neowiser_yr1_p1bs_psd',
+                        value: 'neowiser_yr1_00.neowiser_yr1_p1bs_psd',
                         type: CATTYPE
                     }
                 ],
-                images: []
+                images: [
+                    {
+                        id: CCDEXPOSURE,
+                        label: 'WISE All-Sky Single Exposure (L1b) Image',
+                        value: 'wise_00.allsky_4band_p1bm_frm',
+                        type: IMAGETYPE,
+                        cat: {}
+                    },
+                    {
+                        id: CCDEXPOSURE,
+                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
+                        value: 'wise_00.allsky_3band_p1bm_frm',
+                        type: IMAGETYPE,
+                        cat: {}
+                    },
+                    {
+                        id: CCDEXPOSURE,
+                        label: 'WISE Post-Cryo Single Exposure (L1b) Image',
+                        value: 'wise_00.allsky_2band_p1bm_frm',
+                        type: IMAGETYPE,
+                        cat: {}
+                    }]
             }]
     }
 ];
@@ -225,7 +234,7 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
 
         this.catmaster = getLSSTMasterTable();
         const fields = FieldGroupUtils.getGroupFields(gkey);
-        const project = get(fields, ['project', 'value'], getDefaultProjectName(this.catmaster));  // associated with database name
+        const project = get(fields, ['project', 'value'], getDefaultProjectName(this.catmaster));
         const cattype = get(fields, ['cattype', 'value'], CATTYPE);
         const cattable = get(fields, ['cattable', 'value'], getDefaultTableName(this.catmaster, project, cattype));
 
@@ -251,7 +260,7 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
 
 
     render() {
-        var {cattable, cattype, project}= this.state;
+        const {cattable, cattype, project}= this.state;
         return (
             <div>
                 <FormPanel
@@ -365,7 +374,7 @@ function hideSearchPanel() {
  * @returns {string}
  */
 function formatNumberString(numstr, digits = DEC) {
-    var d = digits&&digits >= 0 ?  digits : DEC;
+    const d = digits&&digits >= 0 ?  digits : DEC;
 
     return parseFloat(numstr).toFixed(d).replace(/(?:\.0+|(\.\d+?)0+)$/, '$1');
 }
@@ -398,16 +407,16 @@ function doImage(request, imgPart) {
     const noSizeMethod = ['ALLSKY', 'CENTER'];
     const noSubsizeMethod = ['ALLSKY', 'ENCLOSED'];
     const noTargetMethod = ['ALLSKY'];
-    const {cattable, project:database} = request[gkey] || {};
+    const {cattable} = request[gkey] || {};
     const spatial =  get(imgPart, ['spatial', 'value']);
     const intersect = get(imgPart, ['intersect', 'value']);
     const size = (!noSizeMethod.includes(intersect)) ? get(imgPart, ['size', 'value']) : '';
     const sizeUnit = 'deg';
-    let subsize = (!noSubsizeMethod.includes(intersect)) ? get(imgPart, ['subsize', 'value']) : ''; // in degrees
+    const subsize = (!noSubsizeMethod.includes(intersect)) ? get(imgPart, ['subsize', 'value']) : ''; // in degrees
     const wp = (!noTargetMethod.includes(intersect)) && get(imgPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
 
-    var title = `${projectName}-${cattable}-${capitalize(intersect)}`;
-    var loc = wp && wp.split(';').slice(0, 2).join();
+    let title = `${projectName}-${cattable}-${capitalize(intersect)}`;
+    const loc = wp && wp.split(';').slice(0, 2).join();
 
     if (!noSizeMethod.includes(intersect)) {
         title += `([${loc}]:${formatNumberString(size)}deg)`;
@@ -415,7 +424,7 @@ function doImage(request, imgPart) {
         title += `([${loc}])`;
     }
 
-    var tReq = makeLsstCatalogRequest(title, projectName, database, cattable,
+    let tReq = makeLsstCatalogRequest(title, projectName, cattable,
                                       {[ServerParams.USER_TARGET_WORLD_PT]: wp,
                                        intersect,
                                        size,
@@ -453,19 +462,19 @@ function doImage(request, imgPart) {
 function doCatalog(request, spatPart) {
 
     const catPart = request[gkey];
-    const {cattable, project:database} = catPart;
+    const {cattable} = catPart;
     const spatial =  get(spatPart, ['spatial', 'value']);
     const conesize = get(spatPart, ['conesize', 'value']);
     const wp = get(spatPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
     const sizeUnit = 'deg';
     const conestr = formatNumberString(conesize);
 
-    var title = `${projectName}-${catPart.cattable}`;
-    var tReq;
+    let title = `${projectName}-${catPart.cattable}`;
+    let tReq;
 
     if (spatial === SpatialMethod.get('Multi-Object').value) {
-        var filename = get(spatPart, ['fileUpload', 'value']);
-        tReq = makeLsstCatalogRequest(title, projectName, database, cattable, {
+        const filename = get(spatPart, ['fileUpload', 'value']);
+        tReq = makeLsstCatalogRequest(title, projectName, cattable, {
             filename,
             radius: conestr,
             sizeUnit,
@@ -478,7 +487,7 @@ function doCatalog(request, spatPart) {
         }
         title += ')';
 
-        tReq = makeLsstCatalogRequest(title, projectName, database, cattable, {
+        tReq = makeLsstCatalogRequest(title, projectName, cattable, {
             SearchMethod: spatial
         });
     }
@@ -579,7 +588,7 @@ LSSTCatalogSelectView.propTypes = {
  * @param {array} catmaster
  * @returns {Function} reducer to change fields when user interact with the dialog
  */
-var userChangeLsstDispatch = function (tblId, catmaster) {
+const userChangeLsstDispatch = function (tblId, catmaster) {
 
     return (inFields, action) => {
 
@@ -652,7 +661,7 @@ var userChangeLsstDispatch = function (tblId, catmaster) {
 };
 
 /**
- * @summary Return the collection of catalog elements based on the project (table in the database)
+ * @summary Return the collection of catalogs based on the project
  * @param {Object} catmaster master table data
  * @param {string} project project name
  * @param {string} cattype
@@ -667,10 +676,10 @@ function getCatalogs(catmaster, project, cattype) {
                  .find((oneMaster)=> {
                      let subProj = null;
 
-                     // check if any masterProject which has subproject with database as the given project
+                     // check if any masterProject which has subproject with value as the given project
                      oneMaster.missions.find((proj) => {
                          if (proj.subproject) {
-                             subProj = proj.subproject.find((sub) => sub.database === project);
+                             subProj = proj.subproject.find((sub) => sub.value === project);
                          }
                          return subProj;
                      });
@@ -713,7 +722,7 @@ function getCatalog(catmaster, project, cattype, catVal) {
 }
 
 /**
- * @summary get all subprojects (each subproject is for one database)
+ * @summary get all subprojects
  * @param catmaster
  * @returns {Object}  subproject set
  */
@@ -749,7 +758,7 @@ function getDefaultProjectName(catmaster) {
     projIndex = projIndex === -1 ? 0 : projIndex;
 
     const subProj = get((get(oneMaster, 'missions')||LSSTTables), [projIndex, 'subproject', '0']);
-    return get(subProj, 'database', '');
+    return get(subProj, 'value', '');
 }
 
 /**
@@ -785,20 +794,20 @@ class LsstCatalogDDList extends PureComponent {
         const {master:catmaster} = this.state;
         if (isEmpty(catmaster)) return false;
 
-        var {cattable, cattype, project} = this.props;
+        const {cattable, cattype, project} = this.props;
 
         const spatialH = 300;
         const spatialPanelStyle = {height: spatialH, width: 550, paddingLeft: 2, paddingRight: 2};
         const catPanelStyle = {paddingLeft: 20, paddingRight: 20, height: spatialH, width: 400};
 
-        var metadataSelector = () => {
+        const metadataSelector = () => {
 
                 const typeOptions = Object.keys(LSSTTableTypes).map((t) => {
                         return {value: t, label: LSSTTableTypes[t]};
                 });
 
                 const projOptions = getAllProjects(catmaster).map((proj) => {
-                    return {label: proj.label, value: proj.database, tooltip: `database name: ${proj.database}`};
+                    return {label: proj.label, value: proj.value, tooltip: `project: ${proj.value}`};
                 }) || [];
                 const options = getCatalogs(catmaster, project, cattype).map((cat) => {
                     return {label: cat.label, value: cat.value, tooltip: `table name: ${cat.value}`};
@@ -828,7 +837,7 @@ class LsstCatalogDDList extends PureComponent {
                             <RadioGroupInputField
                                 inline={false}
                                 initialState={{value: options&&options[0],
-                                               tooltip: `${LSSTTableTypes[cattype]} tables of database ${project}`,
+                                               tooltip: `${LSSTTableTypes[cattype]} tables of ${project}`,
                                                fieldKey: 'cattable'}}
                                 alignment={'vertical'}
                                 fieldKey='cattable'
@@ -840,8 +849,8 @@ class LsstCatalogDDList extends PureComponent {
                 );
         };
 
-        var searchMethod = () => {
-            var method;
+        const searchMethod = () => {
+            let method;
 
             if (cattype === CATTYPE) {
                 const radius = getLSSTCatalogRadius(catmaster, cattable);
@@ -875,7 +884,7 @@ class LsstCatalogDDList extends PureComponent {
                                                  processId={LSSTDDPID}
                                                  groupKey={gkey}
                                                  createDDRequest={()=>{
-                                                    return {id: LSSTDDPID, table_name: cattable, database: project};
+                                                    return {id: LSSTDDPID, table_name: cattable};
                                                  }}
                         />
                     }
@@ -934,7 +943,7 @@ function fieldInit(tblId) {
         {
             'project': {
                 fieldKey: 'project',
-                value: project.database,
+                value: project.value,
                 labelWidth: 100
             },
             'cattype': {

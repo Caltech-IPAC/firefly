@@ -121,7 +121,6 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
  * creates the request to query LSST catalogs.  // TODO: more detail to be updated based on the LSST catalog DD content
  * @param {string} title    title to be displayed with this table result
  * @param {string} project
- * @param {string} database
  * @param {string} catalog  the catalog name to search
  * @param {ConeParams|BoxParams|ElipParams} params   one of 'Cone','Eliptical','Box','Polygon','Table','AllSky'.
  * @param {TableRequest} [options]
@@ -129,8 +128,8 @@ export function makeIrsaCatalogRequest(title, project, catalog, params={}, optio
  * @func makeLsstCatalogRequest
  * @memberof firefly.util.table
  */
-export function makeLsstCatalogRequest(title, project, database, catalog, params={}, options={}) {
-    var req = {startIdx: 0, pageSize: 100};
+export function makeLsstCatalogRequest(title, project, catalog, params={}, options={}) {
+    const req = {startIdx: 0, pageSize: 100};
 
     title = title || catalog;
     options.use = options.use || 'lsst_catalog_overlay';
@@ -139,14 +138,14 @@ export function makeLsstCatalogRequest(title, project, database, catalog, params
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const table_name = catalog;
     const meta_table = catalog;
-    var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
+    const META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
 
 
     options = omit(options, 'tbl_id');
     params = omit(params, 'position');
 
     return omitBy(Object.assign(req, options, params,
-                                {id, tbl_id, META_INFO, UserTargetWorldPt, database, table_name, meta_table, project}), isNil);
+                                {id, tbl_id, META_INFO, UserTargetWorldPt, table_name, meta_table, project}), isNil);
 }
 
 /**

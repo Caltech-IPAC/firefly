@@ -3,11 +3,10 @@
     "catalog": [
       {
         "tables": [
-          "RunDeepSource",
-          "RunDeepForcedSource"
+          "sdss_stripe82_01.RunDeepSource",
+          "sdss_stripe82_01.RunDeepForcedSource"
         ],
         "meta": "db/v0/tap/sync",
-        "database": "sdss_stripe82_01",
         "objectColumn": [
           "id",
           "objectId"
@@ -16,8 +15,8 @@
           "coadd_filter_id"
         ],
         "forcedSourceTable": [
-          "RunDeepForcedSource",
-          "RunDeepForcedSource"
+          "sdss_stripe82_01.RunDeepForcedSource",
+          "sdss_stripe82_01.RunDeepForcedSource"
         ],
         "tableType": [
           "source",
@@ -32,11 +31,10 @@
     "imagemeta": [
       {
         "tables": [
-          "DeepCoadd",
-          "Science_Ccd_Exposure"
+          "sdss_stripe82_01.DeepCoadd",
+          "sdss_stripe82_01.Science_Ccd_Exposure"
         ],
         "meta": "db/v0/tap/sync",
-        "database": "sdss_stripe82_01",
         "tableType": [
           "coadd",
           "ccdExposure"
@@ -62,14 +60,13 @@
     "catalog": [
       {
         "tables": [
-          "allwise_p3as_psd",
-          "allwise_p3as_mep",
-          "allsky_4band_p1bs_psd",
-          "allsky_3band_p1bs_psd",
-          "allsky_2band_p1bs_psd"
+          "wise_00.allwise_p3as_psd",
+          "wise_00.allwise_p3as_mep",
+          "wise_4band_00.allsky_4band_p1bs_psd",
+          "wise_3band_00.allsky_3band_p1bs_psd",
+          "wise_2band_00.allsky_2band_p1bs_psd"
         ],
         "meta": "db/v0/tap/sync",
-        "database": "wise_00",
         "objectColumn": [
           "cntr",
           "cntr_mf",
@@ -78,8 +75,8 @@
           "cntr"
         ],
         "forcedSourceTable": [
-          "allwise_p3as_mep",
-          "allwise_p3as_mep"
+          "wise_00.allwise_p3as_mep",
+          "wise_00.allwise_p3as_mep"
         ],
         "tableType": [
           "source",
@@ -95,10 +92,9 @@
       },
       {
         "tables": [
-          "allwise_p3as_psr"
+          "wise_ext_00.allwise_p3as_psr"
         ],
         "meta": "db/v0/tap/sync",
-        "database": "wise_ext_00",
         "tabletype": [
           "source"
         ],
@@ -109,10 +105,9 @@
       },
       {
         "tables": [
-          "neowiser_yr1_p1bs_psd"
+          "neowiser_yr1_00.neowiser_yr1_p1bs_psd"
         ],
         "meta": "db/v0/tap/sync",
-        "database": "neowiser_yr1_00",
         "tabletype": [
           "source"
         ],
@@ -125,14 +120,13 @@
     "imagemeta": [
       {
         "tables": [
-          "allwise_p3am_cdd",
-          "allwise_p3as_cdd",
-          "allsky_4band_p1bm_frm",
-          "allsky_3band_p1bm_frm",
-          "allsky_2band_p1bm_frm"
+          "wise_00.allwise_p3am_cdd",
+          "wise_00.allwise_p3as_cdd",
+          "wise_00.allsky_4band_p1bm_frm",
+          "wise_00.allsky_3band_p1bm_frm",
+          "wise_00.allsky_2band_p1bm_frm"
         ],
         "meta": "db/v0/tap/sync",
-        "database": "wise_00",
         "tabletype": [
           "coadd",
           "coadd",
@@ -157,8 +151,8 @@
         "schema": {
           "allwise-multiband": {
             "tables": [
-              "allwise_p3am_cdd",
-              "allwise_p3as_cdd"
+              "wise_00.allwise_p3am_cdd",
+              "wise_00.allwise_p3as_cdd"
             ],
             "params": {
               "ImageSet": "allwise-multiband",
@@ -168,7 +162,7 @@
           },
           "allsky_4band-1b": {
             "tables": [
-              "allsky_4band_p1bm_frm"
+              "wise_00.allsky_4band_p1bm_frm"
             ],
             "params": {
               "ImageSet": "allsky-4band",
@@ -186,7 +180,7 @@
           },
           "cryo_3band-1b": {
             "tables": [
-              "allsky_3band_p1bm_frm"
+              "wise_00.allsky_3band_p1bm_frm"
             ],
             "params": {
               "ImageSet": "cryo_3band",
@@ -204,7 +198,7 @@
           },
           "postcryo-1b": {
             "tables": [
-              "allsky_2band_p1bm_frm"
+              "wise_00.allsky_2band_p1bm_frm"
             ],
             "params": {
               "ImageSet": "postcryo",
@@ -217,7 +211,7 @@
             "params": {
               "ImageSet": "neowiser",
               "ProductLevel": "1b",
-              "title": "NeoWISER"
+              "title": "NEOWISER"
             }
           }
         }
