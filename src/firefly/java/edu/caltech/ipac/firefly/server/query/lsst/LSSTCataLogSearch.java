@@ -53,10 +53,10 @@ public class LSSTCataLogSearch extends LSSTQuery {
      *
      * @param req table request
      * @return a string defining area constraint for the where clause of the query
-     * @throws Exception
+     * @throws EndUserException on invalid request parameters
      */
 
-    public static String getSearchMethodCatalog(TableServerRequest req)throws Exception { //, String raCol, String decCol) throws Exception {
+    public static String getSearchMethodCatalog(TableServerRequest req)throws EndUserException { //, String raCol, String decCol) throws Exception {
 
         String method = req.getParam("SearchMethod");
         if (method.equalsIgnoreCase("allSky")){
@@ -112,7 +112,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
                 for (int i=0; i<sArray.length; i++){
                     String[] radecPair = sArray[i].trim().split("\\s+");
                     if (radecPair.length!=2){
-                        throw new Exception("wrong data entered");
+                        throw new EndUserException("Bad ra,dec pair in polygon data", sArray[i]);
                     }
                     if (i==sArray.length-1) {
                         polygoneStr.append(radecPair[0] + "," + radecPair[1] + ")");
@@ -139,9 +139,9 @@ public class LSSTCataLogSearch extends LSSTQuery {
      * image search (only for SDSS)
      * @param req request for image metadata search method
      * @return request based on search method
-     * @throws Exception
+     * @throws EndUserException on invalid request
      */
-    protected String getSearchMethodImageMeta(TableServerRequest req)throws Exception {
+    private String getSearchMethodImageMeta(TableServerRequest req)throws Exception {
 
 
         String searchType = req.getParam("intersect");
@@ -160,9 +160,9 @@ public class LSSTCataLogSearch extends LSSTQuery {
             corners = VisUtil.getCorners(wpt, Double.parseDouble(side) / 2.0 * 3600.0);
         }
 
-        String[] cornerRa = getCorners(req.getParam("database"), req.getParam("table_name"), "ra");
-        String[] cornerDec = getCorners(req.getParam("database"), req.getParam("table_name"), "dec");
-        String cornerStr = "";
+        String[] cornerRa = getCorners(req.getParam("table_name"), "ra");
+        String[] cornerDec = getCorners(req.getParam("table_name"), "dec");
+        String cornerStr;
 
         switch (searchType.toUpperCase()) {
             case "CENTER":
@@ -202,7 +202,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
     }
 
 
-    String getCornerStr(String[] cornerRa, String[] cornerDec) {
+    private String getCornerStr(String[] cornerRa, String[] cornerDec) {
         String cornerStr = "";
 
         if ((cornerRa != null) && (cornerDec != null)) {
@@ -216,8 +216,8 @@ public class LSSTCataLogSearch extends LSSTQuery {
         return cornerStr;
     }
 
-    String[] getCorners(String database, String catalog, String key) {
-        Object corners = LSSTQuery.getDatasetInfo(database, catalog, new String[]{key});
+    private String[] getCorners(String catalog, String key) {
+        Object corners = LSSTQuery.getDatasetInfo(catalog, new String[]{key});
 
         if (corners == null || !(corners instanceof JSONArray))
             return null;
@@ -251,8 +251,8 @@ public class LSSTCataLogSearch extends LSSTQuery {
 
     String buildSqlQueryString(TableServerRequest request) throws Exception {
 
-        String[] dbTable = LSSTQuery.getDBTableNameFromRequest(request);
-        boolean isCatalogTable = LSSTQuery.isCatalogTable(dbTable[0], dbTable[1]);
+        String dbTable = LSSTQuery.getDBTableNameFromRequest(request);
+        boolean isCatalogTable = LSSTQuery.isCatalogTable(dbTable);
 
         String columns = request.getParam(CatalogRequest.SELECTED_COLUMNS);
         if (columns==null){
@@ -281,7 +281,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
             whereStr="";
         }
 
-        String sql = "SELECT " + columns + " FROM " + String.join(".", dbTable);
+        String sql = "SELECT " + columns + " FROM " + dbTable;
         //add the guard to prevent from seaching the whole database when users do not enter a constrain
         if (whereStr.length()>0){
             return sql +  " WHERE " + whereStr + ";";
@@ -310,11 +310,10 @@ public class LSSTCataLogSearch extends LSSTQuery {
 
         super.prepareTableMeta(meta, columns, request);
         String catTable = request.getParam("table_name");
-        String database = request.getParam("database");
 
-        if (LSSTQuery.isCatalogTable(database, catTable)) {
-            Object lon = LSSTQuery.getRA(database, catTable);
-            Object lat = LSSTQuery.getDEC(database, catTable);
+        if (LSSTQuery.isCatalogTable(catTable)) {
+            Object lon = LSSTQuery.getRA(catTable);
+            Object lat = LSSTQuery.getDEC(catTable);
 
             if (lon != null && lat != null) {
                 TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) lon, (String) lat, CoordinateSys.EQ_J2000);
@@ -322,18 +321,18 @@ public class LSSTCataLogSearch extends LSSTQuery {
                 meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
             }
             meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
-            String col = LSSTQuery.getTableColumn(database, catTable, "objectColumn");
+            String col = LSSTQuery.getTableColumn(catTable, "objectColumn");
             if (col != null) {
                 meta.setAttribute("objectIdColumn", col);
             }
-            col =  LSSTQuery.getTableColumn(database, catTable, "filterColumn");
+            col =  LSSTQuery.getTableColumn(catTable, "filterColumn");
 
             if (col != null) {
                 meta.setAttribute("filterIdColumn", col);
             }
         } else {
-            String[] RAs = getCorners(database, catTable, "ra");
-            String[] DECs = getCorners(database, catTable, "dec");
+            String[] RAs = getCorners(catTable, "ra");
+            String[] DECs = getCorners(catTable, "dec");
             TableMeta.LonLatColumns[] c = new TableMeta.LonLatColumns[4];
 
             for (int i = 0; i < 4; i++) {
@@ -343,19 +342,18 @@ public class LSSTCataLogSearch extends LSSTQuery {
             meta.setCorners(c[0], c[1], c[2], c[3]);
             // only set for image meta table
             meta.setAttribute(MetaConst.DATASET_CONVERTER,
-                    (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{MetaConst.DATASET_CONVERTER}));
-            Object schemaParams = LSSTQuery.getImageMetaSchema(database, catTable);
+                    (String)LSSTQuery.getDatasetInfo(catTable, new String[]{MetaConst.DATASET_CONVERTER}));
+            Object schemaParams = LSSTQuery.getImageMetaSchema(catTable);
             if (schemaParams instanceof JSONObject) {
                 for (Object key : ((JSONObject)schemaParams).keySet()) {
                     meta.setAttribute((String)key, (String)((JSONObject)schemaParams).get(key));
                 }
             }
         }
-        meta.setAttribute("database", database);
         meta.setAttribute("tableName", catTable);
         meta.setAttribute("mission",
-                          (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{MetaConst.DATASET_CONVERTER}));
-        meta.setAttribute("tableType", (String)LSSTQuery.getTableColumn(database, catTable, "tableType"));
+                          (String)LSSTQuery.getDatasetInfo(catTable, new String[]{MetaConst.DATASET_CONVERTER}));
+        meta.setAttribute("tableType", (String)LSSTQuery.getTableColumn(catTable, "tableType"));
         super.prepareTableMeta(meta, columns, request);
     }
 

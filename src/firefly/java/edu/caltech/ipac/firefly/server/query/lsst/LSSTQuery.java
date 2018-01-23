@@ -56,7 +56,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             DataGroup dg = getDataFromURL(request);
             //DM-9964 : TODO this is a temporary solution until the meta server is up
             if (dg == null) {
-                throw new DataAccessException("No data is found in the search range");
+                throw new DataAccessException("No data is found in the search range.");
             }
             dg.shrinkToFitData();
             File outFile = createFile(request, ".tbl");
@@ -74,9 +74,8 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
         String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
         _log.briefDebug("Executing SQL query: " + sql);
-        String url = "http://"+HOST +":"+PORT+"/" + LSSTQuery.getDatasetInfo(request.getParam("database"),
-                                                                            request.getParam("table_name"),
-                                                                            new String[]{"meta"});
+        String url = "http://"+HOST +":"+PORT+"/"
+                + LSSTQuery.getDatasetInfo(request.getParam("table_name"), new String[]{"meta"});
         File file = createFile(request, ".json");
         Map<String, String> requestHeader=new HashMap<>();
         requestHeader.put("Accept", "application/json");
@@ -98,7 +97,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
      * @param request table request
      * @param jsonFile JSON file with the result
      * @return DataGroup
-     * @throws Exception
+     * @throws Exception on error
      */
     private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws Exception {
 
@@ -233,7 +232,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         if (request.getParam("meta_table") != null) {
             TableServerRequest metaRequest = new TableServerRequest("LSSTMetaSearch");
             metaRequest.setParam("table_name", request.getParam("meta_table"));
-            metaRequest.setParam("database", request.getParam("database"));
+            //metaRequest.setParam("database", request.getParam("database"));
             metaRequest.setPageSize(Integer.MAX_VALUE);
             //call LSSTMetaSearch processor to get the meta data as a DataGroup
             DataGroup metaData = getMeta(metaRequest);
@@ -419,7 +418,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         return obj;
     }
 
-    public static Object getDatasetInfo(String databaseName, String tableName, String[] pathAry) {
+    public static Object getDatasetInfo(String tableName, String[] pathAry) {
         for (Object key : jsonDataSet.keySet()) {     // test SDSS or WISE
             JSONObject missionObj = (JSONObject)jsonDataSet.get(key);
             String[]   dataSet = {"catalog", "imagemeta"};
@@ -430,9 +429,6 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
                 for (Object missionData : missionTableSet) {   // find table group
 
                     if (!(missionData instanceof JSONObject)) continue;
-                    if (!(((JSONObject)missionData).get("database")).equals(databaseName)) {
-                        continue;
-                    }
                     Object tables = ((JSONObject)missionData).get("tables");
                     if ((tables instanceof JSONArray) &&
                         ((JSONArray)tables).contains(tableName)) {
@@ -456,7 +452,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         return null;
     }
 
-    public static Object getImageMetaSchema(String database, String tableName) {
+    public static Object getImageMetaSchema(String tableName) {
         for (Object key : jsonDataSet.keySet()) {
             JSONObject missionObj = (JSONObject)jsonDataSet.get(key);
             Object   imageDataSets = missionObj.get("imagemeta");
@@ -467,13 +463,11 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             }
 
             for (Object imageDataset : (JSONArray)imageDataSets) {
-                if (database.equals(((JSONObject)imageDataset).get("database"))) {
-                    Object tables = ((JSONObject) imageDataset).get("tables");
-                    if ((tables instanceof JSONArray) &&
+                Object tables = ((JSONObject) imageDataset).get("tables");
+                if ((tables instanceof JSONArray) &&
                         ((JSONArray)tables).contains(tableName)) {
-                            foundImageSet = imageDataset;
-                            break;
-                    }
+                    foundImageSet = imageDataset;
+                    break;
                 }
             }
 
@@ -498,8 +492,8 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     // get table dependent column name
     // columnType: "objectColumn", "filterColumn"
-    public static String getTableColumn(String database, String tableName, String columnType) {
-        Object tables = getDatasetInfo(database, tableName, new String[]{"tables"});
+    public static String getTableColumn(String tableName, String columnType) {
+        Object tables = getDatasetInfo(tableName, new String[]{"tables"});
         if (tables instanceof JSONArray) {
             JSONArray jTables = (JSONArray)tables;
             int tableIdx = -1;
@@ -512,7 +506,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             }
 
             if (tableIdx >= 0) {
-                Object cols = getDatasetInfo(database, tableName, new String[]{columnType});
+                Object cols = getDatasetInfo(tableName, new String[]{columnType});
 
                 if ((cols instanceof JSONArray) && (((JSONArray)cols).size() > tableIdx) ) {
                     return ((JSONArray)cols).get(tableIdx).toString();
@@ -524,41 +518,38 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     }
 
     /**
-     * get ra (or ra corners) column name given the database and table name
-     * @param database database name
+     * get ra (or ra corners) column name for a given table name
      * @param catalog  table name
      * @return  ra related column(s)
      */
-    public static Object getRA(String database, String catalog) {
-        return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"ra"});
+    public static Object getRA(String catalog) {
+        return LSSTQuery.getDatasetInfo(catalog, new String[]{"ra"});
     }
 
     /**
-     * get dec (or dec corners) columne name given the database and table name
-     * @param database database name
+     * get dec (or dec corners) column name for a given table name
      * @param catalog  table name
      * @return dec related column(s)
      */
-    public static Object getDEC(String database, String catalog) {
-        return LSSTQuery.getDatasetInfo(database, catalog, new String[]{"dec"});
+    public static Object getDEC(String catalog) {
+        return LSSTQuery.getDatasetInfo(catalog, new String[]{"dec"});
 
     }
 
 
-    static String[] getDBTableNameFromRequest(TableServerRequest request) {
+    static String getDBTableNameFromRequest(TableServerRequest request) {
         String tableName = request.getParam("table_name");
         String catTable = request.getParam(CatalogRequest.CATALOG);
-        String database = request.getParam(CatalogRequest.DATABASE);
 
         if (catTable == null || catTable.length() == 0) {
             catTable = tableName;
         }
 
-        return new String[]{database, catTable};
+        return catTable;
     }
 
-    static Boolean isCatalogTable(String database, String catTable) {
-        String type = (String)LSSTQuery.getDatasetInfo(database, catTable, new String[]{"datatype"});
+    static Boolean isCatalogTable(String catTable) {
+        String type = (String)LSSTQuery.getDatasetInfo(catTable, new String[]{"datatype"});
         return (type != null)&&type.startsWith("catalog");
     }
 

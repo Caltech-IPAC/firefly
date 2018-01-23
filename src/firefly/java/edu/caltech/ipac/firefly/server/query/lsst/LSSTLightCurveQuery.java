@@ -36,26 +36,23 @@ public class LSSTLightCurveQuery extends LSSTQuery {
         //FROM  wise_00.allwise_p3as_mep
         //WHERE <inherit sql constraints and geometric constraints from object table search> AND cntr_mf=<objectId>
 
-        String database = request.getParam("database");
+        //String database = request.getParam("database");
         String tableName = request.getParam("table_name");
-        String forcedTable = LSSTQuery.getTableColumn(database, tableName, "forcedSourceTable");
-        String fsrc = (database != null && forcedTable != null) ?  database+'.'+forcedTable : null;
-
-        if (fsrc == null) {
-            throw new EndUserException("Invalid parameter", "Missing forced source table");
-        }
+        String forcedTable = LSSTQuery.getTableColumn(tableName, "forcedSourceTable");
+        String [] parts = forcedTable.split("\\.");
+        String database = parts[0];
 
         String objectId = request.getParam("objectId");
         if (objectId == null) {
             throw new EndUserException("Invalid parameter", "Missing objectId");
         }
 
-        String forcedObjectColumn = LSSTQuery.getTableColumn(database, forcedTable, "objectColumn");
-        String forcedFilterColumn = LSSTQuery.getTableColumn(database, forcedTable, "filterColumn");
+        String forcedObjectColumn = LSSTQuery.getTableColumn(forcedTable, "objectColumn");
+        String forcedFilterColumn = LSSTQuery.getTableColumn(forcedTable, "filterColumn");
         String filterId = forcedFilterColumn != null ? request.getParam("filterId") : null;
 
-        String requestStr = new String();
-        String mission = (String)LSSTQuery.getDatasetInfo(database, tableName, new String[]{MetaConst.DATASET_CONVERTER});
+        String requestStr = "";
+        String mission = (String)LSSTQuery.getDatasetInfo(tableName, new String[]{MetaConst.DATASET_CONVERTER});
 
         if (mission.toLowerCase().contains("sdss")) {
             String exp = database + ".Science_Ccd_Exposure";
@@ -65,7 +62,7 @@ public class LSSTLightCurveQuery extends LSSTQuery {
                     "scisql_dnToAbMag(fsrc.flux_psf,exp.fluxMag0) AS mag, "+
                     "scisql_dnToAbMagSigma(fsrc.flux_psf, fsrc.flux_psf_err, exp.fluxMag0, exp.fluxMag0Sigma) AS magErr, "+
                     "exp.run, exp.camcol, exp.field, exp.filterName, exp.scienceCcdExposureId, " + forcedObjectColumn + ", id "+
-                    " FROM " + fsrc + " AS fsrc, " +  exp + " AS exp "+
+                    " FROM " + forcedTable + " AS fsrc, " +  exp + " AS exp "+
                     " WHERE exp.scienceCcdExposureId = fsrc.exposure_id "+
                     " AND " + forcedObjectColumn+"="+objectId+(filterId == null ? "" : " AND fsrc." + forcedFilterColumn + "=" + filterId)+
                     " ORDER BY exposure_time_mid";
@@ -74,7 +71,7 @@ public class LSSTLightCurveQuery extends LSSTQuery {
             String constraints = buildExistingConstraints(request, objectIdConstraints );
 
             requestStr  = "SELECT *" +
-                          " FROM " + fsrc +
+                          " FROM " + forcedTable +
                           " WHERE " + constraints +";";
         }
         return requestStr;
@@ -105,9 +102,9 @@ public class LSSTLightCurveQuery extends LSSTQuery {
         String tableName = request.getParam("table_name");
 
         // add ra&dec column name info
-        if (LSSTQuery.isCatalogTable(database, tableName)) {
-            Object RA = LSSTQuery.getRA(database, tableName);
-            Object DEC = LSSTQuery.getDEC(database, tableName);
+        if (LSSTQuery.isCatalogTable(tableName)) {
+            Object RA = LSSTQuery.getRA(tableName);
+            Object DEC = LSSTQuery.getDEC(tableName);
 
             TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) RA, (String) DEC);
             meta.setCenterCoordColumns(llc);

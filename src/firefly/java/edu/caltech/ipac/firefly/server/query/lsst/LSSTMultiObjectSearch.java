@@ -67,8 +67,7 @@ public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
         }
 
         String tableName = request.getParam("table_name");
-        String database = request.getParam("database");
-       return ConcurrentSearchUtil.doSearch(workers, nThread, inDg, (String)LSSTQuery.getRA(database, tableName), (String)LSSTQuery.getDEC(database, tableName));
+       return ConcurrentSearchUtil.doSearch(workers, nThread, inDg, (String)LSSTQuery.getRA(tableName), (String)LSSTQuery.getDEC(tableName));
 
     }
 
@@ -86,7 +85,7 @@ public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
         private String columnNames;
         private String catTable;
 
-        SearchOneRowCallableThread(DataObject dataObject,TableServerRequest request) throws InterruptedException, ExecutionException, EndUserException, IOException {
+        SearchOneRowCallableThread(DataObject dataObject,TableServerRequest request) {
             tableName = request.getParam("table_name");
 
             constraints = request.getParam(CatalogRequest.CONSTRAINTS);

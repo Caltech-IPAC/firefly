@@ -145,7 +145,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     }
 
     String buildSqlQueryString(TableServerRequest request) throws Exception {
-        String dbTable = String.join(".", LSSTQuery.getDBTableNameFromRequest(request));
+        String dbTable = LSSTQuery.getDBTableNameFromRequest(request);
         return "SHOW COLUMNS FROM " + dbTable + ";";
     }
 
