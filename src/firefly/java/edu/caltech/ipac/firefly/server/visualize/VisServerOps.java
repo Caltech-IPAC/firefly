@@ -43,6 +43,7 @@ import edu.caltech.ipac.visualize.draw.HistogramDisplay;
 import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -1544,6 +1545,16 @@ public class VisServerOps {
                 if (clientFitsHeader ==null) {
                     throw new IOException("Can't read file, ClientFitsHeader is null");
                 }
+                //If test needed to debug,uncomment line below to test tpv for x,y IRSA-1009
+                if (ServerContext.DEBUG_MODE) {
+                    try {
+                        testTpv(f, ipt);
+                    } catch (FitsException e) {
+                        e.printStackTrace();
+                    } catch (ProjectionException e) {
+                        e.printStackTrace();
+                    }
+                }
                 val= PixelValue.pixelVal(fitsFile,(int)ipt.getX(),(int)ipt.getY(), clientFitsHeader);
             }
             else {
@@ -1556,6 +1567,22 @@ public class VisServerOps {
             FileUtil.silentClose(fitsFile);
         }
         return val;
+    }
+
+
+    private static void testTpv(File f,ImagePt ipt) throws FitsException, ProjectionException {
+        Fits fits = new Fits(f);
+        FitsRead[] fitsReadArray = FitsRead.createFitsReadArray(fits);
+
+        FitsRead reader = fitsReadArray[0];
+        CoordinateSys cs = CoordinateSys.EQ_J2000;
+        ImageHeader imageHeader = reader.getImageHeader();
+        Projection proj = imageHeader.createProjection(cs);
+
+
+        WorldPt worldCoords = proj.getWorldCoords((int) ipt.getX(), (int) ipt.getY());
+
+        //System.out.println("x,y,proj: lon, lat"+ipt.getX()+", "+ipt.getY()+", "+proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
     }
 
     private static WebPlotResult createError(String logMsg, PlotState state, Exception e) {

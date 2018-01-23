@@ -1725,17 +1725,12 @@ public class FitsRead implements Serializable {
         fitsRead0.writeSimpleFitsFile(fo);
         fo.close();
 
-        FitsRead[] fry = FitsRead.createFitsReadArray(fits);
-        fo  = new java.io.FileOutputStream(outFitsName+"fitsRead1ReadAsFitsRead.fits");//"f-32AsFitsRead.fits");//
-        fry[1].writeSimpleFitsFile(fo);
-        fo.close();
 
         Fits newFits = new Fits(outFitsName+"fitsRead1ReadAsFitsRead.fits");
         BasicHDU[] hdus = newFits.read();
 
 
     }
-
 }
 
 /*

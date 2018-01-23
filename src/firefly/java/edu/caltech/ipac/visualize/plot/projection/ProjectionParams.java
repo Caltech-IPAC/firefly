@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 public class ProjectionParams implements Serializable {
     public static final int MAX_SIP_LENGTH = 10;
-
+    public static final int MAX_TPV_LENGTH = 4*4 + 1; //4th order polynomial
 
     // If you modify this class please modify -  edu.caltech.ipac.firefly.visualize.ProjectionSerializer
     // which know how to serialize this class for GWT
@@ -47,6 +47,12 @@ public class ProjectionParams implements Serializable {
     public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
+
+    // TPV coefs - 4th order for ztf, probably also more than enough for viz purposes -
+    // astrometry conversion needs higher accuracy, but not here hopefully
+
+    public double[] pv1poly = new double[MAX_TPV_LENGTH];
+    public double[] pv2poly = new double[MAX_TPV_LENGTH];
 
     public ProjectionParams() {}
 }

@@ -409,6 +409,14 @@ private void set_out_from_in()
 	   ref_header.bp[i][j] = in_header.bp[i][j];
       }
    }
+    ref_header.pv1poly = in_header.pv1poly;
+    ref_header.pv2poly = in_header.pv2poly;
+    for (int i=0; i < ProjectionParams.MAX_TPV_LENGTH; i++)
+    {
+        ref_header.pv1poly[i] = in_header.pv1poly[i];
+        ref_header.pv2poly[i] = in_header.pv2poly[i];
+
+    }
 
 
 }
@@ -1464,6 +1472,19 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
 			    }
 			}
 		    }
+
+		    //TPV added (IRSA-1009)
+
+            for (i = 0; i <= ProjectionParams.MAX_TPV_LENGTH; i++) {
+                {
+                    keyword = "PV1_" + i;
+                    in_fits_header.addValue(keyword, ref_header.pv1poly[i], null);
+                }
+                {
+                    keyword = "PV2_" + i;
+                    in_fits_header.addValue(keyword, ref_header.pv2poly[i], null);
+                }
+            }
 
 		    /* DONE COPYING DISTORTION COEFFICIENTS */
 		}
