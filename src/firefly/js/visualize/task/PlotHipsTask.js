@@ -5,14 +5,15 @@
 import {get} from 'lodash';
 import ImagePlotCntlr, {visRoot, IMAGE_PLOT_KEY,
     dispatchChangeCenterOfProjection, dispatchZoom,
-    dispatchPlotProgressUpdate, dispatchPlotImage, dispatchPlotHiPS, dispatchAttributeChange} from '../ImagePlotCntlr.js';
+    dispatchPlotProgressUpdate, dispatchPlotImage, dispatchPlotHiPS} from '../ImagePlotCntlr.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, PlotAttribute} from '../WebPlot.js';
 import {fetchUrl, clone, loadImage} from '../../util/WebUtil.js';
 import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
-import {getCenterOfProjection, findCurrentCenterPoint, getCorners, getDrawLayerByType} from '../PlotViewUtil.js';
+import {getCenterOfProjection, findCurrentCenterPoint, getCorners,
+    getDrawLayerByType, getDrawLayersByType} from '../PlotViewUtil.js';
 import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot, makeHipsUrl, getHiPSFoV} from '../HiPSUtil.js';
 import {ZoomType} from '../ZoomType.js';
@@ -21,6 +22,7 @@ import {ensureWPR, determineViewerId, getHipsImageConversion} from './PlotImageT
 import {dlRoot, dispatchAttachLayerToPlot,
     dispatchCreateDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
+import Artifact from '../../drawingLayers/Artifact.js';
 
 //const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -263,6 +265,9 @@ export function convertToHiPS(pv) {
     const dl = getDrawLayerByType(dlRoot(), ImageOutline.TYPE_ID);
     if (!dl) dispatchCreateDrawLayer(ImageOutline.TYPE_ID);
     dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, plotId);
+
+    const artAry= getDrawLayersByType(dlRoot(), Artifact.TYPE_ID);
+    artAry.forEach( (a) => dispatchDetachLayerFromPlot(a.drawLayerId,plotId));
 
 
     const cenPt= CCUtil.getWorldCoords(primePlot(pv), findCurrentCenterPoint(pv));

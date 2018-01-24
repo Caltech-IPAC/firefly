@@ -48,7 +48,7 @@ export function findUnactivatedRelatedData(pv) {
 export function getRelatedDataById(pv, relatedDataId) {
     if (!pv) return undefined;
     return flatten(pv.plots.map( (p) =>  p.relatedData))
-        .find( (r) => r.relatedDataId===relatedDataId);
+        .find( (r) => get(r,'relatedDataId') === relatedDataId);
 }
 
 
