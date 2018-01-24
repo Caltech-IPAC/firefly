@@ -179,7 +179,7 @@ export class TestQueriesPanel extends PureComponent {
                                 <HiPSSurveyListSelection
                                     surveysId={HiPSId}
                                     pv={getActivePlotView(visRoot())}
-                                    wrapperStyle={{width: '100%', height: 400, display: 'flex',
+                                    wrapperStyle={{width: 550, height: 400, display: 'flex',
                                                    flexDirection:'column',
                                                    alignItems: 'center'}}
                                 />

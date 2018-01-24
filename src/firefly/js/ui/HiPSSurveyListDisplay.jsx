@@ -42,14 +42,19 @@ function renderHiPSSurveysTable(id, surveys, isPopular, moreStyle={}) {
 
     let tableModel = getTblById(tableId);
 
+
     if (!tableModel && !isEmpty(surveys)) {
         const columns = [ {name: HiPSSurveyTableColumm.type.key, width: 8, type: 'char'},
             {name: HiPSSurveyTableColumm.title.key, width: 35, type: 'char'},
+            {name: HiPSSurveyTableColumm.order.key, width: 6, type: 'int'},
+            {name: HiPSSurveyTableColumm.sky_fraction.key, width: 12, type: 'float'},
             {name: HiPSSurveyTableColumm.url.key, width: 22, type: 'char'}];
 
         const data = surveys.reduce((prev, oneSurvey) => {
             prev.push([oneSurvey[HiPSSurveyTableColumm.type.key],
                 oneSurvey[HiPSSurveyTableColumm.title.key],
+                oneSurvey[HiPSSurveyTableColumm.order.key],
+                oneSurvey[HiPSSurveyTableColumm.sky_fraction.key],
                 oneSurvey[HiPSSurveyTableColumm.url.key]]);
             return prev;
         }, []);
@@ -117,7 +122,7 @@ function showHiPSSurveyList(id, isUpdatingHips, popularHiPS = '') {
 export function showHiPSSurverysPopup(pv, dataType=HiPSData) {
     const surveysId =  get(pv, ['request', 'params', 'hipsSurveysId']);
     const popupPanelResizableStyle = {
-        width: 480,
+        width: 550,
         height: 400,
         minWidth: 400,
         minHeight: 350,
