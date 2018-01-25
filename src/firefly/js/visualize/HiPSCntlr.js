@@ -158,7 +158,7 @@ function parseHiPSList(str) {
                             }
                         }
                         return preHiPS;
-                    }, [testRow])
+                    }, [])
                     .reduce( (preHiPS, row) => {
                         if (row[HiPSSurveyTableColumm.type.key]) {    // remove the item with undefined type
                             preHiPS.push(row);
