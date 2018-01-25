@@ -177,10 +177,15 @@ export class FilterInfo {
         const cidx = getColumnIdx(tableModel, cname);
         const noROWID = cname === 'ROW_IDX' && cidx < 0;
         const colType = noROWID ? 'int' : get(getColumn(tableModel, cname), 'type', 'char');
+
+        // bRemoveQuote: if remove the single quote enclosing the string
         const convertStrToNumber = (str, bRemoveQuote=true) => {
             const numStr = bRemoveQuote ? removeQuoteAroundString(str) : str;
+            const isCastInt = bRemoveQuote && str.startsWith("'") && str.endsWith("'");
 
-            return colType.match(/^[i]/) ? parseInt(numStr) : parseFloat(numStr);
+            // cast to integer in case it is single quoted
+            const num = colType.match(/^[i]/)&&isCastInt ? parseInt(numStr) : parseFloat(numStr);
+            return isNaN(num) ? str : num;
         };
 
 
@@ -360,11 +365,13 @@ function autoCorrectConditions(conditions, tbl_id, cname) {
 /**
  * auto correction on filter string in case it is not a valid sql statement.
  * the correction following the rules as follows
- * op : case 1: not specified or 'like' (for both numeric and text column)
+ * op : case 1: not specified or 'like' (for text column)
  *              if the value part is not enclosed by single quotes:
  *                  convert %, _, | to be \%, \_ or \\. (escape the wildcard and escape character)
  *                  enclose the string by '%' and then by single quotes.
  *                  ex: abc% => '%abc\%%' after auto-correction.
+ *              not specified (for numeric column)
+ *                  set op to be '=', no correction on value.
  *      case 2: 'in',
  *              enclose each value in signle quotes in case they are missing (for text column only)
  *              enclose the entire value string in braces, (), if they area missing (for all kinds of columns)
@@ -394,7 +401,7 @@ function autoCorrectCondition(v, isNumeric=false) {
     // empty string or string with no value
     if (!op && !val) return v.trim();
 
-    op = op ? op.toLowerCase() : 'like';      // no operator is treated as 'like'
+    op = op ? op.toLowerCase() : (isNumeric ? '=' : 'like');      // no operator is treated as 'like'
 
     switch (op) {
         case 'like':
