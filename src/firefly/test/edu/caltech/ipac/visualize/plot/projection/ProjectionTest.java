@@ -131,6 +131,29 @@ public class ProjectionTest {
 
     }
 
+//    @Test
+//    public void testTpvProjection() throws ProjectionException, FitsException {
+//
+//        Fits fits = new Fits(new File( FileLoader.getDataPath(ProjectionTest.class)+"ztf-TPV.fits"));
+//        FitsRead[] fitsReadArray = FitsRead.createFitsReadArray(fits);
+//
+//        FitsRead reader = fitsReadArray[0];
+//        CoordinateSys cs = CoordinateSys.EQ_J2000;
+//        ImageHeader imageHeader = reader.getImageHeader();
+//        Projection proj = imageHeader.createProjection(cs);
+//
+//
+//        //WorldPt worldCoords = proj.getWorldCoords(309.218324, 67.723624);
+//
+////        System.out.println(proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
+//
+//        ProjectionPt pix = proj.getImageCoords(10.65804830797796, 41.32089363435967);
+//
+//        Assert.assertTrue(pix.getX()==-80304.01043095533);
+//        Assert.assertTrue(pix.getY()==-18249.626909563052);
+//
+//
+//    }
 
 
     /**
@@ -141,28 +164,30 @@ public class ProjectionTest {
      */
     public static void main(String[] args) throws Exception {
 
-        String path="/Users/zhang/lsstDev/testingData/projectionTestingData/";
+        String path="./firefly_test_data/edu/caltech/ipac/visualize/plot/";//"/Users/zhang/lsstDev/testingData/projectionTestingData/";
         String[] fNames = {
+                "ztf-TPV.fits",
                 "1904-66_SFL.fits",                                      //SFL or GLS  SANSON-FLAMSTEED
                 "f3.fits",                                               //GNOMONIC
                 "DssImage-10.68470841.26902815.015.0poss2ukstu_red.fits", //PLATE
-                "GLM_01050+0000_mosaic_I2.fits",                        //CAR  CARTESIAN
+//                "GLM_01050+0000_mosaic_I2.fits",                        //CAR  CARTESIAN
                 "m51.car.fits",                                         //CAR  CARTESIAN
                 "field1.fits",                                          //SIN  ORTHOGRAPHIC
                 "m51.sin.fits",                                         //SIN  ORTHOGRAPHIC
-                // "file7.fits",                                           //Not FITS format
-                //"file7Downloaded.fits",
+//                 "file7.fits",                                           //Not FITS format
+//                "file7Downloaded.fits",
                 "SIP.fits",                                            //TAN--SIP  GNOMONIC
-                //"lsstsample1.fits",                                   //CEA  CYLINDRICAL EQUAL AREA
+//                "lsstsample1.fits",                                   //CEA  CYLINDRICAL EQUAL AREA
                 "allsky.fits",                                        //AIT (ATF is deprecated)   AITOFF
                 "bird_2ha3-Booth.fits",                              //----  LINEAR
                 "NED_M31.fits",                                          //ARC  ZENITH EQUIDISTANT
-                "cong_12_smo.fits"                                    //ARC  ZENITH EQUIDISTANT
+//                "cong_12_smo.fits"                                    //ARC  ZENITH EQUIDISTANT
         };
 
         for (int i=0; i<fNames.length; i++) {
             try {
-                FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[i]);
+                path = FileLoader.getDataPath(ProjectionTest.class);
+                        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[i]);
             }
             catch (FitsException e) {
                 System.out.println("========ERROR=========="+fNames[i]+"===============");

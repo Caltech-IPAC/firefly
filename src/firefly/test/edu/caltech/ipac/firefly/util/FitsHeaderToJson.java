@@ -236,7 +236,8 @@ public class FitsHeaderToJson {
             else {
 
                 if (field.getType().isPrimitive()){
-                    field.set(imageHeader, Double.NaN);
+//                    if(!field.getName().equals("using_tpv"))
+                        field.set(imageHeader, Double.NaN);
                 }
                 else {
                     field.set(imageHeader, null);
