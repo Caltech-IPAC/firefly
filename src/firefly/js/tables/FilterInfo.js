@@ -4,7 +4,8 @@
 
 import {getColumnIdx, getColumn, isNumericType, getTblById} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
-import {isUndefined, get} from 'lodash';
+import {isUndefined, get, isArray} from 'lodash';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 const cond_regex = new RegExp('(!=|>=|<=|<|>|=|like|in|is|is not)?\\s*(.+)');
 const cond_only_regex = new RegExp('^' + cond_regex.source, 'i');
@@ -159,34 +160,60 @@ export class FilterInfo {
         var [ , cname, op, val] =filterStr.match(filter_regex) || [];
         if (!cname) return () => false;       // bad filter.. returns nothing.
 
-        // remove the double quote around the key
-        const removeQuoteAroundString = (str) => {
-            return str.replace(/^"(.*)"$/, '$1');
+        // remove the double quote or the single quote around cname and val (which is added in auto-correction)
+        const removeQuoteAroundString = (str, quote = "'") => {
+            if (str.startsWith(quote)) {
+                const reg = new RegExp('^' + quote + '(.*)' + quote + '$');
+                return str.replace(reg, '$1');
+            } else {
+                return str;
+            }
         };
 
-        cname = removeQuoteAroundString(cname);
+        cname = removeQuoteAroundString(cname, '"');
         op = op.toLowerCase();
         val = val.toLowerCase();
+
         const cidx = getColumnIdx(tableModel, cname);
         const noROWID = cname === 'ROW_IDX' && cidx < 0;
         const colType = noROWID ? 'int' : get(getColumn(tableModel, cname), 'type', 'char');
-        val = op === 'in' ? val.replace(/[()]/g, '').split(',').map((s) => s.trim()) : val;
+        const convertStrToNumber = (str, bRemoveQuote=true) => {
+            const numStr = bRemoveQuote ? removeQuoteAroundString(str) : str;
+
+            return colType.match(/^[i]/) ? parseInt(numStr) : parseFloat(numStr);
+        };
+
+
+        // update val of operator 'in' into an array of value
+        if (op === 'in') {
+            if (val.match(/^\(.*\)$/)) {
+                val = val.substring(1, val.length-1);
+            }
+            val = val.split(',').map((s) => s.trim());
+        }
+
+        // remove single quote enclosing the string for the value of operater 'like' or char type column
+        if (op === 'like' || colType.match(/^[sc]/)) {
+            val = isArray(val) ? val.map((s) => removeQuoteAroundString(s)) : removeQuoteAroundString(val);
+        } else if (colType.match(/^[dfil]/)) {    // convert to number by removing single quote except 'in'
+            val =  isArray(val) ? val.map((s) => convertStrToNumber(s, false)) : convertStrToNumber(val);
+        }
 
         return (row, idx) => {
             if (!row) return false;
             var compareTo = noROWID ? idx : row[cidx];
             if (isUndefined(compareTo)) return false;
 
-            if (!['in','like'].includes(op) && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
-                val = Number(val);
+            if (op !== 'like' && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
                 compareTo = Number(compareTo);
             } else {
                 compareTo = compareTo.toLowerCase();
             }
 
             switch (op) {
-                case 'like'  :
-                    return compareTo.includes(val);
+                case 'like' :
+                    const reg = likeToRegexp(val);
+                    return reg.test(compareTo);
                 case '>'  :
                     return compareTo > val;
                 case '<'  :
@@ -257,6 +284,60 @@ export class FilterInfo {
     }
 }
 
+/**
+ * convert sql like condition to RegExp, the following character cases in like condition are changed
+ * - usage of special characters for regular expression
+ * - usage of wildcard, % & _, escape wildcard, \% and \_,
+ * - usage of \\ is kept same in regular expression
+ * @param text
+ * @returns {RegExp}
+ */
+function likeToRegexp(text) {
+    const specials = ['/', '.', '*', '+', '?', ':', '!',
+        '(', ')', '[', ']', '{', '}', '^', '$', '-', '='
+    ];
+
+    const sRE = new RegExp('(\\' + specials.join('|\\') + ')', 'g');
+
+    // r1 is the replacement for w, r2 is the replacement for \w
+    function replaceWildCard(str, w, r1, r2, sIdx = 0) {
+
+        const idx = str.indexOf(w, sIdx);
+
+        if (idx < 0) return str;
+
+        const escape = '\\';
+        let newStr;
+        let totalEscape = 0;
+
+        for (let i = idx-1; i >= sIdx; i--) {
+            if (str.charAt(i) !== escape) break;
+            totalEscape++;
+        }
+
+        if (totalEscape%2 === 0) {    // _=>. %=>.*
+            newStr = str.substring(0, idx) + r1 + str.substring(idx+1);
+            sIdx = idx + r1.length;
+        } else {                      // \_ => _, \% => %
+            newStr = str.substring(0, idx-1) + r2 + str.substring(idx+1);
+            sIdx = idx - 1 + r2.length;
+        }
+        return replaceWildCard(newStr, w, r1, r2, sIdx);
+    }
+
+    let  newText = text.replace(sRE, '\\$1');
+
+    newText = replaceWildCard(newText, '%', '.*', '%');
+    newText = replaceWildCard(newText, '_', '.', '_');
+
+    try {
+        return new RegExp('^' + newText + '$');
+    }
+    catch (e) {
+        showInfoPopup('invalid filtering condition: ' + text, 'table filtering');
+        return new RegExp();
+    }
+}
 
 /*-----------------------------------------------------------------------------------------*/
 
@@ -276,29 +357,73 @@ function autoCorrectConditions(conditions, tbl_id, cname) {
     }
 }
 
+/**
+ * auto correction on filter string in case it is not a valid sql statement.
+ * the correction following the rules as follows
+ * op : case 1: not specified or 'like' (for both numeric and text column)
+ *              if the value part is not enclosed by single quotes:
+ *                  convert %, _, | to be \%, \_ or \\. (escape the wildcard and escape character)
+ *                  enclose the string by '%' and then by single quotes.
+ *                  ex: abc% => '%abc\%%' after auto-correction.
+ *      case 2: 'in',
+ *              enclose each value in signle quotes in case they are missing (for text column only)
+ *              enclose the entire value string in braces, (), if they area missing (for all kinds of columns)
+ *              ex: in a, b  => in ('a', 'b') after auto=correction for text column
+ *              ex: in a, b  => in (a, b) after auto-correction for numeric column
+ *     case 3: other operaters, >, <, >=, <=, =, !=
+ *              enclose value in single quotes if they are missing (for text Column only)
+ *              ex: =abc => ='abc' after auto-correction for text column
+ *                  =abc => =abc   after auto-correction for numeric column
+ *
+ * @param v
+ * @param isNumeric
+ * @returns {*}
+ */
 function autoCorrectCondition(v, isNumeric=false) {
-    let [, op, val=''] = v.trim().replace(/[()]/g, '').match(cond_only_regex) || [];
-    if (!op && !val) return v;
 
-    op = op ? op.toLowerCase() : isNumeric ? '=' : 'like';      // apply default operator if one is not given.
+    const encloseByQuote = (txt, quote="'") => {
+        return `${quote}${txt}${quote}`;
+    };
+
+    const encloseString = (txt) => {
+        return (txt.match(/^'.*'$/) ? txt : encloseByQuote(txt));
+    };
+
+    let [, op, val=''] = v.trim().match(cond_only_regex) || [];
+
+    // empty string or string with no value
+    if (!op && !val) return v.trim();
+
+    op = op ? op.toLowerCase() : 'like';      // no operator is treated as 'like'
+
     switch (op) {
         case 'like':
-            val = !val.includes('%') ? `%${val}%` : val;
-            val = !val.match("^'.+'$") ? `'${val}'` : val;
+            if (!val.match(/^'.*'$/)) {
+                val = val.replace(/([_|%|\\])/g, '\\$1');
+
+                val = encloseByQuote(encloseByQuote(val, '%'));
+            }
             break;
         case 'in':
-            if (!isNumeric) {
-                val = val.split(',').map((s) => `'${s.trim}'`).join();
-            }
-            val = `(${val})`;
+            let valList = val.match(/^\((.*)\)$/) ? val.substring(1, val.length-1) : val;
+
+            valList = valList.split(',').map((s) => {
+                return isNumeric ? s : encloseString(s.trim());
+            }).join(', ');
+
+            val = `(${valList})`;
             break;
         case '=':
         case '!=':
-            val = !isNumeric && !val.match("^'.+'$") ? `'${val}'` : val;
-            if (isNumeric && ["''", 'null', '""'].includes(val.toLowerCase())) {
-                op = op === '!=' ? 'is not' : 'is';
-                val = 'null';
-            }
+        case '>':
+        case '<':
+        case '>=':
+        case '<=':
+            val = isNumeric ? val : encloseString(val);
+            break;
+
+        default:
+            return '';
     }
     return `${op} ${val}`;
 }

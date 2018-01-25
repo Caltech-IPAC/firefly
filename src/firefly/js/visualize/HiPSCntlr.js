@@ -8,7 +8,7 @@ export const HIPSSURVEY_PREFIX = 'HIPSCntlr';
 export const HIPSSURVEY_PATH = 'hipssurveys';
 export const HIPSSURVEY_CREATE_PATH = `${HIPSSURVEY_PREFIX}.createPath`;
 export const HIPSSURVEY_IN_LOADING = `${HIPSSURVEY_PREFIX}.inLoading`;
-export const HiPSSurveyTableColumm = new Enum(['url', 'title', 'type']);
+export const HiPSSurveyTableColumm = new Enum(['url', 'title', 'type', 'order', 'sky_fraction']);
 export const HiPSSurveysURL = 'http://alasky.unistra.fr/MocServer/query?hips_service_url=*&get=record';
 export const HiPSPopular = 'popular';
 export const _HiPSPopular = '_popular';
@@ -130,7 +130,17 @@ function parseHiPSList(str) {
     let currentRec = {};
     const hipsColumnMap = {obs_title:        HiPSSurveyTableColumm.title.key,
                            hips_service_url: HiPSSurveyTableColumm.url.key,
-                           dataproduct_type: HiPSSurveyTableColumm.type.key};
+                           dataproduct_type: HiPSSurveyTableColumm.type.key,
+                           hips_order:       HiPSSurveyTableColumm.order.key,
+                           moc_sky_fraction: HiPSSurveyTableColumm.sky_fraction.key};
+    const testRow = {
+        ID: 'test/row',
+        [HiPSSurveyTableColumm.title.key]: 'test_record\\(%for test only%)',
+        [HiPSSurveyTableColumm.url.key]: 'http:\\\\www.caltech.edu\\ipac',
+        [HiPSSurveyTableColumm.type.key]: 'test.1',
+        [HiPSSurveyTableColumm.order.key]: '3',
+        [HiPSSurveyTableColumm.sky_fraction.key]: '0.5'
+    };
 
     return str.split('\n')
                     .map( (s) => s.trim())
@@ -148,7 +158,7 @@ function parseHiPSList(str) {
                             }
                         }
                         return preHiPS;
-                    }, [])
+                    }, [testRow])
                     .reduce( (preHiPS, row) => {
                         if (row[HiPSSurveyTableColumm.type.key]) {    // remove the item with undefined type
                             preHiPS.push(row);
