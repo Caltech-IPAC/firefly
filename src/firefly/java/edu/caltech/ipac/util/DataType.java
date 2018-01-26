@@ -15,19 +15,23 @@ public class DataType implements Serializable, Cloneable {
 
     private final static int UNKNOWN_COLUMN_IDX= -1;
     private static final String DOUBLE = "double";
+    private static final String REAL = "real";
+
     private static final String FLOAT = "float";
     private static final String INTEGER = "int";
     private static final String LONG = "long";
     private static final String CHAR = "char";
     private static final String BOOL = "bool";
     private static final String S_DOUBLE = "d";
+    private static final String S_REAL = "r";
+
     private static final String S_FLOAT = "f";
     private static final String S_INTEGER = "i";
     private static final String S_LONG = "l";
     private static final String S_CHAR = "c";
     private static final String S_BOOL = "b";
     private static final String DEF_NULL_STR = "";
-    public static final List<String> NUMERIC_TYPES = Arrays.asList(DOUBLE, FLOAT, INTEGER, LONG, S_DOUBLE, S_FLOAT, S_INTEGER, S_LONG);
+    public static final List<String> NUMERIC_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, INTEGER, LONG, S_DOUBLE, S_REAL, S_FLOAT, S_INTEGER, S_LONG);
 
 
     private       Class      _type;
@@ -242,6 +246,8 @@ public class DataType implements Serializable, Cloneable {
         switch (type) {
             case DOUBLE:
             case S_DOUBLE:
+            case REAL:
+            case S_REAL:
                 return Double.class;
             case FLOAT:
             case S_FLOAT:
