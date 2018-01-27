@@ -6,6 +6,8 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import numeral from 'numeral';
+import {isEmpty} from 'lodash';
+import {formatPosForTextField} from '../data/form/PositionFieldDef.js';
 
 import {parseWorldPt} from '../visualize/Point.js';
 
@@ -23,7 +25,7 @@ export class SearchSummary extends PureComponent {
             let wpMsg = request.filename?'Multi-Object':'';
             if(!request.filename && request.UserTargetWorldPt){
                 const wp = parseWorldPt(request.UserTargetWorldPt);
-                wpMsg = wp.getObjName();
+                wpMsg = isEmpty(wp.getObjName())?formatPosForTextField(wp):wp.objName;
             }
             const target = 'Target= ' + wpMsg;
             const imageSize = 'Image Size=' + numeral(request.imageSizeAndUnit).format('#.0[000]')+' deg';
