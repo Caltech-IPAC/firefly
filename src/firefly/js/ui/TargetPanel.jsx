@@ -35,7 +35,7 @@ class TargetPanelView extends PureComponent {
                                 visible= {true}
                                 message={message}
                                 onChange={(ev) => onChange(ev.target.value, TARGET)}
-                                label='Coordinates or Object Name:'
+                                label='Name or Position:'
                                 value={value}
                                 tooltip='Enter a target'
                                 labelWidth={labelWidth}
@@ -111,7 +111,7 @@ function getProps(params, fireValueChange) {
         {
             visible: true,
             onChange: (value,source) => handleOnChange(value,source,params, fireValueChange),
-            label: 'Coordinates or Object Name:',
+            label: 'Name or Position:',
             tooltip: 'Enter a target',
             value,
             feedback,
