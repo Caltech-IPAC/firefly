@@ -296,6 +296,7 @@ function makeHipsDrawer(screenRenderParams, totalCnt, isBaseImage, tileProcessIn
     let renderComplete=  false;
     const {offscreenCanvas, plotView}= screenRenderParams;
     const offscreenCtx = offscreenCanvas.getContext('2d');
+    const allImageCancelFuncs= [];
 
 
     return {
@@ -319,21 +320,17 @@ function makeHipsDrawer(screenRenderParams, totalCnt, isBaseImage, tileProcessIn
             }
 
             const {tileAttributes, shouldProcess, processor}= tileProcessInfo;
-            const p = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
-            p.then((imageData) => {
+            const {promise, cancelImageLoad} = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
+            allImageCancelFuncs.push(cancelImageLoad);
+            promise.then((imageData) => {
                 renderedCnt++;
 
-                if (!inCache) addTileCachedImage(src, imageData);
+                if (!inCache && !emptyTile) addTileCachedImage(src, imageData);
                 if (abortRender) return;
 
-                if (emptyTile) {
-                    drawEmptyTile(offscreenCtx,tile);
-                }
-                else {
-                    const tileSize= tile.tileSize || imageData.image.width;
-                    drawOneHiPSTile(offscreenCtx, imageData.image, tile.devPtCorners,
-                        tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
-                }
+                const tileSize= tile.tileSize || imageData.image.width;
+                drawOneHiPSTile(offscreenCtx, imageData.image, tile.devPtCorners,
+                    tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
 
 
                 const now= Date.now();
@@ -344,10 +341,8 @@ function makeHipsDrawer(screenRenderParams, totalCnt, isBaseImage, tileProcessIn
                 if (renderNow && screenRenderEnabled) renderToScreen(screenRenderParams);
                 renderComplete= (renderedCnt === totalCnt);
             }).catch(() => {
-                addTileCachedImage(src, null, true);
                 renderedCnt++;
                 if (abortRender) return;
-                drawEmptyTile(offscreenCtx, tile);
                 if (renderedCnt === totalCnt && screenRenderEnabled) {
                     renderComplete= true;
                     renderToScreen(screenRenderParams);
@@ -374,6 +369,7 @@ function makeHipsDrawer(screenRenderParams, totalCnt, isBaseImage, tileProcessIn
         abort()  {
             abortRender = true;
             if (isBaseImage && !renderComplete && renderedCnt>0 && screenRenderEnabled) renderToScreen(screenRenderParams);
+            allImageCancelFuncs.forEach( (f) => f && f() );
         }
     };
 }
