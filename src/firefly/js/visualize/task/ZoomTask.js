@@ -163,7 +163,7 @@ function makeZoomLevelMatcher(dispatcher, visRoot, sourcePv,level,isFullScreen,z
 
             // we want each plot to have the same arcsec / pixel as the target level
             // if the new level is only slightly different then use the target level
-           newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
+           newZoomLevel= (!plotLevel || (Math.abs(plotLevel-level)<.01)) ? level : plotLevel;
         }
         doZoom(dispatcher,plot,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay,getState);
     };

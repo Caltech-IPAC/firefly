@@ -373,39 +373,39 @@ public class ImageHeaderTest  extends ConfigTest {
     /**
      * This main program is for creating the output files to be saved
      * as references for the unit tests.
-     *
-     *
-     *
      */
-
     public static void main(String[] args) throws Exception {
 
-        fitsFileName = "f3.fits"; //"SIP.fits";//"twomass-j-SIN.fits"; //"iris-25-GNOMONIC.fits";//"f3.fits"; //
-        String inputFitsFile= FileLoader.getDataPath(ImageHeaderTest.class)+fitsFileName;
+        //TODO Regenerate this if imageheader class has changed (reflection purposes)
 
-        Fits fits = new Fits(inputFitsFile);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(fits)[0];
-        Header header =fitsRead0.getHeader();
-        ImageHeader imageHeader= new ImageHeader(header);
-        String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length()-5 ) + "Header.json";
-        FitsHeaderToJson.writeImageHeaderToJson(imageHeader, outJsonFile);
+        String[] fitsFilesName = new String[]{"f3.fits","SIP.fits","twomass-j-SIN.fits","iris-25-GNOMONIC.fits"};//"f3.fits"; //
 
+        for (int i=0; i<fitsFilesName.length;i++) {
+            String inputFitsFile = FileLoader.getDataPath(ImageHeaderTest.class) + fitsFilesName[i];
 
-        //create json file (using f3.fits) containing both the projection to save as a reference
-        Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
-        outJsonFile = inputFitsFile.substring(0, inputFitsFile.length()-5 ) + "Projection.json";
-        FitsHeaderToJson.writeProjectionToJson(imageHeader, projection, outJsonFile);
+            Fits fits = new Fits(inputFitsFile);
+            FitsRead fitsRead0 = FitsRead.createFitsReadArray(fits)[0];
+            Header header = fitsRead0.getHeader();
+            ImageHeader imageHeader = new ImageHeader(header);
+            String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length() - 5) + "Header.json";
+            FitsHeaderToJson.writeImageHeaderToJson(imageHeader, outJsonFile);
 
 
+            //create json file (using f3.fits) containing both the projection to save as a reference
+            Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
+            outJsonFile = inputFitsFile.substring(0, inputFitsFile.length() - 5) + "Projection.json";
+            FitsHeaderToJson.writeProjectionToJson(imageHeader, projection, outJsonFile);
+        }
 
 
-     /*   //for FITS with SPOT parameter
+
+        //for FITS with SPOT parameter
         String fName = "fitsWithSpotExt.fits";
         String inFitsFile = FileLoader.getDataPath(ImageHeaderTest.class)+fName;
         String outJsonFileSpot = inFitsFile.substring(0, inFitsFile.length()-5 ) + "Header.json";
 
         Fits inFits = new Fits(inFitsFile);
-        fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
 
 
         ImageHDU imageHdu = (ImageHDU) fitsRead0.getHDU();
@@ -414,7 +414,7 @@ public class ImageHeaderTest  extends ConfigTest {
         int  extension_number = headerSpot.getIntValue("SPOT_EXT", -1);
         long HDUOffset = extension_number == -1? imageHdu.getFileOffset():headerSpot.getIntValue("SPOT_OFF", 0);
         ImageHeader imageHeaderWithSpot = new ImageHeader(headerSpot, HDUOffset, planeNumber);
-        FitsHeaderToJson.writeImageHeaderToJson(imageHeaderWithSpot, outJsonFileSpot);*/
+        FitsHeaderToJson.writeImageHeaderToJson(imageHeaderWithSpot, outJsonFileSpot);
 
 
     }

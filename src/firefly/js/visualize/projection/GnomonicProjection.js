@@ -5,20 +5,29 @@
 import {DtoR,RtoD, MAX_SIP_LENGTH} from './ProjectionUtil.js';
 import {makeProjectionPt,makeImagePt} from '../Point.js';
 
+const DEF_PV1= [0,1];
+const DEF_PV2= [0,1];
+DEF_PV1.length=40;
+DEF_PV2.length=40;
+
+DEF_PV1.fill(0,2,39);
+DEF_PV2.fill(0,2,39);
+
 export const GnomonicProjection= {
 
-    revProject (ra, dec, hdr, useProjException= false) {
-		var i, j;
-		var fsamp_correction, fline_correction;
-		var fline, fsamp, rtwist, temp;
+    revProject (ra, dec, hdr) {
+		let i, j;
+		let fsamp_correction, fline_correction;
+		let fline, fsamp, rtwist, temp;
 
-		const {crpix1,crpix2,cdelt1,cdelt2, dc1_1, dc1_2, dc2_1, dc2_2, using_cd}= hdr;
+		const {crpix1,crpix2,cdelt1,cdelt2, dc1_1, dc1_2, dc2_1, dc2_2, using_cd,
+               ctype1, ctype2, using_tpv=false, pv1= DEF_PV1, pv2=DEF_PV2}= hdr;
 		const glong  = hdr.crval1;
 		const glat   = hdr.crval2;
 		const twist  = hdr.crota2;
 
-		var lon = ra * DtoR;
-		var lat = dec * DtoR;
+		const lon = ra * DtoR;
+		const lat = dec * DtoR;
 
 		const rpp1 = -cdelt1 * DtoR;
 		const rpp2 = -cdelt2 * DtoR;
@@ -31,9 +40,8 @@ export const GnomonicProjection= {
 		const ff2 = 1./ (Math.sin(lat0) * Math.sin(lat) + aa * Math.cos(lat0));
 
 		if (ff1 < 0) {
-			// we're more than 90 degrees from projection center 
-			if (useProjException) throw new Error('coordinates not on image');
-			else return null;
+			// we're more than 90 degrees from projection center
+			return null;
 		}
 		else {
 			fline = -ff2 * (Math.cos(lat0) * Math.sin(lat) - aa * Math.sin(lat0));
@@ -60,7 +68,7 @@ export const GnomonicProjection= {
 				// apply SIRTF distortion corrections
 				fsamp_correction = 0.0;
 
-				var len= Math.floor(Math.min(hdr.ap_order+1, MAX_SIP_LENGTH));
+				let len= Math.floor(Math.min(hdr.ap_order+1, MAX_SIP_LENGTH));
 				for (i = 0; i < len; i++) {
 					for (j = 0; j < len; j++) {
 						if (i + j <= hdr.ap_order) {
@@ -94,23 +102,24 @@ export const GnomonicProjection= {
 	},
 
 	fwdProject( x, y, hdr) {
-		var i, j;
-		var fsamp_correction, fline_correction;
-		var lat, lon;
-		var xxx, yyy, xx, yy;
+		let i, j;
+		let fsamp_correction, fline_correction;
+		let lat, lon;
+		let xx, yy;
 
-		const {crpix1,crpix2,cdelt1,cdelt2, cd1_1, cd1_2, cd2_1, cd2_2, using_cd, map_distortion}= hdr;
+		const {crpix1,crpix2,cdelt1,cdelt2, cd1_1, cd1_2, cd2_1, cd2_2, using_cd, map_distortion,
+		       using_tpv=false, pv1= DEF_PV1, pv2=DEF_PV2}= hdr;
 		const glong  = hdr.crval1;
 		const glat   = hdr.crval2;
 		const twist  = hdr.crota2;
 
-		var fsamp = x - crpix1 + 1;
-		var fline = y - crpix2 + 1;
+		let fsamp = x - crpix1 + 1;
+		let fline = y - crpix2 + 1;
 
 		if (map_distortion) {
 			// apply SIRTF distortion corrections
 			fsamp_correction = 0.0;
-			var len= Math.floor(Math.min(hdr.a_order+1, MAX_SIP_LENGTH));
+			let len= Math.floor(Math.min(hdr.a_order+1, MAX_SIP_LENGTH));
 			for (i = 0; i < len; i++) {
 				for (j = 0; j < len; j++) {
 					if (i + j <= hdr.a_order) {
@@ -152,13 +161,13 @@ export const GnomonicProjection= {
 
 		const delta = Math.atan(Math.sqrt(xx * xx + yy * yy));
 
-		if ((xx == 0.0) && (yy == 0.0)) yy = 1.0;  // avoid domain error in atan2
+		if ((xx===0.0) && (yy===0.0)) yy = 1.0;  // avoid domain error in atan2
 		const beta = Math.atan2(-xx, yy);
 		const glatr = glat * DtoR;
 		const glongr = glong * DtoR;
 		lat = Math.asin(-Math.sin(delta) * Math.cos(beta) * Math.cos(glatr) + Math.cos(delta) * Math.sin(glatr));
-		xxx = Math.sin(glatr) * Math.sin(delta) * Math.cos(beta) + Math.cos(glatr) * Math.cos(delta);
-		yyy = Math.sin(delta) * Math.sin(beta);
+		const xxx = Math.sin(glatr) * Math.sin(delta) * Math.cos(beta) + Math.cos(glatr) * Math.cos(delta);
+		const yyy = Math.sin(delta) * Math.sin(beta);
 		lon = glongr + Math.atan2(yyy, xxx);
 
 		lat = lat * RtoD;

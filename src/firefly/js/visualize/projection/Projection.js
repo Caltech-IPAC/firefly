@@ -3,7 +3,9 @@
  */
 
 import {get} from 'lodash';
+import {clone} from '../../util/WebUtil.js';
 import {makeImagePt, makeProjectionPt, makeWorldPt} from '../Point.js';
+import {computeDistance} from '../VisUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {AitoffProjection} from './AitoffProjection.js';
 import {NCPProjection} from './NCPProjection.js';
@@ -15,6 +17,7 @@ import {CartesianProjection} from './CartesianProjection.js';
 import {OrthographicProjection} from './OrthographicProjection.js';
 import {CylindricalProjection} from './CylindricalProjection.js';
 import {PlateProjection} from './PlateProjection.js';
+import {TpvProjection} from './TpvProjection.js';
 import {Projection as AladinProjection} from '../../externalSource/aladinProj/AladinProjections.js';
 
 
@@ -32,6 +35,7 @@ export const PLATE        = 1007; // TESTED
 export const ARC          = 1008;
 export const SFL          = 1009; // TESTED
 export const CEA          = 1010;
+export const TPV          = 1011;
 export const UNSPECIFIED  = 1998; // TESTED
 export const UNRECOGNIZED = 1999; // TESTED
 
@@ -49,6 +53,13 @@ const projTypes= {
 		implemented : true,
 		wrapping : false
 	},
+    [TPV] : {
+        name: 'TPV',
+        fwdProject: TpvProjection.fwdProject,
+        revProject: TpvProjection.revProject,
+        implemented : true,
+        wrapping : false
+    },
 	[ORTHOGRAPHIC] : {
 		name: 'ORTHOGRAPHIC',
 		fwdProject: OrthographicProjection.fwdProject,
@@ -196,10 +207,21 @@ export class Projection {
 	 * @public
 	 */
     constructor(header, coordSys)  {
-        this.header= header;
-        this.pixelScaleDeg= Math.abs(this.header.cdelt1);
-        this.pixelScaleArcSec= this.pixelScaleDeg* 3600.0;
+        this.header= clone(header);
         this.coordSys= coordSys;
+        const {crpix1,crpix2, cdelt1}= header;
+        if (!cdelt1 && crpix1 && crpix2) {
+            const projCenter = this.getWorldCoords(crpix1 - 1, crpix2 - 1);
+            const oneToRight = this.getWorldCoords(crpix1, crpix2 - 1);
+            const oneUp = this.getWorldCoords(crpix1 - 1, crpix2);
+            if (oneToRight && oneUp) {
+                this.header.cdelt1 = - computeDistance( projCenter, oneToRight);
+                this.header.cdelt2 = computeDistance( projCenter, oneUp);
+            }
+
+        }
+        this.pixelScaleDeg = Math.abs(this.header.cdelt1);
+        this.pixelScaleArcSec = this.pixelScaleDeg * 3600.0;
     }
 
 	/**
