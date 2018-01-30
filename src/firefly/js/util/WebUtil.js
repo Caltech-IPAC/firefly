@@ -67,7 +67,7 @@ export function loadScript(scriptName) {
 /**
  * Create an image with a promise that resolves when the image is loaded
  * @param {string} src the source of the image typically a url or local image data
- * @return {Promise} a promised that will resolved with the loaded image object
+ * @return {Promise} a promise that will resolved with the loaded image object
  */
 export function loadImage(src) {
     return new Promise( (resolve, reject) => {
@@ -77,6 +77,42 @@ export function loadImage(src) {
         im.onerror= (ev) => reject(ev);
     });
 }
+
+
+
+/**
+ * Create an image with a promise and a cancel function.  The promise resolves when the image is loaded.
+ * @param {string} src the source of the image typically a url or local image data
+ * @return {{promise:Promise, cancelImageLoad:Function}} an object with the promise and the cancel function
+ */
+export function loadCancelableImage(src) {
+    const im = new Image();
+    let promiseReject;
+    let continueExecution= true;
+    let imageCompleted= false;
+    const promise= new Promise( (resolve, reject) => {
+        promiseReject= reject;
+        im.src= src;
+        im.onload= () => {
+            imageCompleted= true;
+            continueExecution && resolve(im);
+        };
+        im.onerror= (ev) => {
+            imageCompleted= true;
+            continueExecution && reject(ev);
+        };
+    });
+
+    const cancelImageLoad= () => {
+        if (!imageCompleted) {
+            promiseReject(new Error('image load canceled'));
+            continueExecution= false;
+            im.src= '';
+        }
+    };
+    return {promise, cancelImageLoad};
+}
+
 
 /**
  * Returns a string where all characters that are not valid for a complete URL have been escaped.

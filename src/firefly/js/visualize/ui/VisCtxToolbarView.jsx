@@ -599,7 +599,7 @@ export function MultiImageControllerView({plotView:pv}) {
     let desc;
 
     if (image) {
-        let cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
+        cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
         if (cIdx<0) cIdx= 0;
         nextIdx= cIdx===plots.length-1 ? 0 : cIdx+1;
         prevIdx= cIdx ? cIdx-1 : plots.length-1;

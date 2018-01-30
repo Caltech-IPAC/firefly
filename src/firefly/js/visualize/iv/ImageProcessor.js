@@ -3,7 +3,7 @@
  */
 
 import {isString} from 'lodash';
-import {loadImage, requestIdleCallback} from '../../util/WebUtil.js';
+import {loadImage, loadCancelableImage, requestIdleCallback} from '../../util/WebUtil.js';
 
 /**
  * @global
@@ -38,28 +38,40 @@ export function retrieveAndProcessImage(imageData, nextTileAttributes, shouldPro
         return Promise.resolve(imageData);
     }
     else if (isString(imageData)) {
-        return loadImage(imageData)
-            .then( (image) => modifyImage({image, tileAttributes:nextTileAttributes},nextTileAttributes,true, shouldProcess, processor));
+        let {promise, cancelImageLoad}= loadCancelableImage(imageData);
+
+         promise=  promise.then( (image) =>
+             modifyImage({image, tileAttributes:nextTileAttributes},nextTileAttributes,true, shouldProcess, processor));
+         return convertToReturn(promise, cancelImageLoad);
     }
     else if (imageData instanceof HTMLImageElement) {
-        return modifyImage({image:imageData, tileAttributes:nextTileAttributes}, nextTileAttributes, true, shouldProcess, processor);
+        const v= modifyImage({image:imageData, tileAttributes:nextTileAttributes}, nextTileAttributes, true, shouldProcess, processor);
+        return convertToReturn(v);
 
     }
     else {
         if (imageData.image) {
             // console.log('Image From Cache');
-            return modifyImage(imageData, nextTileAttributes,false, shouldProcess, processor);
+            const v= modifyImage(imageData, nextTileAttributes,false, shouldProcess, processor);
+            return convertToReturn(v);
+
         }
         else if (imageData.dataUrl) {
-
-            // console.log('Image From Store');
-
-            return loadImage(imageData.dataUrl)
-                .then( (image) => modifyImage({image, tileAttributes:imageData.tileAttributes},
+            let {promise, cancelImageLoad}= loadCancelableImage(imageData.dataUrl);
+            promise= promise.then( (image) => modifyImage({image, tileAttributes:imageData.tileAttributes},
                                                 nextTileAttributes,false, shouldProcess, processor));
+            convertToReturn(promise, cancelImageLoad);
         }
     }
-    return Promise.reject(new Error('could note identify imageData: not string, HTMLImageElement, imageData.image, or imageData.dataUrl'));
+    return convertToReturn(
+        Promise.reject(new Error('could note identify imageData: not string, HTMLImageElement, imageData.image, or imageData.dataUrl')));
+}
+
+
+function convertToReturn(obj, cancelImageLoad= undefined) {
+    if (obj.then) return {promise:obj,cancelImageLoad};
+    else if (obj.promise) return obj;
+    else throw new Error('unexpected return object in ImageProcessor.retrieveAndProcessImage');
 }
 
 

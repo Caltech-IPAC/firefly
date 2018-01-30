@@ -2,16 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isNil, get} from 'lodash';
 import Enum from 'enum';
-import {createImageUrl,initOffScreenCanvas, computeBounding, isQuadTileOnScreen, drawEmptyRecTile} from './TileDrawHelper.jsx';
+import {createImageUrl,initOffScreenCanvas, computeBounding, isQuadTileOnScreen} from './TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
-import {retrieveAndProcessImage} from './ImageProcessor.js';
-import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
 import {getVisibleHiPSCells, getPointMaxSide, getBestHiPSlevel, makeHiPSAllSkyUrlFromPlot} from '../HiPSUtil.js';
 import {loadImage} from '../../util/WebUtil.js';
 import {CysConverter} from '../CsysConverter.js';
-import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage, addTileCachedImage} from './HiPSTileCache.js';
+import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from './HiPSTileCache.js';
+import {makeHipsRenderer} from './HiPSRenderer.js';
 
 
 const noOp= { drawerTile : () => undefined, abort : () => undefined };
@@ -33,7 +31,7 @@ export function createHiPSDrawer(targetCanvas) {
 
 
     return (plot, opacity,plotView, tileProcessInfo= {shouldProcess:false}) => {
-        if (abortLastDraw) abortLastDraw(); // stop any incomplete drawing
+        abortLastDraw && abortLastDraw(); // stop any incomplete drawing
 
         const {viewDim}= plotView;
         let transitionNorder;
@@ -65,12 +63,12 @@ export function createHiPSDrawer(targetCanvas) {
             opacity, tileProcessInfo, drawTiming);
         lastDrawNorder= norder;
         lastFov= fov;
-    }
+    };
 }
 
 
 /**
- * this is used for temporary image when zooming
+ * draw a transitional image when scrolling or zooming.  The transitional image will be overlaid with the final image.
  * @param fov
  * @param centerWp
  * @param targetCanvas
@@ -87,6 +85,7 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
     const {viewDim}= plotView;
     let tilesToLoad;
     if (norder<=3) { // norder is always 3, need to fix this if
+          // draw the level 2 all sky and then draw on top what ever part of the full resolution level 3 tiles that are in cache
         const tilesToLoad2= findCellOnScreen(plot,viewDim,2, fov, centerWp);
         const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
@@ -98,6 +97,7 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
     else {
         let lookMore= true;
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
+        // find some lower resolution norder to draw, as long as there is at least one tile available in cache, us it.
         for( let testNorder= transitionNorder; (testNorder>=3 && lookMore); testNorder--) {
             tilesToLoad= findCellOnScreen(plot,viewDim,testNorder, fov, centerWp);
             const hasSomeTiles= tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile)));
@@ -108,6 +108,7 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
                 // console.log(`draw transi: transitionNorder: ${transitionNorder}, testNorder: ${testNorder}`);
             }
         }
+        // draw what ever part of the nornder tiles that are in cache on top
         drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, finalTileToLoad, false,
             opacity, tileProcessInfo, DrawTiming.IMMEDIATE);
     }
@@ -118,6 +119,20 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
 const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000);
 
 
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} HiPSDeviceTileData
+ *
+ * @prop {number} tileNumber - HiPS pixel number
+ * @prop {number} nside - healpix level
+ * @prop {Array.<DevicePt>} devPtCorners - the target corners of the tile in device coordinates
+ * @prop {number} dx - x offset into image
+ * @prop {number} dy - y offset into image
+ */
+
+
 /**
  *
  * @param {WebPlot} plot
@@ -125,7 +140,7 @@ const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000)
  * @param {number} norder
  * @param {number} fov
  * @param {WorldPt} centerWp
- * @return {Array}
+ * @return {Array.<HiPSDeviceTileData>}
  */
 function findCellOnScreen(plot, viewDim, norder, fov,centerWp) {
     const cells= getVisibleHiPSCells(norder,centerWp, fov, plot.dataCoordSys);
@@ -174,14 +189,14 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tile
 
     if (!targetCanvas) return noOp;
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
-    const drawer= makeHipsDrawer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
-                                      tileProcessInfo, screenRenderEnabled);
+    const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
+                                   tileProcessInfo, screenRenderEnabled);
     
     if (useAllSky) {
         const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
         let cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
         if (cachedAllSkyImage) {
-            drawAllSky(norder, cachedAllSkyImage, tilesToLoad, drawer);
+            drawer.drawAllSky(norder, cachedAllSkyImage, tilesToLoad);
         }
         else {
             loadImage(makeHiPSAllSkyUrlFromPlot(plot))
@@ -189,59 +204,31 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, tile
                 {
                     addAllSkyCachedImage(allSkyURL, allSkyImage);
                     cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
-                    drawAllSky(norder, cachedAllSkyImage, tilesToLoad, drawer);
+                    drawer.drawAllSky(norder, cachedAllSkyImage, tilesToLoad);
                 })
                 .catch( () => {
-                    // this should not happen - there is not all sky image so we are looking for the full tiles.
-                    tilesToLoad.forEach( (tile) => drawer.drawTile(createImageUrl(plot,tile), tile) );
+                    // this should not happen - there is no all sky image so we are looking for the full tiles.
+                    // tilesToLoad.forEach( (tile) => drawer.drawTile(createImageUrl(plot,tile), tile) );
+                    drawer.drawAllTilesAsync(tilesToLoad,plot);
                 });
         }
     }
     else {
         switch (drawTiming) {
             case DrawTiming.IMMEDIATE:
-                tilesToLoad.forEach( (tile) => drawer.drawTileImmediate(createImageUrl(plot,tile), tile) );
+                drawer.drawAllTilesImmediate(tilesToLoad,plot);
                 break;
             case DrawTiming.ASYNC:
-                tilesToLoad.forEach( (tile) => drawer.drawTile(createImageUrl(plot,tile), tile) );
+                drawer.drawAllTilesAsync(tilesToLoad,plot);
                 break;
             case DrawTiming.DELAY:
-                setTimeout( () => {
-                    tilesToLoad.forEach( (tile) => drawer.drawTile(createImageUrl(plot,tile), tile) );
-                }, 250);
+                setTimeout( () => drawer.drawAllTilesAsync(tilesToLoad,plot), 250);
                 break;
         }
     }
     return drawer.abort; // this abort function will any async promise calls stop before they draw
 
 }
-
-function drawAllSky(norder, cachedAllSky, tilesToLoad, drawer) {
-    if (norder===3) {
-        drawAllSkyFromOneImage(cachedAllSky.order3, tilesToLoad, drawer);
-    }
-    else {
-        for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
-            drawer.drawTileImmediate(null, tilesToLoad[i],cachedAllSky.order2Array[tilesToLoad[i].tileNumber]);
-        }
-    }
-}
-
-
-function drawAllSkyFromOneImage(allSkyImage, tilesToLoad, drawer) {
-
-    const width= allSkyImage.width/27;
-    let offset;
-    for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
-        offset= Math.floor(tilesToLoad[i].tileNumber/27);
-        tilesToLoad[i].dy= width * offset;
-        tilesToLoad[i].dx=  width * (tilesToLoad[i].tileNumber - 27*offset);
-        tilesToLoad[i].tileSize= width;
-        drawer.drawTileImmediate(null, tilesToLoad[i],allSkyImage);
-
-    }
-}
-
 
 /**
  *
@@ -276,141 +263,3 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
     offscreenCtx.fillRect(0, 0, width, height);
     return offscreenCanvas;
 }
-
-
-/**
- *
- * @param {{plotView:PlotView, plot:WebPlot, targetCanvas:Canvas, offscreenCanvas:Canvas,
- *          opacity:number, offsetX:number, offsetY:number}} screenRenderParams
- * @param totalCnt
- * @param isBaseImage
- * @param tileProcessInfo
- * @param screenRenderEnabled
- * @return {{drawTile(*=, *=): undefined, drawTileImmediate(*=, *, *=): void, abort(): void}}
- */
-function makeHipsDrawer(screenRenderParams, totalCnt, isBaseImage, tileProcessInfo, screenRenderEnabled) {
-
-    let renderedCnt=0;
-    let abortRender= false;
-    let firstRenderTime= 0;
-    let renderComplete=  false;
-    const {offscreenCanvas, plotView}= screenRenderParams;
-    const offscreenCtx = offscreenCanvas.getContext('2d');
-
-
-    return {
-        drawTile(src, tile) {
-            if (abortRender) return;
-            if (isBaseImage) drawEmptyRecTile(tile.devPtCorners,offscreenCtx,plotView);
-            let inCache;
-            let tileData;
-            let emptyTile;
-
-            const cachedTile= findTileCachedImage(src);
-            if (!firstRenderTime) firstRenderTime= Date.now();
-            if (cachedTile) {
-                tileData=  cachedTile.image;
-                emptyTile= cachedTile.emptyTile;
-                inCache= true;
-            }
-            else {
-                tileData=  src;
-                emptyTile= false;
-            }
-
-            const {tileAttributes, shouldProcess, processor}= tileProcessInfo;
-            const p = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
-            p.then((imageData) => {
-                renderedCnt++;
-
-                if (!inCache) addTileCachedImage(src, imageData);
-                if (abortRender) return;
-
-                if (emptyTile) {
-                    drawEmptyTile(offscreenCtx,tile);
-                }
-                else {
-                    const tileSize= tile.tileSize || imageData.image.width;
-                    drawOneHiPSTile(offscreenCtx, imageData.image, tile.devPtCorners,
-                        tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
-                }
-
-
-                const now= Date.now();
-                const renderNow= (renderedCnt === totalCnt ||
-                                  renderedCnt/totalCnt > .75 && now-firstRenderTime>1000 ||
-                                  now-firstRenderTime>2000);
-                // console.log(`${renderedCnt} of ${totalCnt}, renderNow: ${renderNow}, time diff ${(now-firstRenderTime)/1000}`);
-                if (renderNow && screenRenderEnabled) renderToScreen(screenRenderParams);
-                renderComplete= (renderedCnt === totalCnt);
-            }).catch(() => {
-                addTileCachedImage(src, null, true);
-                renderedCnt++;
-                if (abortRender) return;
-                drawEmptyTile(offscreenCtx, tile);
-                if (renderedCnt === totalCnt && screenRenderEnabled) {
-                    renderComplete= true;
-                    renderToScreen(screenRenderParams);
-                }
-            });
-        },
-
-
-
-        drawTileImmediate(src, tile, allskyImage) {
-            const image= allskyImage || get(findTileCachedImage(src),'image.image');
-            if (image) {
-                const tileSize= tile.tileSize || image.width;
-                drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners,
-                    tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
-            }
-            renderedCnt++;
-            if (renderedCnt === totalCnt && screenRenderEnabled) {
-                renderComplete= true;
-                renderToScreen(screenRenderParams);
-            }
-        },
-
-        abort()  {
-            abortRender = true;
-            if (isBaseImage && !renderComplete && renderedCnt>0 && screenRenderEnabled) renderToScreen(screenRenderParams);
-        }
-    };
-}
-
-
-function drawEmptyTile(offscreenCtx, tile) {
-
-    const DRAW_EMPTY= true;
-    if (DRAW_EMPTY) {
-
-        offscreenCtx.fillStyle = 'rgba(40,40,40,1)';
-        offscreenCtx.save();
-        offscreenCtx.beginPath();
-        const {devPtCorners}= tile;
-
-        offscreenCtx.moveTo(devPtCorners[0].x, devPtCorners[0].y);
-        for(let i= 1; i<devPtCorners.length; i++) {
-            offscreenCtx.lineTo(devPtCorners[i].x, devPtCorners[i].y);
-        }
-        offscreenCtx.closePath();
-        offscreenCtx.fill();
-        offscreenCtx.restore();
-    }
-
-}
-
-
-function renderToScreen(screenRenderParams) {
-    // window.requestAnimationFrame(() => {
-        const {plotView, targetCanvas, offscreenCanvas, opacity}= screenRenderParams;
-        const ctx= targetCanvas.getContext('2d');
-        // ctx.save();
-        ctx.globalAlpha=opacity;
-        if (!isNil(plotView.scrollX) && !isNil(plotView.scrollY)) {
-            ctx.drawImage(offscreenCanvas, 0,0);
-        }
-        // ctx.restore();
-    // });
-}
-
