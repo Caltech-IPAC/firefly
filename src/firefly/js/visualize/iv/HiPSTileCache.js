@@ -10,8 +10,22 @@ const MAX_ALLSKY_IMAGES= 20;
 let cachedImages= new Map();
 let cachedAllSkyImages= new Map();
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} HiPSAllSkyCacheInfo
+ *
+ * @prop {string} url
+ * @prop {Image}  order3 single image with the all order 3 allsky
+ * @prop {Array.<Canvas>}  order2Array array of order 2 image tiles, each index if the tile number
+ */
 
 
+/**
+ *
+ * @param url
+ * @return {HiPSAllSkyCacheInfo}
+ */
 export function findAllSkyCachedImage(url) {
     const result=  cachedAllSkyImages.get(url);
     if (result) result.time= Date.now();
