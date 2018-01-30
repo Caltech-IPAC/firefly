@@ -8,13 +8,14 @@ import {get, isEqual, isEmpty, filter, pick, uniqBy} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {clone} from '../util/WebUtil.js';
-import {smartMerge} from '../tables/TableUtil.js';
+import {smartMerge, getActiveTableId} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE} from '../tables/TablesCntlr.js';
-import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
+import {CHART_ADD, CHART_REMOVE, getChartIdsInGroup} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {getDefaultChartProps} from '../charts/ChartUtil.js';
 
 export const LAYOUT_PATH = 'layout';
 
@@ -217,7 +218,8 @@ export function getLayouInfo() {
     const layout = get(flux.getState(), 'layout', {});
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
     const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
-    const hasXyPlots = hasTables || !isEmpty(get(flux.getState(), 'charts.data', {}));
+    //const hasXyPlots = !isEmpty(get(flux.getState(), 'charts.data', {})) || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
+    const hasXyPlots = getChartIdsInGroup(getActiveTableId()).push(getChartIdsInGroup('default')).length > 0 || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
     return clone(layout, {hasImages, hasTables, hasXyPlots});
 }
 
@@ -249,7 +251,7 @@ export function dropDownHandler(layoutInfo, action) {
         case ImagePlotCntlr.PLOT_IMAGE_START :
             return smartMerge(layoutInfo, {dropDown: {visible: false}});
             break;
-
+        case CHART_REMOVE:
         case SHOW_DROPDOWN:
         case TABLE_REMOVE:
         case TBL_RESULTS_REMOVE:

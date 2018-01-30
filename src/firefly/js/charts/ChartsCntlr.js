@@ -52,6 +52,7 @@ const isDebug = () => get(window, 'firefly.debug', false);
 function actionCreators() {
     return {
         [CHART_ADD]:     chartAdd,
+        [CHART_REMOVE]:  chartRemove,
         [CHART_UPDATE]:  chartUpdate,
         [CHART_HIGHLIGHT]: chartHighlight,
         [CHART_FILTER_SELECTION]: chartFilterSelection,
@@ -341,6 +342,14 @@ function chartAdd(action) {
         } else {
             dispatch(action);
         }
+    };
+}
+
+function chartRemove(action) {
+    return (dispatch) => {
+        const {chartId} = action.payload;
+        clearChartConn({chartId});
+        dispatch(action);
     };
 }
 
@@ -764,7 +773,6 @@ function reduceData(state={}, action={}) {
         {
             const {chartId} = action.payload;
             isDebug() && console.log('REMOVE '+chartId);
-            clearChartConn(chartId);
             return omit(state, chartId);
         }
         case (CHART_DATA_FETCH)  :

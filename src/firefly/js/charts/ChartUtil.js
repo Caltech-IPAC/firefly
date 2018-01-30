@@ -27,6 +27,7 @@ import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogr
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
 import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericData.js';
 import Color from '../util/Color.js';
+import {MetaConst} from '../data/MetaConst';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -880,5 +881,95 @@ export function setDefaultColor(data, type, idx) {
     return getColorSetting(colorList);
 }
 
+export function getDefaultChartProps(tbl_id) {
 
+    if (!isFullyLoaded(tbl_id)) { return; }
+
+    const {tableMeta, tableData, totalRows}= getTblById(tbl_id);
+
+    if (!totalRows) {
+        return;
+    }
+
+    // default chart props can be set in a table attribute
+    const defaultChartDef = tableMeta[MetaConst.DEFAULT_CHART_DEF];
+    const defaultChartProps = defaultChartDef && JSON.parse(defaultChartDef);
+    if (defaultChartProps && defaultChartProps.data) {
+        defaultChartProps.data.forEach((e) => e['tbl_id'] = tbl_id);
+        return defaultChartProps;
+    }
+
+    // for catalogs use lon and lat columns
+    let isCatalog = Boolean(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] && tableMeta[MetaConst.CATALOG_COORD_COLS]);
+    let xCol = undefined, yCol = undefined;
+
+    if (isCatalog) {
+        const s = tableMeta[MetaConst.CATALOG_COORD_COLS].split(';');
+        if (s.length !== 3) return;
+        xCol = colWithName(tableData.columns, s[0]); // longtitude
+        yCol = colWithName(tableData.columns, s[1]); // latitude
+
+        if (!xCol || !yCol) {
+            isCatalog = false;
+        }
+    }
+
+    //otherwise use the first one-two numeric columns
+    if (!isCatalog) {
+        const numericCols = getNumericCols(tableData.columns);
+        if (numericCols.length > 1) {
+            xCol = numericCols[0];
+            yCol = numericCols[1];
+        } else if (numericCols.length > 0) {
+            xCol = numericCols[0];
+            yCol = numericCols[0];
+        }
+    }
+
+    if (xCol && yCol)  {
+        if (xCol === yCol) {
+            // if only one numeric column is available, do histogram
+            const chartData = {
+                data: [{
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id,
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 20,
+                            columnOrExpr: `${xCol.name}`
+                        }
+                    },
+                    name: xCol.name
+                }]
+            };
+            return chartData;
+        } else {
+            const chartData = {
+                data: [{
+                    tbl_id,
+                    x: xCol && `tables::${xCol.name}`,
+                    y: yCol && `tables::${yCol.name}`
+                }],
+                layout: {
+                    xaxis: {
+                        autorange: isCatalog ? 'reversed' : 'true'
+                    },
+                    yaxis: {showgrid: false}
+                }
+            };
+            const maxRowsForScatter = get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
+            if (totalRows > maxRowsForScatter) {
+                Object.assign(chartData.data[0], {type: 'fireflyHeatmap', colorscale: 'Greys', reversescale: true});
+            } else {
+                const DATAPOINTS_COLOR = `rgba(63, 127, 191, ${DEFAULT_ALPHA})`;
+                Object.assign(chartData.data[0], {mode: 'markers', marker: {color: DATAPOINTS_COLOR}});
+            }
+            return chartData;
+        }
+    } else {
+        return {};
+    }
+}
 

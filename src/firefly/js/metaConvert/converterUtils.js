@@ -7,6 +7,7 @@ import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {getTblById,getTblInfo, getCellValue} from '../tables/TableUtil.js';
+import {getCenterColumns} from '../tables/TableInfoUtil.js';
 import {converterFactory} from './ConverterFactory.js';
 import {MetaConst} from '../data/MetaConst.js';
 
@@ -92,10 +93,10 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
 
     const {startIdx, endIdx, highlightedRow}= getTblInfo(table, maxRows);
 
-    var j= 0;
+    let j= 0;
     const retval= [];
 
-    for(var i=startIdx; (i<endIdx );i++) {
+    for(let i=startIdx; (i<endIdx );i++) {
         retval[j++] = {plotId: computePlotId(plotIdRoot, i), row: i, highlight: i === highlightedRow};
     }
     return retval;
@@ -124,9 +125,6 @@ export function isMetaDataTable(tbl_id) {
  */
 export function isCatalogTable(tbl_id) {
     const table= getTblById(tbl_id);
-    const tableMeta= get(table, 'tableMeta');
-    if (!tableMeta) return false;
-
-    return Boolean(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] || tableMeta[MetaConst.CATALOG_COORD_COLS]);
+    return !isEmpty(getCenterColumns(table));
 }
 

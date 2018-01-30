@@ -4,7 +4,7 @@
 
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
-import {getColumnIdx} from './TableUtil.js';
+import {getColumn, getColumnIdx} from './TableUtil.js';
 
 
 export const DEF_CORNER_COLS= ['ra1;dec1', 'ra2;dec2', 'ra3;dec3', 'ra4;dec4'];
@@ -37,9 +37,10 @@ const makeCoordColAry= (cAry, table) => cAry.map( (c) => makeCoordCol(c,table)).
  *
  * @param def
  * @param {TableModel} table - used to look up column information
- * @return {CoordColsDescription}
+ * @return {CoordColsDescription|null}
  */
 function makeCoordCol(def, table) {
+    if (!def) return null;
     const s = def.split(';');
     if (s.length!== 3 && s.length!==2) return null;
     const s0Idx= getColumnIdx(table,s[0]);
@@ -75,12 +76,12 @@ export function getCornersColumns(table) {
 /**
  * Investigate table meta data a return a CoordColsDescription for two columns that represent and object in the row
  * @param {TableModel} table
- * @return {CoordColsDescription}
+ * @return {CoordColsDescription|null}
  */
 export function getCenterColumns(table) {
-    if (!table) return [];
+    if (!table) return null;
     const {tableMeta:meta}= table;
-    if (!meta) return [];
+    if (!meta) return null;
 
     if (meta[MetaConst.CENTER_COLUMN]) return makeCoordCol(meta[MetaConst.CENTER_COLUMN],table);
     if (meta[MetaConst.CATALOG_COORD_COLS]) return makeCoordCol(meta[MetaConst.CATALOG_COORD_COLS],table);
@@ -97,10 +98,12 @@ export function getCenterColumns(table) {
  *
  */
 function guessDefColumns(table) {
-    const {columns}= table.tableData;
-    const colList= columns.map( (c) => c.name.toLowerCase());
-    if (colList.includes('ra') && colList.includes('dec')) return 'ra;dec;EQ_J2000';
-    if (colList.includes('lon') && colList.includes('lat')) return 'lon;lat;EQ_J2000';
-    return 'ra;dec;EQ_J2000';
+    // ex. return 'ra;dec;EQ_J2000' or 'lon;lat;EQ_J2000'
+    const guess = (lon, lat) => {
+        const lonCol = getColumn(table, lon, true);
+        const latCol = getColumn(table, lat, true);
+        if (lonCol && latCol) return `${lonCol.name};${latCol.name};EQ_J2000`;
+    };
+    return guess('ra','dec') || guess('lon', 'lat');
 }
 

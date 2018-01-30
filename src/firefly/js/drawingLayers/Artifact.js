@@ -4,7 +4,7 @@
 
 
 import {take} from 'redux-saga/effects';
-import {get} from 'lodash';
+import {get, isEmpty} from 'lodash';
 import {isPlotIdInPvNewPlotInfoAry,
          isDrawLayerVisible, getDrawLayerById, getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {getRelatedDataById} from '../visualize/RelatedDataUtil.js';
@@ -186,7 +186,7 @@ function createDrawData(drawLayer, tableModel) {
     if (!tableData.data.length) return;
 
     const columns= getCenterColumns(tableModel);
-    if (columns.lonIdx<0 || columns.latIdx<0) return null;
+    if (isEmpty(columns) || columns.lonIdx<0 || columns.latIdx<0) return null;
 
     const {angleInRadian:rad}= drawLayer;
 
