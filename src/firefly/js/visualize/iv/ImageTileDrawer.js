@@ -147,8 +147,8 @@ function makeImageDrawTileObj(screenRenderParams, totalCnt, scale, loadedImages,
             else tileData=src;
 
             const {tileAttributes, shouldProcess, processor}= tileProcessInfo;
-            const p = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
-            p.then((imageData) => {
+            const {promise} = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
+            promise.then((imageData) => {
                 loadedImages.cachedImageData[tileIdx] = clone(loadedImages.serverData[tileIdx],
                     {dataUrl:null, tileAttributes:imageData.tileAttributes, image:imageData.image});
 
