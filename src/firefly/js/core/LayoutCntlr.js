@@ -12,7 +12,7 @@ import {smartMerge, getActiveTableId} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE} from '../tables/TablesCntlr.js';
-import {CHART_ADD, CHART_REMOVE, getChartIdsInGroup} from '../charts/ChartsCntlr.js';
+import {CHART_ADD, CHART_REMOVE} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
@@ -218,8 +218,15 @@ export function getLayouInfo() {
     const layout = get(flux.getState(), 'layout', {});
     const hasImages = get(flux.getState(), 'allPlots.plotViewAry.length') > 0;
     const hasTables = !isEmpty(get(flux.getState(), 'table_space.results.main.tables', {}));
-    //const hasXyPlots = !isEmpty(get(flux.getState(), 'charts.data', {})) || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
-    const hasXyPlots = getChartIdsInGroup(getActiveTableId()).push(getChartIdsInGroup('default')).length > 0 || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
+    /*
+      to make plot area disappear if it's not possible to create a plot use
+         hasXyPlots = getChartIdsInGroup(getActiveTableId()).length > 0 ||
+                      getChartIdsInGroup('default').length > 0 ||
+                      (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
+      the drawback is that the layout changes for tables with no numeric data or no data
+    */
+    // keep plot area in place if any table has a related chart
+    const hasXyPlots = !isEmpty(get(flux.getState(), 'charts.data', {})) || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
     return clone(layout, {hasImages, hasTables, hasXyPlots});
 }
 
