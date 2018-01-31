@@ -915,7 +915,8 @@ function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
 
         if (plot) {
             const sRect = rectOnImage(pts[0], true, plot, radius1*2, radius2*2, unitType, isOnWorld);
-            if (!plot.pointOnDisplay(pt0) || !sRect || !cornerInView(sRect.corners, plot)) {
+
+            if (!plot.pointOnDisplay(pt0) && !sRect && !cornerInView(sRect.corners, plot)) {
                 inView = false;
             } else {
                 w = sRect.width * plot.zoomFactor/2;

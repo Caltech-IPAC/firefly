@@ -60,10 +60,13 @@ export const PlotAttribute= {
 
     IMAGE_BOUNDS_SELECTION: 'IMAGE_BOUNDS_SELECTION',
 
-    LAST_IMAGE_BOUNDS: 'LAST_IMAGE_BOUNDS',
-
-    LAST_IMAGE_TITLE: 'LAST_IMAGE_TITLE',
-
+    /**
+     * setting for outline image, bounds (for FootprintObj) or drawObj, text, textLoc,
+     */
+    OUTLINEIMAGE_BOUNDS: 'OUTLINEIMAGE_BOUNDS',
+    OUTLINEIMAGE_TITLE: 'OUTLINEIMAGE_TITLE',
+    OUTLINEIMAGE_TITLELOC: 'OUTLINEIMAGE_TITLELOC',
+    OUTLINEIMAGE_DRAWOBJ: 'OUTLINE_OBJ',
     /**
      * This will probably an object to represent a line {pt0: point,pt1: point}
      * @See ./Point.js
@@ -124,6 +127,7 @@ export const PlotAttribute= {
 
 
     UNIQUE_KEY : 'UNIQUE_KEY'
+
 };
 
 

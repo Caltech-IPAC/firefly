@@ -3,7 +3,7 @@
  */
 import {isEmpty, get} from 'lodash';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
-import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
@@ -26,14 +26,10 @@ const Corner = new Enum([ 'NE','NW','SE','SW' ]);
 export const SelectedShape = new Enum(['rect', 'circle']);
 
 
-const selHelpText=
-`Click and drag to select an area, then choose from Options
-To modify your selection: click on the corners
-To select again: hold down the shift key, click, and drag`;
+const selHelpText= 'Click and drag to select an area.';
 
-const editHelpText=
-`Click and drag a corner to resize selection area, then choose from Options.
-To select again: hold down the shift key, click, and drag`;
+const editHelpText= 'Click and drag a corner to resize, or click any area except corners ' +
+                    ' to make a new selection and the previous one is removed.';
 
 const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
 
@@ -64,7 +60,8 @@ export function selectAreaEndActionCreator(rawAction) {
             const sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
             dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
             // const imBoundSel= pv.rotation ? getImageBoundsSelection(sel,CsysConverter.make(plot)) : sel;
-            const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), drawLayer.selectedShape, pv.rotation);
+            const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), drawLayer.selectedShape,
+                                                      pv.rotation, drawLayer.selectedShape === SelectedShape.circle.key);
             dispatchAttributeChange(plotId,true,PlotAttribute.IMAGE_BOUNDS_SELECTION, imBoundSel,true);
         }
     };
@@ -111,7 +108,7 @@ function creator(initPayload) {
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
     plotIdAry.forEach( (plotId) => {
-        dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null,true);
+        dispatchAttributeChange(plotId, false, PlotAttribute.SELECTION, null, true);
         dispatchAttributeChange(plotId,false,PlotAttribute.IMAGE_BOUNDS_SELECTION,null,true);
     });
 }
@@ -145,13 +142,10 @@ function getLayerChanges(drawLayer, action) {
     switch (action.type) {
         case DrawLayerCntlr.SELECT_AREA_START:
             return start(drawLayer,action);
-            break;
         case DrawLayerCntlr.SELECT_AREA_MOVE:
             return drag(drawLayer,action);
-            break;
         case DrawLayerCntlr.SELECT_AREA_END:
             return end(drawLayer,action);
-            break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             if (isEmpty(get(drawLayer, ['drawData', 'data']))) {
                 return attach();
@@ -159,9 +153,8 @@ function getLayerChanges(drawLayer, action) {
             break;
         case DrawLayerCntlr.SELECT_MOUSE_LOC:
             return moveMouse(drawLayer,action);
-            break;
     }
-
+    return null;
 }
 
 
@@ -373,11 +366,12 @@ function makeSelectObj(firstPt,currentPt,cc, rotation, title, dl) {
     return retAry;
 }
 
-function getImageBoundsSelection(sel,cc, shape, rotation) {
+function getImageBoundsSelection(sel,cc, shape, rotation, bPadding = false) {
     const {x, y, w, h} = makeImageBoundingBox(sel,cc, shape, rotation);
 
-    const sp0= makeScreenPt(x,y);
-    const sp1= makeScreenPt(x+w,y+h);
+    const padding = bPadding ? Math.ceil(cc.zoomFactor) : 0;
+    const sp0= makeScreenPt(x,y-padding);
+    const sp1= makeScreenPt(x+w+padding,y+h);
 
     return sel.pt0.type=== Point.W_PT ?
             {pt0:cc.getWorldCoords(sp0),pt1:cc.getWorldCoords(sp1)} :
@@ -396,6 +390,7 @@ function modScreenPt(cc, p) {
 
     return makeScreenPt(x, y);
 }
+
 
 function makeImageBoundingBox(sel,cc, shape, rotation) {
     const {pt0,pt1}= sel;
@@ -442,6 +437,7 @@ function getEllipseBoundingBox(devPts, cc, rotation ) {
 
         return modScreenPt(cc, cc.getScreenCoords(makeDevicePt(o_x + centerDev.x, o_y + centerDev.y)));
     });
+
 
     return getBoundingBox(tangentScreenPts);
 

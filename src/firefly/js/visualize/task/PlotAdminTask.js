@@ -17,6 +17,7 @@ import { getPlotViewById, applyToOnePvOrGroup, findPlotGroup, isDrawLayerAttache
 import {isHiPS, isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
 import {clone} from '../../util/WebUtil.js';
+import {destroySelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
@@ -120,6 +121,7 @@ export function restoreDefaultsActionCreator(rawAction) {
 
                     }
                 }
+                destroySelectAreaRelatedLayers();
             });
     };
 }

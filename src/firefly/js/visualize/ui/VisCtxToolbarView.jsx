@@ -9,15 +9,17 @@ import {isEmpty, get} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
-import {makeDevicePt, makeScreenPt} from '../Point.js';
+import {makeDevicePt, makeScreenPt, makeImagePt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {logError} from '../../util/WebUtil.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
+import {getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 
-import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+import {dispatchDetachLayerFromPlot, dispatchCreateDrawLayer,
+        dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
-    dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS} from '../ImagePlotCntlr.js';
+        dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
@@ -33,6 +35,10 @@ import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
 import {isLoadingHiPSSurverys} from '../HiPSCntlr.js';
 import {getSelectedShape} from '../../drawingLayers/Catalog.js';
+import ImageOutline from '../../drawingLayers/ImageOutline.js';
+import ShapeDataObj from '../draw/ShapeDataObj.js';
+import {isOutlineImageForSelectArea, SELECT_AREA_TITLE} from './SelectAreaDropDownView.jsx';
+import {convertAngle} from '../VisUtil.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -202,7 +208,7 @@ function stats(pv, dlAry) {
 }
 
 
-function crop(pv) {
+function crop(pv, dlAry) {
 
     if (isImageOverlayLayersActive(pv)) {
         showInfoPopup('Crop not yet supported with mask layers');
@@ -220,11 +226,52 @@ function crop(pv) {
 
     const cropMultiAll= pv.plotViewCtx.containsMultiImageFits && isMultiImageFitsWithSameArea(pv);
 
-    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
     dispatchCrop({plotId:pv.plotId, imagePt1:ip0, imagePt2:ip1, cropMultiAll});
+    attachImageOutline(pv, dlAry);
+    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
 }
 
 
+
+// attach image outline drawing layer on top of the cropped image, zoom-to-fit image and recenter image
+function attachImageOutline(pv, dlAry) {
+    const selectedShape = getSelectedShape(pv, dlAry);
+    if (selectedShape === SelectedShape.rect.key) return;
+
+    const outlineAry = getDrawLayersByType(dlAry, ImageOutline.TYPE_ID);
+    let   dl = outlineAry.find((dl) => isOutlineImageForSelectArea(dl));
+
+    if (!dl) {
+        const title = SELECT_AREA_TITLE;
+        const plot = primePlot(pv);
+        const cc= CysConverter.make(plot);
+        const sel = plot.attributes[PlotAttribute.SELECTION];
+        const devPt0= cc.getDeviceCoords(sel.pt0);
+        const devPt2= cc.getDeviceCoords(sel.pt1);
+        const devPt1= makeDevicePt(devPt2.x, devPt0.y);
+
+        // create ellipse dimension on image domain
+        const imgPt = [devPt0, devPt1, devPt2].map((devP) => cc.getImageCoords(devP));
+        const dist = (dx, dy) => {
+            return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+        };
+
+        const r1 = dist((imgPt[0].x - imgPt[1].x), (imgPt[0].y - imgPt[1].y))/2;
+        const r2 = dist((imgPt[1].x - imgPt[2].x), (imgPt[1].y - imgPt[2].y))/2;
+        const center = cc.getWorldCoords(makeImagePt((imgPt[0].x + imgPt[2].x)/2, (imgPt[0].y + imgPt[2].y)/2));
+        const rotArc = pv.rotation === 0.0 ? 0.0 : convertAngle('deg', 'arcsec', (360 - pv.rotation));
+
+
+        const ellipseObj = ShapeDataObj.makeEllipse(center, r1, r2, ShapeDataObj.UnitType.IMAGE_PIXEL, rotArc,
+                                                    ShapeDataObj.UnitType.ARCSEC, false);
+        dl = dispatchCreateDrawLayer(ImageOutline.TYPE_ID,
+                                    {drawObj: ellipseObj, color: 'red', title});
+    }
+
+    if (!isDrawLayerAttached(dl, pv.plotId)) {
+        dispatchAttachLayerToPlot(dl.drawLayerId, pv.plotId, true);
+    }
+}
 
 
 function makeExtensionButtons(extensionAry,pv,dlAry) {
@@ -268,7 +315,7 @@ function recenterToSelection(pv) {
 }
 
 
-function zoomIntoSelection(pv) {
+function zoomIntoSelection(pv, dlAry) {
 
     const p= primePlot(pv);
     if (!p) return;
@@ -280,9 +327,8 @@ function zoomIntoSelection(pv) {
     const sp0=  cc.getScreenCoords(sel.pt0);
     const sp2=  cc.getScreenCoords(sel.pt1);
 
-
     const level= (viewDim.width / Math.abs(sp0.x-sp2.x)) * p.zoomFactor;
-    dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
+    dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level});
 
 
     if (p.type==='image') {
@@ -296,8 +342,9 @@ function zoomIntoSelection(pv) {
         if (centerProjPt) dispatchChangeCenterOfProjection({plotId,centerProjPt});
 
     }
-    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
 
+    attachImageOutline(pv, dlAry);
+    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
 
 }
 
@@ -486,7 +533,7 @@ export class VisCtxToolbarView extends PureComponent {
                                tip='Crop the image to the selected area'
                                horizontal={true}
                                visible={showSelectionTools && isImage(plot)}
-                               onClick={() => crop(pv)}/>
+                               onClick={() => crop(pv, dlAry)}/>
 
                 <ToolbarButton icon={STATISTICS}
                                tip='Show statistics for the selected area'
@@ -518,7 +565,7 @@ export class VisCtxToolbarView extends PureComponent {
 
                 <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
                                horizontal={true} visible={showSelectionTools}
-                               onClick={() => zoomIntoSelection(pv)}/>
+                               onClick={() => zoomIntoSelection(pv, dlAry)}/>
                 <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
                                horizontal={true} visible={showSelectionTools}
                                onClick={() => recenterToSelection(pv)}/>
@@ -533,9 +580,6 @@ export class VisCtxToolbarView extends PureComponent {
         );
     }
 }
-
-
-
 
 
 

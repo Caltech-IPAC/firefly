@@ -7,12 +7,14 @@ import PropTypes from 'prop-types';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {ToolbarButton,
         DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
-import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
+import {getDrawLayerByType, getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer,
         getDlAry,
         dispatchAttachLayerToPlot,
-        dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+        dispatchDetachLayerFromPlot,
+        dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
 import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
+import ImageOutline from '../../drawingLayers/ImageOutline.js';
 
 import SELECT_RECT from 'html/images/icons-2014/Marquee.png';
 import SELECT_RECT_ON from 'html/images/icons-2014/Marquee-ON.png';
@@ -35,7 +37,8 @@ export const selectAreaInfo = {
         iconId: SELECT_RECT_ON,
         iconDropDown: SELECT_RECT,
         label: 'Rectangular Selection',
-        tip: 'select rectangular area'
+        tip: 'select rectangular area',
+        params: {imageRoration: 0.0}
     },
     [SelectedShape.circle.key] : {
         typeId: SelectArea.TYPE_ID,
@@ -80,18 +83,47 @@ function updateSelect(pv, ddCB, value, preValue, allPlots=true) {
         }
 
         if (value !== NONSELECT && (!preValue || value !== preValue)) {
-            let dl = getDrawLayerByType(getDlAry(), selectAreaInfo[value].typeId);
+            destroySelectAreaRelatedLayers( selectAreaInfo[value].typeId);
+            // create a new one
+            const dl = dispatchCreateDrawLayer(selectAreaInfo[value].typeId, selectAreaInfo[value].params);
 
-            if (!dl) {
-                dl = dispatchCreateDrawLayer(selectAreaInfo[value].typeId, selectAreaInfo[value].params);
-            }
-
+            // attach plot to the new one
             if (!isDrawLayerAttached(dl, pv.plotId)) {
-               dispatchAttachLayerToPlot(selectAreaInfo[value].typeId, pv.plotId, allPlots);
+               dispatchAttachLayerToPlot(dl.drawLayerId, pv.plotId, allPlots);
             }
         }
     };
 }
+
+export const SELECT_AREA_TITLE = 'Image outline on select area';
+
+export function isOutlineImageForSelectArea(dl) {
+    if (!dl.title)  return false;
+
+    return (typeof dl.title === 'string') ? dl.title.includes(SELECT_AREA_TITLE)
+                                          : Object.values(dl.title).find((v) => v.includes(SELECT_AREA_TITLE));
+}
+
+export function destroySelectAreaRelatedLayers(selectAreaId = SelectArea.TYPE_ID) {
+    const dl = getDrawLayerByType(getDlAry(), selectAreaId);
+
+    if (dl) {
+        dispatchDestroyDrawLayer(dl.drawLayerId);  // remove existing one
+    }
+
+    destroyImageOutlineLayerForSelectArea();
+}
+
+function destroyImageOutlineLayerForSelectArea() {
+    const dlAry = getDrawLayersByType(getDlAry(), ImageOutline.TYPE_ID);
+
+    dlAry.forEach((dl) => {
+        if (isOutlineImageForSelectArea(dl)) {
+            dispatchDestroyDrawLayer(dl.drawLayerId);
+        }
+    });
+}
+
 
 export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSelection}) {
     var enabled = !!pv;
@@ -115,22 +147,6 @@ export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSe
             prev.push(<DropDownVerticalSeparator key={sep++}/>);
             return prev;
         }, []);
-        /*
-        return [selectAreas.rect, selectAreas.circle, selectAreas.noselect].map((s) => {
-            const key = s.key;
-            const retv = (
-                <ToolbarButton key={key}
-                               text={selectAreaInfo[key].label}
-                               enabled={enabled}
-                               horizontal={false}
-                               icon={selectAreaInfo[key].iconId }
-                               tip={selectAreaInfo[key].tip}
-                               onClick={updateSelect(pv, ddCB, key, crtSelection, allPlots)}/>
-                <DropDownVerticalSeparator key={sep++}/>)
-            )
-            return prev;
-        }, []);
-        */
     };
 
 
