@@ -3,7 +3,7 @@
  */
 import {get, isArray, uniqueId} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import {COL_TYPE, getColumns, getTblById, doFetchTable} from '../../tables/TableUtil.js';
+import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
 import {formatColExpr} from '../ChartUtil.js';
@@ -106,6 +106,22 @@ function fetchData(chartId, traceNum, tablesource) {
             let binColor = get(data, `${traceNum}.marker.color`);
             if (isArray(binColor)) binColor = binColor[0];
             const changes = getChanges({histogramData, binColor, traceNum});
+
+            // set default title if it's the first trace
+            // and no title is set by the user
+            if (data && data.length===1) {
+                const xAxisLabel = get(layout, 'xaxis.title');
+                if (!xAxisLabel) {
+                    const xLabel = get(options, 'columnExpression', ''); // default axis label for the first trace
+                    const xColumn = getColumn(getTblById(tbl_id), xLabel);
+                    const xUnit = get(xColumn, 'units', '');
+                    changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
+                }
+                const yAxisLabel = get(layout, 'yaxis.title');
+                if (!yAxisLabel) {
+                    changes['layout.yaxis.title'] = 'Number';
+                }
+            }
 
             if (!layout.barmode) {
                 // use overlay mode for Plotly charts, based on bars

@@ -110,8 +110,9 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
  */
 export function isMetaDataTable(tbl_id) {
     const table= getTblById(tbl_id);
-    const tableMeta= get(table, 'tableMeta');
-    if (!tableMeta) return false;
+    if (isEmpty(table)) return false;
+    const {tableMeta, totalRows} = table;
+    if (!tableMeta || !totalRows) return false;
 
     const hasDsCol= Boolean(Object.keys(tableMeta).find( (key) => key.toUpperCase()===dataSourceUpper));
 
@@ -125,6 +126,6 @@ export function isMetaDataTable(tbl_id) {
  */
 export function isCatalogTable(tbl_id) {
     const table= getTblById(tbl_id);
-    return !isEmpty(getCenterColumns(table));
+    return get(table, 'totalRows') && !isEmpty(getCenterColumns(table));
 }
 
