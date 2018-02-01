@@ -1,11 +1,10 @@
 import './ChartPanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import Resizable from 'react-component-resizable';
+import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {flux} from '../../Firefly.js';
-import {debounce, defer, get, isEmpty, isUndefined} from 'lodash';
+import {get, isEmpty, isUndefined} from 'lodash';
 import {reduxFlux} from '../../core/ReduxFlux.js';
-import {isPlotly} from '../ChartUtil.js';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
 
@@ -17,27 +16,6 @@ class ChartPanelView extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {};
-
-        const normal = (size) => {
-            if (size && this.iAmMounted) {
-                var widthPx = size.width;
-                var heightPx = size.height;
-                //console.log('width: '+widthPx+', height: '+heightPx);
-                if (widthPx !== this.state.widthPx || heightPx !== this.state.heightPx) {
-                    this.setState({widthPx, heightPx});
-                }
-            }
-        };
-        const debounced = debounce(normal, 100);
-
-        this.onResize = (size) => {
-            if (this.state.widthPx === 0 || isPlotly()) {
-                defer(normal, size);
-            } else {
-                debounced(size);
-            }
-        };
-
         this.toggleOptions = this.toggleOptions.bind(this);
     }
 
@@ -81,7 +59,7 @@ class ChartPanelView extends PureComponent {
     }
 
     render() {
-        const {chartId, deletable:deletableProp, expandable, expandedMode, Chart, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
+        const {chartId, deletable:deletableProp, expandable, expandedMode, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
         const chartData =  ChartsCntlr.getChartData(chartId);
         const deletable = isUndefined(deletableProp) ? get(chartData, 'deletable') : deletableProp;
 
@@ -91,8 +69,7 @@ class ChartPanelView extends PureComponent {
             );
         }
 
-        var {widthPx, heightPx} = this.state;
-        const knownSize = widthPx && heightPx;
+        // var {widthPx, heightPx} = this.state;
         const errors  = ChartsCntlr.getErrors(chartId);
 
         if (showChart) {
@@ -113,14 +90,8 @@ class ChartPanelView extends PureComponent {
                                     </div>
                                     <Options {...{chartId, optionsKey}}/>
                                 </div>}
-                                <Resizable id='chart-resizer' onResize={this.onResize}
-                                           className='ChartPanel__chartresizer'>
-                                    {knownSize ?
-                                        errors.length > 0 ?
-                                            <ErrorPanel errors={errors}/> :
-                                            <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
-                                        <div/>}
-                                </Resizable>
+                                <ResizableChartArea
+                                    {...Object.assign({}, this.props, {errors})} />
                                 { !showOptions && deletable &&
                                 <img style={{display: 'inline-block', position: 'absolute', top: 29, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                      title='Delete this chart'
@@ -136,15 +107,8 @@ class ChartPanelView extends PureComponent {
                 return (
                     <div className='ChartPanel__container'>
                         <div className='ChartPanel__chartarea'>
-                            <Resizable id='chart-resizer' onResize={this.onResize}
-                                       className='ChartPanel__chartresizer'>
-                                {knownSize ?
-                                    errors.length > 0 ?
-                                        <ErrorPanel errors={errors}/> :
-                                        <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
-
-                                    <div/>}
-                            </Resizable>
+                            <ResizableChartArea
+                                {...Object.assign({}, this.props, {errors})} />
                             {deletable &&
                             <img style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                  title='Delete this chart'
@@ -201,6 +165,27 @@ ChartPanelView.defaultProps = {
     showToolbar: true,
     showChart: true
 };
+
+
+class ResizableChartAreaInternal extends PureComponent {
+    render() {
+        const {errors, Chart}= this.props;
+        const {width:widthPx, height:heightPx}= this.props.size;
+        const knownSize = widthPx && heightPx;
+        return (
+            <div id='chart-resizer' className='ChartPanel__chartresizer'>
+                {knownSize ?
+                    errors.length > 0 ?
+                        <ErrorPanel errors={errors}/> :
+                        <Chart {...Object.assign({}, this.props, {widthPx, heightPx})}/> :
+                    <div/>}
+            </div>
+        );
+
+    }
+}
+
+export const ResizableChartArea= wrapResizer(ResizableChartAreaInternal);
 
 const stopPropagation= (ev) => ev.stopPropagation();
 

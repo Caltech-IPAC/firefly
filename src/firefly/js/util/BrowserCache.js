@@ -9,21 +9,20 @@ function makeCacheEntry(data,lifeSpanSecs=0) {
     return  {time:Date.now(),data,lifeSpanSecs};
 }
 
-const SEP = "___";
 const  NO_EXPIRATION= 0;
 
 /**
  * @author Trey Roby
  */
 class BrowserCache {
-    static isCached(key) { return BrowserCache.get(key) ? true : false; }
+    static isCached(key) { return Boolean(BrowserCache.get(key)); }
 
     static get(key) {
-        var retval= null;
-        var entry= ls.get(key);
+        let retval= null;
+        const entry= ls.get(key);
 
         if (entry) {
-            var lifeSpanMills= entry.lifeSpanSecs * 1000;
+            const lifeSpanMills= entry.lifeSpanSecs * 1000;
             if (lifeSpanMills===NO_EXPIRATION) {
                 retval= entry.data;
             }

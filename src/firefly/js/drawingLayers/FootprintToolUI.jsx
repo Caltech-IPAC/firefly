@@ -118,7 +118,7 @@ class FootprintToolUI extends PureComponent {
         var angleDeg = get(ev, 'target.value');
         var isValidAngle = true;
 
-        if  (isEmpty(angleDeg) || !validator.isFloat(angleDeg)) {
+        if  (isEmpty(angleDeg) || !validator.isFloat(angleDeg+'')) {
             if (!angleDeg) angleDeg = '';
             isValidAngle = false;
         }

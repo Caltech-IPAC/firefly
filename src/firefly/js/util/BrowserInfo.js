@@ -253,7 +253,7 @@ function parseVersion(ua,key) {
     var found= false;
     var i;
     for(i=0; (i<ver.length); i++) {
-        if (!validator.isNumeric(ver[i]) && ver[i]!=='.') {
+        if (!validator.isNumeric(ver[i]+'') && ver[i]!=='.') {
             found= true;
             break;
         }

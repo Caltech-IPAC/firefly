@@ -1,4 +1,4 @@
-import React, {PureComponent} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../../Firefly.js';
 import {get, set} from 'lodash';
@@ -29,7 +29,7 @@ function adjustLayout(layout={}) {
 }
 
 
-export class PlotlyChartArea extends PureComponent {
+export class PlotlyChartArea extends Component {
 
     constructor(props) {
         super(props);

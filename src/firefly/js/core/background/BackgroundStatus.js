@@ -582,22 +582,22 @@ export class BackgroundStatus {
 //====================================================================
 
     getBooleanParam(key, def=false) {
-        return this.params[key] ? validator.toBoolean(this.params[key]) : def;
+        return this.params[key] ? Boolean(this.params[key]) : def;
     }
 
     getIntParam(key, def=0) {
-        var retval= validator.toInt(this.getParam(key));
+        const retval= validator.toInt(this.getParam(key)+'');
         return !isNaN(retval) ? retval : def;
     }
 
     getFloatParam(key, def=0) {
-        var retval= validator.toFloat(this.getParam(key));
+        const retval= validator.toFloat(this.getParam(key)+'');
         return !isNaN(retval) ? retval : def;
     }
 
 
     getDateParam(key) {
-        var dateValue= validator.toInt(this.getParam(key));
+        var dateValue= validator.toInt(this.getParam(key)+'');
         return !isNaN(dateValue) ? new Date(dateValue) : null;
     }
 

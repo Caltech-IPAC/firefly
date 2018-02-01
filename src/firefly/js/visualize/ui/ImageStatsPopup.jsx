@@ -379,7 +379,7 @@ function ImageAreaStatsClose ({closeButton='Close', plotId} )
     );
 }
 
-ImageAreaStatsClose.PropTypes={
+ImageAreaStatsClose.propTypes={
     closeButton: PropTypes.string,
     plotId: PropTypes.string.isRequired
 };

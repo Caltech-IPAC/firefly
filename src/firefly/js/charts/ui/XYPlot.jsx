@@ -5,8 +5,6 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {get, omit} from 'lodash';
 import shallowequal from 'shallowequal';
-import {isPlotly} from '../ChartUtil.js';
-import {XYPlotHighcharts} from './XYPlotHighcharts.jsx';
 import {XYPlotPlotly} from './XYPlotPlotly.jsx';
 import {plotParamsShape, plotDataShape} from './XYPlotPropTypes.js';
 
@@ -222,15 +220,7 @@ export class XYPlot extends Component {
                 </div>
             );
         } else {
-            if (isPlotly()) {
-                return <XYPlotPlotly {...this.props}/>;
-            } else {
-                return (
-                    <div style={{overflow:'auto',width,height}}>
-                        <XYPlotHighcharts {...this.props}/>
-                    </div>
-                );
-            }
+            return <XYPlotPlotly {...this.props}/>;
         }
     }
 }

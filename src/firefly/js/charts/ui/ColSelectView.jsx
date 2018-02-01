@@ -4,6 +4,7 @@ import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchTableRemove}  from '../../tables/TablesCntlr';
+import {clone} from '../../util/WebUtil.js';
 
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getTblById, calcColumnWidths} from '../../tables/TableUtil.js';
@@ -90,9 +91,9 @@ export function hideColSelectPopup() {
 
 function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth) {
     const tblId = tableModel.tbl_id;
-    popupPanelResizableStyle.minWidth = Math.min(minWidth, 560);
+    const style= clone(popupPanelResizableStyle, {minWidth: Math.min(minWidth, 560)});
     return (
-        <div style={ popupPanelResizableStyle}>
+        <div style={ style}>
             { renderTable(tableModel,popupId)}
             { renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId)}
         </div>

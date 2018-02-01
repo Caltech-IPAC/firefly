@@ -119,5 +119,5 @@ export function convertExtendedAscii(sbOriginal) {
 }
 
 export function parseInt(s,failValue= 0) {
-    return (validator.isInt(s)) ? validator.toInt(s) : failValue;
+    return (validator.isInt(s+'')) ? validator.toInt(s+'') : failValue;
 }

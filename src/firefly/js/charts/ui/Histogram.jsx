@@ -3,12 +3,10 @@
  */
 
 import {HistogramPlotly} from './HistogramPlotly.jsx';
-import {HistogramHighcharts} from './HistogramHighcharts.jsx';
-import {isPlotly} from '../ChartUtil.js';
 import React from 'react';
 
 export function  Histogram(props) {
-    const HistogramInstance =  isPlotly() ? HistogramPlotly : HistogramHighcharts;
+    const HistogramInstance =  HistogramPlotly;
     return <HistogramInstance {...props}/>;
 }
 

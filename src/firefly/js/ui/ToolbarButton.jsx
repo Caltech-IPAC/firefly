@@ -110,7 +110,8 @@ export class ToolbarButton extends PureComponent {
         var textCName= 'menuItemText';
 
 
-        if (!visible) return <div style={s}></div>;
+        // if (!visible) return <div style={s}></div>;
+        if (!visible) return false;
         var cName= `ff-MenuItem ${bgDark ? 'ff-MenuItem-dark' : 'ff-MenuItem-light'}`+
             ` ${enabled ? '' : 'ff-MenuItem-disabled'} ${active ? 'ff-MenuItem-active':''}`;
 

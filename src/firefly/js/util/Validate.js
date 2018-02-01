@@ -56,8 +56,9 @@ var validateRange = function(min,max,precision,description,dType, valStr, nullAl
         message : ''
     };
     if (valStr) {
+        valStr+= '';
         if (valStr && dType.testFunc(valStr)) {
-            var v = dType.convertFunc(valStr);
+            const v = dType.convertFunc(valStr);
             if (!isInRange(v, min, max) || isNaN(v)) {
                 retval.valid = false;
                 retval.message = makeErrorMessage(description, min, max, precision);
@@ -80,7 +81,7 @@ export const validateEmail = function(description,valStr) {
         valid: true,
         message: ''
     };
-    if (valStr && !validator.isEmail(valStr)) {
+    if (valStr && !validator.isEmail(valStr+'')) {
         retval.valid = false;
         retval.message = description + ': must be a valid email address';
     }
@@ -92,7 +93,7 @@ export const validateUrl = function(description,valStr) {
         valid: true,
         message: ''
     };
-    if (valStr && !validator.isURL(valStr)) {
+    if (valStr && !validator.isURL(valStr+'')) {
         retval.valid = false;
         retval.message = description + ': must be a valid URL';
     }
@@ -110,7 +111,7 @@ export const floatRange = function(min,max,precision, description, valStr, nullA
 export const isFloat = function(description, valStr) {
     var retval= { valid : true, message : '' };
     if (valStr) {
-        if (!validator.isFloat(valStr)) {
+        if (!validator.isFloat(valStr+'')) {
             retval.valid = false;
             retval.message = description + ': must be a float';
         }
@@ -139,7 +140,7 @@ export const isPositiveFiniteNumber = (description, valStr)=>{
 export const isInt = function(description, valStr) {
     var retval= { valid : true, message : '' };
     if (valStr) {
-        if (!validator.isInt(valStr)) {
+        if (!validator.isInt(valStr+'')) {
             retval.valid = false;
             retval.message = description + ': must be an int';
         }

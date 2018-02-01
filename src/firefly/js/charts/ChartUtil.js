@@ -55,10 +55,6 @@ const FSIZE = 12;
 
 export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
-export function isPlotly() {
-    return get(getAppOptions(), 'charts.chartEngine')==='plotly';
-}
-
 export function multitraceDesign() {
     return get(getAppOptions(), 'charts.multitrace');
 }

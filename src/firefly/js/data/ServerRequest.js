@@ -222,11 +222,11 @@ export class ServerRequest {
 //  convenience data converting routines
 //====================================================================
     getBooleanParam(key, def=false) {
-        return has(this.params,key) ? validator.toBoolean(this.params[key]) : def;
+        return has(this.params,key) ? Boolean(this.params[key]) : def;
     }
 
     getIntParam(key, def=0) {
-        var retval= validator.toInt(this.getParam(key));
+        const retval= validator.toInt(this.getParam(key)+'');
         return !isNaN(retval) ? retval : def;
     }
 
@@ -237,7 +237,7 @@ export class ServerRequest {
      * @return {number}
      */
     getFloatParam(key, def=0) {
-        var retval= validator.toFloat(this.getParam(key));
+        const retval= validator.toFloat(this.getParam(key)+'');
         return !isNaN(retval) ? retval : def;
     }
 
@@ -247,7 +247,7 @@ export class ServerRequest {
      * @return {Date}
      */
     getDateParam(key) {
-        var dateValue= validator.toInt(this.getParam(key));
+        var dateValue= validator.toInt(this.getParam(key)+'');
         return !isNaN(dateValue) ? new Date(dateValue) : null;
     }
 

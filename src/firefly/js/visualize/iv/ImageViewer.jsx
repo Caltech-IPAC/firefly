@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
 import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {ImageViewerView} from './ImageViewerView.jsx';
+import {ImageViewerView} from './ImageViewerDecorate.jsx';
 import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {MouseState} from '../VisMouseSync.js';

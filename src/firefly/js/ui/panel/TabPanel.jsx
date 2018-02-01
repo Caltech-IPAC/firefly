@@ -5,16 +5,15 @@
 import './TabPanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import Resizable from 'react-component-resizable';
-import {debounce} from 'lodash';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {wrapResizer} from '../SizeMeConfig.js';
 
 function tabsStateFromProps(props) {
     const {defaultSelected, componentKey} = props;
-    var selectedIdx;
+    let selectedIdx;
     // component key should be defined if the state needs to be saved though unmount/mount
-    var savedIdx = componentKey && getComponentState(componentKey).selectedIdx;
+    const savedIdx = componentKey && getComponentState(componentKey).selectedIdx;
     if (!isNaN(savedIdx)) {
         selectedIdx = savedIdx;
     } else if (!isNaN(defaultSelected)) {
@@ -28,15 +27,9 @@ function tabsStateFromProps(props) {
 }
 
 
-class TabsHeader extends PureComponent {
+class TabsHeaderInternal extends PureComponent {
     constructor(props) {
         super(props);
-        this.state = {widthPx: 0};
-        this.onResize = debounce((size) => {
-            if (size && size.width !== this.state.widthPx && !this.isUnmounted) {
-                this.setState({widthPx: size.width});
-            }
-        }, 100).bind(this);
     }
 
     componentWillUnmount() {
@@ -44,7 +37,7 @@ class TabsHeader extends PureComponent {
     }
 
     render() {
-        const {widthPx} = this.state;
+        const {width:widthPx} = this.props.size;
         const {children, resizable, headerStyle={}} = this.props;
         const numTabs = children.length;
         let maxTitleWidth = undefined;
@@ -64,16 +57,20 @@ class TabsHeader extends PureComponent {
                 {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
                     {sizedChildren}
                 </ul> : <div/>}
-                {resizable && <Resizable id='tabs-resizer' style={{position: 'relative', top: '18px', width: '100%', height: '100%'}} onResize={this.onResize}/>}
             </div>
         );
     }
 }
 
-TabsHeader.propTypes= {
+TabsHeaderInternal.propTypes= {
     resizable: PropTypes.bool,
-    headerStyle: PropTypes.object
+    headerStyle: PropTypes.object,
+    size: PropTypes.object.isRequired
 };
+
+
+const TabsHeader= wrapResizer(TabsHeaderInternal);
+
 
 export class Tabs extends PureComponent {
 
@@ -84,7 +81,7 @@ export class Tabs extends PureComponent {
     }
 
     componentWillReceiveProps(nextProps) {
-        this.state= tabsStateFromProps(nextProps);
+        this.setState( () => tabsStateFromProps(nextProps));
     }
     
     componentWillUnmount() {
@@ -108,13 +105,13 @@ export class Tabs extends PureComponent {
     }
 
     render () {
-        var { selectedIdx}= this.state;
+        let { selectedIdx}= this.state;
         const {children, useFlex, resizable, borderless, headerStyle, contentStyle={}} = this.props;
         const numTabs = React.Children.count(children);
 
-        var content;
+        let  content;
         selectedIdx = Math.min(selectedIdx, numTabs-1);
-        var newChildren = React.Children.toArray(children).filter((el) => !!el).map((child, index) => {
+        const newChildren = React.Children.toArray(children).filter((el) => !!el).map((child, index) => {
             if (index === selectedIdx) {
                 content = React.Children.only(child.props.children);
             }
@@ -178,7 +175,7 @@ export class Tab extends PureComponent {
     render () {
         const {name, label, selected, onSelect, removable, onTabRemove, id, maxTitleWidth} = this.props;
 
-        var tabClassName = 'TabPanel__Tab' ;
+        let tabClassName = 'TabPanel__Tab' ;
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
@@ -222,7 +219,7 @@ Tab.defaultProps= { selected: false };
 
 
 function onChange(idx,id, name, params, fireValueChange) {
-    var value= id||name;
+    let value= id||name;
     if (!value) value= idx;
 
     fireValueChange({ value});
