@@ -10,7 +10,7 @@ import {WebPlotRequest, TitleOptions, isImageDataRequeestedEqual} from '../WebPl
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
-    dispatchPlotHiPS, dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
+    dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
@@ -212,49 +212,56 @@ function removeCoverage(tbl_id, decimatedTables) {
 function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
 
     if (!tbl_id) return null;
-    const table= getTblById(tbl_id);
-    if (!table) return null;
-    if (!options.hasCoverageData(options, table)) return null;
-    if (decimatedTables[tbl_id]==='WORKING') return tbl_id;
+    try {
+        const table = getTblById(tbl_id);
+        if (!table) return null;
+        if (!options.hasCoverageData(options, table)) return null;
+        if (decimatedTables[tbl_id] === 'WORKING') return tbl_id;
 
 
-    const params= {
-        startIdx : 0,
-        pageSize : MAX_ROW,
-        inclCols : getCovColumnsForQuery(options, table)
-    };
+        const params = {
+            startIdx: 0,
+            pageSize: MAX_ROW,
+            inclCols: getCovColumnsForQuery(options, table)
+        };
 
-    let req = cloneRequest(table.request, params);
-    if (table.totalRows>10000) {
-        const cenCol= options.getCenterColumns(table);
-        params.decimate=  serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
-        req = makeTableFunctionRequest(table.request, 'DecimateTable', 'coverage',
-            {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000), pageSize: MAX_ROW});
-    }
+        let req = cloneRequest(table.request, params);
+        if (table.totalRows > 10000) {
+            const cenCol = options.getCenterColumns(table);
+            if (!cenCol) return null;
+            params.decimate = serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
+            req = makeTableFunctionRequest(table.request, 'DecimateTable', 'coverage',
+                {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000), pageSize: MAX_ROW});
+        }
 
-    req.tbl_id = `cov-${tbl_id}`;
+        req.tbl_id = `cov-${tbl_id}`;
 
-    if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
-        updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
-    }
-    else {
-        decimatedTables[tbl_id]= 'WORKING';
-        doFetchTable(req).then(
-            (allRowsTable) => {
-                if (get(allRowsTable, ['tableData', 'data'],[]).length>0) {
-                    decimatedTables[tbl_id]= allRowsTable;
-                    updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
+        if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
+            updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
+        }
+        else {
+            decimatedTables[tbl_id] = 'WORKING';
+            doFetchTable(req).then(
+                (allRowsTable) => {
+                    if (get(allRowsTable, ['tableData', 'data'], []).length > 0) {
+                        decimatedTables[tbl_id] = allRowsTable;
+                        updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
+                    }
                 }
-            }
-        ).catch(
-            (reason) => {
-                decimatedTables[tbl_id]= null;
-                logError(`Failed to catalog plot data: ${reason}`, reason);
-            }
-        );
+            ).catch(
+                (reason) => {
+                    decimatedTables[tbl_id] = null;
+                    logError(`Failed to catalog plot data: ${reason}`, reason);
+                }
+            );
+
+        }
+        return tbl_id;
+    } catch (e) {
+        logError('Error updating coverage');
+        e.stack;
 
     }
-    return tbl_id;
 }
 
 
@@ -483,6 +490,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
     const {tbl_id}= table;
     const {tableMeta, tableData}= allRowsTable;
     const columns = boxData ? options.getCornersColumns(table) : options.getCenterColumns(table);
+    if (isEmpty(columns)) { return; }
     const angleInRadian= isTableUsingRadians(tableMeta);
     const dl= getDlAry().find( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogId===table.tbl_id);
     if (!dl) {
@@ -543,6 +551,7 @@ function makePt(lonStr,latStr, csys, radianToDegree) {
 
 function getPtAryFromTable(options,table, usesRadians){
     const cDef= options.getCenterColumns(table);
+    if (isEmpty(cDef)) return [];
     const {lonIdx,latIdx,csys}= cDef;
     return table.tableData.data.map( (row) => makePt(row[lonIdx], row[latIdx], csys, usesRadians) );
 }
@@ -574,7 +583,7 @@ function defaultCanDoCorners(table) {// eslint-disable-line no-unused-vars
 
 function getCovColumnsForQuery(options, table) {
     const cAry= [...options.getCornersColumns(table), options.getCenterColumns(table)];
-    const base = cAry.filter((c)=>Boolean(c)).map( (c)=> `"${c.lonCol}","${c.latCol}"`).join();     // column names should be in quotes
+    const base = cAry.filter((c)=>!isEmpty(c)).map( (c)=> `"${c.lonCol}","${c.latCol}"`).join();     // column names should be in quotes
     return base+',"ROW_IDX"';
 }
 

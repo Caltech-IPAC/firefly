@@ -12,13 +12,12 @@ import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
 import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
-import {updateMerge} from '../util/WebUtil.js';
+import {updateMerge, logError} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
 import {BG_STATUS, BG_JOB_ADD} from '../core/background/BackgroundCntlr.js';
 import {isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
-import {ServerParams} from '../data/ServerParams.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -540,7 +539,11 @@ function syncFetch(request, hlRowIdx, invokedBy, dispatch) {
     unset(request, 'META_INFO.backgroundable');
     TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
         const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
-        dispatch( {type, payload: tableModel} );
+        try {
+            dispatch({type, payload: tableModel});
+        } catch (e) {
+            logError(e.stack);
+        }
     }).catch( (error) => {
         dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(request.tbl_id, `Failed to load table. \n   ${error}`)});
     });

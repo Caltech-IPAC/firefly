@@ -88,6 +88,7 @@ function onAnyAction(layoutInfo, action, views) {
         case TABLE_REMOVE:
         case TBL_RESULTS_ADDED:
         case TBL_RESULTS_REMOVE:
+        case TABLE_LOADED:
         case REPLACE_VIEWER_ITEMS:
         case ImagePlotCntlr.PLOT_IMAGE_START :
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
@@ -97,13 +98,12 @@ function onAnyAction(layoutInfo, action, views) {
         {
             // handle autoExpand feature
             if (autoExpand) {
-                if (count > 1) {
+                if (count !== 1) {
                     autoExpand = false;
                     expanded = LO_VIEW.none;
                 }
             } else if (expanded === LO_VIEW.none && count === 1) {
                 // set mode into expanded view when there is only 1 component visible.
-                autoExpand = true;
                 autoExpand = true;
                 expanded =  showImages ? LO_VIEW.images :
                     showXyPlots ? LO_VIEW.xyPlots :

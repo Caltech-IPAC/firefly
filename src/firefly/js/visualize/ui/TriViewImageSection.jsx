@@ -4,7 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get, isEmpty, isUndefined} from 'lodash';
+import {get, isEmpty} from 'lodash';
 import {take} from 'redux-saga/effects';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
@@ -234,6 +234,7 @@ function onActiveTable (layoutInfo, action) {
         showImages = true;
     } else {
         showCoverage = false;
+        showImages= showFits||coverageLockedOn;
     }
 
     if (anyHasMeta) {

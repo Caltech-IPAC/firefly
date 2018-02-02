@@ -232,7 +232,7 @@ export class ChartSelectDropdown extends PureComponent {
             if (!totalRows) {
                 noChartReason = 'empty table';
             } else if (getNumericCols(tableData.columns).length < 1) {
-                noChartReason = 'tha table has no numeric columns';
+                noChartReason = 'the table has no numeric columns';
             }
         } else {
             noChartReason = 'no active table';

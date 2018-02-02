@@ -61,7 +61,7 @@ const binSizeOptions = [  {label: 'Number of bins:', value: 'numBins'},
 
 
 function isSingleColumn(colName, colValStats) {
-    for (var i = 0; i < colValStats.length; i++) {
+    for (let i = 0; i < colValStats.length; i++) {
         if (colName === colValStats[i].name) {
             return true;
         }
@@ -69,7 +69,7 @@ function isSingleColumn(colName, colValStats) {
     }
     return false;
 }
-var columnNameReducer= (colValStats, basicFieldsReducer) => {
+function columnNameReducer(colValStats, basicFieldsReducer) {
     return (inFields, action) => {
 
         if (!inFields) {
@@ -79,17 +79,20 @@ var columnNameReducer= (colValStats, basicFieldsReducer) => {
         if (!isEmpty(colValStats) && action.type === VALUE_CHANGE) {
             fieldKey = get(action.payload, 'fieldKey');
             switch (fieldKey) {
-                // when column name changes, update the min/max input
+                // when column name changes, update the min/max input and clear x title
                 case 'columnOrExpr': {
                       const numBins = get(inFields, ['numBins', 'value'], 50);
                       const colName = action.payload.value;
                        if (colName) {
+                           if (inFields['layout.xaxis.title']) {
+                               inFields = updateSet(inFields, ['layout.xaxis.title', 'value'], undefined);
+                           }
                            if (isSingleColumn(colName, colValStats)) {
-                               for (var i = 0; i < colValStats.length; i++) {
+                               for (let i = 0; i < colValStats.length; i++) {
                                    if (colName === colValStats[i].name) {
                                        const dataMin = colValStats[i].min;
                                        const dataMax = colValStats[i].max;
-                                       var binWidth = ((dataMax - dataMin) / numBins).toFixed(6);
+                                       const binWidth = ((dataMax - dataMin) / numBins).toFixed(6);
                                        inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
                                        inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
                                        inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
@@ -129,7 +132,7 @@ var columnNameReducer= (colValStats, basicFieldsReducer) => {
                 case 'maxCutoff':   {
 
                     const fixedBinSizeSelection = get(inFields, ['fixedBinSizeSelection', 'value']);
-                    var numBins, min, max, binWidth;
+                    let numBins, min, max, binWidth;
                     if (fixedBinSizeSelection==='numBins'){
                         numBins = get(inFields, ['numBins', 'value'], 50);
                         min = get(inFields, ['minCutoff', 'value'], '');
@@ -161,7 +164,8 @@ var columnNameReducer= (colValStats, basicFieldsReducer) => {
         }
 
     };
-};
+}
+
 export class HistogramOptions extends Component {
 
     constructor(props) {
@@ -206,10 +210,10 @@ export class HistogramOptions extends Component {
         const {colValStats, groupKey, histogramParams} = this.props;
         if (colValStats) {
             const colValidator = getColValidator(colValStats);
-            var payload = {groupKey, fieldKey: 'columnOrExpr', validator: colValidator};
+            let payload = {groupKey, fieldKey: 'columnOrExpr', validator: colValidator};
             const value = get(histogramParams, 'columnOrExpr');
             if (value) {
-                var {valid, message} = colValidator(value);
+                const {valid, message} = colValidator(value);
                 payload = Object.assign(payload, {value, valid, message});
             }
             dispatchValueChange(payload);
@@ -228,7 +232,7 @@ export class HistogramOptions extends Component {
         const {groupKey, histogramParams} = this.props;
         const {fields} = this.state;
 
-        var algorithm =  FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins');
+        const algorithm =  FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins');
 
         if (algorithm === 'bayesianBlocks') {
             // if label is in initialState, it does not show when first time displayed
@@ -249,7 +253,7 @@ export class HistogramOptions extends Component {
         } else { // fixedSizeBins
 
 
-         var disabled = FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') ?
+         const disabled = FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') ?
              FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection')!=='numBins':false;
 
          return (
