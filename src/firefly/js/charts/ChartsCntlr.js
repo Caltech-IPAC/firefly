@@ -8,6 +8,7 @@ import shallowequal from 'shallowequal';
 import {flux} from '../Firefly.js';
 import {updateSet, updateMerge, updateObject, toBoolean} from '../util/WebUtil.js';
 import {getTblById, getColumns, COL_TYPE} from '../tables/TableUtil.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
@@ -48,6 +49,8 @@ const FIREFLY_TRACE_TYPES = ['fireflyHistogram', 'fireflyHeatmap'];
 export default {actionCreators, reducers};
 
 const isDebug = () => get(window, 'firefly.debug', false);
+
+let cleanupWatcherStarted = false;
 
 function actionCreators() {
     return {
@@ -338,6 +341,10 @@ function chartAdd(action) {
             const {mounted} = getChartData(chartId);
             if (mounted > 0) {
                 handleTableSourceConnections({chartId, data, fireflyData});
+            }
+            if (!cleanupWatcherStarted) {
+                dispatchAddActionWatcher({actions:[TablesCntlr.TABLE_REMOVE], callback: cleanupRelatedChartData});
+                cleanupWatcherStarted = true;
             }
         } else {
             dispatch(action);
@@ -903,6 +910,30 @@ function reduceUI(state={}, action={}) {
         default:
             return state;
     }
+}
+
+function cleanupRelatedChartData(action) {
+    const tbl_id = get(action.payload, 'tbl_id');
+    if (!tbl_id) return;
+    const charts = get(flux.getState(), [CHART_SPACE_PATH, 'data']);
+    if (!charts || isEmpty(charts)) { return; }
+    const getMatchingTSIdx = (chartId) => {
+        return get(getChartData(chartId), 'tablesources', []).findIndex((e) => get(e, 'tbl_id') === tbl_id);
+    };
+    Object.keys(charts).forEach((chartId) => {
+        let traceNum = getMatchingTSIdx(chartId);
+        while ( traceNum >= 0) {
+            const {data, tablesources} = getChartData(chartId);
+            // remove trace or remove chart if the last trace
+            tablesources[traceNum]._cancel && tablesources[traceNum]._cancel();
+            if (data.length === 1) {
+                dispatchChartRemove(chartId);
+            } else {
+                removeTrace({chartId, traceNum});
+            }
+            traceNum = getMatchingTSIdx(chartId);
+        }
+    });
 }
 
 /**

@@ -12,9 +12,9 @@ import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {getTblById, getColumnIdx, getCellValue, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
-import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_REMOVE} from '../tables/TablesCntlr.js';
+import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
-import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, dispatchChartRemove, removeTrace, getChartData} from './ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
@@ -104,7 +104,7 @@ export function getHighlighted(xyPlotParams, tblId) {
  */
 export function getColOrExprValue(tableModel, rowIdx, colOrExpr) {
     if (tableModel) {
-        var val;
+        let val;
         if (getColumnIdx(tableModel, colOrExpr) >= 0) {
             val = getCellValue(tableModel, rowIdx, colOrExpr);
             val = isFinite(parseFloat(val)) ? Number(val) : Number.NaN;
@@ -465,7 +465,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
                 }
             }
             traceTS._cancel = watchTableChanges(traceTS.tbl_id,
-                [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT, TABLE_REMOVE],
+                [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT],
                 (action) => updateChartData(chartId, idx, traceTS, action));
 
         }
@@ -511,16 +511,6 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
         if (traceNum !== activeTrace) return;
         const {selectInfo={}} = action.payload;
         updateSelected(chartId, selectInfo);
-    } else if (action.type === TABLE_REMOVE) {
-        // remove trace or remove chart if the last trace
-        tablesource._cancel && tablesource._cancel();
-        const {data} = getChartData(chartId, 'data', []);
-        if (data.length === 1) {
-            dispatchChartRemove(chartId);
-        } else {
-            removeTrace(chartId, traceNum);
-        }
-
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
