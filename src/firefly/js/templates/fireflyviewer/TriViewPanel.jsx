@@ -10,6 +10,7 @@ import {LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode} from '../../core/
 import {ResultsPanel} from './ResultsPanel.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
+import {multitraceDesign} from '../../charts/ChartUtil.js';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
 
@@ -39,6 +40,9 @@ export class TriViewPanel extends PureComponent {
         const {expanded, standard, closeable} = mode || {};
         const content = {};
         var visToolbar;
+        // in multi-trace design, chart container manages default chart
+        // otherwise default chart is managed by addDefaultScatter saga
+        const defaultChart = multitraceDesign();
         if (showImages) {
             visToolbar = <VisToolbar key='res-vis-tb'/>;
             content.imagePlot = (<TriViewImageSection key='res-tri-img'
@@ -51,7 +55,7 @@ export class TriViewPanel extends PureComponent {
                                                closeable={closeable}
                                                expandedMode={expanded===LO_VIEW.xyPlots}
                                                tbl_group='main'
-                                               addDefaultChart={true}/>);
+                                               addDefaultChart={defaultChart}/>);
         }
         if (showTables) {
             content.tables = (<TablesContainer key='res-tables'
