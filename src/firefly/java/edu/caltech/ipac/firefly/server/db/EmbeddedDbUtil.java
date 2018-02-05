@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
@@ -24,6 +25,7 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
@@ -37,6 +39,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -157,6 +160,22 @@ public class EmbeddedDbUtil {
         if (!StringUtils.isEmpty(treq.getTblTitle())) {
             page.getData().setTitle(treq.getTblTitle());  // set the datagroup's title to the request title.
         }
+
+        String prevResultSetID = treq.getMeta(TableServerRequest.RESULTSET_ID);             // the previous resultset ID
+        prevResultSetID = StringUtils.isEmpty(prevResultSetID) ? "data" : prevResultSetID;
+
+        SelectionInfo selectInfo = treq.getSelectionInfo();
+        if ( selectInfo != null && selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
+            // selectInfo exists but a new resultset is required.. make sure selectInfo is remapped to new resultset
+            String rowNums = StringUtils.toString(selectInfo.getSelected());
+            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
+            String origRowIds = String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", prevResultSetID, rowNums);
+
+            List<Integer> newRowNums = jdbc.query(String.format("Select ROW_NUM from %s where ROW_IDX in (%s)", forTable, origRowIds), (rs, idx) -> rs.getInt(1));
+            SelectionInfo newSelectInfo = newRowNums.size() == rowCnt ? new SelectionInfo(true, null, rowCnt) : new SelectionInfo(false, newRowNums, rowCnt);
+            page.getTableDef().setSelectInfo(newSelectInfo);
+        }
+
         return page;
     }
 
@@ -336,6 +355,7 @@ public class EmbeddedDbUtil {
         String insertDDSql = dbAdapter.insertDDSql(tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
+
 
 //====================================================================
 //

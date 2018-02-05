@@ -27,7 +27,7 @@ export class TableConnector {
                 set(tableModel, 'request.tbl_id', tbl_id);
                 const workingTableModel = cloneDeep(tableModel);
                 workingTableModel.origTableModel = tableModel;
-                TblCntlr.dispatchTableInsert(workingTableModel, undefined, false);
+                TblCntlr.dispatchTableAddLocal(workingTableModel, undefined, false);
             }
         }
     }

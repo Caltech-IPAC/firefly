@@ -32,13 +32,8 @@ export function dataReducer(state={data:{}}, action={}) {
         case (Cntlr.TABLE_HIGHLIGHT)  :
         case (Cntlr.TABLE_UPDATE)  :
         {
-            var {tbl_id, totalRows} = action.payload;
+            var {tbl_id} = action.payload;
             const updates = {[tbl_id] : {isFetching:false, ...action.payload}};
-            if (totalRows) {     // update selectInfo.rowCount
-                var selectInfo = get(TblUtil.getTblById(tbl_id), 'selectInfo');
-                selectInfo = selectInfo ? {...selectInfo, rowCount: totalRows} : SelectInfo.newInstance({rowCount: totalRows}).data;
-                updates[tbl_id].selectInfo = selectInfo;
-            }
             return TblUtil.smartMerge(root, updates);
         }
         case (Cntlr.TABLE_FETCH)      :

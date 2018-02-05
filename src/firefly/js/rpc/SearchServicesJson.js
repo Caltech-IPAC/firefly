@@ -14,8 +14,8 @@ import {getBgEmail} from '../core/background/BackgroundUtil.js';
 import {encodeUrl, download, getModuleName} from '../util/WebUtil.js';
 
 import Enum from 'enum';
-import {getTblById} from '../tables/TableUtil.js';
-import {MAX_ROW, DataTagMeta} from '../tables/TableRequestUtil.js';
+import {getTblById, getResultSetID} from '../tables/TableUtil.js';
+import {MAX_ROW, DataTagMeta, getTblId, setResultSetID, setSelectInfo} from '../tables/TableRequestUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
 
@@ -44,6 +44,15 @@ export function fetchTable(tableRequest, hlRowIdx) {
         startIdx: 0,
         pageSize : MAX_ROW
     };
+    const tableModel = getTblById(getTblId(tableRequest));
+    if (tableModel) {
+        // pass along its resultSetID
+        const resultSetID = getResultSetID(tableModel.tbl_id);
+        resultSetID && setResultSetID(tableRequest, resultSetID);
+        // pass along selectInfo
+        tableModel.selectInfo && setSelectInfo(tableRequest, tableModel.selectInfo);
+    }
+
     tableRequest = Object.assign(def, tableRequest);
     const params = {
         [ServerParams.REQUEST]: JSON.stringify(tableRequest),
@@ -59,6 +68,12 @@ export function fetchTable(tableRequest, hlRowIdx) {
                 return nAry;
             }, []);
         }
+        if (tableModel.selectInfo) {
+            // convert selectInfo to JS object
+            const selectInfo = SelectInfo.parse(tableModel.selectInfo);
+            tableModel.selectInfo = selectInfo.data;
+        }
+
         tableModel.highlightedRow = hlRowIdx || startIdx;
         return tableModel;
     });

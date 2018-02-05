@@ -23,6 +23,7 @@ import edu.caltech.ipac.firefly.data.table.*;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
@@ -86,6 +87,12 @@ public class QueryUtil {
         return retval;
     }
 
+    /**
+     * convert a json request to a TableServerRequest
+     * @see JsonTableUtil#toJsonTableRequest for the reverse
+     * @param searchReqStr
+     * @return
+     */
     public static TableServerRequest convertToServerRequest(String searchReqStr) {
         TableServerRequest retval = new TableServerRequest();
         if (!StringUtils.isEmpty(searchReqStr)) {
@@ -97,7 +104,12 @@ public class QueryUtil {
                     if (skey.equals(TableServerRequest.META_INFO)) {
                         Map meta = (Map) val;
                         for (Object mk : meta.keySet()) {
-                            retval.setMeta(String.valueOf(mk), String.valueOf(meta.get(mk)));
+                            String mkey = String.valueOf(mk);
+                            if (mkey.equals(TableServerRequest.SELECT_INFO)) {
+                                retval.setSelectionInfo(SelectionInfo.parse(String.valueOf(meta.get(mkey))));
+                            } else {
+                                retval.setMeta(mkey, String.valueOf(meta.get(mk)));
+                            }
                         }
                     } else {
                         retval.setTrueParam(skey, String.valueOf(val));

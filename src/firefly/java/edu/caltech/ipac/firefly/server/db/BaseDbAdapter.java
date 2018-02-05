@@ -126,7 +126,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
             String cols = treq.getSortInfo().getSortColumns().stream()
                     .map(c -> c.contains("\"") ? c : "\"" + c + "\"")
                     .collect(Collectors.joining(","));
-            return  "order by " + cols + dir;
+            String nullsOrder = dir.equals("") ? " NULLS FIRST" : " NULLS LAST";     // this may be HSQL specific.  move it to subclass if when it becomes a problem.
+            return  "order by " + cols + dir + nullsOrder;
         }
         return "";
     }

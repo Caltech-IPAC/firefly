@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
@@ -25,6 +26,7 @@ public class TableDef {
     private int rowCount;
     private int rowStartOffset;
     private int lineSepLength;
+    private SelectionInfo selectInfo;
     private transient Pair<Integer, String> extras;     // used by IpacTableUtil to store extras data while parsing an ipac table via input stream
 
     public void addAttributes(DataGroup.Attribute... attributes) {
@@ -62,6 +64,14 @@ public class TableDef {
     }
 
     public void setCols(List<DataType> cols) { this.cols = cols; }
+
+    public SelectionInfo getSelectInfo() {
+        return selectInfo;
+    }
+
+    public void setSelectInfo(SelectionInfo selectInfo) {
+        this.selectInfo = selectInfo;
+    }
 
     /**
      * returns all of the attributes including comments.  This function returns the attributes
