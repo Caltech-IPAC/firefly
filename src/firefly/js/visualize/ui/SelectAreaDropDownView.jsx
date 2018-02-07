@@ -11,8 +11,7 @@ import {getDrawLayerByType, getDrawLayersByType, isDrawLayerAttached } from '../
 import {dispatchCreateDrawLayer,
         getDlAry,
         dispatchAttachLayerToPlot,
-        dispatchDetachLayerFromPlot,
-        dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
+        dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 
@@ -60,30 +59,14 @@ export function getSelectedAreaIcon(isSelected = true) {
 }
 
 
-function updateSelect(pv, ddCB, value, preValue, allPlots=true) {
-    const detatchPreSelectArea = (areaToDetach) => {
-        const dl = getDrawLayerByType(getDlAry(), selectAreaInfo[areaToDetach].typeId);
-
-        if (dl) {
-            if (isDrawLayerAttached(dl, pv.plotId)) {
-                dispatchDetachLayerFromPlot(selectAreaInfo[areaToDetach].typeId, pv.plotId, allPlots, dl.destroyWhenAllDetached);
-            }
-        }
-    };
+function updateSelect(pv, value, allPlots=true) {
 
     return ()=> {
-        if (ddCB && Object.keys(selectAreaInfo).includes(value)) {
-            ddCB(value);
-        }
-
         if (!pv) return;
 
-        if (preValue && preValue !== NONSELECT) {
-            detatchPreSelectArea(preValue);
-        }
 
-        if (value !== NONSELECT && (!preValue || value !== preValue)) {
-            destroySelectAreaRelatedLayers( selectAreaInfo[value].typeId);
+        if (value !== NONSELECT) {
+            detachSelectAreaRelatedLayers( pv, allPlots, selectAreaInfo[value].typeId);
             // create a new one
             const dl = dispatchCreateDrawLayer(selectAreaInfo[value].typeId, selectAreaInfo[value].params);
 
@@ -104,32 +87,35 @@ export function isOutlineImageForSelectArea(dl) {
                                           : Object.values(dl.title).find((v) => v.includes(SELECT_AREA_TITLE));
 }
 
-export function destroySelectAreaRelatedLayers(selectAreaId = SelectArea.TYPE_ID) {
-    const dl = getDrawLayerByType(getDlAry(), selectAreaId);
-
-    if (dl) {
-        dispatchDestroyDrawLayer(dl.drawLayerId);  // remove existing one
-    }
-
-    destroyImageOutlineLayerForSelectArea();
-}
-
-function destroyImageOutlineLayerForSelectArea() {
-    const dlAry = getDrawLayersByType(getDlAry(), ImageOutline.TYPE_ID);
+export function detachSelectArea(pv, allPlots = true, id = SelectArea.TYPE_ID) {
+    const dlAry = getDrawLayersByType(getDlAry(), id);
 
     dlAry.forEach((dl) => {
-        if (isOutlineImageForSelectArea(dl)) {
-            dispatchDestroyDrawLayer(dl.drawLayerId);
+        if (isDrawLayerAttached(dl, pv.plotId)) {
+            dispatchDetachLayerFromPlot(dl.drawLayerId, pv.plotId, allPlots, dl.destroyWhenAllDetached);
         }
     });
 }
 
+export function detachImageOutlineLayerForSelectArea(pv, allPlots = true) {
+    const dlAry = getDrawLayersByType(getDlAry(), ImageOutline.TYPE_ID);
 
-export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSelection}) {
+    dlAry.forEach((dl) => {
+        if (isOutlineImageForSelectArea(dl) && isDrawLayerAttached(dl, pv.plotId)) {
+            dispatchDetachLayerFromPlot(dl.drawLayerId, pv.plotId, allPlots, dl.destroyWhenAllDetached);
+        }
+    });
+}
+
+export function detachSelectAreaRelatedLayers(pv, allPlots = true, selectId = SelectArea.TYPE_ID) {
+    detachSelectArea(selectId, allPlots, selectId);
+    detachImageOutlineLayerForSelectArea(pv, allPlots);
+}
+
+
+export function SelectAreaDropDownView({plotView:pv, allPlots}) {
     var enabled = !!pv;
     let sep = 1;
-
-    const ddCB = dropDownCB ? dropDownCB : null;
 
     const selectAreaCommands = () => {
 
@@ -142,7 +128,7 @@ export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSe
                                horizontal={false}
                                icon={selectAreaInfo[key].iconDropDown }
                                tip={selectAreaInfo[key].tip}
-                               onClick={updateSelect(pv, ddCB, key, crtSelection, allPlots)}/>
+                               onClick={updateSelect(pv, key, allPlots)}/>
             ));
             prev.push(<DropDownVerticalSeparator key={sep++}/>);
             return prev;
@@ -159,7 +145,5 @@ export function SelectAreaDropDownView({plotView:pv, allPlots, dropDownCB, crtSe
 
 SelectAreaDropDownView.propTypes= {
     plotView : PropTypes.object,
-    allPlots: PropTypes.bool,
-    dropDownCB: PropTypes.func,
-    crtSelection: PropTypes.string
+    allPlots: PropTypes.bool
 };

@@ -138,7 +138,6 @@ function getCursor(plotView, screenPt) {
 }
 
 function getLayerChanges(drawLayer, action) {
-
     switch (action.type) {
         case DrawLayerCntlr.SELECT_AREA_START:
             return start(drawLayer,action);

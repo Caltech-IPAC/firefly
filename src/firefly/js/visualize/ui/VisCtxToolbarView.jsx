@@ -16,7 +16,7 @@ import {logError} from '../../util/WebUtil.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
 import {getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 
-import {dispatchDetachLayerFromPlot, dispatchCreateDrawLayer,
+import {dispatchCreateDrawLayer,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
         dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS} from '../ImagePlotCntlr.js';
@@ -24,7 +24,7 @@ import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.j
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import SelectArea, {SelectedShape} from '../../drawingLayers/SelectArea.js';
+import {SelectedShape} from '../../drawingLayers/SelectArea.js';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CoordUtil from '../CoordUtil.js';
@@ -37,7 +37,7 @@ import {isLoadingHiPSSurverys} from '../HiPSCntlr.js';
 import {getSelectedShape} from '../../drawingLayers/Catalog.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
-import {isOutlineImageForSelectArea, SELECT_AREA_TITLE} from './SelectAreaDropDownView.jsx';
+import {isOutlineImageForSelectArea, detachSelectArea, SELECT_AREA_TITLE} from './SelectAreaDropDownView.jsx';
 import {convertAngle} from '../VisUtil.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
@@ -228,7 +228,7 @@ function crop(pv, dlAry) {
 
     dispatchCrop({plotId:pv.plotId, imagePt1:ip0, imagePt2:ip1, cropMultiAll});
     attachImageOutline(pv, dlAry);
-    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
+    detachSelectArea(pv, true);
 }
 
 
@@ -265,7 +265,7 @@ function attachImageOutline(pv, dlAry) {
         const ellipseObj = ShapeDataObj.makeEllipse(center, r1, r2, ShapeDataObj.UnitType.IMAGE_PIXEL, rotArc,
                                                     ShapeDataObj.UnitType.ARCSEC, false);
         dl = dispatchCreateDrawLayer(ImageOutline.TYPE_ID,
-                                    {drawObj: ellipseObj, color: 'red', title});
+                                    {drawObj: ellipseObj, color: 'red', title, destroyWhenAllDetached: true});
     }
 
     if (!isDrawLayerAttached(dl, pv.plotId)) {
@@ -344,7 +344,7 @@ function zoomIntoSelection(pv, dlAry) {
     }
 
     attachImageOutline(pv, dlAry);
-    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
+    detachSelectArea(pv, true);
 
 }
 

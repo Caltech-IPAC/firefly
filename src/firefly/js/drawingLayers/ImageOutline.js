@@ -39,7 +39,8 @@ function creator(initPayload, presetDefaults) {
     const options= {
         hasPerPlotData:true,
         isPointData:false,
-        canUserChangeColor: ColorChangeType.DYNAMIC
+        canUserChangeColor: ColorChangeType.DYNAMIC,
+        destroyWhenAllDetached: get(initPayload, 'destroyWhenAllDetached', false)
     };
 
     const dl = DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, get(initPayload, 'title', {}), options, drawingDef);
