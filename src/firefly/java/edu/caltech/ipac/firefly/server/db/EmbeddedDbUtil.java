@@ -165,16 +165,21 @@ public class EmbeddedDbUtil {
         prevResultSetID = StringUtils.isEmpty(prevResultSetID) ? "data" : prevResultSetID;
 
         SelectionInfo selectInfo = treq.getSelectionInfo();
-        if ( selectInfo != null && selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
-            // selectInfo exists but a new resultset is required.. make sure selectInfo is remapped to new resultset
+        if (selectInfo == null) {
+            selectInfo = new SelectionInfo(false, null, rowCnt);
+        } else {
+            selectInfo.setRowCount(rowCnt);
+        }
+        if ( selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
+            // there were row(s) selected but a new resultset is required.. make sure selectInfo is remapped to new resultset
             String rowNums = StringUtils.toString(selectInfo.getSelected());
             SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
             String origRowIds = String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", prevResultSetID, rowNums);
 
             List<Integer> newRowNums = jdbc.query(String.format("Select ROW_NUM from %s where ROW_IDX in (%s)", forTable, origRowIds), (rs, idx) -> rs.getInt(1));
-            SelectionInfo newSelectInfo = newRowNums.size() == rowCnt ? new SelectionInfo(true, null, rowCnt) : new SelectionInfo(false, newRowNums, rowCnt);
-            page.getTableDef().setSelectInfo(newSelectInfo);
+            selectInfo = newRowNums.size() == rowCnt ? new SelectionInfo(true, null, rowCnt) : new SelectionInfo(false, newRowNums, rowCnt);
         }
+        page.getTableDef().setSelectInfo(selectInfo);
 
         return page;
     }
