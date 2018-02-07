@@ -227,6 +227,15 @@ export function setResultSetID(request, resultSetID) {
 }
 
 /**
+ * set the resultSetRequest into the request object
+ * @param {TableRequest} request
+ * @param {string} resultSetRequest
+ */
+export function setResultSetRequest(request, resultSetRequest) {
+    set(request, 'META_INFO.resultSetRequest', resultSetRequest);
+}
+
+/**
  * set selectInfo
  * @param {TableRequest} request
  * @param {object} selectInfo

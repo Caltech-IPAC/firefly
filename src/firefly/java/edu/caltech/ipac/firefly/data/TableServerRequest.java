@@ -21,6 +21,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
     public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc
     public static final String RESULTSET_ID = "resultSetID";        // this meta if exists contains the ID of the resultset returned.
+    public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this of the resultset.
 
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "title";
@@ -38,7 +39,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     private int pageSize = -1;
     private int startIdx;
     private ArrayList<String> filters;
-    private SelectionInfo selectionInfo;
+    private SelectionInfo selectInfo;
     private Map<String, String> metaInfo;
 
     public TableServerRequest() {
@@ -148,12 +149,12 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
     }
 
-    public SelectionInfo getSelectionInfo() {
-        return selectionInfo;
+    public SelectionInfo getSelectInfo() {
+        return selectInfo;
     }
 
-    public void setSelectionInfo(SelectionInfo selectionInfo) {
-        this.selectionInfo = selectionInfo;
+    public void setSelectInfo(SelectionInfo selectInfo) {
+        this.selectInfo = selectInfo;
     }
 
     /**
@@ -290,7 +291,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     @Override
     public ServerRequest cloneRequest() {
         TableServerRequest tsr = (TableServerRequest) super.cloneRequest();
-        tsr.setSelectionInfo(getSelectionInfo());
+        tsr.setSelectInfo(getSelectInfo());
         return tsr;
     }
 

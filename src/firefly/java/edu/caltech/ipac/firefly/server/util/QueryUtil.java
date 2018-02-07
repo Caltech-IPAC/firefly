@@ -106,7 +106,7 @@ public class QueryUtil {
                         for (Object mk : meta.keySet()) {
                             String mkey = String.valueOf(mk);
                             if (mkey.equals(TableServerRequest.SELECT_INFO)) {
-                                retval.setSelectionInfo(SelectionInfo.parse(String.valueOf(meta.get(mkey))));
+                                retval.setSelectInfo(SelectionInfo.parse(String.valueOf(meta.get(mkey))));
                             } else {
                                 retval.setMeta(mkey, String.valueOf(meta.get(mk)));
                             }
