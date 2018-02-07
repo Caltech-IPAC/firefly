@@ -236,7 +236,7 @@ function crop(pv, dlAry) {
 // attach image outline drawing layer on top of the cropped image, zoom-to-fit image and recenter image
 function attachImageOutline(pv, dlAry) {
     const selectedShape = getSelectedShape(pv, dlAry);
-    if (selectedShape === SelectedShape.rect.key) return;
+    //if (selectedShape === SelectedShape.rect.key) return;
 
     const outlineAry = getDrawLayersByType(dlAry, ImageOutline.TYPE_ID);
     let   dl = outlineAry.find((dl) => isOutlineImageForSelectArea(dl));
@@ -256,16 +256,19 @@ function attachImageOutline(pv, dlAry) {
             return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
         };
 
-        const r1 = dist((imgPt[0].x - imgPt[1].x), (imgPt[0].y - imgPt[1].y))/2;
-        const r2 = dist((imgPt[1].x - imgPt[2].x), (imgPt[1].y - imgPt[2].y))/2;
+        const r1 = dist((imgPt[0].x - imgPt[1].x), (imgPt[0].y - imgPt[1].y));
+        const r2 = dist((imgPt[1].x - imgPt[2].x), (imgPt[1].y - imgPt[2].y));
         const center = cc.getWorldCoords(makeImagePt((imgPt[0].x + imgPt[2].x)/2, (imgPt[0].y + imgPt[2].y)/2));
         const rotArc = pv.rotation === 0.0 ? 0.0 : convertAngle('deg', 'arcsec', (360 - pv.rotation));
 
 
-        const ellipseObj = ShapeDataObj.makeEllipse(center, r1, r2, ShapeDataObj.UnitType.IMAGE_PIXEL, rotArc,
-                                                    ShapeDataObj.UnitType.ARCSEC, false);
+        const drawObj = selectedShape === SelectedShape.rect.key ?
+                        ShapeDataObj.makeRectangleByCenter(center, r1, r2, ShapeDataObj.UnitType.IMAGE_PIXEL,
+                                                           rotArc,  ShapeDataObj.UnitType.ARCSEC, false, true) :
+                        ShapeDataObj.makeEllipse(center, r1/2, r2/2, ShapeDataObj.UnitType.IMAGE_PIXEL,
+                                                            rotArc, ShapeDataObj.UnitType.ARCSEC, false);
         dl = dispatchCreateDrawLayer(ImageOutline.TYPE_ID,
-                                    {drawObj: ellipseObj, color: 'red', title, destroyWhenAllDetached: true});
+                                    {drawObj, color: 'red', title, destroyWhenAllDetached: true});
     }
 
     if (!isDrawLayerAttached(dl, pv.plotId)) {
@@ -327,8 +330,8 @@ function zoomIntoSelection(pv, dlAry) {
     const sp0=  cc.getScreenCoords(sel.pt0);
     const sp2=  cc.getScreenCoords(sel.pt1);
 
-    const level= Math.min((viewDim.width / Math.abs(sp0.x-sp2.x)),
-                          (viewDim.height/ Math.abs(sp0.y-sp2.y))) * p.zoomFactor;
+    const level= Math.min(viewDim.width/Math.abs(sp0.x-sp2.x),
+                          viewDim.height/Math.abs(sp0.y-sp2.y)) * p.zoomFactor;
     dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level});
 
 

@@ -137,9 +137,10 @@ function makeRectangleByCorners(pt1, pt2) {
  * @param isOnWorld if the rectangle have the width and height move along the east and north direction over the world domain
  * @returns {Object}
  */
-function makeRectangleByCenter(pt1, width, height, unitType=UnitType.PIXEL, angle = 0.0, angleUnit = UnitType.ARCSEC, isOnWorld = true) {
+function makeRectangleByCenter(pt1, width, height, unitType=UnitType.PIXEL, angle = 0.0, angleUnit = UnitType.ARCSEC,
+                               isOnWorld = true, centerInView = false) {
     const isCenter = true;
-    return Object.assign(make(ShapeType.Rectangle), {pts:[pt1], width, height, unitType, angle, angleUnit, isOnWorld, isCenter});
+    return Object.assign(make(ShapeType.Rectangle), {pts:[pt1], width, height, unitType, angle, angleUnit, isOnWorld, isCenter, centerInView});
 }
 
 /**
@@ -726,7 +727,7 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
  * @param onlyAddToPath
  */
 function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
-    const {pts, text, width, height, angleUnit, isCenter = false, isOnWorld = false}= drawObj;
+    const {pts, text, width, height, angleUnit, isCenter = false, isOnWorld = false, centerInView=false}= drawObj;
     let {renderOptions}= drawObj;
     const {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
     let {angle = 0.0}= drawObj;
@@ -746,10 +747,10 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
         if (isCenter) {
             sRect = rectOnImage(pts[0], isCenter, plot, width, height, unitType, isOnWorld);
         }
-
         const devPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
         if (!plot || (!isCenter && plot.pointOnDisplay(devPt0)) ||
-                     (isCenter && sRect && cornerInView(sRect.corners, plot))) {
+                     (isCenter && ((centerInView&&plot.pointOnDisplay(devPt0))||
+                                   (sRect && cornerInView(sRect.corners, plot))))) {
             inView = true;
 
             switch (unitType) {

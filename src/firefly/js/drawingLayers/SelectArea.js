@@ -61,7 +61,7 @@ export function selectAreaEndActionCreator(rawAction) {
             dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel,true);
             // const imBoundSel= pv.rotation ? getImageBoundsSelection(sel,CsysConverter.make(plot)) : sel;
             const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), drawLayer.selectedShape,
-                                                      pv.rotation, drawLayer.selectedShape === SelectedShape.circle.key);
+                                                      pv.rotation);
             dispatchAttributeChange(plotId,true,PlotAttribute.IMAGE_BOUNDS_SELECTION, imBoundSel,true);
         }
     };
@@ -365,7 +365,7 @@ function makeSelectObj(firstPt,currentPt,cc, rotation, title, dl) {
     return retAry;
 }
 
-function getImageBoundsSelection(sel,cc, shape, rotation, bPadding = false) {
+function getImageBoundsSelection(sel,cc, shape, rotation, bPadding = true) {
     const {x, y, w, h} = makeImageBoundingBox(sel,cc, shape, rotation);
 
     const padding = bPadding ? Math.ceil(cc.zoomFactor) : 0;
