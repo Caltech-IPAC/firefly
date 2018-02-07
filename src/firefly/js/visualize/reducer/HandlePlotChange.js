@@ -447,6 +447,7 @@ function updateViewSize(state,action) {
         const h= isUndefined(height) ? pv.viewDim.height : height;
         pv= Object.assign({}, pv, {viewDim: {width:w, height:h}});
         if (!plot) return pv;
+        if (width===w && height===h) return pv;
 
         const masterPv= getPlotViewById(state, state.mpwWcsPrimId);
 
@@ -464,10 +465,10 @@ function updateViewSize(state,action) {
             pv= recenterPv(null, false)(pv);
         }
         else {
-            const centerImagePt= (pv.scrollX<0 || pv.scrollY<0) ?
-                makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
-                findCurrentCenterPoint(pv);
-            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
+            const centerOn= (pv.scrollX<0 || pv.scrollY<0) ?
+                    makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
+                    findCurrentCenterPoint(pv);
+            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerOn));
         }
 
         pv= updateTransform(pv);
