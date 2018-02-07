@@ -29,12 +29,16 @@ export function dispatchAddSaga(saga, params={}) {
  *                              When not given, a unique ID will be created.  You can still cancel this watcher via
  *                              callback's cancelSelf function.
  * @param {string[]} p.actions  an array of action types to watch
- * @param {function} p.callback a callback function to handle the action(s).  It is called with (action, cancelSelf, params, dispatch, getState).
- *                                action: the triggered action
-*                                 cancelSelf: a function to cancel this watcher
- *                                params: the given params object
- *                                dispatch: flux's dispatcher
- * @param {function} p.params   a pass-along parameter object to be sent when callback is called.
+ * @param {function} p.callback a callback function to handle the action(s).
+ *                                It is called with
+ *                                (action:Action, cancelSelf:Function, params:Object, dispatch:Function, getState:Function).
+ *                                {Action} action: the triggered action
+ *                                {Function} cancelSelf: a function to cancel this watcher
+ *                                {Object} params: the given params object, it the watcher callback returns a value
+ *                                        then on the next call the last returned value
+ *                                {Function} dispatch: flux's dispatcher
+ *                                {Function} getState: flux's getState function
+ * @param {Object} p.params   a pass-along parameter object to be sent when callback is called.
  */
 export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
     flux.process({ type: ADD_ACTION_WATCHER, payload: {id, actions, callback, params}});
@@ -80,8 +84,8 @@ export function* masterSaga() {
                     if (watchers[id]) {
                         yield cancel(watchers[id]);
                     }
-                    const saga = createSaga({id, actions, callback, params, dispatch, getState});
-                    const task = yield fork(saga, dispatch, getState);
+                    const watcherSaga = createWatcherSaga({id, actions, callback, params, dispatch, getState});
+                    const task = yield fork(watcherSaga, dispatch, getState);
                     watchers[id] = task;
                     isDebug() && console.log(`watcher ${id} added.  #watcher: ${Object.keys(watchers).length}`);
                 }
@@ -111,13 +115,14 @@ export function* masterSaga() {
 }
 
 
-function createSaga({id, actions=[], callback, params, dispatch, getState}) {
+function createWatcherSaga({id, actions=[], callback, params, dispatch, getState}) {
     const cancelSelf = ()=> dispatch({ type: CANCEL_ACTION_WATCHER, payload: {id}});
     const saga = function* () {
+        let prevParams= params;
         while (true) {
             const action= yield take(actions);
             try {
-                callback(action, cancelSelf, params, dispatch, getState);
+                prevParams= callback(action, cancelSelf, prevParams, dispatch, getState) || params;
             } catch (e) {
                 console.log(`Encounter error while executing watcher: ${id}  error: ${e}`);
                 console.log(e);
