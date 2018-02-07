@@ -146,6 +146,22 @@ function contextToolbar(pv,dlAry,extensionList) {
                                showMultiImageController={showMulti}/>
         );
     }
+    else if (showUnselect(pv, dlAry)) {
+        return (
+            <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry:EMPTY_ARRAY,
+                showCatUnSelect:true,
+                showMultiImageController:showMulti}}
+            />
+        );
+    }
+    else if (showClearFilter(pv,dlAry)) {
+        return (
+            <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry:EMPTY_ARRAY,
+                showClearFilter:true,
+                showMultiImageController:showMulti}}
+            />
+        );
+    }
     else if (showMulti || isHiPS(plot)) {
         return (
             <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={EMPTY_ARRAY}

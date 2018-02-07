@@ -327,7 +327,8 @@ function zoomIntoSelection(pv, dlAry) {
     const sp0=  cc.getScreenCoords(sel.pt0);
     const sp2=  cc.getScreenCoords(sel.pt1);
 
-    const level= (viewDim.width / Math.abs(sp0.x-sp2.x)) * p.zoomFactor;
+    const level= Math.min((viewDim.width / Math.abs(sp0.x-sp2.x)),
+                          (viewDim.height/ Math.abs(sp0.y-sp2.y))) * p.zoomFactor;
     dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level});
 
 
