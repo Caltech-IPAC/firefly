@@ -108,7 +108,7 @@ export function detachImageOutlineLayerForSelectArea(pv, allPlots = true) {
 }
 
 export function detachSelectAreaRelatedLayers(pv, allPlots = true, selectId = SelectArea.TYPE_ID) {
-    detachSelectArea(selectId, allPlots, selectId);
+    detachSelectArea(pv, allPlots, selectId);
     detachImageOutlineLayerForSelectArea(pv, allPlots);
 }
 
