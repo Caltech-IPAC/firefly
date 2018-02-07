@@ -323,6 +323,7 @@ public class EmbeddedDbUtil {
                             getStrVal(meta, LABEL_TAG, dt, dt.getKeyName()),
                             dt.getTypeDesc(),
                             dt.getDataUnit(),
+                            dt.getNullString(),
                             format,
                             width,
                             visi,
@@ -357,6 +358,7 @@ public class EmbeddedDbUtil {
                 String cname = rs.getString("cname");
                 String label = rs.getString("label");
                 String units = rs.getString("units");
+                String nullStr = rs.getString("null_str");
                 String format = rs.getString("format");
                 int width = rs.getInt("width");
                 String visibility = rs.getString("visibility");
@@ -373,6 +375,9 @@ public class EmbeddedDbUtil {
                     }
                     if (!StringUtils.isEmpty(units)) {
                         dtype.setUnits(units);
+                    }
+                    if (!StringUtils.isEmpty(nullStr)) {
+                        dtype.setNullString(nullStr);
                     }
                     if (!StringUtils.isEmpty(format)) {
                         dtype.getFormatInfo().setDataFormat(format);

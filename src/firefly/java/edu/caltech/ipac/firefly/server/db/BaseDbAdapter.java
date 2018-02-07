@@ -32,16 +32,17 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?)";
+    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
-            "  cname    varchar(1024)" +
-            ", label    varchar(1024)" +
-            ", type     varchar(1024)" +
-            ", units    varchar(1024)" +
-            ", format   varchar(1024)" +
+            "  cname    varchar(1023)" +
+            ", label    varchar(1023)" +
+            ", type     varchar(255)" +
+            ", units    varchar(255)" +
+            ", null_str varchar(255)" +
+            ", format   varchar(255)" +
             ", width    int" +
-            ", visibility varchar(1024)" +
+            ", visibility varchar(255)" +
             ", sortable boolean" +
             ", filterable boolean" +
             ", desc     varchar(64000)" +
