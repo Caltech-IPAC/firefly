@@ -447,7 +447,6 @@ function updateViewSize(state,action) {
         const h= isUndefined(height) ? pv.viewDim.height : height;
         pv= Object.assign({}, pv, {viewDim: {width:w, height:h}});
         if (!plot) return pv;
-        if (width===w && height===h) return pv;
 
         const masterPv= getPlotViewById(state, state.mpwWcsPrimId);
 
