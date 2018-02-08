@@ -528,7 +528,6 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {string} [p.plotId] is required unless defined in the WebPlotRequest
  * @param {Object|WebPlotRequest|Array} p.wpRequest -  plotting parameters, required or for 3 color pass an array of WebPlotRequest
  * @param {boolean} [p.threeColor] is a three color request, if true the wpRequest should be an array
- * @param {boolean} [p.addToHistory=true] add this request to global history of plots, may be deprecated in the future
  * @param {boolean} [p.useContextModifications=true] it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  * @param {Object} [p.attributes] meta data that is added the plot
@@ -537,6 +536,7 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {Object} [p.pvOptions] parameter specific to the  plotView, only read the first time per plot id
  * @param {boolean} [p.setNewPlotAsActive= true] the new plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
+ * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  * @param {string} [p.viewerId] - viewer that this plot should be put into, only optional if
  *                                you have added the plot id manually to a viewer.
@@ -546,7 +546,6 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @memberof firefly.action
  */
 export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpRequest),
-                                  addToHistory=false,
                                   useContextModifications= true,
                                   dispatcher= flux.process,
                                   attributes={},
@@ -554,10 +553,11 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
                                   hipsImageConversion= undefined,
                                   setNewPlotAsActive= true,
                                   holdWcsMatch= false,
+                                  enableRestore= true,
                                   viewerId} ) {
 
     dispatcher({ type: PLOT_IMAGE,
-                   payload: {plotId,wpRequest, threeColor, addToHistory, pvOptions, hipsImageConversion,
+                   payload: {plotId,wpRequest, threeColor, pvOptions, hipsImageConversion, enableRestore,
                              attributes, holdWcsMatch, setNewPlotAsActive, useContextModifications,viewerId}});
 }
 
@@ -571,12 +571,15 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
+ * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
                                    attributes={}, setNewPlotAsActive= true, holdWcsMatch= false,
+                                   enableRestore= true,
                                    dispatcher= flux.process}) {
-    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, attributes, setNewPlotAsActive, holdWcsMatch, viewerId} });
+    dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, attributes, setNewPlotAsActive,
+                                               enableRestore, holdWcsMatch, viewerId} });
 }
 
 
@@ -591,12 +594,14 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  * @param {PVCreateOptions} p.pvOptions PlotView init Options
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
+ * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, attributes={},
                                    hipsImageConversion= undefined,
+                                     enableRestore= true,
                                      setNewPlotAsActive= true, dispatcher= flux.process }) {
-    dispatcher( { type: PLOT_HIPS, payload: {wpRequest, plotId, pvOptions, attributes,
+    dispatcher( { type: PLOT_HIPS, payload: {wpRequest, plotId, pvOptions, attributes, enableRestore,
                                              hipsImageConversion, setNewPlotAsActive, viewerId} });
 }
 
@@ -609,6 +614,8 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
  * @param {string} p.plotId
  * @param {WebPlotRequest} p.hipsRequest
  * @param {WebPlotRequest} p.imageRequest - must be a ServiceType request.
+ * @param {WebPlotRequest} p.allSkyRequest - must be a allsky type request
+ * @param {boolean} p.plotAllSkyFirst - if there is an all sky set up then plot that first
  * @param {number} p.fovDegFallOver - the size in degrees that the image will switch between hips and a image cutout
  * @param {string} p.viewerId
  * @param {PVCreateOptions} p.pvOptions PlotView init Options
@@ -616,13 +623,13 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
-export function dispatchPlotImageOrHiPS({plotId,hipsRequest, imageRequest, viewerId, fovDegFallOver=.12,
-                                            pvOptions= {}, attributes={},
+export function dispatchPlotImageOrHiPS({plotId,hipsRequest, imageRequest, allSkyRequest, viewerId, fovDegFallOver=.12,
+                                            pvOptions= {}, attributes={}, plotAllSkyFirst= false,
                                             setNewPlotAsActive= true, dispatcher= flux.process }) {
 
     dispatcher( { type: PLOT_HIPS_OR_IMAGE,
-        payload: {hipsRequest, imageRequest, plotId, fovDegFallOver, pvOptions,
-                  attributes, setNewPlotAsActive, viewerId} });
+        payload: {hipsRequest, imageRequest, allSkyRequest, plotId, fovDegFallOver, pvOptions,
+                  attributes, setNewPlotAsActive, viewerId, plotAllSkyFirst} });
 }
 
 
@@ -635,10 +642,12 @@ export function dispatchPlotImageOrHiPS({plotId,hipsRequest, imageRequest, viewe
  * @param {string} p.hipsUrlRoot
  * @param {CoordinateSys} p.coordSys
  * @param {WorldPt} p.centerProjPt
+ * @param {boolean} p.applyToGroup, apply to the whole group it is locked
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt, cubeIdx, dispatcher= flux.process }) {
-    dispatcher( { type: CHANGE_HIPS, payload: {plotId, hipsUrlRoot, coordSys, cubeIdx, centerProjPt} });
+export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt, cubeIdx,
+                                       applyToGroup=true, dispatcher= flux.process }) {
+    dispatcher( { type: CHANGE_HIPS, payload: {plotId, hipsUrlRoot, coordSys, cubeIdx, applyToGroup, centerProjPt} });
 }
 
 

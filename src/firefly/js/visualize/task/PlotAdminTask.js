@@ -104,23 +104,24 @@ export function restoreDefaultsActionCreator(rawAction) {
                     const def= vr.plotRequestDefaults[pv.plotId];
                     const viewerId= findViewerWithItemId(getMultiViewRoot(), pv.plotId, IMAGE);
                     if (isImage(plot)) {
-                        if (pv.rotation) dispatchRotate({plotId:pv.plotId, rotateType:RotateType.UNROTATE});
-                        if (pv.flipY) dispatchFlip({plotId:pv.plotId});
-                        if (def.threeColor) {
+                        if (pv.rotation) dispatchRotate({plotId: pv.plotId, rotateType: RotateType.UNROTATE});
+                        if (pv.flipY) dispatchFlip({plotId: pv.plotId});
+                    }
+                    switch (def.plotType) {
+                        case 'threeColor' :
                             dispatchPlotImage({plotId:pv.plotId,
                                 viewerId, wpRequest:[def.redReq,def.greenReq,def.blueReq],
                                 threeColor:true, setNewPlotAsActive:false,
                                 useContextModifications:false});
-                        }
-                        else {
+                            break;
+                        case 'image' :
                             dispatchPlotImage({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
                                 viewerId, useContextModifications:false});
-                        }
-                    }
-                    else if (isHiPS(plot)) {
-                        dispatchPlotHiPS({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
-                            viewerId});
-
+                            break;
+                        case 'hips' :
+                            dispatchPlotHiPS({plotId:pv.plotId, wpRequest:def.wpRequest, setNewPlotAsActive:false,
+                                viewerId});
+                            break;
                     }
                 }
             });

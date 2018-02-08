@@ -2,6 +2,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {WcsMatchType, dispatchWcsMatch} from '../ImagePlotCntlr.js';
+import {getPlotViewById, primePlot} from '../PlotViewUtil.js';
+import {isImage, isHiPS} from '../WebPlot.js';
+import {addImageOutlineDrawingLayer} from '../task/PlotHipsTask.js';
 
 
 const tStyle= {
@@ -54,3 +57,23 @@ function wcsMatchStandard(doWcsStandard, plotId) {
 function wcsMatchTarget(doWcsTarget, plotId) {
     dispatchWcsMatch({matchType:doWcsTarget?WcsMatchType.Target:false, plotId});
 }
+
+
+
+export function HiPSMatchingOptions({visRoot, plotIdAry}) {
+    const imageDataViewers= plotIdAry.filter( (plotId) => isImage(primePlot(visRoot,plotId)));
+    const hipsViewers= plotIdAry.filter( (plotId) => isHiPS(primePlot(visRoot,plotId)));
+    const activePV= getPlotViewById(visRoot, visRoot.activePlotId);
+    const matchPV= isImage(primePlot(activePV)) ? activePV : getPlotViewById(visRoot, imageDataViewers[0]);
+    if (!imageDataViewers.length || !hipsViewers.length ) return false;
+
+    return (
+        <div style={{marginLeft: 20, marginRight: 5}}>
+            <input  type='button'
+                    value={'Match Image to HiPS'}
+                    onClick={()=>addImageOutlineDrawingLayer(matchPV, hipsViewers) } />
+        </div>
+    );
+
+}
+

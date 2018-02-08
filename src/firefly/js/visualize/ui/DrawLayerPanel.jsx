@@ -21,7 +21,7 @@ export const DRAW_LAYER_POPUP= 'DrawLayerPopup';
 function getDialogBuilder() {
     var popup= null;
     const defaultTitle = 'Layers- ';
-    return () => {
+    return (div) => {
         if (!popup) {
             const plot = primePlot(visRoot());
             var title = plot ? `${defaultTitle}${plot.title}` : defaultTitle;
@@ -31,7 +31,7 @@ function getDialogBuilder() {
                     <DrawLayerPanel/>
                 </PopupPanel>
             );
-            DialogRootContainer.defineDialog(DRAW_LAYER_POPUP, popup);
+            DialogRootContainer.defineDialog(DRAW_LAYER_POPUP, popup, div);
         }
         return popup;
     };
@@ -39,8 +39,8 @@ function getDialogBuilder() {
 
 const dialogBuilder= getDialogBuilder();
 
-export function showDrawingLayerPopup() {
-    dialogBuilder();
+export function showDrawingLayerPopup(div) {
+    dialogBuilder(div);
     dispatchShowDialog(DRAW_LAYER_POPUP);
 }
 

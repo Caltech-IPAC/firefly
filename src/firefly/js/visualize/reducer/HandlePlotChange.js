@@ -263,7 +263,12 @@ function installTiles(state, action) {
 }
 
 
-
+/**
+ *
+ * @param state
+ * @param action
+ * @return {*}
+ */
 function processProjectionChange(state,action) {
     const {plotId,centerProjPt}= action.payload;
     const {plotViewAry}= state;
@@ -288,35 +293,72 @@ function processProjectionChange(state,action) {
 }
 
 function changeHiPS(state,action) {
-    const {plotId,hipsProperties, hipsUrlRoot, coordSys, cubeIdx}= action.payload;
+    const {plotId,hipsProperties, hipsUrlRoot, coordSys, cubeIdx, applyToGroup}= action.payload;
     let {centerProjPt}= action.payload;
-    const {plotViewAry}= state;
+    let {plotViewAry}= state;
+
     let pv= getPlotViewById(state, plotId);
     let plot= primePlot(pv);
     if (!plot) return state;
 
     plot= clone(plot);
+
+
+    // single plot stuff
+
     if (hipsUrlRoot) plot.hipsUrlRoot= hipsUrlRoot;
     if (hipsProperties) {
         plot.hipsProperties= hipsProperties;
         plot.title= hipsProperties.label || 'HiPS';
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
     }
-    if (coordSys) {
-        plot= replaceHiPSProjection(plot, coordSys, getCenterOfProjection(plot) );
-        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(plot), coordSys);
-    }
-
-    if (centerProjPt) plot= changeProjectionCenter(plot,centerProjPt);
 
     if (!isUndefined(cubeIdx)) {
         plot.cubeIdx= cubeIdx;
     }
-
     pv= replacePrimaryPlot(pv, plot);
     pv.serverCall= 'success';
     pv.plottingStatus= 'done';
-    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
+    plotViewAry= replacePlotView(plotViewAry,pv);
+
+
+    // group plot stuff
+    const plotGroup= applyToGroup && findPlotGroup(pv.plotGroupId,state.plotGroupAry);
+
+    if (coordSys) {
+        plotViewAry= changeHipsCoordinateSys(plotViewAry, state.plotGroupAry,pv, coordSys, applyToGroup);
+        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(plot), coordSys);
+    }
+
+    if (centerProjPt) {
+        plotViewAry= applyToOnePvOrGroup(plotViewAry, plot.plotId, plotGroup, false,
+            (pv) => {
+                const p= changeProjectionCenter(primePlot(pv),centerProjPt);
+                return replacePrimaryPlot(pv, p);
+            });
+    }
+
+    return clone(state, {plotViewAry});
+}
+
+
+/**
+ *
+ * @param {Array<PlotView>} plotViewAry
+ * @param plotGroupAry
+ * @param {PlotView} pv
+ * @param {CoordinateSys} coordSys
+ * @param {boolean} applyToGroup
+ * @return {Array<PlotView>}
+ */
+function changeHipsCoordinateSys(plotViewAry, plotGroupAry, pv, coordSys, applyToGroup) {
+    const plotGroup= applyToGroup && findPlotGroup(pv.plotGroupId,plotGroupAry);
+    return applyToOnePvOrGroup(plotViewAry, pv.plotId, plotGroup, false,
+        (pv) => {
+            let plot= primePlot(pv);
+            plot= replaceHiPSProjection(plot, coordSys, getCenterOfProjection(plot) );
+            return replacePrimaryPlot(pv, plot);
+        });
 }
 
 
@@ -563,7 +605,18 @@ function changeGroupLocking(state,action) {
     const pgIdx= getPlotGroupIdxById(state,plotGroupId);
 
     if (pgIdx < 0) return state;
-    return updateSet(state, ['plotGroupAry',pgIdx,'lockRelated'], groupLocked);
+    state= updateSet(state, ['plotGroupAry',pgIdx,'lockRelated'], groupLocked);
+
+    if (groupLocked && isHiPS(primePlot(state,plotId))) {
+        const pv= getPlotViewById(state, plotId);
+        const plot= primePlot(pv);
+        const plotViewAry= changeHipsCoordinateSys(state.plotViewAry, state.plotGroupAry, pv,plot.imageCoordSys,true );
+        state= clone(state, {plotViewAry});
+        state= processProjectionChange(state,
+            clone(action, {payload:{plotId, centerProjPt:getCenterOfProjection(plot) }}));
+    }
+
+    return state;
 
 }
 

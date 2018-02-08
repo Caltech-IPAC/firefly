@@ -74,10 +74,11 @@ SelectUrl.propTypes = {
 
 /**
  * create webPlotRequest for HiPS image request
- * @param request
- * @param plotId
+ * @param {WebPlotRequest} request
+ * @param {String} plotId
+ * @param {String} groupId
  */
-export function makeHiPSWebPlotRequest(request, plotId) {
+export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VIEWER_ID) {
     let url;
     if (get(request, 'imageSource', 'archive') === 'url') {
         url = get(request, 'txURL');
@@ -103,7 +104,7 @@ export function makeHiPSWebPlotRequest(request, plotId) {
     const fov = get(request, 'sizeFov', 180);
     const wp = parseWorldPt(request.UserTargetWorldPt) || null;
     const wpRequest = WebPlotRequest.makeHiPSRequest(url, wp, fov);
-    wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
+    wpRequest.setPlotGroupId(groupId);
     wpRequest.setPlotId(plotId);
     return wpRequest;
 }

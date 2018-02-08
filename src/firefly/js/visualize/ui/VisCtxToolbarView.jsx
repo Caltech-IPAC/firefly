@@ -31,7 +31,6 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CoordUtil from '../CoordUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import { parseImagePt } from '../Point.js';
-import {getDefaultHiPSSurveys} from '../HiPSUtil.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
 import {isLoadingHiPSSurverys, HiPSId} from '../HiPSCntlr.js';
@@ -40,6 +39,8 @@ import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
 import {isOutlineImageForSelectArea, detachSelectArea, SELECT_AREA_TITLE} from './SelectAreaDropDownView.jsx';
 import {convertAngle} from '../VisUtil.js';
+import {convertToHiPS, convertToImage} from '../task/PlotHipsTask.js';
+import {RequestType} from '../RequestType.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -358,35 +359,42 @@ function zoomIntoSelection(pv, dlAry) {
 
 }
 
+export function canConvertHipsAndAllSky(pv) {
+    if (!pv || !pv.plotViewCtx.hipsImageConversion) return false;
+    const {allSkyRequest, hipsRequestRoot}= pv.plotViewCtx.hipsImageConversion;
+    if (isImage(primePlot(pv))) {
+        return pv.request.getRequestType() === RequestType.ALL_SKY;
+    }
+    else {
+        return (allSkyRequest && hipsRequestRoot);
+    }
+}
 
-function makeHiPSImageSelect(pv) {
+function doConvert(pv) {
+    if (!canConvertHipsAndAllSky(pv)) return;
+    const plot= primePlot(pv);
+    if (isHiPS(plot)) {
+        convertToImage(pv,true);
+    }
+    else if (isImage(plot)) {
+        convertToHiPS(pv,true);
+    }
+
+}
+
+
+function makeConvertButton(pv) {
     const plot= primePlot(pv);
     if (!plot) return null;
 
-
-    const surveyList= plot.surveyList || getDefaultHiPSSurveys();
-
-
-    let selectedIdx= surveyList.findIndex( (s) => s.url===plot.hipsUrlRoot);
-    if (selectedIdx===-1) selectedIdx= 0;
-
-    const options= surveyList.map( (s,idx) => ({label: s.label, value:idx}) );
-
-
+    const label= isHiPS(primePlot(pv)) ? 'To Image' : 'To HiPS';
     return (
-        <ListBoxInputFieldView
-
-            inline={true}
-            value={selectedIdx}
-            onChange={(ev) =>
-                dispatchChangeHiPS( {plotId:pv.plotId,  hipsUrlRoot:surveyList[Number(ev.target.value)].url})}
-            labelWidth={10}
-            label={' '}
-            tooltip={ 'Choose a different HiPS survey'}
-            options={options}
-            multiple={false}
-        />
-        );
+        <div style={{marginLeft: 5, marginRight: 5, marginTop: -6}}>
+            <input  type='button'
+                    value={label}
+                    onClick={()=>doConvert(pv) } />
+        </div>
+    );
 }
 
 function makeHiPSImageTable(pv, surveysId, isUpdatingHips) {
@@ -395,9 +403,9 @@ function makeHiPSImageTable(pv, surveysId, isUpdatingHips) {
 
     const inputEntry = () => {
         return (
-            <div style={{marginLeft: 10, marginRight: 5}}>
+            <div style={{marginLeft: 9, marginRight: 5, marginTop: -5}}>
                 <input  type='button'
-                        value='Find HiPS Plot'
+                        value='Change HiPS Plot'
                         onClick={()=>showHiPSSurverysPopup(get(pv, ['request', 'params', 'hipsRootUrl']),
                                                            pv, surveysId)} />
             </div>
@@ -433,18 +441,20 @@ function makeHiPSCoordSelect(pv) {
 
 
     return (
-        <ListBoxInputFieldView
+        <div style={{marginTop:-7}}>
+            <ListBoxInputFieldView
 
-            inline={true}
-            value={selectedIdx}
-            onChange={(ev) =>
-                dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: options[Number(ev.target.value)].c})}
-            labelWidth={10}
-            label={' '}
-            tooltip={ 'Choose a different HiPS survey'}
-            options={options}
-            multiple={false}
-        />
+                inline={true}
+                value={selectedIdx}
+                onChange={(ev) =>
+                    dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: options[Number(ev.target.value)].c})}
+                labelWidth={0}
+                label={' '}
+                tooltip={ 'Choose a different HiPS survey'}
+                options={options}
+                multiple={false}
+            />
+        </div>
     );
 }
 
@@ -524,7 +534,8 @@ export class VisCtxToolbarView extends PureComponent {
         const {isUpdatingHips} = this.state || {};
         const plot= primePlot(pv);
         const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
-                           showFilter || showClearFilter || !isEmpty(extensionAry) || isHiPS(plot);
+                           showFilter || showClearFilter || !isEmpty(extensionAry) ||
+                           isHiPS(plot) || canConvertHipsAndAllSky(pv);
 
         return (
             <div style={rS}>
@@ -570,8 +581,9 @@ export class VisCtxToolbarView extends PureComponent {
 
                 {makeExtensionButtons(extensionAry,pv,dlAry)}
 
-                {isHiPS(plot) && makeHiPSImageTable(pv, this.hipsId, isUpdatingHips)}
+                {canConvertHipsAndAllSky(pv) && makeConvertButton(pv)}
                 {isHiPS(plot) && makeHiPSCoordSelect(pv)}
+                {isHiPS(plot) && makeHiPSImageTable(pv, this.hipsId, isUpdatingHips)}
 
             </div>
         );

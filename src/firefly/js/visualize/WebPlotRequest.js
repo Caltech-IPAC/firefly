@@ -4,7 +4,7 @@
  * Time: 9:18:47 AM
  */
 /* eslint prefer-template:0 */
-import {get, isString, isPlainObject, isArray, join, has} from 'lodash';
+import {get, isString, isPlainObject, isArray, join} from 'lodash';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
 import {ZoomType} from './ZoomType.js';
@@ -218,17 +218,14 @@ export class WebPlotRequest extends ServerRequest {
             else if (obj[C.FILE]) typeGuess= RequestType.FILE;
             else if (obj[C.URLKEY]) typeGuess= RequestType.URL;
             else if (obj[C.SURVEY_KEY]) typeGuess= RequestType.SERVICE;
+            else if (obj[C.HIPS_ROOT_URL]) typeGuess= RequestType.HiPS;
 
-
-            if (obj[C.BLANK_ARCSEC_PER_PIX] && obj[C.BLANK_PLOT_WIDTH] &&
-                obj[C.BLANK_PLOT_HEIGHT]) {
-                typeGuess= RequestType.BLANK;
-            }
             if (typeGuess && !wpr.params[C.TYPE]) wpr.setRequestType(typeGuess);
 
-            if (has(wpr.params, C.URLKEY)) {
-                wpr.setURL(wpr.params[C.URLKEY]);
-            }
+            // setting safe urls
+            if (wpr.params[C.URLKEY]) wpr.setURL(wpr.params[C.URLKEY]);
+            if (wpr.params[C.HIPS_ROOT_URL]) wpr.setHipsRootUrl(wpr.params[C.HIPS_ROOT_URL]);
+            
 
             return wpr;
         }
@@ -632,7 +629,10 @@ export class WebPlotRequest extends ServerRequest {
      * @param {number} width the width in pixels
      * @see {ZoomType}
      */
-    setZoomToWidth(width) { this.setParam(C.ZOOM_TO_WIDTH, width + ''); }
+    setZoomToWidth(width) {
+        const w= Number(width);
+        if (!isNaN(w)) this.setParam(C.ZOOM_TO_WIDTH, Math.round(w) + '');
+    }
 
     getZoomToWidth() {
         return this.containsParam(C.ZOOM_TO_WIDTH) ? this.getIntParam(C.ZOOM_TO_WIDTH) : 0;
@@ -646,7 +646,8 @@ export class WebPlotRequest extends ServerRequest {
      * @see {ZoomType}
      */
     setZoomToHeight(height) {
-        this.setParam(C.ZOOM_TO_HEIGHT, height + '');
+        const h= Number(height);
+        if (!isNaN(h)) this.setParam(C.ZOOM_TO_HEIGHT, Math.round(h) + '');
     }
 
     getZoomToHeight() {
@@ -1318,10 +1319,8 @@ export class WebPlotRequest extends ServerRequest {
     getMaskRequiredHeight() { return this.getIntParam(C.ASK_REQUIRED_HEIGHT,0); }
 
 
-
-
-    setHipsRootUrl(url) { this.setParam(C.HIPS_ROOT_URL, url);}
-    getHipsRootUrl() { return this.getParam(C.HIPS_ROOT_URL);}
+    setHipsRootUrl(url) { this.setSafeParam(C.HIPS_ROOT_URL, url);}
+    getHipsRootUrl() { return this.getSafeParam(C.HIPS_ROOT_URL);}
 
     /**
      *

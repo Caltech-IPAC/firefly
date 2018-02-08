@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 import {get,isEmpty,omit} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
+import {VisCtxToolbarView, canConvertHipsAndAllSky} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
@@ -24,13 +24,6 @@ import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 
 const EMPTY_ARRAY=[];
-
-const titleBarAnno= [
-    AnnotationOps.TITLE_BAR,
-    AnnotationOps.TITLE_BAR_BRIEF,
-    AnnotationOps.TITLE_BAR_BRIEF_TOOLS,
-    AnnotationOps.TITLE_BAR_BRIEF_CHECK_BOX
-];
 
 const briefAnno= [
     AnnotationOps.INLINE_BRIEF,
@@ -169,6 +162,12 @@ function contextToolbar(pv,dlAry,extensionList) {
                                showMultiImageController={showMulti}/>
         );
     }
+    else if (isImage(plot) && canConvertHipsAndAllSky(pv)) {
+        return (
+            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={EMPTY_ARRAY}
+                               showMultiImageController={showMulti}/>
+        );
+    }
     return false;
 }
 
@@ -230,28 +229,26 @@ function getBorderColor(pv,visRoot) {
 
 /**
  *
- * @param annoOps
- * @param expandedMode
  * @param pv
- * @param working
+ * @param brief
+ * @param workingIcon
  * @return {*}
  */
-function makeInlineTitle(annoOps, expandedMode,pv, working) {
-    if (!pv || expandedMode===ExpandType.SINGLE ) return null;
-    if (!annoOps || titleBarAnno.includes(annoOps)) return null;
-    const brief= briefAnno.includes(annoOps);
+function makeInlineTitle(pv, brief, workingIcon) {
     return (
-        <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv} working={working}/>
+        <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv} working={workingIcon}/>
     );
 }
 
-function makeTitleLineHeader(annoOps, expandedMode, pv) {
-    if (!pv || expandedMode===ExpandType.SINGLE ) return null;
-    if (!annoOps || !titleBarAnno.includes(annoOps)) return null;
-    const brief= briefAnno.includes(annoOps);
+/**
+ *
+ * @param pv
+ * @param brief
+ * @return {*}
+ */
+function makeTitleLineHeader(pv, brief) {
     return (
-        <PlotTitle brief={brief} titleType={TitleType.HEAD} plotView={pv}
-        />
+        <PlotTitle brief={brief} titleType={TitleType.HEAD} plotView={pv} />
     );
 }
 
@@ -290,15 +287,14 @@ class ImageViewerDecorate extends Component {
 
     render() {
         const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,
-               handleInlineTools,taskCount, size:{width,height}}= this.props;
-
-        // if (!width || !height) return false;
+               handleInlineTools,workingIcon, size:{width,height},
+               inlineTitle=true, aboveTitle= false }= this.props;
 
         const showDelete= pv.plotViewCtx.userCanDeletePlots;
         const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
         const top= ctxToolbar?32:0;
-        let titleLineHeader= null;
-        let inlineTitle= null;
+        let titleLineHeaderUI= null;
+        let inlineTitleUI= null;
         const {expandedMode}= visRoot;
         const expandedToSingle= (expandedMode===ExpandType.SINGLE);
         let iWidth= expandedToSingle ? width : width-4;
@@ -308,8 +304,9 @@ class ImageViewerDecorate extends Component {
         if (iHeight<0) iHeight= 0;
 
         if (plot) {
-            titleLineHeader= makeTitleLineHeader(pv.plotViewCtx.annotationOps,expandedMode, pv);
-            inlineTitle= makeInlineTitle(pv.plotViewCtx.annotationOps,expandedMode, pv, taskCount>0);
+            const brief= briefAnno.includes(pv.plotViewCtx.annotationOps);
+            titleLineHeaderUI= aboveTitle && makeTitleLineHeader(pv, brief);
+            inlineTitleUI= inlineTitle && makeInlineTitle(pv, brief, workingIcon);
         }
 
         const outerStyle= {
@@ -323,7 +320,7 @@ class ImageViewerDecorate extends Component {
         const innerStyle= {
             width:'calc(100% - 4px)',
             bottom: 0,
-            top: titleLineHeader ? 20 : 0,
+            top: titleLineHeaderUI ? 20 : 0,
             overflow: 'hidden',
             position: 'absolute',
             borderStyle: 'solid',
@@ -331,7 +328,7 @@ class ImageViewerDecorate extends Component {
             borderColor: getBorderColor(pv,visRoot)
         };
 
-        if (titleLineHeader) {
+        if (titleLineHeaderUI) {
             outerStyle.boxShadow= 'inset 0 0 3px #000';
             outerStyle.padding= '3px';
             outerStyle.width='calc(100% - 6px)';
@@ -345,14 +342,14 @@ class ImageViewerDecorate extends Component {
             <div style={outerStyle} className='disable-select'
                  onTouchStart={this.makeActive}
                  onClick={this.makeActive} >
-                {titleLineHeader}
+                {titleLineHeaderUI}
                 <div className='image-viewer-decorate' style={innerStyle}>
                     {ctxToolbar}
                     <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
                         <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
                                                       width={iWidth} height={iHeight}
                                                       externalWidth={width} externalHeight={height}/>
-                        {inlineTitle}
+                        {inlineTitleUI}
                         {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId,handleInlineTools,showDelete)}
                     </div>
                 </div>
@@ -371,7 +368,9 @@ ImageViewerDecorate.propTypes= {
     mousePlotId : PropTypes.string,
     size : PropTypes.object.isRequired,
     handleInlineTools : PropTypes.bool,
-    taskCount: PropTypes.number
+    workingIcon: PropTypes.bool,
+    inlineTitle: PropTypes.bool,
+    aboveTitle: PropTypes.bool,
 };
 
 

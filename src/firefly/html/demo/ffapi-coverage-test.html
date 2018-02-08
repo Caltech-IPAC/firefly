@@ -71,13 +71,23 @@
 
             firefly.showCoverage('coverageHere',
                     {
-                        gRIdOn:true,
+                        gridOn:true,
                         symbol: {aTable: 'X', bTable: 'arrow'},
                         symbolSize: {aTable: 3, bTable: 12},
                         color: {aTable: 'blue', bTable: 'yellow'},
-//                        overlayPosition : '149.9;68.8;EQ_J2000',
-                        OVErlayPosition : '149.08;68.739;EQ_J2000',
-                        useHiPS: true
+                        overlayPosition : '149.08;68.739;EQ_J2000',
+
+                        useHiPS: true,
+                        useAllSkyFitsForPlus180 : true,
+                        // fovDegFallOver: .02,
+                        fovDegFallOver: .5, // 720 arcsec
+                        hipsSourceURL : 'http://alasky.u-strasbg.fr/DSS/DSSColor', // url
+                        // hipsSourceURL : 'http://alasky.u-strasbg.fr/Planets/CDS_P_Earth_BlueMarble/', // url
+                        imageSourceParams: {
+                            Service : 'WISE',
+                            SurveyKey: '1b',
+                            SurveyKeyBand: '1',
+                        }
                    });
 
         };

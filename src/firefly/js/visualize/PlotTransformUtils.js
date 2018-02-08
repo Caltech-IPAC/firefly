@@ -15,6 +15,7 @@ import {getCenterOfProjection} from './PlotViewUtil.js';
 import {toRadians} from './VisUtil.js';
 import {CysConverter}  from './CsysConverter.js';
 import {makeScreenPt, makeDevicePt} from './Point.js';
+import {isImage} from './WebPlot.js';
 
 /**
  *
@@ -116,7 +117,7 @@ export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt, m
 
 
 
-    if (startingPlot.type==='image') {
+    if (isImage(startingPlot)) {
         return (screenX, screenY) => {
             const newDevPt = makeDevicePt(screenX, screenY);
             const newScreenPt = cc.getScreenCoords(newDevPt);

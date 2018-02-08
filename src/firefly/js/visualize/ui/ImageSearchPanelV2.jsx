@@ -575,7 +575,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
         if (!plotId) {
             plotId = genHiPSPlotId.next().value;
         }
-        const wpRequest = makeHiPSWebPlotRequest(get(request, FG_KEYS.hips), plotId);
+        const wpRequest = makeHiPSWebPlotRequest(get(request, FG_KEYS.hips), plotId, plotGroupId);
         wpRequest && dispatchPlotHiPS({
             plotId,
             viewerId,

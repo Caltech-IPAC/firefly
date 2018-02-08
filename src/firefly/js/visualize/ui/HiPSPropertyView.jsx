@@ -43,15 +43,15 @@ const popupPanelResizableStyle = {
     position: 'relative'
 };
 
-export function HiPSPropertyView(pv) {
+export function HiPSPropertyView(pv,element) {
     const plot = primePlot(pv);
 
     if (plot) {
-        showHiPSPropsPopup(plot);
+        showHiPSPropsPopup(plot,element);
     }
 }
 
-function showHiPSPropsPopup(plot) {
+function showHiPSPropsPopup(plot, element) {
     const tableId = plot.title.replace(/\s/g, '').replace(/[^a-zA-Z0-9]/g, '_') + '_HiPS';
     const popupId = popupIdRoot + '_' + tableId;
     const popTitle = 'HiPS Property : ' + plot.title;
@@ -62,7 +62,7 @@ function showHiPSPropsPopup(plot) {
         </PopupPanel>
     );
 
-    DialogRootContainer.defineDialog(popupId, popup);
+    DialogRootContainer.defineDialog(popupId, popup,element);
     dispatchShowDialog(popupId);
 }
 

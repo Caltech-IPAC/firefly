@@ -8,9 +8,10 @@ import PropTypes from 'prop-types';
 import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
-import {getPlotViewById, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {WcsMatchOptions} from './WcsMatchOptions.jsx';
+import {getPlotViewById, getAllDrawLayersForPlot, primePlot} from '../PlotViewUtil.js';
+import {WcsMatchOptions, HiPSMatchingOptions} from './WcsMatchOptions.jsx';
 import {clone} from '../../util/WebUtil.js';
+import {isImage} from '../WebPlot.js';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import BrowserInfo from '../../util/BrowserInfo.js';
@@ -62,7 +63,10 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
     const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
     var wcsMatch= false;
 
-    if (viewerPlotIds.length>1) {
+    const imageDataViewers= viewerPlotIds.filter( (plotId) => isImage(primePlot(visRoot,plotId)));
+
+
+    if (imageDataViewers.length>1) {
         wcsMatch= (
             <WcsMatchOptions activePlotId={visRoot.activePlotId} wcsMatchType={visRoot.wcsMatchType} />
         );
@@ -73,7 +77,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
 
     return (
         <div style={style}>
-            <div style={{display:'flex', flexDirection:'row', flexWrap:'nowrap'}}>
+            <div style={{display:'flex', flexDirection:'row', alignItems: 'center', flexWrap:'nowrap'}}>
                 {moreThanOne && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                enabled={true} visible={true}
@@ -93,6 +97,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                      onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
                 {wcsMatch}
+                {layoutType==='grid' && <HiPSMatchingOptions  visRoot={visRoot} plotIdAry={viewerPlotIds}/>}
             </div>
             {handleInlineTools && moreThanOne && makeInlineRightToolbar(visRoot,pv,pvDlAry)}
         </div>

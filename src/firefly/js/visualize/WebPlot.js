@@ -15,6 +15,7 @@ import {makeWorldPt, makeScreenPt} from './Point.js';
 import {changeProjectionCenter} from './HiPSUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';
+import {convert} from './VisUtil.js';
 
 
 export const RDConst= {
@@ -260,22 +261,22 @@ export const PlotAttribute= {
 
 const relatedIdRoot= '-Related-';
 
-export const isHiPS= (plot) => Boolean(plot && plot.type==='hips');
-export const isImage= (plot) => Boolean(plot && plot.type==='image');
-export const isKnownType= (plot) => Boolean(plot && (plot.type==='image' || plot.type==='hips'));
+export const isHiPS= (plot) => Boolean(plot && plot.plotType==='hips');
+export const isImage= (plot) => Boolean(plot && plot.plotType==='image');
+export const isKnownType= (plot) => Boolean(plot && (plot.plotType==='image' || plot.plotType==='hips'));
 
 /**
  *
  * @param plotId
- * @param type
+ * @param plotType
  * @param asOverlay
  * @param imageCoordSys
  * @return {WebPlot}
  */
-function makePlotTemplate(plotId, type, asOverlay, imageCoordSys) {
+function makePlotTemplate(plotId, plotType, asOverlay, imageCoordSys) {
     return {
         plotId,
-        type,
+        plotType,
         imageCoordSys,
         asOverlay,
         plotImageId     : plotId+'---NEEDS___INIT',
@@ -497,7 +498,8 @@ export function replaceHiPSProjectionUsingProperties(plot, hipsProperties, wp= m
  * @param {WorldPt} wp
  */
 export function replaceHiPSProjection(plot, coordinateSys, wp= makeWorldPt(0,0)) {
-    const projection= makeHiPSProjection(coordinateSys, wp.x, wp.y);
+    const newWp= convert(wp, coordinateSys);
+    const projection= makeHiPSProjection(coordinateSys, newWp.x, newWp.y);
     const retPlot= clone(plot);
     retPlot.imageCoordSys= projection.coordSys;
     //note- the dataCoordSys stays the same

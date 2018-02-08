@@ -1,7 +1,3 @@
-
-
-/* eslint jsdoc/require-param: 0 */
-
 import {AstroMath} from './astroMath';
 
 
@@ -36,7 +32,7 @@ Projection.prototype = {
 
 	/**
 	 * Computes the projection of 1 point : ra,dec => X,Y
-	 * alpha, delta = longitude, lattitude
+	 * alpha, delta = longitude, latitude
 	 */
 	project(alpha, delta) {
 		const u1 = this.tr_ou(alpha, delta);	// u1[3]
@@ -54,7 +50,8 @@ Projection.prototype = {
 	 * return o = [ ra, dec ]
 	 */
 	unproject(X,Y) {
-		X = -X; Y = -Y;
+		X = -X;
+		Y = -Y;
 		const u1 = this.tr_pu(this.PROJECTION, X, Y);	// u1[3]
 		if (!u1) return null;
 		const u2 = this.tr_uu1(u1, this.ROT);	// u2[3]

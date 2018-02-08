@@ -10,6 +10,7 @@ import {PopupStoreConnection} from './PopupStoreConnection.jsx';
 
 const DIALOG_DIV= 'dialogRootDiv';
 const TMP_ROOT='TMP-';
+const DEFAULT_ZINDEX= 200;
 
 export default {defineDialog, showTmpPopup};
 
@@ -28,18 +29,30 @@ function requestOnTop(key) {
     }
 }
 
+function computeZIndex(element ) {
+
+    let zIndex, testZ;
+    for(let e=element; (e); e= e.parentElement ) {
+        testZ= Number(window.getComputedStyle(e).getPropertyValue('z-index'));
+        zIndex= testZ || 2;
+    }
+    return zIndex;
+}
 
 
 
 /**
- * @param dialogId {string}
- * @param dialog {object}
+ * @param {string} dialogId
+ * @param {object} dialog
+ * @param {Element} overElement
  */
-function defineDialog(dialogId, dialog) {
+function defineDialog(dialogId, dialog, overElement) {
     if (!divElement) init();
     const idx= dialogs.findIndex((d) => d.dialogId===dialogId);
+    const rootZindex= overElement ? computeZIndex(overElement): DEFAULT_ZINDEX;
     const newD= {
         dialogId,
+        rootZindex,
         component: <PopupStoreConnection popupPanel={dialog} dialogId={dialogId} zIndex={1}/>
     };
     if (idx < 0) {
@@ -90,23 +103,35 @@ class DialogRootComponent extends PureComponent {
     constructor(props) { super(props); }
 
     render() {
-        var {dialogs,tmpPopups,requestOnTop}= this.props;
-        var dialogAry = dialogs.map( (d) =>
-                                React.cloneElement(d.component,
-                                    {
-                                        key:d.dialogId,
-                                        zIndex:d.zIndex,
-                                        requestOnTop
-                                    }));
-        var tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
+        const {dialogs,tmpPopups,requestOnTop}= this.props;
+        const dialogAry = dialogs
+            .filter( (d) => d.rootZindex===DEFAULT_ZINDEX)
+            .map( (d) =>
+                React.cloneElement(d.component,
+                    {
+                        key:d.dialogId,
+                        zIndex:d.zIndex,
+                        requestOnTop
+                    })
+            );
+        const otherDialogAry = dialogs
+            .filter( (d) => d.rootZindex<DEFAULT_ZINDEX)
+            .map( (d) => (
+                <div key= {d.dialogId} style={{position:'relative', zIndex:d.rootZindex}} className='rootStyle'>
+                    {React.cloneElement(d.component, { key:d.dialogId, zIndex:d.zIndex, requestOnTop })}
+                </div>
+            ));
+        const tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
         return (
-                <div style={{position:'relative', zIndex:200}} className='rootStyle'>
+            <div>
+                {otherDialogAry}
+                <div style={{position:'relative', zIndex:DEFAULT_ZINDEX}} className='rootStyle'>
                     {dialogAry}
                     <div style={{position:'relative', zIndex:10}}>
                         {tmpPopupAry}
                     </div>
                 </div>
-
+            </div>
             );
     }
 }

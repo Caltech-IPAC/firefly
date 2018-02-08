@@ -30,7 +30,7 @@ import {
     dispatchChangeActivePlotView,
     dispatchUpdateViewSize} from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
-import {isHiPS} from './WebPlot.js';
+import {isHiPS, isImage} from './WebPlot.js';
 import Color from '../util/Color.js';
 
 const DEFAULT_CURSOR= 'crosshair';
@@ -262,7 +262,7 @@ ImageViewerLayout.propTypes= {
 function scrollMove(plotDrag, plotId, screenX,screenY) {
     const pv= getPlotViewById(visRoot(), plotId);
     const newScrollPt= plotDrag(screenX,screenY, pv);
-    if (primePlot(pv).type==='image') {
+    if (isImage(primePlot(pv))) {
         dispatchProcessScroll({plotId,scrollPt:newScrollPt});
     }
     else {

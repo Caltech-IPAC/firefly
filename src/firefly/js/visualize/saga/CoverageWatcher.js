@@ -17,7 +17,7 @@ import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/Tab
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
-import {computeCentralPointAndRadius} from '../VisUtil.js';
+import {computeCentralPointAndRadius, computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {getCoverageRequest} from './CoverageChooser.js';
 import {logError} from '../../util/WebUtil.js';
@@ -39,10 +39,6 @@ const COVERAGE_CREATED = 'COVERAGE_CREATED';
 const PLOT_ID= 'CoveragePlot';
 
 
-const opStrList= [ 'title', 'tip', 'coveragetype', 'symbol', 'symbolSize', 'overlayPosition',
-                   'color', 'highlightedColor', 'multiCoverage', 'gridOn', 'useBlankPlot', 'fitType',
-                   'ignoreCatalogs',
-];
 
 /**
  * @global
@@ -77,31 +73,40 @@ const defOptions= {
     useBlankPlot : false,
     fitType : FitType.WIDTH_HEIGHT,
     ignoreCatalogs:false,
+
+    useHiPS: false,
+    hipsSourceURL : 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/', // url
+    imageSourceParams: null, // an WebPlotRequest template object
+    useAllSkyFitsForPlus180 : true,
+    fovDegFallOver: .4,
+
+
     canDoCorners : defaultCanDoCorners,
-    getQueryCenter,
     hasCoverageData,
     getCornersColumns,
     getCenterColumns,
-    getExtraColumns: () => []   // eslint-disable-line no-unused-vars
+    // getQueryCenter,
+    // getExtraColumns: () => []   // eslint-disable-line no-unused-vars
 };
+
 
 const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
 
 export function startCoverageWatcher(options) {
-    const {viewerId='DefCoverageId', useHiPS=false}= options;
+    const {viewerId='DefCoverageId'}= options;
     let {paused=true}= options;
     const decimatedTables=  {};
 
     if (paused) {
         paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
     }
-    options= Object.assign(defOptions,cleanUpOptions(options));
+    options= Object.assign({}, defOptions, cleanUpOptions(options));
     let displayedTableId= null;
 
     if (paused) {
         const firstId= getActiveTableId();
-        if (firstId) displayedTableId = updateCoverage(useHiPS, firstId, viewerId, decimatedTables, options);
+        if (firstId) displayedTableId = updateCoverage(firstId, viewerId, decimatedTables, options);
     }
 
     const params = {options, decimatedTables, paused, displayedTableId};
@@ -134,6 +139,11 @@ function watchCoverage(action, cancelSelf, params) {
 
     let {paused, tbl_id, displayedTableId} = params;
 
+    if (action.type===REINIT_APP) {
+        cancelSelf();
+        return;
+    }
+
     if (paused && (action.type!==MultiViewCntlr.VIEWER_MOUNTED && action.type!==MultiViewCntlr.ADD_VIEWER) )  {
         return;
     }
@@ -148,7 +158,7 @@ function watchCoverage(action, cancelSelf, params) {
     }
 
     const {options, decimatedTables} = params;
-    const {viewerId='DefCoverageId', useHiPS=false}= options;
+    const {viewerId='DefCoverageId'}= options;
 
     let previousDisplayedTableId= displayedTableId;
 
@@ -157,12 +167,12 @@ function watchCoverage(action, cancelSelf, params) {
         case TABLE_LOADED:
             if (!getTableInGroup(tbl_id)) return;
             decimatedTables[tbl_id]= null;
-            displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+            displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
             break;
 
         case TBL_RESULTS_ACTIVE:
             if (!getTableInGroup(tbl_id)) return;
-            displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+            displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
             break;
 
         case TABLE_REMOVE:
@@ -172,7 +182,7 @@ function watchCoverage(action, cancelSelf, params) {
             previousDisplayedTableId = null;
             tbl_id = getActiveTableId();
             if (!isEmpty(decimatedTables)) {
-                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
             }
             break;
 
@@ -181,7 +191,7 @@ function watchCoverage(action, cancelSelf, params) {
             if (action.payload.viewerId === viewerId) {
                 paused = false;
                 tbl_id = getActiveTableId();
-                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
             }
             break;
 
@@ -203,9 +213,6 @@ function watchCoverage(action, cancelSelf, params) {
             if (action.payload.plotId===PLOT_ID) overlayCoverageDrawing(decimatedTables,options);
             break;
             
-        case REINIT_APP:
-            cancelSelf();
-            break;
     }
     if (!displayedTableId) displayedTableId= previousDisplayedTableId;
 
@@ -222,14 +229,13 @@ function removeCoverage(tbl_id, decimatedTables) {
 }
 
 /**
- * @param {boolean} useHiPS
  * @param {string} tbl_id
  * @param {string} viewerId
  * @param decimatedTables
  * @param {CoverageOptions} options
  * @return {Array}
  */
-function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
+function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 
     if (!tbl_id) return null;
     try {
@@ -257,7 +263,7 @@ function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
         req.tbl_id = `cov-${tbl_id}`;
 
         if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
-            updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
+            updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
         }
         else {
             decimatedTables[tbl_id] = 'WORKING';
@@ -265,7 +271,7 @@ function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
                 (allRowsTable) => {
                     if (get(allRowsTable, ['tableData', 'data'], []).length > 0) {
                         decimatedTables[tbl_id] = allRowsTable;
-                        updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
+                        updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
                     }
                 }
             ).catch(
@@ -288,7 +294,6 @@ function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
 /**
  *
  * @param {string} viewerId
- * @param {boolean} useHiPS
  * @param {TableData} table
  * @param {CoverageOptions} options
  * @param {string} tbl_id
@@ -296,61 +301,78 @@ function updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options) {
  * @param decimatedTables
  * @param usesRadians
  */
-function updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
-    const {centralPoint, maxRadius}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
+function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
+    const {maxRadius, avgOfCenters}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
 
-    if (!centralPoint || maxRadius<=0) return;
+
+    const {overlayPosition= avgOfCenters }=  options;
+
+    if (!avgOfCenters || maxRadius<=0) return;
+    const {fovDegFallOver, hipsSourceURL, imageSourceParams, useHiPS}= options;
 
     if (useHiPS) {
+        // const baseTitle= options.getCoverageBaseTitle(allRowsTable);
         const pv= getPlotViewById(visRoot(), PLOT_ID);
-        if (!pv) {
-            // const rootUrl= 'http://alasky.u-strasbg.fr/DSS/DSSColor';
-            const rootUrl= 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/';
-            const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
+        let plotAllSkyFirst= false;
+        if (coverageNeedsUpdating(pv,avgOfCenters,maxRadius)) {
+            let imageRequest;
+            let allSkyRequest= null;
             const size= Math.max(maxRadius*2.2, 600/3600);
-            wpRequest.setPlotGroupId(viewerId);
-            wpRequest.setPlotId(PLOT_ID);
-            wpRequest.setOverlayPosition(centralPoint);
-            wpRequest.setWorldPt(centralPoint);
-            wpRequest.setSizeInDeg(size);
-            // dispatchPlotHiPS({
-            //     plotId: PLOT_ID,
-            //     wpRequest,
-            //     viewerId,
-            //     attributes: {
-            //         [COVERAGE_TARGET]: centralPoint,
-            //         [COVERAGE_RADIUS]: maxRadius,
-            //         [COVERAGE_TABLE]: tbl_id,
-            //         [COVERAGE_CREATED]: true,
-            //     },
-            // });
-            //
-            const hipsRequest= wpRequest;
-            const imageRequest= WebPlotRequest.makeWiseRequest(centralPoint, '3a', '1', size);
-            imageRequest.setPlotId(PLOT_ID);
-            imageRequest.setPlotGroupId(viewerId);
-            imageRequest.setOverlayPosition(centralPoint);
-            wpRequest.setWorldPt(centralPoint);
-            dispatchPlotImageOrHiPS({
-                plotId: PLOT_ID,
-                hipsRequest,
-                imageRequest,
-                fovDegFallOver:.5,
-                viewerId,
-                attributes: {
-                    [COVERAGE_TARGET]: centralPoint,
-                    [COVERAGE_RADIUS]: maxRadius,
-                    [COVERAGE_TABLE]: tbl_id,
-                    [COVERAGE_CREATED]: true,
-                },
-            });
+            if (size>160) {
+                allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
+                allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
+                allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
+                plotAllSkyFirst= true;
+            }
+            if (imageSourceParams) {
+                imageRequest= WebPlotRequest.makeFromObj(imageSourceParams);
+            }
+            else {
+                imageRequest= WebPlotRequest.makeWiseRequest(avgOfCenters, '3a', '1', size);
+            }
+            imageRequest= initRequest(imageRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
+
+            let hipsRequest= WebPlotRequest.makeHiPSRequest(hipsSourceURL, null);
+            hipsRequest= initRequest(hipsRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
+            hipsRequest.setSizeInDeg(size);
+
+            if (options.title) {
+                imageRequest.setTitleOptions(TitleOptions.NONE);
+                imageRequest.setTitle(options.title);
+            }
+
+            //todo: fixed this like the else to change isPlotted , also add if for overlayCoverageDrawing
+
+
+            const plot= primePlot(visRoot(), PLOT_ID);
+            if (plot &&
+                pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) &&
+                plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
+                overlayCoverageDrawing(decimatedTables, options);
+            }
+            else {
+                dispatchPlotImageOrHiPS({
+                    plotId: PLOT_ID,
+                    hipsRequest,
+                    imageRequest,
+                    allSkyRequest,
+                    fovDegFallOver,
+                    viewerId,
+                    plotAllSkyFirst,
+                    attributes: {
+                        [COVERAGE_TARGET]: avgOfCenters,
+                        [COVERAGE_RADIUS]: maxRadius,
+                        [COVERAGE_TABLE]: tbl_id,
+                        [COVERAGE_CREATED]: true,
+                    },
+                });
+            }
         }
 
     }
     else {
-        const wpRequest= getCoverageRequest(centralPoint,maxRadius,
-            options.getCoverageBaseTitle(allRowsTable),
-            false, options.gridOn);
+        const wpRequest= getCoverageRequest(avgOfCenters,maxRadius,
+            options.getCoverageBaseTitle(allRowsTable), false, options.gridOn);
         wpRequest.setPlotId(PLOT_ID);
         wpRequest.setPlotGroupId(viewerId);
         if (!isUndefined(options.overlayPosition)) wpRequest.setOverlayPosition(options.overlayPosition);
@@ -361,7 +383,7 @@ function updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRo
 
         const plot= primePlot(visRoot(), PLOT_ID);
         if (plot &&
-            pointEquals(centralPoint,plot.attributes[COVERAGE_TARGET]) &&
+            pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) &&
             plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
             overlayCoverageDrawing(decimatedTables, options);
         }
@@ -371,7 +393,7 @@ function updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRo
                         wpRequest,
                         viewerId,
                         attributes: {
-                            [COVERAGE_TARGET]: centralPoint,
+                            [COVERAGE_TARGET]: avgOfCenters,
                             [COVERAGE_RADIUS]: maxRadius,
                             [COVERAGE_TABLE]: tbl_id,
                             [COVERAGE_CREATED]: true,
@@ -385,6 +407,25 @@ function updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRo
 
 }
 
+/**
+ *
+ * @param r
+ * @param viewerId
+ * @param plotId
+ * @param overlayPos
+ * @param wp
+ * @return {*}
+ */
+function initRequest(r,viewerId,plotId, overlayPos, wp) {
+    if (!r) return undefined;
+    r= r.makeCopy();
+    r.setPlotGroupId(viewerId);
+    r.setPlotId(plotId);
+    r.setOverlayPosition(overlayPos);
+    if (wp) r.setWorldPt(wp);
+    return r;
+}
+
 
 /**
  * Determine if the plotted request match the passed request.  If the plotted request is not plotter by this
@@ -394,22 +435,36 @@ function updateCoverageWithData(viewerId, useHiPS, table, options, tbl_id, allRo
  */
 function isPlotted(r) {
     const pv= getPlotViewById(visRoot(),r.getPlotId());
+    if (!pv || !pv.request) return false;
     const plot= primePlot(pv);
     if (plot) {
         if (plot.attributes[COVERAGE_CREATED]) {
-            return isImageDataRequeestedEqual(plot.plotState.getWebPlotRequest(), r);
+            return isImageDataRequeestedEqual(pv.request, r);
         }
         else {
             return true;
         }
     }
-    else if (get(pv,'request')) {
+    else {
         return isImageDataRequeestedEqual(pv.request,r);
+    }
+}
+
+
+
+function coverageNeedsUpdating(pv, centralPoint, maxRadius) {
+    const plot= primePlot(pv);
+    if (!plot) return true;
+    const {attributes} = plot;
+    if (attributes[COVERAGE_RADIUS] && attributes[COVERAGE_TARGET]) {
+        return (maxRadius!==attributes[COVERAGE_RADIUS] || !pointEquals(attributes[COVERAGE_TARGET],centralPoint));
     }
     else {
         return false;
     }
 }
+
+
 
 
 /**
@@ -422,7 +477,7 @@ function isPlotted(r) {
  */
 function computeSize(options, decimatedTables,allRowsTable, usesRadians) {
     const ary= options.multiCoverage ? values(decimatedTables) : [allRowsTable];
-    let testAry= ary
+    const testAry= ary
         .filter( (t) => t && t!=='WORKING')
         .map( (t) => {
             let ptAry= [];
@@ -438,21 +493,9 @@ function computeSize(options, decimatedTables,allRowsTable, usesRadians) {
             }
             return flattenDeep(ptAry);
     } );
-    testAry= flattenDeep(testAry);
-    if (isOnePoint(testAry)) {
-        return {centralPoint:testAry[0], maxRadius: .05};
-    }
-    else {
-        return computeCentralPointAndRadius(testAry);
-    }
+
+    return computeCentralPtRadiusAverage(testAry);
 }
-
-function isOnePoint(wpList) {
-    if (isEmpty(wpList)) return false;
-    return !wpList.some( (wp) => !pointEquals(wp,wpList[0]));
-}
-
-
 
 function makeOverlayCoverageDrawing() {
     const drawingOptions= {};
@@ -610,10 +653,11 @@ function getCovColumnsForQuery(options, table) {
 
 
 
-function getQueryCenter(table) { // eslint-disable-line no-unused-vars  //todo not supported yet,
-}
+// function getQueryCenter(table) { // eslint-disable-line no-unused-vars  //todo not supported yet,
+// }
 
 function cleanUpOptions(options) {
+    const opStrList= Object.keys(defOptions);
     return Object.keys(options).reduce( (result, key) => {
         const properKey= opStrList.find( (testKey) => testKey.toLowerCase()===key.toLowerCase());
         result[properKey||key]= options[key];

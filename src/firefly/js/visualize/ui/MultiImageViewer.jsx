@@ -11,6 +11,7 @@ import {NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
+import {getPlotViewById} from '../PlotViewUtil.js';
 
 export class MultiImageViewer extends PureComponent {
 
@@ -46,10 +47,10 @@ export class MultiImageViewer extends PureComponent {
     }
 
     storeUpdate(props) {
-        var {state}= this;
-        var {viewerId}= props;
-        var viewer= getViewer(getMultiViewRoot(),viewerId);
-        if (viewer!==state.viewer || visRoot()!==state.visRoot || getDlAry() != state.dlAry) {
+        const {state}= this;
+        const {viewerId}= props;
+        const viewer= getViewer(getMultiViewRoot(),viewerId);
+        if (viewer!==state.viewer || visRoot()!==state.visRoot || getDlAry() !== state.dlAry) {
             if (this.iAmMounted) this.setState({viewer,visRoot:visRoot(),dlAry:getDlAry()});
         }
     }
@@ -63,10 +64,14 @@ export class MultiImageViewer extends PureComponent {
             if (isEmpty(gridDefFunc([]))) return false; // it is possible the function will returns some messages
         }
         const newProps= omit(this.props, ['viewerPlotIds']);
+        const aId= viewer.itemIdAry.find( (id) => getPlotViewById(visRoot,id));
+        const pv= getPlotViewById(visRoot, aId);
         return (
             <MultiImageViewerView {...newProps}
                                   viewerPlotIds={viewer.itemIdAry}
                                   layoutType={layoutType}
+                                  inlineTitle={true}
+                                  aboveTitle={false}
                                   visRoot={visRoot}
                                   dlAry={dlAry}
             />

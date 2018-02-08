@@ -5,10 +5,11 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {visRoot, dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
-import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
+import {getMultiViewRoot, getViewer, getExpandedViewerItemIds, EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
 import {flux} from '../../Firefly.js';
 import {ExpandedTools} from './ExpandedTools.jsx';
 import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
+import {getPlotViewById} from '../PlotViewUtil.js';
 
 export class ImageExpandedMode extends PureComponent {
 
@@ -54,16 +55,20 @@ export class ImageExpandedMode extends PureComponent {
 
         const layoutType= vr.expandedMode===ExpandType.GRID ? 'grid' : 'single';
 
+        var viewer= getViewer(getMultiViewRoot(),EXPANDED_MODE_RESERVED);
+
         return (
             <MultiImageViewerView viewerPlotIds={getExpandedViewerItemIds(multiViewRoot)}
                                   layoutType={layoutType}
                                   Toolbar={ExpandedTools}
-                                  viewerId={'EXPANDED_VIEW'}
+                                  viewerId={viewer.viewerId}
                                   visRoot={vr}
                                   style={{flex:'1 1 auto'}}
                                   closeFunc={closeFunc}
                                   defaultDecoration={false} 
                                   showWhenExpanded={true}
+                                  inlineTitle={true}
+                                  aboveTitle={false}
                                   insideFlex={insideFlex}
             />
         );

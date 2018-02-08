@@ -99,7 +99,7 @@ export function StretchDropDownView({plotView:pv}) {
             <ToolbarButton text='Color stretch...'
                            tip='Change the background image stretch'
                            enabled={enabled} horizontal={false}
-                           onClick={() => showColorDialog()}/>
+                           onClick={(element) => showColorDialog(element)}/>
             <DropDownVerticalSeparator/>
 
             <ToolbarButton text='Z Scale Linear Stretch'
