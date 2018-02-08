@@ -109,11 +109,19 @@
     The hostname is the hostname of the remote CacheManager peer. The port is the listening
     port of the RMICacheManagerPeerListener of the remote CacheManager peer.
 
+    NOTES:
+        239.255.x.y: this address range is reserved for Site-local.
+        239.192-251.x.y: use this range for Organization-local.
+        224.0.1.0-238.255.255.255: Global-scope
+
+        use 239.255.0.1 for site-local
+        use 239.250.0.1 for org-local
+        use 230.0.0.1   for global
     -->
     <cacheManagerPeerProviderFactory
             class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory"
             properties="peerDiscovery=automatic,
-                        multicastGroupAddress=239.255.0.1,
+                        multicastGroupAddress=@ehcache.multicast.address@,
                         multicastGroupPort=@ehcache.multicast.port@, timeToLive=@ehcache.multicast.ttl@"
             propertySeparator=","
             />

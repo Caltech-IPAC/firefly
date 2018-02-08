@@ -15,11 +15,13 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
+import net.sf.ehcache.distribution.RMICachePeer;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,6 +72,20 @@ public class ServerStatus extends BaseHttpServlet {
         writer.println("DiskStore Path: " + cm.getConfiguration().getDiskStoreConfiguration().getPath());
         writer.println();
 
+        try {
+            writer.println("Host IP Address: " + InetAddress.getLocalHost().getHostAddress());
+
+
+            List localCachePeers = cm.getCachePeerListener("RMI").getBoundCachePeers();
+            for (Object cp : localCachePeers) {
+                RMICachePeer rcp = (RMICachePeer) cp;
+                writer.println("\tRMICachePeer : " + rcp.getUrl());
+            }
+
+        } catch (Exception e) {
+            writer.println("\tHost IP Address: n/a" );
+        }
+
         writer.println("Caches: ");
         Map<String, CacheManagerPeerProvider> peerProvs = cm.getCacheManagerPeerProviders();
         String[] cacheNames = cm.getCacheNames();
@@ -86,7 +102,9 @@ public class ServerStatus extends BaseHttpServlet {
                     CachePeer cp = (CachePeer) o;
                     try {
                         writer.println("\tReplicating with: " + cp.getUrl());
-                    } catch (RemoteException e) {}
+                    } catch (RemoteException e) {
+                        writer.println("\tFail to connect: " + cp.toString());
+                    }
                 }
             }
             writer.println();

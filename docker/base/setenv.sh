@@ -4,6 +4,7 @@ CATALINA_OPTS="\
         -Xmx${MAX_JVM_SIZE} \
         -DjvmRoute=${JVM_ROUTE}
         -Djava.rmi.server.hostname= \
+        -Djava.net.preferIPv4Stack=true \
         -Dcom.sun.management.jmxremote.port=${JMX_ADDRESS} \
         -Dcom.sun.management.jmxremote.rmi.port=${JMX_ADDRESS} \
         -Dcom.sun.management.jmxremote.ssl=false \
