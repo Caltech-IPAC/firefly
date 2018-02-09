@@ -28,6 +28,7 @@ import {getUIComponent} from './CatalogUI.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import SelectArea, {SelectedShape} from './SelectArea.js';
+import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 
 const TYPE_ID= 'CATALOG_TYPE';
 
@@ -331,6 +332,7 @@ export function selectCatalog(pv,dlAry) {
                     .forEach( (idx) => selectInfoCls.setRowSelect(idx, true));
                 dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
             });
+            detachSelectArea(pv);
         }
     }
 }
@@ -359,6 +361,7 @@ export function filterCatalog(pv,dlAry) {
 
     const selectedShape = getSelectedShape(pv, dlAry);
     catDlAry.forEach((dl) =>doFilter(dl,p,sel, selectedShape));
+    detachSelectArea(pv);
 }
 
 

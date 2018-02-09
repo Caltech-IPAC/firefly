@@ -17,6 +17,7 @@ import { getPlotViewById, applyToOnePvOrGroup, findPlotGroup, isDrawLayerAttache
 import {isHiPS, isImage} from '../WebPlot.js';
 import {RotateType} from '../PlotState.js';
 import {clone} from '../../util/WebUtil.js';
+import {detachSelectAreaRelatedLayers} from '../ui/SelectAreaDropDownView.jsx';
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
@@ -94,6 +95,8 @@ export function restoreDefaultsActionCreator(rawAction) {
         const {plotGroupAry,plotViewAry}= vr;
         const pv= getPlotViewById(vr,plotId);
         const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+
+        detachSelectAreaRelatedLayers(pv, true);
         applyToOnePvOrGroup( plotViewAry, plotId, plotGroup, false,
             (pv)=> {
                 if (vr.plotRequestDefaults[pv.plotId]) {

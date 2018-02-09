@@ -172,7 +172,7 @@ export function drawOnCanvas(c,drawingDef, w, h) {
 function makeHelpLine(helpLine) {
     if (helpLine) {
         return (
-            <div style={{paddingTop:10,maxWidth:'30em',marginLeft:'2em'}}>{helpLine}</div>
+            <div style={{paddingTop:10,paddingBottom:5,maxWidth:'30em',marginLeft:'2em', whiteSpace: 'normal'}}>{helpLine}</div>
         );
     }
     else {

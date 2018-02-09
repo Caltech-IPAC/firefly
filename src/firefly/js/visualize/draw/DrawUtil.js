@@ -9,7 +9,7 @@ import {toRadians} from '../VisUtil.js';
 const FALLBACK_COLOR = 'red';
 
 export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawTextCanvas, drawPath, makeShadow,
-                drawHandledLine, drawInnerRecWithHandles, drawInnerCircleWithHandles, rotateAroundScreenPt,
+                drawHandledLine, drawInnerRecWithHandles, drawCircleWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
                 drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize,
@@ -87,13 +87,17 @@ function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) 
     stroke(ctx);
 }
 
-function drawInnerCircleWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) {
+function drawCircleWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2, outerThickness = 0) {
 
     const x0 = (inX1+inX2)/2;
     const y0 = (inY1+inY2)/2;
-    const r1 = Math.max((Math.abs(inX1-inX2)-(2*lineWidth))/2, 1);
-    const r2 = Math.max((Math.abs(inY1-inY2)-(2*lineWidth))/2, 1);
+    const rx = (inX2 - inX1)/2;
+    const ry = (inY2 - inY1)/2;
 
+    let r1 = Math.abs(rx);
+    let r2 = Math.abs(ry);
+    r1 = Math.max(r1 - outerThickness, 1);
+    r2 = Math.max(r2 - outerThickness, 1);
 
     drawEllipse(ctx, x0, y0, color, lineWidth, r1, r2, 0);
 }

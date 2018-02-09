@@ -169,7 +169,6 @@ function crossesDisplay(plot, devPt1, devPt2) {
 
 
 /**
- *
  * @param ctx
  * @param {DevicePt} pt0
  * @param {DevicePt} pt2
@@ -182,21 +181,21 @@ function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
     const   {handleColor=color} = drawParams;
     const lineWidth= (style===Style.STANDARD) ? 2 : 1;
 
-    const sWidth= Math.abs(pt2.x-pt0.x);
-    const sHeight= Math.abs(pt2.y-pt0.y);
+    const sWidth= pt2.x-pt0.x;
+    const sHeight= pt2.y-pt0.y;
 
     if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
         DrawUtil.strokeRec(ctx, color, lineWidth, pt0.x, pt0.y, sWidth, sHeight);
     } else if (selectedShape === SelectedShape.circle.key) {
-        DrawUtil.drawEllipse(ctx, (pt2.x + pt0.x)/2, (pt0.y+pt2.y)/2, color, lineWidth, sWidth/2, sHeight/2, 0);
+        DrawUtil.drawCircleWithHandles(ctx, color, lineWidth, pt0.x, pt0.y, pt2.x, pt2.y);
     }
 
     if (style === Style.HANDLED) {
 
         if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
-            DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+            DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
         } else {
-            DrawUtil.drawInnerCircleWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y);
+            DrawUtil.drawCircleWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
         }
 
         const pt1= makeDevicePt(pt0.x+sWidth,pt0.y);

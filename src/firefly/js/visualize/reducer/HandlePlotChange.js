@@ -191,7 +191,10 @@ function zoomStart(state, action) {
 
 
     // update zoom factor and scroll position
-    const centerImagePt= findCurrentCenterPoint(pv);
+    const centerImagePt= isFitFill(userZoomType) ?
+                          makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
+                          findCurrentCenterPoint(pv);
+
     pv= replacePrimaryPlot(pv,clonePlotWithZoom(plot,zoomLevel));
 
 
@@ -464,10 +467,9 @@ function updateViewSize(state,action) {
             pv= recenterPv(null, false)(pv);
         }
         else {
-            const centerOn= (pv.scrollX<0 || pv.scrollY<0) ?
-                    makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
-                    findCurrentCenterPoint(pv);
-            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerOn));
+            // const centerImagePt= (pv.scrollX<0 || pv.scrollY<0) ? makeImagePt(plot.dataWidth/2, plot.dataHeight/2) : findCurrentCenterPoint(pv);
+            const centerImagePt= (pv.scrollX===-1 && pv.scrollY===-1) ? makeImagePt(plot.dataWidth/2, plot.dataHeight/2) : findCurrentCenterPoint(pv);
+            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
         }
 
         pv= updateTransform(pv);

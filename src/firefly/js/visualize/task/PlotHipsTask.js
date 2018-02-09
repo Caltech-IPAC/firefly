@@ -281,8 +281,8 @@ function getCornersAttribute(pv) {
     const cAry= getCorners(plot);
     if (!cAry) return null;
     return {
-        [PlotAttribute.LAST_IMAGE_BOUNDS]: cAry,
-        [PlotAttribute.LAST_IMAGE_TITLE]: plot.title
+        [PlotAttribute.OUTLINEIMAGE_BOUNDS]: cAry,
+        [PlotAttribute.OUTLINEIMAGE_TITLE]: plot.title
     };
 }
 

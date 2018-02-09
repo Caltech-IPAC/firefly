@@ -197,6 +197,7 @@ export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
     if (plotIdAry) {
         dispatchAttachLayerToPlot(drawLayerTypeId,plotIdAry);
     }
+    return drawLayer;
 }
 
 
@@ -316,6 +317,7 @@ export function dispatchDestroyDrawLayer(id) {
  * @param {boolean} attachAllPlot
  * @param {boolean|string} visible - Can have three values: true: layer is attach visible, false: attach not-visible,
  * value (string) 'inherit' layer is visible
+ * @param {boolean} plotTypeMustMatch
  * @memberof firefly.action
  * @public
  * @function  dispatchAttachLayerToPlot
