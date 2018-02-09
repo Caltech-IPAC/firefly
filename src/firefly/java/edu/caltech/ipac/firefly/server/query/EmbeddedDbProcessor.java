@@ -327,8 +327,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         SelectionInfo selectInfo = treq.getSelectInfo();
         if (selectInfo == null) {
             selectInfo = new SelectionInfo(false, null, rowCnt);
-        } else {
-            selectInfo.setRowCount(rowCnt);
         }
 
         String prevResultSetID = treq.getMeta(TableServerRequest.RESULTSET_ID);             // the previous resultset ID
@@ -350,6 +348,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             }
             selectInfo = newRowNums.size() == rowCnt ? new SelectionInfo(true, null, rowCnt) : new SelectionInfo(false, newRowNums, rowCnt);
         }
+        selectInfo.setRowCount(rowCnt);
         return selectInfo;
     }
 }
