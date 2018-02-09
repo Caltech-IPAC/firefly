@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.data;
 
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
@@ -20,9 +21,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
     public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc
     public static final String RESULTSET_ID = "resultSetID";        // this meta if exists contains the ID of the resultset returned.
-
-    public static final String DECIMATE_INFO = "decimate";
-    public static final String SQL_FROM = "sqlFrom";
+    public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this of the resultset.
 
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "title";
@@ -33,12 +32,14 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
     public static final String INCL_COLUMNS = "inclCols";
     public static final String FIXED_LENGTH = "fixedLength";
     public static final String META_INFO = "META_INFO";
-    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID,SQL_FROM);
+    public static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID);
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
+    public static final String SELECT_INFO = "selectInfo";  // a property of META_INFO.  deserialize into SelectionInfo.java
 
     private int pageSize = -1;
     private int startIdx;
     private ArrayList<String> filters;
+    private SelectionInfo selectInfo;
     private Map<String, String> metaInfo;
 
     public TableServerRequest() {
@@ -146,6 +147,14 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         } else {
             this.filters = null;
         }
+    }
+
+    public SelectionInfo getSelectInfo() {
+        return selectInfo;
+    }
+
+    public void setSelectInfo(SelectionInfo selectInfo) {
+        this.selectInfo = selectInfo;
     }
 
     /**
@@ -278,6 +287,14 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         }
         return params;
     }
+
+    @Override
+    public ServerRequest cloneRequest() {
+        TableServerRequest tsr = (TableServerRequest) super.cloneRequest();
+        tsr.setSelectInfo(getSelectInfo());
+        return tsr;
+    }
+
 
 //====================================================================
 //

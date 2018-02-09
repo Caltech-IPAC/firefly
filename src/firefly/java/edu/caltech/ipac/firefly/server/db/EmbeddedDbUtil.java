@@ -153,10 +153,10 @@ public class EmbeddedDbUtil {
 
         DataGroupPart page = EmbeddedDbUtil.toDataGroupPart(data, treq);
         page.setRowCount(rowCnt);
-        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, forTable);
         if (!StringUtils.isEmpty(treq.getTblTitle())) {
             page.getData().setTitle(treq.getTblTitle());  // set the datagroup's title to the request title.
         }
+
         return page;
     }
 
@@ -336,6 +336,7 @@ public class EmbeddedDbUtil {
         String insertDDSql = dbAdapter.insertDDSql(tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
+
 
 //====================================================================
 //

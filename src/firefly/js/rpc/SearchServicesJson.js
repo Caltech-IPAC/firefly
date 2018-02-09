@@ -6,7 +6,7 @@
  * Date: 3/5/12
  */
 
-import {get, set, omitBy} from 'lodash';
+import {get, set, omitBy, cloneDeep} from 'lodash';
 
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
@@ -14,8 +14,8 @@ import {getBgEmail} from '../core/background/BackgroundUtil.js';
 import {encodeUrl, download, getModuleName} from '../util/WebUtil.js';
 
 import Enum from 'enum';
-import {getTblById} from '../tables/TableUtil.js';
-import {MAX_ROW, DataTagMeta} from '../tables/TableRequestUtil.js';
+import {getTblById, getResultSetID, getResultSetRequest} from '../tables/TableUtil.js';
+import {MAX_ROW, DataTagMeta, getTblId, setResultSetID, setResultSetRequest, setSelectInfo} from '../tables/TableRequestUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getBackgroundJobs} from '../core/background/BackgroundUtil.js';
 
@@ -44,7 +44,9 @@ export function fetchTable(tableRequest, hlRowIdx) {
         startIdx: 0,
         pageSize : MAX_ROW
     };
-    tableRequest = Object.assign(def, tableRequest);
+    
+    tableRequest = setupNewRequest(tableRequest, def);
+
     const params = {
         [ServerParams.REQUEST]: JSON.stringify(tableRequest),
     };
@@ -59,6 +61,12 @@ export function fetchTable(tableRequest, hlRowIdx) {
                 return nAry;
             }, []);
         }
+        if (tableModel.selectInfo) {
+            // convert selectInfo to JS object
+            const selectInfo = SelectInfo.parse(tableModel.selectInfo);
+            tableModel.selectInfo = selectInfo.data;
+        }
+
         tableModel.highlightedRow = hlRowIdx || startIdx;
         return tableModel;
     });
@@ -313,3 +321,25 @@ export function getDownloadScript({packageID, type, fname, dataSource}) {
     if (url) download(url);
 }
 
+/**
+ * This function add some important meta info needed by the server to process this request.
+ * These meta are system-only info and should not need to be known outside of this app.
+ * @param {TableRequest} tableRequest
+ * @param {object} defaults
+ */
+function setupNewRequest(tableRequest, defaults) {
+    const newRequest = Object.assign(cloneDeep(tableRequest), defaults);
+
+    const tableModel = getTblById(getTblId(newRequest));
+    if (tableModel) {
+        // pass along its resultSetID
+        const resultSetID = getResultSetID(tableModel.tbl_id);
+        resultSetID && setResultSetID(newRequest, resultSetID);
+        // pass along its resultSetRequest
+        const resultSetRequest = getResultSetRequest(tableModel.tbl_id);
+        resultSetRequest && setResultSetRequest(newRequest, resultSetRequest);
+        // pass along selectInfo
+        tableModel.selectInfo && setSelectInfo(newRequest, tableModel.selectInfo);
+    }
+    return newRequest;
+}

@@ -7,22 +7,34 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
  * Date: Jun 19, 2009
-*
-* @author loi
-* @version $Id: SelectionInfo.java,v 1.5 2012/02/14 01:32:21 loi Exp $
-*/
+ * Serialized form:  selectAll-idx1,idx2[,idxn]-rowCount
+ *  selectAll is a boolean
+ *  rowCount is an integer
+ *
+ * @author loi
+ * @version $Id: SelectionInfo.java,v 1.5 2012/02/14 01:32:21 loi Exp $
+ */
 public class SelectionInfo implements Serializable {
     private boolean selectAll;
     private Set<Integer> exceptions = new HashSet<Integer>();
     private int rowCount;
 
     public SelectionInfo() {
+    }
+
+    public SelectionInfo(boolean selectAll, List<Integer> exceptions, int rowCount) {
+        this.selectAll = selectAll;
+        this.rowCount = rowCount;
+        if (exceptions != null) {
+            this.exceptions = new HashSet<>(exceptions);
+        }
     }
 
     public void setRowCount(int rowCount) {

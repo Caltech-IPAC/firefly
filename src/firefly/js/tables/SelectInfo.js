@@ -5,8 +5,13 @@
 import {isEmpty} from 'lodash';
 
 import {getTblById} from './TableUtil.js';
+import {toBoolean} from '../util/WebUtil.js';
 
-
+/**
+ *  Serialized form:  selectAll-idx1,idx2[,idxn]-rowCount
+ *      selectAll is a boolean
+ *      rowCount is an integer
+ */
 export class SelectInfo {
     constructor(selectInfo) {
         this.data = selectInfo;
@@ -88,13 +93,14 @@ export class SelectInfo {
         return this.data.selectAll + '-' + Array.from(this.data.exceptions).join(',') + '-' + this.data.rowCount;
     }
 
-    parse(s) {
+    static parse(s) {
         var selecInfo = {};
         var parts = s.split('-');
         if (parts.length === 3) {
-            selecInfo.selectAll = Boolean(parts[0]);
+            selecInfo.selectAll = toBoolean(parts[0]);
             if (!isEmpty(parts[1])) {
-                selecInfo.exceptions =  parts[1].reduce( (res, cval) => {
+                const indices = parts[1].split(',');
+                selecInfo.exceptions =  indices.reduce( (res, cval) => {
                         return res.add(parseInt(cval));
                     }, new Set());
             }
@@ -112,7 +118,7 @@ export class SelectInfo {
      * @param {number} offset     All indices passed into this class's funtion will be offsetted by this given value.
      * @returns {SelectInfo}
      */
-    static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0}, offset) {
+    static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0}={}, offset) {
         var si = new SelectInfo({selectAll, exceptions, rowCount});
         if (offset) si.offset = offset;
         return si;

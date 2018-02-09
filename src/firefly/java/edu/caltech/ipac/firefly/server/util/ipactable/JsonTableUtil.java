@@ -40,7 +40,9 @@ public class JsonTableUtil {
 
         if (request != null && request.getMeta() != null) {
             for (String key : request.getMeta().keySet()) {
-                meta.setAttribute(key, request.getMeta(key));
+                if (!meta.contains(key)) {
+                    meta.setAttribute(key, request.getMeta(key));
+                }
             }
         }
 
@@ -59,11 +61,14 @@ public class JsonTableUtil {
 
         if (meta != null) {
             tableModel.put("tableMeta", toJsonTableMeta(meta));
+
+            if (meta.getSelectInfo() != null ){
+                tableModel.put("selectInfo", meta.getSelectInfo().toString());
+            }
         }
         if (request != null ){
             tableModel.put("request", toJsonTableRequest(request));
         }
-
         return tableModel;
     }
 
