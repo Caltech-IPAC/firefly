@@ -8,23 +8,28 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -265,7 +270,20 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         nreq.setSortInfo(null);
         nreq.setInclColumns(new String[0]);
 
-        return execRequestQuery(nreq, dbFile, resultSetID);
+        DataGroupPart page = execRequestQuery(nreq, dbFile, resultSetID);
+
+        // save information needed to recreated this resultset
+        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_REQ, JsonTableUtil.toJsonTableRequest(treq).toString());
+        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, resultSetID);
+
+        // handle selectInfo
+        // selectInfo is sent to the server as Request.META_INFO.selectInfo
+        // it will be moved into TableModel.selectInfo
+        SelectionInfo selectInfo = getSelectInfoForThisResultSet(treq, dbAdapter, dbFile, resultSetID, page.getRowCount());
+        page.getTableDef().setSelectInfo(selectInfo);
+        treq.setSelectInfo(null);
+
+        return page;
     }
 
     public boolean isSecurityAware() { return false; }
@@ -279,5 +297,59 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return cols;
     }
 
+    private String ensurePrevResultSetIfExists(TableServerRequest treq, File dbFile) {
+
+        String prevResultSetID = treq.getMeta().get(TableServerRequest.RESULTSET_ID);
+        if (!StringUtils.isEmpty(prevResultSetID)) {
+            try {
+                DbInstance dbInstance = DbAdapter.getAdapter(treq).getDbInstance(dbFile);
+                JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", prevResultSetID));
+            } catch (Exception e) {
+                // does not exists.. create table from original 'data' table
+                String resultSetRequest = treq.getMeta().get(TableServerRequest.RESULTSET_REQ);
+                if (!StringUtils.isEmpty(resultSetRequest)) {
+                    try {
+                        TableServerRequest req = QueryUtil.convertToServerRequest(resultSetRequest);
+                        DataGroupPart page = getResultSet(req, dbFile);
+                        prevResultSetID = page.getTableDef().getAttribute(TableServerRequest.RESULTSET_ID).getValue();
+                    } catch (DataAccessException e1) {
+                        // can ignore for now.
+                    }
+                    return prevResultSetID;
+                }
+            }
+        }
+        return prevResultSetID;
+    }
+
+    private SelectionInfo getSelectInfoForThisResultSet(TableServerRequest treq, DbAdapter dbAdapter, File dbFile, String forTable, int rowCnt) {
+
+        SelectionInfo selectInfo = treq.getSelectInfo();
+        if (selectInfo == null) {
+            selectInfo = new SelectionInfo(false, null, rowCnt);
+        }
+
+        String prevResultSetID = treq.getMeta(TableServerRequest.RESULTSET_ID);             // the previous resultset ID
+        prevResultSetID = StringUtils.isEmpty(prevResultSetID) ? "data" : prevResultSetID;
+
+        if ( selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
+            // there were row(s) selected from previous resultset.. make sure selectInfo is remapped to new resultset
+            prevResultSetID = ensurePrevResultSetIfExists(treq, dbFile);
+
+            String rowNums = StringUtils.toString(selectInfo.getSelected());
+            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
+            String origRowIds = String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", prevResultSetID, rowNums);
+
+            List<Integer> newRowNums = new ArrayList<>();
+            try {
+                newRowNums = jdbc.query(String.format("Select ROW_NUM from %s where ROW_IDX in (%s)", forTable, origRowIds), (rs, idx) -> rs.getInt(1));
+            } catch (Exception ex) {
+                // unable to collect previous select info.  we'll treat it
+            }
+            selectInfo = newRowNums.size() == rowCnt ? new SelectionInfo(true, null, rowCnt) : new SelectionInfo(false, newRowNums, rowCnt);
+        }
+        selectInfo.setRowCount(rowCnt);
+        return selectInfo;
+    }
 }
 

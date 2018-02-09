@@ -218,6 +218,28 @@ export function isFullyLoaded(tbl_id) {
 }
 
 /**
+ * return the resultSetID of this table.
+ * This is a unique ID used to identify the resultset on the server used to populate this table.
+ * @see TableRequestUtil.setResultSetID for the reverse
+ * @param {string} tbl_id
+ * @returns {string}
+ */
+export function getResultSetID(tbl_id) {
+    return get(getTblById(tbl_id), 'tableMeta.resultSetID', '');
+}
+
+/**
+ * return the resultSetRequest of this table.
+ * This is a JSON string of the request used to created this table
+ * @see TableRequestUtil.setResultSetRequest for the reverse
+ * @param {string} tbl_id
+ * @returns {string}
+ */
+export function getResultSetRequest(tbl_id) {
+    return get(getTblById(tbl_id), 'tableMeta.resultSetRequest', '');
+}
+
+/**
  * Returns the first index of the found row.  It will search the table on the client first.
  * If none is found and the table is partially loaded, it will search the server-side as well.
  * @param {string} tbl_id the tbl_id of the table to search on.

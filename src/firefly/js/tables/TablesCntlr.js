@@ -1,11 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, set, omitBy, pickBy, isNil, cloneDeep, findKey, isEqual, unset} from 'lodash';
-import {take} from 'redux-saga/effects';
+import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset} from 'lodash';
 
 import {flux} from '../Firefly.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TblUtil from './TableUtil.js';
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
@@ -27,16 +26,32 @@ export const UI_PREFIX = 'tableUi';
 
 /*---------------------------- ACTIONS -----------------------------*/
 /**
+ * This action does a fetch and then add the results into the UI.
+ * Sequence of actions:  TABLE_SEARCH -> TABLE_FETCH -> TBL_RESULTS_ADDED -> TBL_RESULTS_ACTIVE -> TABLE_LOADED
+ */
+export const TABLE_SEARCH = `${DATA_PREFIX}.search`;
+
+/**
+ * Add this tableModel to the table store and the UI.  If tbl_id exists, data will be replaced.
+ * Sequence of actions:  TABLE_REPLACE -> TABLE_LOADED, with invokedBy = TABLE_FETCH
+ */
+export const TABLE_ADD_LOCAL = `${DATA_PREFIX}.addLocal`;
+
+/**
  * Fetch table data.  If tbl_id exists, data will be cleared.
  * Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE(+) -> TABLE_LOADED, with invokedBy = TABLE_FETCH
  */
 export const TABLE_FETCH = `${DATA_PREFIX}.fetch`;
 
 /**
- * Insert a full TableModel into the sytem.  If tbl_id exists, data will be replaced.
- * Sequence of actions:  TABLE_REPLACE -> TABLE_LOADED, with invokedBy = TABLE_FETCH
+ * Used internally; Update table data.
  */
-export const TABLE_INSERT = `${DATA_PREFIX}.insert`;
+export const TABLE_UPDATE = `${DATA_PREFIX}.update`;
+
+/**
+ * Used internally; Repace table data.
+ */
+export const TABLE_REPLACE = `${DATA_PREFIX}.replace`;
 
 /**
  * Fired when table is completely loaded on the server.
@@ -77,12 +92,6 @@ export const TABLE_SELECT = `${DATA_PREFIX}.select`;
 export const TABLE_HIGHLIGHT = `${DATA_PREFIX}.highlight`;
 
 /**
- * This action does a fetch and then add the results into the UI.
- * Sequence of actions:  TABLE_FETCH -> TABLE_UPDATE -> TABLE_LOADED -> TBL_RESULTS_ADDED -> TBL_RESULTS_ACTIVE
- */
-export const TABLE_SEARCH = `${DATA_PREFIX}.search`;
-
-/**
  * Add the table into the UI given information from the payload.
  */
 export const TBL_RESULTS_ADDED = `${RESULTS_PREFIX}.added`;
@@ -113,16 +122,6 @@ export const TBL_UI_UPDATE = `${UI_PREFIX}.update`;
  */
 export const TBL_UI_EXPANDED = `${UI_PREFIX}.expanded`;
 
-/**
- * Fired when partial table data is updated.  Used internally to maintain state.
- */
-export const TABLE_UPDATE = `${DATA_PREFIX}.update`;
-
-/**
- * Fired when full table data is updated.  Used internally to maintain state.
- */
-export const TABLE_REPLACE = `${DATA_PREFIX}.replace`;
-
 
 
 export default {actionCreators, reducers};
@@ -130,7 +129,7 @@ export default {actionCreators, reducers};
 function actionCreators() {
     return {
         [TABLE_SEARCH]:     tableSearch,
-        [TABLE_INSERT]:     tableInsert,
+        [TABLE_ADD_LOCAL]:  tableAddLocal,
         [TABLE_HIGHLIGHT]:  highlightRow,
         [TABLE_SELECT]:     tableSelect,
         [TABLE_FETCH]:      tableFetch,
@@ -138,8 +137,8 @@ function actionCreators() {
         [TABLE_FILTER]:     tableFilter,
         [TABLE_FILTER_SELROW]:  tableFilterSelrow,
         [TBL_RESULTS_ADDED]:    tblResultsAdded,
-        [TABLE_REMOVE]:     tblRemove,
-        [TBL_RESULTS_REMOVE]:     tblResultRemove
+        [TABLE_REMOVE]:         tblRemove,
+        [TBL_RESULTS_REMOVE]:   tblResultRemove
     };
 }
 
@@ -163,17 +162,16 @@ export function dispatchTableSearch(request, options, dispatcher= flux.process) 
 }
 
 /**
- * insert this tableModel into the system and then add it to the result view.
+ * Add this tableModel into the system and then add it to the result view.
  * If one exists, it will be replaced.
- * This is similar to dispatchTableSearch except fetching is not needed.  The given tableModel is a full
- * data set, and does not need server fetching.
+ * This operation is used when the tableModel is maintained locally without server's support.
  * @param {TableModel} tableModel  the tableModel to insert
  * @param {TblOptions} options  table options
  * @param {boolean}    [addUI=true]  add this table to the UI
  * @param {function}   dispatcher only for special dispatching uses such as remote
  */
-export function dispatchTableInsert(tableModel, options, addUI=true, dispatcher= flux.process) {
-    dispatcher( {type: TABLE_INSERT, payload: {tableModel, options, addUI}});
+export function dispatchTableAddLocal(tableModel, options, addUI=true, dispatcher= flux.process) {
+    dispatcher( {type: TABLE_ADD_LOCAL, payload: {tableModel, options, addUI}});
 }
 
 /**
@@ -334,7 +332,7 @@ function tableSearch(action) {
     };
 }
 
-function tableInsert(action) {
+function tableAddLocal(action) {
     return (dispatch) => {
         const {tableModel={}, options={}, addUI=true} = action.payload || {};
         const {tbl_ui_id} = options;
@@ -425,21 +423,16 @@ function tableSelect(action) {
 
 function tableFetch(action) {
     return (dispatch) => {
-        if (!action.err) {
-            var {request, hlRowIdx, invokedBy=TABLE_FETCH} = action.payload;
-            const {tbl_id} = request;
+        var {request, hlRowIdx} = action.payload;
+        const {tbl_id} = request;
 
-            dispatch( updateMerge(action, 'payload', {tbl_id}) );
-            request.startIdx = 0;
+        dispatch( updateMerge(action, 'payload', {tbl_id}) );
 
-            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy})) );
-            const backgroundable = get(request, 'META_INFO.backgroundable', false);
-            if (backgroundable) {
-                asyncFetch(request, hlRowIdx, invokedBy, dispatch);
-            } else {
-                syncFetch(request, hlRowIdx, invokedBy, dispatch);
-            }
-        }
+        TblUtil.onTableLoaded(tbl_id).then( (tableModel) => {
+            dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
+        });
+
+        doTableFetch({tbl_id, request, hlRowIdx, dispatch});
     };
 }
 
@@ -448,24 +441,60 @@ function tableSort(action) {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
             const {tbl_id} = request;
-            dispatchTableFetch(request, hlRowIdx, TABLE_SORT);
-            TblUtil.onTableLoaded(tbl_id).then( () => dispatch(action) );
+            const tableStub = setupTableOps(tbl_id, request);
+            if (!tableStub) return;
+
+            dispatch({type:TABLE_FETCH, payload: tableStub});
+
+            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => {
+                dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_SORT}));
+                dispatch(action);
+            });
+
+            doTableFetch({tbl_id, request: tableStub.request, hlRowIdx, dispatch});
         }
     };
 }
+
+function setupTableOps(tbl_id, nrequest) {
+    const tableModel = TblUtil.getTblById(tbl_id);
+    if (!tableModel) return;
+
+    const {request, tableMeta, selectInfo} = tableModel;
+    const tableData = pick(tableModel.tableData, 'columns');
+    const nreq = Object.assign({}, request, nrequest);
+    return {tbl_id, request:nreq, tableMeta, selectInfo, tableData};
+}
+
 
 function tableFilter(action) {
     return (dispatch) => {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
             const {tbl_id} = request;
-            const oreq = get(TblUtil.getTblById(tbl_id), 'request');
-            if (!oreq) return;
-            const nreq = Object.assign({}, oreq, request);
-            dispatchTableFetch(nreq, hlRowIdx, TABLE_FILTER);
-            TblUtil.onTableLoaded(tbl_id).then( () => dispatch(action) );
+            const tableStub = setupTableOps(tbl_id, request);
+            if (!tableStub) return;
+
+            dispatch({type:TABLE_FETCH, payload: tableStub});
+
+            TblUtil.onTableLoaded(tbl_id).then( (tableModel) => {
+                dispatchTableLoaded(Object.assign(TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FILTER}));
+                dispatch(action);
+            });
+
+            doTableFetch({tbl_id, request: tableStub.request, hlRowIdx,  dispatch});
         }
     };
+}
+
+function doTableFetch({request, hlRowIdx, dispatch, tbl_id}) {
+    request.startIdx = 0;
+    const backgroundable = get(request, 'META_INFO.backgroundable', false);
+    if (backgroundable) {
+        asyncFetch(request, hlRowIdx, dispatch, tbl_id);
+    } else {
+        syncFetch(request, hlRowIdx, dispatch, tbl_id);
+    }
 }
 
 
@@ -535,68 +564,61 @@ function getRowIdFor(request, selected) {
     });
 }
 
-function syncFetch(request, hlRowIdx, invokedBy, dispatch) {
+function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
     unset(request, 'META_INFO.backgroundable');
-    TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
-        const type = tableModel.origTableModel ? TABLE_REPLACE : TABLE_UPDATE;
-        try {
-            dispatch({type, payload: tableModel});
-        } catch (e) {
-            logError(e.stack);
-        }
-    }).catch( (error) => {
-        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(request.tbl_id, `Failed to load table. \n   ${error}`)});
-    });
+    TblUtil.doFetchTable(request, hlRowIdx)
+        .then( (tableModel) => {
+            try {
+                dispatch({type:TABLE_UPDATE, payload: tableModel});
+            } catch (e) {
+                logError(e.stack);
+            }
+        }).catch((error) => {
+            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
+        });
 }
 
 
-function asyncFetch(request, hlRowIdx, invokedBy, dispatch) {
-    const {tbl_id} = request;
+function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
     submitBackgroundSearch(request, request, 1000).then ( (bgStatus) => {
-        const {ID} = bgStatus;
-        if (!handleAsynFetch({request, hlRowIdx, invokedBy, dispatch, action:{type: BG_STATUS, payload: bgStatus}})) {
-            dispatchAddSaga( trackFetch, {request, hlRowIdx, invokedBy, bgID:ID, dispatch});
+        const {ID, STATE} = bgStatus;
+        if (isDone(STATE)) {
+            if (isSuccess(STATE)) {
+                syncFetch(request, hlRowIdx, dispatch, tbl_id);
+            } else {
+                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n ${getErrMsg(bgStatus)}`)});
+            }
+        } else {
+            // not done; track progress
             dispatch({type: TABLE_UPDATE, payload: {tbl_id, bgStatus}});
+            dispatchAddActionWatcher({  actions:[BG_STATUS,BG_JOB_ADD],
+                callback: bgTracker,
+                params: {bgID: ID, request, hlRowIdx, dispatch, tbl_id}});
         }
     }).catch( (error) => {
         dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
     });
 }
 
-function handleAsynFetch({request, hlRowIdx, invokedBy, bgID, dispatch, action}) {
+function bgTracker(action, cancelSelf, {bgID, request, hlRowIdx, dispatch, tbl_id}) {
     const {type} = action;
-    const {ID, STATE, tbl_id, error} = action.payload || {};
+    const {ID, STATE} = action.payload || {};
+
     switch (type) {
-        case TABLE_UPDATE :
-            if (request.tbl_id === tbl_id && error) {
-                return true;
-            }
-            break;
         case  BG_STATUS :
             if (isDone(STATE)) {
                 if (isSuccess(STATE)) {
-                    syncFetch(request, hlRowIdx, invokedBy, dispatch);
+                    syncFetch(request, hlRowIdx, dispatch, tbl_id);
                 } else {
-                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(request.tbl_id, `Failed to load table. \n   ${getErrMsg(action.payload)}`)});
+                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n ${getErrMsg(bgStatus)}`)});
                 }
-                return true;
+                cancelSelf();
             }
             break;
         case BG_JOB_ADD :
             if (ID === bgID) {
                 // sent to background... no need to track this anymore.
-                return true;
+                cancelSelf();
             }
-            break;
-    }
-    return false;
-}
-
-function* trackFetch({request, hlRowIdx, invokedBy, bgID, dispatch}) {
-    var stop = false;
-    while (!stop) {
-        const action = yield take([TABLE_UPDATE, BG_STATUS, BG_JOB_ADD]);
-        stop = handleAsynFetch({request, hlRowIdx, invokedBy, bgID, dispatch, action});
     }
 }
-

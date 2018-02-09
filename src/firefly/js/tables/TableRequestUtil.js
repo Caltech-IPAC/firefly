@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, unset, cloneDeep, omit, omitBy, isNil} from 'lodash';
+import {get, set, unset, cloneDeep, omit, omitBy, isNil} from 'lodash';
 
-import {ServerParams} from '../data/ServerParams.js';
 import {uniqueTblId} from './TableUtil.js';
 import {Keys} from '../core/background/BackgroundStatus.js';
+import {SelectInfo} from './SelectInfo.js';
 
 export const MAX_ROW = Math.pow(2,31) - 1;
 export const DataTagMeta = ['META_INFO', Keys.DATA_TAG]; // a tag describing the content of this table.  ie. 'catalog', 'imagemeta'
@@ -208,3 +208,40 @@ export function makeTableFunctionRequest(searchRequest, id, title, params={}, op
     return req;
 }
 
+/**
+ * return the tbl_id from the request object
+ * @param {TableRequest} request
+ * @returns {string}
+ */
+export function getTblId(request) {
+    return get(request, 'META_INFO.tbl_id') || get(request, 'tbl_id'); 
+}
+
+/**
+ * set the resultSetID into the request object
+ * @param {TableRequest} request
+ * @param {string} resultSetID
+ */
+export function setResultSetID(request, resultSetID) {
+    set(request, 'META_INFO.resultSetID', resultSetID);
+}
+
+/**
+ * set the resultSetRequest into the request object
+ * @param {TableRequest} request
+ * @param {string} resultSetRequest
+ */
+export function setResultSetRequest(request, resultSetRequest) {
+    set(request, 'META_INFO.resultSetRequest', resultSetRequest);
+}
+
+/**
+ * set selectInfo
+ * @param {TableRequest} request
+ * @param {object} selectInfo
+ */
+export function setSelectInfo(request, selectInfo) {
+    if (selectInfo) {
+        set(request, 'META_INFO.selectInfo', SelectInfo.newInstance(selectInfo).toString());
+    }
+}

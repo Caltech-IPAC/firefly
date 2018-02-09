@@ -312,7 +312,7 @@ function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
     );
 }
 
-function TableError({error, tbl_id, message}) {
+function TableError({tbl_id, message}) {
     const {request} = TblUtil.getTblById(tbl_id);
     const canReset = get(request, 'filters') || get(request, 'sortInfo');
     const reloadTable = () => {
