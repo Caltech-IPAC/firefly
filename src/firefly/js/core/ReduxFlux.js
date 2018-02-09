@@ -205,6 +205,7 @@ window.enableFireflyReduxLogging= false;
 //     if (type.startsWith('tblstats')) return false;
 //     if (type.startsWith('table_ui')) return false;
 //     if (type.startsWith('app_data')) return false;
+//     if (type.startsWith('ReadoutCntlr')) return false;
 //     return window.enableFireflyReduxLogging;
 // }
 

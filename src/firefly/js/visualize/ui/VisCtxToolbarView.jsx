@@ -6,7 +6,8 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../../Firefly.js';
 import {isEmpty, get} from 'lodash';
-import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
+import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById} from '../PlotViewUtil.js';
+import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
 import {makeDevicePt, makeScreenPt, makeImagePt} from '../Point.js';
@@ -19,7 +20,7 @@ import {getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
-        dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS} from '../ImagePlotCntlr.js';
+        dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS, visRoot} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
@@ -320,10 +321,10 @@ function recenterToSelection(pv) {
 
 function zoomIntoSelection(pv, dlAry) {
 
-    const p= primePlot(pv);
+    let p= primePlot(pv);
     if (!p) return;
     const {viewDim,plotId}= pv;
-    const cc= CysConverter.make(p);
+    let cc= CysConverter.make(p);
     const sel= p.attributes[PlotAttribute.IMAGE_BOUNDS_SELECTION];
     if (!sel) return;
 
@@ -336,8 +337,14 @@ function zoomIntoSelection(pv, dlAry) {
 
 
     if (p.type==='image') {
-        const newScrollPt= cc.getImageCoords(makeScreenPt(Math.min(sp0.x,sp2.x), Math.min(sp0.y,sp2.y)));
-        dispatchProcessScroll({plotId,scrollPt:newScrollPt});
+        pv= getPlotViewById(visRoot(),plotId);
+        p= primePlot(pv);
+        cc= CysConverter.make(p);
+        const ip0=  cc.getImageCoords(sel.pt0);
+        const ip2=  cc.getImageCoords(sel.pt1);
+        const centerPt= makeImagePt( Math.abs(ip0.x+ip2.x)/2, Math.abs(ip0.y+ip2.y)/2);
+        const proposedSP= findScrollPtToCenterImagePt(pv, centerPt);
+        dispatchProcessScroll({plotId,scrollPt:proposedSP});
     }
     else {
         const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
