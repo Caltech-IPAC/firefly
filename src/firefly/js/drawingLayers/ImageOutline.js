@@ -100,14 +100,18 @@ function computeDrawData(drawLayer, plotId) {
     return computeDrawobj(drawLayer, plot);
 }
 
-/*
-drawObj could be either statically set by dl.drawObj or dynamically updated in attribute
- PlotAttribute.OUTLINEIMAGE_DRAWOBJ or PlotAttribute.OUTLINEIMAGE_BOUNDS
 
- title could be either statically set by dl.text or dynamically updated in attribute PlotAttribute.OUTLINEIMAGE_TITLE
- text location could either statically set by dl.textLoc or dynamically updated in attribute PlotAttribute.OUTLINEIMAGE_TITLELOC
-
- statically set is one time set.
+/**
+ * create drawing object and title object based on the statical or dynamical settings.
+ * drawObj could be either statically set by dl.drawObj or dynamically set by plot attribute,
+ * i.e. PlotAttribute.OUTLINEIMAGE_DRAWOBJ or PlotAttribute.OUTLINEIMAGE_BOUNDS
+ * title could be either statically set by dl.text or dynamically set by attribute
+ * PlotAttribute.OUTLINEIMAGE_TITLE
+ * text location could be either statically set by dl.textLoc or dynamically set by attribute
+ * PlotAttribute.OUTLINEIMAGE_TITLELOC
+ * @param dl
+ * @param plot
+ * @returns {*}
  */
 function computeDrawobj(dl, plot) {
 
