@@ -40,7 +40,9 @@ public class AtlasImageGetter {
             String errorMsg ="";
             if (params instanceof AtlasImageParams) {
                 AtlasImageParams atlasParams = (AtlasImageParams) params;
-                sizeStr= atlasParams.getSize()+"";
+                if(!Float.isNaN(atlasParams.getSize())){
+                    sizeStr= atlasParams.getSize()+"";
+                }
                 ibeSource = new AtlasIbeDataSource();
 
                 Map<String, String> m = new HashMap<String, String>(1);
@@ -82,8 +84,9 @@ public class AtlasImageGetter {
                 DataObject row = data.get(0);
                 Map<String, String> dataMap = IpacTableUtil.asMap(row);
                 IbeDataParam dataParam = ibeSource.makeDataParam(dataMap);
-
-                dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
+                if(sizeStr!=null){
+                    dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
+                }
                 dataParam.setDoZip(true);
                 FileInfo result = ibe.getData(dataParam, null);
                 return new File(result.getInternalFilename());

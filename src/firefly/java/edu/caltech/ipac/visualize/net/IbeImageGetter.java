@@ -48,7 +48,9 @@ public class IbeImageGetter {
               ibeSource= new WiseIbeDataSource(product);
 
               queryMap.put("band", wiseParams.getBand());
-              sizeStr= wiseParams.getSize()+"";
+              if(!Float.isNaN(wiseParams.getSize())){
+                  sizeStr= wiseParams.getSize()+"";
+              }
               isWise= true;
           }
           else if (params instanceof TwoMassImageParams) {
@@ -97,7 +99,9 @@ public class IbeImageGetter {
               }
               IbeDataParam dataParam= ibeSource.makeDataParam(dataMap);
 
-              dataParam.setCutout(true, params.getRaJ2000String()+","+params.getDecJ2000String(), sizeStr);
+              if(sizeStr!=null){
+                  dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
+              }
               dataParam.setDoZip(true);
               FileInfo result= ibe.getData(dataParam,null);
               return new File(result.getInternalFilename());

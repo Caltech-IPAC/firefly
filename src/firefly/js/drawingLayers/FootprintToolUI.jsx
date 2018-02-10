@@ -134,7 +134,6 @@ class FootprintToolUI extends PureComponent {
             display:'flex',
             flexDirection:'column',
             paddingLeft : 10,
-            userSelect: 'text'
         };
 
         const mStyle = {
@@ -148,7 +147,7 @@ class FootprintToolUI extends PureComponent {
             <div style={{display:'flex', justifyContent:'flex-start', flexDirection: 'column', padding:'5px 0 9px 0'}}>
                 <div style={{display:'flex', justifyContent: 'flex-start', paddingLeft:10, paddingBottom:8}}>
                     <div> Center:</div>
-                    <div style={tStyle}>
+                    <div style={tStyle} className={'enable-select'}>
                         {convertWorldLonToString(this.state.currentPt, this.csys) + ', ' +
                         convertWorldLatToString(this.state.currentPt, this.csys)}
                     </div>
