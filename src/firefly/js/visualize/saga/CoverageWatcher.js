@@ -2,9 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
 import Enum from 'enum';
-import {get,isEmpty,isObject, flattenDeep,values, isUndefined} from 'lodash';
+import {get,isEmpty,isObject, flattenDeep, values, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {WebPlotRequest, TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
@@ -12,7 +11,7 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
     dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
-import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
+import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
@@ -27,6 +26,7 @@ import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispat
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {getNextColor} from '../draw/DrawingDef.js';
+import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 
 export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -88,108 +88,128 @@ const defOptions= {
 const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
 
-/**
- * Watch the tables and udpate coverage display
- * @param {Object} options
- */
-export function* watchCoverage(options) {
-
+export function startCoverageWatcher(options) {
     const {viewerId='DefCoverageId', useHiPS=false}= options;
     let {paused=true}= options;
     const decimatedTables=  {};
-    let tbl_id;
 
     if (paused) {
         paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
     }
     options= Object.assign(defOptions,cleanUpOptions(options));
     let displayedTableId= null;
-    let previousDisplayedTableId;
 
     if (paused) {
         const firstId= getActiveTableId();
         if (firstId) displayedTableId = updateCoverage(useHiPS, firstId, viewerId, decimatedTables, options);
     }
 
+    const params = {options, decimatedTables, paused, displayedTableId};
+
+    const actions = [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
+        TBL_RESULTS_ACTIVE,
+        DrawLayerCntlr.ATTACH_LAYER_TO_PLOT,
+        ImagePlotCntlr.PLOT_IMAGE,
+        ImagePlotCntlr.PLOT_HIPS,
+        MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
+        MultiViewCntlr.VIEWER_UNMOUNTED];
+    
+    dispatchAddActionWatcher({id: `cw-${viewerId}`, actions, callback: watchCoverage, params});
+}
+
+/**
+ * Action watcher callback: watch the tables and update coverage display
+ * @callback actionWatcherCallback
+ * @param action
+ * @param cancelSelf
+ * @param params
+ * @param params.options read-only
+ * @param params.decimatedTables read-only
+ * @param params.paused
+ * @param params.tbl_id
+ * @param params.displayedTableId
+ */
+function watchCoverage(action, cancelSelf, params) {
 
 
-    while (true) {
-        previousDisplayedTableId= displayedTableId;
-        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
-                                  TBL_RESULTS_ACTIVE, REINIT_RESULT_VIEW,
-                                  DrawLayerCntlr.ATTACH_LAYER_TO_PLOT,
-                                  ImagePlotCntlr.PLOT_IMAGE,
-                                  ImagePlotCntlr.PLOT_HIPS,
-                                  MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
-                                  MultiViewCntlr.VIEWER_UNMOUNTED]);
-        
+    let {paused, tbl_id, displayedTableId} = params;
 
-        if (paused && (action.type!==MultiViewCntlr.VIEWER_MOUNTED && action.type!==MultiViewCntlr.ADD_VIEWER) )  {
-            continue;
-        }
-
-        const {payload}= action;
-
-        if (action.type===TABLE_REMOVE) {
-            tbl_id= getActiveTableId();
-        }
-        else if (payload.tbl_id) {
-            tbl_id= payload.tbl_id; // otherwise use the last one
-        }
-
-
-        switch (action.type) {
-
-            case TABLE_LOADED:
-                if (!getTableInGroup(tbl_id)) continue;
-                decimatedTables[tbl_id]= null;
-                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
-                break;
-
-            case TBL_RESULTS_ACTIVE:
-                if (!getTableInGroup(tbl_id)) continue;
-                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
-                break;
-
-            case TABLE_REMOVE:
-                removeCoverage(payload.tbl_id, decimatedTables);
-                if (!getTableInGroup(payload.tbl_id)) continue;
-                displayedTableId = null;
-                previousDisplayedTableId = null;
-                tbl_id = getActiveTableId();
-                if (!isEmpty(decimatedTables)) {
-                    displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
-                }
-                break;
-
-            case MultiViewCntlr.ADD_VIEWER:
-            case MultiViewCntlr.VIEWER_MOUNTED:
-                if (action.payload.viewerId === viewerId) {
-                    paused = false;
-                    tbl_id = getActiveTableId();
-                    displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
-                }
-                break;
-
-            case TABLE_SELECT:
-                dispatchModifyCustomField(tbl_id, {selectInfo:action.payload.selectInfo});
-                break;
-
-            case TABLE_HIGHLIGHT:
-            case TABLE_UPDATE:
-                dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
-                break;
-
-            case MultiViewCntlr.VIEWER_UNMOUNTED:
-                if (action.payload.viewerId === viewerId) paused = true;
-                break;
-            case ImagePlotCntlr.PLOT_IMAGE:
-            case ImagePlotCntlr.PLOT_HIPS:
-                if (action.payload.plotId===PLOT_ID) overlayCoverageDrawing(decimatedTables,options);
-                break;
-        }
-        if (!displayedTableId) displayedTableId= previousDisplayedTableId;
+    if (paused && (action.type!==MultiViewCntlr.VIEWER_MOUNTED && action.type!==MultiViewCntlr.ADD_VIEWER) )  {
+        return;
     }
+
+    const {payload}= action;
+
+    if (action.type===TABLE_REMOVE) {
+        tbl_id= getActiveTableId();
+    }
+    else if (payload.tbl_id) {
+        tbl_id= payload.tbl_id; // otherwise use the last one
+    }
+
+    const {options, decimatedTables} = params;
+    const {viewerId='DefCoverageId', useHiPS=false}= options;
+
+    let previousDisplayedTableId= displayedTableId;
+
+    switch (action.type) {
+
+        case TABLE_LOADED:
+            if (!getTableInGroup(tbl_id)) return;
+            decimatedTables[tbl_id]= null;
+            displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+            break;
+
+        case TBL_RESULTS_ACTIVE:
+            if (!getTableInGroup(tbl_id)) return;
+            displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+            break;
+
+        case TABLE_REMOVE:
+            removeCoverage(payload.tbl_id, decimatedTables);
+            if (!getTableInGroup(payload.tbl_id)) return;
+            displayedTableId = null;
+            previousDisplayedTableId = null;
+            tbl_id = getActiveTableId();
+            if (!isEmpty(decimatedTables)) {
+                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+            }
+            break;
+
+        case MultiViewCntlr.ADD_VIEWER:
+        case MultiViewCntlr.VIEWER_MOUNTED:
+            if (action.payload.viewerId === viewerId) {
+                paused = false;
+                tbl_id = getActiveTableId();
+                displayedTableId = updateCoverage(useHiPS, tbl_id, viewerId, decimatedTables, options);
+            }
+            break;
+
+        case TABLE_SELECT:
+            dispatchModifyCustomField(tbl_id, {selectInfo:action.payload.selectInfo});
+            break;
+
+        case TABLE_HIGHLIGHT:
+        case TABLE_UPDATE:
+            dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
+            break;
+
+        case MultiViewCntlr.VIEWER_UNMOUNTED:
+            if (action.payload.viewerId === viewerId) paused = true;
+            break;
+
+        case ImagePlotCntlr.PLOT_IMAGE:
+        case ImagePlotCntlr.PLOT_HIPS:
+            if (action.payload.plotId===PLOT_ID) overlayCoverageDrawing(decimatedTables,options);
+            break;
+            
+        case REINIT_APP:
+            cancelSelf();
+            break;
+    }
+    if (!displayedTableId) displayedTableId= previousDisplayedTableId;
+
+    return {paused, decimatedTables, tbl_id, options, displayedTableId};
 }
 
 

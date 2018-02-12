@@ -15,51 +15,47 @@ import {SCATTER, multitraceDesign} from '../../charts/ChartUtil.js';
 import {PLOT2D, DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems, dispatchUpdateCustom, getViewerItemIds, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
 
 /**
- * this saga handles chart related side effects
+ * Action watcher callback for handling pre-multitrace chart related side effects
+ * @callback actionWatcherCallback
+ * @param {Action} action
  */
-export function* syncCharts() {
-    while (true) {
-        const action= yield take([ChartsCntlr.CHART_ADD, ChartsCntlr.CHART_MOUNTED, ChartsCntlr.CHART_REMOVE, TablesCntlr.TABLE_LOADED]);
-        if (multitraceDesign()) {
-            return;
-        }
-        switch (action.type) {
-            case ChartsCntlr.CHART_ADD:
-            case ChartsCntlr.CHART_MOUNTED:
-            {
-                const {chartId} = action.payload;
-                ChartsCntlr.getRelatedTblIds(chartId).forEach((tblId) => {
-                    if (TableUtil.isFullyLoaded(tblId)) {
-                        if (!TableStatsCntlr.getColValStats(tblId) && ChartsCntlr.getNumCharts(tblId) === 1) {
-                            TableStatsCntlr.dispatchLoadTblStats(TableUtil.getTblById(tblId)['request']);
-                        }
-                        ChartsCntlr.updateChartData(chartId, tblId);
+export function syncCharts(action) {
+    switch (action.type) {
+        case ChartsCntlr.CHART_ADD:
+        case ChartsCntlr.CHART_MOUNTED:
+        {
+            const {chartId} = action.payload;
+            ChartsCntlr.getRelatedTblIds(chartId).forEach((tblId) => {
+                if (TableUtil.isFullyLoaded(tblId)) {
+                    if (!TableStatsCntlr.getColValStats(tblId) && ChartsCntlr.getNumCharts(tblId) === 1) {
+                        TableStatsCntlr.dispatchLoadTblStats(TableUtil.getTblById(tblId)['request']);
                     }
-                });
-                break;
-            }
-            case ChartsCntlr.CHART_REMOVE:
-            {
-                const {chartId} = action.payload;
-                dispatchRemoveViewerItems(DEFAULT_PLOT2D_VIEWER_ID, [chartId]);
-                break;
-            }
-            case TablesCntlr.TABLE_LOADED:
-                const {tbl_id} = action.payload;
-                if (ChartsCntlr.getNumCharts(tbl_id, true)>0) {  // has related mounted charts
-                    const {invokedBy} = action.payload;
-                    if (invokedBy !== TablesCntlr.TABLE_SORT) {
-                        TableStatsCntlr.dispatchLoadTblStats(TableUtil.getTblById(tbl_id)['request']);
-                    }
-                    ChartsCntlr.updateRelatedData(tbl_id, invokedBy);
+                    ChartsCntlr.updateChartData(chartId, tblId);
                 }
-                break;
+            });
+            break;
         }
+        case ChartsCntlr.CHART_REMOVE:
+        {
+            const {chartId} = action.payload;
+            dispatchRemoveViewerItems(DEFAULT_PLOT2D_VIEWER_ID, [chartId]);
+            break;
+        }
+        case TablesCntlr.TABLE_LOADED:
+            const {tbl_id} = action.payload;
+            if (ChartsCntlr.getNumCharts(tbl_id, true)>0) {  // has related mounted charts
+                const {invokedBy} = action.payload;
+                if (invokedBy !== TablesCntlr.TABLE_SORT) {
+                    TableStatsCntlr.dispatchLoadTblStats(TableUtil.getTblById(tbl_id)['request']);
+                }
+                ChartsCntlr.updateRelatedData(tbl_id, invokedBy);
+            }
+            break;
     }
 }
 
 /**
- * This saga makes synchronizes the default chart viewer with the active table
+ * This saga makes synchronizes the default chart viewer with the active table in pre-multitrace design
  */
 export function* syncChartViewer() {
     while (true) {
@@ -78,7 +74,7 @@ export function* syncChartViewer() {
 }
 
 /**
- * This saga adds a default chart
+ * This saga adds a default chart in pre-multitrace design
  */
 export function* addDefaultScatter() {
     while (true) {

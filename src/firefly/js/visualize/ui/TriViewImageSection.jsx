@@ -5,23 +5,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {get, isEmpty} from 'lodash';
-import {take} from 'redux-saga/effects';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {watchImageMetaData} from '../saga/ImageMetaDataWatcher.js';
-import {watchCoverage} from '../saga/CoverageWatcher.js';
-import {dispatchAddSaga} from '../../core/MasterSaga.js';
+import {startImageMetadataWatcher} from '../saga/ImageMetaDataWatcher.js';
+import {startCoverageWatcher} from '../saga/CoverageWatcher.js';
+import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../tables/TableUtil.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {getAppOptions, REINIT_APP} from '../../core/AppDataCntlr.js';
 
 export const META_VIEWER_ID = 'triViewImageMetaData';
 
@@ -105,62 +104,69 @@ TriViewImageSection.propTypes= {
 
 export function launchImageMetaDataSega() {
     const useHiPS= get(getAppOptions(), 'hips.useForCoverage',false);
-    dispatchAddSaga(watchImageMetaData,{viewerId: META_VIEWER_ID});
-    dispatchAddSaga(watchCoverage, {viewerId:'coverageImages', ignoreCatalogs:true, useHiPS});
-    dispatchAddSaga(layoutHandler);
+    startImageMetadataWatcher({viewerId: META_VIEWER_ID});
+    startCoverageWatcher({viewerId:'coverageImages', ignoreCatalogs:true, useHiPS});
+    startLayoutWatcher();
 }
 
+function startLayoutWatcher() {
+    const actions = [
+        ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
+        ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
+        TBL_RESULTS_ACTIVE, TABLE_LOADED, TBL_RESULTS_ADDED,
+        REINIT_APP
+    ];
+    dispatchAddActionWatcher({id: 'layoutHandler', actions, callback: layoutHandler});
+}
+
+
 /**
- * this saga manages layout info related to this component.
- * @param dispatch
+ * Action watcher callback: manages layout info related to this component.
+ * @callback actionWatcherCallback
+ * @param action
+ * @param cancelSelf
  */
-function* layoutHandler(dispatch) {
+function layoutHandler(action, cancelSelf) {
 
-    while (true) {
-        const action = yield take([
-            ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
-            ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,
-            TBL_RESULTS_ACTIVE, TABLE_LOADED, TBL_RESULTS_ADDED
-        ]);
+    /**
+     * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
+     * If state has changed, it will be dispatched into the flux.
+     * @type {LayoutInfo}
+     * @prop {Object}   layoutInfo.images      images specific states
+     * @prop {string}   layoutInfo.images.metaTableId  tbl_id of the image meta table
+     * @prop {string}   layoutInfo.images.selectedTab  selected tab of the images tabpanel
+     * @prop {string}   layoutInfo.images.showCoverage  show images coverage tab
+     * @prop {string}   layoutInfo.images.showFits  show images fits data tab
+     * @prop {string}   layoutInfo.images.showMeta  show images image metea tab
+     * @prop {string}   layoutInfo.images.coverageLockedOn
+     */
+    const layoutInfo = getLayouInfo();
+    let newLayoutInfo = layoutInfo;
 
-        /**
-         * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
-         * If state has changed, it will be dispatched into the flux.
-         * @type {LayoutInfo}
-         * @prop {Object}   layoutInfo.images      images specific states
-         * @prop {string}   layoutInfo.images.metaTableId  tbl_id of the image meta table
-         * @prop {string}   layoutInfo.images.selectedTab  selected tab of the images tabpanel
-         * @prop {string}   layoutInfo.images.showCoverage  show images coverage tab
-         * @prop {string}   layoutInfo.images.showFits  show images fits data tab
-         * @prop {string}   layoutInfo.images.showMeta  show images image metea tab
-         * @prop {string}   layoutInfo.images.coverageLockedOn
-         */
-        var layoutInfo = getLayouInfo();
-        var newLayoutInfo = layoutInfo;
+    switch (action.type) {
+        case ImagePlotCntlr.PLOT_IMAGE_START:
+        case ImagePlotCntlr.PLOT_IMAGE :
+        case ImagePlotCntlr.PLOT_HIPS:
+        case REPLACE_VIEWER_ITEMS:
+            newLayoutInfo = onNewImage(newLayoutInfo, action);
+            break;
+        case ImagePlotCntlr.DELETE_PLOT_VIEW:
+            newLayoutInfo = onPlotDelete(newLayoutInfo, action);
+            break;
+        case TABLE_LOADED:
+        case TBL_RESULTS_ADDED:
+            newLayoutInfo = handleNewTable(newLayoutInfo, action);
+            break;
+        case TBL_RESULTS_ACTIVE:
+            newLayoutInfo = onActiveTable(newLayoutInfo, action);
+            break;
+        case REINIT_APP:
+            cancelSelf();
+            break;
+    }
 
-        switch (action.type) {
-            case ImagePlotCntlr.PLOT_IMAGE_START:
-            case ImagePlotCntlr.PLOT_IMAGE :
-            case ImagePlotCntlr.PLOT_HIPS:
-            case REPLACE_VIEWER_ITEMS:
-                newLayoutInfo = onNewImage(newLayoutInfo, action);
-                break;
-            case ImagePlotCntlr.DELETE_PLOT_VIEW:
-                newLayoutInfo = onPlotDelete(newLayoutInfo, action);
-                break;
-            case TABLE_LOADED:
-            case TBL_RESULTS_ADDED:
-                newLayoutInfo = handleNewTable(newLayoutInfo, action);
-                break;
-            case TBL_RESULTS_ACTIVE:
-                newLayoutInfo = onActiveTable(newLayoutInfo, action);
-                break;
-        }
-
-        if (newLayoutInfo !== layoutInfo) {
-            dispatchUpdateLayoutInfo(newLayoutInfo);
-
-        }
+    if (newLayoutInfo !== layoutInfo) {
+        dispatchUpdateLayoutInfo(newLayoutInfo);
     }
 }
 
@@ -179,8 +185,9 @@ const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAUL
 
 function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;
-    var {images={}, showImages, showTables} = layoutInfo;
-    var {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
+    const {images={}, showTables}  = layoutInfo;
+    let {showImages} = layoutInfo;
+    let {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
     const isMeta = isMetaDataTable(tbl_id);
     
     if ((isMeta || isCatalogTable(tbl_id)) && showTables ) {
@@ -204,8 +211,8 @@ function handleNewTable(layoutInfo, action) {
 
 function onActiveTable (layoutInfo, action) {
     const {tbl_id} = action.payload;
-    var {images={}, showImages} = layoutInfo;
-    var {coverageLockedOn, showCoverage, showMeta, metaDataTableId} = images;
+    let {images={}, showImages} = layoutInfo;
+    let {coverageLockedOn, showCoverage, showMeta, metaDataTableId} = images;
 
     const showFits= shouldShowFits();
     showImages= showFits||coverageLockedOn;
@@ -249,8 +256,9 @@ function onActiveTable (layoutInfo, action) {
 }
 
 function onPlotDelete(layoutInfo, action) {
-    var {images={}, showImages} = layoutInfo;
-    var {coverageLockedOn} = images;
+    const {images={}}  = layoutInfo;
+    let {showImages} = layoutInfo;
+    let {coverageLockedOn} = images;
     const showFits = shouldShowFits();
     if (!get(visRoot(), 'plotViewAry.length', 0)) {
         coverageLockedOn = false;
@@ -260,8 +268,8 @@ function onPlotDelete(layoutInfo, action) {
 }
 
 function onNewImage(layoutInfo, action) {
-    var {images={}} = layoutInfo;
-    var {selectedTab, showMeta, showFits, coverageLockedOn} = images;
+    const {images={}} = layoutInfo;
+    let {selectedTab, showMeta, showFits, coverageLockedOn} = images;
 
     const {viewerId} = action.payload || {};
     if (viewerId === META_VIEWER_ID) {

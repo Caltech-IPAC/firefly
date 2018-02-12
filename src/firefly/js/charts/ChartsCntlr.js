@@ -14,6 +14,7 @@ import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
 import {formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
+import {syncCharts} from '../visualize/saga/ChartsSync.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
@@ -51,6 +52,7 @@ export default {actionCreators, reducers};
 const isDebug = () => get(window, 'firefly.debug', false);
 
 let cleanupWatcherStarted = false;
+let syncChartsWatcherStarted = false;
 
 function actionCreators() {
     return {
@@ -343,10 +345,18 @@ function chartAdd(action) {
                 handleTableSourceConnections({chartId, data, fireflyData});
             }
             if (!cleanupWatcherStarted) {
-                dispatchAddActionWatcher({actions:[TablesCntlr.TABLE_REMOVE], callback: cleanupRelatedChartData});
+                dispatchAddActionWatcher({id: 'chartCleanup', actions:[TablesCntlr.TABLE_REMOVE], callback: cleanupRelatedChartData});
                 cleanupWatcherStarted = true;
             }
         } else {
+            if (!syncChartsWatcherStarted) {
+                // this watcher is used for table-chart connection in pre-multitrace design
+                // the assumption is that we never use both single trace and multitrace charts in the same app
+                // adding it here to handle remote API pre-multitrace charts
+                const actions = [CHART_ADD, CHART_MOUNTED, CHART_REMOVE, TablesCntlr.TABLE_LOADED];
+                dispatchAddActionWatcher({id: 'syncCharts', actions, callback: syncCharts});
+                syncChartsWatcherStarted = true;
+            }
             dispatch(action);
         }
     };
@@ -764,13 +774,13 @@ function reduceData(state={}, action={}) {
                     chartDataElements: chartDataElementsToObj(chartDataElements),
                     ...rest
                 }, isUndefined));
-            isDebug() && console.log(`ADD ${chartId} mounted ${nMounted}`);
+            isDebug() && console.log(`CHART_ADD ${chartId} #mounted ${nMounted}`);
             return state;
         }
         case (CHART_UPDATE) :
         {
             const {chartId, changes}  = action.payload;
-            var chartData = getChartData(chartId);
+            let chartData = getChartData(chartId);
             chartData = updateObject(chartData, changes);
             useScatterGL && changeToScatterGL(chartData);
 
@@ -779,7 +789,7 @@ function reduceData(state={}, action={}) {
         case (CHART_REMOVE)  :
         {
             const {chartId} = action.payload;
-            isDebug() && console.log('REMOVE '+chartId);
+            isDebug() && console.log('CHART_REMOVE '+chartId);
             return omit(state, chartId);
         }
         case (CHART_DATA_FETCH)  :
@@ -809,7 +819,7 @@ function reduceData(state={}, action={}) {
             const {chartId, chartDataElementId, updates} = action.payload;
             let options = get(state, [chartId, 'chartDataElements', chartDataElementId, 'options']);
             if (!options) {
-                logError(`[CHART_OPTIONS_UPDATE] Chart data element optionsis not found: ${chartId}, ${chartDataElementId}`);
+                logError(`[CHART_OPTIONS_UPDATE] Chart data element options is not found: ${chartId}, ${chartDataElementId}`);
                 return state;
             }
             Object.keys(updates).forEach((path) => {
@@ -823,7 +833,7 @@ function reduceData(state={}, action={}) {
             if (has(state, chartId)) {
                 const n = get(state, [chartId,'mounted'], 0);
                 state = updateSet(state, [chartId,'mounted'], Number(n) + 1);
-                isDebug() && console.log(`MOUNTED ${chartId} mounted ${state[chartId].mounted}`);
+                isDebug() && console.log(`CHART_MOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
             }
 
             return state;
@@ -838,7 +848,7 @@ function reduceData(state={}, action={}) {
                 } else {
                     logError(`CHART_UNMOUNT on unmounted chartId ${chartId}`);
                 }
-                isDebug() && console.log(`UNMOUNTED ${chartId} mounted ${state[chartId].mounted}`);
+                isDebug() && console.log(`CHART_UNMOUNTED ${chartId} #mounted ${state[chartId].mounted}`);
             }
             return state;
         }
@@ -912,6 +922,10 @@ function reduceUI(state={}, action={}) {
     }
 }
 
+/**
+ * @callback actionWatcherCallback
+ * @param action
+ */
 function cleanupRelatedChartData(action) {
     const tbl_id = get(action.payload, 'tbl_id');
     if (!tbl_id) return;

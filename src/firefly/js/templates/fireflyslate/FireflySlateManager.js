@@ -5,8 +5,8 @@
 import {take} from 'redux-saga/effects';
 import {filter, isEmpty, get, isArray, uniq} from 'lodash';
 
-import {watchImageMetaData} from '../../visualize/saga/ImageMetaDataWatcher.js';
-import {watchCoverage} from '../../visualize/saga/CoverageWatcher.js';
+import {startImageMetadataWatcher} from '../../visualize/saga/ImageMetaDataWatcher.js';
+import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, ENABLE_SPECIAL_VIEWER, SPECIAL_VIEWER,
@@ -112,11 +112,11 @@ function startSpecialViewerSaga(action, alreadyStarted) {
     switch (viewerType) {
 
         case SPECIAL_VIEWER.tableImageMeta:
-            dispatchAddSaga(watchImageMetaData,{viewerId: cellId, paused:false});
+            startImageMetadataWatcher({viewerId: cellId, paused:false});
             break;
         case SPECIAL_VIEWER.coverageImage:
             const useHiPS= get(getAppOptions(), 'hips.useForCoverage',false);
-            dispatchAddSaga(watchCoverage, {viewerId:cellId, ignoreCatalogs:true, paused:false, useHiPS});
+            startCoverageWatcher({viewerId:cellId, ignoreCatalogs:true, paused:false, useHiPS});
             break;
 
     }

@@ -466,7 +466,8 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
             }
             traceTS._cancel = watchTableChanges(traceTS.tbl_id,
                 [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT],
-                (action) => updateChartData(chartId, idx, traceTS, action));
+                (action) => updateChartData(chartId, idx, traceTS, action),
+                uniqueId(`ucd-${traceTS.tbl_id}-trace`)); // watcher id for debugging
 
         }
         tablesources[idx] = traceTS;

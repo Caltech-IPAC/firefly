@@ -16,7 +16,7 @@ import * as AppDataCntlr from '../core/AppDataCntlr.js';
 import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {ApiExpandedView} from './ApiExpandedView.jsx';
 import {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer} from '../core/LayoutCntlr.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {dispatchAddSaga, dispatchAddActionWatcher} from '../core/MasterSaga.js';
 
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
@@ -174,7 +174,7 @@ export function buildLowlevelAPI() {
         findDispatch(AppDataCntlr),
         findDispatch(DrawLayerCntlr),
         {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer},
-        {dispatchAddSaga}
+        {dispatchAddSaga, dispatchAddActionWatcher, }
     );
 
     const ui= {

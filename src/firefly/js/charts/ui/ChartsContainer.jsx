@@ -29,7 +29,7 @@ function watchTblGroup(viewerId, tblGroup, addDefaultChart) {
         };
         const actions = [CHART_ADD, CHART_REMOVE, TBL_RESULTS_ACTIVE];
         if (addDefaultChart) actions.push(TABLE_LOADED);
-        return monitorChanges(actions, accept, updateViewer(viewerId, tblGroup));
+        return monitorChanges(actions, accept, updateViewer(viewerId, tblGroup), `wtg-${viewerId}-${tblGroup}`);
     };
 }
 

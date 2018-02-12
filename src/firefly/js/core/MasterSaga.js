@@ -3,8 +3,8 @@
  */
 
 import {flux} from '../Firefly.js';
-import {take, fork, cancel} from 'redux-saga/effects';
-import {get} from 'lodash';
+import {take, fork, spawn, cancel} from 'redux-saga/effects';
+import {get, has, isUndefined} from 'lodash';
 
 import {uniqueID} from '../util/WebUtil.js';
 
@@ -24,12 +24,22 @@ export function dispatchAddSaga(saga, params={}) {
 }
 
 /**
+ * Action watcher callback.
+ * @callback actionWatcherCallback
+ * @param {Action} action - the triggering action
+ * @param {function} cancelSelf - a function to cancel this watcher
+ * @param {object} params – params passed through dispatchAddActionWatcher or (if not undefined) the last returned value from the watcher callback
+ * @param {function} dispatch: flux's dispatcher
+ * @param {function} getState: flux's getState function
+ */
+
+/**
  * @param {object}   p
  * @param {string}   [p.id]     a unique identifier for this watcher.  This is needed for dispatchCancel*.
  *                              When not given, a unique ID will be created.  You can still cancel this watcher via
  *                              callback's cancelSelf function.
  * @param {string[]} p.actions  an array of action types to watch
- * @param {function} p.callback a callback function to handle the action(s).
+ * @param {actionWatcherCallback} p.callback a callback function to handle the action(s).
  *                                It is called with
  *                                (action:Action, cancelSelf:Function, params:Object, dispatch:Function, getState:Function).
  *                                {Action} action: the triggered action
@@ -74,7 +84,10 @@ export function* masterSaga() {
             case ADD_SAGA: {
                 const {getState, dispatch}= flux.getRedux();
                 const {saga,params}= action.payload;
-                if (typeof saga === 'function') yield fork( saga, params, dispatch, getState);
+                // with fork every exception will bubble up from the child to the parent:
+                // an unhandled exception in one saga will cancel all sibling sagas
+                // with spawn, only the saga with the unhandled error will be cancelled
+                if (typeof saga === 'function') yield spawn(saga, params, dispatch, getState);
                 break;
             }
             case ADD_ACTION_WATCHER: {
@@ -118,11 +131,20 @@ export function* masterSaga() {
 function createWatcherSaga({id, actions=[], callback, params, dispatch, getState}) {
     const cancelSelf = ()=> dispatch({ type: CANCEL_ACTION_WATCHER, payload: {id}});
     const saga = function* () {
+
         let prevParams= params;
+        let returnedParams;
+
+        // loop exits when saga is cancelled
         while (true) {
-            const action= yield take(actions);
+            const action = yield take(actions);
             try {
-                prevParams= callback(action, cancelSelf, prevParams, dispatch, getState) || params;
+                // the same callback can return modified parameters or undefined
+                // when undefined is returned use previous parameters
+                returnedParams = callback(action, cancelSelf, prevParams, dispatch, getState);
+                if (!isUndefined(returnedParams)) {
+                    prevParams = returnedParams;
+                }
             } catch (e) {
                 console.log(`Encounter error while executing watcher: ${id}  error: ${e}`);
                 console.log(e);

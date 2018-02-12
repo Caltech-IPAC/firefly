@@ -40,7 +40,6 @@ import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js
 
 
 //--- import Sagas
-import {syncCharts} from '../visualize/saga/ChartsSync.js';
 import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
 import {watchReadout} from '../visualize/saga/MouseReadoutWatch.js';
 import {watchForRelatedActions} from '../fieldGroup/FieldGroupCntlr.js';
@@ -235,7 +234,6 @@ function createRedux() {
 
 function startCoreSagas() {
     dispatchAddSaga( imagePlotter);
-    dispatchAddSaga( syncCharts);
     dispatchAddSaga( watchReadout);
     dispatchAddSaga( watchForRelatedActions);
     dispatchAddSaga( watchExtensionActions);

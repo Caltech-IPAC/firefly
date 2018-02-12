@@ -600,6 +600,17 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
     });
 }
 
+/**
+ * @callback actionWatcherCallback
+ * @param action
+ * @param cancelSelf
+ * @param params
+ * @param params.bgID
+ * @param params.request
+ * @param params.hlRowIdx
+ * @param params.dispatch
+ * @param params.tbl_id
+ */
 function bgTracker(action, cancelSelf, {bgID, request, hlRowIdx, dispatch, tbl_id}) {
     const {type} = action;
     const {ID, STATE} = action.payload || {};
