@@ -222,10 +222,7 @@ public class EmbeddedDbUtil {
         String tblName = proc.getResultSetID(treq);
         String inRows = selRows != null && selRows.size() > 0 ? StringUtils.toString(selRows) : "-1";
 
-        try {
-            DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", tblName));
-        } catch (Exception e) {
+        if (!hasTable(treq, dbFile, tblName)) {
             try {
                 // data does not exists.. recreate it
                 new SearchManager().getDataGroup(treq);
@@ -470,6 +467,25 @@ public class EmbeddedDbUtil {
             logger.error("Fail to create custom function:" + decimate_key);
         }
 
+    }
+
+    /**
+     * This function is to test if a table exists in the given database.
+     * It's using a get count and catches exception to determine if the given table exists.
+     * It will work across all databases, but it's not optimal.  Change to specific implementation when needed.
+     * @param treq
+     * @param dbFile
+     * @param tblName
+     * @return
+     */
+    public static boolean hasTable(TableServerRequest treq, File dbFile, String tblName) {
+        try {
+            DbInstance dbInstance = DbAdapter.getAdapter(treq).getDbInstance(dbFile);
+            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", tblName));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
