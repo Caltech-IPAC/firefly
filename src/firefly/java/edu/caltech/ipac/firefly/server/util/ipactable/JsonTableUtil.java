@@ -60,11 +60,11 @@ public class JsonTableUtil {
         
 
         if (meta != null) {
-            tableModel.put("tableMeta", toJsonTableMeta(meta));
-
             if (meta.getSelectInfo() != null ){
                 tableModel.put("selectInfo", meta.getSelectInfo().toString());
+                meta.setSelectInfo(null);
             }
+            tableModel.put("tableMeta", toJsonTableMeta(meta));
         }
         if (request != null ){
             tableModel.put("request", toJsonTableRequest(request));

@@ -391,7 +391,7 @@ function highlightRow(action) {
     return (dispatch) => {
         const {tbl_id, highlightedRow, request={}} = action.payload;
         var tableModel = TblUtil.getTblById(tbl_id);
-        if (!tableModel || highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
+        if (!tableModel || tableModel.error || highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
         if (highlightedRow === tableModel.highlightedRow && !request.pageSize) return;   // nothing to change
 
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
@@ -405,7 +405,7 @@ function highlightRow(action) {
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_HIGHLIGHT, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
+                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
             });
         }
     };
@@ -540,6 +540,8 @@ function reducer(state=initState(), action={}) {
 
     if (action.type===REINIT_APP) return initState();
 
+    isDebug() && get(action, 'type','').includes(DATA_PREFIX) && (console.log(action.type + ': ' + get(action, 'payload.tbl_id')));
+
     const nstate = {...state};
     nstate.results = resultsReducer(nstate, action);
     nstate.data = dataReducer(nstate, action);
@@ -610,7 +612,7 @@ function bgTracker(action, cancelSelf, {bgID, request, hlRowIdx, dispatch, tbl_i
                 if (isSuccess(STATE)) {
                     syncFetch(request, hlRowIdx, dispatch, tbl_id);
                 } else {
-                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n ${getErrMsg(bgStatus)}`)});
+                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n ${getErrMsg(action.payload)}`)});
                 }
                 cancelSelf();
             }
@@ -622,3 +624,5 @@ function bgTracker(action, cancelSelf, {bgID, request, hlRowIdx, dispatch, tbl_i
             }
     }
 }
+
+const isDebug = () => get(window, 'firefly.debug', false);

@@ -273,7 +273,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         DataGroupPart page = execRequestQuery(nreq, dbFile, resultSetID);
 
         // save information needed to recreated this resultset
-        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_REQ, JsonTableUtil.toJsonTableRequest(treq).toString());
+        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_REQ, makeResultSetReqStr(treq));
         page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, resultSetID);
 
         // handle selectInfo
@@ -284,6 +284,15 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         treq.setSelectInfo(null);
 
         return page;
+    }
+
+    private String makeResultSetReqStr(TableServerRequest treq) {
+        // only keep state one deep.
+        TableServerRequest savedRequest = (TableServerRequest) treq.cloneRequest();
+        savedRequest.getMeta().remove(TableServerRequest.RESULTSET_REQ);
+        savedRequest.getMeta().remove(TableServerRequest.RESULTSET_ID);
+        savedRequest.setSelectInfo(null);
+        return JsonTableUtil.toJsonTableRequest(savedRequest).toString();
     }
 
     public boolean isSecurityAware() { return false; }
