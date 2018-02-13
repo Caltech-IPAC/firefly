@@ -314,7 +314,7 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 }
 
 
-function addDrawLayers(request, plot ) {
+export function addDrawLayers(request, plot ) {
     const {plotId}= plot;
     request.getOverlayIds().forEach((drawLayerTypeId)=> {
         const dls = getDrawLayersByType(dlRoot(), drawLayerTypeId);
@@ -431,7 +431,7 @@ function updateActiveTarget(plot) {
     if (activeTarget || corners) dispatchActiveTarget(activeTarget,corners);
 }
 
-function initBuildInDrawLayers() {
+export function initBuildInDrawLayers() {
     dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
 }
 

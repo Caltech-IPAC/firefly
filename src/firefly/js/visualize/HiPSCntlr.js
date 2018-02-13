@@ -3,6 +3,7 @@ import {get, isArray, isEmpty, set} from 'lodash';
 import {fetchUrl} from '../util/WebUtil.js';
 import {hipsSURVEYS} from './HiPSUtil.js';
 import Enum from 'enum';
+import {getAppOptions} from '../core/AppDataCntlr.js';
 
 export const HIPSSURVEY_PREFIX = 'HIPSCntlr';
 export const HIPSSURVEY_PATH = 'hipssurveys';
@@ -10,8 +11,12 @@ export const HIPSSURVEY_CREATE_PATH = `${HIPSSURVEY_PREFIX}.createPath`;
 export const HIPSSURVEY_IN_LOADING = `${HIPSSURVEY_PREFIX}.inLoading`;
 export const HiPSSurveyTableColumm = new Enum(['url', 'title', 'type', 'order', 'sky_fraction']);
 export const HiPSSurveysURL = 'http://alasky.unistra.fr/MocServer/query?hips_service_url=*&get=record';
+
 export const HiPSPopular = 'popular';
 export const _HiPSPopular = '_popular';
+export const HiPSId = 'hips';
+export const HiPSDataType= new Enum([ 'image', 'cube', 'catalog'], { ignoreCase: true });
+export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
 
 export default {actionCreators, reducers };
 
@@ -27,7 +32,9 @@ function reducers() {
     };
 }
 
-export const HiPSDataType= new Enum([ 'image', 'cube', 'catalog'], { ignoreCase: true });
+export function getAppHiPSConfig() {
+    return get(getAppOptions(), ['hips', 'useForImageSearch'], false);
+}
 
 /**
  * update HiPS surveys id based on if it is for popular surveys
@@ -120,19 +127,77 @@ function updateHiPSSurveys(action) {
     };
 }
 
-function getPopularSurveys(HiPSList) {
-    const defaultUrls =  hipsSURVEYS.map((oneSurvey) => oneSurvey.url);
-
-    return HiPSList.filter((oneSurvey) => defaultUrls.includes(oneSurvey.url));
+function stripTrailingSlash(url) {
+    if (typeof url === 'string') {
+        return url.replace(/\/$/, '');
+    }
+    return url;
 }
+
+
+const hipsPopularProcess =
+    {[HiPSSurveyTableColumm.title.key]:
+                (pSurveys) => (get(pSurveys, HiPSSurveyTableColumm.title.key, pSurveys.label)),
+     [HiPSSurveyTableColumm.url.key]:
+                (pSurveys) => (get(pSurveys, HiPSSurveyTableColumm.url.key, '')),
+     [HiPSSurveyTableColumm.type.key]:
+                (pSurveys) => (get(pSurveys, HiPSSurveyTableColumm.type.key, 'image')),
+     [HiPSSurveyTableColumm.order.key]:
+                (pSurveys) => (get(pSurveys, HiPSSurveyTableColumm.order.key, '')),
+     [HiPSSurveyTableColumm.sky_fraction.key]:
+                (pSurveys) => (get(pSurveys, HiPSSurveyTableColumm.sky_fraction.key, '')) };
+
+
+function getPopularSurveys(HiPSList) {
+    const globalList = HiPSList
+                        .map((oneS) => {
+                            const newUrl = stripTrailingSlash(get(oneS, [HiPSSurveyTableColumm.url.key]));
+
+                            return  (typeof newUrl === 'string') ? newUrl.toLowerCase() : newUrl;
+                        });
+
+    return hipsSURVEYS.reduce((rows, oneDefault) => {
+        const dUrl = stripTrailingSlash(oneDefault.url).toLowerCase();
+        const inGlobal = globalList.findIndex((oneUrl) => oneUrl === dUrl);
+
+        if (inGlobal >= 0) {
+            rows.push(HiPSList[inGlobal]);
+        } else {  // not seen from global list
+            const newRow = Object.values(hipsColumnMap).reduce((prev, columnItem) => {
+                prev[columnItem] = (hipsPopularProcess[columnItem])(oneDefault);
+                return prev;
+            }, {});
+            rows.push(newRow);
+        }
+        return rows;
+    }, []);
+}
+
+export function isOnePopularSurvey(url) {
+    const defaultUrls =  hipsSURVEYS.map((oneSurvey) => stripTrailingSlash(oneSurvey.url).toLowerCase());
+
+    return defaultUrls.findIndex((dUrl) => dUrl === stripTrailingSlash(url).toLowerCase()) >= 0;
+}
+
+export function indexInHiPSSurveys(id, url) {
+    if (!url || typeof url !== 'string') return 0;
+
+    const data = getHiPSSurveys(id) || [];
+    return data.findIndex((s) => {
+        return (stripTrailingSlash(get(s, 'url', '')).toLowerCase()
+                === stripTrailingSlash(url).toLowerCase());
+    });
+}
+
+const hipsColumnMap = {obs_title:        HiPSSurveyTableColumm.title.key,
+    hips_service_url: HiPSSurveyTableColumm.url.key,
+    dataproduct_type: HiPSSurveyTableColumm.type.key,
+    hips_order:       HiPSSurveyTableColumm.order.key,
+    moc_sky_fraction: HiPSSurveyTableColumm.sky_fraction.key};
 
 function parseHiPSList(str) {
     let currentRec = {};
-    const hipsColumnMap = {obs_title:        HiPSSurveyTableColumm.title.key,
-                           hips_service_url: HiPSSurveyTableColumm.url.key,
-                           dataproduct_type: HiPSSurveyTableColumm.type.key,
-                           hips_order:       HiPSSurveyTableColumm.order.key,
-                           moc_sky_fraction: HiPSSurveyTableColumm.sky_fraction.key};
+
     const testRow = {
         ID: 'test/row',
         [HiPSSurveyTableColumm.title.key]: 'test_record\\(%for test only%)',
@@ -179,7 +244,6 @@ function parseHiPSList(str) {
 export function getHiPSSurveys(id) {
     return get(flux.getState(), [HIPSSURVEY_PATH, id, 'data']);
 }
-
 
 
 /**

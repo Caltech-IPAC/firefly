@@ -18,7 +18,8 @@ import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.j
 import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot, makeHipsUrl, getHiPSFoV} from '../HiPSUtil.js';
 import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
-import {ensureWPR, determineViewerId, getHipsImageConversion} from './PlotImageTask.js';
+import {ensureWPR, determineViewerId, getHipsImageConversion,
+        initBuildInDrawLayers, addDrawLayers} from './PlotImageTask.js';
 import {dlRoot, dispatchAttachLayerToPlot,
     dispatchCreateDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
@@ -30,6 +31,7 @@ import Artifact from '../../drawingLayers/Artifact.js';
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
 
+let firstTime = true;
 
 
 function hipsFail(dispatcher, plotId, wpRequest, reason) {
@@ -76,6 +78,9 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
 
         const wp= pv.request && pv.request.getWorldPt();
         if (wp) dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});
+
+        addDrawLayers(pv.request, plot);
+
         cancelSelf();
     }
 }
@@ -123,6 +128,12 @@ export function makePlotHiPSAction(rawAction) {
             hipsFail(dispatcher, plotId, wpRequest, 'No Root URL');
             return;
         }
+
+        if (firstTime) {
+            initBuildInDrawLayers();
+            firstTime= false;
+        }
+
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
         dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
 

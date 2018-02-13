@@ -72,7 +72,8 @@ const defConfigOptions = {
     catalogSpacialOp: undefined,
     imageMasterSources: ['ALL'],
     imageMasterSourcesOrder: '',
-    workspace : { showOptions: false}
+    workspace : { showOptions: false},
+    hips: {useForImageSearch: false}
 };
 
 

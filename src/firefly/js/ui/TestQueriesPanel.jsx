@@ -29,7 +29,7 @@ import {showInfoPopup} from './PopupUtil.jsx';
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 
-import FieldGroupUtils, {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils  from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -41,13 +41,12 @@ import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableRequestUtil
 import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, DEFAULT_FITS_VIEWER_ID, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.js';
+import {hipsSURVEYS} from '../visualize/HiPSUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {onHiPSSurveys, HiPSDataType, HiPSPopular, updateHiPSId} from '../visualize/HiPSCntlr.js';
-import {HiPSSurvey,  HiPSPopupMsg, HiPSSurveyListSelection, gKeyHiPSPopup, fKeyHiPSPopular} from './HiPSSurveyListDisplay.jsx';
+import {onHiPSSurveys, HiPSId, HiPSData} from '../visualize/HiPSCntlr.js';
+import {makeHiPSSurveysTableName, HiPSPopupMsg, HiPSSurveyListSelection} from './HiPSSurveyListDisplay.jsx';
 import {getTblById, getCellValue} from '../tables/TableUtil.js';
-import {visRoot } from '../visualize/ImagePlotCntlr.js';
-import {getActivePlotView} from '../visualize/PlotViewUtil.js';
 
 const options = [
     {label: 'AllWISE Source Catalog', value: 'allwise_p3as_psd', proj: 'WISE'},
@@ -55,74 +54,6 @@ const options = [
     {label: 'IRAS Point Source Catalog v2.1 (PSC)', value: 'iraspsc', proj: 'IRAS'}
 ];
 
-
-
-const hipsSURVEYS = [
-    {
-        url: 'http://alasky.u-strasbg.fr/2MASS/Color',
-        label: '2MASS colored'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/DSS/DSSColor',
-        label: 'DSS colored'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/DSS/DSS2Merged',
-        label: 'DSS2 Red (F+R)'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/Fermi/Color',
-        label: 'Fermi color'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/FinkbeinerHalpha',
-        label: 'Halpha'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/GALEX/GR6-02-Color',
-        label: 'GALEX Allsky Imaging Survey colored'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/IRISColor',
-        label: 'IRIS colored'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/MellingerRGB',
-        label: 'Mellinger colored'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/SDSS/DR9/color',
-        label: 'SDSS9 colored'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/SpitzerI1I2I4color',
-        label: 'IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS)'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/VTSS/Ha',
-        label: 'VTSS-Ha'
-    },
-    {
-        url: 'http://saada.u-strasbg.fr/xmmallsky',
-        label: 'XMM-Newton stacked EPIC images (no phot. normalization)'
-    },
-    {
-        url: 'http://saada.u-strasbg.fr/xmmallsky/',
-        label: 'XMM PN colored'
-    },
-    {
-        url: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',
-        label: 'AllWISE color'
-    },
-    {
-        url: 'http://www.spitzer.caltech.edu/glimpse360/aladin/data',
-        label: 'GLIMPSE360'
-    }
-];
-
-
-export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
-const HiPSId = 'hips';
 
 export class TestQueriesPanel extends PureComponent {
 
@@ -146,7 +77,7 @@ export class TestQueriesPanel extends PureComponent {
         //const fields = this.state;
         const {fields}=this.state || {};
 
-        const onTabSelect = (idx, id, name) => {
+        const onTabSelect = (idx, id) => {
             if (id === HiPSId) {
                 onHiPSSurveys(HiPSData, id);
             }
@@ -178,7 +109,6 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='HiPS' id={HiPSId}>
                                 <HiPSSurveyListSelection
                                     surveysId={HiPSId}
-                                    pv={getActivePlotView(visRoot())}
                                     wrapperStyle={{width: 550, height: 400, display: 'flex',
                                                    flexDirection:'column',
                                                    alignItems: 'center'}}
@@ -212,15 +142,12 @@ export class TestQueriesPanel extends PureComponent {
 
 
 
-
-
-
 TestQueriesPanel.propTypes = {
-    name: PropTypes.oneOf(['TestSearches']),
+    name: PropTypes.oneOf(['TestSearches'])
 };
 
 TestQueriesPanel.defaultProps = {
-    name: 'TestSearches',
+    name: 'TestSearches'
 };
 
 
@@ -288,7 +215,7 @@ function renderPeriodogram(fields) {
                 'original_table':'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl',
                 'x':'mjd',
                 'y':'w1mpro_ep',
-                'table_name': 'periodogram',
+                'table_name': 'periodogram'
                 // The following are optional
                 //'pmin':0,
                 //'pmax':200,
@@ -648,10 +575,7 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
-
-    const popularHiPS = getFieldVal(gKeyHiPSPopup, fKeyHiPSPopular);
-    const hipsId = updateHiPSId(HiPSId, (popularHiPS === HiPSPopular));
-    const tblId = HiPSSurvey + hipsId;
+    const tblId = makeHiPSSurveysTableName();
     const tableModel = getTblById(tblId);
     if (!tableModel) {
         return HiPSPopupMsg('No HiPS information found', 'HiPS search');
@@ -663,7 +587,6 @@ function doHiPSLoad(request) {
     const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
     wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
     wpRequest.setPlotId('aHiPSid');
-    wpRequest.setHipsSurveysId(hipsId);
 
     const wp = parseWorldPt(request.UserTargetWorldPt);
     if (wp) wpRequest.setWorldPt(wp);

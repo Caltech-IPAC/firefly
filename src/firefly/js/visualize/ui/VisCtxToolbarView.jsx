@@ -34,7 +34,7 @@ import { parseImagePt } from '../Point.js';
 import {getDefaultHiPSSurveys} from '../HiPSUtil.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
-import {isLoadingHiPSSurverys} from '../HiPSCntlr.js';
+import {isLoadingHiPSSurverys, HiPS} from '../HiPSCntlr.js';
 import {getSelectedShape} from '../../drawingLayers/Catalog.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
@@ -389,7 +389,7 @@ function makeHiPSImageSelect(pv) {
         );
 }
 
-function makeHiPSImageTable(pv, isUpdatingHips) {
+function makeHiPSImageTable(pv, surveysId, isUpdatingHips) {
     const plot= primePlot(pv);
     if (!plot) return null;
 
@@ -398,7 +398,8 @@ function makeHiPSImageTable(pv, isUpdatingHips) {
             <div style={{marginLeft: 10, marginRight: 5}}>
                 <input  type='button'
                         value='Find HiPS Plot'
-                        onClick={()=>showHiPSSurverysPopup(pv)} />
+                        onClick={()=>showHiPSSurverysPopup(get(pv, ['request', 'params', 'hipsRootUrl']),
+                                                           pv, surveysId)} />
             </div>
         );
     };
@@ -471,11 +472,9 @@ export class VisCtxToolbarView extends PureComponent {
     constructor(props) {
         super(props);
 
-        const {plotView} = props;
-
-        const hipsId = get(plotView ['request', 'params', 'hipsSurveysId']);
-        if (hipsId) {
-            const isUpdatingHips = isLoadingHiPSSurverys(hipsId);
+        this.hipsId = HiPS;
+        if (this.hipsId) {
+            const isUpdatingHips = isLoadingHiPSSurverys(this.hipsId);
 
             this.state = {isUpdatingHips};
         }
@@ -494,14 +493,10 @@ export class VisCtxToolbarView extends PureComponent {
     storeUpdate() {
 
         if (this.iAmMounted) {
-            const hipsId = get(this.props, ['plotView', 'request', 'params', 'hipsSurveysId']);
+            const isUpdatingHips = isLoadingHiPSSurverys(this.hipsId);
 
-            if (hipsId) {
-                const isUpdatingHips = isLoadingHiPSSurverys(hipsId);
-
-                if (isUpdatingHips !== get(this.state, 'isUpdatingHips', false)) {
-                    this.setState({isUpdatingHips});
-                }
+            if (isUpdatingHips !== get(this.state, 'isUpdatingHips', false)) {
+                this.setState({isUpdatingHips});
             }
         }
     }
@@ -575,7 +570,7 @@ export class VisCtxToolbarView extends PureComponent {
 
                 {makeExtensionButtons(extensionAry,pv,dlAry)}
 
-                {isHiPS(plot) && makeHiPSImageTable(pv, isUpdatingHips)}
+                {isHiPS(plot) && makeHiPSImageTable(pv, this.hipsId, isUpdatingHips)}
                 {isHiPS(plot) && makeHiPSCoordSelect(pv)}
 
             </div>
