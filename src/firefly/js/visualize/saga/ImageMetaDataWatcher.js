@@ -2,14 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
 import {union,get,isEmpty,difference} from 'lodash';
 import {Band,allBandAry} from '../Band.js';
 import {TABLE_SELECT,TABLE_HIGHLIGHT,
         TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
+import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceViewerItems, dispatchUpdateCustom, getViewerItemIds,
@@ -19,94 +18,100 @@ import {converterFactory, converters} from '../../metaConvert/ConverterFactory.j
 import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {isImageDataRequeestedEqual} from '../WebPlotRequest.js';
+import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 
 const MAX_GRID_SIZE= 50;
 
-/**
- * this saga does the following:
- * <ul>
- *     <li>Then loops:
- *     <ul>
- *         <li>waits table change, and loads images- only acts with image meta data tables
- *         <li>waits for watches for viewer mounting and unmounted, paused with unmounted
- *     </ul>
- * </ul>
- * @param viewerId
- */
-export function* watchImageMetaData({viewerId, paused=true}) {
 
-    var tbl_id;
+export function startImageMetadataWatcher({viewerId, paused=true}) {
+    let tbl_id = null;
 
     if (!paused) {
         tbl_id= getActiveTableId();
         if (tbl_id) updateImagePlots(tbl_id, viewerId);
     }
 
+    const actions = [TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
+        TBL_RESULTS_ACTIVE, REINIT_APP,
+        MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
+        MultiViewCntlr.VIEWER_UNMOUNTED,
+        MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
+        ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW];
 
+    dispatchAddActionWatcher({id: `imw-${viewerId}`, actions, callback: watchImageMetadata, params: {viewerId, paused, tbl_id}});
+}
 
-    while (true) {
-        const action= yield take([TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
-                                  TBL_RESULTS_ACTIVE,
-                                  MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
-                                  MultiViewCntlr.VIEWER_UNMOUNTED,
-                                  MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
-                                  ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
-                                  REINIT_RESULT_VIEW]);
-        const {payload}= action;
+/**
+ * Action watcher callback:
+ * loads images on table change (only acts on image metadata tables),
+ * pauses when the viewer is unmounted, resumes when it is mounted again
+ * @callback actionWatcherCallback
+ * @param action
+ * @param cancelSelf
+ * @param params
+ * @param params.viewerId
+ * @param params.paused
+ * @param params.tbl_id
+ */
+function watchImageMetadata(action, cancelSelf, params) {
+    const {viewerId} = params;
+    let {paused, tbl_id} = params;
 
-        if (payload.viewerId && payload.viewerId!==viewerId) continue;
+    const {payload}= action;
 
-        if (action.type===TABLE_REMOVE) {
-            tbl_id= getActiveTableId();
-            if (!tbl_id) removeAllPlotsInViewer(viewerId);
-        }
-        else if (payload.tbl_id) {
-            if (!isMetaDataTable(payload.tbl_id)) continue;
-            tbl_id= payload.tbl_id; // otherwise use the last one
-        }
+    if (payload.viewerId && payload.viewerId!==viewerId) return;
 
-
-        switch (action.type) {
-
-            case TABLE_REMOVE:
-            case TABLE_HIGHLIGHT:
-            case TABLE_UPDATE:
-            case TBL_RESULTS_ACTIVE:
-                if (!paused) updateImagePlots(tbl_id, viewerId);
-                break;
-
-            case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
-            case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
-                if (!paused) updateImagePlots(tbl_id, viewerId, true);
-                break;
-
-
-            case MultiViewCntlr.ADD_VIEWER:
-                init3Color(viewerId);
-                if (payload.mounted) {
-                    updateImagePlots(tbl_id, viewerId);
-                    paused= false;
-                }
-                break;
-
-            case MultiViewCntlr.VIEWER_MOUNTED:
-                paused= false;
-                updateImagePlots(tbl_id, viewerId);
-                break;
-
-            case MultiViewCntlr.VIEWER_UNMOUNTED:
-                paused= true;
-                break;
-
-            case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-                if (!paused) changeActivePlotView(action.payload.plotId,tbl_id);
-                break;
-
-            case REINIT_RESULT_VIEW:
-                return; // sega exit
-                break;
-        }
+    if (action.type===TABLE_REMOVE) {
+        tbl_id= getActiveTableId();
+        if (!tbl_id) removeAllPlotsInViewer(viewerId);
     }
+    else if (payload.tbl_id) {
+        if (!isMetaDataTable(payload.tbl_id)) return;
+        tbl_id= payload.tbl_id; // otherwise use the last one
+    }
+
+
+    switch (action.type) {
+
+        case TABLE_REMOVE:
+        case TABLE_HIGHLIGHT:
+        case TABLE_UPDATE:
+        case TBL_RESULTS_ACTIVE:
+            if (!paused) updateImagePlots(tbl_id, viewerId);
+            break;
+
+        case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
+        case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
+            if (!paused) updateImagePlots(tbl_id, viewerId, true);
+            break;
+
+
+        case MultiViewCntlr.ADD_VIEWER:
+            init3Color(viewerId);
+            if (payload.mounted) {
+                updateImagePlots(tbl_id, viewerId);
+                paused= false;
+            }
+            break;
+
+        case MultiViewCntlr.VIEWER_MOUNTED:
+            paused= false;
+            updateImagePlots(tbl_id, viewerId);
+            break;
+
+        case MultiViewCntlr.VIEWER_UNMOUNTED:
+            paused= true;
+            break;
+
+        case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
+            if (!paused) changeActivePlotView(action.payload.plotId,tbl_id);
+            break;
+
+        case REINIT_APP:
+            cancelSelf();
+            break;
+    }
+    return {viewerId, paused, tbl_id};
 }
 
 

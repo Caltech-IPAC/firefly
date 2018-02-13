@@ -24,7 +24,7 @@ import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
 import {SCATTER, HISTOGRAM} from '../charts/ChartUtil.js';
 import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
-import {makeFileRequest}  from '../tables/TableUtil.js';
+import {makeFileRequest}  from '../tables/TableRequestUtil.js';
 import {makeXYPlotParams, makeHistogramParams, uniqueChartId} from '../charts/ChartUtil.js';
 import {getWsChannel, getWsConnId} from '../core/messaging/WebSocketClient.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';

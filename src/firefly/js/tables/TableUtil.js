@@ -827,11 +827,12 @@ export function createErrorTbl(tbl_id, error) {
  * @param {string}   tbl_id  table id to watch
  * @param {Object}   actions  an array of table actions to watch
  * @param {function} callback  callback to execute when table is loaded.
+ * @param {string} [watcherId] action watcher id to be used
  * @return {function} returns a function used to cancel
  */
-export function watchTableChanges(tbl_id, actions, callback) {
+export function watchTableChanges(tbl_id, actions, callback, watcherId) {
     const accept = (a) => tbl_id === (get(a, 'payload.tbl_id') || get(a, 'payload.request.tbl_id'));
-    return monitorChanges(actions, accept, callback);
+    return monitorChanges(actions, accept, callback, watcherId);
 }
 
 /**
@@ -839,12 +840,13 @@ export function watchTableChanges(tbl_id, actions, callback) {
  * @param {Object}   actions  an array of actions to watch
  * @param {function} accept  a function used to filter incoming actions.  if not given, it will accept all.
  * @param {function} callback  callback to execute when action occurs.
+ * @param {string} [watcherId] action watcher id to be used
  * @return {function} returns a function used to cancel
  */
-export function monitorChanges(actions, accept, callback) {
+export function monitorChanges(actions, accept, callback, watcherId) {
     if (!Array.isArray(actions) || actions.length === 0 || !callback) return;
 
-    const id = uniqueID();
+    const id = watcherId || uniqueID();
     const mCallback = (action) => {
         if (accept(action)) {
             callback(action);
@@ -891,13 +893,14 @@ export function isTextType(col={}) {
 
 /*-------------------------------------private------------------------------------------------*/
 /**
- * this saga watches for table update and invoke the given callback when
+ * Action watcher callback for table update, which is invoked when
  * the table given by tbl_id is fully loaded.
- * @param {Object}   action  action that triggered this watcher
- * @param {function} cancelSelf  function to cancel this watcher
- * @param {Object}   p  parameters object
- * @param {string}   p.tbl_id  table id to watch
- * @param {function} p.resolve  callback to execute when table is loaded.
+ * @callback actionWatcherCallback
+ * @param action  action that triggered this watcher
+ * @param cancelSelf  function to cancel this watcher
+ * @param params  parameters object
+ * @param {string}   params.tbl_id  table id to watch
+ * @param {function} params.resolve  callback to execute when table is loaded.
  */
 function doOnTblLoaded(action, cancelSelf, {tbl_id, resolve}) {
     if (!resolve) cancelSelf();

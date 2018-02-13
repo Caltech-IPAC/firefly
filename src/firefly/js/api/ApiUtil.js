@@ -5,11 +5,10 @@
 
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import {get,isEmpty} from 'lodash';
-import {isElement,isString} from 'lodash';
+import {get,isArray,isElement,isEmpty,isString} from 'lodash';
 import {logErrorWithPrefix} from '../util/WebUtil.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
-import {take,race,call} from 'redux-saga/effects';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
+import {uniqueID} from '../util/WebUtil';
 
 // NOTE 
 // NOTE 
@@ -94,10 +93,10 @@ export function unrenderDOM(div) {
 
 /**
  * @summary Add a listener to any action type
- * @param {string} actionType a string or and array of strings. Each string is an action constant from firefly.action.type
- * @param {function} callBack the call back will be call with two parameters: action object and state object
+ * @param {string} actionType a string or an array of strings. Each string is an action constant from firefly.action.type
+ * @param {function} callBack the call back will be called with three parameters: action object, state object, and extraData
  *                 If it returns true the listener will be removed.
- * @param {object} extraData, an object with data to send to the callback, can be anything
+ * @param {object} extraData an object with data to send to the callback, can be anything
  *
  * @return {function} a function that will remove the listener
  * @public
@@ -105,43 +104,22 @@ export function unrenderDOM(div) {
  * @memberof firefly.util
  */
 export function addActionListener(actionType,callBack, extraData) {
-    var pResolve;
-    const cancelPromise= new Promise((resolve) => pResolve= resolve);
-    dispatchAddSaga(actionReport,{actionType,callBack, cancelPromise,extraData});
-    return () => pResolve();
-}
 
-//=========================================================================
-//------------------ Private ----------------------------------------------
-//=========================================================================
-
-/**
- * This saga call a user callback when when one of the actionTypes are dispatched
- * This saga does the following:
- * <ul>
- *     <li>waits until a type in the actionType list is dispatched or a cancel promise
- *     <li>if an action call the callback
- *     <li>if the call back returns true or the cancel promise is resolved then exit
- * </ul>
- * @param {string | string[]} actionType
- * @param callBack the user callback
- * @param cancelPromise a promise to cancel the callback
- * @param extraData
- * @param dispatch
- * @param getState a function get the application state
- * @private
- * @func actionReport
- *  @memberof firefly.util
- *
- */
-function *actionReport({actionType,callBack, cancelPromise, extraData},dispatch,getState) {
-    if (!actionType && !callBack) return;
-    var stopListening= false;
-    while (!stopListening) {
-        var raceWinner = yield race({
-            action: take(actionType),
-            cancel: call(() => cancelPromise)
-        });
-        stopListening= raceWinner.action ? callBack(raceWinner.action,getState(),extraData) : true;
+    if (!isArray(actionType) && !isString(actionType)) {
+        throw 'actionType must be a string or an array of strings';
     }
+
+    // @callback {actionWatcherCallback}
+    const wrapperCallback = (action, cancelSelf, params, dispatch, getState) => {
+        if (callBack(action, getState(), params)) {
+            cancelSelf();
+        }
+    };
+
+    const id = uniqueID();
+    const actions = isArray(actionType) ? actionType : [actionType];
+
+    dispatchAddActionWatcher({id, actions, callback: wrapperCallback, params: extraData});
+    return (() => dispatchCancelActionWatcher(id));
 }
+

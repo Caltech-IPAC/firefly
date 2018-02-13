@@ -378,9 +378,8 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
 
 function initCoverage(llApi, targetDiv,options= {}) {
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
-    const {dispatchAddSaga}= llApi.action;
     const {renderDOM,debug}= llApi.util;
-    const {watchImageMetaData,watchCoverage,NewPlotMode}= llApi.util.image;
+    const {startCoverageWatcher,NewPlotMode}= llApi.util.image;
     highlevelImageInit(llApi);
 
     const {canReceiveNewPlots=NewPlotMode.replace_only.key}= options;
@@ -389,7 +388,7 @@ function initCoverage(llApi, targetDiv,options= {}) {
     renderDOM(targetDiv, MultiImageViewer,
         {viewerId:targetDiv, canReceiveNewPlots, canDelete:false, Toolbar:MultiViewStandardToolbar });
     options= Object.assign({},options, {viewerId:targetDiv});
-    dispatchAddSaga(watchCoverage, options);
+    startCoverageWatcher(options);
 }
 
 

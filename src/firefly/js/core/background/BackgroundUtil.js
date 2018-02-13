@@ -171,6 +171,12 @@ export function bgDownload({dlRequest, searchRequest, selectInfo}, {key, onCompl
         });
 }
 
+/**
+ * @callback actionWatcherCallback
+ * @param action
+ * @param cancelSelf
+ * @param params
+ */
 function bgTracker(action, cancelSelf, params={}) {
     const {bgID, key, onComplete, sentToBg} = params;
     const bgStatus = bgStatusTransform(action.payload || {});

@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
 import {get, map} from 'lodash';
 
 import {flux} from '../Firefly.js';
-import {dispatchAddSaga} from '../core/MasterSaga.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
@@ -28,7 +27,6 @@ export const APP_OPTIONS = `${APP_DATA_PATH}.appOptions`;
 
 export const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
-export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 export const ROOT_URL_PATH = `${APP_DATA_PATH}.rootUrlPath`;
 export const SET_ALERTS = `${APP_DATA_PATH}.setAlerts`;
 export const SET_USER_INFO = `${APP_DATA_PATH}.setUserInfo`;
@@ -83,6 +81,7 @@ export function dispatchAppOptions(appOptions) {
 /**
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, you create with makeTaskId()
+ * @param replace
  */
 export function dispatchAddTaskCount(componentId,taskId, replace= false) {
     flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId, replace}});
@@ -132,8 +131,8 @@ export function dispatchSetMenu(menu) {
  * Load search info into the application
  * @param p                     parameter object
  * @param {object[]}  p.groups  an array of search groups
- * @param {string}   [activeSearch] the current selected search.  defaults to the first search.
- * @param {string}   [flow]     'horizontal' or 'vertical'.  defaults to 'vertical'.
+ * @param {string}   [p.activeSearch] the current selected search.  defaults to the first search.
+ * @param {string}   [p.flow]     'horizontal' or 'vertical'.  defaults to 'vertical'.
  */
 export function dispatchLoadSearches({groups, activeSearch, flow}) {
     flux.process({ type : LOAD_SEARCHES, payload: {groups, activeSearch, flow} });
@@ -156,12 +155,12 @@ export function dispatchOnAppReady(callback) {
     if (isAppReady()) {
         callback && callback(flux.getState());
     } else {
-        dispatchAddSaga(doOnAppReady, callback);
+        dispatchAddActionWatcher({actions: [APP_UPDATE, APP_LOAD], callback: doOnAppReady, params: {callback}});
     }
 }
 
 
-/*---------------------------- EXPORTED FUNTIONS -----------------------------*/
+/*---------------------------- EXPORTED FUNCTIONS -----------------------------*/
 export function isAppReady() {
     const gwtReady = !get(window, 'firefly.use_gwt', false) ||
         get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
@@ -305,20 +304,21 @@ function updateAppData(appData) {
 }
 
 /**
- * This saga watches for app_data.isReady.  
- * When that happens, it will execute the given callback with the current state. 
- * @param {function} callback
+ * Action watcher callback. Watches for app_data.isReady.
+ * When app data are loaded, it will execute the callback passed with params with the current state.
+ * @callback actionWatcherCallback
+ * @param action
+ * @param cancelSelf
+ * @param params
+ * @param {function} params.callback function to execute on completion
  * @param {function} dispatch
  * @param {function} getState
  */
-function* doOnAppReady(callback, dispatch, getState) {
-
-    var isReady = isAppReady();
-    while (!isReady) {
-        yield take([APP_UPDATE, APP_LOAD]);
-        isReady = isAppReady();
+function doOnAppReady(action, cancelSelf, params={}, dispatch, getState) {
+    if (isAppReady()) {
+        params.callback && params.callback(getState());
+        cancelSelf();
     }
-    callback && callback(getState());
 }
 
 /**

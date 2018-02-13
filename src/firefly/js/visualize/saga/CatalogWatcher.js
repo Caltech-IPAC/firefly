@@ -27,7 +27,7 @@ import {logError} from '../../util/WebUtil.js';
  *     <li>Then loops:
  *     <ul>
  *         <li>waits for a table new table, update, highlight or select change and then updates the drawing layer
- *         <li>waits fora new plot and adds any catalog
+ *         <li>waits for a new plot and adds any catalog
  *     </ul>
  * </ul>
  */
