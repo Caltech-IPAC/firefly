@@ -534,7 +534,7 @@ function isFireflyType(type) {
 
 /**
  * Move firefly attributes from data and layout objects to fireflyData and fireflyLayout
- * @param payload – original action payload
+ * @param payload - original action payload
  * @return updated action payload
  */
 function handleFireflyTraceTypes(payload) {

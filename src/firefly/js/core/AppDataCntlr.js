@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, map, uniqueId} from 'lodash';
+import {get, map} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
@@ -155,8 +155,7 @@ export function dispatchOnAppReady(callback) {
     if (isAppReady()) {
         callback && callback(flux.getState());
     } else {
-        dispatchAddActionWatcher({id: uniqueId('appReady'), actions: [APP_UPDATE, APP_LOAD],
-            callback: doOnAppReady, params: {callback}});
+        dispatchAddActionWatcher({actions: [APP_UPDATE, APP_LOAD], callback: doOnAppReady, params: {callback}});
     }
 }
 

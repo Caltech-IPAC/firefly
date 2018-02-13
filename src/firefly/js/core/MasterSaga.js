@@ -4,7 +4,7 @@
 
 import {flux} from '../Firefly.js';
 import {take, fork, spawn, cancel} from 'redux-saga/effects';
-import {get, has, isUndefined} from 'lodash';
+import {get, isFunction, isUndefined} from 'lodash';
 
 import {uniqueID} from '../util/WebUtil.js';
 
@@ -28,7 +28,7 @@ export function dispatchAddSaga(saga, params={}) {
  * @callback actionWatcherCallback
  * @param {Action} action - the triggering action
  * @param {function} cancelSelf - a function to cancel this watcher
- * @param {object} params – params passed through dispatchAddActionWatcher or (if not undefined) the last returned value from the watcher callback
+ * @param {object} params - params passed through dispatchAddActionWatcher or (if not undefined) the last returned value from the watcher callback
  * @param {function} dispatch: flux's dispatcher
  * @param {function} getState: flux's getState function
  */
@@ -87,13 +87,19 @@ export function* masterSaga() {
                 // with fork every exception will bubble up from the child to the parent:
                 // an unhandled exception in one saga will cancel all sibling sagas
                 // with spawn, only the saga with the unhandled error will be cancelled
-                if (typeof saga === 'function') yield spawn(saga, params, dispatch, getState);
+                // the unhandled errors are caught by middleware and logged to console
+                if (isFunction(saga)) {
+                    yield spawn(saga, params, dispatch, getState);
+                } else {
+                    console.error('Can not add saga: callback must be a generator function');
+                }
                 break;
             }
             case ADD_ACTION_WATCHER: {
                 const {getState, dispatch}= flux.getRedux();
-                const {id=uniqueID(), actions, callback, params}= action.payload;
-                if (actions && callback) {
+                const {actions, callback, params}= action.payload;
+                if (actions && isFunction(callback)) {
+                    const {id=callback.name+uniqueID()}= action.payload;
                     if (watchers[id]) {
                         yield cancel(watchers[id]);
                     }
@@ -101,6 +107,8 @@ export function* masterSaga() {
                     const task = yield fork(watcherSaga, dispatch, getState);
                     watchers[id] = task;
                     isDebug() && console.log(`watcher ${id} added.  #watcher: ${Object.keys(watchers).length}`);
+                } else {
+                    console.error('Can not create action watcher: invalid actions or callback');
                 }
                 break;
             }
