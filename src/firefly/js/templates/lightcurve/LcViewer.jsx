@@ -11,7 +11,6 @@ import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../co
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {lcManager, LC} from './LcManager.js';
 import {LcResult} from './LcResult.jsx';
-import {LcPeriod} from './LcPeriod.jsx';
 import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
@@ -30,7 +29,6 @@ import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName, DL_DATA_TAG} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {HelpText} from './../../ui/HelpText.jsx';
 import {dispatchAllowDataTag} from '../../core/background/BackgroundCntlr.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
@@ -95,8 +93,6 @@ export class LcViewer extends PureComponent {
         dropdownPanels.push(<UploadPanel {...{missionOptions, fileLocation}}/>);
 
 
-        const LcPeriodInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? LcPeriodPlotly : LcPeriod;
-
         var mainView = (converterId) => {
             const converter = getConverter(converterId);
             if (!converter.isTableUploadValid().isValid){
@@ -113,7 +109,7 @@ export class LcViewer extends PureComponent {
             } else {
                 if (displayMode && displayMode.startsWith('period')) {
                     return (
-                        <LcPeriodInstance {...periodProps}/>
+                        <LcPeriodPlotly {...periodProps}/>
                     );
                 } else {
                     return (

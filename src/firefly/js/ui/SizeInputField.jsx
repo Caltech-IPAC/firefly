@@ -20,7 +20,7 @@ function getUnit(unit) {
 // input: string format,
 // output: size in degree (string foramt, no decimal digit limit), '': invalid input
 export const sizeToDeg = (sizestr, unit) => {
-    if (sizestr && !validator.isFloat(sizestr)) {
+    if (sizestr && !validator.isFloat(sizestr+'')) {
         return sizestr;
     }
     return (sizestr) ? convertAngle(((unit) ? unit : 'deg'), 'deg', sizestr).toString() : '';

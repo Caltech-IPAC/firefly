@@ -19,7 +19,7 @@ const titleStyle= {
 
 export function TargetFeedback ({showHelp, feedback, style={}}) {
     let retval;
-    style = Object.assign(topDivStyle, style);
+    style = Object.assign({}, topDivStyle, style);
     if (showHelp) {
         const makeSpan= (w) => <span style={{paddingLeft: `${w}px`}}/>;
         retval= (

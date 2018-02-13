@@ -21,6 +21,7 @@ import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import './ImageViewerDecorate.css';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {DataTypes} from '../draw/DrawLayer.js';
+import {wrapResizer} from '../../ui/SizeMeConfig.js';
 
 const EMPTY_ARRAY=[];
 
@@ -232,6 +233,7 @@ function getBorderColor(pv,visRoot) {
  * @param annoOps
  * @param expandedMode
  * @param pv
+ * @param working
  * @return {*}
  */
 function makeInlineTitle(annoOps, expandedMode,pv, working) {
@@ -258,13 +260,13 @@ function makeTitleLineHeader(annoOps, expandedMode, pv) {
 //---------- React Components -----------------------------------------------
 //===========================================================================
 
-export class ImageViewerDecorate extends Component {
+class ImageViewerDecorate extends Component {
     constructor(props) {
         super(props);
         this.makeActive= this.makeActive.bind(this);
     }
 
-    shouldComponentUpdate(np,ns) {
+    shouldComponentUpdate(np) {
         const {props:p}= this;
         const omitList= ['mousePlotId'];
         const update= !shallowequal(omit(np,omitList), omit(p,omitList) );
@@ -281,28 +283,29 @@ export class ImageViewerDecorate extends Component {
 
 
 
-    makeActive(ev) {
+    makeActive() {
         const plotId= get(this.props,'plotView.plotId');
         if (plotId) dispatchChangeActivePlotView(plotId);
     }
 
     render() {
         const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,
-               handleInlineTools,taskCount,width,height}= this.props;
+               handleInlineTools,taskCount, size:{width,height}}= this.props;
 
-        if (!width || !height) return false;
+        // if (!width || !height) return false;
 
         const showDelete= pv.plotViewCtx.userCanDeletePlots;
         const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
         const top= ctxToolbar?32:0;
-        let title;
         let titleLineHeader= null;
         let inlineTitle= null;
         const {expandedMode}= visRoot;
         const expandedToSingle= (expandedMode===ExpandType.SINGLE);
-        const iWidth= expandedToSingle ? width : width-4;
-        const iHeight=expandedToSingle ? height-top :height-5-top;
+        let iWidth= expandedToSingle ? width : width-4;
+        let iHeight=expandedToSingle ? height-top :height-5-top;
         const plot= primePlot(pv);
+        if (iWidth<0) iWidth= 0;
+        if (iHeight<0) iHeight= 0;
 
         if (plot) {
             titleLineHeader= makeTitleLineHeader(pv.plotViewCtx.annotationOps,expandedMode, pv);
@@ -366,8 +369,7 @@ ImageViewerDecorate.propTypes= {
     visRoot: PropTypes.object.isRequired,
     extensionList : PropTypes.array.isRequired,
     mousePlotId : PropTypes.string,
-    width : PropTypes.number.isRequired,
-    height : PropTypes.number.isRequired,
+    size : PropTypes.object.isRequired,
     handleInlineTools : PropTypes.bool,
     taskCount: PropTypes.number
 };
@@ -377,3 +379,7 @@ ImageViewerDecorate.defaultProps = {
     handleInlineTools : true,
     showDelete : false
 };
+
+
+export const ImageViewerView= wrapResizer(ImageViewerDecorate);
+

@@ -6,7 +6,33 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {dispatchMountFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
+import {dispatchMountFieldGroup, MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr.js';
+import {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+
+
+/**
+ * Watch for an unmount for a field group this is marked as mounted. Then we immediately do a mount.
+ * @param action
+ * @param cancelSelf
+ * @param params
+ */
+function remountWatcher(action, cancelSelf, params) {
+    const {payload}= action;
+    if (action.type===MOUNT_COMPONENT && !payload.mounted && payload.groupKey===params.props.groupKey) {
+        doMountDispatch(params.props, params.context);
+        cancelSelf();
+    }
+}
+
+
+function doMountDispatch(props,context) {
+    const {groupKey:wrapperGroupKey}= context;
+    const {groupKey, reducerFunc, keepState, initValues, actionTypes}= props;
+    dispatchMountFieldGroup(groupKey, true, keepState, initValues, reducerFunc, actionTypes, wrapperGroupKey);
+}
+
+
 
 
 export class FieldGroup extends PureComponent {
@@ -23,16 +49,25 @@ export class FieldGroup extends PureComponent {
         const {groupKey:wrapperGroupKey}= context;
         const {groupKey, reducerFunc, keepState, actionTypes}= nextProps;
                        // support change the groupKey property on the form with out unmounting
-        if (this.props.groupKey!==groupKey) {   //todo: not quite sure how to test that this works
+        if (this.props.groupKey!==groupKey) {
             dispatchMountFieldGroup(groupKey, false);
             dispatchMountFieldGroup(groupKey, true, keepState, null, reducerFunc, actionTypes, wrapperGroupKey);
         }
     }
 
     componentWillMount() {
-        const {groupKey:wrapperGroupKey}= this.context;
-        var {groupKey, reducerFunc, keepState, initValues, actionTypes}= this.props;
-        dispatchMountFieldGroup(groupKey, true, keepState, initValues, reducerFunc, actionTypes, wrapperGroupKey);
+        const {groupKey}= this.props;
+        const groupState= getFieldGroupState(groupKey);
+        if (groupState && groupState.mounted) {
+            // as of react 16 mount happens before unmount:
+            // if a mounted group is unmounted, I will delay the remount until the componentWillUnmount is called
+            dispatchAddActionWatcher({
+                actions:[MOUNT_COMPONENT], callback:remountWatcher, params:{props:this.props, context:this.context}}
+            );
+        }
+        else {
+            doMountDispatch(this.props, this.context);
+        }
     }
 
     componentWillUnmount() {

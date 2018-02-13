@@ -127,7 +127,7 @@ class ShapePickerWrapper extends PureComponent {
         var validSize = true;
         var isize;
 
-        if (!size || !validator.isFloat(size)) {
+        if (!size || !validator.isFloat(size+'')) {
             validSize = false;
         } else {
             isize = Math.floor(parseFloat(size));

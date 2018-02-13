@@ -285,7 +285,6 @@ function makeExtensionButtons(extensionAry,pv,dlAry) {
                 <ToolbarButton icon={ext.imageUrl} text={ext.title}
                                tip={ext.toolTip} key={ext.id}
                                horizontal={true} enabled={true}
-                               visible={true}
                                lastTextItem={idx===(extensionAry.length-1)}
                                onClick={() => dispatchExtensionActivate(ext,makePlotSelectionExtActivateData(ext,pv,dlAry))}/>
                 );
@@ -540,46 +539,38 @@ export class VisCtxToolbarView extends PureComponent {
                         float : 'left', fontStyle: 'italic'}}>
                     Options:</div>
                 }
-                <ToolbarButton icon={CROP}
-                               tip='Crop the image to the selected area'
-                               horizontal={true}
-                               visible={showSelectionTools && isImage(plot)}
-                               onClick={() => crop(pv, dlAry)}/>
+                {showSelectionTools && isImage(plot) &&
+                <ToolbarButton icon={CROP} tip='Crop the image to the selected area'
+                               horizontal={true} onClick={() => crop(pv, dlAry)}/>}
 
-                <ToolbarButton icon={STATISTICS}
-                               tip='Show statistics for the selected area'
-                               horizontal={true}
-                               visible={showSelectionTools && isImage(plot)}
-                               onClick={() => stats(pv, dlAry)}/>
+                {showSelectionTools && isImage(plot) &&
+                <ToolbarButton icon={STATISTICS} tip='Show statistics for the selected area'
+                               horizontal={true} onClick={() => stats(pv, dlAry)}/>}
 
-                <ToolbarButton icon={SELECTED}
-                               tip='Mark data in area as selected'
-                               horizontal={true}
-                               visible={showCatSelect}
-                               onClick={() => selectCatalog(pv,dlAry)}/>
+                {showCatSelect &&
+                <ToolbarButton icon={SELECTED} tip='Mark data in area as selected'
+                               horizontal={true} onClick={() => selectCatalog(pv,dlAry)}/>}
 
-                <ToolbarButton icon={UNSELECTED}
-                               tip='Mark all data unselected'
-                               horizontal={true}
-                               visible={showCatUnSelect}
-                               onClick={() => unselectCatalog(pv,dlAry)}/>
+                {showCatUnSelect &&
+                <ToolbarButton icon={UNSELECTED} tip='Mark all data unselected'
+                               horizontal={true} onClick={() => unselectCatalog(pv,dlAry)}/>}
 
-                <ToolbarButton icon={FILTER}
-                               tip='Filter in the selected area'
-                               horizontal={true}
-                               visible={showFilter}
-                               onClick={() => filterCatalog(pv,dlAry)}/>
+                {showFilter &&
+                <ToolbarButton icon={FILTER} tip='Filter in the selected area'
+                               horizontal={true} onClick={() => filterCatalog(pv,dlAry)}/>}
 
+                {showClearFilter &&
                 <ToolbarButton icon={CLEAR_FILTER} tip='Clear all the Filters'
-                               horizontal={true} visible={showClearFilter}
-                               onClick={() => clearFilterCatalog(pv,dlAry)}/>
+                               horizontal={true} onClick={() => clearFilterCatalog(pv,dlAry)}/>}
 
+                {showSelectionTools &&
                 <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
-                               horizontal={true} visible={showSelectionTools}
-                               onClick={() => zoomIntoSelection(pv, dlAry)}/>
+                               horizontal={true}
+                               onClick={() => zoomIntoSelection(pv, dlAry)}/>}
+
+                { showSelectionTools &&
                 <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
-                               horizontal={true} visible={showSelectionTools}
-                               onClick={() => recenterToSelection(pv)}/>
+                               horizontal={true} onClick={() => recenterToSelection(pv)}/>}
 
 
                 {makeExtensionButtons(extensionAry,pv,dlAry)}
@@ -636,7 +627,6 @@ const mulImStyle= {
     flexDirection:'row',
     flexWrap:'nowrap',
     alignItems: 'center',
-    // width:'100%',
 };
 
 

@@ -65,9 +65,6 @@ import FootprintTool from '../drawingLayers/FootprintTool.js';
 import ImageOutline from '../drawingLayers/ImageOutline.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
-//==============
-// import Perf from 'react-addons-perf';
-// window.Perf = Perf;
 
 
 /**

@@ -26,7 +26,7 @@ export const CollapseHeaderCorner = {
 
 function collapsibleStateFromProps(props) {
     // component key needs to be defined if the state needs to be saved though unmount/mount
-    var isOpen = props.componentKey && getComponentState(props.componentKey).isOpen;
+    let isOpen = props.componentKey && getComponentState(props.componentKey).isOpen;
     if (!isBoolean(isOpen)) {
         // use property to initialize state
         isOpen = props.isOpen? props.isOpen: false;
@@ -47,7 +47,7 @@ export class CollapsiblePanel extends PureComponent {
     }
 
     componentWillReceiveProps(nextProps) {
-        this.state= collapsibleStateFromProps(nextProps);
+        this.setState( () => collapsibleStateFromProps(nextProps));
     }
 
     handleClick() {
@@ -74,9 +74,9 @@ export class CollapsiblePanel extends PureComponent {
         var {headerStyle, contentStyle} = this.props;
         const contentBorderClassName = ['', ' CollapsiblePanel__Content-oneborder',
                               ' CollapsiblePanel__Content-twoborder', ' CollapsiblePanel__Content-threeborder'];
-        var headerClassName = 'CollapsiblePanel__Header';
-        var contentClassName = 'CollapsiblePanel__Content';
-        var headerCorner = '';
+        let headerClassName = 'CollapsiblePanel__Header';
+        let contentClassName = 'CollapsiblePanel__Content';
+        let headerCorner = '';
 
        ['TopLeft', 'TopRight', 'BottomRight', 'BottomLeft'].forEach((corner) => {
             CollapseHeaderCorner[corner]&headerRoundCorner ?

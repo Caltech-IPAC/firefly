@@ -12,7 +12,6 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import * as ChartsCntlr from '../ChartsCntlr.js';
-import {isPlotly} from '../ChartUtil.js';
 import {downloadChart} from '../ui/PlotlyWrapper.jsx';
 import {HistogramOptions} from '../ui/HistogramOptions.jsx';
 import {Histogram} from '../ui/Histogram.jsx';
@@ -154,10 +153,10 @@ function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
                                visible={true}
                                badgeCount={TblUtil.getFilterCount(tableModel)}
                                onClick={() => toggleOptions('filters')}/>
-                {isPlotly() && <img className='PanelToolbar__button'
+                <img className='PanelToolbar__button'
                      title='Download the chart as a PNG image'
                      src={SAVE}
-                     onClick={() => downloadChart(chartId)}/>}
+                     onClick={() => downloadChart(chartId)}/>
                 <img className='PanelToolbar__button'
                      title='Chart options and tools'
                      src={SETTINGS}

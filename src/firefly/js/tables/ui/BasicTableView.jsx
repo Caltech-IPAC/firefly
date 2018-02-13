@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import FixedDataTable from 'fixed-data-table-2';
-import Resizable from 'react-component-resizable';
+import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {debounce, defer, get, isEmpty} from 'lodash';
 
 import {tableTextView, getTableUiById} from '../TableUtil.js';
@@ -22,31 +22,13 @@ const {Table, Column} = FixedDataTable;
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 
-export class BasicTableView extends PureComponent {
+class BasicTableViewInternal extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {
             showMask: false,
-            widthPx: 0,
-            heightPx: 200,
             data: [],
             columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
-        };
-
-        const normal = (size) => {
-            if (size && !this.isUnmounted) {
-                var widthPx = size.width;
-                var heightPx = size.height;
-                this.setState({widthPx, heightPx});
-            }
-        };
-        const debounced = debounce(normal, 100);
-        this.onResize =  (size) => {
-            if (this.state.widthPx === 0) {
-                defer(normal, size);
-            } else {
-                debounced(size);
-            }
         };
 
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
@@ -135,9 +117,10 @@ export class BasicTableView extends PureComponent {
     }
 
     render() {
+        const {width, height}= this.props.size;
         const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo, renderers, bgColor,
             selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask, error, tbl_ui_id} = this.props;
-        const {widthPx, heightPx, columnWidths} = this.state;
+        const {columnWidths} = this.state;
         const {onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected} = this;
         const {tbl_id} = getTableUiById(tbl_ui_id) || {};
 
@@ -153,10 +136,10 @@ export class BasicTableView extends PureComponent {
         const headerHeight = 22 + (showUnits && 8) + (showFilters && 22);
 
         return (
-            <Resizable id='table-resizer' tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' onResize={this.onResize}>
+            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' >
                 {   error ? <div style={{padding: 10}}>{error}</div> :
-                    widthPx === 0 ? <div /> :
-                    textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
+                    width === 0 ? <div /> :
+                    textView ? <TextView { ...{columns, data, showUnits, width, height} }/> :
                     <Table
                         rowHeight={rowHeight}
                         headerHeight={headerHeight}
@@ -166,19 +149,19 @@ export class BasicTableView extends PureComponent {
                         onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
                         rowClassNameGetter={this.rowClassName}
                         scrollToRow={hlRowIdx}
-                        width={widthPx}
-                        height={heightPx}>
+                        width={width}
+                        height={height}>
                         { makeColumns(makeColumnsProps) }
                     </Table>
                 }
                 {!error && showMask && <div style={{top: 0}} className='loading-mask'/>}
                 {!error && !showMask && isEmpty(data) && <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>}
-            </Resizable>
+            </div>
         );
     }
 }
 
-BasicTableView.propTypes = {
+BasicTableViewInternal.propTypes = {
     tbl_ui_id: PropTypes.string,
     columns: PropTypes.arrayOf(PropTypes.object),
     data: PropTypes.arrayOf(PropTypes.array),
@@ -195,6 +178,7 @@ BasicTableView.propTypes = {
     currentPage: PropTypes.number,
     bgColor: PropTypes.string,
     error:  PropTypes.string,
+    size: PropTypes.object.isRequired,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,
@@ -212,7 +196,7 @@ BasicTableView.propTypes = {
 
 };
 
-BasicTableView.defaultProps = {
+BasicTableViewInternal.defaultProps = {
     selectable: false,
     showUnits: false,
     showFilters: false,
@@ -221,11 +205,12 @@ BasicTableView.defaultProps = {
     currentPage: -1
 };
 
+export const BasicTableView= wrapResizer(BasicTableViewInternal);
 
-const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
+const TextView = ({columns, data, showUnits, width, height}) => {
     const text = tableTextView(columns, data, showUnits);
     return (
-        <div style={{height: heightPx, width: widthPx,overflow: 'hidden'}}>
+        <div style={{height, width,overflow: 'hidden'}}>
             <div style={{height: '100%',overflow: 'auto'}}>
                 <pre>{text}</pre>
             </div>
@@ -236,7 +221,7 @@ const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
 function makeColWidth(columns, showUnits) {
     return !columns ? {} : columns.reduce((widths, col, idx) => {
         const label = col.name;
-        var nchar = col.prefWidth;
+        let nchar = col.prefWidth;
         const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
         if (!nchar) {
             nchar = Math.max(label.length+2, unitLength+2, get(col,'width', 0)); // 2 is for padding and sort symbol
