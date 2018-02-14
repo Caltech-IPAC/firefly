@@ -39,7 +39,7 @@ export function TargetFeedback ({showHelp, feedback, style={}}) {
     }
     else {
         retval= (
-            <div style={topDivStyle}>
+            <div style={style}>
 
                 <span dangerouslySetInnerHTML={{
                     __html : feedback
