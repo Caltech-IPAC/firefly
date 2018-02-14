@@ -2,12 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {has} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {convertISOToMJD, convertMJDToISO, validateDateTime, validateMJD, fMoment} from './DateTimePickerField.jsx';
 import {MJD, ISO} from './tap/TapUtil.js';
 
@@ -165,19 +165,6 @@ TimeFeedback.propTypes = {
     timeMode: PropTypes.string
 };
 
-
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            onChange: (ev) => handleOnChange(ev, params, fireValueChange),
-            value: params.value || ''
-        });
-}
-
-const propTypes = {
-    timeMode: PropTypes.string
-};
-
 function handleOnChange(ev, params, fireValueChange) {
     const v = ev.target.value;
     const {timeMode = ISO} = params;
@@ -224,6 +211,15 @@ export const isShowHelp = (utc, mjd) => {
     return !utc && !mjd;
 };
 
-export const TimePanel= fieldGroupConnector(TimePanelView, getProps, propTypes);
+export const TimePanel= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const newProps= {...viewProps, value:viewProps.value || '' };
+    return (<TimePanelView {...newProps} onChange={(ev) => handleOnChange(ev,viewProps, fireValueChange)}/>);
+});
 
+TimePanel.propTypes = {
+    fieldKey : PropTypes.string,
+    groupKey : PropTypes.string,
+    timeMode: PropTypes.string
+};
 

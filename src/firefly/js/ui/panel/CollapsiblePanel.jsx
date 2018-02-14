@@ -3,11 +3,12 @@
  */
 
 import './CollapsiblePanel.css';
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isBoolean, isFunction} from 'lodash';
-import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {clone} from '../../util/WebUtil.js';
+import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
 
 
 export const CollapseBorder = {
@@ -105,6 +106,16 @@ export class CollapsiblePanel extends PureComponent {
     }
 }
 
+
+export const FieldGroupCollapsible= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const newProps= {...viewProps,
+            isOpen: Boolean(viewProps.value === 'open'),
+            onToggle: (isOpen) => fireValueChange({ value: isOpen ? 'open' : 'closed' })
+        };
+    return ( <CollapsiblePanel {...newProps} /> );
+});
+
 CollapsiblePanel.propTypes = {
     componentKey: PropTypes.string, // if need to preserve state and is not part of the field group
     header: PropTypes.node,
@@ -114,7 +125,10 @@ CollapsiblePanel.propTypes = {
     contentStyle: PropTypes.object,
     wrapperStyle: PropTypes.object,
     borderStyle: PropTypes.number,
-    onToggle: PropTypes.func
+    onToggle: PropTypes.func,
+    initialState: PropTypes.shape({
+        value: PropTypes.string,  // 'open' or 'closed'
+    })
 };
 
 CollapsiblePanel.defaultProps= {
@@ -124,11 +138,3 @@ CollapsiblePanel.defaultProps= {
 };
 
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params, {
-        onToggle: (isOpen) => fireValueChange({value: isOpen?'open':'closed'}),
-        isOpen: Boolean(params.value && params.value==='open')
-    });
-}
-
-export const FieldGroupCollapsible= fieldGroupConnector(CollapsiblePanel,getProps);

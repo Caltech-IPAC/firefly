@@ -1,13 +1,13 @@
-import React, {PureComponent} from 'react';
+import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
 import {toMaxFixed} from '../util/MathUtil.js';
 import validator from 'validator';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 const invalidSizeMsg = 'size is not set properly or size is out of range';
 const DECDIGIT = 6;
@@ -46,20 +46,6 @@ function updateSizeInfo(params) {
     return {unit, valid, value, displayValue};
 }
 
-function getProps(params, fireValueChange) {
-
-    var {unit, valid, value, displayValue} = updateSizeInfo(params);
-
-    return Object.assign({}, params,
-        {
-            onChange: (ev, sizeInfo) => handleOnChange(ev, sizeInfo, params, fireValueChange),
-            unit,
-            displayValue,
-            value,
-            valid
-        });
-}
-
 /**
  *
  * @param ev
@@ -82,13 +68,6 @@ function handleOnChange(ev, sizeInfo, params, fireValueChange) {
          valid
      });
 }
-
-const propTypes={
-    label:       PropTypes.string,
-    labelWidth:  PropTypes.number,
-    unit:        PropTypes.string,
-    showFeedback:    PropTypes.bool
-};
 
 /**
  * @param {string} value size value in degree
@@ -226,4 +205,24 @@ SizeInputFieldView.defaultProps = {
     showFeedback: false
 };
 
-export const SizeInputFields = fieldGroupConnector(SizeInputFieldView, getProps, propTypes, null);
+
+export const SizeInputFields = memo( (props) => {
+
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const {unit, valid, value, displayValue} = updateSizeInfo(viewProps);
+    return (<SizeInputFieldView
+             {...{...viewProps, unit, valid, value, displayValue}}
+             onChange= {(ev, sizeInfo) => handleOnChange(ev, sizeInfo, viewProps, fireValueChange)} />
+             );
+});
+
+
+SizeInputFields.propTypes={
+    fieldKey : PropTypes.string,
+    groupKey : PropTypes.string,
+    initialState:  PropTypes.object,
+    label:       PropTypes.string,
+    labelWidth:  PropTypes.number,
+    unit:        PropTypes.string,
+    showFeedback:    PropTypes.bool
+};

@@ -1,194 +1,152 @@
-import React, {PureComponent} from 'react';
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+import React, {useContext, useState, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
-import {get,omit} from 'lodash';
+import {get,omit, isUndefined} from 'lodash';
 import {dispatchMountComponent,dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {flux} from '../Firefly.js';
 import {GroupKeyCtx} from './FieldGroup';
+import {isDefined} from '../util/WebUtil';
 
 const defaultConfirmInitValue= (v) => v;
+const defValidatorFunc= () => ({valid:true,message:''});
+
+
+
+const STORE_OMIT_LIST= ['fieldKey', 'groupKey', 'initialState', 'fireReducer',
+    'confirmInitialValue', 'forceReinit', 'mounted'];
+
+function buildViewProps(fieldState,props) {
+    const {message= '', valid= true, visible= true, value= '', displayValue= '',
+        tooltip= '', validator= defValidatorFunc, ...rest}= fieldState;
+    const propsClean= Object.keys(props).reduce( (obj,k)=> {
+        if (isDefined(props[k]) && k!=='value') obj[k]=props[k];
+        return obj;
+    },{} );
+
+    const tmpProps= Object.assign({ message, valid, visible, value, displayValue,
+            tooltip, validator, key:fieldState.fieldKey},
+        rest, propsClean);
+
+    return omit(tmpProps, STORE_OMIT_LIST);
+}
+
+function showValueWarning(groupKey, fieldKey, value, ignoring) {
+    const extra= ignoring ? 'value property is being ignored, since initialState.value is defined' : '';
+    console.warn(
+        `useFieldGroupConnector: fieldKey: ${fieldKey}, groupKey: ${groupKey}: value should not be passed in props\n`,
+        `Only initial value should be passed as in the initialState property, ${extra}\n`,
+        `i.e. initialState= {value: '${value}'} `);
+}
+
+function validateKeys(fieldKey, groupKey) {
+    if (!fieldKey) throw Error('useFieldGroupConnector: fieldKey is required for useFieldGroupConnector.');
+    if (!groupKey) throw Error('useFieldGroupConnector: groupKey is required for useFieldGroupConnector, groupKey is usually passed though context but may be a prop.');
+}
+
+
+
 
 /**
- * Wraps a react component to connect to the field group store.
+ * @global
+ * @public
+ * @typedef {Object} ConnectorInterface
  *
- * @param FieldComponent the component to be wrapped
- * @param {function} getComponentProps a function that will be called for the properties for the FieldComponent
- *                          when it is rendered.
- *                          getComponentProps(params, fireValueChange)
- *                             - params is is a combination of all values in properties, fieldStore, and State
- *                             - fireValueChange is the function to call when the value has changed
- *                                     - Parameter: a object with new values to put into the fieldGroupStore
- *                                           - object should include a a 'value' key. It may include other keys such
- *                                             as 'validator', 'valid', or anything else you want to put in.
- * @param {object} connectorPropTypes - the prop type of the connector.
- *                             The connector already has propType however, this is a way to add more
- * @param {object} connectorDefProps - the default properties of the connector
- * @param {function} confirmInitialValue - call just before mount, 
- *                          confirmInitialValue(value, props, fieldState)
- *                             - value is the current value 
- *                             - props is the props to the connector
- *                             - fieldState is the current fieldState
- *                              return a new value
- *                          the current default value is pass and it can be overridden here
- * @return {FGConnector} return the wrapped component
+ * @summary Return value of useFieldGroupConnector. This object contains the view components properties (viewProps) and the
+ * fireValueChange. Simple pass the viewProps to the component and call fireValueChange when the view component has a
+ * value change call.
+ *
+ * @prop {Function} fireValueChange- Call the anytime the value of the view changes. The parameter is an object
+ * the should contains as least a value properties plus anything else that is appropriate to pass
+ * @prop {Object} viewProps - all the properties passed to useFieldGroupConnector with the connection properties
+ * removed.  This object should contain all the properties to pass on the the view component
+ * @prop {fieldKey} return the passed fieldKey, you don't usually need to access this value
+ * @prop {groupKey} return the passed groupKey, you don't usually need to access this value
  */
-export function fieldGroupConnector(FieldComponent,
-                                    getComponentProps=()=>({}),
-                                    connectorPropTypes=undefined,
-                                    connectorDefProps=undefined,
-                                    confirmInitialValue= defaultConfirmInitValue ) {
-    class FGConnector extends PureComponent {
 
-        constructor(props, context) {
-            super(props, context);
-            this.fireValueChange = this.fireValueChange.bind(this);
-            const {fieldKey} = props;
-            const groupKey= getGroupKey(props,context);
+/**
+ * useFieldGroupConnector parameters expressed as propTypes
+ */
+export const fgConnectPropsTypes= {
+    fieldKey: PropTypes.string.isRequired,
+    groupKey: PropTypes.string,
+    forceReinit: PropTypes.bool,
+    initialState: PropTypes.shape({ // not all fields use everything in initialState, most of it is optional
+        value: PropTypes.any, // this is the most common one, it is the initial value for the field.
+        message: PropTypes.string,
+        validator: PropTypes.func,
+        displayValue: PropTypes.string,
+        tooltip:  PropTypes.string,
+        label:  PropTypes.string,
+    }),
+    confirmInitialValue: PropTypes.func
+};
 
-            var fieldState;
-            if (props.forceReinit) {
-                fieldState = props.initialState || FieldGroupUtils.getGroupFields(groupKey)[fieldKey];
-            }
-            else {
-                fieldState = FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || props.initialState;
-            }
-            this.state = {fieldState};
-            this.prevContext= context;
-        }
-
-        fireValueChange(payload) {
-            // if (!payload.groupKey) payload.groupKey = this.props.groupKey || this.context.groupKey;
-            
-            const {fieldKey}= this.props;
-            const modPayload= Object.assign({},payload, {fieldKey,groupKey:getGroupKey(this.props,this.context)});
-            dispatchValueChange(modPayload);
-        }
-
-        componentDidUpdate(prevProps) {
-            const {fieldKey}= this.props;
-            const groupKey= getGroupKey(prevProps, this.prevContext);
-            const nGroupKey= getGroupKey(this.props, this.context);
-            if (prevProps.fieldKey!==fieldKey || nGroupKey !== groupKey) {
-                this.prevContext= this.context;
-                const fieldState= get(FieldGroupUtils.getGroupFields(nGroupKey),fieldKey);
-                this.storeUnmount(prevProps.fieldKey,groupKey);
-                this.reinit(this.props,fieldState, this.context);
-            }
-            else {
-                this.updateFieldState(this.props, this.context);
-            }
-
-        }
-
-
-        updateFieldState(props, context) {
-            var {fieldKey}= props;
-            var groupState = getFieldGroupState(getGroupKey(props,context));
-            if (get(groupState,'mounted') && get(groupState,['fields',fieldKey])) {
-                if (this.iAmMounted && this.state.fieldState !== groupState.fields[fieldKey]) {
-                    this.setState({fieldState: groupState.fields[fieldKey]});
-                }
-            }
-        }
-
-
-        storeUnmount(fieldKey,groupKey) {
-            if (this.storeListenerRemove) this.storeListenerRemove();
-            this.storeListenerRemove= null;
-            dispatchMountComponent(
-                groupKey, fieldKey, false, get(this.state, 'fieldState.value')
-            );
-        }
-
-
-        reinit(props,fieldState, context) {
-            var value= get(fieldState, 'value');
-            if (props.forceReinit) {
-                value= props.initialState.value;
-            }
-            if (this.storeListenerRemove) this.storeListenerRemove();
-            this.storeListenerRemove = flux.addListener(()=> this.updateFieldState(props, context));
-            dispatchMountComponent(
-                getGroupKey(props, context),
-                props.fieldKey,
-                true,
-                confirmInitialValue(value,props,fieldState),
-                props.initialState
-            );
-        }
-
-        componentDidMount() {
-            this.reinit(this.props,this.state.fieldState, this.context);
-            this.iAmMounted= true;
-        }
-
-        componentWillUnmount() {
-            this.storeUnmount(this.props.fieldKey, getGroupKey(this.props,this.context));
-            this.iAmMounted= false;
-        }
-
-        render() {
-            const groupKey= getGroupKey(this.props,this.context);
-            const {fieldKey}= this.props;
-            const paramValues= getParamValues(this.state.fieldState,this.props);
-            return (
-                <FieldComponent key={fieldKey} fieldKey={fieldKey} groupKey={groupKey}
-                    {...getComponentProps(paramValues, this.fireValueChange)}
-                />
-            );
-        }
+/**
+ *
+ * Hook to connect a field to the FieldGroup Store. Pass the props object, make sure it includes the required props
+ * to connect to the store (fieldKey is the only requirement, see below). The hooks returns qn object with the new
+ * props that you should be able to pass directly to the view.
+ *
+ * the props object parameter can contain any that should be kept in the store. The parameters below are special.
+ * fieldKey is required.
+ *
+ * @param {Object} props
+ * @param {string} props.fieldKey - required, a unique id for this field (unique within group)
+ * @param {string} [props.groupKey] - optional - a unique group id, normally this is not use because it is passed in the context
+ * @param {string} [props.forceReinit] - optional - if true, this field will be reinited from the properties and not from the field group
+ * @param {string} [props.initialState] - optional - the initial state object
+ * @param {function} [props.confirmInitialValue] - optional - on the first render the value from the properties is passed and a value is returned
+ * @return {ConnectorInterface}
+ *
+ */
+export const useFieldGroupConnector= (props) => {
+    const infoRef = useRef({prevFieldKey:undefined, prevGroupKey:undefined});
+    const gkFromCtx= useContext(GroupKeyCtx);
+    const {fieldKey, forceReinit, confirmInitialValue= defaultConfirmInitValue}= props;
+    let {initialState}= props;
+    const groupKey= props.groupKey || gkFromCtx;
+    // validation checks
+    validateKeys(fieldKey,groupKey);
+    if (isDefined(props.value)) {
+        showValueWarning(groupKey, fieldKey, props.value, (initialState && isDefined(initialState.value)));
+        initialState= {value:props.value, ...initialState};
     }
 
-    FGConnector.contextType = GroupKeyCtx;
+    function getInitialState() {
+        const storeField= get(FieldGroupUtils.getGroupFields(groupKey), [fieldKey]);
+        const initS= forceReinit ? (initialState ||  storeField || {}) : (storeField || initialState || {});
+        return {...initS, value: confirmInitialValue(initS.value,props,initS)};
+    }
+    const [fieldState, setFieldState] = useState(getInitialState());
 
-    FGConnector.propTypes = {
-        fieldKey: PropTypes.string,
-        groupKey: PropTypes.string, // usually comes from context but this is a fallback
-        initialState: PropTypes.object,
-        labelWidth: PropTypes.number,
-        forceReinit: PropTypes.bool
+
+    useEffect(() => {
+        const {prevFieldKey, prevGroupKey}= infoRef.current;
+        if (prevFieldKey!==fieldKey || prevGroupKey !== groupKey) {  // called the first time or when fieldKey or groupKey change
+            let value= fieldState.value;
+            if (prevFieldKey && prevGroupKey) { // if field and group key changed, whole thing must reinit
+                dispatchMountComponent( prevGroupKey, prevFieldKey, false );
+                const initFieldState= getInitialState();
+                setFieldState(initFieldState);
+                value= initFieldState.value;
+            }
+            dispatchMountComponent( groupKey, fieldKey, true, value, initialState );
+            infoRef.current={prevFieldKey: fieldKey, prevGroupKey: groupKey};
+        }
+        return flux.addListener(()=> {
+            const gState = getFieldGroupState(groupKey);
+            if (!gState || !gState.mounted || !get(gState,['fields',fieldKey])) return;
+            if (fieldState !== gState.fields[fieldKey]) setFieldState(gState.fields[fieldKey]);
+        });
+    }, [fieldKey, groupKey, fieldState]);
+
+    return {
+        fireValueChange: (payload) => dispatchValueChange({...payload, fieldKey,groupKey}),
+        viewProps: buildViewProps(fieldState,props),
+        fieldKey, groupKey
     };
-
-    if (connectorPropTypes) {
-        Object.assign(FGConnector.propTypes, connectorPropTypes);
-    }
-    if (connectorDefProps) {
-        FGConnector.defaultProps = connectorDefProps;
-    }
-
-    FGConnector.displayName = `FGConnector(${getDisplayName(FieldComponent)})`;
-
-    return FGConnector;
-
-}
-
-
-
-
-function getParamValues(fieldState,props) {
-
-
-    const omitProps= omit(props, ['fieldKey', 'groupKey', 'initialState']);
-    
-    // create one object from all three parameters. Some reserved parameters need 
-    // to be defined with defaults.
-
-    return Object.assign( {}, fieldState, omitProps, {
-        message:  get(fieldState,'message',''),
-        valid: get(fieldState,'valid',true),
-        visible: get(fieldState,'visible',true),
-        value: get(fieldState,'value',''),
-        displayValue: get(fieldState,'displayValue',''),
-        tooltip: get(fieldState,'tooltip',''),
-        validator: get(fieldState,'validator',() => ({valid:true,message:''}))
-    });
-}
-
-
-function getDisplayName(Component) {
-  return Component.displayName || Component.name || 'Component';
-}
-
-
-const getGroupKey= (props,context)=> props.groupKey || context;
-
+};

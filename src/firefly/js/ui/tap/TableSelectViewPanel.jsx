@@ -282,7 +282,7 @@ class BasicUI extends PureComponent {
                                 fieldKey='tableName'
                                 type='Table'
                                 options={tableOptions}
-                                value={tableName}
+                                initialState= {{value:tableName}}
                                 onSelect = {(selectedTapTable) => {
                                     this.loadColumns(serviceUrl, schemaName, selectedTapTable);
                                 }}

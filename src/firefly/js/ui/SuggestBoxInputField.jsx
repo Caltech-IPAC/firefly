@@ -1,21 +1,14 @@
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 import {logError} from '../util/WebUtil.js';
 
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import './SuggestBoxInputField.css';
 
-
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            fireValueChange
-        });
-}
 
 /**
  *  Make sure a component (like highlighted suggestion) is visible
@@ -104,7 +97,7 @@ const SuggestBox = (props) => {
     );
 };
 
-class SuggestBoxInputFieldView extends PureComponent {
+export class SuggestBoxInputFieldView extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {
@@ -179,7 +172,7 @@ class SuggestBoxInputFieldView extends PureComponent {
             const currentSuggestion = suggestions[highlightedIdx];
             const value = valueOnSuggestion ? valueOnSuggestion(displayValue, currentSuggestion) : currentSuggestion;
             if (value !== displayValue) {
-                var {valid,message} = validator? validator(value) : {true : ''};
+                var {valid,message} = validator? validator(value) : {valid: true, message:''};
                 this.setState({
                     isOpen: false,
                     highlightedIdx: undefined,
@@ -233,7 +226,7 @@ class SuggestBoxInputFieldView extends PureComponent {
             <div className={'SuggestBoxInputField'} style={style} onKeyDown={this.handleKeyPress}>
                 <div>
                     <InputFieldView
-                        valid={valid}
+                        valid={Boolean(valid)}
                         onChange={this.onValueChange}
                         onBlur={() => {isOpen && this.changeValue(undefined);}}
                         value={displayValue}
@@ -274,8 +267,37 @@ SuggestBoxInputFieldView.propTypes = {
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
     renderSuggestion : PropTypes.func,   // ReactElem = renderSuggestion(suggestion)
     popupIndex: PropTypes.number,
-    inputStyle: PropTypes.object
+    inputStyle: PropTypes.object,
+    valid: PropTypes.bool,
+    message: PropTypes.string,
 };
 
 
-export const SuggestBoxInputField = fieldGroupConnector(SuggestBoxInputFieldView, getProps, SuggestBoxInputFieldView.propTypes, null);
+export const SuggestBoxInputField= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return <SuggestBoxInputFieldView {...{...viewProps, fireValueChange}} /> ;
+
+});
+
+
+SuggestBoxInputField.propTypes = {
+    fieldKey : PropTypes.string.isRequired,
+    groupKey : PropTypes.string,
+    inline : PropTypes.bool,
+    label:  PropTypes.string,
+    tooltip:  PropTypes.string,
+    labelWidth : PropTypes.number,
+    popStyle : PropTypes.object, //style for the popup list
+    wrapperStyle: PropTypes.object,     //style to merge into the container div
+    getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
+    valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
+    renderSuggestion : PropTypes.func,   // ReactElem = renderSuggestion(suggestion)
+    popupIndex: PropTypes.number,
+    initialState: PropTypes.shape({
+        value: PropTypes.string,
+        tooltip: PropTypes.string,
+        label:  PropTypes.string,
+        validator: PropTypes.func
+    }),
+};
+

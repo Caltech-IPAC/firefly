@@ -347,7 +347,6 @@ function FieldGroupTestView ({fields}) {
                 <SuggestBoxInputField
                     fieldKey='suggestion1'
                     initialState= {{
-                        fieldKey: 'suggestion1',
                         value: '',
                         validator:  (val) => {
                             let retval = {valid: true, message: ''};
@@ -371,7 +370,6 @@ function FieldGroupTestView ({fields}) {
                 <ValidationField fieldKey='field3'
                                  forceReinit={true}
                                  initialState= {{
-                                     fieldKey: 'field3',
                                      value: '12.12322',
                                      validator: Validate.floatRange.bind(null, 1.23333, 1000, 3,'field 3'),
                                      tooltip: 'more tipping',

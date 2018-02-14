@@ -1,9 +1,9 @@
-import React, {PureComponent} from 'react';
+import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
 import {get} from 'lodash';
 import {isFunction, isNil, isEmpty} from 'lodash';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {FilePicker} from '../externalSource/FilePicker/FilePicker.jsx';
 import {dispatchWorkspaceCreatePath,
@@ -116,31 +116,27 @@ WorkspaceView.propTypes = {
 /**
  /* WorkspaceView as an input field
  */
-export const WorkspaceViewField = fieldGroupConnector(WorkspaceView, getViewProps);
+
+export const WorkspaceViewField = memo( (props) => {
+    const {viewProps, fireValueChange} = useFieldGroupConnector(props);
+
+    return (<WorkspaceView {...{...viewProps, selectedItem: viewProps.value}}
+                           onClickItem={(key) => fireValueChange({value: key})}/>); // get key from FilePicker
+});
+
 
 const defaultWorkspaceFieldPropTypes = {    fieldKey: PropTypes.string.isRequired,
                                             files: PropTypes.arrayOf(PropTypes.object),
                                             value: PropTypes.string};
 
 
-// get key from FilePicker
-function getViewProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            value: params.value,
-            selectedItem: params.value,
-            onClickItem: (key) => {
-                fireValueChange({value: key});
-            }
-    });
-}
 
 // Workspace input field used for 'save to workspace' - same as WorkspaceViewField with 'add folder' enabled
 export const WorkspaceSave = ({fieldKey, files, value}) => {
     return (
         <WorkspaceViewField fieldKey={fieldKey}
                             files={files}
-                            value={value}
+                            initialState= {{value}}
                             keepSelect={true}
                             canCreateFolder={true}
 
@@ -149,25 +145,24 @@ export const WorkspaceSave = ({fieldKey, files, value}) => {
 };
 WorkspaceSave.propTypes = defaultWorkspaceFieldPropTypes;
 
+
 /*
  * Show WorkspaceView as a pop up field.  A button is used to trigger the popup.
  * A label next to the button to show the selected item.
  */
-export const WorkspacePickerPopup =  fieldGroupConnector(WorkspaceAsPopup,
-                                        ({fieldKey='WorkspacePickerPopup', onComplete, value={}, ...rest}, fireValueChange) => {
-                                            const onSelComplete = (v) => {
-                                                        fireValueChange({value: v});
-                                                        onComplete && onComplete(v[fieldKey]);
-                                                    };
-                                            return Object.assign({}, rest,
-                                                {
-                                                    fieldKey,
-                                                    keepSelect: true,
-                                                    value: value[fieldKey],
-                                                    onComplete: onSelComplete
-                                                }
-                                            );
-                                        });
+export const WorkspacePickerPopup = memo( ({fieldKey='WorkspacePickerPopup', onComplete, value={}, ...rest}) => {
+    const {viewProps, fireValueChange} = useFieldGroupConnector({fieldKey, ...rest});
+
+    return (
+        <WorkspaceAsPopup {...viewProps}
+                          {...{fieldKey, keepSelect: true, value: value[fieldKey]}}
+                          onComplete={(v) => {
+                              fireValueChange({value: v});
+                              onComplete && onComplete(v[fieldKey]);
+                          }}/>
+    );
+});
+
 
 WorkspacePickerPopup.propTypes = defaultWorkspaceFieldPropTypes;
 
@@ -237,7 +232,17 @@ WorkspaceAsPopup.defaultProps = {
  *  The value of this field is an ID/key to the uploaded file.
  *  Field is represented as a button.  Upon clicked, WorkspaceView will appear as a popup.
  */
-export  const WorkspaceUpload =  fieldGroupConnector(WorkspaceAsPopup, getUploadProps);
+export const WorkspaceUpload= memo( (props) => {
+    const {viewProps, fireValueChange} = useFieldGroupConnector(props);
+    const {fileAnalysis, preloadWsFile, fieldKey}= viewProps;
+    return (
+        <WorkspaceAsPopup {...{...viewProps, value: viewProps.displayValue, fieldKey}}
+                          onComplete= {resultSuccess(fireValueChange, fileAnalysis, preloadWsFile, fieldKey)} />
+           );
+});
+
+
+
 
 // the value defined is display value as shown on UI
 WorkspaceUpload.propTypes = {
@@ -250,14 +255,6 @@ WorkspaceUpload.propTypes = {
 };
 
 
-function getUploadProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            value: params.displayValue,
-            onComplete: resultSuccess(fireValueChange, params.fileAnalysis, params.preloadWsFile, params.fieldKey)
-        }
-    );
-}
 
 function resultSuccess(fireValueChange, fileAnalysis, preloadWsFile, fieldKey=workspaceUploadDef.file.fkey) {
     return (request) => {
@@ -443,8 +440,7 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
                             <WorkspaceViewField fieldKey={fieldKey}
                                                 files={newList}
                                                 keepSelect={true}
-                                                value={value}
-                                                initialState={{validator: isWsFolder(false)}}/>
+                                                initialState={{value, validator: isWsFolder(false)}}/>
                         </div>
                     </FieldGroup>
 

@@ -3,11 +3,11 @@
  */
 
 import './TabPanel.css';
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import sizeMe from 'react-sizeme';
-import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
 
 
 
@@ -222,23 +222,37 @@ Tab.defaultProps= { selected: false };
 
 
 
-function onChange(idx,id, name, params, fireValueChange) {
+function onChange(idx,id, name, viewProps, fireValueChange) {
     let value= id||name;
     if (!value) value= idx;
 
     fireValueChange({ value});
-    if (params.onTabSelect) {
-        params.onTabSelect(idx, id, name);
+    if (viewProps.onTabSelect) {
+        viewProps.onTabSelect(idx, id, name);
     }
 }
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            onTabSelect: (idx,id,name) => onChange(idx,id,name,params, fireValueChange),
-            defaultSelected:params.value,
-            useFlex: true
-        });
-}
 
-export const FieldGroupTabs= fieldGroupConnector(Tabs,getProps);
+export const FieldGroupTabs= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const newProps= {
+        ...viewProps,
+        defaultSelected : viewProps.value,
+        useFlex: true,
+        onTabSelect: (idx,id,name) => onChange(idx,id,name,viewProps, fireValueChange)
+        };
+    return (<Tabs {...newProps} />);
+});
+
+FieldGroupTabs.propTypes= {
+    fieldKey: PropTypes.string,
+    onTabSelect: PropTypes.func,
+    initialState: PropTypes.shape({
+        value: PropTypes.string,
+    }),
+    resizable: PropTypes.bool,
+    headerStyle: PropTypes.object,
+    contentStyle: PropTypes.object,
+    borderless: PropTypes.bool,
+    forceReinit: PropTypes.bool
+};

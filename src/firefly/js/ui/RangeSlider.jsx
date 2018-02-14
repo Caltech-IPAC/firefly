@@ -1,15 +1,8 @@
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import { has, isNaN} from 'lodash';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {RangeSliderView, checkMarksObject} from './RangeSliderView.jsx';
-
-function getProps(params, fireValueChange) {
-
-    return Object.assign({}, params,
-        {
-            handleChange: (v) => handleOnChange(v, params, fireValueChange),
-        });
-}
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 /**
  * @summary callback to handle slider value change
@@ -33,7 +26,20 @@ function handleOnChange(value, params, fireValueChange){
     }
 }
 
-const propTypes={
+
+// export const RangeSlider = fieldGroupConnector(RangeSliderView, getProps, propTypes, null);
+
+
+export const RangeSlider= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return (<RangeSliderView {...viewProps}
+                            handleChange={(value) => handleOnChange(value,viewProps, fireValueChange)}/>);
+});
+
+
+RangeSlider.propTypes={
+    fieldKey: PropTypes.string,
+    groupKey: PropTypes.string,
     associatedKey: PropTypes.string,
     label:       PropTypes.string,             // slider label
     slideValue:  PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired, // slider value
@@ -55,6 +61,4 @@ const propTypes={
     maxStop:  PropTypes.number,                          // maximum value the slider can be changed to
     errMsg: PropTypes.string                            // message for invalid value
 };
-
-export const RangeSlider = fieldGroupConnector(RangeSliderView, getProps, propTypes, null);
 
