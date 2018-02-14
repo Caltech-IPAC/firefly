@@ -47,7 +47,7 @@ export function fieldGroupConnector(FieldComponent,
 
             var fieldState;
             if (props.forceReinit) {
-                fieldState = props.initialState || FieldGroupUtils.getGroupFields(groupKey)[fieldKey];
+                fieldState = props.initialState || FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || {};
             }
             else {
                 fieldState = FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || props.initialState;

@@ -1,12 +1,13 @@
-import React from 'react';
+import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get, has, isFunction, isNil} from 'lodash';
+import {clone} from '../util/WebUtil.js';
 
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {fetchUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
+import {FieldGroupEnable} from './FieldGroupEnable';
 
 import LOADING from 'html/images/gxt/loading.gif';
 const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
@@ -89,7 +90,48 @@ FileUploadView.defaultProps = {
     labelWidth: 0
 };
 
-export const FileUpload = fieldGroupConnector(FileUploadView, getProps);
+export class FileUpload extends PureComponent {
+
+    render()  {
+        const {props}= this;
+        const {isFromURL}= props;
+        return (
+            <FieldGroupEnable {...props}>
+                {
+                    (propsFromStore, fireValueChange) => {
+                        let viewProps;
+                        if (isFromURL) {
+                            viewProps= clone(props,
+                                {
+                                    onChange: (ev) => onUrlChange(ev, propsFromStore, fireValueChange),
+                                    value:  propsFromStore.displayValue,
+                                    message: propsFromStore.message,
+                                    key: propsFromStore.key,
+                                    onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, props.fileType,
+                                        props.fileAnalysis)
+                                }
+                            );
+                        } else {
+                            viewProps= clone(this.props,
+                                {
+                                    value: propsFromStore.displayValue,
+                                    message: propsFromStore.message,
+                                    key: propsFromStore.key,
+                                    onChange: (ev) => handleChange(ev, fireValueChange, props.fileType, props.fileAnalysis)
+                                }
+                            );
+                        }
+                        return <FileUploadView {...viewProps } /> ;
+                    }
+
+                }
+            </FieldGroupEnable>
+        );
+
+    }
+}
+
+
 
 /*---------------------------- private ----------------------------*/
 
@@ -104,25 +146,6 @@ function onUrlChange(ev, store, fireValueChange) {
     fireValueChange({ value, message, valid, displayValue, analysisResult:''});
 }
 
-function getProps(params, fireValueChange) {
-    if (has(params, 'isFromURL') && params.isFromURL) {
-        return Object.assign({}, params,
-            {
-                onChange: (ev) => onUrlChange(ev, params, fireValueChange),
-                value: params.displayValue,
-                onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, params.fileType,
-                                                                                params.fileAnalysis)
-            }
-        );
-    } else {
-        return Object.assign({}, params,
-            {
-                value: params.displayValue,
-                onChange: (ev) => handleChange(ev, fireValueChange, params.fileType, params.fileAnalysis)
-            }
-        );
-    }
-}
 
 function doUrlAnalysis(value, fireValueChange, type, fileAnalysis) {
      fireValueChange({value: makeDoUpload(value, type, true, fileAnalysis)()});

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, get, merge, isNil, isArray, cloneDeep, has}from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
@@ -16,7 +16,7 @@ import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../../tables/FilterInfo.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
-import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
+import {FieldGroupEnable} from '../../ui/FieldGroupEnable.jsx';
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
 import '../../tables/ui/TablePanel.css';
@@ -427,14 +427,25 @@ class ConstraintPanel extends PureComponent {
     }
 }
 
-export const TablePanelConnected = fieldGroupConnector(ConstraintPanel, getProps, null, null);
+export const TablePanelConnected= memo( ({fieldKey, groupKey, ...otherProps} ) => {
+    return (
+        <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} {...otherProps} >
+            {
+                (propsFromStore, fireValueChange) => {
+                    return (
+                        <ConstraintPanel {...propsFromStore}
+                             onTableChanged= {() => handleOnTableChanged(propsFromStore, fireValueChange)} />
+                    );
+                }
+            }
+        </FieldGroupEnable>
+    );
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            onTableChanged: () => handleOnTableChanged(params, fireValueChange)
-        });
-}
+});
+
+
+
+
 
 /**
  * @summary update row selection (only update selectInfo, not change data in table model)

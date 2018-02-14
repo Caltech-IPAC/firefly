@@ -1,30 +1,34 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, {PureComponent} from 'react';
 import {has} from 'lodash';
-
+import {clone} from '../util/WebUtil.js';
+import {FieldGroupEnable} from './FieldGroupEnable.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
-import {InputAreaFieldView} from './InputAreaFieldView';
 
 
-function onChange(ev, store, fireValueChange) {
-    var value = ev.target.value;
-    var {valid,message, ...others}= store.validator(value);
+function onChange(ev, validator, fireValueChange) {
+    let value = ev.target.value;
+    const {valid,message, ...others}= validator(value);
     has(others, 'value') && (value = others.value);    // allow the validator to modify the value.. useful in auto-correct.
-
     fireValueChange({ value, message, valid });
 }
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            onChange: (ev) => onChange(ev,params, fireValueChange),
-            value: String(params.value)
-        });
+
+
+export class ValidationField extends PureComponent {
+
+    render()  {
+        const {fieldKey, initialState, forceReinit}= this.props;
+        return (
+            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState} forceReinit={forceReinit}>
+                {
+                    (propsFromStore, fireValueChange) => {
+                        return <InputFieldView {...clone(this.props, propsFromStore)}
+                                               onChange={(ev) => onChange(ev,propsFromStore.validator, fireValueChange)}/> ;
+                    }
+
+                }
+            </FieldGroupEnable>
+        );
+
+    }
 }
-
-const propTypes= {
-      inline : PropTypes.bool
-};
-
-export const ValidationField= fieldGroupConnector(InputFieldView,getProps,propTypes);

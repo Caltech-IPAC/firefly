@@ -6,7 +6,7 @@ import './TabPanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import sizeMe from 'react-sizeme';
-import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
+import {FieldGroupEnable} from '../FieldGroupEnable.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
 
@@ -221,23 +221,45 @@ Tab.defaultProps= { selected: false };
 
 
 
-function onChange(idx,id, name, params, fireValueChange) {
+function onChange(idx,id, name, propsFromStore, fireValueChange) {
     let value= id||name;
     if (!value) value= idx;
 
     fireValueChange({ value});
-    if (params.onTabSelect) {
-        params.onTabSelect(idx, id, name);
+    if (propsFromStore.onTabSelect) {
+        propsFromStore.onTabSelect(idx, id, name);
     }
 }
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            onTabSelect: (idx,id,name) => onChange(idx,id,name,params, fireValueChange),
-            defaultSelected:params.value,
-            useFlex: true
-        });
+export class FieldGroupTabs extends PureComponent {
+
+    render()  {
+        const {fieldKey, initialState, forceReinit, onTabSelect}= this.props;
+        return (
+            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState} forceReinit={forceReinit} onTabSelect={onTabSelect}>
+                {
+                    (propsFromStore, fireValueChange) => {
+                        const newProps= Object.assign({}, this.props, propsFromStore,
+                            { defaultSelected : propsFromStore.value,
+                              useFlex: true,
+                              onTabSelect: (idx,id,name) => onChange(idx,id,name,propsFromStore, fireValueChange)
+                            });
+                        return <Tabs {...newProps} /> ;
+                    }
+
+                }
+            </FieldGroupEnable>
+        );
+
+    }
 }
 
-export const FieldGroupTabs= fieldGroupConnector(Tabs,getProps);
+FieldGroupTabs.propTypes= {
+    fieldKey: PropTypes.string,
+    onTabSelect: PropTypes.func,
+    initialState: PropTypes.object,
+    resizable: PropTypes.bool,
+    headerStyle: PropTypes.object,
+    contentStyle: PropTypes.object,
+    borderless: PropTypes.bool
+};

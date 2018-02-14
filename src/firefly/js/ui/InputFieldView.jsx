@@ -1,7 +1,6 @@
 import React, {PureComponent} from 'react';
-import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
-
+import {bool,string,number,object, func, oneOfType} from 'prop-types';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -124,28 +123,28 @@ export class InputFieldView extends PureComponent {
 }
 
 InputFieldView.propTypes= {
-    valid   : PropTypes.bool,
-    visible : PropTypes.bool,
-    disabled : PropTypes.bool,
-    message : PropTypes.string,
-    tooltip : PropTypes.string,
-    label : PropTypes.string,
-    inline : PropTypes.bool,
-    labelWidth: PropTypes.number,
-    style: PropTypes.object,
-    wrapperStyle: PropTypes.object,
-    labelStyle: PropTypes.object,
-    value   : PropTypes.string.isRequired,
-    size : PropTypes.number,
-    onChange : PropTypes.func.isRequired,
-    onBlur : PropTypes.func,
-    onKeyPress : PropTypes.func,
-    onKeyDown: PropTypes.func,
-    onKeyUp: PropTypes.func,
-    showWarning : PropTypes.bool,
-    type: PropTypes.string,
-    placeholder: PropTypes.string,
-    form: PropTypes.string
+    valid   : bool,
+    visible : bool,
+    disabled : bool,
+    message : string,
+    tooltip : string,
+    label : string,
+    inline : bool,
+    labelWidth: number,
+    style: object,
+    wrapperStyle: object,
+    labelStyle: object,
+    value   : oneOfType([string, number]).isRequired,
+    size : number,
+    onChange : func.isRequired,
+    onBlur : func,
+    onKeyPress : func,
+    onKeyDown: func,
+    onKeyUp: func,
+    showWarning : bool,
+    type: string,
+    placeholder: string,
+    form: string
 };
 
 InputFieldView.defaultProps= {

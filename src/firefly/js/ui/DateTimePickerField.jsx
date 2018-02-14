@@ -1,13 +1,14 @@
 import React, {PureComponent} from 'react';
 import {isNaN, get} from 'lodash';
 import PropTypes from 'prop-types';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import Moment from 'moment';
 import DateTime from 'react-datetime';
 import Validate from '../util/Validate.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
+import {clone} from '../util/WebUtil.js';
 
 import './tap/react-datetime.css';
+import {FieldGroupEnable} from './FieldGroupEnable';
 /**
  * try to convert date/time string to Moment, if not, keep the string
  * @param str_or_moment
@@ -191,12 +192,12 @@ const propTypes = {
     nullAllowed: PropTypes.bool
 };
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            onChange: (momentVal) => handleOnChange(momentVal, params, fireValueChange)
-        });
-}
+// function getProps(params, fireValueChange) {
+//     return Object.assign({}, params,
+//         {
+//             onChange: (momentVal) => handleOnChange(momentVal, params, fireValueChange)
+//         });
+// }
 
 function handleOnChange(momentVal, params, fireValueChange) {
     const {nullAllowed=true} = params;
@@ -208,7 +209,29 @@ function handleOnChange(momentVal, params, fireValueChange) {
     fireValueChange({value, valid, message});
 }
 
-export const DateTimePickerField = fieldGroupConnector(DateTimePicker, getProps, propTypes);
+// export const DateTimePickerField = fieldGroupConnector(DateTimePicker, getProps, propTypes);
+
+export class DateTimePickerField extends PureComponent {
+
+    render()  {
+        const {fieldKey, groupKey}= this.props;
+        return (
+            <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey}>
+                {
+                    (propsFromStore, fireValueChange) => {
+                        return <DateTimePicker {...clone(this.props, propsFromStore)}
+                                               onChange={(momentVal) => handleOnChange(momentVal,propsFromStore, fireValueChange)}/> ;
+                    }
+
+                }
+            </FieldGroupEnable>
+        );
+
+    }
+}
+
+
+
 
 const DiffUnixMJD = 40587.0;
 const DiffUnixJD = 2440587.5;

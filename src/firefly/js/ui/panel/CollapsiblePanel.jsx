@@ -6,8 +6,9 @@ import './CollapsiblePanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isBoolean, isFunction} from 'lodash';
-import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {FieldGroupEnable} from '../FieldGroupEnable.jsx';
+import {clone} from '../../util/WebUtil.js';
 
 
 export const CollapseBorder = {
@@ -123,12 +124,27 @@ CollapsiblePanel.defaultProps= {
     isOpen: false
 };
 
+export class FieldGroupCollapsible extends PureComponent {
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params, {
-        onToggle: (isOpen) => fireValueChange({value: isOpen?'open':'closed'}),
-        isOpen: Boolean(params.value && params.value==='open')
-    });
+    render()  {
+        const {fieldKey, groupKey, onValueChange, ...restOfProps}= this.props;
+        return (
+            <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} onValueChange={onValueChange} {...restOfProps}>
+                {
+                    (propsFromStore, fireValueChange) => {
+                        const newProps= clone(restOfProps,
+                            {
+                                value: propsFromStore.value,
+                                isOpen: Boolean(propsFromStore.value === 'open'),
+                                onToggle: (isOpen) => fireValueChange({ value: isOpen ? 'open' : 'closed' })
+                            });
+                        return <CollapsiblePanel {...newProps} /> ;
+                    }
+                }
+            </FieldGroupEnable>
+        );
+
+    }
 }
 
-export const FieldGroupCollapsible= fieldGroupConnector(CollapsiblePanel,getProps);
+

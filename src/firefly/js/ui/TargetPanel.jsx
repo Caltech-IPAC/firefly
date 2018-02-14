@@ -8,7 +8,7 @@ import {get} from 'lodash';
 import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
 import {TargetFeedback} from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {FieldGroupEnable} from './FieldGroupEnable.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
@@ -197,12 +197,6 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
     return payload;
 }
 
-const connectorDefaultProps = {
-    fieldKey : 'UserTargetWorldPt',
-    initialState  : {
-        fieldKey : 'UserTargetWorldPt'
-    }
-};
 
 function replaceValue(v,props) {
     const t= getActiveTarget();
@@ -215,5 +209,51 @@ function replaceValue(v,props) {
 }
 
 
-export const TargetPanel= fieldGroupConnector(TargetPanelView,getProps,null,connectorDefaultProps, replaceValue);
 
+export class TargetPanel extends PureComponent {
+    render()  {
+
+        const {fieldKey= 'UserTargetWorldPt', initialState= { fieldKey : 'UserTargetWorldPt' }}= this.props;
+        return (
+            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState} confirmInitialValue={replaceValue}>
+                {
+                    (propsFromStore, fireValueChange) => {
+                        const newProps= computeProps(propsFromStore, this.props);
+                        return <TargetPanelView {...newProps}
+                                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/> ;
+                    }
+                }
+            </FieldGroupEnable>
+        );
+
+    }
+}
+
+
+function computeProps(propsFromStore, componentProps) {
+
+    let feedback= propsFromStore.feedback|| '';
+    let value= propsFromStore.displayValue;
+    let showHelp= get(propsFromStore,'showHelp', true);
+    const resolver= propsFromStore.resolver || nedThenSimbad;
+    const wpStr= propsFromStore.value;
+    const wp= parseWorldPt(wpStr);
+
+    if (isValidPoint(wp) && !value) {
+        feedback= getFeedback(wp);
+        value= wp.objName || formatPosForTextField(wp);
+        showHelp= false;
+    }
+
+    return Object.assign({}, propsFromStore,
+        {
+            visible: true,
+            label: 'Name or Position:',
+            tooltip: 'Enter a target',
+            value,
+            feedback,
+            resolver,
+            showHelp,
+            onUnmountCB: didUnmount
+        }, componentProps);
+}

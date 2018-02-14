@@ -9,9 +9,9 @@ import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import RangeValues, {STRETCH_LINEAR, STRETCH_ASINH, PERCENTAGE, ABSOLUTE, SIGMA, ZSCALE} from './../RangeValues.js';
+import {clone} from '../../util/WebUtil.js';
 
 
-const clone = (obj,params={}) => Object.assign({},obj,params);
 const cloneWithValue= (field,v) => Object.assign({}, field, {value:v});
 
 

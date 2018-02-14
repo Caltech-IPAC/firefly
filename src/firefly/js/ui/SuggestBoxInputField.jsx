@@ -2,20 +2,13 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
+import {FieldGroupEnable} from './FieldGroupEnable';
 
 import {logError} from '../util/WebUtil.js';
 
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import './SuggestBoxInputField.css';
 
-
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            fireValueChange
-        });
-}
 
 /**
  *  Make sure a component (like highlighted suggestion) is visible
@@ -278,4 +271,40 @@ SuggestBoxInputFieldView.propTypes = {
 };
 
 
-export const SuggestBoxInputField = fieldGroupConnector(SuggestBoxInputFieldView, getProps, SuggestBoxInputFieldView.propTypes, null);
+// export const SuggestBoxInputField = fieldGroupConnector(SuggestBoxInputFieldView, getProps, SuggestBoxInputFieldView.propTypes, null);
+
+
+
+export class SuggestBoxInputField extends PureComponent {
+
+    render()  {
+        const {fieldKey, groupKey, ...restOfProps}= this.props;
+        return (
+            <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} {...restOfProps}>
+                {
+                    (propsFromStore, fireValueChange) => {
+                        return <SuggestBoxInputFieldView {...{...propsFromStore, fireValueChange}} /> ;
+                    }
+                }
+            </FieldGroupEnable>
+        );
+
+    }
+}
+
+SuggestBoxInputField.propTypes = {
+    value:  PropTypes.string,
+    fieldKey : PropTypes.string,
+    groupKey : PropTypes.string,
+    inline : PropTypes.bool,
+    label:  PropTypes.string,
+    tooltip:  PropTypes.string,
+    labelWidth : PropTypes.number,
+    popStyle : PropTypes.object, //style for the popup list
+    wrapperStyle: PropTypes.object,     //style to merge into the container div
+    getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
+    valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
+    renderSuggestion : PropTypes.func,   // ReactElem = renderSuggestion(suggestion)
+    popupIndex: PropTypes.number
+};
+

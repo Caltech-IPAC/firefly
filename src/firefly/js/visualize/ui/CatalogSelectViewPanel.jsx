@@ -754,14 +754,14 @@ function fieldInit() {
             fieldKey: 'project',
             label: catmaster[0].project,
             value: catmaster[0].project,
-            labelWidth: '100'
+            labelWidth: 100
         },
 
         'catalog': {
             fieldKey: 'catalog',
             label: catmaster[0].subproject[0].value,
             value: catmaster[0].subproject[0].value,
-            labelWidth: '100'
+            labelWidth: 100
         },
         'cattable': {
             fieldKey: 'cattable',
