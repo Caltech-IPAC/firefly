@@ -313,16 +313,15 @@ function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
 }
 
 function TableError({tbl_id, message}) {
-    const {request} = TblUtil.getTblById(tbl_id);
-    const canReset = get(request, 'filters') || get(request, 'sortInfo');
+    const prevReq = TblUtil.getResultSetRequest(tbl_id);
     const reloadTable = () => {
-        const origRequest = omit(cloneDeep(request), 'filters', 'sortInfo');
-        dispatchTableSearch(origRequest);
+        dispatchTableSearch(JSON.parse(prevReq));
     };
     return (
         <div className='TablePanel__error'>
+            <div><b>Table Load Error:</b></div>
             <div>{message}</div>
-            {canReset && <button type='button' className='button std' onClick={reloadTable}>Reload</button>}
+            {prevReq && <button type='button' className='button std' onClick={reloadTable}>Back</button>}
         </div>
     );
 }

@@ -74,17 +74,19 @@ public class ServerStatus extends BaseHttpServlet {
 
         try {
             writer.println("Host IP Address: " + InetAddress.getLocalHost().getHostAddress());
-
-
-            List localCachePeers = cm.getCachePeerListener("RMI").getBoundCachePeers();
-            for (Object cp : localCachePeers) {
-                RMICachePeer rcp = (RMICachePeer) cp;
-                writer.println("\tRMICachePeer : " + rcp.getUrl());
-            }
-
         } catch (Exception e) {
-            writer.println("\tHost IP Address: n/a" );
+            writer.println("Host IP Address: n/a" );
         }
+
+
+        List localCachePeers = cm.getCachePeerListener("RMI").getBoundCachePeers();
+        for (Object cp : localCachePeers) {
+            RMICachePeer rcp = (RMICachePeer) cp;
+            try{
+                writer.println("\tRMICachePeer : " + rcp.getUrl());
+            } catch (Exception e) {}    //ignore
+        }
+
 
         writer.println("Caches: ");
         Map<String, CacheManagerPeerProvider> peerProvs = cm.getCacheManagerPeerProviders();

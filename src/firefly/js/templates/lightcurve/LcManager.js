@@ -223,6 +223,7 @@ export function* lcManager(params={}) {
          * @prop {Object}   layoutInfo.rawTableRequest // raw table request
          * @prop {Object}   layoutInfo.rawTableColumns // raw table columns
          * @prop {Object}   layoutInfo.missionOptions       // a list of mission choices presented by upload panel.  all missions from factory will be presented if not given.
+         * @prop {Object}   layoutInfo.error       // error at the application level.  render should display error message only
          */
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
@@ -451,21 +452,27 @@ function handleNewSearch(layoutInfo, action) {
  */
 function handleRawTableLoad(layoutInfo, tblId) {
     const rawTable = getTblById(tblId);
-    if (rawTable.error) {
-        logError('Table load error: ' + rawTable.error);
-        return layoutInfo;
-    }
-
     const generalEntries = get(layoutInfo, LC.GENERAL_DATA) || getGeneralEntries();
     const {converterData, missionEntries} = makeMissionEntries(rawTable.tableMeta);
 
     if (!converterData) {
         logError('Unknown mission or no converter');
-        return;
+        newLayoutInfo = updateSet(layoutInfo, 'error', 'Unknown mission or no converter');
+    }
+
+    if (converterData.isTableUploadValid) {
+        const {errorMsg, isValid=true} = converterData.isTableUploadValid(rawTable, missionEntries, generalEntries);
+        if (!isValid) {
+            return updateSet(layoutInfo, 'error', errorMsg);
+        }
+    }
+    if (rawTable.error) {
+        logError('Table load error: ' + rawTable.error);
+        return updateSet(layoutInfo, 'error', rawTable.error);
     }
 
     //TODO LZ How validTable is used, the onNewRawtable has its value to false.  But it was never used here???
-    let {newLayoutInfo, shouldContinue, validTable} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
+    let {newLayoutInfo, shouldContinue} = converterData.onNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo);
     const newMissionEntries = get(newLayoutInfo, ['missionEntries']); // missionEntries could have changed after calling specific mission onRaw
     newLayoutInfo = updateSet(newLayoutInfo, 'rawTableColumns', get(rawTable, ['tableData', 'columns']));
 
@@ -510,19 +517,12 @@ function handleTableLoad(layoutInfo, action) {
                 layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
                 layoutInfo = updateSet(layoutInfo, ['periodRange', 'period'], '' );
             }
-           else if (invokedBy === TABLE_FILTER){
-                //update the raw table row number here
-                const rawTable = getTblById(tbl_id);
-                //layoutInfo.rawTable = rawTable;
-                //layoutInfo = handleRawTableLoad(layoutInfo, tbl_id);
-            }
-
 
             layoutInfo = handleTableActive(layoutInfo, action);     // because table_active happened before loaded.. we'll handle it here.
         }
     }
     if([LC.RAW_TABLE, LC.PHASE_FOLDED].includes(tbl_id)) {
-        const {highlightedRow} = getTblById(tbl_id);
+        const {highlightedRow} = getTblById(tbl_id) || {};
         // this handles sorting and filtering cases.
         keepHighlightedRowSynced(tbl_id, highlightedRow);
 

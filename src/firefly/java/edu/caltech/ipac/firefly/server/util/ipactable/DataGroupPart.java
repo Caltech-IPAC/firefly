@@ -30,6 +30,7 @@ public class DataGroupPart implements HasAccessInfos {
     private int startRow;
     private int rowCount;
     private String hasAccessCName = null;
+    private String errorMsg;
 
     public DataGroupPart() {
     }
@@ -80,6 +81,10 @@ public class DataGroupPart implements HasAccessInfos {
     public void setStartRow(int startRow) {
         this.startRow = startRow;
     }
+
+    public String getErrorMsg() { return errorMsg; }
+
+    public void setErrorMsg(String errorMsg) { this.errorMsg = errorMsg; }
 
 //====================================================================
 //  implements HasAccessInfos

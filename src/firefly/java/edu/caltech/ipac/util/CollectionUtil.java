@@ -46,6 +46,51 @@ public class CollectionUtil {
     }
 
     /**
+     * Return the value of the array at the given idx
+     * @param ary   The source array
+     * @param idx   Index of the array
+     * @param defaults  Default when value is not available
+     * @return
+     */
+    public static <T> T get(T[] ary, int idx, T defaults) {
+        if (ary == null || ary.length == 0 || ary.length < idx || idx < 0) return defaults;
+        return ary[idx] == null ? defaults : ary[idx];
+    }
+
+    /**
+     * Returns the differences between list1 and list2.  If twoWay is false, it will only return
+     * elements in list1 that is different than in list2.
+     * @param list1
+     * @param list2
+     * @param twoWay  if false, it will only show element in ary1 that is different than in ary2
+     * @param <T>
+     * @return
+     */
+    public static <T extends Comparable> List<T> diff(List<T> list1, List<T> list2, boolean twoWay) {
+        if (list1 == null) {
+            return twoWay ? list2 : null;
+        } else if (list2 == null) {
+            return list1;
+        }
+        ArrayList<T> res = new ArrayList<>();
+        for (T el : list1) {
+            int idx = list2.indexOf(el);
+            if (idx < 0) {
+                res.add(el);
+            }
+        }
+        if (twoWay) {
+            for (T el : list2) {
+                int idx = list1.indexOf(el);
+                if (idx < 0) {
+                    res.add(el);
+                }
+            }
+        }
+        return res;
+    }
+
+    /**
      * Returns a String representation of this collection.
      * The items are converted to strings using String.format(frmtPattern).
      * If frmtPattern is given, the items will be formatted as
