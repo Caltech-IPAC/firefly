@@ -2,6 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+/**
+ *  2/20/2018 LZ
+ *  IRSA-663
+ *
+ *  Display meaningful downloaded file names
+ *  Remove redundant codes
+ *  Fixed the bug in DownloadDialog.jsx
+ *
+ */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {pick, get, isEmpty, cloneDeep} from 'lodash';
@@ -24,9 +33,8 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblById, doFetchTable, isTblDataAvail} from '../../tables/TableUtil.js';
 import {MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGroup/FieldGroupCntlr.js';
-import {logError,updateSet} from '../../util/WebUtil.js';
+import {logError} from '../../util/WebUtil.js';
 import {getConverter, getMissionName,  DL_DATA_TAG} from './LcConverterFactory.js';
-import {ERROR_MSG_KEY} from '../lightcurve/generic/errorMsg.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
@@ -127,14 +135,18 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
-
+    const currentTime = Date();
+    const style = {width: 247};
     const defaultOptPanel = (m, c) => {
         return (
             <DownloadButton>
                 <DownloadOptionPanel
+                    groupKey = {mission}
                     dataTag = {DL_DATA_TAG}
                     cutoutSize={c}
                     title={'Image Download Option'}
+                    labelWidth={130}
+                    style = {{width: 400}}
                     dlParams={{
                         MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
                         FilePrefix: `${m}_Files`,
@@ -143,12 +155,13 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                         FileGroupProcessor: 'LightCurveFileGroupsProcessor'
                     }}>
                     <ValidationField
+                        style={style}
                         initialState={{
-                            value: 'A sample download',
-                            label: 'Title for this download:'
+                            value: `${m}_Files:${currentTime}`,
+                            label: `${m} download:`
                         }}
                         fieldKey='Title'
-                        labelWidth={110}/>
+                        labelWidth={130}/>
                 </DownloadOptionPanel>
             </DownloadButton>
         );

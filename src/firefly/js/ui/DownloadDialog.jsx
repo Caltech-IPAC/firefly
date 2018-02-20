@@ -15,8 +15,6 @@ import {FieldGroup} from './FieldGroup.jsx';
 import Validate from '../util/Validate.js';
 import {InputField} from './InputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
-import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
-import {ValidationField} from './ValidationField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import {SimpleComponent} from './SimpleComponent.jsx';
 
@@ -29,7 +27,11 @@ import {DataTagMeta} from '../tables/TableRequestUtil.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 
-
+/**
+ * History
+ * 2/20/18  LZ
+ * Add a labelWidth property so that the label can be adjusted.
+ */
 /**
  * This download button does 2 things:
  * 1. track a table for selected rows, then changes style to reflect whether or not it can be clicked
@@ -141,9 +143,9 @@ export class DownloadOptionPanel extends SimpleComponent {
     }
 
     render() {
-        const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = this.props;
+        const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag, labelWidth} = this.props;
         const {mask, email, enableEmail} = this.state;
-        const labelWidth = 110;
+        const lblWidth = labelWidth|| 110;
         const ttl = title || DOWNLOAD_DIALOG_ID;
 
         const onSubmit = (options) => {
@@ -161,7 +163,6 @@ export class DownloadOptionPanel extends SimpleComponent {
             const email = enableEmail ? email : ''; 
             dispatchBgSetEmailInfo({email, enableEmail});
         };
-
         return (
             <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
                 {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
@@ -171,7 +172,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                     onSubmit = {onSubmit}
                     onCancel = {() => dispatchHideDialog(ttl)}
                     help_id  = {help_id}>
-                    <FieldGroup groupKey={'DownloadDialog'} keepState={true}>
+                    <FieldGroup groupKey={groupKey} keepState={true}>
 
                         {children}
 
@@ -187,7 +188,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                                         {label: 'Specified Cutouts', value: 'cut'},
                                         {label: 'Original Images', value: 'orig'}
                                     ]}
-                                labelWidth = {labelWidth}
+                                labelWidth = {lblWidth}
                             />
                         }
                         <ListBoxInputField
@@ -201,7 +202,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                                         {label: 'Structured (with folders)', value: 'folder'},
                                         {label: 'Flattened (no folders)', value: 'flat'}
                                     ]}
-                            labelWidth = {labelWidth}
+                            labelWidth = {lblWidth}
                         />
 
                         <div style={{width: 250, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
@@ -235,6 +236,7 @@ DownloadOptionPanel.propTypes = {
     mask:       PropTypes.bool,
     style:      PropTypes.object,
     dataTag:    PropTypes.string,
+    labelWidth: PropTypes.number,
     dlParams:   PropTypes.shape({
         TitlePrefix:    PropTypes.string,
         FilePrefix:     PropTypes.string,

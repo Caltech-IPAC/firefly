@@ -149,17 +149,19 @@ export function ptfOnFieldUpdate(fieldKey, value) {
 }
 
 /**
- *
- * Gets the download option panel for PTF with specific file processor id 'PtfDownload'
+ *  This is specialized for PTF download.
+ *  Gets the download option panel for PTF with specific file processor id 'PtfDownload'
  * @param mission
  * @param cutoutSizeInDeg
  * @returns {XML}
  */
 export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
-
+    const currentTime = Date();
+    const style = {width: 247};
     return (
         <DownloadButton>
             <DownloadOptionPanel
+                groupKe = {mission}
                 dataTag = {DL_DATA_TAG}
                 cutoutSize={cutoutSizeInDeg}
                 title={'Image Download Option'}
@@ -174,10 +176,12 @@ export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
                     table:'level1'
                 }}>
                 <ValidationField
+                    style={style}
                     initialState={{
-                        value: 'A sample download',
-                        label: 'Title for this download:'
+                        value: `${mission}_Files:${currentTime}`,
+                        label: 'PTF download:'
                     }}
+
                     fieldKey='Title'
                     labelWidth={110}/>
             </DownloadOptionPanel>
