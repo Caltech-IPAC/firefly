@@ -57,6 +57,7 @@
     flex-grow: 1;
     align-self: center;
     text-align: center;
+    margin-top: 10px;
 }
 
 .TablePanel__toolbar {

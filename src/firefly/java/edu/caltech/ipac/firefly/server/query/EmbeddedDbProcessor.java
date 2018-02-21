@@ -19,10 +19,13 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import javax.validation.constraints.NotNull;
@@ -134,12 +137,23 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
             if (!dbFile.exists() || !EmbeddedDbUtil.hasTable(treq, dbFile, "DATA")) {
-                dbFile = populateNewDbFile(treq);
+                StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
+                dbFile = populateDataTable(treq);
                 dbFileCreated = true;
+                StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
             }
 
             StopWatch.getInstance().start("getDataset: " + request.getRequestId());
-            DataGroupPart results = getResultSet(treq, dbFile);
+            DataGroupPart results;
+            try {
+                results = getResultSet(treq, dbFile);
+            } catch (Exception e) {
+                // table data exists.. but, bad grammar when querying for the resultset.
+                // should return table meta info + error message
+                DataGroup dg = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data limit 0", "data");
+                results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
+                results.setErrorMsg(retrieveMsgFromError(e, treq));
+            }
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 
             if (doLogging() && dbFileCreated) {
@@ -147,11 +161,29 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
             }
 
-            return  results;
+            return results;
         } finally {
             activeRequests.remove(unigueReqID);
             lock.unlock();
         }
+    }
+
+    private File populateDataTable(TableServerRequest treq) throws DataAccessException {
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        File dbFile = createDbFile(treq);
+        try {
+            FileInfo dbFileInfo = ingestDataIntoDb(treq, dbFile);
+            dbFile = dbFileInfo.getFile();
+        } catch (Exception e) {
+            dbFile.delete();
+            if (e instanceof DataAccessException) {
+                throw e;
+            } else {
+                throw new DataAccessException(retrieveMsgFromError(e, treq), e);
+            }
+        }
+        EmbeddedDbUtil.setDbMetaInfo(treq, dbAdapter, dbFile);
+        return dbFile;
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
@@ -342,23 +374,45 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return selectInfo;
     }
 
-    private File populateNewDbFile(TableServerRequest treq) throws DataAccessException {
-        StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        File dbFile = createDbFile(treq);
-        try {
-            FileInfo dbFileInfo = ingestDataIntoDb(treq, dbFile);
-            dbFile = dbFileInfo.getFile();
-        } catch (DataAccessException e) {
-            dbFile.delete();
-            throw e;
-        } catch (Exception e) {
-            dbFile.delete();
-            throw new DataAccessException(e);
+    private static String retrieveMsgFromError(Exception e, TableServerRequest treq) {
+
+
+        if (e instanceof BadSqlGrammarException) {
+            // object not found condition
+            BadSqlGrammarException ex = (BadSqlGrammarException) e;
+            String msg = ex.getRootCause().getMessage();
+            if (msg.toLowerCase().contains("object not found")) {
+                String name = CollectionUtil.get(msg.split(":"), 1, "").trim();
+                String sql = ex.getSql() == null ? "" : ex.getSql();
+                if (sql.matches(String.format(".*from\\s+%s.*", name))) {
+                    return "Table not found: " + name;
+                } else {
+                    return "Column not found: " + name;
+                }
+            }
+            return msg;
+        } else if (e instanceof DataIntegrityViolationException) {
+            // data type mismatch
+            String possibleError = "";
+            DataIntegrityViolationException ex = (DataIntegrityViolationException) e;
+            String msg = ex.getRootCause().getMessage();
+            TableServerRequest prevReq = QueryUtil.convertToServerRequest(treq.getMeta().get(TableServerRequest.RESULTSET_REQ));
+            if (treq.getInclColumns() != null && !StringUtils.areEqual(treq.getInclColumns(), prevReq.getInclColumns())) {
+                possibleError += treq.getInclColumns();
+            }
+            List<String> diff = CollectionUtil.diff(treq.getFilters(), prevReq.getFilters(), false);
+            if (diff != null && diff.size() > 0) {
+                possibleError += StringUtils.toString(diff);
+            }
+            if (treq.getSortInfo() != null && !treq.getSortInfo().equals(prevReq.getSortInfo())) {
+                possibleError += treq.getSortInfo().toString();
+            }
+
+            if (msg.toLowerCase().contains(" cast")) {
+                return "Data type mismatch: \n\t " + possibleError;
+            }
         }
-        EmbeddedDbUtil.setDbMetaInfo(treq, dbAdapter, dbFile);
-        StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
-        return dbFile;
+        return e.getMessage();
     }
 }
 
