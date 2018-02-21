@@ -133,23 +133,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
-            if (!dbFile.exists()) {
-                StopWatch.getInstance().start("createDbFile: " + request.getRequestId());
-                DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-                dbFile = createDbFile(treq);
-                try {
-                    FileInfo dbFileInfo = ingestDataIntoDb(treq, dbFile);
-                    dbFile = dbFileInfo.getFile();
-                } catch (DataAccessException e) {
-                    dbFile.delete();
-                    throw e;
-                } catch (Exception e) {
-                    dbFile.delete();
-                    throw new DataAccessException(e);
-                }
-                EmbeddedDbUtil.setDbMetaInfo(treq, dbAdapter, dbFile);
+            if (!dbFile.exists() || !EmbeddedDbUtil.hasTable(treq, dbFile, "DATA")) {
+                dbFile = populateNewDbFile(treq);
                 dbFileCreated = true;
-                StopWatch.getInstance().stop("createDbFile: " + request.getRequestId()).printLog("createDbFile: " + request.getRequestId());
             }
 
             StopWatch.getInstance().start("getDataset: " + request.getRequestId());
@@ -233,9 +219,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
 
-        try {
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", resultSetID));
-        } catch (Exception e) {
+        if (!EmbeddedDbUtil.hasTable(treq, dbFile, resultSetID)) {
             // does not exists.. create table from original 'data' table
             List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? getColumnNames(dbInstance, "DATA")
                     : StringUtils.asList(treq.getInclColumns(), ",");
@@ -262,8 +246,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             String metaSql = "select * from data_meta";
             metaSql = dbAdapter.createTableFromSelect(resultSetID + "_meta", metaSql);
             JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
-
         }
+
         // resultSetID is a table created with sort and filter in consideration.  no need to re-apply.
         TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
         nreq.setFilters(null);
@@ -310,10 +294,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         String prevResultSetID = treq.getMeta().get(TableServerRequest.RESULTSET_ID);
         if (!StringUtils.isEmpty(prevResultSetID)) {
-            try {
-                DbInstance dbInstance = DbAdapter.getAdapter(treq).getDbInstance(dbFile);
-                JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(String.format("select count(*) from %s", prevResultSetID));
-            } catch (Exception e) {
+            if (!EmbeddedDbUtil.hasTable(treq, dbFile, prevResultSetID)) {
                 // does not exists.. create table from original 'data' table
                 String resultSetRequest = treq.getMeta().get(TableServerRequest.RESULTSET_REQ);
                 if (!StringUtils.isEmpty(resultSetRequest)) {
@@ -359,6 +340,25 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         }
         selectInfo.setRowCount(rowCnt);
         return selectInfo;
+    }
+
+    private File populateNewDbFile(TableServerRequest treq) throws DataAccessException {
+        StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        File dbFile = createDbFile(treq);
+        try {
+            FileInfo dbFileInfo = ingestDataIntoDb(treq, dbFile);
+            dbFile = dbFileInfo.getFile();
+        } catch (DataAccessException e) {
+            dbFile.delete();
+            throw e;
+        } catch (Exception e) {
+            dbFile.delete();
+            throw new DataAccessException(e);
+        }
+        EmbeddedDbUtil.setDbMetaInfo(treq, dbAdapter, dbFile);
+        StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
+        return dbFile;
     }
 }
 
