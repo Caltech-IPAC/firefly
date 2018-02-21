@@ -156,12 +156,13 @@ export function ptfOnFieldUpdate(fieldKey, value) {
  * @returns {XML}
  */
 export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
-    const currentTime = Date();
-    const style = {width: 247};
+    const currentTime = (new Date()).toLocaleString('en-US', { hour12: false });
+
+    const style = {width: 167};
     return (
         <DownloadButton>
             <DownloadOptionPanel
-                groupKe = {mission}
+                groupKey = {mission}
                 dataTag = {DL_DATA_TAG}
                 cutoutSize={cutoutSizeInDeg}
                 title={'Image Download Option'}
@@ -178,7 +179,7 @@ export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
                 <ValidationField
                     style={style}
                     initialState={{
-                        value: `${mission}_Files:${currentTime}`,
+                        value: `${mission}_Files: ${currentTime}`,
                         label: 'PTF download:'
                     }}
 

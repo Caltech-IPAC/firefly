@@ -135,8 +135,8 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
-    const currentTime = Date();
-    const style = {width: 247};
+    const currentTime =  (new Date()).toLocaleString('en-US', { hour12: false });
+    const style = {width: 223};
     const defaultOptPanel = (m, c) => {
         return (
             <DownloadButton>
@@ -157,7 +157,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                     <ValidationField
                         style={style}
                         initialState={{
-                            value: `${m}_Files:${currentTime}`,
+                            value: `${m}_Files: ${currentTime}`,
                             label: `${m} download:`
                         }}
                         fieldKey='Title'
