@@ -18,7 +18,7 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {parseWorldPt} from '../../visualize/Point.js';
 import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
-import {dispatchPlotImage, visRoot} from '../../visualize/ImagePlotCntlr.js';
+import {dispatchPlotImage, visRoot, dispatchPlotHiPS} from '../../visualize/ImagePlotCntlr.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import {ImageSelect} from '../../ui/ImageSelect.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
@@ -31,6 +31,9 @@ import {getPlotViewById} from '../PlotViewUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {getAppHiPSConfig, HiPSId, HiPSData, onHiPSSurveys} from '../HiPSCntlr.js';
+import {HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
+import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 
 import './ImageSearchPanelV2.css';
 
@@ -40,11 +43,28 @@ const FG_KEYS = {
     single: 'ImageSearchPanel_single',
     red: 'ImageSearchPanel_red',
     green: 'ImageSearchPanel_green',
-    blue: 'ImageSearchPanel_blue'
+    blue: 'ImageSearchPanel_blue',
+    hips: 'ImageSearchPanel_hips'
 };
 
+const FD_KEYS = {
+    type: 'imageType',
+    source: 'imageSource'
+};
 
 var imageMasterData;        // latest imageMasterData retrieved from server
+
+// set 20 as the maximum plot
+function* getHiPSPlotId() {
+    let index = 0;
+
+    while (true) {
+        ++index;
+        yield 'aHiPSId' + index;
+    }
+}
+
+const genHiPSPlotId = getHiPSPlotId();
 
 /**
  * @typedef {Object} ContextInfo
@@ -142,6 +162,19 @@ export function showImageSelPanel(popTitle) {
 /*-----------------------------------------------------------------------------------------*/
 
 
+function  isThreeColorImgType() {
+    return getFieldVal(FG_KEYS.main, FD_KEYS.type) === 'threeColor';
+}
+
+function  isHipsImgType() {
+    return getFieldVal(FG_KEYS.main, FD_KEYS.type) === 'hipsImage';
+}
+
+function isSingleChannelImgType() {
+    return (!isThreeColorImgType() && !isHipsImgType());
+}
+
+
 /**
  *
  */
@@ -181,7 +214,8 @@ export class ImageSearchPanelV2 extends PureComponent {
         const {archiveName='Search', title='Image Search'}= this.props;
         let {multiSelect=true} = this.props;
         const {imageMasterData, showError= false}= this.state;
-        const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
+        const isThreeColor = isThreeColorImgType();
+
         multiSelect = !isThreeColor && multiSelect;
 
         if (showError) {
@@ -197,8 +231,10 @@ export class ImageSearchPanelV2 extends PureComponent {
                 <div>
                     <div className='ImageSearch__title'>{title}</div>
                     <ImageType/>
-                    { isThreeColor && <ThreeColor {...{imageMasterData, multiSelect, archiveName}}/>}
-                    {!isThreeColor && <SingleChannel {...{groupKey: FG_KEYS.single, imageMasterData, multiSelect, archiveName}}/>}
+                    {isThreeColor && <ThreeColor {...{imageMasterData, multiSelect, archiveName}}/>}
+                    {isSingleChannelImgType() && <SingleChannel {...{groupKey: FG_KEYS.single,
+                                                                 imageMasterData, multiSelect, archiveName}}/>}
+                    {isHipsImgType() && <HiPSImage {...{groupKey: FG_KEYS.hips,  archiveName}}/>}
                 </div>
             );
         } else {
@@ -210,7 +246,7 @@ export class ImageSearchPanelV2 extends PureComponent {
 ImageSearchPanelV2.propTypes = {
     title:       PropTypes.string,
     archiveName: PropTypes.string,
-    multiSelect: PropTypes.bool,
+    multiSelect: PropTypes.bool
 };
 
 function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName}) {
@@ -244,32 +280,58 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
     );
 }
 
+function HiPSImage({groupKey, archiveName}) {
+    return (
+        <div style={{width:'100%'}}>
+            <FieldGroup groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
+                <ImageSource {...{groupKey, archiveName}}/>
+            </FieldGroup>
+        </div>
+    );
+}
+HiPSImage.propTypes = {
+    groupKey: PropTypes.string,
+    archiveName: PropTypes.string
+};
+
 function ImageType({}) {
+    const options = [  {label: 'View Images', value: 'singleChannel'},
+                     {label: 'create 3-color composite', value: 'threeColor'}];
+
+    if (getAppHiPSConfig()) {
+        options.push({label: 'HiPS - multi order image', value: 'hipsImage'});
+    }
     return (
         <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
             <div className='ImageSearch__section--title'>1. Choose image type</div>
             <RadioGroupInputField
                 initialState= {{ defaultValue: 'singleChannel',
                              tooltip: 'Please select the image type'}}
-                options={[  {label: 'View Images', value: 'singleChannel'},
-                        {label: 'create 3-color composite', value: 'threeColor'}]}
-                fieldKey='imageType'
+                options={ options }
+                fieldKey={ FD_KEYS.type }
             />
         </FieldGroup>
     );
 }
 
+
 function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive'}) {
-    const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
+    const isThreeColor = isThreeColorImgType();
+    const isHips = isHipsImgType();
     const options = [   {label: archiveName, value: 'archive'},
-                        {label: 'Use my image', value: 'upload'},
                         {label: 'URL', value: 'url'}];
-    if (getWorkspaceConfig()) {
-        options.push({label: 'Workspace', value: ServerParams.IS_WS});
+
+    if (!isHips) {   // additional sources for non-Hips options
+        options.splice(1, 0, {label: 'Use my image', value: 'upload'});
+
+        if (getWorkspaceConfig()) {
+            options.push({label: 'Workspace', value: ServerParams.IS_WS});
+        }
     }
+
     isThreeColor && (options.push({label: 'None', value: 'none'}));
     const defaultValue = isThreeColor ? 'none' : 'archive';
-    const imageSource = getFieldVal(groupKey, 'imageSource', defaultValue);
+    const imageSource = getFieldVal(groupKey, FD_KEYS.source, defaultValue);
 
     return (
         <div>
@@ -279,10 +341,10 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
                     initialState = {{ defaultValue, options, tooltip: 'Please select the image source'}}
                     defaultValue ={defaultValue}
                     options = {options}
-                    fieldKey = 'imageSource'/>
+                    fieldKey = { FD_KEYS.source }/>
             </div>
-            {imageSource === 'url'    && <SelectUrl />}
-            {imageSource === 'archive'   && <SelectArchive {...{groupKey, imageMasterData, multiSelect}}/>}
+            {imageSource === 'url'  && (isHips ? <SelectArchive {...{groupKey}}/> : <SelectUrl />)}
+            {imageSource === 'archive'  && <SelectArchive {...{groupKey, imageMasterData, multiSelect}}/>}
             {imageSource === 'upload' && <SelectUpload />}
             {imageSource === ServerParams.IS_WS && <SelectWorkspace />}
         </div>
@@ -294,6 +356,12 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const style = {width: '100%', height: 350};
     const targetStyle = {height: 40};
     const sizeStyle = {margin: '-5px 0 0 36px'};
+    const isHips = isHipsImgType();
+    const sizeLabel = isHips ? 'Field of view:' : 'Cutout size:';
+    const sizeKey = isHips ? 'sizeFov' : 'conesize';
+    const minSize = isHips ? 197/3600 : 1/3600;
+    const maxSize = isHips ? 180 : 1;
+    const sizeVal = isHips ? (180) + '' : (500/3600) + '';
 
     return (
         <div>
@@ -301,23 +369,27 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                 <div className='ImageSearch__section--title'>3. Select Target</div>
                 <div>
                     <TargetPanel labelWidth={100} feedbackStyle={targetStyle}/>
-                    <SizeInputFields fieldKey='conesize' showFeedback={true}
+                    <SizeInputFields fieldKey={sizeKey} showFeedback={true}
                                      feedbackStyle={sizeStyle}
                                      initialState={{
                                              unit: 'arcsec',
                                              labelWidth : 0,
                                              nullAllowed: false,
-                                             value: (500/3600)+'',
-                                             min: 1 / 3600,
-                                             max: 1,
+                                             value: sizeVal,
+                                             min: minSize,
+                                             max: maxSize
                                          }}
-                                     label={'Cutout size:'}
+                                     label={sizeLabel}
+                                     key={`sizeInput_${groupKey}`}
                     />
                 </div>
             </div>
             <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset'}}>
                 <div className='ImageSearch__section--title'>4. Select Data Set</div>
-                <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, style, addChangeListener, imageMasterData, multiSelect}} />
+                {!isHips ?
+                <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, style, addChangeListener, imageMasterData, multiSelect}} /> :
+                <HiPSImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, style}} />
+                    }
             </div>
         </div>
     );
@@ -373,8 +445,7 @@ function mainReducer(inFields, action) {
     // call all listeners for
     inFields = Object.values(changeListeners).reduce( (p, l) => l(p, action), inFields);
     return inFields;
-};
-
+}
 
 function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId}) {
     const validInfo= validateInput(request);
@@ -430,13 +501,22 @@ function getValidatedInfo(request, isThreeColor) {
     return {valid:true, message: 'success'};
 }
 
-function validateInput(allFields) {
-    const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
+function getHipsValidateInfo(request) {
+    if (request.imageSource === 'url') {
+        if (isNil(request.txURL)){
+            return ({valid:false, message:'invalid URL'});
+        }
+    }
+    return {valid:true, message: 'success'};
+}
 
-    if (isThreeColor) {
+function validateInput(allFields) {
+    if (isHipsImgType()) {
+        return getHipsValidateInfo(get(allFields, FG_KEYS.hips));
+    } else if (isThreeColorImgType()) {
         const resps = [FG_KEYS.red, FG_KEYS.green, FG_KEYS.blue].map((band) => {
                         const req = get(allFields, band);
-                        if (get(req, 'imageSource', 'none') === 'none') {
+                        if (get(req, FD_KEYS.source, 'none') === 'none') {
                             return undefined;
                         } else {
                             return getValidatedInfo(req, true);
@@ -490,8 +570,19 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
         viewerId = newCellViewerId();
     }
 
-    const isThreeColor = getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
-    if (isThreeColor){
+    // hips
+    if (isHipsImgType()) {
+        if (!plotId) {
+            plotId = genHiPSPlotId.next().value;
+        }
+        const wpRequest = makeHiPSWebPlotRequest(get(request, FG_KEYS.hips), plotId);
+        wpRequest && dispatchPlotHiPS({
+            plotId,
+            viewerId,
+            wpRequest
+        });
+
+    } else if  (isThreeColorImgType()){       // three color
         const redReq = get(request, FG_KEYS.red);
         const greenReq = get(request, FG_KEYS.green);
         const blueReq = get(request, FG_KEYS.blue);
@@ -505,7 +596,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
         });
         dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId});
 
-    } else {
+    } else {                       // single channel
         const wprs = makeWebPlotRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
         wprs.forEach( (r) => dispatchPlotImage({wpRequest:r, viewerId}));
     }
@@ -522,7 +613,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
  */
 function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
 
-    if (get(request, 'imageSource', 'none') === 'none') {
+    if (get(request, FD_KEYS.source, 'none') === 'none') {
         return [];
 
     } else if (request.imageSource === 'upload') {
@@ -575,7 +666,7 @@ const nextPlotId = (() => {
 function makeWPRequest(wp, radius, params, plotId, plotGroupId) {
     const inReq= Object.assign( {
         [WPConst.WORLD_PT] : wp.toString(),
-        [WPConst.SIZE_IN_DEG] : radius+'',
+        [WPConst.SIZE_IN_DEG] : radius+''
     }, params);
 
     return addStdParams(WebPlotRequest.makeFromObj(inReq), plotId, plotGroupId);

@@ -80,9 +80,9 @@ export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
 }
 
 /**
- *
  * @param urlRoot
  * @param exts
+ * @param cubeIdx
  * @param proxy
  * @return {*}
  */

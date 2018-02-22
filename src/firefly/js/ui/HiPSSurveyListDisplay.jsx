@@ -2,7 +2,6 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
 import {isEmpty, get} from 'lodash';
-import {getHiPSSurveys,  getHiPSLoadingMessage, updateHiPSId, HiPSSurveyTableColumm} from '../visualize/HiPSCntlr.js';
 import {getTblById, getCellValue} from '../tables/TableUtil.js';
 import LOADING from 'html/images/gxt/loading.gif';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
@@ -14,34 +13,48 @@ import {HelpIcon} from './HelpIcon.jsx';
 import {CompleteButton} from './CompleteButton.jsx';
 import {INFO_POPUP} from './PopupUtil.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import {HiPSData}  from './TestQueriesPanel.jsx';
-import {onHiPSSurveys, isLoadingHiPSSurverys, HiPSPopular, _HiPSPopular} from '../visualize/HiPSCntlr.js';
+import {onHiPSSurveys, isLoadingHiPSSurverys,
+        HiPSPopular, HiPSId, HiPSData, HiPSSurveyTableColumm,
+        getHiPSSurveys,  getHiPSLoadingMessage, updateHiPSId,
+        indexInHiPSSurveys, isOnePopularSurvey} from '../visualize/HiPSCntlr.js';
 import {FieldGroup} from './FieldGroup.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
-import {getFieldVal, getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
+import {visRoot} from '../visualize/ImagePlotCntlr.js';
 
 //define the table style only in the table div
 const tableStyle = {boxSizing: 'border-box', padding:5, width: '100%', height: 'calc(100% - 20px)', overflow: 'hidden', display: 'flex', flexDirection: 'column'};
 const hipsSurveysPopupId = 'hipsSurveys';
-export const HiPSSurvey = 'HiPS_Surveys_';
+const HiPSSurvey = 'HiPS_Surveys_';
 
+
+export function makeHiPSSurveysTableName(hipsId) {
+    if (!hipsId) {
+        const popularHiPS = getFieldVal(gKeyHiPSPanel, fKeyHiPSPopular);
+        hipsId = updateHiPSId(HiPSId, (popularHiPS === HiPSPopular));
+    }
+
+    return HiPSSurvey + hipsId;
+}
 /**
  * table to contain HiPS survey info including url, data_product and title
  * @param id
  * @param surveys
  * @param isPopular
+ * @param hipsUrl
  * @param moreStyle
  * @returns {XML}
  */
-function renderHiPSSurveysTable(id, surveys, isPopular, moreStyle={}) {
+function renderHiPSSurveysTable(id, surveys, isPopular, hipsUrl, moreStyle={}) {
+    const hipsId = updateHiPSId(id, isPopular);
     if (!surveys) {
-        surveys = getHiPSSurveys(updateHiPSId(id, isPopular));
+        surveys = getHiPSSurveys(hipsId);
     }
     const surveyTableStyle = isEmpty(moreStyle) ? tableStyle : Object.assign(tableStyle, moreStyle);
-    const tableId = HiPSSurvey + updateHiPSId(id, isPopular);
+    const tableId = makeHiPSSurveysTableName(hipsId);
 
     let tableModel = getTblById(tableId);
-
 
     if (!tableModel && !isEmpty(surveys)) {
         const columns = [ {name: HiPSSurveyTableColumm.type.key, width: 8, type: 'char'},
@@ -59,11 +72,13 @@ function renderHiPSSurveysTable(id, surveys, isPopular, moreStyle={}) {
             return prev;
         }, []);
 
+        const highlightedRow = indexInHiPSSurveys(hipsId, hipsUrl);
+
         tableModel = {
             totalRows: data.length,
             tbl_id: tableId,
             tableData: {columns, data},
-            highlightedRow: 0
+            highlightedRow
         };
     }
 
@@ -89,9 +104,10 @@ function renderHiPSSurveysTable(id, surveys, isPopular, moreStyle={}) {
  * @param id
  * @param isUpdatingHips
  * @param popularHiPS
+ * @param hipsUrl
  * @returns {*}
  */
-function showHiPSSurveyList(id, isUpdatingHips, popularHiPS = '') {
+function showHiPSSurveyList(id, isUpdatingHips, popularHiPS, hipsUrl) {
     const isPopular =  (popularHiPS === HiPSPopular);
     const hipsSurveys = getHiPSSurveys(updateHiPSId(id, isPopular));
 
@@ -104,7 +120,7 @@ function showHiPSSurveyList(id, isUpdatingHips, popularHiPS = '') {
     };
 
     const showHiPSSurvey = () => {
-        return renderHiPSSurveysTable(id, hipsSurveys, isPopular);
+        return renderHiPSSurveysTable(id, hipsSurveys, isPopular, hipsUrl);
     };
 
     return (
@@ -115,12 +131,13 @@ function showHiPSSurveyList(id, isUpdatingHips, popularHiPS = '') {
 
 /**
  * show HiPS survey info table in popup panel
+ * @param hipsUrl
  * @param pv
+ * @param surveysId
  * @param dataType
  * @returns {*}
  */
-export function showHiPSSurverysPopup(pv, dataType=HiPSData) {
-    const surveysId =  get(pv, ['request', 'params', 'hipsSurveysId']);
+export function showHiPSSurverysPopup(hipsUrl,  pv, surveysId = HiPSId, dataType=HiPSData) {
     const popupPanelResizableStyle = {
         width: 550,
         height: 400,
@@ -130,12 +147,8 @@ export function showHiPSSurverysPopup(pv, dataType=HiPSData) {
         overflow: 'hidden'
     };
 
-    if (!surveysId ) {
-        HiPSPopupMsg('No HiPS Surveys Id found', 'HiPS Surverys search');
-        return;
-    }
-
     const hipsSurveys = getHiPSSurveys(surveysId);
+    // no surveys in the store yet
     if (!hipsSurveys) {
         onHiPSSurveys(dataType, surveysId);
     }
@@ -146,18 +159,18 @@ export function showHiPSSurverysPopup(pv, dataType=HiPSData) {
                 <div style={popupPanelResizableStyle}>
                     <HiPSSurveyListSelection
                         surveysId={surveysId}
-                        pv={pv}
                         wrapperStyle={{height: 'calc(100% - 60px)'}}
+                        hipsUrl={hipsUrl}
                     />
 
                     <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 15, marginBottom: 15}}>
                         <div style={{display: 'flex', alignItems: 'flexStart', marginLeft: 10}}>
                             <div style={{marginRight: 10}}>
                                 <CompleteButton
-                                    onSuccess={onSelectPlot(surveysId, pv.plotId)}
+                                    onSuccess={onSelectPlot(surveysId, pv ? primePlot(pv) : primePlot(visRoot()))}
                                     text={'Search'}
                                     dialogId={hipsSurveysPopupId}
-                                    groupKey={gKeyHiPSPopup}
+                                    groupKey={gKeyHiPSPanel}
                                 />
                             </div>
                             <div>
@@ -181,15 +194,12 @@ export function showHiPSSurverysPopup(pv, dataType=HiPSData) {
     startHiPSPopup();
 }
 
-export const gKeyHiPSPopup = 'HIPSList_PANEL';
+export const gKeyHiPSPanel = 'HIPSList_PANEL';
 export const fKeyHiPSPopular = 'popularHiPS';
 
-const getHiPSPopularSetting = (pv) => {
-    const surveysId = get(pv, ['request', 'params', 'hipsSurveysId']);
-
-    return (surveysId&&surveysId.endsWith(_HiPSPopular)) ? HiPSPopular
-                                                         : getFieldVal( gKeyHiPSPopup, fKeyHiPSPopular, HiPSPopular);
-};
+function getHiPSPopularSetting(hipsUrl) {
+    return (!hipsUrl || isOnePopularSurvey(hipsUrl)) ? HiPSPopular : '';
+}
 
 /**
  * show HiPS survey info table plus check box for showing popular surveys in popup panel or form panel
@@ -198,9 +208,15 @@ export class HiPSSurveyListSelection extends PureComponent {
     constructor(props) {
         super(props);
 
-        const popularStr = getHiPSPopularSetting(props.pv);
-        const isUpdatingHips = isLoadingHiPSSurverys(props.surveysId);
-        this.state = {fields: {popularHiPS: {value: popularStr}}, isUpdatingHips};
+        const hipsSurveys = getHiPSSurveys(this.props.surveysId);
+        // no surveys in the store yet
+        if (!hipsSurveys) {
+            const {dataType=HiPSData} = props;
+            onHiPSSurveys(dataType, props.surveysId);
+        }
+        this.state = {[fKeyHiPSPopular]: getHiPSPopularSetting(props.hipsUrl),
+                      isUpdatingHips: isLoadingHiPSSurverys(props.surveysId)};
+        //this.groupKey = props.groupKey || gKeyHiPSPanel;
     }
 
     componentWillUnmount() {
@@ -215,14 +231,13 @@ export class HiPSSurveyListSelection extends PureComponent {
 
     storeUpdate() {
         if (this.iAmMounted) {
-            const {fields} = getFieldGroupState(gKeyHiPSPopup) || {};
+            const {surveysId} = this.props;
+            const isUpdatingHips = isLoadingHiPSSurverys(surveysId);
+            const pSetting = getFieldVal(gKeyHiPSPanel, fKeyHiPSPopular);
 
-            if (fields && (fields !== get(this.state, 'fields'))) {
-                this.setState({fields});
+            if (pSetting !== get(this.state, [fKeyHiPSPopular])) {
+                this.setState({[fKeyHiPSPopular]: pSetting});
             }
-
-            const isUpdatingHips = isLoadingHiPSSurverys(this.props.surveysId);
-
             if (isUpdatingHips !== get(this.state, 'isUpdatingHips')) {
                 this.setState({isUpdatingHips});
             }
@@ -231,26 +246,21 @@ export class HiPSSurveyListSelection extends PureComponent {
     }
 
     render() {
-        const {surveysId, wrapperStyle} = this.props;
-        const {fields, isUpdatingHips} = this.state;
-        const popularHiPS = get(fields, [fKeyHiPSPopular, 'value']);
-
+        const {surveysId, wrapperStyle, hipsUrl} = this.props;
+        const {isUpdatingHips, [fKeyHiPSPopular]: popularS} = this.state;
 
         return (
             <div style={wrapperStyle}>
-                <FieldGroup groupKey={gKeyHiPSPopup} validatorFunc={null} keepState={true}
+                <FieldGroup groupKey={gKeyHiPSPanel} validatorFunc={null} keepState={true}
+                            reducerFunc={fieldReducer(hipsUrl)}
                             style={{height: '100%', width: '100%'}}>
                     <CheckboxGroupInputField
                         fieldKey={fKeyHiPSPopular}
-                        initialState={{
-                                        value: popularHiPS,   // workaround for _all_ for now
-                                        tooltip: 'display popular HiPS'
-                                      }}
                         options={[{label: 'Popular HiPS', value: HiPSPopular}]}
                         alignment='horizontal'
                         wrapperStyle={{textAlign: 'center'}}
                     />
-                    {showHiPSSurveyList(surveysId, isUpdatingHips, popularHiPS)}
+                    {showHiPSSurveyList(surveysId, isUpdatingHips, popularS, hipsUrl)}
                 </FieldGroup>
             </div>
         );
@@ -258,21 +268,36 @@ export class HiPSSurveyListSelection extends PureComponent {
 }
 
 HiPSSurveyListSelection.propTypes = {
-    pv: PropTypes.object,
     surveysId: PropTypes.string.isRequired,
-    wrapperStyle: PropTypes.object
+    wrapperStyle: PropTypes.object,
+    hipsUrl: PropTypes.string,
+    dataType: PropTypes.array
 };
 
-function onSelectPlot(surveysId, plotId) {
+function fieldReducer(hipsUrl) {
+    return (inFields, action ) => {
+        if (!inFields) {
+            const pSetting = getHiPSPopularSetting(hipsUrl);
+            return {[fKeyHiPSPopular]: {
+                fieldKey: fKeyHiPSPopular,
+                value: pSetting,
+                tooltip: 'display popular HiPS'
+            }};
+        }
+        return inFields;
+    };
+}
+
+function onSelectPlot(surveysId, plot) {
     return (request) => {
-        const tblId = HiPSSurvey + updateHiPSId(surveysId, (get(request, fKeyHiPSPopular) === HiPSPopular));
+        const tblId = makeHiPSSurveysTableName(updateHiPSId(surveysId, (get(request, fKeyHiPSPopular) === HiPSPopular)));
         const tableModel = getTblById(tblId);
         if (!tableModel) {
             return;
         }
 
         const rootUrl = getCellValue(tableModel, get(tableModel, 'highlightedRow', 0), 'url');
-        dispatchChangeHiPS({plotId, hipsUrlRoot: rootUrl});
+        dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
     };
 }
 

@@ -1323,8 +1323,6 @@ export class WebPlotRequest extends ServerRequest {
     setHipsRootUrl(url) { this.setParam(C.HIPS_ROOT_URL, url);}
     getHipsRootUrl() { return this.getParam(C.HIPS_ROOT_URL);}
 
-    setHipsSurveysId(id) { this.setParam(C.HIPS_SURVEYS_ID, id);}
-    getHipsSurveysId() { return this.getParam(C.HIPS_SURVEYS_ID);}
     /**
      *
      * @param overlayIdList
