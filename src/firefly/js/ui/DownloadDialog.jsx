@@ -26,12 +26,6 @@ import {SelectInfo} from '../tables/SelectInfo.js';
 import {DataTagMeta} from '../tables/TableRequestUtil.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
-
-/**
- * History
- * 2/20/18  LZ
- * Add a labelWidth property so that the label can be adjusted.
- */
 /**
  * This download button does 2 things:
  * 1. track a table for selected rows, then changes style to reflect whether or not it can be clicked
