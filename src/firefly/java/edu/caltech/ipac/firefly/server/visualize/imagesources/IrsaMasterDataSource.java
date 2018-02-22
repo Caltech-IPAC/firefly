@@ -105,7 +105,7 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
                      //make a temporary missionId
                      if (val==null && parameters[i].getKey().equals("imageId")){
                          val = String.valueOf(row.getDataElement(PARAMS.MISSION_ID.getKey()))
-                                 +String.valueOf(row.getDataElement(PARAMS.ACRONYM.getKey()))
+                                 +String.valueOf(row.getDataElement("surveyKey"))
                                  +String.valueOf(row.getDataElement(PARAMS.WAVEBAND_ID.getKey()));
                          if( missionIdList.contains(val)){
                              val=val.concat(new String("_"+i));
@@ -168,7 +168,7 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
          List<ImageMasterDataEntry> dataList = s.createDataList("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/java/edu/caltech/ipac/firefly/resources/irsa-image-master-table.csv");
 //         ImageMasterDataEntry o = (ImageMasterDataEntry) dataList.get(0);
          for(ImageMasterDataEntry o:dataList){
-            // System.out.println(makeJsonObj(o.getDataMap()));
+            System.out.println(makeJsonObj(o.getDataMap()));
          }
 
          ExternalMasterDataSource e = new ExternalMasterDataSource();

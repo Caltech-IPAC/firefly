@@ -98,8 +98,15 @@ public class ServiceRetriever implements FileRetriever {
         if (sizeInArcSec < 50) sizeInArcSec = 50;
         circle = new Circle(circle.getCenter(), sizeInArcSec);
         List<RelatedData> rdList= IbeQueryArtifact.get2MassRelatedData(circle.getCenter(), circle.getRadius()+"");
-        FileInfo fi = getIrsaPlot(request.getSurveyKey(), circle, ImageSourceTypes.TWOMASS, ServiceDesc.get(request));
-        for(RelatedData rd : rdList) fi.addRelatedData(rd);
+        TwoMassImageParams params = new TwoMassImageParams();
+        params.setWorldPt(circle.getCenter());
+        params.setDataset(request.getSurveyKey());
+        params.setBand(request.getSurveyBand());
+        params.setSize((float)circle.getRadius());
+        FileInfo fi= LockingVisNetwork.retrieve(params, (p,f) -> IbeImageGetter.get(p));
+       // FileInfo fi = getIrsaPlot(request.getSurveyKey(), circle, ImageSourceTypes.TWOMASS, ServiceDesc.get(request));
+        fi.setDesc(ServiceDesc.get(request));
+        fi.addRelatedDataList(rdList);
         return fi;
     }
 
