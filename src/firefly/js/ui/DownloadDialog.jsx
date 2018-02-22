@@ -143,9 +143,9 @@ export class DownloadOptionPanel extends SimpleComponent {
     }
 
     render() {
-        const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag, labelWidth} = this.props;
+        const {groupKey, cutoutSize, help_id, children, style, title, tbl_id, dlParams, dataTag} = this.props;
         const {mask, email, enableEmail} = this.state;
-        const lblWidth = labelWidth|| 110;
+        const labelWidth = 110;
         const ttl = title || DOWNLOAD_DIALOG_ID;
 
         const onSubmit = (options) => {
@@ -188,7 +188,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                                         {label: 'Specified Cutouts', value: 'cut'},
                                         {label: 'Original Images', value: 'orig'}
                                     ]}
-                                labelWidth = {lblWidth}
+                                labelWidth = {labelWidth}
                             />
                         }
                         <ListBoxInputField
@@ -202,7 +202,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                                         {label: 'Structured (with folders)', value: 'folder'},
                                         {label: 'Flattened (no folders)', value: 'flat'}
                                     ]}
-                            labelWidth = {lblWidth}
+                            labelWidth = {labelWidth}
                         />
 
                         <div style={{width: 250, marginTop: 10}}><input type='checkbox' checked={enableEmail} onChange={toggleEnableEmail}/>Enable email notification</div>
@@ -236,7 +236,6 @@ DownloadOptionPanel.propTypes = {
     mask:       PropTypes.bool,
     style:      PropTypes.object,
     dataTag:    PropTypes.string,
-    labelWidth: PropTypes.number,
     dlParams:   PropTypes.shape({
         TitlePrefix:    PropTypes.string,
         FilePrefix:     PropTypes.string,

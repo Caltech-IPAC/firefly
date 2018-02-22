@@ -180,7 +180,7 @@ export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
                     style={style}
                     initialState={{
                         value: `${mission}_Files: ${currentTime}`,
-                        label: 'PTF download:'
+                        label: 'PTF:'
                     }}
 
                     fieldKey='Title'

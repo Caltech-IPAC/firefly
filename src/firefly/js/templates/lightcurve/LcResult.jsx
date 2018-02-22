@@ -145,7 +145,6 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                     dataTag = {DL_DATA_TAG}
                     cutoutSize={c}
                     title={'Image Download Option'}
-                    labelWidth={130}
                     style = {{width: 400}}
                     dlParams={{
                         MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
@@ -158,10 +157,10 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                         style={style}
                         initialState={{
                             value: `${m}_Files: ${currentTime}`,
-                            label: `${m} download:`
+                            label: `${m}:`
                         }}
                         fieldKey='Title'
-                        labelWidth={130}/>
+                        labelWidth={110}/>
                 </DownloadOptionPanel>
             </DownloadButton>
         );
