@@ -56,8 +56,8 @@ HiPSImageSelect.propTypes = {
 
 function SelectUrl({style}) {
     return (
-        <div className='ImageSearch__section' style={style}>
-            <div className='ImageSearch__section--title'>URL</div>
+        <div className='ImageSearch__section' style={style} title={'enter url of HiPS image'}>
+            <div className='ImageSearch__section--title'>Enter URL</div>
             <ValidationField
                 labelWidth={150}
                 style={{width: 475}}

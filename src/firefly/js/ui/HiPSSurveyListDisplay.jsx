@@ -208,6 +208,12 @@ export class HiPSSurveyListSelection extends PureComponent {
     constructor(props) {
         super(props);
 
+        const hipsSurveys = getHiPSSurveys(this.props.surveysId);
+        // no surveys in the store yet
+        if (!hipsSurveys) {
+            const {dataType=HiPSData} = props;
+            onHiPSSurveys(dataType, props.surveysId);
+        }
         this.state = {[fKeyHiPSPopular]: getHiPSPopularSetting(props.hipsUrl),
                       isUpdatingHips: isLoadingHiPSSurverys(props.surveysId)};
         //this.groupKey = props.groupKey || gKeyHiPSPanel;
@@ -229,12 +235,13 @@ export class HiPSSurveyListSelection extends PureComponent {
             const isUpdatingHips = isLoadingHiPSSurverys(surveysId);
             const pSetting = getFieldVal(gKeyHiPSPanel, fKeyHiPSPopular);
 
-            if (isUpdatingHips !== get(this.state, 'isUpdatingHips')) {
-                this.setState({isUpdatingHips});
-            }
             if (pSetting !== get(this.state, [fKeyHiPSPopular])) {
                 this.setState({[fKeyHiPSPopular]: pSetting});
             }
+            if (isUpdatingHips !== get(this.state, 'isUpdatingHips')) {
+                this.setState({isUpdatingHips});
+            }
+
         }
     }
 
@@ -263,7 +270,8 @@ export class HiPSSurveyListSelection extends PureComponent {
 HiPSSurveyListSelection.propTypes = {
     surveysId: PropTypes.string.isRequired,
     wrapperStyle: PropTypes.object,
-    hipsUrl: PropTypes.string
+    hipsUrl: PropTypes.string,
+    dataType: PropTypes.array
 };
 
 function fieldReducer(hipsUrl) {

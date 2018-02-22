@@ -31,9 +31,6 @@ function handleOnChange(ev, params, fireValueChange) {
 
     if (checked) {
         fireValueChange({ value: val, valid: true});
-        if (params.onChange) {
-            params.onChange(val);
-        }
     }
 }
 

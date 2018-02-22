@@ -33,6 +33,7 @@ import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getAppHiPSConfig, HiPSId, HiPSData, onHiPSSurveys} from '../HiPSCntlr.js';
 import {HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
+import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 
 import './ImageSearchPanelV2.css';
 
@@ -46,6 +47,10 @@ const FG_KEYS = {
     hips: 'ImageSearchPanel_hips'
 };
 
+const FD_KEYS = {
+    type: 'imageType',
+    source: 'imageSource'
+};
 
 var imageMasterData;        // latest imageMasterData retrieved from server
 
@@ -53,7 +58,7 @@ var imageMasterData;        // latest imageMasterData retrieved from server
 function* getHiPSPlotId() {
     let index = 0;
 
-    while (1) {
+    while (true) {
         ++index;
         yield 'aHiPSId' + index;
     }
@@ -158,11 +163,11 @@ export function showImageSelPanel(popTitle) {
 
 
 function  isThreeColorImgType() {
-    return getFieldVal(FG_KEYS.main, 'imageType') === 'threeColor';
+    return getFieldVal(FG_KEYS.main, FD_KEYS.type) === 'threeColor';
 }
 
 function  isHipsImgType() {
-    return getFieldVal(FG_KEYS.main, 'imageType') === 'hipsImage';
+    return getFieldVal(FG_KEYS.main, FD_KEYS.type) === 'hipsImage';
 }
 
 function isSingleChannelImgType() {
@@ -303,28 +308,12 @@ function ImageType({}) {
                 initialState= {{ defaultValue: 'singleChannel',
                              tooltip: 'Please select the image type'}}
                 options={ options }
-                fieldKey='imageType'
-                onChange={imageTypeForHips()}
+                fieldKey={ FD_KEYS.type }
             />
         </FieldGroup>
     );
 }
 
-function imageTypeForHips() {
-    return (val) => {
-        if (val === 'hipsImage' && getFieldVal(FG_KEYS.hips, 'imageSource', 'archive') === 'archive') {
-            onHiPSSurveys(HiPSData, HiPSId);
-        }
-    };
-}
-
-function imageSourceForHips() {
-    return (val) => {
-        if (val === 'archive' && getFieldVal(FG_KEYS.hips, 'imageType', 'singleChannel') === 'hipsImage') {
-            onHiPSSurveys(HiPSData, HiPSId);
-        }
-    };
-}
 
 function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archive'}) {
     const isThreeColor = isThreeColorImgType();
@@ -342,7 +331,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 
     isThreeColor && (options.push({label: 'None', value: 'none'}));
     const defaultValue = isThreeColor ? 'none' : 'archive';
-    const imageSource = getFieldVal(groupKey, 'imageSource', defaultValue);
+    const imageSource = getFieldVal(groupKey, FD_KEYS.source, defaultValue);
 
     return (
         <div>
@@ -352,8 +341,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
                     initialState = {{ defaultValue, options, tooltip: 'Please select the image source'}}
                     defaultValue ={defaultValue}
                     options = {options}
-                    onChange = {imageSourceForHips()}
-                    fieldKey = 'imageSource'/>
+                    fieldKey = { FD_KEYS.source }/>
             </div>
             {imageSource === 'url'  && (isHips ? <SelectArchive {...{groupKey}}/> : <SelectUrl />)}
             {imageSource === 'archive'  && <SelectArchive {...{groupKey, imageMasterData, multiSelect}}/>}
@@ -459,7 +447,6 @@ function mainReducer(inFields, action) {
     return inFields;
 }
 
-
 function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId}) {
     const validInfo= validateInput(request);
     if (!validInfo.valid)  {
@@ -529,7 +516,7 @@ function validateInput(allFields) {
     } else if (isThreeColorImgType()) {
         const resps = [FG_KEYS.red, FG_KEYS.green, FG_KEYS.blue].map((band) => {
                         const req = get(allFields, band);
-                        if (get(req, 'imageSource', 'none') === 'none') {
+                        if (get(req, FD_KEYS.source, 'none') === 'none') {
                             return undefined;
                         } else {
                             return getValidatedInfo(req, true);
@@ -626,7 +613,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
  */
 function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
 
-    if (get(request, 'imageSource', 'none') === 'none') {
+    if (get(request, FD_KEYS.source, 'none') === 'none') {
         return [];
 
     } else if (request.imageSource === 'upload') {

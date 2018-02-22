@@ -83,9 +83,6 @@ function handleOnChange(ev, params, fireValueChange) {
 
     fireValueChange({ value: curValueArr.toString(), message, valid });
 
-    if (params.onChange) {
-        params.onChange(ev);
-    }
 }
 
 
