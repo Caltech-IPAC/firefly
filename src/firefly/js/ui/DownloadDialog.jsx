@@ -15,8 +15,6 @@ import {FieldGroup} from './FieldGroup.jsx';
 import Validate from '../util/Validate.js';
 import {InputField} from './InputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
-import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
-import {ValidationField} from './ValidationField.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
 import {SimpleComponent} from './SimpleComponent.jsx';
 
@@ -28,8 +26,6 @@ import {SelectInfo} from '../tables/SelectInfo.js';
 import {DataTagMeta} from '../tables/TableRequestUtil.js';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
-
-
 /**
  * This download button does 2 things:
  * 1. track a table for selected rows, then changes style to reflect whether or not it can be clicked
@@ -161,7 +157,6 @@ export class DownloadOptionPanel extends SimpleComponent {
             const email = enableEmail ? email : ''; 
             dispatchBgSetEmailInfo({email, enableEmail});
         };
-
         return (
             <div style = {Object.assign({margin: '4px', position: 'relative', minWidth: 350}, style)}>
                 {mask && <div style={{width: '100%', height: '100%'}} className='loading-mask'/>}
@@ -171,7 +166,7 @@ export class DownloadOptionPanel extends SimpleComponent {
                     onSubmit = {onSubmit}
                     onCancel = {() => dispatchHideDialog(ttl)}
                     help_id  = {help_id}>
-                    <FieldGroup groupKey={'DownloadDialog'} keepState={true}>
+                    <FieldGroup groupKey={groupKey} keepState={true}>
 
                         {children}
 

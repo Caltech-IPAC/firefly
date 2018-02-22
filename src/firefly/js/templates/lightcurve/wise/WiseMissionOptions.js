@@ -6,8 +6,8 @@ import {getCellValue, getTblById, getColumnIdx, smartMerge, getColumns, COL_TYPE
 import {makeFileRequest} from '../../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
+
 import {LC} from '../LcManager.js';
-import {DL_DATA_TAG} from '../LcConverterFactory.js';
 
 
 const labelWidth = 80;
@@ -161,28 +161,4 @@ export function wiseOnFieldUpdate(fieldKey, value) {
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
         return {[fieldKey]: value};
     }
-}
-
-export function wiseDowloadOptionPanel (mission, cutoutSizeInDeg){
-    return (
-        <DownloadOptionPanel
-            dataTag = {DL_DATA_TAG}
-            cutoutSize={cutoutSizeInDeg}
-            title={'Image Download Option'}
-            dlParams={{
-                MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
-                FilePrefix: `${mission}_Files`,
-                BaseFileName: `${mission}_Files`,
-                DataSource: `${mission} images`,
-                FileGroupProcessor: 'LightCurveFileGroupsProcessor'
-            }}>
-            <ValidationField
-                initialState={{
-                    value: 'A sample download',
-                    label: 'Title for this download:'
-                }}
-                fieldKey='Title'
-                labelWidth={110}/>
-        </DownloadOptionPanel>
-    );
 }
