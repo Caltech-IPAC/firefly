@@ -219,7 +219,7 @@ export class HiPSSurveyListSelection extends PureComponent {
 
             onHiPSSurveys(dataType, this.props.surveysId);
         }
-        this.setState({isUpdatingHips: isLoadingHiPSSurverys(this.props.surveysId)});
+        this.setState({isUpdatingHips: isLoadingHiPSSurverys(thisprops.surveysId)});
     }
 
     componentWillUnmount() {
