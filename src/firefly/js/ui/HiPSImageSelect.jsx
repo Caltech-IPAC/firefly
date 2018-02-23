@@ -13,6 +13,7 @@ import {getTblById, getCellValue} from '../tables/TableUtil.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {parseWorldPt} from '../visualize/Point.js';
+import {parseUrl} from '../util/WebUtil.js';
 
 import './ImageSelect.css';
 
@@ -90,6 +91,15 @@ export function makeHiPSWebPlotRequest(request, plotId) {
         const {highlightedRow=0} = tableModel;
         url = getCellValue(tableModel, highlightedRow, 'url');
     }
+
+    const {protocol} = parseUrl(window.location);
+    url = url.trim();
+
+    const p = ['https:', 'http:'].find((h) => url.startsWith(h));
+    if (p) {
+        url = `${protocol}${url.substring(p.length)}`;
+    }
+
     const fov = get(request, 'sizeFov', 180);
     const wp = parseWorldPt(request.UserTargetWorldPt) || null;
     const wpRequest = WebPlotRequest.makeHiPSRequest(url, wp, fov);

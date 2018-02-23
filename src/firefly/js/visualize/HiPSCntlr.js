@@ -1,6 +1,6 @@
 import {flux} from '../Firefly.js';
 import {get, isArray, isEmpty, set} from 'lodash';
-import {fetchUrl} from '../util/WebUtil.js';
+import {fetchUrl, parseUrl} from '../util/WebUtil.js';
 import {hipsSURVEYS} from './HiPSUtil.js';
 import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -10,7 +10,7 @@ export const HIPSSURVEY_PATH = 'hipssurveys';
 export const HIPSSURVEY_CREATE_PATH = `${HIPSSURVEY_PREFIX}.createPath`;
 export const HIPSSURVEY_IN_LOADING = `${HIPSSURVEY_PREFIX}.inLoading`;
 export const HiPSSurveyTableColumm = new Enum(['url', 'title', 'type', 'order', 'sky_fraction']);
-export const HiPSSurveysURL = 'http://alasky.unistra.fr/MocServer/query?hips_service_url=*&get=record';
+export const HiPSSurveysURL = '//alasky.unistra.fr/MocServer/query?hips_service_url=*&get=record';
 
 export const HiPSPopular = 'popular';
 export const _HiPSPopular = '_popular';
@@ -106,9 +106,11 @@ function updateHiPSSurveys(action) {
             return prev;
         }, '');
 
+        const {protocol} = parseUrl(window.location);
         const hipsListQuery = (dp) => {
-            return dp ? `${HiPSSurveysURL}&${dp}` : HiPSSurveysURL;
+            return dp ? `${protocol}${HiPSSurveysURL}&${dp}` : `${protocol}${HiPSSurveysURL}`;
         };
+
 
 
         fetchUrl(hipsListQuery(dataProduct), {}, true, false)
