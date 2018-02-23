@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import org.eclipse.jetty.util.StringUtil;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
@@ -47,7 +48,9 @@ public class JsonTableUtil {
         }
 
         JSONObject tableModel = new JSONObject();
-        if (meta.contains(TableServerRequest.TBL_ID)) {
+        if (!StringUtils.isEmpty(request.getTblId())) {
+            tableModel.put("tbl_id",  request.getTblId());
+        } else if (meta.contains(TableServerRequest.TBL_ID)) {
             tableModel.put("tbl_id",  meta.getAttribute(TableServerRequest.TBL_ID).getValue());
         }
         tableModel.put("title", page.getData().getTitle());
@@ -69,6 +72,10 @@ public class JsonTableUtil {
         if (request != null ){
             tableModel.put("request", toJsonTableRequest(request));
         }
+        if (!StringUtils.isEmpty(page.getErrorMsg())) {
+            tableModel.put("error", page.getErrorMsg());
+        }
+
         return tableModel;
     }
 

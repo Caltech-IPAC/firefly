@@ -405,7 +405,7 @@ function highlightRow(action) {
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );
             }).catch( (error) => {
-                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
+                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Unable to load table. \n   ${error.message}`)});
             });
         }
     };
@@ -576,7 +576,7 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
                 logError(e.stack);
             }
         }).catch((error) => {
-            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
+            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});
         });
 }
 
@@ -588,7 +588,7 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
             if (isSuccess(STATE)) {
                 syncFetch(request, hlRowIdx, dispatch, tbl_id);
             } else {
-                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n ${getErrMsg(bgStatus)}`)});
+                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(bgStatus))});
             }
         } else {
             // not done; track progress
@@ -598,7 +598,7 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
                 params: {bgID: ID, request, hlRowIdx, dispatch, tbl_id}});
         }
     }).catch( (error) => {
-        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n   ${error}`)});
+        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});
     });
 }
 
@@ -612,7 +612,7 @@ function bgTracker(action, cancelSelf, {bgID, request, hlRowIdx, dispatch, tbl_i
                 if (isSuccess(STATE)) {
                     syncFetch(request, hlRowIdx, dispatch, tbl_id);
                 } else {
-                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Failed to load table. \n ${getErrMsg(action.payload)}`)});
+                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(action.payload))});
                 }
                 cancelSelf();
             }

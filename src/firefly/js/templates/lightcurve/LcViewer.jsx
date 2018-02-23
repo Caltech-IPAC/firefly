@@ -85,7 +85,7 @@ export class LcViewer extends PureComponent {
 
     render() {
         var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown, missionOptions,
-            dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation} = this.state;
+            dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation, error} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
             displayMode, timeColName: get(missionEntries, [LC.META_TIME_CNAME]),
@@ -97,16 +97,15 @@ export class LcViewer extends PureComponent {
 
         const LcPeriodInstance=  get(getAppOptions(), 'charts.chartEngine')==='plotly' ? LcPeriodPlotly : LcPeriod;
 
-        var mainView = (converterId) => {
-            const converter = getConverter(converterId);
-            if (!converter.isTableUploadValid().isValid){
-
+        var MainView = () => {
+            if (error) {
                 return (
-                    <div
-                        style={{display:'flex', position:'absolute', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
-                        {converter.isTableUploadValid().errorMsg}
-                        <div>
-                            <HelpIcon helpId={'loadingTSV'}/>
+                    <div style={{display: 'flex', width: '100%', marginTop: 20, justifyContent: 'center', alignItems: 'baseline'}}>
+                        <div style={{display: 'inline-flex', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
+                            <div>{error}</div>
+                            <div style={{marginLeft: 10}}>
+                                <HelpIcon helpId={'loadingTSV'}/>
+                            </div>
                         </div>
                     </div>
                 );
@@ -121,7 +120,6 @@ export class LcViewer extends PureComponent {
                     );
                 }
             }
-
         };
 
         let title = appTitle ? appTitle : DEFAULT_TITLE; // use default title when appTitle is undefined or ''
@@ -135,7 +133,6 @@ export class LcViewer extends PureComponent {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
 
-            const converterId = get(missionEntries, LC.META_MISSION);
             return (
                 <div id='App' className='rootStyle' style={style}>
                     <header>
@@ -148,7 +145,7 @@ export class LcViewer extends PureComponent {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        {mainView(converterId)}
+                        <MainView/>
                     </main>
                 </div>
             );
@@ -267,7 +264,7 @@ export class UploadPanel extends PureComponent {
             const {fileLocation} = this.state;
 
             return (
-                <div style={{padding:5, display:'flex', alignItems:'center', width: 400, height: 50}}>
+                <div style={{padding:5, display:'flex', alignItems:'center', minWidth: 450, height: 50}}>
                     <div style={{display:'flex', flexDirection:'column', width: labelW}}>
                         <div> {'Upload time series table:'} </div>
                         <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'}/>
