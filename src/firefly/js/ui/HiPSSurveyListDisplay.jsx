@@ -208,15 +208,18 @@ export class HiPSSurveyListSelection extends PureComponent {
     constructor(props) {
         super(props);
 
+        this.state = {[fKeyHiPSPopular]: getHiPSPopularSetting(props.hipsUrl)};
+    }
+
+    componentWillMount() {
         const hipsSurveys = getHiPSSurveys(this.props.surveysId);
         // no surveys in the store yet
         if (!hipsSurveys) {
-            const {dataType=HiPSData} = props;
-            onHiPSSurveys(dataType, props.surveysId);
+            const {dataType=HiPSData} = this.props;
+
+            onHiPSSurveys(dataType, this.props.surveysId);
         }
-        this.state = {[fKeyHiPSPopular]: getHiPSPopularSetting(props.hipsUrl),
-                      isUpdatingHips: isLoadingHiPSSurverys(props.surveysId)};
-        //this.groupKey = props.groupKey || gKeyHiPSPanel;
+        this.setState({isUpdatingHips: isLoadingHiPSSurverys(this.props.surveysId)});
     }
 
     componentWillUnmount() {
