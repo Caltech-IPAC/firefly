@@ -184,7 +184,7 @@ war {
   description= 'Build application. Creates a war file.'
   group = MAIN_GROUP
 
-  dependsOn webapp, jar, gwtCompile, buildClient, prepareWebapp
+  dependsOn webapp, jar, buildClient, prepareWebapp
   outputs.dir gwt.warDir
   classpath = configurations.webappLib
   from gwt.warDir
@@ -321,10 +321,9 @@ task publishToGithub (dependsOn: loadConfig) {
 // ------------------------
 // define task order
 //-------------------------
-gwt.mustRunAfter          jar
+gwt.mustRunAfter   jar
 loadConfig.mustRunAfter   gwt
-gwtCompile.mustRunAfter   loadConfig
-prepareWebapp.mustRunAfter gwtCompile
+prepareWebapp.mustRunAfter loadConfig
 buildClient.mustRunAfter  prepareWebapp
 buildJsDoc.mustRunAfter   buildClient
 war.mustRunAfter          buildJsDoc

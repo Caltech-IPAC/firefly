@@ -599,7 +599,7 @@ function doChartDataFetch(dispatch, payload, getChartDataType) {
         const tblModel = getTblById(tblId);
 
         // if table load produced an error, we can not get chart data
-        const error = get(tblModel, error);
+        const error = get(tblModel, 'error');
         if (error) {
             const message = 'Failed to fetch chart data';
             logError(`${message}: ${error}`);

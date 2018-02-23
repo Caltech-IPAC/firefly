@@ -1,6 +1,6 @@
 /* eslint-env node */
 
-require('babel-core/register')({presets: ['es2015', 'react', 'stage-2']});
+require('babel-core/register')({presets: ['env']});
 var path = require('path');
 
 var firefly_root = path.resolve(__dirname, '../..');
