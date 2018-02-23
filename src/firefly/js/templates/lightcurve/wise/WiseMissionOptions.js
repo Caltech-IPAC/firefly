@@ -103,7 +103,7 @@ export function isValidWiseTable(){
     }
     else {
         const errorMsg=`The uploaded table is not valid. The WISE  option requires frame_id, or source_id, or both scan_id and frame_num.
-                Please select one of the other upload options`;
+                Please select the "Other" upload option for tables that do not meet these requirements.`;
         return {errorMsg, isValid:false};
     }
 }

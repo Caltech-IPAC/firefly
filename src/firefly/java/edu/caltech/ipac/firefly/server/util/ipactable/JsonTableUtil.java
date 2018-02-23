@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import org.eclipse.jetty.util.StringUtil;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
