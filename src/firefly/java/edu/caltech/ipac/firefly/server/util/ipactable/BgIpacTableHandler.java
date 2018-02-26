@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
+
 /**
  * Date: 11/21/16
  *
@@ -23,7 +25,7 @@ public class BgIpacTableHandler extends DataGroupWriter.IpacTableHandler {
     private Timer timer;
 
     public BgIpacTableHandler(File ofile, DataGroup source, TableServerRequest request) {
-        this(ofile, Arrays.asList(source.getDataDefinitions()), source.getKeywords(), source.iterator(), request);
+        this(ofile, Arrays.asList(source.getDataDefinitions()), makeAttributes(source), source.iterator(), request);
     }
 
     public BgIpacTableHandler(File ofile,  List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr, TableServerRequest request) {
