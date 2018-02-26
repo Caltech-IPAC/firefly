@@ -328,7 +328,7 @@ export function getDownloadScript({packageID, type, fname, dataSource}) {
  * @param {object} defaults
  */
 function setupNewRequest(tableRequest, defaults) {
-    const newRequest = Object.assign(cloneDeep(tableRequest), defaults);
+    const newRequest = Object.assign(defaults, cloneDeep(tableRequest));
 
     const tableModel = getTblById(getTblId(newRequest));
     if (tableModel) {
