@@ -63,7 +63,7 @@ export class TablePanelOptions extends PureComponent {
                              title='Remove Tab'
                              onClick={() => toggleOptions()}/>
 
-                        <button className='TablePanelOptions__button' onClick={onOptionReset}
+                        <button type='button' className='TablePanelOptions__button' onClick={onOptionReset}
                                 title='Reset all options to defaults'>Reset</button>
                     </span>
                 </div>
