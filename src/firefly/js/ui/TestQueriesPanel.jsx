@@ -44,9 +44,9 @@ import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.j
 import {hipsSURVEYS} from '../visualize/HiPSUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {onHiPSSurveys, HiPSId, HiPSData} from '../visualize/HiPSCntlr.js';
-import {makeHiPSSurveysTableName, HiPSPopupMsg, HiPSSurveyListSelection} from './HiPSSurveyListDisplay.jsx';
-import {getTblById, getCellValue} from '../tables/TableUtil.js';
+import {HiPSId, HiPSSurveyTableColumn} from '../visualize/HiPSListUtil.js';
+import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel} from './HiPSSurveyListDisplay.jsx';
+import {getCellValue} from '../tables/TableUtil.js';
 
 const options = [
     {label: 'AllWISE Source Catalog', value: 'allwise_p3as_psd', proj: 'WISE'},
@@ -77,13 +77,6 @@ export class TestQueriesPanel extends PureComponent {
         //const fields = this.state;
         const {fields}=this.state || {};
 
-        const onTabSelect = (idx, id) => {
-            if (id === HiPSId) {
-                onHiPSSurveys(HiPSData, id);
-            }
-        };
-
-
         return (
             <div style={{padding: 10}}>
                 <FormPanel
@@ -95,7 +88,7 @@ export class TestQueriesPanel extends PureComponent {
                         <div style={{padding:'5px 0 5px 0'}}>
                             <TargetPanel/>
                         </div>
-                        <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' onTabSelect={onTabSelect}>
+                        <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs'>
                             <Tab name='Test Catalog' id='catalog'>{renderCatalogTab()}</Tab>
                             <Tab name='Wise Search' id='wiseImage'>
                                 <div>{renderWiseSearch(fields)}</div>
@@ -575,15 +568,13 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
-    const tblId = makeHiPSSurveysTableName();
-    const tableModel = getTblById(tblId);
+    const tableModel = getTblModelOnPanel(HiPSId);
     if (!tableModel) {
         return HiPSPopupMsg('No HiPS information found', 'HiPS search');
     }
 
-
     const {highlightedRow=0} = tableModel;
-    const rootUrl= getCellValue(tableModel, highlightedRow, 'url');
+    const rootUrl= getCellValue(tableModel, highlightedRow, HiPSSurveyTableColumn.Url.key);
     const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
     wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
     wpRequest.setPlotId('aHiPSid');

@@ -3,19 +3,19 @@
  */
 import DrawLayerCntlr, {dlRoot, dispatchAttachLayerToPlot,
                         dispatchCreateDrawLayer, getDlAry} from '../visualize/DrawLayerCntlr.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {visRoot, dispatchChangeCenterOfProjection} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getCenterOfProjection} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getWorldOrImage, makeMarker, findClosestIndex,  updateFootprintTranslate, updateMarkerSize,
         updateFootprintDrawobjText, updateFootprintOutline,  lengthSizeUnit,
         MARKER_DISTANCE, OutlineType, MarkerType, ROTATE_BOX} from '../visualize/draw/MarkerFootprintObj.js';
 import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
-import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
+import {getDrawobjArea, isPointInView} from '../visualize/draw/ShapeHighlight.js';
 import ShapeDataObj, {lengthToScreenPixel, lengthToArcsec} from '../visualize/draw/ShapeDataObj.js';
 import {makeDevicePt, makeImagePt} from '../visualize/Point.js';
 import {clone} from '../util/WebUtil.js';
@@ -46,7 +46,7 @@ export var initMarkerPos = (plot, cc) => {
 
     if (!cc) cc = CsysConverter.make(plot);
 
-    if (!pos) {
+    if (!pos || !isPointInView(getWorldOrImage(pos, cc))) {
         pos = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
     }
     return getWorldOrImage(pos, cc);
@@ -130,7 +130,7 @@ export function markerToolStartActionCreator(rawAction) {
             refPt = imagePt;                   // refPt is used as the reference point for next relocation
         }
 
-        if (nextStatus) {
+        if (nextStatus && isPointInView(refPt, cc)) {
             showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, plotId, nextStatus, markerInterval,
                                drawLayerId, {isOutline: true, isResize:true}, wpt, evenSize(currentSize), refPt, move);
         }
@@ -181,6 +181,8 @@ export function markerToolMoveActionCreator(rawAction) {
         cancelTimeoutProcess(timeoutProcess);
 
         if (markerStatus === MarkerStatus.resize)  {               // mmarker stay at current point, and change size
+            if (!isPointInView(getWorldOrImage(imagePt, cc), cc)) return;               // resize stops
+
             var imgUnit = ShapeDataObj.UnitType.IMAGE_PIXEL;
 
             newSize = [lengthToArcsec(Math.abs(imagePt.x - imageCenter.x)*2, cc, imgUnit),
@@ -194,10 +196,20 @@ export function markerToolMoveActionCreator(rawAction) {
             var dx, dy;
 
             if (refPt) {
-                dx = imagePt.x - refPt.x;
-                dy = imagePt.y - refPt.y;
-                refPt = imagePt;
+                const prePt = cc.getImageCoords(refPt);
+
+                dx = imagePt.x - prePt.x;
+                dy = imagePt.y - prePt.y;
                 wpt = getWorldOrImage(makeImagePt(imageCenter.x + dx, imageCenter.y + dy), cc);
+
+                if (!isPointInView(wpt, cc)) {  // HiPS plot, wpt is out of range, no move
+                    //if (isHiPS(cc)) rotateHiPSImage(cc, imageCenter, null, dx, dy);
+                    dx = 0;
+                    dy = 0;
+                    wpt = getWorldOrImage(makeImagePt(imageCenter.x, imageCenter.y), cc);
+                } else {
+                    refPt = imagePt;
+                }
 
                 dx = lengthSizeUnit(cc, dx, ShapeDataObj.UnitType.IMAGE_PIXEL);
                 dy = lengthSizeUnit(cc, dy, ShapeDataObj.UnitType.IMAGE_PIXEL);
@@ -209,11 +221,46 @@ export function markerToolMoveActionCreator(rawAction) {
         }
 
         // resize (newDize) or relocate (wpt),  status remains the same
-        showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_MOVE, plotId,
-                           markerStatus, 0, drawLayerId, isHandle, wpt, newSize, refPt, move);
+        if (!isEmpty(move) && isPointInView(refPt, cc)) {
+            showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_MOVE, plotId,
+                markerStatus, 0, drawLayerId, isHandle, wpt, newSize, refPt, move);
+        }
     };
 }
 
+// markerCenter, outlineCenter, dx, dy in image coordinate
+export function rotateHiPSImage(cc, markerCenter, outlineCenter, dx, dy) {
+    const findDiff = (center, dx, dy) => {
+        const newDevPt = cc.getDeviceCoords(makeImagePt(center.x + dx, center.y + dy));
+        const oldDevPt = cc.getDeviceCoords(center);
+        const delta = 2;
+
+        const xdiff = Math.sign(newDevPt.x - oldDevPt.x) * delta;
+        const ydiff = Math.sign(newDevPt.y - oldDevPt.y) * delta;
+
+        return {xdiff, ydiff};
+    };
+
+    const markerDiff = markerCenter ? findDiff(markerCenter, dx, dy) : {xdiff: 0, ydiff: 0};
+    const outlineDiff = outlineCenter ? findDiff(outlineCenter, dx, dy) : {xdiff: 0, ydiff: 0};
+    const xDelta = Math.abs(markerDiff.xdiff) > Math.abs(outlineDiff.xdiff) ? markerDiff.xdiff
+                                                                             : outlineDiff.xdiff;
+    const yDelta = Math.abs(markerDiff.ydiff) > Math.abs(outlineDiff.ydiff) ? markerDiff.ydiff
+                                                                             : outlineDiff.ydiff;
+    const plot= primePlot(visRoot(), cc.plotId);
+    const centerOfProj= getCenterOfProjection(plot);
+    const originalCenterOfProjDev= cc.getDeviceCoords(centerOfProj);
+    const newCenterOfProjDev= makeDevicePt(originalCenterOfProjDev.x+xDelta,
+                                           originalCenterOfProjDev.y+yDelta);
+    const newWp= cc.getWorldCoords(newCenterOfProjDev, plot.imageCoordSys);
+
+    if (!newWp) return;
+
+    if (newWp.y < -89.7) newWp.y= -89.7;
+    if (newWp.y >  89.7) newWp.y=  89.7;
+
+    dispatchChangeCenterOfProjection({plotId: cc.plotId, centerProjPt:newWp});
+}
 
 /**
  * create drawing layer for a new marker
@@ -478,7 +525,7 @@ function createMarkerObjs(action, dl, plotId, wpt, size, prevRet) {
             markObj = translateForRelocate(markObj,  move, cc);
         }
     } else if (crtMarkerObj) {
-        if ((markerStatus === MarkerStatus.resize || markerStatus === MarkerStatus.relocate) && move) {
+        if ((markerStatus === MarkerStatus.resize || markerStatus === MarkerStatus.relocate) && !isEmpty(move)) {
             var {apt, newSize} = move;    // move to relocate or resize
             if (apt) {      // translate
                 markObj = updateFootprintTranslate(crtMarkerObj, cc, apt);
@@ -561,17 +608,22 @@ export function getMovement(currentPt, imagePt, cc) {
 export function getVertexDistance( markObj, cc) {
     var {drawObjAry, outlineIndex} = markObj;
     var dist, w, h, centerPt;
+    let findOutline = false;
 
     if (outlineIndex && drawObjAry.length > outlineIndex &&
         drawObjAry[outlineIndex].outlineType === OutlineType.original) {
         var outlineObj = Object.assign({}, drawObjAry[outlineIndex]);
-        var {width, height, center} = getDrawobjArea(outlineObj, cc);
+        var {width, height, center} = getDrawobjArea(outlineObj, cc) || {};
 
-        w = lengthToScreenPixel(width, cc, ShapeDataObj.UnitType.IMAGE_PIXEL) / 2;
-        h = lengthToScreenPixel(height, cc, ShapeDataObj.UnitType.IMAGE_PIXEL) / 2;
-        centerPt = getWorldOrImage(center, cc);
-        dist = markObj.sType === MarkerType.Marker ? 0 : ROTATE_BOX;
-    } else {
+        if (center) {
+            w = lengthToScreenPixel(width, cc, ShapeDataObj.UnitType.IMAGE_PIXEL) / 2;
+            h = lengthToScreenPixel(height, cc, ShapeDataObj.UnitType.IMAGE_PIXEL) / 2;
+            centerPt = getWorldOrImage(center, cc);
+            dist = markObj.sType === MarkerType.Marker ? 0 : ROTATE_BOX;
+            findOutline = true;
+        }
+    }
+    if (!findOutline) {
         w = cc.viewDim.width/2;
         h = cc.viewDim.height/2;
         centerPt = getWorldOrImage(makeDevicePt(w, h), cc);

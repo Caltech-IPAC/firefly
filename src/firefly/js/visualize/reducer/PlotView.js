@@ -21,7 +21,7 @@ import {CCUtil, CysConverter} from './../CsysConverter.js';
 import {getDefMenuItemKeys} from '../MenuItemKeys.js';
 import {ExpandType, WcsMatchType} from '../ImagePlotCntlr.js';
 import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
-
+import {isHiPS} from '../WebPlot.js';
 const DEF_WORKING_MSG= 'Plotting ';
 
 export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignoreCase: true });
@@ -449,7 +449,7 @@ function getNewAttributes(plot) {
 
     if (worldPt) {
         const cc= CysConverter.make(plot);
-        if (cc.pointInPlot(worldPt) || req.getOverlayPosition()) {
+        if (isHiPS(plot) || cc.pointInPlot(worldPt) || req.getOverlayPosition()) {
             attributes[PlotAttribute.FIXED_TARGET]= worldPt;
             if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
         }

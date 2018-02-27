@@ -97,6 +97,11 @@ public class ServerParams {
     public static final String IRSA = "irsa";
     public static final String LSST = "lsst";
     public static final String ALL = "all";
+    public static final String CDS = "cds";
+    public static final String HIPS_SOURCES = "hipsSources";
+    public static final String HIPS_DATATYPES = "hipsDataTypes";
+    public static final String CUBE = "cube";
+    public static final String CATALOG = "catalog";
 
     public static final String GEOSHAPE = "shape";
     public static final String ROTATION = "rotation";
@@ -161,7 +166,6 @@ public class ServerParams {
     public static final String VIS_PUSH_ALIVE_COUNT= "pushAliveCount";
     public static final String VIS_PUSH_ACTION= "pushAction";
     public static final String GET_IMAGE_MASTER_DATA= "getImageMasterData";
-
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
 

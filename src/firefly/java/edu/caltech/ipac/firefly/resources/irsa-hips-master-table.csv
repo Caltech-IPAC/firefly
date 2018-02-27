@@ -1,0 +1,15 @@
+url,label
+http://alasky.u-strasbg.fr/2MASS/Color,2MASS colored
+http://alasky.u-strasbg.fr/DSS/DSSColor,DSS colored
+http://alasky.u-strasbg.fr/DSS/DSS2Merged,DSS2 Red (F+R)
+http://alasky.u-strasbg.fr/Fermi/Color,Fermi color
+http://alasky.u-strasbg.fr/FinkbeinerHalpha,Halpha
+http://alasky.u-strasbg.fr/GALEX/GR6-02-Color,GALEX Allsky Imaging Survey colored
+http://alasky.u-strasbg.fr/IRISColor,IRIS colored
+http://alasky.u-strasbg.fr/MellingerRGB,Mellinger colored
+http://alasky.u-strasbg.fr/SDSS/DR9/color,SDSS9 colored
+http://alasky.u-strasbg.fr/SpitzerI1I2I4color,IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS
+http://alasky.u-strasbg.fr/VTSS/Ha,VTSS-Ha
+http://saada.u-strasbg.fr/xmmallsky,XMM-Newton stacked EPIC images (no phot. normalization)
+http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/,AllWISE color
+http://www.spitzer.caltech.edu/glimpse360/aladin/data,GLIMPSE360

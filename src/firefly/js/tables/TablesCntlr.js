@@ -335,7 +335,7 @@ function tableSearch(action) {
 function tableAddLocal(action) {
     return (dispatch) => {
         const {tableModel={}, options={}, addUI=true} = action.payload || {};
-        const {tbl_ui_id} = options;
+        const {tbl_ui_id} = options || {};
         const title = tableModel.title || get(tableModel, 'request.META_INFO.title') || 'untitled';
         const tbl_id = tableModel.tbl_id || get(tableModel, 'request.tbl_id');
 

@@ -384,11 +384,7 @@ export const hipsSURVEYS = [
     },
     {
         url: 'http://saada.u-strasbg.fr/xmmallsky',
-        label: 'XMM-Newton stacked EPIC images (no phot. normalization)',
-    },
-    {
-        url: 'http://saada.u-strasbg.fr/xmmallsky/',
-        label: 'XMM PN colored'
+        label: 'XMM-Newton stacked EPIC images (no phot. normalization)'
     },
     {
         url: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',

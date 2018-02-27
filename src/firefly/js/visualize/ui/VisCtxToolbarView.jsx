@@ -33,7 +33,7 @@ import {CoordinateSys} from '../CoordSys.js';
 import { parseImagePt } from '../Point.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
-import {isLoadingHiPSSurverys, HiPSId} from '../HiPSCntlr.js';
+import {HiPSId} from '../HiPSListUtil.js';
 import {getSelectedShape} from '../../drawingLayers/Catalog.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
@@ -52,8 +52,6 @@ import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
-
-import LOADING from 'html/images/gxt/loading.gif';
 
 
 //todo move the statistics constants to where they are needed
@@ -397,7 +395,7 @@ function makeConvertButton(pv) {
     );
 }
 
-function makeHiPSImageTable(pv, surveysId, isUpdatingHips) {
+function makeHiPSImageTable(pv, surveysId) {
     const plot= primePlot(pv);
     if (!plot) return null;
 
@@ -406,23 +404,19 @@ function makeHiPSImageTable(pv, surveysId, isUpdatingHips) {
             <div style={{marginLeft: 9, marginRight: 5, marginTop: -5}}>
                 <input  type='button'
                         value='Change HiPS Plot'
-                        onClick={()=>showHiPSSurverysPopup(get(pv, ['request', 'params', 'hipsRootUrl']),
+                        onClick={()=>showHiPSSurverysPopup(get(primePlot(pv), 'hipsUrlRoot'),
                                                            pv, surveysId)} />
             </div>
         );
     };
 
-    const styleLoading = {width:14,height:14};
     return (
         <div style={{display:'flex'}}>
             {inputEntry()}
-            {isUpdatingHips ? <img style={styleLoading} src={LOADING}/> :
-                              <div style={styleLoading}/>}
         </div>
     );
 
 }
-
 
 
 function makeHiPSCoordSelect(pv) {
@@ -481,36 +475,8 @@ export class VisCtxToolbarView extends PureComponent {
 
     constructor(props) {
         super(props);
-
-        this.hipsId = HiPSId;
-        if (this.hipsId) {
-            const isUpdatingHips = isLoadingHiPSSurverys(this.hipsId);
-
-            this.state = {isUpdatingHips};
-        }
     }
-
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-        this.iAmMounted = false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListener = flux.addListener(()=>this.storeUpdate());
-    }
-
-    storeUpdate() {
-
-        if (this.iAmMounted) {
-            const isUpdatingHips = isLoadingHiPSSurverys(this.hipsId);
-
-            if (isUpdatingHips !== get(this.state, 'isUpdatingHips', false)) {
-                this.setState({isUpdatingHips});
-            }
-        }
-    }
-
+    
     render() {
         const {
             plotView:pv, dlAry, extensionAry, showSelectionTools=false,
@@ -531,7 +497,6 @@ export class VisCtxToolbarView extends PureComponent {
 
         };
 
-        const {isUpdatingHips} = this.state || {};
         const plot= primePlot(pv);
         const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
                            showFilter || showClearFilter || !isEmpty(extensionAry) ||
@@ -583,7 +548,7 @@ export class VisCtxToolbarView extends PureComponent {
 
                 {canConvertHipsAndAllSky(pv) && makeConvertButton(pv)}
                 {isHiPS(plot) && makeHiPSCoordSelect(pv)}
-                {isHiPS(plot) && makeHiPSImageTable(pv, this.hipsId, isUpdatingHips)}
+                {isHiPS(plot) && makeHiPSImageTable(pv, HiPSId)}
 
             </div>
         );

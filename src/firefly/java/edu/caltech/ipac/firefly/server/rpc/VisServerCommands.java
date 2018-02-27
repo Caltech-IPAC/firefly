@@ -32,6 +32,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -498,6 +500,5 @@ public class VisServerCommands {
             return obj.toJSONString();
         }
     }
-
 }
 
