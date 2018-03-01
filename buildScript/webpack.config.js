@@ -3,6 +3,7 @@
 import webpack from 'webpack';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import UglifyJsPlugin from 'uglifyjs-webpack-plugin';
+import Visualizer from 'webpack-visualizer-plugin';
 import path from 'path';
 import fs from 'fs';
 
@@ -19,6 +20,7 @@ const exclude_dirs = /(node_modules|java|python|config|test)/;
  * @param {boolean=true} [config.use_loader]  generate a loader to load compiled JS script(s).  Defautls to true
  * @param {string}  [config.project]  project name
  * @param {string}  [config.filename]  name of the generated JS script.
+ * @param {string}  [config.baseWarName]  name of the the war file base, defaults to config.name
  * @returns {Object} a webpack config object.
  */
 export default function makeWebpackConfig(config) {
@@ -73,7 +75,8 @@ export default function makeWebpackConfig(config) {
     });
 
     const DEBUG    = config.env === 'development' && process.env.DEBUG;
-    const PROD      = config.env !== 'development';
+    const PROD     = config.env !== 'development';
+    const DO_STATS = process.env.BUILD_ENV==='dev';
 
     /*
      * creating the webpackConfig based on the project's config for webpack to work on.
@@ -89,13 +92,15 @@ export default function makeWebpackConfig(config) {
     const output =  {filename, path: out_path};
 
     /*------------------------ PLUGIINS -----------------------------*/
-    const plugins = [ new webpack.DefinePlugin(globals),
-        new ExtractTextPlugin(`${config.name}.css`)
+    const plugins = [
+        new webpack.DefinePlugin(globals),
+        new ExtractTextPlugin(`${config.name}.css`),
     ];
     if (DEBUG) {
-        plugins.push(
-            dev_progress()
-        );
+        plugins.push( dev_progress() );
+    }
+    if (DO_STATS) {
+        plugins.push( new Visualizer({filename: './package-stats.html'}) );
     }
 
     if (config.use_loader) {
@@ -150,13 +155,18 @@ export default function makeWebpackConfig(config) {
                 // later presets run before earlier for each AST node
                 // use 'es2015', {modules: false}] for es5 with es6 modules
                 presets: [
-                    ['env', {
-                        targets: {
-                            browsers: ['safari >= 9', 'chrome >= 62', 'firefox >= 56', 'edge >= 14']
-                        },
-                        debug: !PROD,
-                        modules: false}], // preserve application module style - in our case es6 modules
-                    'react', 'stage-3'],
+                    ['env',
+                        {
+                            targets: {
+                                browsers: ['safari >= 9', 'chrome >= 62', 'firefox >= 56', 'edge >= 14']
+                            },
+                            debug: !PROD,
+                            modules: false,  // preserve application module style - in our case es6 modules
+                            useBuiltIns : true
+                        }
+                    ],
+                    'react',
+                    'stage-3'],
                 plugins: ['transform-runtime']
             }
         },

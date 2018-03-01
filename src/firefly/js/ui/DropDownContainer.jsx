@@ -13,7 +13,6 @@ import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
-import {ImageSelectDropdown} from '../ui/ImageSelectDropdown.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
 import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
 import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewPanel.jsx';

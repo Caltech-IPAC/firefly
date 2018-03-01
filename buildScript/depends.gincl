@@ -339,6 +339,7 @@ ext.NODE = { ...cmd ->
     environment '__$version_tag': tag
     environment 'WP_BUILD_DIR': wpBuildDir
     environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
+    environment 'BUILD_ENV': project.env
     commandLine cmd
     for (String key : project.appConfigProps.keySet()) {
       if (key.startsWith('__$')) {
