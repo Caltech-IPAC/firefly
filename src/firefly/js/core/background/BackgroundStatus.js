@@ -12,8 +12,8 @@ import Enum from 'enum';
 import {parseWorldPt} from '../../visualize/Point.js';
 import WebPlotRequest from '../../visualize/WebPlotRequest.js';
 import BackgroundState from './BackgroundState.js';
-import PackageProgress from './PackageProgress.js';
-import ServerRequest from '../../data/ServerRequest.js';
+import {PackageProgress} from './PackageProgress.js';
+import {ServerRequest} from '../../data/ServerRequest.js';
 import {replaceAll} from '../../util/WebUtil.js';
 import validator from 'validator';
 

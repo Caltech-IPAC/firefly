@@ -120,8 +120,8 @@ export const SpatialVector = function() {
     return t;
 }();
 
-export let AngularPosition = function() {
-    AngularPosition = function(theta, phi) {
+export const AngularPosition = function() {
+    let AngularPosition = function(theta, phi) {
         this.theta = theta;
         this.phi = phi;
     };

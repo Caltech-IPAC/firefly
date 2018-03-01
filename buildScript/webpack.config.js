@@ -2,14 +2,15 @@
 
 import webpack from 'webpack';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
+import UglifyJsPlugin from 'uglifyjs-webpack-plugin';
 import path from 'path';
 import fs from 'fs';
 
 
-var exclude_dirs = /(node_modules|java|python|config|test)/;
+const exclude_dirs = /(node_modules|java|python|config|test)/;
 
 /**
- * A helper function to create the webpack config object to be sent to webpack module bundler. 
+ * A helper function to create the webpack config object to be sent to webpack module bundler.
  * @param {Object}  config configuration parameters used to create the webpack config object.
  * @param {string}  config.src  source directory
  * @param {string}  config.firefly_root  Firefly's build root
@@ -29,7 +30,7 @@ export default function makeWebpackConfig(config) {
     config.project = config.project || path.resolve(config.src, '../../');
     config.baseWarName = config.baseWarName || config.name; 
 
-    var def_config = {
+    const def_config = {
         env         : process.env.NODE_ENV || 'development',
         dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/war`),
         do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
@@ -47,7 +48,7 @@ export default function makeWebpackConfig(config) {
     config.alias = Object.assign(def_config.alias, config.alias);
     config = Object.assign(def_config, config);
 
-    var script_names = [];
+    let script_names = [];
     if (config.use_loader) {
         script_names = ['firefly_loader.js'];
     } else {
@@ -80,8 +81,8 @@ export default function makeWebpackConfig(config) {
      */
 
     /*------------------------ OUTPUT -----------------------------*/
-    var out_path = DEBUG ? config.deploy_dir : config.dist;
-    var filename = config.use_loader ? '[name]-dev.js' : '[name].js';
+    const out_path = DEBUG ? config.deploy_dir : config.dist;
+    let filename = config.use_loader ? '[name]-dev.js' : '[name].js';
     if (PROD) {
         filename = config.use_loader ? '[name]-[hash].js' : '[name].js';
     }
@@ -89,8 +90,8 @@ export default function makeWebpackConfig(config) {
 
     /*------------------------ PLUGIINS -----------------------------*/
     const plugins = [ new webpack.DefinePlugin(globals),
-                      new ExtractTextPlugin(`${config.name}.css`)
-                    ];
+        new ExtractTextPlugin(`${config.name}.css`)
+    ];
     if (DEBUG) {
         plugins.push(
             dev_progress()
@@ -106,54 +107,89 @@ export default function makeWebpackConfig(config) {
 
     if (PROD) {
         plugins.push(
-            new webpack.optimize.OccurrenceOrderPlugin(),
-            new webpack.optimize.DedupePlugin(),
-            new webpack.optimize.UglifyJsPlugin({
-                compress : {
-                    warnings  : false,
-                    unused    : true,
-                    dead_code : true
+            // if using the latest uglifyjs-webpack-plugin, based on UglifyJSv3, understanding es6 modules
+            // this uglifier also minimizes the code, no LoaderOptionsPlugin is needed
+            new UglifyJsPlugin({
+                sourceMap : true,
+                uglifyOptions: {
+                    warnings: false, // false is default
+                    compress: {
+                        ecma: 6, // 5 is default
+                        dead_code: true, // true is default
+                        unused: true,    // true is default
+                    },
+                    output: {
+                        ecma: 6
+                    }
                 }
             })
+
+            // included with webpack3 is UglifyJSv2
+            // https://github.com/webpack-contrib/uglifyjs-webpack-plugin/tree/version-0.4
+            // new webpack.optimize.UglifyJsPlugin({
+            //     sourceMap : false,
+            //     compress : {
+            //         warnings  : false,
+            //         unused    : true,
+            //         dead_code : true
+            //     }
+            // }),
+            // new webpack.LoaderOptionsPlugin({
+            //     minimize: true
+            // })
         );
     }
 
+
     /*------------------------ MODULE -----------------------------*/
-    var loaders = [
-                    {   test : /\.(js|jsx)$/,
-                        include: [config.src, config.firefly_dir,
-                                 `${config.firefly_root}/node_modules/react-component-resizable/`],
-                        loader: 'babel',
-                        query: {
-                            presets: ['es2015', 'react', 'stage-2'],
-                            plugins: ['transform-runtime']
-                        }
-                    },
-                    {   test    : /\.css$/,
-                        exclude: exclude_dirs,
-                        loaders : [
-                            'style-loader',
-                            `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
-                            'postcss-loader'
-                        ]
-                    },
-                    {   test: /\.(png|jpg|gif)$/,
-                        loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`
-                    }
-                ];
+    const rules = [
+        {   test : /\.(js|jsx)$/,
+            include: [config.src, config.firefly_dir],
+            loader: 'babel-loader',
+            query: {
+                // later presets run before earlier for each AST node
+                // use 'es2015', {modules: false}] for es5 with es6 modules
+                presets: [
+                    ['env', {
+                        targets: {
+                            browsers: ['safari >= 9', 'chrome >= 62', 'firefox >= 56', 'edge >= 14']
+                        },
+                        debug: !PROD,
+                        modules: false}], // preserve application module style - in our case es6 modules
+                    'react', 'stage-3'],
+                plugins: ['transform-runtime']
+            }
+        },
+        {   test    : /\.css$/,
+            exclude: exclude_dirs,
+            use: [
+                {
+                    loader: 'style-loader'
+                },
+                {
+                    loader: `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
+                },
+                {
+                    loader: 'postcss-loader'
+                }
+            ]
+        },
+        {   test: /\.(png|jpg|gif)$/,
+            use: [{
+                loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
+            }]
+        }
+    ];
 
     // commented out for now.. may want to use it later on.
-    // Compile CSS to its own file in production.
-    // loaders = loaders.map(loader => {
-    //    if (/css/.test(loader.test)) {
-    //        const [first, ...rest] = loader.loaders;
-    //
-    //        loader.loader = ExtractTextPlugin.extract(first, rest.join('!'));
-    //        delete loader.loaders;
-    //    }
-    //    return loader;
-    //});
-    var preLoaders = [];
+    // Compile CSS to its own file in production..
+    // rules = rules.map((rule) => {
+    //     if (/css/.test(rule.test)) {
+    //         rule.use = ExtractTextPlugin.extract({fallback: rule.use[0], use: rule.use.slice(1)});
+    //     }
+    //    return rule;
+    // });
+
 
     if (config.do_lint) {
         let eslint_options = '';
@@ -169,26 +205,20 @@ export default function makeWebpackConfig(config) {
                 config.do_lint = false;
             }
         }
-        if (config.do_lint) {
-            preLoaders.push(
-                {
-                    test : /\.(js|jsx)$/,
-                    exclude: exclude_dirs,
-                    loaders: ['eslint-loader' + eslint_options]
+        rules.push(
+            {
+                test : /\.(js|jsx)$/,
+                enforce: 'pre',
+                exclude: exclude_dirs,
+                loader: 'eslint-loader' + eslint_options,
+                options: {
+                    configFile  : path.resolve(config.project,'.eslintrc'),
+                    failOnError : false,
+                    emitWarning : false
                 }
-            );
-        }
+            }
+        );
     }
-
-    const module = {loaders, preLoaders};
-
-    /*------------------------ ESLINT -----------------------------*/
-    const eslint = {
-        configFile  : path.resolve(config.project,'.eslintrc'),
-        failOnError : false,
-        emitWarning : false
-        };
-
 
     const webpack_config = {
         name    : config.name,
@@ -196,13 +226,13 @@ export default function makeWebpackConfig(config) {
         devtool : 'source-map',
         entry   : config.entry,
         resolve : {
-            extensions : ['', '.js', '.jsx'],
+            extensions : ['.js', '.jsx'],
             alias : config.alias
         },
-        module,
+        module: {rules},
         output,
         plugins,
-        eslint
+        stats: {maxModules: 0}
     };
 
     // console.log (JSON.stringify(webpack_config, null, 2));
@@ -238,19 +268,12 @@ function firefly_loader(loadScript, outpath, debug=true) {
     return function () {
         this.plugin('done', function (stats) {
             // console.log(Object.keys(stats.compilation));
-            var hash = debug ? 'dev' : stats.hash;
-            var cxt_name = stats.compilation.name;
+            const hash = debug ? 'dev' : stats.hash;
+            //var cxt_name = stats.compilation.name;
 
-            var callback='';
-            if (fs.existsSync(path.resolve(outpath, 'jsinterop.nocache.js'))) {
-                callback = `,
-                    function() {
-                        loadScript('firefly_loader.js', 'jsinterop.nocache.js');
-                    }`;
-            }
-            var content = fs.readFileSync(loadScript);
-            content += `\nloadScript('firefly_loader.js', 'firefly-${hash}.js'${callback});`;
-            var loader = path.join(outpath, 'firefly_loader.js');
+            let content = fs.readFileSync(loadScript);
+            content = content.toString().replace('/*PARAMS_HERE*/', `'firefly_loader.js', 'firefly-${hash}.js'`);
+            const loader = path.join(outpath, 'firefly_loader.js');
             fs.writeFileSync(loader, content);
         });
     };
@@ -258,7 +281,8 @@ function firefly_loader(loadScript, outpath, debug=true) {
 
 function dev_progress() {
     return new webpack.ProgressPlugin(function (percent, msg) {
-        if (msg.startsWith('compile')) {
+        //console.log(msg);
+        if (msg.startsWith('compiling')) {
             process.stdout.write('\n\x1b[1;31m> Compiling new changes\x1b[0m');   // set color to red.  for more options.. import a color lib.
         }
         if  (percent === 1) {
@@ -266,7 +290,7 @@ function dev_progress() {
             setTimeout(() => process.stdout.write('\n\x1b[32m\x1b[1m> Build completed: ' + new Date().toLocaleTimeString() + '\x1b[0m \n'));
         } else if (percent * 100 % 5 === 0) {
             process.stdout.write('.');
-        };
+        }
     });
 }
 

@@ -31,7 +31,7 @@ export const WS_CHANNEL_HD = 'FF-channel';
 export const WS_CONNID_HD  = 'FF-connID';
 
 
-let GLOBAL_PROPS;
+var GLOBAL_PROPS;
 export function getProp(key, def) {
     /*global __PROPS__*/        // this is defined at build-time.
     GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;

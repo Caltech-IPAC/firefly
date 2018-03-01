@@ -34,7 +34,7 @@ import { parseImagePt } from '../Point.js';
 import {getDefaultHiPSSurveys} from '../HiPSUtil.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
-import {isLoadingHiPSSurverys, HiPS} from '../HiPSCntlr.js';
+import {isLoadingHiPSSurverys, HiPSId} from '../HiPSCntlr.js';
 import {getSelectedShape} from '../../drawingLayers/Catalog.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
@@ -472,7 +472,7 @@ export class VisCtxToolbarView extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.hipsId = HiPS;
+        this.hipsId = HiPSId;
         if (this.hipsId) {
             const isUpdatingHips = isLoadingHiPSSurverys(this.hipsId);
 

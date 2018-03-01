@@ -1,6 +1,7 @@
+/* eslint-env node */
 require('babel-core/register')(
     {
-        "presets": [ "es2015","stage-2"],
-        "plugins": ["transform-runtime"]
+        'presets': [ 'env','stage-3'],
+        'plugins': ['transform-runtime']
     }
-)
+);
