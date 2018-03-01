@@ -20,6 +20,7 @@
 
     var bundleUrl = getScriptURL(loaderScript) + bundleScript;
     scriptTag.src = bundleUrl;
+    scriptTag.charset='utf-8';
     document.getElementsByTagName('head')[0].appendChild(scriptTag);
 })(/*PARAMS_HERE*/);
 
