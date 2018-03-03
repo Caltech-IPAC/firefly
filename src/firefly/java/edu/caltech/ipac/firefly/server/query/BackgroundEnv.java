@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.core.background.*;
 import edu.caltech.ipac.firefly.data.ServerEvent;
-import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
@@ -13,6 +12,7 @@ import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
+import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -276,17 +276,17 @@ public class BackgroundEnv {
      * @param fileKey the key of the file to check
      * @return the enum with the status
      */
-    public static SearchServices.DownloadProgress getDownloadProgress(String fileKey) {
+    public static SearchServicesImpl.DownloadProgress getDownloadProgress(String fileKey) {
         Cache cache= AnyFileDownload.getCache(); // use the any file download choice of cache
         StringKey key= new StringKey(fileKey);
-        SearchServices.DownloadProgress retval= SearchServices.DownloadProgress.UNKNOWN;
+        SearchServicesImpl.DownloadProgress retval= SearchServicesImpl.DownloadProgress.UNKNOWN;
         if (cache.isCached(key)) {
-            retval= (SearchServices.DownloadProgress)cache.get(key);
-            if (retval== SearchServices.DownloadProgress.FAIL) {
+            retval= (SearchServicesImpl.DownloadProgress)cache.get(key);
+            if (retval== SearchServicesImpl.DownloadProgress.FAIL) {
                 // once a fail is returned then put the unknown state,
                 // this will keep retries from showing fail before an actual fail
                 // note- most of the time a fail is when the user just canceled the download
-                cache.put(key, SearchServices.DownloadProgress.UNKNOWN);
+                cache.put(key, SearchServicesImpl.DownloadProgress.UNKNOWN);
 
             }
         }

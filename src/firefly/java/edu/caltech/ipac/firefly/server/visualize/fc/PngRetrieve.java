@@ -8,12 +8,12 @@
 package edu.caltech.ipac.firefly.server.visualize.fc;
 
 import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
 import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
-import edu.caltech.ipac.firefly.util.Constants;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -73,7 +73,7 @@ public class PngRetrieve {
                                                               List<FileInfo> artifactList) {
         ArrayList <StaticDrawInfo> retval = new ArrayList <StaticDrawInfo>();
 
-        List<String> drawInfoList = StringUtils.asList(drawInfoListStr, Constants.SPLIT_TOKEN);
+        List<String> drawInfoList = StringUtils.asList(drawInfoListStr, CommonParams.SPLIT_TOKEN);
         FileInfo fi;
         String fiExt, sdiLbl;
         if (drawInfoList!=null) {

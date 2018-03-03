@@ -5,11 +5,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
-import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
-import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -40,10 +36,6 @@ public class VisUtil {
 
     public static boolean isLargePlot(float zFact, int width, int height) {
         return (zFact > 4 && (width > 2000 || height > 2000));
-    }
-
-    public static double computeScreenDistance(ScreenPt p1, ScreenPt p2) {
-        return computeScreenDistance(p1.getX(), p1.getY(), p2.getX(), p2.getY());
     }
 
     public static double computeScreenDistance(double x1, double y1, double x2, double y2) {
@@ -261,61 +253,6 @@ public class VisUtil {
         return new WorldPt(ra1, dec1);
     }
 
-    public static String getBestTitle(WebPlot plot) {
-        String t = plot.getPlotDesc();
-        if (StringUtils.isEmpty(t)) {
-            MiniPlotWidget mpw = plot.getPlotView().getMiniPlotWidget();
-            if (mpw != null) t = mpw.getTitle();
-        }
-        return t;
-    }
-
-
-    public static double getRotationAngle(WebPlot plot) {
-        double retval = 0;
-        double iWidth = plot.getImageWidth();
-        double iHeight = plot.getImageHeight();
-        double ix = iWidth / 2;
-        double iy = iHeight / 2;
-        WorldPt wptC = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
-        WorldPt wpt2 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iHeight/4));
-        if (wptC!=null && wpt2!=null) {
-            if (wptC.getLat() > wpt2.getLat()) {
-                retval = getPositionAngle(wpt2.getLon(), wpt2.getLat(), wptC.getLon(), wptC.getLat());
-            }
-            else {
-                retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
-            }
-        }
-        return retval;
-    }
-
-    public static boolean isPlotNorth(WebPlot plot) {
-
-        boolean retval= false;
-        double iWidth = plot.getImageWidth();
-        double iHeight = plot.getImageHeight();
-        double ix = iWidth / 2;
-        double iy = iHeight / 2;
-        WorldPt wpt1 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
-        if (wpt1!=null) {
-            double cdelt1 = plot.getImagePixelScaleInDeg();
-            float zfact = plot.getZoomFact();
-            WorldPt wpt2 = new WorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / zfact) * (5));
-
-            ScreenPt spt1 = plot.getScreenCoords(wpt1);
-            ScreenPt spt2 = plot.getScreenCoords(wpt2);
-            if (spt1!=null && spt2!=null) {
-                retval = spt1.getIX() == spt2.getIX() && spt1.getIY() > spt2.getIY();
-            }
-        }
-        return retval;
-    }
-
-    public static float[] getPossibleZoomLevels() {
-        return ZoomUtil._levels;
-    }
-
     public static float getEstimatedFullZoomFactor(FullType fullType,
                                                    int dataWidth,
                                                    int dataHeight,
@@ -465,34 +402,6 @@ public class VisUtil {
 
     }
 
-    public static Integer[] getSelectedPts(RecSelection selection, WebPlot plot, List<DrawObj> objList) {
-        Integer retval[]= new Integer[0];
-        if (selection!=null && plot!=null && objList!=null && objList.size()>0) {
-            ScreenPt pt0= plot.getScreenCoords(selection.getPt0());
-            ScreenPt pt1= plot.getScreenCoords(selection.getPt1());
-            if (pt0==null || pt1==null) return retval;
-
-            int x= Math.min( pt0.getIX(),  pt1.getIX());
-            int y= Math.min(pt0.getIY(), pt1.getIY());
-            int width= Math.abs(pt0.getIX()-pt1.getIX());
-            int height= Math.abs(pt0.getIY()-pt1.getIY());
-            int idx= 0;
-            ScreenPt objC;
-            List<Integer> selectedList= new ArrayList<Integer>(400);
-            for(DrawObj obj : objList) {
-                objC = plot.getScreenCoords(obj.getCenterPt());
-                if (objC!=null && VisUtil.contains(x,y,width,height,objC.getIX(), objC.getIY())) {
-                    selectedList.add(idx);
-                }
-                idx++;
-            }
-            if (selectedList.size()>0) {
-                retval= selectedList.toArray(new Integer[selectedList.size()]);
-            }
-        }
-        return retval;
-
-    }
 
 
     /**
@@ -771,14 +680,6 @@ public class VisUtil {
     }
 
 
-    public static Band[] getBands(PlotStateCI sCI) {
-        BandCI bciAry[]= sCI.getBandsCI();
-        Band bAry[]= new Band[bciAry.length];
-        for(int i=0; (i<bAry.length); i++) {
-            bAry[i]= Band.parse(bciAry[i].key());
-        }
-        return bAry;
-    }
 
 
     public static class NorthEastCoords {

@@ -4,23 +4,17 @@
 package edu.caltech.ipac.util.dd;
 
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
  * This class contains the specifications of the DS9 region
  * @author Booth Hartley
  */
-@JsExport
-@JsType
 public class RegionAnnulus extends Region {
 
 
     private RegionValue[] radii;
 
-    @JsNoExport
     private RegionAnnulus() { super(null); }
 
     public RegionAnnulus(WorldPt pt, RegionValue... radii) {

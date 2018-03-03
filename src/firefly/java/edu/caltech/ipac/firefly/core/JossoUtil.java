@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.util.Base64;
-import edu.caltech.ipac.util.StringUtils;
 
 /**
  * Date: Jun 15, 2010
@@ -33,27 +32,9 @@ public class JossoUtil {
         }
     }
 
-    public static String makeLoginUrl(String backTo) {
-//        return jossoServerUrl + "signon/login.do" + "?josso_back_to=" + makeVerifyUrl(backTo);
-        String backToUrl = StringUtils.isEmpty(backTo) ? "" : "?" + BACK_TO_KEY + "=" + backTo;
-        return jossoServerUrl + LOGIN_URL + backToUrl;
-    }
-
-    public static String makeLogOutUrl(String backTo) {
-//        return jossoServerUrl + "signon/logout.do" + "?josso_back_to=" + makeVerifyUrl(backTo);
-        String backToUrl = StringUtils.isEmpty(backTo) ? "" : "?" + BACK_TO_KEY + "=" + backTo;
-        return jossoServerUrl + LOGOUT_URL + backToUrl;
-    }
-
     public static String makeAuthCheckUrl(String backTo) {
         return jossoServerUrl + LOGIN_URL + "?josso_cmd=login_optional" + "&" + BACK_TO_KEY + "=" + makeVerifyUrl(backTo);
     }
-
-    public static String makeUserProfileUrl(String backTo) {
-        String backToUrl = StringUtils.isEmpty(backTo) ? "" : BACK_TO_KEY + "=" + backTo;
-        return userProfileUrl + "&" + backToUrl;
-    }
-
     public static String makeVerifyUrl(String backTo) {
         if(contextPath==null)
             return null;

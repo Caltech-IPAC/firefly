@@ -5,7 +5,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import javax.servlet.ServletConfig;
@@ -89,9 +89,9 @@ public abstract class BaseHttpServlet extends HttpServlet {
             StopWatch.getInstance().start(getClass().getSimpleName());
             enableCors(req, res);
             if (allowAccess) {
-                String codId = req.getParameter(GwtUtil.COD_ID);
+                String codId = req.getParameter(CommonParams.COD_ID);
                 if (codId != null) {
-                    Cookie c = new Cookie(GwtUtil.COD_ID, codId);
+                    Cookie c = new Cookie(CommonParams.COD_ID, codId);
                     c.setPath("/");
                     res.addCookie(c);
                 }

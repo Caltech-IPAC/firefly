@@ -3,9 +3,9 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.packagedata.Packager;
+import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.Cache;
@@ -36,7 +36,7 @@ public class PackageDownload extends BaseHttpServlet {
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         Cache cache= getCache();
         StringKey statusKey= new StringKey(req.getQueryString());
-        cache.put(statusKey, SearchServices.DownloadProgress.STARTING);
+        cache.put(statusKey, SearchServicesImpl.DownloadProgress.STARTING);
         String packageId = req.getParameter(PARAM_ID);
         String partIdx = req.getParameter(PARAM_IDX);
         String browserFileName = req.getParameter(PARAM_NAME);
@@ -73,13 +73,13 @@ public class PackageDownload extends BaseHttpServlet {
 
             int bytesRead;
             byte buffer[] = new byte[BUFF_SIZE];
-            cache.put(statusKey, SearchServices.DownloadProgress.WORKING);
+            cache.put(statusKey, SearchServicesImpl.DownloadProgress.WORKING);
             while ((bytesRead = buffIS.read(buffer)) != -1) {
                 buffOS.write(buffer, 0, bytesRead);
             }
-            cache.put(statusKey, SearchServices.DownloadProgress.DONE);
+            cache.put(statusKey, SearchServicesImpl.DownloadProgress.DONE);
         } catch (IOException e) {
-            cache.put(statusKey, SearchServices.DownloadProgress.FAIL);
+            cache.put(statusKey, SearchServicesImpl.DownloadProgress.FAIL);
             throw e;
         } finally {
             if (buffOS!= null) try {buffOS.close();} catch (Exception e) {Logger.warn("Failed to close: "+e.getMessage());}

@@ -10,7 +10,6 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 
 import edu.caltech.ipac.firefly.visualize.OffsetScreenPt;
-import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -23,8 +22,9 @@ import java.util.List;
 /**
  * @author Trey Roby
  */
-public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<WorldPt> {
+public class StaticDrawInfo implements Serializable, Iterable<WorldPt> {
 
+    public enum ShapeType {Line, Text,Circle, Rectangle}
     public enum DrawType {SYMBOL, GRID, REGION}
 
     private final static String SPLIT_TOKEN= "--SDI--";
@@ -33,9 +33,9 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
     private DrawType drawType= DrawType.SYMBOL;
     private DrawSymbol symbol= DrawSymbol.X;
     private String color= "red";
-    private String gridType= WebGridLayer.GRID_NONE;
+    private String gridType= "none";
     private String label= null;
-    private ShapeDataObj.ShapeType shapeType= ShapeDataObj.ShapeType.Circle;
+    private ShapeType shapeType= ShapeType.Circle;
     private List<WorldPt> list= new ArrayList<WorldPt>(100);
     private OffsetScreenPt textOffset = null;
     private List<String> serializedRegionList= new ArrayList<String>(40);
@@ -84,8 +84,7 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
         return retList;
     }
 
-    public void setShapeType(ShapeDataObj.ShapeType shapeType) { this.shapeType = shapeType; }
-    public ShapeDataObj.ShapeType getShapeType() { return shapeType; }
+    public void setShapeType(ShapeType shapeType) { this.shapeType = shapeType; }
 
     public void setTextOffset(OffsetScreenPt textOffset) { this.textOffset= textOffset; }
     public OffsetScreenPt getTextOffset() { return textOffset; }
@@ -124,7 +123,7 @@ public class StaticDrawInfo implements Serializable, HandSerialize, Iterable<Wor
                 drawInfo.setLabel(StringUtils.checkNull(sAry[i++]));
                 OffsetScreenPt offsetScreenPt= OffsetScreenPt.parse(StringUtils.checkNull(sAry[i++]));
                 if (offsetScreenPt!=null) drawInfo.setTextOffset(offsetScreenPt);
-                ShapeDataObj.ShapeType shapeType= Enum.valueOf(ShapeDataObj.ShapeType.class, sAry[i++]);
+                ShapeType shapeType= Enum.valueOf(ShapeType.class, sAry[i++]);
                 drawInfo.setShapeType(shapeType);
 //                drawInfo.setDim1(Float.parseFloat(sAry[i++]));
 //                drawInfo.setDim2(Float.parseFloat(sAry[i++]));

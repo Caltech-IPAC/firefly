@@ -1,4 +1,0 @@
-function isBodyLoaded(){
-  return true;
-}
-

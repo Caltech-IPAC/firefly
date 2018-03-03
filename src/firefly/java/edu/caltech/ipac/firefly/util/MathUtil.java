@@ -30,12 +30,6 @@ public class MathUtil {
         }
     }
 
-   public static native double atan2(double x, double y) /*-{
-            var retval=  Math.atan2(x,y);
-            return retval;
-   }-*/;
-
-
     public static double convert(Units fromUnits, Units toUnits, double v) {
         double retval;
         if (fromUnits==toUnits) {
@@ -67,8 +61,7 @@ public class MathUtil {
             retval= v*ARCMIN_TO_ARCSEC;
         }
         else { // this should never happpen
-            retval= v;
-            WebAssert.tst(false);
+            throw new IllegalArgumentException("this should never happen");
         }
         return retval;
     }

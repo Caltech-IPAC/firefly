@@ -8,7 +8,6 @@ import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.EphPair;
-import edu.caltech.ipac.firefly.rpc.TargetServices;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
@@ -19,7 +18,7 @@ import java.util.ArrayList;
  * @author tatianag
  * $Id: TargetServicesImpl.java,v 1.11 2012/08/22 20:31:43 roby Exp $
  */
-public class TargetServicesImpl extends BaseRemoteService implements TargetServices {
+public class TargetServicesImpl {
 
     public ResolvedWorldPt resolveName(String objName, Resolver resolver) throws RPCException {
         try {

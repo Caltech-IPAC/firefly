@@ -3,9 +3,6 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.io.Serializable;
@@ -20,8 +17,6 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
-@JsExport
-@JsType
 public class Name implements Serializable {
 
     public static final Name WINDOW_RESIZE = new Name("WindowResize", "This event is triggered when the browser resizes.");
@@ -324,7 +319,6 @@ public class Name implements Serializable {
         _desc= desc;
     }
 
-    @JsNoExport
     public Name() {
         this("unknown", "bad name.");
     }

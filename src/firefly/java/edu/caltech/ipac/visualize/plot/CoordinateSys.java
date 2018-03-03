@@ -3,15 +3,11 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.astro.conv.CoordConv;
 
 import java.io.Serializable;
 
 
-@JsExport
-@JsType
 public class CoordinateSys implements Serializable {
 
     // =====================================================================
@@ -135,11 +131,6 @@ public class CoordinateSys implements Serializable {
     private String _lonShortDesc;
     private String _latShortDesc;
     private String _shortDesc;
-
-
-    private CoordinateSys() {
-    }
-
 
     public CoordinateSys(int jsys,
                          double equinox,

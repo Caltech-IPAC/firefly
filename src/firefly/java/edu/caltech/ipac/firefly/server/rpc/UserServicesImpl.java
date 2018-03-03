@@ -10,12 +10,8 @@ import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.data.fuse.MissionInfo;
-import edu.caltech.ipac.firefly.data.fuse.config.MissionTag;
-import edu.caltech.ipac.firefly.rpc.UserServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.fuse.MissionConfigManager;
 import edu.caltech.ipac.firefly.server.persistence.GuestHistoryCache;
 import edu.caltech.ipac.firefly.server.persistence.HistoryAndTagsDao;
 import edu.caltech.ipac.firefly.server.persistence.PreferencesDao;
@@ -44,7 +40,7 @@ import java.util.Map;
  * @author tatianag
  * @version $Id: UserServicesImpl.java,v 1.30 2011/11/10 16:38:19 tatianag Exp $
  */
-public class UserServicesImpl extends BaseRemoteService implements UserServices {
+public class UserServicesImpl {
 
     private static final String ALERTS_DIR = AppProperties.getProperty("alerts.dir", "/hydra/alerts/");
     private static final String URL_F = "servlet/Download?" + AnyFileDownload.FILE_PARAM +
@@ -296,14 +292,6 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
         }
 
         return new ArrayList<Alert>(alerts.values());
-    }
-
-    public MissionTag getMissionConfig(String dsName) {
-        return MissionConfigManager.getInstance().getMissionConfig().getMission(dsName);
-    }
-
-    public List<MissionInfo> getAllMissionInfo() {
-        return MissionConfigManager.getInstance().getMissionInfos();
     }
 
     public WspaceMeta getMeta(String relPath, WspaceMeta.Includes includes) {

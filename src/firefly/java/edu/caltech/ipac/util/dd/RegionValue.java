@@ -8,16 +8,11 @@ package edu.caltech.ipac.util.dd;
  * Time: 2:00 PM
  */
 
-
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
  * @author Trey Roby
  */
-@JsExport
-@JsType
 public class RegionValue {
 
     public enum Unit {CONTEXT, DEGREE, ARCSEC, ARCMIN, RADIANS, SCREEN_PIXEL, IMAGE_PIXEL, UNKNOWN}

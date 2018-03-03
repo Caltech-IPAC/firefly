@@ -3,11 +3,6 @@
  */
 package edu.caltech.ipac.astro.conv;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
-
-@JsExport
-@JsType
 public class LonLat {
     public double lon;
     public double lat;
