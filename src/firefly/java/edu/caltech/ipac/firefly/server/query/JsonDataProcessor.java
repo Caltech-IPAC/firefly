@@ -45,38 +45,5 @@ abstract public class JsonDataProcessor implements SearchProcessor<String> {
     }
 
     abstract public String getData(ServerRequest request) throws DataAccessException;
-
-
-    protected JSONArray toJsonArray(List values) {
-        JSONArray jAry = new JSONArray();
-        for (Object v : values) {
-            if (v instanceof List) {
-
-            } else if(v instanceof Map) {
-                jAry.add(toJsonObject((Map) v));
-            } else {
-                jAry.add(v);
-            }
-        }
-        return jAry;
-    }
-
-    protected JSONObject toJsonObject(Map values) {
-
-        JSONObject jObj = new JSONObject();
-        for (Object k : values.keySet()) {
-            String name = String.valueOf(k);
-            Object v = values.get(k);
-            if (v instanceof List) {
-                jObj.put(name, toJsonArray((List) v));
-            } else if(v instanceof Map) {
-                jObj.put(name, toJsonObject((Map) v));
-            } else {
-                jObj.put(name, v);
-            }
-        }
-        return jObj;
-    }
-
 }
 
