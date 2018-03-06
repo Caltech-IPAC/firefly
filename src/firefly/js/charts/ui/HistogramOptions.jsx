@@ -105,6 +105,11 @@ function columnNameReducer(colValStats, basicFieldsReducer) {
                                inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
                                inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
                            }
+                           if (inFields['__xreset']) {
+                               // reset axes range
+                               inFields = updateSet(inFields, ['__xreset', 'value'], 'true');
+                               inFields = updateSet(inFields, ['__yreset', 'value'], 'true');
+                           }
                          }
 
                     }

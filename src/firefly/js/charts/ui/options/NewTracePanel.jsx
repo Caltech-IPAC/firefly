@@ -30,16 +30,16 @@ export function getSubmitChangesFunc(traceType, fireflyType) {
     }
 }
 
-function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id}) {
+function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id,showMultiTrace}) {
     const noColor = !hasMarkerColor(traceType);
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
-            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
+            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
         case 'fireflyHeatmap':
-            return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
+            return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
         case 'fireflyHistogram':
-            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
+            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
         default:
             return (
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
@@ -85,7 +85,7 @@ export class NewTracePanel extends SimpleComponent {
     }
 
     render() {
-        const {tbl_id, chartId, groupKey} = this.props;
+        const {tbl_id, chartId, groupKey,showMultiTrace} = this.props;
         const {activeTrace, type} = this.state;
 
         return (
@@ -100,7 +100,7 @@ export class NewTracePanel extends SimpleComponent {
                         {...fieldProps} />
                 </FieldGroup>
                 <br/>
-                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id})}
+                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id,showMultiTrace})}
 
             </div>
         );

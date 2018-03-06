@@ -13,6 +13,7 @@ import * as TablesCntlr from '../../tables/TablesCntlr.js';
 import * as ChartsCntlr from '../ChartsCntlr.js';
 import * as TableStatsCntlr from '../TableStatsCntlr.js';
 
+import '../../tables/ui/TablePanel.css';
 
 /**
  * Get properties defining chart from the store.
@@ -60,20 +61,22 @@ export class FilterEditorWrapper extends Component {
         const {tableModel} = this.props;
         const {sortInfo} = this.state;
         return (
-            <div style={{width: 350, height: 'calc(100% - 20px)'}}>
-                <FilterEditor
-                    columns={get(tableModel, 'tableData.columns', [])}
-                    selectable={false}
-                    filterInfo={get(tableModel, 'request.filters')}
-                    sortInfo={sortInfo}
-                    onChange={(obj) => {
+            <div className='TablePanelOptionsWrapper'>
+                <div className='TablePanelOptions'>
+                    <FilterEditor
+                        columns={get(tableModel, 'tableData.columns', [])}
+                        selectable={false}
+                        filterInfo={get(tableModel, 'request.filters')}
+                        sortInfo={sortInfo}
+                        onChange={(obj) => {
                             if (!isUndefined(obj.filterInfo)) {
                                 const newRequest = Object.assign({}, tableModel.request, {filters: obj.filterInfo});
                                 TablesCntlr.dispatchTableFilter(newRequest, 0);
                             } else if (!isUndefined(obj.sortInfo)) {
                                 this.setState({sortInfo: obj.sortInfo});
                             }
-                          } }/>
+                        } }/>
+                </div>
             </div>
         );
     }

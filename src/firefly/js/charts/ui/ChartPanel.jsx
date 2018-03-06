@@ -5,12 +5,12 @@ import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {flux} from '../../Firefly.js';
 import {get, isEmpty, isUndefined} from 'lodash';
 import {reduxFlux} from '../../core/ReduxFlux.js';
-
+import {singleTraceUI} from '../ChartUtil.js';
 import * as ChartsCntlr from '../ChartsCntlr.js';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
 
-
+//LZ 3/06/18 IRSA-1522 Add this constant variable to control if all the toolbar icons are shown or not shown
 class ChartPanelView extends PureComponent {
 
     constructor(props) {
@@ -62,6 +62,7 @@ class ChartPanelView extends PureComponent {
         const {chartId, deletable:deletableProp, expandable, expandedMode, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
         const chartData =  ChartsCntlr.getChartData(chartId);
         const deletable = isUndefined(deletableProp) ? get(chartData, 'deletable') : deletableProp;
+        const showMultiTrace = !singleTraceUI();
 
         if (isEmpty(chartData)) {
             return (
@@ -78,7 +79,7 @@ class ChartPanelView extends PureComponent {
                 return (
                     <div className='ChartPanel__container'>
                         <div className='ChartPanel__wrapper'>
-                            <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
+                            <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
                             <div className='ChartPanel__chartarea--withToolbar'>
                                 {showOptions &&
                                 <div className='ChartPanelOptions'>
@@ -123,7 +124,7 @@ class ChartPanelView extends PureComponent {
             // toolbar and options
             return (
                 <div className='ChartPanel__chartarea'>
-                    <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
+                    <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
                     <div className='ChartPanel__chartarea--withToolbar'>
                         {showOptions &&
                         <div className='ChartPanelOptions'

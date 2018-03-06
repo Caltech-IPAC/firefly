@@ -19,6 +19,8 @@ export const INFO_POPUP= 'InfoPopup';
 // ------------------------------------------------------------
 
 export const MODAL_DIALOG_ID = 'ModalDialog';
+export const POPUP_DIALOG_ID = 'ModalDialog';
+
 
 /**
  * Creates and shows the modal dialog.
@@ -29,7 +31,7 @@ export function showModal(content, show=true) {
     if (show) {
         const dialogContent= (
             <ModalDialog>
-                {content}
+                    {content}
             </ModalDialog>
         );
         DialogRootContainer.defineDialog(MODAL_DIALOG_ID, dialogContent);
@@ -41,6 +43,32 @@ export function showModal(content, show=true) {
 }
 
 
+/**
+ * Creates and shows the modal dialog.
+ * @param {object} p
+ * @param {string | object}  p.content can be a string or a react component
+ * @param {string} [p.title] popup title
+ * @param {boolean} [p.modal=false] when true, glass panel will be under the popup
+ * @param {boolean} [p.show=true] show or hide this dialog
+ */
+export function showOptionsPopup({content, title='Options', modal = false, show=true}) {
+
+
+  if (show) {
+      const dialogContent= (
+          <PopupPanel title={title} modal={modal}>
+              <div style={{position: 'relative', overflow: 'auto', resize:'vertical'}}>
+                  {content}
+              </div>
+          </PopupPanel>
+      );
+    DialogRootContainer.defineDialog(POPUP_DIALOG_ID, dialogContent);
+
+    dispatchShowDialog(POPUP_DIALOG_ID);
+  } else {
+    dispatchHideDialog(POPUP_DIALOG_ID);
+  }
+}
 /**
  * Show a simple information popup
  * @param {string | object} content can be a string or a react component
