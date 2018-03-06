@@ -106,7 +106,7 @@ export class BasicOptions extends SimpleComponent {
     }
 
     render() {
-        const {chartId, tbl_Id:tblIdProp} = this.props;
+        const {chartId, tbl_Id:tblIdProp, showMultiTrace} = this.props;
         const {activeTrace=0} = this.state;
         const {tablesources, data={}} = getChartData(chartId);
         const groupKey = `${chartId}-basic-${activeTrace}`;
@@ -124,38 +124,18 @@ export class BasicOptions extends SimpleComponent {
         return (
             <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey}
                         reducerFunc={basicFieldReducer({chartId, activeTrace})}>
-                <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, isXNotNumeric, isYNotNumeric, xNoLog, yNoLog}}/>
+                <BasicOptionFields {...{activeTrace, groupKey, noColor, noXY, isXNotNumeric, isYNotNumeric, xNoLog, yNoLog,showMultiTrace}}/>
             </FieldGroup>
         );
     }
 }
-
-export function basicFieldReducer({chartId, activeTrace}) {
+//TODO on Monday, check if showMultiTrace is needed, it works for all cases both chart and xyPlot
+export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
     const {data, layout, fireflyLayout={}} = getChartData(chartId);
     let color = get(data, `${activeTrace}.marker.color`, '');
     color = Array.isArray(color) ? '' : color;
-    const fields = {
-        [`data.${activeTrace}.name`]: {
-            fieldKey: `data.${activeTrace}.name`,
-            value: get(data, `${activeTrace}.name`,''),
-            tooltip: 'The name of this new series',
-            label : 'Name:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.marker.color`]: {
-            fieldKey: `data.${activeTrace}.marker.color`,
-            value: color,
-            tooltip: 'Set series color',
-            label : 'Color:',
-            ...fieldProps
-        },
-        ['layout.title']: {
-            fieldKey: 'layout.title',
-            value: get(layout, 'title'),
-            tooltip: 'Plot title',
-            label : 'Plot title:',
-            ...fieldProps
-        },
+
+    const commonfields = {
         ['layout.showlegend']: {
             fieldKey: 'layout.showlegend',
             value: get(layout, 'showlegend', ''),
@@ -248,6 +228,31 @@ export function basicFieldReducer({chartId, activeTrace}) {
         }
     };
 
+
+    const extraFeidls = showMultiTrace?{
+            [`data.${activeTrace}.name`]: {
+                fieldKey: `data.${activeTrace}.name`,
+                value: get(data, `${activeTrace}.name`, ''),
+                tooltip: 'The name of this new series',
+                label: 'Name:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.marker.color`]: {
+                fieldKey: `data.${activeTrace}.marker.color`,
+                value: color,
+                tooltip: 'Set series color',
+                label: 'Color:',
+                ...fieldProps
+            },
+            ['layout.title']: {
+                fieldKey: 'layout.title',
+                value: get(layout, 'title'),
+                tooltip: 'Plot title',
+                label: 'Plot title:',
+                ...fieldProps
+            },
+      }:{};
+    const fields = Object.assign({}, commonfields, extraFeidls);
     return (inFields, action) => {
         if (!inFields) {
             return fields;
@@ -333,32 +338,37 @@ export class BasicOptionFields extends Component {
     }
 
     render() {
-        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog, yNoLog, isXNotNumeric, isYNotNumeric} = this.props;
+        const {activeTrace, groupKey, align='vertical', noColor, noXY, xNoLog, yNoLog, isXNotNumeric, isYNotNumeric, showMultiTrace} = this.props;
 
         // TODO: need color input field
         const colorFldPath = `data.${activeTrace}.marker.color`;
 
+        const borderStyle = {padding: '15px 10px 0', border: '2px solid #a5a5a5', borderRadius: 10};
+        const noBoarderStyle = {padding: '14px 3px 0'};
+        const style = showMultiTrace?borderStyle:noBoarderStyle;
         return (
             <div className={`FieldGroup__${align}`}
-                 style={{padding: '15px 10px 0', border: '2px solid #a5a5a5', borderRadius: 10}}>
-                <ValidationField fieldKey={`data.${activeTrace}.name`}/>
-                {!noColor && <div style={{whiteSpace: 'nowrap'}}>
+                 style={style }>
+                {showMultiTrace && <ValidationField fieldKey={`data.${activeTrace}.name`}/>}
+                {!noColor && showMultiTrace && <div style={{whiteSpace: 'nowrap'}}>
                     <ValidationField inline={true} fieldKey={colorFldPath}/>
                     <div
-                        style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
-                        title='Select trace color'
-                        onClick={() => showColorPickerDialog(getFieldVal(groupKey, colorFldPath), true, false,
-                             (ev) => {
-                                 const {r,g,b,a}= ev.rgb;
-                                 const rgbStr= `rgba(${r},${g},${b},${a})`;
-                                 dispatchValueChange({fieldKey: colorFldPath, groupKey, value: rgbStr, valid: true});
-                             }, groupKey)}>
-                        <ToolbarButton icon={MAGNIFYING_GLASS}/>
+                    style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
+                    title='Select trace color'
+                    onClick={() => showColorPickerDialog(getFieldVal(groupKey, colorFldPath), true, false,
+                    (ev) => {
+                        const {r, g, b, a} = ev.rgb;
+                        const rgbStr = `rgba(${r},${g},${b},${a})`;
+                        dispatchValueChange({fieldKey: colorFldPath, groupKey, value: rgbStr, valid: true});
+                    }, groupKey)}>
+                    <ToolbarButton icon={MAGNIFYING_GLASS}/>
                     </div>
-                </div>}
-                <br/>
-                <ValidationField fieldKey={'layout.title'}/>
-                <br/>
+                    </div>
+                   }
+
+                 {showMultiTrace &&  <div> <br/><ValidationField fieldKey={'layout.title'}/><br/></div>}
+
+
                 {/* checkboxgroup is not working right when there's only 1 .. will add in later
                  <CheckboxGroupInputField fieldKey={'layout.showlegend'}/>
                  */}
@@ -429,7 +439,8 @@ BasicOptionFields.propTypes = {
     yNoLog: PropTypes.bool,
     noXY: PropTypes.bool,
     isXNotNumeric: PropTypes.bool,
-    isYNotNumeric: PropTypes.bool
+    isYNotNumeric: PropTypes.bool,
+    showMultiTrace: PropTypes.bool
 };
 
 

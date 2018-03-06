@@ -30,12 +30,12 @@ export function getSubmitChangesFunc(traceType, fireflyType) {
     }
 }
 
-function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id}) {
+function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id,showMultiTrace}) {
     const noColor = !hasMarkerColor(traceType);
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
-            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
+            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id,showMultiTrace}}/>);
         case 'fireflyHeatmap':
             return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
         case 'fireflyHistogram':
@@ -85,7 +85,7 @@ export class NewTracePanel extends SimpleComponent {
     }
 
     render() {
-        const {tbl_id, chartId, groupKey} = this.props;
+        const {tbl_id, chartId, groupKey,showMultiTrace} = this.props;
         const {activeTrace, type} = this.state;
 
         return (
@@ -100,7 +100,7 @@ export class NewTracePanel extends SimpleComponent {
                         {...fieldProps} />
                 </FieldGroup>
                 <br/>
-                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id})}
+                {getOptionsComponent({traceType:type, chartId, activeTrace, groupKey, tbl_id,showMultiTrace})}
 
             </div>
         );

@@ -7,6 +7,9 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
+
+import React from 'react';
+
 import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
@@ -584,6 +587,7 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
  * set default value for layout and data
  * @param chartData
  * @param resetColor reset color generator for default color assignment of the chart
+ * 3/12/19 LZ changed the default to 'select' IRSA-1522
  */
 export function applyDefaults(chartData={}, resetColor = true) {
     //const chartType = get(chartData, ['data', '0', 'type']);
@@ -594,7 +598,7 @@ export function applyDefaults(chartData={}, resetColor = true) {
 
     const defaultLayout = {
         hovermode: 'closest',
-        dragmode: 'zoom',
+        dragmode: 'select',
         legend: {
             font: {size: FSIZE},
             orientation: 'v',

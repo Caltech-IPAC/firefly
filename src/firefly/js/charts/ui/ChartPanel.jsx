@@ -9,8 +9,8 @@ import {reduxFlux} from '../../core/ReduxFlux.js';
 import * as ChartsCntlr from '../ChartsCntlr.js';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
-
-
+//LZ 3/06/18 IRSA-1522 Add this constant variable to control if all the toolbar icons are shown or not shown
+const showMultiTrace = false;
 class ChartPanelView extends PureComponent {
 
     constructor(props) {
@@ -78,7 +78,7 @@ class ChartPanelView extends PureComponent {
                 return (
                     <div className='ChartPanel__container'>
                         <div className='ChartPanel__wrapper'>
-                            <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
+                            <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
                             <div className='ChartPanel__chartarea--withToolbar'>
                                 {showOptions &&
                                 <div className='ChartPanelOptions'>
@@ -123,7 +123,7 @@ class ChartPanelView extends PureComponent {
             // toolbar and options
             return (
                 <div className='ChartPanel__chartarea'>
-                    <Toolbar {...{chartId, expandable, expandedMode, toggleOptions: this.toggleOptions}}/>
+                    <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
                     <div className='ChartPanel__chartarea--withToolbar'>
                         {showOptions &&
                         <div className='ChartPanelOptions'

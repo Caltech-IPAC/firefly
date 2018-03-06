@@ -26,11 +26,17 @@ export const MODAL_DIALOG_ID = 'ModalDialog';
  * @param {boolean} [show=true] show or hide this dialog
  */
 export function showModal(content, show=true) {
+
+    const popTitle = 'Plot Parameters';
+
     if (show) {
+
         const dialogContent= (
+            <PopupPanel title={popTitle} >
             <ModalDialog>
                 {content}
             </ModalDialog>
+            </PopupPanel>
         );
         DialogRootContainer.defineDialog(MODAL_DIALOG_ID, dialogContent);
 

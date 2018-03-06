@@ -38,7 +38,7 @@ const PREF_CHART_TYPE = 'pref.chartType';
 export function getFormName(chartType) {
     return chartType+'ChartOpts';
 }
-
+const showMultiTrace=false;
 /**
  *
  * @param props
@@ -244,6 +244,7 @@ export class ChartSelectDropdown extends PureComponent {
                     tbl_id: tblId,
                     chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
                     chartAction: CHART_ADDNEW,
+                    showMultiTrace,
                     hideDialog: ()=>dispatchHideDropDown()}}/> ) :
                 (<ChartSelect {...{tblId, tblStatsData}} {...this.props}/>);
         } else {

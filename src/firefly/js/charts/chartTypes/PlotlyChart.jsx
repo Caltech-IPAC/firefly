@@ -47,14 +47,14 @@ Options.propTypes = {
 };
 
 
-function Toolbar({chartId, expandable, expandedMode, toggleOptions}) {
+function Toolbar({chartId, expandable, expandedMode, showMultiTrace, toggleOptions}) {
     const {activeTrace} = getChartData(chartId);
     const ToolbarUI = getToolbarUI(chartId, activeTrace);
     return (
         <div className={`PanelToolbar ChartPanel__toolbar ${expandedMode?'ChartPanel__toolbar--offsetLeft':''}`}>
             <div className='PanelToolbar__group'/>
             <div className='PanelToolbar__group'>
-                <ToolbarUI {...{chartId, expandable, toggleOptions}}/>
+                <ToolbarUI {...{chartId, expandable, showMultiTrace, toggleOptions}}/>
                 </div>
         </div>
     );
@@ -64,7 +64,8 @@ Toolbar.propTypes = {
     chartId: PropTypes.string,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
-    toggleOptions: PropTypes.func // callback: toggleOptions(optionsKey)
+    toggleOptions: PropTypes.func, // callback: toggleOptions(optionsKey)
+    showMultiTrace:PropTypes.bool
 };
 
 /**

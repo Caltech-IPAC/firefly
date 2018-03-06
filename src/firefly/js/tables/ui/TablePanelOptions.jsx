@@ -12,6 +12,7 @@ import {intValidator} from '../../util/Validate.js';
 
 const labelStyle = {display: 'inline-block', width: 70};
 
+
 export class TablePanelOptions extends PureComponent {
     constructor(props) {
         super(props);

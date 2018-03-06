@@ -28,7 +28,7 @@ export class ScatterOptions extends SimpleComponent {
     }
 
     render() {
-        const {chartId, groupKey:groupKeyProp, activeTrace:activeTraceProp, tbl_id:tblIdProp} = this.props;
+        const {chartId, groupKey:groupKeyProp, activeTrace:activeTraceProp, tbl_id:tblIdProp,showMultiTrace} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(activeTraceProp) ? cActiveTrace : activeTraceProp;
         const groupKey = groupKeyProp || `${chartId}-scatter-${activeTrace}`;
@@ -47,9 +47,8 @@ export class ScatterOptions extends SimpleComponent {
                  options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
                  */}
-                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
-                <br/>
-                <BasicOptionFields {...{activeTrace, groupKey}}/>
+                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey,showMultiTrace}}/>}
+                <BasicOptionFields {...{activeTrace, groupKey,showMultiTrace}}/>
             </FieldGroup>
         );
     }
@@ -182,7 +181,7 @@ export function fieldReducer({chartId, activeTrace}) {
     };
 }
 
-export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
+export function TableSourcesOptions({tablesource={}, activeTrace, groupKey,showMultiTrace}) {
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
@@ -208,14 +207,16 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
             <br/>
             <ColumnOrExpression {...yProps}/>
             <Errors axis='y' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
-            <br/>
-            <ColumnOrExpression {...sizeMapProps}/>
-            <ColumnOrExpression {...colorMapProps}/>
-            <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
-                               options={[{value:'Default'}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
-                                         {value:'Greys'}, {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
-                                         {value:'RdBu'}, {value:'Reds'}, {value:'Viridis'}, {value:'YlGnBu'}, {value:'YlOrRd'}]}/>
-        </div>
+            {showMultiTrace &&  <br/>  &&
+               <ColumnOrExpression {...sizeMapProps}/>
+            && < ColumnOrExpression {...colorMapProps}/>
+
+            && <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
+                                  options={[{value: 'Default'}, {value: 'Bluered'}, {value: 'Blues'}, {value: 'Earth'}, {value: 'Electric'}, {value: 'Greens'},
+                                      {value: 'Greys'}, {value: 'Hot'}, {value: 'Jet'}, {value: 'Picnic'}, {value: 'Portland'}, {value: 'Rainbow'},
+                                      {value: 'RdBu'}, {value: 'Reds'}, {value: 'Viridis'}, {value: 'YlGnBu'}, {value: 'YlOrRd'}]}/>
+            }
+            </div>
     );
 }
 

@@ -50,18 +50,12 @@ function getChartActions({chartId, tbl_id}) {
 function onChartAction({chartAction, tbl_id, chartId, hideDialog}) {
     return (fields) => {
         switch (chartAction) {
-            case CHART_ADDNEW:
-                addNewTrace({fields, tbl_id, hideDialog}); // no chart id
-                break;
-            case CHART_TRACE_ADDNEW:
-                addNewTrace({fields, tbl_id, chartId, hideDialog});
-                break;
-            case CHART_TRACE_MODIFY:
+             case CHART_TRACE_MODIFY:
                 const {activeTrace, data, fireflyData} = getChartData(chartId);
                 const type = get(data, `${activeTrace}.type`, 'scatter');
                 const ftype = get(fireflyData, `${activeTrace}.dataType`);
                 const submitChangesFunc = getSubmitChangesFunc(type, ftype);
-                hideDialog();
+                //hideDialog();
                 submitChangesFunc && submitChangesFunc({chartId, activeTrace, fields, tbl_id});
                 break;
             case CHART_TRACE_REMOVE:
@@ -97,10 +91,10 @@ export class ChartSelectPanel extends SimpleComponent {
     }
 
     componentWillMount() {
-        const {chartId, tbl_id, chartAction} = this.props;
+        const {chartId, tbl_id, chartAction,showMultiTrace} = this.props;
         const oldChartAction = getFieldVal(chartActionPanelKey, chartActionKey);
         let newChartAction = oldChartAction || chartAction;
-        const chartActions = getChartActions({chartId, tbl_id});
+        const chartActions = showMultiTrace?getChartActions({chartId, tbl_id}):[CHART_TRACE_MODIFY];
 
         if (!newChartAction || !chartActions.includes(newChartAction)) {
             newChartAction = chartActions[0];
@@ -121,23 +115,25 @@ export class ChartSelectPanel extends SimpleComponent {
 
     render() {
 
-        const {tbl_id, chartId, hideDialog} = this.props;
+        const {tbl_id, chartId, hideDialog,showMultiTrace} = this.props;
+
         const chartActions = getChartActions({chartId, tbl_id});
-        const {chartAction} = this.state;
-        const groupKey = getGroupKey(chartId, chartAction);
+        const {chartAction} =showMultiTrace?this.state:{chartAction:CHART_TRACE_MODIFY};
+        const groupKey = getGroupKey(chartId, CHART_TRACE_MODIFY);
 
         return (
 
             <div style={{padding: 10}}>
                 <FormPanel
                     groupKey={groupKey}
-                    submitText='OK'
+                    submitText='Apply'
                     onSuccess={onChartAction({chartAction, tbl_id, chartId, hideDialog})}
+                    cancelText='Close'
                     onError={() => {}}
                     onCancel={hideDialog}
                     changeMasking={this.changeMasking}>
-                    <ChartAction {...{chartActions, chartAction, groupKey: chartActionPanelKey, fieldKey: chartActionKey}}/>
-                    <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog}}/>
+                    {showMultiTrace && <ChartAction {...{chartActions, chartAction, groupKey: chartActionPanelKey, fieldKey: chartActionKey}}/>}
+                    <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog,showMultiTrace}}/>
                 </FormPanel>
             </div>
         );
@@ -148,9 +144,13 @@ ChartSelectPanel.propTypes = {
     tbl_id: PropTypes.string,
     chartId: PropTypes.string,
     chartAction: PropTypes.string, // suggested chart action
-    hideDialog: PropTypes.func
+    hideDialog: PropTypes.func,
+    showMultiTrace:PropTypes.bool
 };
+ChartSelectPanel.defaultProps = {
+    showMultiTrace: true,
 
+};
 
 function ChartAction(props) {
 
@@ -165,9 +165,9 @@ function ChartAction(props) {
     if (chartActions.includes(CHART_TRACE_ADDNEW)) {
         options.push({label: 'Add New Trace', value: CHART_TRACE_ADDNEW});
     }
-    if (chartActions.includes(CHART_TRACE_MODIFY)) {
+   /* if (chartActions.includes(CHART_TRACE_MODIFY)) {
         options.push({label: 'Modify Active Trace', value: CHART_TRACE_MODIFY});
-    }
+    }*/
     if (chartActions.includes(CHART_TRACE_REMOVE)) {
         options.push({label: 'Remove Active Trace', value: CHART_TRACE_REMOVE});
     }
@@ -194,17 +194,20 @@ ChartAction.propTypes = {
 };
 
 function ChartActionOptions(props) {
-    const {chartAction, tbl_id, chartId:chartIdProp, groupKey, hideDialog} = props;
+    const {chartAction, tbl_id, chartId:chartIdProp, groupKey, hideDialog,showMultiTrace} = props;
 
     const chartId = chartAction === CHART_ADDNEW ? undefined : chartIdProp;
 
-    if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
-        return (<NewTracePanel {...{groupKey, tbl_id, chartId, hideDialog}}/>);
-    } else if (chartAction === CHART_TRACE_MODIFY) {
+    if (showMultiTrace) {
+        if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
+            return (<NewTracePanel {...{groupKey, tbl_id, chartId, hideDialog,showMultiTrace}}/>);
+        }
+    }
+    if (chartAction === CHART_TRACE_MODIFY) {
         const OptionsUI = getOptionsUI(chartId);
         return (
             <div style={{padding: 10}}>
-                <OptionsUI {...{chartId, groupKey}}/>
+                <OptionsUI {...{chartId, groupKey,showMultiTrace}}/>
             </div>
         );
     } else if (chartAction === CHART_TRACE_REMOVE) {
@@ -228,12 +231,12 @@ ChartActionOptions.propTypes = {
     hideDialog: PropTypes.func
 };
 
-
 /**
  * Creates and shows the modal dialog with chart options.
- * @param {string}  chartId
+ * @param {string} chartId
+ * @param {boolean} showMultiTrace
  */
-export function showChartsDialog(chartId) {
+export function showChartsDialog(chartId,  showMultiTrace) {
     const {data, fireflyData, activeTrace} = getChartData(chartId);
     const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
 
@@ -242,6 +245,7 @@ export function showChartsDialog(chartId) {
                 tbl_id,
                 chartId,
                 chartAction: CHART_TRACE_MODIFY,
+                showMultiTrace,
                 hideDialog: ()=>showModal(null, false)}}/>
     );
     showModal(content, true);

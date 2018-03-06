@@ -1,7 +1,9 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import './ModalDialog.css';
+import {PopupPanel} from './PopupPanel.jsx';
 
+import Draggable from 'react-draggable';
 export class ModalDialog extends PureComponent {
     constructor(props) {
         super(props);
@@ -28,15 +30,17 @@ export class ModalDialog extends PureComponent {
     render() {
         const {width, height} = this.state;
         // make sure the modal fits into the viewport
-        const wrapperStyle = {maxWidth: width, maxHeight: height, overflow: 'auto'};
+        const wrapperStyle = {maxWidth: width, maxHeight: height, overflow: 'auto', resize:'vertical'};
+
         return (
-            <div className='ModalWindow' style={{zIndex: this.props.zIndex}}>
+            <div  style={{zIndex: this.props.zIndex}}>
                 <div className='ModalDialog'>
                     <div className='ModalDialog__content' style={wrapperStyle}>
                         {this.props.children}
                     </div>
                 </div>
             </div>
+
         );
     }
 }
