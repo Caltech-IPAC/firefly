@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
+
 /**
  * This class query the database, and then write results out to the given file as an ipac table.
  * If the results exceed the number of maximum row set by property 'IpacTableExtractor.Max.Rows.Limit',
@@ -109,7 +111,7 @@ public class IpacTableExtractor {
             template = new DataGroup("", DataGroupUtil.getExtraData(resultset.getMetaData()));
         }
         List<DataType> headers = Arrays.asList(template.getDataDefinitions());
-        IpacTableUtil.writeAttributes(writer, template.getKeywords());
+        IpacTableUtil.writeAttributes(writer, makeAttributes(template));
         IpacTableUtil.writeHeader(writer,headers);
         int count = 0;
         while(resultset.next()) {

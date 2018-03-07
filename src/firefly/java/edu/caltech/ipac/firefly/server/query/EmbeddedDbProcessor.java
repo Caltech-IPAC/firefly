@@ -24,6 +24,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -381,7 +382,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     private static String retrieveMsgFromError(Exception e, TableServerRequest treq) {
 
-
         if (e instanceof BadSqlGrammarException) {
             // object not found condition
             BadSqlGrammarException ex = (BadSqlGrammarException) e;
@@ -394,29 +394,39 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 } else {
                     return "Column not found: " + name;
                 }
+            } else if (msg.toLowerCase().contains("object name already exists")) {
+                String name = CollectionUtil.get(msg.split(":"), 1, "").trim();
+                return "Duplicate table or column name: " + name;
             }
-            return msg;
-        } else if (e instanceof DataIntegrityViolationException) {
-            // data type mismatch
-            String possibleError = "";
-            DataIntegrityViolationException ex = (DataIntegrityViolationException) e;
+        }
+
+        if (e instanceof NestedRuntimeException) {
+            List<String> possibleErrors = new ArrayList<>();
+            NestedRuntimeException ex = (NestedRuntimeException) e;
             String msg = ex.getRootCause().getMessage();
             TableServerRequest prevReq = QueryUtil.convertToServerRequest(treq.getMeta().get(TableServerRequest.RESULTSET_REQ));
             if (treq.getInclColumns() != null && !StringUtils.areEqual(treq.getInclColumns(), prevReq.getInclColumns())) {
-                possibleError += treq.getInclColumns();
+                possibleErrors.add(treq.getInclColumns());
             }
             List<String> diff = CollectionUtil.diff(treq.getFilters(), prevReq.getFilters(), false);
             if (diff != null && diff.size() > 0) {
-                possibleError += StringUtils.toString(diff);
+                possibleErrors.addAll(diff);
             }
             if (treq.getSortInfo() != null && !treq.getSortInfo().equals(prevReq.getSortInfo())) {
-                possibleError += treq.getSortInfo().toString();
+                possibleErrors.add(treq.getSortInfo().toString());
             }
 
             if (msg.toLowerCase().contains(" cast")) {
-                return "Data type mismatch: \n\t " + possibleError;
+                return "Data type mismatch: \n" + StringUtils.toString(possibleErrors, "\n");
             }
+
+            if ( msg.toLowerCase().contains("unexpected token:")) {
+                return CollectionUtil.get(msg.split("required:"), 0, "").trim() +
+                        "\n" + StringUtils.toString(possibleErrors, "\n");
+            }
+            return "Invalid statement: \n" + StringUtils.toString(possibleErrors, "\n");
         }
+
         return e.getMessage();
     }
 }

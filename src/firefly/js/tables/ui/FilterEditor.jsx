@@ -165,7 +165,9 @@ function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
 function collectFilterInfo(data) {
     const filterCls = FilterInfo.parse('');
     data.filter( (row) => row[1]).forEach( (row) => {
-        filterCls.addFilter(row[0], row[1]);
+        if (row[1] !== NOT_CELL_DATA) {
+            filterCls.addFilter(row[0], row[1]);
+        }
     });
     return filterCls.serialize();
 }

@@ -15,6 +15,8 @@ import java.io.Reader;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+
 /**
  * Date: Jun 25, 2009
  *
@@ -25,6 +27,31 @@ public class IpacTableUtil {
 
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
     private static final String STRING_TYPE[]= {"cha.*", "str.*", "s", "c"};
+
+    /**
+     * Returns the table's attributes in original sorted order, plus additional
+     * attributes from column's info is present.
+     * @param dataGroup
+     * @return
+     */
+    public static List<DataGroup.Attribute> makeAttributes(DataGroup dataGroup) {
+        List<DataGroup.Attribute> attribs = dataGroup.getKeywords();
+        // add column's attributes as table meta
+        for(DataType col : dataGroup.getDataDefinitions()) {
+            String descKey = makeAttribKey(DataSetParser.DESC_TAG, col.getKeyName());
+            String fmtKey = makeAttribKey(DataSetParser.FORMAT_TAG, col.getKeyName());
+
+            if (!StringUtils.isEmpty(col.getShortDesc()) &&
+                    dataGroup.getAttribute(descKey) == null) {
+                attribs.add(new DataGroup.Attribute(descKey, col.getShortDesc()));
+            }
+            if (!StringUtils.isEmpty(!col.getFormatInfo().isDefault()) &&
+                    dataGroup.getAttribute(fmtKey) == null) {
+                attribs.add(new DataGroup.Attribute(fmtKey, col.getFormatInfo().getDataFormatStr()));
+            }
+        }
+        return attribs;
+    }
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
         writeAttributes(writer, attribs, false, ignoreList);
@@ -141,7 +168,7 @@ public class IpacTableUtil {
      * @return
      */
     public static String getColMeta(Collection<DataGroup.Attribute> metas, String cname, String tag) {
-        String mkey = DataSetParser.makeAttribKey(tag, cname);
+        String mkey = makeAttribKey(tag, cname);
         Optional<DataGroup.Attribute> att = metas.stream().filter(m -> Objects.equals(m.getKey(), mkey)).findFirst();
         return att.isPresent() ? att.get().getValue() : null;
 
@@ -283,7 +310,7 @@ public class IpacTableUtil {
                     }
                     offset = endoffset;
                     if (type.getFormatInfo().isDefault()) {
-                        DataGroup.Attribute format = source.getAttribute(DataSetParser.makeAttribKey(DataSetParser.FORMAT_TAG, type.getKeyName()));
+                        DataGroup.Attribute format = source.getAttribute(makeAttribKey(DataSetParser.FORMAT_TAG, type.getKeyName()));
                         if (format == null || Objects.equals(format.getValue(), DataSetParser.FMT_AUTO)) {
                             IpacTableUtil.guessFormatInfo(type, rval);
                         } else if (!Objects.equals(format.getValue(), DataSetParser.FMT_NONE)){
@@ -295,8 +322,8 @@ public class IpacTableUtil {
                         if (type.getDataType().isAssignableFrom(String.class)) {
                             if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("html") ||
                                     rval.trim().matches("<[^>]+>.*")) {
-                                source.addAttribute(DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, type.getKeyName()), "false");
-                                source.addAttribute(DataSetParser.makeAttribKey(DataSetParser.FILTERABLE_TAG, type.getKeyName()), "false");
+                                source.addAttribute(makeAttribKey(DataSetParser.SORTABLE_TAG, type.getKeyName()), "false");
+                                source.addAttribute(makeAttribKey(DataSetParser.FILTERABLE_TAG, type.getKeyName()), "false");
                             }
                         }
                     }

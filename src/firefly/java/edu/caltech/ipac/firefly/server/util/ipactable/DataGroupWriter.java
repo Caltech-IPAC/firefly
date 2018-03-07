@@ -11,6 +11,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
+
 
 /**
  * Writes a DataGroup into an IPAC table file.  This class support different handlers.
@@ -140,7 +142,7 @@ public class DataGroupWriter {
         private int rowCount = 0;
 
         public IpacTableHandler(File ofile, DataGroup source) {
-            this(ofile, Arrays.asList(source.getDataDefinitions()), source.getKeywords(), source.iterator());
+            this(ofile, Arrays.asList(source.getDataDefinitions()), makeAttributes(source), source.iterator());
         }
 
         public IpacTableHandler(File ofile, List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr) {

@@ -378,7 +378,7 @@ function autoCorrectConditions(conditions, tbl_id, cname) {
  *              ex: in a, b  => in ('a', 'b') after auto=correction for text column
  *              ex: in a, b  => in (a, b) after auto-correction for numeric column
  *     case 3: other operaters, >, <, >=, <=, =, !=
- *              enclose value in single quotes if they are missing (for text Column only)
+ *              enclose value in single quotes if they are missing (for text Columns and non-numeric values)
  *              ex: =abc => ='abc' after auto-correction for text column
  *                  =abc => =abc   after auto-correction for numeric column
  *
@@ -426,7 +426,7 @@ function autoCorrectCondition(v, isNumeric=false) {
         case '<':
         case '>=':
         case '<=':
-            val = isNumeric ? val : encloseString(val);
+            val = isNumeric && !isNaN(val) ? val : encloseString(val);
             break;
 
         default:
