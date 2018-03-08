@@ -364,7 +364,7 @@ public class DataGroup implements Serializable,
      * @return
      */
     public List<Attribute> getKeywords() {
-        return Collections.unmodifiableList(_attributes);
+        return new ArrayList<>(_attributes);
     }
 
     public DataObject get(int i) {

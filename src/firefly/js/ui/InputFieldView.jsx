@@ -1,5 +1,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import {pickBy} from 'lodash';
+
 import {PointerPopup} from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -87,9 +89,14 @@ export class InputFieldView extends PureComponent {
     render() {
         var {hasFocus}= this.state;
         var {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder}= this.props;
+             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder, form='__ignore'}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
+        // form to relate this input field to.
+        // assign form to null or empty-string to use it within a form tag (similar to input tag without form attribute).
+        // if form is not given, it will default to __ignore so that it does not interfere with embedded forms.
+        form = form || undefined;
+
         return (
             <div style={wrapperStyle}>
                 {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
@@ -106,10 +113,7 @@ export class InputFieldView extends PureComponent {
                        onKeyUp={(ev) => onKeyUp && onKeyUp(ev)}
                        value={type==='file' ? undefined : value}
                        title={ (!showWarning && !valid) ? message : tooltip}
-                       size={size}
-                       type={type}
-                       disabled={disabled}
-                       placeholder={placeholder}
+                       {...pickBy({size, type, disabled, placeholder, form})}
                 />
                 {showWarning && this.makeWarningArea(!valid)}
             </div>
@@ -138,7 +142,8 @@ InputFieldView.propTypes= {
     onKeyUp: PropTypes.func,
     showWarning : PropTypes.bool,
     type: PropTypes.string,
-    placeholder: PropTypes.string
+    placeholder: PropTypes.string,
+    form: PropTypes.string
 };
 
 InputFieldView.defaultProps= {

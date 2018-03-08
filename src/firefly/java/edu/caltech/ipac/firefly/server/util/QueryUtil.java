@@ -27,6 +27,8 @@ import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.util.URIUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -35,11 +37,9 @@ import org.json.simple.parser.ParseException;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.sql.Date;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.*;
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ACTIVE_REQUEST_CNT;
@@ -184,6 +184,18 @@ public class QueryUtil {
         return jAry;
     }
 
+    public static String toJsonString(Param ...params) {
+        HashMap<String, String> map = new HashMap<>();
+        if (params != null) {
+            Arrays.stream(params).forEach(p -> map.put(p.getName(), p.getValue()));
+        }
+        return toJsonString(map);
+    }
+
+    public static String toJsonString(Map values) {
+        return toJsonObject(values).toJSONString();
+    }
+
     public static JSONObject toJsonObject(Map values) {
 
         JSONObject jObj = new JSONObject();
@@ -228,27 +240,22 @@ public class QueryUtil {
         }
     }
 
-    public static String encodeUrl(ServerRequest req) {
-        StringBuffer sb = new StringBuffer();
-        if (req == null || req.getParams() == null || req.getParams().size() == 0) return "";
-
-        for (Param p : req.getParams()) {
-            if (!StringUtils.isEmpty(p.getName())) {
-                sb.append(ServerRequest.PARAM_SEP).append(p.getName());
-                if (!StringUtils.isEmpty(p.getValue())) {
-                    sb.append(ServerRequest.KW_VAL_SEP).append(encode(p.getValue()));
-                }
-            }
-        }
-        return sb.toString();
-    }
-
     public static String encode(String s) {
+        if (s == null) return "";
         try {
-            return URLEncoder.encode(s, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
+            return URIUtil.encodeQuery(s);
+        } catch (URIException e) {
             return e.getMessage();
         }
+    }
+
+    public static String encodeUrl(String url, List<Param> params) {
+        String qStr = params == null ? "" : "?" +
+                      params.stream()
+                              .filter(p -> !StringUtils.isEmpty(p.getName()))
+                              .map(p -> p.getName() + "=" + encode(p.getValue()))
+                              .collect(Collectors.joining("&"));
+        return url + qStr;
     }
 
     public static RawDataSet getRawDataSet(DataGroup dg, int startIndex, int pageSize) {
@@ -1018,11 +1025,13 @@ public class QueryUtil {
     }
 
     public static String decode(String str) {
+        if (str == null) return "";
         try {
-            return URLDecoder.decode(str, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            return str;
+            return URIUtil.decode(str);
+        } catch (URIException e) {
+            return e.getMessage();
         }
+
     }
 
     public static void main(String[] args) {

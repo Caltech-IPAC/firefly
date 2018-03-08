@@ -259,7 +259,7 @@ function onlineHelpLoad( action )
     return () => {
         var url = getProp('help.base.url');
         var windowName = 'onlineHelp';
-        var moduleName = getModuleName();
+        var moduleName = getProp('help.subpath', getModuleName());
 
         if (moduleName) {
             url +=  moduleName;

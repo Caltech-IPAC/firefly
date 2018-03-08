@@ -56,7 +56,7 @@ export class InputField extends PureComponent {
     render() {
 
         var {label, labelWidth, tooltip, visible, inline, size, placeholder,
-             showWarning, style, wrapperStyle, labelStyle, validator} = this.props;
+             showWarning, style, wrapperStyle, labelStyle, validator, form} = this.props;
         var {value, notValidate} = this.state;
         var {valid=true, message=''} = (!isNil(notValidate) && notValidate)? {} : (validator ? validator(value) : {});
 
@@ -79,6 +79,7 @@ export class InputField extends PureComponent {
                 wrapperStyle={wrapperStyle}
                 labelStyle={labelStyle}
                 placeholder={placeholder}
+                form={form}
             />
         );
 
@@ -104,7 +105,8 @@ InputField.propTypes = {
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
     showWarning : PropTypes.bool,
-    placeholder: PropTypes.string
+    placeholder: PropTypes.string,
+    form: PropTypes.string
 };
 
 InputField.defaultProps = {

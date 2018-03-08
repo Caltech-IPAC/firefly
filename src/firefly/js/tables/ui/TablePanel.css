@@ -53,11 +53,10 @@
 }
 
 .TablePanel__error {
-    position: relative;
-    flex-grow: 1;
-    align-self: center;
-    text-align: center;
     margin-top: 10px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 .TablePanel__toolbar {
