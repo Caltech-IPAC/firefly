@@ -74,9 +74,9 @@ export default function makeWebpackConfig(config) {
         globals.__PROPS__[k.substring(3)] = JSON.stringify(process.env[k]);
     });
 
-    const DEBUG    = config.env === 'development' && process.env.DEBUG;
-    const PROD     = config.env !== 'development';
-    const DO_STATS = process.env.BUILD_ENV==='dev';
+    const ENV_DEV_MODE= config.env === 'development' && process.env.DEBUG;
+    const ENV_PROD    = config.env !== 'development';
+    const ENV_DEV     = process.env.BUILD_ENV==='dev';
 
     /*
      * creating the webpackConfig based on the project's config for webpack to work on.
@@ -84,9 +84,9 @@ export default function makeWebpackConfig(config) {
      */
 
     /*------------------------ OUTPUT -----------------------------*/
-    const out_path = DEBUG ? config.deploy_dir : config.dist;
+    const out_path = ENV_DEV_MODE ? config.deploy_dir : config.dist;
     let filename = config.use_loader ? '[name]-dev.js' : '[name].js';
-    if (PROD) {
+    if (ENV_PROD) {
         filename = config.use_loader ? '[name]-[hash].js' : '[name].js';
     }
     const output =  {filename, path: out_path};
@@ -96,21 +96,21 @@ export default function makeWebpackConfig(config) {
         new webpack.DefinePlugin(globals),
         new ExtractTextPlugin(`${config.name}.css`),
     ];
-    if (DEBUG) {
+    if (ENV_DEV_MODE) {
         plugins.push( dev_progress() );
     }
-    if (DO_STATS) {
+    if (ENV_DEV) {
         plugins.push( new Visualizer({filename: './package-stats.html'}) );
     }
 
     if (config.use_loader) {
         plugins.push(
             firefly_loader(path.resolve(config.firefly_dir, '../../buildScript/loadScript.js'),
-                out_path, DEBUG)
+                out_path, ENV_DEV_MODE)
         );
     }
 
-    if (PROD) {
+    if (ENV_PROD) {
         plugins.push(
             // if using the latest uglifyjs-webpack-plugin, based on UglifyJSv3, understanding es6 modules
             // this uglifier also minimizes the code, no LoaderOptionsPlugin is needed
@@ -160,7 +160,7 @@ export default function makeWebpackConfig(config) {
                             targets: {
                                 browsers: ['safari >= 9', 'chrome >= 62', 'firefox >= 56', 'edge >= 14']
                             },
-                            debug: !PROD,
+                            debug: !ENV_PROD,
                             modules: false,  // preserve application module style - in our case es6 modules
                             useBuiltIns : true
                         }
