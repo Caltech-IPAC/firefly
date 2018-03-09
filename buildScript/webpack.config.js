@@ -3,6 +3,7 @@
 import webpack from 'webpack';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import UglifyJsPlugin from 'uglifyjs-webpack-plugin';
+import Visualizer from 'webpack-visualizer-plugin';
 import path from 'path';
 import fs from 'fs';
 
@@ -19,6 +20,7 @@ const exclude_dirs = /(node_modules|java|python|config|test)/;
  * @param {boolean=true} [config.use_loader]  generate a loader to load compiled JS script(s).  Defautls to true
  * @param {string}  [config.project]  project name
  * @param {string}  [config.filename]  name of the generated JS script.
+ * @param {string}  [config.baseWarName]  name of the the war file base, defaults to config.name
  * @returns {Object} a webpack config object.
  */
 export default function makeWebpackConfig(config) {
@@ -72,8 +74,9 @@ export default function makeWebpackConfig(config) {
         globals.__PROPS__[k.substring(3)] = JSON.stringify(process.env[k]);
     });
 
-    const DEBUG    = config.env === 'development' && process.env.DEBUG;
-    const PROD      = config.env !== 'development';
+    const ENV_DEV_MODE= config.env === 'development' && process.env.DEBUG;
+    const ENV_PROD    = config.env !== 'development';
+    const ENV_DEV     = process.env.BUILD_ENV==='dev';
 
     /*
      * creating the webpackConfig based on the project's config for webpack to work on.
@@ -81,31 +84,33 @@ export default function makeWebpackConfig(config) {
      */
 
     /*------------------------ OUTPUT -----------------------------*/
-    const out_path = DEBUG ? config.deploy_dir : config.dist;
+    const out_path = ENV_DEV_MODE ? config.deploy_dir : config.dist;
     let filename = config.use_loader ? '[name]-dev.js' : '[name].js';
-    if (PROD) {
+    if (ENV_PROD) {
         filename = config.use_loader ? '[name]-[hash].js' : '[name].js';
     }
     const output =  {filename, path: out_path};
 
     /*------------------------ PLUGIINS -----------------------------*/
-    const plugins = [ new webpack.DefinePlugin(globals),
-        new ExtractTextPlugin(`${config.name}.css`)
+    const plugins = [
+        new webpack.DefinePlugin(globals),
+        new ExtractTextPlugin(`${config.name}.css`),
     ];
-    if (DEBUG) {
-        plugins.push(
-            dev_progress()
-        );
+    if (ENV_DEV_MODE) {
+        plugins.push( dev_progress() );
+    }
+    if (ENV_DEV) {
+        plugins.push( new Visualizer({filename: './package-stats.html'}) );
     }
 
     if (config.use_loader) {
         plugins.push(
             firefly_loader(path.resolve(config.firefly_dir, '../../buildScript/loadScript.js'),
-                out_path, DEBUG)
+                out_path, ENV_DEV_MODE)
         );
     }
 
-    if (PROD) {
+    if (ENV_PROD) {
         plugins.push(
             // if using the latest uglifyjs-webpack-plugin, based on UglifyJSv3, understanding es6 modules
             // this uglifier also minimizes the code, no LoaderOptionsPlugin is needed
@@ -150,13 +155,18 @@ export default function makeWebpackConfig(config) {
                 // later presets run before earlier for each AST node
                 // use 'es2015', {modules: false}] for es5 with es6 modules
                 presets: [
-                    ['env', {
-                        targets: {
-                            browsers: ['safari >= 9', 'chrome >= 62', 'firefox >= 56', 'edge >= 14']
-                        },
-                        debug: !PROD,
-                        modules: false}], // preserve application module style - in our case es6 modules
-                    'react', 'stage-3'],
+                    ['env',
+                        {
+                            targets: {
+                                browsers: ['safari >= 9', 'chrome >= 62', 'firefox >= 56', 'edge >= 14']
+                            },
+                            debug: !ENV_PROD,
+                            modules: false,  // preserve application module style - in our case es6 modules
+                            useBuiltIns : true
+                        }
+                    ],
+                    'react',
+                    'stage-3'],
                 plugins: ['transform-runtime']
             }
         },
