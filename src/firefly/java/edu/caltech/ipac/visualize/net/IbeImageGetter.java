@@ -54,20 +54,15 @@ public class IbeImageGetter {
               sizeStr= wiseParams.getSize()+"";
               isWise= true;
           }
-          else if (params instanceof IrsaImageParams) {
-              IrsaImageParams irsaParams= (IrsaImageParams)params;
+          else if (params instanceof TwoMassImageParams) {
+              TwoMassImageParams irsaParams= (TwoMassImageParams) params;
               if (params.getType()== ImageServiceParams.ImageSourceTypes.TWOMASS || params.getType()== ImageServiceParams.ImageSourceTypes.TWOMASS6) {
 
                   ibeSource= new TwoMassIbeDataSource();
 
 
                   Map<String,String> m= new HashMap<>();
-                  if (params.getType()== ImageServiceParams.ImageSourceTypes.TWOMASS)  {
-                      m.put(TwoMassIbeDataSource.DS_KEY, "ASKY");
-                  }
-                  else {
-                      m.put(TwoMassIbeDataSource.DS_KEY, "SX");
-                  }
+                  m.put(TwoMassIbeDataSource.DS_KEY, irsaParams.getDataset());
                   ibeSource.initialize(m);
 
 
