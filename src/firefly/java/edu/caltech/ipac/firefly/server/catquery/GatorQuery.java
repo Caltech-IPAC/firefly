@@ -7,7 +7,11 @@ package edu.caltech.ipac.firefly.server.catquery;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -19,9 +23,13 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -477,8 +485,7 @@ public class GatorQuery extends BaseGator {
         } else if (fromUnits == CatalogRequest.RadUnits.ARCMIN && toUnits == CatalogRequest.RadUnits.ARCSEC) {
             retval = Math.round( v * ARCMIN_TO_ARCSEC );
         } else { // this should never happpen
-            retval = v;
-            WebAssert.tst(false);
+            throw new IllegalArgumentException("this should never happen");
         }
 
         return retval;

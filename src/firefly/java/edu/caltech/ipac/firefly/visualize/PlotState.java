@@ -3,9 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.HandSerialize;
@@ -21,8 +18,6 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-@JsExport
-@JsType
 public class PlotState implements DataEntry, HandSerialize {
 
     private final static String SPLIT_TOKEN= "--PlotState--";
@@ -170,7 +165,6 @@ public class PlotState implements DataEntry, HandSerialize {
      * @param plotRequests copy this request
      * @param band the band to set the request for
      */
-    @JsNoExport
     public void setWebPlotRequest(WebPlotRequest plotRequests, Band band) {
         setWebPlotRequest(plotRequests,band,true);
     }
@@ -212,7 +206,6 @@ public class PlotState implements DataEntry, HandSerialize {
      * after the set will not be reflected here.
      * @return the WebPlotRequest
      */
-    @JsNoExport
     public WebPlotRequest getWebPlotRequest() { return get(firstBand()).getWebPlotRequest(); }
 
 
@@ -225,7 +218,6 @@ public class PlotState implements DataEntry, HandSerialize {
         return get(band).isMultiImageFile();
     }
 
-    @JsNoExport
     public boolean isMultiImageFile() { return get(firstBand()).isMultiImageFile(); }
     public void setMultiImageFile(boolean multiImageFile, Band band) { get(band).setMultiImageFile(multiImageFile); }
 
@@ -234,7 +226,6 @@ public class PlotState implements DataEntry, HandSerialize {
         return get(band).isTileCompress();
     }
 
-    @JsNoExport
     public boolean isTileCompress() { return get(firstBand()).isTileCompress(); }
     public void setTileCompress(boolean tileCompress, Band band) { get(band).setTileCompress(tileCompress); }
 
@@ -242,7 +233,6 @@ public class PlotState implements DataEntry, HandSerialize {
         if (band==null) band= firstBand();
         return get(band).getCubeCnt();
     }
-    @JsNoExport
     public int getCubeCnt() { return get(firstBand()).getCubeCnt(); }
     public void setCubeCnt(int cubeCnt, Band band) { get(band).setCubeCnt(cubeCnt); }
 
@@ -251,7 +241,6 @@ public class PlotState implements DataEntry, HandSerialize {
         return get(band).getCubePlaneNumber();
     }
 
-    @JsNoExport
     public int getCubePlaneNumber() { return get(firstBand()).getCubePlaneNumber(); }
     public void setCubePlaneNumber(int cubeIdx, Band band) { get(band).setCubePlaneNumber(cubeIdx); }
 
@@ -262,7 +251,6 @@ public class PlotState implements DataEntry, HandSerialize {
         return get(band).getRangeValues();
     }
 
-    @JsNoExport
     public RangeValues getRangeValues() { return get(firstBand()).getRangeValues(); }
 
     public void setFitsHeader(ClientFitsHeader header, Band band) { get(band).setFitsHeader(header); }

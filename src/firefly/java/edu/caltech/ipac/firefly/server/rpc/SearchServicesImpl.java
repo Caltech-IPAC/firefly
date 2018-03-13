@@ -3,84 +3,19 @@
  */
 package edu.caltech.ipac.firefly.server.rpc;
 
-import com.google.gwt.user.server.rpc.RPCRequest;
-import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
-import edu.caltech.ipac.firefly.data.DownloadRequest;
-import edu.caltech.ipac.firefly.data.FileStatus;
-import edu.caltech.ipac.firefly.data.Request;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.rpc.SearchServices;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 
-import java.io.File;
 import java.util.List;
 
 /**
  * @author tatianag
  * $Id: SearchServicesImpl.java,v 1.14 2012/10/03 22:18:11 loi Exp $
  */
-public class SearchServicesImpl extends BaseRemoteService implements SearchServices {
+public class SearchServicesImpl {
 
-    public RawDataSet getRawDataSet(TableServerRequest request) throws RPCException{
-        try {
-            return  new SearchManager().getRawDataSet(request);
-
-        } catch (Throwable e) {
-            throw createRPCException(e);
-        }
-    }
-
-    public FileStatus getFileStatus(String filePath) throws RPCException {
-        try {
-            return  new SearchManager().getFileStatus(new File(filePath));
-        } catch (Throwable e) {
-            throw createRPCException(e);
-        }
-    }
-
-
-    public BackgroundStatus submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
-        try {
-            return  new SearchManager().getRawDataSetBackground(request, clientRequest, waitMillis);
-        } catch (Throwable e) {
-            throw createRPCException(e);
-        }
-    }
-
-    public RawDataSet getEnumValues(String filePath) throws RPCException {
-        try {
-            if (filePath != null) {
-                return  new SearchManager().getEnumValues(new File(filePath));
-            }
-        } catch (Throwable e) {
-            throw createRPCException(e);
-        }
-        return null;
-    }
-
-    public List<String> getDataFileValues(String filePath, List<Integer> rows, String colName) throws RPCException {
-        try {
-            return  new SearchManager().getDataFileValues(new File(filePath), rows, colName);
-        } catch (Throwable e) {
-            throw createRPCException(e);
-        }
-    }
-
-    public BackgroundStatus packageRequest(DownloadRequest request) throws RPCException {
-        try {
-            return  new SearchManager().packageRequest(request);
-
-        } catch (Throwable e) {
-            throw createRPCException(e);
-        }
-    }
 
 
     public BackgroundStatus getStatus(String id, boolean polling) { return BackgroundEnv.getStatus(id, polling); }
@@ -146,32 +81,14 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
         return true;
     }
 
-    public SearchServices.DownloadProgress getDownloadProgress(String fileKey) {
+    public DownloadProgress getDownloadProgress(String fileKey) {
         return BackgroundEnv.getDownloadProgress(fileKey);
     }
 
 
-
-    protected RPCException createRPCException(Throwable e) {
-         e.printStackTrace();
-         RPCRequest req = (RPCRequest) ServerContext.getRequestOwner().getAttribute("rpcRequest");
-
-        String userMsg = "";
-        String msg = "";
-        for (Throwable t= e.getCause(); (t!=null); t= t.getCause()) {
-            if (t instanceof EndUserException) {
-                userMsg= ((EndUserException)t).getEndUserMsg();
-            }
-            msg = t.getMessage();
-        }
-
-        RPCException rcpE= new RPCException (e, getClass().getSimpleName(),
-                                         req.getMethod().getName(),
-                                         "The call failed on the server",
-                                         msg);
-        rcpE.setEndUserMsg(userMsg);
-
-         return rcpE;
-     }
-
+    /**
+     * Utility/Convenience class.
+     * Use SearchServices.App.getInstance() to access static instance of SearchServicesAsync
+     */
+    public enum DownloadProgress { STARTING, WORKING, DONE, UNKNOWN, FAIL}
 }

@@ -266,10 +266,6 @@ public class QueryUtil {
         return convertToRawDataset(dg,0,20000);
     }
 
-    public static DataSet getDataSet(DataGroup dg, int startIndex, int pageSize) {
-        return convertToDataset(dg, startIndex, pageSize);
-    }
-
     public static void doSort(DataGroup dg, SortInfo sortInfo) {
         if (sortInfo != null) {
             String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG) == null ? "" : dg.getAttribute(SortInfo.SORT_INFO_TAG).getValue();
@@ -308,69 +304,6 @@ public class QueryUtil {
         return filterList.toArray(new CollectionUtil.Filter[filterList.size()]);
     }
 
-    public static DataSet convertToDataset(DataGroup dg, int startIdx, int pageSize) {
-        DataType[] types = dg.getDataDefinitions();
-        String[] headers = new String[types.length];
-        BaseTableColumn[] columns = new BaseTableColumn[types.length];
-        for (int i=0; i < types.length; i++) {
-            headers[i] = types[i].getKeyName();
-            columns[i] = new BaseTableColumn(types[i].getKeyName());
-
-            DataGroup.Attribute label = dg.getAttribute("col." + types[i].getKeyName() + ".Label");
-            if (label != null && !StringUtils.isEmpty(label.getValue())) {
-                columns[i].setTitle(types[i].getDefaultTitle());
-            }
-            columns[i].setWidth(types[i].getFormatInfo().getWidth());
-            DataType.FormatInfo.Align align = types[i].getFormatInfo().getDataAlign();
-            DataSet.Align calign = align == DataType.FormatInfo.Align.RIGHT ? DataSet.Align.RIGHT : DataSet.Align.LEFT;
-            columns[i].setAlign(calign);
-            columns[i].setWidth(types[i].getFormatInfo().getWidth());
-            columns[i].setUnits(types[i].getDataUnit());
-
-            DataGroup.Attribute vis = dg.getAttribute("col." + types[i].getKeyName() + ".Visibility");
-            if (vis == null || vis.getValue().equals("show")) {
-                columns[i].setHidden(false);
-                columns[i].setVisible(true);
-            } else if (vis.getValue().equals("hide")) {
-                columns[i].setHidden(false);
-                columns[i].setVisible(false);
-            } else {
-                columns[i].setHidden(true);
-                columns[i].setVisible(false);
-            }
-        }
-
-        int endIdx = Math.min(dg.size(), startIdx + pageSize);
-        if (startIdx >= endIdx) {
-            startIdx = (endIdx - pageSize > 0) ? endIdx - pageSize : 0;
-        }
-        List<DataObject> values = dg.values().subList(startIdx, endIdx);
-
-        // a simple column_name to display_name mappings
-        for(BaseTableColumn c : columns) {
-            c.setTitle(ColumnMapper.getTitle(c.getName()));
-        }
-
-        DataSet dataset = new DataSet(columns);
-        dataset.setStartingIdx(startIdx);
-        dataset.setTotalRows(dg.size());
-
-        BaseTableData model = new BaseTableData(headers);
-        for (DataObject row : values) {
-            String[] sdata = new String[row.getData().length];
-            String[] data = row.getFormatedData();
-            System.arraycopy(data, 0, sdata, 0, data.length);
-            model.addRow(sdata);
-        }
-
-        // setting attributes into the dataset
-        for (String key : dg.getAttributeKeys()) {
-            model.setAttribute(key, String.valueOf(dg.getAttribute(key).getValue()));
-        }
-
-        dataset.setModel(model);
-        return dataset;
-    }
 
     public static RawDataSet convertToRawDataset(DataGroup dg, int startIdx, int pageSize) {
 

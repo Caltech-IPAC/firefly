@@ -4,11 +4,6 @@ import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
-import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
-import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
-import edu.caltech.ipac.firefly.visualize.draw.RegionConnection;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.RegionParser;
 import edu.caltech.ipac.util.dd.Region;
@@ -23,54 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 public class RegionLoaderTest extends ConfigTest {
-
-    @Test
-    public void loadDs9String() throws IOException {
-
-        String footprintDefinitionImageSpace = "" + "# Region file format: DS9 version 4.1\n" + "# comment\n"
-                // + "global color=green dashlist=8 3 width=1 font=\"helvetica 10
-                // normal\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1
-                // include=1 source=1"
-                + "global color=red\n" + "image\n" // coord sys
-                // + "point(0,0) # point=circle 20 color=blue\n"
-                + "box(50,0,100,80,0)";
-        footprintDefinitionImageSpace = ""
-
-                + "J2000;polygon 40.61604915124965 42.80918792708867 40.712377144607814 42.93672942109403 40.88357410412381 42.865366469565274 40.78798704601202 42.73923576788347 40.61604915124965 42.80918792708867";
-
-        InputStream is = new ByteArrayInputStream(footprintDefinitionImageSpace.getBytes());
-        // read it with BufferedReader
-        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-        RegionParser parser = new RegionParser();
-        RegionFactory.ParseRet result = parser.processFile(br);
-
-        for (Region r : result.getRegionList())
-            LOG.debug(r.toString());
-        for (String s : result.getMsgList())
-            LOG.debug(s);
-
-        LOG.debug("Output:");
-        LOG.debug("------");
-        for (Region r : result.getRegionList())
-            LOG.debug(r.serialize());
-
-        RegionConnection reg = new RegionConnection(result.getRegionList());
-        List<DrawObj> drawData = new ArrayList<>();
-        // List<WorldPt> wptLst = new ArrayList<>();
-        MockPlott plot = new MockPlott();
-        //WorldPt worldCoords = plot.getWorldCoords(new ScreenPt(0, 0));
-        for (Region r : result.getRegionList()) {
-            DrawObj drawObj = reg.makeRegionDrawObject(r, plot, false);
-            // wptLst.add(r.getPt());
-            if (drawObj != null)
-                drawData.add(drawObj);
-        }
-
-        for (DrawObj r : drawData) {
-            // Assert.assertTrue(r instanceof PointDataObj);
-            LOG.debug(r.toString());
-        }
-    }
 
     @Test
     public void testPositionAngle() {
@@ -119,110 +66,5 @@ public class RegionLoaderTest extends ConfigTest {
         return jwstPolys;
     }
 
-    @Test
-    public void parseJwstPolygonString() {
 
-
-        String[] split = getFootprintString().split("\\s");
-        int polys = 0;
-        HashMap<String, List<Double>> map = new HashMap<>();
-        ArrayList<Double> lst = null;
-        for (int i = 0; i < split.length; i++) {
-            String trim = split[i].trim();
-            if (trim.length() > 0) {
-                if (trim.startsWith("POL")) {
-                    lst = new ArrayList<Double>();
-                    map.put("POL" + polys, lst);
-                    polys++;
-                } else {
-                    //LOG.debug(polys+": "+trim);
-                    lst.add(Double.parseDouble(trim));
-                }
-
-            }
-        }
-        WorldPt newCenter = new WorldPt(40.5, 42.81);
-        LOG.debug("Center " + newCenter.toString());
-        List<Region> footprintRegions = new ArrayList<>();
-        Set<String> keySet = map.keySet();
-        for (String string : keySet) {
-            List<Double> list = map.get(string);
-            Double[] array = list.toArray(new Double[list.size()]);
-            WorldPt[] pts = new WorldPt[array.length / 2];
-            for (int i = 0; i < array.length / 2; i++) {
-                WorldPt pt = new WorldPt(array[2 * i].doubleValue(), array[2 * i + 1].doubleValue());
-//				newCenter = pt;
-                LOG.debug(string + " " + pt.toString());
-                double computeDistance = VisUtil.computeDistance(pt, newCenter); //deg
-                double distDeg = MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.DEGREE, computeDistance);
-                double phi = VisUtil.getPositionAngle(pt, newCenter);
-
-                WorldPt newPt = VisUtil.getNewPosition(pt.getLon(), pt.getLat(), distDeg, phi);
-                //VisUtil.calculatePosition(pt, newCenter.getLon(), newCenter.getLat());
-//				pts[i] = new WorldPt(array[2 * i].doubleValue()+newPt.getLon(), array[2 * i + 1].doubleValue()+newPt.getLat());
-                pts[i] = newPt;
-                LOG.debug(string + " " + pts[i].toString());
-            }
-            for (int i = 0; i < array.length / 2 - 1; i++) {
-                LOG.debug(i + " " + VisUtil.computeDistance(pts[i], pts[i + 1]));
-            }
-
-            footprintRegions.add(new RegionLines(pts));
-        }
-
-        MockPlott plot = new MockPlott();
-        // Not a footprint obj
-        RegionLines xcross = new RegionLines(new WorldPt(-10, 0), /* Add this extra point to make a polygon plot.getWorldCoords(new ScreenPt(0, 0)),*/
-                new WorldPt(10, 0)); // rl.isPolygon() is called when drawing...
-        footprintRegions.add(xcross);
-        RegionConnection regConnection = new RegionConnection(footprintRegions);
-        int i = 0;
-        for (Region r : footprintRegions) {
-
-            DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
-            LOG.debug(r.toString());
-            LOG.debug(drawObj.toString());
-            if (drawObj instanceof FootprintObj) {
-                i++;
-            }
-        }
-        org.junit.Assert.assertTrue(i == footprintRegions.size() - 1);
-
-    }
-
-    /**
-     * Used for building regions - only matter height and zoom level
-     *
-     * @author ejoliet
-     */
-    class MockPlott extends WebPlot {
-
-        private double cdelt1 = -2.801912890205E-4; // example from FC 'm34'
-        // search DSS2 red
-
-        public MockPlott(WebPlotInitializer wpInit, boolean asOverlay) {
-            super(wpInit, asOverlay);
-            // TODO Auto-generated constructor stub
-        }
-
-        public MockPlott() {
-
-        }
-
-        @Override
-        public int getImageHeight() {
-            return 1;
-        }
-
-        @Override
-        public float getZoomFact() {
-            return 1;
-        }
-
-        public double getImagePixelScaleInDeg() {
-            return Math.abs(cdelt1);// * 3600.0/3600.0; see projection used in
-            // WebPlot
-        }
-
-    }
 }

@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
@@ -212,7 +211,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String file= params.getRequired(ServerParams.FILE);
-            SearchServices.DownloadProgress dp= new SearchServicesImpl().getDownloadProgress(file);
+            SearchServicesImpl.DownloadProgress dp= new SearchServicesImpl().getDownloadProgress(file);
             return dp.toString();
         }
     }

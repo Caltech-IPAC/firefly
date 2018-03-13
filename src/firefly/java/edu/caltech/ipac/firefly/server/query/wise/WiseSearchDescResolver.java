@@ -3,13 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.query.wise;
 
-import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
-import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
-import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
@@ -18,18 +15,12 @@ import edu.caltech.ipac.util.StringUtils;
  * @author loi
  * @version $Id: WiseSearchDescResolver.java,v 1.5 2012/02/14 21:17:54 tatianag Exp $
  */
-public class WiseSearchDescResolver extends SearchDescResolver implements SearchDescResolverCreator {
+public class WiseSearchDescResolver extends SearchDescResolver {
 
-    public static final String ID = "wise-" + WidgetFactory.SEARCH_DESC_RESOLVER_SUFFIX;
-
-    public SearchDescResolver create() {
-        return this;
-    }
+    public static final String ID = "wise-" + CommonParams.SEARCH_DESC_RESOLVER_SUFFIX;
 
     public String getTitle(Request req) {
-
-        return Application.getInstance().getProperties()
-                        .getProperty(req.getCmdName() + ".Title", req.getShortDesc());
+        return "WiseSearchDescResolver.getTitle: Not Implemented";
     }
 
     public String getDesc(Request req) {
@@ -58,7 +49,7 @@ public class WiseSearchDescResolver extends SearchDescResolver implements Search
         if (req.getParam("filename") != null) {
             source = "Multi-Object";
         } else {
-            source = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
+            source = req.getParam(CommonParams.TARGET_NAME_KEY);
             if (source == null) {
                 source = req.getParam(ServerParams.USER_TARGET_WORLD_PT);
             }

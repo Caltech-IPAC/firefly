@@ -4,14 +4,13 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
 import edu.caltech.ipac.firefly.data.WspaceMeta;
-import edu.caltech.ipac.firefly.rpc.WorkspaceServices;
 
 
 /**
  * @author loi
  * @version $Id: WorkspaceServiceImpl.java,v 1.15 2012/05/16 01:39:05 loi Exp $
  */
-public class WorkspaceServiceImpl extends BaseRemoteService implements WorkspaceServices {
+public class WorkspaceServiceImpl {
 
     public WspaceMeta getMeta(String relPath) {
         return null;

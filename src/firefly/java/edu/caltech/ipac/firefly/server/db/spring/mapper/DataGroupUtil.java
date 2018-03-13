@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.db.spring.mapper;
 
 
-import com.google.gwt.dom.client.Style;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -19,9 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 public class DataGroupUtil {

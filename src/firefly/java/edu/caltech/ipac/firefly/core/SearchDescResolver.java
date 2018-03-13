@@ -27,10 +27,7 @@ public class SearchDescResolver {
     }
 
     public String getTitle(Request req) {
-        String title = Application.getInstance().getProperties()
-                        .getProperty(req.getCmdName() + ".Title", req.getShortDesc());
-
-        return StringUtils.isEmpty(title) ? req.getShortDesc() : title;
+        return "SearchDescResolver.getTitle: Not Implemented";
     }
 
     public String getDesc(Request req) {

@@ -3,11 +3,6 @@
  */
 package edu.caltech.ipac.astro.conv;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
-
-@JsExport
-@JsType
 public class CoordConv {
    public static final int EQUATORIAL_J = 0;
    public static final int EQUATORIAL_B = 1;

@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.ResourcePath;
 import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.rpc.ResourceServices;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ResourceManager;
@@ -31,7 +30,7 @@ import java.util.List;
  * @author loi
  * @version $Id: ResourceServicesImpl.java,v 1.44 2012/04/20 19:49:17 roby Exp $
  */
-public class ResourceServicesImpl extends BaseRemoteService implements ResourceServices {
+public class ResourceServicesImpl {
 
     private static final Logger.LoggerImpl _statsLog= Logger.getLogger(Logger.INFO_LOGGER);
     private static final List<String> allIPList= new ArrayList<String>(500);
@@ -51,7 +50,7 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
                     params.getSortInfo(), QueryUtil.convertToDataFilter(params.getFilters()));
             return dataset;
         } catch (Throwable e) {
-            throw createRPCException(e);
+            throw new RPCException();
         }
     }
 
@@ -63,7 +62,7 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
             return dataset;
 
         } catch (Throwable e) {
-            throw createRPCException(e);
+            throw createRPCException(e, "getIpacTable");
         }
     }
 
@@ -71,7 +70,6 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
         return ServerContext.getRequestOwner().getUserKey();
     }
 
-    @Override
     public List<VOResourceEndpoint> getVOResources(String typeS, String keywords) throws RPCException {
         return VoRegistryUtil.getEndpoints(typeS, keywords);
     }
@@ -124,5 +122,11 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
             Counters.getInstance().increment(Counters.Category.Pages, referer);
         }
 
+    }
+
+    private RPCException createRPCException(Throwable e, String method) {
+        e.printStackTrace();
+        return new RPCException (e, getClass().getSimpleName(), "ResourcesServices:"+method,
+                "The call failed on the server", e.getMessage());
     }
 }

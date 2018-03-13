@@ -3,10 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
+import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -70,13 +70,13 @@ public class AnyFileDownload extends BaseHttpServlet {
             String retFile= (local!=null) ? local : downloadFile.getName();
             if (retFile.equals(USE_SERVER_NAME)) retFile= downloadFile.getName();
             insertResponseHeaders(res, downloadFile,retFile);
-            if (track) trackProgress(req, SearchServices.DownloadProgress.WORKING);
+            if (track) trackProgress(req, SearchServicesImpl.DownloadProgress.WORKING);
             try {
                 FileUtil.writeFileToStream(downloadFile, res.getOutputStream());
-                if (track) trackProgress(req, SearchServices.DownloadProgress.DONE);
+                if (track) trackProgress(req, SearchServicesImpl.DownloadProgress.DONE);
                 if (log) logActivity(downloadFile);
             } catch (IOException e) {
-                if (track) trackProgress(req, SearchServices.DownloadProgress.FAIL);
+                if (track) trackProgress(req, SearchServicesImpl.DownloadProgress.FAIL);
                 throw e;
             }
         }
@@ -106,7 +106,7 @@ public class AnyFileDownload extends BaseHttpServlet {
                                          "u", FileUtil.getSizeAsString(f.length()), "file", f.getPath());
     }
 
-    private static void trackProgress(HttpServletRequest req, SearchServices.DownloadProgress progress) {
+    private static void trackProgress(HttpServletRequest req, SearchServicesImpl.DownloadProgress progress) {
         StringKey statusKey= new StringKey(req.getQueryString());
         getCache().put(statusKey, progress);
     }

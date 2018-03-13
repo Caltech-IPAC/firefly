@@ -3,9 +3,6 @@
  */
 package edu.caltech.ipac.visualize.plot.projection;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
@@ -17,8 +14,6 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.io.Serializable;
 
 
-@JsExport
-@JsType
 public class Projection implements Serializable {
 
 
@@ -76,7 +71,6 @@ public class Projection implements Serializable {
           return outpt;
     }
 
-    @JsNoExport
     public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y) {
           ImageWorkSpacePt outpt= new ImageWorkSpacePt (
                pt.getX()+(x * _scale1), pt.getY()+(y * _scale2) );
