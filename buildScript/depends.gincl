@@ -59,7 +59,7 @@ ext {
              ':gwt-dev',
              ]
 
-  firefly_ext_lib = [ ':xstream-gwt', ':simbad_ws' ]
+  firefly_ext_lib = [ ':simbad_ws' ]
 
   firefly_lib = [ firefly_ext_lib, ':firefly' ]
 
@@ -113,7 +113,9 @@ repositories {
 jar.destinationDir = file ("$rootDir/jars/build")
 
 clean {
-  delete "${jar.destinationDir}/${jar.baseName}.jar"
+  doLast {
+    project.delete "${jar.destinationDir}/${jar.baseName}.jar"
+  }
 }
 
 task buildClient (dependsOn: loadConfig) {
