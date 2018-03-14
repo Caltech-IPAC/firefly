@@ -31,7 +31,7 @@ export function getCoverageRequest(wp, size, baseTitle, blank= false, gridOn= Gr
         request.setTitle(baseTitle);
     }
     else if (radiusAS < 500) {
-        request = WebPlotRequest.make2MASSRequest(wp, 'k', size);
+        request = WebPlotRequest.make2MASSRequest(wp, 'asky', 'k', size);
         title = baseTitle + ' 2MASS k';
         request.setTitle(title);
     } else if (radiusAS < 1800) {

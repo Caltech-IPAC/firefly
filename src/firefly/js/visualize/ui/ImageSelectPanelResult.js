@@ -122,7 +122,7 @@ function imagePlotOnSurvey(crtCatalogId, request) {
             break;
 
         case TWOMASS:
-            wpr = WebPlotRequest.make2MASSRequest(wp, survey, sizeInDeg);
+            wpr = WebPlotRequest.make2MASSRequest(wp, survey, band, sizeInDeg);
             break;
         case ATLAS:
             //TODO: Not sure how to combine several dataset with different missions under same ATLAS service type
