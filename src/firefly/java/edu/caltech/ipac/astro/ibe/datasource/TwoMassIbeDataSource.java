@@ -136,6 +136,11 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
             }
         }
         String subSize = pathInfo.get("subsize");
+        if(!StringUtils.isEmpty(subSize)){
+            if(subSize.equals("null")){
+                subSize = null;
+            }
+        }
 
         if (!StringUtils.isEmpty(subLon) && !StringUtils.isEmpty(subLat) && !StringUtils.isEmpty(subSize)) {
             dataParam.setCutout(true, subLon + "," + subLat, subSize);
