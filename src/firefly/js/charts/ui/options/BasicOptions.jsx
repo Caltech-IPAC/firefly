@@ -6,6 +6,8 @@ import {dispatchChartUpdate, dispatchChartAdd, getChartData} from '../../ChartsC
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import FieldGroupUtils, {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange, VALUE_CHANGE, MULTI_VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
+import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
+
 import {showColorPickerDialog} from '../../../ui/ColorPicker.jsx';
 import Validate from '../../../util/Validate.js';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
@@ -26,7 +28,7 @@ import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
 
 const fieldProps = {labelWidth: 50, size: 25};
 const boundariesFieldProps = {labelWidth: 35, size: 10};
-const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
+export const helpStyle = {fontStyle: 'italic', color: '#808080', paddingBottom: 10};
 const xyratioFldName = 'fireflyLayout.xyratio';
 
 const X_AXIS_OPTIONS = [
@@ -343,89 +345,94 @@ export class BasicOptionFields extends Component {
         // TODO: need color input field
         const colorFldPath = `data.${activeTrace}.marker.color`;
 
-        const borderStyle = {padding: '15px 10px 0', border: '2px solid #a5a5a5', borderRadius: 10};
-        const noBoarderStyle = {padding: '14px 3px 0'};
-        const style = showMultiTrace?borderStyle:noBoarderStyle;
         return (
-            <div className={`FieldGroup__${align}`}
-                 style={style }>
-                {showMultiTrace && <ValidationField fieldKey={`data.${activeTrace}.name`}/>}
-                {!noColor && showMultiTrace && <div style={{whiteSpace: 'nowrap'}}>
-                    <ValidationField inline={true} fieldKey={colorFldPath}/>
-                    <div
-                    style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
-                    title='Select trace color'
-                    onClick={() => showColorPickerDialog(getFieldVal(groupKey, colorFldPath), true, false,
-                    (ev) => {
-                        const {r, g, b, a} = ev.rgb;
-                        const rgbStr = `rgba(${r},${g},${b},${a})`;
-                        dispatchValueChange({fieldKey: colorFldPath, groupKey, value: rgbStr, valid: true});
-                    }, groupKey)}>
-                    <ToolbarButton icon={MAGNIFYING_GLASS}/>
+            <FieldGroupCollapsible  header='Layout Options'
+                                    initialState= {{ value:'closed' }}
+                                    fieldKey='layoutOptions'>
+                <div className={`FieldGroup__${align}`}>
+                    {showMultiTrace && <ValidationField fieldKey={`data.${activeTrace}.name`}/>}
+                    {showMultiTrace && !noColor && <div style={{whiteSpace: 'nowrap'}}>
+                        <ValidationField inline={true} fieldKey={colorFldPath}/>
+                        <div
+                            style={{display: 'inline-block', paddingLeft: 2, verticalAlign: 'top'}}
+                            title='Select trace color'
+                            onClick={() => showColorPickerDialog(getFieldVal(groupKey, colorFldPath), true, false,
+                                (ev) => {
+                                    const {r, g, b, a} = ev.rgb;
+                                    const rgbStr = `rgba(${r},${g},${b},${a})`;
+                                    dispatchValueChange({fieldKey: colorFldPath, groupKey, value: rgbStr, valid: true});
+                                }, groupKey)}>
+                            <ToolbarButton icon={MAGNIFYING_GLASS}/>
+                        </div>
                     </div>
-                    </div>
-                   }
+                    }
 
-                 {showMultiTrace &&  <div> <br/><ValidationField fieldKey={'layout.title'}/><br/></div>}
+                    {showMultiTrace &&  <div> <br/><ValidationField fieldKey={'layout.title'}/><br/></div>}
 
 
-                {/* checkboxgroup is not working right when there's only 1 .. will add in later
+                    {/* checkboxgroup is not working right when there's only 1 .. will add in later
                  <CheckboxGroupInputField fieldKey={'layout.showlegend'}/>
                  */}
-                {!noXY && <div>
-                    <ValidationField fieldKey={'layout.xaxis.title'}/>
-                    <CheckboxGroupInputField fieldKey='__xoptions'
-                                             options={xNoLog || isXNotNumeric ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
-                    <br/>
-                    <ValidationField fieldKey={'layout.yaxis.title'}/>
-                    <CheckboxGroupInputField fieldKey='__yoptions'
-                                             options={yNoLog || isYNotNumeric ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
-                    <br/>
-                    <div style={helpStyle}>
-                        Set plot boundaries if different from data range.
-                    </div>
-                    {isXNotNumeric ? false :
-                        <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
-                            <div style={{paddingRight: 5}}>
-                                <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
-                            </div>
-                            <div style={{paddingRight: 5}}>
-                                <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
-                            </div>
-                        </div>}
-                    {isYNotNumeric ? false :
-                        <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
-                            <div style={{paddingRight: 5}}>
-                                <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
-                            </div>
-                            <div style={{paddingRight: 5}}>
-                                <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
-                            </div>
+
+                    {!noXY && <div>
+
+                        <ValidationField fieldKey={'layout.xaxis.title'}/>
+                        <CheckboxGroupInputField fieldKey='__xoptions'
+                                                 options={xNoLog || isXNotNumeric ? X_AXIS_OPTIONS_NOLOG : X_AXIS_OPTIONS}/>
+                        <br/>
+                        <ValidationField fieldKey={'layout.yaxis.title'}/>
+                        <CheckboxGroupInputField fieldKey='__yoptions'
+                                                 options={yNoLog || isYNotNumeric ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
+                        <br/>
+
+                        <div style={helpStyle}>
+                            Set plot boundaries if different from data range.
                         </div>
-                    }
-                </div>}
-                <div style={helpStyle}>
-                    Enter display aspect ratio below.<br/>
-                    Leave it blank to use all available space.<br/>
-                </div>
-                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 5px 5px 0'}}>
-                    <div style={{paddingRight: 5}}>
-                        <ValidationField style={{width:15}} fieldKey={xyratioFldName}/>
-                    </div>
-                    {this.state.displayStretchOptions && <div style={{paddingRight: 5}}>
-                        <RadioGroupInputField fieldKey={'fireflyLayout.stretch'}
-                                              alignment='horizontal'
-                                              options={[
-                                          {label: 'height', value: 'fit'},
-                                          {label: 'width', value: 'fill'}
-                                      ]}/>
+                        {isXNotNumeric ? false :
+                            <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
+                                <div style={{paddingRight: 5}}>
+                                    <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
+                                </div>
+                                <div style={{paddingRight: 5}}>
+                                    <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
+                                </div>
+                            </div>}
+                        {isYNotNumeric ? false :
+                            <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
+                                <div style={{paddingRight: 5}}>
+                                    <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
+                                </div>
+                                <div style={{paddingRight: 5}}>
+                                    <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
+                                </div>
+                            </div>
+                        }
+
                     </div>}
+                    <div style={helpStyle}>
+                        Enter display aspect ratio below.<br/>
+                        Leave it blank to use all available space.<br/>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 5px 5px 0'}}>
+                        <div style={{paddingRight: 5}}>
+                            <ValidationField style={{width:15}} fieldKey={xyratioFldName}/>
+                        </div>
+                        {this.state.displayStretchOptions && <div style={{paddingRight: 5}}>
+                            <RadioGroupInputField fieldKey={'fireflyLayout.stretch'}
+                                                  alignment='horizontal'
+                                                  options={[
+                                                      {label: 'height', value: 'fit'},
+                                                      {label: 'width', value: 'fill'}
+                                                  ]}/>
+                        </div>}
+                    </div>
+
+                    <div style={{overflow: 'hidden', height: 0, width: 0}}>
+                        <ValidationField fieldKey='__xreset'/>
+                        <ValidationField fieldKey='__yreset'/>
+                    </div>
                 </div>
-                <div style={{overflow: 'hidden', height: 0, width: 0}}>
-                    <ValidationField fieldKey='__xreset'/>
-                    <ValidationField fieldKey='__yreset'/>
-                </div>
-            </div>
+            </FieldGroupCollapsible>
         );
     }
 }

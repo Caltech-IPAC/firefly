@@ -24,6 +24,33 @@ function getToolbarStates(chartId) {
             dragmode: get(layout, 'dragmode'), traceNames, columns};
 }
 
+
+export class SingleTraceUIToolbar extends SimpleComponent {
+    getNextState(np) {
+        const {chartId} = np || this.props;
+        return getToolbarStates(chartId);
+    }
+
+    render() {
+        const {chartId, expandable} = this.props;
+        const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected} = this.state;
+        const help_id = get(getChartData(chartId), 'help_id');
+        return (
+            <div className='ChartToolbar'>
+                <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
+                <div className='ChartToolbar__buttons'>
+                    <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
+                    <SaveBtn {...{chartId}} />
+                    <OptionsBtn {...{chartId, showMultiTrace: false }} />
+                    {expandable && <ExpandBtn {...{chartId}} />}
+                </div>
+                { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
+            </div>
+        );
+    }
+
+}
+
 export class ScatterToolbar extends SimpleComponent {
 
     getNextState(np) {
@@ -33,54 +60,30 @@ export class ScatterToolbar extends SimpleComponent {
 
 
     render() {
-        const {chartId, expandable, toggleOptions, showMultiTrace} = this.props;
+        const {chartId, expandable, toggleOptions} = this.props;
         const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
         const hasSelectionMode = Boolean(tbl_id);
         const help_id=get(getChartData(chartId), 'help_id');
 
-        if (showMultiTrace){
-            return (
-                <div className='ChartToolbar'>
-                    <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
-                    <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
-                    <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode}}/>
-                    <div className='ChartToolbar__buttons'>
-                        <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
-                        <SaveBtn {...{chartId}} />
-                        <RestoreBtn {...{chartId}} />
-                        {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
-                        <OptionsBtn {...{chartId}} />
-                        {expandable && <ExpandBtn {...{chartId}} />}
-                    </div>
-                    { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
+        return (
+            <div className='ChartToolbar'>
+                <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
+                <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
+                <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode}}/>
+                <div className='ChartToolbar__buttons'>
+                    <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
+                    <SaveBtn {...{chartId}} />
+                    <RestoreBtn {...{chartId}} />
+                    {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
+                    <OptionsBtn {...{chartId}} />
+                    {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
-            );
-        }
-        else {
-            return (
-                <div className='ChartToolbar'>
-                    <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
-                    <div className='ChartToolbar__buttons'>
-                         <SaveBtn {...{chartId}} />
-                        <RestoreBtn {...{chartId}} />
-                        <OptionsBtn {...{chartId, showMultiTrace }} />
-                        {expandable && <ExpandBtn {...{chartId}} />}
-                    </div>
-                    { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
-                </div>
-            );
-
-        }
-
+                { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
+            </div>
+        );
     }
 }
 
-ScatterToolbar.propTypes = {
-    showMultiTrace: PropTypes.bool
-};
-ScatterToolbar.defaultProps = {
-    showMultiTrace: true
-};
 
 function isSelectable(tbl_id, chartId, type) {
     const typeWithX = ['heatmap', 'histogram2dcontour', 'histogram2d', 'scatter'];

@@ -24,7 +24,7 @@ import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
 import {HeatmapOptions} from './ui/options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './ui/options/FireflyHistogramOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
-import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
+import {ScatterToolbar, BasicToolbar, SingleTraceUIToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
@@ -60,6 +60,10 @@ export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
 export function multitraceDesign() {
     return get(getAppOptions(), 'charts.multitrace');
+}
+
+export function singleTraceUI() {
+    return get(getAppOptions(), 'charts.singleTraceUI');
 }
 
 /**
@@ -304,7 +308,10 @@ export function getOptionsUI(chartId) {
     }
 }
 
-export function getToolbarUI(chartId, activeTrace=0) {
+export function getToolbarUI(chartId, activeTrace=0, showMultiTrace) {
+
+    if (!showMultiTrace) { return SingleTraceUIToolbar; }
+
     const {data} =  getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
     if (isScatter2d(type)) {

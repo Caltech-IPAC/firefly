@@ -8,7 +8,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, helpStyle, submitChanges} from './BasicOptions.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
@@ -202,6 +202,10 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey,showM
     return (
         <div className='FieldGroup__vertical'>
             <br/>
+            <div style={helpStyle}>
+                For X and Y, enter a column or an expression<br/>
+                ex. log(col); 100*col1/col2; col1-col2
+            </div>
             <ColumnOrExpression {...xProps}/>
             <Errors axis='x' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
             <br/>

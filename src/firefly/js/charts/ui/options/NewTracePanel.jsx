@@ -35,11 +35,11 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id,
     switch(traceType) {
         case 'scatter':
         case 'scattergl':
-            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id,showMultiTrace}}/>);
+            return (<ScatterOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
         case 'fireflyHeatmap':
-            return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
+            return (<HeatmapOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
         case 'fireflyHistogram':
-            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id}}/>);
+            return (<FireflyHistogramOptions {...{chartId, activeTrace, groupKey, tbl_id, showMultiTrace}}/>);
         default:
             return (
                 <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>

@@ -10,7 +10,7 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, helpStyle, submitChanges} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 
@@ -29,7 +29,7 @@ export class HeatmapOptions extends SimpleComponent {
     }
 
     render() {
-        const {chartId, tbl_id:tblIdProp} = this.props;
+        const {chartId, tbl_id:tblIdProp, showMultiTrace} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-heatmap-${activeTrace}`;
@@ -39,7 +39,7 @@ export class HeatmapOptions extends SimpleComponent {
             <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                 {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
                 <br/>
-                <BasicOptionFields {...{activeTrace, groupKey, noColor: true}}/>
+                <BasicOptionFields {...{activeTrace, groupKey, noColor: true, showMultiTrace}}/>
             </FieldGroup>
         );
     }
@@ -123,6 +123,10 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
     return (
         <div className='FieldGroup__vertical'>
             <br/>
+            <div style={helpStyle}>
+                For X and Y, enter a column or an expression<br/>
+                ex. log(col); 100*col1/col2; col1-col2
+            </div>
             {colValStats && <ColumnOrExpression {...xProps}/>}
             {colValStats && <ColumnOrExpression {...yProps}/>}
             <div style={{whiteSpace: 'nowrap'}}>

@@ -50,6 +50,12 @@ function getChartActions({chartId, tbl_id}) {
 function onChartAction({chartAction, tbl_id, chartId, hideDialog}) {
     return (fields) => {
         switch (chartAction) {
+            case CHART_ADDNEW:
+                addNewTrace({fields, tbl_id, hideDialog}); // no chart id
+                break;
+            case CHART_TRACE_ADDNEW:
+                addNewTrace({fields, tbl_id, chartId, hideDialog});
+                break;
              case CHART_TRACE_MODIFY:
                 const {activeTrace, data, fireflyData} = getChartData(chartId);
                 const type = get(data, `${activeTrace}.type`, 'scatter');
@@ -91,10 +97,10 @@ export class ChartSelectPanel extends SimpleComponent {
     }
 
     componentWillMount() {
-        const {chartId, tbl_id, chartAction,showMultiTrace} = this.props;
+        const {chartId, tbl_id, chartAction} = this.props;
         const oldChartAction = getFieldVal(chartActionPanelKey, chartActionKey);
-        let newChartAction = oldChartAction || chartAction;
-        const chartActions = showMultiTrace?getChartActions({chartId, tbl_id}):[CHART_TRACE_MODIFY];
+        let newChartAction = chartAction;
+        const chartActions = getChartActions({chartId, tbl_id});
 
         if (!newChartAction || !chartActions.includes(newChartAction)) {
             newChartAction = chartActions[0];
@@ -108,17 +114,17 @@ export class ChartSelectPanel extends SimpleComponent {
     }
 
     getNextState(np) {
-        const chartAction = getFieldVal(chartActionPanelKey, chartActionKey);
+        const chartAction = getFieldVal(chartActionPanelKey, chartActionKey) || this.props.chartAction;
         return {chartAction};
     }
 
 
     render() {
 
-        const {tbl_id, chartId, hideDialog,showMultiTrace} = this.props;
+        const {tbl_id, chartId, hideDialog, showMultiTrace} = this.props;
 
         const chartActions = getChartActions({chartId, tbl_id});
-        const {chartAction} =showMultiTrace?this.state:{chartAction:CHART_TRACE_MODIFY};
+        const {chartAction} = this.state;
         const groupKey = getGroupKey(chartId, CHART_TRACE_MODIFY);
 
         return (
@@ -156,8 +162,7 @@ function ChartAction(props) {
 
     const {chartActions, chartAction, groupKey, fieldKey} = props;
 
-
-    var options = [];
+    const options = [];
 
     if (chartActions.includes(CHART_ADDNEW)) {
         options.push({label: 'Add New Chart', value: CHART_ADDNEW});
@@ -165,9 +170,9 @@ function ChartAction(props) {
     if (chartActions.includes(CHART_TRACE_ADDNEW)) {
         options.push({label: 'Add New Trace', value: CHART_TRACE_ADDNEW});
     }
-   /* if (chartActions.includes(CHART_TRACE_MODIFY)) {
+    if (chartActions.includes(CHART_TRACE_MODIFY)) {
         options.push({label: 'Modify Active Trace', value: CHART_TRACE_MODIFY});
-    }*/
+    }
     if (chartActions.includes(CHART_TRACE_REMOVE)) {
         options.push({label: 'Remove Active Trace', value: CHART_TRACE_REMOVE});
     }
@@ -194,20 +199,18 @@ ChartAction.propTypes = {
 };
 
 function ChartActionOptions(props) {
-    const {chartAction, tbl_id, chartId:chartIdProp, groupKey, hideDialog,showMultiTrace} = props;
+    const {chartAction, tbl_id, chartId:chartIdProp, groupKey, hideDialog, showMultiTrace} = props;
 
     const chartId = chartAction === CHART_ADDNEW ? undefined : chartIdProp;
 
-    if (showMultiTrace) {
-        if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
-            return (<NewTracePanel {...{groupKey, tbl_id, chartId, hideDialog,showMultiTrace}}/>);
-        }
+    if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
+        return (<NewTracePanel {...{groupKey, tbl_id, chartId, hideDialog, showMultiTrace}}/>);
     }
     if (chartAction === CHART_TRACE_MODIFY) {
         const OptionsUI = getOptionsUI(chartId);
         return (
             <div style={{padding: 10}}>
-                <OptionsUI {...{chartId, groupKey,showMultiTrace}}/>
+                <OptionsUI {...{chartId, groupKey, showMultiTrace}}/>
             </div>
         );
     } else if (chartAction === CHART_TRACE_REMOVE) {
