@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.server.db.DbCustomFunctions.createCustomFunctions;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.firefly.util.DataSetParser.*;
@@ -448,26 +449,6 @@ public class EmbeddedDbUtil {
         return v == null ? def : Integer.parseInt(v);
     }
 
-
-    /**
-     * This is where you create stored function or procedure.
-     * @param dbFile
-     * @param dbAdapter
-     */
-    private static void createCustomFunctions(File dbFile, DbAdapter dbAdapter) {
-
-        String decimate_key =
-                "CREATE FUNCTION decimate_key(xVal DOUBLE, yVal DOUBLE, xMin DOUBLE, yMin DOUBLE, nX INT, nY INT, xUnit DOUBLE, yUnit DOUBLE)\n" +
-                        "RETURNS CHAR VARYING(20)\n" +
-                        "LANGUAGE JAVA DETERMINISTIC NO SQL\n" +
-                        "EXTERNAL NAME 'CLASSPATH:edu.caltech.ipac.firefly.server.db.DbCustomFunctions.getDecimateKey'\n";
-        try {
-            JdbcFactory.getTemplate(dbAdapter.getDbInstance(dbFile)).execute(decimate_key);
-        } catch (Exception ex) {
-            logger.error("Fail to create custom function:" + decimate_key);
-        }
-
-    }
 
     /**
      * This function is to test if a table exists in the given database.

@@ -661,31 +661,40 @@ export function formatColExpr({colOrExpr, quoted, colNames}) {
     if (!colOrExpr) return;
 
     // do not change the expression, if it's matching a column name
-    if (colNames && colNames.find((c) => c===colOrExpr)) {
+    if (colNames && colNames.find((c) => c === colOrExpr)) {
         return quoted ? `"${colOrExpr}"` : colOrExpr;
     }
 
-    if (quoted) {
-        const expr = new Expression(colOrExpr, colNames);
-        if (expr.isValid()) {
+    const expr = new Expression(colOrExpr, colNames);
+    if (expr.isValid()) {
+        // remove white space
+        colOrExpr = expr.getCanonicalInput();
+
+        if (quoted) {
             // quote columns, assuming column names are alpha-numeric
             expr.getParsedVariables().forEach((v) => {
-                const re = new RegExp('([^A-Za-z\d_"]|^)(' + v + ')([^A-Za-z\d_"]|$)', 'g');
-                colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
+                if (!v.startsWith('"')) {
+                    const re = new RegExp('([^A-Za-z\d_"]|^)(' + v + ')([^A-Za-z\d_"]|$)', 'g');
+                    colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
+                }
             });
         }
     }
 
-    // remove white space, otherwise column filters are parsed incorrectly
-    colOrExpr = colOrExpr.replace(/\s+/g, '');
-    // substitute expression functions with the functions db understands
-    [
-        ['lg', 'log10']
-    ].map(([f,r]) => {
-        const re = new RegExp(`${f}\\(`, 'g');
-        colOrExpr = colOrExpr.replace(re, `${r}(`);
-    });
     return colOrExpr;
+}
+
+/**
+ * Convenience function to quote column name if it's not alphanumeric
+ * (if the name is not alphanumeric, it needs to be quoted in expressions)
+ * @param name
+ * @returns {*}
+ */
+export function quoteNonAlphanumeric(name) {
+    if (!/^[A-Za-z\d_]+$/.test(name) && !name.startsWith('"')) {
+        name = `"${name}"`;
+    }
+    return name;
 }
 
 // plotly default color (items 0-7) + color-blind friendly colors
@@ -914,6 +923,10 @@ export function getDefaultChartProps(tbl_id) {
     }
 
     if (xCol && yCol)  {
+        // non-alphanumeric column names should be quoted in expressions
+        xCol = Object.assign({}, xCol, {name: quoteNonAlphanumeric(xCol.name)});
+        yCol = Object.assign({}, yCol, {name: quoteNonAlphanumeric(yCol.name)});
+        
         if (xCol === yCol) {
             // if only one numeric column is available, do histogram
             const chartData = {

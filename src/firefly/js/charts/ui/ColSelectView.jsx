@@ -10,6 +10,8 @@ import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getTblById, calcColumnWidths} from '../../tables/TableUtil.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
+import {quoteNonAlphanumeric} from '../ChartUtil.js';
+
 //import HelpIcon from '../../ui/HelpIcon.jsx';
 const popupId = 'XYColSelect';
 const TBL_ID ='selectCol';
@@ -42,17 +44,17 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
     }
 
     const colNames = colValStats.map((colVal) => {return colVal.name;});
-    var hlRowNum = getHlRow(currentVal,colNames) || 0;
+    const hlRowNum = getHlRow(currentVal,colNames) || 0;
 
     // make a local table for plot column selection panel
-    var columns = [
+    const columns = [
         {name: 'Name'},
         {name: 'Unit'},
         {name: 'Type'},
         {name: '', visibility: 'hidden'}
     ];
-    var data = [];
-    for (var i = 0; i < colValStats.length; i++) {
+    const data = [];
+    for (let i = 0; i < colValStats.length; i++) {
             data[i] = [
                         colValStats[i].name,
                         colValStats[i].unit,
@@ -69,11 +71,11 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
         columns[3] = {name: 'Description', prefWidth: widths[3], visibility: 'show'};
     }
 
-    var tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
+    const tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
 
     // 360 is the width of table options
     const minWidth = Math.max(columns.reduce((rval, c) => isFinite(c.prefWidth) ? rval+c.prefWidth : rval, 0), 360);
-    var popup = (<PopupPanel title={popupTitle}>
+    const popup = (<PopupPanel title={popupTitle}>
             {popupForm(tableModel,onColSelected,buttonText,popupId, minWidth)}
         </PopupPanel>
 
@@ -146,14 +148,14 @@ function renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId) {
 
 function setXYColumns(tblId,onColSelected) {
     const tableModel = getTblById(tblId);
-    var hlRow = tableModel.highlightedRow || 0;
-    const selectedColName = tableModel.tableData.data[hlRow][0];
+    const hlRow = tableModel.highlightedRow || 0;
+    const selectedColName = quoteNonAlphanumeric(tableModel.tableData.data[hlRow][0]);
     onColSelected(selectedColName);
 
 }
 
 function getHlRow(currentVal,colNames) {
-    for(var i = 0; i < colNames.length; i++) {
+    for(let i = 0; i < colNames.length; i++) {
         if (colNames[i] === currentVal) {
             return i;
         }

@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {isArray} from 'lodash';
 import {Parser} from './Parser.js';
 import {makeVariable} from './Variable.js';
 
@@ -17,7 +18,7 @@ export class Expression {
         this.userInput = input;
         const parser = new Parser();
         parser.allow(null);
-        if (allowedVariables != null) {
+        if (isArray(allowedVariables)) {
             allowedVariables.forEach((v)=>{
                 parser.allow(makeVariable(v));
             });
@@ -25,6 +26,7 @@ export class Expression {
         try {
             this.expr = parser.parseString(input);
             this.parsedVariablesMap = parser.getParsedVariables();
+            this.canonicalInput = parser.getCanonicalInput();
         } catch (se) {
             this.syntaxException = se;
         }
@@ -32,6 +34,10 @@ export class Expression {
 
     getInput() {
         return this.userInput;
+    }
+
+    getCanonicalInput() {
+        return this.canonicalInput;
     }
 
     isValid() {
@@ -59,7 +65,7 @@ export class Expression {
      */
     setVariableValue(name, value) {
         const v = this.parsedVariablesMap.get(name);
-        if (v != null) {
+        if (v) {
             v.setValue(value);
         } else {
             throw ('Invalid variable: '+name);
