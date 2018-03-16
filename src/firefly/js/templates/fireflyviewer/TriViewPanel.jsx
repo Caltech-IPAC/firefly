@@ -27,11 +27,14 @@ export class TriViewPanel extends PureComponent {
 
     componentWillUnmount() {
         this.removeListener && this.removeListener();
+        this.isUnmounted = true;
     }
 
     storeUpdate() {
-        const nextState = pick(getLayouInfo(), ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images']);
-        this.setState(nextState);
+        if (!this.isUnmounted) {
+            const nextState = pick(getLayouInfo(), ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images']);
+            this.setState(nextState);
+        }
     }
 
     render() {

@@ -9,7 +9,6 @@ import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
-import {getWsChannel} from './messaging/WebSocketClient.js';
 import {getProp} from '../util/WebUtil.js';
 
 export const APP_DATA_PATH = 'app_data';
@@ -228,6 +227,28 @@ export const dispatchActiveTarget= function(wp,corners) {
         flux.process({type: ACTIVE_TARGET, payload});
     }
 };
+
+/**
+ * @returns {object}  websocket connection information.
+ */
+export function getWsInfo() {
+    return get(flux.getState(), [APP_DATA_PATH, 'websocket']);
+}
+
+/**
+ * @returns {string}  the channel websocket is connected to.
+ */
+export function getWsChannel() {
+    return get(flux.getState(), [APP_DATA_PATH, 'websocket', 'channel']);
+}
+
+/**
+ * @returns {string}  the connection ID websocket is connected to.
+ */
+export function getWsConnId() {
+    return get(flux.getState(), [APP_DATA_PATH, 'websocket', 'connId']);
+}
+
 
 /*---------------------------- REDUCERS -----------------------------*/
 

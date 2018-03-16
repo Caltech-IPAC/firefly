@@ -27,6 +27,7 @@ import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {dispatchAppOptions} from './core/AppDataCntlr.js';
 import {init} from './rpc/CoreServices.js';
 import {getProp} from './util/WebUtil.js';
+import {initLostConnectionWarning} from './ui/LostConnection.jsx'; 
 
 export const flux = reduxFlux;
 
@@ -103,10 +104,11 @@ function fireflyInit() {
         window.firefly.initialized = true;
 
         // start WebSocketClient
-        wsConnect().then((client) => {
+        wsConnect((client) => {
             client.addListener(ActionEventHandler);
             window.firefly.wsClient = client;
             init();    //TODO.. need to add spaName when we decide to support it.
+            initLostConnectionWarning();
         });
     }
 }

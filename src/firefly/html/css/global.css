@@ -311,6 +311,25 @@
 }
 /*------------------- loading mask >---------------------*/
 
+.lost-connection {
+    position: fixed;
+    z-index: 200;
+    top: 50%;
+    left: 50%;
+    height: 125px;
+    width: 450px;
+    margin-top: -50px;
+    margin-left: -200px;
+    background-color: #FFF7C2;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: maroon;
+    border: solid 1px #bbb285;
+}
+
 .banner-background {
     background: url('/images/ipac_bar.jpg');
 }

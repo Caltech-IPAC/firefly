@@ -13,6 +13,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.distribution.CacheManagerPeerListener;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
 import net.sf.ehcache.distribution.RMICachePeer;
@@ -79,8 +80,10 @@ public class ServerStatus extends BaseHttpServlet {
         }
 
 
-        List localCachePeers = cm.getCachePeerListener("RMI").getBoundCachePeers();
-        for (Object cp : localCachePeers) {
+        CacheManagerPeerListener listeners = cm.getCachePeerListener("RMI");
+        if (listeners == null || listeners.getBoundCachePeers() == null) return;
+
+        for (Object cp : listeners.getBoundCachePeers()) {
             RMICachePeer rcp = (RMICachePeer) cp;
             try{
                 writer.println("\tRMICachePeer : " + rcp.getUrl());

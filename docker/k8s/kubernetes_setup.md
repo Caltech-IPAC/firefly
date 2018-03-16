@@ -235,7 +235,7 @@ Log in using the admin-user token from above
 Build updated firefly and push image to DockerHub
 
     $ gradle -Penv=dev :firefly:war
-    $ gradle -Pdocker_tag=k8s :firefly:dockerPublish            // this will create a docker image(dockerImage) witht the tag, then push it to DockHub
+    $ gradle -Pdocker_tag=k8s :firefly:dockerPublish            // this will create a docker image(dockerImage) with the given tag, then push it to DockHub
 
 Edit firefly.yaml with the updated firefly version.  Then,
 
