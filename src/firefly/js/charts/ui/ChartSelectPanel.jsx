@@ -250,9 +250,9 @@ export function showChartsDialog(chartId,  showMultiTrace) {
               chartId,
               chartAction: CHART_TRACE_MODIFY,
               showMultiTrace,
-                hideDialog: ()=>showOptionsPopup(null, false)}}/>
+                hideDialog: ()=>showOptionsPopup({show:false})}}/>
     );
-    showOptionsPopup(content, true);
+    showOptionsPopup({content, title: 'Plot Parameters', modal: true, show: true});
 }
 
 

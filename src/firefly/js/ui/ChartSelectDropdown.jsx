@@ -9,7 +9,7 @@ import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import {uniqueChartId, multitraceDesign, getNumericCols} from '../charts/ChartUtil.js';
+import {uniqueChartId, multitraceDesign, singleTraceUI, getNumericCols} from '../charts/ChartUtil.js';
 import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
                        setOptions as XYPlotSetOptions} from '../charts/ui/XYPlotOptions.jsx';
@@ -25,7 +25,6 @@ import CompleteButton from './CompleteButton.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 import {isEmpty} from 'lodash';
-import {showOptionsPopup} from './PopupUtil.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
 
@@ -224,7 +223,7 @@ export class ChartSelectDropdown extends PureComponent {
 
     render() {
         const {tblId, tblStatsData} = this.state;
-        const showMultiTrace = !multitraceDesign();
+        const showMultiTrace = !singleTraceUI();
 
         let noChartReason='';
         if (tblId) {
@@ -239,16 +238,6 @@ export class ChartSelectDropdown extends PureComponent {
         }
 
         if (!noChartReason) {
-
-          /*const content =(<ChartSelectPanel {...{
-            tbl_id: tblId,
-            chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
-            chartAction: CHART_ADDNEW,
-            showMultiTrace,
-            hideDialog: ()=> showOptionsPopup(null,false)}}/> );
-          return multitraceDesign() ?<div>{showOptionsPopup(content, true)}</div>
-            : (<ChartSelect {...{tblId, tblStatsData}} {...this.props}/>);
-*/
             return multitraceDesign() ?
                 (<ChartSelectPanel {...{
                     tbl_id: tblId,

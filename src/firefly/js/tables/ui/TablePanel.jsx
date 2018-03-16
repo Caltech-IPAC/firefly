@@ -52,19 +52,17 @@ export class TablePanel extends PureComponent {
         this.state = this.setupInitState(props);
     }
 
-   showTableOptionDialog(onChange, onOptionReset,toggleOptions, params) {
-
-
-    const content =
-      <div style={ popupPanelResizableStyle}>
-          <TablePanelOptions
-            onChange={onChange}
-            onOptionReset={onOptionReset}
-            toggleOptions={toggleOptions}
-            { ...params}
-          /></div>;
-    showOptionsPopup(content, true);
-  }
+    showTableOptionDialog(onChange, onOptionReset,toggleOptions, params) {
+        const content =
+            <div style={ popupPanelResizableStyle}>
+                <TablePanelOptions
+                    onChange={onChange}
+                    onOptionReset={onOptionReset}
+                    toggleOptions={toggleOptions}
+                    { ...params}
+                /></div>;
+        showOptionsPopup({content, title: 'Table Options', show: true});
+    }
 
     setupInitState(props) {
         var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
@@ -245,19 +243,6 @@ const popupPanelResizableStyle = {
   overflow: 'hidden',
   position: 'relative'
 };
- function showTableOptionDialog(onChange, onOptionReset,toggleOptions, params) {
-
-
-    const content =
-      <div style={ popupPanelResizableStyle}>
-          <TablePanelOptions
-      onChange={onChange}
-      onOptionReset={onOptionReset}
-      toggleOptions={toggleOptions}
-      { ...params}
-          /></div>;
-   showOptionsPopup(content, true);
-}
 
 const stopPropagation= (ev) => ev.stopPropagation();
 

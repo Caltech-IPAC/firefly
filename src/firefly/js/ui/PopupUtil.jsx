@@ -28,17 +28,11 @@ export const POPUP_DIALOG_ID = 'ModalDialog';
  * @param {boolean} [show=true] show or hide this dialog
  */
 export function showModal(content, show=true) {
-
-    const popTitle = 'Plot Parameters';
-
     if (show) {
-
         const dialogContent= (
-            <PopupPanel title={popTitle} >
             <ModalDialog>
-                {content}
+                    {content}
             </ModalDialog>
-            </PopupPanel>
         );
         DialogRootContainer.defineDialog(MODAL_DIALOG_ID, dialogContent);
 
@@ -51,20 +45,22 @@ export function showModal(content, show=true) {
 
 /**
  * Creates and shows the modal dialog.
- * @param {string | object}  content can be a string or a react component
- * @param {boolean} [show=true] show or hide this dialog
+ * @param {object} p
+ * @param {string | object}  p.content can be a string or a react component
+ * @param {string} [p.title] popup title
+ * @param {boolean} [p.modal=false] when true, glass panel will be under the popup
+ * @param {boolean} [p.show=true] show or hide this dialog
  */
-export function showOptionsPopup(content, show=true) {
-
-  const popTitle = 'Plot Parameters';
+export function showOptionsPopup({content, title='Options', modal = false, show=true}) {
 
   if (show) {
-
-    const dialogContent= (
-      <PopupPanel title={popTitle} >
-            {content}
-      </PopupPanel>
-    );
+      const dialogContent= (
+          <PopupPanel title={title} modal={modal}>
+              <div style={{overflow: 'auto', resize:'vertical'}}>
+                  {content}
+              </div>
+          </PopupPanel>
+      );
     DialogRootContainer.defineDialog(POPUP_DIALOG_ID, dialogContent);
 
     dispatchShowDialog(POPUP_DIALOG_ID);

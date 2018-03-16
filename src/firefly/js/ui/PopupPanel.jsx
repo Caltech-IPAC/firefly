@@ -27,6 +27,7 @@ export class PopupPanel extends PureComponent {
             };
         this.browserResizeCallback= null;
         this.mouseCtx= null;
+        this.popupRef = null;
         this.titleBarRef= null;
         this.moveCallback= null;
         this.buttonUpCallback= null;
@@ -44,7 +45,7 @@ export class PopupPanel extends PureComponent {
 
 
     updateLayoutPosition() {
-        const e= ReactDOM.findDOMNode(this);
+        const e= ReactDOM.findDOMNode(this.popupRef);
 
         const activeLayoutType = this.props.layoutPosition||LayoutType.TOP_CENTER;
         setTimeout( () => {
@@ -85,7 +86,7 @@ export class PopupPanel extends PureComponent {
     dialogMoveStart(ev)  {
         const {requestOnTop,dialogId}= this.props;
         requestOnTop && requestOnTop(dialogId);
-        const e= ReactDOM.findDOMNode(this);
+        const e= ReactDOM.findDOMNode(this.popupRef);
         const titleBar= ReactDOM.findDOMNode(this.titleBarRef);
         this.mouseCtx= humanStart(ev,e,titleBar);
     }
@@ -121,15 +122,16 @@ export class PopupPanel extends PureComponent {
             position: 'absolute',
             visibility : this.state.activeLayoutType===LayoutType.NONE ? 'hidden' : 'visible',
             left : this.state.posX,
-            top : this.state.posY,
-            zIndex:this.props.zIndex
+            top : this.state.posY
         };
 
 
         const title= this.props.title||'';
 
         return (
-                <div style={rootStyle} className={'popup-panel-shadow disable-select'}
+            <div style={{zIndex: this.props.zIndex}}>
+                {this.props.modal && <div className='popup-panel-glass'/>}
+                <div ref={(c) => this.popupRef=c} style={rootStyle} className={'popup-panel-shadow disable-select'}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
                      onTouchEnd={this.dialogMoveEnd}
@@ -164,8 +166,8 @@ export class PopupPanel extends PureComponent {
                         </div>
                     </div>
                 </div>
+            </div>
         );
-
     }
 
 
@@ -190,5 +192,6 @@ PopupPanel.propTypes= {
     visible : PropTypes.bool,
     dialogId : PropTypes.string,
     zIndex : PropTypes.number,
-    mouseInDialog : PropTypes.func
+    mouseInDialog : PropTypes.func,
+    modal : PropTypes.bool
 };
