@@ -59,7 +59,7 @@ const FSIZE = 12;
 export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
 export function multitraceDesign() {
-    return get(getAppOptions(), 'charts.multitrace');
+    return get(getAppOptions(), 'charts.multitrace', true);
 }
 
 export function singleTraceUI() {

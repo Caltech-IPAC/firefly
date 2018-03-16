@@ -19,6 +19,8 @@ export const INFO_POPUP= 'InfoPopup';
 // ------------------------------------------------------------
 
 export const MODAL_DIALOG_ID = 'ModalDialog';
+export const POPUP_DIALOG_ID = 'ModalDialog';
+
 
 /**
  * Creates and shows the modal dialog.
@@ -47,6 +49,29 @@ export function showModal(content, show=true) {
 }
 
 
+/**
+ * Creates and shows the modal dialog.
+ * @param {string | object}  content can be a string or a react component
+ * @param {boolean} [show=true] show or hide this dialog
+ */
+export function showOptionsPopup(content, show=true) {
+
+  const popTitle = 'Plot Parameters';
+
+  if (show) {
+
+    const dialogContent= (
+      <PopupPanel title={popTitle} >
+            {content}
+      </PopupPanel>
+    );
+    DialogRootContainer.defineDialog(POPUP_DIALOG_ID, dialogContent);
+
+    dispatchShowDialog(POPUP_DIALOG_ID);
+  } else {
+    dispatchHideDialog(POPUP_DIALOG_ID);
+  }
+}
 /**
  * Show a simple information popup
  * @param {string | object} content can be a string or a react component

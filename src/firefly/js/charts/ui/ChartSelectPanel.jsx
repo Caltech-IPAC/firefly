@@ -13,7 +13,7 @@ import {getChartData, removeTrace} from '../ChartsCntlr.js';
 import {getOptionsUI} from '../ChartUtil.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 
-import {showModal} from './../../ui/PopupUtil.jsx';
+import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
 
 const chartActionPanelKey = 'ChartSelectPanel-actions';
 const chartActionKey = 'chartAction';
@@ -243,15 +243,16 @@ export function showChartsDialog(chartId,  showMultiTrace) {
     const {data, fireflyData, activeTrace} = getChartData(chartId);
     const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
 
+
     const content= (
             <ChartSelectPanel {...{
-                tbl_id,
-                chartId,
-                chartAction: CHART_TRACE_MODIFY,
-                showMultiTrace,
-                hideDialog: ()=>showModal(null, false)}}/>
+              tbl_id,
+              chartId,
+              chartAction: CHART_TRACE_MODIFY,
+              showMultiTrace,
+                hideDialog: ()=>showOptionsPopup(null, false)}}/>
     );
-    showModal(content, true);
+    showOptionsPopup(content, true);
 }
 
 

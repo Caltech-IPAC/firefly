@@ -4,11 +4,10 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, truncate, get, cloneDeep, omit} from 'lodash';
+import {isEmpty, truncate, get} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../../Firefly.js';
-import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTblResultsRemove, dispatchTableSearch} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
@@ -21,6 +20,7 @@ import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchJobAdd} from '../../core/background/BackgroundCntlr.js';
 import {showTableDownloadDialog} from './TableSave.jsx';
+import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
 
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
@@ -47,9 +47,24 @@ export class TablePanel extends PureComponent {
         this.onOptionUpdate = this.onOptionUpdate.bind(this);
         this.onOptionReset = this.onOptionReset.bind(this);
         this.setupInitState = this.setupInitState.bind(this);
+        this.showTableOptionDialog=this.showTableOptionDialog.bind(this);
 
         this.state = this.setupInitState(props);
     }
+
+   showTableOptionDialog(onChange, onOptionReset,toggleOptions, params) {
+
+
+    const content =
+      <div style={ popupPanelResizableStyle}>
+          <TablePanelOptions
+            onChange={onChange}
+            onOptionReset={onOptionReset}
+            toggleOptions={toggleOptions}
+            { ...params}
+          /></div>;
+    showOptionsPopup(content, true);
+  }
 
     setupInitState(props) {
         var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
@@ -141,7 +156,9 @@ export class TablePanel extends PureComponent {
                         .map((f) => f(this.state))
                         .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
 
-        return (
+        const params = {columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar, tbl_ui_id};
+
+      return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
             <div className='TablePanel'>
                 <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
@@ -193,26 +210,53 @@ export class TablePanel extends PureComponent {
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
                                     tableConnector, renderers, tbl_ui_id} }
                             />
-                            {showOptionButton && !showToolbar &&
-                            <img className='TablePanel__options--small'
-                                 src={OPTIONS}
-                                 title={TT_OPTIONS}
-                                 onClick={this.toggleOptions}/>
+                      {showOptionButton && !showToolbar &&
+                      <img className='TablePanel__options--small'
+                           src={OPTIONS}
+                           title={TT_OPTIONS}
+                           onClick={showOptions ? this.showTableOptionDialog(this.onChange, this.onOptionReset, this.toggleOptions, params) : null}/>
+                      }
+                      {showOptions && <div>
+                              onClick={ this.showTableOptionDialog (this.onChange,this.onOptionReset,this.toggleOptions, params)}
+                              </div> }
                             }
-                            {showOptions &&
 
-                            <TablePanelOptions
-                                onChange={this.onOptionUpdate}
-                                onOptionReset={this.onOptionReset}
-                                toggleOptions={this.toggleOptions}
-                                { ...{columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar, tbl_ui_id}}
-                            /> }
                     </div>
                 </div>
             </div>
             </div>
         );
     }
+}
+
+//<div>{showTableOptionDialog(this.onChange,this.onOptionReset,this.toggleOptions, params)}</div>
+               {/*         <TablePanelOptions
+                          onChange={this.onOptionUpdate}
+                          onOptionReset={this.onOptionReset}
+                          toggleOptions={showTableOptionDialog(this.onChange, this.onOptionReset,this.toggleOptions, params)}
+                          { ...{columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar, tbl_ui_id}}
+                        /> }*/}
+const popupPanelResizableStyle = {
+  width: 370,
+  minWidth: 370,
+  height: 400,
+  minHeight: 450,
+  resize: 'both',
+  overflow: 'hidden',
+  position: 'relative'
+};
+ function showTableOptionDialog(onChange, onOptionReset,toggleOptions, params) {
+
+
+    const content =
+      <div style={ popupPanelResizableStyle}>
+          <TablePanelOptions
+      onChange={onChange}
+      onOptionReset={onOptionReset}
+      toggleOptions={toggleOptions}
+      { ...params}
+          /></div>;
+   showOptionsPopup(content, true);
 }
 
 const stopPropagation= (ev) => ev.stopPropagation();
@@ -296,7 +340,7 @@ function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
         dispatchJobAdd(bgStatus);
     };
     const height = showTitle ? 'calc(100% - 20px)': '100%';
-    
+
     return (
         <div style={{position: 'relative', width: '100%', height: '100%', border: 'solid 1px rgba(0,0,0,.2)', boxSizing: 'border-box'}}>
             {showTitle && <Title {...{title, removable, tbl_id}}/>}

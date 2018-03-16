@@ -5,7 +5,6 @@
 import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-
 import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
@@ -26,6 +25,7 @@ import CompleteButton from './CompleteButton.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 import {isEmpty} from 'lodash';
+import {showOptionsPopup} from './PopupUtil.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
 
@@ -38,7 +38,6 @@ const PREF_CHART_TYPE = 'pref.chartType';
 export function getFormName(chartType) {
     return chartType+'ChartOpts';
 }
-const showMultiTrace=false;
 /**
  *
  * @param props
@@ -225,6 +224,7 @@ export class ChartSelectDropdown extends PureComponent {
 
     render() {
         const {tblId, tblStatsData} = this.state;
+        const showMultiTrace = !multitraceDesign();
 
         let noChartReason='';
         if (tblId) {
@@ -239,6 +239,16 @@ export class ChartSelectDropdown extends PureComponent {
         }
 
         if (!noChartReason) {
+
+          /*const content =(<ChartSelectPanel {...{
+            tbl_id: tblId,
+            chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
+            chartAction: CHART_ADDNEW,
+            showMultiTrace,
+            hideDialog: ()=> showOptionsPopup(null,false)}}/> );
+          return multitraceDesign() ?<div>{showOptionsPopup(content, true)}</div>
+            : (<ChartSelect {...{tblId, tblStatsData}} {...this.props}/>);
+*/
             return multitraceDesign() ?
                 (<ChartSelectPanel {...{
                     tbl_id: tblId,
