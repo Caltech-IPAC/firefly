@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {WcsMatchType, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from '../PlotViewUtil.js';
 import {isImage, isHiPS} from '../WebPlot.js';
-import {addImageOutlineDrawingLayer} from '../task/PlotHipsTask.js';
+import {matchHiPSToImage} from '../task/PlotHipsTask.js';
 
 
 const tStyle= {
@@ -71,7 +71,7 @@ export function HiPSMatchingOptions({visRoot, plotIdAry}) {
         <div style={{marginLeft: 20, marginRight: 5}}>
             <input  type='button'
                     value={'Match Image to HiPS'}
-                    onClick={()=>addImageOutlineDrawingLayer(matchPV, hipsViewers) } />
+                    onClick={()=>matchHiPSToImage(matchPV, hipsViewers) } />
         </div>
     );
 

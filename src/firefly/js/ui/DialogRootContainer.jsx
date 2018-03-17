@@ -22,7 +22,7 @@ var divElement;
 
 
 function requestOnTop(key) {
-    var topKey= dialogs.sort( (d1,d2) => d2.zIndex-d1.zIndex)[0].dialogId;
+    const topKey= dialogs.sort( (d1,d2) => d2.zIndex-d1.zIndex)[0].dialogId;
     if (topKey!==key) {
         dialogs= sortZIndex(dialogs,key);
         reRender(dialogs,tmpPopups,requestOnTop);
@@ -34,9 +34,10 @@ function computeZIndex(element ) {
     let zIndex, testZ;
     for(let e=element; (e); e= e.parentElement ) {
         testZ= Number(window.getComputedStyle(e).getPropertyValue('z-index'));
-        zIndex= testZ || 2;
+        if (testZ) zIndex= testZ;
     }
-    return zIndex;
+    if (!zIndex) return 12;
+    return (zIndex<DEFAULT_ZINDEX-10) ? zIndex+10 : DEFAULT_ZINDEX;
 }
 
 

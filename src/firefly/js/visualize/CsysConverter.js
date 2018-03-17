@@ -59,7 +59,7 @@ export class CysConverter {
         this.screenSize= plot.screenSize;
         this.affTrans= altAffTrans || plot.affTrans;
         this.viewDim= plot.viewDim;
-        this.type= plot.type;
+        this.plotType= plot.plotType;
     }
 
     // isRotated() { return !Matrix.from(this.affTrans).isIdentity(); }

@@ -205,6 +205,7 @@ export class WebPlotRequest extends ServerRequest {
 //======================================================================
     
     static makeFromObj(obj) {
+        if (!obj) return null;
         if (isString(obj)) {
             return WebPlotRequest.parse(obj);
         }
@@ -229,7 +230,12 @@ export class WebPlotRequest extends ServerRequest {
 
             return wpr;
         }
-        return obj;
+        else if (obj.makeCopy) { // in this case I was probably passed a WebPlotRequest
+           return obj.makeCopy();
+        }
+        else { // i don't know what I have, just return it
+            return obj;
+        }
     }
 
     /**

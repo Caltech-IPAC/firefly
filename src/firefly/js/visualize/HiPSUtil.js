@@ -401,7 +401,23 @@ export const hipsSURVEYS = [
 ];
 
 
+export const API_HIPS_CONSTANTS= {
+    TWO_MASS: 'http://alasky.u-strasbg.fr/2MASS/Color',
+    DSS_COLORED: 'http://alasky.u-strasbg.fr/DSS/DSSColor',
+    DSS2_RED: 'http://alasky.u-strasbg.fr/DSS/DSS2Merged',
+    AllWISE_COLOR: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',
+    IRAC_COLOR: 'http://alasky.u-strasbg.fr/SpitzerI1I2I4color',
+};
 
+/**
+ * return the value of the constant or if not found return the given value.
+ * @param c
+ * @return {*}
+ */
+export function resolveHiPSConstant(c) {
+    return API_HIPS_CONSTANTS[c] || c;
+
+}
 
 
 export function getDefaultHiPSSurveys() {

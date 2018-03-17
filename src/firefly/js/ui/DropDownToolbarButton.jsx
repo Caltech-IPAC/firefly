@@ -25,7 +25,9 @@ function computeDropdownXY(divElement) {
 
 function showDialog(divElement,dropDown,ownerId,offButtonCB) {
     const {x,y}= computeDropdownXY(divElement);
-    const dd= <DropDownMenuWrapper x={x} y={y} content={dropDown}/>;
+
+    const dropDownClone= React.cloneElement(dropDown, { toolbarElement:divElement });
+    const dd= <DropDownMenuWrapper x={x} y={y} content={dropDownClone}/>;
     DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
     dispatchShowDialog(DROP_DOWN_KEY,ownerId);
     document.addEventListener('mousedown', offButtonCB);
