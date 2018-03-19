@@ -34,9 +34,9 @@ export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL'
  * @return {number}
  */
 export function getNextZoomLevel(plot, zoomType) {
-    const {zoomFactor, type}= plot;
-    const availableLevels= (type==='image')  ? levels : hiPSLevels;
-    const zoomMax= (type==='image')  ? IMAGE_ZOOM_MAX : HIPS_ZOOM_MAX;
+    const {zoomFactor}= plot;
+    const availableLevels= isImage(plot) ? levels : hiPSLevels;
+    const zoomMax= isImage(plot)  ? IMAGE_ZOOM_MAX : HIPS_ZOOM_MAX;
     let newLevel= 1;
     if (zoomType===UserZoomTypes.UP) {
         newLevel= zoomFactor>=zoomMax ? zoomMax : availableLevels.find( (l) => l>zoomFactor);
@@ -98,6 +98,12 @@ function getOnePlusLevelDesc(level) {
     return retval;
 }
 
+/**
+ * Get the scale in arcsec / pixel of a plot as the given zoom factor
+ * @param plot
+ * @param zoomFact
+ * @return {number}
+ */
 export function getArcSecPerPix(plot, zoomFact) {
     return getPixScaleArcSec(plot) / zoomFact;
 }

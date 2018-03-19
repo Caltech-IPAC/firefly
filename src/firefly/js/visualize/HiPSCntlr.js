@@ -33,7 +33,7 @@ function reducers() {
 }
 
 export function getAppHiPSConfig() {
-    return get(getAppOptions(), ['hips', 'useForImageSearch'], false);
+    return get(getAppOptions(), ['hips', 'useForImageSearch'], true);
 }
 
 /**

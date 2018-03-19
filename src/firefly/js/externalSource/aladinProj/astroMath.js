@@ -14,7 +14,7 @@ AstroMath.R2D = 180.0/Math.PI;
  * @param x value for checking the sign
  * @return {number} -1, 0, +1 respectively if x < 0, = 0, > 0
  */
-AstroMath.sign = function(x) { return x > 0 ? 1 : (x < 0 ? -1 : 0 ); };
+const sign = (x) => x > 0 ? 1 : (x < 0 ? -1 : 0 );
 
 /**
  * Function cosd(degrees)
@@ -101,7 +101,7 @@ AstroMath.atand = function(x) { return Math.atan(x)*AstroMath.R2D; };
  */
 AstroMath.atan2 = function(y,x) {
 	if (y !== 0.0) {
-		const sgny = AstroMath.sign(y);
+		const sgny = sign(y);
 		if (x !== 0.0) {
 			const phi = Math.atan(Math.abs(y/x));
 			if (x > 0.0) return phi*sgny;
@@ -173,38 +173,38 @@ AstroMath.atanh = (x) => 0.5*Math.log((1.0+x)/(1.0-x));
  *	@param {number} x in degrees.
  * For small arguments x <= 0.001, use approximation 
  */
-AstroMath.sinc = function(x) {
-	let ax = Math.abs(x);
-	let y;
-
-	if (ax <= 0.001) {
-		ax *= ax;
-		y = 1 - ax*(1.0-ax/20.0)/6.0;
-	} else {
-		y = Math.sin(ax)/ax;
-	}
-
-	return y;
-};
+// AstroMath.sinc = function(x) {
+// 	let ax = Math.abs(x);
+// 	let y;
+//
+// 	if (ax <= 0.001) {
+// 		ax *= ax;
+// 		y = 1 - ax*(1.0-ax/20.0)/6.0;
+// 	} else {
+// 		y = Math.sin(ax)/ax;
+// 	}
+//
+// 	return y;
+// };
 
 /**
  * Computes asin(x)/x
  * @param {number} x in degrees.
  * For small arguments x <= 0.001, use an approximation
  */
-AstroMath.asinc = function(x) {
-	let ax = Math.abs(x);
-	let y;
-
-	if (ax <= 0.001) {
-		ax *= ax; 
-		y = 1 + ax*(6.0 + ax*(9.0/20.0))/6.0;
-	} else {
-		y = Math.asin(ax)/ax;	// ???? radians ???
-	}
-
-	return (y);
-};
+// AstroMath.asinc = function(x) {
+// 	let ax = Math.abs(x);
+// 	let y;
+//
+// 	if (ax <= 0.001) {
+// 		ax *= ax;
+// 		y = 1 + ax*(6.0 + ax*(9.0/20.0))/6.0;
+// 	} else {
+// 		y = Math.asin(ax)/ax;	// ???? radians ???
+// 	}
+//
+// 	return (y);
+// };
 
 
 //=============================================================================
@@ -229,28 +229,28 @@ AstroMath.hypot= (x,y) => Math.sqrt(x*x+y*y);
  *   |   0      0   1|   |sin.the  0  cos.the|   |   0        0    1|
  * </pre>
  */
-AstroMath.eulerMatrix = function(z, theta, zeta) {
-	const R = new Array(3);
-	R[0] = new Array(3);
-	R[1] = new Array(3);
-	R[2] = new Array(3);
-	const cosdZ = AstroMath.cosd(z);
-	const sindZ = AstroMath.sind(z);
-	const cosdTheta = AstroMath.cosd(theta);
-	const w = AstroMath.sind(theta) ;
-	const cosdZeta = AstroMath.cosd(zeta);
-	const sindZeta = AstroMath.sind(zeta);
-
-	R[0][0] = cosdZeta*cosdTheta*cosdZ - sindZeta*sindZ;
-	R[0][1] = -sindZeta*cosdTheta*cosdZ - cosdZeta*sindZ;
-	R[0][2] = -w*cosdZ;
-
-	R[1][0] = cosdZeta*cosdTheta*sindZ + sindZeta*cosdZ;
-	R[1][1] = -sindZeta*cosdTheta*sindZ + cosdZeta*cosdZ;
-	R[1][2] = -w*sindZ;
-
-	R[2][0] = -w*cosdZeta;
-	R[2][1] = -w*cosdZ;
-	R[2][2] = cosdTheta;
-	return R;
-};
+// AstroMath.eulerMatrix = function(z, theta, zeta) {
+// 	const R = new Array(3);
+// 	R[0] = new Array(3);
+// 	R[1] = new Array(3);
+// 	R[2] = new Array(3);
+// 	const cosdZ = AstroMath.cosd(z);
+// 	const sindZ = AstroMath.sind(z);
+// 	const cosdTheta = AstroMath.cosd(theta);
+// 	const w = AstroMath.sind(theta) ;
+// 	const cosdZeta = AstroMath.cosd(zeta);
+// 	const sindZeta = AstroMath.sind(zeta);
+//
+// 	R[0][0] = cosdZeta*cosdTheta*cosdZ - sindZeta*sindZ;
+// 	R[0][1] = -sindZeta*cosdTheta*cosdZ - cosdZeta*sindZ;
+// 	R[0][2] = -w*cosdZ;
+//
+// 	R[1][0] = cosdZeta*cosdTheta*sindZ + sindZeta*cosdZ;
+// 	R[1][1] = -sindZeta*cosdTheta*sindZ + cosdZeta*cosdZ;
+// 	R[1][2] = -w*sindZ;
+//
+// 	R[2][0] = -w*cosdZeta;
+// 	R[2][1] = -w*cosdZ;
+// 	R[2][2] = cosdTheta;
+// 	return R;
+// };

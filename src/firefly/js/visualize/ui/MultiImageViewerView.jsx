@@ -11,20 +11,22 @@ import {MultiItemViewerView} from './MultiItemViewerView.jsx';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 
 
-
 export function MultiImageViewerView(props) {
 
-    const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false, handleInlineToolsWhenSingle=true}= props;
+    const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false,
+        handleInlineToolsWhenSingle=true, inlineTitle= true, aboveTitle=false}= props;
 
-    const makeItemViewer = (plotId) => (
-        <ImageViewer plotId={plotId} key={plotId}
-                                 handleInlineTools={false} {...{showWhenExpanded}} />
-    );
+    const makeItemViewer = (plotId) =>  {
+        return (
+            <ImageViewer plotId={plotId} key={plotId}
+                         handleInlineTools={false} {...{showWhenExpanded, inlineTitle, aboveTitle}} />
+        );
+    };
 
     const makeItemViewerFull = (plotId) => (
         <ImageViewer plotId={plotId} key={plotId}
                      handleInlineTools={false} {...{
-                         showWhenExpanded,
+                         showWhenExpanded, inlineTitle, aboveTitle,
                          handleInlineTools: viewerPlotIds.length===1 && handleInlineToolsWhenSingle
                      }
                      } />
@@ -56,6 +58,12 @@ MultiImageViewerView.propTypes= {
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
     gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
     insideFlex :  PropTypes.bool,
-    handleInlineToolsWhenSingle :  PropTypes.bool
+    handleInlineToolsWhenSingle :  PropTypes.bool,
+    inlineTitle: PropTypes.bool,
+    aboveTitle: PropTypes.bool
 };
+
+
+
+
 

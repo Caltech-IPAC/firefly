@@ -33,7 +33,7 @@ var todoStyle= {
 
 
 function handleClick(onClick, dropdownCB ,divElement) {
-    if (onClick) onClick();
+    if (onClick) onClick(divElement);
     dropdownCB ? dropdownCB(divElement) : dispatchHideDialog(DROP_DOWN_KEY);
 }
 

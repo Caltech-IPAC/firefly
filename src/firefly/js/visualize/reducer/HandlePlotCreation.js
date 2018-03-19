@@ -78,38 +78,39 @@ export function reducer(state, action) {
 
 
 
-const updateDefaults= function(plotRequestDefaults, action) {
-
+function updateDefaults(plotRequestDefaults, action) {
     const {wpRequestAry}= action.payload;
-    if (wpRequestAry) {
-        const newObj= wpRequestAry.reduce( (obj,r) => {
-            obj[r.getPlotId()]={threeColor:false, wpRequest:r};
-            return obj;
-        }, {});
-        return clone(plotRequestDefaults, newObj);
+    const {plotId,wpRequest,redReq,greenReq, blueReq,threeColor, plotType}= action.payload;
+    if (plotType==='hips') {
+        return clone(plotRequestDefaults, {[plotId]:{plotType:'hips',wpRequest}});
     }
-    else {
-        const {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
-        if (!wpRequest && !redReq && !greenReq && !blueReq) return plotRequestDefaults;
-        return threeColor ?
-            clone(plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}}) :
-            clone(plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
+    else if (plotType==='image') {
+        if (wpRequestAry) {
+            const newObj= wpRequestAry.reduce( (obj,r) => {
+                obj[r.getPlotId()]={plotType:'image', wpRequest:r};
+                return obj;
+            }, {});
+            return clone(plotRequestDefaults, newObj);
+        }
+        else {
+            if (!wpRequest && !redReq && !greenReq && !blueReq) return plotRequestDefaults;
+            return threeColor ?
+                clone(plotRequestDefaults, {[plotId]:{plotType:'threeColor',redReq,greenReq, blueReq}}) :
+                clone(plotRequestDefaults, {[plotId]:{plotType:'image',wpRequest}});
+        }
     }
-};
+}
 
 
 function startPlot(state, action) {
-    const plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
+    const plotRequestDefaults= action.payload.enableRestore && updateDefaults(state.plotRequestDefaults,action);
     const plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
     const plotViewAry= preNewPlotPrep(state.plotViewAry,action);
-    let retState= state;
-    if (plotGroupAry || plotViewAry || plotRequestDefaults) {
-        retState= clone(state);
-        if (plotViewAry) retState.plotViewAry= plotViewAry;
-        if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
-        if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
-        if (action.payload.setNewPlotAsActive) retState.activePlotId= action.payload.plotId;
-    }
+    const retState= clone(state);
+    if (plotViewAry) retState.plotViewAry= plotViewAry;
+    if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
+    if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
+    if (action.payload.setNewPlotAsActive) retState.activePlotId= action.payload.plotId;
     return retState;
 }
 
@@ -130,6 +131,9 @@ function addHiPS(state,action, setActive= true, newPlot= true) {
         pv = replacePlots(pv, [plot], null, state.expandedMode, newPlot);
         pv.serverCall= 'success';
         pv.plottingStatus= 'done';
+        pv.rotation= 0;
+        pv.flipY= false;
+        pv.flipX= false;
 
         if (pv.viewDim) {
             const centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
@@ -317,15 +321,20 @@ function hipsFail(state,action) {
  * @return {Array|null} new PlotViewAry or null it nothing is created.
  */
 function preNewPlotPrep(plotViewAry,action) {
-    const wpRequestAry= getRequestAry(action.payload);
+    const {payload}= action;
+    const wpRequestAry= getRequestAry(payload);
 
     const pvChangeAry= wpRequestAry.map( (req) => {
         const plotId= req.getPlotId();
         let pv= getPlotViewById(plotViewAry,plotId);
         pv= pv ? clone(pv, { plottingStatus:'Plotting...', plots:[],  primeIdx:-1, request: req && req.makeCopy() }) :
-                 makePlotView(plotId, req,action.payload.pvOptions);
+                 makePlotView(plotId, req,payload.pvOptions);
 
-        // if (req.getRotate()) pv.rotation= req.getRotationAngle();
+        const {hipsImageConversion}= payload;
+        if (hipsImageConversion) {
+            pv.plotViewCtx= clone(pv.plotViewCtx, {hipsImageConversion});
+        }
+
         if (req.getRotateNorth()) {
             pv.plotViewCtx= clone(pv.plotViewCtx, {rotateNorthLock :true});
         }

@@ -31,7 +31,7 @@ export function* imagePlotter(params, dispatch, getState) {
         var action= yield take([ImagePlotCntlr.PLOT_IMAGE_START,ImagePlotCntlr.UPDATE_VIEW_SIZE]);
         switch (action.type) {
             case ImagePlotCntlr.PLOT_IMAGE_START:
-                if (action.payload.type==='image') {
+                if (action.payload.plotType==='image') {
                     if (canContinue(action)) {
                         continuePlotting(makeContinueAction(action),dispatch);
                     }

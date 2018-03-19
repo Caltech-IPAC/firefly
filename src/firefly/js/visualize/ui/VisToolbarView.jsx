@@ -348,7 +348,7 @@ export class VisToolbarView extends PureComponent {
                                enabled={enabled}
                                horizontal={true}
                                visible={mi.fitsHeader}
-                               onClick={image ? () => fitsHeaderView(pv) : (hips ? () => HiPSPropertyView(pv) : null)}
+                               onClick={image ? (element) => fitsHeaderView(pv, element ) : (hips ? (element) => HiPSPropertyView(pv, element) : null)}
                                />
 
                 <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', marginLeft:'10px'}}>

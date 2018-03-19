@@ -208,9 +208,7 @@ function makeCorners(hpIdx, pixList, coordSys) {
  */
 function makeSimpleHpxCornerCache() {
     const tmpHealpixIdx3 = new HealpixIndex(8);
-    tmpHealpixIdx3.init();
     const tmpHealpixIdx2 = new HealpixIndex(4);
-    tmpHealpixIdx2.init();
     const npix = HealpixIndex.nside2Npix(8);
     const cachedCorners8= [];
     for (let ipix=0; ipix<npix; ipix++) {
@@ -292,14 +290,12 @@ export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
     }
     else if (fov>80) { // with norder 1 or 2
         hpxIdx = new HealpixIndex(nside);
-        hpxIdx.init();
         pixList= [];
         const npix = HealpixIndex.nside2Npix(nside);
         for (let ipix=0; ipix<npix; ipix++) pixList[ipix]= ipix;
     }
     else {
         hpxIdx = new HealpixIndex(nside);
-        hpxIdx.init();
         const spatialVector = new SpatialVector();
         spatialVector.set(dataCenterWp.x, dataCenterWp.y);
         let radius = fov/2;
@@ -405,7 +401,23 @@ export const hipsSURVEYS = [
 ];
 
 
+export const API_HIPS_CONSTANTS= {
+    TWO_MASS: 'http://alasky.u-strasbg.fr/2MASS/Color',
+    DSS_COLORED: 'http://alasky.u-strasbg.fr/DSS/DSSColor',
+    DSS2_RED: 'http://alasky.u-strasbg.fr/DSS/DSS2Merged',
+    AllWISE_COLOR: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/',
+    IRAC_COLOR: 'http://alasky.u-strasbg.fr/SpitzerI1I2I4color',
+};
 
+/**
+ * return the value of the constant or if not found return the given value.
+ * @param c
+ * @return {*}
+ */
+export function resolveHiPSConstant(c) {
+    return API_HIPS_CONSTANTS[c] || c;
+
+}
 
 
 export function getDefaultHiPSSurveys() {

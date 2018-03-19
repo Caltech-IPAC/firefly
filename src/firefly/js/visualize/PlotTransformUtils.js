@@ -15,6 +15,8 @@ import {getCenterOfProjection} from './PlotViewUtil.js';
 import {toRadians} from './VisUtil.js';
 import {CysConverter}  from './CsysConverter.js';
 import {makeScreenPt, makeDevicePt} from './Point.js';
+import {isImage} from './WebPlot.js';
+import {getHiPSFoV} from './HiPSUtil.js';
 
 /**
  *
@@ -113,10 +115,11 @@ export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt, m
     const yDir= startingPlotView.flipX ? -1 : 1;
     let xdiff, ydiff;
     let lastDevPt= makeDevicePt(originalDeviceX ,originalDeviceY);
+    let lastWorldPt= cc.getWorldCoords(lastDevPt,startingPlot.imageCoordSys);
 
 
 
-    if (startingPlot.type==='image') {
+    if (isImage(startingPlot)) {
         return (screenX, screenY) => {
             const newDevPt = makeDevicePt(screenX, screenY);
             const newScreenPt = cc.getScreenCoords(newDevPt);
@@ -148,6 +151,15 @@ export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt, m
                 return null;
             }
 
+
+            if (lastWorldPt && Math.abs(lastWorldPt.y)>88 && getHiPSFoV(pv)>30) {
+                // xdiff/=8;
+                ydiff/=8;
+                xdiff/=8;
+            }
+
+            
+
             const newCenterOfProjDev= makeDevicePt(originalCenterOfProjDev.x-xdiff, originalCenterOfProjDev.y-ydiff);
             const newWp= activeCC.getWorldCoords(newCenterOfProjDev,plot.imageCoordSys);
 
@@ -158,6 +170,7 @@ export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt, m
             if (newWp.y >  89.7) newWp.y=  89.7;
 
             lastDevPt= newDevPt;
+            lastWorldPt= newWp;
 
             return newWp;
 

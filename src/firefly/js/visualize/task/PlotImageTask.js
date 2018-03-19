@@ -52,7 +52,9 @@ export function getHipsImageConversion(hipsImageConversion ) {
     return hipsImageConversion && {
         hipsRequestRoot:ensureWPR(hipsImageConversion.hipsRequestRoot),
         imageRequestRoot:ensureWPR(hipsImageConversion.imageRequestRoot),
-        fovDegFallOver: hipsImageConversion.fovDegFallOver
+        allSkyRequest: ensureWPR(hipsImageConversion.allSkyRequest),
+        fovDegFallOver: hipsImageConversion.fovDegFallOver,
+        plotAllSkyFirst: hipsImageConversion.plotAllSkyFirst
     };
 
 }
@@ -63,7 +65,7 @@ const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => Boolean(r))
 function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 
    const {threeColor, attributes, setNewPlotAsActive= true,
-         holdWcsMatch= false, addToHistory= false,useContextModifications= true}= rawPayload;
+         holdWcsMatch= false, useContextModifications= true, enableRestore= true}= rawPayload;
    let {plotId, wpRequest, pvOptions= {}}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);
@@ -95,7 +97,7 @@ function makeSinglePlotPayload(vr, rawPayload, requestKey) {
                      groupLocked: req.isGroupLocked(),
                      viewerId: determineViewerId(rawPayload.viewerId, plotId),
                      hipsImageConversion,
-                     requestKey, attributes, pvOptions, addToHistory,
+                     requestKey, attributes, pvOptions, enableRestore,
                      useContextModifications, threeColor, setNewPlotAsActive};
 
     const existingPv= getPlotViewById(vr,plotId);
@@ -140,7 +142,7 @@ export function makePlotImageAction(rawAction) {
         else {
             const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
                    setNewPlotAsActive= true, pvOptions= {},
-                   addToHistory= false,useContextModifications= true}= rawAction.payload;
+                   useContextModifications= true, enableRestore= true}= rawAction.payload;
             payload= {
                 wpRequestAry:ensureWPR(wpRequestAry),
                 viewerId,
@@ -148,8 +150,8 @@ export function makePlotImageAction(rawAction) {
                 pvOptions,
                 setNewPlotAsActive,
                 threeColor:false,
-                addToHistory,
                 useContextModifications,
+                enableRestore,
                 groupLocked:true,
                 requestKey
             };
@@ -178,7 +180,7 @@ export function makePlotImageAction(rawAction) {
         }
 
         payload.requestKey= requestKey;
-        payload.type= 'image';
+        payload.plotType= 'image';
 
         vr= getState()[IMAGE_PLOT_KEY];
 

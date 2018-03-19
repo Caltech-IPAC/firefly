@@ -29,13 +29,13 @@ import {RED_PANEL,
 import { RangeValues, ZSCALE}from '../RangeValues.js';
 
 
-export function showColorDialog() {
+export function showColorDialog(element) {
     const content= (
         <PopupPanel title={'Modify Color Stretch'} >
             <ColorDialog />
         </PopupPanel>
     );
-    DialogRootContainer.defineDialog('ColorStretchDialog', content);
+    DialogRootContainer.defineDialog('ColorStretchDialog', content, element);
     const watchActions= [ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW];
     dispatchInitFieldGroup( NO_BAND_PANEL, true, null, colorPanelChange(Band.NO_BAND), watchActions);
     dispatchInitFieldGroup( RED_PANEL, true, null, colorPanelChange(Band.RED), watchActions);

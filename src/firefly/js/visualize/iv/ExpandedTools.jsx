@@ -9,13 +9,13 @@ import {ExpandType, dispatchChangeExpandedMode,
          dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
-import {WcsMatchOptions} from '../ui/WcsMatchOptions.jsx';
+import {WcsMatchOptions, HiPSMatchingOptions} from '../ui/WcsMatchOptions.jsx';
+import {isImage} from '../WebPlot.js';
 
 import './ExpandedTools.css';
 
@@ -36,8 +36,8 @@ const tStyle= {
 
 
 function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
-    var autoPlay= false;
-    var wcsMatch= false;
+    let autoPlay= false;
+    let wcsMatch= false;
     if (expandedMode===ExpandType.SINGLE && plotIdAry.length>1) {
         autoPlay= (
             <div style={{paddingLeft:25}}>
@@ -51,16 +51,18 @@ function createOptions(expandedMode, singleAutoPlay, visRoot, plotIdAry) {
         );
     }
 
-    if (plotIdAry.length>1) {
+    const imageDataViewers= plotIdAry.filter( (plotId) => isImage(primePlot(visRoot,plotId)));
+    if (imageDataViewers.length>1 ) {
         wcsMatch= (
                 <WcsMatchOptions activePlotId={visRoot.activePlotId} wcsMatchType={visRoot.wcsMatchType} />
         );
     }
 
     return (
-        <div style={{display:'inline-block', paddingLeft:15}}>
+        <div style={{display:'inline-flex', flexDirection:'row', alignItems: 'center', flexWrap:'nowrap', paddingLeft:15}}>
             {wcsMatch}
             {autoPlay}
+            {expandedMode===ExpandType.GRID && <HiPSMatchingOptions  visRoot={visRoot} plotIdAry={plotIdAry}/>}
         </div>
     );
 }
@@ -88,25 +90,33 @@ const gridPlotTitleStyle= {
 export function ExpandedTools({visRoot,closeFunc}) {
     const {expandedMode,activePlotId, singleAutoPlay}= visRoot;
     const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
-    const single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
+    // const single= expandedMode===ExpandType.SINGLE || plotIdAry.length===1;
+    const single= plotIdAry.length===1;
     const pv= getActivePlotView(visRoot);
     const plot= primePlot(pv);
 
     let plotTitle;
     if (plot) {
-        if (single) {
-            plotTitle= (
-                <div style={singlePlotTitleStyle}>
-                    <PlotTitle brief={false} inline={false} titleType={TitleType.EXPANDED} plotView={pv} />
-                </div>
-            );
+        // I might need to put the following code back.
+        // if (single) {
+            // plotTitle= (
+            //     <div style={singlePlotTitleStyle}>
+            //         <PlotTitle brief={false} inline={false} titleType={TitleType.EXPANDED} plotView={pv} />
+            //     </div>
+            // );
+        // }
+        // else {
+        //     plotTitle= (<div style={gridPlotTitleStyle}>Tiled View</div>);
+        // }
+        if (expandedMode===ExpandType.GRID && plotIdAry.length>1) {
+            plotTitle= <div style={gridPlotTitleStyle}>Tiled View</div>;
         }
-        else {
-            plotTitle= (<div style={gridPlotTitleStyle}>Tiled View</div>);
+        else if (expandedMode===ExpandType.SINGLE && plotIdAry.length>1) {
+            plotTitle= <div style={gridPlotTitleStyle}/>;
         }
     }
     const getPlotTitle = (plotId) => {
-        var plot= primePlot(visRoot,plotId);
+        const plot= primePlot(visRoot,plotId);
         return plot ? plot.title : '';
     };
 
@@ -118,10 +128,11 @@ export function ExpandedTools({visRoot,closeFunc}) {
                     <VisToolbar messageUnder={Boolean(closeFunc)}/>
                 </div>
             </div>
+            {!single &&
             <div style={{width:'100%', minHeight:25, margin: '7px 0 5px 0',
-                         display: 'flex', justifyContent:'space-between'}} className='disable-select'>
+                display: 'flex', justifyContent:'space-between'}} className='disable-select'>
                 {plotTitle}
-                <div style={{paddingBottom:5, alignSelf:'flex-end', whiteSpace:'nowrap'}}>
+                <div style={{paddingBottom:5, alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>
                     <WhichView  visRoot={visRoot}/>
                     {createOptions(expandedMode,singleAutoPlay, visRoot, plotIdAry)}
                     <PagingControl
@@ -132,7 +143,7 @@ export function ExpandedTools({visRoot,closeFunc}) {
                         onActiveItemChange={dispatchChangeActivePlotView}
                     />
                 </div>
-            </div>
+            </div>}
         </div>
     );
 }

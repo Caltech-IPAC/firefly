@@ -70,7 +70,7 @@ function popupForm(plot, fitsHeaderInfo, popupId) {
 }
 
 
-function showFitsHeaderPopup(plot, tableId, fitsHeaderInfo) {
+function showFitsHeaderPopup(plot, tableId, fitsHeaderInfo, element) {
 
     var popupId = popupIdRoot + '_' + tableId;
 
@@ -81,7 +81,7 @@ function showFitsHeaderPopup(plot, tableId, fitsHeaderInfo) {
 
     );
 
-    DialogRootContainer.defineDialog(popupId, popup);
+    DialogRootContainer.defineDialog(popupId, popup, element);
     dispatchShowDialog(popupId);
 }
 
@@ -226,7 +226,7 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
  * This function will return the popup component.  As React conversion, the CamelCase is used.
  * @param plotView
  */
-export function fitsHeaderView(plotView) {
+export function fitsHeaderView(plotView,element) {
 
     var plot = primePlot(plotView);
     if (!plot)  return;
@@ -257,7 +257,7 @@ export function fitsHeaderView(plotView) {
     callGetFitsHeaderInfo(plot.plotState, tableId)
         .then((result) => {
 
-            showFitsHeaderPopup(plot, tableId, result);
+            showFitsHeaderPopup(plot, tableId, result, element);
         })
         .catch((e) => {
                 logError(`fitsHeader error: ${plot.plotId}`, e);

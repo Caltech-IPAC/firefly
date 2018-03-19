@@ -93,7 +93,7 @@ export class ImageViewer extends PureComponent {
 
     render() {
         var {plotView,allPlots,drawLayersAry,mousePlotId,taskCount=0}= this.state;
-        var {showWhenExpanded, plotId, handleInlineTools}= this.props;
+        var {showWhenExpanded, plotId, handleInlineTools, inlineTitle, aboveTitle}= this.props;
         if (!showWhenExpanded  && allPlots.expandedMode!==ExpandType.COLLAPSE) return false;
         if (!plotView) return false;
 
@@ -110,7 +110,9 @@ export class ImageViewer extends PureComponent {
                              visRoot={allPlots}
                              mousePlotId={mousePlotId}
                              handleInlineTools={handleInlineTools}
-                             taskCount= {taskCount}
+                             inlineTitle={inlineTitle}
+                             aboveTitle={aboveTitle}
+                             workingIcon= {taskCount>0}
                              extensionList={getPlotUIExtensionList(plotId)} />
         );
     }
@@ -120,6 +122,8 @@ ImageViewer.propTypes= {
     plotId : PropTypes.string.isRequired,
     showWhenExpanded : PropTypes.bool,
     handleInlineTools : PropTypes.bool,
+    inlineTitle: PropTypes.bool,
+    aboveTitle: PropTypes.bool,
 };
 
 ImageViewer.defaultProps = {

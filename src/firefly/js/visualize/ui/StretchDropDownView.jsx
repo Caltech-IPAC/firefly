@@ -91,7 +91,7 @@ function stretchByType(pv,currRV,sType,min,max) {
 }
 
 
-export function StretchDropDownView({plotView:pv}) {
+export function StretchDropDownView({plotView:pv, toolbarElement}) {
     var enabled= pv ? true : false;
     var rv= primePlot(pv).plotState.getRangeValues();
     return (
@@ -99,7 +99,7 @@ export function StretchDropDownView({plotView:pv}) {
             <ToolbarButton text='Color stretch...'
                            tip='Change the background image stretch'
                            enabled={enabled} horizontal={false}
-                           onClick={() => showColorDialog()}/>
+                           onClick={() => showColorDialog(toolbarElement)}/>
             <DropDownVerticalSeparator/>
 
             <ToolbarButton text='Z Scale Linear Stretch'
@@ -150,5 +150,6 @@ export function StretchDropDownView({plotView:pv}) {
 }
 
 StretchDropDownView.propTypes= {
-    plotView : PropTypes.object
+    plotView : PropTypes.object,
+    toolbarElement : PropTypes.object
 };

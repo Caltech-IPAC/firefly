@@ -17,6 +17,7 @@ import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js'
 import WebPlotResult from '../WebPlotResult.js';
 import VisUtil from '../VisUtil.js';
 import {convertToHiPS, convertToImage} from './PlotHipsTask.js';
+import {RequestType} from '../RequestType.js';
 
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds
@@ -241,18 +242,19 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
  * @return {boolean}
  */
 function doConversionIfNecessary(pv, preZoomVisRoot, oldZoomLevel, zoomLevel) {
+    if (!pv.plotViewCtx.hipsImageConversion) return false;
     const plot= primePlot(pv);
+    const {fovDegFallOver, allSkyRequest}=  pv.plotViewCtx.hipsImageConversion;
+    const {width,height}= pv.viewDim;
+
     if (isHiPS(plot) ) {
-        const fovDegFallOver= get(pv, 'plotViewCtx.hipsImageConversion.fovDegFallOver');
-        if (fovDegFallOver && oldZoomLevel<zoomLevel &&
-            getHiPSFoV(pv) < pv.plotViewCtx.hipsImageConversion.fovDegFallOver) {
+        if (fovDegFallOver && oldZoomLevel<zoomLevel && getHiPSFoV(pv) < fovDegFallOver) {
             convertToImage(pv);
             return true;
         }
     }
-    else if (isImage(plot) && oldZoomLevel>zoomLevel && pv.plotViewCtx.hipsImageConversion) {
-        const {width,height}= pv.viewDim;
-        if ((width-10)>plot.dataWidth*zoomLevel && (height-10) >plot.dataHeight*zoomLevel ) {
+    else if (isImage(plot) ) {
+        if (oldZoomLevel>zoomLevel && (width-10)>plot.dataWidth*zoomLevel && (height-10) >plot.dataHeight*zoomLevel ) { //zoom out an image
             convertToHiPS(pv);
             return true;
         }

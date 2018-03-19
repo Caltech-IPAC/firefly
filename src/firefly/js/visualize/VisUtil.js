@@ -8,7 +8,7 @@
  */
 
 
-import {isArray} from 'lodash';
+import {isArray, isEmpty, flattenDeep} from 'lodash';
 import pointInPolygon from 'point-in-polygon';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
@@ -17,13 +17,15 @@ import DrawOp from './draw/DrawOp.js';
 import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
 import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
-               makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
+               makeWorldPt, makeDevicePt, isValidPoint, pointEquals} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
 import {getPixScaleDeg} from './WebPlot.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
 
 
+/** Constant for conversion Degrees => Radians */
 export const DtoR = Math.PI / 180.0;
+/** Constant for conversion Radians => Degrees */
 export const RtoD = 180.0 / Math.PI;
 
 export const toDegrees = (angle) => angle * (180 / Math.PI);
@@ -176,6 +178,35 @@ export function computeCentralPointAndRadius(inPoints) {
 
     return {centralPoint, maxRadius};
 }
+
+/**
+ * call computeCentralPointAndRadius in 2 ways first with a flatten version of the 2d array
+ * then again with group of points.  This allows us not to overweight a larger group when computing the center.
+ *
+ * @param {Array.<Array.<WorldPt>>} inPoints2dAry  a 2d array of world points. Each array represents a group of points
+ * @return {{centralPoint:WorldPt, maxRadius:number, avgOfCenters:number}}
+ */
+export function computeCentralPtRadiusAverage(inPoints2dAry) {
+
+    const testAry= flattenDeep(inPoints2dAry);
+
+    if (isEmpty(testAry)) return {centralPoint:undefined, maxRadius: 0, avgOfCenters:undefined};
+    if (isOnePoint(testAry)) return {centralPoint:testAry[0], maxRadius: .05, avgOfCenters:testAry[0]};
+
+    const {centralPoint, maxRadius}= computeCentralPointAndRadius(testAry);
+    if (inPoints2dAry.length===1) return {centralPoint, maxRadius, avgOfCenters:centralPoint};
+
+    const centers= inPoints2dAry.map( (ptAry) =>
+              isOnePoint(ptAry) ? ptAry[0] : computeCentralPointAndRadius(ptAry).centralPoint);
+
+    const {centralPoint:avgOfCenters}= computeCentralPointAndRadius(centers);
+    return {centralPoint, maxRadius, avgOfCenters};
+}
+
+function isOnePoint(wpList) {
+    return !wpList.some( (wp) => !pointEquals(wp,wpList[0]));
+}
+
 
 
 /**

@@ -412,7 +412,7 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup, forceAllInGroup= 
 }
 
 
-export const primePlotType= (pv) => get(primePlot(pv), 'type', 'image');
+export const primePlotType= (pv) => get(primePlot(pv), 'plotType', 'image');
 
 
 /**
@@ -471,7 +471,7 @@ export function matchPlotView(sourcePv,plotViewAry,plotGroup,matchAnyType, opera
  * Typically used inside of reducer
  * @param plotViewAry plotViewAry
  * @param plotId the that is primary.
- * @param plotGroup the group to check against
+ * @param {PlotGroup} plotGroup the group to check against, passing falsey will only apply to primary
  * @param {boolean} matchAnyType matching across plot types ie, would return a hips or an image
  * @param {Function} operationFunc the function to operate on the other plot views
  * @param {PlotView} operationFunc.param pv the PlotView to operate on
@@ -482,7 +482,7 @@ export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,matchAnyType, 
     const sourcePv= getPlotViewById(plotViewAry,plotId);
     if (!sourcePv) return;
     const srcType= primePlotType(sourcePv);
-    const groupLock= hasGroupLock(sourcePv,plotGroup);
+    const groupLock= plotGroup && hasGroupLock(sourcePv,plotGroup);
     return plotViewAry.map( (pv) => {
         if (pv.plotId===plotId) {
             return operationFunc(pv);

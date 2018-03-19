@@ -122,14 +122,14 @@ VisToolbar.defaultProps= {
 
 
 
-export function showTools() {
+export function showTools(element) {
     if (!isDialogVisible('PopupToolbar')) {
         const popup= (
             <PopupPanel title={'Tools'} layoutPosition={LayoutType.TOP_LEFT} >
                 <VisToolbar messageUnder={true}/>
             </PopupPanel>
         );
-        DialogRootContainer.defineDialog('PopupToolbar', popup);
+        DialogRootContainer.defineDialog('PopupToolbar', popup, element);
         dispatchShowDialog('PopupToolbar');
         dispatchAddSaga(autoClose);
     }
