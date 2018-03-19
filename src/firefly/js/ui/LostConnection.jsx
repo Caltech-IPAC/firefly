@@ -38,8 +38,10 @@ class LostConnection extends SimpleComponent {
         return (
             <div className='lost-connection'>
                 <img src={noInternet}/>
-                <div>You are no longer connected to the server</div>
-                <div>This message will go away once your connection is restored</div>
+                <div>
+                    You are no longer connected to the server. <br/> 
+                    This message will go away once your connection is restored.
+                </div>
             </div>
         );
     }
