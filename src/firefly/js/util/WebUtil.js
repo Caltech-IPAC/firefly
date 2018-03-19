@@ -7,7 +7,7 @@ import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
         last, isPlainObject, forEach, fromPairs} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
-import {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
+import {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
 
 // todo: we want to replace react-addons-update with immutability-helper. However there is some behavior difference with error
@@ -63,6 +63,11 @@ export function loadScript(scriptName) {
         });
     return loadPromise;
 }
+
+/**
+ * Is in debug mode.. temporary util we come up with something better
+ */
+export const isDebug = () => get(window, 'firefly.debug', false);
 
 /**
  * Create an image with a promise that resolves when the image is loaded

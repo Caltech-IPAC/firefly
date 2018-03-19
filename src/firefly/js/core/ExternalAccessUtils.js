@@ -7,7 +7,7 @@ import {flux} from '../Firefly.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import {reportUserAction} from '../rpc/SearchServicesJson.js';
 import {parseImagePt, parseWorldPt, parseScreenPt} from '../visualize/Point.js';
-import {getWsChannel} from './messaging/WebSocketClient.js';
+import {getWsChannel} from './AppDataCntlr.js';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {getTblById, getTblRowAsObj} from '../tables/TableUtil.js';
 import {PlotState} from '../visualize/PlotState.js';

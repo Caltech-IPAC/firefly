@@ -3,45 +3,66 @@
  */
 
 import {get, pickBy} from 'lodash';
-import {parseUrl} from '../../util/WebUtil.js';
+import {parseUrl, isDebug} from '../../util/WebUtil.js';
 import {WSCH} from '../History.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 import {dispatchUpdateAppData} from '../AppDataCntlr.js';
 
 export const CH_ID = 'channelID';
 
-var channel;
-var connId;
-var nRetries = 0;
-var pinger;
-var connectBaseUrl;
-var listenters = [];
 var wsConn;
+var pinger;
+var intervalId;
 
-const wsClient = {send: wsSend, addListener};
-var connected;
+var wsClient;
 
-export function wsConnect(baseUrl=getRootURL()) {
+/**
+ * WebSocket client.
+ * @typedef {object} WsClient
+ * @prop {function} send        function to send a message to the server.  see wsSend for parameters
+ * @prop {function} addListener add a message listener.  This function will be called on all incoming message 'matches'
+ *                              returns true.  see addListener for details.
+ * @prop {object} listeners     a list of all the listeners.
+ * @prop {string} channel       the channel websocket is connected to.
+ * @prop {string} connId        the connection ID websocket is connected to.
+ */
+
+/**
+ * @returns {WsClient}  return the active websocket client used.
+ */
+export function getWsClient() { return wsClient; }
+
+/**
+ * @returns {string}  the channel websocket is connected to.
+ */
+export function getWsChannel() { return wsClient && wsClient.channel; }
+
+/**
+ * @returns {string}  the connection ID websocket is connected to.
+ */
+export function getWsConnId() { return wsClient && wsClient.connId; }
+
+export function wsConnect(callback, baseUrl=getRootURL()) {
     baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
-    connectBaseUrl = baseUrl;
 
     const urlInfo = parseUrl(document.location);
-    var wsch = get(urlInfo,['searchObject', WSCH]); 
+    var wsch = get(urlInfo,['searchObject', WSCH]);
     wsch = wsch ? `?${CH_ID}=${wsch}` : '';
 
-    const connUrl = `${baseUrl}/sticky/firefly/events${wsch}`;
-    console.log('Connecting to ' + connUrl);
+    const wsUrl = `${baseUrl}/sticky/firefly/events${wsch}`;
+    console.log('Connecting to ' + wsUrl);
+    makeConnection(wsUrl);
+    pinger = makePinger(callback, wsUrl);
+}
 
-    wsConn = new WebSocket(connUrl);
+function makeConnection(wsUrl) {
+    wsConn && wsConn.close();
+
+    wsConn = new WebSocket(wsUrl);
     wsConn.onopen = onOpen;
     wsConn.onerror = onError;
     wsConn.onclose = onClose;
     wsConn.onmessage = onMessage;
-    
-    return new Promise((resolve) => {
-        connected = resolve;
-    });
-
 }
 
 /**
@@ -52,45 +73,23 @@ export function wsConnect(baseUrl=getRootURL()) {
  * @param p.data - String.
  */
 function wsSend({name='ping', scope, dataType, data}) {
+
     if (name === 'ping') {
         wsConn.send('');
     } else {
         const msg = JSON.stringify( pickBy({name, scope, dataType, data}));
         wsConn.send(msg);
     }
-
 }
 
-/**
- * add an event listener to this websocket client.
- * @param {Object} obj
- * @param {Function} obj.matches - matches a function that takes an event({name, data}) as its parameter.  return true if this
- *                    listener will handle the event.
- * @param {Function} obj.onEvent - a function that takes an event({name, data}) as its parameter.  this function is called
- *                    whenever an event matches its listener.
- */
-function addListener( {matches, onEvent} ) {
-    listenters.push({matches, onEvent});
-}
 
-function onOpen() {
-    if (pinger) clearInterval(pinger);
-    pinger = setInterval(() => wsSend({}), 5000);
-}
+function onOpen() {}
 
 function onError(event) {
-    if (nRetries < 5) {
-        nRetries++;
-        setTimeout( () => wsConnect(connectBaseUrl), 1000 );
-        console.log('WS error: initiating retry ' + nRetries);
-    } else {
-        console.log(`WS error: after ${nRetries} retries.. ${event}`);
-    }
+    pinger && pinger.onError(event);
 }
 
-function onClose(event) {
-    console.log('WS closed: ' + JSON.stringify(event));
-}
+function onClose() {}
 
 function onMessage(event) {
     const eventData = event.data && JSON.parse(event.data);
@@ -99,12 +98,11 @@ function onMessage(event) {
         // console.log('ws message: ' + JSON.stringify(eventData));
         if (eventData.name === 'EVT_CONN_EST') {
             // connection established.. doing handshake.
-            [connId, channel] = [eventData.data.connID, eventData.data.channel];
-            dispatchUpdateAppData({channel});
-            console.log(`WebSocket connected.  connId:${connId} channel:${channel}`);
-            connected && connected(wsClient);
+            const [connId, channel] = [eventData.data.connID, eventData.data.channel];
+            pinger && pinger.onConnected(channel, connId);
         } else {
-            listenters.forEach( (l) => {
+            const {listeners=[]} = wsClient || {};
+            listeners.forEach( (l) => {
                 if (!l.matches || l.matches(eventData)) {
                     l.onEvent(eventData);
                 }
@@ -114,12 +112,57 @@ function onMessage(event) {
 
 }
 
-/**
- * @returns {string}  the channel websocket is connected to.
- */
-export function getWsChannel() { return channel; }
+function makeWsClient(channel, connId) {
+    const listeners = [];
 
-/**
- * @returns {string}  the connection ID websocket is connected to.
- */
-export function getWsConnId() { return connId; }
+    /**
+     * add an event listener to this websocket client.
+     * @param {Object} obj
+     * @param {Function} obj.matches - matches a function that takes an event({name, data}) as its parameter.  return true if this
+     *                    listener will handle the event.
+     * @param {Function} obj.onEvent - a function that takes an event({name, data}) as its parameter.  this function is called
+     *                    whenever an event matches its listener.
+     */
+    const addListener = ( {matches, onEvent} ) => {
+        listeners.push({matches, onEvent});
+    };
+
+    return {send: wsSend, addListener, listeners, channel, connId};
+}
+
+function makePinger(onConnectCallback, wsUrl) {
+
+    intervalId && clearInterval(intervalId);
+
+    const check = (from='ping') => {
+
+        if (wsConn.readyState === WebSocket.OPEN) {
+            wsSend({});
+        } else {
+            dispatchUpdateAppData({websocket: {isConnected: false}});
+            makeConnection(wsUrl);
+        }
+
+        if (isDebug()) {
+            console.log(`ping initiated from ${from} on: ${Date()}`);
+        }
+    };
+
+    const onConnected = (channel, connId) => {
+        console.log(`WebSocket connected.  connId:${connId} channel:${channel}`);
+        wsClient = makeWsClient(channel, connId);
+        onConnectCallback && onConnectCallback(wsClient);
+        dispatchUpdateAppData({websocket: {isConnected: true, channel, connId}});
+    };
+
+    const onError = () => {
+        dispatchUpdateAppData({websocket: {isConnected: false}});
+    };
+
+    intervalId = setInterval(check, 10*1000);   // check every n * seconds
+    window.addEventListener('online',  () => check('online'));
+    window.addEventListener('offline', () => check('offline'));
+
+    return {onError, check, onConnected};
+
+}

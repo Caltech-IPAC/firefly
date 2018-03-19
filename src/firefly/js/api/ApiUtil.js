@@ -6,7 +6,7 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import {get,isArray,isElement,isEmpty,isString} from 'lodash';
-import {logErrorWithPrefix} from '../util/WebUtil.js';
+import {logErrorWithPrefix, isDebug} from '../util/WebUtil.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {uniqueID} from '../util/WebUtil';
 
@@ -21,20 +21,9 @@ import {uniqueID} from '../util/WebUtil';
 /**
  * @public
  */
-export {getBoolean} from '../util/WebUtil.js';
-export {toBoolean} from '../util/WebUtil.js';
+export {getBoolean, toBoolean, isDebug} from '../util/WebUtil.js';
 
-export {getWsConnId, getWsChannel} from '../core/messaging/WebSocketClient.js';
-
-/**
- * Is in debug mode
- * @func isDebug
- * @static
- * @public
- * @memberof firefly.util
- *
- */
-export const isDebug = () => get(window, 'firefly.debug', false);
+export {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 
 /**
  * show a debug message if debugging is enabled
