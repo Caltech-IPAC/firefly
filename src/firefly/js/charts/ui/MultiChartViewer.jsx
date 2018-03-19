@@ -49,15 +49,17 @@ export class MultiChartViewer extends PureComponent {
     }
 
     componentWillMount() {
-        this.iAmMounted= true;
-        this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
         var {viewerId, canReceiveNewItems, expandedMode}= this.props;
         dispatchAddViewer(viewerId,canReceiveNewItems,PLOT2D,true);
         if (expandedMode) {
             const {chartId} = getExpandedChartProps();
             dispatchUpdateCustom(viewerId, {activeItemId: chartId});
         }
+    }
 
+    componentDidMount() {
+        this.iAmMounted= true;
+        this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
     }
 
 

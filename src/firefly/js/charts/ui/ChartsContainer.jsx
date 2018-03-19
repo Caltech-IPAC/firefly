@@ -111,10 +111,14 @@ export class ChartsContainer extends PureComponent {
             // make sure the viewer is updated with related charts on start
             // important when we use external viewer
             doUpdateViewer(viewerId, tbl_group, chartId);
-
-            const monitor = watchTblGroup(viewerId, tbl_group, addDefaultChart);
-            this.removeMonitor = monitor();
         }
+    }
+
+    componentDidMount() {
+        const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart} = this.props;
+
+        const monitor = watchTblGroup(viewerId, tbl_group, addDefaultChart);
+        this.removeMonitor = monitor();
     }
 
     componentWillUnmount() {
