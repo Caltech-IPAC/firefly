@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray, uniqueId} from 'lodash';
+import {get, isArray, truncate, uniqueId} from 'lodash';
 import {COL_TYPE, getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
@@ -104,8 +104,8 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     // default axes labels for the first trace (remove surrounding quotes, if any)
     const xLabel = get(mappings, 'x').replace(/^"(.+)"$/, '$1');
     const yLabel = get(mappings, 'y').replace(/^"(.+)"$/, '$1');
-    const xTipLabel = xLabel.length > 20 ? xLabel.substring(0,18)+'...' : xLabel;
-    const yTipLabel = yLabel.length > 20 ? yLabel.substring(0,18)+'...' : yLabel;
+    const xTipLabel = xLabel.length > 20 ? truncate(xLabel, {length: 20}) : xLabel;
+    const yTipLabel = yLabel.length > 20 ? truncate(yLabel, {length: 20}) : yLabel;
 
     const colors = get(changes, [`data.${traceNum}.marker.color`]);
     let cTipLabel = isArray(colors) ? get(mappings, 'marker.color') : '';

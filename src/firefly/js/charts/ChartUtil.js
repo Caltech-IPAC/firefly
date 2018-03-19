@@ -16,6 +16,7 @@ import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT} from '../tables/TablesCntlr
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
+import {quoteNonAlphanumeric}  from '../util/expr/Variable.js';
 import {logError, flattenObject} from '../util/WebUtil.js';
 import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
 import {HeatmapOptions} from './ui/options/HeatmapOptions.jsx';
@@ -684,18 +685,7 @@ export function formatColExpr({colOrExpr, quoted, colNames}) {
     return colOrExpr;
 }
 
-/**
- * Convenience function to quote column name if it's not alphanumeric
- * (if the name is not alphanumeric, it needs to be quoted in expressions)
- * @param name
- * @returns {*}
- */
-export function quoteNonAlphanumeric(name) {
-    if (!/^[A-Za-z\d_]+$/.test(name) && !name.startsWith('"')) {
-        name = `"${name}"`;
-    }
-    return name;
-}
+
 
 // plotly default color (items 0-7) + color-blind friendly colors
 export const TRACE_COLORS = [  '#1f77b4', '#2ca02c', '#d62728', '#9467bd',

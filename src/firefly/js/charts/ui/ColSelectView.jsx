@@ -10,7 +10,7 @@ import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getTblById, calcColumnWidths} from '../../tables/TableUtil.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
-import {quoteNonAlphanumeric} from '../ChartUtil.js';
+import {quoteNonAlphanumeric}  from '../../util/expr/Variable.js';
 
 //import HelpIcon from '../../ui/HelpIcon.jsx';
 const popupId = 'XYColSelect';

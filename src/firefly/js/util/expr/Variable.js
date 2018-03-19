@@ -2,6 +2,19 @@
 // Copyright 2002 by Darius Bacon <darius@wry.me>
 // Altered, converted to JS
 
+/**
+ * Convenience function to quote variable name if it's not alphanumeric
+ * (if the name is not alphanumeric, it needs to be quoted in expressions)
+ * @param name
+ * @returns {*}
+ */
+export function quoteNonAlphanumeric(name) {
+    if (!/^[A-Za-z\d_]+$/.test(name) && !name.startsWith('"')) {
+        name = `"${name}"`;
+    }
+    return name;
+}
+
 //TODO: when should the variables get cleared?
 const variables = new Map();
 
@@ -13,9 +26,7 @@ const variables = new Map();
  * @return the variable; create it initialized to 0 if it doesn't
  *         yet exist */
 export function makeVariable(name) {
-    if (!/^[A-Za-z\d_]+$/.test(name) && !name.startsWith('"')) {
-        name = `"${name}"`;
-    }
+    name = quoteNonAlphanumeric(name);
     let result = variables.get(name);
     if (!result) {
         result = new Variable(name);

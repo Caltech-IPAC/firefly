@@ -5,6 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
+import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
@@ -12,7 +13,7 @@ import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {quoteNonAlphanumeric} from '../ChartUtil.js';
+
 
 const EXPRESSION_TTIPS = `
 Supported operators: *, /, +, -.
