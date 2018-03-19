@@ -86,10 +86,11 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
         return {};
     }
 
-    const xLabel = get(mappings, 'x'); // default axis label for the first trace
-    const yLabel = get(mappings, 'y'); // default axis label for the first trace
-    const xTipLabel = xLabel.length > 20 ? 'x' : xLabel;
-    const yTipLabel = yLabel.length > 20 ? 'y' : yLabel;
+    // default axes labels for the first trace (remove surrounding quotes, if any)
+    const xLabel = get(mappings, 'x').replace(/^"(.+)"$/, '$1');
+    const yLabel = get(mappings, 'y').replace(/^"(.+)"$/, '$1');
+    const xTipLabel = xLabel.length > 20 ? xLabel.substring(0,18)+'...' : xLabel;
+    const yTipLabel = yLabel.length > 20 ? yLabel.substring(0,18)+'...' : yLabel;
 
     const xColumn = getColumn(tableModel, get(mappings, 'x'));
     const xUnit = get(xColumn, 'units', '');

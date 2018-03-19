@@ -2,24 +2,38 @@
 // Copyright 2002 by Darius Bacon <darius@wry.me>
 // Altered, converted to JS
 
+/**
+ * Convenience function to quote variable name if it's not alphanumeric
+ * (if the name is not alphanumeric, it needs to be quoted in expressions)
+ * @param name
+ * @returns {*}
+ */
+export function quoteNonAlphanumeric(name) {
+    if (!/^[A-Za-z\d_]+$/.test(name) && !name.startsWith('"')) {
+        name = `"${name}"`;
+    }
+    return name;
+}
+
 //TODO: when should the variables get cleared?
 const variables = new Map();
 
 /**
-  * Return a unique variable named `name'.  There can be only one
-  * variable with the same name returned by this method; that is,
-  * makeVariable(s1) === makeVariable(s2) if and only if s1===s2.
-  * @param {String} name the variable's name
-  * @return the variable; create it initialized to 0 if it doesn't
-  *         yet exist */
+ * Return a unique variable named `name'.  There can be only one
+ * variable with the same name returned by this method; that is,
+ * makeVariable(s1) === makeVariable(s2) if and only if s1===s2.
+ * @param {String} name the variable's name
+ * @return the variable; create it initialized to 0 if it doesn't
+ *         yet exist */
 export function makeVariable(name) {
-     let result = variables.get(name);
-     if (!result) {
-         result = new Variable(name);
-         variables.set(name, result);
-     }
-     return result;
- }
+    name = quoteNonAlphanumeric(name);
+    let result = variables.get(name);
+    if (!result) {
+        result = new Variable(name);
+        variables.set(name, result);
+    }
+    return result;
+}
 
 /**
  * A variable is a simple expression with a name (like "x") and a

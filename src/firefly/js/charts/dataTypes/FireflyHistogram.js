@@ -112,9 +112,12 @@ function fetchData(chartId, traceNum, tablesource) {
             if (data && data.length===1) {
                 const xAxisLabel = get(layout, 'xaxis.title');
                 if (!xAxisLabel) {
-                    const xLabel = get(options, 'columnExpression', ''); // default axis label for the first trace
+                    // default axis label for the first trace
+                    let xLabel = get(options, 'columnExpression', '');
                     const xColumn = getColumn(getTblById(tbl_id), xLabel);
                     const xUnit = get(xColumn, 'units', '');
+                    //remove surrounding quotes, if any
+                    if (xLabel.startsWith('"')) { xLabel = xLabel.replace(/^"(.+)"$/, '$1'); }
                     changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
                 }
                 const yAxisLabel = get(layout, 'yaxis.title');

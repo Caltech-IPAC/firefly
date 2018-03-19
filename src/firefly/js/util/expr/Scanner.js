@@ -1,6 +1,7 @@
 // Scan lexical tokens in input strings.
 // Copyright 2002 by Darius Bacon <darius@wry.me>
 // Altered, converted to JS
+// variables can be quoted strings
 
 import * as Token from './Token.js';
 
@@ -29,14 +30,20 @@ export class Scanner {
         this.s = string;
         this.operatorChars = operatorChars;
 
-        var i = 0;
+        let i = 0;
         do {
             i = this.scanToken(i);
         } while (i < this.s.length);
+
+        this.cs = this.tokens.map((t)=>t.sval).join('');
     }
 
     getInput() {
         return this.s;
+    }
+
+    getCanonicalInput() {
+        return this.cs;
     }
 
     // The tokens may have been diddled, so this can be different from
@@ -44,16 +51,16 @@ export class Scanner {
     toString() {
         let sb = '';
         let whitespace = 0;
-        for (var i = 0; i < this.tokens.length; ++i) {
+        for (let i = 0; i < this.tokens.length; ++i) {
             const t = this.tokens[i];
 
-            let spaces = (whitespace != 0 ? whitespace : t.leadingWhitespace);
+            let spaces = (whitespace !== 0 ? whitespace : t.leadingWhitespace);
             if (i === 0) {
                 spaces = 0;
             } else if (spaces === 0 && !joinable(this.tokens[i-1], t)) {
                 spaces = 1;
             }
-            for (var j = spaces; 0 < j; --j) {
+            for (let j = spaces; 0 < j; --j) {
                 sb += ' ';
             }
             sb += t.sval;
@@ -133,7 +140,7 @@ export class Scanner {
             }
             tokens.push(Token.tokenFromString(s.charAt(i), 0, s, i, i+1));
             return i+1;
-        } else if (/[a-zA-Z]/.test(s.charAt(i))) {
+        } else if (/[a-zA-Z"]/.test(s.charAt(i))) {
             return this.scanSymbol(i);
         } else if (/\d/.test(s.charAt(i)) || '.' === s.charAt(i)) {
             return this.scanNumber(i);
@@ -150,8 +157,23 @@ export class Scanner {
     scanSymbol(i) {
         const {s, tokens} = this;
         const from = i;
-        while (i < s.length && /[A-Za-z\d_]/.test(s.charAt(i)) ) {
+        if (s.charAt(i) === '"') {
             ++i;
+            let terminated = false;
+            while (i < s.length && !terminated) {
+                if (s.charAt(i) === '"') {
+                    terminated = true;
+                }
+                ++i;
+            }
+            if (!terminated) {
+                tokens.push(this.makeErrorToken(from, i));
+                return i;
+            }
+        } else {
+            while (i < s.length && /[A-Za-z\d_]/.test(s.charAt(i))) {
+                ++i;
+            }
         }
         tokens.push(Token.tokenFromString(Token.TT_WORD, 0, s, from, i));
         return i;
@@ -166,10 +188,10 @@ export class Scanner {
 
         const from = i;
 
-        // We include letters in our purview because otherwise we'd
+        // We include letters in our preview because otherwise we'd
         // accept a word following with no intervening space.
         for (; i < s.length; ++i) {
-            if (!/[\.\da-zA-Z]/.test(s.charAt(i))) {
+            if (!/[.\da-zA-Z]/.test(s.charAt(i))) {
                 break;
             }
         }

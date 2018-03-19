@@ -143,7 +143,12 @@ const rators2 = [
         return this.reparse();
     }
 
-
+    /**
+     * return input string without whitespace
+     */
+    getCanonicalInput() {
+        return this.tokens.getCanonicalInput();
+    }
 
     reparse() {
         this.tokens.index = -1;
@@ -253,7 +258,7 @@ const rators2 = [
 
                 const v = makeVariable(this.token.sval);
                 if (this.allowedVariables && !this.allowedVariables.has(v)) {
-                    throw this.error('Unknown variable',
+                    throw this.error(`Unknown variable ${v}.`,
                         SyntaxException.UNKNOWN_VARIABLE);
                 }
                 this.addParsedVariable(v);

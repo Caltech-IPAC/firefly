@@ -5,6 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
+import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
@@ -13,10 +14,12 @@ import {showColSelectPopup} from './ColSelectView.jsx';
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
+
 const EXPRESSION_TTIPS = `
 Supported operators: *, /, +, -.
 Supported functions: abs(x), acos(x), asin(x), atan(x), atan2(x,y), ceil(x), cos(x), exp(x), floor(x), lg(x), ln(x), log10(x), log(x), power(x,y), round(x), sin(x), sqrt(x), tan(x).
-Example: sqrt(power(b,4) - 4*a*c) / (2*a), where a, b, c are column names.`;
+Example: sqrt(power(b,4) - 4*a*c) / (2*a), where a, b, c are column names.
+Non-alphanumeric column names should be quoted in expressions.`;
 
 /*
  * Split content into prior content and the last alphanumeric token in the text
@@ -27,7 +30,7 @@ function parseSuggestboxContent(text) {
     let token='', priorContent='';
     if (text && text.length) {
         // [entireMatch, firstCature, secondCapture] or null
-        const match =  text.match(/^(.*[^A-Za-z\d_]|)([A-Za-z\d_]*)$/);
+        const match =  text.match(/^(.*[^A-Za-z\d_"]|)([A-Za-z\d_"]*)$/);
         if (match && match.length === 3) {
             priorContent = match[1];
             token = match[2];
@@ -75,7 +78,8 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
 
     const valueOnSuggestion = (prevVal, idx)=>{
         const {priorContent} = parseSuggestboxContent(prevVal);
-        return priorContent+colValStats[idx].name;
+        let name = quoteNonAlphanumeric(colValStats[idx].name);
+        return priorContent+name;
     };
 
     const value = params ? get(params, fldPath) : getFieldVal(groupKey, fldPath);
