@@ -71,7 +71,7 @@ function initCorrectCoordinateSys(pv) {
         const hipsPv = vr.plotViewAry.filter((pv) => isHiPS(primePlot(pv)) && pv.plotId !== plotId)[0];
         const hipsPlot = primePlot(hipsPv);
         if (hipsPlot && hipsPlot.imageCoordSys !== plot.imageCoordSys) {
-            dispatchChangeHiPS({plotId, coordSys: hipsPlot.imageCoordSys})
+            dispatchChangeHiPS({plotId, coordSys: hipsPlot.imageCoordSys});
         }
     }
 }

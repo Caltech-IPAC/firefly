@@ -56,6 +56,7 @@ function renderHiPSSurveysTable(hipsId, isPopular, hipsUrl, moreStyle={}) {
                 height={'calc(100%)'}
                 showToolbar={false}
                 selectable={false}
+                showFilters={isPopular ? false : true}
                 showOptionButton={true}
             />
         </div>) :
