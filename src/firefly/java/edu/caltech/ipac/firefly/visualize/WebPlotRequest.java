@@ -335,8 +335,10 @@ public class WebPlotRequest extends ServerRequest {
 
     public static WebPlotRequest make2MASSRequest(WorldPt wp,
                                                   String survey,
+                                                  String band,
                                                   float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
+        req.setParam(SURVEY_KEY_BAND, band + "");
         req.setTitle("2MASS: "+survey.toUpperCase());
         return req;
     }
