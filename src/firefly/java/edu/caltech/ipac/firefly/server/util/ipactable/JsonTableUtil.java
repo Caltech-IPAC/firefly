@@ -6,9 +6,9 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static edu.caltech.ipac.firefly.util.DataSetParser.*;
 
 /**
  * @author loi
@@ -142,7 +140,7 @@ public class JsonTableUtil {
         DataType[] columns = data.getDataDefinitions();
         for (int colIdx = 0; colIdx < columns.length; colIdx++) {
             DataType dt = columns[colIdx];
-            String fkey = DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName());
+            String fkey = IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_DISP_TAG, dt.getKeyName());
             if (tableDef.contains(fkey)) {
                 dt.getFormatInfo().setDataFormat(tableDef.getAttribute(fkey).getValue());
                 String[] headers = new String[] {dt.getKeyName(), dt.getTypeDesc(), dt.getDataUnit(), dt.getNullString()};
@@ -222,43 +220,43 @@ public class JsonTableUtil {
             }
 
             // modify column's attributes based on meta
-            String label = getColAttr(tableDef, LABEL_TAG, cname);
+            String label = getColAttr(tableDef, IpacTableUtil.LABEL_TAG, cname);
             if (!StringUtils.isEmpty(label)) {
                 c.put("label", label);
             }
-            String desc = getColAttr(tableDef, DESC_TAG, cname);
+            String desc = getColAttr(tableDef, IpacTableUtil.DESC_TAG, cname);
             if (!StringUtils.isEmpty(desc)) {
                 c.put("desc", desc);
             }
-            String visibility = getColAttr(tableDef, VISI_TAG, cname);
+            String visibility = getColAttr(tableDef, IpacTableUtil.VISI_TAG, cname);
             if (!StringUtils.isEmpty(visibility)) {
                 c.put("visibility", visibility);
             }
-            String width = getColAttr(tableDef, WIDTH_TAG, cname);
+            String width = getColAttr(tableDef, IpacTableUtil.WIDTH_TAG, cname);
             if (!StringUtils.isEmpty(width)) {
                 c.put("width", width);
             }
-            String prefWidth = getColAttr(tableDef, PREF_WIDTH_TAG, cname);
+            String prefWidth = getColAttr(tableDef, IpacTableUtil.PREF_WIDTH_TAG, cname);
             if (!StringUtils.isEmpty(prefWidth)) {
                 c.put("prefWidth", prefWidth);
             }
-            String sortable = getColAttr(tableDef, SORTABLE_TAG, cname);
+            String sortable = getColAttr(tableDef, IpacTableUtil.SORTABLE_TAG, cname);
             if (!StringUtils.isEmpty(sortable)) {
                 c.put("sortable", Boolean.parseBoolean(sortable));
             }
-            String filterable = getColAttr(tableDef, FILTERABLE_TAG, cname);
+            String filterable = getColAttr(tableDef, IpacTableUtil.FILTERABLE_TAG, cname);
             if (!StringUtils.isEmpty(filterable)) {
                 c.put("filterable", Boolean.parseBoolean(filterable));
             }
-            String units = getColAttr(tableDef, UNIT_TAG, cname);
+            String units = getColAttr(tableDef, IpacTableUtil.UNIT_TAG, cname);
             if (!StringUtils.isEmpty(units)) {
                 c.put("units", units);
             }
-            String items = getColAttr(tableDef, ITEMS_TAG, cname);
+            String items = getColAttr(tableDef, IpacTableUtil.ITEMS_TAG, cname);
             if (!StringUtils.isEmpty(items)) {
                 c.put("items", items);
             }
-            String sortBy = getColAttr(tableDef, SORT_BY_TAG, cname);
+            String sortBy = getColAttr(tableDef, IpacTableUtil.SORT_BY_TAG, cname);
             if (!StringUtils.isEmpty(sortBy)) {
                 c.put("sortByCols", sortBy);
             }
@@ -274,7 +272,7 @@ public class JsonTableUtil {
     }
 
     private static String getColAttr(TableDef meta, String tag, String cname) {
-        DataGroup.Attribute att = meta.getAttribute(makeAttribKey(tag, cname));
+        DataGroup.Attribute att = meta.getAttribute(IpacTableUtil.makeAttribKey(tag, cname));
         return (att == null) ? "" : att.getValue();
     }
 

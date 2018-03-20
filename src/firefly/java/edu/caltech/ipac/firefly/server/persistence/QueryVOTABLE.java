@@ -25,8 +25,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.DESC_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import static edu.caltech.ipac.util.IpacTableUtil.DESC_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 
 /**
  * @author tatianag

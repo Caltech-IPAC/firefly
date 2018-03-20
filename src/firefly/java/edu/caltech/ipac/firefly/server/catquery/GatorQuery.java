@@ -39,8 +39,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Locale;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.DESC_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import static edu.caltech.ipac.util.IpacTableUtil.DESC_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 /**
  * User: roby
  * Date: Jul 29, 2010

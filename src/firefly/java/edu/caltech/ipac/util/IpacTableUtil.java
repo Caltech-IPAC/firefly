@@ -4,7 +4,6 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,8 +14,6 @@ import java.io.Reader;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
-
 /**
  * Date: Jun 25, 2009
  *
@@ -24,9 +21,35 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
  * @version $Id: IpacTableUtil.java,v 1.5 2012/11/08 23:56:49 tlau Exp $
  */
 public class IpacTableUtil {
+    // -------- meta used for additional column's attributes when dealing with ipac table -------//
+    public static final String LABEL_TAG = "col.@.Label";
+    public static final String VISI_TAG = "col.@.Visibility";
+    public static final String WIDTH_TAG = "col.@.Width";
+    public static final String PREF_WIDTH_TAG = "col.@.PrefWidth";
+    public static final String DESC_TAG = "col.@.ShortDescription";
+    public static final String UNIT_TAG = "col.@.Unit";
+    public static final String FORMAT_TAG = "col.@.Fmt";     // can be AUTO, NONE or a valid java format string.  defaults to AUTO.
+    public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
+    public static final String SORTABLE_TAG = "col.@.Sortable";
+    public static final String FILTERABLE_TAG = "col.@.Filterable";
+    public static final String ITEMS_TAG = "col.@.Items";
+    public static final String SORT_BY_TAG = "col.@.SortByCols";
+    public static final String ENUM_VALS_TAG = "col.@.EnumVals";
+    public static final String RELATED_COLS_TAG = "col.related";
+    public static final String GROUPBY_COLS_TAG = "col.groupby";
 
+    public static final String VISI_SHOW = "show";
+    public static final String VISI_HIDE = "hide";
+    public static final String VISI_HIDDEN = "hidden";      // for application use only.
+    public static final String FMT_AUTO = "AUTO";     // guess format from data
+    public static final String FMT_NONE = "NONE";     // do not format data
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
     private static final String STRING_TYPE[]= {"cha.*", "str.*", "s", "c"};
+
+
+    public static String makeAttribKey(String tag, String colName) {
+        return tag.replaceFirst("@", colName);
+    }
 
     /**
      * Returns the table's attributes in original sorted order, plus additional
@@ -38,8 +61,8 @@ public class IpacTableUtil {
         List<DataGroup.Attribute> attribs = dataGroup.getKeywords();
         // add column's attributes as table meta
         for(DataType col : dataGroup.getDataDefinitions()) {
-            String descKey = makeAttribKey(DataSetParser.DESC_TAG, col.getKeyName());
-            String fmtKey = makeAttribKey(DataSetParser.FORMAT_TAG, col.getKeyName());
+            String descKey = makeAttribKey(DESC_TAG, col.getKeyName());
+            String fmtKey = makeAttribKey(FORMAT_TAG, col.getKeyName());
 
             if (!StringUtils.isEmpty(col.getShortDesc()) &&
                     dataGroup.getAttribute(descKey) == null) {
@@ -310,10 +333,10 @@ public class IpacTableUtil {
                     }
                     offset = endoffset;
                     if (type.getFormatInfo().isDefault()) {
-                        DataGroup.Attribute format = source.getAttribute(makeAttribKey(DataSetParser.FORMAT_TAG, type.getKeyName()));
-                        if (format == null || Objects.equals(format.getValue(), DataSetParser.FMT_AUTO)) {
+                        DataGroup.Attribute format = source.getAttribute(makeAttribKey(FORMAT_TAG, type.getKeyName()));
+                        if (format == null || Objects.equals(format.getValue(), FMT_AUTO)) {
                             IpacTableUtil.guessFormatInfo(type, rval);
-                        } else if (!Objects.equals(format.getValue(), DataSetParser.FMT_NONE)){
+                        } else if (!Objects.equals(format.getValue(), FMT_NONE)){
                             type.getFormatInfo().setDataFormat(format.getValue());
                         }
 
@@ -322,8 +345,8 @@ public class IpacTableUtil {
                         if (type.getDataType().isAssignableFrom(String.class)) {
                             if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("html") ||
                                     rval.trim().matches("<[^>]+>.*")) {
-                                source.addAttribute(makeAttribKey(DataSetParser.SORTABLE_TAG, type.getKeyName()), "false");
-                                source.addAttribute(makeAttribKey(DataSetParser.FILTERABLE_TAG, type.getKeyName()), "false");
+                                source.addAttribute(makeAttribKey(SORTABLE_TAG, type.getKeyName()), "false");
+                                source.addAttribute(makeAttribKey(FILTERABLE_TAG, type.getKeyName()), "false");
                             }
                         }
                     }
@@ -525,5 +548,8 @@ public class IpacTableUtil {
     }
 
 
+    public static boolean isVisible(DataGroup dataGroup, DataType dt) {
+        return dataGroup.getMeta(makeAttribKey(VISI_TAG, dt.getKeyName()), VISI_SHOW).equals(VISI_SHOW);
+    }
 }
 

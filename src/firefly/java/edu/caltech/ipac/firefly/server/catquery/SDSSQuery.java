@@ -33,8 +33,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.*;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.*;
-
 /**
  * @author tatianag
  */
@@ -397,8 +395,8 @@ public class SDSSQuery extends IpacTablePartProcessor {
             boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
 
             DataGroup results = DataGroupQuery.join(upDg, upDefsToSave.toArray(new DataType[upDefsToSave.size()]), resDg, null, comparator, !nearestOnly, true);
-            results.addAttribute(makeAttribKey(VISI_TAG, "up_id"), "hide");
-            results.addAttribute(makeAttribKey(DESC_TAG, "distance"), "distance in arcmin");
+            results.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, "up_id"), "hide");
+            results.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, "distance"), "distance in arcmin");
             DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, CatalogRequest.UPDLOAD_ROW_ID);
             results.shrinkToFitData(true);
             IpacTableWriter.save(dgFile, results);

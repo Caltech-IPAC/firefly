@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
-import edu.caltech.ipac.astro.ibe.BaseIbeDataSource;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
@@ -13,8 +12,7 @@ import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.util.DataSetParser;
-import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.IOException;
@@ -142,12 +140,12 @@ public class IBEUtils {
         }
 
         for (String sortCol : sortByCols.keySet()) {
-            attribs.put(DataSetParser.makeAttribKey(DataSetParser.SORT_BY_TAG, sortCol), sortByCols.get(sortCol));
+            attribs.put(IpacTableUtil.makeAttribKey(IpacTableUtil.SORT_BY_TAG, sortCol), sortByCols.get(sortCol));
         }
 
         if (colsToHide != null) {
             for (String c : colsToHide) {
-                attribs.put(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, c), DataSetParser.VISI_HIDE);
+                attribs.put(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, c), IpacTableUtil.VISI_HIDE);
             }
         }
 

@@ -163,8 +163,9 @@ export function dispatchOnAppReady(callback) {
 export function isAppReady() {
     const gwtReady = !get(window, 'firefly.use_gwt', false) ||
         get(flux.getState(), [APP_DATA_PATH, 'gwtLoaded']);
+    const {isConnected} = getWsInfo() || {};
 
-    return getWsChannel() && get(flux.getState(), [APP_DATA_PATH, 'isReady']) && gwtReady;
+    return isConnected && get(flux.getState(), [APP_DATA_PATH, 'isReady']) && gwtReady;
 }
 
 export function getSearchInfo() {

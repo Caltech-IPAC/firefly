@@ -11,10 +11,10 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -75,7 +75,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
                     String col = String.valueOf(row.getDataElement("name"));
                     if (exists(columns, col)) {
                         String desc = String.valueOf(row.getDataElement("description"));
-                        meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, col), desc);
+                        meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, col), desc);
                     }
                 }
             } catch (DataAccessException e) {

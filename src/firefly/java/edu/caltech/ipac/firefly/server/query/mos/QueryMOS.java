@@ -5,9 +5,7 @@ package edu.caltech.ipac.firefly.server.query.mos;
 
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.util.Ref;
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
@@ -36,8 +34,8 @@ import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.LABEL_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import static edu.caltech.ipac.util.IpacTableUtil.LABEL_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 
 
 @SearchProcessorImpl(id = "MOSQuery")

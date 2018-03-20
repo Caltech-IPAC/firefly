@@ -12,21 +12,17 @@ import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
-import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -110,7 +106,7 @@ public class QueryIBE extends IpacTablePartProcessor {
                 String col = String.valueOf(row.getDataElement("name"));
                 if (exists(columns, col)) {
                     String desc = String.valueOf(row.getDataElement("description"));
-                    meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, col), desc);
+                    meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, col), desc);
                 }
             }
 
@@ -128,7 +124,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             String [] colsToHide = source.getColsToHide();
 
             for (String c : colsToHide) {
-                meta.setAttribute(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, c), DataSetParser.VISI_HIDE);
+                meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, c), IpacTableUtil.VISI_HIDE);
             }
 
             // mission specific attributes

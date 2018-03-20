@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_HIDDEN;
-import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import static edu.caltech.ipac.util.IpacTableUtil.VISI_HIDDEN;
+import static edu.caltech.ipac.util.IpacTableUtil.VISI_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 
 /**
  * Date: Nov 11, 2010

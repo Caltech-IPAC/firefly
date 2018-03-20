@@ -4,10 +4,10 @@
 package edu.caltech.ipac.astro;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.FitsFactory;
@@ -315,17 +315,17 @@ public final class FITSTableReader
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
             DataType dt = dataTypes.get(colIdx);
             if (!StringUtils.isEmpty(dt.getShortDesc())) {
-                dataGroup.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, dt.getKeyName()), dt.getShortDesc());
+                dataGroup.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, dt.getKeyName()), dt.getShortDesc());
             }
             String format = getParam(table, "TDISP" + (colIdx + 1), 20);
             format = format == null ? null : convertFormat(format);
             if (Double.class.isAssignableFrom(dt.getDataType()) ||
                 Float.class.isAssignableFrom(dt.getDataType())) {
                 format = format == null && Double.class.isAssignableFrom(dt.getDataType()) ? "%.9g" : format;
-                dataGroup.addAttribute(DataSetParser.makeAttribKey(DataSetParser.FORMAT_TAG, dt.getKeyName()), "NONE");
+                dataGroup.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_TAG, dt.getKeyName()), "NONE");
             }
             if (!StringUtils.isEmpty(format)) {
-                dataGroup.addAttribute(DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName()), format);
+                dataGroup.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_DISP_TAG, dt.getKeyName()), format);
             }
         }
 

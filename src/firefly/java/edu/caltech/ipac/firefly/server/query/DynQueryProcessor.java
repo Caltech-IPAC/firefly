@@ -24,8 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import static edu.caltech.ipac.util.IpacTableUtil.VISI_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 
 
 abstract public class DynQueryProcessor extends IpacTablePartProcessor {
