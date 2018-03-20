@@ -7,13 +7,8 @@ import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.dyn.xstream.CatalogTag;
-import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectTag;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.dyn.DynConfigManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -25,12 +20,13 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
-import java.util.List;
 
 
 /**
@@ -71,36 +67,36 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
             // if hydra, check for additional catalogs
             DataGroup dgExtra = null;
             String projectId = request.getParam("projectId");
-            if (!StringUtils.isEmpty(projectId)) {
-                ProjectTag pTag = DynConfigManager.getInstance().getCachedProject(projectId);
-                List<CatalogTag> cList = pTag.getCatalogs();
-                for (CatalogTag cTag : cList) {
-                    String fullCatalogUrl = cTag.getHost() + cTag.getCatalogUrl();
-                    File catInFile = new File(ServerContext.getPermWorkDir(), cTag.getOriginalFilename());
-                    placeOriginal(fullCatalogUrl, catInFile);
-
-                    catOutFile = new File(ServerContext.getPermWorkDir(), cTag.getMasterCatFilename());
-
-                    String selectStr =
-                            "select col " +
-                                    colNames + " " +
-                                    "from " + catInFile.getPath() + " " +
-                                    "with complete_header";
-                    DataGroupQueryStatement statement = DataGroupQueryStatement.parseStatement(selectStr);
-                    DataGroup dg = statement.execute();
-
-                    if (dgExtra == null) {
-                        dgExtra = dg;
-
-                    } else {
-                        // concat dg to dgExtra
-                        Iterator<DataObject> iter = dg.iterator();
-                        while (iter.hasNext()) {
-                            dgExtra.add(iter.next());
-                        }
-                    }
-                }
-            }
+//            if (!StringUtils.isEmpty(projectId)) {
+//                ProjectTag pTag = DynConfigManager.getInstance().getCachedProject(projectId);
+//                List<CatalogTag> cList = pTag.getCatalogs();
+//                for (CatalogTag cTag : cList) {
+//                    String fullCatalogUrl = cTag.getHost() + cTag.getCatalogUrl();
+//                    File catInFile = new File(ServerContext.getPermWorkDir(), cTag.getOriginalFilename());
+//                    placeOriginal(fullCatalogUrl, catInFile);
+//
+//                    catOutFile = new File(ServerContext.getPermWorkDir(), cTag.getMasterCatFilename());
+//
+//                    String selectStr =
+//                            "select col " +
+//                                    colNames + " " +
+//                                    "from " + catInFile.getPath() + " " +
+//                                    "with complete_header";
+//                    DataGroupQueryStatement statement = DataGroupQueryStatement.parseStatement(selectStr);
+//                    DataGroup dg = statement.execute();
+//
+//                    if (dgExtra == null) {
+//                        dgExtra = dg;
+//
+//                    } else {
+//                        // concat dg to dgExtra
+//                        Iterator<DataObject> iter = dg.iterator();
+//                        while (iter.hasNext()) {
+//                            dgExtra.add(iter.next());
+//                        }
+//                    }
+//                }
+//            }
 
             // get all other catalog data
             placeOriginal(MASTER_LOC, ORIGINAL_FILE);

@@ -8,14 +8,12 @@ package edu.caltech.ipac.util.dd;
  * Time: 1:24 PM
  */
 
-import edu.caltech.ipac.util.HandSerialize;
-
 import java.io.Serializable;
 
 /**
  * @author Trey Roby
  */
-public class RegionOptions implements Serializable, HandSerialize {
+public class RegionOptions implements Serializable {
 
     private String color= "green";
     private boolean editable= true;

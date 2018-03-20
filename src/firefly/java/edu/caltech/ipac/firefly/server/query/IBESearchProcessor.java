@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class IBESearchProcessor extends DynQueryProcessor {
+public abstract class IBESearchProcessor extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     abstract protected String getDDUrl(ServerRequest request);
@@ -64,7 +64,6 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
-        setXmlParams(request);
         String url = getDDUrl(request);
         if (url != null) {
             try {

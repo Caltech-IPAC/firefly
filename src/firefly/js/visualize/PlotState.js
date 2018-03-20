@@ -69,8 +69,8 @@ export class PlotState {
      * @public
      */
     firstBand() {
-        var bandAry= this.getBands();
-        return (bandAry) ? bandAry[0] : null;
+        const bandAry= this.getBands();
+        return bandAry && bandAry[0];
     }
 
     /**
@@ -103,13 +103,6 @@ export class PlotState {
     }
 
     /**
-     *
-     * @return {string}
-     */
-    getContextString() { return this.ctxStr; }
-
-
-    /**
      * Get the number of the color table
      * @return {number}
      */
@@ -121,14 +114,6 @@ export class PlotState {
      */
     isThreeColor() { return this.threeColor; }
 
-    /**
-     *
-     * @return {number}
-     */
-    getThumbnailSize() {
-        return this.get(this.firstBand()).getWebPlotRequest().getThumbnailSize();
-    }
-
 
     /**
      *
@@ -136,36 +121,12 @@ export class PlotState {
      */
     getZoomLevel() {return this.zoomLevel; }
 
-
-    /**
-     *
-     * @return {RotateType}
-     */
-    // getRotateType() {return this.rotationType; }
-
-    /**
-     * @summary check to see it the image is rotated
-     * @return {boolean}
-     * @public
-     */
-    // isRotated() {return this.rotationType!==RotateType.UNROTATE;}
-
     /**
      *
      * @return {boolean}
      */
     isFlippedY() { return this.flippedY; }
 
-    // getRotationAngle() { return this.rotationAngle; }
-
-
-    /**
-     *
-     * @return {CoordinateSys}
-     */
-    getRotateNorthType() {
-        return this.rotaNorthType;
-    }
 
     /**
      * @summary this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
@@ -177,9 +138,6 @@ export class PlotState {
     getWebPlotRequest(band) { return this.get(band || this.firstBand()).getWebPlotRequest(); }
 
 
-    isBandVisible(band) { return  this.get(band).isBandVisible(); }
-
-
     /**
      * @summary Check to see it this plot is from a multi image file
      * @param {Band} [band] the band check for, if not passed the used the primary band
@@ -187,13 +145,6 @@ export class PlotState {
      * @public
      */
     isMultiImageFile(band = undefined) { return this.get(band || this.firstBand()).isMultiImageFile(); }
-
-    /**
-     * @summary check to see if this plot is from a file with tile compress image
-     * @param band
-     * @returns {BandState.isTileCompress}
-     */
-    isTileCompress(band = undefined) { return this.get(band || this.firstBand()).isTileCompress(); }
 
     /**
      * @summary if a cube, checkout how many images it contains
@@ -207,8 +158,6 @@ export class PlotState {
     getCubePlaneNumber(band) {
         return this.get(band || this.firstBand()).getCubePlaneNumber();
     }
-    getPrimaryCubePlaneNumber() { return this.get(this.firstBand()).getCubePlaneNumber(); }
-
 
     /**
      * Get the range values for the plot.
@@ -216,22 +165,6 @@ export class PlotState {
      * @return {RangeValues}
      */
     getRangeValues(band) { return this.get(band || this.firstBand()).getRangeValues(); }
-
-    /**
-     *
-     * @return {RangeValues}
-     */
-    getPrimaryRangeValues() { return this.get(this.firstBand()).getRangeValues(); }
-
-
-    /**
-     *
-     * @param band
-     * @return {FileAndHeaderInfo}
-     */
-    getFileAndHeaderInfo(band) {
-        return this.get(band).getFileAndHeaderInfo();
-    }
 
 
     /**
@@ -267,7 +200,7 @@ export class PlotState {
      * @param {Operation} op
      */
     hasOperation(op) {
-        var newOp;
+        let newOp;
         if (op.key) {
             newOp= op;
         }
@@ -280,14 +213,6 @@ export class PlotState {
         return newOp ? this.ops.indexOf(newOp)>-1  : false;
     }
 
-    isFilesOriginal() {
-        return this.getBands().every( (band) => this.get(band).isFileOriginal());
-    }
-
-
-    serialize() { return this.toString(); }
-
-
     equals(obj) {
         return (obj instanceof PlotState) ? this.toJson()===obj.toJson() : false;
     }
@@ -298,7 +223,7 @@ export class PlotState {
      * @return {BandState}
      */
     get(band) {
-        var idx;
+        let idx;
         if (band.value) {
             idx= band.value;
         }
@@ -306,7 +231,7 @@ export class PlotState {
             idx= band;
         }
         else {
-            var b= Band.get(band.toString());
+            const b= Band.get(band.toString());
             idx= b ? b.value : Band.NO_BAND.value;
         }
 
@@ -325,7 +250,7 @@ export class PlotState {
 
     static makePlotStateWithJson(psJson) {
         if (!psJson) return null;
-        var state= PlotState.makePlotState();
+        const state= PlotState.makePlotState();
 
         state.bandStateAry= psJson.bandStateAry.map( (bJ) => BandState.makeBandStateWithJson(bJ));
 
@@ -351,7 +276,7 @@ export class PlotState {
      */
     static convertToJSON(s) {
         if (!s) return null;
-        var json= {};
+        const json= {};
         json.JSON=true;
         json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ));
         json.multiImage= s.multiImage;

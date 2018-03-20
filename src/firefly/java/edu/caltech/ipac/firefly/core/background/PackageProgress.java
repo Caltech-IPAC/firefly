@@ -9,7 +9,6 @@ package edu.caltech.ipac.firefly.core.background;
  */
 
 
-import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
@@ -17,7 +16,7 @@ import java.io.Serializable;
 /**
 * @author Trey Roby
 */
-public class PackageProgress implements Serializable, HandSerialize {
+public class PackageProgress implements Serializable {
     private final static String SPLIT_TOKEN= "--BGProgress--";
     private int _totalFiles= 0;
     private int _processedFiles= 0;

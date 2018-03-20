@@ -3,13 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
+import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.util.AppProperties;
@@ -17,6 +15,8 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,12 +34,12 @@ import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
  * @version $Id: CatScanQuery.java,v 1.8 2012/10/08 22:51:25 tatianag Exp $
  */
 @SearchProcessorImpl(id ="catScan")
-public class CatScanQuery extends DynQueryProcessor {
+public class CatScanQuery extends IpacTablePartProcessor {
     private static final String DEF_HOST    = AppProperties.getProperty("irsa.gator.hostname", "https://irsa.ipac.caltech.edu");
     private static final String URL_FORMAT  = "%s/cgi-bin/Gator/nph-scan?%smode=ascii";
     private static final String PROJ_PARAM = "projshort=%s&";
 
-    protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
+    protected File loadDataFile(TableServerRequest req) throws IOException, DataAccessException {
 
         String proj = req.getParam("projshort");
         String projParam = StringUtils.isEmpty(proj) ? "" : String.format(PROJ_PARAM, proj);

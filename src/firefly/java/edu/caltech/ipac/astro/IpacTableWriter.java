@@ -6,7 +6,6 @@ package edu.caltech.ipac.astro;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.IpacTableUtil;
-import edu.caltech.ipac.util.action.ClassProperties;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,14 +27,12 @@ import java.util.stream.Collectors;
  * @version $Id: IpacTableWriter.java,v 1.11 2012/08/10 20:58:28 tatianag Exp $
  */
 public class IpacTableWriter {
-    private final static ClassProperties _prop =
-            new ClassProperties(IpacTableWriter.class);
     private static final String LINE_SEP = "\n";
 
     public final static String BACKSLASH = "\\";
 
     // constants
-    private final static int COL_LENGTH = _prop.getIntValue("column.length");
+    private final static int COL_LENGTH = 30;
     // header names & constants
     private final static String NULL_STRING = "null";
     private final static String SEPARATOR = "|";

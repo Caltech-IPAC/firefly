@@ -43,10 +43,6 @@ public class VisJsonSerializer {
 
 
 
-    public static String serializeWebPlotInitializerShallow(WebPlotInitializer wpInit) {
-        return wpInit.toString();
-    }
-
     public static JSONObject serializeWebPlotInitializerDeep(WebPlotInitializer wpInit) {
         JSONObject map = new JSONObject();
         map.put("JSON", true);
@@ -288,9 +284,8 @@ public class VisJsonSerializer {
 
 
 
-    public static StretchData deserializeStretchDataFromString(String s, boolean asJson) {
+    public static StretchData deserializeStretchDataFromString(String s) {
         if (s==null) return null;
-        if (!asJson) return StretchData.parse(s);
         try {
             JSONParser parser= new JSONParser();
             Object obj= parser.parse(s);
@@ -313,7 +308,6 @@ public class VisJsonSerializer {
 
     public static PlotState deserializePlotStateFromString(String s) {
         if (s==null) return null;
-        if (!s.contains("JSON")) return PlotState.parse(s);
         try {
             PlotState state= null;
             JSONParser parser= new JSONParser();

@@ -41,7 +41,6 @@ public class ServerCommandAccess {
     }
 
     private static void initCommand() {
-        _cmdMap.put(ServerParams.FILE_FLUX,    new VisServerCommands.FileFluxCmd());
         _cmdMap.put(ServerParams.FILE_FLUX_JSON, new VisServerCommands.FileFluxCmdJson());
         _cmdMap.put(ServerParams.CREATE_PLOT,  new VisServerCommands.GetWebPlotCmd());
         _cmdMap.put(ServerParams.CREATE_PLOT_GROUP,  new VisServerCommands.GetWebPlotGroupCmd());
@@ -54,7 +53,6 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.CROP,         new VisServerCommands.Crop());
         _cmdMap.put(ServerParams.HISTOGRAM,    new VisServerCommands.ColorHistogram());
         _cmdMap.put(ServerParams.STAT,         new VisServerCommands.AreaStat());
-        _cmdMap.put(ServerParams.HEADER,       new VisServerCommands.Header());
         _cmdMap.put(ServerParams.FITS_HEADER,  new VisServerCommands.FitsHeader());   //LZ 3/21/16  DM-4494
 
         _cmdMap.put(ServerParams.IMAGE_PNG,    new VisServerCommands.GetImagePng());
@@ -63,7 +61,6 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.DS9_REGION,   new VisServerCommands.DS9Region());
         _cmdMap.put(ServerParams.SAVE_DS9_REGION,      new VisServerCommands.SaveDS9Region());
         _cmdMap.put(ServerParams.ADD_SAVED_REQUEST,    new VisServerCommands.AddSavedRequest());
-        _cmdMap.put(ServerParams.GET_ALL_SAVED_REQUEST,new VisServerCommands.GetAllSavedRequest());
         _cmdMap.put(ServerParams.GET_IMAGE_MASTER_DATA, new VisServerCommands.GetMasterImageData());
 
         _cmdMap.put(ServerParams.USER_KEY,   new ResourceServerCommands.UserKey());

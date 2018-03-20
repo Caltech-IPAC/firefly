@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.util.StringUtils;
-
 import java.io.Serializable;
 /**
  * User: roby
@@ -25,8 +23,6 @@ public class WebFitsData implements Serializable {
     private long   _fitsFileSize;
     private String _fluxUnits;
     private double  _beta;
-
-    public WebFitsData() {}
 
     public WebFitsData(double dataMin,
                        double dataMax,
@@ -64,28 +60,6 @@ public class WebFitsData implements Serializable {
                _fitsFileSize + SPLIT_TOKEN +
                _fluxUnits;
     }
-
-    public static WebFitsData parse(String s) {
-        if (s==null) return null;
-        String sAry[]= s.split(SPLIT_TOKEN,5);
-        WebFitsData retval= null;
-        if (sAry.length==5) {
-            try {
-                int i= 0;
-                double dataMin= StringUtils.getDouble(sAry[i++]);
-                double dataMax= StringUtils.getDouble(sAry[i++]);
-                double beta =  StringUtils.getDouble(sAry[i++]);
-                long fitsFileSize= Long.parseLong(sAry[i++]);
-                String fluxUnits= getString(sAry[i]);;
-                retval= new WebFitsData(dataMin,dataMax,beta, fitsFileSize,fluxUnits);
-            } catch (NumberFormatException e) {
-                retval= null;
-            }
-        }
-        return retval;
-
-    }
-
     private static String getString(String s) { return s.equals("null") ? null : s; }
 }
 

@@ -3,30 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WspaceMeta;
-import edu.caltech.ipac.firefly.data.dyn.xstream.CatalogTag;
-import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectTag;
-import edu.caltech.ipac.firefly.server.WorkspaceManager;
-import edu.caltech.ipac.firefly.server.dyn.DynConfigManager;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
+import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataGroupQuery;
-import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -38,10 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -50,7 +37,7 @@ import java.util.Map;
  * @author Trey
  * @version $Id: BaseGator.java,v 1.28 2012/08/21 21:31:12 roby Exp $
  */
-public abstract class BaseGator extends DynQueryProcessor {
+public abstract class BaseGator extends IpacTablePartProcessor {
 
 
     private static final int MAX_ERROR_LEN = 200;
@@ -70,66 +57,65 @@ public abstract class BaseGator extends DynQueryProcessor {
 
     @Override
     public ServerRequest inspectRequest(ServerRequest request) {
-        setXmlParams(request);
-
         CatalogRequest req = QueryUtil.assureType(CatalogRequest.class,request.cloneRequest());
         // if hydra, check against additional catalogs
-        try {
-            CatalogTag cTag = null;
-            String projectId = req.getParam("projectId");
-            if (!StringUtils.isEmpty(projectId)) {
-                String projectName = req.getParam(CatalogRequest.CATALOG_PROJECT);
-                ProjectTag pTag = DynConfigManager.getInstance().getCachedProject(projectId);
-                List<CatalogTag> cList = pTag.getCatalogs();
-                for (CatalogTag c : cList) {
-                    if (projectName.equals(c.getName())) {
-                        cTag = c;
-
-                        // set request params from configured catalog info
-                        req.setGatorHost(c.getHost());
-                        req.setDDOnList(false);
-
-                        Map<String, String> paramMap = c.getSearchParams();
-                        if (paramMap.size() > 0) {
-                            // set additional request params with data obtained from master catalog query
-                            DataGroup dGrp = null;
-                                dGrp = CatMasterTableQuery.getBaseGatorData(c.getOriginalFilename());
-
-                            DataGroupQuery.DataFilter filter =
-                                    new DataGroupQuery.DataFilter("catname", DataGroupQuery.OpType.EQUALS, req.getQueryCatName());
-
-                            ArrayList<DataObject> dataResults = new ArrayList<DataObject>();
-                            CollectionUtil.filter(dGrp.values(), dataResults, filter);
-
-                            DataObject dObj = dataResults.get(0);
-
-                            Iterator iter = paramMap.entrySet().iterator();
-                            while (iter.hasNext()) {
-                                Map.Entry<String, String> entry = (Map.Entry) iter.next();
-                                req.setParam(entry.getKey(), String.valueOf(dObj.getDataElement(entry.getValue())));
-                            }
-
-                            if (StringUtils.isEmpty(req.getXPFFile())) {
-                                throw new DataAccessException("xpffile does not exist for this catalog!");
-                            }
-                        }
-
-                        break;
-                    }
-                }
-            }
-//            if (!ServerStringUtil.isEmpty(DEF_GATOR_MISSION) && !request.containsParam(CatalogRequest.GATOR_MISSION))  {
-//                req.setGatorMission(DEF_GATOR_MISSION);
+//        try {
+////            CatalogTag cTag = null;
+//            String projectId = req.getParam("projectId");
+//            if (!StringUtils.isEmpty(projectId)) {
+//                String projectName = req.getParam(CatalogRequest.CATALOG_PROJECT);
+////                ProjectTag pTag = DynConfigManager.getInstance().getCachedProject(projectId);
+////                List<CatalogTag> cList = pTag.getCatalogs();
+//                List<CatalogTag> cList= Collections.emptyList()
+//                for (CatalogTag c : cList) {
+//                    if (projectName.equals(c.getName())) {
+//                        cTag = c;
+//
+//                        // set request params from configured catalog info
+//                        req.setGatorHost(c.getHost());
+//                        req.setDDOnList(false);
+//
+//                        Map<String, String> paramMap = c.getSearchParams();
+//                        if (paramMap.size() > 0) {
+//                            // set additional request params with data obtained from master catalog query
+//                            DataGroup dGrp = null;
+//                                dGrp = CatMasterTableQuery.getBaseGatorData(c.getOriginalFilename());
+//
+//                            DataGroupQuery.DataFilter filter =
+//                                    new DataGroupQuery.DataFilter("catname", DataGroupQuery.OpType.EQUALS, req.getQueryCatName());
+//
+//                            ArrayList<DataObject> dataResults = new ArrayList<DataObject>();
+//                            CollectionUtil.filter(dGrp.values(), dataResults, filter);
+//
+//                            DataObject dObj = dataResults.get(0);
+//
+//                            Iterator iter = paramMap.entrySet().iterator();
+//                            while (iter.hasNext()) {
+//                                Map.Entry<String, String> entry = (Map.Entry) iter.next();
+//                                req.setParam(entry.getKey(), String.valueOf(dObj.getDataElement(entry.getValue())));
+//                            }
+//
+//                            if (StringUtils.isEmpty(req.getXPFFile())) {
+//                                throw new DataAccessException("xpffile does not exist for this catalog!");
+//                            }
+//                        }
+//
+//                        break;
+//                    }
+//                }
 //            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (DataAccessException e) {
-            e.printStackTrace();
-        }
+////            if (!ServerStringUtil.isEmpty(DEF_GATOR_MISSION) && !request.containsParam(CatalogRequest.GATOR_MISSION))  {
+////                req.setGatorMission(DEF_GATOR_MISSION);
+////            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (DataAccessException e) {
+//            e.printStackTrace();
+//        }
         return req;
     }
 
-    protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
         CatalogRequest req = QueryUtil.assureType(CatalogRequest.class, request);
         return searchGator(req);
     }

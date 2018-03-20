@@ -4,23 +4,22 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -141,24 +140,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
 
         } catch (IOException e) {
             _log.error(e, e.toString());
-            if (conn != null && conn instanceof HttpURLConnection) {
-                HttpURLConnection httpConn = (HttpURLConnection) conn;
-                int respCode = httpConn.getResponseCode();
-                if (respCode == 400 || respCode == 404 || respCode == 500) {
-                    InputStream is = httpConn.getErrorStream();
-                    if (is != null) {
-                        String msg = parseMessageFromServer(DynServerUtils.convertStreamToString(is));
-                        throw new EndUserException("query failed: " + msg, msg);
-
-                    } else {
-                        String msg = httpConn.getResponseMessage();
-                        throw new EndUserException("query failed: " + msg, msg);
-                    }
-                }
-
-            } else {
-                throw makeException(e, "query failed - network error.");
-            }
+            throw makeException(e, "query failed - network error.");
 
         } catch (Exception e) {
             throw makeException(e, "query failed");

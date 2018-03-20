@@ -46,5 +46,8 @@ public class CommonParams {
     public static final String COD_ID = "COD_ID";
     public final static String SPLIT_TOKEN= "--split--";
 
+    static public final String HYDRA_PROJECT_ID = "projectId";
+    static public final String QUERY_ID = "queryId";
+    static public final String SEARCH_NAME = "searchName";
 }
 

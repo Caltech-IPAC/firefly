@@ -156,10 +156,6 @@ public class ServerContext {
         Assert.setLogger(new AssertLogger());
 
 
-        // load resource files
-        String resdir = AppProperties.getProperty("web.properties.dir", "/resources");
-        boolean loadAllClientProperties= AppProperties.getBooleanProperty("properties.loadAllClientProperties",true);
-        WebPropertyLoader.loadAllProperties(resdir, loadAllClientProperties);
 
         // disable caching is it's a preference
         CacheManager.setDisabled(AppProperties.getBooleanProperty(CACHEMANAGER_DISABLED_PROP, false));

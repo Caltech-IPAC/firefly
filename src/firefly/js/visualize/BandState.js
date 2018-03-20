@@ -3,12 +3,9 @@
  */
 
 
-import {join} from 'lodash';
 import WebPlotRequest from './WebPlotRequest.js';
 import {RangeValues} from './RangeValues.js';
 import {makeClientFitsHeader} from './ClientFitsHeader.js';
-
-const SPLIT_TOKEN= '--BandState--';
 
 /**
  * @global
@@ -63,11 +60,6 @@ export class BandState {
     isMultiImageFile() { return this.multiImageFile; }
 
     /**
-     * check if the image is with  tile compression
-     * @returns {BandState.isTileCompress}
-     */
-    isTileCompress() { return this.tileCompress; }
-    /**
      *
      */
     getCubePlaneNumber() { return this.cubePlaneNumber; }
@@ -96,12 +88,6 @@ export class BandState {
 
     hasRequest() { return this.plotRequestSerialize!==null; }
 
-    /**
-     *
-     * @return {boolean}
-     */
-    isBandVisible() { return this.bandVisible; }
-
 
     /**
      *
@@ -121,12 +107,6 @@ export class BandState {
 
     /**
      *
-     * @return {object}
-     */
-    getFileAndHeaderInfo() { return {file:this.workingFitsFileStr, header:this.fitsHeader }; }
-
-    /**
-     *
      * @return {string}
      */
     getWorkingFitsFileStr() { return this.workingFitsFileStr; }
@@ -142,41 +122,9 @@ export class BandState {
 
     /**
      *
-     * @return {boolean}
-     */
-    isFileOriginal() { return this.originalFitsFileStr===this.workingFitsFileStr; }
-
-    /**
-     *
      * @return {string}
      */
     getUploadedFileName() { return this.uploadFileNameStr; }
-
-    toString() {
-        return join(
-            [this.workingFitsFileStr,
-            this.originalFitsFileStr,
-            this.uploadFileNameStr,
-            this.imageIdx,
-            this.originalImageIdx,
-            this.plotRequestSerialize,
-            this.rangeValuesSerialize,
-            this.fitsHeaderSerialize,
-            this.bandVisible,
-            this.multiImageFile,
-            this.tileCompress,
-            this.cubeCnt,
-            this.cubePlaneNumber],
-            SPLIT_TOKEN);
-    }
-
-    serialize() { return this.toString(); }
-
-
-    equals(obj) {
-        return (obj instanceof BandState) ? this.toString()===obj.toString() : false;
-    }
-
 
     static makeBandState() { return new BandState(); }
 
@@ -187,7 +135,7 @@ export class BandState {
      */
     static makeBandStateWithJson(bsJson) {
         if (!bsJson) return null;
-        var bState= BandState.makeBandState();
+        const bState= BandState.makeBandState();
         bState.workingFitsFileStr= bsJson.workingFitsFileStr;
         bState.originalFitsFileStr= bsJson.originalFitsFileStr;
         bState.uploadFileNameStr= bsJson.uploadFileNameStr;
@@ -209,7 +157,7 @@ export class BandState {
      */
     static convertToJSON(bs) {
         if (!bs || !bs.plotRequestSerialize) return null;
-        var json= {};
+        const json= {};
         json.workingFitsFileStr= bs.workingFitsFileStr;
         json.originalFitsFileStr= bs.originalFitsFileStr;
         json.uploadFileNameStr= bs.uploadFileNameStr;

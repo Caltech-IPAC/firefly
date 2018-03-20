@@ -3,22 +3,17 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.util.ComparisonUtil;
-import edu.caltech.ipac.util.HandSerialize;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Trey Roby
  */
-public class PlotState implements DataEntry, HandSerialize {
+public class PlotState {
 
     private final static String SPLIT_TOKEN= "--PlotState--";
     public enum RotateType {NORTH, ANGLE, UNROTATE}
@@ -310,10 +305,7 @@ public class PlotState implements DataEntry, HandSerialize {
 
     }
 
-    public String serialize() { return toString(); }
-
     public String toString() {
-
         StringBuilder sb= new StringBuilder(350);
         sb.append(multiImage).append(SPLIT_TOKEN);
         sb.append(ctxStr).append(SPLIT_TOKEN);
@@ -327,75 +319,12 @@ public class PlotState implements DataEntry, HandSerialize {
         sb.append(rotaNorthType.toString()).append(SPLIT_TOKEN);
 
         for(int i= 0; (i< bandStateAry.length); i++) {
-                sb.append(bandStateAry[i]==null ? null : bandStateAry[i].serialize());
+                sb.append(bandStateAry[i]==null ? null : bandStateAry[i].toString());
                 if (i< bandStateAry.length-1) sb.append(SPLIT_TOKEN);
         }
         return sb.toString();
     }
 
-    public Map<String,String> originKeyValues() {
-        Map<String,String> keyVals = new LinkedHashMap<String,String>(5);
-        BandState firstBandState = get(firstBand());
-        keyVals.put("workingFile", firstBandState.getWorkingFitsFileStr());
-        if (firstBandState.isMultiImageFile()) {
-            keyVals.put("multiImageFile", firstBandState.isMultiImageFile()+"");
-            keyVals.put("imageIdx", firstBandState.getImageIdx()+"");
-        }
-        if (firstBandState.isTileCompress()) {
-            keyVals.put("tileCompress", firstBandState.isTileCompress()+"");
-            keyVals.put("imageIdx", firstBandState.getImageIdx()+"");
-        }
-        if (!firstBandState.isFileOriginal()) {
-            keyVals.put("originalFile",firstBandState.getOriginalFitsFileStr());
-            if (firstBandState.isMultiImageFile()) {
-                keyVals.put("originalImageIdx", firstBandState.getOriginalImageIdx()+"");
-            }
-
-        }
-        return keyVals;
-    }
-
-    public static PlotState parse(String s) {
-        PlotState retval;
-        try {
-            String sAry[]= StringUtils.parseHelper(s,13,SPLIT_TOKEN);
-            int i= 0;
-            MultiImageAction multiImage= Enum.valueOf(MultiImageAction.class, sAry[i++]);
-            String ctxStr= getString(sAry[i++]);
-            boolean newPlot= Boolean.parseBoolean(sAry[i++]);
-            float zoomLevel= StringUtils.getFloat(sAry[i++], 1F);
-            boolean threeColor = Boolean.parseBoolean(sAry[i++]);
-            int colorTableId= StringUtils.getInt(sAry[i++], 0);
-            RotateType rotationType= Enum.valueOf(RotateType.class, sAry[i++]);
-            double rotationAngle= StringUtils.getDouble(sAry[i++]);
-            boolean flippedY= StringUtils.getBoolean(sAry[i++],false);
-            CoordinateSys rotaNorthType= CoordinateSys.parse(getString(sAry[i++]));
-
-            BandState bandStateAry[]= new BandState[MAX_BANDS];
-            for(int j= 0; (j<MAX_BANDS);j++) {
-                bandStateAry[j]= BandState.parse(getString(sAry[i++]));
-            }
-
-            retval= new PlotState();
-            retval.multiImage = multiImage;
-            retval.ctxStr = ctxStr;
-            retval.newPlot = newPlot;
-            retval.zoomLevel = zoomLevel;
-            retval.threeColor = threeColor;
-            retval.colorTableId = colorTableId;
-            retval.rotationType = rotationType;
-            retval.rotaNorthType = rotaNorthType;
-            retval.rotationAngle = rotationAngle;
-            retval.flippedY = flippedY;
-            retval.bandStateAry = bandStateAry;
-
-        } catch (Exception e) {
-            retval= null;
-        }
-        return retval;
-    }
-
-    private static String getString(String s) { return s.equals("null") ? null : s; }
 
     public boolean equals(Object o) {
         boolean retval= false;

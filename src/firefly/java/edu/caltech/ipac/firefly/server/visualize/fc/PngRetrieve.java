@@ -14,10 +14,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder;
 import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -59,14 +56,21 @@ public class PngRetrieve {
         return null;
     }
 
+
+    /**
+     *
+     * @deprecated  - the method depends on a string serialized plotStateStr that is no longer passed since
+     * we ported from GWT. Since the conversion plotStateStr must have always been null
+     */
+    @Deprecated
     private static void importPlotState(WebPlotRequest request, String plotStateStr) {
-        PlotState state = PlotState.parse(plotStateStr);
-        if (state==null) return;
-        request.setInitialColorTable(state.getColorTableId());
-        request.setInitialZoomLevel(state.getZoomLevel());
-        ZoomType zt= state.getWebPlotRequest().getZoomType();
-        request.setZoomType(zt);
-        request.setInitialRangeValues(state.getRangeValues(Band.NO_BAND));
+//        PlotState state = PlotState.parse(plotStateStr);
+//        if (state==null) return;
+//        request.setInitialColorTable(state.getColorTableId());
+//        request.setInitialZoomLevel(state.getZoomLevel());
+//        ZoomType zt= state.getWebPlotRequest().getZoomType();
+//        request.setZoomType(zt);
+//        request.setInitialRangeValues(state.getRangeValues(Band.NO_BAND));
     }
 
     private static List<StaticDrawInfo> parseDrawInfoListStr (WebPlotRequest request, String drawInfoListStr,

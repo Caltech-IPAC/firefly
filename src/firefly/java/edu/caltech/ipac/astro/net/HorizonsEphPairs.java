@@ -4,7 +4,6 @@
 package edu.caltech.ipac.astro.net;
 
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
@@ -26,8 +25,7 @@ import java.util.List;
  */
 public class HorizonsEphPairs {
 
-    private static final ClassProperties _prop = new ClassProperties(
-            HorizonsEphPairs.class);
+    private static final String PARSE_ERROR= "Error Parsing Name Resolver results";
 
     private static final String NAME_IDENT = "Object Name";
     private static final String ID_IDENT = "Primary SPKID";
@@ -150,7 +148,7 @@ public class HorizonsEphPairs {
 
                 if (name == null || id == null || des == null || aliases == null) {
                     throw new FailedRequestException(
-                            _prop.getError("parse"),
+                            PARSE_ERROR,
                             "One of the fields was null.\n" +
                                     "Results from query:\n" +
                                     appendAll(list));
@@ -168,7 +166,7 @@ public class HorizonsEphPairs {
                 sAry = s.split("=");
                 if (sAry.length != 2) {
                     throw new FailedRequestException(
-                            _prop.getError("parse"),
+                            PARSE_ERROR,
                             "Missing a value pair combination\n" +
                                     "Results from query:\n" +
                                     appendAll(list));
@@ -203,7 +201,7 @@ public class HorizonsEphPairs {
         } // end loop
         if (retList.size() == 0) {
             throw new FailedRequestException(
-                    _prop.getError("parse"),
+                    PARSE_ERROR,
                     "No error indicated but no results\n" +
                             "Results from query:\n" +
                             appendAll(list));

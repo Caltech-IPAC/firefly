@@ -4,11 +4,9 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
+import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -18,8 +16,14 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -35,7 +39,7 @@ import java.util.regex.Pattern;
         {@ParamDoc(name = CatSummaryQuery.RA_DEC_RADIUS_KEY, desc = "comma separated ra, dec, radius in degrees"),
          @ParamDoc(name = CatSummaryQuery.PROJECT_KEY, desc = "project")
         })
-public class CatSummaryQuery  extends DynQueryProcessor {
+public class CatSummaryQuery  extends IpacTablePartProcessor {
 
     public static final String PROJECT_KEY = "projshort";
     public static final String RA_DEC_RADIUS_KEY = "ra_dec_radius";
@@ -45,7 +49,7 @@ public class CatSummaryQuery  extends DynQueryProcessor {
     private static final String URL_FORMAT  = "%s/%s?%s";
 
 
-    protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
+    protected File loadDataFile(TableServerRequest req) throws IOException, DataAccessException {
 
 
         // get the master table.
@@ -145,15 +149,15 @@ public class CatSummaryQuery  extends DynQueryProcessor {
         return hm;
     }
 
-    public static void main(String [] args) {
-        TableServerRequest req = new TableServerRequest();
-        req.setParam(RA_DEC_RADIUS_KEY, "259.5575,-38.973528,0.3");
-        req.setParam(PROJECT_KEY, "spitzer");
-        try {
-            File f = new CatSummaryQuery().loadDynDataFile(req);
-            System.out.println(f.getAbsolutePath());
-        } catch (Exception e) {
-            System.out.println("ERROR: "+e.getMessage());
-        }
-    }
+//    public static void main(String [] args) {
+//        TableServerRequest req = new TableServerRequest();
+//        req.setParam(RA_DEC_RADIUS_KEY, "259.5575,-38.973528,0.3");
+//        req.setParam(PROJECT_KEY, "spitzer");
+//        try {
+//            File f = new CatSummaryQuery().loadDynDataFile(req);
+//            System.out.println(f.getAbsolutePath());
+//        } catch (Exception e) {
+//            System.out.println("ERROR: "+e.getMessage());
+//        }
+//    }
 }

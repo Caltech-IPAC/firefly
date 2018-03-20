@@ -57,11 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
-/**
- * User: roby
- * Date: Sep 23, 2009
- * Time: 9:46:23 AM
- */
 
 
 /**
@@ -185,79 +180,6 @@ public class PlotServUtils {
 
 
 
-//    public static File createRotatedFile(FitsRead originalFR,
-//                                         String originalFileStr,
-//                                         String workingFileStr,
-//                                         PlotState.RotateType rotateType,
-//                                         double angle,
-//                                         CoordinateSys rotNorthType) throws FitsException, IOException, GeomException {
-//
-//        String fStr = originalFileStr != null ? originalFileStr : workingFileStr;
-//        File originalFile = ServerContext.convertToFile(fStr);
-//        boolean rotateNorth = (rotateType == PlotState.RotateType.NORTH);
-//        File f = rotateNorth ? createRotateNorthFile(originalFile, originalFR, rotNorthType) :
-//                               createRotatedAngleFile(originalFile, originalFR, angle);
-//        return f;
-//    }
-//
-//    public static File createRotateNorthFile(File originalFile,
-//                                             FitsRead originalFR,
-//                                             CoordinateSys rotateNorthType) throws FitsException,
-//                                                                                   IOException,
-//                                                                                   GeomException {
-//        FitsRead northFR= null;
-//        if (rotateNorthType.equals(CoordinateSys.GALACTIC)) {
-//            northFR= FitsRead.createFitsReadNorthUpGalactic(originalFR);
-//        }
-//        else if (rotateNorthType.equals(CoordinateSys.EQ_J2000)){
-//            northFR= FitsRead.createFitsReadNorthUp(originalFR);
-//        }
-//        else {
-//            WebAssert.argTst(false, "only supports galactic and j2000");
-//
-//        }
-//        String fname= originalFile.getName();
-//        File f= File.createTempFile(FileUtil.getBase(fname) + "-rot-north",
-//                "." + FileUtil.FITS,
-//                ServerContext.getVisSessionDir());
-//        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-//        if (northFR!=null) northFR.writeSimpleFitsFile(stream);
-//        FileUtil.silentClose(stream);
-//        return f;
-//    }
-//
-//
-//    public static File createRotatedAngleFile(File originalFile, FitsRead originalFR, double angle) throws FitsException,
-//                                                                                                      IOException,
-//                                                                                                      GeomException {
-//        FitsRead rotateFR= FitsRead.createFitsReadRotated(originalFR, angle, true);
-//        String fname= originalFile.getName();
-//        String angleStr= String.format("%2f", angle);
-//        File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-"+angleStr,
-//                                    "."+FileUtil.FITS,
-//                                    ServerContext.getVisSessionDir());
-//        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-//        if (rotateFR!=null) rotateFR.writeSimpleFitsFile(stream);
-//        FileUtil.silentClose(stream);
-//        return f;
-//    }
-//
-//    public static File createFlipYFile(File originalFile, FitsRead originalFR) throws FitsException,
-//                                                                                      IOException,
-//                                                                                      GeomException {
-//        FitsRead rotateFR= FitsRead.createFitsReadFlipLR(originalFR);
-//        String fname= originalFile.getName();
-//        String base= FileUtil.getBase(fname);
-//        int idx= base.indexOf("-flip");
-//        if (idx>-1) base= base.substring(0,idx);
-//        File f= File.createTempFile(base+"-flip", "."+FileUtil.FITS,
-//                                    ServerContext.getVisSessionDir());
-//        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-//        rotateFR.writeSimpleFitsFile(stream);
-//        FileUtil.silentClose(stream);
-//        return f;
-//    }
-
 
     public static long getTileModTime(String fname) {
         File f= ServerContext.convertToFile(fname);
@@ -372,7 +294,7 @@ public class PlotServUtils {
         else if (isBlank(state)) {
             baseStr= "Blank";
         }
-        return  baseStr +"-"+ state.getContextString() +"-"+state.serialize().hashCode();
+        return  baseStr +"-"+ state.getContextString() +"-"+state.toString().hashCode();
     }
 
     public static void updatePlotCreateProgress(ProgressStat pStat) {
@@ -735,8 +657,8 @@ public class PlotServUtils {
 
     public static Color convertColorHtmlToJava(String color) {
         Color c;
-        if (edu.caltech.ipac.firefly.visualize.ui.color.Color.isHexColor(color)) {
-            int rgb[]=  edu.caltech.ipac.firefly.visualize.ui.color.Color.toRGB(color);
+        if (isHexColor(color)) {
+            int rgb[]=  toRGB(color);
             c= new Color(rgb[0],rgb[1],rgb[2]);
         }
         else if (color.startsWith("rgb")) {
@@ -856,6 +778,42 @@ public class PlotServUtils {
             this.message= message;
             this.done= done;
         }
+    }
+
+    private static boolean isHexColor(String text) {
+        boolean retval= false;
+        if (text.length() == 6 || (text.length()==7 && text.startsWith("#"))) {
+            if (text.startsWith("#")) text=text.substring(1);
+            retval= true;
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                if (Character.digit(c, 16) == -1) {
+                    retval= false;
+                    break;
+                }
+            }
+        }
+        return retval;
+    }
+
+    private static int [] toRGB(String colorStr) {
+        int retval[]= null;
+        if (isHexColor(colorStr)) {
+            try {
+                //Note: subString(1) returned a new instance, so isHexColor(colorStr) cannot remove "#" in colorStr.
+                if (colorStr.startsWith("#")) colorStr=colorStr.substring(1);
+                String rStr= colorStr.substring(0,2);
+                String gStr= colorStr.substring(2,4);
+                String bStr= colorStr.substring(4);
+                int red= Integer.parseInt(rStr, 16);
+                int green= Integer.parseInt(gStr, 16);
+                int blue= Integer.parseInt(bStr, 16);
+                retval= new int[] { red, green, blue};
+            } catch (NumberFormatException e) {
+                retval= null;
+            }
+        }
+        return retval;
     }
 }
 

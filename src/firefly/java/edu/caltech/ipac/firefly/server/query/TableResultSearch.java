@@ -12,7 +12,6 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.dyn.DynUtils;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartData;
@@ -35,7 +34,7 @@ import java.util.Map;
         {@ParamDoc(name = TableResultSearch.LOAD_TABLE, desc = "name of the ipac table in the upload directory"),
          @ParamDoc(name = CommonParams.CACHE_KEY, desc = "the cache key with more parameters")
         })
-public class TableResultSearch extends DynQueryProcessor {
+public class TableResultSearch extends IpacTablePartProcessor {
 
     public static final String LOAD_TABLE= "loadTable";
 
@@ -47,8 +46,8 @@ public class TableResultSearch extends DynQueryProcessor {
 
 
     @Override
-    protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
-        setXmlParams(req);
+    protected File loadDataFile(TableServerRequest req) throws IOException, DataAccessException {
+//        setXmlParams(req);
         boolean isUpload= req.getBooleanParam(IS_UPLOAD);
         addSearchParmsToData(req, isUpload);
         File f= null;
@@ -100,9 +99,9 @@ public class TableResultSearch extends DynQueryProcessor {
                 String missionSearchParts= req.getParam(processorKey);
                 String partsAry[]= missionSearchParts.split(":", 5);
                 if (partsAry.length==4) {
-                    params.put(DynUtils.HYDRA_PROJECT_ID, partsAry[0]);
-                    params.put(DynUtils.SEARCH_NAME,      partsAry[1]);
-                    params.put(DynUtils.QUERY_ID,         partsAry[2]);
+                    params.put(CommonParams.HYDRA_PROJECT_ID, partsAry[0]);
+                    params.put(CommonParams.SEARCH_NAME,      partsAry[1]);
+                    params.put(CommonParams.QUERY_ID,         partsAry[2]);
                     params.put(CommonParams.SEARCH_PROCESSOR_ID, partsAry[3]);
                     addToCache(data);
                 }

@@ -6,15 +6,13 @@ package edu.caltech.ipac.firefly.server.query.wise;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IBESearchProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -31,14 +29,17 @@ import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -77,10 +78,9 @@ public class QueryWise extends IBESearchProcessor {
 
 
     @Override
-    protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
         File retFile;
         try {
-            setXmlParams(request);
             WiseRequest req = QueryUtil.assureType(WiseRequest.class, request);
 
             StopWatch.getInstance().start("Wise Search");
@@ -125,7 +125,7 @@ public class QueryWise extends IBESearchProcessor {
                 int statusCode = resp.getStatusCode();
                 if (statusCode == 400 || statusCode == 404 || statusCode == 500) {
                     InputStream is = new FileInputStream(outFile);
-                    String msg = parseMessageFromIBE(DynServerUtils.convertStreamToString(is));
+                    String msg = parseMessageFromIBE(convertStreamToString(is));
                     is.close();
 
                     throw new EndUserException("WISE Search Failed: " + msg, msg);
@@ -154,7 +154,7 @@ public class QueryWise extends IBESearchProcessor {
                 if (respCode == 400 || respCode == 404 || respCode == 500) {
                     InputStream is = httpConn.getErrorStream();
                     if (is != null) {
-                        String msg = parseMessageFromIBE(DynServerUtils.convertStreamToString(is)).trim();
+                        String msg = parseMessageFromIBE(convertStreamToString(is)).trim();
                         if (msg.contains("NoneType")) {
                             return null;
                         } else {
@@ -434,11 +434,11 @@ public class QueryWise extends IBESearchProcessor {
             // process DATE RANGE
             String timeStart = req.getParam("timeStart");
             if (!StringUtils.isEmpty(timeStart)) {
-                constraints.add("mjd_obs>='" + DynServerUtils.convertUnixToMJD(timeStart) + "'");
+                constraints.add("mjd_obs>='" + convertUnixToMJD(timeStart) + "'");
             }
             String timeEnd = req.getParam("timeEnd");
             if (!StringUtils.isEmpty(timeEnd)) {
-                constraints.add("mjd_obs<='" + DynServerUtils.convertUnixToMJD(timeEnd) + "'");
+                constraints.add("mjd_obs<='" + convertUnixToMJD(timeEnd) + "'");
             }
 
             // process Scan IDs (support multiple IDs)
@@ -603,7 +603,6 @@ public class QueryWise extends IBESearchProcessor {
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
         WiseRequest req = QueryUtil.assureType(WiseRequest.class, request);
-        setXmlParams(req);
 
         meta.setAttribute(WiseRequest.SCHEMA, request.getParam(WiseRequest.SCHEMA));
         // add cutout parameters, if applicable
@@ -625,5 +624,37 @@ public class QueryWise extends IBESearchProcessor {
         return File.createTempFile("wise-catalog-original-", ".tbl", ServerContext.getPermWorkDir());
     }
 
+    private static String convertUnixToMJD(String unix) {
+        if (!StringUtils.isEmpty(unix)) {
+            long unixL = Long.parseLong(unix);
+
+            // derived from http://en.wikipedia.org/wiki/Julian_day
+            long mdjL = (unixL / 86400000) + 40587;
+
+            return Long.toString(mdjL);
+
+        } else {
+            return null;
+        }
+    }
+
+    public static String convertStreamToString(InputStream is) throws IOException {
+        if (is != null) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+            } finally {
+                is.close();
+            }
+            return sb.toString();
+        } else {
+            return "";
+        }
+    }
 }
 

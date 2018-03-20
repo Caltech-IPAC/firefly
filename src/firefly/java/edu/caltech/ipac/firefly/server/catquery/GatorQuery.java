@@ -261,7 +261,6 @@ public class GatorQuery extends BaseGator {
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
         CatalogRequest req = QueryUtil.assureType(CatalogRequest.class, request);
-        setXmlParams(req);
         TableMeta.LonLatColumns llc = null;
 
         if (verifyCoordsInTable(columns, RA, DEC)) {
