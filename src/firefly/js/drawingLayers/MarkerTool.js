@@ -46,7 +46,7 @@ export var initMarkerPos = (plot, cc) => {
 
     if (!cc) cc = CsysConverter.make(plot);
 
-    if (!pos || !isPointInView(getWorldOrImage(pos, cc))) {
+    if (!pos || !isPointInView(getWorldOrImage(pos, cc), cc)) {
         pos = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
     }
     return getWorldOrImage(pos, cc);
