@@ -77,9 +77,9 @@ public class ServiceDesc {
     }
 
     private static String get2MassDesc(WebPlotRequest request) {
-        String survey= request.getSurveyKey().toLowerCase();
+        String band= request.getSurveyBand().toLowerCase();
         String root = "2MASS ";
-        switch (survey) {
+        switch (band) {
             case "j": return root + "J";
             case "h": return root + "H";
             case "k": return root + "K";

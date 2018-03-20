@@ -353,13 +353,15 @@ export class WebPlotRequest extends ServerRequest {
     /**
      *
      * @param wp
-     * @param {string} survey  must be one of 'j','h','k'
+     * @param {string} survey  must be one of 'asky', 'askyw', 'sx', 'sxw', 'cal'
+     * @param {string} band  must be one of 'j','h','k'
      * @param sizeInDeg less then .138 degrees (500 arcsec)
      * @return {WebPlotRequest}
      */
-    static make2MASSRequest(wp, survey, sizeInDeg) {
+    static make2MASSRequest(wp, survey, band, sizeInDeg) {
         const req= this.makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
         req.setTitle('2MASS '+survey.toUpperCase());
+        req.setParam(C.SURVEY_KEY_BAND, band + '');
         req.setDrawingSubGroupId('2mass');
         return req;
     }

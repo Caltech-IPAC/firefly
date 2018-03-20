@@ -19,7 +19,7 @@ public class TwoMassImageParams extends ImageServiceParams {
     public float  getSize()             { return _size; }
 
     public String getUniqueString() {
-        return "2mass-" + super.toString()+ "-" + ds + "-" + _band + "-" +_size;
+        return "2mass-" + super.toString()+ "-" + this.ds + "-" + _band + "-" +_size;
     }
 
     public String toString() { return getUniqueString(); }

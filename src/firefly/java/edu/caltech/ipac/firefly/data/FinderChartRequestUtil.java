@@ -165,7 +165,7 @@ public class FinderChartRequestUtil {
                 wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(key), radius);
                 break;
             case TWOMASS:
-                wpReq= WebPlotRequest.make2MASSRequest(pt, getComboValue(key),radius);
+                wpReq= WebPlotRequest.make2MASSRequest(pt, "asky", getComboValue(key),radius);
                 break;
             case AKARI:
             case SEIP:
