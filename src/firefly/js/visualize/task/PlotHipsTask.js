@@ -71,7 +71,7 @@ function initCorrectCoordinateSys(pv) {
         const hipsPv = vr.plotViewAry.filter((pv) => isHiPS(primePlot(pv)) && pv.plotId !== plotId)[0];
         const hipsPlot = primePlot(hipsPv);
         if (hipsPlot && hipsPlot.imageCoordSys !== plot.imageCoordSys) {
-            dispatchChangeHiPS({plotId, coordSys: hipsPlot.imageCoordSys})
+            dispatchChangeHiPS({plotId, coordSys: hipsPlot.imageCoordSys});
         }
     }
 }
@@ -290,6 +290,8 @@ export function convertToImage(pv, allSky= false) {
     const hipsFov= getHiPSFoV(pv);
     wpRequest.setPlotId(plotId);
     wpRequest.setPlotGroupId(plotGroupId);
+    const plot= primePlot(pv);
+    const attributes= clone(plot.attributes, getCornersAttribute(pv) || {});
     if (doingAllSky) {
         wpRequest.setZoomType(ZoomType.TO_WIDTH);
     }
@@ -300,7 +302,7 @@ export function convertToImage(pv, allSky= false) {
         wpRequest.setZoomArcsecPerScreenPix((hipsFov/viewDim.width) * 3600);
     }
 
-    dispatchPlotImage({plotId, wpRequest, enableRestore:false});
+    dispatchPlotImage({plotId, wpRequest, attributes, enableRestore:false});
 }
 
 export function convertToHiPS(pv, fromAllSky= false) {

@@ -50,7 +50,6 @@ function getZoomer() {
         }
 
         if (deltaClick < CLICK_TIME   && isImage(plot)) {
-            console.log('show zoom options popup');
             showZoomOptionsPopup();
             return;
         }

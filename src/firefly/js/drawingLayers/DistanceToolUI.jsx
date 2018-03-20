@@ -24,9 +24,9 @@ function DistanceToolUI({drawLayer,pv}) {
 
 
 
-    var options= [ {label: 'Degree', value: 'deg'},
-                   {label: 'Arcminute', value: 'arcmin'},
-                   {label: 'Arcsecond', value: 'arcsec'}
+    var options= [ {label: 'degree', value: 'deg'},
+                   {label: 'arcminute', value: 'arcmin'},
+                   {label: 'arcsecond', value: 'arcsec'}
     ];
 
 

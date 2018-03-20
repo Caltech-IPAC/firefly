@@ -80,6 +80,11 @@ export const ServerParams = {
         IRSA : 'irsa',
         LSST : 'lsst',
         ALL : 'all',
+        CDS : 'cds',
+        HIPS_SOURCES : 'hipsSources',
+        HIPS_DATATYPES: 'hipsDataTypes',
+        CUBE: 'cube',
+        CATALOG: 'catalog',
 
         GEOSHAPE : 'shape',
         ROTATION : 'rotation',

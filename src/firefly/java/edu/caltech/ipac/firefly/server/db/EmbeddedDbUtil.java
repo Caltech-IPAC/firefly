@@ -327,7 +327,7 @@ public class EmbeddedDbUtil {
                             visi,
                             Boolean.valueOf(getStrVal(meta, SORTABLE_TAG, dt, "true")),
                             Boolean.valueOf(getStrVal(meta, FILTERABLE_TAG, dt, "true")),
-                            getStrVal(meta, DESC_TAG, dt, "")
+                            getStrVal(meta, DESC_TAG, dt, dt.getShortDesc())
                     }
             );
         }

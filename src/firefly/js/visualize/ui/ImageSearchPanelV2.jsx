@@ -31,9 +31,8 @@ import {getPlotViewById} from '../PlotViewUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
-import {getAppHiPSConfig, HiPSId, HiPSData, onHiPSSurveys} from '../HiPSCntlr.js';
+import {getAppHiPSConfig} from '../HiPSListUtil.js';
 import {HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
-import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 
 import './ImageSearchPanelV2.css';
 
@@ -295,11 +294,11 @@ HiPSImage.propTypes = {
 };
 
 function ImageType({}) {
-    const options = [  {label: 'View Images', value: 'singleChannel'},
-                     {label: 'create 3-color composite', value: 'threeColor'}];
+    const options = [  {label: 'View FITS Images', value: 'singleChannel'},
+                     {label: 'Create 3-Color Composite', value: 'threeColor'}];
 
     if (getAppHiPSConfig()) {
-        options.push({label: 'HiPS - multi order image', value: 'hipsImage'});
+        options.push({label: 'View HiPS Images', value: 'hipsImage'});
     }
     return (
         <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
@@ -362,6 +361,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const minSize = isHips ? 197/3600 : 1/3600;
     const maxSize = isHips ? 180 : 1;
     const sizeVal = isHips ? (180) + '' : (500/3600) + '';
+    const initUnit = isHips ? 'deg' : 'arcsec';
 
     return (
         <div>
@@ -372,7 +372,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                     <SizeInputFields fieldKey={sizeKey} showFeedback={true}
                                      feedbackStyle={sizeStyle}
                                      initialState={{
-                                             unit: 'arcsec',
+                                             unit: initUnit,
                                              labelWidth : 0,
                                              nullAllowed: false,
                                              value: sizeVal,
@@ -503,7 +503,7 @@ function getValidatedInfo(request, isThreeColor) {
 
 function getHipsValidateInfo(request) {
     if (request.imageSource === 'url') {
-        if (isNil(request.txURL)){
+        if (isNil(request.txURL) || (!request.txURL.trim())){
             return ({valid:false, message:'invalid URL'});
         }
     }

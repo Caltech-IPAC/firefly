@@ -4,8 +4,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../Firefly.js';
-import {dispatchShowDialog} from '../core/ComponentCntlr.js';
-import {Operation} from '../visualize/PlotState.js';
+import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
@@ -41,7 +40,7 @@ export function showZoomOptionsPopup() {
 /**
  * This method is called when the dialog is rendered. Only when an image is loaded, the PlotView is available.
  * Then, the color band, plotState etc can be determined.
- * @returns {{plotState, colors: Array, hasThreeColorBand: boolean, hasOperation: boolean}}
+ * @returns {{plotState, colors: Array, hasThreeColorBand: boolean}}
  */
 function getInitialPlotState() {
     var pv= getActivePlotView(visRoot());
@@ -49,14 +48,7 @@ function getInitialPlotState() {
 
     //var plot = primePlot(visRoot());
 
-    var initcurrLevel = plot.zoomFactor;
-
-    var plotState = plot.plotState;
-
-
-    var isCrop = plotState.hasOperation(Operation.CROP);
-    var isRotation = plotState.hasOperation(Operation.ROTATE);
-    var cropNotRotate = isCrop && !isRotation ? true : false;
+    var initcurrLevel = plot && plot.zoomFactor;
 
     return {
         pv,
@@ -64,7 +56,6 @@ function getInitialPlotState() {
         initcurrLevel,
         colors: [],
         hasThreeColorBand: false,
-        hasOperation: cropNotRotate
     };
 
 }
@@ -85,7 +76,14 @@ class ZoomOptionsPopup extends PureComponent {
 
         this.removeListener= flux.addListener(() => {
             const { plot, initcurrLevel} = getInitialPlotState();
-            this.setState({plot, initcurrLevel});
+            if (plot===this.state.plot) return;
+            if (plot) {
+                this.setState({plot, initcurrLevel});
+            }
+            else {
+                if (this.removeListener) this.removeListener();
+                dispatchHideDialog('zoomOptionsDialog');
+            }
         });
     }
 

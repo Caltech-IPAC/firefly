@@ -438,7 +438,7 @@ function drawDot(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath)
 
 function drawBoxcircle(ctx, x, y, color, size,  renderOptions, onlyAddToPath, lineWidth) {
     drawSquare(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
-    drawCircle(ctx, x, y, color, lineWidth, size, renderOptions, onlyAddToPath);
+    drawCircle(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
 }
 
 function drawArrow(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {

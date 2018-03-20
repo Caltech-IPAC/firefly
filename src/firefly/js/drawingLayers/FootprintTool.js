@@ -14,9 +14,10 @@ import {ANGLE_UNIT, OutlineType, getWorldOrImage, findClosestIndex, makeFootprin
         lengthSizeUnit, updateFootprintDrawobjAngle,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
 import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos, getPlot,
-        updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot} from './MarkerTool.js';
+        updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot, rotateHiPSImage} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
+import {isPointInView} from '../visualize/draw/ShapeHighlight.js';
 import {clone} from '../util/WebUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
@@ -105,6 +106,7 @@ export function footprintStartActionCreator(rawAction) {
         let   move = {};
 
         cancelTimeoutProcess(timeoutProcess);
+        if (!getWorldOrImage(imagePt, cc)) return;
         // marker can move to anywhere the mouse click at while in 'attached' state
         if (footprintStatus === FootprintStatus.attached) {
             if (footprintObj) {
@@ -132,7 +134,8 @@ export function footprintStartActionCreator(rawAction) {
         if ([FootprintStatus.relocate, FootprintStatus.attached_relocate, FootprintStatus.rotate].includes(nextStatus)) {
             refPt = imagePt;                   // refPt is used for calculating the relocated offset of next time
         }
-        if (nextStatus) {
+
+        if (nextStatus && isPointInView(refPt, cc)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_START, regions, plotId,
                 nextStatus, footprintInterval, drawLayerId, {isOutline: true, isRotate:true}, fpInfo, wpt, refPt, move);
         }
@@ -157,6 +160,7 @@ export function footprintEndActionCreator(rawAction) {
         // marker stays at current position and size
         if ([FootprintStatus.relocate, FootprintStatus.attached_relocate, FootprintStatus.rotate].includes(footprintStatus)) {
             const wpt = getWorldOrImage(currentPt, cc);
+
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_END, regions, plotId,
                             FootprintStatus.select, footprintInterval, drawLayerId, {isOutline, isRotate}, fpInfo, wpt);
         }
@@ -181,6 +185,7 @@ export function footprintMoveActionCreator(rawAction) {
         return z * angle;
     };
 
+
     return (dispatcher) => {
         const {plotId, imagePt, drawLayer} = rawAction.payload;
         const cc = getCC(plotId);
@@ -189,36 +194,49 @@ export function footprintMoveActionCreator(rawAction) {
         var   {footprintStatus, currentPt: wpt, timeoutProcess, refPt} = get(footprintObj, 'actionInfo', {});
         var move = {};
         var isHandle;
+        var prePt = cc.getImageCoords(refPt);
+
 
         cancelTimeoutProcess(timeoutProcess);
-        // refPt: in image coordinate
-        if (footprintStatus === FootprintStatus.rotate)  {    // footprint rotate by angle on screen angle
-            var center = centerForRotation(footprintObj, wpt);
 
-            move.angle = -angleBetween(cc.getImageCoords(center), cc.getImageCoords(refPt), imagePt); // angle on screen
+        if (footprintStatus === FootprintStatus.rotate)  {    // footprint rotate by angle on screen angle
+            if (!isPointInView(imagePt, cc)) return;   // rotate stops
+            const rotateCenter = cc.getImageCoords(centerForRotation(footprintObj, wpt)); // center of outline
+
+            move.angle = -angleBetween(rotateCenter, prePt, imagePt); // angle on screen
             move.angleUnit = ANGLE_UNIT.radian;
             refPt = imagePt;
-
             isHandle = {isOutline: true, isRotate: true};
         } else if (footprintStatus === FootprintStatus.relocate || footprintStatus === FootprintStatus.attached_relocate) {
-            // marker move to new mouse move positon
-            var prePt = cc.getImageCoords(refPt);
+            // marker move to new mouse move position
             var deltaX = imagePt.x - prePt.x;
             var deltaY = imagePt.y - prePt.y;
-            var imageCenter = cc.getImageCoords(wpt);
+            var fpCenterImg = cc.getImageCoords(wpt);
 
-            wpt = getWorldOrImage(makeImagePt(imageCenter.x + deltaX, imageCenter.y + deltaY), cc);
+            // both footprint center and outline center are tested if being moved out of view
+            wpt = getWorldOrImage(makeImagePt(fpCenterImg.x + deltaX, fpCenterImg.y + deltaY), cc);
+            const olCenterImg = cc.getImageCoords(centerForOutline(footprintObj));
+            const nextOlCenter = olCenterImg ? getWorldOrImage(makeImagePt(olCenterImg.x + deltaX, olCenterImg.y + deltaY), cc)
+                                               : null;
+
+            if (!wpt || !isPointInView(nextOlCenter, cc)) {  // HiPS plot, wpt is out of range, no move
+                //if (isHiPS(cc)) rotateHiPSImage(cc, fpCenterImg, olCenterImg, deltaX, deltaY);
+                deltaX = 0;
+                deltaY = 0;
+                wpt = getWorldOrImage(makeImagePt(fpCenterImg.x, fpCenterImg.y), cc); // reference point (refPt) no change
+            } else {
+                refPt = imagePt;
+            }
+
             deltaX = lengthSizeUnit(cc, deltaX, ShapeDataObj.UnitType.IMAGE_PIXEL);
             deltaY = lengthSizeUnit(cc, deltaY, ShapeDataObj.UnitType.IMAGE_PIXEL);
             move.apt = {x: deltaX.len, y: deltaY.len, type: deltaX.unit};
 
-            refPt = imagePt;
             footprintStatus = FootprintStatus.relocate;
             isHandle = {isOutline: true, isRotate: true};
         }
 
-        if (move) {
-            // rotate (newDize) or relocate (wpt),  status remains the same
+        if (!isEmpty(move) && isPointInView(refPt, cc)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_MOVE, regions, plotId,
                                  footprintStatus, 0, drawLayerId, isHandle, fpInfo, wpt, refPt, move);
         }
@@ -449,9 +467,11 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
          if (footprintStatus === FootprintStatus.attached_relocate) {
              footprintObj = translateForRelocate(footprintObj,  move, cc);
          }
+
      } else if (crtFpObj) {
-         if ((footprintStatus === FootprintStatus.rotate || footprintStatus === FootprintStatus.relocate) && move) {
+         if ((footprintStatus === FootprintStatus.rotate || footprintStatus === FootprintStatus.relocate) && !isEmpty(move)) {
              var {apt} = move;    // move to relocate or rotate
+
 
              if (apt) {      // translate
                  footprintObj = updateFootprintTranslate(crtFpObj, cc, apt);
@@ -473,9 +493,10 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
      }
 
      footprintObj.plotId = plotId;
+     footprintObj.lastZoom = cc.zoomFactor;
      const actionInfo = {currentPt: wpt,       // marker center, world or image coordinate
                          timeoutProcess: timeoutProcess ? timeoutProcess : null,
-                         refPt: refPt ? refPt : null,
+                         refPt: refPt ? refPt : null,   // in World coordinate to be consistent in case plot is changed
                          footprintStatus};
      set(dl.drawData, [DataTypes.DATA, plotId],  Object.assign(footprintObj, {actionInfo}));
      var dlObj = {drawData: dl.drawData, helpLine: editHelpText};
@@ -492,7 +513,7 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
 }
 
 /**
- * get center of outline box;
+ * get rotation center
  * @param drawObj
  * @param wpt
  * @returns {*}
@@ -502,9 +523,16 @@ function centerForRotation(drawObj, wpt) {
     var outlineBox =  (outlineIndex && drawObjAry && drawObjAry.length > outlineIndex ) ? drawObjAry[outlineIndex] : null;
 
     //return outlineBox.pts[0];
-    return (outlineBox && outlineBox.outlineType === OutlineType.plotcenter) ? outlineBox.pts[0] : wpt;
+    return (outlineBox && outlineBox.outlineType === OutlineType.plotcenter) ? outlineBox.pts[0] :
+           (outlineBox ? wpt :null);
 }
 
+function centerForOutline(drawObj) {
+    const {outlineIndex, drawObjAry} = drawObj;
+    const outlineBox = (outlineIndex && drawObjAry && drawObjAry.length > outlineIndex ) ? drawObjAry[outlineIndex] : null;
+
+    return outlineBox ? outlineBox.pts[0] : null;
+}
 /**
  * update the handle inclusion on the footprint object
  * @param isHandle

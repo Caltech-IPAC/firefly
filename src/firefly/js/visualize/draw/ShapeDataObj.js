@@ -135,6 +135,7 @@ function makeRectangleByCorners(pt1, pt2) {
  * @param angle
  * @param angleUnit
  * @param isOnWorld if the rectangle have the width and height move along the east and north direction over the world domain
+ * @param centerInView
  * @returns {Object}
  */
 function makeRectangleByCenter(pt1, width, height, unitType=UnitType.PIXEL, angle = 0.0, angleUnit = UnitType.ARCSEC,
@@ -336,7 +337,7 @@ function getRectangleCenterScreenPt(drawObj,plot,unitType) {
 
             case UnitType.ARCSEC:
                 const corners = getRectCorners(pts[0], false, width, height, plot);
-                return plot.getScreenCoords(corners.center);
+                return corners ? plot.getScreenCoords(corners.center) : null;
 
             case UnitType.IMAGE_PIXEL:
                 const scale= plot.zoomFactor;
@@ -380,6 +381,7 @@ function getRectCorners(pt, isCenter, width, height, plot) {
     const h = height/2;
 
 
+    if (!wpt) return false;
     // compute 4 corners in J2000
     if (!isCenter) {
         const posCenter = VisUtil.calculatePosition(wpt, +w, -h); // go east and south to find the center
@@ -439,6 +441,8 @@ export function rectOnImage(wpt, isCenter, plot, width, height, unit, isOnWorld)
         }
 
         corners = getRectCorners(wpt, isCenter, width, height, plot);
+        if (!corners) return null;
+
         imgUpperLeft = plot.getImageCoords(corners.upperLeft);
         imgUpperRight = plot.getImageCoords(corners.upperRight);
         imgLowerLeft = plot.getImageCoords(corners.lowerLeft);
@@ -609,7 +613,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
         }
         cenDevPt= plot.getDeviceCoords(pts[0]);
         if (plot.pointOnDisplay(cenDevPt)) {
-            DrawUtil.drawCircle(ctx,cenDevPt.x, cenDevPt.y,color,lineWidth, screenRadius,renderOptions,false);
+            DrawUtil.drawCircle(ctx,cenDevPt.x, cenDevPt.y,color, screenRadius, lineWidth, renderOptions,false);
         }
     }
     else {
@@ -626,7 +630,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
             const y= Math.min(pt0.y,pt1.y) + Math.abs(pt0.y-pt1.y)/2;
             cenDevPt= makeDevicePt(x,y);
 
-            DrawUtil.drawCircle(ctx,cenDevPt.x,cenDevPt.y,color,lineWidth,screenRadius,renderOptions,false );
+            DrawUtil.drawCircle(ctx,cenDevPt.x,cenDevPt.y,color, screenRadius, lineWidth, renderOptions,false );
         }
     }
 
@@ -749,7 +753,8 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
         }
         const devPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
         if (!plot || (!isCenter && plot.pointOnDisplay(devPt0)) ||
-                     (isCenter && ((centerInView&&plot.pointOnDisplay(devPt0))||
+                     (isCenter && sRect
+                               && ((centerInView&&plot.pointOnDisplay(devPt0))||
                                    (sRect && cornerInView(sRect.corners, plot))))) {
             inView = true;
 
@@ -1264,7 +1269,7 @@ export function translateTo(plot, pts, apt) {
 
     return pts.map( (inPt) => {
         const pti= plot.getImageCoords(inPt);
-        return makePoint(makeImagePt(pt_x+pti.x, pt_y+pti.y), plot, inPt.type);
+        return pti ? makePoint(makeImagePt(pt_x+pti.x, pt_y+pti.y), plot, inPt.type):null;
     });
 }
 
@@ -1333,6 +1338,8 @@ export function rotateAround(plot, pts, angle, wc) {
     const center = plot.getImageCoords(wc);
 
     return pts.map( (p1) => {
+        if (!p1) return null;
+
         const pti= plot.getImageCoords(p1);
         const x1 = pti.x - center.x;
         const y1 = pti.y - center.y;

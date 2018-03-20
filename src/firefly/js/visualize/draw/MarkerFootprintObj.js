@@ -8,7 +8,7 @@ import {CoordinateSys} from '../CoordSys.js';
 import ShapeDataObj, {lengthToImagePixel, lengthToScreenPixel,
        lengthToArcsec, makePoint, drawText, makeTextLocationComposite, flipTextLocAroundY} from './ShapeDataObj.js';
 import {POINT_DATA_OBJ, getPointDataobjArea, makePointDataObj, DrawSymbol} from './PointDataObj.js';
-import {getDrawobjArea, isWithinPolygon} from './ShapeHighlight.js';
+import {getDrawobjArea, isWithinPolygon, isPointInView, isDrawobjAreaInView} from './ShapeHighlight.js';
 import {defaultMarkerTextLoc} from '../../drawingLayers/MarkerToolUI.jsx';
 import {defaultFootprintTextLoc} from '../../drawingLayers/FootprintToolUI.jsx';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
@@ -195,6 +195,13 @@ export function makeMarker(centerPt, width, height, isHandle, cc, text, textLoc,
     return dObj;
 }
 
+function createCrossCenter(centerPt) {
+    const centerObj = makePointDataObj(centerPt, CROSS_BOX, DrawSymbol.CROSS);
+    centerObj.color = 'red';
+
+    return centerObj;
+}
+
 
 /**
  * make foopprint drawobj, create drawObj on all regions defined
@@ -210,16 +217,16 @@ export function makeMarker(centerPt, width, height, isHandle, cc, text, textLoc,
 export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
     var fpCenter = getWorldOrImage(centerPt, cc);
     var regionDrawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(regions, fpCenter, regions[0].isInstrument);
-    var centerObj = makePointDataObj(fpCenter, CROSS_BOX, DrawSymbol.CROSS);
+    var centerObj = createCrossCenter(fpCenter);
     var dObj = clone(make(MarkerType.Footprint), {pts: [makeWorldPt(fpCenter.x, fpCenter.y)]});
-
-    centerObj.color = 'red';
 
     regionDrawObjAry.forEach((obj) => {
         obj.isMarker = true;
     });
 
     regionDrawObjAry.push(centerObj);
+
+
     dObj = Object.assign(dObj, {
         isMovable: true,
         isRotable: true,
@@ -243,6 +250,7 @@ export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
     dObj.includeOutline = !!(isOutline);
     dObj.includeResize = !!(get(dObj, 'isEditable') && isResize && isOutline);
     dObj.includeRotate = !!(get(dObj, 'isRotable') && isRotate && isOutline);
+
     setHandleIndex(dObj);
     return dObj;
 }
@@ -295,12 +303,14 @@ var draw=  {
 
         if (drawObjAry) {
             drawObjAry.forEach( (obj) => {
-                obj.pts.forEach( (wp) => {
-                    xSum += wp.x;
-                    ySum += wp.y;
-                    xTot++;
-                    yTot++;
-                });
+                if (obj && obj.pts) {
+                    obj.pts.forEach((wp) => {
+                        xSum += wp.x;
+                        ySum += wp.y;
+                        xTot++;
+                        yTot++;
+                    });
+                }
             });
             return makeWorldPt(xSum / xTot, ySum / yTot);
         } else {
@@ -404,12 +414,16 @@ function collectDrawobjAry(drawObj, includeList = []) {
  * @returns {*}
  */
 var simpleRotateAroundPt = (pt, center, angle, outType) => {   // rotate around center of same coordinate
-    var x1 = pt.x - center.x;
-    var y1 = pt.y - center.y;
-    var x2 = x1 * Math.cos(angle) - y1 * Math.sin(angle) + center.x;
-    var y2 = x1 * Math.sin(angle) + y1 * Math.cos(angle) + center.y;
+    if (!center || !pt) {
+        return null;
+    } else {
+        var x1 = pt.x - center.x;
+        var y1 = pt.y - center.y;
+        var x2 = x1 * Math.cos(angle) - y1 * Math.sin(angle) + center.x;
+        var y2 = x1 * Math.sin(angle) + y1 * Math.cos(angle) + center.y;
 
-    return Object.assign(new SimplePt(x2, y2), {type: outType});
+        return Object.assign(new SimplePt(x2, y2), {type: outType});
+    }
 };
 
 /**
@@ -423,11 +437,15 @@ var simpleRotateAroundPt = (pt, center, angle, outType) => {   // rotate around 
  * @returns {Array}
  */
 function getRectCorners(pt, width, height, unitType, cc, outUnit = Point.W_PT) {
+    // if centerPt is null, then return corners with null in array
     var centerPt = cc.getImageCoords(pt);
     var nW = lengthToImagePixel(width/2, cc, unitType);
     var nH = lengthToImagePixel(height/2, cc, unitType);
 
     return cornersImg.map( (coord) => {
+        if (!centerPt)  {
+            return null;
+        }
         var x = centerPt.x + coord[0] * nW;
         var y = centerPt.y + coord[1] * nH;
 
@@ -443,39 +461,46 @@ function getRectCorners(pt, width, height, unitType, cc, outUnit = Point.W_PT) {
 }
 
 /**
- * calculate the footprint overal rectangular arae in image coordinate
+ * calculate the footprint overal rectangular area in image coordinate
  * @param rDrawAry
  * @param cc
  * @returns {{width: number, height: number, unitType: *}}
  */
 export function getMarkerImageSize(rDrawAry, cc) {
-    var area = rDrawAry.reduce( (prev, oneDrawObj) => {
+    const mArea = {};
+
+
+    const badArea = rDrawAry.findIndex( (oneDrawObj) => {
         if (get(oneDrawObj, 'isMarker', false)) {
             const area = getObjArea(oneDrawObj, cc);  // in image coordinate
-            if (!area) return prev;
+            if (!area) {
+                return true;    // some marker is out of view
+            }
             const {upperLeft, width, height} = area;
             const [min_x, min_y, max_x, max_y] = [upperLeft.x, upperLeft.y - height, upperLeft.x + width, upperLeft.y];
 
-            if ((!has(prev, 'min_x')) || (min_x < prev.min_x)) {
-                prev.min_x = min_x;
+            if ((!has(mArea, 'min_x')) || (min_x < mArea.min_x)) {
+                mArea.min_x = min_x;
             }
-            if ((!has(prev, 'min_y')) || (min_y < prev.min_y)) {
-                prev.min_y = min_y;
+            if ((!has(mArea, 'min_y')) || (min_y < mArea.min_y)) {
+                mArea.min_y = min_y;
             }
-            if ((!has(prev, 'max_x')) || (max_x > prev.max_x)) {
-                prev.max_x = max_x;
+            if ((!has(mArea, 'max_x')) || (max_x > mArea.max_x)) {
+                mArea.max_x = max_x;
             }
-            if ((!has(prev, 'max_y')) || (max_y > prev.max_y)) {
-                prev.max_y = max_y;
+            if ((!has(mArea, 'max_y')) || (max_y > mArea.max_y)) {
+                mArea.max_y = max_y;
             }
         }
-        return prev;
-    }, {});
+        return false;
+    });
 
-    var width = lengthSizeUnit(cc, area.max_x - area.min_x + 1, ShapeDataObj.UnitType.IMAGE_PIXEL);
-    var height = lengthSizeUnit(cc, area.max_y - area.min_y + 1, ShapeDataObj.UnitType.IMAGE_PIXEL);
+    if (badArea >= 0) return null;    // in case all drawObj is out of plot area
+
+    var width = lengthSizeUnit(cc, mArea.max_x - mArea.min_x, ShapeDataObj.UnitType.IMAGE_PIXEL);
+    var height = lengthSizeUnit(cc, mArea.max_y - mArea.min_y, ShapeDataObj.UnitType.IMAGE_PIXEL);
     return {width: width.len, height: height.len, unitType: width.unit,
-            centerPt: getWorldOrImage(makeImagePt((area.min_x + area.max_x)/2, (area.min_y + area.max_y)/2), cc)};
+            centerPt: getWorldOrImage(makeImagePt((mArea.min_x + mArea.max_x)/2, (mArea.min_y + mArea.max_y)/2), cc)};
 }
 
 /**
@@ -488,10 +513,15 @@ function getObjArea(obj, cc) {
     const area= (obj.type === ShapeDataObj.SHAPE_DATA_OBJ) ? getDrawobjArea(obj, cc): getPointDataobjArea(obj, cc);
     if (!area) return null;
 
-    var {upperLeft, width, height, centerPt, center} = area;
+    var {upperLeft, width, height, centerPt, center} = area || {};
 
     if (center) {
         centerPt = center;
+    }
+
+    if (!isPointInView(centerPt, cc) ||
+        !isDrawobjAreaInView(cc, null, area)) {    // in case the cover area is out of plot area
+        return null;
     }
 
     // convert dimension on image coordinate
@@ -500,6 +530,7 @@ function getObjArea(obj, cc) {
         width = lengthToImagePixel(width, cc, ShapeDataObj.UnitType.PIXEL);
         height = lengthToImagePixel(height, cc, ShapeDataObj.UnitType.PIXEL);
     }
+
     return {upperLeft, width, height, centerPt, unitType: imageUnit};
 }
 
@@ -530,13 +561,26 @@ var rectCornerInView = (drawObj, cc) => {
 
     return corners.reduce( (prev, corner) =>
     {
-        var rCorner = simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(pts[0]), -rotAngle, Point.IM_PT);
-        if (cc.pointInData(rCorner)) {
+        var rCorner = corner ? simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(pts[0]), -rotAngle, Point.IM_PT) : null;
+        if (rCorner && isPointInView(rCorner, cc)) {
             prev++;
         }
         return prev;
     }, 0);
 };
+
+/**
+ * regenerate the footprint elements in terms of the current footprint center and the original regions
+ * @param drawObj
+ * @returns {*}
+ */
+function getOriginalFPDrawObj(drawObj){
+    const drawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
+        drawObj.regions[0].isInstrument);
+
+    drawObjAry.forEach((obj) => obj.isMarker = true);
+    return drawObjAry;
+}
 
 /**
  * create outline box based on the drawObjs with some rotation angle
@@ -549,38 +593,53 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
     var {originalOutlineBox:tryOutline} = drawObj;
     var angle = getMarkerAngleInRad(drawObj);
 
+    if (!isPointInView(drawObj.pts[0], cc)) {
+        return null;
+    }
+
     // try original outline box (the current outline is not 'original)'
     if (checkOutline.includes(OutlineType.original)) {
         if (!tryOutline) {
             if (drawObj.sType === MarkerType.Marker) {               // for marker case (assume no rotation)
                 var {radius = 0.0, unitType = ShapeDataObj.ShapeType.ARCSEC} = get(drawObj, ['drawObjAry', '0']) || {};
 
-                tryOutline = ShapeDataObj.makeRectangleByCenter(drawObj.pts[0], radius*2, radius*2, unitType,
-                        0.0, ShapeDataObj.UnitType.ARCSEC, false);
-            } else if (!tryOutline && has(drawObj,'regions')) {        // for footprint case
-                var drawObjAry;
+                tryOutline =  ShapeDataObj.makeRectangleByCenter(drawObj.pts[0], radius*2, radius*2, unitType,
+                                                                 0.0, ShapeDataObj.UnitType.ARCSEC, false);
+            } else if (has(drawObj,'regions')) {        // for footprint case
+                const drawObjAry = getOriginalFPDrawObj(drawObj);
 
-                drawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
-                    drawObj.regions[0].isInstrument);
-                drawObjAry.forEach((obj) => obj.isMarker = true);
+                // finding the center of all markers and rotate the center around the center of the footprint object
+                var {width, height, centerPt, unitType:ut} = getMarkerImageSize(drawObjAry, cc) || {};
+                if (!centerPt) {
+                    tryOutline = null;
+                } else {
+                    var rCenterPt = simpleRotateAroundPt(cc.getImageCoords(centerPt), cc.getImageCoords(drawObj.pts[0]),
+                                                         -angle, Point.IM_PT);
 
-                var {width, height, centerPt, unitType} = getMarkerImageSize(drawObjAry, cc);
-                //var w = lengthSizeUnit(cc, width, unitType);
-                //var h = lengthSizeUnit(cc, height, unitType);
-
-                var rCenterPt = simpleRotateAroundPt(cc.getImageCoords(centerPt), cc.getImageCoords(drawObj.pts[0]),
-                    -angle, Point.IM_PT);
-
-                tryOutline = ShapeDataObj.makeRectangleByCenter(getWorldOrImage(rCenterPt, cc), width, height, unitType,
-                    0.0, ShapeDataObj.UnitType.ARCSEC, false);
+                    if (!isPointInView(rCenterPt, cc)) {
+                        tryOutline = null;
+                    } else {
+                        tryOutline = ShapeDataObj.makeRectangleByCenter(getWorldOrImage(rCenterPt, cc), width, height, ut,
+                                                                        0.0, ShapeDataObj.UnitType.ARCSEC, false);
+                    }
+                }
             }
-            drawObj.origianlOutlineBox = Object.assign(tryOutline, { outlineType: OutlineType.original,
-                                                                     color: HANDLE_COLOR,
-                                                                     renderOptions: {lineDash: [8, 5, 2, 5],
-                                                                     rotAngle: angle} });
+            if (tryOutline) {
+                tryOutline = Object.assign(tryOutline, {
+                                                outlineType: OutlineType.original,
+                                                color: HANDLE_COLOR,
+                                                renderOptions: {
+                                                    lineDash: [8, 5, 2, 5],
+                                                    rotAngle: angle
+                                                }
+                             });
+                if (get(drawObj, 'originalOutlineBox', null)) {
+                    drawObj.originalOutlineBox = tryOutline;
+                }
+            }
         }
         if (tryOutline && rectCornerInView(tryOutline, cc) > 0) {
-            drawObj.originalOutlineBox = null;
+            //drawObj.originalOutlineBox = null; ???
             return tryOutline;
         }
     }
@@ -618,7 +677,7 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
     var {pts} = drawObj;
     var retval = [];    // outlinebox, resize and rotate
 
-    if (!pts) return retval;
+    if (!pts || !pts[0]) return retval;
     var outlineBox;
 
     // get existing outline box and check if it is in view
@@ -633,7 +692,7 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
             // if the outline is around the footprint center or plot center, check if the original or the center outline box exist
             if (cornersInView === 0) {    // if not in view, get a new outline box
                 if (outlineBox.outlineType === OutlineType.original) {
-                    drawObj.originalOutlineBox = Object.assign({}, outlineBox);
+                    drawObj.originalOutlineBox = Object.assign({}, outlineBox); // save the original outline box
                 }
 
                 // remake outlinebox from some candidates in case the original outline box is out of display range
@@ -658,7 +717,7 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
             outlineBox = remakeOutlineBox(drawObj, cc);
         }
     } else {
-        var {width, height, centerPt, unitType} = getMarkerImageSize(collectDrawobjAry(drawObj), cc);
+        var {width, height, centerPt, unitType} = getMarkerImageSize(collectDrawobjAry(drawObj), cc) || {};
         var angle = getMarkerAngleInRad(drawObj);
 
          outlineBox = createOutlineBoxAllSteps(pts[0], centerPt, width, height, unitType, cc, angle);
@@ -703,13 +762,13 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
  */
 function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitType, cc, angle = 0.0, stopAt) {
 
-    if (angle !== 0.0) {  // rotate the center around the footprint center
+    if (angle !== 0.0 && outlineCenter) {  // rotate the center around the footprint center
         var oCenter  = simpleRotateAroundPt(cc.getImageCoords(outlineCenter),
                                             cc.getImageCoords(fpCenter), -angle, Point.IM_PT);
         outlineCenter = getWorldOrImage(oCenter, cc);
     }
 
-    var outlineBox = createOutlineBox(outlineCenter, width, height, unitType, cc, angle);
+    var outlineBox = outlineCenter ? createOutlineBox(outlineCenter, width, height, unitType, cc, angle) : null;
 
     if (outlineBox) {   // outline box around the footprint is visible
         outlineBox.outlineType = OutlineType.original;
@@ -744,13 +803,19 @@ function createResizeHandle(outlineBox, cc, rotAngle) {
         return simpleRotateAroundPt(c, outlineCenter, -rotAngle, Point.IM_PT);
     });
 
+    // some corner could be null
     return rCorners.reduce((prev, handlerCenter) => {
-        var handlerBox = ShapeDataObj.makeRectangleByCenter(getWorldOrImage(handlerCenter, cc),
-            box.size[0], box.size[1], box.unit,
-            0.0, ShapeDataObj.UnitType.ARCSEC, false);
+        const corner = getWorldOrImage(handlerCenter, cc);
+        let   handlerBox = null;
 
-        updateHandleRotAngle(rotAngle, handlerBox);
-        set(handlerBox, 'color', HANDLE_COLOR);
+        if (corner) {
+            handlerBox = ShapeDataObj.makeRectangleByCenter(corner,
+                box.size[0], box.size[1], box.unit,
+                0.0, ShapeDataObj.UnitType.ARCSEC, false);
+
+            updateHandleRotAngle(rotAngle, handlerBox);
+            set(handlerBox, 'color', HANDLE_COLOR);
+        }
         prev.push(handlerBox);
         return prev;
     }, []);
@@ -766,15 +831,16 @@ function createResizeHandle(outlineBox, cc, rotAngle) {
 function createRotateHandle(outlineBox, cc, rotAngle) {
     const handleCenter = [[0, -0.5], [0.5, 0], [0, 0.5], [-0.5, 0]];  // handle center relative to the end of handle bar
     const handleAngle = [Math.PI * 3/2, 0, Math.PI*0.5, Math.PI];
+    const circleLoc = [[0, -0.75], [0.75, 0], [0, 0.75], [-0.75, 0]];  // circle center relative to the end of handle bar
     const [x1, x2, y1, y2] = [0, cc.screenSize.width, 0, cc.screenSize.height];
     var rotateObj = null;
-    var corners =  getRectCorners(outlineBox.pts[0], outlineBox.width, outlineBox.height, outlineBox.unitType, cc);
+
+    const corners = getRectCorners(outlineBox.pts[0], outlineBox.width, outlineBox.height, outlineBox.unitType, cc, Point.SPT);
     var side = 4;
     var originVp = cc.getScreenCoords(outlineBox.pts[0]);
     var vpCorners = corners.map((c) => {
         return simpleRotateAroundPt(cc.getScreenCoords(c), originVp, rotAngle, Point.SPT);
     });
-    var vpInView = vpCorners.map( (v) => cc.pointInData(v) );
 
     var startIdx = has(outlineBox, 'rotateSide') ? outlineBox.rotateSide : 1;
     var endIdx = startIdx + side - 1;
@@ -783,9 +849,10 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
         var i = idx%side;
         var j = (i+1)%side;
         var ends;
-        var [xlen, ylen] = [(vpCorners[j].x - vpCorners[i].x), (vpCorners[j].y - vpCorners[i].y)];
 
-        if ( !vpInView[i] && !vpInView[j] ) continue;
+        if ( !vpCorners[i] || !vpCorners[j] ) continue;  // skip any corner that is null
+
+        var [xlen, ylen] = [(vpCorners[j].x - vpCorners[i].x), (vpCorners[j].y - vpCorners[i].y)];
 
         // find the ends of the side intercepted by the border of viewport
         ends = [vpCorners[i], vpCorners[j]].map((vp) => {
@@ -813,22 +880,28 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
         var hBottom = makeScreenPt((ends[0].x + ends[1].x)/2, (ends[0].y + ends[1].y)/2);
         // center of the handle, rotate first if there is
         var hCenter = makeScreenPt((ends[0].x + ends[1].x)/2 + handleCenter[i][0] * ROTATE_BOX,
-                                     (ends[0].y + ends[1].y)/2 + handleCenter[i][1] * ROTATE_BOX);
+                                    (ends[0].y + ends[1].y)/2 + handleCenter[i][1] * ROTATE_BOX);
         if (rotAngle !== 0) {
             hCenter = simpleRotateAroundPt(hCenter, hBottom, rotAngle, Point.SPT);
         }
-        // test if all cornres of the handle after rotation are seen
-        var hNotInView = cornerScreen.find ( (c) => {
-            var vp = makeScreenPt(hCenter.x + c[0] * ROTATE_BOX * 0.5, hCenter.y + c[1] * ROTATE_BOX * 0.5);
-            var rVp = simpleRotateAroundPt(vp, hCenter, rotAngle, Point.SPT);
-
-            return !(cc.pointInData(rVp));
-        });
-
-        if (hNotInView) continue; // corners of handle are not seen
 
         // bottom center of the handle
-        rotateObj = makePointDataObj(getWorldOrImage(hBottom, cc), ROTATE_BOX, DrawSymbol.ROTATE);
+        const handleBottom = getWorldOrImage(hBottom, cc);
+        if (!isPointInView(handleBottom, cc)  || !isPointInView(getWorldOrImage(hCenter, cc), cc)) continue;
+
+        // test if all cornres of the circle at the handle after rotation are seen
+        const cCenter = makeScreenPt((ends[0].x + ends[1].x)/2 + circleLoc[i][0] * ROTATE_BOX,
+                                     (ends[0].y + ends[1].y)/2 + circleLoc[i][1] * ROTATE_BOX);
+        var hNotInView = cornerScreen.findIndex ( (c) => {
+            // corners around circle portion
+            var vp = makeScreenPt(cCenter.x + c[0] * ROTATE_BOX * 0.25, cCenter.y + c[1] * ROTATE_BOX * 0.25);
+            var rVp = simpleRotateAroundPt(vp, hBottom, rotAngle, Point.SPT);
+
+            return !isPointInView(getWorldOrImage(rVp, cc), cc);
+        });
+        if (hNotInView >= 0 || !isPointInView(hBottom, cc)) continue;
+
+        rotateObj = makePointDataObj(handleBottom, ROTATE_BOX, DrawSymbol.ROTATE);
 
         // store the rotate angle and handle center
         rotateObj = Object.assign(rotateObj, {renderOptions: {rotAngle: (handleAngle[i%side]+rotAngle)},
@@ -842,7 +915,7 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
 
 
 /**
- * create outline box
+ * create outline box by checking if any corner is in view
  * @param centerPt
  * @param width
  * @param height
@@ -860,7 +933,7 @@ function createOutlineBox(centerPt, width, height, unitType, cc, angle = 0.0) {
                       simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(centerPt), -angle, Point.IM_PT) :
                       corner;
 
-        if (cc.pointInData(rCorner)) {
+        if (rCorner && cc.pointInData(rCorner)) {
             prev++;
         }
         return prev;
@@ -917,11 +990,14 @@ export function findClosestIndex(screenPt, drawObj, cc) {
         //if (wIdx !== drawObj.outlineIndex && distance > 0) {
         if (distance > 0) {
             var lastObj = dObjAry[wIdx];
-            var dist = getScreenDistToMarker(lastObj, cc, screenPt);
 
-            if (dist >= 0 && dist < distance) {
-                distance = dist;
-                prev = wIdx;
+            if (lastObj) {
+                var dist = getScreenDistToMarker(lastObj, cc, screenPt);
+
+                if (dist >= 0 && dist < distance) {
+                    distance = dist;
+                    prev = wIdx;
+                }
             }
         }
         return prev;
@@ -972,7 +1048,6 @@ export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath)
         drawObj.drawObjAry = drawObjP.drawObjAry.map( (obj) => Object.assign({}, obj) );
 
         var newObj = Object.assign({}, drawObj, {drawObjAry: drawObj.drawObjAry.slice(0, drawObj.outlineIndex)});
-
         // add outline box, resize and rotate handle if any is included
         if (get(drawObj, 'includeResize', false) ||
             get(drawObj, 'includeRotate', false) ||
@@ -984,7 +1059,9 @@ export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath)
         // newObj is made for display
         updateColorFromDef(newObj, def);
         newObj.drawObjAry.forEach((oneDrawObj) => {
-            DrawOp.draw(oneDrawObj, ctx, plot, def, vpPtM, onlyAddToPath);
+            if (oneDrawObj) {      // the resize or rotate drawObj could be null
+                DrawOp.draw(oneDrawObj, ctx, plot, def, vpPtM, onlyAddToPath);
+            }
         });
 
         drawFootprintText(newObj, plot, def, ctx);
@@ -1012,8 +1089,6 @@ function drawFootprintText(drawObj, plot, def, ctx) {
                       drawObj.drawObjAry[drawObj.outlineIndex] :
                       (updateHandle(drawObj, plot, []))[0];
 
-   // if (!outlineObj || outlineObj.outlineType === OutlineType.plotcenter) return;
-
     if (!outlineObj) return;
 
     var objArea  = getObjArea(outlineObj, plot); // in image coordinate
@@ -1031,14 +1106,49 @@ function drawFootprintText(drawObj, plot, def, ctx) {
     }
 }
 
+
 /**
- * update the footprint outline box once some object is clicked to be selected
+ * update the footprint outline box once some object is clicked to be selected, render the entire footprint in case the
+ * plot zoom changes.
  * @param drawObj
  * @param cc
  * @returns {*}
  */
 export function updateFootprintOutline(drawObj, cc) {
-    updateOutlineBox(drawObj, cc, true);
+
+
+    if (drawObj.sType === MarkerType.Marker || drawObj.lastZoom === cc.zoomFactor) {
+    //if (drawObj.sType === MarkerType.Marker || drawObj.sType === MarkerType.Footprint) {
+        updateOutlineBox(drawObj, cc, true);
+    } else {
+        const centerPt = getWorldOrImage(drawObj.pts[0], cc);
+        const {angle} = drawObj;
+
+        drawObj.drawObjAry = getOriginalFPDrawObj(drawObj);
+        drawObj.angle = 0;
+        drawObj.drawObjAry.push(createCrossCenter(centerPt));
+
+        const handle = updateHandle(drawObj, cc, [MARKER_HANDLE.outline]);
+        if (handle) {
+            drawObj.drawObjAry.push(handle[0]);
+        }
+
+        drawObj.angle = angle;
+        const angleRad = getMarkerAngleInRad(drawObj);
+
+
+        drawObj.drawObjAry = drawObj.drawObjAry.reduce((prev, oneObj) => {
+            var rObj = DrawOp.rotateAround(oneObj, cc, angleRad, centerPt);
+            prev.push(rObj);
+            return prev;
+        }, []);
+
+        if (get(drawObj, 'originalOutlineBox', null)) {
+            const outlineBox = drawObj.drawObjAry.length > drawObj.outlineIndex ? drawObj.drawObjAry[drawObj.outlineIndex] : null;
+
+            drawObj.originalOutlineBox = (outlineBox && (outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
+        }
+    }
 
     return Object.assign({}, drawObj);
 }
@@ -1157,7 +1267,8 @@ export function translateMarker(drawObj, plot, apt) {
     }, [] );
 
     if (get(newObj, 'originalOutlineBox', null)) {
-        newObj.originalOutlineBox = DrawOp.translateTo(drawObj.originalOutlineBox, plot, apt);
+        const outlineBox = newObj.drawObjAry.length > newObj.outlineIndex ? newObj.drawObjAry[newObj.outlineIndex] : null;
+        newObj.originalOutlineBox = (outlineBox&&(outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
     }
 
     return newObj;
@@ -1174,7 +1285,7 @@ export function translateMarker(drawObj, plot, apt) {
  */
 export function rotateMarkerAround(drawObj,plot, angle, worldPt) {
     var {pts} = drawObj;
-    if (!pts) return null;
+    if (!pts || !pts[0] || !worldPt) return null;
 
     var worldImg = plot.getImageCoords(worldPt);
     var drawObjPt = plot.getImageCoords(pts[0]);
@@ -1203,8 +1314,9 @@ export function rotateMarkerAround(drawObj,plot, angle, worldPt) {
         return prev;
     }, []);
 
-    if (get(drawObj, 'originalOutlineBox', null)) {
-        newObj.originalOutlineBox = DrawOp.rotateAround(drawObj.originalOutlineBox, plot, angle, worldPt);
+    if (get(newObj, 'originalOutlineBox', null)) {
+        const outlineBox = newObj.drawObjAry.length > newObj.outlineIndex ? newObj.drawObjAry[newObj.outlineIndex] : null;
+        newObj.originalOutlineBox = (outlineBox&&(outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
     }
 
     return newObj;
@@ -1225,11 +1337,21 @@ export function updateMarkerSize(markerObj, cc, newSize) {
         var radius = lengthSizeUnit(cc, Math.min(size[0], size[1])/2, newSize.unitType);
 
         newObj = Object.assign(newObj, {width: radius.len, height: radius.len, unitType: radius.unit });
-        newObj.drawObjAry = [clone(drawObjAry[0], {radius: radius.len, unitType: radius.unit})];
+        const mObj = clone(drawObjAry[0], {radius: radius.len, unitType: radius.unit});
+        let   oObj;
 
-        var outline = updateHandle(newObj, cc, [MARKER_HANDLE.outline]);
+        if (drawObjAry.length > 1) {
+            oObj = (drawObjAry[1].outlineType === OutlineType.original) ?
+                   clone(drawObjAry[1], {width: radius.len*2, height: radius.len*2, unitType: radius.unit}) :
+                   clone(drawObjAry[1]);
+        } else {
+            oObj = null;
+        }
+        newObj.drawObjAry = oObj? [mObj, oObj] : [mObj];
+
+        const outline = updateHandle(newObj, cc, []);
         if (outline) {
-            newObj.drawObjAry.push(outline[0]);
+            newObj.drawObjAry[1] = outline[0];
         }
     }
 
@@ -1316,15 +1438,17 @@ export function getScreenDistToMarker(drawObj, plot, pt) {
         return Math.sqrt((dx * dx) + (dy * dy));
     };
 
-    // if the rectangle is slanted, then find the distance by usiung distToPolygon, centerPt: screen point
+    // if the rectangle is slanted, then find the distance by using distToPolygon, centerPt: rotate center of the drawObj
     var distToRect = (corners, rotAngle, centerPt) => {
-        if (rotAngle !== 0.0) {
+        const hasNull = corners.some((oneCorner) => !oneCorner);   // corners may contain null conrner
+
+        if (rotAngle !== 0.0 || hasNull) {
             var rCorners = corners.reduce( (prev, c) => {
                 prev.push(simpleRotateAroundPt(c, centerPt, rotAngle, Point.SPT));
                 return prev;
             }, []);
 
-            return isWithinPolygon(pt, rCorners, plot) ? 0 : distToPolygon(rCorners);
+            return (!hasNull && isWithinPolygon(pt, rCorners, plot)) ? 0 : distToPolygon(rCorners);
         } else {
             var [x1, x2, y1, y2] = [corners[0].x, corners[1].x, corners[1].y, corners[2].y];
             var bx = (pt.x >= x1 && pt.x <= x2) ? pt.x : ((pt.x < x1) ? x1 : x2);
@@ -1360,12 +1484,13 @@ export function getScreenDistToMarker(drawObj, plot, pt) {
         return dist;
     };
 
+    // skip the convex which is null
     var distToPolygon = (pts) => {
         var vertices = [...pts, pts[0]].map((onePt) => plot.getScreenCoords(onePt));
         var totalV = pts.length;
 
         return vertices.reduce((prev, ver, index) => {
-            if (index < totalV) {
+            if ((index < totalV) && (vertices[index]) && (vertices[index+1])) {
                 var d = distToLine(vertices[index], vertices[index+1]);
 
                 if (d < prev) prev = d;
@@ -1394,9 +1519,14 @@ export function getScreenDistToMarker(drawObj, plot, pt) {
          } else if (drawObj.sType === ShapeDataObj.ShapeType.Circle) {
              var r = lengthToScreenPixel(drawObj.radius, plot, drawObj.unitType);
 
-             cScreen = plot.getScreenCoords(drawObj.pts[0]);
-             distance = distToPt(cScreen.x, cScreen.y);
-             distance = distance > r ? distance - r : 0;
+             if (isPointInView(drawObj.pts[0], plot)) {
+                 cScreen = plot.getScreenCoords(drawObj.pts[0]);
+                 distance = distToPt(cScreen.x, cScreen.y);
+                 distance = distance > r ? distance - r : 0;
+             } else {
+                 distance = Number.MAX_VALUE;      // not counted for the point out of plot area
+             }
+
          } else if (drawObj.sType === ShapeDataObj.ShapeType.Polygon) {
              var inside = isWithinPolygon(pt, drawObj.pts, plot);
 

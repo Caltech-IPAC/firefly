@@ -5,13 +5,31 @@
 import VisUtil, {convertAngle} from '../VisUtil.js';
 import ShapeDataObj, {rectOnImage, lengthToImagePixel, widthAfterRotation, heightAfterRotation } from './ShapeDataObj.js';
 import {makeScreenPt, makeImagePt} from '../Point.js';
-import {clone} from '../../util/WebUtil.js';
 import {get, isNil, set, has, cloneDeep} from 'lodash';
 import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
 import {TextLocation} from './DrawingDef.js';
+import {SimplePt} from '../Point.js';
+import {isHiPS} from '../WebPlot.js';
 
 const doAry = 'drawObjAry';
 export const defaultDashline = [8, 5, 2, 5];
+
+export const isPointInView = (pt, cc) => {
+    if (!pt) return false;
+    if (isHiPS(cc)) {
+        const inViewDim = (cc, pt) => {
+            const devPt = cc.getDeviceCoords(pt);
+
+            return (devPt) && (devPt.x >= 0 && devPt.x < cc.viewDim.width) &&
+                (devPt.y >= 0 && devPt.y < cc.viewDim.height);
+        };
+
+        return inViewDim(cc, pt);
+    } else {
+        return cc.pointInData(pt);
+    }
+
+};
 
 // in image coordinate or screen coordinate
 var areaObj = (min_x, max_x, min_y, max_y, unit = ShapeDataObj.UnitType.IMAGE_PIXEL) => {
@@ -70,6 +88,33 @@ export function getDrawobjArea(drawObj, cc, def={}) {
             break;
     }
     return rCover;
+}
+
+
+/**
+ * check if the shape coverage area is inside the plot area
+ * @param cc
+ * @param drawObj    drawObj & coverArea could be exclusive
+ * @param coverArea
+ * @param def
+ * @returns {*} the upperLeft corner and the covered width and height
+ */
+export function isDrawobjAreaInView(cc, drawObj = null, coverArea = null, def={}) {
+    if (!coverArea && drawObj) {
+        coverArea = getDrawobjArea(drawObj);
+    }
+    const {center, width, height} = coverArea || {};
+    if (!center) return false;
+
+    const cornerNotInView = [[-1, 1], [1, 1], [1, -1], [-1, -1]].some((c) => {
+        const x = center.x + c[0] * width / 2;
+        const y = center.y + c[1] * height / 2;
+        const cornerP = Object.assign(new SimplePt(x, y), {type: center.type});
+
+        return !isPointInView(cornerP, cc);
+    });
+
+    return !cornerNotInView;
 }
 
 /**
@@ -277,6 +322,7 @@ function getDrawobjPolygonArea(drawObj, cc) {
     var wpScreen;
 
     if (pts.length < 3) return null;
+    if (pts.some((pt) => !pt)) return null;
 
     wpScreen = cc.getImageCoords(pts[0]);
     if (!wpScreen) {
@@ -287,7 +333,7 @@ function getDrawobjPolygonArea(drawObj, cc) {
     miny = wpScreen.y;
     maxy = miny;
 
-    pts.slice(1).some( (wp) => {
+    const noArea = pts.slice(1).some( (wp) => {
         wpScreen = cc.getImageCoords(wp);
         if (wpScreen) {
             if (wpScreen.x < minx)  minx = wpScreen.x;
@@ -299,7 +345,7 @@ function getDrawobjPolygonArea(drawObj, cc) {
         return isNil(wpScreen);
     });
 
-    return areaObj(minx, maxx, miny, maxy);
+    return noArea ? null : areaObj(minx, maxx, miny, maxy);
 }
 
 export const DELTA = 2;
@@ -350,7 +396,8 @@ export function isScreenPtInRegion(drawObj, pt, cc, def={}) {
  */
 export function isWithinPolygon(sPt, corners, cc, lineWidth = 1) {
 
-    if (corners.length < 3) return false;
+    if (corners.length < 3 ||
+        (corners.some((oneCorner) => !oneCorner))) return false;
 
     var lw = Math.floor((lineWidth+1)/2) + DELTA;
     var inside = false;
@@ -362,15 +409,17 @@ export function isWithinPolygon(sPt, corners, cc, lineWidth = 1) {
         if (index < totalP) {
             var pt1, pt2;
 
-            pt1 = pt;
-            pt2 = closeCorners[index + 1];
+            if (pt && closeCorners[index+1]) {
+                pt1 = pt;
+                pt2 = closeCorners[index + 1];
 
-            if ((pt1.y !== pt2.y) &&
-                (sPt.y >= Math.min(pt1.y, pt2.y)) &&
-                (sPt.y <= Math.max(pt1.y, pt2.y))) {  // not include pt1.y === pt2.y
-                var xLine = (pt2.x - pt1.x) * (sPt.y - pt1.y) / (pt2.y - pt1.y) + pt1.x;
+                if ((pt1.y !== pt2.y) &&
+                    (sPt.y >= Math.min(pt1.y, pt2.y)) &&
+                    (sPt.y <= Math.max(pt1.y, pt2.y))) {  // not include pt1.y === pt2.y
+                    var xLine = (pt2.x - pt1.x) * (sPt.y - pt1.y) / (pt2.y - pt1.y) + pt1.x;
 
-                xOnLines.push(xLine);
+                    xOnLines.push(xLine);
+                }
             }
         }
     } );

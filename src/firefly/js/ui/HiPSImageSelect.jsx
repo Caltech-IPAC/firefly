@@ -5,18 +5,18 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {HiPSId} from '../visualize/HiPSCntlr.js';
-import {HiPSSurveyListSelection, makeHiPSSurveysTableName, HiPSPopupMsg} from './HiPSSurveyListDisplay.jsx';
+import {HiPSId, updateHiPSTblHighlightOnUrl, HiPSSurveyTableColumn} from '../visualize/HiPSListUtil.js';
+import {HiPSSurveyListSelection, HiPSPopupMsg, getTblModelOnPanel, isPopularHiPSChecked} from './HiPSSurveyListDisplay.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from './ValidationField.jsx';
-import {getTblById, getCellValue} from '../tables/TableUtil.js';
+import {getCellValue} from '../tables/TableUtil.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {parseWorldPt} from '../visualize/Point.js';
-import {parseUrl} from '../util/WebUtil.js';
 
 import './ImageSelect.css';
 
+const hipsPanelId = HiPSId;
 
 export class HiPSImageSelect extends PureComponent {
 
@@ -40,10 +40,10 @@ export class HiPSImageSelect extends PureComponent {
         return (
             <div style={style} className='ImageSelect'>
                 {imageSource === 'url' ? <SelectUrl style={wrapperStyle}/> :
-                                        <HiPSSurveyListSelection
-                                            surveysId={HiPSId}
+                                         <HiPSSurveyListSelection
+                                            surveysId={hipsPanelId}
                                             wrapperStyle={ wrapperStyle }
-                                        />}
+                                         />}
             </div>
         );
     }
@@ -81,25 +81,27 @@ SelectUrl.propTypes = {
 export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VIEWER_ID) {
     let url;
     if (get(request, 'imageSource', 'archive') === 'url') {
-        url = get(request, 'txURL');
+        url = get(request, 'txURL').trim();
+        updateHiPSTblHighlightOnUrl(url, hipsPanelId);
     } else {
-        const tblId = makeHiPSSurveysTableName();
-        const tableModel = tblId ? getTblById(tblId) : null;
+        const tableModel = getTblModelOnPanel(hipsPanelId);
         if (!tableModel) {
             HiPSPopupMsg('No HiPS information found', 'HiPS search');
             return null;
         }
         const {highlightedRow=0} = tableModel;
-        url = getCellValue(tableModel, highlightedRow, 'url');
+        url = getCellValue(tableModel, highlightedRow, HiPSSurveyTableColumn.Url.key);
+        if (url) {
+            url = url.trim();
+        }
+
+        // update the table highlight of the other one not shown in table panel
+        const isPopular = isPopularHiPSChecked();
+        if (url) {
+            updateHiPSTblHighlightOnUrl(url, hipsPanelId, !isPopular);
+        }
     }
 
-    const {protocol} = parseUrl(window.location);
-    url = url.trim();
-
-    const p = ['https:', 'http:'].find((h) => url.startsWith(h));
-    if (p) {
-        url = `${protocol}${url.substring(p.length)}`;
-    }
 
     const fov = get(request, 'sizeFov', 180);
     const wp = parseWorldPt(request.UserTargetWorldPt) || null;
