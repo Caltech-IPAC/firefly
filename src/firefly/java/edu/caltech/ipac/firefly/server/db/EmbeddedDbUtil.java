@@ -20,7 +20,6 @@ import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -46,6 +45,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.util.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.util.DataGroup.ROW_NUM;
+import static edu.caltech.ipac.util.IpacTableUtil.*;
 
 /**
  * @author loi
@@ -307,26 +307,26 @@ public class EmbeddedDbUtil {
         Map<String, DataGroup.Attribute> meta = dg.getAttributes();
         List<Object[]> data = new ArrayList<>();
         for(DataType dt : colsAry) {
-            int width = getIntVal(meta, IpacTableUtil.WIDTH_TAG, dt, 0);
+            int width = getIntVal(meta, WIDTH_TAG, dt, 0);
             width = width > 0 ? width : dt.getFormatInfo().getWidth();
-            String format = getStrVal(meta, IpacTableUtil.FORMAT_TAG, dt, null);
+            String format = getStrVal(meta, FORMAT_TAG, dt, null);
             format = format == null ? dt.getFormatInfo().getDataFormatStr() : format;
-            String visi = dt.getKeyName().equals(ROW_IDX) ? IpacTableUtil.VISI_HIDDEN :
-                            getStrVal(meta, IpacTableUtil.VISI_TAG, dt, IpacTableUtil.VISI_SHOW);
+            String visi = dt.getKeyName().equals(ROW_IDX) ? VISI_HIDDEN :
+                            getStrVal(meta, VISI_TAG, dt, VISI_SHOW);
 
             data.add( new Object[]
                     {
                             dt.getKeyName(),
-                            getStrVal(meta, IpacTableUtil.LABEL_TAG, dt, dt.getKeyName()),
+                            getStrVal(meta, LABEL_TAG, dt, dt.getKeyName()),
                             dt.getTypeDesc(),
                             dt.getDataUnit(),
                             dt.getNullString(),
                             format,
                             width,
                             visi,
-                            Boolean.valueOf(getStrVal(meta, IpacTableUtil.SORTABLE_TAG, dt, "true")),
-                            Boolean.valueOf(getStrVal(meta, IpacTableUtil.FILTERABLE_TAG, dt, "true")),
-                            getStrVal(meta, IpacTableUtil.DESC_TAG, dt, dt.getShortDesc())
+                            Boolean.valueOf(getStrVal(meta, SORTABLE_TAG, dt, "true")),
+                            Boolean.valueOf(getStrVal(meta, FILTERABLE_TAG, dt, "true")),
+                            getStrVal(meta, DESC_TAG, dt, dt.getShortDesc())
                     }
             );
         }
@@ -368,7 +368,7 @@ public class EmbeddedDbUtil {
                 if (dtype != null) {
                     dtype.setKeyName(cname);
                     if (!StringUtils.areEqual(label, cname)) {
-                        String attr = IpacTableUtil.makeAttribKey(IpacTableUtil.LABEL_TAG, cname);
+                        String attr = makeAttribKey(LABEL_TAG, cname);
                         dg.addAttribute(attr, label);
                     }
                     if (!StringUtils.isEmpty(units)) {
@@ -383,20 +383,20 @@ public class EmbeddedDbUtil {
                     if (width > 0) {
                         dtype.getFormatInfo().setWidth(width);
                     }
-                    if (!StringUtils.areEqual(visibility, IpacTableUtil.VISI_SHOW)) {
-                        String attr = IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, cname);
+                    if (!StringUtils.areEqual(visibility, VISI_SHOW)) {
+                        String attr = makeAttribKey(VISI_TAG, cname);
                         dg.addAttribute(attr, visibility);
                     }
                     if (!StringUtils.isEmpty(desc)) {
-                        String attr = IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, cname);
+                        String attr = makeAttribKey(DESC_TAG, cname);
                         dg.addAttribute(attr, desc);
                     }
                     if (!sortable) {
-                        String attr = IpacTableUtil.makeAttribKey(IpacTableUtil.SORTABLE_TAG, cname);
+                        String attr = makeAttribKey(SORTABLE_TAG, cname);
                         dg.addAttribute(attr, String.valueOf(false));
                     }
                     if (!filterable) {
-                        String attr = IpacTableUtil.makeAttribKey(IpacTableUtil.FILTERABLE_TAG, cname);
+                        String attr = makeAttribKey(FILTERABLE_TAG, cname);
                         dg.addAttribute(attr, String.valueOf(false));
                     }
                 }
@@ -433,13 +433,13 @@ public class EmbeddedDbUtil {
         System.arraycopy(dg.getDataDefinitions(), 0, cols, 0, cols.length-2);
         cols[cols.length-2] = DataGroup.makeRowIdx();
         cols[cols.length-1] = DataGroup.makeRowNum();
-        dg.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, ROW_IDX), IpacTableUtil.VISI_HIDDEN);
-        dg.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, ROW_NUM), IpacTableUtil.VISI_HIDDEN);
+        dg.addAttribute(makeAttribKey(VISI_TAG, ROW_IDX), VISI_HIDDEN);
+        dg.addAttribute(makeAttribKey(VISI_TAG, ROW_NUM), VISI_HIDDEN);
         return cols;
     }
 
     private static String getStrVal(Map<String, DataGroup.Attribute> meta, String tag, DataType col, String def) {
-        DataGroup.Attribute val = meta.get(IpacTableUtil.makeAttribKey(tag, col.getKeyName()));
+        DataGroup.Attribute val = meta.get(makeAttribKey(tag, col.getKeyName()));
         return val == null ? def : val.getValue();
     }
 
