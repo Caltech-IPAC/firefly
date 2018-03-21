@@ -47,22 +47,11 @@ export class TablePanel extends PureComponent {
         this.onOptionUpdate = this.onOptionUpdate.bind(this);
         this.onOptionReset = this.onOptionReset.bind(this);
         this.setupInitState = this.setupInitState.bind(this);
-        this.showTableOptionDialog=this.showTableOptionDialog.bind(this);
+        //this.showTableOptionDialog=this.showTableOptionDialog.bind(this);
 
         this.state = this.setupInitState(props);
     }
 
-    showTableOptionDialog(onChange, onOptionReset,toggleOptions, params) {
-        const content =
-            <div style={ popupPanelResizableStyle}>
-                <TablePanelOptions
-                    onChange={onChange}
-                    onOptionReset={onOptionReset}
-                    toggleOptions={toggleOptions}
-                    { ...params}
-                /></div>;
-        showOptionsPopup({content, title: 'Table Options', show: true});
-    }
 
     setupInitState(props) {
         var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
@@ -89,6 +78,7 @@ export class TablePanel extends PureComponent {
         this.removeListener= flux.addListener(() => this.storeUpdate());
         this.tableConnector.onMount();
     }
+
 
     componentWillUnmount() {
         this.removeListener && this.removeListener();
@@ -187,7 +177,7 @@ export class TablePanel extends PureComponent {
                                 {showOptionButton &&
                                     <div style={{marginLeft: '4px'}}
                                             title={TT_OPTIONS}
-                                            onClick={this.toggleOptions}
+                                            onClick={ ( ()=>showTableOptionDialog (this.onOptionUpdate,this.onOptionReset, params))}
                                             className='PanelToolbar__button options'/> }
                                 { expandable && !expandedMode &&
                                     <div className='PanelToolbar__button' onClick={this.expandTable} title={TT_EXPAND}>
@@ -201,7 +191,7 @@ export class TablePanel extends PureComponent {
                         onClick={stopPropagation}
                         onTouchStart={stopPropagation}
                         onMouseDown={stopPropagation}
-                    >
+                        >
                             <BasicTableView
                                 callbacks={tableConnector}
                                 { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showFilters,
@@ -212,12 +202,8 @@ export class TablePanel extends PureComponent {
                       <img className='TablePanel__options--small'
                            src={OPTIONS}
                            title={TT_OPTIONS}
-                           onClick={showOptions ? this.showTableOptionDialog(this.onChange, this.onOptionReset, this.toggleOptions, params) : null}/>
+                           onClick={ ( ()=>showTableOptionDialog (this.onOptionUpdate,this.onOptionReset, params))}/>
                       }
-                      {showOptions && <div>
-                              onClick={ this.showTableOptionDialog (this.onChange,this.onOptionReset,this.toggleOptions, params)}
-                              </div> }
-                            }
 
                     </div>
                 </div>
@@ -227,22 +213,32 @@ export class TablePanel extends PureComponent {
     }
 }
 
-//<div>{showTableOptionDialog(this.onChange,this.onOptionReset,this.toggleOptions, params)}</div>
-               {/*         <TablePanelOptions
-                          onChange={this.onOptionUpdate}
-                          onOptionReset={this.onOptionReset}
-                          toggleOptions={showTableOptionDialog(this.onChange, this.onOptionReset,this.toggleOptions, params)}
-                          { ...{columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar, tbl_ui_id}}
-                        /> }*/}
+
 const popupPanelResizableStyle = {
-  width: 370,
-  minWidth: 370,
-  height: 400,
-  minHeight: 450,
-  resize: 'both',
-  overflow: 'hidden',
-  position: 'relative'
+
+    width: 370,
+    minWidth: 370,
+    height: 450,
+    minHeight: 528,
+    resize: 'both',
+    overflow: 'hidden',
+    position: 'relative'
 };
+function showTableOptionDialog(onChange, onOptionReset, params) {
+
+    const content =
+         <div style={ popupPanelResizableStyle }>
+
+               <TablePanelOptions
+                  onChange={onChange}
+                  onOptionReset={onOptionReset}
+                  { ...params}
+               />
+
+        </div>;
+    showOptionsPopup({content, title: 'Table Options',show: true});
+
+}
 
 const stopPropagation= (ev) => ev.stopPropagation();
 

@@ -53,6 +53,7 @@ export function showModal(content, show=true) {
  */
 export function showOptionsPopup({content, title='Options', modal = false, show=true}) {
 
+
   if (show) {
       const dialogContent= (
           <PopupPanel title={title} modal={modal}>

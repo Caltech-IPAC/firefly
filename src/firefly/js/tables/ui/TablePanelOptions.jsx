@@ -19,14 +19,15 @@ export class TablePanelOptions extends PureComponent {
     }
 
     render() {
-        const {columns, pageSize, showUnits, showFilters, showToolbar=true, onChange, onOptionReset, optSortInfo, filterInfo, toggleOptions, tbl_ui_id} = this.props;
+        const {columns, pageSize, showUnits, showFilters, showToolbar=true, onChange, onOptionReset, optSortInfo, filterInfo, tbl_ui_id} = this.props;
         if (isEmpty(columns)) return false;
 
         const {onPageSize, onPropChanged} = makeCallbacks(onChange, columns);
         return (
-            <div className='TablePanelOptions'>
-                <div
-                    style={{flexGrow: 0, marginBottom: 4, display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+
+               <div className='TablePanelOptions'>
+                 <div
+                    style={{flexGrow: 0, marginBottom: 32, display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
                     <div style={{display: 'inline-block', whiteSpace: 'nowrap'}}>
                         <div>
                             <div style={labelStyle}>Show Units:</div>
@@ -56,13 +57,6 @@ export class TablePanelOptions extends PureComponent {
                         </div>
                     }
                     <span>
-                        <div style={{ position: 'relative',
-                                      display: 'block',
-                                      right: -42,
-                                      top: -2}}
-                             className='btn-close'
-                             title='Remove Tab'
-                             onClick={() => toggleOptions()}/>
 
                         <button type='button' className='TablePanelOptions__button' onClick={onOptionReset}
                                 title='Reset all options to defaults'>Reset</button>
@@ -73,8 +67,9 @@ export class TablePanelOptions extends PureComponent {
                         {...{tbl_ui_id, columns, filterInfo, onChange}}
                     />
                 </div>
-            </div>
-        );
+               </div>
+
+     );
     };
 }
 

@@ -168,8 +168,8 @@
     top: 1px;
     bottom: 1px;
     right: 0;
-    background-color: beige;
-    border-left: 1px solid #CCC;
+    //background-color: beige;
+    //border-left: 1px solid #CCC;
     z-index: 100;
     display: flex;
     flex-direction: column;
