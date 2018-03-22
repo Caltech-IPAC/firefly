@@ -47,7 +47,6 @@ export class TablePanel extends PureComponent {
         this.onOptionUpdate = this.onOptionUpdate.bind(this);
         this.onOptionReset = this.onOptionReset.bind(this);
         this.setupInitState = this.setupInitState.bind(this);
-        //this.showTableOptionDialog=this.showTableOptionDialog.bind(this);
 
         this.state = this.setupInitState(props);
     }
@@ -216,11 +215,10 @@ export class TablePanel extends PureComponent {
 
 const popupPanelResizableStyle = {
 
-    width: 370,
-    minWidth: 370,
+    width: 365,
+    minWidth: 365,
     height: 450,
     minHeight: 528,
-    resize: 'both',
     overflow: 'hidden',
     position: 'relative'
 };
