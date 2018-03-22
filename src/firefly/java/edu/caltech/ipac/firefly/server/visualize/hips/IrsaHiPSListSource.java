@@ -45,10 +45,6 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
     private static Map<String, String> paramsMap = new HashMap<>();
     static {
-        if (irsaHiPSSource.equals("file")) {
-            HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TITLE, "label");
-            HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.URL, "url");
-        } else {
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ID, "creator_did");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.URL, "hips_service_url");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TITLE, "obs_title");
@@ -56,7 +52,6 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TYPE, "dataproduct_type");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.FRACTION, "moc_sky_fraction");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.FRAME, "hips_frame");
-        }
     }
 
     public List<HiPSMasterListEntry> getHiPSListData(String[] dataTypes, String source) {
@@ -171,7 +166,8 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
     }
 
     private String checkBaseUrl(String crtUrl) {
-        if (crtUrl.contains(urlBase)) {
+
+        if (crtUrl == null || crtUrl.contains(urlBase)) {
             return crtUrl;
         } else {
             int baseSLoc = crtUrl.indexOf("//");
@@ -190,11 +186,11 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
 
     // a csv file is created to contain HiPS from IRSA
-    private List<HiPSMasterListEntry> createHiPSListFromFile(String hipsMaser,
+    private List<HiPSMasterListEntry> createHiPSListFromFile(String hipsMaster,
                                                      String[] dataTypes,
                                                      String source) throws IOException, FailedRequestException {
 
-        InputStream inf= IrsaHiPSListSource.class.getResourceAsStream(hipsMaser);
+        InputStream inf= IrsaHiPSListSource.class.getResourceAsStream(hipsMaster);
         DataGroup dg = DsvToDataGroup.parse(inf, CSVFormat.DEFAULT);
 
         return getListData(dg, paramsMap, source);
@@ -229,7 +225,14 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
                 Object obj = row.getDataElement(dataCols[i].getKeyName());
                 String val = obj != null ? obj.toString() : null;
 
-                oneList.set(cols[i], val);
+                if (dataCols[i].getKeyName().equals(keyMap.get(PARAMS.URL.getKey()))) {
+                    oneList.set(cols[i], checkBaseUrl(val));
+                } else if (cols[i] != null) {
+                    oneList.set(cols[i], val);
+                }
+                if (dataCols[i].getKeyName().equals(keyMap.get(PARAMS.ID.getKey()))) {
+                    oneList.set(PARAMS.TITLE.getKey(), getTitle(val));
+                }
             }
         }
 

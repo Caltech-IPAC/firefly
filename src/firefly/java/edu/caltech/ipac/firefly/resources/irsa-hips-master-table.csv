@@ -1,15 +1,21 @@
-url,label
-http://alasky.u-strasbg.fr/2MASS/Color,2MASS colored
-http://alasky.u-strasbg.fr/DSS/DSSColor,DSS colored
-http://alasky.u-strasbg.fr/DSS/DSS2Merged,DSS2 Red (F+R)
-http://alasky.u-strasbg.fr/Fermi/Color,Fermi color
-http://alasky.u-strasbg.fr/FinkbeinerHalpha,Halpha
-http://alasky.u-strasbg.fr/GALEX/GR6-02-Color,GALEX Allsky Imaging Survey colored
-http://alasky.u-strasbg.fr/IRISColor,IRIS colored
-http://alasky.u-strasbg.fr/MellingerRGB,Mellinger colored
-http://alasky.u-strasbg.fr/SDSS/DR9/color,SDSS9 colored
-http://alasky.u-strasbg.fr/SpitzerI1I2I4color,IRAC color I1,I2,I4 - (GLIMPSE, SAGE, SAGE-SMC, SINGS
-http://alasky.u-strasbg.fr/VTSS/Ha,VTSS-Ha
-http://saada.u-strasbg.fr/xmmallsky,XMM-Newton stacked EPIC images (no phot. normalization)
-http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/,AllWISE color
-http://www.spitzer.caltech.edu/glimpse360/aladin/data,GLIMPSE360
+creator_did,hips_release_date,hips_service_url,hips_status
+ivo://ESAVO/P/HERSCHEL/PACS-color,2015-10-16T01:02Z,https://irsadev.ipac.caltech.edu/data/hips/ESAC/PACS-color,public mirror clonable
+ivo://CDS/P/2MASS/color,2016-04-22T14:40Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/2MASS/Color,public mirror unclonable
+ivo://CDS/P/2MASS/K,2016-04-22T14:23Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/2MASS/K,public mirror unclonable
+ivo://CDS/P/2MASS/H,2016-04-22T13:48Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/2MASS/H,public mirror unclonable
+ivo://CDS/P/2MASS/J,2016-04-22T14:03Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/2MASS/J,public mirror unclonable
+ivo://CDS/P/allWISE/W2,2016-06-03T14:58Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/AllWISE/W2,public mirror unclonable
+ivo://CDS/P/allWISE/color,2016-07-01T06:44Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/AllWISE/RGB-W4-W2-W1,public mirror unclonable
+ivo://CDS/P/allWISE/W1,2016-06-03T14:49Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/AllWISE/W1,public mirror unclonable
+ivo://CDS/P/allWISE/W3,2016-06-03T14:58Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/AllWISE/W3,public mirror unclonable
+ivo://CDS/P/allWISE/W4,2016-06-03T14:58Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/AllWISE/W4,public mirror unclonable
+ivo://CDS/P/SDSS9/color,2014-10-24T15:12Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/SDSS/DR9/color,public mirror unclonable
+ivo://CDS/P/SPITZER/IRAC1,2011-07-07T11:40Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/SPITZER/IRAC1,public mirror unclonable
+ivo://CDS/P/SPITZER/IRAC2,2011-07-06T15:52Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/SPITZER/IRAC2,public mirror unclonable
+ivo://CDS/P/SPITZER/IRAC3,2011-07-06T13:38Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/SPITZER/IRAC3,public mirror unclonable
+ivo://CDS/P/SPITZER/IRAC4,2011-07-06T08:46Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/SPITZER/IRAC4,public mirror unclonable
+ivo://CDS/P/IRIS/color,2010-06-09T06:33Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/IRIS/color,public mirror unclonable
+ivo://CDS/P/DSS2/color,2015-05-11T08:45Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/DSS2/color,public mirror unclonable
+ivo://CDS/P/DSS2/red,2014-10-24T14:57Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/DSS2/red,public mirror unclonable
+ivo://CDS/P/PLANCK/R2/LFI/color,2015-02-06T12:09Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/PLANCK/R2/LFI/color,public mirror unclonable
+ivo://CDS/P/PLANCK/R2/HFI/color,2015-02-06T13:38Z,https://irsadev.ipac.caltech.edu/data/hips/CDS/PLANCK/R2/HFI/color,public mirror unclonable

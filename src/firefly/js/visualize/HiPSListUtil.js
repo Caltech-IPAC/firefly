@@ -76,12 +76,6 @@ export function getPopularHiPSTable(hipsId, hipsUrl) {
     return  (masterTbl && hFilter && hFilter.getPopularTable) ? hFilter.getPopularTable(masterTbl, hipsUrl) : null;
 }
 
-export function isOnePopularSurvey(url) {
-    const hFilter = getHiPSFilter();
-
-    return (hFilter && hFilter.isOnePopularSurvey) ? hFilter.isOnePopularSurvey(url) : false;
-}
-
 function getHiPSFilter() {
     const hFilter = defaultHiPSPopularFilter;  // hard code, hips filter will be configured later
 
@@ -101,12 +95,6 @@ function stripTrailingSlash(url) {
 
 
 function defaultHiPSPopularFilter() {
-    const isOnePopularSurvey = (url) => {
-        const defaultUrls =  hipsSURVEYS.map((oneSurvey) => stripTrailingSlash(oneSurvey.url).toLowerCase());
-
-        return defaultUrls.findIndex((dUrl) => dUrl === stripTrailingSlash(url).toLowerCase()) >= 0;
-    };
-
     const createPopularTable = (tableModel, popular_tblId, hipsUrl) => {
         const newTable = omit(cloneDeep(tableModel), ['request', 'origTableModel', 'selectInfo', 'tableMeta'] );
         newTable.tbl_id = popular_tblId;
@@ -140,7 +128,6 @@ function defaultHiPSPopularFilter() {
     };
 
     return {
-        isOnePopularSurvey,
         getPopularTable
     };
 }
