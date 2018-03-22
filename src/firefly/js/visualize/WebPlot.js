@@ -467,8 +467,15 @@ function getHiPSCoordSysFromProperties(hipsProperties) {
         case 'equatorial' : return CoordinateSys.EQ_J2000;
         case 'galactic' :   return CoordinateSys.GALACTIC;
         case 'ecliptic' :   return CoordinateSys.ECL_B1950;
-        default:            return CoordinateSys.GALACTIC;
     }
+    if (!hipsProperties.hips_frame) {
+        switch (hipsProperties.coordsys) { // fallback using old style
+            case 'C' : return CoordinateSys.EQ_J2000;
+            case 'G' : return CoordinateSys.GALACTIC;
+            case 'E' : return CoordinateSys.ECL_B1950;
+        }
+    }
+    return CoordinateSys.GALACTIC;
 }
 
 function makeHiPSProjectionUsingProperties(hipsProperties, lon=0, lat=0) {
