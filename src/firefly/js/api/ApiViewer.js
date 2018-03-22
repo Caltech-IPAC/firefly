@@ -85,8 +85,8 @@ export function setViewerConfig(viewerType, htmlFile= '') {
  * @memberof firefly
  *
  */
-export function getViewer(channel= getWsChannel(),file=defaultViewerFile) {
-    channel += VIEWER_ID;
+export function getViewer(channel,file=defaultViewerFile) {
+    channel = (channel || getWsChannel()) + VIEWER_ID;
     const dispatch= (action) => dispatchRemoteAction(channel,action);
 
 

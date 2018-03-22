@@ -9,11 +9,11 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataObjectUtil;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -204,7 +204,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     }
 
     private void addFormatInfoAtt(DataGroup dg, DataType dt) {
-        String fkey = DataSetParser.makeAttribKey(DataSetParser.FORMAT_DISP_TAG, dt.getKeyName());
+        String fkey = IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_DISP_TAG, dt.getKeyName());
         dg.addAttribute(fkey, dt.getFormatInfo().getDataFormatStr());
     }
 

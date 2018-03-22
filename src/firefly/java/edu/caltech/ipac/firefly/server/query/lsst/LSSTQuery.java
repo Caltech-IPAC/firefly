@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
@@ -117,7 +116,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
         //add column description as the attribute so that it can be displayed
         for (DataType dt : dataType) {
-            dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, dt.getKeyName()),
+            dg.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, dt.getKeyName()),
                     dt.getShortDesc());
         }
 

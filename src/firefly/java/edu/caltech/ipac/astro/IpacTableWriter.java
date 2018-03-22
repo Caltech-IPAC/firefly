@@ -3,9 +3,7 @@
  */
 package edu.caltech.ipac.astro;
 
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.action.ClassProperties;
@@ -18,8 +16,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * This class handles an action to save a catalog in IPAC table format to local file.
@@ -107,6 +104,11 @@ public class IpacTableWriter {
     private static void save(PrintWriter out, DataGroup dataGroup, boolean ignoreSysMeta) throws IOException {
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();
+
+        if (ignoreSysMeta) {
+            // this should return only visible columns
+            headers = headers.stream().filter((dt) -> IpacTableUtil.isVisible(dataGroup, dt)).collect(Collectors.toList());
+        }
 
         IpacTableUtil.writeAttributes(out, dataGroup.getKeywords(), ignoreSysMeta);
         IpacTableUtil.writeHeader(out, headers);

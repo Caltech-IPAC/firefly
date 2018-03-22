@@ -10,14 +10,12 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -80,7 +78,7 @@ public class NedSearch extends QueryByConeSearchURL {
             }
 
 
-            tableDef.setAttribute(DataSetParser.makeAttribKey(DataSetParser.WIDTH_TAG, linkColName), maxWidth + "");
+            tableDef.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.WIDTH_TAG, linkColName), maxWidth + "");
             Map<String, DataGroup.Attribute> attribs = resDg.getAttributes();
             if (attribs.size() > 0) {
                 tableDef.addAttributes(attribs.values().toArray(new DataGroup.Attribute[attribs.size()]));

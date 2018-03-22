@@ -4,9 +4,9 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -36,14 +36,14 @@ import java.util.Map;
 public class TemplateGenerator {
 
 
-    public static enum Tag {LABEL_TAG(DataSetParser.LABEL_TAG),
-                      VISI_TAG(DataSetParser.VISI_TAG),
-                      DESC_TAG(DataSetParser.DESC_TAG),
-                      ITEMS_TAG(DataSetParser.ITEMS_TAG),
-                      UNIT_TAG(DataSetParser.UNIT_TAG);
-        public static final String VISI_SHOW = DataSetParser.VISI_SHOW;
-        public static final String VISI_HIDE = DataSetParser.VISI_HIDE;
-        public static final String VISI_HIDDEN = DataSetParser.VISI_HIDDEN;
+    public static enum Tag {LABEL_TAG(IpacTableUtil.LABEL_TAG),
+                      VISI_TAG(IpacTableUtil.VISI_TAG),
+                      DESC_TAG(IpacTableUtil.DESC_TAG),
+                      ITEMS_TAG(IpacTableUtil.ITEMS_TAG),
+                      UNIT_TAG(IpacTableUtil.UNIT_TAG);
+        public static final String VISI_SHOW = IpacTableUtil.VISI_SHOW;
+        public static final String VISI_HIDE = IpacTableUtil.VISI_HIDE;
+        public static final String VISI_HIDDEN = IpacTableUtil.VISI_HIDDEN;
         String name;
         Tag(String name) { this.name = name;}
 

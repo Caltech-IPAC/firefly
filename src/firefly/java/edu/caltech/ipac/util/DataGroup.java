@@ -326,6 +326,18 @@ public class DataGroup implements Serializable,
     }
 
     /**
+     * similar to getAttribute, but it returns just the value of the attribute.
+     * @param key the attribute key
+     * @param def default if attribute does not exists
+     * @return
+     */
+    public String getMeta(String key, String def) {
+        Attribute att = getAttributes().get(key);
+        String v = att == null ? null : att.getValue();
+        return StringUtils.isEmpty(v) ? def : v;
+    }
+
+    /**
      * returns a set of unique keys
      * @return
      */

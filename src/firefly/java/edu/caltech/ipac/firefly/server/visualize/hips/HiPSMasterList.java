@@ -16,18 +16,18 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
-import edu.caltech.ipac.firefly.server.query.SearchProcessor;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
 
 import java.io.File;
 import java.util.*;
 import java.io.IOException;
+
+import static edu.caltech.ipac.util.IpacTableUtil.VISI_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.WIDTH_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 
 /**
  * @author Cindy Wang
@@ -139,12 +139,12 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             DataType colDT = dg.getDataDefintion(colName);
             if (colDT != null) {
                 if (colDT.getFormatInfo().getWidth() > sWidth) {
-                    dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.WIDTH_TAG, colName),
+                    dg.addAttribute(makeAttribKey(WIDTH_TAG, colName),
                                     Integer.toString(sWidth));
                 }
             }
             if (colName.equals("Source")) {
-                dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, colName), "hidden");
+                dg.addAttribute(makeAttribKey(VISI_TAG, colName), "hidden");
             }
         }
     }

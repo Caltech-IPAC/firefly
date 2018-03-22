@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -44,9 +43,9 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.firefly.server.db.DbCustomFunctions.createCustomFunctions;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
-import static edu.caltech.ipac.firefly.util.DataSetParser.*;
 import static edu.caltech.ipac.util.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.util.DataGroup.ROW_NUM;
+import static edu.caltech.ipac.util.IpacTableUtil.*;
 
 /**
  * @author loi
@@ -369,7 +368,7 @@ public class EmbeddedDbUtil {
                 if (dtype != null) {
                     dtype.setKeyName(cname);
                     if (!StringUtils.areEqual(label, cname)) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.LABEL_TAG, cname);
+                        String attr = makeAttribKey(LABEL_TAG, cname);
                         dg.addAttribute(attr, label);
                     }
                     if (!StringUtils.isEmpty(units)) {
@@ -385,19 +384,19 @@ public class EmbeddedDbUtil {
                         dtype.getFormatInfo().setWidth(width);
                     }
                     if (!StringUtils.areEqual(visibility, VISI_SHOW)) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, cname);
+                        String attr = makeAttribKey(VISI_TAG, cname);
                         dg.addAttribute(attr, visibility);
                     }
                     if (!StringUtils.isEmpty(desc)) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, cname);
+                        String attr = makeAttribKey(DESC_TAG, cname);
                         dg.addAttribute(attr, desc);
                     }
                     if (!sortable) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, cname);
+                        String attr = makeAttribKey(SORTABLE_TAG, cname);
                         dg.addAttribute(attr, String.valueOf(false));
                     }
                     if (!filterable) {
-                        String attr = DataSetParser.makeAttribKey(DataSetParser.FILTERABLE_TAG, cname);
+                        String attr = makeAttribKey(FILTERABLE_TAG, cname);
                         dg.addAttribute(attr, String.valueOf(false));
                     }
                 }
@@ -434,8 +433,8 @@ public class EmbeddedDbUtil {
         System.arraycopy(dg.getDataDefinitions(), 0, cols, 0, cols.length-2);
         cols[cols.length-2] = DataGroup.makeRowIdx();
         cols[cols.length-1] = DataGroup.makeRowNum();
-        dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, ROW_IDX), DataSetParser.VISI_HIDDEN);
-        dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.VISI_TAG, ROW_NUM), DataSetParser.VISI_HIDDEN);
+        dg.addAttribute(makeAttribKey(VISI_TAG, ROW_IDX), VISI_HIDDEN);
+        dg.addAttribute(makeAttribKey(VISI_TAG, ROW_NUM), VISI_HIDDEN);
         return cols;
     }
 

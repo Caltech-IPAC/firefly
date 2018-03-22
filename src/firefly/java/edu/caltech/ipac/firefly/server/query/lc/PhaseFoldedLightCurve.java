@@ -3,10 +3,10 @@ package edu.caltech.ipac.firefly.server.query.lc;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class PhaseFoldedLightCurve {
         String desc = "number of period elapsed since starting time.";
         dg.addAttribute(null, PHASE_COL);
         dg.addAttribute(null, "___ " + desc);
-        dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.DESC_TAG, PHASE_COL), desc);
+        dg.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, PHASE_COL), desc);
 
         //Find the minimum time:
         double tzero = Double.MAX_VALUE;

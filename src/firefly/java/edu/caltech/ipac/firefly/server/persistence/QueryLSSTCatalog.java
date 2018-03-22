@@ -25,8 +25,8 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.DESC_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import static edu.caltech.ipac.util.IpacTableUtil.DESC_TAG;
+import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 
 /**
  * @author tatianag
