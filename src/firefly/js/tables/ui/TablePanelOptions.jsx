@@ -2,13 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 
-import {flux} from '../../Firefly.js';
-import shallowequal from 'shallowequal';
-
+import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
 import {FilterEditor} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
@@ -19,45 +17,17 @@ import * as TblUtil from '../TableUtil.js';
 const labelStyle = {display: 'inline-block', width: 70};
 
 
-export class TablePanelOptions extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.state = this.setupInitState(props);
-    }
+export class TablePanelOptions extends SimpleComponent  {
 
-    setupInitState(props) {
-        const {tbl_ui_id} = props;
-        const uiState = TblUtil.getTableUiById(tbl_ui_id);
-        return Object.assign({}, uiState);
-    }
-
-    componentWillReceiveProps(props) {
-        if (!shallowequal(this.props, props)) {
-            this.setState(this.setupInitState(props));
-        }
-    }
-
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-    }
-
-
-    componentWillUnmount() {
-        this.removeListener && this.removeListener();
-        this.isUnmounted = true;
-    }
-
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            const {tbl_ui_id} = this.props;
-            const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
-            this.setState(uiState);
-        }
+    getNextState(np) {
+        const {tbl_ui_id} = np || this.props;
+        const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
+        return uiState;
     }
 
     render() {
         const {onChange, onOptionReset, tbl_ui_id} = this.props;
-        const {columns, pageSize, showUnits, showFilters, showToolbar=true, optSortInfo, filterInfo} = this.state;
+        const {columns, pageSize, showUnits=false, showFilters=false, showToolbar=true, optSortInfo, filterInfo} = this.state;
 
         if (isEmpty(columns)) return false;
 
@@ -119,13 +89,13 @@ TablePanelOptions.propTypes = {
 };
 
 function makeCallbacks(onChange) {
-    var onPageSize = (pageSize) => {
+    const onPageSize = (pageSize) => {
         if (pageSize.valid) {
             onChange && onChange({pageSize: pageSize.value});
         }
     };
 
-    var onPropChanged = (v, prop) => {
+    const onPropChanged = (v, prop) => {
         onChange && onChange({[prop]: v});
     };
 
