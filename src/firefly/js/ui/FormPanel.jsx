@@ -55,7 +55,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey,
             action, params, title, style, inputStyle, submitBarStyle,
-            submitText='Search', help_id, changeMasking, includeUnmounted=false} = props;
+            submitText='Search',cancelText='Cancel', help_id, changeMasking, includeUnmounted=false} = props;
 
     const childrenStyle = Object.assign({
         backgroundColor: 'white',
@@ -82,7 +82,7 @@ export const FormPanel = function (props) {
                                     onFail={onError || handleFailfure}
                                     text = {submitText} changeMasking={changeMasking}
                     />
-                    <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>Cancel</button>
+                    <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>{cancelText}</button>
 
                 </div>
                 <div>
@@ -99,6 +99,7 @@ export const FormPanel = function (props) {
 // If onSuccess is provided, onSubmit, action, param, and title properties are ignored
 FormPanel.propTypes = {
     submitText: PropTypes.string,
+    cancelText:PropTypes.string,
     title: PropTypes.string,
     style: PropTypes.object,
     inputStyle: PropTypes.object,

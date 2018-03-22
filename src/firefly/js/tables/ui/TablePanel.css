@@ -161,19 +161,25 @@
     cursor: pointer;
 }
 
+.TablePanelOptionsWrapper {
+    min-width: 365px;
+    height: 450px;
+    min-height: 200px;
+    resize: both;
+    overflow: hidden;
+    position: relative;
+}
+
 .TablePanelOptions {
     position: absolute;
     padding: 5px 7px;
-    width: 350px;
-    top: 1px;
-    bottom: 1px;
-    right: 0;
-    background-color: beige;
-    border-left: 1px solid #CCC;
-    z-index: 100;
+    top: 5px;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
     display: flex;
     flex-direction: column;
-    box-shadow: -2px 0 2px 0 rgba(0,0,0,0.50);
+    //box-shadow: -2px 0 2px 0 rgba(0,0,0,0.50);
 }
 
 .TablePanelOptions__button {
@@ -419,7 +425,8 @@
     display: block;
     overflow: hidden;
     position: absolute;
-    white-space: normal
+    white-space: normal;
+    background-color:white
 }
 
 .fixedDataTableCellLayout_lastChild {

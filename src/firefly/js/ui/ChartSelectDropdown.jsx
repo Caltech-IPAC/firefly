@@ -5,12 +5,11 @@
 import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-
 import {flux} from '../Firefly.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
 import * as ChartsCntlr from '../charts/ChartsCntlr.js';
-import {uniqueChartId, multitraceDesign, getNumericCols} from '../charts/ChartUtil.js';
+import {uniqueChartId, multitraceDesign, singleTraceUI, getNumericCols} from '../charts/ChartUtil.js';
 import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
 import {XYPlotOptions, resultsSuccess as onXYPlotOptsSelected,
                        setOptions as XYPlotSetOptions} from '../charts/ui/XYPlotOptions.jsx';
@@ -38,7 +37,6 @@ const PREF_CHART_TYPE = 'pref.chartType';
 export function getFormName(chartType) {
     return chartType+'ChartOpts';
 }
-
 /**
  *
  * @param props
@@ -225,6 +223,7 @@ export class ChartSelectDropdown extends PureComponent {
 
     render() {
         const {tblId, tblStatsData} = this.state;
+        const showMultiTrace = !singleTraceUI();
 
         let noChartReason='';
         if (tblId) {
@@ -244,6 +243,7 @@ export class ChartSelectDropdown extends PureComponent {
                     tbl_id: tblId,
                     chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
                     chartAction: CHART_ADDNEW,
+                    showMultiTrace,
                     hideDialog: ()=>dispatchHideDropDown()}}/> ) :
                 (<ChartSelect {...{tblId, tblStatsData}} {...this.props}/>);
         } else {
