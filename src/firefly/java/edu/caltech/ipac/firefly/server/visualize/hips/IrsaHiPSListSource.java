@@ -35,10 +35,9 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
     private static final String irsaHiPSSource = AppProperties.getProperty("irsa.hips.list.source", "file");
     private static final String irsaHipsTable = "/edu/caltech/ipac/firefly/resources/irsa-hips-master-table.csv";
     private static final String irsaHipsUrl = "https://irsadev.ipac.caltech.edu/data/hips/list";
-    private static final String irsaHiPSList = irsaHiPSSource.equals("file") ?
+    private static final String irsaHiPSListFrom = irsaHiPSSource.equals("file") ?
                                                     AppProperties.getProperty("irsa.hips.masterFile",irsaHipsTable):
                                                     AppProperties.getProperty("irsa.hips.masterUrl", irsaHipsUrl);
-    private static final String urlBase = AppProperties.getProperty("irsa.hips.url.base", "irsa.ipac.caltech.edu");
     private static int TIMEOUT  = new Integer( AppProperties.getProperty("HiPS.timeoutLimit" , "30")).intValue();
 
 
@@ -60,9 +59,9 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             if (!Arrays.asList(dataTypes).contains(ServerParams.IMAGE)) return null;
 
             if (irsaHiPSSource.equals("file")) {
-                return createHiPSListFromFile(irsaHiPSList, dataTypes, source);
+                return createHiPSListFromFile(irsaHiPSListFrom, dataTypes, source);
             } else {
-                return createHiPSListFromUrl(irsaHiPSList, dataTypes, source, urlBase);
+                return createHiPSListFromUrl(irsaHiPSListFrom, dataTypes, source);
             }
         }
         catch (FailedRequestException | IOException | DataAccessException e) {
@@ -75,7 +74,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
     }
 
-    public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String[] dataTypes, String source, String urlBase)
+    public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String[] dataTypes, String source)
                                                   throws IOException, DataAccessException, FailedRequestException  {
         _log.briefDebug("executing " + source + " url query: " + url);
 
@@ -94,11 +93,11 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             throw new DataAccessException("[HiPS_LIST] " + (err == null ? listFile.getResponseCodeMsg() : err));
         }
 
-        return getListDataFromFile(file, paramsMap, source, urlBase);
+        return getListDataFromFile(file, paramsMap, source);
 
     }
 
-    private static List<HiPSMasterListEntry> getListDataFromFile(File f, Map<String, String> keyMap, String source, String urlBase)
+    private static List<HiPSMasterListEntry> getListDataFromFile(File f, Map<String, String> keyMap, String source)
                                                                                                throws IOException {
         if (f == null) return null;
 
@@ -133,9 +132,6 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
                     if (oneList == null) continue;
                     for (Map.Entry<String, String> entry : keyMap.entrySet()) {
                         if (entry.getValue().equals(k)) {
-                            if (entry.getKey().equals(PARAMS.URL.getKey()) && urlBase != null) {
-                                v = checkBaseUrl(v, urlBase);
-                            }
                             oneList.set(entry.getKey(), v);
                             break;
                         }
@@ -163,26 +159,6 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
          return titleStr.substring(titleLoc+1).replaceAll("/", " ").trim();
     }
-
-    private static String checkBaseUrl(String crtUrl, String urlBase) {
-
-        if (crtUrl == null || crtUrl.contains(urlBase)) {
-            return crtUrl;
-        } else {
-            int baseSLoc = crtUrl.indexOf("//");
-            if (baseSLoc < 0)
-                return crtUrl;
-
-            int baseELoc = crtUrl.indexOf("/", baseSLoc+2);
-            if (baseELoc < 0)
-                return crtUrl;
-
-            String newUrl = crtUrl.substring(0, baseSLoc+2) + urlBase + crtUrl.substring(baseELoc);
-
-            return newUrl;
-        }
-    }
-
 
     // a csv file is created to contain HiPS from IRSA
     private List<HiPSMasterListEntry> createHiPSListFromFile(String hipsMaster,
@@ -221,14 +197,12 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             oneList.set(PARAMS.SOURCE.getKey(), source);
             oneList.set(PARAMS.TYPE.getKey(), ServerParams.IMAGE);
             for (int i = 0; i < dataCols.length; i++) {
+                if (cols[i] == null) continue;
+
                 Object obj = row.getDataElement(dataCols[i].getKeyName());
                 String val = obj != null ? obj.toString() : null;
 
-                if (dataCols[i].getKeyName().equals(keyMap.get(PARAMS.URL.getKey()))) {
-                    oneList.set(cols[i], checkBaseUrl(val, urlBase));
-                } else if (cols[i] != null) {
-                    oneList.set(cols[i], val);
-                }
+                oneList.set(cols[i], val);
                 if (dataCols[i].getKeyName().equals(keyMap.get(PARAMS.ID.getKey()))) {
                     oneList.set(PARAMS.TITLE.getKey(), getTitle(val));
                 }

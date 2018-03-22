@@ -70,6 +70,6 @@ public class CDSHiPSListSource implements HiPSMasterListSourceType {
     private List<HiPSMasterListEntry> createHiPSList(String[] dataTypes,
                                                      String source) throws IOException, DataAccessException, FailedRequestException {
         String url = HiPSCDSURL + dataProduct(dataTypes);
-        return IrsaHiPSListSource.createHiPSListFromUrl(url, dataTypes, source, null);
+        return IrsaHiPSListSource.createHiPSListFromUrl(url, dataTypes, source);
     }
 }
