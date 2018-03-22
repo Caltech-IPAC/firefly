@@ -21,6 +21,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchJobAdd} from '../../core/background/BackgroundCntlr.js';
 import {showTableDownloadDialog} from './TableSave.jsx';
 import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
+import './TablePanel.css';
 
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
@@ -47,7 +48,6 @@ export class TablePanel extends PureComponent {
         this.onOptionUpdate = this.onOptionUpdate.bind(this);
         this.onOptionReset = this.onOptionReset.bind(this);
         this.setupInitState = this.setupInitState.bind(this);
-
         this.state = this.setupInitState(props);
     }
 
@@ -120,10 +120,10 @@ export class TablePanel extends PureComponent {
     render() {
         const {tableConnector} = this;
         const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
-                showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton,
-                totalRows, showLoading, columns, showOptions, showUnits, showFilters, textView, optSortInfo,
-                tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
-                filterInfo, filterCount, sortInfo, data, bgStatus} = this.state;
+            showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton,
+            totalRows, showLoading, columns, showUnits, showFilters, textView, optSortInfo,
+            tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
+            filterInfo, filterCount, sortInfo, data, bgStatus} = this.state;
         var {leftButtons, rightButtons} =  this.state;
         const {tbl_ui_id} = this.tableConnector;
 
@@ -137,59 +137,59 @@ export class TablePanel extends PureComponent {
 
         // converts the additional left/right buttons into elements
         leftButtons =   leftButtons && leftButtons
-                        .map((f) => f(this.state))
-                        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
+            .map((f) => f(this.state))
+            .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
         rightButtons = rightButtons && rightButtons
-                        .map((f) => f(this.state))
-                        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
+            .map((f) => f(this.state))
+            .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
 
-        const params = {columns, optSortInfo, filterInfo, pageSize, showUnits, showFilters, showToolbar, tbl_ui_id};
+        const showOptionsDialog = () => showTableOptionDialog(this.onOptionUpdate, this.onOptionReset, tbl_ui_id);
 
-      return (
+        return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
-            <div className='TablePanel'>
-                <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
-                    {showToolbar &&
+                <div className='TablePanel'>
+                    <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
+                        {showToolbar &&
                         <div className='PanelToolbar TablePanel__toolbar'>
                             <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
                             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:tableConnector}} /> }
                             <div className='PanelToolbar__group'>
                                 {rightButtons}
                                 {showFilterButton && filterCount > 0 &&
-                                    <div onClick={this.clearFilter}
-                                            title={TT_CLEAR_FILTER}
-                                            className='PanelToolbar__button clearFilters'/>}
+                                <div onClick={this.clearFilter}
+                                     title={TT_CLEAR_FILTER}
+                                     className='PanelToolbar__button clearFilters'/>}
                                 {showFilterButton &&
-                                    <ToolbarButton icon={FILTER}
-                                                   tip={TT_SHOW_FILTER}
-                                                   visible={true}
-                                                   badgeCount={filterCount}
-                                                   onClick={this.toggleFilter}/>
+                                <ToolbarButton icon={FILTER}
+                                               tip={TT_SHOW_FILTER}
+                                               visible={true}
+                                               badgeCount={filterCount}
+                                               onClick={this.toggleFilter}/>
                                 }
                                 <div onClick={this.toggleTextView}
-                                        title={TT_VIEW}
-                                        className={viewIcoStyle}/>
+                                     title={TT_VIEW}
+                                     className={viewIcoStyle}/>
                                 {showSave &&
-                                    <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
-                                            title={TT_SAVE}
-                                            className='PanelToolbar__button save'/> }
+                                <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
+                                     title={TT_SAVE}
+                                     className='PanelToolbar__button save'/> }
                                 {showOptionButton &&
-                                    <div style={{marginLeft: '4px'}}
-                                            title={TT_OPTIONS}
-                                            onClick={ ( ()=>showTableOptionDialog (this.onOptionUpdate,this.onOptionReset, params))}
-                                            className='PanelToolbar__button options'/> }
+                                <div style={{marginLeft: '4px'}}
+                                     title={TT_OPTIONS}
+                                     onClick={showOptionsDialog}
+                                     className='PanelToolbar__button options'/> }
                                 { expandable && !expandedMode &&
-                                    <div className='PanelToolbar__button' onClick={this.expandTable} title={TT_EXPAND}>
-                                        <img src={OUTLINE_EXPAND}/>
-                                    </div>}
+                                <div className='PanelToolbar__button' onClick={this.expandTable} title={TT_EXPAND}>
+                                    <img src={OUTLINE_EXPAND}/>
+                                </div>}
                                 { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
                             </div>
                         </div>
-                    }
-                    <div className='TablePanel__table' style={{top: tableTopPos}}
-                        onClick={stopPropagation}
-                        onTouchStart={stopPropagation}
-                        onMouseDown={stopPropagation}
+                        }
+                        <div className='TablePanel__table' style={{top: tableTopPos}}
+                             onClick={stopPropagation}
+                             onTouchStart={stopPropagation}
+                             onMouseDown={stopPropagation}
                         >
                             <BasicTableView
                                 callbacks={tableConnector}
@@ -197,44 +197,34 @@ export class TablePanel extends PureComponent {
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
                                     tableConnector, renderers, tbl_ui_id} }
                             />
-                      {showOptionButton && !showToolbar &&
-                      <img className='TablePanel__options--small'
-                           src={OPTIONS}
-                           title={TT_OPTIONS}
-                           onClick={ ( ()=>showTableOptionDialog (this.onOptionUpdate,this.onOptionReset, params))}/>
-                      }
+                            {showOptionButton && !showToolbar &&
+                            <img className='TablePanel__options--small'
+                                 src={OPTIONS}
+                                 title={TT_OPTIONS}
+                                 onClick={showOptionsDialog}/>
+                            }
 
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         );
     }
 }
 
+function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id) {
 
-const popupPanelResizableStyle = {
-
-    width: 365,
-    minWidth: 365,
-    height: 450,
-    minHeight: 528,
-    overflow: 'hidden',
-    position: 'relative'
-};
-function showTableOptionDialog(onChange, onOptionReset, params) {
-
-    const content =
-         <div style={ popupPanelResizableStyle }>
-
+    const content = (
+         <div className='TablePanelOptionsWrapper'>
                <TablePanelOptions
                   onChange={onChange}
                   onOptionReset={onOptionReset}
-                  { ...params}
+                  tbl_ui_id={tbl_ui_id}
                />
+         </div>
+    );
 
-        </div>;
-    showOptionsPopup({content, title: 'Table Options',show: true});
+    showOptionsPopup({content, title: 'Table Options', show: true});
 
 }
 

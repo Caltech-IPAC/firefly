@@ -345,6 +345,9 @@ export class BasicOptionFields extends Component {
         // TODO: need color input field
         const colorFldPath = `data.${activeTrace}.marker.color`;
 
+        // do not show XY ratio and axes ranges for fireflyHistogram
+        const showAll = showMultiTrace || !xNoLog;
+
         return (
             <FieldGroupCollapsible  header='Layout Options'
                                     initialState= {{ value:'closed' }}
@@ -371,8 +374,8 @@ export class BasicOptionFields extends Component {
 
 
                     {/* checkboxgroup is not working right when there's only 1 .. will add in later
-                 <CheckboxGroupInputField fieldKey={'layout.showlegend'}/>
-                 */}
+                     <CheckboxGroupInputField fieldKey={'layout.showlegend'}/>
+                     */}
 
                     {!noXY && <div>
 
@@ -383,49 +386,52 @@ export class BasicOptionFields extends Component {
                         <ValidationField fieldKey={'layout.yaxis.title'}/>
                         <CheckboxGroupInputField fieldKey='__yoptions'
                                                  options={yNoLog || isYNotNumeric ? Y_AXIS_OPTIONS_NOLOG : Y_AXIS_OPTIONS}/>
-                        <br/>
+                        {showAll &&<div>
+                            <br/>
 
-                        <div style={helpStyle}>
-                            Set plot boundaries if different from data range.
-                        </div>
-                        {isXNotNumeric ? false :
-                            <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
-                                <div style={{paddingRight: 5}}>
-                                    <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
-                                </div>
-                                <div style={{paddingRight: 5}}>
-                                    <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
-                                </div>
-                            </div>}
-                        {isYNotNumeric ? false :
-                            <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
-                                <div style={{paddingRight: 5}}>
-                                    <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
-                                </div>
-                                <div style={{paddingRight: 5}}>
-                                    <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
-                                </div>
+                            <div style={helpStyle}>
+                                Set plot boundaries if different from data range.
                             </div>
-                        }
-
-                    </div>}
-                    <div style={helpStyle}>
-                        Enter display aspect ratio below.<br/>
-                        Leave it blank to use all available space.<br/>
-                    </div>
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 5px 5px 0'}}>
-                        <div style={{paddingRight: 5}}>
-                            <ValidationField style={{width:15}} fieldKey={xyratioFldName}/>
-                        </div>
-                        {this.state.displayStretchOptions && <div style={{paddingRight: 5}}>
-                            <RadioGroupInputField fieldKey={'fireflyLayout.stretch'}
-                                                  alignment='horizontal'
-                                                  options={[
-                                                      {label: 'height', value: 'fit'},
-                                                      {label: 'width', value: 'fill'}
-                                                  ]}/>
+                            {isXNotNumeric ? false :
+                                <div style={{display: 'flex', flexDirection: 'row', padding: '5px 15px 0'}}>
+                                    <div style={{paddingRight: 5}}>
+                                        <ValidationField fieldKey={'fireflyLayout.xaxis.min'}/>
+                                    </div>
+                                    <div style={{paddingRight: 5}}>
+                                        <ValidationField fieldKey={'fireflyLayout.xaxis.max'}/>
+                                    </div>
+                                </div>}
+                            {isYNotNumeric ? false :
+                                <div style={{display: 'flex', flexDirection: 'row', padding: '0px 15px 15px'}}>
+                                    <div style={{paddingRight: 5}}>
+                                        <ValidationField fieldKey={'fireflyLayout.yaxis.min'}/>
+                                    </div>
+                                    <div style={{paddingRight: 5}}>
+                                        <ValidationField fieldKey={'fireflyLayout.yaxis.max'}/>
+                                    </div>
+                                </div>
+                            }
                         </div>}
-                    </div>
+                    </div>}
+                    {showAll && <div>
+                        <div style={helpStyle}>
+                            Enter display aspect ratio below.<br/>
+                            Leave it blank to use all available space.<br/>
+                        </div>
+                        <div style={{display: 'flex', flexDirection: 'row', padding: '5px 5px 5px 0'}}>
+                            <div style={{paddingRight: 5}}>
+                                <ValidationField style={{width:15}} fieldKey={xyratioFldName}/>
+                            </div>
+                            {this.state.displayStretchOptions && <div style={{paddingRight: 5}}>
+                                <RadioGroupInputField fieldKey={'fireflyLayout.stretch'}
+                                                      alignment='horizontal'
+                                                      options={[
+                                                          {label: 'height', value: 'fit'},
+                                                          {label: 'width', value: 'fill'}
+                                                      ]}/>
+                            </div>}
+                        </div>
+                    </div>}
 
                     <div style={{overflow: 'hidden', height: 0, width: 0}}>
                         <ValidationField fieldKey='__xreset'/>
@@ -484,7 +490,7 @@ export function submitChanges({chartId, fields, tbl_id}) {
 
                     if (opts.includes('flip')) {
                         if (range) {  
-                            if (range[0]<range[1]) changes[`layout.${a}axis.range`] = reverse(range);
+                            changes[`layout.${a}axis.range`] = (range[0]<range[1]) ? reverse(range) : range;
                             changes[`layout.${a}axis.autorange`] = false;
                         } else {
                             changes[`layout.${a}axis.autorange`] = 'reversed';
@@ -492,7 +498,7 @@ export function submitChanges({chartId, fields, tbl_id}) {
                         }
                     } else {
                         if (range) {
-                            if (range[1]<range[0]) changes[`layout.${a}axis.range`] = reverse(range);
+                            changes[`layout.${a}axis.range`] = (range[1]<range[0]) ? reverse(range) : range;
                             changes[`layout.${a}axis.autorange`] = false;
                         } else {
                             changes[`layout.${a}axis.autorange`] = true;
@@ -567,25 +573,27 @@ export function submitChanges({chartId, fields, tbl_id}) {
 
 function adjustAxesRange(layout, changes) {
     ['x', 'y'].forEach((a) => {
-        var minUser = parseFloat(get(changes, `fireflyLayout.${a}axis.min`));
-        var maxUser = parseFloat(get(changes, `fireflyLayout.${a}axis.max`));
-        if (!Number.isNaN(minUser) || !Number.isNaN(maxUser)) {
-            if (Number.isNaN(minUser) || Number.isNaN(maxUser)) {
-                // range values of a log axis are logs - convert them back
-                const range = changes[`layout.${a}axis.range`] &&
-                    (get(layout, `${a}axis.range`, []).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e));
-                if (Number.isNaN(minUser)) {
-                    minUser = Math.min(range[0], range[1]);
-                } else if (Number.isNaN(maxUser)) {
-                    maxUser = Math.max(range[0], range[1]);
-                }
-            }
-            const range = changes[`layout.${a}axis.range`] || [];
-            const autorange = changes[`layout.${a}axis.autorange`];
-            const reversed = (autorange === 'reversed') || (!autorange && range[1] < range[0]);
+        let minUser = parseFloat(get(changes, `fireflyLayout.${a}axis.min`));
+        let maxUser = parseFloat(get(changes, `fireflyLayout.${a}axis.max`));
 
-            changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', reversed);
-            changes[`layout.${a}axis.autorange`] = false;
+        if (!Number.isNaN(minUser) || !Number.isNaN(maxUser) || changes[`layout.${a}axis.type`]) {
+            // range values of a log axis are logs - convert them back
+            const range = changes[`layout.${a}axis.range`] &&
+                (get(layout, `${a}axis.range`, []).map(get(layout, `${a}axis.type`) === 'log' ? (e)=>Math.pow(10, e) : (e)=>e));
+            if (Number.isNaN(minUser) && range) {
+                minUser = Math.min(range[0], range[1]);
+            }
+            if (Number.isNaN(maxUser) && range) {
+                maxUser = Math.max(range[0], range[1]);
+            }
+
+            if (!Number.isNaN(minUser) || !Number.isNaN(maxUser)) {
+                const autorange = changes[`layout.${a}axis.autorange`];
+                const reversed = (autorange === 'reversed') || (!autorange && range[1] < range[0]);
+
+                changes[`layout.${a}axis.range`] = getRange(minUser, maxUser, changes[`layout.${a}axis.type`] === 'log', reversed);
+                changes[`layout.${a}axis.autorange`] = false;
+            }
         }
     });
 }

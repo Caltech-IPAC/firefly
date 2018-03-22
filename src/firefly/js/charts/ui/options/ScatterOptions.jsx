@@ -8,6 +8,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
+import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {BasicOptionFields, basicFieldReducer, helpStyle, submitChanges} from './BasicOptions.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
@@ -34,19 +35,24 @@ export class ScatterOptions extends SimpleComponent {
         const groupKey = groupKeyProp || `${chartId}-scatter-${activeTrace}`;
         const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
 
+        const modeKey = `data.${activeTrace}.mode`;
+        const modeOptions =[{label: 'points', value:'markers'},
+            {label: 'connected points', value:'lines+markers'},
+            {label: 'lines', value:'lines'}];
+
         return (
             <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                <ListBoxInputField fieldKey={`data.${activeTrace}.mode`}
-                                   options={[{label: 'points', value:'markers'},
-                                                 {label: 'connected points', value:'lines+markers'},
-                                                 {label: 'lines', value:'lines'}]}/>
-                <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
-                                   options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
-                                                 {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
+
+                {!showMultiTrace && <RadioGroupInputField alignment='horizontal' fieldKey={modeKey} options={modeOptions}/>}
+                {showMultiTrace && <ListBoxInputField fieldKey={modeKey} options={modeOptions}/>}
+                {showMultiTrace && <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
+                                                      options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
+                                                          {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>}
                 {/* TODO: scattergl does not support 'open' symbols as of v1..28.2.  we'll add them back at a later time when they do.
                  options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
                  */}
+
                 {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey,showMultiTrace}}/>}
                 <BasicOptionFields {...{activeTrace, groupKey,showMultiTrace}}/>
             </FieldGroup>
@@ -181,7 +187,7 @@ export function fieldReducer({chartId, activeTrace}) {
     };
 }
 
-export function TableSourcesOptions({tablesource={}, activeTrace, groupKey,showMultiTrace}) {
+export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, showMultiTrace}) {
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
@@ -211,23 +217,24 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey,showM
             <br/>
             <ColumnOrExpression {...yProps}/>
             <Errors axis='y' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
-            {showMultiTrace &&  <br/>  &&
-               <ColumnOrExpression {...sizeMapProps}/>
-            && < ColumnOrExpression {...colorMapProps}/>
-
-            && <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
-                                  options={[{value: 'Default'}, {value: 'Bluered'}, {value: 'Blues'}, {value: 'Earth'}, {value: 'Electric'}, {value: 'Greens'},
-                                      {value: 'Greys'}, {value: 'Hot'}, {value: 'Jet'}, {value: 'Picnic'}, {value: 'Portland'}, {value: 'Rainbow'},
-                                      {value: 'RdBu'}, {value: 'Reds'}, {value: 'Viridis'}, {value: 'YlGnBu'}, {value: 'YlOrRd'}]}/>
-            }
+            {showMultiTrace &&  <div style={{paddingTop: 10}}>
+                <ColumnOrExpression {...sizeMapProps}/>
+                <ColumnOrExpression {...colorMapProps}/>
+                <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
+                                   options={[{value: 'Default'}, {value: 'Bluered'}, {value: 'Blues'}, {value: 'Earth'}, {value: 'Electric'}, {value: 'Greens'},
+                                       {value: 'Greys'}, {value: 'Hot'}, {value: 'Jet'}, {value: 'Picnic'}, {value: 'Portland'}, {value: 'Rainbow'},
+                                       {value: 'RdBu'}, {value: 'Reds'}, {value: 'Viridis'}, {value: 'YlGnBu'}, {value: 'YlOrRd'}]}/>
             </div>
+            }
+        </div>
     );
 }
 
 TableSourcesOptions.propTypes = {
     tablesource: PropTypes.object,
     activeTrace: PropTypes.number,
-    groupKey: PropTypes.string
+    groupKey: PropTypes.string,
+    showMultiTrace: PropTypes.bool
 };
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {

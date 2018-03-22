@@ -57,7 +57,7 @@ export function showOptionsPopup({content, title='Options', modal = false, show=
   if (show) {
       const dialogContent= (
           <PopupPanel title={title} modal={modal}>
-              <div style={{overflow: 'auto', resize:'vertical'}}>
+              <div style={{position: 'relative', overflow: 'auto', resize:'vertical'}}>
                   {content}
               </div>
           </PopupPanel>

@@ -132,8 +132,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
             <div style={{whiteSpace: 'nowrap'}}>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.colorscale`}
                                    inline={true}
-                                   options={[{label:'Default', value:undefined}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
-                                         {value:'Greys'}, {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
+                                   options={[{value:'Greys'}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
+                                         {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
                                          {value:'RdBu'}, {value:'Reds'}, {value:'Viridis'}, {value:'YlGnBu'}, {value:'YlOrRd'}]}/>
                 <CheckboxGroupInputField
                     fieldKey={`data.${activeTrace}.reversescale`}

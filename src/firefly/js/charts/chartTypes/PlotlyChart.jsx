@@ -12,6 +12,7 @@ import {PlotlyChartArea} from '../ui/PlotlyChartArea.jsx';
 import {getChartData} from '../ChartsCntlr.js';
 
 import {FilterEditorWrapper} from './TblView.jsx';
+import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 
 
 export const PLOTLY_CHART = {
@@ -77,3 +78,17 @@ function getChartProperties(chartId) {
     return {};
 }
 
+/**
+ * Creates and shows the modal dialog with filter options.
+ * @param {string} chartId
+ */
+export function showFilterDialog(chartId) {
+    const {data, fireflyData, activeTrace} = getChartData(chartId);
+    const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
+    const tableModel = getTblById(tbl_id);
+    const content= (
+        <FilterEditorWrapper tableModel={tableModel}/>
+    );
+
+    showOptionsPopup({content, title: 'Filters', modal: true, show: true});
+}

@@ -10,7 +10,9 @@ import {getColValidator} from './ColumnOrExpression.jsx';
 import {getColValStats} from '../TableStatsCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showChartsDialog} from './ChartSelectPanel.jsx';
-import PropTypes from 'prop-types';
+import {showFilterDialog} from '../chartTypes/PlotlyChart.jsx';
+
+
 
 function getToolbarStates(chartId) {
     const {selection, hasSelected, activeTrace=0, tablesources, layout, data=[]} = getChartData(chartId);
@@ -60,7 +62,7 @@ export class ScatterToolbar extends SimpleComponent {
 
 
     render() {
-        const {chartId, expandable, toggleOptions} = this.props;
+        const {chartId, expandable} = this.props;
         const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
         const hasSelectionMode = Boolean(tbl_id);
         const help_id=get(getChartData(chartId), 'help_id');
@@ -74,7 +76,7 @@ export class ScatterToolbar extends SimpleComponent {
                     <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
                     <SaveBtn {...{chartId}} />
                     <RestoreBtn {...{chartId}} />
-                    {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
+                    {tbl_id && <FiltersBtn {...{chartId}} />}
                     <OptionsBtn {...{chartId}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
@@ -135,7 +137,7 @@ export class BasicToolbar extends SimpleComponent {
     }
 
     render() {
-        const {chartId, expandable, toggleOptions} = this.props;
+        const {chartId, expandable} = this.props;
         //const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = this.state;
         const {activeTrace, hasFilter, hasSelection, tbl_id, dragmode} = this.state;
 
@@ -154,12 +156,12 @@ export class BasicToolbar extends SimpleComponent {
                 {showSelectionPart && <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
                     {hasFilter && <ClearFilter {...{tbl_id}} />}
                     {hasSelection && <FilterSelection {...{chartId}} />}
-                    </div>}
+                </div>}
                 <div className='ChartToolbar__buttons'>
                     {showDragPart && <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />}
                     <SaveBtn {...{chartId}} />
                     <RestoreBtn {...{chartId}} />
-                    {tbl_id && <FiltersBtn {...{chartId, toggleOptions}} />}
+                    {tbl_id && <FiltersBtn {...{chartId}} />}
                     <OptionsBtn {...{chartId}} />
                     {expandable && <ExpandBtn {...{chartId}} />}
                 </div>
@@ -175,7 +177,9 @@ function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) 
     let showSelectSelection = hasSelection;
     if (hasSelection) {
         const {data, activeTrace} = getChartData(chartId);
-        showSelectSelection = get(data, `${activeTrace}.hoverinfo`) !== 'skip';
+        showSelectSelection = get(data, `${activeTrace}.hoverinfo`) !== 'skip'
+            // for singleTraceUI only - handle heatmap
+            && !get(getChartData(chartId), `data.${activeTrace}.type`, '').includes('heatmap');
     }
     return (
         <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
@@ -289,9 +293,9 @@ function SaveBtn({style={}, chartId}) {
     );
 }
 
-function FiltersBtn({style={}, chartId, toggleOptions}) {
+function FiltersBtn({style={}, chartId}) {
     return (
-        <div style={style} onClick={() => toggleOptions('filters')}
+        <div style={style} onClick={() => showFilterDialog(chartId)}
              title='Show/edit filters'
              className='ChartToolbar__tblfilters'/>
     );

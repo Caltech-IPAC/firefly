@@ -8,9 +8,7 @@
  * Created by tatianag on 3/17/16.
  */
 
-import React from 'react';
-
-import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, pick, cloneDeep, merge, isNil, has} from 'lodash';
+import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -322,7 +320,7 @@ export function getToolbarUI(chartId, activeTrace=0, showMultiTrace) {
 }
 
 export function clearChartConn({chartId}) {
-    var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
+    const oldTablesources = get(getChartData(chartId), 'tablesources',[]);
     if (Array.isArray(oldTablesources)) {
         oldTablesources.forEach( (traceTS) => {
             if (traceTS._cancel) {
@@ -424,7 +422,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
  * @param {object[]} p.data
  */
 export function handleTableSourceConnections({chartId, data, fireflyData}) {
-    var tablesources = makeTableSources(chartId, data, fireflyData);
+    const tablesources = makeTableSources(chartId, data, fireflyData);
     const {tablesources:oldTablesources=[], activeTrace, curveNumberMap=[]} = getChartData(chartId);
 
     const hasTablesources = Array.isArray(tablesources) && tablesources.find((ts) => !isEmpty(ts));
@@ -605,7 +603,6 @@ export function applyDefaults(chartData={}, resetColor = true) {
 
     const defaultLayout = {
         hovermode: 'closest',
-        dragmode: 'select',
         legend: {
             font: {size: FSIZE},
             orientation: 'v',
@@ -656,7 +653,15 @@ export function applyDefaults(chartData={}, resetColor = true) {
         }
 
         type && Object.entries(setDefaultColor(d, type)).forEach(([k, v]) => set(d, k, v));
+
+        // default dragmode is select if box selection is supported
+        type && !chartData.layout.dragmode && (chartData.layout.dragmode = isBoxSelectionSupported(type) ? 'select' : 'zoom');
     });
+}
+
+export function isBoxSelectionSupported(type) {
+    if (!type || !isString(type)) return false;
+    return ['heatmap', 'histogram2dcontour', 'histogram2d', 'scatter'].find((e) => type.toLowerCase().includes(e));
 }
 
 /**
