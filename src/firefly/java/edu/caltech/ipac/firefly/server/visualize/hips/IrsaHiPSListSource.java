@@ -62,7 +62,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             if (irsaHiPSSource.equals("file")) {
                 return createHiPSListFromFile(irsaHiPSList, dataTypes, source);
             } else {
-                return createHiPSListFromUrl(irsaHiPSList, dataTypes, source);
+                return createHiPSListFromUrl(irsaHiPSList, dataTypes, source, urlBase);
             }
         }
         catch (FailedRequestException | IOException | DataAccessException e) {
@@ -75,29 +75,30 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
     }
 
-    List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String[] dataTypes, String source)
+    public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String[] dataTypes, String source, String urlBase)
                                                   throws IOException, DataAccessException, FailedRequestException  {
-        _log.briefDebug("executing Irsa url query: " + url);
+        _log.briefDebug("executing " + source + " url query: " + url);
 
         File file = HiPSMasterList.createFile(dataTypes, ".txt", source);
         Map<String, String> requestHeader=new HashMap<>();
+
         requestHeader.put("Accept", "application/text");
         long cTime = System.currentTimeMillis();
         FileInfo listFile = URLDownload.getDataToFileUsingPost(new URL(url), null, null, requestHeader, file, null,
-                TIMEOUT);
+                                                               TIMEOUT);
 
-        _log.briefDebug("get IRSA HiPS took " + (System.currentTimeMillis() - cTime) + "ms");
+        _log.briefDebug("get " + source + " HiPS took " + (System.currentTimeMillis() - cTime) + "ms");
 
         if (listFile.getResponseCode() >= 400) {
             String err = LSSTQuery.getErrorMessageFromFile(file);
-            throw new DataAccessException("[HiPS_CDS] " + (err == null ? listFile.getResponseCodeMsg() : err));
+            throw new DataAccessException("[HiPS_LIST] " + (err == null ? listFile.getResponseCodeMsg() : err));
         }
 
-        return getListDataFrom(file, paramsMap, source);
+        return getListDataFromFile(file, paramsMap, source, urlBase);
 
     }
 
-    private List<HiPSMasterListEntry> getListDataFrom(File f, Map<String, String> keyMap, String source)
+    private static List<HiPSMasterListEntry> getListDataFromFile(File f, Map<String, String> keyMap, String source, String urlBase)
                                                                                                throws IOException {
         if (f == null) return null;
 
@@ -106,7 +107,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             BufferedReader br = new BufferedReader(new FileReader(f));
             String strLine;
             HiPSMasterListEntry oneList = null;
-            List<HiPSMasterListEntry> lists = new ArrayList();
+            List<HiPSMasterListEntry> lists = new ArrayList<>();
             String sProp = HiPSMasterListEntry.getParamString(keyMap, PARAMS.ID);  // first property for each record
 
             //Read File Line By Line
@@ -126,14 +127,14 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
                     lists.add(oneList);
                     oneList.set(PARAMS.ID.getKey(), v);
                     oneList.set(PARAMS.SOURCE.getKey(), source);
-                    oneList.set(PARAMS.TYPE.getKey(), ServerParams.IMAGE);
-                    oneList.set(PARAMS.TITLE.getKey(), getTitle(v));
+                    oneList.set(PARAMS.TYPE.getKey(), ServerParams.IMAGE); // set default type
+                    oneList.set(PARAMS.TITLE.getKey(), getTitle(v));       // set default title
                 } else {
                     if (oneList == null) continue;
                     for (Map.Entry<String, String> entry : keyMap.entrySet()) {
                         if (entry.getValue().equals(k)) {
-                            if (entry.getKey().equals(PARAMS.URL.getKey())) {
-                                v = checkBaseUrl(v);
+                            if (entry.getKey().equals(PARAMS.URL.getKey()) && urlBase != null) {
+                                v = checkBaseUrl(v, urlBase);
                             }
                             oneList.set(entry.getKey(), v);
                             break;
@@ -150,7 +151,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
         }
     }
 
-    private String getTitle(String titleStr) {
+    private static String getTitle(String titleStr) {
          int insLoc = titleStr.indexOf("//");
          if (insLoc < 0) return titleStr;
 
@@ -160,12 +161,10 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
          int titleLoc = titleStr.indexOf('/', divLoc+1);
          if (titleLoc < 0) return titleStr;
 
-         String newTitle = titleStr.substring(titleLoc+1).replaceAll("/", " ").trim();
-
-         return newTitle;
+         return titleStr.substring(titleLoc+1).replaceAll("/", " ").trim();
     }
 
-    private String checkBaseUrl(String crtUrl) {
+    private static String checkBaseUrl(String crtUrl, String urlBase) {
 
         if (crtUrl == null || crtUrl.contains(urlBase)) {
             return crtUrl;
@@ -226,7 +225,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
                 String val = obj != null ? obj.toString() : null;
 
                 if (dataCols[i].getKeyName().equals(keyMap.get(PARAMS.URL.getKey()))) {
-                    oneList.set(cols[i], checkBaseUrl(val));
+                    oneList.set(cols[i], checkBaseUrl(val, urlBase));
                 } else if (cols[i] != null) {
                     oneList.set(cols[i], val);
                 }

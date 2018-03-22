@@ -25,7 +25,7 @@ import {ensureWPR, determineViewerId, getHipsImageConversion,
         initBuildInDrawLayers, addDrawLayers} from './PlotImageTask.js';
 import {dlRoot, dispatchAttachLayerToPlot,
         dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
-        getDlAry} from '../DrawLayerCntlr.js';
+        getDlAry, dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
 import {isHiPS} from '../WebPlot';
@@ -175,7 +175,7 @@ export function makePlotHiPSAction(rawAction) {
             })
             .then( addAllSky)
             .then( (plot) => {
-                addHiPSGridLayer();
+                createHiPSGridLayer();
                 dispatchAddActionWatcher({
                     actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
                     callback:watchForHiPSViewDim,
@@ -191,7 +191,7 @@ export function makePlotHiPSAction(rawAction) {
     };
 }
 
-function addHiPSGridLayer() {
+function createHiPSGridLayer() {
     const dl= getDrawLayerByType(getDlAry(), HiPSGrid.TYPE_ID);
     if (!dl) {
         dispatchCreateDrawLayer(HiPSGrid.TYPE_ID);
@@ -295,6 +295,7 @@ export function convertToImage(pv, allSky= false) {
     const {plotId, plotGroupId,viewDim}= pv;
     const {allSkyRequest, imageRequestRoot}= pv.plotViewCtx.hipsImageConversion;
     dispatchDetachLayerFromPlot(ImageOutline.TYPE_ID, plotId);
+    dispatchDetachLayerFromPlot(HiPSGrid.TYPE_ID, plotId);
     const doingAllSky= allSky && allSkyRequest;
     const wpRequest= (doingAllSky) ? allSkyRequest.makeCopy() : imageRequestRoot.makeCopy();
     const hipsFov= getHiPSFoV(pv);
