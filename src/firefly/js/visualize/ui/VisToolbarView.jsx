@@ -31,7 +31,6 @@ import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
 import { fitsHeaderView} from './FitsHeaderView.jsx';
 import { getDlAry } from '../DrawLayerCntlr.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
-import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {showRegionFileUploadPanel} from '../region/RegionFileUploadView.jsx';
 import {MarkerDropDownView} from './MarkerDropDownView.jsx';
 import {showImageSelPanel} from './ImageSearchPanelV2.jsx';
@@ -50,8 +49,6 @@ import DIST_ON from 'html/images/icons-2014/Measurement-ON.png';
 import DIST_OFF from 'html/images/icons-2014/Measurement.png';
 import GRID_OFF from 'html/images/icons-2014/GreenGrid.png';
 import GRID_ON from 'html/images/icons-2014/GreenGrid-ON.png';
-import HIPS_GRID_OFF from 'html/images/icons-2014/HiPSGrid.png';
-import HIPS_GRID_ON from 'html/images/icons-2014/HiPSGrid-ON.png';
 import COMPASS_OFF from 'html/images/icons-2014/28x28_Compass.png';
 import COMPASS_ON from 'html/images/icons-2014/28x28_CompassON.png';
 import ROTATE_NORTH_OFF from 'html/images/icons-2014/RotateToNorth.png';
@@ -283,18 +280,6 @@ export class VisToolbarView extends PureComponent {
                                         iconOff={GRID_OFF}
                                         visible={mi.grid}
                 />
-
-                <SimpleLayerOnOffButton plotView={pv}
-                                        typeId={HiPSGrid.TYPE_ID}
-                                        tip='Add HiPS grid layer to the HiPS display'
-                                        iconOn={HIPS_GRID_ON}
-                                        iconOff={HIPS_GRID_OFF}
-                                        allPlots={true}
-                                        plotTypeMustMatch={true}
-                                        visible={mi.hipsGrid && hips}
-                />
-
-
 
                 <ToolbarButton icon={DS9_REGION}
                                tip='Load a DS9 Region File'

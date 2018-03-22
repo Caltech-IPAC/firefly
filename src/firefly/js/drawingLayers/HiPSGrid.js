@@ -7,7 +7,7 @@ import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot, isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {getBestHiPSlevel, getVisibleHiPSCells,
-    getPointMaxSide, getMaxDisplayableHiPSLevel} from '../visualize/HiPSUtil.js';
+       getPointMaxSide, getMaxDisplayableHiPSLevel} from '../visualize/HiPSUtil.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -43,12 +43,10 @@ function creator(initPayload, presetDefaults) {
         hasPerPlotData:true,
         isPointData:false,
         canUserChangeColor: ColorChangeType.DYNAMIC,
-        gridType: 'auto',
+        gridType: 'auto'
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
 }
-
-
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
@@ -56,16 +54,23 @@ function getLayerChanges(drawLayer, action) {
         case ImagePlotCntlr.ANY_REPLOT:
             return {drawData:computeDrawData(drawLayer,action, drawLayer.gridType,drawLayer.gridLockLevel)};
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            const {plotId}= action.payload;
+            const {plotId} = action.payload;
             let {plotIdAry}= action.payload;
+
             if (!plotIdAry && !plotId) return null;
-            if (!plotIdAry) plotIdAry= [plotId];
+            plotIdAry = plotIdAry ? plotIdAry : [plotId];
+
             const title= Object.assign({},drawLayer.title);
-            plotIdAry.forEach( (id) => title[id]= getTitle(id));
+            plotIdAry.forEach( (id) => title[id]= getTitle());
+
             return {title,
                 drawData:computeDrawData(drawLayer,action,drawLayer.gridType,drawLayer.gridLockLevel) };
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             return dealWithMods(drawLayer,action);
+        case DrawLayerCntlr.CHANGE_VISIBILITY:
+            if (action.payload.visible) {
+                return {drawData:computeDrawData(drawLayer,action, drawLayer.gridType,drawLayer.gridLockLevel, true)};
+            }
     }
     return null;
 }
@@ -86,14 +91,17 @@ function dealWithMods(drawLayer,action) {
     return null;
 }
 
-function computeDrawData(drawLayer,action, gridType, gridLockLevel) {
+function computeDrawData(drawLayer,action, gridType, gridLockLevel, isVisible = false) {
     const {payload}= action;
     const plotIdAry= payload.plotId ? getAllPlotViewId(visRoot(), payload.plotId, false, true) : payload.plotIdAry;
     if (plotIdAry) {
         const drawData= {data: clone(drawLayer.drawData.data)};
+
         plotIdAry.forEach( (plotId) => {
-            if (drawLayer.visiblePlotIdAry.includes(plotId)) {
-                drawData.data[plotId]= computeDrawDataForId(drawLayer,plotId, gridType, gridLockLevel);
+            if (plotId && (isDrawLayerVisible(drawLayer, plotId) || isVisible)) {
+                drawData.data[plotId] = computeDrawDataForId(plotId, gridType, gridLockLevel);
+            } else {
+                drawData.data[plotId] = null;
             }
         });
         return drawData;
@@ -101,14 +109,9 @@ function computeDrawData(drawLayer,action, gridType, gridLockLevel) {
     else {
         return drawLayer.drawData;
     }
-
-
-
 }
 
-function computeDrawDataForId(drawLayer, plotId, gridType, gridLockLevel) {
-    if (!plotId) return null;
-    if (!isDrawLayerVisible(drawLayer, plotId)) return null;
+function computeDrawDataForId(plotId, gridType, gridLockLevel) {
     const plot= primePlot(visRoot(),plotId);
     if (!plot) return [];
 
@@ -143,9 +146,8 @@ function computeDrawDataForId(drawLayer, plotId, gridType, gridLockLevel) {
             const s1= cc.getImageCoords(c.wpCorners[0]);
             const s2= cc.getImageCoords(c.wpCorners[2]);
             if (!s1 || !s2) return null;
-            const textObj= ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6),
+            return ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6),
                  makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2), `${norder}/${c.ipix}`);
-            return textObj;
         })
         .filter( (v) => v);
     return [FootprintObj.make(fpAry), ...idAry];

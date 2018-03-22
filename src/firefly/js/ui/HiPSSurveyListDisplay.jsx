@@ -15,7 +15,7 @@ import {INFO_POPUP} from './PopupUtil.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {onHiPSSurveys, isLoadingHiPSSurverys, HiPSPopular, HiPSId, HiPSData, HiPSSurveyTableColumn,
         getHiPSSurveys,  getHiPSLoadingMessage, getPopularHiPSTable,
-        isOnePopularSurvey, makeHiPSSurveysTableName, indexInHiPSSurveys,
+        makeHiPSSurveysTableName, indexInHiPSSurveys,
         updateHiPSTblHighlightOnUrl} from '../visualize/HiPSListUtil.js';
 import {FieldGroup} from './FieldGroup.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -164,8 +164,8 @@ function getHiPSPopularSetting(hipsUrl) {
     let pSetting = getFieldVal(gKeyHiPSPanel, fKeyHiPSPopular);
 
     if (isUndefined(pSetting)) {
-        pSetting = (!hipsUrl || isOnePopularSurvey(hipsUrl)) ? HiPSPopular : '';
-        // pSetting = HiPSPopular;
+        //pSetting = (!hipsUrl || isOnePopularSurvey(hipsUrl)) ? HiPSPopular : '';
+        pSetting = HiPSPopular; // will be updated based on app options hips popular setting
     }
 
     return pSetting;

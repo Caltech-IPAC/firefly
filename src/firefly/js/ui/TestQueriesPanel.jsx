@@ -149,49 +149,6 @@ function hideSearchPanel() {
 }
 
 
-function renderHiPS(fields) {
-
-    //todo
-    //todo
-    //todo
-    //todo
-    //todo
-    const options= hipsSURVEYS.map( (s,idx) => ({label:s.label, value:idx+''}));
-    options.push({label:'Other', value:'other'});
-
-    return (
-        <div>
-            <div>
-                HiPS Plot
-            </div>
-
-            <RadioGroupInputField
-                fieldKey='hipsSurvey'
-                inline={true}
-                alignment='vertical'
-                initialState={{
-                    tooltip: 'Choose survey',
-                    value: options[0].value
-                }}
-                options={options}
-            />
-            <ValidationField fieldKey='otherUrl'
-                             initialState={{
-                                 fieldKey: 'otherUrl',
-                                 value: '',
-                                 tooltip: 'a url',
-                                 label : 'url:',
-                                 labelWidth : 100
-                             }}/>
-
-
-        </div>
-    );
-}
-
-
-
-
 function renderPeriodogram(fields) {
 
     /**
