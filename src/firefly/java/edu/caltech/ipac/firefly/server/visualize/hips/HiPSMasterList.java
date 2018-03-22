@@ -65,6 +65,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         List<String> orderedSources = new ArrayList<>();
         List<HiPSMasterListEntry> allSourceData = new ArrayList<>();
         DbAdapter dbAdapter = DbAdapter.getAdapter(request);
+        Map<String, List<HiPSMasterListEntry>> allLists = new HashMap<>();
 
         if (workingSources == null || workingSources.length == 0 ||
                 (workingSources.length == 1 && workingSources[0].equalsIgnoreCase(ServerParams.ALL))) {
@@ -101,12 +102,37 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         }
 
         try {
+
+            List<String> nonCDSIds = new ArrayList<>();
+
             for (String source : orderedSources) {
                 HiPSMasterListSourceType hipsls = sources.get(source);
 
                 if (hipsls != null) {
                     List<HiPSMasterListEntry> hipsL = hipsls.getHiPSListData(workingTypes, source);
-                    if (hipsL != null) allSourceData.addAll(hipsL);
+                    if (hipsL != null) {
+                        allLists.put(source, hipsL);
+                        if (!source.equals(ServerParams.CDS)) { // collecting all id
+                            for (HiPSMasterListEntry oneHiPS : hipsL) {
+                                String id = oneHiPS.getMapInfo().get(PARAMS.ID.getKey());
+                                if (id != null) {
+                                    nonCDSIds.add(id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            List<HiPSMasterListEntry> cdsList = allLists.get(ServerParams.CDS);
+            if (cdsList != null && nonCDSIds.size() > 0) {   // remove repeat items from cds source
+                cdsList = cleanHiPSList(cdsList, nonCDSIds);
+                allLists.put(ServerParams.CDS, cdsList);
+            }
+            for (String source : orderedSources) {
+                List<HiPSMasterListEntry> hipsList = allLists.get(source);
+                if (hipsList != null) {
+                    allSourceData.addAll(hipsList);
                 }
             }
 
@@ -124,6 +150,17 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         } catch (Exception e) {
             throw new DataAccessException("[HiPS_MASTER]: Unable to get HiPS");
         }
+    }
+
+    private List<HiPSMasterListEntry> cleanHiPSList(List<HiPSMasterListEntry> listToClean, List<String> ids) {
+        List<HiPSMasterListEntry> cleanedList = new ArrayList<>();
+
+        for (HiPSMasterListEntry oneEntry : listToClean) {
+            if (!ids.contains(oneEntry.getMapInfo().get(PARAMS.ID.getKey()))) {
+                cleanedList.add(oneEntry);
+            }
+        }
+        return cleanedList;
     }
 
     private void setupMeta(DataGroup dg) {

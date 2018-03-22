@@ -7,15 +7,15 @@ import ImagePlotCntlr, {visRoot, IMAGE_PLOT_KEY,
     dispatchChangeCenterOfProjection, dispatchZoom,
     dispatchAttributeChange,
     dispatchPlotProgressUpdate, dispatchPlotImage, dispatchPlotHiPS} from '../ImagePlotCntlr.js';
-import {getEstimatedFullZoomFactor, getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
+import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, PlotAttribute} from '../WebPlot.js';
 import {fetchUrl, clone, loadImage} from '../../util/WebUtil.js';
 import {getPlotGroupById} from '../PlotGroup.js';
-import {primePlot, getPlotViewById, hasGroupLock} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, hasGroupLock, isDrawLayerAttached} from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
 import {getCenterOfProjection, findCurrentCenterPoint, getCorners,
-    getDrawLayerByType, getDrawLayersByType} from '../PlotViewUtil.js';
+        getDrawLayerByType, getDrawLayersByType} from '../PlotViewUtil.js';
 import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot,
          makeHipsUrl, getHiPSFoV, resolveHiPSConstant} from '../HiPSUtil.js';
@@ -24,12 +24,14 @@ import {CCUtil} from '../CsysConverter.js';
 import {ensureWPR, determineViewerId, getHipsImageConversion,
         initBuildInDrawLayers, addDrawLayers} from './PlotImageTask.js';
 import {dlRoot, dispatchAttachLayerToPlot,
-    dispatchCreateDrawLayer, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+        dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
+        getDlAry} from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
-import CysConverter from '../CsysConverter';
 import {isHiPS} from '../WebPlot';
 import {dispatchChangeHiPS} from '../ImagePlotCntlr';
+import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
+
 
 //const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -173,6 +175,7 @@ export function makePlotHiPSAction(rawAction) {
             })
             .then( addAllSky)
             .then( (plot) => {
+                addHiPSGridLayer();
                 dispatchAddActionWatcher({
                     actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
                     callback:watchForHiPSViewDim,
@@ -186,6 +189,13 @@ export function makePlotHiPSAction(rawAction) {
                 hipsFail(dispatcher, plotId, wpRequest, 'Could not retrieve properties file');
             } );
     };
+}
+
+function addHiPSGridLayer() {
+    const dl= getDrawLayerByType(getDlAry(), HiPSGrid.TYPE_ID);
+    if (!dl) {
+        dispatchCreateDrawLayer(HiPSGrid.TYPE_ID);
+    }
 }
 
 

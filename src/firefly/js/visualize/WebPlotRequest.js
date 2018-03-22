@@ -1345,7 +1345,8 @@ export class WebPlotRequest extends ServerRequest {
         return this.containsParam(C.OVERLAY_IDS) ?
             this.getParam(C.OVERLAY_IDS).split(';') :
             ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORTH_UP_COMPASS_TYPE',
-             'WEB_GRID_TYPE', 'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE'];
+             'WEB_GRID_TYPE', 'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE',
+             'HIPS_GRID_TYPE'];
             //[ActiveTarget.TYPE_ID,'OTHER'];
     }
 

@@ -28,11 +28,11 @@ public class CDSHiPSListSource implements HiPSMasterListSourceType {
     private static final String HiPSCDSURL = AppProperties.getProperty("HiPS.cds.hostname",
                                              "http://alasky.unistra.fr/MocServer/query?hips_service_url=*&get=record");
     //set default timeout to 30seconds
-    private static int TIMEOUT  = new Integer( AppProperties.getProperty("HiPS.cds.timeoutLimit" , "30")).intValue();
+    private static int TIMEOUT  = new Integer( AppProperties.getProperty("HiPS.timeoutLimit" , "30")).intValue();
     private static Map<String, String> paramsMap = new HashMap<>();
 
     static {
-        HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ID, "ID");
+        HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ID, "creator_did");
         HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TITLE, "obs_title");
         HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ORDER, "hips_order");
         HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TYPE, "dataproduct_type");
