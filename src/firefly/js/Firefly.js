@@ -78,8 +78,6 @@ const defConfigOptions = {
 };
 
 
-
-
 function fireflyInit() {
 
     if (! (window.firefly && window.firefly.initialized) ) {

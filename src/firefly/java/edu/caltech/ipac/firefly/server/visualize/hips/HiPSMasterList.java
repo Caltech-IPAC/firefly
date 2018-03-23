@@ -65,7 +65,6 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         List<String> orderedSources = new ArrayList<>();
         List<HiPSMasterListEntry> allSourceData = new ArrayList<>();
         DbAdapter dbAdapter = DbAdapter.getAdapter(request);
-        Map<String, List<HiPSMasterListEntry>> allLists = new HashMap<>();
 
         if (workingSources == null || workingSources.length == 0 ||
                 (workingSources.length == 1 && workingSources[0].equalsIgnoreCase(ServerParams.ALL))) {
@@ -103,52 +102,35 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
 
         try {
 
-            List<String> nonCDSIds = new ArrayList<>();
-
             for (String source : orderedSources) {
                 HiPSMasterListSourceType hipsls = sources.get(source);
 
                 if (hipsls != null) {
                     List<HiPSMasterListEntry> hipsL = hipsls.getHiPSListData(workingTypes, source);
                     if (hipsL != null) {
-                        allLists.put(source, hipsL);
-                        if (!source.equals(ServerParams.CDS)) { // collecting all id
-                            for (HiPSMasterListEntry oneHiPS : hipsL) {
-                                String id = oneHiPS.getMapInfo().get(PARAMS.ID.getKey());
-                                if (id != null) {
-                                    nonCDSIds.add(id);
-                                }
-                            }
-                        }
+                        allSourceData.addAll(hipsL);
                     }
                 }
             }
 
-            List<HiPSMasterListEntry> cdsList = allLists.get(ServerParams.CDS);
-            if (cdsList != null && nonCDSIds.size() > 0) {   // remove repeat items from cds source
-                cdsList = cleanHiPSList(cdsList, nonCDSIds);
-                allLists.put(ServerParams.CDS, cdsList);
-            }
-            for (String source : orderedSources) {
-                List<HiPSMasterListEntry> hipsList = allLists.get(source);
-                if (hipsList != null) {
-                    allSourceData.addAll(hipsList);
-                }
-            }
-
             if (allSourceData.size() == 0) {
-                throw new IOException("[HiPS_MASTER]: no HiPS found");
+                throw new IOException("[HiPS_LIST]: no HiPS found");
             }
 
             DataGroup dg = createTableDataFromListEntry(allSourceData);
             dg.shrinkToFitData();
 
-            setupMeta(dg);
+            setupMeta(dg, (orderedSources.size() > 1));
 
             FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
             return finfo;
         } catch (Exception e) {
-            throw new DataAccessException("[HiPS_MASTER]: Unable to get HiPS");
+            String msg = e.getMessage();
+
+            if (!msg.startsWith("[HiPS_")) {
+                msg = "[HiPS_LIST]: " + msg;
+            }
+            throw new DataAccessException(msg);
         }
     }
 
@@ -163,24 +145,20 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         return cleanedList;
     }
 
-    private void setupMeta(DataGroup dg) {
+    private void setupMeta(DataGroup dg, boolean bMulti) {
         int    sWidth = 30;
 
-        for (PARAMS oneCol : PARAMS.values()) {
-            String colName = oneCol.getKey();
+        for (DataType colDT : dg.getDataDefinitions()) {
+            String colName = colDT.getKeyName();
 
-            //dg.addAttribute(DataSetParser.makeAttribKey(DataSetParser.LABEL_TAG, colName),
-            //                                            oneCol.getTitle());
-            if (oneCol.getMetaClass() != String.class) continue;
+            if (colDT.getDataType() != String.class) continue;
 
-            DataType colDT = dg.getDataDefintion(colName);
-            if (colDT != null) {
-                if (colDT.getFormatInfo().getWidth() > sWidth) {
-                    dg.addAttribute(makeAttribKey(WIDTH_TAG, colName),
-                                    Integer.toString(sWidth));
-                }
+            int crtWidth = colDT.getFormatInfo().getWidth();
+            if (crtWidth > sWidth && !colName.equals(PARAMS.PROPERTIES.getKey())) {
+                dg.addAttribute(makeAttribKey(WIDTH_TAG, colName), Integer.toString(sWidth));
             }
-            if (colName.equals("Source")) {
+
+            if ((!bMulti && colName.equals(PARAMS.SOURCE.getKey())) || colName.equals(PARAMS.URL.getKey())) {
                 dg.addAttribute(makeAttribKey(VISI_TAG, colName), "hidden");
             }
         }

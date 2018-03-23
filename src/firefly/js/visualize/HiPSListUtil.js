@@ -1,47 +1,58 @@
-import {get, isArray, cloneDeep, set, isFunction, isUndefined, omit} from 'lodash';
-import {hipsSURVEYS} from './HiPSUtil.js';
+import {get, isArray} from 'lodash';
 import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, isTableLoaded} from '../tables/TableUtil.js';
+import {getTblById, isTableLoaded, findGroupByTblId} from '../tables/TableUtil.js';
 import {dispatchTableFetch, dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {getColumnIdx} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 
-export const HiPSSurveyTableColumn = new Enum(['Url', 'Title', 'Type', 'Order', 'Coverage', 'Frame', 'Source']);
-export const HiPSPopular = 'popular';
-export const _HiPSPopular = '_popular';
+export const HiPSSurveyTableColumn = new Enum(['Url', 'Title', 'Type', 'Order', 'Coverage', 'Frame', 'Source', 'Properties']);
 export const HiPSId = 'hips';
 export const HiPSDataType= new Enum([ 'image', 'cube', 'catalog'], { ignoreCase: true });
 export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
-
-export const HiPSMasterTable = {
-    defaultFilter: defaultHiPSPopularFilter
-};
+export const HiPSSources = ServerParams.CDS.toLowerCase()+',' + ServerParams.IRSA.toLowerCase();
 
 const HiPSSurvey = 'HiPS_Surveys_';
 
-export function makeHiPSSurveysTableName(hipsId, isPopular = false) {
-    const nHipsId = updateHiPSId(hipsId||HiPSId, isPopular);
+export function makeHiPSSurveysTableName(hipsId, sources) {
+    const nHipsId = updateHiPSId(hipsId||HiPSId, (sources===ServerParams.ALL ? HiPSSources : sources));
 
 
     return nHipsId.startsWith(HiPSSurvey) ? nHipsId : (HiPSSurvey + nHipsId);
 }
 
 export function getAppHiPSConfig() {
-    return get(getAppOptions(), ['hips', 'useForImageSearch'], true);
+    return get(getAppOptions(), ['hips', 'useForImageSearch'], false);
 }
+
+export function defHiPSSortOrder() {
+    return get(getAppOptions(), ['hips', ServerParams.SORT_ORDER], ServerParams.ALL);
+}
+
+export function getHiPSSources() {
+    return get(getAppOptions(), ['hips', ServerParams.HIPS_SOURCES], ServerParams.ALL);
+}
+
+export function defHiPSSources() {
+    return get(getAppOptions(), ['hips', ServerParams.HIPS_DEFSOURCES]);
+}
+
 
 /**
  * update HiPS surveys id based on if it is for popular surveys
  * @param id
- * @param isPopular
+ * @param sources
  * @returns {*}
  */
-function updateHiPSId(id, isPopular=false) {
+function updateHiPSId(id, sources) {
+    const sortedSources = sources.split(',').filter((s) => s)
+                                            .map((s) => s.toLowerCase())
+                                            .sort();
+    const idSuffix = '__' + sortedSources.join('_');  // suffix in lower case
+    const sId = id.endsWith(idSuffix) ? id : (id + idSuffix);
 
-    const sId = id.endsWith(_HiPSPopular) ? id.substring(0, (id.length - _HiPSPopular.length)) : id;
-    return isPopular ? sId+_HiPSPopular : sId;
+    return sId;
 }
 
 /**
@@ -53,8 +64,10 @@ function updateHiPSId(id, isPopular=false) {
  * @param {string} params.sources
  * @param {string} params.sortOrder
  */
-export function onHiPSSurveys({dataTypes, id, isPopular, sources = ServerParams.ALL, sortOrder=''}) {
-    const tbl_id = makeHiPSSurveysTableName(id, isPopular);
+export function onHiPSSurveys({dataTypes, id, sources=defHiPSSources(), sortOrder = defHiPSSortOrder()}) {
+    if (!sources) return;
+
+    const tbl_id = makeHiPSSurveysTableName(id, sources);
     const types = isArray(dataTypes) ? dataTypes.join(',') : dataTypes;
     const ss = isArray(sources) ? sources.join(',') : sources;
     const so = isArray(sortOrder) ? sortOrder.join(',') : sortOrder;
@@ -69,69 +82,12 @@ export function onHiPSSurveys({dataTypes, id, isPopular, sources = ServerParams.
     }
 }
 
-export function getPopularHiPSTable(hipsId, hipsUrl) {
-    const masterTbl =  getTblById(makeHiPSSurveysTableName(hipsId));
-    const hFilter = getHiPSFilter();
-
-    return  (masterTbl && hFilter && hFilter.getPopularTable) ? hFilter.getPopularTable(masterTbl, hipsUrl) : null;
-}
-
-function getHiPSFilter() {
-    const hFilter = defaultHiPSPopularFilter;  // hard code, hips filter will be configured later
-
-    if (isFunction(hFilter)) {
-        return hFilter();
-    } else {
-        return HiPSMasterTable[hFilter]();
-    }
-}
-
 function stripTrailingSlash(url) {
     if (typeof url === 'string') {
         return url.trim().replace(/\/$/, '');
     }
     return url;
 }
-
-
-function defaultHiPSPopularFilter() {
-    const createPopularTable = (tableModel, popular_tblId, hipsUrl) => {
-        const newTable = omit(cloneDeep(tableModel), ['request', 'origTableModel', 'selectInfo', 'tableMeta'] );
-        newTable.tbl_id = popular_tblId;
-        set(newTable, ['tableMeta', 'tbl_id'], popular_tblId);
-
-        const cIdx = getColumnIdx(tableModel, HiPSSurveyTableColumn.Source.key);
-        if (cIdx < 0 || tableModel.error) {
-            return newTable;
-        }
-
-        const retData = newTable.tableData.data.reduce((prev, oneRow) => {
-            if (oneRow[cIdx].toLowerCase() === 'irsa') {
-                prev.push(oneRow);
-            }
-            return prev;
-        }, []);
-
-        newTable.tableData = Object.assign(newTable.tableData, {data: retData});
-        newTable.totalRows = retData.length;
-        const idx = hipsUrl ? indexInHiPSSurveys(newTable, hipsUrl) : 0;
-        set(newTable, 'highlightedRow', (idx < 0 ? 0 : idx));
-        set(newTable, 'title', 'default popular HiPS');
-        return newTable;
-    };
-
-    const getPopularTable = (tableModel, hipsUrl) => {
-        const popular_tblId = updateHiPSId(tableModel.tbl_id, true);
-        const popularTable = getTblById(popular_tblId);
-
-        return popularTable ? popularTable : createPopularTable(tableModel, popular_tblId, hipsUrl);
-    };
-
-    return {
-        getPopularTable
-    };
-}
-
 
 /**
  *
@@ -176,11 +132,7 @@ export function isLoadingHiPSSurverys(id) {
     }
     const tbl = getHiPSSurveys(id);
 
-    if (!tbl || tbl.isFetching) {
-        return true;
-    }
-
-    return !isTableLoaded(tbl);
+    return tbl ? (tbl.isFetching ? true : !isTableLoaded(tbl)) : false;
 }
 
 
@@ -200,23 +152,21 @@ export function getHiPSLoadingMessage(id) {
  *  update highlighted row of both original master hips table and popular hips table if there is
  * @param url
  * @param hipsId
- * @param isPopular
+ * @param sources
  */
-export function updateHiPSTblHighlightOnUrl(url, hipsId, isPopular=undefined) {
-    const hipsOpt =  isUndefined(isPopular) ? [false, true] : [!!isPopular];
+export function updateHiPSTblHighlightOnUrl(url, hipsId, sources) {
+    const tblId = makeHiPSSurveysTableName(hipsId, sources);
+    const tblHiPS = getHiPSSurveys(tblId);
+    const groupId = findGroupByTblId(tblId);
+    if (tblHiPS) {
+        let hIdx = indexInHiPSSurveys(tblHiPS, url);
 
-    hipsOpt.forEach((cond) => {
-        const tblId = makeHiPSSurveysTableName(hipsId, cond);
-        const tblHiPS = getHiPSSurveys(tblId);
-        if (tblHiPS) {
-            let hIdx = indexInHiPSSurveys(tblHiPS, url);
-
-            if (hIdx < 0) {
-                hIdx = 0;
-            }
-            if (hIdx !== tblHiPS.highlightedRow) {
-                dispatchTableHighlight(tblId, hIdx);
-            }
+        if (hIdx < 0) {
+            hIdx = 0;
         }
-    });
+        if (hIdx !== tblHiPS.highlightedRow) {
+            dispatchTableHighlight(tblId, hIdx);
+        }
+    }
+
 }

@@ -83,6 +83,7 @@ export const ServerParams = {
         CDS : 'cds',
         HIPS_SOURCES : 'hipsSources',
         HIPS_DATATYPES: 'hipsDataTypes',
+        HIPS_DEFSOURCES: 'defHipsSources',
         CUBE: 'cube',
         CATALOG: 'catalog',
 
