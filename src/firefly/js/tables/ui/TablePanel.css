@@ -165,9 +165,9 @@
     min-width: 365px;
     height: 450px;
     min-height: 200px;
-    resize: both;
     overflow: hidden;
     position: relative;
+    resize:vertical;
 }
 
 .TablePanelOptions {
@@ -177,7 +177,7 @@
     bottom: 5px;
     left: 5px;
     right: 5px;
-    background-color: white;
+    //background-color: white;
     display: flex;
     flex-direction: column;
 }

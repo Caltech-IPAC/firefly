@@ -16,7 +16,8 @@ import {toBoolean} from '../../util/WebUtil.js';
 import {NOT_CELL_DATA} from './TableRenderer.js';
 
 const wrapperStyle = {display: 'block', flexGrow: 0};
-const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box', backgroundColor: 'white'};
+//const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box', backgroundColor: 'white'};
+const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box'};
 
 export class FilterEditor extends PureComponent {
     constructor(props) {
@@ -40,7 +41,7 @@ export class FilterEditor extends PureComponent {
                 <div style={{flexGrow: 1, position: 'relative'}}>
                     <div style={{position: 'absolute', top:0, bottom:5, left:0, right:0}}>
                         <BasicTableView
-                            bgColor= 'white'
+                            bgColor= 'ligthGrey'
                             columns={cols}
                             rowHeight={24}
                             selectable={selectable}

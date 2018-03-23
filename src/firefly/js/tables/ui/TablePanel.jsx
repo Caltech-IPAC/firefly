@@ -21,7 +21,6 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchJobAdd} from '../../core/background/BackgroundCntlr.js';
 import {showTableDownloadDialog} from './TableSave.jsx';
 import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
-import './TablePanel.css';
 
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
@@ -224,7 +223,8 @@ function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id) {
          </div>
     );
 
-    showOptionsPopup({content, title: 'Table Options', show: true});
+    showOptionsPopup({content, title: 'Table Options', modal: true,show: true});
+
 
 }
 

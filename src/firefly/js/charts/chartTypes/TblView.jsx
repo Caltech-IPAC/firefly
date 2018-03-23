@@ -13,8 +13,6 @@ import * as TablesCntlr from '../../tables/TablesCntlr.js';
 import * as ChartsCntlr from '../ChartsCntlr.js';
 import * as TableStatsCntlr from '../TableStatsCntlr.js';
 
-import '../../tables/ui/TablePanel.css';
-
 /**
  * Get properties defining chart from the store.
  * @param chartId

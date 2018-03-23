@@ -53,13 +53,12 @@ export function showModal(content, show=true) {
  */
 export function showOptionsPopup({content, title='Options', modal = false, show=true}) {
 
-
   if (show) {
       const dialogContent= (
           <PopupPanel title={title} modal={modal}>
-              <div style={{position: 'relative', overflow: 'auto', resize:'vertical'}}>
+
                   {content}
-              </div>
+
           </PopupPanel>
       );
     DialogRootContainer.defineDialog(POPUP_DIALOG_ID, dialogContent);
