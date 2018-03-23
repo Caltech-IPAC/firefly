@@ -133,7 +133,8 @@ class FootprintToolUI extends PureComponent {
         const tStyle= {
             display:'flex',
             flexDirection:'column',
-            paddingLeft : 10
+            paddingLeft : 10,
+            userSelect: 'text'
         };
 
         const mStyle = {
@@ -150,7 +151,6 @@ class FootprintToolUI extends PureComponent {
                     <div style={tStyle}>
                         {convertWorldLonToString(this.state.currentPt, this.csys) + ', ' +
                         convertWorldLatToString(this.state.currentPt, this.csys)}
-                        {convertWorldToString(this.state.currentPt, this.csys)}
                     </div>
                 </div>
 
