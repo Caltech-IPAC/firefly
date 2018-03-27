@@ -140,7 +140,7 @@ export function showHiPSSurverysPopup(hipsUrl,  pv, surveysId = HiPSId, dataType
                             </div>
                         </div>
                         <div style={{ textAlign:'right', marginRight: 10}}>
-                            <HelpIcon helpId={'visualization.imageoptions'}/>
+                            <HelpIcon helpId={'visualization.hipsViewer'}/>
                         </div>
                     </div>
                 </div>

@@ -108,7 +108,8 @@ export function ImageSearchDropDown({gridSupport}) {
                     params = {{hideOnInvalid: false}}
                     onSubmit = {(request) => onSearchSubmit({request, plotId, viewerId, gridSupport})}
                     onError = {searchFailed}
-                    onCancel = {dispatchHideDropDown}>
+                    onCancel = {dispatchHideDropDown}
+                    help_id = {'basics.searching'}>
             <ImageSearchPanelV2 {...{multiSelect, archiveName}}/>
             {gridSupport && <GridSupport/>}
         </FormPanel>
