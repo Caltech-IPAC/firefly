@@ -403,7 +403,7 @@ function makeHiPSImageTable(pv, surveysId) {
         return (
             <div style={{marginLeft: 9, marginRight: 5, marginTop: -5}}>
                 <input  type='button'
-                        value='Change HiPS Plot'
+                        value='Change HiPS'
                         onClick={()=>showHiPSSurverysPopup(get(primePlot(pv), 'hipsUrlRoot'),
                                                            pv, surveysId)} />
             </div>
