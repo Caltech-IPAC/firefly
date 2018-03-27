@@ -165,7 +165,7 @@ export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
                 groupKey = {mission}
                 dataTag = {DL_DATA_TAG}
                 cutoutSize={cutoutSizeInDeg}
-                title={'Image Download Option'}
+                title={'Image Download Options'}
                 dlParams={{
                     MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ptf image is ~33mb
                     FilePrefix: `${mission}_Files`,

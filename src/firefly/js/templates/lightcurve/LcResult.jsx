@@ -144,7 +144,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                     groupKey = {mission}
                     dataTag = {DL_DATA_TAG}
                     cutoutSize={c}
-                    title={'Image Download Option'}
+                    title={'Image Download Options'}
                     style = {{width: 400}}
                     dlParams={{
                         MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
