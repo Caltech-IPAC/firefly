@@ -46,64 +46,69 @@ export class HeatmapOptions extends SimpleComponent {
 }
 
 export function fieldReducer({chartId, activeTrace}) {
-    const {data, fireflyData, tablesources={}} = getChartData(chartId);
-    const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-    const basicReducer = basicFieldReducer({chartId, activeTrace, tablesources});
-    const fields = {
+    const basicReducer = basicFieldReducer({chartId, activeTrace});
 
-        [`fireflyData.${activeTrace}.nbins.x`]: {
-            fieldKey: `fireflyData.${activeTrace}.nbins.x`,
-            value: get(fireflyData, `${activeTrace}.nbins.x`),
-            validator: intValidator(2, 300, 'Number of X-Bins'), // need at least 2 bins to display dx correctly
-            tooltip: 'Number of bins along X axis',
-            label: 'Number of X-Bins:',
-            labelWidth: 95,
-            size: 5
-        },
-        [`fireflyData.${activeTrace}.nbins.y`]: {
-            fieldKey: `fireflyData.${activeTrace}.nbins.y`,
-            value: get(fireflyData, `${activeTrace}.nbins.y`),
-            validator: intValidator(2, 300, 'Number of Y-Bins'), // need at least 2 bins to display dy correctly
-            tooltip: 'Number of bins along Y axis',
-            label: 'Number of Y-Bins:',
-            labelWidth: 95,
-            size: 5
-        },
-        [`data.${activeTrace}.colorscale`]: {
-            fieldKey: `data.${activeTrace}.colorscale`,
-            value: get(data, `${activeTrace}.colorscale`),
-            tooltip: 'Select colorscale for color map',
-            label: 'Color Scale:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.reversescale`]: {
-            fieldKey: `data.${activeTrace}.reversescale`,
-            value: get(data, `${activeTrace}.reversescale`) ? 'true' : undefined,
-            tooltip: 'Reverse colorscale for color map',
-            label: ' ',
-            labelWidth: 10
-        },
-        ...basicReducer(null)
-    };
-    const tblRelFields = {
-        [`_tables.data.${activeTrace}.x`]: {
-            fieldKey: `_tables.data.${activeTrace}.x`,
-            value: get(tablesourceMappings, 'x', ''),
-            //tooltip: 'X axis',
-            label: 'X:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.y`]: {
-            fieldKey: `_tables.data.${activeTrace}.y`,
-            value: get(tablesourceMappings, 'y', ''),
-            //tooltip: 'Y axis',
-            label: 'Y:',
-            ...fieldProps
-        }
+    const getFields = () => {
+        const {data, fireflyData, tablesources = {}} = getChartData(chartId);
+        const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
+
+        const fields = {
+
+            [`fireflyData.${activeTrace}.nbins.x`]: {
+                fieldKey: `fireflyData.${activeTrace}.nbins.x`,
+                value: get(fireflyData, `${activeTrace}.nbins.x`),
+                validator: intValidator(2, 300, 'Number of X-Bins'), // need at least 2 bins to display dx correctly
+                tooltip: 'Number of bins along X axis',
+                label: 'Number of X-Bins:',
+                labelWidth: 95,
+                size: 5
+            },
+            [`fireflyData.${activeTrace}.nbins.y`]: {
+                fieldKey: `fireflyData.${activeTrace}.nbins.y`,
+                value: get(fireflyData, `${activeTrace}.nbins.y`),
+                validator: intValidator(2, 300, 'Number of Y-Bins'), // need at least 2 bins to display dy correctly
+                tooltip: 'Number of bins along Y axis',
+                label: 'Number of Y-Bins:',
+                labelWidth: 95,
+                size: 5
+            },
+            [`data.${activeTrace}.colorscale`]: {
+                fieldKey: `data.${activeTrace}.colorscale`,
+                value: get(data, `${activeTrace}.colorscale`),
+                tooltip: 'Select colorscale for color map',
+                label: 'Color Scale:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.reversescale`]: {
+                fieldKey: `data.${activeTrace}.reversescale`,
+                value: get(data, `${activeTrace}.reversescale`) ? 'true' : undefined,
+                tooltip: 'Reverse colorscale for color map',
+                label: ' ',
+                labelWidth: 10
+            },
+            ...basicReducer(null)
+        };
+        const tblRelFields = {
+            [`_tables.data.${activeTrace}.x`]: {
+                fieldKey: `_tables.data.${activeTrace}.x`,
+                value: get(tablesourceMappings, 'x', ''),
+                //tooltip: 'X axis',
+                label: 'X:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.y`]: {
+                fieldKey: `_tables.data.${activeTrace}.y`,
+                value: get(tablesourceMappings, 'y', ''),
+                //tooltip: 'Y axis',
+                label: 'Y:',
+                ...fieldProps
+            }
+        };
+        return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
     };
     return (inFields, action) => {
         if (!inFields) {
-            return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
+            return getFields();
         }
 
         inFields = basicReducer(inFields, action);

@@ -15,7 +15,20 @@ class ChartPanelView extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {};
+        this.toggleOptions = this.toggleOptions.bind(this);
+    }
 
+    toggleOptions(key) {
+        const {chartId, showOptions, optionsKey} = this.props;
+        if (key === optionsKey) {
+            const newShowOptions = !showOptions;
+            const newKey = newShowOptions ? key : undefined;
+            ChartsCntlr.dispatchChartUpdate({chartId, changes: {showOptions: newShowOptions, optionsKey: newKey}});
+        } else if (key) {
+            ChartsCntlr.dispatchChartUpdate({chartId, changes: {showOptions: true, optionsKey: key}});
+        } else {
+            ChartsCntlr.dispatchChartUpdate({chartId, changes: {showOptions: false, optionsKey: key}});
+        }
     }
 
     componentDidMount() {
@@ -65,7 +78,7 @@ class ChartPanelView extends PureComponent {
                 return (
                     <div className='ChartPanel__container'>
                         <div className='ChartPanel__wrapper'>
-                            <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace}}/>
+                            <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
                             <div className='ChartPanel__chartarea--withToolbar'>
                                 {showOptions &&
                                 <div className='ChartPanelOptions'>
@@ -73,7 +86,7 @@ class ChartPanelView extends PureComponent {
                                         <div style={{ right: -6, float: 'right'}}
                                              className='btn-close'
                                              title='Remove Panel'
-                                             />
+                                             onClick={() => this.toggleOptions()}/>
                                     </div>
                                     <Options {...{chartId, optionsKey}}/>
                                 </div>}
@@ -110,7 +123,7 @@ class ChartPanelView extends PureComponent {
             // toolbar and options
             return (
                 <div className='ChartPanel__chartarea'>
-                    <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace}}/>
+                    <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
                     <div className='ChartPanel__chartarea--withToolbar'>
                         {showOptions &&
                         <div className='ChartPanelOptions'
@@ -121,7 +134,7 @@ class ChartPanelView extends PureComponent {
                                 <div style={{ right: -6, float: 'right'}}
                                      className='btn-close'
                                      title='Remove Panel'
-                                     />
+                                     onClick={() => this.toggleOptions()}/>
                             </div>
                             <Options {...{chartId, optionsKey}}/>
                         </div>

@@ -1,15 +1,16 @@
-import React from 'react';
+import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
+import {get, pick, uniqueId} from 'lodash';
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from './../../ui/FieldGroup.jsx';
-import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
 
-import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal, getReducerFunc} from '../../fieldGroup/FieldGroupUtils.js';
 
 import {RadioGroupInputField} from './../../ui/RadioGroupInputField.jsx';
 import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
-import {getChartData, removeTrace} from '../ChartsCntlr.js';
+import {CHART_UPDATE, getChartData, removeTrace} from '../ChartsCntlr.js';
 import {getOptionsUI} from '../ChartUtil.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 
@@ -132,7 +133,7 @@ export class ChartSelectPanel extends SimpleComponent {
             <div style={{padding: 10}}>
                 <FormPanel
                     groupKey={groupKey}
-                    submitText='Apply'
+                    submitText={chartAction===CHART_TRACE_MODIFY ? 'Apply' : 'OK'}
                     onSuccess={onChartAction({chartAction, tbl_id, chartId, hideDialog})}
                     cancelText='Close'
                     onError={() => {}}
@@ -207,10 +208,9 @@ function ChartActionOptions(props) {
         return (<NewTracePanel {...{groupKey, tbl_id, chartId, hideDialog, showMultiTrace}}/>);
     }
     if (chartAction === CHART_TRACE_MODIFY) {
-        const OptionsUI = getOptionsUI(chartId);
         return (
             <div style={{padding: 10}}>
-                <OptionsUI {...{chartId, groupKey, showMultiTrace}}/>
+                <SyncedOptionsUI {...{chartId, groupKey, showMultiTrace}}/>
             </div>
         );
     } else if (chartAction === CHART_TRACE_REMOVE) {
@@ -233,6 +233,63 @@ ChartActionOptions.propTypes = {
     groupKey: PropTypes.string,
     hideDialog: PropTypes.func
 };
+
+/**
+ * Action watcher callback: watch chart data updates, and sync options with the store
+ * Some options (ex. default axes titles) are updated with the data.
+ * At this point options fields should be reset.
+ * @callback actionWatcherCallback
+ * @param action
+ * @param cancelSelf
+ * @param params
+ * @param params.chartId
+ * @param params.groupId
+ */
+function watchChartDataChange(action, cancelSelf, params) {
+    const {chartId:actionChartId, changes={}} = action.payload;
+    const {chartId, groupKey} = params;
+    //options should be synced when data are received: fireflyData.traceNum.isLoading is switched to false
+    if (actionChartId === chartId && Object.keys(changes).find((k)=>(k.match(/isLoading$/) && !changes[k]))) {
+        const reducerFunc = getReducerFunc(params.groupKey);
+        const flds = reducerFunc && reducerFunc(null);
+        if (flds) {
+            const fldAry = Object.values(flds).map((v) => pick(v, ['fieldKey', 'value']));
+            dispatchMultiValueChange(groupKey, fldAry);
+        }
+    }
+}
+
+class SyncedOptionsUI extends PureComponent {
+
+    componentDidMount() {
+        const {chartId, groupKey} = this.props;
+        if (chartId && groupKey) {
+            this.watcherId = uniqueId('syncChartOpts');
+            dispatchAddActionWatcher({id: this.watcherId,
+                actions:[CHART_UPDATE],
+                callback: watchChartDataChange,
+                params: {chartId, groupKey}});
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.watcherId) {
+            dispatchCancelActionWatcher(this.watcherId);
+        }
+    }
+
+    render() {
+        const {chartId} = this.props;
+        const OptionsUI = getOptionsUI(chartId);
+        return (<OptionsUI {...this.props}/>);
+    }
+}
+
+SyncedOptionsUI.propTypes = {
+    chartId: PropTypes.string,
+    groupKey: PropTypes.string
+};
+
 
 /**
  * Creates and shows the modal dialog with chart options.

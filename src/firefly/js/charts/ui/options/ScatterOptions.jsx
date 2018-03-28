@@ -61,102 +61,109 @@ export class ScatterOptions extends SimpleComponent {
 }
 
 export function fieldReducer({chartId, activeTrace}) {
-    const {data, tablesources={}} = getChartData(chartId);
-    const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-    const basicReducer = basicFieldReducer({chartId, activeTrace, tablesources});
-    const fields = {
-        [`data.${activeTrace}.mode`]: {
-            fieldKey: `data.${activeTrace}.mode`,
-            value: get(data, `${activeTrace}.mode`),
-            tooltip: 'Select plot style',
-            label: 'Plot Style:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.marker.symbol`]: {
-            fieldKey: `data.${activeTrace}.marker.symbol`,
-            value: get(data, `${activeTrace}.marker.symbol`),
-            tooltip: 'Select marker symbol',
-            label: 'Symbol:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.marker.colorscale`]: {
-            fieldKey: `data.${activeTrace}.marker.colorscale`,
-            value: get(data, `${activeTrace}.marker.colorscale`),
-            tooltip: 'Select colorscale for color map',
-            label: 'Color Scale:',
-            ...fieldProps
-        },
-        [errorTypeFieldKey(activeTrace, 'x')]: {
-            fieldKey: errorTypeFieldKey(activeTrace, 'x'),
-            value: get(data, errorTypeFieldKey(activeTrace, 'x').replace(/^data./, ''), 'none')
-        },
-        [errorTypeFieldKey(activeTrace, 'y')]: {
-            fieldKey: errorTypeFieldKey(activeTrace, 'y'),
-            value: get(data, errorTypeFieldKey(activeTrace, 'y').replace(/^data./, ''), 'none')
-        },
-        ...basicReducer(null)
+
+    const basicReducer = basicFieldReducer({chartId, activeTrace});
+
+    const getFields = () => {
+        const {data, tablesources={}} = getChartData(chartId);
+        const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
+
+        const fields = {
+            [`data.${activeTrace}.mode`]: {
+                fieldKey: `data.${activeTrace}.mode`,
+                value: get(data, `${activeTrace}.mode`),
+                tooltip: 'Select plot style',
+                label: 'Plot Style:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.marker.symbol`]: {
+                fieldKey: `data.${activeTrace}.marker.symbol`,
+                value: get(data, `${activeTrace}.marker.symbol`),
+                tooltip: 'Select marker symbol',
+                label: 'Symbol:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.marker.colorscale`]: {
+                fieldKey: `data.${activeTrace}.marker.colorscale`,
+                value: get(data, `${activeTrace}.marker.colorscale`),
+                tooltip: 'Select colorscale for color map',
+                label: 'Color Scale:',
+                ...fieldProps
+            },
+            [errorTypeFieldKey(activeTrace, 'x')]: {
+                fieldKey: errorTypeFieldKey(activeTrace, 'x'),
+                value: get(data, errorTypeFieldKey(activeTrace, 'x').replace(/^data./, ''), 'none')
+            },
+            [errorTypeFieldKey(activeTrace, 'y')]: {
+                fieldKey: errorTypeFieldKey(activeTrace, 'y'),
+                value: get(data, errorTypeFieldKey(activeTrace, 'y').replace(/^data./, ''), 'none')
+            },
+            ...basicReducer(null)
+        };
+        const tblRelFields = {
+            [`_tables.data.${activeTrace}.x`]: {
+                fieldKey: `_tables.data.${activeTrace}.x`,
+                value: get(tablesourceMappings, 'x', ''),
+                //tooltip: 'X axis',
+                label: 'X:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.y`]: {
+                fieldKey: `_tables.data.${activeTrace}.y`,
+                value: get(tablesourceMappings, 'y', ''),
+                //tooltip: 'Y axis',
+                label: 'Y:',
+                ...fieldProps
+            },
+            [errorFieldKey(activeTrace, 'x')]: {
+                fieldKey: errorFieldKey(activeTrace, 'x'),
+                value: get(tablesourceMappings, ['error_x.array'], ''),
+                //tooltip: 'X error',
+                label: 'X error\u2191:',
+                ...fieldProps
+            },
+            [errorMinusFieldKey(activeTrace, 'x')]: {
+                fieldKey: errorMinusFieldKey(activeTrace, 'x'),
+                value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
+                //tooltip: 'X error',
+                label: 'Error\u2193:',
+                ...fieldProps
+            },
+            [errorFieldKey(activeTrace, 'y')]: {
+                fieldKey: errorFieldKey(activeTrace, 'y'),
+                value: get(tablesourceMappings, ['error_y.array'], ''),
+                //tooltip: '',
+                label: 'Y error\u2191:',
+                ...fieldProps
+            },
+            [errorMinusFieldKey(activeTrace, 'y')]: {
+                fieldKey: errorMinusFieldKey(activeTrace, 'y'),
+                value: get(tablesourceMappings, ['error_y.arrayminus'], ''),
+                //tooltip: 'Y error',
+                label: 'Y error\u2193:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.marker.color`]: {
+                fieldKey: `_tables.data.${activeTrace}.marker.color`,
+                value: get(tablesourceMappings, 'marker.color', ''),
+                //tooltip: 'Use a column for color map',
+                label: 'Color Map:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.marker.size`]: {
+                fieldKey: `_tables.data.${activeTrace}.marker.size`,
+                value: get(tablesourceMappings, 'marker.size', ''),
+                //tooltip: 'Use a column for size map',
+                label: 'Size Map:',
+                ...fieldProps
+            }
+        };
+        return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
     };
-    const tblRelFields = {
-        [`_tables.data.${activeTrace}.x`]: {
-            fieldKey: `_tables.data.${activeTrace}.x`,
-            value: get(tablesourceMappings, 'x', ''),
-            //tooltip: 'X axis',
-            label: 'X:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.y`]: {
-            fieldKey: `_tables.data.${activeTrace}.y`,
-            value: get(tablesourceMappings, 'y', ''),
-            //tooltip: 'Y axis',
-            label: 'Y:',
-            ...fieldProps
-        },
-        [errorFieldKey(activeTrace, 'x')]: {
-            fieldKey: errorFieldKey(activeTrace, 'x'),
-            value: get(tablesourceMappings, ['error_x.array'], ''),
-            //tooltip: 'X error',
-            label: 'X error\u2191:',
-            ...fieldProps
-        },
-        [errorMinusFieldKey(activeTrace, 'x')]: {
-            fieldKey: errorMinusFieldKey(activeTrace, 'x'),
-            value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
-            //tooltip: 'X error',
-            label: 'Error\u2193:',
-            ...fieldProps
-        },
-        [errorFieldKey(activeTrace, 'y')]: {
-            fieldKey: errorFieldKey(activeTrace, 'y'),
-            value: get(tablesourceMappings, ['error_y.array'], ''),
-            //tooltip: '',
-            label: 'Y error\u2191:',
-            ...fieldProps
-        },
-        [errorMinusFieldKey(activeTrace, 'y')]: {
-            fieldKey: errorMinusFieldKey(activeTrace, 'y'),
-            value: get(tablesourceMappings, ['error_y.arrayminus'], ''),
-            //tooltip: 'Y error',
-            label: 'Y error\u2193:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.marker.color`]: {
-            fieldKey: `_tables.data.${activeTrace}.marker.color`,
-            value: get(tablesourceMappings, 'marker.color', ''),
-            //tooltip: 'Use a column for color map',
-            label: 'Color Map:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.marker.size`]: {
-            fieldKey: `_tables.data.${activeTrace}.marker.size`,
-            value: get(tablesourceMappings, 'marker.size', ''),
-            //tooltip: 'Use a column for size map',
-            label: 'Size Map:',
-            ...fieldProps
-        }
-    };
+
     return (inFields, action) => {
         if (!inFields) {
-            return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
+            return getFields();
         }
 
         inFields = basicReducer(inFields, action);

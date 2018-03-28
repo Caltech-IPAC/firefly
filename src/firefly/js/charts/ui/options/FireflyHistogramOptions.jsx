@@ -31,14 +31,9 @@ export class FireflyHistogramOptions extends SimpleComponent {
 
         const basicFields = <BasicOptionFields {...{activeTrace, groupKey, xNoLog: true, showMultiTrace}}/>;
         const basicFieldsReducer = basicFieldReducer({chartId, activeTrace});
-        return (
-            <div style={{padding:'0 5px 7px'}}>
-                {colValStats ?
-                    <HistogramOptions {...{key: activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/> :
-                    'Loading...'
-                }
-            </div>
-        );
+        return colValStats ?
+            <HistogramOptions {...{key: activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/> :
+            'Loading...';
     }
 }
 

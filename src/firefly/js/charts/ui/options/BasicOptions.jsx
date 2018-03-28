@@ -133,105 +133,106 @@ export class BasicOptions extends SimpleComponent {
 }
 //TODO on Monday, check if showMultiTrace is needed, it works for all cases both chart and xyPlot
 export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
-    const {data, layout, fireflyLayout={}} = getChartData(chartId);
-    let color = get(data, `${activeTrace}.marker.color`, '');
-    color = Array.isArray(color) ? '' : color;
 
-    const commonfields = {
-        ['layout.showlegend']: {
-            fieldKey: 'layout.showlegend',
-            value: get(layout, 'showlegend', ''),
-            tooltip: 'Show legend',
-            label : 'Legend:',
-            ...fieldProps
-        },
-        ['layout.xaxis.title']: {
-            fieldKey: 'layout.xaxis.title',
-            value: get(layout, 'xaxis.title'),
-            tooltip: 'X axis label',
-            label : 'X Label:',
-            ...fieldProps
-        },
-        ['__xreset']: {  // invisible helper field
-            fieldKey: '__xreset',
-            value: ''
-        },
-        ['__xoptions']: {
-            fieldKey: '__xoptions',
-            value: getOptions('x', layout),
-            tooltip: 'X axis options',
-            label : 'Options:',
-            ...fieldProps
-        },
-        ['layout.yaxis.title']: {
-            fieldKey: 'layout.yaxis.title',
-            value: get(layout, 'yaxis.title'),
-            tooltip: 'Y axis label',
-            label : 'Y Label:',
-            ...fieldProps
-        },
-        ['__yreset']: { // invisible helper field
-            fieldKey: '__yreset',
-            value: ''
-        },
-        ['__yoptions']: {
-            fieldKey: '__yoptions',
-            value: getOptions('y', layout),
-            tooltip: 'Y axis options',
-            label : 'Options:',
-            ...fieldProps
-        },
-        ['fireflyLayout.xaxis.min']: {
-            fieldKey: 'fireflyLayout.xaxis.min',
-            value: get(fireflyLayout, 'xaxis.min'),
-            validator: (val)=>Validate.isFloat('X Min', val),
-            tooltip: 'Minimum X value',
-            label: 'X Min:',
-            ...boundariesFieldProps
-        },
-        ['fireflyLayout.xaxis.max']: {
-            fieldKey: 'fireflyLayout.xaxis.max',
-            value: get(fireflyLayout, 'xaxis.max'),
-            validator: (val)=>Validate.isFloat('X Max', val),
-            tooltip: 'Maximum X value',
-            label : 'X Max:',
-            ...boundariesFieldProps
-        },
-        ['fireflyLayout.yaxis.min']: {
-            fieldKey: 'fireflyLayout.yaxis.min',
-            value: get(fireflyLayout, 'yaxis.min'),
-            validator: (val)=>Validate.isFloat('Y Min', val),
-            tooltip: 'Minimum Y value',
-            label: 'Y Min:',
-            ...boundariesFieldProps
-        },
-        ['fireflyLayout.yaxis.max']: {
-            fieldKey: 'fireflyLayout.yaxis.max',
-            value: get(fireflyLayout, 'yaxis.max'),
-            validator: (val)=>Validate.isFloat('Y Max', val),
-            tooltip: 'Maximum Y value',
-            label : 'Y Max:',
-            ...boundariesFieldProps
-        },
-        [xyratioFldName]: {
-            fieldKey: xyratioFldName,
-            value: get(fireflyLayout, 'xyratio'),
-            validator: Validate.floatRange.bind(null, 0.1, 10, 1, 'X/Y ratio'),
-            tooltip: 'X/Y ratio',
-            label : 'X/Y ratio:',
-            labelWidth: 50
-        },
-        ['fireflyLayout.stretch']: {
-            fieldKey: 'fireflyLayout.stretch',
-            value: get(fireflyLayout, 'stretch', 'fit'),
-            tooltip: 'Should the plot fit into the available space or fill the available width?',
-            label : 'Stretch to:',
-            labelWidth: 50
-        }
-    };
+    const getFields = () => {
+        const {data, layout, fireflyLayout = {}} = getChartData(chartId);
+        let color = get(data, `${activeTrace}.marker.color`, '');
+        color = Array.isArray(color) ? '' : color;
 
+        const commonfields = {
+            ['layout.showlegend']: {
+                fieldKey: 'layout.showlegend',
+                value: get(layout, 'showlegend', ''),
+                tooltip: 'Show legend',
+                label: 'Legend:',
+                ...fieldProps
+            },
+            ['layout.xaxis.title']: {
+                fieldKey: 'layout.xaxis.title',
+                value: get(layout, 'xaxis.title'),
+                tooltip: 'X axis label',
+                label: 'X Label:',
+                ...fieldProps
+            },
+            ['__xreset']: {  // invisible helper field
+                fieldKey: '__xreset',
+                value: ''
+            },
+            ['__xoptions']: {
+                fieldKey: '__xoptions',
+                value: getOptions('x', layout),
+                tooltip: 'X axis options',
+                label: 'Options:',
+                ...fieldProps
+            },
+            ['layout.yaxis.title']: {
+                fieldKey: 'layout.yaxis.title',
+                value: get(layout, 'yaxis.title'),
+                tooltip: 'Y axis label',
+                label: 'Y Label:',
+                ...fieldProps
+            },
+            ['__yreset']: { // invisible helper field
+                fieldKey: '__yreset',
+                value: ''
+            },
+            ['__yoptions']: {
+                fieldKey: '__yoptions',
+                value: getOptions('y', layout),
+                tooltip: 'Y axis options',
+                label: 'Options:',
+                ...fieldProps
+            },
+            ['fireflyLayout.xaxis.min']: {
+                fieldKey: 'fireflyLayout.xaxis.min',
+                value: get(fireflyLayout, 'xaxis.min'),
+                validator: (val) => Validate.isFloat('X Min', val),
+                tooltip: 'Minimum X value',
+                label: 'X Min:',
+                ...boundariesFieldProps
+            },
+            ['fireflyLayout.xaxis.max']: {
+                fieldKey: 'fireflyLayout.xaxis.max',
+                value: get(fireflyLayout, 'xaxis.max'),
+                validator: (val) => Validate.isFloat('X Max', val),
+                tooltip: 'Maximum X value',
+                label: 'X Max:',
+                ...boundariesFieldProps
+            },
+            ['fireflyLayout.yaxis.min']: {
+                fieldKey: 'fireflyLayout.yaxis.min',
+                value: get(fireflyLayout, 'yaxis.min'),
+                validator: (val) => Validate.isFloat('Y Min', val),
+                tooltip: 'Minimum Y value',
+                label: 'Y Min:',
+                ...boundariesFieldProps
+            },
+            ['fireflyLayout.yaxis.max']: {
+                fieldKey: 'fireflyLayout.yaxis.max',
+                value: get(fireflyLayout, 'yaxis.max'),
+                validator: (val) => Validate.isFloat('Y Max', val),
+                tooltip: 'Maximum Y value',
+                label: 'Y Max:',
+                ...boundariesFieldProps
+            },
+            [xyratioFldName]: {
+                fieldKey: xyratioFldName,
+                value: get(fireflyLayout, 'xyratio'),
+                validator: Validate.floatRange.bind(null, 0.1, 10, 1, 'X/Y ratio'),
+                tooltip: 'X/Y ratio',
+                label: 'X/Y ratio:',
+                labelWidth: 50
+            },
+            ['fireflyLayout.stretch']: {
+                fieldKey: 'fireflyLayout.stretch',
+                value: get(fireflyLayout, 'stretch', 'fit'),
+                tooltip: 'Should the plot fit into the available space or fill the available width?',
+                label: 'Stretch to:',
+                labelWidth: 50
+            }
+        };
 
-    const extraFeidls = showMultiTrace?{
+        const extraFields = showMultiTrace ? {
             [`data.${activeTrace}.name`]: {
                 fieldKey: `data.${activeTrace}.name`,
                 value: get(data, `${activeTrace}.name`, ''),
@@ -253,11 +254,12 @@ export function basicFieldReducer({chartId, activeTrace, showMultiTrace=true}) {
                 label: 'Plot title:',
                 ...fieldProps
             },
-      }:{};
-    const fields = Object.assign({}, commonfields, extraFeidls);
+        } : {};
+        return Object.assign({}, commonfields, extraFields);
+    };
     return (inFields, action) => {
         if (!inFields) {
-            return fields;
+            return getFields();
         } else {
             let fieldKey = undefined;
             if (action.type === VALUE_CHANGE) {
@@ -444,6 +446,7 @@ export class BasicOptionFields extends Component {
 }
 
 BasicOptionFields.propTypes = {
+    chartId: PropTypes.string,
     groupKey: PropTypes.string.isRequired,
     activeTrace: PropTypes.number.isRequired,
     align: PropTypes.oneOf(['vertical', 'horizontal']),
