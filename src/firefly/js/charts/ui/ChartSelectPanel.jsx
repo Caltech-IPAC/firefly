@@ -138,7 +138,7 @@ export class ChartSelectPanel extends SimpleComponent {
                     cancelText='Close'
                     onError={() => {}}
                     onCancel={hideDialog}
-                    inputStyle = {{backgroundColor:'none'}}
+                    inputStyle = {chartAction===CHART_TRACE_MODIFY ? {backgroundColor:'none'} : {}}
                     changeMasking={this.changeMasking}>
                     {showMultiTrace && <ChartAction {...{chartActions, chartAction, groupKey: chartActionPanelKey, fieldKey: chartActionKey}}/>}
                     <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog,showMultiTrace}}/>

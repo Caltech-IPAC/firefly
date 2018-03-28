@@ -38,9 +38,8 @@ export class FilterEditor extends PureComponent {
         return (
             <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
                 <div style={{flexGrow: 1, position: 'relative'}}>
-                    <div style={{position: 'absolute', top:0, bottom:5, left:0, right:0}}>
+                    <div style={{position: 'absolute', top:0, bottom:5, left:0, right:0, backgroundColor: 'white'}}>
                         <BasicTableView
-                            bgColor= '#e3e3e3'
                             columns={cols}
                             rowHeight={24}
                             selectable={selectable}
