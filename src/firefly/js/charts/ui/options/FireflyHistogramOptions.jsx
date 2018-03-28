@@ -19,7 +19,7 @@ export class FireflyHistogramOptions extends SimpleComponent {
     }
 
     render() {
-        const {chartId, tbl_id:tblIdProp} = this.props;
+        const {chartId, tbl_id:tblIdProp, showMultiTrace} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-ffhist-${activeTrace}`;
@@ -29,16 +29,11 @@ export class FireflyHistogramOptions extends SimpleComponent {
 
         const histogramParams = toHistogramOptions(chartId, activeTrace);
 
-        const basicFields = <BasicOptionFields {...{activeTrace, groupKey, xNoLog: true}}/>;
+        const basicFields = <BasicOptionFields {...{activeTrace, groupKey, xNoLog: true, showMultiTrace}}/>;
         const basicFieldsReducer = basicFieldReducer({chartId, activeTrace});
-        return (
-            <div style={{padding:'0 5px 7px'}}>
-                {colValStats ?
-                    <HistogramOptions {...{key: activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/> :
-                    'Loading...'
-                }
-            </div>
-        );
+        return colValStats ?
+            <HistogramOptions {...{key: activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer}}/> :
+            'Loading...';
     }
 }
 

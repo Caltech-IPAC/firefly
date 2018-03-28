@@ -102,7 +102,7 @@ function reducers() {
  *  @function dispatchChartAdd
  *  @memberof firefly.action
  */
-export function dispatchChartAdd({chartId, chartType, chartDataElements, groupId='main', deletable, help_id, mounted=undefined, dispatcher= flux.process, ...rest}) {
+export function dispatchChartAdd({chartId, chartType='plot.ly', chartDataElements, groupId='main', deletable, help_id, mounted=undefined, dispatcher= flux.process, ...rest}) {
     dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, groupId, deletable, help_id, mounted, ...rest}});
 }
 

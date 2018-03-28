@@ -69,6 +69,7 @@ function isSingleColumn(colName, colValStats) {
     }
     return false;
 }
+
 function columnNameReducer(colValStats, basicFieldsReducer) {
     return (inFields, action) => {
 
@@ -81,51 +82,57 @@ function columnNameReducer(colValStats, basicFieldsReducer) {
             switch (fieldKey) {
                 // when column name changes, update the min/max input and clear x title
                 case 'columnOrExpr': {
-                      const numBins = get(inFields, ['numBins', 'value'], 50);
-                      const colName = action.payload.value;
-                       if (colName) {
-                           if (inFields['layout.xaxis.title']) {
-                               inFields = updateSet(inFields, ['layout.xaxis.title', 'value'], undefined);
-                           }
-                           if (isSingleColumn(colName, colValStats)) {
-                               for (let i = 0; i < colValStats.length; i++) {
-                                   if (colName === colValStats[i].name) {
-                                       const dataMin = colValStats[i].min;
-                                       const dataMax = colValStats[i].max;
-                                       const binWidth = ((dataMax - dataMin) / numBins).toFixed(6);
-                                       inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
-                                       inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
-                                       inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
-                                       break;
-                                   }
-                               }
-                           }
-                           else {
-                               inFields = updateSet(inFields, ['minCutoff', 'value'], undefined);
-                               inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
-                               inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
-                           }
-                         }
+                    const numBins = get(inFields, ['numBins', 'value'], 50);
+                    const colName = action.payload.value;
+                    if (colName && !get(action.payload, 'validator')) {
+                        // colName change is triggered by user input
+                        if (inFields['layout.xaxis.title']) {
+                            inFields = updateSet(inFields, ['layout.xaxis.title', 'value'], undefined);
+                        }
+                        if (isSingleColumn(colName, colValStats)) {
+                            for (let i = 0; i < colValStats.length; i++) {
+                                if (colName === colValStats[i].name) {
+                                    const dataMin = colValStats[i].min;
+                                    const dataMax = colValStats[i].max;
+                                    const binWidth = ((dataMax - dataMin) / numBins).toFixed(6);
+                                    inFields = updateSet(inFields, ['minCutoff', 'value'], `${dataMin}`);
+                                    inFields = updateSet(inFields, ['maxCutoff', 'value'], `${dataMax}`);
+                                    inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            inFields = updateSet(inFields, ['minCutoff', 'value'], undefined);
+                            inFields = updateSet(inFields, ['maxCutoff', 'value'], undefined);
+                            inFields = updateSet(inFields, ['binWidth', 'value'], undefined);
+                        }
+                        if (inFields['__xreset']) {
+                            // reset axes range
+                            inFields = updateSet(inFields, ['__xreset', 'value'], 'true');
+                            inFields = updateSet(inFields, ['__yreset', 'value'], 'true');
+                        }
+                    }
 
-                    }
+                }
                     break;
-               //When numBins changes, update binWidth
+                //When numBins changes, update binWidth
                 case 'numBins':  {
-                         const numBins = get(inFields, ['numBins', 'value'], 50);
-                         const min = get(inFields, ['minCutoff', 'value'], '');
-                         const max = get(inFields, ['maxCutoff', 'value'], '');
-                         const binWidth = (max - min) / numBins;
-                         inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
-                    }
+                    const numBins = get(inFields, ['numBins', 'value'], 50);
+                    const min = get(inFields, ['minCutoff', 'value'], '');
+                    const max = get(inFields, ['maxCutoff', 'value'], '');
+                    const binWidth = (max - min) / numBins;
+                    inFields = updateSet(inFields, ['binWidth', 'value'], `${binWidth}`);
+                }
                     break;
                 //when binWidth changes, update the numBins
                 case 'binWidth': {
-                         const binWidth = get(inFields, ['binWidth', 'value'], '');
-                         const min = get(inFields, ['minCutoff', 'value'], '');
-                         const max = get(inFields, ['maxCutoff', 'value'], '');
-                         const numBins =Math.ceil((max - min) / binWidth);
-                         inFields = updateSet(inFields, ['numBins', 'value'], `${numBins}`);
-                    }
+                    const binWidth = get(inFields, ['binWidth', 'value'], '');
+                    const min = get(inFields, ['minCutoff', 'value'], '');
+                    const max = get(inFields, ['maxCutoff', 'value'], '');
+                    const numBins =Math.ceil((max - min) / binWidth);
+                    inFields = updateSet(inFields, ['numBins', 'value'], `${numBins}`);
+                }
                     break;
                 //when minCutOff or maxCutOff change, update numBins
                 case 'minCutoff':
@@ -142,13 +149,13 @@ function columnNameReducer(colValStats, basicFieldsReducer) {
 
                     }
                     else {
-                         binWidth = get(inFields, ['binWidth', 'value'], '');
-                         numBins = get(inFields, ['numBins', 'value'], 50);
+                        binWidth = get(inFields, ['binWidth', 'value'], '');
+                        numBins = get(inFields, ['numBins', 'value'], 50);
 
-                         min = get(inFields, ['minCutoff', 'value'], '');
-                         max = get(inFields, ['maxCutoff', 'value'], '');
+                        min = get(inFields, ['minCutoff', 'value'], '');
+                        max = get(inFields, ['maxCutoff', 'value'], '');
 
-                         numBins = Math.ceil((max - min) / binWidth);
+                        numBins = Math.ceil((max - min) / binWidth);
                         inFields = updateSet(inFields, ['numBins', 'value'], `${numBins}`);
                     }
                     break;
@@ -302,7 +309,7 @@ export class HistogramOptions extends Component {
         // set minimum height to fit full height suggest box,
         // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
-            <div style={{padding:'0 5px', minHeight: 250}}>
+            <div style={{padding:'0 5px'}}>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={!Boolean(basicFieldsReducer)}
                             reducerFunc={columnNameReducer(colValStats,basicFieldsReducer)}>
 
@@ -373,7 +380,6 @@ export class HistogramOptions extends Component {
                     {basicFields && <br/>}
                     {basicFields}
                 </FieldGroup>
-
             </div>
         );
     }

@@ -5,6 +5,7 @@ import {get} from 'lodash';
 import {getTblById, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
+import {singleTraceUI} from '../ChartUtil.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
 
@@ -180,7 +181,11 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
         // colorbar.title is causing hover text display issues in Firefox
         // see https://github.com/plotly/plotly.js/issues/2003
         if (!BrowserInfo.isFirefox()) {
-            changes[`data.${traceNum}.colorbar.title`] = get(data, `${traceNum}.name`, 'pts');
+            if (singleTraceUI()) {
+                changes[`data.${traceNum}.colorbar.title`] = 'pts';
+            } else {
+                changes[`data.${traceNum}.colorbar.title`] = get(data, `${traceNum}.name`, 'pts');
+            }
         }
 
         const nbars = data.filter((d) => get(d, 'colorbar') && get(d, 'showscale', true)).length + 1;

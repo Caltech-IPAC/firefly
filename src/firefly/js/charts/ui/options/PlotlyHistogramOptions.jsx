@@ -5,7 +5,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer} from './BasicOptions.jsx';
 import {getChartData} from '../../ChartsCntlr.js';
 
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
@@ -53,57 +53,62 @@ export class HistogramOptions extends SimpleComponent {
 }
 
 export function fieldReducer({chartId, activeTrace}) {
-    const {data, tablesources={}} = getChartData(chartId);
-    const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-    const basicReducer = basicFieldReducer({chartId, activeTrace, tablesources});
-    const fields = {
-        [`_tables.data.${activeTrace}.x`]: {
-            fieldKey: `_tables.data.${activeTrace}.x`,
-            value: get(tablesourceMappings, 'x', ''),
-            tooltip: 'X axis',
-            label: 'X:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.histfunc`]: {
-            fieldKey: `data.${activeTrace}.histfunc`,
-            value: get(data, `${activeTrace}.histfunc`),
-            tooltip: 'Binning function used for this histogram trace',
-            label: 'Function:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.nbinsx`]: {
-            fieldKey: `data.${activeTrace}.nbinsx`,
-            value: get(data, `${activeTrace}.nbinsx`),
-            tooltip: 'Maximum number of desired bins',
-            label: 'Num of bins:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.xbins.size`]: {
-            fieldKey: `data.${activeTrace}.xbins.size`,
-            value: get(data, `${activeTrace}.xbins.size`),
-            tooltip: 'Step in between value each x axis bin',
-            label: 'Bin width:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.xbins.start`]: {
-            fieldKey: `data.${activeTrace}.xbins.start`,
-            value: get(data, `${activeTrace}.xbins.start`),
-            tooltip: 'Sets the starting value for the x axis bins',
-            label: 'Min:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.xbins.end`]: {
-            fieldKey: `data.${activeTrace}.xbins.end`,
-            value: get(data, `${activeTrace}.xbins.end`),
-            tooltip: 'Sets the end value for the x axis bins.',
-            label: 'Max:',
-            ...fieldProps
-        },
-        ...basicReducer(null)
+    const basicReducer = basicFieldReducer({chartId, activeTrace});
+
+    const getFields = () => {
+        const {data, tablesources = {}} = getChartData(chartId);
+        const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
+
+        const fields = {
+            [`_tables.data.${activeTrace}.x`]: {
+                fieldKey: `_tables.data.${activeTrace}.x`,
+                value: get(tablesourceMappings, 'x', ''),
+                tooltip: 'X axis',
+                label: 'X:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.histfunc`]: {
+                fieldKey: `data.${activeTrace}.histfunc`,
+                value: get(data, `${activeTrace}.histfunc`),
+                tooltip: 'Binning function used for this histogram trace',
+                label: 'Function:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.nbinsx`]: {
+                fieldKey: `data.${activeTrace}.nbinsx`,
+                value: get(data, `${activeTrace}.nbinsx`),
+                tooltip: 'Maximum number of desired bins',
+                label: 'Num of bins:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.xbins.size`]: {
+                fieldKey: `data.${activeTrace}.xbins.size`,
+                value: get(data, `${activeTrace}.xbins.size`),
+                tooltip: 'Step in between value each x axis bin',
+                label: 'Bin width:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.xbins.start`]: {
+                fieldKey: `data.${activeTrace}.xbins.start`,
+                value: get(data, `${activeTrace}.xbins.start`),
+                tooltip: 'Sets the starting value for the x axis bins',
+                label: 'Min:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.xbins.end`]: {
+                fieldKey: `data.${activeTrace}.xbins.end`,
+                value: get(data, `${activeTrace}.xbins.end`),
+                tooltip: 'Sets the end value for the x axis bins.',
+                label: 'Max:',
+                ...fieldProps
+            },
+            ...basicReducer(null)
+        };
+        return fields;
     };
     return (inFields, action) => {
         if (!inFields) {
-            return fields;
+            return getFields();
         } else {
             return inFields;
         }
