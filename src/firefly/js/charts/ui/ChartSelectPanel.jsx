@@ -122,7 +122,7 @@ export class ChartSelectPanel extends SimpleComponent {
 
     render() {
 
-        const {tbl_id, chartId, hideDialog, showMultiTrace} = this.props;
+        const {tbl_id, chartId, inputStyle={}, hideDialog, showMultiTrace} = this.props;
 
         const chartActions = getChartActions({chartId, tbl_id});
         const {chartAction} = this.state;
@@ -138,7 +138,7 @@ export class ChartSelectPanel extends SimpleComponent {
                     cancelText='Close'
                     onError={() => {}}
                     onCancel={hideDialog}
-                    inputStyle = {chartAction===CHART_TRACE_MODIFY ? {backgroundColor:'none'} : {}}
+                    inputStyle = {inputStyle}
                     changeMasking={this.changeMasking}>
                     {showMultiTrace && <ChartAction {...{chartActions, chartAction, groupKey: chartActionPanelKey, fieldKey: chartActionKey}}/>}
                     <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog,showMultiTrace}}/>
@@ -153,6 +153,7 @@ ChartSelectPanel.propTypes = {
     chartId: PropTypes.string,
     chartAction: PropTypes.string, // suggested chart action
     hideDialog: PropTypes.func,
+    inputStyle: PropTypes.object,
     showMultiTrace:PropTypes.bool
 };
 ChartSelectPanel.defaultProps = {
@@ -300,15 +301,15 @@ SyncedOptionsUI.propTypes = {
 export function showChartsDialog(chartId,  showMultiTrace) {
     const {data, fireflyData, activeTrace} = getChartData(chartId);
     const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
-
-
+    
     const content= (
-            <ChartSelectPanel {...{
-              tbl_id,
-              chartId,
-              chartAction: CHART_TRACE_MODIFY,
-              showMultiTrace,
-              hideDialog: ()=>showOptionsPopup({show:false})}}/>
+        <ChartSelectPanel {...{
+            tbl_id,
+            chartId,
+            chartAction: CHART_TRACE_MODIFY,
+            inputStyle: {backgroundColor:'none'},
+            showMultiTrace,
+            hideDialog: ()=>showOptionsPopup({show:false})}}/>
     );
     showOptionsPopup({content, title: 'Plot Parameters', modal: true, show: true});
 }
