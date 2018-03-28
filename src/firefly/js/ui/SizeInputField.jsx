@@ -11,7 +11,7 @@ import validator from 'validator';
 
 const invalidSizeMsg = 'size is not set properly or size is out of range';
 const DECDIGIT = 6;
-const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' Deg' };
+const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' deg' };
 
 function getUnit(unit) {
     return unitSign[unit];
