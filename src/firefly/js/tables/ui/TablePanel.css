@@ -177,7 +177,6 @@
     bottom: 5px;
     left: 5px;
     right: 5px;
-    //background-color: white;
     display: flex;
     flex-direction: column;
 }
