@@ -424,9 +424,9 @@ public class QueryWise extends IBESearchProcessor {
                 n++;
             }
 
-            if (imageSets.contains(WiseRequest.NEOWISER)) {    // public merge of yr1, yr2, and yr3.  modify when yr4 goes public
-                if (n > 0) imageSetConstraint += ",6,7,8";
-                else imageSetConstraint += "6,7,8";
+            if (imageSets.contains(WiseRequest.NEOWISER)) {    // public merge of yr1, yr2, yr3 and yr4.  modify when yr5 goes public
+                if (n > 0) imageSetConstraint += ",6,7,8,9";
+                else imageSetConstraint += "6,7,8,9";
                 n++;
             }
 
