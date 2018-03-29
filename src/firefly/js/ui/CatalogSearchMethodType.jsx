@@ -10,7 +10,7 @@ import {ValidationField} from '../ui/ValidationField.jsx';
 import {VALUE_CHANGE, dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 
-import {PlotAttribute} from '../visualize/WebPlot.js';
+import {PlotAttribute, isHiPS} from '../visualize/WebPlot.js';
 import Validate from '../util/Validate.js';
 import Enum from 'enum';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
@@ -24,10 +24,12 @@ import {FieldGroup} from './FieldGroup.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getActivePlotView} from '../visualize/PlotViewUtil.js';
-import { makeImagePt, makeWorldPt, makeScreenPt} from '../visualize/Point.js';
+import { makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt} from '../visualize/Point.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 
+import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 import './CatalogSearchMethodType.css';
+import {getHiPSFoV} from "../visualize/HiPSUtil";
 /*
  Component which suppose to handle the catalog method search such as cone, elliptical,etc.
  each of the option has different option panel associated
@@ -72,7 +74,8 @@ export class CatalogSearchMethodType extends PureComponent {
         const {fields}= this.state;
         const {groupKey, polygonDefWhenPlot, withPos=true, searchOption}= this.props;
 
-        const polyIsDef= polygonDefWhenPlot && primePlot(visRoot());
+        const plot = primePlot(visRoot());
+        const polyIsDef= polygonDefWhenPlot && !isHiPS(plot);
         const searchType = withPos ? get(fields, 'spatial.value', SpatialMethod.Cone.value)
                                    : SpatialMethod['All Sky'].value;
 
@@ -146,6 +149,8 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
 
 };
 
+const maxHipsRadiusSearch = 5; //degrees
+
 function calcCornerString(pv, method) {
     if (method==='clear' || !pv) return '';
     const f5 = (v) => v.toFixed(5);
@@ -156,11 +161,26 @@ function calcCornerString(pv, method) {
     var w = plot.dataWidth;
     var h = plot.dataHeight;
     var cc = CsysConverter.make(plot);
+    const radiusSearch = getHiPSFoV(pv) > maxHipsRadiusSearch ? maxHipsRadiusSearch * 3600 : getHiPSFoV(pv) * 3600; // in arcsec
+
     if (method==='image' || (!sel && method==='area-selection') ) {
         pt1 = cc.getWorldCoords(makeImagePt(0,0));
         pt2 = cc.getWorldCoords(makeImagePt(w, 0));
         pt3 = cc.getWorldCoords(makeImagePt(w, h));
         pt4 = cc.getWorldCoords(makeImagePt(0, h));
+
+        if(isHiPS(plot)){
+            const centerDevPt= makeDevicePt(plot.viewDim.width/2, plot.viewDim.height/2);
+            const centerWp= cc.getWorldCoords( centerDevPt, plot.imageCoordSys);
+            const centerPixel = cc.getScreenCoords(centerWp);
+
+            w = h = getValueInScreenPixel(plot, radiusSearch);
+
+            pt1 = cc.getWorldCoords(makeScreenPt(centerPixel.x-w/2, centerPixel.y-h/2));
+            pt2 = cc.getWorldCoords(makeScreenPt(centerPixel.x + w/2, centerPixel.y-h/2));
+            pt3 = cc.getWorldCoords(makeScreenPt(centerPixel.x + w/2, centerPixel.y + h/2));
+            pt4 = cc.getWorldCoords(makeScreenPt(centerPixel.x-w/2, centerPixel.y + h/2));
+        }
     }
     else if (method==='viewport') {
         const {viewDim, scrollX, scrollY}= pv;
@@ -186,6 +206,18 @@ function calcCornerString(pv, method) {
         pt2= cc.getWorldCoords(makeScreenPt(sx3,sy1));
         pt3= cc.getWorldCoords(makeScreenPt(sx3,sy3));
         pt4= cc.getWorldCoords(makeScreenPt(sx1,sy3));
+
+        if(isHiPS(plot)){
+            const centerDevPt2= makeDevicePt(plot.viewDim.width/2, plot.viewDim.height/2);
+            const centerWp2= cc.getWorldCoords( centerDevPt2, plot.imageCoordSys);
+            const centerPixel2 = cc.getScreenCoords(centerWp2);
+            w = h = getValueInScreenPixel(plot, radiusSearch);
+
+            pt1 = cc.getWorldCoords(makeScreenPt(centerPixel2.x-w/2, centerPixel2.y-h/2));
+            pt2 = cc.getWorldCoords(makeScreenPt(centerPixel2.x + w/2, centerPixel2.y-h/2));
+            pt3 = cc.getWorldCoords(makeScreenPt(centerPixel2.x + w/2, centerPixel2.y + h/2));
+            pt4 = cc.getWorldCoords(makeScreenPt(centerPixel2.x-w/2, centerPixel2.y + h/2));
+        }
     }
     else if (method==='area-selection') {
         pt1 = cc.getWorldCoords(sel.pt0);

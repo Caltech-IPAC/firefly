@@ -304,7 +304,7 @@ function ImageType({}) {
     }
     return (
         <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
-            <div className='ImageSearch__section--title'>1. Choose image type</div>
+            <div className='ImageSearch__section--title'>1. Choose Image Type</div>
             <RadioGroupInputField
                 initialState= {{ defaultValue: 'singleChannel',
                              tooltip: 'Please select the image type'}}
@@ -337,7 +337,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
     return (
         <div>
             <div className='ImageSearch__section'>
-                <div className='ImageSearch__section--title'>2. Select image source</div>
+                <div className='ImageSearch__section--title'>2. Select Image Source</div>
                 <RadioGroupInputField
                     initialState = {{ defaultValue, options, tooltip: 'Please select the image source'}}
                     defaultValue ={defaultValue}

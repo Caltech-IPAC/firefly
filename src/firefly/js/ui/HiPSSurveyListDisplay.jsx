@@ -106,7 +106,7 @@ export function showHiPSSurverysPopup(hipsUrl,  pv, surveysId = HiPSId, dataType
     const startHiPSPopup = () => {
         const plot = pv ? primePlot(pv) : primePlot(visRoot());
         const popup = (
-            <PopupPanel title={'HiPS Surveys'}>
+            <PopupPanel title={'Change HiPS Image'}>
                 <div style={popupPanelResizableStyle}>
                     <HiPSSurveyListSelection
                         surveysId={surveysId}
