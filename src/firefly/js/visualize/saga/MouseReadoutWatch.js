@@ -14,7 +14,8 @@ import {MouseState} from '../VisMouseSync.js';
 import {primePlot, getPlotStateAry, getPlotViewById} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
-import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage} from '../WebPlot.js';
+import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS} from '../WebPlot.js';
+import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -42,16 +43,16 @@ export function* watchReadout() {
             if (plot) {
                 if (isImage(plot)) {
                     readout= makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, threeColor);
-                    dispatchReadoutData(plotId,readout, threeColor);
+                    dispatchReadoutData({plotId,readoutItems:readout, threeColor});
                     getNextWithFlux= true;
                 }
                 else {
-                    dispatchReadoutData(plotId,makeReadout(plot,worldPt,screenPt,imagePt), false);
+                    dispatchReadoutData({plotId,readoutItems:makeReadout(plot,worldPt,screenPt,imagePt), isHiPS:true});
                 }
             }
         }
         else if (!lockByClick) {
-            dispatchReadoutData(plotId, {});
+            dispatchReadoutData({plotId, readoutItems:{}, isHiPS:isHiPS(plot)});
         }
 
         if (getNextWithFlux) { // get the next mouse event or the flux
@@ -69,8 +70,9 @@ function* processImmediateFlux(noFluxReadout,plotView,imagePt, threeColor) {
     try {
         const fluxResult= yield call(doFluxCall, plotView, imagePt);
         if (fluxResult) {
-            const readout= makeReadoutWithFlux(noFluxReadout,primePlot(plotView), fluxResult, threeColor);
-            dispatchReadoutData(plotView.plotId,readout, threeColor);
+            const plot= primePlot(plotView);
+            const readout= makeReadoutWithFlux(noFluxReadout,plot, fluxResult, threeColor);
+            dispatchReadoutData({plotId:plotView.plotId,readoutItems:readout, isHiPS:isHiPS(plot), threeColor});
             const mouseCtx = yield call(mouseUpdatePromise);
             return mouseCtx;
         }
@@ -100,8 +102,9 @@ function* processDelayedFlux(noFluxReadout,plotView,imagePt, threeColor) {
         if (raceWinner.mouseCtx) return raceWinner.mouseCtx;
 
         if (raceWinner.fluxResult) {
+            const plot= primePlot(plotView);
             const readout= makeReadoutWithFlux(noFluxReadout,primePlot(plotView), raceWinner.fluxResult, threeColor);
-            dispatchReadoutData(plotView.plotId,readout, threeColor);
+            dispatchReadoutData({plotId:plotView.plotId,readoutItems:readout, isHiPS:isHiPS(plot), threeColor});
             const mouseCtx = yield call(mouseUpdatePromise);
             return mouseCtx;
         }
@@ -136,20 +139,48 @@ function usePayload(mouseState, lockByClick) {
  */
 function makeReadout(plot, worldPt, screenPt, imagePt) {
     if (CysConverter.make(plot).pointInPlot(imagePt)) {
-        return {
-            worldPt: makePointReadoutItem('World Point', worldPt),
-            screenPt: makePointReadoutItem('Screen Point', screenPt),
-            imagePt: makePointReadoutItem('Image Point', imagePt),
-            title: makeDescriptionItem(plot.title),
-            pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
-            screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
-        };
+        if (isImage(plot)) {
+            return {
+                worldPt: makePointReadoutItem('World Point', worldPt),
+                screenPt: makePointReadoutItem('Screen Point', screenPt),
+                imagePt: makePointReadoutItem('Image Point', imagePt),
+                title: makeDescriptionItem(plot.title),
+                pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
+                screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
+            };
+        }
+        else {
+            return {
+                worldPt: makePointReadoutItem('World Point', worldPt),
+                screenPt: makePointReadoutItem('Screen Point', screenPt),
+                imagePt: makePointReadoutItem('Image Point', imagePt),
+                title: makeDescriptionItem(plot.title),
+                pixel: makeHiPSPixelReadoutItem(plot),
+                screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
+            };
+
+        }
     }
     else {
         return {};
     }
 
 }
+
+function makeHiPSPixelReadoutItem(plot) {
+    const pixDeg= getPlotTilePixelAngSize(plot);
+    let unit= 'degree', value= pixDeg;
+    if (pixDeg*3600 < 60) {
+        unit= 'arcsec';
+        value= pixDeg*3600;
+    }
+    else if (pixDeg*60 < 60) {
+        unit= 'arcmin';
+        value= pixDeg*60;
+    }
+    return makeValueReadoutItem('Pixel Size',value, unit, 3);
+}
+
 
 
 /**

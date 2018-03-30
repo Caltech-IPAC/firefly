@@ -9,17 +9,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {STANDARD_READOUT, dispatchChangeLockByClick, dispatchChangeLockUnlockByClick} from '../../visualize/MouseReadoutCntlr.js';
-import {getMouseReadout, labelMap} from './MouseReadout.jsx';
+import {getNonFluxDisplayElements} from './MouseReadoutUIUtil';
 
 //--------------- Icons --------------------------------
 import LOCKED from    'html/images/icons-2014/lock_20x20.png';
 import UNLOCKED from  'html/images/icons-2014/unlock_20x20.png';
 
 const rS = {
-    // padding : 10,
     cursor: 'pointer',
     display: 'flex',
     padding: '2px 0 2px 3px'
@@ -46,23 +44,13 @@ const column3 =    {width: 100,    paddingLeft: 8, textAlign: 'left',display: 'i
 
 export function PopupMouseReadoutMinimal({readout}){
 
-
     //get the standard readouts
     const sndReadout= readout[STANDARD_READOUT];
     if (!get(sndReadout,'readoutItems')) return EMPTY;
 
-    var objList={};
-    Object.keys( readout.readoutPref).forEach( (key) =>  {
-        if (key!=='pixelSize') {
-            objList[key] = getMouseReadout(sndReadout.readoutItems, readout.readoutPref[key]);
-        }
-    });
-
-    if (!objList)return EMPTY;
-
-
-    const {mouseReadout1, mouseReadout2} = objList;
-
+    const {isHiPS, readoutItems}= sndReadout;
+    const displayEle= getNonFluxDisplayElements(readoutItems,  readout.readoutPref, isHiPS);
+    const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange}= displayEle;
 
     const lock = readout.isLocked ? LOCKED:UNLOCKED;
     return (
@@ -74,33 +62,22 @@ export function PopupMouseReadoutMinimal({readout}){
             />
             <div>
                 <div>
-
-
-                    <div style={ column1} onClick={ () => showDialog('mouseReadout1', readout.readoutPref.mouseReadout1)}>
-                        { labelMap[readout.readoutPref.mouseReadout1] }
-                    </div>
-                    <div style={column2}> {mouseReadout1} </div>
-
-
+                    <div style={column1} onClick={ showReadout1PrefChange}> { readout1.label } </div>
+                    <div style={column2}> {readout1.value} </div>
                 </div>
                 <div>{/* row2*/}
-
-
-                    <div style={ column1} onClick={ () => showDialog('mouseReadout2' ,readout.readoutPref.mouseReadout2 )}>
-                        {labelMap[readout.readoutPref.mouseReadout2] } </div>
-
-                    <div style={column2}>  {mouseReadout2}  </div>
+                    <div style={column1} onClick={ showReadout2PrefChange}> {readout2.label} </div>
+                    <div style={column2}>  {readout2.value}  </div>
 
                     <div style={column3} title='Click on an image to lock the display at that point.'>
                         <input type='checkbox' name='aLock' value='lock'
                                onChange={() => {
-                           dispatchChangePointSelection('mouseReadout', !readout.lockByClick);
-                           dispatchChangeLockByClick(!readout.lockByClick);
-                      }}
+                                   dispatchChangePointSelection('mouseReadout', !readout.lockByClick);
+                                   dispatchChangeLockByClick(!readout.lockByClick);
+                               }}
                         />
                         Lock by click
                     </div>
-
                 </div>
             </div>
         </div>
@@ -110,10 +87,4 @@ export function PopupMouseReadoutMinimal({readout}){
 PopupMouseReadoutMinimal.propTypes = {
     readout: PropTypes.object
 };
-
-function showDialog(fieldKey, radioValue) {
-
-    showMouseReadoutOptionDialog(fieldKey, radioValue);
-
-}
 

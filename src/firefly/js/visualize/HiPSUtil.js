@@ -8,7 +8,7 @@
 // http:www.ivoa.net/documents/HiPS/20170519/REC-HIPS-1.0-20170519.pdf
 
 
-import {get} from 'lodash';
+import {get, memoize} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeWorldPt, makeDevicePt} from './Point.js';
@@ -19,6 +19,7 @@ import {primePlot} from './PlotViewUtil.js';
 import CoordinateSys from './CoordSys';
 import {encodeServerUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
+import {toDegrees} from './VisUtil.js';
 
 
 /**
@@ -42,6 +43,28 @@ export function getMaxDisplayableHiPSLevel(plot) {
 }
 
 
+export function getPlotTilePixelAngSize(plot) {
+    if (!plot) return 0;
+    const {norder} = getBestHiPSlevel(plot,true);
+    return getTilePixelAngSize(norder);
+}
+
+const cachedRetValues= {};
+
+/**
+ * Return the angular size of the pixel of a nOrder level
+ * results are cache so the computation does not have to be done again an again
+ * @param {Number} nOrder
+ * @return {*}
+ */
+export function getTilePixelAngSize(nOrder) {
+    nOrder= Math.trunc(nOrder);
+    if (cachedRetValues[nOrder]) return cachedRetValues[nOrder];
+    const rad= Math.sqrt(4*Math.PI / (12*Math.pow(512*Math.pow(2,nOrder) , 2)));
+    cachedRetValues[nOrder]= toDegrees(rad);
+    return cachedRetValues[nOrder];
+}
+
 /**
  *
  * @param {WebPlot} plot
@@ -53,13 +76,13 @@ export function getBestHiPSlevel(plot, limitToImageDepth= false) {
 
     const {fov}= getPointMaxSide(plot,plot.viewDim);
 
-    const screenPix= (fov/plot.viewDim.width)*3600;
-    if (screenPix> 130) return  {useAllSky:true, norder:2};
-    if (screenPix> 100) return  {useAllSky:true, norder:3};
+    const screenPixArcsecSize= (fov/plot.viewDim.width)*3600;
+    if (screenPixArcsecSize> 130) return  {useAllSky:true, norder:2};
+    if (screenPixArcsecSize> 100) return  {useAllSky:true, norder:3};
 
-    const nside = HealpixIndex.calculateNSide(screenPix*512);
+    const nside = HealpixIndex.calculateNSide(screenPixArcsecSize*512); // 512 size tiles hardcoded, should fix
 
-    let norder = Math.log(nside)/Math.log(2);
+    let norder = Math.log(nside)/Math.log(2); // convert to a base 2 log - 	logb(x) = logc(x) / logc(b)
     norder= Math.max(3, norder);
 
     if (limitToImageDepth) {
@@ -354,7 +377,3 @@ export function resolveHiPSConstant(c) {
 
 }
 
-
-export function getDefaultHiPSSurveys() {
-    return hipsSURVEYS;
-}

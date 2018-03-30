@@ -33,15 +33,18 @@ export default {
 //======================================== Dispatch Functions =============================
 
 /**
- * 
- * @param plotId
- * @param readoutItems
- * @param threeColor
- * @param readoutKey
+ *
+ * @param {Object} p
+ * @param p.plotId
+ * @param p.readoutItems
+ * @param p.threeColor
+ * @param p.readoutKey
  */
-export function dispatchReadoutData(plotId, readoutItems, threeColor= false, readoutKey=STANDARD_READOUT) {
+// export function dispatchReadoutData(plotId, readoutItems, threeColor= false, readoutKey=STANDARD_READOUT) {
+export function dispatchReadoutData({plotId, readoutItems, threeColor= false,
+                                        isHiPS= false, readoutKey=STANDARD_READOUT}) {
     flux.process({type: READOUT_DATA, payload: {readoutKey, plotId, threeColor, 
-                                                readoutItems, 
+                                                readoutItems, isHiPS,
                                                  hasValues:!isEmpty(readoutItems)}});
 }
 
@@ -116,7 +119,7 @@ function reducer(state=initState(), action={}) {
 
     if (!action.payload || !action.type) return state;
 
-    var retState= state;
+    let retState= state;
     switch (action.type) {
         case READOUT_DATA:
             retState= processReadoutData(state,action);
@@ -129,8 +132,8 @@ function reducer(state=initState(), action={}) {
             retState= clone(state,{isLocked:action.payload.isLocked});
             break;
         case CHANGE_READOUT_PREFS:
-            var readoutPref = state.readoutPref;
-            var key = Object.keys(action.payload.readoutPref);
+            const readoutPref = state.readoutPref;
+            const key = Object.keys(action.payload.readoutPref);
             readoutPref[key]=action.payload.readoutPref[ key];
             retState= clone(state,{readoutPref:clone(state.readoutPref,readoutPref)});
             break;
@@ -143,8 +146,8 @@ function reducer(state=initState(), action={}) {
 
 
  function processReadoutData(state,action) {
-     const {plotId, readoutKey,readoutItems, threeColor, hasValues}= action.payload;
-     return clone(state, {[readoutKey]: {plotId, threeColor, hasValues, readoutItems}});
+     const {plotId, readoutKey,readoutItems, threeColor, hasValues, isHiPS}= action.payload;
+     return clone(state, {[readoutKey]: {plotId, threeColor, hasValues, readoutItems, isHiPS}});
  }
 
 
@@ -157,10 +160,11 @@ const initState= function() {
         lockByClick : false,
         isLocked: false,
         readoutPref :{
-            mouseReadout1:'eqj2000hms',
-            mouseReadout2: 'fitsIP',
-            pixelSize: 'pixelSize'
-
+            imageMouseReadout1:'eqj2000hms',
+            imageMouseReadout2: 'fitsIP',
+            pixelSize: 'pixelSize',
+            hipsMouseReadout1:'eqj2000hms',
+            hipsMouseReadout2:'galactic'
         }
     };
 

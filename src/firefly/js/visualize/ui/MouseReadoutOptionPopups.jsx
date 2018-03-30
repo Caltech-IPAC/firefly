@@ -25,15 +25,25 @@ const coordOptions= [
 	{label: 'EQ B1950', value: 'eqb1950'},
 	{label: 'FITS Image Pixel', value: 'fitsIP'}
 ];
-const pixelOptions = [
 
+const hipsCoordOptions= [
+    {label: 'EQ J2000 HMS', value: 'eqj2000hms'},
+    {label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
+    {label: 'Galactic', value: 'galactic'},
+    {label: 'EQ B1950', value: 'eqb1950'},
+];
+
+
+const pixelOptions = [
 	{label: 'Pixel Size', value: 'pixelSize'},
 	{label: 'Screen Pixel Size', value: 'sPixelSize' }
 ];
 
 const groupKeys={
-	mouseReadout1:'COORDINATE_OPTION_FORM',
-	mouseReadout2:'COORDINATE_OPTION_FORM',
+	imageMouseReadout1:'COORDINATE_OPTION_FORM',
+	imageMouseReadout2:'COORDINATE_OPTION_FORM',
+    hipsMouseReadout1:'COORDINATE_OPTION_FORM',
+    hipsMouseReadout2:'COORDINATE_OPTION_FORM',
 	pixelSize: 'PIXEL_OPTION_FORM'
 };
 
@@ -45,22 +55,21 @@ const dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
 
 /**
  *
- * @param fieldKey - string: a key for the field group
- * @param radioValue: string: a option value of the radio group
+ * @param {string} fieldKey - a key for the field group
+ * @param {string} radioValue - a option value of the radio group
  * @returns {XML}
  */
 function getDialogBuilder(fieldKey, radioValue) {
 
-
 	//name a groupKey based on the input fieldKey
-	var groupKey = groupKeys[fieldKey];
+	const groupKey = groupKeys[fieldKey];
+	const isHiPS= (fieldKey==='hipsMouseReadout1' || fieldKey==='hipsMouseReadout2');
 
-	var popup = (
-
+	const popup = (
 		<PopupPanel title={'Choose Option'}  >
-			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue}/>
+			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}
+									  radioValue={radioValue} isHiPS={isHiPS}/>
 		</PopupPanel>
-
 	);
 	DialogRootContainer.defineDialog(fieldKey, popup);
 
@@ -83,9 +92,23 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
  */
 function doDispatch(fieldGroup,  fieldKey){
 	window.setTimeout(() => { // since the mouse click happens before the store can update, we must defer the actions
-		var results= getFieldGroupResults(fieldGroup,true);
-		const payload = {[fieldKey]:results[fieldKey]};
-		dispatchChangeReadoutPrefs(payload);
+		const results= getFieldGroupResults(fieldGroup,true);
+		const prefValue= results[fieldKey];
+		if (prefValue==='fitsIP') {
+            dispatchChangeReadoutPrefs({[fieldKey]:prefValue});
+        }
+		else if (fieldKey==='imageMouseReadout1' || fieldKey==='hipsMouseReadout1') {
+            dispatchChangeReadoutPrefs({imageMouseReadout1:prefValue});
+            dispatchChangeReadoutPrefs({hipsMouseReadout1:prefValue});
+        }
+        else if (fieldKey==='imageMouseReadout2' || fieldKey==='hipsMouseReadout2') {
+            dispatchChangeReadoutPrefs({imageMouseReadout2:prefValue});
+            dispatchChangeReadoutPrefs({hipsMouseReadout2:prefValue});
+        }
+        else {
+            dispatchChangeReadoutPrefs({[fieldKey]:prefValue});
+        }
+
 		dispatchHideDialog(fieldKey);
 	},0);
 
@@ -116,8 +139,8 @@ class MouseReadoutOptionDialog extends PureComponent {
 	}
 
 	render() {
-		var form;
-		const {groupKey,fieldKey,radioValue}= this.props;
+		let form;
+		const {groupKey,fieldKey,radioValue, isHiPS}= this.props;
 
 		if (this.props.groupKey==='PIXEL_OPTION_FORM'){
 			form=(  <PixelSizeOptionDialogForm
@@ -132,6 +155,7 @@ class MouseReadoutOptionDialog extends PureComponent {
 				groupKey={groupKey}
 				fieldKey={fieldKey}
 				radioValue={radioValue}
+                optionList={isHiPS ? hipsCoordOptions : coordOptions}
 			/>);
 		}
 		return form;
@@ -145,20 +169,21 @@ class MouseReadoutOptionDialog extends PureComponent {
 MouseReadoutOptionDialog.propTypes= {
 	groupKey:   PropTypes.string.isRequired,
 	fieldKey:   PropTypes.string.isRequired,
-	radioValue:   PropTypes.string.isRequired
+	radioValue:   PropTypes.string.isRequired,
+    isHiPS: PropTypes.bool.isRequired
 };
 
 
 // ------------ React component
-function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
+function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue, optionList}) {
 
 
 	return (
 
-		<FieldGroup groupKey={groupKey} keepState={true}>
+		<FieldGroup groupKey={groupKey} keepState={false}>
 			<div style={ dialogStyle} onClick={ () => doDispatch(groupKey, fieldKey) } >
 					<div style={leftColumn} title='Please select an option'> Options</div>
-			     	{renderCoordinateRadioGroup(rightColumn,fieldKey,radioValue)}
+			     	{renderCoordinateRadioGroup(rightColumn,fieldKey,radioValue, optionList)}
 			</div>
 
 		</FieldGroup>
@@ -168,24 +193,24 @@ function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 }
 /**
  * property of the CoordinateOptionDialogForm
- * @type {{groupKey: *, filedKey: *, radioValue: *}}
  */
 CoordinateOptionDialogForm.propTypes= {
 	groupKey:  PropTypes.string.isRequired,
-	filedKey:  PropTypes.string,
-	radioValue: PropTypes.string.isRequired
+	fieldKey:  PropTypes.string,
+	radioValue: PropTypes.string.isRequired,
+	optionList: PropTypes.arrayOf(PropTypes.object).isRequired
 };
 
 
-function renderCoordinateRadioGroup(rightColumn,fieldKey, radioValue ){
+function renderCoordinateRadioGroup(rightColumn,fieldKey, radioValue, optionList ){
 	return(
 		<div style={rightColumn} >
 			<RadioGroupInputField
-				initialState={{
-                                    tooltip: 'Please select an option',
-                                    value:radioValue
-                                    }}
-				options={coordOptions}
+                initialState={{
+                    tooltip: 'Please select an option',
+                    value:radioValue
+                }}
+				options={optionList}
 				alignment={'vertical'}
 				fieldKey={fieldKey}
 			/>
@@ -199,7 +224,7 @@ function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 
 
 	return (
-		<FieldGroup groupKey={groupKey} keepState={true}>
+		<FieldGroup groupKey={groupKey} keepState={false}>
 			<div style={ dialogStyle} onClick={ () => doDispatch(groupKey, fieldKey) }>
 				<div style={leftColumn} title='Please select an option'> Options</div>
 				<div style={rightColumn}>
@@ -225,6 +250,6 @@ function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 PixelSizeOptionDialogForm.propTypes= {
 	groupKey: PropTypes.string.isRequired,
 	radioValue: PropTypes.string.isRequired,
-	filedKey: PropTypes.string
+	fieldKey: PropTypes.string
 };
 
