@@ -373,4 +373,32 @@ public class AppProperties {
     public static String[] getArrayProperties(final String property) {
         return getArrayProperties(property, "\\s+");
     }
+
+    public static void setProperty(String key, String value) {
+           if (_mainProperties==null) {
+               return;  // if _mainProperties is null then most probably we are using a server (tomcat) that has
+               // done some sort of static unload during shutdown, in any normal mode of
+               // operation _mainProperties is never null
+           }
+           _mainProperties.setProperty(key, value);
+       }
+
+    public static boolean loadClassPropertiesFromFileToPdb(File file, Properties loadToPDB) {
+         boolean loaded= false;
+         Assert.argTst(file, "resource must not be null");
+         try {
+             InputStream fs= new FileInputStream( file );
+             addPropertiesFromStream(fs, loadToPDB);
+             loaded= true;
+         } catch (FileNotFoundException e) {
+             System.out.println("AppProperties: Could not find file: " +
+                                file.getPath());
+         } catch (IOException e) {
+             String errStr= "AppProperties: Class properties not found: ";
+             System.out.println(errStr + file.getPath());
+             System.out.println("AppProperties: exception: " + e);
+         }
+         return loaded;
+     }
+
 }
