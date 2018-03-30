@@ -138,26 +138,27 @@ export function getZoomDesc(pv) {
     const plot= primePlot(pv);
     if (!plot) return '';
     const zstr= convertZoomToString(plot.zoomFactor);
+
     if (isImage(plot)) {
         return zstr;
     }
     else {
         if (!plot.viewDim) return '';
         const zprefix= SHOW_ZOOM_PREFIX ? zstr+', ' : '';
-        // const degPerPix= getArcSecPerPix(plot,plot.zoomFactor)/3600;
-        // const fov= degPerPix * plot.viewDim.width;
         const fov= getHiPSFoV(pv);
-        if (fov>10) {
-            return `${zprefix}FOV: ${numeral(fov).format('0')}${String.fromCharCode(176)}`;
-        }
-        else if (fov>5) {
-            return `${zprefix}FOV: ${numeral(fov).format('0.0')}${String.fromCharCode(176)}`;
-        }
-        else if (fov>1) {
-            return `${zprefix}FOV: ${numeral(fov).format('0.00')}${String.fromCharCode(176)}`;
-        }
-        else {
-            return `${zprefix}FOV: ${numeral(fov*3600).format('0')}"`;
+        const zoomNumber = (charCode, fNum) => {
+            const nFormat = (fNum > 10.0) ? '0' : ((fNum >= 1.0) ? '0.0' : '0.00');
+
+            return `${zprefix}FOV: ${numeral(fNum).format(nFormat)}${charCode}`;
+        };
+
+        if (fov > 1.0) {
+            return zoomNumber(String.fromCharCode(176), fov);
+        } else {
+            const fovMin = VisUtil.convertAngle('deg', 'arcmin', fov);
+
+            return fovMin > 1.0 ? zoomNumber("'", fovMin) :
+                                  zoomNumber('"', VisUtil.convertAngle('arcmin', 'arcsec', fovMin));
         }
     }
 
