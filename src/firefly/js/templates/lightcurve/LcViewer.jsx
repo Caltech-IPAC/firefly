@@ -219,10 +219,18 @@ export class UploadPanel extends PureComponent {
         this.iAmMounted = true;
         this.unbinder = FieldGroupUtils.bindToStore(vFileKey, (fields) => {
             if (this.iAmMounted) {
+                const newLoc = get(fields, ['uploadContainer', 'value'], 'isLocal');
+
+                if (newLoc !== this.state.fileLocation) {
+                this.setState(
+                    {fileLocation: newLoc});
+                }
+                /*
                 this.setState((state) => {
                     state.fileLocation = get(fields, ['uploadContainer', 'value'], 'isLocal');
                     return state;
                 });
+                */
             }
         });
     }
