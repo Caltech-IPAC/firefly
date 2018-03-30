@@ -23,7 +23,6 @@ public class ZoomChoice {
     private final int height;
     private final float arcsecPerScreenPix;
     private boolean hasMaxZoomLevel = true;
-    private float maxZoomLevel = DEFAULT_MAX_ZOOM_LEVEL;
 
 
     public ZoomChoice(boolean hasMaxZoomLevel,
@@ -46,6 +45,6 @@ public class ZoomChoice {
     public int getHeight() { return height; }
     public float getArcsecPerScreenPix() { return arcsecPerScreenPix; }
     public boolean hasMaxZoomLevel() {return hasMaxZoomLevel;}
-    public float getMaxZoomLevel() {return maxZoomLevel;}
+    public float getMaxZoomLevel() {return DEFAULT_MAX_ZOOM_LEVEL;}
 }
 

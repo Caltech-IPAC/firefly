@@ -24,6 +24,10 @@ import java.util.List;
  */
 public class StaticDrawInfo implements Serializable, Iterable<WorldPt> {
 
+    /**
+     * @author Trey Roby
+     */
+    public enum DrawSymbol { X,SQUARE,CROSS,DIAMOND,DOT,CIRCLE, SQUARE_X, EMP_CROSS,EMP_SQUARE_X }
     public enum ShapeType {Line, Text,Circle, Rectangle}
     public enum DrawType {SYMBOL, GRID, REGION}
 
@@ -140,5 +144,6 @@ public class StaticDrawInfo implements Serializable, Iterable<WorldPt> {
         }
         return drawInfo;
     }
+
 }
 

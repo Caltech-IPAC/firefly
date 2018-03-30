@@ -432,7 +432,7 @@ public class ImagePlotBuilder {
         }
     }
 
-    static void initState(PlotState state,
+    private static void initState(PlotState state,
                           FileReadInfo fi,
                           Band band,
                           WebPlotRequest req) {

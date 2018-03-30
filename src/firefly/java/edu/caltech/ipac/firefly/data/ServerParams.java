@@ -154,7 +154,7 @@ public class ServerParams {
     public static final String DS9_REGION= "ds9Region";
     public static final String SAVE_DS9_REGION= "saveDS9Region";
     public static final String ADD_SAVED_REQUEST= "addSavedRequest";
-    public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
+//    public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static final String TITLE= "Title";
     public static final String JSON_DEEP= "jsonDeep";
     public static final String CLIENT_IS_NORTH= "clientIsNorth";

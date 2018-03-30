@@ -3,9 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.util.StringUtils;
-
-import java.io.Serializable;
 /**
  * User: roby
  * Date: Mar 1, 2010
@@ -16,42 +13,27 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
-public class FileAndHeaderInfo implements Serializable {
+public class FileAndHeaderInfo {
 
     private final static String SPLIT_TOKEN= "--FileAndHeaderInfo --";
     private String          _file;
-    private String _headerSerialized;
-
-    private FileAndHeaderInfo() {}
+    private ClientFitsHeader _header;
 
     /**
      * contains the file and the ClientFitsHeader
      * @param file the file to look at on the server
-     * @param headerSerialized a string the contains the results of passing ClientFitsHeader
-     * to ClientFitsHeader.toString()
+     * @param header the ClientFitsHeader
      */
-    FileAndHeaderInfo(String file, String headerSerialized) {
+    FileAndHeaderInfo(String file, ClientFitsHeader header) {
         _file= file;
-        _headerSerialized = headerSerialized;
+        _header= header;
     }
 
     public String getfileName() { return _file; }
-    public ClientFitsHeader getHeader() { return ClientFitsHeader.parse(_headerSerialized); }
+    public ClientFitsHeader getHeader() { return _header; }
 
     public String toString() {
-        return _file+SPLIT_TOKEN+_headerSerialized;
-    }
-
-
-    public static FileAndHeaderInfo parse(String s) {
-
-        if (s==null) return null;
-        String sAry[]= s.split(SPLIT_TOKEN,3);
-        FileAndHeaderInfo retval= null;
-        if (sAry.length==2) {
-            retval= new FileAndHeaderInfo(StringUtils.checkNull(sAry[0]),sAry[1]);
-        }
-        return retval;
+        return _file+SPLIT_TOKEN+_header.toString();
     }
 }
 

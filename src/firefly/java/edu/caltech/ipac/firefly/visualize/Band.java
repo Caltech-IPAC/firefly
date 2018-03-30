@@ -11,9 +11,6 @@ public enum Band {
     private String _desc;
     private int _idx;
 
-    Band() {
-    }
-
     Band(String desc, int idx) {
         _desc = desc;
         _idx = idx;

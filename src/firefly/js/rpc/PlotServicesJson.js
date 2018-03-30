@@ -28,7 +28,6 @@ export const callGetColorHistogram= function(state,band,width,height) {
     paramList.push({name:ServerParams.WIDTH, value: width+''});
     paramList.push({name:ServerParams.HEIGHT, value: height+''});
     paramList.push({name:ServerParams.BAND, value: band.key});
-    paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
 
     return doJsonRequest(ServerParams.HISTOGRAM, paramList, true);
 };
@@ -44,7 +43,6 @@ export function callGetWebPlot3Color(redRequest, greenRequest, blueRequest) {
     if (redRequest) paramList.push({name:ServerParams.RED_REQUEST, value:redRequest.toString()});
     if (greenRequest) paramList.push({name:ServerParams.GREEN_REQUEST, value:greenRequest.toString()});
     if (blueRequest) paramList.push({name:ServerParams.BLUE_REQUEST, value:blueRequest.toString()});
-    paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
     return doJsonRequest(ServerParams.CREATE_PLOT, paramList, true);
 };
 
@@ -54,14 +52,12 @@ export function callGetWebPlot3Color(redRequest, greenRequest, blueRequest) {
  */
 export function callGetWebPlot(request) {
     var paramList = [{name: ServerParams.NOBAND_REQUEST, value:request.toString()}];
-    paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
     return doJsonRequest(ServerParams.CREATE_PLOT, paramList,true);
 };
 
 export function callGetWebPlotGroup(reqAry,  requestKey) {
     var paramList = {};
     paramList[ServerParams.PROGRESS_KEY]= requestKey;
-    paramList[ServerParams.JSON_DEEP]= 'true';
     paramList= reqAry.reduce( (obj,req, idx) => {
         obj[ServerParams.REQUEST+idx]= req.toString();
         return obj;
@@ -89,7 +85,6 @@ export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
 export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4, areaShape = SelectedShape.rect.key, rotation = 0) {
     var params= {
         [ServerParams.STATE]: state.toJson(),
-        [ServerParams.JSON_DEEP]:'true',
         [ServerParams.PT1]: ipt1.toString(),
         [ServerParams.PT2]: ipt2.toString(),
         [ServerParams.PT3]: ipt3.toString(),
@@ -119,7 +114,6 @@ export function callSetZoomLevel(stateAry, level, isFullScreen) {
 export function callChangeColor(state, colorTableId) {
     var params= [
         {name:ServerParams.STATE, value: state.toJson()},
-        {name:ServerParams.JSON_DEEP,value:'true'},
         {name:ServerParams.COLOR_IDX, value:colorTableId}
     ];
     return doJsonRequest(ServerParams.CHANGE_COLOR, params, true);
@@ -135,7 +129,6 @@ export function callGetBeta(state) {
 export function callRecomputeStretch(state, stretchDataAry) {
     var params= {
         [ServerParams.STATE]: state.toJson(),
-        [ServerParams.JSON_DEEP]: true
     };
     stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
     return doJsonRequest(ServerParams.STRETCH, params, true);
@@ -158,7 +151,6 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
 export  function  callGetFitsHeaderInfo(plotState, tableId) {
 
     var params ={ [ServerParams.STATE]: plotState.toJson(),
-        [ServerParams.JSON_DEEP]: true,
         tableId
     };
 
@@ -198,7 +190,6 @@ export function getDS9Region(fileKey) {
 
     const params= {
         [ServerParams.FILE_KEY]: fileKey,
-        [ServerParams.JSON_DEEP]: true
     };
     return doJsonRequest(ServerParams.DS9_REGION, params, true);
 }
@@ -208,7 +199,6 @@ export function saveDS9RegionFile(regionData) {
 
     const params= {
         [ServerParams.REGION_DATA]: regionData,
-        [ServerParams.JSON_DEEP]: true
     };
     return doJsonRequest(ServerParams.SAVE_DS9_REGION, params, true);
 }
@@ -232,7 +222,6 @@ export function getImagePng(state, regionData, clientIsNorth, clientRotAngle, cl
         [ServerParams.CLIENT_IS_NORTH]: clientIsNorth,
         [ServerParams.CLIENT_ROT_ANGLE]: clientRotAngle,
         [ServerParams.CLIENT_FlIP_Y]: clientFlipY,
-        [ServerParams.JSON_DEEP]: true
     };
     return doJsonRequest(ServerParams.IMAGE_PNG_REG, params, true);
 }
@@ -241,7 +230,6 @@ function makeParamsWithStateAry(stateAry, otherParams=[]) {
     return [
         ...makeStateParamAry(stateAry),
         ...otherParams,
-        {name:ServerParams.JSON_DEEP,value:'true'}
     ];
 
 }

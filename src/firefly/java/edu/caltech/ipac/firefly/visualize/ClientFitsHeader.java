@@ -35,19 +35,6 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     private static final String BLANK_VALUE= "blankValue";
     private static final String DATA_OFFSET= "dataOffset";
 
-
-
-//    private int _planeNumber;
-//    private int _bitpix;
-//    private int _naxis;
-//    private int _naxis1;
-//    private int _naxis2;
-//    private int _naxis3;
-//    private double _cdelt2;
-//    private double _blankValue;
-//    private double _bscale;
-//    private double _bzero;
-//    private long _dataOffset;
     private Map<String,String> _headers= new HashMap<String,String>(20);
 
 
@@ -197,6 +184,16 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
         return clientFitsHeader;
     }
 
+    public boolean equals(Object o) {
+        boolean retval= false;
+        if (o==this) {
+            retval= true;
+        }
+        else if (o!=null && o instanceof ClientFitsHeader) {
+            return o.toString().equals(this.toString());
+        }
+        return retval;
+    }
 
 
 }

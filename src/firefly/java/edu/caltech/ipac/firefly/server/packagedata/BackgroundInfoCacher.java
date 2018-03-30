@@ -12,7 +12,7 @@ import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.util.event.ServerSentEventNames;
+import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
 
@@ -71,7 +71,7 @@ public class BackgroundInfoCacher {
                 mergeInfoIntoStatus(info, info.getStatus());
                 ServerEvent.EventTarget target = info.getEventTarget() == null ?
                         new ServerEvent.EventTarget(ServerEvent.Scope.USER) : info.getEventTarget();
-                ServerEvent ev= new ServerEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
+                ServerEvent ev= new ServerEvent(Name.SVR_BACKGROUND_REPORT,
                         target, info.getStatus());
                 ServerEventManager.fireEvent(ev);
             }

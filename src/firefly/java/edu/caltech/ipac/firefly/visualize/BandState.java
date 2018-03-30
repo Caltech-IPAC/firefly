@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.util.ComparisonUtil;
-import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
@@ -20,7 +19,7 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
-public class BandState implements Serializable, HandSerialize {
+public class BandState implements Serializable {
 
     private final static String SPLIT_TOKEN= "--BandState--";
 
@@ -32,7 +31,7 @@ public class BandState implements Serializable, HandSerialize {
 
     private String plotRequestSerialize = null; // Serialized WebPlotRequest
     private String rangeValuesSerialize = null; // Serialized RangeValues
-    private String fitsHeaderSerialize = null; // Serialized ClientFitsHeader
+    private ClientFitsHeader fitsHeader;
     private boolean bandVisible = true;
     private boolean multiImageFile = false;
     private boolean tileCompress = false;
@@ -129,18 +128,14 @@ public class BandState implements Serializable, HandSerialize {
      * @param header
      */
     public void setFitsHeader(ClientFitsHeader header) {
-        fitsHeaderSerialize = header==null ? null : header.toString();
+        fitsHeader= header;
     }
 
     public FileAndHeaderInfo getFileAndHeaderInfo() {
-        return new FileAndHeaderInfo(workingFitsFileStr, fitsHeaderSerialize);
+        return new FileAndHeaderInfo(workingFitsFileStr, fitsHeader);
     }
 
-    public ClientFitsHeader getHeader() { return ClientFitsHeader.parse(fitsHeaderSerialize); }
-
-
-    public String getFitsHeaderSerialize() { return fitsHeaderSerialize; }
-
+    public ClientFitsHeader getHeader() { return fitsHeader; }
 
 
     public String getWorkingFitsFileStr() { return workingFitsFileStr; }
@@ -168,56 +163,13 @@ public class BandState implements Serializable, HandSerialize {
                 originalImageIdx +"",
                 plotRequestSerialize,
                 rangeValuesSerialize,
-                fitsHeaderSerialize,
+                fitsHeader+"",
                 bandVisible +"",
                 multiImageFile+"",
                 tileCompress+"",
                 cubeCnt+"",
                 cubePlaneNumber+"");
     }
-
-    public String serialize() { return toString(); }
-
-    public static BandState parse(String s) {
-        BandState retval= null;
-        try {
-            String sAry[]= StringUtils.parseHelper(s,12,SPLIT_TOKEN);
-            int i= 0;
-            String workingFileStr=  StringUtils.checkNull(sAry[i++]);
-            String originalFileStr= StringUtils.checkNull(sAry[i++]);
-            String uploadFileStr=   StringUtils.checkNull(sAry[i++]);
-            int    imageIdx=        Integer.parseInt(sAry[i++]);
-            int    originalImageIdx=Integer.parseInt(sAry[i++]);
-            WebPlotRequest req=     WebPlotRequest.parse(sAry[i++]);
-            RangeValues rv=         RangeValues.parse(sAry[i++]);
-            ClientFitsHeader header=  ClientFitsHeader.parse(sAry[i++]);
-            boolean bandVisible=    Boolean.parseBoolean(sAry[i++]);
-            boolean multiImageFile= Boolean.parseBoolean(sAry[i++]);
-            boolean tileCompress = Boolean.parseBoolean(sAry[i++]);
-            int cubeCnt=            Integer.parseInt(sAry[i++]);
-            int cubePlaneNumber=    Integer.parseInt(sAry[i++]);
-            if (req!=null && header!=null ) {
-                retval= new BandState();
-                retval.setWorkingFitsFileStr(workingFileStr);
-                retval.setOriginalFitsFileStr(originalFileStr);
-                retval.setUploadedFileName(uploadFileStr);
-                retval.setImageIdx(imageIdx);
-                retval.setOriginalImageIdx(originalImageIdx);
-                retval.setWebPlotRequest(req);
-                retval.setRangeValues(rv);
-                retval.setFitsHeader(header);
-                retval.setBandVisible(bandVisible);
-                retval.setMultiImageFile(multiImageFile);
-                retval.setTileCompress(tileCompress);
-                retval.setCubeCnt(cubeCnt);
-                retval.setCubePlaneNumber(cubePlaneNumber);
-            }
-        } catch (IllegalArgumentException e) {
-            retval= null;
-        }
-        return retval;
-    }
-
 
     public boolean equals(Object o) {
         boolean retval= false;
@@ -231,7 +183,7 @@ public class BandState implements Serializable, HandSerialize {
                  ComparisonUtil.equals(uploadFileNameStr, bs.uploadFileNameStr) &&
                  ComparisonUtil.equals(plotRequestSerialize, bs.plotRequestSerialize) &&
                  ComparisonUtil.equals(rangeValuesSerialize, bs.rangeValuesSerialize) &&
-                 ComparisonUtil.equals(fitsHeaderSerialize, bs.fitsHeaderSerialize) &&
+                 ComparisonUtil.equals(fitsHeader, bs.fitsHeader) &&
                  imageIdx ==bs.imageIdx &&
                  originalImageIdx ==bs.originalImageIdx &&
                  bandVisible ==bs.bandVisible) {

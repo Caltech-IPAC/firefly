@@ -53,15 +53,6 @@
     </servlet-mapping>
 
     <servlet>
-        <servlet-class>edu.caltech.ipac.firefly.server.servlets.FitsUpload</servlet-class>
-        <servlet-name>FireFly FitsUpload</servlet-name>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>FireFly FitsUpload</servlet-name>
-        <url-pattern>/servlet/FireFly_FitsUpload</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
         <servlet-class>edu.caltech.ipac.firefly.server.servlets.ImageDownload</servlet-class>
         <servlet-name>FireFly ImageDownload</servlet-name>
     </servlet>

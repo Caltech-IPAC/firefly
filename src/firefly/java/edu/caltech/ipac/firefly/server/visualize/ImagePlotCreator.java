@@ -45,10 +45,7 @@ public class ImagePlotCreator {
 
     static ImagePlotInfo[] makeAllNoBand(PlotState stateAry[],
                                          FileReadInfo[] readAry,
-                                         ZoomChoice zoomChoice) throws FailedRequestException,
-                                                                       FitsException,
-                                                                       GeomException,
-                                                                       IOException {
+                                         ZoomChoice zoomChoice) throws FitsException {
          // never use this method with three color plots
 
          ImagePlotInfo piAry[]= new ImagePlotInfo[readAry.length];

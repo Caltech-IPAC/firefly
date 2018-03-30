@@ -3,9 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.firefly.data.DataEntry;
-
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -19,7 +16,7 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entry<String,DataEntry>> {
+public class WebPlotResult implements Iterable<Map.Entry<String,Object>> {
 
 
     public static final String PLOT_CREATE = "PlotCreate";
@@ -50,7 +47,7 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
     private String _detailFailReason;
     private String _requestKey;
     private String _plotId;
-    private HashMap<String, DataEntry> _map= new HashMap<String, DataEntry>(3);
+    private HashMap<String, Object> _map= new HashMap<>(3);
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -99,19 +96,19 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public void putResult(String key, DataEntry result) {
+    public void putResult(String key, Object result) {
         _map.put(key,result);
     }
 
-    public DataEntry getResult(String key) {
+    public Object getResult(String key) {
         return _map.get(key);
     }
 
     public String getStringResult(String key) {
         String retval= null;
-        DataEntry s= getResult(key);
-        if (s!=null && s instanceof DataEntry.Str) {
-            retval= ((DataEntry.Str) s).getString();
+        Object s= getResult(key);
+        if (s!=null && s instanceof String) {
+            retval= (String)s;
         }
         return retval;
     }
@@ -126,11 +123,20 @@ public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entr
     public void setRequestKey(String requestKey) { _requestKey = requestKey;}
     public String getRequestKey() { return _requestKey; }
 
-    public Iterator<Map.Entry<String,DataEntry>> iterator() {
+    public Iterator<Map.Entry<String,Object>> iterator() {
         return _map.entrySet().iterator();
     }
 
     public int getResultsSize() { return _map.size(); }
     public boolean containsKey(String key) { return _map.containsKey(key); }
+
+    public PlotState getPlotState() {
+        return (PlotState)this.getResult(WebPlotResult.PLOT_STATE);
+    }
+    public void setPlotState(PlotState state) {
+        this.putResult(WebPlotResult.PLOT_STATE, state);
+    }
+
+
 }
 

@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  *         $Id: UserCatalogQuery.java,v 1.1 2011/09/23 23:37:51 tatianag Exp $
  */
 @SearchProcessorImpl(id ="userCatalogFromFile")
-public class UserCatalogQuery extends DynQueryProcessor {
+public class UserCatalogQuery extends IpacTablePartProcessor {
 
     private static final String RA = "ra";
     private static final String DEC = "dec";
@@ -44,7 +44,7 @@ public class UserCatalogQuery extends DynQueryProcessor {
 
 
 
-    protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
+    protected File loadDataFile(TableServerRequest req) throws IOException, DataAccessException {
 
         String filePath = req.getParam("filePath");
         if (!StringUtils.isEmpty(filePath)) {

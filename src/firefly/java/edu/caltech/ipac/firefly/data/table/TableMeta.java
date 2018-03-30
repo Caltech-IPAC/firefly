@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.data.table;
 
-import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -23,7 +22,7 @@ import java.util.Map;
  * @author loi
  * @version $Id: TableMeta.java,v 1.20 2012/11/30 22:19:38 loi Exp $
  */
-public class TableMeta implements Serializable, HandSerialize {
+public class TableMeta implements Serializable {
 
     private final static String SPLIT_TOKEN = "--TableMeta--";
     private final static String ELEMENT_TOKEN = "--TMElement--";

@@ -6,7 +6,6 @@ package edu.caltech.ipac.astro;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.action.ClassProperties;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,10 +22,8 @@ import java.io.Reader;
 
 public final class IpacTableReader {
 
-    private static ClassProperties _prop = new ClassProperties(
-            IpacTableReader.class);
 
-    private static final String NO_DATA = _prop.getError("noData");
+    private static final String NO_DATA = "No data found";
 
     /**
      * Parse the file in IPAC table format and put the data in a

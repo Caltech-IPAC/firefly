@@ -136,7 +136,7 @@ export const ServerParams = {
         DS9_REGION: 'ds9Region',
         SAVE_DS9_REGION: 'saveDS9Region',
         ADD_SAVED_REQUEST: 'addSavedRequest',
-        GET_ALL_SAVED_REQUEST: 'getAllSavedRequest',
+        // GET_ALL_SAVED_REQUEST: 'getAllSavedRequest',
         TITLE: 'Title',
         JSON_DEEP: 'jsonDeep',
         CLIENT_IS_NORTH: 'clientIsNorth',

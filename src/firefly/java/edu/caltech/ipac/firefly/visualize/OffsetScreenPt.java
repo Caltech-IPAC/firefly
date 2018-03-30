@@ -9,8 +9,6 @@ import edu.caltech.ipac.visualize.plot.Pt;
  */
 public final class OffsetScreenPt extends Pt {
 
-    public OffsetScreenPt() { this(0,0); }
-
     public OffsetScreenPt(int x, int y) { super(x,y); }
     private OffsetScreenPt(Pt p) { this((int)p.getX(),(int)p.getY()); }
 
