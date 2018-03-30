@@ -356,6 +356,7 @@ public class PlotServUtils {
             case TWOMASS:
                 header= "ORDATE";
                 break;
+            case ATLAS:
             case DSS:
                 header= "DATE-OBS";
                 break;
@@ -390,41 +391,45 @@ public class PlotServUtils {
         long currentYear = Math.round(Math.floor(System.currentTimeMillis()/1000/3600/24/365.25) +1970);
         long year;
         String dateValue= header.getStringValue(headerKey);
-        if (headerKey.equals("ORDATE")) {
-            if (dateValue.length()>5) {
-                dateValue= dateValue.subSequence(0,2)+"-"+dateValue.subSequence(2,4)+"-"+
-                        dateValue.subSequence(4,6);
-                year = 2000+Integer.parseInt(dateValue.subSequence(0,2).toString());
-                if (year > currentYear) {
-                    dateValue = "19"+dateValue;
-                } else {
-                    dateValue = "20"+dateValue;
-                }
-            }
-        } else if (headerKey.equals("DATE-OBS")) {
-            dateValue = dateValue.split("T")[0];
-            if (dateValue.contains("/")) {
-                String newDate = "";
-                for (String v: dateValue.split("/")) {
-                    if (newDate.length()==0) {
-                        newDate = v;
+        if(dateValue !=null){
+            if (headerKey.equals("ORDATE")) {
+                if (dateValue.length()>5) {
+                    dateValue= dateValue.subSequence(0,2)+"-"+dateValue.subSequence(2,4)+"-"+
+                            dateValue.subSequence(4,6);
+                    year = 2000+Integer.parseInt(dateValue.subSequence(0,2).toString());
+                    if (year > currentYear) {
+                        dateValue = "19"+dateValue;
                     } else {
-                        newDate = v + "-" + newDate;
+                        dateValue = "20"+dateValue;
                     }
                 }
-                year = 2000+Integer.parseInt(newDate.subSequence(0,2).toString());
-                if (year > currentYear) {
-                    dateValue = "19"+newDate;
-                } else {
-                    dateValue = "20"+newDate;
+            } else if (headerKey.equals("DATE-OBS")) {
+                dateValue = dateValue.split("T")[0];
+                if (dateValue.contains("/")) {
+                    String newDate = "";
+                    for (String v: dateValue.split("/")) {
+                        if (newDate.length()==0) {
+                            newDate = v;
+                        } else {
+                            newDate = v + "-" + newDate;
+                        }
+                    }
+                    year = 2000+Integer.parseInt(newDate.subSequence(0,2).toString());
+                    if (year > currentYear) {
+                        dateValue = "19"+newDate;
+                    } else {
+                        dateValue = "20"+newDate;
+                    }
                 }
+            } else if (headerKey.equals("MIDOBS")) {
+                dateValue = dateValue.split("T")[0];
+            } else if (headerKey.equals("DATEIRIS")) {
+                dateValue = "1983";
             }
-        } else if (headerKey.equals("MIDOBS")) {
-            dateValue = dateValue.split("T")[0];
-        } else if (headerKey.equals("DATEIRIS")) {
-            dateValue = "1983";
+            return dateValue;
+        }else{
+            return "";
         }
-        return dateValue;
     }
 
     public static boolean isBlank(PlotState state) {
