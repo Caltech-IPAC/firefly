@@ -75,7 +75,7 @@ export class CatalogSearchMethodType extends PureComponent {
         const {groupKey, polygonDefWhenPlot, withPos=true, searchOption}= this.props;
 
         const plot = primePlot(visRoot());
-        const polyIsDef= polygonDefWhenPlot && !isHiPS(plot);
+        const polyIsDef= polygonDefWhenPlot; //&& !isHiPS(plot)
         const searchType = withPos ? get(fields, 'spatial.value', SpatialMethod.Cone.value)
                                    : SpatialMethod['All Sky'].value;
 
