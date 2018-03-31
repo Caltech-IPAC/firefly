@@ -69,6 +69,7 @@ export class DownloadOptionsDialog extends PureComponent {
             const wsSelect = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, 'wsSelect');
 
             this.setState((state) => {
+                state = Object.assign({}, state);
                 if (loc !== state.where) {
                     state.where = loc;
                     if (loc ===  WORKSPACE) {
