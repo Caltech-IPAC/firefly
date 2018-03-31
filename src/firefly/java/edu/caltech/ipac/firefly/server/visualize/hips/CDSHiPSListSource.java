@@ -23,7 +23,6 @@ public class CDSHiPSListSource implements HiPSMasterListSourceType {
     private static Map<String, String> paramsMap = new HashMap<>();
 
     static {
-        HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ID, "ID");
         HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.IVOID, "creator_did,publisher_did");
         HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TITLE, "obs_title");
         HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ORDER, "hips_order");
@@ -40,7 +39,7 @@ public class CDSHiPSListSource implements HiPSMasterListSourceType {
     public List<HiPSMasterListEntry> getHiPSListData(String[] dataTypes, String source) {
         try {
             return createHiPSList(dataTypes, source);
-        } catch (FailedRequestException | IOException | DataAccessException e) {
+        } catch (IOException e) {
             _log.warn("get " + source + " HiPS failed - " + e.getMessage());
             return null;
         } catch (Exception e) {
@@ -61,10 +60,10 @@ public class CDSHiPSListSource implements HiPSMasterListSourceType {
     }
 
     private List<HiPSMasterListEntry> createHiPSList(String[] dataTypes,
-                                                     String source) throws IOException, DataAccessException, FailedRequestException {
+                                                     String source) throws IOException {
         String url = HiPSCDSURL + dataProduct(dataTypes);
 
         // no call for HiPS properties
-        return IrsaHiPSListSource.createHiPSListFromUrl(url, dataTypes, source, paramsMap, PARAMS.ID, false);
+        return IrsaHiPSListSource.createHiPSListFromUrl(url, source, paramsMap, false);
     }
 }
