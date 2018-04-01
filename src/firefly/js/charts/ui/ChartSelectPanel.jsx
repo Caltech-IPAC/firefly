@@ -10,7 +10,7 @@ import {getFieldVal, getReducerFunc} from '../../fieldGroup/FieldGroupUtils.js';
 
 import {RadioGroupInputField} from './../../ui/RadioGroupInputField.jsx';
 import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
-import {CHART_UPDATE, getChartData, removeTrace} from '../ChartsCntlr.js';
+import {CHART_UPDATE, dataLoadedUpdate, getChartData, removeTrace} from '../ChartsCntlr.js';
 import {getOptionsUI} from '../ChartUtil.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 
@@ -126,7 +126,7 @@ export class ChartSelectPanel extends SimpleComponent {
 
         const chartActions = getChartActions({chartId, tbl_id});
         const {chartAction} = this.state;
-        const groupKey = getGroupKey(chartId, CHART_TRACE_MODIFY);
+        const groupKey = getGroupKey(chartId, chartAction);
 
         return (
 
@@ -204,6 +204,7 @@ ChartAction.propTypes = {
 function ChartActionOptions(props) {
     const {chartAction, tbl_id, chartId:chartIdProp, groupKey, hideDialog, showMultiTrace} = props;
 
+
     const chartId = chartAction === CHART_ADDNEW ? undefined : chartIdProp;
 
     if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
@@ -251,7 +252,7 @@ function watchChartDataChange(action, cancelSelf, params) {
     const {chartId:actionChartId, changes={}} = action.payload;
     const {chartId, groupKey} = params;
     //options should be synced when data are received: fireflyData.traceNum.isLoading is switched to false
-    if (actionChartId === chartId && Object.keys(changes).find((k)=>(k.match(/isLoading$/) && !changes[k]))) {
+    if (actionChartId === chartId && dataLoadedUpdate(changes)) {
         const reducerFunc = getReducerFunc(params.groupKey);
         const flds = reducerFunc && reducerFunc(null);
         if (flds) {

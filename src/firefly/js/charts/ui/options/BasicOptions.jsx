@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {get, isUndefined, isEmpty, reverse, set} from 'lodash';
+import {isArray, get, isUndefined, isEmpty, reverse, set} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartAdd, getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -473,7 +473,7 @@ BasicOptionFields.propTypes = {
 export function submitChanges({chartId, fields, tbl_id}) {
     if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
     if (!chartId) chartId = uniqueChartId();
-    const {layout={}, data=[], activeTrace:traceNum=0} = getChartData(chartId, {});
+    const {layout={}, data=[], fireflyData, activeTrace:traceNum=0} = getChartData(chartId, {});
     const changes = {showOptions: false};
     Object.entries(fields).forEach( ([k,v]) => {
         if (tbl_id && k.startsWith('_tables.')) {
@@ -540,6 +540,15 @@ export function submitChanges({chartId, fields, tbl_id}) {
                         // when changing color, change all color attributes
                         colorsOnTypes[type][0].filter((att) => att.endsWith('color')).
                         forEach((att) => changes[`data.${traceNum}.${att}`] = v);
+                        // change annotation color
+                        const annotations = get(fireflyData, `${traceNum}.annotations`);
+                        if (isArray(annotations)) {
+                            annotations.forEach((a, i) => {
+                                if (a) {
+                                    changes[`fireflyData.${traceNum}.annotations.${i}.arrowcolor`] = v;
+                                }
+                            });
+                        }
                     }
                 }
             }

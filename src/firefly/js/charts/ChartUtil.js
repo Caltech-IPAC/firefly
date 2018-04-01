@@ -8,7 +8,7 @@
  * Created by tatianag on 3/17/16.
  */
 
-import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has} from 'lodash';
+import {assign, get, uniqueId, isArray, isUndefined, omitBy, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -332,9 +332,9 @@ export function clearChartConn({chartId}) {
     }
 }
 
-export function newTraceFrom(data, selIndexes, newTraceProps) {
+export function newTraceFrom(data, selIndexes, newTraceProps, traceAnnotations) {
 
-    const sdata = cloneDeep(pick(data, ['x', 'y', 'z', 'legendgroup', 'error_x', 'error_y', 'text', 'marker', 'hoverinfo', 'firefly' ]));
+    const sdata = cloneDeep(pick(data, ['x', 'y', 'z', 'legendgroup', 'error_x', 'error_y', 'text', 'hovertext', 'marker', 'hoverinfo', 'firefly' ]));
     Object.assign(sdata, {showlegend: false, type: get(data, 'type', 'scatter'), mode: 'markers'});
 
     // the rowIdx doesn't exist for generic plotly chart case
@@ -343,6 +343,13 @@ export function newTraceFrom(data, selIndexes, newTraceProps) {
         get(sdata, 'x.length', 0) !== 0) {
         const rowIdx = range(get(sdata, 'x.length')).map(String);
         set(sdata, 'firefly.rowIdx', rowIdx);
+    }
+
+    if (isArray(traceAnnotations) && traceAnnotations.length > 0) {
+        const annotations = cloneDeep(traceAnnotations);
+        const color = get(newTraceProps, 'marker.color');
+        annotations.forEach((a) => {a && (a.arrowcolor = color);});
+        set(sdata, 'firefly.annotations', annotations);
     }
 
     // walk through object and replace values where there's an array with only the selected indexes.
@@ -407,9 +414,11 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
 
     if (mappings) {
         Object.entries(mappings).forEach(([k,v]) => {
+            const key = k.startsWith('firefly') ? k : `data.${traceNum}.${k}`;
+
             // using plotly attribute path (key in the mappings object) as a column name
             // this makes it possible to use the same column as x and y, for example
-            changes[`data.${traceNum}.${k}`] = getDataVal(v) || getDataVal(`data[${traceNum}].${k}`);
+            changes[key] = getDataVal(v) || getDataVal(key);
         });
     }
 
@@ -558,7 +567,10 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
     const currentData = (data.length < fireflyData.length) ? fireflyData : data;
 
     return currentData.map((d, traceNum) => {
-        const ds = data[traceNum] ? convertToDS(flattenObject(data[traceNum])) : {}; //avoid flattening arrays
+        const fireflyDataFlatten = flattenObject(fireflyData[traceNum] || {}, `fireflyData.${traceNum}`);
+        // fireflyData mappings have full path
+        const flattenData = assign(flattenObject(data[traceNum]), fireflyDataFlatten);
+        const ds = data[traceNum] ? convertToDS(flattenData) : {}; //avoid flattening arrays
         // table id can be a part of fireflyData too
         const tbl_id = get(data, `${traceNum}.tbl_id`) || get(fireflyData, `${traceNum}.tbl_id`);
 
@@ -740,14 +752,16 @@ export function getNewTraceDefaults(chartId, type='', traceNum=0) {
     let   retV;
 
     if (type.includes(SCATTER)) {
+        const traceColor = defaultTraceColor({}, traceNum, chartId);
         retV = {
             [`data.${traceNum}.type`]: type, //make sure trace type is set
-            [`data.${traceNum}.marker.color`]: defaultTraceColor({}, traceNum, chartId),
+            [`data.${traceNum}.marker.color`]: traceColor,
             [`data.${traceNum}.marker.line`]: 'none',
             [`data.${traceNum}.showlegend`]: true,
             ['layout.xaxis.range']: undefined, //clear out fixed range
             ['layout.yaxis.range']: undefined //clear out fixed range
         };
+        colorsOnTypes['scatter'][0].forEach((p) => { retV[`data.${traceNum}.${p}`] = traceColor; } );
     } else if (type.includes(HEATMAP)) {
         retV = {
             [`data.${traceNum}.showlegend`]: true,

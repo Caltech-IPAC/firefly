@@ -4,7 +4,7 @@
 import {get, isArray, truncate, uniqueId} from 'lodash';
 import {COL_TYPE, getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchError, getChartData, hasUpperLimits} from '../ChartsCntlr.js';
 import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
 
 /**
@@ -20,15 +20,24 @@ import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelec
  * @param traceTS
  * @returns {{options: *, fetchData: fetchData}}
  */
-export function getTraceTSEntries({traceTS}) {
+export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     const {mappings} = traceTS || {};
 
     if (mappings) {
-        return {options: mappings, fetchData};
+        const options = Object.assign({}, mappings);
+
+        if (hasUpperLimits(chartId, traceNum)) {
+            const {layout} = getChartData(chartId);
+            const {range=[], autorange=true, type='linear'} = get(layout, 'yaxis', {});
+            const reversed = (autorange === 'reversed') || (range[1] < range[0]);
+            options['ytype'] = type;
+            options['yreversed'] = reversed;
+        }
+        return {options, fetchData};
 
     } else {
         return {};
-   }
+    }
 }
 
 function fetchData(chartId, traceNum, tablesource) {
@@ -46,7 +55,8 @@ function fetchData(chartId, traceNum, tablesource) {
         pageSize: MAX_ROW,
         inclCols: Object.entries(mappings).map(([k,v]) => {
             // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
-            const asStr = (numericCols.includes(v)) ? '' : ` as "data[${traceNum}].${k}"`;
+            //const asStr = (numericCols.includes(v)) ? '' : k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
+            const asStr = k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
             return `${formatColExpr({colOrExpr: v, quoted: true, colNames: numericCols})}${asStr}`;
         }).join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
     });
@@ -104,8 +114,8 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     // default axes labels for the first trace (remove surrounding quotes, if any)
     const xLabel = get(mappings, 'x').replace(/^"(.+)"$/, '$1');
     const yLabel = get(mappings, 'y').replace(/^"(.+)"$/, '$1');
-    const xTipLabel = xLabel.length > 20 ? truncate(xLabel, {length: 20}) : xLabel;
-    const yTipLabel = yLabel.length > 20 ? truncate(yLabel, {length: 20}) : yLabel;
+    const xTipLabel = truncate(xLabel, {length: 20});
+    const yTipLabel = truncate(yLabel, {length: 20});
 
     const colors = get(changes, [`data.${traceNum}.marker.color`]);
     let cTipLabel = isArray(colors) ? get(mappings, 'marker.color') : '';
@@ -114,7 +124,7 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     }
 
 
-    const {layout, data} = getChartData(chartId) || {};
+    const {layout, data, fireflyData} = getChartData(chartId) || {};
 
     // legend group is used to show/hide traces together
     // highlight and selected traces should have the same legend group as the active scatter
@@ -139,9 +149,56 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
         }
     }
 
-    // set tooltips
     const x = get(changes, [`data.${traceNum}.x`]);
     if (!x) return;
+
+    // handle upper limits: update new or erase old
+    let annotations = [];
+    if (mappings[`fireflyData.${traceNum}.yMax`]) {
+        const arrowcolor = get(data, `${traceNum}.marker.color`);
+        const {range = [], autorange = true, type: ytype} = get(layout, 'yaxis', {});
+        const {type: xtype} = get(layout, 'xaxis', {});
+        const reversed = (autorange === 'reversed') || (range[1] < range[0]);
+        const sign = reversed ? -1 : 1;
+
+        // per trace annotations
+        annotations = changes[`fireflyData.${traceNum}.yMax`].map((v, i) => {
+
+            let yy = parseFloat(v);
+            if (Number.isFinite(yy)) {
+                // create a point if not present
+                if (!Number.isFinite(parseFloat(changes[`data.${traceNum}.y`][i]))) {
+                    changes[`data.${traceNum}.y`][i] = changes[`fireflyData.${traceNum}.yMax`][i];
+                }
+
+                // annotation position should take into account axis type
+                let xx = parseFloat(changes[`data.${traceNum}.x`][i]);
+                if (xtype === 'log') { xx = Math.log10(xx); }
+
+                if (ytype === 'log') { yy = Math.log10(yy); }
+
+                return {
+                    x: xx,
+                    y: yy,
+                    xref: 'x',
+                    yref: 'y',
+                    showarrow: true,
+                    arrowhead: 3,
+                    ax: 0,
+                    ay: sign * (-40),
+                    yshift: sign * (-30),
+                    standoff: 10,
+                    arrowcolor
+                };
+            } else {
+                return undefined;
+            }
+        });
+    }
+    // per trace annotations
+    changes[`fireflyData.${traceNum}.annotations`] = annotations;
+
+    // set tooltips
 
     // hoverinfo 'skip' disables hover layer - hence we can not highlight clicking on a point or select points in the chart
     // if we support it, we need to exclude select button from the tools appearing on select
@@ -168,12 +225,15 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
             const xerr = hasXErrors ? formatError(xval, xErr[idx], xErrLow[idx], xErrHigh[idx]) : '';
             const yerr = hasYErrors ? formatError(yval, yErr[idx], yErrLow[idx], yErrHigh[idx]) : '';
             const cval = isArray(colors) ? `<br> ${cTipLabel} = ${parseFloat(colors[idx])} ` : '';
+            const ul = annotations[idx] ? '<br> Upper Limit ' : '';
             return `<span> ${xTipLabel} = ${parseFloat(xval)}${xerr} ${xUnit} <br>` +
-                ` ${yTipLabel} = ${parseFloat(yval)}${yerr} ${yUnit} ${cval}</span>`;
+                ` ${yTipLabel} = ${parseFloat(yval)}${yerr} ${yUnit} ${ul} ${cval}</span>`;
         });
-        changes[`data.${traceNum}.text`] = text;
+        changes[`data.${traceNum}.hovertext`] = text;
         changes[`data.${traceNum}.hoverinfo`] = 'text';
     }
+
+
 
     // TODO: colorbar needs more work:
     // it does not get updated when color scale is changing,

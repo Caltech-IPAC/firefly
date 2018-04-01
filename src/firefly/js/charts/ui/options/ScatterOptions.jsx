@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {get, isUndefined, omit} from 'lodash';
 
 import {Expression} from '../../../util/expr/Expression.js';
-import {getChartData} from '../../ChartsCntlr.js';
+import {getChartData, hasUpperLimits} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
@@ -15,8 +15,17 @@ import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {Errors, errorTypeFieldKey, errorFieldKey, errorMinusFieldKey} from './Errors.jsx';
+import {getAppOptions} from '../../../core/AppDataCntlr.js';
 
 const fieldProps = {labelWidth: 62, size: 15};
+
+/**
+ * Should we display Upper Limit field under Y?
+ * @returns {*}
+ */
+export function upperLimitUI() {
+    return get(getAppOptions(), 'charts.upperLimitUI');
+}
 
 export class ScatterOptions extends SimpleComponent {
 
@@ -53,7 +62,7 @@ export class ScatterOptions extends SimpleComponent {
                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
                  */}
 
-                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey,showMultiTrace}}/>}
+                {tablesource && <TableSourcesOptions {...{chartId, tablesource, activeTrace, groupKey,showMultiTrace}}/>}
                 <BasicOptionFields {...{activeTrace, groupKey,showMultiTrace}}/>
             </FieldGroup>
         );
@@ -113,6 +122,12 @@ export function fieldReducer({chartId, activeTrace}) {
                 value: get(tablesourceMappings, 'y', ''),
                 //tooltip: 'Y axis',
                 label: 'Y:',
+                ...fieldProps
+            },
+            [`_tables.fireflyData.${activeTrace}.yMax`]: {
+                fieldKey: `_tables.fireflyData.${activeTrace}.yMax`,
+                value: get(tablesourceMappings, `fireflyData.${activeTrace}.yMax`, ''),
+                label: 'Limit:',
                 ...fieldProps
             },
             [errorFieldKey(activeTrace, 'x')]: {
@@ -194,7 +209,7 @@ export function fieldReducer({chartId, activeTrace}) {
     };
 }
 
-export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, showMultiTrace}) {
+export function TableSourcesOptions({chartId, tablesource={}, activeTrace, groupKey, showMultiTrace}) {
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
@@ -202,7 +217,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, show
     const labelWidth = 30;
     const xProps = {fldPath:`_tables.data.${activeTrace}.x`, label: 'X:', name: 'X', nullAllowed: false, colValStats, groupKey, labelWidth};
     const yProps = {fldPath:`_tables.data.${activeTrace}.y`, label: 'Y:', name: 'Y', nullAllowed: false, colValStats, groupKey, labelWidth};
-
+    const yMaxProps = {fldPath:`_tables.fireflyData.${activeTrace}.yMax`, label: 'Limit:', name: 'Upper Limit', nullAllowed: true, colValStats, groupKey, labelWidth};
+    
     const commonProps = {colValStats, groupKey, labelWidth: 62, nullAllowed: true};
     const sizemapTooltip = 'marker size. Please use expression to convert column value to valid pixels';
     const flds = [
@@ -223,6 +239,7 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, show
             <Errors axis='x' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
             <br/>
             <ColumnOrExpression {...yProps}/>
+            {(upperLimitUI() || hasUpperLimits(chartId, activeTrace)) && <ColumnOrExpression {...yMaxProps}/>}
             <Errors axis='y' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
             {showMultiTrace &&  <div style={{paddingTop: 10}}>
                 <ColumnOrExpression {...sizeMapProps}/>

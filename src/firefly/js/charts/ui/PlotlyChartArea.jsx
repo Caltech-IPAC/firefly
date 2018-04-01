@@ -6,12 +6,12 @@ import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
-import {dispatchChartUpdate, dispatchChartHighlighted, getChartData} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, getAnnotations, getChartData} from '../ChartsCntlr.js';
 import {isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
 
 const X_TICKLBL_PX = 60;
 const TITLE_PX = 30;
-const MIN_MARGIN_PX = 10;
+const MIN_MARGIN_PX = 30; // should be enough to accommodate upper limit annotation
 
 function adjustLayout(layout={}) {
     const hasTitle = get(layout, 'title');
@@ -120,14 +120,25 @@ export class PlotlyChartArea extends Component {
         pdata.push(Object.assign({}, data[activeTrace]));
 
         //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
+        let annotations = getAnnotations(this.props.chartId);
         if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
             // highlight makes sense only for scatter at the moment
             // 3d scatter highlight and selected appear in front - not good: disable for the moment
-            pdata = selected ? pdata.concat([selected]) : pdata;
-            pdata = highlighted ? pdata.concat([highlighted]) : pdata;
+            if (selected) {
+                pdata = pdata.concat([selected]);
+                if (annotations.length>0) {
+                    annotations = annotations.concat(get(selected, 'firefly.annotations'));
+                }
+            }
+            if (highlighted) {
+                pdata = pdata.concat([highlighted]);
+                if (annotations.length>0) {
+                    annotations = annotations.concat(get(highlighted, 'firefly.annotations'));
+                }
+            }
         }
         const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
-        const playout = Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight});
+        const playout = Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations});
 
         const style = {float: 'left'};
         if (chartWidth > widthPx || chartHeight > heightPx) {

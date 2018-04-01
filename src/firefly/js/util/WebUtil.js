@@ -714,11 +714,12 @@ export const cancelIdleCallback = window.cancelIdleCallback || ((id) => clearTim
 /**
  *
  * @param object
+ * @param prefix - prefix to use for all object properties
  * @param testFunc - test function to decide which entries should be flattened.  defaults to isPlainObject
  * @returns {*}
  */
-export function flattenObject(object, testFunc=isPlainObject) {
-    return Object.assign( {}, ...function _flatten( objectBit, path = '' ) {  //spread the result into our return object
+export function flattenObject(object, prefix='', testFunc=isPlainObject) {
+    return Object.assign( {}, ...function _flatten( objectBit, path=prefix) {  //spread the result into our return object
         return [].concat(                                                     //concat everything into one level
             ...Object.keys( objectBit ).map(                                  //iterate over object
                 (key) => {
