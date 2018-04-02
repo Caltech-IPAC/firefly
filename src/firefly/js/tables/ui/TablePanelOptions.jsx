@@ -2,30 +2,41 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 
+import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
 import {FilterEditor} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 
+import * as TblUtil from '../TableUtil.js';
+
+
 const labelStyle = {display: 'inline-block', width: 70};
 
-export class TablePanelOptions extends PureComponent {
-    constructor(props) {
-        super(props);
+
+export class TablePanelOptions extends SimpleComponent  {
+
+    getNextState(np) {
+        const {tbl_ui_id} = np || this.props;
+        const uiState = TblUtil.getTableUiById(tbl_ui_id) || {columns: []};
+        return uiState;
     }
 
     render() {
-        const {columns, pageSize, showUnits, showFilters, showToolbar=true, onChange, onOptionReset, optSortInfo, filterInfo, toggleOptions, tbl_ui_id} = this.props;
+        const {onChange, onOptionReset, tbl_ui_id} = this.props;
+        const {columns, pageSize, showUnits=false, showFilters=false, showToolbar=true, optSortInfo, filterInfo} = this.state;
+
         if (isEmpty(columns)) return false;
 
         const {onPageSize, onPropChanged} = makeCallbacks(onChange, columns);
         return (
-            <div className='TablePanelOptions'>
-                <div
-                    style={{flexGrow: 0, marginBottom: 4, display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+
+               <div className='TablePanelOptions'>
+                 <div
+                    style={{flexGrow: 0, marginBottom: 32, display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
                     <div style={{display: 'inline-block', whiteSpace: 'nowrap'}}>
                         <div>
                             <div style={labelStyle}>Show Units:</div>
@@ -55,13 +66,6 @@ export class TablePanelOptions extends PureComponent {
                         </div>
                     }
                     <span>
-                        <div style={{ position: 'relative',
-                                      display: 'block',
-                                      right: -42,
-                                      top: -2}}
-                             className='btn-close'
-                             title='Remove Tab'
-                             onClick={() => toggleOptions()}/>
 
                         <button type='button' className='TablePanelOptions__button' onClick={onOptionReset}
                                 title='Reset all options to defaults'>Reset</button>
@@ -72,33 +76,26 @@ export class TablePanelOptions extends PureComponent {
                         {...{tbl_ui_id, columns, filterInfo, onChange}}
                     />
                 </div>
-            </div>
-        );
+               </div>
+
+     );
     };
 }
 
 TablePanelOptions.propTypes = {
     tbl_ui_id: PropTypes.string,
-    columns: PropTypes.arrayOf(PropTypes.object),
-    optSortInfo: PropTypes.string,
-    filterInfo: PropTypes.string,
-    pageSize: PropTypes.number,
-    showUnits: PropTypes.bool,
-    showFilters: PropTypes.bool,
-    showToolbar: PropTypes.bool,
     onChange: PropTypes.func,
-    onOptionReset: PropTypes.func,
-    toggleOptions: PropTypes.func
+    onOptionReset: PropTypes.func
 };
 
 function makeCallbacks(onChange) {
-    var onPageSize = (pageSize) => {
+    const onPageSize = (pageSize) => {
         if (pageSize.valid) {
             onChange && onChange({pageSize: pageSize.value});
         }
     };
 
-    var onPropChanged = (v, prop) => {
+    const onPropChanged = (v, prop) => {
         onChange && onChange({[prop]: v});
     };
 

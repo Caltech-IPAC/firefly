@@ -4,14 +4,11 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.BandInfo;
-import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
@@ -66,9 +63,9 @@ import nom.tam.fits.HeaderCard;
 import nom.tam.util.Cursor;
 
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.Ellipse2D;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -215,7 +212,7 @@ public class VisServerOps {
 
         if (progressMsg != null) {
             retval = new WebPlotResult(null);
-            retval.putResult(WebPlotResult.STRING, new DataEntry.Str(progressMsg.message));
+            retval.putResult(WebPlotResult.STRING, progressMsg.message);
         } else {
             retval = WebPlotResult.makeFail("Not found", null, null);
         }
@@ -348,21 +345,20 @@ public class VisServerOps {
         return retval;
     }
 
-    @Deprecated
-    public static WebPlotResult getFluxOld(PlotState state, ImagePt ipt) {
-        try {
-            Band bands[] = state.getBands();
-            double fluxes[] = new double[bands.length];
-            for (int i = 0; (i < bands.length); i++) {
-                fluxes[i] = getFluxValueInMemory(state, bands[i], ipt);
-            }
-            WebPlotResult retval = new WebPlotResult(state.getContextString());
-            retval.putResult(WebPlotResult.FLUX_VALUE, new DataEntry.DoubleArray(fluxes));
-            return retval;
-        } catch (IOException e) {
-            return createError("on getFlux", state, e);
-        }
-    }
+//    public static WebPlotResult getFluxOld(PlotState state, ImagePt ipt) {
+//        try {
+//            Band bands[] = state.getBands();
+//            double fluxes[] = new double[bands.length];
+//            for (int i = 0; (i < bands.length); i++) {
+//                fluxes[i] = getFluxValueInMemory(state, bands[i], ipt);
+//            }
+//            WebPlotResult retval = new WebPlotResult(state.getContextString());
+//            retval.putResult(WebPlotResult.FLUX_VALUE, new DataEntry.DoubleArray(fluxes));
+//            return retval;
+//        } catch (IOException e) {
+//            return createError("on getFlux", state, e);
+//        }
+//    }
 
     public static WebPlotResult deleteColorBand(PlotState state, Band band) {
         try {
@@ -464,7 +460,7 @@ public class VisServerOps {
             if (success) success = resultAry[i].isSuccess();
         }
         WebPlotResult result = new WebPlotResult(stateAry[0].getContextString());
-        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
+        result.putResult(WebPlotResult.RESULT_ARY, resultAry);
         return success ? result : resultAry[0];
     }
 
@@ -561,43 +557,6 @@ public class VisServerOps {
 
 
 
-    private static WebPlotResult getFitsHeaderInfoFull(PlotState state) {
-
-
-        try {
-            HashMap<Band, RawDataSet> rawDataMap = new HashMap<>();
-            HashMap<Band, String> stringMap = new HashMap<>();
-            WebPlotResult retValue = new WebPlotResult();
-            ActiveCallCtx ctx = CtxControl.prepare(state);
-            ImagePlot plot = ctx.getPlot();
-
-            for (Band band : state.getBands()) {
-                FitsRead fr = plot.getHistogramOps(band, ctx.getFitsReadGroup()).getFitsRead();
-                DataGroup dg = getFitsHeaders(fr.getHeader(), plot.getPlotDesc());
-                RawDataSet rds = QueryUtil.getRawDataSet(dg);
-
-                String string = String.valueOf(plot.getPixelScale());
-
-                File f = PlotStateUtil.getOriginalFile(state, band);
-                if (f == null) f = PlotStateUtil.getWorkingFitsFile(state, band);
-
-                string += ";" + StringUtils.getSizeAsString(f.length(), true);
-
-                rawDataMap.put(band, rds);
-                stringMap.put(band, string);
-            }
-            BandInfo bandInfo = new BandInfo(rawDataMap, stringMap, null);
-
-            retValue.putResult(WebPlotResult.BAND_INFO, bandInfo);
-            counters.incrementVis("Fits header");
-            return retValue;
-
-        } catch (Exception e) {
-            return createError("on getFitsInfo", state, e);
-        }
-
-    }
-
     private static DataGroup getFitsHeaders(Header headers, String name) {
         DataType comment = new DataType("Comments", String.class);
         DataType keyword = new DataType("Keyword", String.class);
@@ -623,44 +582,6 @@ public class VisServerOps {
             }
         }
         return dg;
-    }
-
-
-    private static class UseFullException extends Exception {
-    }
-
-
-    public static WebPlotResult getFitsHeaderInfo(PlotState state) {
-        WebPlotResult retValue = new WebPlotResult();
-
-        try {
-            HashMap<Band, RawDataSet> rawDataMap = new HashMap<>();
-            for (Band band : state.getBands()) {
-                File f = PlotStateUtil.getWorkingFitsFile(state, band);
-                if (f == null) f = PlotStateUtil.getOriginalFile(state, band);
-                Fits fits = new Fits(f);
-                BasicHDU hdu[] = fits.read();
-                Header header = hdu[0].getHeader();
-                if (header.containsKey("EXTEND") && header.getBooleanValue("EXTEND")) {
-                    throw new UseFullException();
-                } else {
-                    DataGroup dg = getFitsHeaders(header, "fits data");
-                    RawDataSet rds = QueryUtil.getRawDataSet(dg);
-                    rawDataMap.put(band, rds);
-                }
-            }
-            BandInfo bandInfo = new BandInfo(rawDataMap, null, null);
-
-            retValue.putResult(WebPlotResult.BAND_INFO, bandInfo);
-            counters.incrementVis("Fits header");
-
-        } catch (UseFullException e) {
-            retValue = getFitsHeaderInfoFull(state);
-        } catch (Exception e) {
-            retValue = createError("on getFitsInfo", state, e);
-        }
-
-        return retValue;
     }
 
 
@@ -876,7 +797,7 @@ public class VisServerOps {
 
             }
 
-            BandInfo bandInfo = new BandInfo(null, stringMap, metricsMap);
+            BandInfo bandInfo = new BandInfo(metricsMap);
 
             retValue.putResult(WebPlotResult.BAND_INFO, bandInfo);
 
@@ -898,7 +819,7 @@ public class VisServerOps {
             if (success) success = resultAry[i].isSuccess();
         }
         WebPlotResult result = new WebPlotResult(stateAry[0].getContextString());
-        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
+        result.putResult(WebPlotResult.RESULT_ARY, resultAry);
         return result;
     }
 
@@ -1055,13 +976,10 @@ public class VisServerOps {
             File cbarFile = PlotServUtils.createHistImage(colorBarC, colorBarC, dir, bgColor, cbarFname);
 
             retval = new WebPlotResult(ctx.getKey());
-            retval.putResult(WebPlotResult.DATA_HISTOGRAM, new DataEntry.IntArray(dHist));
-            retval.putResult(WebPlotResult.DATA_BIN_MEAN_ARRAY,
-                    new DataEntry.DoubleArray(meanDataAry));
-            retval.putResult(WebPlotResult.DATA_HIST_IMAGE_URL,
-                    new DataEntry.Str(ServerContext.replaceWithPrefix(dataFile)));
-            retval.putResult(WebPlotResult.CBAR_IMAGE_URL,
-                    new DataEntry.Str(ServerContext.replaceWithPrefix(cbarFile)));
+            retval.putResult(WebPlotResult.DATA_HISTOGRAM, dHist);
+            retval.putResult(WebPlotResult.DATA_BIN_MEAN_ARRAY, meanDataAry);
+            retval.putResult(WebPlotResult.DATA_HIST_IMAGE_URL, ServerContext.replaceWithPrefix(dataFile));
+            retval.putResult(WebPlotResult.CBAR_IMAGE_URL, ServerContext.replaceWithPrefix(cbarFile));
             counters.incrementVis("Color change");
 
         } catch (Exception e) {
@@ -1079,7 +997,7 @@ public class VisServerOps {
             ActiveCallCtx ctx = CtxControl.prepare(state);
             String pngFile = PlotPngCreator.createImagePng(ctx.getPlot(), ctx.getFitsReadGroup(), drawInfoList);
             WebPlotResult retval = new WebPlotResult(ctx.getKey());
-            retval.putResult(WebPlotResult.IMAGE_FILE_NAME, new DataEntry.Str(pngFile));
+            retval.putResult(WebPlotResult.IMAGE_FILE_NAME, pngFile);
             CtxControl.updateCachedPlot(ctx);
             return retval;
         } catch (Exception e) {
@@ -1181,7 +1099,7 @@ public class VisServerOps {
 
             ActiveCallCtx ctx = CtxControl.prepare(state);
             WebPlotResult retval = new WebPlotResult(ctx.getKey());
-            retval.putResult(WebPlotResult.IMAGE_FILE_NAME, new DataEntry.Str(pngFile));
+            retval.putResult(WebPlotResult.IMAGE_FILE_NAME, pngFile);
 
 
             return retval;
@@ -1200,7 +1118,7 @@ public class VisServerOps {
             rp.saveFile(f, regOutList, "Region file generated by IRSA");
             String retFile = ServerContext.replaceWithPrefix(f);
             WebPlotResult retval = new WebPlotResult();
-            retval.putResult(WebPlotResult.REGION_FILE_NAME, new DataEntry.Str(retFile));
+            retval.putResult(WebPlotResult.REGION_FILE_NAME, retFile);
             counters.incrementVis("Region save");
             return retval;
         } catch (Exception e) {
@@ -1224,10 +1142,8 @@ public class VisServerOps {
             List<String> rAsStrList = toStringList(r.getRegionList());
 
 
-            retval.putResult(WebPlotResult.REGION_DATA,
-                    new DataEntry.Str(StringUtils.combineStringList(rAsStrList)));
-            retval.putResult(WebPlotResult.REGION_ERRORS,
-                    new DataEntry.Str(StringUtils.combineStringList(r.getMsgList())));
+            retval.putResult(WebPlotResult.REGION_DATA, StringUtils.combineStringList(rAsStrList));
+            retval.putResult(WebPlotResult.REGION_ERRORS, StringUtils.combineStringList(r.getMsgList()));
 
             UploadFileInfo fi = (UploadFileInfo) sessionCache.get(new StringKey(fileKey));
             String title;
@@ -1236,7 +1152,7 @@ public class VisServerOps {
             } else {
                 title = fileKey.startsWith("UPLOAD") ? "Region file" : regFile.getName();
             }
-            retval.putResult(WebPlotResult.TITLE, new DataEntry.Str(title));
+            retval.putResult(WebPlotResult.TITLE, title);
             PlotServUtils.statsLog("ds9Region", fileKey);
             counters.incrementVis("Region read");
             return retval;
@@ -1278,10 +1194,8 @@ public class VisServerOps {
         } else {
             msgList.add("no footprint description file is found");
         }
-        retval.putResult(WebPlotResult.REGION_DATA,
-                new DataEntry.Str(StringUtils.combineStringList(rAsStrList)));
-        retval.putResult(WebPlotResult.REGION_ERRORS,
-                new DataEntry.Str(StringUtils.combineStringList(msgList)));
+        retval.putResult(WebPlotResult.REGION_DATA, StringUtils.combineStringList(rAsStrList));
+        retval.putResult(WebPlotResult.REGION_ERRORS, StringUtils.combineStringList(msgList));
         return retval;
     }
 
@@ -1301,26 +1215,6 @@ public class VisServerOps {
         }
         return true;
     }
-
-    public static WebPlotResult getAllSavedRequest(String saveKey) {
-        Cache cache = UserCache.getInstance();
-        CacheKey key = new StringKey(saveKey);
-
-        WebPlotResult result;
-        if (cache.isCached(key)) {
-            ArrayList<WebPlotRequest> reqList = (ArrayList) cache.get(key);
-            String[] sAry = new String[reqList.size()];
-            for (int i = 0; (i < sAry.length); i++) {
-                sAry[i] = reqList.get(i).toString();
-            }
-            result = new WebPlotResult();
-            result.putResult(WebPlotResult.REQUEST_LIST, new DataEntry.StringArray(sAry));
-        } else {
-            result = WebPlotResult.makeFail("not request found", null, null);
-        }
-        return result;
-    }
-
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

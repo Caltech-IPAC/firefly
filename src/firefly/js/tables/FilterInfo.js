@@ -67,7 +67,7 @@ export class FilterInfo {
             const filters = filterInfo.split(';').map( (v) => {
                 const [, cname, op, val] = v.trim().match(filter_regex) || [];
                 if (!cname) return v;
-                return `${cname} ${FilterInfo.autoCorrectCondition(op + ' ' + val)}`;
+                return `${cname} ${autoCorrectCondition(op + ' ' + val)}`;
             });
             return filters.join(';');
         } else {

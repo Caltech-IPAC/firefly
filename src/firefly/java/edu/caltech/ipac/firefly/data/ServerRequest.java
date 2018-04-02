@@ -15,7 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ServerRequest implements Serializable, DataEntry, Cloneable {
+public class ServerRequest implements Serializable, Cloneable {
 
     public static final String REQUEST_CLASS= "RequestClass";
     public static final String SERVER_REQUEST_CLASS = "ServerRequest";

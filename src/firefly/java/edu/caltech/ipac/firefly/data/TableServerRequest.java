@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class TableServerRequest extends ServerRequest implements Serializable, DataEntry, Cloneable {
+public class TableServerRequest extends ServerRequest implements Serializable, Cloneable {
 
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
     public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc

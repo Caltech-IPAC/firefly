@@ -20,6 +20,8 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
+import {multitraceDesign} from '../../charts/ChartUtil.js';
+import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -31,6 +33,7 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {updateSet} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
+
 
 const algorOptions = [
     {label: 'Lomb-Scargle ', value: 'ls', proj: 'LCViewer'}
@@ -543,32 +546,82 @@ function periodogramSuccess(popupId, hideDropDown = false) {
 
         if (tReq !== null) {
             dispatchTableSearch(tReq, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
-            const xyPlotParams = {
-                userSetBoundaries: {yMin: 0},
-                x: {columnOrExpr: LC.PERIOD_CNAME, options: 'grid,log'},
-                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
-                plotStyle: 'linepoints',
-                plotTitle: 'Periodogram'
+            if (multitraceDesign()) {
+                const dispatchParams= {
+                    viewerId: LC.PERIODOGRAM_GROUP,
+                    groupId: LC.PERIODOGRAM_TABLE,
+                    chartId: LC.PERIODOGRAM_TABLE,
+                    help_id: 'findpTSV.pgramresults',
+                    data: [{
+                        tbl_id: LC.PERIODOGRAM_TABLE,
+                        x: `tables::${LC.PERIOD_CNAME}`,
+                        y: `tables::${LC.POWER_CNAME}`,
+                        mode: 'lines+markers'
+                    }],
+                    layout: {
+                        title: 'Periodogram',
+                        xaxis: {type: 'log', showgrid: true},
+                        yaxis: {showgrid: true, range: [0, undefined]}
+                    }
+                };
+                dispatchChartAdd(dispatchParams);
 
-            };
-            loadXYPlot({
-                chartId: LC.PERIODOGRAM_TABLE,
-                tblId: LC.PERIODOGRAM_TABLE,
-                markAsDefault: true,
-                xyPlotParams,
-                help_id: 'findpTSV.pgramresults'
-            });
+            } else {
+                const xyPlotParams = {
+                    userSetBoundaries: {yMin: 0},
+                    x: {columnOrExpr: LC.PERIOD_CNAME, options: 'grid,log'},
+                    y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
+                    plotStyle: 'linepoints',
+                    plotTitle: 'Periodogram'
+
+                };
+                loadXYPlot({
+                    chartId: LC.PERIODOGRAM_TABLE,
+                    tblId: LC.PERIODOGRAM_TABLE,
+                    markAsDefault: true,
+                    xyPlotParams,
+                    help_id: 'findpTSV.pgramresults'
+                });
+            }
         }
         if (tReq2 !== null) {
             dispatchTableSearch(tReq2, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
-            const xyPlotParams = {
-                x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
-                y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
-                plotStyle: 'linepoints',
-                plotTitle: `First ${get(request, [pKeyDef.peaks.fkey])} Peaks`
+            const title = `First ${get(request, [pKeyDef.peaks.fkey])} Peaks`;
+            if (multitraceDesign()) {
+                const dispatchParams= {
+                    viewerId: LC.PERIODOGRAM_GROUP,
+                    groupId: LC.PEAK_TABLE,
+                    chartId: LC.PEAK_TABLE,
+                    help_id: 'findpTSV.pgramresults',
+                    data: [{
+                        tbl_id: LC.PEAK_TABLE,
+                        x: `tables::${LC.PEAK_CNAME}`,
+                        y: `tables::${LC.POWER_CNAME}`,
+                        mode: 'lines+markers'
+                    }],
+                    layout: {
+                        title,
+                        xaxis: {showgrid: true},
+                        yaxis: {showgrid: true, range: [0, undefined]},
+                    }
+                };
+                dispatchChartAdd(dispatchParams);
 
-            };
-            loadXYPlot({chartId: LC.PEAK_TABLE, tblId: LC.PEAK_TABLE, xyPlotParams, help_id: 'findpTSV.pgramresults'});
+            } else {
+                const xyPlotParams = {
+                    x: {columnOrExpr: LC.PEAK_CNAME, options: 'grid'},
+                    y: {columnOrExpr: LC.POWER_CNAME, options: 'grid'},
+                    plotStyle: 'linepoints',
+                    plotTitle: title
+
+                };
+                loadXYPlot({
+                    chartId: LC.PEAK_TABLE,
+                    tblId: LC.PEAK_TABLE,
+                    xyPlotParams,
+                    help_id: 'findpTSV.pgramresults'
+                });
+            }
         }
 
         dispatchActiveTableChanged(LC.PERIODOGRAM_TABLE, LC.PERIODOGRAM_GROUP);
@@ -610,6 +663,8 @@ const  PeriodogramResult = ({expanded}) => {
                                       expandedMode={expanded===LO_VIEW.tables}
                                       tableOptions={{help_id:'findpTSV.pgramresults'}}/>);
     const xyPlot = (<ChartsContainer key='res-charts'
+                                     viewerId={LC.PERIODOGRAM_GROUP}
+                                     tbl_group={LC.PERIODOGRAM_GROUP}
                                      closeable={true}
                                      expandedMode={expanded===LO_VIEW.xyPlots}/>);
 

@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
@@ -22,12 +21,10 @@ import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -103,39 +100,6 @@ public class ResourceManager {
 //====================================================================
 //
 //====================================================================
-
-
-    /**
-     * Loads all of the properties file in the given resources directory.
-     * It will search first the class path, and then from file system.
-     * @param resourcesDir directory
-     */
-    public static void loadAllProperties(String resourcesDir) {
-        
-        try {
-            URL url = ResourceManager.class.getResource(resourcesDir );
-
-            File resDir;
-            if ( url != null ) {
-                resDir = new File(url.toURI());
-            } else {
-                resDir = new File(resourcesDir);
-            }
-            if (resDir.isDirectory()) {
-                File[] props = resDir.listFiles(new FilenameFilter(){
-                            public boolean accept(File dir, String name) {
-                                return name.endsWith(".prop") || name.endsWith(".properties");
-                            }
-                        });
-                for(File f : props) {
-                    AppProperties.loadClassPropertiesFromFileToPdb(f, null);
-                }
-            }
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            throw new IllegalArgumentException("Unable to load resources");
-        }
-    }
 
 
 

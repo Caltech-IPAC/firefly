@@ -9,14 +9,12 @@ package edu.caltech.ipac.util.dd;
  */
 
 
-import edu.caltech.ipac.util.HandSerialize;
-
 import java.io.Serializable;
 
 /**
  * @author Trey Roby
  */
-public class Global implements Serializable, HandSerialize, RegionFileElement, ContainsOptions {
+public class Global implements Serializable, RegionFileElement, ContainsOptions {
 
     private RegionOptions ops;
 

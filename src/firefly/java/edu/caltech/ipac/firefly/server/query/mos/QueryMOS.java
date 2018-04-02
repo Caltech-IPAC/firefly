@@ -5,41 +5,47 @@ package edu.caltech.ipac.firefly.server.query.mos;
 
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.util.Ref;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
+import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.firefly.util.Ref;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.VoTableUtil;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static edu.caltech.ipac.util.IpacTableUtil.LABEL_TAG;
 import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
 
 
 @SearchProcessorImpl(id = "MOSQuery")
-public class QueryMOS extends DynQueryProcessor {
+public class QueryMOS extends IpacTablePartProcessor {
 
     String MOST_HOST_URL = AppProperties.getProperty("most.host", "default_most_host_url");
 
@@ -55,10 +61,9 @@ public class QueryMOS extends DynQueryProcessor {
     }
 
     @Override
-    protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
         File retFile;
         try {
-            setXmlParams(request);
             MOSRequest req = QueryUtil.assureType(MOSRequest.class, request);
             String tblType = req.getParam(MOSRequest.TABLE_NAME);
             boolean headerOnly = isHeaderOnlyRequest(req);
@@ -151,24 +156,7 @@ Thread.sleep(1000);
 
             } catch (IOException e) {
                 _log.error(e, e.toString());
-                if (conn != null && conn instanceof HttpURLConnection) {
-                    HttpURLConnection httpConn = (HttpURLConnection) conn;
-                    int respCode = httpConn.getResponseCode();
-                    if (respCode == 400 || respCode == 404 || respCode == 500) {
-                        InputStream is = httpConn.getErrorStream();
-                        if (is != null) {
-                            String msg = parseMessageFromServer(DynServerUtils.convertStreamToString(is));
-                            throw new EndUserException("WISE MOS Search Failed: " + msg, msg);
-
-                        } else {
-                            String msg = httpConn.getResponseMessage();
-                            throw new EndUserException("WISE MOS Search Failed: " + msg, msg);
-                        }
-                    }
-
-                } else {
-                    throw makeException(e, "MOS Query Failed - network error.");
-                }
+                throw makeException(e, "MOS Query Failed - network error.");
 
             } catch (Exception e) {
                 throw makeException(e, "MOS Query Failed.");

@@ -93,7 +93,7 @@ export class InputAreaFieldView extends PureComponent {
         return (
             <div style={wrapperStyle}>
                 {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
-                <textarea style={Object.assign({display:'inline-block'}, style)}
+                <textarea style={Object.assign({display:'inline-block', backgroundColor: 'white'}, style)}
                           rows={rows}
                           cols={cols}
                           className={computeStyle(valid,hasFocus)}

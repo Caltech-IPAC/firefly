@@ -7,7 +7,8 @@
  * Utilities related to charts
  * Created by tatianag on 3/17/16.
  */
-import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, pick, cloneDeep, merge, isNil, has} from 'lodash';
+
+import {get, uniqueId, isUndefined, omitBy, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -22,7 +23,7 @@ import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
 import {HeatmapOptions} from './ui/options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './ui/options/FireflyHistogramOptions.jsx';
 import {BasicOptions} from './ui/options/BasicOptions.jsx';
-import {ScatterToolbar, BasicToolbar} from './ui/PlotlyToolbar';
+import {ScatterToolbar, BasicToolbar, SingleTraceUIToolbar} from './ui/PlotlyToolbar';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
@@ -57,7 +58,11 @@ const FSIZE = 12;
 export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
 export function multitraceDesign() {
-    return get(getAppOptions(), 'charts.multitrace');
+    return get(getAppOptions(), 'charts.multitrace', true);
+}
+
+export function singleTraceUI() {
+    return get(getAppOptions(), 'charts.singleTraceUI');
 }
 
 /**
@@ -302,7 +307,10 @@ export function getOptionsUI(chartId) {
     }
 }
 
-export function getToolbarUI(chartId, activeTrace=0) {
+export function getToolbarUI(chartId, activeTrace=0, showMultiTrace) {
+
+    if (!showMultiTrace) { return SingleTraceUIToolbar; }
+
     const {data} =  getChartData(chartId);
     const type = get(data, [activeTrace, 'type'], 'scatter');
     if (isScatter2d(type)) {
@@ -313,7 +321,7 @@ export function getToolbarUI(chartId, activeTrace=0) {
 }
 
 export function clearChartConn({chartId}) {
-    var oldTablesources = get(getChartData(chartId), 'tablesources',[]);
+    const oldTablesources = get(getChartData(chartId), 'tablesources',[]);
     if (Array.isArray(oldTablesources)) {
         oldTablesources.forEach( (traceTS) => {
             if (traceTS._cancel) {
@@ -415,7 +423,7 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
  * @param {object[]} p.data
  */
 export function handleTableSourceConnections({chartId, data, fireflyData}) {
-    var tablesources = makeTableSources(chartId, data, fireflyData);
+    const tablesources = makeTableSources(chartId, data, fireflyData);
     const {tablesources:oldTablesources=[], activeTrace, curveNumberMap=[]} = getChartData(chartId);
 
     const hasTablesources = Array.isArray(tablesources) && tablesources.find((ts) => !isEmpty(ts));
@@ -595,7 +603,6 @@ export function applyDefaults(chartData={}, resetColor = true) {
 
     const defaultLayout = {
         hovermode: 'closest',
-        dragmode: 'zoom',
         legend: {
             font: {size: FSIZE},
             orientation: 'v',
@@ -646,7 +653,15 @@ export function applyDefaults(chartData={}, resetColor = true) {
         }
 
         type && Object.entries(setDefaultColor(d, type)).forEach(([k, v]) => set(d, k, v));
+
+        // default dragmode is select if box selection is supported
+        type && !chartData.layout.dragmode && (chartData.layout.dragmode = isBoxSelectionSupported(type) ? 'select' : 'zoom');
     });
+}
+
+export function isBoxSelectionSupported(type) {
+    if (!type || !isString(type)) return false;
+    return ['heatmap', 'histogram2dcontour', 'histogram2d', 'scatter'].find((e) => type.toLowerCase().includes(e));
 }
 
 /**

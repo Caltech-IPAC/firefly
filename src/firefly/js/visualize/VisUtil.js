@@ -1019,7 +1019,7 @@ export default {
     isPlotNorth, getEstimatedFullZoomFactor,
     intersects, contains, containsRec,containsCircle,
     getArrowCoords, getSelectedPts, calculatePosition, getCorners,
-    makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees
+    makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees, convertAngle
 };
 
 

@@ -3,13 +3,9 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.firefly.data.DataEntry;
-
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 /**
  * User: roby
  * Date: Apr 5, 2010
@@ -20,13 +16,11 @@ import java.util.List;
 /**
  * @author Trey Roby
  */
-public class CreatorResults implements Iterable<WebPlotInitializer>, Serializable, DataEntry {
+public class CreatorResults implements Iterable<WebPlotInitializer>, Serializable {
 
     private final static String SPLIT_TOKEN= "--CreatorResults--";
 
     WebPlotInitializer _wpInit[];
-
-    private CreatorResults() {}
 
     public CreatorResults(WebPlotInitializer wpInit[]) {
         _wpInit= wpInit;
@@ -52,16 +46,5 @@ public class CreatorResults implements Iterable<WebPlotInitializer>, Serializabl
         return sb.toString();
     }
 
-    public static CreatorResults parse(String s) {
-        if (s==null) return null;
-        String sAry[]= s.split(SPLIT_TOKEN,10);
-        List<WebPlotInitializer> list= new ArrayList<WebPlotInitializer>(5);
-        for(String wpStr : sAry) {
-            list.add(WebPlotInitializer.parse(wpStr));
-        }
-        CreatorResults retval= new CreatorResults(list.toArray(new WebPlotInitializer[list.size()]));
-        return retval;
-
-    }
 }
 

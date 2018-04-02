@@ -4,7 +4,6 @@
 package edu.caltech.ipac.util.dd;
 
 
-import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -15,7 +14,7 @@ import java.util.List;
  * This class contains the specifications of the DS9 region
  * @author Booth Hartley
  */
-public abstract class Region implements Serializable, HandSerialize, RegionFileElement, ContainsOptions {
+public abstract class Region implements Serializable, RegionFileElement, ContainsOptions {
 
 
    static public final int UNDEFINED = 0;

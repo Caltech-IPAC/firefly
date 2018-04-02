@@ -84,6 +84,7 @@ export class LcResult extends PureComponent {
         }
         if (showXyPlots) {
             content.xyPlot = (<ChartsContainer key='res-charts'
+                                               tbl_group='main'
                                                closeable={true}
                                                expandedMode={expanded===LO_VIEW.xyPlots}
             />);

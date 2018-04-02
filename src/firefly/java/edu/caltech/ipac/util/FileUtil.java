@@ -744,22 +744,6 @@ public class FileUtil
         return setExtension(ext, base);
     }
 
-    public static String absolutePathForWindows(String filename) {
-        if (OSInfo.isPlatform(OSInfo.ANY_WINDOWS))
-        {
-            String backSlash = "" + (File.separatorChar);
-            String doubleBackSlash = backSlash + backSlash;
-            String pathSet[] = filename.split(doubleBackSlash);
-            String newPath = pathSet[0];
-
-            for (int i=1; i<pathSet.length; i++) {
-                newPath += doubleBackSlash + pathSet[i];
-            }
-            return newPath;
-        } else
-            return filename;
-    }
-
     public static String getHostname() {
         String retHost= "UNKNOWN_HOST";
         try {

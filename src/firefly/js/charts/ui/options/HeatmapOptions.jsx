@@ -10,7 +10,7 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {BasicOptionFields, basicFieldReducer, helpStyle, submitChanges} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 
@@ -29,7 +29,7 @@ export class HeatmapOptions extends SimpleComponent {
     }
 
     render() {
-        const {chartId, tbl_id:tblIdProp} = this.props;
+        const {chartId, tbl_id:tblIdProp, showMultiTrace} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(this.props.activeTrace) ? cActiveTrace : this.props.activeTrace;
         const groupKey = this.props.groupKey || `${chartId}-heatmap-${activeTrace}`;
@@ -39,71 +39,76 @@ export class HeatmapOptions extends SimpleComponent {
             <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
                 {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
                 <br/>
-                <BasicOptionFields {...{activeTrace, groupKey, noColor: true}}/>
+                <BasicOptionFields {...{activeTrace, groupKey, noColor: true, showMultiTrace}}/>
             </FieldGroup>
         );
     }
 }
 
 export function fieldReducer({chartId, activeTrace}) {
-    const {data, fireflyData, tablesources={}} = getChartData(chartId);
-    const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-    const basicReducer = basicFieldReducer({chartId, activeTrace, tablesources});
-    const fields = {
+    const basicReducer = basicFieldReducer({chartId, activeTrace});
 
-        [`fireflyData.${activeTrace}.nbins.x`]: {
-            fieldKey: `fireflyData.${activeTrace}.nbins.x`,
-            value: get(fireflyData, `${activeTrace}.nbins.x`),
-            validator: intValidator(2, 300, 'Number of X-Bins'), // need at least 2 bins to display dx correctly
-            tooltip: 'Number of bins along X axis',
-            label: 'Number of X-Bins:',
-            labelWidth: 95,
-            size: 5
-        },
-        [`fireflyData.${activeTrace}.nbins.y`]: {
-            fieldKey: `fireflyData.${activeTrace}.nbins.y`,
-            value: get(fireflyData, `${activeTrace}.nbins.y`),
-            validator: intValidator(2, 300, 'Number of Y-Bins'), // need at least 2 bins to display dy correctly
-            tooltip: 'Number of bins along Y axis',
-            label: 'Number of Y-Bins:',
-            labelWidth: 95,
-            size: 5
-        },
-        [`data.${activeTrace}.colorscale`]: {
-            fieldKey: `data.${activeTrace}.colorscale`,
-            value: get(data, `${activeTrace}.colorscale`),
-            tooltip: 'Select colorscale for color map',
-            label: 'Color Scale:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.reversescale`]: {
-            fieldKey: `data.${activeTrace}.reversescale`,
-            value: get(data, `${activeTrace}.reversescale`) ? 'true' : undefined,
-            tooltip: 'Reverse colorscale for color map',
-            label: ' ',
-            labelWidth: 10
-        },
-        ...basicReducer(null)
-    };
-    const tblRelFields = {
-        [`_tables.data.${activeTrace}.x`]: {
-            fieldKey: `_tables.data.${activeTrace}.x`,
-            value: get(tablesourceMappings, 'x', ''),
-            //tooltip: 'X axis',
-            label: 'X:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.y`]: {
-            fieldKey: `_tables.data.${activeTrace}.y`,
-            value: get(tablesourceMappings, 'y', ''),
-            //tooltip: 'Y axis',
-            label: 'Y:',
-            ...fieldProps
-        }
+    const getFields = () => {
+        const {data, fireflyData, tablesources = {}} = getChartData(chartId);
+        const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
+
+        const fields = {
+
+            [`fireflyData.${activeTrace}.nbins.x`]: {
+                fieldKey: `fireflyData.${activeTrace}.nbins.x`,
+                value: get(fireflyData, `${activeTrace}.nbins.x`),
+                validator: intValidator(2, 300, 'Number of X-Bins'), // need at least 2 bins to display dx correctly
+                tooltip: 'Number of bins along X axis',
+                label: 'Number of X-Bins:',
+                labelWidth: 95,
+                size: 5
+            },
+            [`fireflyData.${activeTrace}.nbins.y`]: {
+                fieldKey: `fireflyData.${activeTrace}.nbins.y`,
+                value: get(fireflyData, `${activeTrace}.nbins.y`),
+                validator: intValidator(2, 300, 'Number of Y-Bins'), // need at least 2 bins to display dy correctly
+                tooltip: 'Number of bins along Y axis',
+                label: 'Number of Y-Bins:',
+                labelWidth: 95,
+                size: 5
+            },
+            [`data.${activeTrace}.colorscale`]: {
+                fieldKey: `data.${activeTrace}.colorscale`,
+                value: get(data, `${activeTrace}.colorscale`),
+                tooltip: 'Select colorscale for color map',
+                label: 'Color Scale:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.reversescale`]: {
+                fieldKey: `data.${activeTrace}.reversescale`,
+                value: get(data, `${activeTrace}.reversescale`) ? 'true' : undefined,
+                tooltip: 'Reverse colorscale for color map',
+                label: ' ',
+                labelWidth: 10
+            },
+            ...basicReducer(null)
+        };
+        const tblRelFields = {
+            [`_tables.data.${activeTrace}.x`]: {
+                fieldKey: `_tables.data.${activeTrace}.x`,
+                value: get(tablesourceMappings, 'x', ''),
+                //tooltip: 'X axis',
+                label: 'X:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.y`]: {
+                fieldKey: `_tables.data.${activeTrace}.y`,
+                value: get(tablesourceMappings, 'y', ''),
+                //tooltip: 'Y axis',
+                label: 'Y:',
+                ...fieldProps
+            }
+        };
+        return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
     };
     return (inFields, action) => {
         if (!inFields) {
-            return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
+            return getFields();
         }
 
         inFields = basicReducer(inFields, action);
@@ -123,13 +128,17 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
     return (
         <div className='FieldGroup__vertical'>
             <br/>
+            <div style={helpStyle}>
+                For X and Y, enter a column or an expression<br/>
+                ex. log(col); 100*col1/col2; col1-col2
+            </div>
             {colValStats && <ColumnOrExpression {...xProps}/>}
             {colValStats && <ColumnOrExpression {...yProps}/>}
             <div style={{whiteSpace: 'nowrap'}}>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.colorscale`}
                                    inline={true}
-                                   options={[{label:'Default', value:undefined}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
-                                         {value:'Greys'}, {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
+                                   options={[{value:'Greys'}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
+                                         {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
                                          {value:'RdBu'}, {value:'Reds'}, {value:'Viridis'}, {value:'YlGnBu'}, {value:'YlOrRd'}]}/>
                 <CheckboxGroupInputField
                     fieldKey={`data.${activeTrace}.reversescale`}

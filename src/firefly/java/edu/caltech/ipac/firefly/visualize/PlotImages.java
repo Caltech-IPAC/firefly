@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.io.Serializable;
@@ -20,7 +19,6 @@ import java.util.Iterator;
  * @author Trey Roby
  */
 public class PlotImages implements Serializable,
-                                   DataEntry,
                                    Iterable<PlotImages.ImageURL> {
 
     private final static String IMAGE_URL_TOKEN= "--ImageURL--";
@@ -44,7 +42,7 @@ public class PlotImages implements Serializable,
         _screenWidth= screenWidth;
         _screenHeight= screenHeight;
         _zfact= zfact;
-        _images= new ArrayList<ImageURL>(size);
+        _images= new ArrayList<>(size);
     }
 
 //======================================================================
@@ -91,32 +89,6 @@ public class PlotImages implements Serializable,
         return sb.toString();
     }
 
-    public static PlotImages parse(String s) {
-        if (s==null) return null;
-        String sAry[]= s.split(PLOT_IMAGES_TOKEN,500);
-        PlotImages retval= null;
-        if (sAry.length>2) {
-            try {
-                int i= 0;
-                ThumbURL thumbnailImage= ThumbURL.parse(sAry[i++]);
-                String templateName= getString(sAry[i++]);
-                int screenWidth= Integer.parseInt(sAry[i++]);
-                int screenHeight= Integer.parseInt(sAry[i++]);
-                float zfact= Float.parseFloat(sAry[i++]);
-                retval= new PlotImages(templateName, sAry.length-2, screenWidth, screenHeight,zfact);
-                retval.setThumbnail(thumbnailImage);
-                while(i<sAry.length) {
-                    retval.add( ImageURL.parse(sAry[i++]) );
-                }
-            } catch (NumberFormatException e) {
-                retval= null;
-            }
-        }
-        return retval;
-    }
-
-    private static String getString(String s) { return s.equals("null") ? null : s; }
-
 // =====================================================================
 // -------------------- Factory Methods --------------------------------
 // =====================================================================
@@ -126,11 +98,7 @@ public class PlotImages implements Serializable,
         private int  _width;
         private int  _height;
 
-        private ThumbURL() {}
-
-        public ThumbURL(String url,
-                        int width,
-                        int height) {
+        public ThumbURL(String url, int width, int height) {
             _url= url;
             _width= width;
             _height= height;
@@ -161,27 +129,6 @@ public class PlotImages implements Serializable,
                    getHeight();
         }
 
-
-        public static ThumbURL parse(String s) {
-            if (s==null) return null;
-            String sAry[]= s.split(THUMB_URL_TOKEN,4);
-            ThumbURL retval= null;
-            if (sAry.length==3) {
-                try {
-                    int i= 0;
-                    String url= getString(sAry[i++]);
-                    int  width= Integer.parseInt(sAry[i++]);
-                    int  height= Integer.parseInt(sAry[i]);
-                    retval= new ThumbURL(url,width,height);
-
-                } catch (NumberFormatException e) {
-                    retval= null;
-                }
-            }
-            return retval;
-
-        }
-
     }
 
 
@@ -194,15 +141,7 @@ public class PlotImages implements Serializable,
         private int _index;
         private boolean _created;
 
-        private ImageURL() {}
-
-        public ImageURL(String url,
-                        int xoff,
-                        int yoff,
-                        int width,
-                        int height,
-                        int index,
-                        boolean created) {
+        public ImageURL(String url, int xoff, int yoff, int width, int height, int index, boolean created) {
             _url= url;
             _xoff= xoff;
             _yoff= yoff;
@@ -256,31 +195,6 @@ public class PlotImages implements Serializable,
                    isCreated();
         }
 
-
-        public static ImageURL parse(String s) {
-            if (s==null) return null;
-            String sAry[]= s.split(IMAGE_URL_TOKEN,8);
-            ImageURL retval= null;
-            if (sAry.length==7) {
-                try {
-                    int i= 0;
-                    int index= Integer.parseInt(sAry[i++]);
-                    int  xoff= Integer.parseInt(sAry[i++]);
-                    int  yoff= Integer.parseInt(sAry[i++]);
-                    int  width= Integer.parseInt(sAry[i++]);
-                    int  height= Integer.parseInt(sAry[i++]);
-                    String url= getString(sAry[i++]);
-                    boolean created= Boolean.parseBoolean(sAry[i]);
-                    retval= new ImageURL(url,xoff,yoff,width,height,index,created);
-
-
-                } catch (NumberFormatException e) {
-                    retval= null;
-                }
-            }
-            return retval;
-
-        }
 
     }
 

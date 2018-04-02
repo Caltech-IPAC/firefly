@@ -167,6 +167,8 @@ function showExpandedView ({expanded,  images}) {
                 );
     } else if (expanded === LO_VIEW.xyPlots) {
         view = (<ChartsContainer closeable={true}
+                                 tbl_group='main'
+                                 addDefaultChart={true}
                          expandedMode={expanded===LO_VIEW.xyPlots}/>
                 );
     } else {

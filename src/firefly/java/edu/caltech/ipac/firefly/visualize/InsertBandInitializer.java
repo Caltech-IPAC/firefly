@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.firefly.data.DataEntry;
-
 import java.io.Serializable;
 /**
  * User: roby
@@ -17,7 +15,7 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
-public class InsertBandInitializer implements Serializable, DataEntry {
+public class InsertBandInitializer implements Serializable {
 
     private final static String SPLIT_TOKEN= "--InsertBandInitializer--";
 
@@ -26,9 +24,6 @@ public class InsertBandInitializer implements Serializable, DataEntry {
     private WebFitsData   _fitsData;
     private Band          _band;
     private String        _dataDesc;
-
-
-    private InsertBandInitializer() {}
 
 
     public InsertBandInitializer(PlotState plotState,
@@ -62,26 +57,6 @@ public class InsertBandInitializer implements Serializable, DataEntry {
                _dataDesc;
     }
 
-    public static InsertBandInitializer parse(String s) {
-        if (s==null) return null;
-        String sAry[]= s.split(SPLIT_TOKEN,6);
-        InsertBandInitializer retval= null;
-        if (sAry.length==5) {
-            try {
-                int i= 0;
-                PlotImages  initImages= PlotImages.parse(sAry[i++]);
-                PlotState   plotState= PlotState.parse(sAry[i++]);
-                WebFitsData fitsData= WebFitsData.parse(sAry[i++]);
-                Band        band= Band.parse(sAry[i++]);
-                String      dataDesc= getString(sAry[i]);
-                retval= new InsertBandInitializer(plotState,initImages,band,fitsData,dataDesc);
-            } catch (NumberFormatException e) {
-                retval= null;
-            }
-        }
-        return retval;
-
-    }
 
     private static String getString(String s) { return s.equals("null") ? null : s; }
 }

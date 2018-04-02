@@ -8,7 +8,8 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import {BasicOptionFields, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
+import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
+import {BasicOptionFields, basicFieldReducer, helpStyle, submitChanges} from './BasicOptions.jsx';
 import {updateSet} from '../../../util/WebUtil.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
@@ -28,130 +29,141 @@ export class ScatterOptions extends SimpleComponent {
     }
 
     render() {
-        const {chartId, groupKey:groupKeyProp, activeTrace:activeTraceProp, tbl_id:tblIdProp} = this.props;
+        const {chartId, groupKey:groupKeyProp, activeTrace:activeTraceProp, tbl_id:tblIdProp,showMultiTrace} = this.props;
         const {tablesources, activeTrace:cActiveTrace=0} = getChartData(chartId);
         const activeTrace = isUndefined(activeTraceProp) ? cActiveTrace : activeTraceProp;
         const groupKey = groupKeyProp || `${chartId}-scatter-${activeTrace}`;
         const tablesource = get(tablesources, [cActiveTrace], tblIdProp && {tbl_id: tblIdProp});
 
+        const modeKey = `data.${activeTrace}.mode`;
+        const modeOptions =[{label: 'points', value:'markers'},
+            {label: 'connected points', value:'lines+markers'},
+            {label: 'lines', value:'lines'}];
+
         return (
             <FieldGroup className='FieldGroup__vertical' keepState={false} groupKey={groupKey} reducerFunc={fieldReducer({chartId, activeTrace})}>
-                <ListBoxInputField fieldKey={`data.${activeTrace}.mode`}
-                                   options={[{label: 'points', value:'markers'},
-                                                 {label: 'connected points', value:'lines+markers'},
-                                                 {label: 'lines', value:'lines'}]}/>
-                <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
-                                   options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
-                                                 {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
+
+                {!showMultiTrace && <RadioGroupInputField alignment='horizontal' fieldKey={modeKey} options={modeOptions}/>}
+                {showMultiTrace && <ListBoxInputField fieldKey={modeKey} options={modeOptions}/>}
+                {showMultiTrace && <ListBoxInputField fieldKey={`data.${activeTrace}.marker.symbol`}
+                                                      options={[{value:'circle'}, {value:'circle-open'}, {value:'square'}, {value:'square-open'}, {value:'diamond'}, {value:'diamond-open'},
+                                                          {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>}
                 {/* TODO: scattergl does not support 'open' symbols as of v1..28.2.  we'll add them back at a later time when they do.
                  options={[{value:'circle'}, {value:'square'}, {value:'diamond'},
                  {value:'cross'}, {value:'x'}, {value:'triangle-up'}, {value:'hexagon'}, {value:'star'}]}/>
                  */}
-                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
-                <br/>
-                <BasicOptionFields {...{activeTrace, groupKey}}/>
+
+                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey,showMultiTrace}}/>}
+                <BasicOptionFields {...{activeTrace, groupKey,showMultiTrace}}/>
             </FieldGroup>
         );
     }
 }
 
 export function fieldReducer({chartId, activeTrace}) {
-    const {data, tablesources={}} = getChartData(chartId);
-    const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-    const basicReducer = basicFieldReducer({chartId, activeTrace, tablesources});
-    const fields = {
-        [`data.${activeTrace}.mode`]: {
-            fieldKey: `data.${activeTrace}.mode`,
-            value: get(data, `${activeTrace}.mode`),
-            tooltip: 'Select plot style',
-            label: 'Plot Style:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.marker.symbol`]: {
-            fieldKey: `data.${activeTrace}.marker.symbol`,
-            value: get(data, `${activeTrace}.marker.symbol`),
-            tooltip: 'Select marker symbol',
-            label: 'Symbol:',
-            ...fieldProps
-        },
-        [`data.${activeTrace}.marker.colorscale`]: {
-            fieldKey: `data.${activeTrace}.marker.colorscale`,
-            value: get(data, `${activeTrace}.marker.colorscale`),
-            tooltip: 'Select colorscale for color map',
-            label: 'Color Scale:',
-            ...fieldProps
-        },
-        [errorTypeFieldKey(activeTrace, 'x')]: {
-            fieldKey: errorTypeFieldKey(activeTrace, 'x'),
-            value: get(data, errorTypeFieldKey(activeTrace, 'x').replace(/^data./, ''), 'none')
-        },
-        [errorTypeFieldKey(activeTrace, 'y')]: {
-            fieldKey: errorTypeFieldKey(activeTrace, 'y'),
-            value: get(data, errorTypeFieldKey(activeTrace, 'y').replace(/^data./, ''), 'none')
-        },
-        ...basicReducer(null)
+
+    const basicReducer = basicFieldReducer({chartId, activeTrace});
+
+    const getFields = () => {
+        const {data, tablesources={}} = getChartData(chartId);
+        const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
+
+        const fields = {
+            [`data.${activeTrace}.mode`]: {
+                fieldKey: `data.${activeTrace}.mode`,
+                value: get(data, `${activeTrace}.mode`),
+                tooltip: 'Select plot style',
+                label: 'Plot Style:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.marker.symbol`]: {
+                fieldKey: `data.${activeTrace}.marker.symbol`,
+                value: get(data, `${activeTrace}.marker.symbol`),
+                tooltip: 'Select marker symbol',
+                label: 'Symbol:',
+                ...fieldProps
+            },
+            [`data.${activeTrace}.marker.colorscale`]: {
+                fieldKey: `data.${activeTrace}.marker.colorscale`,
+                value: get(data, `${activeTrace}.marker.colorscale`),
+                tooltip: 'Select colorscale for color map',
+                label: 'Color Scale:',
+                ...fieldProps
+            },
+            [errorTypeFieldKey(activeTrace, 'x')]: {
+                fieldKey: errorTypeFieldKey(activeTrace, 'x'),
+                value: get(data, errorTypeFieldKey(activeTrace, 'x').replace(/^data./, ''), 'none')
+            },
+            [errorTypeFieldKey(activeTrace, 'y')]: {
+                fieldKey: errorTypeFieldKey(activeTrace, 'y'),
+                value: get(data, errorTypeFieldKey(activeTrace, 'y').replace(/^data./, ''), 'none')
+            },
+            ...basicReducer(null)
+        };
+        const tblRelFields = {
+            [`_tables.data.${activeTrace}.x`]: {
+                fieldKey: `_tables.data.${activeTrace}.x`,
+                value: get(tablesourceMappings, 'x', ''),
+                //tooltip: 'X axis',
+                label: 'X:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.y`]: {
+                fieldKey: `_tables.data.${activeTrace}.y`,
+                value: get(tablesourceMappings, 'y', ''),
+                //tooltip: 'Y axis',
+                label: 'Y:',
+                ...fieldProps
+            },
+            [errorFieldKey(activeTrace, 'x')]: {
+                fieldKey: errorFieldKey(activeTrace, 'x'),
+                value: get(tablesourceMappings, ['error_x.array'], ''),
+                //tooltip: 'X error',
+                label: 'X error\u2191:',
+                ...fieldProps
+            },
+            [errorMinusFieldKey(activeTrace, 'x')]: {
+                fieldKey: errorMinusFieldKey(activeTrace, 'x'),
+                value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
+                //tooltip: 'X error',
+                label: 'Error\u2193:',
+                ...fieldProps
+            },
+            [errorFieldKey(activeTrace, 'y')]: {
+                fieldKey: errorFieldKey(activeTrace, 'y'),
+                value: get(tablesourceMappings, ['error_y.array'], ''),
+                //tooltip: '',
+                label: 'Y error\u2191:',
+                ...fieldProps
+            },
+            [errorMinusFieldKey(activeTrace, 'y')]: {
+                fieldKey: errorMinusFieldKey(activeTrace, 'y'),
+                value: get(tablesourceMappings, ['error_y.arrayminus'], ''),
+                //tooltip: 'Y error',
+                label: 'Y error\u2193:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.marker.color`]: {
+                fieldKey: `_tables.data.${activeTrace}.marker.color`,
+                value: get(tablesourceMappings, 'marker.color', ''),
+                //tooltip: 'Use a column for color map',
+                label: 'Color Map:',
+                ...fieldProps
+            },
+            [`_tables.data.${activeTrace}.marker.size`]: {
+                fieldKey: `_tables.data.${activeTrace}.marker.size`,
+                value: get(tablesourceMappings, 'marker.size', ''),
+                //tooltip: 'Use a column for size map',
+                label: 'Size Map:',
+                ...fieldProps
+            }
+        };
+        return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
     };
-    const tblRelFields = {
-        [`_tables.data.${activeTrace}.x`]: {
-            fieldKey: `_tables.data.${activeTrace}.x`,
-            value: get(tablesourceMappings, 'x', ''),
-            //tooltip: 'X axis',
-            label: 'X:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.y`]: {
-            fieldKey: `_tables.data.${activeTrace}.y`,
-            value: get(tablesourceMappings, 'y', ''),
-            //tooltip: 'Y axis',
-            label: 'Y:',
-            ...fieldProps
-        },
-        [errorFieldKey(activeTrace, 'x')]: {
-            fieldKey: errorFieldKey(activeTrace, 'x'),
-            value: get(tablesourceMappings, ['error_x.array'], ''),
-            //tooltip: 'X error',
-            label: 'X error\u2191:',
-            ...fieldProps
-        },
-        [errorMinusFieldKey(activeTrace, 'x')]: {
-            fieldKey: errorMinusFieldKey(activeTrace, 'x'),
-            value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
-            //tooltip: 'X error',
-            label: 'Error\u2193:',
-            ...fieldProps
-        },
-        [errorFieldKey(activeTrace, 'y')]: {
-            fieldKey: errorFieldKey(activeTrace, 'y'),
-            value: get(tablesourceMappings, ['error_y.array'], ''),
-            //tooltip: '',
-            label: 'Y error\u2191:',
-            ...fieldProps
-        },
-        [errorMinusFieldKey(activeTrace, 'y')]: {
-            fieldKey: errorMinusFieldKey(activeTrace, 'y'),
-            value: get(tablesourceMappings, ['error_y.arrayminus'], ''),
-            //tooltip: 'Y error',
-            label: 'Y error\u2193:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.marker.color`]: {
-            fieldKey: `_tables.data.${activeTrace}.marker.color`,
-            value: get(tablesourceMappings, 'marker.color', ''),
-            //tooltip: 'Use a column for color map',
-            label: 'Color Map:',
-            ...fieldProps
-        },
-        [`_tables.data.${activeTrace}.marker.size`]: {
-            fieldKey: `_tables.data.${activeTrace}.marker.size`,
-            value: get(tablesourceMappings, 'marker.size', ''),
-            //tooltip: 'Use a column for size map',
-            label: 'Size Map:',
-            ...fieldProps
-        }
-    };
+
     return (inFields, action) => {
         if (!inFields) {
-            return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
+            return getFields();
         }
 
         inFields = basicReducer(inFields, action);
@@ -182,7 +194,7 @@ export function fieldReducer({chartId, activeTrace}) {
     };
 }
 
-export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
+export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, showMultiTrace}) {
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
@@ -203,18 +215,24 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
     return (
         <div className='FieldGroup__vertical'>
             <br/>
+            <div style={helpStyle}>
+                For X and Y, enter a column or an expression<br/>
+                ex. log(col); 100*col1/col2; col1-col2
+            </div>
             <ColumnOrExpression {...xProps}/>
             <Errors axis='x' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
             <br/>
             <ColumnOrExpression {...yProps}/>
             <Errors axis='y' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
-            <br/>
-            <ColumnOrExpression {...sizeMapProps}/>
-            <ColumnOrExpression {...colorMapProps}/>
-            <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
-                               options={[{value:'Default'}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
-                                         {value:'Greys'}, {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
-                                         {value:'RdBu'}, {value:'Reds'}, {value:'Viridis'}, {value:'YlGnBu'}, {value:'YlOrRd'}]}/>
+            {showMultiTrace &&  <div style={{paddingTop: 10}}>
+                <ColumnOrExpression {...sizeMapProps}/>
+                <ColumnOrExpression {...colorMapProps}/>
+                <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
+                                   options={[{value: 'Default'}, {value: 'Bluered'}, {value: 'Blues'}, {value: 'Earth'}, {value: 'Electric'}, {value: 'Greens'},
+                                       {value: 'Greys'}, {value: 'Hot'}, {value: 'Jet'}, {value: 'Picnic'}, {value: 'Portland'}, {value: 'Rainbow'},
+                                       {value: 'RdBu'}, {value: 'Reds'}, {value: 'Viridis'}, {value: 'YlGnBu'}, {value: 'YlOrRd'}]}/>
+            </div>
+            }
         </div>
     );
 }
@@ -222,7 +240,8 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
 TableSourcesOptions.propTypes = {
     tablesource: PropTypes.object,
     activeTrace: PropTypes.number,
-    groupKey: PropTypes.string
+    groupKey: PropTypes.string,
+    showMultiTrace: PropTypes.bool
 };
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {

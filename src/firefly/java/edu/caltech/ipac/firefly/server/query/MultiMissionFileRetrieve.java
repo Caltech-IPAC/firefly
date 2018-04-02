@@ -47,7 +47,7 @@ public class MultiMissionFileRetrieve extends BaseFileInfoProcessor {
         for(Map.Entry<String,String> entry : params.entrySet()) {
             sr.setParam(entry.getKey(), entry.getValue());
         }
-        DynQueryProcessor.setXmlParams(sr);
+//        DynQueryProcessor.setXmlParams(sr);
 
     }
 

@@ -5,9 +5,11 @@
 import './TabPanel.css';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
+import sizeMe from 'react-sizeme';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
-import {wrapResizer} from '../SizeMeConfig.js';
+
+
 
 function tabsStateFromProps(props) {
     const {defaultSelected, componentKey} = props;
@@ -30,10 +32,6 @@ function tabsStateFromProps(props) {
 class TabsHeaderInternal extends PureComponent {
     constructor(props) {
         super(props);
-    }
-
-    componentWillUnmount() {
-        this.isUnmounted = true;
     }
 
     render() {
@@ -69,7 +67,7 @@ TabsHeaderInternal.propTypes= {
 };
 
 
-const TabsHeader= wrapResizer(TabsHeaderInternal);
+const TabsHeader= sizeMe({refreshRate: 16})(TabsHeaderInternal);
 
 
 export class Tabs extends PureComponent {

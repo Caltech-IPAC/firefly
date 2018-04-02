@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.data.table;
 
-import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
@@ -14,7 +13,7 @@ import java.io.Serializable;
  * @author loi
  * @version $Id: RawDataSet.java,v 1.4 2012/03/12 18:04:40 roby Exp $
  */
-public class RawDataSet implements Serializable, HandSerialize {
+public class RawDataSet implements Serializable {
     private final static String SPLIT_TOKEN= "--RawDataSet--";
     private final static String NL_TOKEN=  "---nl---";
 

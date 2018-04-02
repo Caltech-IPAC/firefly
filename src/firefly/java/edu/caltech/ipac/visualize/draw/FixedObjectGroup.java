@@ -12,7 +12,6 @@ import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.TableConnectionList;
-import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.visualize.VisConstants;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.NewPlotNotificationEvent;
@@ -21,8 +20,7 @@ import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -51,23 +49,22 @@ public class FixedObjectGroup implements TableConnectionList,
 
 
 
-   private final static ClassProperties _prop= new ClassProperties(
-                                                    FixedObjectGroup.class);
-
 //===================================================================
 //---------- private Constants for the table column name ------------
 //===================================================================
     private enum Direction {LON,LAT}
 
-   private final String ENABLED_COL     = _prop.getColumnName("on");
-   private final String HILIGHT_COL     = _prop.getColumnName("hilight");
-   private final String SHAPE_COL       = _prop.getColumnName("shape");
-   private final String SHOW_NAME_COL   = _prop.getColumnName("showName");
-   private final String TNAME_COL       = _prop.getColumnName("targetName");
-   protected final String USER_RA_COL     = _prop.getColumnName("userRa");
-   protected final String USER_DEC_COL    = _prop.getColumnName("userDec");
-   private final String USER_LON_COL    = _prop.getColumnName("userLon");
-   private final String USER_LAT_COL    = _prop.getColumnName("userLat");
+   private final String ENABLED_COL     = "On";
+   private final String HILIGHT_COL     = "Hi.";
+   private final String SHAPE_COL       = "Shape";
+   private final String SHOW_NAME_COL   = "Show Name";
+   private final String TNAME_COL       = "Tgt. Name";
+   protected final String USER_RA_COL     = "RA";
+   protected final String USER_DEC_COL    = "Dec";
+   private final String USER_LON_COL    = "Lon";
+   private final String USER_LAT_COL    = "Lat";
+
+
 
 //====================================================================
 //---------- public Constants for the table column index ------------

@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.data;
 
-import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
@@ -18,7 +17,7 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
-public class Version implements Serializable, HandSerialize {
+public class Version implements Serializable {
     private final static String SPLIT_TOKEN= "--Version--";
 
     public enum VersionType {Final, Development,
@@ -153,23 +152,5 @@ public class Version implements Serializable, HandSerialize {
                                    _configLastModTime+"");
     }
 
-    public static Version parse(String s) {
-        Version v= new Version();
-        try {
-            String sAry[]= StringUtils.parseHelper(s,12,SPLIT_TOKEN);
-            int i= 0;
-            v._appName= StringUtils.checkNull(sAry[i++]);
-            v._major= StringUtils.getInt(sAry[i++]);
-            v._minor= StringUtils.getInt(sAry[i++]);
-            v._rev= StringUtils.getInt(sAry[i++]);
-            v._vType= convertVersionType(sAry[i++]);
-            v._build= StringUtils.getInt(sAry[i++]);
-            v._buildDate= StringUtils.checkNull(sAry[i++]);
-            v._configLastModTime= StringUtils.getLong(sAry[i++]);
-        } catch (IllegalArgumentException e) {
-            v= null;
-        }
-        return v;
-    }
 }
 
