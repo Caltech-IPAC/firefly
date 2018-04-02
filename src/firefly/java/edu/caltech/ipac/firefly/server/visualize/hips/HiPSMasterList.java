@@ -114,7 +114,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             }
 
             if (allSourceData.size() == 0) {
-                throw new IOException("[HiPS_LIST]: no HiPS found");
+                throw new IOException("[HiPS_LIST]: no HiPS found or HiPS service connection error");
             }
 
             DataGroup dg = createTableDataFromListEntry(allSourceData);
