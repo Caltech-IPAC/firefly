@@ -80,6 +80,7 @@ export class WorkspaceViewPanel extends PureComponent {
     onClickStatus(status) {
         return () => {
             this.setState((state) => {
+                state = Object.assign({}, state);
                 state.clickStatus = (state.clickStatus === status) ? WS_reset : status;
                 return state;
             });
@@ -101,6 +102,7 @@ export class WorkspaceViewPanel extends PureComponent {
             const wsList = getWorkspaceList();
 
             this.setState((state) => {
+                state = Object.assign({}, state);
                 if (wsList !== state.wsList) {
                     state.wsList = wsList;
                 }

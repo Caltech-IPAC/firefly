@@ -48,6 +48,7 @@ export class UploadOptionsDialog extends PureComponent {
             const loc = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, this.fileLocation);
 
             this.setState((state) => {
+                state = Object.assign({}, state);
                 if (loc !== state.where) {
                     state.where = loc;
                 }

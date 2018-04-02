@@ -70,6 +70,7 @@ class BaseFolder extends React.Component {
   handleNewNameChange(event) {
     var newName = this.refs.newName.value;
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.newName = newName;
       return state;
     });

@@ -143,6 +143,7 @@ class FileBrowser extends React.Component {
   }
   renameFolder(oldKey, newKey) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.activeAction = null;
       state.actionTarget = null;
       if (state.selection.substr(0, oldKey.length) === oldKey) {
@@ -171,6 +172,7 @@ class FileBrowser extends React.Component {
   }
   moveFolder(oldKey, newKey) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.activeAction = null;
       state.actionTarget = null;
       state.selection = newKey;
@@ -188,6 +190,7 @@ class FileBrowser extends React.Component {
   }
   createFiles(files, prefix) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.openFolders = {
         ...state.openFolders
       };
@@ -202,6 +205,7 @@ class FileBrowser extends React.Component {
   }
   createFolder(key) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.activeAction = null;
       state.actionTarget = null;
       state.selection = key;
@@ -217,6 +221,7 @@ class FileBrowser extends React.Component {
   // browser manipulation
   beginAction(action, key) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.activeAction = action;
       state.actionTarget = key;
       return state;
@@ -230,6 +235,7 @@ class FileBrowser extends React.Component {
   }
   select(key) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.selection = key;
       if (state.actionTarget !== null && state.actionTarget !== key) {
         state.actionTarget = null;
@@ -244,12 +250,14 @@ class FileBrowser extends React.Component {
   }
   preview(file) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.previewFile = this.props.showPreview ? file : null;
       return state;
     });
   }
   closeDetail() {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.previewFile = null;
       return state;
     });
@@ -258,12 +266,14 @@ class FileBrowser extends React.Component {
   handleShowMoreClick(event) {
     event.preventDefault();
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.searchResultsShown += SEARCH_RESULTS_PER_PAGE;
       return state;
     });
   }
   toggleFolder(folderKey) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       if (folderKey in state.openFolders) {
         delete state.openFolders[folderKey];
       } else {
@@ -274,6 +284,7 @@ class FileBrowser extends React.Component {
   }
   openFolder(folderKey) {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.openFolders[folderKey] = true;
       return state;
     });
@@ -288,6 +299,7 @@ class FileBrowser extends React.Component {
     );
     if (!inBrowser && !inPreview) {
       this.setState((state) => {
+        state = Object.assign({}, state);
         state.selection = (this.props.keepSelect ? state.selection : null);
         state.actionTarget = null;
         state.activeAction = null;
@@ -317,6 +329,7 @@ class FileBrowser extends React.Component {
     }
     addKey += '__new__/';
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.actionTarget = addKey;
       state.activeAction = 'createFolder';
       state.selection = addKey;
@@ -332,6 +345,7 @@ class FileBrowser extends React.Component {
   handleFilterChange(event) {
     var newValue = this.refs.filter.value;
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.nameFilter = newValue;
       state.searchResultsShown = SEARCH_RESULTS_PER_PAGE;
       return state;
@@ -339,6 +353,7 @@ class FileBrowser extends React.Component {
   }
   clearFilter() {
     this.setState((state) => {
+      state = Object.assign({}, state);
       state.nameFilter = '';
       return state;
     });
