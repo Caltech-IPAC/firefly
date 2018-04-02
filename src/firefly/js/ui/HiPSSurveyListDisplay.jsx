@@ -13,39 +13,32 @@ import {HelpIcon} from './HelpIcon.jsx';
 import {CompleteButton} from './CompleteButton.jsx';
 import {INFO_POPUP} from './PopupUtil.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import {onHiPSSurveys, isLoadingHiPSSurverys, HiPSPopular, HiPSId, HiPSData, HiPSSurveyTableColumn,
-        getHiPSSurveys,  getHiPSLoadingMessage, getPopularHiPSTable,
-        makeHiPSSurveysTableName, indexInHiPSSurveys,
-        updateHiPSTblHighlightOnUrl} from '../visualize/HiPSListUtil.js';
+import {onHiPSSurveys, isLoadingHiPSSurverys, HiPSId, HiPSData, HiPSSurveyTableColumn, HiPSSources,
+        getHiPSSurveys,  getHiPSLoadingMessage, makeHiPSSurveysTableName,
+        updateHiPSTblHighlightOnUrl, getHiPSSources, defHiPSSources} from '../visualize/HiPSListUtil.js';
 import {FieldGroup} from './FieldGroup.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {ServerParams} from '../data/ServerParams.js';
 
 //define the table style only in the table div
 const tableStyle = {boxSizing: 'border-box', padding:5, width: '100%', height: 'calc(100% - 20px)', overflow: 'hidden', display: 'flex', flexDirection: 'column'};
 const hipsSurveysPopupId = 'hipsSurveys';
 
+
 /**
  * table to contain HiPS survey info including url, data_product and title
  * @param hipsId
- * @param isPopular
- * @param hipsUrl
+ * @param sources
  * @param moreStyle
  * @returns {XML}
  */
-function renderHiPSSurveysTable(hipsId, isPopular, hipsUrl, moreStyle={}) {
+function renderHiPSSurveysTable(hipsId, sources, moreStyle={}) {
     const surveyTableStyle = isEmpty(moreStyle) ? tableStyle : Object.assign(tableStyle, moreStyle);
-    const tableId = makeHiPSSurveysTableName(hipsId, isPopular);
-    let   tableModel = getTblById(tableId);
-
-    if (!tableModel && isPopular) {
-        tableModel = getPopularHiPSTable(hipsId, hipsUrl);
-    } else if (tableModel && hipsUrl) {
-        // for first time table display
-        tableModel.highlightedRow = indexInHiPSSurveys(tableModel, hipsUrl);
-    }
+    const tableId = makeHiPSSurveysTableName(hipsId, sources);
+    const tableModel = getTblById(tableId);
 
     return (tableModel && !tableModel.error) ? (
         <div style={surveyTableStyle}>
@@ -56,12 +49,12 @@ function renderHiPSSurveysTable(hipsId, isPopular, hipsUrl, moreStyle={}) {
                 height={'calc(100%)'}
                 showToolbar={false}
                 selectable={false}
-                showFilters={isPopular ? false : true}
+                showFilters={true}
                 showOptionButton={true}
             />
         </div>) :
         (<div style={{display:'flex', justifyContent: 'center', alignItems: 'center', padding: 10}}>
-               {getHiPSLoadingMessage(tableId) || 'HiPS surveys are not found'}
+               {getHiPSLoadingMessage(tableId)}
         </div>);
 }
 
@@ -69,11 +62,10 @@ function renderHiPSSurveysTable(hipsId, isPopular, hipsUrl, moreStyle={}) {
  * show HiPS survey table or loading sign
  * @param id
  * @param isUpdatingHips
- * @param popularHiPS
- * @param hipsUrl
+ * @param hipsSources
  * @returns {*}
  */
-function showHiPSSurveyList(id, isUpdatingHips, popularHiPS, hipsUrl) {
+function showHiPSSurveyList(id, isUpdatingHips, hipsSources) {
     const loading = () => {
         return (
             <div style={{width: '100%', height: '100%', display:'flex', justifyContent: 'center', alignItems: 'center'}}>
@@ -83,7 +75,7 @@ function showHiPSSurveyList(id, isUpdatingHips, popularHiPS, hipsUrl) {
     };
 
     const showHiPSSurvey = () => {
-        return renderHiPSSurveysTable(id, (popularHiPS === HiPSPopular), hipsUrl);
+        return renderHiPSSurveysTable(id, hipsSources);
     };
 
     return (
@@ -152,27 +144,16 @@ export function showHiPSSurverysPopup(hipsUrl,  pv, surveysId = HiPSId, dataType
     };
 
     if (hipsUrl) {
-        updateHiPSTblHighlightOnUrl(hipsUrl, surveysId);
+        updateHiPSTblHighlightOnUrl(hipsUrl, surveysId, getDefaultHiPSSources());
     }
     startHiPSPopup();
 }
 
 export const gKeyHiPSPanel = 'HIPSList_PANEL';
-export const fKeyHiPSPopular = 'popularHiPS';
+export const fKeyHiPSSources = 'hipsSources';
 
-function getHiPSPopularSetting(hipsUrl) {
-    let pSetting = getFieldVal(gKeyHiPSPanel, fKeyHiPSPopular);
-
-    if (isUndefined(pSetting)) {
-        //pSetting = (!hipsUrl || isOnePopularSurvey(hipsUrl)) ? HiPSPopular : '';
-        pSetting = HiPSPopular; // will be updated based on app options hips popular setting
-    }
-
-    return pSetting;
-}
-
-export function isPopularHiPSChecked() {
-    return getFieldVal(gKeyHiPSPanel, fKeyHiPSPopular) === HiPSPopular;
+export function getHiPSSourcesChecked() {
+     return getFieldVal(gKeyHiPSPanel, fKeyHiPSSources);
 }
 /**
  * show HiPS survey info table plus check box for showing popular surveys in popup panel or form panel
@@ -181,19 +162,20 @@ export class HiPSSurveyListSelection extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.state = {[fKeyHiPSPopular]: getHiPSPopularSetting(props.hipsUrl)};
+        this.state = {[fKeyHiPSSources]: getDefaultHiPSSources()};
     }
 
     componentWillMount() {
-        const hipsSurveys = getHiPSSurveys(makeHiPSSurveysTableName(this.props.surveysId));
+        const {[fKeyHiPSSources]:sources} = this.state;
+        const hipsSurveys = getHiPSSurveys(makeHiPSSurveysTableName(this.props.surveysId, sources));
         // no surveys in the store yet
         if (!hipsSurveys) {
             const {dataType} = this.props;
 
-            onHiPSSurveys({dataTypes: dataType, id: this.props.surveysId});
+            onHiPSSurveys({dataTypes: dataType, id: this.props.surveysId, sources});
         }
         // if HiPS table is created by server
-        this.setState({isUpdatingHips: isLoadingHiPSSurverys(makeHiPSSurveysTableName(this.props.surveysId))});
+        this.setState({isUpdatingHips: isLoadingHiPSSurverys(makeHiPSSurveysTableName(this.props.surveysId, sources))});
 
     }
 
@@ -210,35 +192,48 @@ export class HiPSSurveyListSelection extends PureComponent {
     storeUpdate() {
         if (this.iAmMounted) {
             const {surveysId} = this.props;
-            const pSetting = getFieldVal(gKeyHiPSPanel, fKeyHiPSPopular);
-            const isUpdatingHips = isLoadingHiPSSurverys(makeHiPSSurveysTableName(surveysId));
+            const pSetting = getFieldVal(gKeyHiPSPanel, fKeyHiPSSources);
+            const isUpdatingHips = isLoadingHiPSSurverys(makeHiPSSurveysTableName(surveysId, pSetting));
 
-            if (pSetting !== get(this.state, [fKeyHiPSPopular])) {
-                this.setState({[fKeyHiPSPopular]: pSetting});
+            if (pSetting !== get(this.state, [fKeyHiPSSources])) {
+                this.setState({[fKeyHiPSSources]: pSetting});
             }
             if (isUpdatingHips !== get(this.state, 'isUpdatingHips')) {
                 this.setState({isUpdatingHips});
             }
+        }
+    }
 
+    componentDidUpdate(prevProps, prevState) {
+        const {[fKeyHiPSSources]:sources, isUpdatingHips} = this.state;
+
+
+        const hipsSurveys = getHiPSSurveys(makeHiPSSurveysTableName(this.props.surveysId, sources));
+        // no surveys in the store yet
+        if (!hipsSurveys && !isUpdatingHips) {
+            const {dataType} = this.props;
+
+            onHiPSSurveys({dataTypes: dataType, id: this.props.surveysId, sources});
         }
     }
 
     render() {
-        const {surveysId, wrapperStyle, hipsUrl} = this.props;
-        const {isUpdatingHips, [fKeyHiPSPopular]: popularS} = this.state;
+        const {surveysId, wrapperStyle} = this.props;
+        const {isUpdatingHips, [fKeyHiPSSources]: hipsSources} = this.state;
+        const optionsMenu = getOptionsMenu(getHiPSSources());
 
         return (
             <div style={wrapperStyle}>
                 <FieldGroup groupKey={gKeyHiPSPanel} validatorFunc={null} keepState={true}
-                            reducerFunc={fieldReducer(hipsUrl)}
+                            reducerFunc={fieldReducer(hipsSources)}
                             style={{height: '100%', width: '100%'}}>
-                    <CheckboxGroupInputField
-                        fieldKey={fKeyHiPSPopular}
-                        options={[{label: 'Popular HiPS', value: HiPSPopular}]}
+                   <CheckboxGroupInputField
+                        fieldKey={fKeyHiPSSources}
+                        options={optionsMenu}
                         alignment='horizontal'
                         wrapperStyle={{textAlign: 'center'}}
                     />
-                    {showHiPSSurveyList(surveysId, isUpdatingHips, popularS, hipsUrl)}
+                    {showHiPSSurveyList(surveysId, isUpdatingHips, hipsSources)}
                 </FieldGroup>
             </div>
         );
@@ -256,14 +251,55 @@ HiPSSurveyListSelection.defaultProps={
     dataType: HiPSData
 };
 
-function fieldReducer(hipsUrl) {
-    return (inFields, action ) => {
+function getAllSources(sources) {
+    let  hipsSources = sources ? sources : getHiPSSources();
+
+    if ((!hipsSources) || hipsSources.toLowerCase() === ServerParams.ALL.toLowerCase()) {
+        hipsSources= HiPSSources;
+    }
+    return hipsSources;
+}
+
+function getOptionsMenu(sources){
+    const hipsSources = getAllSources(sources);
+
+    return hipsSources.split(',').filter((oneSource) => oneSource.trim())
+                                 .map((s) => ({label: s.trim().toUpperCase(), value: s.trim().toLowerCase()}));
+
+}
+
+function getDefaultHiPSSources() {
+    const defFromPanel =  getHiPSSourcesChecked();
+
+    if (!isUndefined(defFromPanel)) {
+        return defFromPanel;
+    } else {
+        const allSources = getAllSources().split(',')
+            .filter((s) => s.trim())
+            .map((s) => s.trim().toLowerCase());  // value in lower case
+
+        const defSources = defHiPSSources();
+
+        if (!defSources) {
+            return allSources[0];
+        } else if (defSources.toLowerCase() === ServerParams.ALL.toLowerCase()) {
+            return allSources.join(',');
+        } else {
+            return defSources.split(',')
+                .filter((oneSource) => oneSource.trim() && allSources.includes(oneSource.trim().toLowerCase()))
+                .map((s) => s.trim().toLowerCase())
+                .join(',');
+        }
+    }
+}
+
+function fieldReducer(defSources) {
+    return (inFields) => {
         if (!inFields) {
-            const pSetting = getHiPSPopularSetting(hipsUrl);
-            return {[fKeyHiPSPopular]: {
-                fieldKey: fKeyHiPSPopular,
-                value: pSetting,
-                tooltip: 'display popular HiPS'
+            return {[fKeyHiPSSources]: {
+                fieldKey: fKeyHiPSSources,
+                value: defSources,
+                tooltip: 'HiPS sources'
             }};
         }
         return inFields;
@@ -271,27 +307,31 @@ function fieldReducer(hipsUrl) {
 }
 
 export function getTblModelOnPanel(surveysId) {
-    const isPopular = isPopularHiPSChecked();
-    const tblId = makeHiPSSurveysTableName(surveysId, isPopular);
+    const sources = getHiPSSourcesChecked();
+    const tblId = sources ? makeHiPSSurveysTableName(surveysId, sources) : null;
 
     return tblId ? getTblById(tblId) : null;
 }
 
 function onSelectPlot(surveysId, plot) {
     return (request) => {
-        const isPopular = (get(request, fKeyHiPSPopular) === HiPSPopular);
-        const tblId = makeHiPSSurveysTableName(surveysId, isPopular);
-        const tableModel = getTblById(tblId);
-        if (!tableModel) {
+        const sources = getHiPSSourcesChecked();
+        if (!sources) {
+            HiPSPopupMsg('No HiPS source selected', 'HiPS search');
             return;
         }
 
+        const tblId = makeHiPSSurveysTableName(surveysId, sources);
+        const tableModel = getTblById(tblId);
+        if (!tableModel) {
+            HiPSPopupMsg('no table with id ' + tblId + ' is found', 'HiPS search');
+            return;
+        }
 
         const rootUrl = getCellValue(tableModel, get(tableModel, 'highlightedRow', 0), HiPSSurveyTableColumn.Url.key);
 
         if (rootUrl) {
             // update the table highlight of the other one which is not shown in table panel
-            updateHiPSTblHighlightOnUrl(rootUrl, surveysId, !isPopular);
             dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
         }
     };
@@ -307,7 +347,7 @@ function resultCancel(surveysId, plot) {
 
         // reset the highlight of HiPS tables based on current plot
         if (rootUrl) {
-            updateHiPSTblHighlightOnUrl(rootUrl, surveysId);
+            updateHiPSTblHighlightOnUrl(rootUrl, surveysId, getHiPSSourcesChecked());
         }
         dispatchHideDialog(hipsSurveysPopupId);
         if (isDialogVisible(INFO_POPUP)) {

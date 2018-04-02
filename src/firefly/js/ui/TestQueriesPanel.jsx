@@ -45,7 +45,7 @@ import {hipsSURVEYS} from '../visualize/HiPSUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 import {HiPSId, HiPSSurveyTableColumn} from '../visualize/HiPSListUtil.js';
-import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel} from './HiPSSurveyListDisplay.jsx';
+import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel, getHiPSSourcesChecked} from './HiPSSurveyListDisplay.jsx';
 import {getCellValue} from '../tables/TableUtil.js';
 
 const options = [
@@ -525,6 +525,10 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
+    const sources = getHiPSSourcesChecked();
+    if (!sources) {
+        return HiPSPopupMsg('No HiPS source selected', 'HiPS search');
+    }
     const tableModel = getTblModelOnPanel(HiPSId);
     if (!tableModel) {
         return HiPSPopupMsg('No HiPS information found', 'HiPS search');

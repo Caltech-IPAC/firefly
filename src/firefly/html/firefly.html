@@ -24,7 +24,7 @@
                     MenuItemKeys: {maskOverlay:true},
                     catalogSpacialOp: 'polygonWhenPlotExist',
                     charts: {multitrace: true, singleTraceUI: false},
-                    hips : {useForCoverage: true, useForImageSearch: true},
+                    hips : {useForCoverage: true, useForImageSearch: true, hipsSources: 'all', defHipsSources: 'irsa'},
                     workspace : {showOptions: false},
                     imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
                     coverage : { // example of using DSS and wise combination for coverage (not that anyone would want to combination)
@@ -32,7 +32,7 @@
                         imageSourceParams: {
                             Service : 'WISE',
                             SurveyKey: '1b',
-                            SurveyKeyBand: '4',
+                            SurveyKeyBand: '4'
                         }
                     }
                 }

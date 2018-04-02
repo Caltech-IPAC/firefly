@@ -33,6 +33,7 @@ import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getAppHiPSConfig} from '../HiPSListUtil.js';
 import {HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
+import {getHiPSSourcesChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
 
 import './ImageSearchPanelV2.css';
 
@@ -102,7 +103,7 @@ export function ImageSearchDropDown({gridSupport}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
 
     return (
-        <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+        <FormPanel  inputStyle = {{width: 780, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                     submitBarStyle = {{padding: '0 4px 3px'}}
                     groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
                     params = {{hideOnInvalid: false}}
@@ -507,6 +508,8 @@ function getHipsValidateInfo(request) {
         if (isNil(request.txURL) || (!request.txURL.trim())){
             return ({valid:false, message:'invalid URL'});
         }
+    } else if (!getHiPSSourcesChecked()) {
+        return ({valied: false, message: 'No HiPS source selected'});
     }
     return {valid:true, message: 'success'};
 }

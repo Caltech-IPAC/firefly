@@ -12,7 +12,6 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.firefly.server.query.lsst.LSSTQuery;
 import org.apache.commons.csv.CSVFormat;
 
 import java.util.List;
@@ -20,12 +19,17 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Properties;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.net.URL;
-import java.io.FileReader;
 import java.io.BufferedReader;
+import java.net.URLConnection;
+import java.io.StringReader;
+import java.lang.StringBuilder;
+
 
 /**
  * Created by cwang on 2/27/18.
@@ -39,19 +43,22 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
                                                     AppProperties.getProperty("irsa.hips.masterFile",irsaHipsTable):
                                                     AppProperties.getProperty("irsa.hips.masterUrl", irsaHipsUrl);
     private static int TIMEOUT  = new Integer( AppProperties.getProperty("HiPS.timeoutLimit" , "30")).intValue();
-
-
+    private static String PROP = PARAMS.PROPERTIES.getKey().toLowerCase();
 
     private static Map<String, String> paramsMap = new HashMap<>();
     static {
-            HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ID, "creator_did");
+            HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.IVOID, "creator_did");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.URL, "hips_service_url");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TITLE, "obs_title");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.ORDER, "hips_order");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.TYPE, "dataproduct_type");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.FRACTION, "moc_sky_fraction");
             HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.FRAME, "hips_frame");
+            HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.WAVELENGTH, "obs_regime");
+            HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.RELEASEDATE, "hips_release_date");
+            HiPSMasterListEntry.setParamsMap(paramsMap, PARAMS.PIXELSCALE, "hips_pixel_scale");
     }
+    //private static String[] mandatoryKeys = new String[]{ PARAMS.ID.key, PARAMS.URL.key, PARAMS.RELEASEDATE.key, PARAMS.STATUS.key};
 
     public List<HiPSMasterListEntry> getHiPSListData(String[] dataTypes, String source) {
         try {
@@ -61,91 +68,153 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             if (irsaHiPSSource.equals("file")) {
                 return createHiPSListFromFile(irsaHiPSListFrom, dataTypes, source);
             } else {
-                return createHiPSListFromUrl(irsaHiPSListFrom, dataTypes, source);
+                return createHiPSListFromUrl(irsaHiPSListFrom, source, paramsMap, true);
             }
         }
-        catch (FailedRequestException | IOException | DataAccessException e) {
-            _log.warn("get Irsa HiPS failed");
+        catch (FailedRequestException | IOException e) {
+            _log.warn("get " + source + " HiPS failed - " + e.getMessage());
             return null;
         } catch (Exception e) {
-            _log.warn(e.getMessage());
+            _log.warn("get " + source + " HiPS failed - " + e.getMessage());
             return null;
         }
 
     }
 
-    public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String[] dataTypes, String source)
-                                                  throws IOException, DataAccessException, FailedRequestException  {
+    public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String source,
+                                                        Map<String, String> keyMap, boolean bPropCall)
+                                                                                                throws IOException  {
         _log.briefDebug("executing " + source + " url query: " + url);
 
-        File file = HiPSMasterList.createFile(dataTypes, ".txt", source);
-        Map<String, String> requestHeader=new HashMap<>();
-
-        requestHeader.put("Accept", "application/text");
         long cTime = System.currentTimeMillis();
-        FileInfo listFile = URLDownload.getDataToFileUsingPost(new URL(url), null, null, requestHeader, file, null,
-                                                               TIMEOUT);
+
+        URLConnection uc = URLDownload.makeConnection(new URL(url));
 
         _log.briefDebug("get " + source + " HiPS took " + (System.currentTimeMillis() - cTime) + "ms");
 
-        if (listFile.getResponseCode() >= 400) {
-            String err = LSSTQuery.getErrorMessageFromFile(file);
-            throw new DataAccessException("[HiPS_LIST] " + (err == null ? listFile.getResponseCodeMsg() : err));
-        }
-
-        return getListDataFromFile(file, paramsMap, source);
-
-    }
-
-    private static List<HiPSMasterListEntry> getListDataFromFile(File f, Map<String, String> keyMap, String source)
-                                                                                               throws IOException {
-        if (f == null) return null;
-
         try{
             // Open the file that is the first command line parameter
-            BufferedReader br = new BufferedReader(new FileReader(f));
+            BufferedReader br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
             String strLine;
-            HiPSMasterListEntry oneList = null;
+            HiPSMasterListEntry oneList;
             List<HiPSMasterListEntry> lists = new ArrayList<>();
-            String sProp = HiPSMasterListEntry.getParamString(keyMap, PARAMS.ID);  // first property for each record
 
-            //Read File Line By Line
-            while ((strLine = br.readLine()) != null)   {
+            Properties newProp;
+            StringBuilder propLine = new StringBuilder();
+
+
+            //Read from the link Line By Line
+
+            while ((strLine = br.readLine()) != null) {
                 String tLine = strLine.trim();
                 if (tLine.startsWith("#")) continue;    // comment line
-
-                String[] oneKeyVal = tLine.split("=");
-                if (oneKeyVal.length != 2) continue;    // not legal key=value line
-
-                String k = oneKeyVal[0].trim();         // key
-                String v = oneKeyVal[1].trim();         // value
-
-
-                if (k.equalsIgnoreCase(sProp)) {        // key is 'creator_did'
-                    oneList = new HiPSMasterListEntry();
-                    lists.add(oneList);
-                    oneList.set(PARAMS.ID.getKey(), v);
-                    oneList.set(PARAMS.SOURCE.getKey(), source);
-                    oneList.set(PARAMS.TYPE.getKey(), ServerParams.IMAGE); // set default type
-                    oneList.set(PARAMS.TITLE.getKey(), getTitle(v));       // set default title
-                } else {
-                    if (oneList == null) continue;
-                    for (Map.Entry<String, String> entry : keyMap.entrySet()) {
-                        if (entry.getValue().equals(k)) {
-                            oneList.set(entry.getKey(), v);
-                            break;
-                        }
+                if (tLine.length() == 0) {      // end of a HiPS block
+                    newProp = startNewProperties(propLine.toString());
+                    if (newProp != null) {
+                        oneList = propertiesToListEntry(newProp, keyMap, source, bPropCall);
+                        if (oneList != null) lists.add(oneList);
                     }
+                    propLine = new StringBuilder();
+                } else {
+                    propLine.append(tLine+"\n");
                 }
             }
+
             //Close the input stream
+            newProp = startNewProperties(propLine.toString());
+            if (newProp != null) {
+                oneList = propertiesToListEntry(newProp, keyMap, source, bPropCall);
+                if (oneList != null) lists.add(oneList);
+            }
             br.close();
             return lists;
         } catch (Exception e){//Catch exception if any
-            e.printStackTrace();
-            throw new IOException("[HIPS_CDS]:" + e.getMessage());
+            throw new IOException("[HiPS_LIST]:" + e.getMessage());
         }
     }
+
+    private static Properties startNewProperties(String pLine)  throws IOException {
+        if (pLine.length() == 0) return null;
+
+        Properties newProp = new Properties();
+        newProp.load(new StringReader(pLine));
+
+        return newProp;
+    }
+
+    private static HiPSMasterListEntry propertiesToListEntry(Properties newProp,
+                                                              Map<String, String> keyMap, String source, boolean bProp)
+                                                throws IOException {
+
+        HiPSMasterListEntry oneList = new HiPSMasterListEntry();
+
+        addItemsToListEntry(keyMap, newProp, oneList);
+
+        int colCount = oneList.getMapInfo().size();
+
+        if (colCount == 0) {
+            return null;
+        } else {
+            int totalCount = keyMap.size();
+
+            oneList.set(PARAMS.SOURCE.getKey(), source);
+            String url = oneList.getMapInfo().get(PARAMS.URL.getKey());
+
+            if (url != null) {
+                String pUrl = getPropertyUrl(url);
+
+                oneList.set(PARAMS.PROPERTIES.getKey(), getPropertyUrl(url));
+                if (bProp && (colCount < totalCount) && (pUrl != null)) {
+                    addItemsFromProperties(oneList, keyMap);
+                }
+
+            }
+
+            return oneList;
+        }
+    }
+
+    private static void addItemsToListEntry(Map<String, String> keyMap, Properties prop, HiPSMasterListEntry oneList ) {
+
+        for (Map.Entry<String, String> entry : keyMap.entrySet()) {
+            if (oneList.getMapInfo().get(entry.getKey()) != null) continue;
+
+            String[] propSet = entry.getValue().split(",");
+
+            for (String s : propSet) {
+                String v = prop.getProperty(s);
+
+                if (v != null) {
+                    oneList.set(entry.getKey(), v);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void addItemsFromProperties(HiPSMasterListEntry listEntry, Map<String, String> keyMap)
+                                                throws IOException {
+        String propUrl = listEntry.getMapInfo().get(PARAMS.PROPERTIES.getKey());
+
+        if (propUrl == null || listEntry == null) return;
+
+        URLConnection uc = URLDownload.makeConnection(new URL(propUrl));
+        BufferedReader br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
+        String strLine;
+        StringBuilder sb = new StringBuilder();
+
+        while ((strLine = br.readLine()) != null) {
+            String tLine = strLine.trim();
+            if (tLine.startsWith("#")) continue;    // comment line or illegal line
+            sb.append(tLine+"\n");
+        }
+
+        Properties prop = startNewProperties(sb.toString());
+        if (prop == null) return;
+
+        addItemsToListEntry(keyMap, prop, listEntry);
+    }
+
 
     private static String getTitle(String titleStr) {
          int insLoc = titleStr.indexOf("//");
@@ -158,6 +227,12 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
          if (titleLoc < 0) return titleStr;
 
          return titleStr.substring(titleLoc+1).replaceAll("/", " ").trim();
+    }
+
+    private static String getPropertyUrl(String hipsUrl) {
+         if (!hipsUrl.startsWith("http")) return null;
+
+         return (hipsUrl.endsWith("/")) ? (hipsUrl+PROP) : (hipsUrl+"/"+PROP);
     }
 
     // a csv file is created to contain HiPS from IRSA
@@ -181,7 +256,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
         for (int i = 0; i < dataCols.length; i++) {
             String colName = dataCols[i].getKeyName();
             for (Map.Entry<String, String> entry: keyMap.entrySet()) {
-                if (colName.equals(entry.getValue())) {
+                if (Arrays.asList(entry.getValue().split(",")).contains(colName)) {
                     cols[i] = entry.getKey();
                     break;
                 }
@@ -198,13 +273,16 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             oneList.set(PARAMS.TYPE.getKey(), ServerParams.IMAGE);
             for (int i = 0; i < dataCols.length; i++) {
                 if (cols[i] == null) continue;
+                String colName = dataCols[i].getKeyName();
 
-                Object obj = row.getDataElement(dataCols[i].getKeyName());
+                Object obj = row.getDataElement(colName);
                 String val = obj != null ? obj.toString() : null;
 
                 oneList.set(cols[i], val);
-                if (dataCols[i].getKeyName().equals(keyMap.get(PARAMS.ID.getKey()))) {
+                if (colName.equals(keyMap.get(PARAMS.IVOID.getKey()))) {
                     oneList.set(PARAMS.TITLE.getKey(), getTitle(val));
+                } else if (colName.equals(keyMap.get(PARAMS.URL.getKey()))) {
+                    oneList.set(PARAMS.PROPERTIES.getKey(), getPropertyUrl(val));
                 }
             }
         }
