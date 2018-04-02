@@ -54,6 +54,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
     }
 
     private static final Logger.LoggerImpl _log= Logger.getLogger();
+    private static final String errMsg = "HiPS Map search: no HiPS maps found";
 
     public FileInfo ingestDataIntoDb(TableServerRequest request, File dbFile) throws DataAccessException {
         String hipsSources = request.getParam(ServerParams.HIPS_SOURCES);
@@ -114,7 +115,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             }
 
             if (allSourceData.size() == 0) {
-                throw new IOException("[HiPS_LIST]: no HiPS found or HiPS service connection error");
+                throw new IOException(errMsg);
             }
 
             DataGroup dg = createTableDataFromListEntry(allSourceData);
@@ -125,12 +126,8 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
             return finfo;
         } catch (Exception e) {
-            String msg = e.getMessage();
-
-            if (!msg.startsWith("[HiPS_")) {
-                msg = "[HiPS_LIST]: " + msg;
-            }
-            throw new DataAccessException(msg);
+            _log.warn(e.getMessage());
+            throw new DataAccessException(errMsg);
         }
     }
 
