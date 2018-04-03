@@ -123,7 +123,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
             put(NEOWISER_YR2 +"|1b", new String[]{"yr2_p1bm_frm", "yr2_p1bs_psd"});
             put(NEOWISER_YR3 +"|1b", new String[]{"yr3_p1bm_frm", "yr3_p1bs_psd"});
-            put(NEOWISER_YR4 +"|1b", new String[]{"yr4_i1bm_frm", "yr4_i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR4 +"|1b", new String[]{"yr4_p1bm_frm", "yr4_p1bs_psd"});  // TODO: check
             put(NEOWISER_YR5 +"|1b", new String[]{"yr5_i1bm_frm", "yr5_i1bs_psd"});  // TODO: check
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
@@ -198,7 +198,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
             put(CRYO_3BAND,"allsky_3band_p1bs_psd");
             put(POSTCRYO,"allsky_2band_p1bs_psd");
-            put(NEOWISER,"neowiser_p1bs_psd");
+            put(NEOWISER,"neowiser_q1bs_psd");
             put(PASS1,"pass1_i1bs_psd_view");
             put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
             put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
