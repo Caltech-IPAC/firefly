@@ -51,11 +51,11 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|1b", "links-allsky/l1b-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|3a", "links-allsky/l3a-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLWISE_MULTIBAND+"|3a", "links-allwise/l3a/");
-        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|1b", "links-merge/l1b/");  // was under links-allsky
+        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|1b", "links-merge/l1b-yrs-1234/");  // was under links-allsky
         PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|3a", "links-merge/l3a/");  // was under links-allwise
         PROD_LEVEL_MAP.put(WiseRequest.MERGE_INT+"|1b", "links-merge/l1b/");  // same link tree as ops(?)
         PROD_LEVEL_MAP.put(WiseRequest.MERGE_INT+"|3a", "links-merge/l3a/");  // same link tree as ops(?)
-        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER +"|1b", "links-neowiser/l1b/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER +"|1b", "links-neowiser/l1b-yrs-1234/");
 
 
         PROD_LEVEL_MAP.put(WiseRequest.PASS1+"|1b", "links-pass1/l1b/");
