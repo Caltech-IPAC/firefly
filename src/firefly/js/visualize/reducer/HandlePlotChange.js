@@ -486,17 +486,23 @@ function updateViewSize(state,action) {
     const plotViewAry= state.plotViewAry.map( (pv) => {
         if (pv.plotId!==plotId ) return pv;
         const plot= primePlot(pv);
+        let centerImagePt;
 
-
+        if (plot) {
+            centerImagePt= (pv.scrollX===-1 && pv.scrollY===-1) ?
+                makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
+                findCurrentCenterPoint(pv);
+        }
         const w= isUndefined(width) ? pv.viewDim.width : width;
         const h= isUndefined(height) ? pv.viewDim.height : height;
         pv= Object.assign({}, pv, {viewDim: {width:w, height:h}});
         if (!plot) return pv;
 
         const masterPv= getPlotViewById(state, state.mpwWcsPrimId);
+        pv= updateTransform(pv);
 
         if (isHiPS(plot)) {
-            const centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
+            centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
             pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
         }
         else if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
@@ -509,9 +515,7 @@ function updateViewSize(state,action) {
             pv= recenterPv(null, false)(pv);
         }
         else {
-            // const centerImagePt= (pv.scrollX<0 || pv.scrollY<0) ? makeImagePt(plot.dataWidth/2, plot.dataHeight/2) : findCurrentCenterPoint(pv);
-            const centerImagePt= (pv.scrollX===-1 && pv.scrollY===-1) ? makeImagePt(plot.dataWidth/2, plot.dataHeight/2) : findCurrentCenterPoint(pv);
-            pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
+            pv= centerImagePt ? updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt)) : recenter((null,false)(pv));
         }
 
         pv= updateTransform(pv);
