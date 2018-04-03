@@ -43,8 +43,12 @@ function getZoomer() {
 
         if (zType===ZoomType.UP) {
             if (isZoomMax(pv)) {
-                console.log('show max zoom info popup ');
-                showInfoPopup('You may not zoom beyond ' + getZoomMax(plot) + 'x', 'Zoom Info');
+                if (isImage(plot)) {
+                    showInfoPopup('You may not zoom beyond ' + getZoomMax(plot) + 'x', 'Zoom Info');
+                }
+                else {
+                    showInfoPopup('You have reached the maximum zoom depth', 'Zoom Info');
+                }
                 return;
             }
         }
