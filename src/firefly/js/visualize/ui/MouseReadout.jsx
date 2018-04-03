@@ -1,23 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- * Lijun
- *   2/23/16
- *     DM-4788
- *   3/2/16
- *     DM-4789
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
-import CoordinateSys from '../CoordSys.js';
-import CoordUtil from '../CoordUtil.js';
-import VisUtil from '../VisUtil.js';
-import numeral from 'numeral';
+import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {STANDARD_READOUT, dispatchChangeLockByClick} from '../../visualize/MouseReadoutCntlr.js';
-
-import {padEnd} from 'lodash';
+import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 
 const rS = {
     width: 670,
@@ -32,22 +23,6 @@ const rS = {
     overflow: 'hidden'
 };
 const EMPTY = <div style={rS}/>;
-const EMPTY_READOUT = '';
-const coordinateMap = {
-    galactic: CoordinateSys.GALACTIC,
-    eqb1950: CoordinateSys.EQ_B1950,
-    pixelSize: CoordinateSys.PIXEL,
-    sPixelSize: CoordinateSys.SCREEN_PIXEL
-};
-export const labelMap = {
-    eqj2000hms: 'EQ-J2000:',
-    eqj2000DCM: 'EQ-J2000:',
-    galactic: 'Gal:',
-    eqb1950: 'Eq-B1950:',
-    fitsIP: 'Image Pixel:',
-    pixelSize: 'Pixel Size:',
-    sPixelSize: 'Screen Pixel Size:'
-};
 
 const column1 = {
     width: 60,
@@ -89,11 +64,6 @@ const column6 = {width: 160,addingLeft: 2, textAlign: 'left', display: 'inline-b
 const column7 = {width: 109, paddingLeft: 6, display: 'inline-block'};
 const column7_r2 = {width: 90, paddingLeft: 3, display: 'inline-block'};
 
-
-const precision7Digit = '0.0000000';
-const precision1Digit = '0.0';
-
-const myFormat= (v,precision) => !isNaN(v) ? numeral(v).format(padEnd('0.',precision+1,'0')) : '';
 export function MouseReadout({readout}){
 
 
@@ -104,18 +74,13 @@ export function MouseReadout({readout}){
     const sndReadout= get(readout, STANDARD_READOUT);
     
     const title = sndReadout.readoutItems.title?sndReadout.readoutItems.title.value:'';
+    const {isHiPS, readoutItems}= sndReadout;
 
-    var objList={};
-    Object.keys( readout.readoutPref).forEach( (key) =>  {
-         objList[key]=getMouseReadout(sndReadout.readoutItems,  readout.readoutPref[key] );
-    });
 
-    if (!objList)return EMPTY;
+    const displayEle= getNonFluxDisplayElements(readoutItems,  readout.readoutPref, isHiPS);
+    const {readout1, readout2, pixelSize, showReadout1PrefChange, showReadout2PrefChange, showPixelPrefChange}= displayEle;
 
-    const {mouseReadout1, mouseReadout2, pixelSize} = objList;
-
-    const {fluxLabels, fluxValues} = getFluxInfo(sndReadout);
-
+    const fluxArray = getFluxInfo(sndReadout);
 
     return (
 
@@ -123,32 +88,32 @@ export function MouseReadout({readout}){
 
             {/*row1*/}
             <div  >
-                <div style={ column1}>{fluxLabels[1]} </div>
-                <div style={ column2}>  {fluxValues[1]}  </div>
-                <div style={ column3} onClick={ () => showDialog('pixelSize', readout.readoutPref.pixelSize)}>
-                    {labelMap[readout.readoutPref.pixelSize] }
+                <div style={ column1}>{fluxArray[1].label} </div>
+                <div style={ column2}>  {fluxArray[1].value}  </div>
+                <div style={ column3} onClick={ showPixelPrefChange}>
+                    {pixelSize.label}
                 </div>
-                <div style={column4}>{pixelSize} </div>
+                <div style={column4}>{pixelSize.value} </div>
 
-                <div style={ column5} onClick={ () => showDialog('mouseReadout1', readout.readoutPref.mouseReadout1)}>
-                    { labelMap[readout.readoutPref.mouseReadout1] }
+                <div style={ column5} onClick={ showReadout1PrefChange}>
+                    { readout1.label }
                 </div>
-                <div style={column6}> {mouseReadout1} </div>
+                <div style={column6}> {readout1.value} </div>
 
 
                 <div style={column7}> {title}  </div>
             </div>
             <div>{/* row2*/}
-                <div style={ column1}>{fluxLabels[2]} </div>
-                <div style={ column2}> { fluxValues[2]} </div>
+                <div style={ column1}>{fluxArray[2].label} </div>
+                <div style={ column2}> {fluxArray[2].value} </div>
 
-                <div style={ column3_r2}>{fluxLabels[0]}</div>
-                <div style={ column4}> {fluxValues[0]}</div>
+                <div style={ column3_r2}>{fluxArray[0].label}</div>
+                <div style={ column4}> {fluxArray[0].value}</div>
 
-                <div style={ column5} onClick={ () => showDialog('mouseReadout2' ,readout.readoutPref.mouseReadout2 )}>
-                    {labelMap[readout.readoutPref.mouseReadout2] } </div>
+                <div style={ column5} onClick={ showReadout2PrefChange}>
+                    {readout2.label } </div>
 
-                <div style={column6}>  {mouseReadout2}  </div>
+                <div style={column6}>  {readout2.value}  </div>
                 <div style={column7_r2} title='Click on an image to lock the display at that point.'>
                     <input type='checkbox' name='aLock' value='lock'
                            onChange={() => {
@@ -171,151 +136,6 @@ MouseReadout.propTypes = {
     readout: PropTypes.object
 };
 
-/**
- * This method passes the standard readout and then get the flux information
- * @param sndReadout
- * @returns {{fluxLabels: Array, fluxValues: Array}}
- */
-export function getFluxInfo(sndReadout){
-
-    var fluxObj = [];
-    if (sndReadout.threeColor){
-        if (sndReadout.readoutItems.hasOwnProperty('REDFlux')){
-            fluxObj.push(sndReadout.readoutItems['REDFlux']);
-        }
-        if (sndReadout.readoutItems.hasOwnProperty('GREENFlux')){
-            fluxObj.push(sndReadout.readoutItems['GREENFlux']);
-        }
-        if (sndReadout.readoutItems.hasOwnProperty('BLUEFlux')){
-            fluxObj.push(sndReadout.readoutItems['BLUEFlux']);
-        }
-    }
-    else if (sndReadout.readoutItems.hasOwnProperty('nobandFlux')){
-        fluxObj.push(sndReadout.readoutItems.nobandFlux);
-    }
-    var fluxValueArrays=[];
-    var fluxLabelArrays=[];
-    var fluxValue;
-
-    for (let i = 0; i < fluxObj.length; i++) {
-        if (!isNaN(fluxObj[i].value )) {
-            //IRSA-737
-            const min = Number('0.'+'0'.repeat(fluxObj[i].precision-1)+'1');
-            fluxValue = (Math.abs(fluxObj[i].value) < 1000  &&Math.abs(fluxObj[i].value)>min ) ? `${myFormat(fluxObj[i].value, fluxObj[i].precision)}` : fluxObj[i].value.toExponential(6).replace('e+', 'E');
-
-            if (fluxObj[i].unit && !isNaN(fluxObj[i].value)) fluxValue+= ` ${fluxObj[i].unit}`;
-            fluxValueArrays.push(fluxValue);
-        }
-        fluxLabelArrays.push(fluxObj[i].title);
-     }
-
-    if (fluxLabelArrays.length<3) { //fill with empty
-        for (let i = fluxLabelArrays.length; i < 3; i++) {
-            fluxValueArrays.push(EMPTY_READOUT);
-            fluxLabelArrays.push(EMPTY_READOUT);
-        }
-    }
-    return {fluxLabels:fluxLabelArrays, 'fluxValues':fluxValueArrays};
-
-}
-
-/**
- * Get the mouse readouts from the standard readout and convert to the values based on the toCoordinaeName
- * @param readoutItems
- * @param toCoordinateName
- * @returns {*}
- */
-export function  getMouseReadout(readoutItems, toCoordinateName) {
-    var imagePt=readoutItems.imagePt;
-    if (!imagePt || !imagePt.value) return;
-
-    if (toCoordinateName === 'fitsIP') {
-        return ` ${numeral(imagePt.value.x).format(precision1Digit)}, ${
-            numeral(imagePt.value.y).format(precision1Digit)}`;
-    }
-    var wpt = readoutItems.worldPt;
-    if (!wpt.value) return;
-
-    var result, obj;
-    var {coordinate, type} = getCoordinateMap(toCoordinateName);
-    if (coordinate) {
-        var ptInCoord = VisUtil.convert(wpt.value, coordinate);
-        var lon = ptInCoord.getLon();
-        var lat = ptInCoord.getLat();
-        var hmsLon = CoordUtil.convertLonToString(lon, coordinate);
-        var hmsLat = CoordUtil.convertLatToString(lat, coordinate);
-
-
-        switch (coordinate) {
-
-            case CoordinateSys.EQ_J2000:
-                if (type === 'hms') {
-                    result = ` ${hmsLon}, ${hmsLat}`;
-                }
-                else {
-                    //convert to decimal representation
-                    var dmsLon = CoordUtil.convertStringToLon(hmsLon, coordinate);
-                    var dmsLat = CoordUtil.convertStringToLat(hmsLat, coordinate);
-                    result = ` ${numeral(Number(dmsLon)).format(precision7Digit)}, ${numeral(Number(dmsLat)).format(precision7Digit)}`;
-                }
-                break;
-            case CoordinateSys.GALACTIC:
-            case CoordinateSys.SUPERGALACTIC:
-
-                var lonShort = numeral(lon).format(precision7Digit);
-                var latShort = numeral(lat).format(precision7Digit);
-                result = ` ${lonShort}, ${latShort}`;
-                break;
-            case CoordinateSys.EQ_B1950:
-                result = ` ${hmsLon}, ${hmsLat}`;
-                break;
-
-            case CoordinateSys.PIXEL:
-                obj =readoutItems.pixel;
-                 result = `${myFormat(obj.value, obj.precision)}  ${obj.unit || ''}`;
-                break;
-            case CoordinateSys.SCREEN_PIXEL:
-                 obj =readoutItems.screenPixel;
-                 result = `${myFormat(obj.value, obj.precision)}  ${obj.unit || ''}`;
-                 break;
-
-            default:
-                result = '';
-                break;
-        }
-
-    }
-
-
-    return result;
-
-}
-
-/**
- *
- * This method map the value in coordinate option popup to its value
- * @param coordinateName : the value in the radio button
- * @returns {{coordinate: *, type: *}}
- */
-function getCoordinateMap(coordinateName) {
-    var coordinate;
-    var type;
-
-    if ( coordinateName === 'eqj2000hms') {
-        coordinate = CoordinateSys.EQ_J2000;
-        type = 'hms';
-    }
-    else if (coordinateName === 'eqj2000DCM') {
-        coordinate = CoordinateSys.EQ_J2000;
-        type = 'decimal';
-    }
-    else {
-        coordinate = coordinateMap[coordinateName];
-        //if coordinate is not define, assign it as below
-        if (!coordinate) coordinate = CoordinateSys.UNDEFINED;
-    }
-    return {coordinate, type};
-}
 
 
 function showDialog(fieldKey, radioValue) {

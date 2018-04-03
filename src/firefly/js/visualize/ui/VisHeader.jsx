@@ -8,8 +8,7 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
-import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadoutItem,
-    makeDescriptionItem, isLockByClick} from '../../visualize/MouseReadoutCntlr.js';
+import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 
 
 export class VisHeader_old extends PureComponent {

@@ -572,7 +572,7 @@ export function getScreenPixScaleArcSec(plot) {
         const cc= CysConverter.make(tmpPlot);
         const scrP= cc.getScreenCoords( pt00);
         const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
-        return Math.abs(0-pt2.x)*3600;
+        return Math.abs(0-pt2.x)*3600; // note have to use angular distance formula here, because of the location of the point
     }
     return 0;
 }
