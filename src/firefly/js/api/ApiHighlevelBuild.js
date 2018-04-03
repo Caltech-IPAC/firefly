@@ -260,8 +260,6 @@ function buildImagePart(llApi) {
      *
      * @param div - targetDiv to put the coverage in.
      * @param options - an object literal containing a list of the coverage options
-     * @param {HipsImageConversionSettings} [hipsImageConversion= undefined] if defined, use these parameter to
-     *                                                convert between image and HiPS
      * @memberof firefly
      * @public
      * @example firefly.showCoverage
@@ -270,8 +268,11 @@ function buildImagePart(llApi) {
 
     const showHiPS= (targetDiv, request, hipsImageConversion)  =>
                         showImageInMultiViewer(llApi, targetDiv, request, true, hipsImageConversion);
+    const showImageOrHiPS = (targetDiv, hipsRequest, imageRequest,  fovDegFallOver, allSkyRequest, plotAllSkyFirst) =>
+                        showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageRequest,
+                                                     fovDegFallOver, allSkyRequest, plotAllSkyFirst);
 
-    return {showImage, showHiPS, showImageFileOrUrl, setGlobalImageDef, showCoverage};
+    return {showImage, showHiPS, showImageOrHiPS, showImageFileOrUrl, setGlobalImageDef, showCoverage};
 }
 
 /**
@@ -340,23 +341,69 @@ function makePlotSimple(llApi, plotId) {
     };
 }
 
-function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion) {
-    const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer, dispatchAddImages}= llApi.action;
-    const {findInvalidWPRKeys,confirmPlotRequest, IMAGE, NewPlotMode}= llApi.util.image;
-    const {renderDOM,debug, getWsConnId, getWsChannel}= llApi.util;
-    const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
+function validatePlotRequest(llApi, targetDiv, request) {
+    const {findInvalidWPRKeys,confirmPlotRequest}= llApi.util.image;
+    const {debug, getWsConnId}= llApi.util;
 
-    highlevelImageInit(llApi);
     const testR= Array.isArray(request) ? request : [request];
     testR.forEach( (r) => {
         const badList= findInvalidWPRKeys(r);
         if (badList.length) debug(`plot request has the following bad keys: ${badList}`);
     });
-    request= confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId(getWsConnId));
 
-    const plotId= !Array.isArray(request) ? request.plotId : request.find( (r) => r.plotId).plotId;
+    return confirmPlotRequest(request,globalImageViewDefParams,targetDiv,makePlotId(getWsConnId));
+}
+
+function getPlotIdFromRequest(request) {
+    if (Array.isArray(request)) {
+        const rWithPId = request.find((r) => r.plotId);
+
+        return rWithPId ? rWithPId.plotId : null;
+    } else {
+        return request.plotId;
+    }
+}
+
+function showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageRequest,
+                                                fovDegFallOver, allSkyRequest, plotAllSkyFirst) {
+    const {dispatchPlotImageOrHiPS, dispatchAddViewer}= llApi.action;
+    const {IMAGE, NewPlotMode}= llApi.util.image;
+    const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
+    const {renderDOM}= llApi.util;
+
+
+    highlevelImageInit(llApi);
+    hipsRequest = validatePlotRequest(llApi, targetDiv, hipsRequest);
+    hipsRequest.Type = 'HiPS';
+    imageRequest = validatePlotRequest(llApi, targetDiv, imageRequest);
+
     dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
-    if (isHiPS) {
+
+    const plotId= getPlotIdFromRequest(hipsRequest) || getPlotIdFromRequest(imageRequest);
+    dispatchPlotImageOrHiPS({plotId, hipsRequest, viewerId: targetDiv,
+                             imageRequest, allSkyRequest, plotAllSkyFirst, fovDegFallOver});
+
+    renderDOM(targetDiv, MultiImageViewer,
+        {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+
+}
+
+
+function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion) {
+    const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer}= llApi.action;
+    const {IMAGE, NewPlotMode}= llApi.util.image;
+    const {renderDOM}= llApi.util;
+    const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
+
+    highlevelImageInit(llApi);
+
+    request = validatePlotRequest(llApi, targetDiv, request);
+
+    const plotId= getPlotIdFromRequest(request);
+    dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
+
+
+   if (isHiPS) {
         request.Type= 'HiPS';
         if (hipsImageConversion && !hipsImageConversion.hipsRequestRoot) {
             hipsImageConversion.hipsRequestRoot= request;
@@ -372,7 +419,6 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
 
     renderDOM(targetDiv, MultiImageViewer,
         {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
-
 }
 
 
