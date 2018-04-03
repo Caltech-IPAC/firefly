@@ -3,6 +3,7 @@
  */
 
 import React, {PureComponent} from 'react';
+import numeral from 'numeral';
 import PropTypes from 'prop-types';
 import {flux} from '../../Firefly.js';
 import {isEmpty, get} from 'lodash';
@@ -401,7 +402,7 @@ function makeHiPSImageTable(pv, surveysId) {
 
     const inputEntry = () => {
         return (
-            <div style={{marginLeft: 9, marginRight: 5, marginTop: -5}}>
+            <div style={{marginLeft: 9, marginRight: 5}}>
                 <input  type='button'
                         value='Change HiPS'
                         onClick={()=>showHiPSSurverysPopup(get(primePlot(pv), 'hipsUrlRoot'),
@@ -435,7 +436,7 @@ function makeHiPSCoordSelect(pv) {
 
 
     return (
-        <div style={{marginTop:-7}}>
+        <div >
             <ListBoxInputFieldView
 
                 inline={true}
@@ -506,8 +507,7 @@ export class VisCtxToolbarView extends PureComponent {
             <div style={rS}>
                 {showMultiImageController && <MultiImageControllerView plotView={pv} />}
                 {showOptions && <div
-                    style={{display: 'inline-block', padding: '8px 7px 0 8px', alignSelf:'flex-start',
-                        float : 'left', fontStyle: 'italic'}}>
+                    style={{padding: '0 7px 0 8px', fontStyle: 'italic'}}>
                     Options:</div>
                 }
                 {showSelectionTools && isImage(plot) &&
@@ -628,7 +628,8 @@ export function MultiImageControllerView({plotView:pv}) {
         nextIdx= cIdx===plot.cubeDepth-1 ? 0 : cIdx+1;
         prevIdx= cIdx ? cIdx-1 : plot.cubeDepth-1;
         length= plot.cubeDepth;
-        desc= '';
+        // desc= '';
+        desc= getHipsCubeDesc(plot);
     }
 
     if (length<3) leftImageStyle.visibility='hidden';
@@ -639,14 +640,14 @@ export function MultiImageControllerView({plotView:pv}) {
 
     return (
         <div style={mulImStyle}>
-            <div style={{fontStyle: 'italic', padding: '8px 0 0 5px', alignSelf:'flex-start'}}>Image:</div>
+            <div style={{fontStyle: 'italic', padding: '0 0 0 5px'}}>Image:</div>
             <img style={leftImageStyle} src={PAGE_LEFT}
                  onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:prevIdx}) : dispatchChangeHiPS({plotId, cubeIdx:prevIdx})}/>
             <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:3, flex: '0 0 auto'}}
                  src={PAGE_RIGHT}
                  onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:nextIdx}): dispatchChangeHiPS({plotId, cubeIdx:nextIdx})} />
-            {desc && <div style={{minWidth: '3em', padding:'0 10px 0 5px', fontWeight:'bold'}}>{desc}</div>}
-            <div style={{minWidth: '3em', paddingLeft:4}}>{`${cIdx+1}/${length}`}</div>
+            {desc && <div style={{minWidth: '3em', padding:'0 5px 0 5px', fontWeight:'bold'}}>{desc}</div>}
+            <div style={{minWidth: '3em', padding:'0 10px 0 4px'}}>{`${cIdx+1}/${length}`}</div>
         </div>
     );
 }
@@ -656,3 +657,16 @@ MultiImageControllerView.propTypes= {
     plotView : PropTypes.object.isRequired,
 };
 
+
+function getHipsCubeDesc(plot) {
+    if (!isHiPS(plot)) return '';
+    const {hipsProperties}= plot;
+    const {data_cube_crpix3, data_cube_crval3, data_cube_cdelt3, data_cube_bunit3=''}= hipsProperties;
+    if (!data_cube_crpix3 || !data_cube_crval3 || !data_cube_cdelt3) return ''
+    const crpix3= Number(data_cube_crpix3);
+    const crval3= Number(data_cube_crval3);
+    const cdelt3= Number(data_cube_cdelt3);
+    if (isNaN(crpix3) || isNaN(crval3) || isNaN(cdelt3)) return '';
+    const value = crval3 + ( plot.cubeIdx - crpix3 ) * cdelt3;
+    return `${numeral(value).format('0.00000')} ${data_cube_bunit3}`
+}

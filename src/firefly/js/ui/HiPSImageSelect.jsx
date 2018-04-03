@@ -108,7 +108,7 @@ export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VI
 
     const fov = get(request, 'sizeFov', 180);
     const wp = parseWorldPt(request.UserTargetWorldPt) || null;
-    const wpRequest = WebPlotRequest.makeHiPSRequest(url, wp, fov);
+    const wpRequest = WebPlotRequest.makeHiPSRequest(url, wp, Number(fov) || NaN);
     wpRequest.setPlotGroupId(groupId);
     wpRequest.setPlotId(plotId);
     return wpRequest;

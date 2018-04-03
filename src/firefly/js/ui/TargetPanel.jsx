@@ -17,6 +17,7 @@ import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
 const TARGET= 'targetSource';
 const RESOLVER= 'resolverSource';
+const LABEL_DEFAULT='Name or Position:';
 
 const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
@@ -29,13 +30,14 @@ class TargetPanelView extends PureComponent {
     }
 
     render() {
-        const {showHelp, feedback, valid, message, onChange, value, labelWidth, children, resolver, feedbackStyle}= this.props;
+        const {showHelp, feedback, valid, message, onChange, value,
+            labelWidth, children, resolver, feedbackStyle, label= LABEL_DEFAULT}= this.props;
         let positionField = (<InputFieldView
                                 valid={valid}
                                 visible= {true}
                                 message={message}
                                 onChange={(ev) => onChange(ev.target.value, TARGET)}
-                                label='Name or Position:'
+                                label={label}
                                 value={value}
                                 tooltip='Enter a target'
                                 labelWidth={labelWidth}
@@ -69,6 +71,7 @@ class TargetPanelView extends PureComponent {
 TargetPanelView.propTypes = {
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
+    label : PropTypes.string,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
     feedback: PropTypes.string.isRequired,
@@ -111,12 +114,13 @@ function getProps(params, fireValueChange) {
         {
             visible: true,
             onChange: (value,source) => handleOnChange(value,source,params, fireValueChange),
-            label: 'Name or Position:',
+            label: params.label || LABEL_DEFAULT,
             tooltip: 'Enter a target',
             value,
             feedback,
             resolver,
             showHelp,
+            nullAllowed:params.nullAllowed,
             onUnmountCB: didUnmount
         });
 }
@@ -125,10 +129,10 @@ function getProps(params, fireValueChange) {
 
 
 function handleOnChange(value, source, params, fireValueChange) {
-    var {parseResults={}}= params;
+    let {parseResults={}}= params;
 
-    var displayValue;
-    var resolver;
+    let displayValue;
+    let resolver;
 
     if (source===TARGET) {
         resolver= params.resolver || nedThenSimbad;
@@ -143,11 +147,18 @@ function handleOnChange(value, source, params, fireValueChange) {
     }
 
     parseResults= parseTarget(displayValue, parseResults, resolver);
-    var {resolvePromise}= parseResults;
+    let {resolvePromise}= parseResults;
 
     const targetResolve= (asyncParseResults) => {
         return asyncParseResults ? makePayloadAndUpdateActive(displayValue, asyncParseResults, null, resolver) : null;
     };
+
+    if (!displayValue && params.nullAllowed) {
+        parseResults.valid= true;
+        parseResults.feedback= 'valid: true';
+    }
+
+
 
     resolvePromise= resolvePromise ? resolvePromise.then(targetResolve) : null;
 
@@ -191,7 +202,7 @@ const connectorDefaultProps = {
 
 function replaceValue(v,props) {
     const t= getActiveTarget();
-    var retVal= v;
+    let retVal= v;
     if (t && t.worldPt) {
        if (get(t,'worldPt')) retVal= t.worldPt.toString();
     }

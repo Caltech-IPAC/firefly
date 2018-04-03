@@ -384,7 +384,9 @@ export const WebPlot= {
         plotState.colorTableId= 0;
 
         const hipsCoordSys= getHiPSCoordSysFromProperties(hipsProperties);
-        const projection= makeHiPSProjection(hipsCoordSys, 0,0);
+        const lon= Number(hipsProperties.hips_initial_ra) || 0;
+        const lat= Number(hipsProperties.hips_initial_dec) || 0;
+        const projection= makeHiPSProjection(hipsCoordSys, lon,lat);
 
         const plot= makePlotTemplate(plotId,'hips',asOverlay, hipsCoordSys);
 

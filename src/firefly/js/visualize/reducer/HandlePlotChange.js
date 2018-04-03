@@ -310,10 +310,12 @@ function changeHiPS(state,action) {
     if (hipsProperties) {
         plot.hipsProperties= hipsProperties;
         plot.title= hipsProperties.label || 'HiPS';
+        plot.cubeDepth= Number(get(hipsProperties, 'hips_cube_depth')) || 1;
+        plot.cubeIdx= Number(get(hipsProperties, 'hips_cube_firstframe')) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
     }
 
-    if (!isUndefined(cubeIdx)) {
+    if (!isUndefined(cubeIdx) && plot.cubeDepth>1 && cubeIdx<plot.cubeDepth) {
         plot.cubeIdx= cubeIdx;
     }
     pv= replacePrimaryPlot(pv, plot);
