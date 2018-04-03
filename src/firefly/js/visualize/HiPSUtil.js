@@ -3,24 +3,27 @@
  */
 
 
-// This module contain utilities for using HiPS. Here is some documentation on HiPS.
-// https://aladin.u-strasbg.fr/hips/hipsdoc.pdf
-// http:www.ivoa.net/documents/HiPS/20170519/REC-HIPS-1.0-20170519.pdf
+/**
+ * Many utility functions for working with HiPS.  Several of the more computationally intensive ones use cached results
+ *
+ * Here is some documentation on HiPS.
+ * https://aladin.u-strasbg.fr/hips/hipsdoc.pdf
+ * http:www.ivoa.net/documents/HiPS/20170519/REC-HIPS-1.0-20170519.pdf
+ */
 
 
-import {get, memoize} from 'lodash';
+import {get, isUndefined} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeWorldPt, makeDevicePt} from './Point.js';
 import {SpatialVector, HealpixIndex} from '../externalSource/aladinProj/HealpixIndex.js';
 import {convert, computeDistance} from './VisUtil.js';
-import {replaceHeader} from './WebPlot.js';
+import {replaceHeader, getScreenPixScaleArcSec} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
 import CoordinateSys from './CoordSys';
 import {encodeServerUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {toDegrees} from './VisUtil.js';
-
 
 /**
  *
@@ -35,6 +38,11 @@ export function changeProjectionCenter(plot, wp) {
 }
 
 
+/**
+ * Determine how deep we can render this HiPs Map
+ * @param plot
+ * @return {number}
+ */
 export function getMaxDisplayableHiPSLevel(plot) {
     let {norder}= getBestHiPSlevel(plot);
     norder = norder>3 ? norder+3 : norder+2;
@@ -43,26 +51,41 @@ export function getMaxDisplayableHiPSLevel(plot) {
 }
 
 
-export function getPlotTilePixelAngSize(plot) {
-    if (!plot) return 0;
-    const {norder} = getBestHiPSlevel(plot,true);
-    return getTilePixelAngSize(norder);
-}
 
-const cachedRetValues= {};
+const  angSizeCacheMap = new WeakMap(); // use week map since we don't want to keep old plot objects
 
 /**
- * Return the angular size of the pixel of a nOrder level
- * results are cache so the computation does not have to be done again an again
- * @param {Number} nOrder
+ * Return the angular size of the pixel at the nOrder level for this plot.
+ * Results are cached so this function is very efficient.
+ * @param plot
  * @return {*}
+ */
+export function getPlotTilePixelAngSize(plot) {
+    if (!plot) return 0;
+    let size= angSizeCacheMap.get(plot);
+    if (isUndefined(size)) {
+        size= getTilePixelAngSize(getBestHiPSlevel(plot,true).norder);
+        angSizeCacheMap.set(plot, size);
+    }
+    return size;
+}
+
+
+
+const tilePixelAngSizeCacheMap= {};
+
+/**
+ * Return the angular size of the pixel of a nOrder level. this function assumes 512x512 tiles sizes
+ * Results are cached so this function is very efficient.
+ * @param {Number} nOrder
+ * @return {Number} the angular size of a pixel in a HiPS tile
  */
 export function getTilePixelAngSize(nOrder) {
     nOrder= Math.trunc(nOrder);
-    if (cachedRetValues[nOrder]) return cachedRetValues[nOrder];
+    if (tilePixelAngSizeCacheMap[nOrder]) return tilePixelAngSizeCacheMap[nOrder];
     const rad= Math.sqrt(4*Math.PI / (12*Math.pow(512*Math.pow(2,nOrder) , 2)));
-    cachedRetValues[nOrder]= toDegrees(rad);
-    return cachedRetValues[nOrder];
+    tilePixelAngSizeCacheMap[nOrder]= toDegrees(rad);
+    return tilePixelAngSizeCacheMap[nOrder];
 }
 
 /**
@@ -74,16 +97,11 @@ export function getTilePixelAngSize(nOrder) {
 export function getBestHiPSlevel(plot, limitToImageDepth= false) {
     if (!plot) return {norder:-1, useAllSky:false};
 
-    const {fov}= getPointMaxSide(plot,plot.viewDim);
-
-    const screenPixArcsecSize= (fov/plot.viewDim.width)*3600;
+    const screenPixArcsecSize= getScreenPixScaleArcSec(plot);
     if (screenPixArcsecSize> 130) return  {useAllSky:true, norder:2};
     if (screenPixArcsecSize> 100) return  {useAllSky:true, norder:3};
 
-    const nside = HealpixIndex.calculateNSide(screenPixArcsecSize*512); // 512 size tiles hardcoded, should fix
-
-    let norder = Math.log(nside)/Math.log(2); // convert to a base 2 log - 	logb(x) = logc(x) / logc(b)
-    norder= Math.max(3, norder);
+    let norder= getNOrderForPixArcSecSize(screenPixArcsecSize);
 
     if (limitToImageDepth) {
         const maxOrder= Number(get(plot, 'hipsProperties.hips_order', '3'));
@@ -91,6 +109,27 @@ export function getBestHiPSlevel(plot, limitToImageDepth= false) {
     }
     return {norder, useAllSky:false};
 
+}
+
+const nOrderForPixAsSizeCacheMap= new Map(); // this map will not grow much above 100
+
+/**
+ * Return the best norder for a given screen pixel angular size in arc seconds
+ * Results are cached so this function is very efficient.
+ * @param {Number} sizeInArcSec - pixel size in arc seconds
+ * @return {Number} the best norder for the pixel
+ */
+function getNOrderForPixArcSecSize(sizeInArcSec) {
+    const sizeInArcSecKey= Math.trunc(sizeInArcSec*10000);
+    let norder= nOrderForPixAsSizeCacheMap.get(sizeInArcSecKey);
+    if (isUndefined(norder)) {
+        const nside = HealpixIndex.calculateNSide(sizeInArcSec*512); // 512 size tiles hardcoded, should fix
+
+        norder = Math.log(nside)/Math.log(2); // convert to a base 2 log - 	logb(x) = logc(x) / logc(b)
+        norder= Math.max(3, norder);
+        nOrderForPixAsSizeCacheMap.set(sizeInArcSecKey,norder);
+    }
+    return norder;
 }
 
 
@@ -124,7 +163,12 @@ export function makeHiPSAllSkyUrlFromPlot(plot) {
 }
 
 
-
+/**
+ * Build the HiPS url
+ * @param {String} url
+ * @param {boolean} proxy - make a URL the uses proxying
+ * @return {String} the modified url
+ */
 export function makeHipsUrl(url, proxy) {
     if (proxy) {
         const params= {
@@ -139,6 +183,11 @@ export function makeHipsUrl(url, proxy) {
 }
 
 
+/**
+ * Choose an extension to use from the available extensions.
+ * @param {Array.<String>} exts
+ * @return {string}
+ */
 export function getHiPSTileExt(exts) {
     if (!exts) return null;
     if (exts.includes('png')) return'png';
@@ -149,8 +198,8 @@ export function getHiPSTileExt(exts) {
 
 /**
  *
- * @param plot
- * @param viewDim
+ * @param {WebPlot} plot
+ * @param {Dimension} viewDim
  * @return {{centerWp:WorldPt, fov: number, centerDevPt: DevicePt}}
  */
 export function getPointMaxSide(plot, viewDim) {
@@ -278,6 +327,7 @@ function makeSimpleHpxCornerCache() {
 
 /**
  * @Function
+ * lazily defined.
  * @param {number} ipix
  * @param {number} nside
  * @param {HealpixIndex} healpixIdx

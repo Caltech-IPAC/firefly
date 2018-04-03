@@ -16,6 +16,9 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import { dispatchChangeReadoutPrefs} from '../../visualize/MouseReadoutCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
+import {primePlot} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
+import {isHiPS} from '../WebPlot.js';
 
 //define the labels and values for the radio options
 const coordOptions= [
@@ -60,22 +63,17 @@ const dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
  * @returns {XML}
  */
 function getDialogBuilder(fieldKey, radioValue) {
-
 	//name a groupKey based on the input fieldKey
 	const groupKey = groupKeys[fieldKey];
-	const isHiPS= (fieldKey==='hipsMouseReadout1' || fieldKey==='hipsMouseReadout2');
 
 	const popup = (
 		<PopupPanel title={'Choose Option'}  >
 			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}
-									  radioValue={radioValue} isHiPS={isHiPS}/>
+									  radioValue={radioValue} isHiPS={isHiPS(primePlot(visRoot()))}/>
 		</PopupPanel>
 	);
 	DialogRootContainer.defineDialog(fieldKey, popup);
-
 	return popup;
-
-
 }
 
 export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
