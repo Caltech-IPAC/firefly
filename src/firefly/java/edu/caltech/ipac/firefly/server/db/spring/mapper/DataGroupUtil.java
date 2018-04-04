@@ -137,8 +137,8 @@ public class DataGroupUtil {
             // format info - for numeric types only
             if (!(columnClass==String.class)) {
                 if (columnClass == Double.class || columnClass == Float.class) {
-                    int scale = Math.max(rsmd.getScale(i), 6);
-                    fi.setDataFormat("%." + scale + "f"); // double or float
+                    int scale = Math.max(rsmd.getScale(i), columnClass == Double.class ? 10 : 7);
+                    fi.setDataFormat("%." + scale + "e"); // double or float
                 } else if (Date.class.isAssignableFrom(columnClass)) {
                     fi.setDataFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date
                 }

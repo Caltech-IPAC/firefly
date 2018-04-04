@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get, isUndefined, omit} from 'lodash';
+import {isArray, get, isUndefined, omit} from 'lodash';
 
 import {Expression} from '../../../util/expr/Expression.js';
-import {getChartData, hasUpperLimits} from '../../ChartsCntlr.js';
+import {getChartData, getTraceSymbol, hasUpperLimits} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
@@ -74,8 +74,12 @@ export function fieldReducer({chartId, activeTrace}) {
     const basicReducer = basicFieldReducer({chartId, activeTrace});
 
     const getFields = () => {
-        const {data, tablesources={}} = getChartData(chartId);
+        const {data, fireflyData, tablesources={}} = getChartData(chartId);
         const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
+
+        // when a symbol is substituted with an array,
+        // the selected symbol is saved in fireflyData
+        const symbol = getTraceSymbol(data, fireflyData, activeTrace);
 
         const fields = {
             [`data.${activeTrace}.mode`]: {
@@ -87,7 +91,7 @@ export function fieldReducer({chartId, activeTrace}) {
             },
             [`data.${activeTrace}.marker.symbol`]: {
                 fieldKey: `data.${activeTrace}.marker.symbol`,
-                value: get(data, `${activeTrace}.marker.symbol`),
+                value: symbol,
                 tooltip: 'Select marker symbol',
                 label: 'Symbol:',
                 ...fieldProps

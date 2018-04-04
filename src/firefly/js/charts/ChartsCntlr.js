@@ -477,9 +477,14 @@ function chartFilterSelection(action) {
             const numericCols = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER).map((c) => c.name);
 
             let {x,y} = mappings;
+            let upperLimit = get(mappings,  `fireflyData.${activeTrace}.yMax`);
             // use standard form without spaces for filter key
             // to make sure the key is replaced when setFilter is used
-            [x,y] = [x, y].map((v) => formatColExpr({colOrExpr:v, colNames:numericCols}));
+            [x,y,upperLimit] = [x, y, upperLimit].map((v) => v && formatColExpr({colOrExpr:v, colNames:numericCols}));
+            if (upperLimit) {
+                y = `ifnull(${y},${upperLimit})`;
+            }
+
             const [xMin, xMax] = get(selection, 'range.x', []);
             const [yMin, yMax] = get(selection, 'range.y', []);
             const {request} = getTblById(tbl_id);
@@ -489,6 +494,7 @@ function chartFilterSelection(action) {
             filterInfoCls.addFilter(x, '< ' + xMax);
             filterInfoCls.setFilter(y, '> ' + yMin);
             filterInfoCls.addFilter(y, '< ' + yMax);
+
 
             // filters are processed by db, column expressions need to use syntax db understands
             const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:numericCols});
@@ -911,14 +917,28 @@ export function getAnnotations(chartId) {
         if (isArray(d.annotations)) {
             const filtered = d.annotations.filter((e) => !isUndefined(e));
             if (filtered.length > 0) {
-                annotations = annotations.concat(d.annotations);
+                annotations = annotations.concat(filtered);
             }
         }
     });
     return annotations;
 }
 
-
+/**
+ * Return trace symbol
+ * In some cases we use distinct symbols to mark the specific points of the trace (ex. upper limits)
+ * In these cases data.[traceNum].marker.symbol will be an array and fireflyData.[traceNum].marker.symbol
+ * will contain the trace symbol
+ * @param data
+ * @param fireflyData
+ * @param traceNum
+ * @returns {*}
+ */
+export function getTraceSymbol(data, fireflyData, traceNum) {
+    let symbol = get(data, `${traceNum}.marker.symbol`, 'circle');
+    if (isArray(symbol)) { symbol = get(fireflyData, `${traceNum}.marker.symbol`, 'circle'); }
+    return symbol;
+}
 
 function chartDataElementsToObj(chartDataElementsArr) {
     if (!chartDataElementsArr) return;

@@ -445,24 +445,29 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
 
         let doUpdate = false;
         if (isEmpty(traceTS)) {
-            traceTS = oldTraceTS;     // if no updates.. move the previous one into the new tablesources
+            traceTS = oldTraceTS;
+            // no updates to this trace, but shared layout updates might affect this trace
+            const {fireflyData:oldFireflyData} = getChartData(chartId);
+            const chartDataType = get(oldFireflyData[idx], 'dataType');
+            traceTS = Object.assign({}, oldTraceTS, getTraceTSEntries({chartDataType, traceTS: oldTraceTS, chartId, traceNum: idx}));
         } else {
             // if mappings are resolved, we need to get info from old tablesource
             if (!traceTS.fetchData) {
                 traceTS = Object.assign({}, oldTraceTS, traceTS);
             }
-
-            if (!tablesourcesEqual(traceTS, oldTraceTS)) {
-                if (oldTraceTS && oldTraceTS._cancel) {
-                    oldTraceTS._cancel(); // cancel the previous watcher if exists
-                    oldTraceTS._cancel = undefined;
-                    traceTS._cancel = undefined;
-                }
-                doUpdate = true;
-            } else {
-                traceTS = oldTraceTS;
-            }
         }
+
+        if (!tablesourcesEqual(traceTS, oldTraceTS)) {
+            if (oldTraceTS && oldTraceTS._cancel) {
+                oldTraceTS._cancel(); // cancel the previous watcher if exists
+                oldTraceTS._cancel = undefined;
+                traceTS._cancel = undefined;
+            }
+            doUpdate = true;
+        } else {
+            traceTS = oldTraceTS;
+        }
+
         // make sure table watcher is set for all non-empty table sources
         if (!isEmpty(traceTS) && !traceTS._cancel) {
             //creates a new one.. and save the cancel handle
@@ -569,7 +574,7 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
     return currentData.map((d, traceNum) => {
         const fireflyDataFlatten = flattenObject(fireflyData[traceNum] || {}, `fireflyData.${traceNum}`);
         // fireflyData mappings have full path
-        const flattenData = assign(flattenObject(data[traceNum]), fireflyDataFlatten);
+        const flattenData = assign(flattenObject(data[traceNum] || {}), fireflyDataFlatten);
         const ds = data[traceNum] ? convertToDS(flattenData) : {}; //avoid flattening arrays
         // table id can be a part of fireflyData too
         const tbl_id = get(data, `${traceNum}.tbl_id`) || get(fireflyData, `${traceNum}.tbl_id`);

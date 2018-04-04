@@ -4,7 +4,7 @@
 import {get, isArray, truncate, uniqueId} from 'lodash';
 import {COL_TYPE, getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {dispatchChartUpdate, dispatchError, getChartData, hasUpperLimits} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits} from '../ChartsCntlr.js';
 import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
 
 /**
@@ -27,11 +27,13 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
         const options = Object.assign({}, mappings);
 
         if (hasUpperLimits(chartId, traceNum)) {
-            const {layout} = getChartData(chartId);
+            const {layout, data, fireflyData} = getChartData(chartId);
             const {range=[], autorange=true, type='linear'} = get(layout, 'yaxis', {});
+            const symbol = getTraceSymbol(data, fireflyData, traceNum);
             const reversed = (autorange === 'reversed') || (range[1] < range[0]);
             options['ytype'] = type;
             options['yreversed'] = reversed;
+            options['symbol'] = symbol;
         }
         return {options, fetchData};
 
@@ -154,22 +156,37 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
 
     // handle upper limits: update new or erase old
     let annotations = [];
+    const symbol = getTraceSymbol(data, fireflyData, traceNum);
     if (mappings[`fireflyData.${traceNum}.yMax`]) {
+        // if there is an upper limit value and no y value, y is set to upper limit value
+        let numNewPts = 0;
+        let symbolArr = undefined;
         const arrowcolor = get(data, `${traceNum}.marker.color`);
         const {range = [], autorange = true, type: ytype} = get(layout, 'yaxis', {});
         const {type: xtype} = get(layout, 'xaxis', {});
         const reversed = (autorange === 'reversed') || (range[1] < range[0]);
         const sign = reversed ? -1 : 1;
 
+
+
         // per trace annotations
         annotations = changes[`fireflyData.${traceNum}.yMax`].map((v, i) => {
 
             let yy = parseFloat(v);
             if (Number.isFinite(yy)) {
-                // create a point if not present
+                // create a point if not present and change its symbol
                 if (!Number.isFinite(parseFloat(changes[`data.${traceNum}.y`][i]))) {
                     changes[`data.${traceNum}.y`][i] = changes[`fireflyData.${traceNum}.yMax`][i];
+                    // change the symbol
+                    if (numNewPts === 0) {
+                        symbolArr = new Array(x.length);
+                        symbolArr.fill(symbol);
+                    }
+                    symbolArr[i] = 'line-ew-open';
+                    numNewPts++;
                 }
+
+
 
                 // annotation position should take into account axis type
                 let xx = parseFloat(changes[`data.${traceNum}.x`][i]);
@@ -194,6 +211,11 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
                 return undefined;
             }
         });
+        // set an array of marker symbols
+        if (numNewPts > 0) {
+            changes[`data.${traceNum}.marker.symbol`] = symbolArr;
+            changes[`fireflyData.${traceNum}.marker.symbol`] = symbol;
+        }
     }
     // per trace annotations
     changes[`fireflyData.${traceNum}.annotations`] = annotations;
@@ -267,16 +289,19 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
 export const formatError = function(val, err, errLow, errHigh) {
     // TODO use format for expressions in future - still hard to tell how many places to save
     let str = '';
-    if (Number.isFinite(parseFloat(err))) {
+    const errNum = parseFloat(err);
+    if (Number.isFinite(errNum)) {
         //return ' \u00B1 '+numeral(lowErr).format(fmtLow); //Unicode U+00B1 is plusmn
-        str = ` \u00B1${err}`; //Unicode U+00B1 is plusmn
+        str = ` \u00B1${errNum}`; //Unicode U+00B1 is plusmn
     } else {
-        if (Number.isFinite(parseFloat(errHigh))) {
-            str += ` \u002B${errHigh}`;
+        const errHighNum = parseFloat(errHigh);
+        if (Number.isFinite(errHighNum)) {
+            str += ` \u002B${errHighNum}`;
         }
-        if (Number.isFinite(parseFloat(errLow))) {
+        const errLowNum = parseFloat(errLow);
+        if (Number.isFinite(errLowNum)) {
             if (str) str += ' /';
-            str += ` \u2212${errLow}`;
+            str += ` \u2212${errLowNum}`;
         }
     }
     return str;

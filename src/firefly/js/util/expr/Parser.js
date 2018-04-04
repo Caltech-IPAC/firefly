@@ -30,11 +30,11 @@ const rators1 = [
 ];
 
 const procs2 = [
-    'atan2', 'max', 'min', 'power'
+    'atan2', 'max', 'min', 'power', 'ifnull'
 ];
 
 const rators2 = [
-    Expr.ATAN2, Expr.MAX, Expr.MIN, Expr.POW
+    Expr.ATAN2, Expr.MAX, Expr.MIN, Expr.POW, Expr.IFNULL
 ];
 
 /**
