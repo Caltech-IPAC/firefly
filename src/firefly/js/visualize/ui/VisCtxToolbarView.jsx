@@ -5,9 +5,9 @@
 import React, {PureComponent} from 'react';
 import numeral from 'numeral';
 import PropTypes from 'prop-types';
-import {flux} from '../../Firefly.js';
 import {isEmpty, get} from 'lodash';
-import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById} from '../PlotViewUtil.js';
+import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
+                getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
@@ -16,10 +16,8 @@ import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {logError} from '../../util/WebUtil.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
-import {getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 
-import {dispatchCreateDrawLayer,
-        dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
+import {dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
         dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS, visRoot} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
@@ -31,7 +29,7 @@ import {isImageOverlayLayersActive} from '../RelatedDataUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CoordUtil from '../CoordUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
-import { parseImagePt } from '../Point.js';
+import {parseImagePt} from '../Point.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurverysPopup} from '../../ui/HiPSSurveyListDisplay.jsx';
 import {HiPSId} from '../HiPSListUtil.js';
@@ -92,7 +90,6 @@ function formatNumber(num, fractionDigits=7)
  * @param {object} cc
  * @returns { object } {statsSummary: array (for summary items), statsTable: array (for table rows)}}
  */
-
 function tabulateStatics(wpResult, cc) {
 
     const SSummary = 'statsSummary';
@@ -471,7 +468,6 @@ function makeHiPSCoordSelect(pv) {
  * @return {XML}
  * @constructor
  */
-
 export class VisCtxToolbarView extends PureComponent {
 
     constructor(props) {
@@ -662,11 +658,13 @@ function getHipsCubeDesc(plot) {
     if (!isHiPS(plot)) return '';
     const {hipsProperties}= plot;
     const {data_cube_crpix3, data_cube_crval3, data_cube_cdelt3, data_cube_bunit3=''}= hipsProperties;
-    if (!data_cube_crpix3 || !data_cube_crval3 || !data_cube_cdelt3) return ''
+    if (!data_cube_crpix3 || !data_cube_crval3 || !data_cube_cdelt3) return '';
     const crpix3= Number(data_cube_crpix3);
     const crval3= Number(data_cube_crval3);
     const cdelt3= Number(data_cube_cdelt3);
     if (isNaN(crpix3) || isNaN(crval3) || isNaN(cdelt3)) return '';
     const value = crval3 + ( plot.cubeIdx - crpix3 ) * cdelt3;
-    return `${numeral(value).format('0.00000')} ${data_cube_bunit3}`
+    const bunit3= (data_cube_bunit3!=='null' && data_cube_bunit3!=='nil' && data_cube_bunit3!=='undefined') ?
+                               data_cube_bunit3 : '';
+    return `${numeral(value).format('0.00000')} ${bunit3}`;
 }
