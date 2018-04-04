@@ -6,6 +6,7 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
+import java.util.Map;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 
@@ -19,6 +20,25 @@ public interface DbAdapter {
     String H2 = "h2";
     String SQLITE = "sqlite";
     String HSQL = "hsql";
+
+    /*
+      CLEAN UP POLICY:
+        A rough estimate: A search results of one million rows displayed in the triview(chart + image + table) takes around 500 MB
+        There are two stages of clean-up; compact(remove all temp tables), then shutdown(remove from memory)
+
+        - Compact DB once it has idled longer than CLEANUP_INTVL
+        - Shutdown DB once it has expired; idle longer than MAX_IDLE_TIME
+        - Shutdown DB based on LRU(Least Recently Used) once the total rows have exceeded MAX_MEMORY_ROWS
+
+        Current settings:
+          - CLEANUP_INTVL:  1 minutes
+          - MAX_IDLE_TIME: 15 minutes
+          - MAX_MEMORY_ROWS:  250k rows for every 1GB of max heap, between the range of 1-10 millions.
+     */
+    long MAX_IDLE_TIME  = 1000 * 60 * 15;   // will shutdown database if idle more than 15 minutes.
+    int  CLEANUP_INTVL  = 1000 * 60;        // check every 1 minutes
+    long MAX_MEMORY_ROWS = Math.min(10000000, Math.max(1000000, Runtime.getRuntime().maxMemory()/1024/1024/1024 * 250000));
+
 
     /**
      * @return the name of this database
@@ -69,11 +89,22 @@ public interface DbAdapter {
     String createTableFromSelect(String tblName, String selectSql);
     String translateSql(String sql);
 
+    /**
+     * perform a cleanup routine which may close inactive database to free up memory
+     * @param force  true to force close all open databases
+     */
+    void cleanup(boolean force);
+    public Map<String, BaseDbAdapter.EmbeddedDbInstance> getDbInstances();
+
 //====================================================================
 //
 //====================================================================
 
-    static String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", HSQL);
+    String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", HSQL);
+
+    static DbAdapter getAdapter() {
+        return getAdapter(TBL_FILE_TYPE);
+    }
 
     static DbAdapter getAdapter(TableServerRequest treq) {
         return getAdapter(treq.getMeta(TBL_FILE_TYPE));
@@ -93,6 +124,61 @@ public interface DbAdapter {
         }
     }
 
+    class EmbeddedDbInstance extends DbInstance {
+        long lastAccessed;
+        long created;
+        File dbFile;
+        boolean isCompact;
+        int tblCount;
+        int rowCount = -1;
+
+        EmbeddedDbInstance(String type, File dbFile, String dbUrl, String driver) {
+            this(type, dbFile, dbUrl, driver, System.currentTimeMillis());
+        }
+
+        EmbeddedDbInstance(String type, File dbFile, String dbUrl, String driver, long created) {
+            super(false, null, dbUrl, null, null, driver, type);
+            lastAccessed = System.currentTimeMillis();
+            this.dbFile = dbFile;
+            this.created = created;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return StringUtils.areEqual(this.dbUrl,((EmbeddedDbInstance)obj).dbUrl);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.dbUrl.hashCode();
+        }
+
+        public long getLastAccessed() {
+            return lastAccessed;
+        }
+
+        public long getCreated() { return created; }
+
+        public boolean hasExpired() {
+            return System.currentTimeMillis() - lastAccessed > MAX_IDLE_TIME;
+        }
+
+        public File getDbFile() {
+            return dbFile;
+        }
+
+        public void touch() {
+            lastAccessed = System.currentTimeMillis();
+            isCompact = false;
+        }
+
+        public void setCompact(boolean compact) { isCompact = compact;}
+        public boolean isCompact() { return isCompact; }
+        public int getTblCount() { return tblCount; }
+        public int getRowCount() { return rowCount; }
+        public void setTblCount(int tblCount) { this.tblCount = tblCount; }
+        public void setRowCount(int rowCount) { this.rowCount = rowCount; }
+    }
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

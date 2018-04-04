@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
-import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
 import edu.caltech.ipac.firefly.server.Counters;
@@ -13,10 +13,8 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.distribution.CacheManagerPeerListener;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
-import net.sf.ehcache.distribution.RMICachePeer;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
 import javax.servlet.http.HttpServletRequest;
@@ -79,18 +77,6 @@ public class ServerStatus extends BaseHttpServlet {
             writer.println("Host IP Address: n/a" );
         }
 
-
-        CacheManagerPeerListener listeners = cm.getCachePeerListener("RMI");
-        if (listeners == null || listeners.getBoundCachePeers() == null) return;
-
-        for (Object cp : listeners.getBoundCachePeers()) {
-            RMICachePeer rcp = (RMICachePeer) cp;
-            try{
-                writer.println("\tRMICachePeer : " + rcp.getUrl());
-            } catch (Exception e) {}    //ignore
-        }
-
-
         writer.println("Caches: ");
         Map<String, CacheManagerPeerProvider> peerProvs = cm.getCacheManagerPeerProviders();
         String[] cacheNames = cm.getCacheNames();
@@ -119,11 +105,19 @@ public class ServerStatus extends BaseHttpServlet {
     private static void showDatabaseStatus(PrintWriter writer) {
         writer.println("DATABASE INFORMATION");
         writer.println("--------------------");
-        writer.println("Open: " + BaseDbAdapter.getDbInstances().size());
-        writer.println("Details: idle time is in (mm:ss)");
-        Collections.unmodifiableCollection(BaseDbAdapter.getDbInstances().values()).stream()
+        writer.println(String.format("Open: %d    CHECK_INTVL: %ds    MAX_ROWS: %d    MAX_IDLE: %dm",
+                        DbAdapter.getAdapter().getDbInstances().size(), DbAdapter.CLEANUP_INTVL/1000, DbAdapter.MAX_MEMORY_ROWS, DbAdapter.MAX_IDLE_TIME/1000/60));
+        writer.println("Idled   Age     Tables  Rows      File Path");
+        writer.println("------  ------  ------  --------  ---------");
+        Collections.unmodifiableCollection(DbAdapter.getAdapter().getDbInstances().values()).stream()
                     .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
-                    .forEach((db) -> writer.println(String.format("\tidled: %2$tM:%2$tS %s", db.getDbFile().getPath(), System.currentTimeMillis() - db.getLastAccessed())));
+                    .forEach((db) -> writer.println(String.format("%4$tM'%4$tS\"  %5$tM'%5$tS\"  %6d  %8d  %s",
+                                                        db.getTblCount(),
+                                                        db.getRowCount(),
+                                                        db.getDbFile().getPath(),
+                                                        System.currentTimeMillis() - db.getLastAccessed(),
+                                                        System.currentTimeMillis() - db.getCreated()
+                    )));
     }
 
     private static String getStats(Ehcache c) {

@@ -22,6 +22,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Date: Jul 17, 2008
@@ -38,6 +40,14 @@ public class EhcacheProvider implements Cache.Provider {
     private static HashMap<String, Boolean> fileListenersReg = new HashMap<String, Boolean>();
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
     private static long curConfModTime = 0;
+
+    /*
+      CLEANUP POLICY:
+        - cached data expires after 60 minute of inactivity
+        - force eviction check once every 1 minute.
+     */
+    private static int DEF_TTI_SEC       = 60*60;     // default vis.shared maximum time to idle in seconds before evicted
+    private static int EVICT_CHECK_INTVL = 1;         // interval in minutes to check for expired vis.shared cache items
 
     static {
 
@@ -91,6 +101,13 @@ public class EhcacheProvider implements Cache.Provider {
                     sharedMemSize =  String.format("%dM", (int)(Runtime.getRuntime().maxMemory() * pctVisSharedMemSize/1024/1024));
                 }
                 sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getCacheConfiguration().setMaxBytesLocalHeap(sharedMemSize);
+
+                // setup cleanup task
+                int ttiSecs = AppProperties.getIntProperty("vis.shared.tti.secs", DEF_TTI_SEC);  // defaults to expire after 60 mins of inactivity.
+                sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getCacheConfiguration().setTimeToIdleSeconds(ttiSecs);
+                Executors.newSingleThreadScheduledExecutor()
+                        .scheduleAtFixedRate( () -> sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getKeysWithExpiryCheck()        // this forces eviction
+                                              , EVICT_CHECK_INTVL, EVICT_CHECK_INTVL, TimeUnit.MINUTES);      // check every n minutes
             }
             _log.info("shared cache manager config file: " + sharedConfig);
         }

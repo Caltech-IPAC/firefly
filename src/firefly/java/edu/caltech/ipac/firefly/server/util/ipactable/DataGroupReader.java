@@ -35,7 +35,7 @@ public class DataGroupReader {
     public static DataGroup readAnyFormat(File inf, int tableIndex) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
-            return read(inf, false, false);
+            return read(inf, false, false, true);
         } else if (format == Format.VO_TABLE) {
             DataGroup[] tables = VoTableUtil.voToDataGroups(inf.getAbsolutePath());
             if (tables.length > tableIndex) {

@@ -86,6 +86,9 @@
  * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
  * @prop {string} use       one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
  * @prop {string} tbl_id    a unique id of a table. auto-create if not given.
+ *
+ * @global
+ * @public
  */
 
 /**
@@ -127,4 +130,7 @@
  * @prop {object} DataSource
  * @prop {TableRequest} tableRequest 
  * @prop {string} selectionInfo
+ *
+ * @global
+ * @public
  */

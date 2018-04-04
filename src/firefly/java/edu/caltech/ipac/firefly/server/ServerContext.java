@@ -4,8 +4,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
-import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
-import edu.caltech.ipac.firefly.server.filters.CommonFilter;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
@@ -765,13 +764,13 @@ public class ServerContext {
             System.out.println("contextInitialized...");
             ServletContext cntx = servletContextEvent.getServletContext();
             ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
-            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> BaseDbAdapter.cleanup(), 1, 1, TimeUnit.MINUTES);   // check every minute
-
+            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> DbAdapter.getAdapter().cleanup(false),
+                        DbAdapter.CLEANUP_INTVL, DbAdapter.CLEANUP_INTVL, TimeUnit.MILLISECONDS);
         }
 
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
             System.out.println("contextDestroyed...");
-            BaseDbAdapter.cleanup(true);
+            DbAdapter.getAdapter().cleanup(true);
             ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
         }
     }
