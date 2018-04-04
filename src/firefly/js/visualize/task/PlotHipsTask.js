@@ -11,7 +11,7 @@ import {getArcSecPerPix, getZoomLevelForScale, UserZoomTypes} from '../ZoomUtil.
 import {WebPlot, PlotAttribute} from '../WebPlot.js';
 import {fetchUrl, clone, loadImage} from '../../util/WebUtil.js';
 import {getPlotGroupById} from '../PlotGroup.js';
-import {primePlot, getPlotViewById, hasGroupLock, isDrawLayerAttached} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, hasGroupLock} from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
 import {getCenterOfProjection, findCurrentCenterPoint, getCorners,
@@ -24,8 +24,7 @@ import {CCUtil} from '../CsysConverter.js';
 import {ensureWPR, determineViewerId, getHipsImageConversion,
         initBuildInDrawLayers, addDrawLayers} from './PlotImageTask.js';
 import {dlRoot, dispatchAttachLayerToPlot,
-        dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
-        getDlAry, dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
+        dispatchCreateDrawLayer, dispatchDetachLayerFromPlot, getDlAry} from '../DrawLayerCntlr.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
 import {isHiPS} from '../WebPlot';
@@ -88,7 +87,8 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
         const plot= primePlot(pv);
         if (!plot) return;
 
-        const size= pv.request.getSizeInDeg()  || 180;
+
+        const size= pv.request.getSizeInDeg()  || Number(plot.hipsProperties.hips_initial_fov) || 180;
         if (size) {
             if (size>70) {
                 dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});

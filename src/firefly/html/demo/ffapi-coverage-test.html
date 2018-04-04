@@ -30,6 +30,11 @@
 
 <script type="text/javascript">
     {
+
+        window.firefly= {};
+        window.firefly.options= {
+            hips : {useForImageSearch: true, hipsSources: 'all', defHipsSources: 'irsa'},
+        };
         onFireflyLoaded= function(firefly) {
 
             window.ffViewer= firefly.getViewer();
@@ -39,6 +44,9 @@
             } );
 
             firefly.debug= true;
+            firefly.options= {
+                hips : {useForImageSearch: true, hipsSources: 'all', defHipsSources: 'irsa'},
+            };
 
             var util= firefly.util;
             var ui= firefly.ui;

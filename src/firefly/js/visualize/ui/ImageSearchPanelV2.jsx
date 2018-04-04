@@ -358,11 +358,12 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const targetStyle = {height: 40};
     const sizeStyle = {margin: '-5px 0 0 36px'};
     const isHips = isHipsImgType();
-    const sizeLabel = isHips ? 'Field of view:' : 'Cutout size:';
+    const sizeLabel = isHips ? 'Field of view (optional):' : 'Cutout size:';
     const sizeKey = isHips ? 'sizeFov' : 'conesize';
     const minSize = isHips ? 197/3600 : 1/3600;
     const maxSize = isHips ? 180 : 1;
-    const sizeVal = isHips ? (180) + '' : (500/3600) + '';
+    // const sizeVal = isHips ? (180) + '' : (500/3600) + '';
+    const sizeVal = isHips ?  '' : (500/3600) + '';
     const initUnit = isHips ? 'deg' : 'arcsec';
 
     return (
@@ -370,13 +371,15 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
             <div className='ImageSearch__section'>
                 <div className='ImageSearch__section--title'>3. Select Target</div>
                 <div>
-                    <TargetPanel labelWidth={100} feedbackStyle={targetStyle}/>
+                    <TargetPanel labelWidth={isHips?150:100} feedbackStyle={targetStyle}
+                                 label={isHips?'Name or Position (optional):' :'Name or Position:' }
+                                 nullAllowed= {isHips} />
                     <SizeInputFields fieldKey={sizeKey} showFeedback={true}
                                      feedbackStyle={sizeStyle}
                                      initialState={{
                                              unit: initUnit,
                                              labelWidth : 0,
-                                             nullAllowed: false,
+                                             nullAllowed: isHips,
                                              value: sizeVal,
                                              min: minSize,
                                              max: maxSize
