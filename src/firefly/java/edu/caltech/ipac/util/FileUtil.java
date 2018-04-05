@@ -773,6 +773,27 @@ public class FileUtil
         return retHost;
     }
 
+    public static String makeShortHostName(String hostname) {
+        String retHost= "";
+        if (hostname!=null) {
+            int idx= hostname.indexOf(".");
+            if (idx>-1) {
+                retHost= hostname.substring(0,idx);
+                try {
+                    int v= Integer.parseInt(retHost);
+                    retHost= hostname;
+                } catch (NumberFormatException e) {
+                    // do nothing, we found a host name
+                }
+
+            }
+            else {
+                retHost= hostname;
+            }
+        }
+        return retHost;
+    }
+
     //============================================================================
     //                       File Directory Utilities
     //============================================================================

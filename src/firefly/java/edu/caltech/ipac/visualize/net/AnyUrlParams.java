@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AnyUrlParams extends BaseNetParams {
-    private static int MAX_LENGTH = 80;
+    private static int MAX_LENGTH = 60;
     private URL _url;
     private Map<String,String> cookies= null;
     private String _loginName= null;
@@ -47,9 +47,13 @@ public class AnyUrlParams extends BaseNetParams {
             securCookie= "-"+ cookies.get(_securityCookie);
         }
 
-        String baseKey= loginName+ securCookie +"-"+ fileStr.toString();
-        baseKey= baseKey.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>]", "");
+        String baseKey= loginName+ securCookie +"-"+ fileStr;
         int originalHashCode = (_url.getHost()+ baseKey).hashCode();
+        baseKey= baseKey.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?\\+<>]", "");
+
+
+
+
         if (baseKey.length()>MAX_LENGTH) {
             baseKey= baseKey.substring(0,MAX_LENGTH);
         }
@@ -57,8 +61,11 @@ public class AnyUrlParams extends BaseNetParams {
         String retval;
         if (_desc!=null) {
             retval = _desc + "-"+originalHashCode;
-        } else
-            retval = "URL--"+ _url.getHost() + "-"+originalHashCode+baseKey;
+        }
+        else {
+            String host = FileUtil.makeShortHostName(_url.getHost());
+            retval = "URL--" + host + "-" + originalHashCode + baseKey;
+        }
         //note: "=","," signs causes problem in download servlet.
         retval = retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>\\=\\,]","\\-");
         if (_localFileExtensions!=null && !_localFileExtensions.contains(FileUtil.getExtension(retval))) {
