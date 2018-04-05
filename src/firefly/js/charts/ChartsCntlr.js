@@ -7,17 +7,17 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
 import {updateSet, updateMerge, updateObject, toBoolean} from '../util/WebUtil.js';
-import {getTblById, getColumns, COL_TYPE} from '../tables/TableUtil.js';
+import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUtil.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
 import {formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
-import {syncCharts} from '../visualize/saga/ChartsSync.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {makeHistogramParams, makeXYPlotParams} from './ChartUtil.js';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
@@ -54,7 +54,7 @@ export default {actionCreators, reducers};
 const isDebug = () => get(window, 'firefly.debug', false);
 
 let cleanupWatcherStarted = false;
-let syncChartsWatcherStarted = false;
+
 
 function actionCreators() {
     return {
@@ -351,15 +351,32 @@ function chartAdd(action) {
                 cleanupWatcherStarted = true;
             }
         } else {
-            if (!syncChartsWatcherStarted) {
-                // this watcher is used for table-chart connection in pre-multitrace design
-                // the assumption is that we never use both single trace and multitrace charts in the same app
-                // adding it here to handle remote API pre-multitrace charts
-                const actions = [CHART_ADD, CHART_MOUNTED, CHART_REMOVE, TablesCntlr.TABLE_LOADED];
-                dispatchAddActionWatcher({id: 'syncCharts', actions, callback: syncCharts});
-                syncChartsWatcherStarted = true;
+            // supporting deprecated API, which uses the specialized parameters
+            const {chartId, chartType, params={}, ...rest} = action.payload;
+            const {tbl_id} = params;
+
+            const doChartAdd = (p) => {
+                const chartData = chartType === 'scatter' ? makeXYPlotParams(p) : makeHistogramParams(p);
+                if (chartData) {
+                    dispatchChartAdd({chartId, ...chartData, ...rest});
+                }
+            };
+
+            // @callback {actionWatcherCallback}
+            const onTblLoad = (action, cancelSelf, params) => {
+                if (get(action.payload, 'tbl_id') === tbl_id) {
+                    doChartAdd(params);
+                    cancelSelf && cancelSelf();
+                }
+            };
+
+            if (isFullyLoaded(tbl_id)) {
+                doChartAdd(params);
+            } else {
+                // add watcher that will add chart on table load
+                const actions = [TablesCntlr.TABLE_LOADED];
+                dispatchAddActionWatcher({id:`onTblLoad-${chartId}`, actions, callback: onTblLoad, params});
             }
-            dispatch(action);
         }
     };
 }

@@ -21,11 +21,8 @@ import {clone, logError}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
 import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
-import {SCATTER, HISTOGRAM} from '../charts/ChartUtil.js';
-import {DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
-import {DT_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 import {makeFileRequest}  from '../tables/TableRequestUtil.js';
-import {makeXYPlotParams, makeHistogramParams, uniqueChartId} from '../charts/ChartUtil.js';
+import {uniqueChartId} from '../charts/ChartUtil.js';
 import {getWsChannel, getWsConnId} from '../core/AppDataCntlr.js';
 import {getConnectionCount, WS_CONN_UPDATED, GRAB_WINDOW_FOCUS} from '../core/AppDataCntlr.js';
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
@@ -372,7 +369,7 @@ function plotRemoteChart(params, viewerId, dispatch) {
         viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
         chartId: params.chartId || uniqueChartId(),
         chartType: 'plot.ly',
-        closeable: true,
+        deletable: true,
         dispatcher: dispatch
     }, params);
 
@@ -386,7 +383,6 @@ function plotRemoteChart(params, viewerId, dispatch) {
  * @param {Function} dispatch - dispatch function
  */
 function plotRemoteXYPlot(params, viewerId, dispatch) {
-    const xyPlotParams = makeXYPlotParams(params);
     let tblId = params.tbl_id;
     if (!tblId) {
         const source = params.source;
@@ -399,23 +395,20 @@ function plotRemoteXYPlot(params, viewerId, dispatch) {
             );
             tblId = searchRequest.tbl_id;
             dispatchTableFetch(searchRequest, 0, undefined, dispatch);
+            params = Object.assign({}, params, {tbl_id: tblId});
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
         }
     }
-    const chartId = uniqueChartId();
     // SCATTER
-    dispatchChartAdd({chartId, chartType: SCATTER,
+    dispatchChartAdd({
         groupId: viewerId || 'default',
         viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
-        chartDataElements: [
-            {
-                type: DT_XYCOLS,
-                options: xyPlotParams,
-                tblId
-            }
-        ],
+        chartId: params.chartId || uniqueChartId(),
+        chartType: 'scatter',
+        params,
+        deletable: true,
         dispatcher: dispatch});
 }
 
@@ -425,7 +418,6 @@ function plotRemoteXYPlot(params, viewerId, dispatch) {
  * @param {Function} dispatch - dispatch function
  */
 function plotRemoteHistogram(params, viewerId, dispatch) {
-    const histogramParams = makeHistogramParams(params);
     let tblId = params.tbl_id;
     if (!tblId) {
         const source = params.source;
@@ -438,24 +430,20 @@ function plotRemoteHistogram(params, viewerId, dispatch) {
             );
             tblId = searchRequest.tbl_id;
             dispatchTableFetch(searchRequest, 0, undefined, dispatch);
+            params = Object.assign({}, params, {tbl_id: tblId});
         } else {
             logError('Either tbl_id or source must be specified in the parameters');
             return;
         }
     }
-    const chartId = uniqueChartId();
     // HISTOGRAM
-    dispatchChartAdd({chartId,
-        chartType: HISTOGRAM,
+    dispatchChartAdd({
         groupId: viewerId || 'default',
         viewerId:viewerId || DEFAULT_PLOT2D_VIEWER_ID,
-        chartDataElements: [
-            {
-                type: DT_HISTOGRAM,
-                options: histogramParams,
-                tblId
-            }
-        ],
+        chartId: params.chartId || uniqueChartId(),
+        chartType: 'histogram',
+        params,
+        deletable: true,
         dispatcher: dispatch});
 }
 
