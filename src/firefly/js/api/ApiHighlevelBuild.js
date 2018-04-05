@@ -389,6 +389,7 @@ function showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageReques
 }
 
 
+
 function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion) {
     const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer}= llApi.action;
     const {IMAGE, NewPlotMode}= llApi.util.image;

@@ -262,8 +262,8 @@ export function makeImageOrHiPSAction(rawAction) {
         const viewerId= determineViewerId(payload.viewerId, plotId);
         const size= getSizeInDeg(imageRequest, hipsRequest);
         const groupId= getPlotGroupId(imageRequest, hipsRequest);
-        const useImage= (plotAllSkyFirst && allSkyRequest) || (imageRequest.getWorldPt() && (size<fovDegFallOver));
-
+        const useImage= (plotAllSkyFirst && allSkyRequest) || (imageRequest.getWorldPt() &&
+                                                              (size !== 0) && (size < fovDegFallOver));
         let wpRequest= useImage ? imageRequest.makeCopy() : hipsRequest.makeCopy();
 
         if (useImage) {
@@ -398,10 +398,12 @@ function validateHipsAndImage(imageRequest, hipsRequest, fovDegFallOver) {
         console.log('You must define both hipsRequest and imageRequest');
         return false;
     }
+    /*
     if (!getSizeInDeg(imageRequest, hipsRequest)) {
         console.log('You must call setSizeInDeg in either the hipsRequest or the imageRequest');
         return false;
     }
+    */
     if (!getPlotGroupId(imageRequest, hipsRequest)) {
         console.log('You must call setPlotGroupId in either the hipsRequest or the imageRequest');
         return false;
