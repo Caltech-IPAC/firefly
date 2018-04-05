@@ -286,3 +286,4 @@ ChartPanel.propTypes = {
     showToolbar: PropTypes.bool,
     showChart: PropTypes.bool
 };
+

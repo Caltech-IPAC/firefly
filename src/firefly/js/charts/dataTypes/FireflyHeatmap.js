@@ -152,7 +152,7 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
         [`data.${traceNum}.x`]: x,
         [`data.${traceNum}.y`]: y,
         [`data.${traceNum}.z`]: z,
-        [`data.${traceNum}.text`]: text,
+        [`data.${traceNum}.hovertext`]: text,
         [`data.${traceNum}.hoverinfo`]: 'text',
         [`fireflyData.${traceNum}.toRowIdx`]: toRowIdx
     };

@@ -25,6 +25,7 @@ export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
 
 
 const defaultConfig= {
+    scrollZoom: true,
     displaylogo: false,
     displayModeBar: false,
     modeBarButtonsToRemove :[
@@ -244,7 +245,10 @@ const now = Date.now();
                         Plotly.Plots.resize(this.div);
                         break;
                     case RenderType.UPDATE:
-                        Plotly.update(this.div, data, layout);
+                        // can use UPDATE for single trace plus layout updates
+                        // otherwise it will not work - data will not be updated
+                        // dataUpdate should be an object
+                        Plotly.update(this.div, dataUpdate[0], layoutUpdate, dataUpdateTraces);
                         break;
                     case RenderType.NEW_PLOT:
                         Plotly.newPlot(this.div, data, layout, config);

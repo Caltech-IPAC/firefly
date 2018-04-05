@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isEmpty, isString, isUndefined, omit, omitBy, set, range} from 'lodash';
+import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -45,7 +45,9 @@ export const CHART_UNMOUNTED = `${UI_PREFIX}/unmounted`;
 
 const FIRST_CDEL_ID = '0'; // first data element id (if missing)
 
-const FIREFLY_TRACE_TYPES = ['fireflyHistogram', 'fireflyHeatmap'];
+const FIREFLY_TRACE_TYPES = ['scatter', 'fireflyHistogram', 'fireflyHeatmap'];
+
+const EMPTY_ARRAY = [];
 
 export default {actionCreators, reducers};
 
@@ -395,7 +397,7 @@ function chartHighlight(action) {
     return (dispatch) => {
         const {chartId, highlighted=0, chartTrigger=false} = action.payload;
         // TODO: activeTrace is not implemented.  switch to trace.. then highlight(?)
-        const {data, tablesources, activeTrace:activeDataTrace=0, selected} = getChartData(chartId);
+        const {data, fireflyData, tablesources, activeTrace:activeDataTrace=0, selected} = getChartData(chartId);
 
         const {traceNum=activeDataTrace, traceName} = action.payload; // highlighted trace can be selected or highlighted trace of the data trace
 
@@ -412,7 +414,8 @@ function chartHighlight(action) {
             // avoid updating chart twice
             // update only as a response to table highlight change
             if (!chartTrigger) {
-                const hlTrace = newTraceFrom(data[traceNum], [highlighted], HIGHLIGHTED_PROPS);
+                const traceAnnotations = get(fireflyData, `${traceNum}.annotations`);
+                const hlTrace = newTraceFrom(data[traceNum], [highlighted], HIGHLIGHTED_PROPS, traceAnnotations);
                 dispatchChartUpdate({chartId, changes: {highlighted: hlTrace}});
             }
             let traceData = data[traceNum];
@@ -437,7 +440,7 @@ function chartHighlight(action) {
 function chartSelect(action) {
     return (dispatch) => {
         const {chartId, selIndexes=[], chartTrigger=false} = action.payload;
-        const {activeTrace=0, data, tablesources} = getChartData(chartId);
+        const {activeTrace=0, data, fireflyData, tablesources} = getChartData(chartId);
 
         // when skipping hover, selecting chart points does not work
         // disable chart select in this case
@@ -458,7 +461,8 @@ function chartSelect(action) {
         // don't update before table select
         if (!chartTrigger) {
             const hasSelected = !isEmpty(selIndexes);
-            selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
+            const traceAnnotations = get(fireflyData, `${activeTrace}.annotations`);
+            selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS, traceAnnotations);
             dispatchChartUpdate({chartId, changes: {hasSelected, selected, selection: undefined}});
         }
     };
@@ -473,9 +477,14 @@ function chartFilterSelection(action) {
             const numericCols = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER).map((c) => c.name);
 
             let {x,y} = mappings;
+            let upperLimit = get(mappings,  `fireflyData.${activeTrace}.yMax`);
             // use standard form without spaces for filter key
             // to make sure the key is replaced when setFilter is used
-            [x,y] = [x, y].map((v) => formatColExpr({colOrExpr:v, colNames:numericCols}));
+            [x,y,upperLimit] = [x, y, upperLimit].map((v) => v && formatColExpr({colOrExpr:v, colNames:numericCols}));
+            if (upperLimit) {
+                y = `ifnull(${y},${upperLimit})`;
+            }
+
             const [xMin, xMax] = get(selection, 'range.x', []);
             const [yMin, yMax] = get(selection, 'range.y', []);
             const {request} = getTblById(tbl_id);
@@ -485,6 +494,7 @@ function chartFilterSelection(action) {
             filterInfoCls.addFilter(x, '< ' + xMax);
             filterInfoCls.setFilter(y, '> ' + yMin);
             filterInfoCls.addFilter(y, '< ' + yMax);
+
 
             // filters are processed by db, column expressions need to use syntax db understands
             const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:numericCols});
@@ -499,27 +509,28 @@ function chartFilterSelection(action) {
 function setActiveTrace(action) {
     return (dispatch) => {
         const {chartId, activeTrace} = action.payload;
-        const {data, tablesources, curveNumberMap} = getChartData(chartId);
-        const changes = getActiveTraceChanges({activeTrace, data, tablesources, curveNumberMap});
+        const {data, fireflyData, tablesources, curveNumberMap} = getChartData(chartId);
+        const changes = getActiveTraceChanges({activeTrace, data, fireflyData, tablesources, curveNumberMap});
         dispatchChartUpdate({chartId, changes});
     };
 }
 
-function getActiveTraceChanges({activeTrace, data, tablesources, curveNumberMap}) {
+function getActiveTraceChanges({activeTrace, data, fireflyData, tablesources, curveNumberMap}) {
     const tbl_id = get(tablesources, [activeTrace, 'tbl_id']);
     let selected = undefined;
     let highlighted = undefined;
     let curveMap = undefined;
     if (tbl_id) {
         const {selectInfo, highlightedRow} = getTblById(tbl_id) || {};
+        const traceAnnotations = get(fireflyData, `${activeTrace}.annotations`);
         if (selectInfo) {
             const selectInfoCls = SelectInfo.newInstance(selectInfo);
             const selIndexes = Array.from(selectInfoCls.getSelected()).map((e)=>getPointIdx(data[activeTrace], e));
             if (selIndexes.length > 0) {
-                selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS);
+                selected = newTraceFrom(data[activeTrace], selIndexes, SELECTED_PROPS, traceAnnotations);
             }
         }
-        highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS);
+        highlighted = newTraceFrom(data[activeTrace], [getPointIdx(data[activeTrace], highlightedRow)], HIGHLIGHTED_PROPS, traceAnnotations);
         if (curveNumberMap) {
             curveMap = range(curveNumberMap.length).filter((idx) => (idx !== activeTrace));
             curveMap.push(activeTrace);
@@ -529,7 +540,7 @@ function getActiveTraceChanges({activeTrace, data, tablesources, curveNumberMap}
 }
 
 function isFireflyType(type) {
-    return  FIREFLY_TRACE_TYPES.includes(type);
+    return  !type || FIREFLY_TRACE_TYPES.includes(type);
 }
 
 /**
@@ -557,9 +568,17 @@ function handleFireflyTraceTypes(payload) {
         });
         newPayload = Object.assign({}, newPayload, {data: plotlyData, fireflyData});
     }
-    if (layout.firefly) {
+    if (layout.firefly || isArray(layout.annotations)) {
         const fireflyLayout = layout.firefly;
         const plotlyLayout = omit(layout, 'firefly');
+
+        if (isArray(layout.annotations)) {
+            // save annotations array into fireflyLayout
+            if (!fireflyLayout.annotations) { fireflyLayout.annotations = []; }
+            fireflyLayout.annotations.push(plotlyLayout.annotations);
+        }
+
+
         newPayload = Object.assign({}, newPayload, {layout: plotlyLayout, fireflyLayout});
     }
     return newPayload;
@@ -891,6 +910,36 @@ function reduceData(state={}, action={}) {
     }
 }
 
+export function getAnnotations(chartId) {
+    const chartData = getChartData(chartId);
+    let annotations = get(chartData, 'fireflyLayout.annotations', EMPTY_ARRAY);
+    get(chartData, 'fireflyData', []).forEach((d) => {
+        if (isArray(d.annotations)) {
+            const filtered = d.annotations.filter((e) => !isUndefined(e));
+            if (filtered.length > 0) {
+                annotations = annotations.concat(filtered);
+            }
+        }
+    });
+    return annotations;
+}
+
+/**
+ * Return trace symbol
+ * In some cases we use distinct symbols to mark the specific points of the trace (ex. upper limits)
+ * In these cases data.[traceNum].marker.symbol will be an array and fireflyData.[traceNum].marker.symbol
+ * will contain the trace symbol
+ * @param data
+ * @param fireflyData
+ * @param traceNum
+ * @returns {*}
+ */
+export function getTraceSymbol(data, fireflyData, traceNum) {
+    let symbol = get(data, `${traceNum}.marker.symbol`, 'circle');
+    if (isArray(symbol)) { symbol = get(fireflyData, `${traceNum}.marker.symbol`, 'circle'); }
+    return symbol;
+}
+
 function chartDataElementsToObj(chartDataElementsArr) {
     if (!chartDataElementsArr) return;
     const obj = {};
@@ -950,6 +999,16 @@ function cleanupRelatedChartData(action) {
     });
 }
 
+export function hasUpperLimits(chartId, traceNum) {
+    const yMax = get(getChartData(chartId), `fireflyData.${traceNum}.yMax`);
+    return !isUndefined(yMax);
+}
+
+export function dataLoadedUpdate(changes) {
+    // when the chart data finished loading, fireflyData.traceNum.isLoading is switched to false
+    return Object.keys(changes).find((k)=>(k.match(/isLoading$/) && !changes[k]));
+}
+
 /**
  * Reset chart to the original
  * @param chartId
@@ -982,6 +1041,7 @@ export function removeTrace({chartId, traceNum}) {
                 Object.assign(changes,
                     getActiveTraceChanges({activeTrace: newActiveTrace,
                         data: changes['data'],
+                        fireflyData: changes['fireflyData'],
                         tablesources: changes['tablesources'],
                         curveNumberMap: newCurveMap})
                 );

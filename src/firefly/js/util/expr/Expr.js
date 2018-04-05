@@ -18,6 +18,7 @@
 /** Binary operator: greater than    */  export const GT  = 13;
 /** Binary operator: logical and     */  export const AND = 14;
 /** Binary operator: logical or      */  export const OR  = 15;
+/** Binary operator: if null         */  export const IFNULL  = 16;
 
 /** Unary operator: absolute value*/   export const ABS   = 100;
 /** Unary operator: arccosine */       export const ACOS  = 101;
@@ -148,6 +149,7 @@ class BinaryExpr {
             case DIV:   return arg0 / arg1; // division by 0 has IEEE 754 behavior
             case POW:   return Math.pow(arg0, arg1);
             case ATAN2: return Math.atan2(arg0, arg1);
+            case IFNULL: return (arg0 === undefined || arg0 === null) ? arg1 : arg0;
             case MAX:   return arg0 < arg1 ? arg1 : arg0;
             case MIN:   return arg0 < arg1 ? arg0 : arg1;
             case LT:    return arg0 <  arg1 ? 1.0 : 0.0;

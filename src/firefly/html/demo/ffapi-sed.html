@@ -1,0 +1,141 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Upper Limits - Firefly</title>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 50px 0 0 20px;">
+    <h2>
+    Sample SED Charts
+    </h2>
+</div>
+
+<div id="table" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
+<div id="sedchart" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
+
+<div id="table2" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
+<div id="sedchart2" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<br/><br/>
+
+<script type="text/javascript">
+    if (!window.firefly) window.firefly= {};
+    window.firefly.options= {charts: {singleTraceUI: true, upperLimitUI: true}};
+</script>
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function(firefly) {
+
+            var tblReq = firefly.util.table.makeFileRequest(
+                'SED: ARP-220 raw', // title
+                'http://ned.ipac.caltech.edu/cgi-bin/datasearch?ebars_spec=ebars&label_spec=no&x_spec=freq&y_spec=Fnu_jy&xr=-2&objname=ARP+220&objid=58863&search_type=Photo_id&meas_type=bot&of=xml_main&objname=ARP+220&objid\
+=58863&search_type=Photo_id&meas_type=bot',  // source
+                null,  // alt_source
+                {filters: '"NED Units" like \'Jy\''} // options
+            );
+
+            // while waiting for NED to provide us a numeric column for upper limit and uncertainty
+            // using the db expression to generate upper limit column:
+            tblReq.inclCols = '"No.","Frequency","NED Photometry Measurement","NED Uncertainty",CASEWHEN(IFNULL("NED Photometry Measurement", 0) > 0, NULL, 10) as "NED Limit"'
+
+            var wrapperReq = firefly.util.table.makeTblRequest('IpacTableFromSource', 'SED: ARP-220',
+                {searchRequest: tblReq}, {pageSize: 50});
+            var tblId = wrapperReq.tbl_id;
+
+            firefly.showTable('table', wrapperReq);
+
+            firefly.showChart('sedchart', {
+                data: [{
+                    name: 'sed',
+                    tbl_id: tblId,
+                    //text: 'tables::"No."', // does not display - probably not needed, if chart and table are connected
+                    x: 'tables::log(Frequency)',
+                    // error_x: {
+                    //     // assuming error is a fifth of the Frequency
+                    //     array_minus: 'tables::log("Frequency")-log("Frequency"-"Frequency"/5)', // error bar (minus)
+                    //     array: 'tables::log("Frequency"+"Frequency"/5)-log("Frequency")', // error bar (plus)
+                    // },
+                    y: 'tables::log("NED Photometry Measurement")',
+                    firefly: {
+                        yMax: 'tables::log("NED Limit")'
+                    },
+                    mode: 'markers'
+                }],
+                layout: {
+                    xaxis: {
+                        title: 'log(<em>v</em> [Hz])',
+                    },
+                    yaxis: {
+                        title: 'log(F<sub><em>v</em></sub> [Jy])',
+                    }
+                }
+            });
+
+
+            // Another example: the table has numeric columns
+
+            var tblReq2 = firefly.util.table.makeFileRequest(
+                'SED: M31', // title
+                'http://localhost:8080/firefly/demo/sedSample.xml',  // source
+                null,  // alt_source
+                {} // options
+            );
+            var tblId1 = tblReq2.tbl_id;
+
+            firefly.showTable('table2', tblReq2);
+
+            firefly.showChart('sedchart2', {
+                data: [{
+                    name: 'sed',
+                    tbl_id: tblId1,
+                    x: 'tables::Frequency',
+                    y: 'tables::NEDPhotometryMeasurement',
+                    error_y: {
+                        array: 'tables::NEDUncertainty', // error bar (symmetrical or plus)
+                    },
+                    firefly: {
+                        yMax: 'tables::NEDUpperLimit'
+                    },
+                    mode: 'markers'
+                }],
+                layout: {
+                    xaxis: {
+                        title: 'v [Hz]',
+                        type: 'log'
+                    },
+                    yaxis: {
+                        title: 'F(v) [Jy]',
+                        type: 'log'
+                    }
+                }
+            });
+
+        }
+    }
+
+
+</script>
+
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+
+
+</body>
+</html>

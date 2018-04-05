@@ -94,7 +94,7 @@ Firefly React components can be found in `firefly.ui` module.
 | ---------- | ---- | ----------- |
 | div | string or Object | a div element or a string id of the div element |
 
-<br>
+
 *Example:* 
 ```js
 const props = {
@@ -188,8 +188,8 @@ The FITS viewer can take many, many possible parameters.  Some parameters contro
 
 For the details of FITS plotting parameters see: [fits-plotting-parameters.md](fits-plotting-parameters.md)
  
-<br>
-*Examples:* 
+
+*Examples:*
 ```js
 firefly.setGlobalImageDef({
     ZoomType  : 'TO_WIDTH'

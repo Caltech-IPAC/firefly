@@ -153,7 +153,7 @@ function getChanges({histogramData, binColor, traceNum}) {
     changes[`data.${traceNum}.marker.color`] = color;
     changes[`data.${traceNum}.marker.colorscale`] = colorScale;
     changes[`data.${traceNum}.marker.line`] = {width: 1, color: borderColor};
-    changes[`data.${traceNum}.text`] = text;
+    changes[`data.${traceNum}.hovertext`] = text;
     changes[`data.${traceNum}.hoverinfo`] = 'text';
     return changes;
 }
