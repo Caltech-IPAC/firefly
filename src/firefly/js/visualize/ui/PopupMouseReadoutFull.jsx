@@ -67,7 +67,7 @@ export function PopupMouseReadoutFull({readout}){
     const {isHiPS, readoutItems}= sndReadout;
     const displayEle= getNonFluxDisplayElements(readoutItems,  readout.readoutPref, isHiPS);
     const {readout1, readout2, pixelSize, showReadout1PrefChange, showReadout2PrefChange, showPixelPrefChange}= displayEle;
-    const {fluxLabels, fluxValues} = getFluxInfo(sndReadout);
+    const fluxArray = getFluxInfo(sndReadout);
 
     return (
         <div style={{display:'flex', height: '100%', alignItems:'center'}}>
@@ -88,8 +88,8 @@ export function PopupMouseReadoutFull({readout}){
                     <div style={column6}> {readout1.value} </div>
                 </div>
                 <div style={{paddingTop: 3}}>{/* row2*/}
-                    <div style={ column3_r2}>{fluxLabels[0]}</div>
-                    <div style={ column4}> {fluxValues[0]}</div>
+                    <div style={ column3_r2}>{fluxArray[0].label}</div>
+                    <div style={ column4}> {fluxArray[0].value}</div>
 
                     <div style={ clone(column5,linkLook)} onClick={ showReadout2PrefChange}>
                         {readout2.label } </div>
@@ -97,10 +97,10 @@ export function PopupMouseReadoutFull({readout}){
                     <div style={column6}>  {readout2.value}  </div>
                 </div>
                  <div style={{height: 13, width:'100%', paddingTop:3}}>{/* row3*/}
-                     {threeColor && <div style={ column3}>{fluxLabels[1]}</div>}
-                     {threeColor && <div style={ column4}>{fluxValues[1]}</div>}
-                     {threeColor && <div style={ column5}>{fluxLabels[2]}</div>}
-                     {threeColor && <div style={ column6}>{fluxValues[2]}</div>}
+                     {threeColor && <div style={ column3}>{fluxArray[1].label}</div>}
+                     {threeColor && <div style={ column4}>{fluxArray[1].value}</div>}
+                     {threeColor && <div style={ column5}>{fluxArray[2].label}</div>}
+                     {threeColor && <div style={ column6}>{fluxArray[2].value}</div>}
                 </div>
                 <div style={lockByClickStyle} title='Click on an image to lock the display at that point.'>
                     <input type='checkbox' name='aLock' value='lock'
