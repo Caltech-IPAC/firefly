@@ -28,18 +28,49 @@
     <div id="hipsDIV2" style="display: inline-block; width: 500px; height: 500px; margin: 10px;"></div>
 </div>
 
+<div>
+    <div style="display: inline-block">
+        <div style="width: 500px; padding: 50px 0 0 20px;">
+            <br> Show Image or HiPS (image request has no world point) <br>
+        </div>
+        <div id="hipsDiv3" style="width: 500px; height: 400px; margin: 10px;"></div>
+    </div>
+    <div style="display: inline-block">
+        <div style="width: 500px; padding: 50px 0 0 20px;">
+            <br> Show Image or HiPS (image request has world point) <br>
+        </div>
+        <div id="hipsDiv4" style="width: 500px; height: 400px; margin: 10px;"></div>
+    </div>
+</div>
+
+<div>
+    <div style="display: inline-block">
+        <div style="width: 500px; padding: 50px 0 0 20px;">
+            <br> Show Image or HiPS (no size defined) <br>
+        </div>
+        <div id="hipsDiv5" style="width: 500px; height: 400px; margin: 10px;"></div>
+    </div>
+    <div style="display: inline-block">
+        <div style="width: 500px; padding: 50px 0 0 20px;">
+            <br> Show Image or HiPS (size is defined) <br>
+        </div>
+        <div id="hipsDiv6" style="width: 500px; height: 400px; margin: 10px;"></div>
+    </div>
+</div>
+
+
 <script type="text/javascript">
     {
         onFireflyLoaded= function(firefly) {
 
             window.ffViewer= firefly.getViewer();
 
-            firefly.debug= true;
+            firefly.debug = true;
 
             var util= firefly.util;
             var ui= firefly.ui;
-              // util.image.initAutoReadout(ui.DefaultApiReadout,
-              //        {MouseReadoutComponent:ui.PopupMouseReadoutMinimal, showThumb:false,showMag:false});
+            // util.image.initAutoReadout(ui.DefaultApiReadout,
+            //        {MouseReadoutComponent:ui.PopupMouseReadoutMinimal, showThumb:false,showMag:false});
 
             firefly.showHiPS('hipsDIV1',
                 {
@@ -82,8 +113,74 @@
                 },
                 hiConvert
             );
-        };
 
+
+            var imageRequestNoWpt = {
+                    Service: 'WISE',
+                    Title: 'Wise',
+                    SurveyKey: '3a',
+                    SurveyKeyBand: '2'
+                };
+
+            var imageRequestWPt = {
+                Service: 'WISE',
+                Title: 'Wise',
+                SurveyKey: '3a',
+                SurveyKeyBand: '2',
+                WorldPt: '148.892;69.0654;EQ_J2000'
+            };
+
+            var fovDegFallOver=.5;
+
+            // world point in image request
+            firefly.showImageOrHiPS(
+                'hipsDiv3',
+                {
+                    plotId: 'aHipsID3',
+                    title     : 'A HiPS - 0.1',
+                    hipsRootUrl: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1',
+                    SizeInDeg:.1
+                },
+
+                imageRequestNoWpt, fovDegFallOver
+            );
+
+            firefly.showImageOrHiPS(
+                'hipsDiv4',
+                {
+                    plotId: 'aHipsID4',
+                    title     : 'A HiPS - 0.2',
+                    hipsRootUrl: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1',
+                    SizeInDeg:.2
+                },
+
+                imageRequestWPt, fovDegFallOver
+            );
+
+            // no size in both requests
+            firefly.showImageOrHiPS(
+                 'hipsDiv5',
+                 {
+                    plotId: 'aHipsID5',
+                    title     : 'A HiPS - no size',
+                    hipsRootUrl: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1',
+                 },
+                 imageRequestWPt, fovDegFallOver
+            );
+
+            // size defined in at least one request
+            firefly.showImageOrHiPS(
+                'hipsDiv6',
+                {
+                   plotId: 'aHipsID6',
+                   title     : 'A HiPS - 0.2',
+                   hipsRootUrl: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1',
+                   SizeInDeg:.2
+                },
+                imageRequestWPt, fovDegFallOver
+            );
+
+        };
    }
    
 </script>
