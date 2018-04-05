@@ -5,7 +5,7 @@
 import React, {PureComponent} from 'react';
 import numeral from 'numeral';
 import PropTypes from 'prop-types';
-import {isEmpty, get} from 'lodash';
+import {isEmpty, get, padEnd} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
                 getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
@@ -653,6 +653,7 @@ MultiImageControllerView.propTypes= {
     plotView : PropTypes.object.isRequired,
 };
 
+const doFormat= (v,precision) => precision>0 ? numeral(v).format(padEnd('0.',precision+2,'0')) : Math.trunc(v)+'';
 
 function getHipsCubeDesc(plot) {
     if (!isHiPS(plot)) return '';
@@ -662,9 +663,10 @@ function getHipsCubeDesc(plot) {
     const crpix3= Number(data_cube_crpix3);
     const crval3= Number(data_cube_crval3);
     const cdelt3= Number(data_cube_cdelt3);
+    const dp= Math.abs(cdelt3)>10 ? 0 :  1- Math.trunc(Math.log10(Math.abs(cdelt3))); // number of decimal points suggestion of gpdf
     if (isNaN(crpix3) || isNaN(crval3) || isNaN(cdelt3)) return '';
     const value = crval3 + ( plot.cubeIdx - crpix3 ) * cdelt3;
     const bunit3= (data_cube_bunit3!=='null' && data_cube_bunit3!=='nil' && data_cube_bunit3!=='undefined') ?
                                data_cube_bunit3 : '';
-    return `${numeral(value).format('0.00000')} ${bunit3}`;
+    return `${doFormat(value,dp)} ${bunit3}`;
 }
