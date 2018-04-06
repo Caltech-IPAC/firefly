@@ -327,7 +327,6 @@ public class ImagePlotCreator {
         HistogramOps ops= plot.getHistogramOps(band,frGroup);
         Histogram hist= ops.getDataHistogram();
         return new WebFitsData( ops.getDataMin(hist), ops.getDataMax(hist),
-                                Double.NaN /*no longer pass beta by default*/,
                                 fileLength, plot.getFluxUnits(band,frGroup));
     }
 }

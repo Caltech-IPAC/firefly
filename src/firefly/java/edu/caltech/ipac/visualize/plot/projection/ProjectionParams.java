@@ -9,6 +9,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+/**
+ * This class exist because of GWT. We could not pass ImageHeader to the client.  Now we turn all this
+ * data to JSON so we should remove this class.  The problem is that is is passed to all the projection
+ * classes.  We need to return to passing ImageHeader to the projection classes.
+ */
 public class ProjectionParams implements Serializable {
     public static final int MAX_SIP_LENGTH = 10;
 
@@ -51,7 +56,7 @@ public class ProjectionParams implements Serializable {
     public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
-    public Map<String,String> sendToClientHeaders= new HashMap<>();
+    public Map<String,Object> sendToClientHeaders= new HashMap<>();
 
     public ProjectionParams() {}
 }

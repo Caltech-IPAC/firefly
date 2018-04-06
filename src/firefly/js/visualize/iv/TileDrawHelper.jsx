@@ -51,7 +51,7 @@ export function createImageUrl(plot, tile) {
     if (isImage(plot)) {
         const params = {
             file: tile.url,
-            state: plot.plotState.toJson(),
+            state: plot.plotState.toJson(false),
             type: 'tile',
             x: tile.x,
             y: tile.y,

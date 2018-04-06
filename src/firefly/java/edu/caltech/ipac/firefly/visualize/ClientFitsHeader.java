@@ -163,27 +163,6 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     }
 
 
-    public static ClientFitsHeader parse(String s) {
-
-        if (s==null) return null;
-        Map<String,String> map= new HashMap<String,String>(50);
-//        MapPropertyLoader.load(map,projStr);
-        String sAry[]= s.split(SPLIT_TOKEN,60);
-        ClientFitsHeader clientFitsHeader = null;
-        if (sAry.length<60) {
-            String pairAry[];
-            for(String pair : sAry) {
-                pairAry= pair.split("=",2);
-                if (pairAry.length==2) {
-                    map.put(pairAry[0],pairAry[1]);
-                }
-            }
-            clientFitsHeader = new ClientFitsHeader(map);
-        }
-
-        return clientFitsHeader;
-    }
-
     public boolean equals(Object o) {
         boolean retval= false;
         if (o==this) {

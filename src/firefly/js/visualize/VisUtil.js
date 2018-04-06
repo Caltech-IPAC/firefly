@@ -8,7 +8,7 @@
  */
 
 
-import {isArray, isEmpty, flattenDeep} from 'lodash';
+import {isArray, isEmpty, flattenDeep, isUndefined} from 'lodash';
 import pointInPolygon from 'point-in-polygon';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
@@ -19,7 +19,7 @@ import {doConv} from '../astro/conv/CoordConv.js';
 import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
                makeWorldPt, makeDevicePt, isValidPoint, pointEquals} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
-import {getPixScaleDeg} from './WebPlot.js';
+import {getPixScaleDeg, getFluxUnits} from './WebPlot.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
 
 
@@ -876,10 +876,8 @@ export function convertAngle(from, to, angle) {
 
 
 export function formatFlux(value, plot, band) {
-    if (typeof value==='undefined') return '';
-    const fluxUnits= plot.webFitsData[band.value].fluxUnits;
-    return `${formatFluxValue(value)} ${fluxUnits}`;
-
+    if (isUndefined(value)) return '';
+    return `${formatFluxValue(value)} ${getFluxUnits(plot,band)}`;
 }
 
 export function formatFluxValue(value) {

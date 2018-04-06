@@ -11,6 +11,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.RelatedData;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
@@ -21,6 +22,7 @@ import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -98,62 +100,21 @@ public class VisJsonSerializer {
     public static JSONObject serializeProjectionParams(ProjectionParams p) {
         JSONObject map = new JSONObject();
 
-        map.put("bitpix", p.bitpix);
-        map.put("naxis",  p.naxis);
-        map.put("naxis1", p.naxis1);
-        map.put("naxis2", p.naxis2);
-        map.put("naxis3", p.naxis3);
-        map.put("crpix1", p.crpix1);
-        map.put("crpix2", p.crpix2);
-        map.put("crval1", p.crval1);
-        map.put("crval2", p.crval2);
-        map.put("cdelt1", p.cdelt1);
-        map.put("cdelt2", p.cdelt2);
-        map.put("crota1", p.crota1);
-        map.put("crota2", p.crota2);
-        map.put("file_equinox", p.file_equinox);
-        map.put("ctype1", p.ctype1);
-        map.put("ctype2", p.ctype2);
-        map.put("radecsys", p.radecsys);
-        map.put("datamax", p.datamax);
-        map.put("datamin", p.datamin);
-        map.put("maptype", p.maptype);
-        map.put("cd1_1", p.cd1_1);
-        map.put("cd1_2", p.cd1_2);
-        map.put("cd2_1", p.cd2_1);
-        map.put("cd2_2", p.cd2_2);
-        map.put("dc1_1", p.dc1_1);
-        map.put("dc1_2", p.dc1_2);
-        map.put("dc2_1", p.dc2_1);
-        map.put("dc2_2", p.dc2_2);
-        map.put("using_cd", p.using_cd);
-        map.put("using_tpv", p.using_tpv);
-        map.put("pv1", makeJAry(p.pv1));
-        map.put("pv2", makeJAry(p.pv2));
-        map.put("plate_ra", p.plate_ra);
-        map.put("plate_dec", p.plate_dec);
-        map.put("x_pixel_offset", p.x_pixel_offset);
-        map.put("y_pixel_offset", p.y_pixel_offset);
-        map.put("x_pixel_size", p.x_pixel_size);
-        map.put("y_pixel_size", p.y_pixel_size);
-        map.put("plt_scale", p.plt_scale);
-
-        map.put("ppo_coeff", makeJAry(p.ppo_coeff));
-        map.put("amd_x_coeff", makeJAry(p.amd_x_coeff));
-        map.put("amd_y_coeff", makeJAry(p.amd_y_coeff));
-        map.put("a_order", p.a_order);
-        map.put("ap_order", p.ap_order);
-        map.put("b_order", p.b_order);
-        map.put("bp_order", p.bp_order);
-        map.put("a", makeJAry2d(p.a));
-        map.put("ap", makeJAry2d(p.ap));
-        map.put("b", makeJAry2d(p.b));
-        map.put("bp", makeJAry2d(p.bp));
-        map.put("map_distortion", p.map_distortion);
-        map.put("keyword", p.keyword);
-
-        for(Map.Entry<String,String> e : p.sendToClientHeaders.entrySet() ) {
-            map.put(e.getKey(),e.getValue());
+        for(Map.Entry<String,Object> e : p.sendToClientHeaders.entrySet() ) {
+            Object v= e.getValue();
+            String k= e.getKey();
+            if (v==null || v instanceof String || v instanceof Number || v instanceof Boolean) {
+                map.put(k,v);
+            }
+            else if (v instanceof double[]) {
+                map.put(k,makeJAry((double[])v));
+            }
+            else if (v instanceof double[][]) {
+                map.put(k,makeJAry2d((double[][])v));
+            }
+            else {
+                Logger.warn("found unexpected type in serializeProjectionParams: key: "+k+", value: "+ v.toString());
+            }
         }
 
         return map;
@@ -236,10 +197,8 @@ public class VisJsonSerializer {
     public static JSONObject serializeWebFitsData(WebFitsData wfData) {
         if (wfData==null) return null;
         JSONObject map = new JSONObject();
-        map.put("JSON", true);
         map.put("dataMin", wfData.getDataMin());
         map.put("dataMax", wfData.getDataMax());
-        map.put("beta", wfData.getBeta());
         map.put("fluxUnits", wfData.getFluxUnits());
         map.put("getFitsFileSize", wfData.getFitsFileSize());
         return map;
@@ -248,20 +207,32 @@ public class VisJsonSerializer {
     public static  JSONObject serializePlotState(PlotState s) {
         if (s==null) return null;
 
+
         JSONObject map = new JSONObject();
 
-        map.put("JSON", true);
-        map.put("multiImage", s.getMultiImageAction().toString());
         map.put("ctxStr", s.getContextString());
-        map.put("newPlot", s.isNewPlot());
         map.put("zoomLevel", s.getZoomLevel());
-        map.put("threeColor", s.isThreeColor());
         map.put("colorTableId", s.getColorTableId());
-        map.put("rotationType", s.getRotateType().toString());
-        map.put("rotationAngle", s.getRotationAngle());
-        map.put("flippedY", s.isFlippedY());
-        map.put("rotaNorthType", s.getRotateNorthType().toString());
 
+
+        // don't pass if defaulted
+        if (s.getMultiImageAction()!=PlotState.MultiImageAction.GUESS) map.put("multiImage", s.getMultiImageAction().toString());
+        if (!Double.isNaN(s.getRotationAngle())) map.put("rotationAngle", s.getRotationAngle());
+        if (s.getRotateType()!=PlotState.RotateType.UNROTATE) map.put("rotationType", s.getRotateType().toString());
+        if (s.getRotateNorthType()!=CoordinateSys.EQ_J2000) map.put("rotaNorthType", s.getRotateNorthType().toString());
+        if (s.isFlippedY()) map.put("flippedY", true);
+        if (s.isThreeColor()) map.put("threeColor", true);
+        if (s.getOperations().size()>0 ) {
+            JSONArray outOpList = new JSONArray();
+            for(PlotState.Operation op  : s.getOperations()) {
+                outOpList.add(op.toString());
+            }
+            map.put("ops", outOpList);
+
+        }
+
+
+        // band state array
         JSONArray list = new JSONArray();
         BandState bandStateAry[]= s.getBandStateAry();
         for(int i= 0; (i< bandStateAry.length); i++) {
@@ -269,14 +240,6 @@ public class VisJsonSerializer {
                                                    null : serializeBandState(bandStateAry[i]));
         }
         map.put("bandStateAry", list);
-
-
-
-        JSONArray outOpList = new JSONArray();
-        for(PlotState.Operation op  : s.getOperations()) {
-            outOpList.add(op.toString());
-        }
-        map.put("ops", outOpList);
 
 
         return map;
@@ -324,25 +287,33 @@ public class VisJsonSerializer {
     public static PlotState deserializePlotState(JSONObject map) {
         try {
             PlotState state= new PlotState();
-            PlotState.MultiImageAction multiImage= StringUtils.getEnum(getStr(map, "multiImage"),
+            PlotState.MultiImageAction multiImage= StringUtils.getEnum(getStr(map, "multiImage", true),
                     PlotState.MultiImageAction.GUESS);
-            PlotState.RotateType rType= StringUtils.getEnum(getStr(map, "rotationType"),
+            PlotState.RotateType rType= StringUtils.getEnum(getStr(map, "rotationType", true),
                     PlotState.RotateType.UNROTATE);
-            CoordinateSys rNorthType= CoordinateSys.parse(getStr(map,"rotaNorthType"));
+            String rnType= getStr(map,"rotaNorthType", true);
+            CoordinateSys rNorthType= rnType!=null ? CoordinateSys.parse(rnType) : CoordinateSys.EQ_J2000;
 
 
-
-            state.setMultiImageAction(multiImage);
             state.setContextString(getStr(map, "ctxStr"));
-            state.setNewPlot((Boolean)map.get("newPlot"));
             state.setZoomLevel(getFloat(map,"zoomLevel" ));
-            state.setThreeColor((Boolean)map.get("threeColor"));
             state.setColorTableId(getInt(map, "colorTableId"));
-            state.setRotateType(rType);
-            state.setRotationAngle(getDouble(map, "rotationAngle",true));
-            state.setFlippedY((Boolean)map.get("flippedY"));
-            state.setRotateNorthType(rNorthType);
 
+
+            // optional - default if not passed
+            state.setMultiImageAction(multiImage);
+            state.setNewPlot(false);
+            state.setRotationAngle(getDouble(map, "rotationAngle",true, Double.NaN));
+            state.setRotateNorthType(rNorthType);
+            state.setRotateType(rType);
+            state.setFlippedY(getBoolean(map, "flippedY",false));
+            state.setThreeColor(getBoolean(map, "threeColor",false));
+            JSONArray opList = (JSONArray)map.get("ops");
+            if (opList!=null) {
+                for(Object oStr : opList) {
+                    state.addOperation( StringUtils.getEnum(oStr.toString(), PlotState.Operation.ROTATE));
+                }
+            }
 
 
             JSONArray pList = (JSONArray)map.get("bandStateAry");
@@ -352,10 +323,6 @@ public class VisJsonSerializer {
             }
             state.setBandStateAry(bandStateAry);
 
-            JSONArray opList = (JSONArray)map.get("ops");
-            for(Object oStr : opList) {
-                state.addOperation( StringUtils.getEnum(oStr.toString(), PlotState.Operation.ROTATE));
-            }
             return state;
         } catch (ClassCastException|IllegalArgumentException  e) {
             return null;
@@ -367,18 +334,21 @@ public class VisJsonSerializer {
         JSONObject map = new JSONObject();
         map.put("JSON", true);
         map.put("workingFitsFileStr", b.getWorkingFitsFileStr());
-        map.put("originalFitsFileStr", b.getOriginalFitsFileStr());
-        map.put("uploadFileNameStr", b.getUploadedFileName());
-        map.put("imageIdx", b.getImageIdx());
-        map.put("originalImageIdx", b.getOriginalImageIdx());
+        if (!ComparisonUtil.equals(b.getWorkingFitsFileStr(), b.getOriginalFitsFileStr())) {
+            map.put("originalFitsFileStr", b.getOriginalFitsFileStr());
+        }
+        if (b.getUploadedFileName()!=null) {
+            map.put("uploadFileNameStr", b.getUploadedFileName());
+        }
+        if (b.getImageIdx()>0) map.put("imageIdx", b.getImageIdx());
+        if (b.getOriginalImageIdx()>0) map.put("originalImageIdx", b.getOriginalImageIdx());
         map.put("plotRequestSerialize", b.getWebPlotRequestSerialized());
         map.put("rangeValuesSerialize", b.getRangeValuesSerialized());
         map.put("fitsHeader", serializeClientFitsHeader(b.getHeader()));
-        map.put("bandVisible", b.isBandVisible());
-        map.put("multiImageFile", b.isMultiImageFile());
-        map.put("tileCompress", b.isTileCompress());
-        map.put("cubeCnt", b.getCubeCnt());
-        map.put("cubePlaneNumber", b.getCubePlaneNumber());
+        if (b.isMultiImageFile()) map.put("multiImageFile", b.isMultiImageFile());
+        if (b.isTileCompress()) map.put("tileCompress", b.isTileCompress());
+        if (b.getCubeCnt()>0) map.put("cubeCnt", b.getCubeCnt());
+        if (b.getCubePlaneNumber()>0) map.put("cubePlaneNumber", b.getCubePlaneNumber());
         return map;
     }
 
@@ -386,19 +356,24 @@ public class VisJsonSerializer {
         if (map==null) return null;
         try {
             BandState b= new BandState();
-            b.setWorkingFitsFileStr(getStr(map, "workingFitsFileStr"));
-            b.setOriginalFitsFileStr(getStr(map,"originalFitsFileStr"));
+
+            String working= getStr(map, "workingFitsFileStr");
+            String original= getStr(map,"originalFitsFileStr", true);
+            b.setWorkingFitsFileStr(working);
+            b.setOriginalFitsFileStr( original!=null ? original : working);
+
             b.setUploadedFileName(getStr(map,"uploadFileNameStr",true));
-            b.setImageIdx(getInt(map, "imageIdx"));
-            b.setOriginalImageIdx(getInt(map,"originalImageIdx"));
+            b.setImageIdx(getInt(map, "imageIdx",0));
+            b.setOriginalImageIdx(getInt(map,"originalImageIdx",0));
             b.setWebPlotRequest(WebPlotRequest.parse(getStr(map, "plotRequestSerialize")));
             b.setRangeValues(RangeValues.parse(getStr(map,"rangeValuesSerialize")));
             b.setFitsHeader(deserializeClientFitsHeader((JSONObject)map.get("fitsHeader")));
-            b.setBandVisible((Boolean) map.get("bandVisible"));
-            b.setMultiImageFile((Boolean) map.get("multiImageFile"));
-            b.setTileCompress((Boolean) map.get("tileCompress"));
-            b.setCubeCnt(getInt(map,"cubeCnt"));
-            b.setCubePlaneNumber(getInt(map, "cubePlaneNumber"));
+            b.setBandVisible(true);
+//            b.setMultiImageFile((Boolean) map.get("multiImageFile"));
+            b.setMultiImageFile(getBoolean(map,"multiImageFile", false));
+            b.setCubeCnt(getInt(map,"cubeCnt",0));
+            b.setCubePlaneNumber(getInt(map, "cubePlaneNumber",0));
+            b.setTileCompress(getBoolean(map,"tileCompress",false));
             return b;
         } catch (ClassCastException|IllegalArgumentException  e) {
             return null;
@@ -419,7 +394,7 @@ public class VisJsonSerializer {
     public static ClientFitsHeader deserializeClientFitsHeader(JSONObject map) {
         if (map==null) return null;
         try {
-            Map<String,String> tMap= new HashMap<String, String>(30);
+            Map<String,String> tMap= new HashMap<>(30);
 
             for(Object key : map.keySet()) {
                 tMap.put((String)key, (String)map.get(key));
@@ -449,31 +424,48 @@ public class VisJsonSerializer {
         return n.intValue();
     }
 
-    private static float getFloat(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {
-        return getFloat(j,key,false);
+    private static int getInt(JSONObject j, String key, int defValue) throws IllegalArgumentException, ClassCastException {
+        Number n= (Number)j.get(key);
+        if (n==null) return defValue;
+        return n.intValue();
     }
 
-    private static float getFloat(JSONObject j, String key, boolean nullAsNan) throws IllegalArgumentException, ClassCastException {
+    private static float getFloat(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {
+        return getFloat(j,key,false, Float.NaN);
+    }
+
+    private static float getFloat(JSONObject j, String key, boolean nullAsNan, float defValue) throws IllegalArgumentException, ClassCastException {
         Number n= (Number)j.get(key);
         if (n==null) {
             if (nullAsNan) return Float.NaN;
-            else throw new IllegalArgumentException(key + " must exist");
+            else if (Float.isNaN(defValue)) throw new IllegalArgumentException(key + " must exist");
+            else return defValue;
         }
         else {
             return n.floatValue();
         }
     }
 
-    private static double getDouble(JSONObject j, String key, boolean nullAsNan) throws IllegalArgumentException, ClassCastException {
+    private static double getDouble(JSONObject j, String key, boolean nullAsNan, double defValue) throws IllegalArgumentException, ClassCastException {
         Number n= (Number)j.get(key);
         if (n==null) {
             if (nullAsNan) return Double.NaN;
-            else throw new IllegalArgumentException(key + " must exist");
+            else if (Double.isNaN(defValue)) throw new IllegalArgumentException(key + " must exist");
+            else return defValue;
         }
         else {
             return n.doubleValue();
         }
     }
 
+    private static boolean getBoolean(JSONObject j, String key, boolean defValue) throws IllegalArgumentException, ClassCastException {
+        Boolean b= (Boolean)j.get(key);
+        if (b==null) {
+            return defValue;
+        }
+        else {
+            return b.booleanValue();
+        }
+    }
 
 }

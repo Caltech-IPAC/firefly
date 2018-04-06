@@ -81,7 +81,7 @@ public class ImageHeader implements Serializable
 	public boolean using_tpv= false;
     public String keyword;
 	public Map<String,String> maskHeaders= new HashMap<>(23);
-	public Map<String,String> sendToClientHeaders = new HashMap<>(23);
+	public Map<String,Object> sendToClientHeaders = new HashMap<>(23);
 
 
     public ImageHeader()
@@ -750,7 +750,8 @@ public class ImageHeader implements Serializable
     public static ProjectionParams createProjectionParams(ImageHeader hdr) {
         ProjectionParams params= new ProjectionParams();
 
-		params.sendToClientHeaders= hdr.sendToClientHeaders;
+
+
         params.bitpix= hdr.bitpix;
         params.naxis = hdr.naxis;
         params.naxis1= hdr.naxis1;
@@ -810,6 +811,67 @@ public class ImageHeader implements Serializable
         params.map_distortion= hdr.map_distortion;
         params.keyword= hdr.keyword;
 
+
+
+		params.sendToClientHeaders= hdr.sendToClientHeaders;
+		params.sendToClientHeaders.put("bitpix", hdr.bitpix);
+		params.sendToClientHeaders.put("naxis", hdr.naxis);
+		params.sendToClientHeaders.put("naxis1", hdr.naxis1);
+		params.sendToClientHeaders.put("naxis2", hdr.naxis2);
+		params.sendToClientHeaders.put("naxis3", hdr.naxis3);
+		params.sendToClientHeaders.put("crpix1", hdr.crpix1);
+		params.sendToClientHeaders.put("crpix2", hdr.crpix2);
+		params.sendToClientHeaders.put("crval1", hdr.crval1);
+		params.sendToClientHeaders.put("crval2", hdr.crval2);
+		params.sendToClientHeaders.put("cdelt1", hdr.cdelt1);
+		params.sendToClientHeaders.put("cdelt2", hdr.cdelt2);
+		params.sendToClientHeaders.put("crota2", hdr.crota2);
+		params.sendToClientHeaders.put("crota1", hdr.crota1);
+		params.sendToClientHeaders.put("file_equinox", hdr.file_equinox);
+		params.sendToClientHeaders.put("ctype1", hdr.ctype1);
+		params.sendToClientHeaders.put("ctype2", hdr.ctype2);
+		params.sendToClientHeaders.put("radecsys", hdr.radecsys);
+		params.sendToClientHeaders.put("datamax", hdr.datamax);
+		params.sendToClientHeaders.put("datamin", hdr.datamin);
+
+
+		params.sendToClientHeaders.put("maptype", hdr.maptype);
+		params.sendToClientHeaders.put("cd1_1", hdr.cd1_1);
+		params.sendToClientHeaders.put("cd1_2", hdr.cd1_2);
+		params.sendToClientHeaders.put("cd2_1", hdr.cd2_1);
+		params.sendToClientHeaders.put("cd2_2", hdr.cd2_2);
+		params.sendToClientHeaders.put("dc1_1", hdr.dc1_1);
+		params.sendToClientHeaders.put("dc1_2", hdr.dc1_2);
+		params.sendToClientHeaders.put("dc2_1", hdr.dc2_1);
+		params.sendToClientHeaders.put("dc2_2", hdr.dc2_2);
+		params.sendToClientHeaders.put("using_cd", hdr.using_cd);
+		params.sendToClientHeaders.put("using_tpv", hdr.using_tpv);
+		params.sendToClientHeaders.put("pv1", hdr.pv1);
+		params.sendToClientHeaders.put("pv2", hdr.pv2);
+
+
+		params.sendToClientHeaders.put("plate_ra", hdr.plate_ra);
+		params.sendToClientHeaders.put("plate_dec", hdr.plate_dec);
+		params.sendToClientHeaders.put("x_pixel_offset", hdr.x_pixel_offset);
+		params.sendToClientHeaders.put("y_pixel_offset", hdr.y_pixel_offset);
+		params.sendToClientHeaders.put("x_pixel_size", hdr.x_pixel_size);
+		params.sendToClientHeaders.put("y_pixel_size", hdr.y_pixel_size);
+		params.sendToClientHeaders.put("plt_scale", hdr.plt_scale);
+		params.sendToClientHeaders.put("ppo_coeff", hdr.ppo_coeff);
+		params.sendToClientHeaders.put("amd_x_coeff", hdr.amd_x_coeff);
+		params.sendToClientHeaders.put("amd_y_coeff", hdr.amd_y_coeff);
+
+
+		params.sendToClientHeaders.put("a_order", hdr.a_order);
+		params.sendToClientHeaders.put("ap_order", hdr.ap_order);
+		params.sendToClientHeaders.put("b_order", hdr.b_order);
+		params.sendToClientHeaders.put("bp_order", hdr.bp_order);
+		params.sendToClientHeaders.put("a", hdr.a);
+		params.sendToClientHeaders.put("ap", hdr.ap);
+		params.sendToClientHeaders.put("b", hdr.b);
+		params.sendToClientHeaders.put("bp", hdr.bp);
+		params.sendToClientHeaders.put("map_distortion", hdr.map_distortion);
+		params.sendToClientHeaders.put("keyword", hdr.keyword);
 
 
         return params;
