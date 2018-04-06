@@ -373,7 +373,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                 <div>
                     <TargetPanel labelWidth={isHips?150:100} feedbackStyle={targetStyle}
                                  label={isHips?'Name or Position (optional):' :'Name or Position:' }
-                                 nullAllowed= {isHips} />
+                                 nullAllowed={true} />
                     <SizeInputFields fieldKey={sizeKey} showFeedback={true}
                                      feedbackStyle={sizeStyle}
                                      initialState={{
