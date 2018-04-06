@@ -167,6 +167,7 @@ function buildChartPart(llApi) {
      * @param {XYPlotOptions} parameters - object literal with the chart parameters
      * @memberof firefly
      * @public
+     * @deprecated
      * @example firefly.showXYPlot('myDiv', {source: 'mySourceFile', {xCol: 'ra', yCol: 'dec'})
      */
     const showXYPlot= (targetDiv, parameters)  => doShowXYPlot(llApi, targetDiv, parameters);
@@ -187,6 +188,7 @@ function buildChartPart(llApi) {
      * @param {HistogramOptions} parameters - object literal with the chart parameters
      * @memberof firefly
      * @public
+     * @deprecated
      * @example firefly.showHistogram
      */
     const showHistogram= (targetDiv, parameters)  => doShowHistogram(llApi, targetDiv, parameters);
@@ -501,13 +503,10 @@ function doShowChart(llApi, targetDiv, params={}) {
 }
 
 function doShowXYPlot(llApi, targetDiv, params={}) {
-    const {dispatchTableFetch, dispatchChartAdd, dispatchChartRemove}= llApi.action;
-    const {TBL_RESULTS_ACTIVE} = llApi.action.type;
+    const {dispatchTableFetch, dispatchChartAdd}= llApi.action;
     const {renderDOM} = llApi.util;
-    const {makeFileRequest, getActiveTableId} = llApi.util.table;
-    const {makeXYPlotParams, uniqueChartId} = llApi.util.chart;
+    const {makeFileRequest} = llApi.util.table;
     const {ChartsContainer}= llApi.ui;
-    const {addActionListener} = llApi.util;
 
     if ((typeof targetDiv).match(/string|HTMLDivElement/) === null) {
         // old api.. need to change targetDiv and params
@@ -515,9 +514,6 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
         targetDiv = params;
         params = oldApiParams;
     }
-
-    const xyPlotParams = makeXYPlotParams(params);
-    const help_id = params.help_id;
 
     // it is not quite clear how to handle situation when there are multiple tables in a group
     // for now we are connecting to the currently active table in the group
@@ -533,44 +529,20 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
         );
         tblId = searchRequest.tbl_id;
         dispatchTableFetch(searchRequest);
+        params = Object.assign({}, params, {tbl_id: tblId});
     }
+
+    const help_id = params.help_id;
 
     const chartId = targetDiv;
-
-    if (tblGroup) {
-        tblId = getActiveTableId(tblGroup);
-        addActionListener(TBL_RESULTS_ACTIVE, () => {
-            const new_tblId = getActiveTableId(tblGroup);
-            if (new_tblId !== tblId) {
-                tblId = new_tblId;
-                dispatchChartRemove(chartId);
-                dispatchChartAdd({chartId, chartType: 'scatter', help_id, deletable: false,
-                    mounted: 1,
-                    chartDataElements: [
-                        {
-                            type: 'xycols', //DATATYPE_XYCOLS.id
-                            options: xyPlotParams,
-                            tblId
-                        }
-                    ]});
-            }
-        });
-    }
-
-    // SCATTER
-    dispatchChartAdd({chartId, chartType: 'scatter', help_id, deletable: false,
-        chartDataElements: [
-            {
-                type: 'xycols', //DATATYPE_XYCOLS.id
-                options: xyPlotParams,
-                tblId
-            }
-        ]});
+    dispatchChartAdd({chartId, chartType: 'scatter', help_id, deletable: false, viewerId: targetDiv, params});
 
     renderDOM(targetDiv, ChartsContainer,
         {
             key: `${targetDiv}-xyplot`,
-            chartId,
+            viewerId: targetDiv,
+            tbl_group: tblGroup,
+            addDefaultChart: Boolean(tblGroup),
             closeable: false,
             expandedMode: false
         }
@@ -578,16 +550,11 @@ function doShowXYPlot(llApi, targetDiv, params={}) {
 }
 
 function doShowHistogram(llApi, targetDiv, params={}) {
-    const {dispatchTableFetch, dispatchChartAdd, dispatchChartRemove}= llApi.action;
-    const {TBL_RESULTS_ACTIVE} = llApi.action.type;
+    const {dispatchTableFetch, dispatchChartAdd}= llApi.action;
     const {renderDOM} = llApi.util;
-    const {makeFileRequest, getActiveTableId} = llApi.util.table;
-    const {makeHistogramParams, uniqueChartId} = llApi.util.chart;
+    const {makeFileRequest} = llApi.util.table;
     const {ChartsContainer}= llApi.ui;
-    const {addActionListener} = llApi.util;
 
-    const histogramParams = makeHistogramParams(params);
-    const help_id = params.help_id;
 
     // it is not quite clear how to handle situation when there are multiple tables in a group
     // for now we are connecting to the currently active table in the group
@@ -603,43 +570,20 @@ function doShowHistogram(llApi, targetDiv, params={}) {
         );
         tblId = searchRequest.tbl_id;
         dispatchTableFetch(searchRequest);
+        params = Object.assign({}, params, {tbl_id: tblId});
     }
+
+    const help_id = params.help_id;
 
     const chartId = targetDiv;
-
-    if (tblGroup) {
-        tblId = getActiveTableId(tblGroup);
-        addActionListener(TBL_RESULTS_ACTIVE, () => {
-            const new_tblId = getActiveTableId(tblGroup);
-            if (new_tblId !== tblId) {
-                tblId = new_tblId;
-                dispatchChartRemove(chartId);
-                dispatchChartAdd({chartId, chartType: 'histogram', help_id, deletable: false,
-                    mounted: 1,
-                    chartDataElements: [
-                        {
-                            type: 'histogram', //DATATYPE_XYCOLS.id
-                            options: histogramParams,
-                            tblId
-                        }
-                    ]});
-            }
-        });
-    }
-    // HISTOGRAM, DATA_TYPE_HISTOGRAM
-    dispatchChartAdd({chartId, chartType: 'histogram', help_id, deletable: false,
-        chartDataElements: [
-            {
-                type: 'histogram',
-                options: histogramParams,
-                tblId
-            }
-        ]});
+    dispatchChartAdd({chartId, chartType: 'histogram', help_id, deletable: false, viewerId: targetDiv, params});
 
     renderDOM(targetDiv, ChartsContainer,
         {
             key: `${targetDiv}-histogram`,
-            chartId,
+            viewerId: targetDiv,
+            tbl_group: tblGroup,
+            addDefaultChart: Boolean(tblGroup),
             closeable: false,
             expandedMode: false
         }

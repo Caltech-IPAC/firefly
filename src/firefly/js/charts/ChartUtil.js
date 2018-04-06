@@ -173,13 +173,8 @@ export function getNumericCols(cols) {
  * @prop {string}  xCol         column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3
  * @prop {string}  yCol         column or expression to use for y values, can contain multiple column names ex. sin(col) or (col1-col2)/col3
  * @prop {string}  [plotStyle]  points, linepoints, line
- * @prop {string}  [sortColOrExpr] sort column or expression (when line plot is requested
- * @prop {number}  [xyRatio]    aspect ratio (must be between 1 and 10), if not defined the chart will fill all available space
- * @prop {string}  [stretch]    'fit' to fit plot into available space or 'fill' to fill the available width (applied when xyPlotRatio is defined)
  * @prop {string}  [xLabel]     label to use with x axis
  * @prop {string}  [yLabel]     label to use with y axis
- * @prop {string}  [xUnit]      unit for x axis
- * @prop {string}  [yUnit]      unit for y axis
  * @prop {string}  [xOptions]   comma separated list of x axis options: grid,flip,log
  * @prop {string}  [yOptions]   comma separated list of y axis options: grid,flip,log
  * @prop {string}  [xError]     column or expression for X error
@@ -189,23 +184,55 @@ export function getNumericCols(cols) {
 /**
  * @summary Convert shallow object with XYPlot parameters to scatter plot parameters object.
  * @param {XYPlotOptions} params - shallow object with XYPlot parameters
- * @returns {XYPlotParams} - object, used to create XYPlot chart
+ * @returns {Object} - object, used to create Plotly chart
  * @public
  * @function makeXYPlotParams
+ * @deprecated
  * @memberof firefly.util.chart
  */
 export function makeXYPlotParams(params) {
-    const {xCol, yCol, xError, yError, xLabel, yLabel, xUnit, yUnit, xOptions, yOptions, plotStyle, sortColOrExpr, xyRatio, stretch} = params;
-    const xyPlotParams = xCol && yCol ?
-    omitBy({
-        plotStyle,
-        sortColOrExpr,
-        xyRatio,
-        stretch,
-        x : omitBy({ columnOrExpr : xCol, error: xError, label : xLabel, unit : xUnit, options : xOptions}, isUndefined),
-        y : omitBy({ columnOrExpr : yCol, error: yError, label : yLabel, unit : yUnit, options : yOptions}, isUndefined)
-    }, isUndefined) : undefined;
-    return xyPlotParams;
+
+    const {tbl_id, xCol, yCol, plotStyle, xError, yError, xLabel, yLabel, xOptions, yOptions, chartTitle} = params;
+
+    let data, layout={xaxis:{}, yaxis:{showgrid: false}};
+
+    if (xCol && yCol) {
+        const trace = {tbl_id};
+        trace.x = `tables::${xCol}`;
+        trace.y = `tables::${yCol}`;
+        if (xError) { trace.error_x = {array: `tables::${xError}`}; }
+        if (yError) { trace.error_y = {array: `tables::${yError}`}; }
+        trace.mode = 'markers';
+        if (plotStyle) {
+            if (plotStyle === 'line') {
+                trace.mode = 'lines';
+            } else if (plotStyle === 'linepoints') {
+                trace.mode = 'lines+markers';
+            } 
+        }
+        data = [trace];
+    } else {
+        const defProps = getDefaultChartProps(tbl_id) || {};
+        if (!isObject(defProps)) { return; }
+        data = defProps.data;
+        layout = Object.assign(layout, defProps.layout);
+    }
+
+    if (xLabel) { layout.xaxis.title = xLabel; }
+    if (yLabel) { layout.yaxis.title = yLabel; }
+    if (xOptions) {
+        if (xOptions.includes('grid')) { layout.xaxis.showgrid  = true; }
+        if (xOptions.includes('flip')) { layout.xaxis.autorange  = 'reversed'; }
+        if (xOptions.includes('log')) { layout.xaxis.type  = 'log'; }
+    }
+
+    if (yOptions) {
+        if (yOptions.includes('grid')) { layout.yaxis.showgrid  = true; }
+        if (yOptions.includes('flip')) { layout.yaxis.autorange  = 'reversed'; }
+        if (yOptions.includes('log')) { layout.yaxis.type  = 'log'; }
+    }
+    if (chartTitle) { layout.title = chartTitle; }
+    return {data, layout};
 }
 
 
@@ -229,10 +256,11 @@ export function makeXYPlotParams(params) {
  * @returns {HistogramParams} - object, used to create Histogram chart
  * @public
  * @function makeHistogramParams
+ * @deprecated
  * @memberof firefly.util.chart
  */
 export function makeHistogramParams(params) {
-    const {col, xOptions, yOptions, falsePositiveRate, binWidth} = params;
+    const {tbl_id, col, xOptions, yOptions, falsePositiveRate, binWidth} = params;
     let numBins = params.numBins;
     let fixedBinSizeSelection = params.fixedBinSizeSelection;
     if (!falsePositiveRate) {
@@ -246,18 +274,34 @@ export function makeHistogramParams(params) {
     const algorithm = numBins ? 'fixedSizeBins' : 'bayesianBlocks';
 
     if (col) {
-        const histogramParams =
-        {
+        const options = {
             columnOrExpr: col,
             algorithm,
             fixedBinSizeSelection,
             numBins,
             binWidth,
-            falsePositiveRate,
-            x: xOptions||'',
-            y: yOptions||''
+            falsePositiveRate
         };
-        return histogramParams;
+        const layout = {xaxis: {}, yaxis: {}};
+        if (xOptions) {
+            if (xOptions.includes('flip')) { layout.xaxis.autorange  = 'reversed'; }
+            if (xOptions.includes('log')) { layout.xaxis.type  = 'log'; }
+        }
+        if (yOptions) {
+            if (yOptions.includes('flip')) { layout.yaxis.autorange  = 'reversed'; }
+            if (yOptions.includes('log')) { layout.yaxis.type  = 'log'; }
+        }
+
+        return {
+            data : [{
+                type: 'fireflyHistogram',
+                firefly: {
+                    tbl_id,
+                    options
+                }
+            }],
+            layout
+        };
     }
 }
 
