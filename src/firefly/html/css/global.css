@@ -125,6 +125,13 @@
     user-select :  none;
 }
 
+.enable-select {
+    -moz-user-select : text;
+    -ms-user-select : text;
+    -webkit-user-select : text;
+    user-select :  text;
+}
+
 .title-color { color : white; } /*whiteColor*/
 
 .title-label  {
