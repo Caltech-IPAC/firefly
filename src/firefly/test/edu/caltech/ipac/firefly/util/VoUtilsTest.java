@@ -16,11 +16,13 @@ public class VoUtilsTest extends ConfigTest {
 	private List<VOResourceEndpoint> endpoints;
 
 	@Test
+	@Ignore
 	public void testRegistryEndPoint(){
 		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "iphas");
 		Assert.assertTrue("No endpoints found!" ,endpoints.size()>0);
 	}
 	@Test
+	@Ignore
 	public void testAnotherRegistryEndPoint(){
 		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "spitzer");
 		Assert.assertTrue("No endpoints found!" ,endpoints.size()>0);
