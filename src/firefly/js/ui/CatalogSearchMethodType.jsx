@@ -317,18 +317,22 @@ function sizeArea(searchType, imageCornerCalc) {
             </div>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
-        const cornerTypeOps=
+        let cornerTypeOps=
             [
                 {label: 'Image', value: 'image'},
                 {label: 'Visible', value: 'viewport'},
                 {label: 'Custom', value: 'user'}
             ];
 
-
-
         const pv= getActivePlotView(visRoot());
         var plot = primePlot(pv);
-
+        if(isHiPS(plot)){
+            cornerTypeOps =
+                [
+                    {label: 'Visible (limit 5 deg)', value: 'image'},
+                    {label: 'Custom', value: 'user'}
+                ];
+        }
         if (imageCornerCalc!=='clear' && plot) {
             const sel= plot.attributes[PlotAttribute.SELECTION];
             if (sel) {
