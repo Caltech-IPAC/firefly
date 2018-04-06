@@ -54,7 +54,7 @@ export function HiPSPropertyView(pv,element) {
 function showHiPSPropsPopup(plot, element) {
     const tableId = plot.title.replace(/\s/g, '').replace(/[^a-zA-Z0-9]/g, '_') + '_HiPS';
     const popupId = popupIdRoot + '_' + tableId;
-    const popTitle = 'HiPS Property : ' + plot.title;
+    const popTitle = 'HiPS Properties : ' + plot.title;
 
     var popup = (
         <PopupPanel title={popTitle}>
