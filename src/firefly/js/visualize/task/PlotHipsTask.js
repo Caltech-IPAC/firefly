@@ -30,6 +30,7 @@ import Artifact from '../../drawingLayers/Artifact.js';
 import {isHiPS} from '../WebPlot';
 import {dispatchChangeHiPS} from '../ImagePlotCntlr';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
+import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 
 
 //const INIT_STATUS_UPDATE_DELAY= 7000;
@@ -45,14 +46,21 @@ function hipsFail(dispatcher, plotId, wpRequest, reason) {
     dispatcher( {
         type: ImagePlotCntlr.PLOT_HIPS_FAIL,
         payload:{
-            description: 'HiPS plot failed: '+ reason,
+            description: 'HiPS display failed: '+ reason,
             plotId,
             wpRequest
         }});
 }
 
+function hipsChangeFail(pv, reason) {
+    dispatchPlotProgressUpdate(pv.plotId, 'Failed to change HiPS display',true, pv.request.getRequestKey(), false);
+}
+
 function parseProperties(str) {
-    return str.split('\n')
+    if (!str) {
+        throw new Error('Could not retrieve HiPS properties file');
+    }
+    const hipsProperties= str.split('\n')
         .map( (s) => s.trim())
         .filter( (s) => !s.startsWith('#') && s)
         .map( (s) => s.split('='))
@@ -60,6 +68,25 @@ function parseProperties(str) {
             if (sAry.length===2) obj[sAry[0].trim()]= sAry[1].trim();
             return obj;
         },{});
+    validateProperties(hipsProperties);
+    return hipsProperties;
+}
+
+function validateProperties(hipsProperties) {
+    if (isEmpty(hipsProperties)) {
+        throw new Error('Could not retrieve HiPS properties file');
+    }
+    const {dataproduct_type= 'image'}= hipsProperties;
+    if (dataproduct_type!=='image' && dataproduct_type!=='cube') {
+        if (dataproduct_type==='catalog') {
+            throw new Error('HiPS catalogs are currently unsupported');
+        }
+        else {
+            throw new Error('Currently only HiPS images and cubes are supported');
+        }
+    }
+    return hipsProperties;
+
 }
 
 function initCorrectCoordinateSys(pv) {
@@ -143,36 +170,44 @@ export function makePlotHiPSAction(rawAction) {
         const {payload}= rawAction;
         const {plotId, attributes, pvOptions}= payload;
         const wpRequest= ensureWPR(payload.wpRequest);
-        wpRequest.setHipsRootUrl(resolveHiPSConstant(wpRequest.getHipsRootUrl()));
-        const newPayload= clone(payload, {wpRequest, plotType:'hips', wpRequestAry:[wpRequest]});
+        const PROXY= true;
 
+        const newPayload= clone(payload, {wpRequest, plotType:'hips', wpRequestAry:[wpRequest]});
         newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
         const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
         if (hipsImageConversion) newPayload.pvOptions= clone(pvOptions, {hipsImageConversion});
+        let attemptedFetch= false;
 
-
-        const root= wpRequest.getHipsRootUrl();
-        if (!root) {
-            hipsFail(dispatcher, plotId, wpRequest, 'No Root URL');
-            return;
-        }
 
         if (firstTime) {
             initBuildInDrawLayers();
             firstTime= false;
         }
 
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
-        dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
+        resolveHiPSIvoURL(wpRequest.getHipsRootUrl())
+            .then( (url) => {
+                wpRequest.setHipsRootUrl(url);
+                dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,payload:newPayload} );
+                if (!url) {
+                    throw new Error('Empty URL');
+                }
 
-        const proxy= true;
-        const url= makeHipsUrl(`${root}/properties`, proxy);
-        fetchUrl(url, {}, true, false)
-            .then( (result)=> result.text())
+                dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
+
+                return makeHipsUrl(`${url}/properties`, PROXY);
+
+            })
+            .then( (url) => {
+                return fetchUrl(url, {}, true, false);
+            })
+            .then( (result)=> {
+                if (!result.text) throw new Error('Could not retrieve HiPS properties file');
+                return result.text();
+            })
             .then( (s)=> parseProperties(s))
             .then( (hipsProperties) => {
                 const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
-                plot.proxyHips= proxy;
+                plot.proxyHips= PROXY;
                 return plot;
             })
             .then( addAllSky)
@@ -186,9 +221,9 @@ export function makePlotHiPSAction(rawAction) {
                 const pvNewPlotInfoAry= [ {plotId, plotAry: [plot]} ];
                 dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: clone(newPayload, {plot,pvNewPlotInfoAry}) });
             })
-            .catch( (message) => {
-                console.log(message);
-                hipsFail(dispatcher, plotId, wpRequest, 'Could not retrieve properties file');
+            .catch( (error) => {
+                console.log(error);
+                hipsFail(dispatcher, plotId, wpRequest, error.message);
             } );
     };
 }
@@ -219,6 +254,10 @@ export function makeChangeHiPSAction(rawAction) {
         if (hipsUrlRoot) {
             dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
             fetchUrl(url, {}, true, false)
+                .catch( (e) => {
+                    console.log('properties not found');
+                    throw new Error('Could not retrieve HiPS properties file');
+                })
                 .then( (result)=> result.text())
                 .then( (s)=> parseProperties(s))
                 .then ( (hipsProperties) => addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, true))
@@ -232,8 +271,9 @@ export function makeChangeHiPSAction(rawAction) {
                 .then( () => {
                     dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload });
                 })
-                .catch( (message) => {
-                    console.log(message);
+                .catch( (error) => {
+                    console.log(error);
+                    hipsChangeFail(pv, error.message);
                 } );
         }
         else {

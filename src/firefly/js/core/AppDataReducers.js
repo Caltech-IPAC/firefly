@@ -79,8 +79,7 @@ export function alertsReducer(state={}, action={}) {
 
 /*---------------------------- REDUCING FUNTIONS -----------------------------*/
 const updateActiveTarget= function(state,action) {
-    var {worldPt,corners}= action.payload;
-    if (!worldPt && !corners) return state;
+    const {worldPt,corners}= action.payload;
     return Object.assign({}, state, {activeTarget:{worldPt,corners}});
 };
 

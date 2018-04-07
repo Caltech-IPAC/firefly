@@ -5,13 +5,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {UserZoomTypes} from '../ZoomUtil.js';
 import {dispatchZoom} from '../ImagePlotCntlr.js';
-import {getZoomMax, getNextZoomLevel} from '../ZoomUtil.js';
+import {getZoomMax, getNextZoomLevel, UserZoomTypes} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {showZoomOptionsPopup} from '../../ui/ZoomOptionsPopup.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {isImage} from '../WebPlot.js';
+import {MAX_SUPPORTED_HIPS_LEVEL} from '../HiPSUtil.js';
 
 import zoomDown from 'html/images/icons-2014/ZoomOut.png';
 import zoomUp from 'html/images/icons-2014/ZoomIn.png';
@@ -43,12 +43,16 @@ function getZoomer() {
 
         if (zType===ZoomType.UP) {
             if (isZoomMax(pv)) {
+                let msg;
                 if (isImage(plot)) {
-                    showInfoPopup('You may not zoom beyond ' + getZoomMax(plot) + 'x', 'Zoom Info');
+                    msg= 'You may not zoom beyond ' + getZoomMax(plot) + 'x';
                 }
                 else {
-                    showInfoPopup('You have reached the maximum zoom depth', 'Zoom Info');
+                    msg= `You may not zoom beyond HiPS Norder level ${MAX_SUPPORTED_HIPS_LEVEL}`;
                 }
+
+                const renderContent= <div style={{padding: '5px 0 5px 0',whiteSpace: 'nowrap'}}> {msg} </div> ;
+                showInfoPopup(renderContent, 'Zoom Info');
                 return;
             }
         }

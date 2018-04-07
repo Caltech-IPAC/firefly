@@ -5,7 +5,7 @@
 import Enum from 'enum';
 import {createImageUrl,initOffScreenCanvas, computeBounding, isQuadTileOnScreen} from './TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
-import {getVisibleHiPSCells, getPointMaxSide, getBestHiPSlevel, makeHiPSAllSkyUrlFromPlot} from '../HiPSUtil.js';
+import {getVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel, makeHiPSAllSkyUrlFromPlot} from '../HiPSUtil.js';
 import {loadImage} from '../../util/WebUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from './HiPSTileCache.js';
@@ -36,7 +36,7 @@ export function createHiPSDrawer(targetCanvas) {
         const {viewDim}= plotView;
         let transitionNorder;
 
-        const {norder, useAllSky}= getBestHiPSlevel(plot, true);
+        const {norder, useAllSky}= getHiPSNorderlevel(plot, true);
         const {fov,centerWp}= getPointMaxSide(plot,viewDim);
         const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp);
         let drawTiming= DrawTiming.ASYNC;

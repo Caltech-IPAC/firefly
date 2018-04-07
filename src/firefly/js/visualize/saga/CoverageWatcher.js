@@ -17,7 +17,7 @@ import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/Tab
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
-import {computeCentralPointAndRadius, computeCentralPtRadiusAverage} from '../VisUtil.js';
+import {computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {getCoverageRequest} from './CoverageChooser.js';
 import {logError} from '../../util/WebUtil.js';
@@ -27,6 +27,7 @@ import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispat
 import Catalog from '../../drawingLayers/Catalog.js';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -74,9 +75,14 @@ const defOptions= {
     fitType : FitType.WIDTH_HEIGHT,
     ignoreCatalogs:false,
 
-    useHiPS: false,
-    hipsSourceURL : 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1/', // url
-    imageSourceParams: null, // an WebPlotRequest template object
+    useHiPS: true, // useHiPS it initialized in the startCoverageWatcher
+    hipsSourceURL : 'ivo://CDS/P/2MASS/color', // url
+    imageSourceParams: {
+        Service : 'TWOMASS',
+        SurveyKey: 'asky',
+        SurveyKeyBand: 'k',
+    },
+
     useAllSkyFitsForPlus180 : true,
     fovDegFallOver: .4,
 
@@ -94,6 +100,8 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
 
 export function startCoverageWatcher(options) {
+
+    defOptions.useHiPS= get(getAppOptions(), 'hips.useForCoverage', false);
     const {viewerId='DefCoverageId'}= options;
     let {paused=true}= options;
     const decimatedTables=  {};
@@ -324,12 +332,8 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
                 allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
                 plotAllSkyFirst= true;
             }
-            if (imageSourceParams) {
-                imageRequest= WebPlotRequest.makeFromObj(imageSourceParams);
-            }
-            else {
-                imageRequest= WebPlotRequest.makeWiseRequest(avgOfCenters, '3a', '1', size);
-            }
+            imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
+                          WebPlotRequest.make2MASSRequest(avgOfCenters, 'asky', 'k', size);
             imageRequest= initRequest(imageRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
 
             let hipsRequest= WebPlotRequest.makeHiPSRequest(hipsSourceURL, null);

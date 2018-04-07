@@ -301,13 +301,14 @@ export function dispatchApiToolsView(apiToolsView) {
 }
 /**
  *
- * @param plotId
- * @param message
- * @param done
- * @param requestKey
+ * @param {String} plotId -
+ * @param {String} message - the message if working or failure
+ * @param {boolean} done - true if completed, false if still working
+ * @param {String} requestKey
+ * @param {boolean} [callSuccess=true] - true if success, false otherwise, parameter ignored if done is false
  */
-export function dispatchPlotProgressUpdate(plotId, message, done, requestKey ) {
-    flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message, requestKey }});
+export function dispatchPlotProgressUpdate(plotId, message, done, requestKey, callSuccess= true ) {
+    flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message, requestKey, callSuccess }});
 }
 
 /**

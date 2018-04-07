@@ -26,7 +26,7 @@ class TargetPanelView extends PureComponent {
 
     componentWillUnmount() {
         const {onUnmountCB, fieldKey, groupKey}= this.props;
-        if (onUnmountCB) onUnmountCB(fieldKey,groupKey);
+        if (onUnmountCB) onUnmountCB(fieldKey,groupKey, this.props);
     }
 
     render() {
@@ -85,11 +85,14 @@ TargetPanelView.propTypes = {
 };
 
 
-function didUnmount(fieldKey,groupKey) {
+function didUnmount(fieldKey,groupKey, props) {
     const wp= parseWorldPt(FieldGroupUtils.getFldValue(FieldGroupUtils.getGroupFields(groupKey),fieldKey));
 
-    if (isValidPoint(wp)) {
-        if (wp) dispatchActiveTarget(wp);
+    if (props.nullAllowed && !wp) {
+        dispatchActiveTarget(null);
+    }
+    else if (isValidPoint(wp)) {
+        dispatchActiveTarget(wp);
     }
 }
 
@@ -202,6 +205,7 @@ const connectorDefaultProps = {
 
 function replaceValue(v,props) {
     const t= getActiveTarget();
+    // if (props.nullAllowed && !v) return v;
     let retVal= v;
     if (t && t.worldPt) {
        if (get(t,'worldPt')) retVal= t.worldPt.toString();
