@@ -255,10 +255,6 @@ public class PlotState {
         return get(band).getFileAndHeaderInfo();
     }
 
-
-    public ClientFitsHeader getHeader(Band band) { return get(band).getHeader(); }
-
-
     public String getWorkingFitsFileStr(Band band) { return band!=null ? get(band).getWorkingFitsFileStr() : null; }
     public void setWorkingFitsFileStr(String fileStr, Band band) { get(band).setWorkingFitsFileStr(fileStr); }
 

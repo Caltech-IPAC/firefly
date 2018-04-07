@@ -4,7 +4,7 @@
 
 
 
-import {get} from 'lodash';
+import {get,isEmpty} from 'lodash';
 import {RequestType} from './RequestType.js';
 import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
@@ -28,6 +28,10 @@ export const RDConst= {
 
 const HIPS_DATA_WIDTH= 100000;
 const HIPS_DATA_HEIGHT= 100000;
+
+
+
+export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_title || hipsProperties.label || 'HiPS';
 
 export const PlotAttribute= {
 
@@ -326,6 +330,12 @@ export const WebPlot= {
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
         const zf= plotState.getZoomLevel();
 
+        //original plot state come with header information for getting flux.
+        // this is only need for one call, so most time we string it out.
+        // keeping clientFitsHeaderAry allows a way to put back the original
+        //todo: i think is could be cached on the server side so we don't need to be send it back and forth
+        const clientFitsHeaderAry= plotState.getBands().map( (b) => plotState.getHeader(b));
+
         let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(wpInit.imageCoordSys));
 
         const imagePlot= {
@@ -343,7 +353,8 @@ export const WebPlot= {
             //=== Mutable =====================
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,
-            attributes: {},
+            attributes,
+            clientFitsHeaderAry,
             //=== End Mutable =====================
         };
         plot= clone(plot, imagePlot);
@@ -374,11 +385,9 @@ export const WebPlot= {
 
         bandState.plotRequestTmp= wpRequest;
         bandState.rangeValuesSerialize = null; // todo
-        bandState.bandVisible= true; //todo
         bandState.rangeValues= null; //todo
         plotState.bandStateAry= [bandState,null,null];
         plotState.ctxStr=null;
-        plotState.newPlot= true;
         plotState.zoomLevel= 1;
         plotState.threeColor= false;
         plotState.colorTableId= 0;
@@ -404,7 +413,7 @@ export const WebPlot= {
             dataHeight: HIPS_DATA_HEIGHT,
             imageScaleFactor: 1,
 
-            title : hipsProperties.obs_title || hipsProperties.label || 'HiPS',
+            title : getHiPsTitleFromProperties(hipsProperties),
             plotDesc        : desc,
             dataDesc        : hipsProperties.label || 'HiPS',
             //=== Mutable =====================
@@ -424,16 +433,26 @@ export const WebPlot= {
 
     /**
      *
-     * @param {WebPlot} wpData
+     * @param {WebPlot} plot
      * @param {object} stateJson
      * @param {ImageTileData} tileData
      * @return {*}
      */
-    setPlotState(wpData,stateJson,tileData) {
+    setPlotState(plot,stateJson,tileData) {
         const plotState= PlotState.makePlotStateWithJson(stateJson);
         const zf= plotState.getZoomLevel();
-        const screenSize= {width:wpData.dataWidth*zf, height:wpData.dataHeight*zf};
-        const plot= Object.assign({},wpData,{plotState, zoomFactor:zf,screenSize});
+        const screenSize= {width:plot.dataWidth*zf, height:plot.dataHeight*zf};
+
+        //keep the plotState populated with the fitsHeader information, this is only used with get flux calls
+        //todo: i think is could be cached on the server side so we don't need to be send it back and forth
+        const {bandStateAry}= plotState;
+        for(let i=0; (i<bandStateAry.length);i++) {
+            if (bandStateAry[i] && isEmpty(bandStateAry[i].fitsHeader)) {
+                bandStateAry[i].fitsHeader= plot.clientFitsHeaderAry[i];
+            }
+        }
+
+        plot= {...plot,...{plotState, zoomFactor:zf,screenSize}};
         if (tileData) plot.tileData= tileData;
         return plot;
     },
@@ -578,6 +597,13 @@ export function getScreenPixScaleArcSec(plot) {
     }
     return 0;
 }
+
+
+export function getFluxUnits(plot,band) {
+    if (!band) return '';
+    return get(plot,['webFitsData',band.value,'fluxUnits'], '');
+}
+
 
 /**
  *

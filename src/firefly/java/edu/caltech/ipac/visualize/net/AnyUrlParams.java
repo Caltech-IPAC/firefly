@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AnyUrlParams extends BaseNetParams {
-    private static int MAX_LENGTH = 60;
+    private static int MAX_LENGTH = 30;
     private URL _url;
     private Map<String,String> cookies= null;
     private String _loginName= null;
@@ -64,7 +64,7 @@ public class AnyUrlParams extends BaseNetParams {
         }
         else {
             String host = FileUtil.makeShortHostName(_url.getHost());
-            retval = "URL--" + host + "-" + originalHashCode + baseKey;
+            retval = "URL-" + host + "-" + originalHashCode + baseKey;
         }
         //note: "=","," signs causes problem in download servlet.
         retval = retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>\\=\\,]","\\-");

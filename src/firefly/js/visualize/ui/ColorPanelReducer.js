@@ -23,6 +23,7 @@ export const NO_BAND_PANEL= 'nobandPanel';
 
 /**
  * Reducer entry point. This function returns a reducer initialized to work with the passed band.
+ * @param {Band} band
  * @return a reducer function. a standard type reducer function.
  */
 export const colorPanelChange= function(band) {
@@ -66,8 +67,7 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
         case INIT_FIELD_GROUP:
         case ImagePlotCntlr.ANY_REPLOT:
             if (!plottedRV && !fitsData) return fields;
-            var newFields = updateFieldsFromRangeValues(fields,plottedRV,fitsData);
-            // return newFields; //syncFields(newFields,plottedRV,fitsData);
+            var newFields = updateFieldsFromRangeValues(fields,plottedRV);
             return syncFields(newFields,plottedRV,fitsData);
             break;
 
@@ -191,15 +191,13 @@ const makeRangeValuesFromFields= function(fields) {
  * Update all the fields from a RangeValues object.
  * @param fields
  * @param {RangeValues} rv
- * @param {object} fitsData
  */
-const updateFieldsFromRangeValues= function(fields,rv, fitsData) {
+const updateFieldsFromRangeValues= function(fields,rv) {
     fields= clone(fields);
     fields.lowerWhich= cloneWithValue(fields.lowerWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.lowerWhich);
     fields.lowerRange= cloneWithValue(fields.lowerRange, rv.lowerValue);
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
     fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
-    // fields.beta= cloneWithValue(fields.beta,fitsData.beta.toFixed(2) );//rv.betaValue); //
     fields.beta= cloneWithValue(fields.beta, rv.betaValue);
     fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
     fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);

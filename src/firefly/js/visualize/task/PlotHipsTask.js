@@ -88,12 +88,14 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
         if (!plot) return;
 
 
-        const size= pv.request.getSizeInDeg()  || Number(plot.hipsProperties.hips_initial_fov) || 180;
+        let size= pv.request.getSizeInDeg()  || Number(plot.hipsProperties.hips_initial_fov) || 180;
+
         if (size) {
-            if (size>70) {
+            if (size<.00027 || size>70) { // if size is really small (<1 arcsec) or big then do a fill, small size is probably an error
                 dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
             }
             else {
+                if (size<.0025) size= .0025; //if between 1 arcsec and 9 then set to 9 arcsec
                 const level= getHiPSZoomLevelToFit(pv,size);
                 dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
             }

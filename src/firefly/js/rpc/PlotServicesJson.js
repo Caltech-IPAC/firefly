@@ -9,7 +9,6 @@
 import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
-import {PlotState} from '../visualize/PlotState.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
 
 
@@ -24,7 +23,7 @@ import {SelectedShape} from '../drawingLayers/SelectArea.js';
  */
 export const callGetColorHistogram= function(state,band,width,height) {
     var paramList = [];
-    paramList.push({name:ServerParams.STATE, value: state.toJson()});
+    paramList.push({name:ServerParams.STATE, value: state.toJson(false)});
     paramList.push({name:ServerParams.WIDTH, value: width+''});
     paramList.push({name:ServerParams.HEIGHT, value: height+''});
     paramList.push({name:ServerParams.BAND, value: band.key});
@@ -67,24 +66,25 @@ export function callGetWebPlotGroup(reqAry,  requestKey) {
 
 /**
  *
+ * @deprecated
  * @param stateAry
  * @param rotate
  * @param angle
  * @param newZoomLevel
  */
-export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
-    var params = makeParamsWithStateAry(stateAry,[
-                       {name: ServerParams.ROTATE, value: rotate + ''},
-                       {name: ServerParams.ANGLE, value: angle + ''},
-                       {name: ServerParams.ZOOM, value: newZoomLevel + ''},
-                   ]);
-    return doJsonRequest(ServerParams.ROTATE_ANGLE, params, true);
-}
+// export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
+//     var params = makeParamsWithStateAry(stateAry,false, [
+//                        {name: ServerParams.ROTATE, value: rotate + ''},
+//                        {name: ServerParams.ANGLE, value: angle + ''},
+//                        {name: ServerParams.ZOOM, value: newZoomLevel + ''},
+//                    ]);
+//     return doJsonRequest(ServerParams.ROTATE_ANGLE, params, true);
+// }
 
 
 export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4, areaShape = SelectedShape.rect.key, rotation = 0) {
     var params= {
-        [ServerParams.STATE]: state.toJson(),
+        [ServerParams.STATE]: state.toJson(false),
         [ServerParams.PT1]: ipt1.toString(),
         [ServerParams.PT2]: ipt2.toString(),
         [ServerParams.PT3]: ipt3.toString(),
@@ -103,7 +103,7 @@ export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4, areaShape =
  * @param {boolean} isFullScreen hint, will only make on file
  */
 export function callSetZoomLevel(stateAry, level, isFullScreen) {
-    var params= makeParamsWithStateAry(stateAry,[
+    var params= makeParamsWithStateAry(stateAry,false, [
         {name:ServerParams.LEVEL, value:level},
         {name:ServerParams.FULL_SCREEN, value : isFullScreen},
     ]);
@@ -113,7 +113,7 @@ export function callSetZoomLevel(stateAry, level, isFullScreen) {
 
 export function callChangeColor(state, colorTableId) {
     var params= [
-        {name:ServerParams.STATE, value: state.toJson()},
+        {name:ServerParams.STATE, value: state.toJson(false)},
         {name:ServerParams.COLOR_IDX, value:colorTableId}
     ];
     return doJsonRequest(ServerParams.CHANGE_COLOR, params, true);
@@ -121,14 +121,14 @@ export function callChangeColor(state, colorTableId) {
 
 export function callGetBeta(state) {
     const params= [
-        {name:ServerParams.STATE, value: state.toJson()},
+        {name:ServerParams.STATE, value: state.toJson(false)},
     ];
     return doJsonRequest(ServerParams.GET_BETA, params, true);
 }
 
 export function callRecomputeStretch(state, stretchDataAry) {
     var params= {
-        [ServerParams.STATE]: state.toJson(),
+        [ServerParams.STATE]: state.toJson(false),
     };
     stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
     return doJsonRequest(ServerParams.STRETCH, params, true);
@@ -138,7 +138,7 @@ export function callRecomputeStretch(state, stretchDataAry) {
 
 export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll) {
 
-    var params= makeParamsWithStateAry(stateAry,[
+    var params= makeParamsWithStateAry(stateAry,false, [
         {name:ServerParams.PT1, value: corner1ImagePt.toString()},
         {name:ServerParams.PT2, value: corner2ImagePt.toString()},
         {name:ServerParams.CRO_MULTI_ALL, value: cropMultiAll +''}
@@ -150,7 +150,7 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
 //LZ 3/22/16 DM-4494
 export  function  callGetFitsHeaderInfo(plotState, tableId) {
 
-    var params ={ [ServerParams.STATE]: plotState.toJson(),
+    var params ={ [ServerParams.STATE]: plotState.toJson(false),
         tableId
     };
 
@@ -161,7 +161,7 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
 
 export function callGetFileFlux(stateAry, pt) {
 
-    const params =  makeParamsWithStateAry(stateAry,[
+    const params =  makeParamsWithStateAry(stateAry,true, [
         {name: [ServerParams.PT], value: pt.toString()}
     ]);
 
@@ -206,6 +206,7 @@ export function saveDS9RegionFile(regionData) {
 
 /**
  *
+ * @deprecated
  * @param state
  * @param regionData
  * @param clientIsNorth
@@ -226,9 +227,9 @@ export function getImagePng(state, regionData, clientIsNorth, clientRotAngle, cl
     return doJsonRequest(ServerParams.IMAGE_PNG_REG, params, true);
 }
 
-function makeParamsWithStateAry(stateAry, otherParams=[]) {
+function makeParamsWithStateAry(stateAry, includeHeader, otherParams=[]) {
     return [
-        ...makeStateParamAry(stateAry),
+        ...makeStateParamAry(stateAry,true),
         ...otherParams,
     ];
 
@@ -237,11 +238,12 @@ function makeParamsWithStateAry(stateAry, otherParams=[]) {
 /**
  *
  * @param {Array} startAry
+ * @param {boolean} includeHeader
  * @return {Array}
  */
-function makeStateParamAry(startAry) {
+function makeStateParamAry(startAry, includeHeader= true) {
     return startAry.map( (s,idx) => {
-        return {name:'state'+idx, value: s.toJson() };
+        return {name:'state'+idx, value: s.toJson(includeHeader) };
     } );
 }
 

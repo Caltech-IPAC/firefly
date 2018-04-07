@@ -212,7 +212,7 @@ function suggestedValuesPanel( plot,band, showBeta, betaValue) {
     const style= { fontSize: '11px', paddingBottom:5, height:16, marginTop:50,  whiteSpace: 'pre'};
 
     const  fitsData= plot.webFitsData[band.value];
-    const {dataMin, dataMax, beta} = fitsData;
+    const {dataMin, dataMax} = fitsData;
     const dataMaxStr = `DataMax: ${numeral(dataMax).format(precision6Digit)} `;
     const dataMinStr = `DataMin: ${numeral(dataMin).format(precision6Digit)}`;
     const betaStr =  `Beta: ${numeral(betaValue).format(precision6Digit)}`;

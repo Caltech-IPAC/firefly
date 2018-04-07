@@ -14,7 +14,7 @@ import {MouseState} from '../VisMouseSync.js';
 import {primePlot, getPlotStateAry, getPlotViewById} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {mouseUpdatePromise} from '../VisMouseSync.js';
-import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS} from '../WebPlot.js';
+import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 
 
@@ -227,13 +227,10 @@ function getFluxLabels(plot) {
 
 function showSingleBandFluxLabel(plot, band) {
 
-    if (!plot || !plot.webFitsData) return '';
+    if (!plot || !band) return '';
+    const fluxUnits= getFluxUnits(plot,band);
 
-    var webFitsData = plot.webFitsData;
-    if (!band) return '';
-    var fluxUnits = webFitsData[band.value].fluxUnits;
-
-    var start;
+    let start;
     switch (band) {
         case Band.RED :
             start = 'Red ';
@@ -251,9 +248,9 @@ function showSingleBandFluxLabel(plot, band) {
             start = '';
             break;
     }
-    var valStr = start.length > 0 ? 'Val: ' : 'Value: ';
+    const valStr = start.length > 0 ? 'Val: ' : 'Value: ';
 
-    var fluxUnitInUpperCase = fluxUnits.toUpperCase();
+    const fluxUnitInUpperCase = fluxUnits.toUpperCase();
     if (fluxUnitInUpperCase === 'DN' || fluxUnitInUpperCase === 'FRAMES' || fluxUnitInUpperCase === '') {
         return start + valStr;
     }
@@ -291,7 +288,7 @@ function doFluxCall(plotView,iPt) {
 function getFlux(result, plot) {
     var fluxArray = [];
     if (result.NO_BAND) {
-        var fluxUnitStr = plot.webFitsData[Band.NO_BAND.value].fluxUnits;
+        var fluxUnitStr = getFluxUnits(plot,Band.NO_BAND);
         var fValue = parseFloat(result.NO_BAND);
         fluxArray[0]= {value: fValue, unit: fluxUnitStr};
     }
@@ -310,7 +307,7 @@ function getFlux(result, plot) {
                     bandName = 'Blue';
                     break;
             }
-            unitStr = get(plot.webFitsData, [bands[i].value, 'fluxUnits'], '');
+            unitStr = getFluxUnits(plot,bands[i]);
             fnum = parseFloat(result[bandName]);
             fluxArray[i]= {bandName, value:fnum, unit:unitStr};
         }

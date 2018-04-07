@@ -9,7 +9,7 @@ import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScro
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
 import {WebPlot, clonePlotWithZoom, PlotAttribute, isHiPS, isImage,
-    replaceHiPSProjectionUsingProperties, replaceHiPSProjection} from '../WebPlot.js';
+    replaceHiPSProjectionUsingProperties, replaceHiPSProjection, getHiPsTitleFromProperties} from '../WebPlot.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {logError, updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
@@ -309,7 +309,7 @@ function changeHiPS(state,action) {
     if (hipsUrlRoot) plot.hipsUrlRoot= hipsUrlRoot;
     if (hipsProperties) {
         plot.hipsProperties= hipsProperties;
-        plot.title= hipsProperties.label || 'HiPS';
+        plot.title= getHiPsTitleFromProperties(hipsProperties);
         plot.cubeDepth= Number(get(hipsProperties, 'hips_cube_depth')) || 1;
         plot.cubeIdx= Number(get(hipsProperties, 'hips_cube_firstframe')) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );

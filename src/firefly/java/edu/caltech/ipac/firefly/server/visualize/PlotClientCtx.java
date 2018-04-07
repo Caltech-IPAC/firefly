@@ -47,7 +47,7 @@ public class PlotClientCtx implements Serializable {
 //======================================================================
 
     public PlotClientCtx () {
-        _key = "WebPlot-"+ ServerContext.getAppName() +"--" +HOST_NAME+"--"+_cnt.incrementAndGet();
+        _key = ServerContext.getAppName() +"-" +HOST_NAME+"-"+_cnt.incrementAndGet();
     }
 
 //======================================================================

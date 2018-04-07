@@ -164,7 +164,7 @@ function makeImageTag(pv, onImageLoad) {
     const params= {
         file : url,
         type : 'thumbnail',
-        state : plot.plotState.toJson()
+        state : plot.plotState.toJson(false)
     };
 
     const imageURL=  encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);

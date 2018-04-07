@@ -3,6 +3,7 @@
  */
 
 
+import {isEmpty} from 'lodash';
 import {Band} from './Band.js';
 import {BandState} from './BandState.js';
 import CoordinateSys from './CoordSys.js';
@@ -46,7 +47,6 @@ export class PlotState {
 
         this.bandStateAry= [null,null,null];
         this.ctxStr=null;
-        this.newPlot= true;
         this.zoomLevel= 1;
         this.threeColor= false;
         this.colorTableId= 0;
@@ -55,7 +55,6 @@ export class PlotState {
         this.flippedY= false;
         this.rotationAngle= NaN;
         this.ops= [];
-        this.newPlot= true;
     }
 
 
@@ -239,8 +238,8 @@ export class PlotState {
         return this.bandStateAry[idx];
     }
 
-    toJson() {
-        return JSON.stringify(PlotState.convertToJSON(this));
+    toJson(includeHeader= true) {
+        return JSON.stringify(PlotState.convertToJSON(this, includeHeader));
     }
 
     static makePlotState() {
@@ -254,18 +253,18 @@ export class PlotState {
 
         state.bandStateAry= psJson.bandStateAry.map( (bJ) => BandState.makeBandStateWithJson(bJ));
 
-        state.multiImage= psJson.multiImage;
-        state.tileCompress = psJson.tileCompress;
-        state.rotationType= RotateType.get(psJson.rotationType);
-        state.rotaNorthType= CoordinateSys.parse(psJson.rotaNorthType);
-        state.ops= psJson.ops.map( (op) => Operation.get(op) );
         state.ctxStr=psJson.ctxStr;
         state.zoomLevel= psJson.zoomLevel;
-        state.threeColor= psJson.threeColor;
         state.colorTableId= psJson.colorTableId;
-        state.flippedY= psJson.flippedY;
-        state.rotationAngle= psJson.rotationAngle;
-        state.newPlot= psJson.newPlot;
+
+        // if not include used defaulted values
+        state.multiImage= psJson.multiImage; // if multiImage is not default we don't care
+        state.rotationType= psJson.rotationType ? RotateType.get(psJson.rotationType) : RotateType.UNROTATE;
+        state.rotaNorthType= psJson.rotaNorthType ? CoordinateSys.parse(psJson.rotaNorthType) : CoordinateSys.EQ_J2000;
+        state.rotationAngle= psJson.rotationAngle ? psJson.rotationAngle : NaN;
+        state.flippedY= Boolean(psJson.flippedY);
+        state.threeColor= Boolean(psJson.threeColor);
+        state.ops= psJson.ops ? psJson.ops.map( (op) => Operation.get(op) ) :[];
 
         return state;
     }
@@ -274,23 +273,32 @@ export class PlotState {
      * @summary convert his PlotState to something can be used with JSON.stringify
      * @param {PlotState} s
      */
-    static convertToJSON(s) {
+    static convertToJSON(s, includeHeader= true) {
         if (!s) return null;
         const json= {};
-        json.JSON=true;
-        json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ));
-        json.multiImage= s.multiImage;
-        json.tileCompress = s.tileCompress;
-        json.rotationType= s.rotationType.key;
-        json.rotaNorthType= s.rotaNorthType.toString();
-        json.ops= s.ops.map( (op) => op.key );
         json.ctxStr=s.ctxStr;
-        json.newPlot= s.newPlot;
         json.zoomLevel= s.zoomLevel;
-        json.threeColor= s.threeColor;
         json.colorTableId= s.colorTableId;
-        json.flippedY= s.flippedY;
-        json.rotationAngle= s.rotationAngle;
+        // json.rotationType= s.rotationType.key;
+        // json.rotaNorthType= s.rotaNorthType.toString();
+        // json.ops= s.ops.map( (op) => op.key );
+        // json.threeColor= s.threeColor;
+        // json.flippedY= s.flippedY;
+        // json.rotationAngle= s.rotationAngle;
+
+
+        // if not defaulted values, don't include
+
+        if (s.multiImage) json.multiImage= s.multiImage;
+        if (s.rotationType!==RotateType.UNROTATE) json.rotationType= s.rotationType.key;
+        if (s.rotaNorthType!==CoordinateSys.EQ_J2000) json.rotaNorthType= s.rotaNorthType.toString();
+        if (!isEmpty(s.ops)) json.ops= s.ops.map( (op) => op.key );
+        if (s.threeColor) json.threeColor= true;
+        if (s.flippedY) json.flippedY= true;
+        if (!isNaN(s.rotationAngle)) json.rotationAngle= s.rotationAngle;
+
+
+        json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ,includeHeader));
         return json;
     }
 

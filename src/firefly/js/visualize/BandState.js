@@ -5,7 +5,6 @@
 
 import WebPlotRequest from './WebPlotRequest.js';
 import {RangeValues} from './RangeValues.js';
-import {makeClientFitsHeader} from './ClientFitsHeader.js';
 
 /**
  * @global
@@ -19,7 +18,6 @@ import {makeClientFitsHeader} from './ClientFitsHeader.js';
  * @prop plotRequestSerialize
  * @prop rangeValuesSerialize
  * @prop fitsHeader
- * @prop bandVisible
  * @prop multiImageFile
  * @prop tileCompress
  * @prop cubeCnt
@@ -36,7 +34,6 @@ export class BandState {
         this.plotRequestSerialize = null; // Serialized WebPlotRequest
         this.rangeValuesSerialize = null; // Serialized RangeValues
         this.fitsHeader= null;
-        this.bandVisible= true;
         this.multiImageFile = false;
         this.tileCompress = false;
         this.cubeCnt = 0;
@@ -136,41 +133,43 @@ export class BandState {
     static makeBandStateWithJson(bsJson) {
         if (!bsJson) return null;
         const bState= BandState.makeBandState();
+
+
+
         bState.workingFitsFileStr= bsJson.workingFitsFileStr;
         bState.originalFitsFileStr= bsJson.originalFitsFileStr;
-        bState.uploadFileNameStr= bsJson.uploadFileNameStr;
-        bState.imageIdx= bsJson.imageIdx;
-        bState.originalImageIdx= bsJson.originalImageIdx;
+        if (bState.uploadFileNameStr) bState.uploadFileNameStr= bsJson.uploadFileNameStr;
+        bState.imageIdx= bsJson.imageIdx || 0;
+        bState.originalImageIdx= bsJson.originalImageIdx || 0;
         bState.plotRequestSerialize= bsJson.plotRequestSerialize;
         bState.rangeValuesSerialize= bsJson.rangeValuesSerialize;
-        bState.fitsHeader= makeClientFitsHeader(bsJson.fitsHeader);
-        bState.bandVisible= bsJson.bandVisible;
-        bState.multiImageFile= bsJson.multiImageFile;
-        bState.tileCompress = bsJson.tileCompress;
-        bState.cubeCnt= bsJson.cubeCnt;
-        bState.cubePlaneNumber= bsJson.cubePlaneNumber;
+        bState.fitsHeader= bsJson.fitsHeader;
+        bState.multiImageFile= Boolean(bsJson.multiImageFile);
+        bState.tileCompress = Boolean(bsJson.tileCompress);
+        bState.cubeCnt= bsJson.cubeCnt || 0;
+        bState.cubePlaneNumber= bsJson.cubePlaneNumber || 0;
         return bState;
     }
 
     /**
      * @param {BandState} bs
+     * @param {boolean} includeHeader include the clientFitsHeader object
      */
-    static convertToJSON(bs) {
+    static convertToJSON(bs, includeHeader= true) {
         if (!bs || !bs.plotRequestSerialize) return null;
         const json= {};
         json.workingFitsFileStr= bs.workingFitsFileStr;
-        json.originalFitsFileStr= bs.originalFitsFileStr;
-        json.uploadFileNameStr= bs.uploadFileNameStr;
-        json.imageIdx= bs.imageIdx;
-        json.originalImageIdx= bs.originalImageIdx;
+        if (bs.workingFitsFileStr!==bs.originalFitsFileStr) json.originalFitsFileStr= bs.originalFitsFileStr;
+        if (bs.uploadFileNameStr) json.uploadFileNameStr= bs.uploadFileNameStr;
+        if (bs.imageIdx) json.imageIdx= bs.imageIdx;
+        if (bs.originalImageIdx) json.originalImageIdx= bs.originalImageIdx;
         json.plotRequestSerialize= bs.plotRequestSerialize;
         json.rangeValuesSerialize= bs.rangeValuesSerialize;
-        json.fitsHeader= bs.fitsHeader.headers;
-        json.bandVisible= bs.bandVisible;
-        json.multiImageFile= bs.multiImageFile;
-        json.tileCompress = bs.tileCompress;
-        json.cubeCnt= bs.cubeCnt;
-        json.cubePlaneNumber= bs.cubePlaneNumber;
+        if (includeHeader) json.fitsHeader= bs.fitsHeader;
+        if (bs.multiImageFile) json.multiImageFile= bs.multiImageFile;
+        if (bs.tileCompress) json.tileCompress = bs.tileCompress;
+        if (bs.cubeCnt) json.cubeCnt= bs.cubeCnt;
+        if (bs.cubePlaneNumber) json.cubePlaneNumber= bs.cubePlaneNumber;
         return json;
 
     }
