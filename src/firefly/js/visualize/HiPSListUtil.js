@@ -76,7 +76,7 @@ export function onHiPSSurveys({dataTypes, id, sources=defHiPSSources(), sortOrde
                                   {[ServerParams.HIPS_DATATYPES]: types,
                                    [ServerParams.HIPS_SOURCES]: ss,
                                    [ServerParams.SORT_ORDER]: so},
-                                   {tbl_id, removable: true, pageSize: 1000000});
+                                   {tbl_id, removable: true, pageSize: 10000});
 
         dispatchTableFetch(req, 0);
     }
