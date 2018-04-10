@@ -6,7 +6,7 @@
 import PositionParser from '../util/PositionParser';
 import PositionFieldDef from '../data/form/PositionFieldDef';
 import {getRootPath} from '../util/BrowserUtil.js';
-import {fetchUrl} from '../util/WebUtil.js';
+import {fetchUrl,encodeUrl} from '../util/WebUtil.js';
 import {parseWorldPt} from '../visualize/Point';
 
 
@@ -128,7 +128,7 @@ export function getFeedback(wpt) {
 }
 
 var resolveObject = function(posFieldDef, resolver) {
-    var objName= posFieldDef.getObjectName();
+    var objName= encodeURIComponent(posFieldDef.getObjectName());
     if (!objName) {
         return {
             showHelp: true,
