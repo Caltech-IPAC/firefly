@@ -123,8 +123,8 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
         x.push(centerPt.x);
         y.push(centerPt.y);
         z.push(weight);
-        text.push(`<span> ${xTipLabel} = ${xval} ${xUnit} <br>` +
-                    ` ${yTipLabel} = ${yval} ${yUnit} <br>` +
+        text.push(`<span> ${xTipLabel} = ${parseFloat(xval)} ${xUnit} <br>` +
+                    ` ${yTipLabel} = ${parseFloat(yval)} ${yUnit} <br>` +
                     ` represents ${weight} points</span>`);
         toRowIdx.set(decimateKey, rowIdx);
     });
@@ -152,7 +152,7 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
         [`data.${traceNum}.x`]: x,
         [`data.${traceNum}.y`]: y,
         [`data.${traceNum}.z`]: z,
-        [`data.${traceNum}.hovertext`]: text,
+        [`data.${traceNum}.text`]: text,
         [`data.${traceNum}.hoverinfo`]: 'text',
         [`fireflyData.${traceNum}.toRowIdx`]: toRowIdx
     };
