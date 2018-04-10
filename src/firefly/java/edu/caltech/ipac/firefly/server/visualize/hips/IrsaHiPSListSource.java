@@ -9,9 +9,7 @@ import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import org.apache.commons.csv.CSVFormat;
 
 import java.util.List;
@@ -22,13 +20,11 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.File;
-import java.net.URL;
 import java.io.BufferedReader;
-import java.net.URLConnection;
 import java.io.StringReader;
 import java.lang.StringBuilder;
+import java.io.FileReader;
 
 
 /**
@@ -68,7 +64,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
             if (irsaHiPSSource.equals("file")) {
                 return createHiPSListFromFile(irsaHiPSListFrom, dataTypes, source);
             } else {
-                return createHiPSListFromUrl(irsaHiPSListFrom, source, paramsMap, true);
+                return createHiPSListFromUrl(irsaHiPSListFrom, source, paramsMap, true, null);
             }
         }
         catch (FailedRequestException | IOException e) {
@@ -82,19 +78,19 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
     }
 
     public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String source,
-                                                        Map<String, String> keyMap, boolean bPropCall)
+                                                        Map<String, String> keyMap, boolean bPropCall, String childExt)
                                                                                                 throws IOException  {
-        _log.briefDebug("executing " + source + " url query: " + url);
-
-        long cTime = System.currentTimeMillis();
-
-        URLConnection uc = URLDownload.makeConnection(new URL(url));
-
-        _log.briefDebug("get " + source + " HiPS took " + (System.currentTimeMillis() - cTime) + "ms");
-
         try{
+            _log.briefDebug("executing " + source + " url query: " + url);
+
+            long cTime = System.currentTimeMillis();
+
+            File listFile = AnyFileDownload.retrieveHiPSData(url, childExt);
+
+            _log.briefDebug("get " + source + " HiPS took " + (System.currentTimeMillis() - cTime) + "ms");
+
             // Open the file that is the first command line parameter
-            BufferedReader br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
+            BufferedReader br = new BufferedReader(new FileReader(listFile));
             String strLine;
             HiPSMasterListEntry oneList;
             List<HiPSMasterListEntry> lists = new ArrayList<>();
@@ -198,21 +194,27 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
         if (propUrl == null || listEntry == null) return;
 
-        URLConnection uc = URLDownload.makeConnection(new URL(propUrl));
-        BufferedReader br = new BufferedReader(new InputStreamReader(uc.getInputStream()));
-        String strLine;
-        StringBuilder sb = new StringBuilder();
+        try {
+            File propFile = AnyFileDownload.retrieveHiPSData(propUrl, null);
+            BufferedReader br = new BufferedReader(new FileReader(propFile));
+            String strLine;
+            StringBuilder sb = new StringBuilder();
 
-        while ((strLine = br.readLine()) != null) {
-            String tLine = strLine.trim();
-            if (tLine.startsWith("#")) continue;    // comment line or illegal line
-            sb.append(tLine+"\n");
+            while ((strLine = br.readLine()) != null) {
+                String tLine = strLine.trim();
+                if (tLine.startsWith("#")) continue;    // comment line or illegal line
+                sb.append(tLine + "\n");
+            }
+
+            Properties prop = startNewProperties(sb.toString());
+            if (prop == null) return;
+
+            addItemsToListEntry(keyMap, prop, listEntry);
+        } catch (IOException e) {
+            throw new IOException("[HiPS_LIST]:" + e.getMessage());
+        } catch (Exception e) {
+            throw new IOException("[HiPS_LIST]:" + e.getMessage());
         }
-
-        Properties prop = startNewProperties(sb.toString());
-        if (prop == null) return;
-
-        addItemsToListEntry(keyMap, prop, listEntry);
     }
 
 

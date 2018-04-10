@@ -7,7 +7,6 @@ package edu.caltech.ipac.firefly.server.visualize.hips;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -131,17 +130,6 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         }
     }
 
-    private List<HiPSMasterListEntry> cleanHiPSList(List<HiPSMasterListEntry> listToClean, List<String> ids) {
-        List<HiPSMasterListEntry> cleanedList = new ArrayList<>();
-
-        for (HiPSMasterListEntry oneEntry : listToClean) {
-            if (!ids.contains(oneEntry.getMapInfo().get(PARAMS.ID.getKey()))) {
-                cleanedList.add(oneEntry);
-            }
-        }
-        return cleanedList;
-    }
-
     private void setupMeta(DataGroup dg, boolean bMulti) {
         int    sWidth = 30;
 
@@ -159,15 +147,6 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
                 dg.addAttribute(makeAttribKey(VISI_TAG, colName), "hidden");
             }
         }
-    }
-
-
-    public static File createFile(String[] dataTypes, String fileExt, String hipsSource) throws IOException {
-        String filePrefix = hipsSource + "_" + String.join("_", dataTypes);
-        File file = null;
-
-        file = File.createTempFile(filePrefix, fileExt, ServerContext.getPermWorkDir());
-        return file;
     }
 
     private static DataGroup createTableDataFromListEntry(List<HiPSMasterListEntry> hipsMaps) {
