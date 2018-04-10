@@ -18,6 +18,7 @@ import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {makeHistogramParams, makeXYPlotParams} from './ChartUtil.js';
+import {dispatchRemoveViewerItems} from '../visualize/MultiViewCntlr.js';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
@@ -338,6 +339,15 @@ function chartAdd(action) {
             if (viewerId) {
                 // viewer will be added if it does not exist already
                 dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
+                // remove chart item from the viewer when the chart is removed
+                // @callback {actionWatcherCallback}
+                const onChartRemove = (action, cancelSelf) => {
+                    if (get(action.payload, 'chartId') === chartId) {
+                        dispatchRemoveViewerItems(viewerId, [chartId]);
+                        cancelSelf && cancelSelf();
+                    }
+                };
+                dispatchAddActionWatcher({actions: [CHART_REMOVE], callback: onChartRemove});
             }
 
             // lazy table connection

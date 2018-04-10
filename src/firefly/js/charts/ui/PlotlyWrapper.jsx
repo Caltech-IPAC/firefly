@@ -254,7 +254,10 @@ const now = Date.now();
                         Plotly.newPlot(this.div, data, layout, config);
                         if (this.div.on) {
                             const chart = this.div;
+                            // make sure clicked or selected chart is active
                             chart.on('plotly_click', () => chart.parentElement.click());
+                            chart.on('plotly_selected', () => chart.parentElement.click());
+
                             chart.on('plotly_afterplot', () => this.showMask(false));
                             chart.on('plotly_autosize', () => this.showMask(false));
                             chart.on('plotly_relayout', () => this.showMask(false));
