@@ -184,7 +184,7 @@ export class PopupPanel extends PureComponent {
 
 PopupPanel.propTypes= {
     layoutPosition : PropTypes.object,
-    title : PropTypes.string,
+    title : PropTypes.oneOfType([PropTypes.string,PropTypes.element]),
     closePromise : PropTypes.object,
     requestToClose : PropTypes.func,
     requestOnTop : PropTypes.func,
