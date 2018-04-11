@@ -50,7 +50,7 @@ public class AnyFileDownload extends BaseHttpServlet {
         File downloadFile;
 
         if (hips!=null) {
-            downloadFile= retrieveHiPSData(hips);
+            downloadFile= retrieveHiPSData(hips, null);
         }
         else {
             downloadFile= ServerContext.convertToFile(fname);
@@ -113,14 +113,14 @@ public class AnyFileDownload extends BaseHttpServlet {
 
     public static Cache getCache() { return UserCache.getInstance(); }
 
-    private static File retrieveHiPSData(String urlStr) throws Exception {
-
+    public static File retrieveHiPSData(String urlStr, String pathExt) throws Exception {
         URL url= new URL(urlStr);
 
-        File dir= new File(ServerContext.getHiPSDir(),new File(url.getHost()+"/"+url.getPath()).getParent());
+        String fPath = pathExt == null ? url.getPath() : (url.getPath() + "/" + pathExt);
+        File dir= new File(ServerContext.getHiPSDir(),new File(url.getHost() + fPath).getParent());
         if (!dir.exists()) dir.mkdirs();
-        File targetFile= new File(dir, new File(url.getFile()).getName());
-//        if (targetFile.canRead()) return targetFile;
+
+        File targetFile= new File(dir, new File((pathExt == null ? url.getFile() : pathExt)).getName());
         URLDownload.getDataToFile(url,targetFile);
         return targetFile;
     }

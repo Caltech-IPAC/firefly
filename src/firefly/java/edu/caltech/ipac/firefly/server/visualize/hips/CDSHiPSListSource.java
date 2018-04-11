@@ -2,8 +2,6 @@ package edu.caltech.ipac.firefly.server.visualize.hips;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
 
 import java.util.HashMap;
@@ -64,6 +62,17 @@ public class CDSHiPSListSource implements HiPSMasterListSourceType {
         String url = HiPSCDSURL + dataProduct(dataTypes);
 
         // no call for HiPS properties
-        return IrsaHiPSListSource.createHiPSListFromUrl(url, source, paramsMap, false);
+        return IrsaHiPSListSource.createHiPSListFromUrl(url, source, paramsMap, false, joinStr(dataTypes));
+    }
+
+    private String joinStr(String[] strAry) {
+        String[] newAry = new String[strAry.length];
+
+        for (int i = 0; i < strAry.length; i++) {
+            newAry[i] = strAry[i].toLowerCase();
+        }
+        Arrays.sort(newAry);
+
+        return String.join("_", newAry);
     }
 }
