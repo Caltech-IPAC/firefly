@@ -30,6 +30,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
     private static long LAST_CHECK = System.currentTimeMillis();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
     private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
@@ -176,6 +177,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
         if (ins == null && create) {
             ins = createDbInstance(dbFile);
             dbInstances.put(dbFile.getPath(), ins);
+            getRuntimeStats().totalDbs++;
+            getRuntimeStats().peakMemDbs = Math.max(dbInstances.size(), getRuntimeStats().peakMemDbs);
         }
         if (ins != null ) ins.touch();
         return ins;
@@ -195,9 +198,15 @@ abstract public class BaseDbAdapter implements DbAdapter {
         cleanup(false);
     }
 
+    public EmbeddedDbStats getRuntimeStats() {
+        return dbStats;
+    }
+
     public void cleanup(boolean force) {
 
         try {
+            long MAX_MEMORY_ROWS = DbAdapter.maxMemRows();
+
             // remove expired search results
             List<EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
                     .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
@@ -205,7 +214,6 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
                 toBeRemove.forEach((db) -> closeDb(db));
             }
-
             // remove search results based on LRU when count is greater than the high-water mark
             long totalRows = dbInstances.values().stream().mapToInt((db) -> db.getRowCount()).sum();
             if (totalRows > MAX_MEMORY_ROWS) {
@@ -231,12 +239,23 @@ abstract public class BaseDbAdapter implements DbAdapter {
             // record stats if needed
             for(EmbeddedDbInstance db : dbInstances.values()) {
                 if (db.getRowCount() < 0) {
-                    db.setRowCount(getRowCount(db));
+                    DbStats stats = getDbStats(db);
+                    db.setRowCount(stats.rowCount);
+                    db.setColCount(stats.colCount);
                 }
                 if (db.getLastAccessed() > LAST_CHECK) {
                     db.setTblCount(getTempTables(db).size()+1);
                 }
             }
+
+            int memRows = dbInstances.values().stream().mapToInt((db) -> db.getRowCount()).sum();
+            EmbeddedDbStats stats = getRuntimeStats();
+            stats.lastCleanup = System.currentTimeMillis();
+            stats.maxMemRows = MAX_MEMORY_ROWS;
+            stats.peakMaxMemRows = Math.max(MAX_MEMORY_ROWS, stats.peakMaxMemRows);
+            stats.memDbs = dbInstances.size();
+            stats.memRows = memRows;
+            stats.peakMemRows = Math.max(memRows, stats.peakMemRows);
 
         }catch (Exception e) {
             LOGGER.error(e);
@@ -245,6 +264,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     private static void closeDb(EmbeddedDbInstance db) {
+        compact(db);
         DbAdapter.getAdapter(db.name).close(db.dbFile, false);
         dbInstances.remove(db.dbFile.getPath());
     }
@@ -265,14 +285,25 @@ abstract public class BaseDbAdapter implements DbAdapter {
         db.setTblCount(1);
     }
 
+    private static class DbStats {
+        int rowCount;
+        int colCount;
 
-    private static int getRowCount(EmbeddedDbInstance db) {
+        public DbStats(int rowCount, int colCount) {
+            this.rowCount = rowCount;
+            this.colCount = colCount;
+        }
+    }
+
+    private static DbStats getDbStats(EmbeddedDbInstance db) {
         try {
-            String sql = "SELECT CARDINALITY FROM INFORMATION_SCHEMA.SYSTEM_TABLESTATS \n" +
-                    "where table_schema = 'PUBLIC' and TABLE_NAME = 'DATA'";
-            return JdbcFactory.getSimpleTemplate(db).queryForInt(sql);
+            String sql = " SELECT CARDINALITY, count(*) FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS c, INFORMATION_SCHEMA.SYSTEM_TABLESTATS t" +
+                         " WHERE c.TABLE_NAME = t.TABLE_NAME" +
+                         " AND c.TABLE_NAME = 'DATA'" +
+                         " GROUP BY CARDINALITY";
+            return  JdbcFactory.getSimpleTemplate(db).queryForObject(sql, (rs, i) -> new DbStats(rs.getInt(1), rs.getInt(2)));
         } catch (Exception e) {
-            return 0;
+            return new DbStats(-1,-1);
         }
     }
 

@@ -16,7 +16,7 @@ public class HsqlDbAdapter extends BaseDbAdapter{
     public String getName() {
         return HSQL;
     }
-    private static final String[] DB_FILES = new String[]{".properties",".script",".log",".data",".backup"};
+    private static final String[] DB_FILES = new String[]{".properties",".script",".log",".data",".lck",".backup"};
 
     protected EmbeddedDbInstance createDbInstance(File dbFile) {
         String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_size=1024;sql.syntax_ora=true;sql.ignore_case=true", dbFile.getPath());
@@ -31,6 +31,8 @@ public class HsqlDbAdapter extends BaseDbAdapter{
         DbInstance db = getDbInstance(dbFile, false);
         if (db != null) {
             JdbcFactory.getTemplate(db).execute("SHUTDOWN");
+            File f = new File(dbFile + ".lck");
+            if (f.exists()) f.delete();
         }
         if (deleteFile) {
             for(String fname : DB_FILES) {
