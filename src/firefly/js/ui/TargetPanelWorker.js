@@ -131,7 +131,7 @@ export function getFeedback(wpt) {
 }
 
 var resolveObject = function(posFieldDef, resolver) {
-    var objName= posFieldDef.getObjectName();
+    var objName= encodeURIComponent(posFieldDef.getObjectName());
     if (!objName) {
         return {
             showHelp: true,

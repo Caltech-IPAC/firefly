@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
-import edu.caltech.ipac.util.StringUtils;
+import org.json.simple.JSONObject;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -22,49 +22,39 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
         if (doJsonp) res.setContentType("application/javascript");
 
         String jsonData;
+        JSONObject json=new JSONObject();
+
         try {
             String result = doCommand(new SrvParam(sp.getParamMap()));
 
             if (getCanCreateJson()) {
                 jsonData = result;
             } else {
-                jsonData = "[{" +
-                        "\"success\" :  \"" + true + "\"," +
-                        "\"data\" :  \"" + StringUtils.escapeQuotes(result) + "\"" +
-                        "}]";
+                json.put("success","true" );
+                json.put("data", result );
+                jsonData = "["+json.toJSONString()+"]";
             }
 
-            StringBuilder sb= new StringBuilder(jsonData.length()+10);
-            for(char c : jsonData.toCharArray()) {
-                if (!Character.isISOControl(c) && c>31 && c<127 ) {
-                    sb.append(c);
-                }
-            }
-
-            jsonData= sb.toString();
-
-//            res.setContentType("text/plain");
         } catch (Exception e) {
             e.printStackTrace();
+            json.put("success", "false");
+            json.put("error", e.getMessage());
             StringBuilder sb = new StringBuilder(500);
-            sb.append("[{");
-            sb.append("\"success\" :  \"").append(false).append("\",");
-
-            // need to escape double quotes - otherwise JSON will be messed
-            sb.append("\"error\" : \"").append(e.getMessage().replace("\"", "\\\"")).append("\"");
-
             int cnt = 1;
+            String causeMsg= new String();
             for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
-                sb.append(", ").append("\"cause").append(cnt).append("\" :  \"").append(t.toString().replace("\"", "\\\"")).append("\"");
+                causeMsg.concat((new Integer(cnt)).toString());
+                causeMsg.concat(":"+t.toString());
                 cnt++;
             }
-            sb.append("}]");
-            jsonData = sb.toString();
-        }
+            json.put("cause", causeMsg);
+            jsonData = "["+json.toJSONString()+"]";
+
+       }
 
         String retval;
         if (doJsonp && callback != null) {
-            retval = callback + "(" + jsonData + ");";
+            retval = callback + jsonData;
         } else {
             retval = jsonData;
         }
