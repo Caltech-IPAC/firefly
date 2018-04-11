@@ -21,7 +21,6 @@ const FORM_DMS = 1;             // 12d34m23.4s
 const FORM_HMS = 2;             // 12h34m23.4s
 
 const LAT_OUT_RANGE = 'Latitude is out of range [-90.0, +90.0]';
-//var LON_OUT_RANGE = 'Longitude is out of range [0.0, 360.0)';
 const LON_TOO_BIG = 'Longitude is too big (>=360.0)';
 const LON_NEGATIVE = 'Longitude can not be negative';
 const RA_TOO_BIG = 'RA is too big (>=24 hours)';
@@ -32,7 +31,7 @@ const MIN_SEC_TOO_BIG = 'Greater than 60 minutes or seconds';
 const INVALID_SEPARATOR = 'Invalid input';
 
 
-
+const isDigit = (c) => (!!c.trim() && (c > -1));
 
 
 /**
@@ -100,7 +99,7 @@ var sex2dd = function (coordstr, islat, isequ) {
                     }  //Mark this place - number starts here
                 }
             }
-            else if (!isNaN(p.charAt(0))) {
+            else if (isDigit(p.charAt(0))) {
                 if (pointseen===0) {
                     cntdigits++;
                 }
@@ -242,7 +241,7 @@ var sex2dd = function (coordstr, islat, isequ) {
 
         } else if (sep[0] ===' ') {
 
-            isdec= (isequ && !islat);
+            isdec= !(isequ && !islat);  // per CoordUtil.java
 
         } else if (sep[0] ==='m') {
             isdec = false;

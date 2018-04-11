@@ -183,7 +183,7 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
     const wpStr= parseResults && wpt ? wpt.toString() : null;
 
     const payload= {
-        message : 'Could not resolve object: Enter valid object',
+        message : parseResults.parseError || 'Could not resolve object: Enter valid object',
         displayValue,
         wpt,
         value : resolvePromise ? resolvePromise  : wpStr,

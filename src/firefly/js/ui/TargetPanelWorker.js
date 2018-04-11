@@ -80,19 +80,22 @@ export var parseTarget= function(inStr, lastResults, resolver) {
     var valid= false;
     var targetInput= inStr;
     var feedback= 'valid: false';
-    //var update= true;
     var showHelp= true;
     var posFieldDef= PositionFieldDef.makePositionFieldDef();
     var resolveData;
     var resolvePromise= null;
     var aborter= null;
+    let errMsg = null;
+
     if (targetInput) {
         if (lastResults && lastResults.aborter) lastResults.aborter();
         try {
             valid= posFieldDef.validateSoft(targetInput);
         } catch (e) {
             valid= false;
+            errMsg = e;
         }
+
         if (valid) {
             wpt= posFieldDef.getPosition();
             if (posFieldDef.getInputType()===PositionParser.PositionParsedInput.Position) {
@@ -116,7 +119,7 @@ export var parseTarget= function(inStr, lastResults, resolver) {
         aborter= resolveData.aborter;
     }
 
-    return {showHelp, feedback,
+    return {showHelp, feedback, parseError: errMsg,
             inputType: posFieldDef.getInputType(),
             valid, resolvePromise, wpt, aborter  };
 };
@@ -169,7 +172,6 @@ var resolveObject = function(posFieldDef, resolver) {
             }
         }
     ).catch(function(e) {
-            // console.log(`aborted: ${objName}`);
             if (e) console.error(e);
         });
 
