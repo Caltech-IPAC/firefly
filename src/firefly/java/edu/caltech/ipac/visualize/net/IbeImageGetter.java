@@ -28,7 +28,8 @@ import java.util.Map;
  */
 public class IbeImageGetter {
 
-
+    static final String NaN = "NaN";
+    static final String NULL = "null";
     public static File get(ImageServiceParams params) throws FailedRequestException, IOException {
         boolean isWise= false;
 
@@ -99,7 +100,7 @@ public class IbeImageGetter {
               }
               IbeDataParam dataParam= ibeSource.makeDataParam(dataMap);
 
-              if(sizeStr!=null){
+              if (!StringUtils.isEmpty(sizeStr) && !sizeStr.equalsIgnoreCase(NULL) && !sizeStr.equalsIgnoreCase(NaN)) {
                   dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
               }
               dataParam.setDoZip(true);
