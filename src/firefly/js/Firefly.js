@@ -74,7 +74,7 @@ const defConfigOptions = {
     imageMasterSources: ['ALL'],
     imageMasterSourcesOrder: '',
     workspace : { showOptions: false},
-    hips: {useForImageSearch: false}
+    hips : {useForCoverage: true, useForImageSearch: true, hipsSources: 'all', defHipsSources: 'irsa'},
 };
 
 
@@ -140,7 +140,7 @@ export const firefly = {
  * @param props     viewer's props used for rendering.
  * @returns {Promise.<boolean>}
  */
-function bootstrap(options, viewer, props) {
+function bootstrap(options={}, viewer, props) {
 
     return  new Promise((resolve) => {
 
@@ -148,11 +148,9 @@ function bootstrap(options, viewer, props) {
         flux.process( {type : APP_LOAD} );
         resolve && resolve();
 
-        if (options) {
-            dispatchAppOptions(Object.assign({},defConfigOptions, options));
-            if (options.disableDefaultDropDown) {
-                dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
-            }
+        dispatchAppOptions(Object.assign({},defConfigOptions, options));
+        if (options.disableDefaultDropDown) {
+            dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
         }
 
         if (viewer) {

@@ -217,8 +217,11 @@ export function getConnectionCount(channel) {
  * @param corners array of 4 WorldPts that represent the corners of a image
  */
 export const dispatchActiveTarget= function(wp,corners) {
-    var payload={};
+    const payload={};
     if (isValidPoint(wp) && wp.type===Point.W_PT) {
+        payload.worldPt= wp;
+    }
+    else if (!wp) {
         payload.worldPt= wp;
     }
     if (corners) {

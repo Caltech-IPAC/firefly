@@ -31,7 +31,7 @@ public class HiPSMasterListEntry {
         FRAME("Frame", "Frame", String.class, "Coordinate frame reference"),
         URL("Url", "Url", String.class, "HiPS url"),
         ID("ID", "ID",  String.class, "HiPS id"),
-        IVOID("CreatorID", "CreatorID", String.class, "Unique id of HiPS"),
+        IVOID("CreatorID", "CreatorID", String.class, "Unique id of HiPS"), // note- don't change this unless you change the client also
         WAVELENGTH("Wavelength", "Wavelength", String.class, "General wavelength, Radio, Millimeter, Infared, Optical, " +
                 "UV, EUV, X-ray, Gamma-ray"),
         RELEASEDATE("Release_date", "Release_date", String.class, "Last HiPS update date, YYYY-mm-ddTHH:MMZ"),
@@ -73,7 +73,8 @@ public class HiPSMasterListEntry {
     // columns included in the HiPS list table, some column may be hidden, URL, SOURCE
     private static PARAMS[] orderCols = new PARAMS[]{PARAMS.TYPE, PARAMS.TITLE, PARAMS.WAVELENGTH,
                                             PARAMS.RELEASEDATE, PARAMS.FRAME, PARAMS.ORDER, PARAMS.PIXELSCALE,
-                                            PARAMS.FRACTION,  PARAMS.PROPERTIES, PARAMS.URL,PARAMS.SOURCE};
+                                            PARAMS.FRACTION,  PARAMS.PROPERTIES, PARAMS.URL,
+                                            PARAMS.SOURCE, PARAMS.IVOID};
     static {
         for (PARAMS param : orderCols) {
             DataType dt = new DataType(param.getKey(), param.getTitle(), param.getMetaClass()) ;

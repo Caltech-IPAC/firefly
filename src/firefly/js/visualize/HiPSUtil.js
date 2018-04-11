@@ -25,6 +25,9 @@ import {encodeServerUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {toDegrees} from './VisUtil.js';
 
+
+export const MAX_SUPPORTED_HIPS_LEVEL= 14;
+
 /**
  *
  * @param {WebPlot} plot
@@ -39,14 +42,14 @@ export function changeProjectionCenter(plot, wp) {
 
 
 /**
- * Determine how deep we can render this HiPs Map
+ * Determine how deep we show a grid on the current Hips map.  This will change depending on how deeply it is zoomed.
  * @param plot
  * @return {number}
  */
-export function getMaxDisplayableHiPSLevel(plot) {
-    let {norder}= getBestHiPSlevel(plot);
+export function getMaxDisplayableHiPSGridLevel(plot) {
+    let {norder}= getHiPSNorderlevel(plot);
     norder = norder>3 ? norder+3 : norder+2;
-    if (norder>15) norder= 15;
+    if (norder>14) norder= 14;
     return norder;
 }
 
@@ -64,7 +67,7 @@ export function getPlotTilePixelAngSize(plot) {
     if (!plot) return 0;
     let size= angSizeCacheMap.get(plot);
     if (isUndefined(size)) {
-        size= getTilePixelAngSize(getBestHiPSlevel(plot,true).norder);
+        size= getTilePixelAngSize(getHiPSNorderlevel(plot,true).norder);
         angSizeCacheMap.set(plot, size);
     }
     return size;
@@ -91,10 +94,13 @@ export function getTilePixelAngSize(nOrder) {
 /**
  *
  * @param {WebPlot} plot
- * @param {boolean} [limitToImageDepth]
- * @return {{useAllSky:boolean, norder:number}}
+ * @param {boolean} [limitToImageDepth] When true, do not return a number that is greater than what this HiPS map
+ * can display.  Use hipsProperties.hips_order to determine.
+ * @return {{useAllSky:boolean, norder:number}} norder is the result, useAllSky true when the norder is 2 or 3 but
+ * is zoom out so much that the full norder 3 tiles are not necessary, if all sky map is available the is should be used
+ * for drawing.
  */
-export function getBestHiPSlevel(plot, limitToImageDepth= false) {
+export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
     if (!plot) return {norder:-1, useAllSky:false};
 
     const screenPixArcsecSize= getScreenPixScaleArcSec(plot);
@@ -111,7 +117,7 @@ export function getBestHiPSlevel(plot, limitToImageDepth= false) {
 
 }
 
-const nOrderForPixAsSizeCacheMap= new Map(); // this map will not grow much above 100
+const nOrderForPixAsSizeCacheMap= {};
 
 /**
  * Return the best norder for a given screen pixel angular size in arc seconds
@@ -120,14 +126,15 @@ const nOrderForPixAsSizeCacheMap= new Map(); // this map will not grow much abov
  * @return {Number} the best norder for the pixel
  */
 function getNOrderForPixArcSecSize(sizeInArcSec) {
-    const sizeInArcSecKey= Math.trunc(sizeInArcSec*10000);
-    let norder= nOrderForPixAsSizeCacheMap.get(sizeInArcSecKey);
+    const sizeInArcSecKey= Math.trunc(sizeInArcSec*10000)+'';
+    let norder= nOrderForPixAsSizeCacheMap[sizeInArcSecKey];
     if (isUndefined(norder)) {
-        const nside = HealpixIndex.calculateNSide(sizeInArcSec*512); // 512 size tiles hardcoded, should fix
+        let nside = HealpixIndex.calculateNSide(sizeInArcSec*512); // 512 size tiles hardcoded, should fix
+        if (nside===8192 && sizeInArcSec<.04) nside=16384 ;
 
         norder = Math.log(nside)/Math.log(2); // convert to a base 2 log - 	logb(x) = logc(x) / logc(b)
         norder= Math.max(3, norder);
-        nOrderForPixAsSizeCacheMap.set(sizeInArcSecKey,norder);
+        nOrderForPixAsSizeCacheMap[sizeInArcSecKey]= norder;
     }
     return norder;
 }

@@ -32,9 +32,6 @@
     {
 
         window.firefly= {};
-        window.firefly.options= {
-            hips : {useForImageSearch: true, hipsSources: 'all', defHipsSources: 'irsa'},
-        };
         onFireflyLoaded= function(firefly) {
 
             window.ffViewer= firefly.getViewer();
@@ -85,12 +82,12 @@
                         color: {aTable: 'blue', bTable: 'yellow'},
                         overlayPosition : '149.08;68.739;EQ_J2000',
 
-                        useHiPS: true,
+                        // useHiPS: true,
                         useAllSkyFitsForPlus180 : true,
                         // fovDegFallOver: .02,
-                        fovDegFallOver: .5, // 720 arcsec
-                         hipsSourceURL : 'AllWISE_COLOR',
-                        // hipsSourceURL : 'http://alasky.u-strasbg.fr/DSS/DSSColor', // url
+                        fovDegFallOver: .5, // 1800 arcsec
+                         // hipsSourceURL : 'AllWISE_COLOR',
+                        hipsSourceURL : 'http://alasky.u-strasbg.fr/DSS/DSSColor', // url
                         // hipsSourceURL : 'http://alasky.u-strasbg.fr/Planets/CDS_P_Earth_BlueMarble/', // url
                         imageSourceParams: {
                             Service : 'WISE',

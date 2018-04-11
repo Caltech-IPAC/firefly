@@ -6,8 +6,8 @@
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot, isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
-import {getBestHiPSlevel, getVisibleHiPSCells,
-       getPointMaxSide, getMaxDisplayableHiPSLevel} from '../visualize/HiPSUtil.js';
+import {getHiPSNorderlevel, getVisibleHiPSCells,
+       getPointMaxSide, getMaxDisplayableHiPSGridLevel} from '../visualize/HiPSUtil.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -77,7 +77,7 @@ function getLayerChanges(drawLayer, action) {
 
 
 function getTitle() {
-    return 'HiPS Grid';
+    return 'HEALPix (HiPS) Grid';
 }
 
 
@@ -119,11 +119,11 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel) {
 
     let norder;
     if (gridType==='lock') {
-        norder= Math.min(Number(gridLockLevel), getMaxDisplayableHiPSLevel(plot));
+        norder= Math.min(Number(gridLockLevel), getMaxDisplayableHiPSGridLevel(plot));
     }
     else {
         const limitByMax= gridType==='match';
-        const {norder:retNorder}= getBestHiPSlevel(plot, limitByMax);
+        const {norder:retNorder}= getHiPSNorderlevel(plot, limitByMax);
         norder= retNorder;
     }
 

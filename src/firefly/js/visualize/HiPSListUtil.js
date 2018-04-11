@@ -6,6 +6,8 @@ import {dispatchTableFetch, dispatchTableHighlight} from '../tables/TablesCntlr.
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {getColumnIdx} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {TABLE_LOADED} from '../tables/TablesCntlr';
 
 export const HiPSSurveyTableColumn = new Enum(['Url', 'Title', 'Type', 'Order', 'Coverage', 'Frame', 'Source', 'Properties']);
 export const HiPSId = 'hips';
@@ -14,6 +16,8 @@ export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
 export const HiPSSources = ServerParams.CDS.toLowerCase()+',' + ServerParams.IRSA.toLowerCase();
 
 const HiPSSurvey = 'HiPS_Surveys_';
+const IVO_ID_COL= 'CreatorID';
+const URL_COL= 'Url';
 
 export function makeHiPSSurveysTableName(hipsId, sources) {
     const nHipsId = updateHiPSId(hipsId||HiPSId, (sources===ServerParams.ALL ? HiPSSources : sources));
@@ -81,6 +85,55 @@ export function onHiPSSurveys({dataTypes, id, sources=defHiPSSources(), sortOrde
         dispatchTableFetch(req, 0);
     }
 }
+
+
+//todo
+export function getHiPSSurveysTable(dataTypes, id, sources=defHiPSSources()) {
+
+    const hipsSurveys = getHiPSSurveys(makeHiPSSurveysTableName(id, sources));
+    if (hipsSurveys && hipsSurveys.tableData) return Promise.resolve(hipsSurveys);
+
+
+    return new Promise((resolve) => {
+        const watcher= (action, cancelSelf) =>{
+            const {tbl_id}= action.payload;
+            if (tbl_id!==makeHiPSSurveysTableName(id, sources)) return;
+            const loadSurveys = getHiPSSurveys(makeHiPSSurveysTableName(id, sources));
+            resolve(loadSurveys);
+            cancelSelf();
+        };
+        dispatchAddActionWatcher({actions:[TABLE_LOADED], callback: watcher});
+        onHiPSSurveys({dataTypes,id,sources});
+    });
+}
+
+
+/**
+ * resolve a ivo hips id to a URL if a url is passed just return it.
+ * @param {string} ivoOrUrl - a url or a IVO id
+ * @return {Promise} a promise the resolves to a url
+ */
+export function resolveHiPSIvoURL(ivoOrUrl) {
+    if (!ivoOrUrl) return Promise.reject(new Error('empty url'));
+    if (ivoOrUrl.startsWith('http')) return Promise.resolve(ivoOrUrl);
+
+
+    return getHiPSSurveysTable([HiPSDataType.image, HiPSDataType.cube], 'hipsResolveTable')
+        .then( (tableModel) => {
+            const ivoIdx= getColumnIdx(tableModel, IVO_ID_COL);
+            const urlIdx= getColumnIdx(tableModel, URL_COL);
+            if (ivoIdx<0 || urlIdx<1) return undefined;
+            const lowerIvo= ivoOrUrl.toLowerCase();
+            // now match the table
+            const foundRow= tableModel.tableData.data.find( (row) =>
+                                row[ivoIdx] && row[ivoIdx].toLowerCase().includes(lowerIvo) );
+            const replaceUrl= foundRow && foundRow[urlIdx];
+            return replaceUrl || ivoOrUrl;
+        });
+}
+
+
+
 
 function stripTrailingSlash(url) {
     if (typeof url === 'string') {

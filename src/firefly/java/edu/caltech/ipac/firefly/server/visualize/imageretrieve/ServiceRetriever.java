@@ -94,8 +94,8 @@ public class ServiceRetriever implements FileRetriever {
         Circle circle = PlotServUtils.getRequestArea(request);
         // this is really size not radius, i am just using Circle to hold the params
         float sizeInArcSec = (float) MathUtil.convert(MathUtil.Units.DEGREE, MathUtil.Units.ARCSEC, circle.getRadius());
-        if (sizeInArcSec > 500) sizeInArcSec = 500;
-        if (sizeInArcSec < 50) sizeInArcSec = 50;
+//        if (sizeInArcSec > 500) sizeInArcSec = 500;
+//        if (sizeInArcSec < 50) sizeInArcSec = 50;
         circle = new Circle(circle.getCenter(), sizeInArcSec);
         List<RelatedData> rdList= IbeQueryArtifact.get2MassRelatedData(circle.getCenter(), circle.getRadius()+"");
         TwoMassImageParams params = new TwoMassImageParams();
