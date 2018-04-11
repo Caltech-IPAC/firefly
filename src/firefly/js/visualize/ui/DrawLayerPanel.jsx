@@ -9,6 +9,7 @@ import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.
 import {getActivePlotView, getAllDrawLayersForPlot, primePlot} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {DrawLayerPanelView} from './DrawLayerPanelView.jsx';
@@ -20,14 +21,10 @@ export const DRAW_LAYER_POPUP= 'DrawLayerPopup';
 
 function getDialogBuilder() {
     var popup= null;
-    const defaultTitle = 'Layers- ';
     return (div) => {
         if (!popup) {
-            const plot = primePlot(visRoot());
-            var title = plot ? `${defaultTitle}${plot.title}` : defaultTitle;
-
             const popup= (
-                <PopupPanel title={title} >
+                <PopupPanel title={<DrawLayerPanelTitle/>} >
                     <DrawLayerPanel/>
                 </PopupPanel>
             );
@@ -35,6 +32,18 @@ function getDialogBuilder() {
         }
         return popup;
     };
+}
+
+class DrawLayerPanelTitle extends SimpleComponent {
+    getNextState(np) {
+        return {plotTitle: get(primePlot(visRoot()), 'title')};
+    }
+
+    render() {
+        const defaultTitle = 'Layers- ';
+        const {plotTitle} = this.state;
+        return (plotTitle ? `${defaultTitle}${plotTitle}` : defaultTitle);
+    }
 }
 
 const dialogBuilder= getDialogBuilder();
