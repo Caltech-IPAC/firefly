@@ -32,7 +32,7 @@ const MIN_SEC_TOO_BIG = 'Greater than 60 minutes or seconds';
 const INVALID_SEPARATOR = 'Invalid input';
 
 
-
+const isDigit = (c) => (!!c.trim() && (c > -1));
 
 
 /**
@@ -100,7 +100,7 @@ var sex2dd = function (coordstr, islat, isequ) {
                     }  //Mark this place - number starts here
                 }
             }
-            else if (!isNaN(p.charAt(0))) {
+            else if (isDigit(p.charAt(0))) {
                 if (pointseen===0) {
                     cntdigits++;
                 }
@@ -242,7 +242,7 @@ var sex2dd = function (coordstr, islat, isequ) {
 
         } else if (sep[0] ===' ') {
 
-            isdec= (isequ && !islat);
+            isdec= !(isequ && !islat);  // per CoordUtil.java
 
         } else if (sep[0] ==='m') {
             isdec = false;

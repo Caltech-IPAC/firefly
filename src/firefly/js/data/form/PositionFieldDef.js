@@ -52,24 +52,34 @@ var makePositionFieldDef= function(properties) {
             } else {
 
                 // check coordinate system
-                if (_parser.getCoordSys() ===null) {
-                    throw getErrMsg() + '- invalid coordinate system.';
+                if (_parser.getCoordSys() === CoordinateSys.UNDEFINED) {
+                    throw getErrMsg() + 'invalid coordinate system.';
                 }
 
                 // validate RA
                 var ra = _parser.getRa();
                 if (isNaN(ra)) {
+                    const errRA = _parser.getRAParseError();
+                    if (errRA) {
+                        throw `${getErrMsg()}${errRA}`;
+                    }
                     var raStr = _parser.getRaString();
+
                     if (hard || (raStr !==null && !(raStr.length === 1 && raStr.charAt(0) === '.'))) {
-                        throw getErrMsg() + '- unable to parse RA.';
+                        throw getErrMsg() + 'unable to parse RA.';
                     }
                 }
                 // validate DEC
                 var dec = _parser.getDec();
                 if (isNaN(dec)) {
+                    const errDec = _parser.getDECParseError();
+
+                    if (errDec) {
+                        throw `${getErrMsg()}${errDec}`;
+                    }
                     var decStr = _parser.getDecString();
                     if (hard || (decStr !== null && !(decStr.length === 1 && (decStr.charAt(0) === '+' || decStr.charAt(0) === '-' || decStr.charAt(0) === '.')))) {
-                        throw getErrMsg() + '- unable to parse DEC.';
+                        throw getErrMsg() + 'unable to parse DEC.';
                     }
                 }
             }
@@ -88,7 +98,7 @@ var makePositionFieldDef= function(properties) {
     }
 
     // -------------------- public methods --------------------
-    /**
+     /**
      *
      * @returns WorldPt
      */
@@ -196,22 +206,28 @@ var makePositionFieldDef= function(properties) {
         }
         return s;
 
-    };
+    }
 
     function ClientPositionResolverHelper() {
+        let _ra_parse_err = null;
+        let _dec_parse_err = null;
 
         this.convertStringToLon= function(s, coordSys) {
+            _ra_parse_err = null;
             try {
                 return CoordUtil.convertStringToLon(s, coordSys);
             } catch (e) {
+                _ra_parse_err = e;
                 return NaN;
             }
         };
 
         this.convertStringToLat= function(s, coordSys) {
+            _dec_parse_err = null;
             try {
                 return CoordUtil.convertStringToLat(s, coordSys);
             } catch (e) {
+                _dec_parse_err = e;
                 return NaN;
             }
         };
@@ -222,6 +238,14 @@ var makePositionFieldDef= function(properties) {
 
         this.matchesIgnoreCase= function(s, regExp) {
             return matchesIgCase(s, regExp);
+        };
+
+        this.getRAError = function() {
+            return _ra_parse_err;
+        };
+
+        this.getDECError = function() {
+            return _dec_parse_err;
         };
     }
 
@@ -251,7 +275,7 @@ export default PositionFieldDef;
 /**
  *
  * @param csys coordinate system
- * @returns String
+ * @return string
  */
 function coordToString(csys) {
     var retval= '';
@@ -278,6 +302,8 @@ function coordToString(csys) {
 
 /**
  *
+ * @param wp world point
+ * @returns {*}
  */
 export function formatPosForTextField(wp) {
     var retval;

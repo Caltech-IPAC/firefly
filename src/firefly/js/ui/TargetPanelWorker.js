@@ -86,13 +86,17 @@ export var parseTarget= function(inStr, lastResults, resolver) {
     var resolveData;
     var resolvePromise= null;
     var aborter= null;
+    let errMsg = null;
+
     if (targetInput) {
         if (lastResults && lastResults.aborter) lastResults.aborter();
         try {
             valid= posFieldDef.validateSoft(targetInput);
         } catch (e) {
             valid= false;
+            errMsg = e;
         }
+
         if (valid) {
             wpt= posFieldDef.getPosition();
             if (posFieldDef.getInputType()===PositionParser.PositionParsedInput.Position) {
@@ -116,7 +120,7 @@ export var parseTarget= function(inStr, lastResults, resolver) {
         aborter= resolveData.aborter;
     }
 
-    return {showHelp, feedback,
+    return {showHelp, feedback, parseError: errMsg,
             inputType: posFieldDef.getInputType(),
             valid, resolvePromise, wpt, aborter  };
 };

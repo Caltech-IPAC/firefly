@@ -83,6 +83,14 @@ var makePositionParser = function(helper) {
         return helper.convertStringToLat(v, _coordSys);
     };
 
+    retPP.getRAParseError = function() {
+        return helper.getRAError();
+    };
+
+    retPP.getDECParseError = function () {
+        return helper.getDECError();
+    };
+
     retPP.getRaString= function() {
         return _ra;
     };
@@ -177,10 +185,10 @@ var makePositionParser = function(helper) {
                 }
                 if (numericList.length>0) {
                     for (i=0; (i<numericList.length); i++) {
-                        dec += (item+' ');
+                        dec += (numericList[i] + ' ');
                     }
                     for (i=0; (i<alphabetList.length); i++) {
-                        coordSys += (item+' ');
+                        coordSys += (alphabetList[i]+' ');
                     }
                 } else {
                     if (alphabetList.length===1) {
@@ -440,30 +448,6 @@ var makePositionParser = function(helper) {
         return retval;
     }
 
-
-
-    function coordToString(csys) {
-        var retval= '';
-
-        if (csys===CoordinateSys.EQ_J2000) {
-            retval= 'Equ J2000';
-        }
-        else if (csys===CoordinateSys.EQ_B1950) {
-            retval= 'Equ B1950';
-        }
-        else if (csys===CoordinateSys.GALACTIC) {
-            retval= 'Gal';
-        }
-        else if (csys===CoordinateSys.ECL_J2000) {
-            retval= 'Ecl J2000';
-        }
-        else if (csys===CoordinateSys.ECL_B1950) {
-            retval= 'Ecl B1950';
-        }
-
-        return retval;
-
-    }
 
     function matches(s, regExp) {
         return helper.matchesIgnoreCase(s, regExp);
