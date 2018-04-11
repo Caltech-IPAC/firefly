@@ -80,7 +80,6 @@ export var parseTarget= function(inStr, lastResults, resolver) {
     var valid= false;
     var targetInput= inStr;
     var feedback= 'valid: false';
-    //var update= true;
     var showHelp= true;
     var posFieldDef= PositionFieldDef.makePositionFieldDef();
     var resolveData;
@@ -173,7 +172,6 @@ var resolveObject = function(posFieldDef, resolver) {
             }
         }
     ).catch(function(e) {
-            // console.log(`aborted: ${objName}`);
             if (e) console.error(e);
         });
 
