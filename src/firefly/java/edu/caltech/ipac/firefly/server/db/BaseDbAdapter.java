@@ -180,12 +180,38 @@ abstract public class BaseDbAdapter implements DbAdapter {
             getRuntimeStats().totalDbs++;
             getRuntimeStats().peakMemDbs = Math.max(dbInstances.size(), getRuntimeStats().peakMemDbs);
         }
-        if (ins != null ) ins.touch();
+        if (ins != null) {
+            try {
+                ins.getLock().lock();
+                ins.touch();
+            } finally {
+                ins.getLock().unlock();
+            }
+        }
         return ins;
 
     }
 
-    public void close(File dbFile, boolean deleteFile) {}          // subclass should override this to properly closes the database and cleanup resources.
+    public void close(File dbFile, boolean deleteFile) {
+        EmbeddedDbInstance db = dbInstances.get(dbFile.getPath());
+        if (db != null) {
+            try {
+                db.getLock().lock();
+                if (!deleteFile) {
+                    compact(db);
+                }
+                shutdown(db);
+            } finally {
+                db.getLock().unlock();
+            }
+            dbInstances.remove(db.dbFile.getPath());
+        }
+        if (deleteFile) removeDbFiles(dbFile);
+    }
+
+    protected void shutdown(EmbeddedDbInstance db) {}
+    protected void removeDbFiles(File dbFile) {}
+
     public Map<String, EmbeddedDbInstance> getDbInstances() { return dbInstances; }
 
     protected abstract EmbeddedDbInstance createDbInstance(File dbFile);
@@ -212,7 +238,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                     .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
             if (toBeRemove.size() > 0) {
                 LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
-                toBeRemove.forEach((db) -> closeDb(db));
+                toBeRemove.forEach((db) -> close(db.getDbFile(), false));
             }
             // remove search results based on LRU when count is greater than the high-water mark
             long totalRows = dbInstances.values().stream().mapToInt((db) -> db.getRowCount()).sum();
@@ -223,7 +249,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 for(EmbeddedDbInstance db : active) {
                     cRows += db.getRowCount();
                     if (cRows > highWaterMark) {
-                        closeDb(db);
+                        close(db.getDbFile(), false);
                     }
                 }
             }
@@ -238,7 +264,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
             // record stats if needed
             for(EmbeddedDbInstance db : dbInstances.values()) {
-                if (db.getRowCount() < 0) {
+                if (db.getRowCount() < 1) {
                     DbStats stats = getDbStats(db);
                     db.setRowCount(stats.rowCount);
                     db.setColCount(stats.colCount);
@@ -261,12 +287,6 @@ abstract public class BaseDbAdapter implements DbAdapter {
             LOGGER.error(e);
         }
         LAST_CHECK = System.currentTimeMillis();
-    }
-
-    private static void closeDb(EmbeddedDbInstance db) {
-        compact(db);
-        DbAdapter.getAdapter(db.name).close(db.dbFile, false);
-        dbInstances.remove(db.dbFile.getPath());
     }
 
     private static void compact(EmbeddedDbInstance db) {

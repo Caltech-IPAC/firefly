@@ -148,7 +148,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
-            if (!dbFile.exists() || !EmbeddedDbUtil.hasTable(treq, dbFile, "DATA")) {
+            if (!dbFile.exists()) {
                 StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
                 dbFile = populateDataTable(treq);
                 dbFileCreated = true;

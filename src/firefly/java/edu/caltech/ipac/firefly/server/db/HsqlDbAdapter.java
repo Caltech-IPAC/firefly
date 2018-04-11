@@ -27,18 +27,17 @@ public class HsqlDbAdapter extends BaseDbAdapter{
         return String.format("CREATE TABLE %s AS (%s) WITH DATA", tblName, selectSql);
     }
 
-    public void close(File dbFile, boolean deleteFile) {
-        DbInstance db = getDbInstance(dbFile, false);
-        if (db != null) {
-            JdbcFactory.getTemplate(db).execute("SHUTDOWN");
-            File f = new File(dbFile + ".lck");
+    protected void shutdown(EmbeddedDbInstance db) {
+        JdbcFactory.getTemplate(db).execute("SHUTDOWN");
+        File f = new File(db.getDbFile() + ".lck");
+        if (f.exists()) f.delete();
+    }
+
+    protected void removeDbFiles(File dbFile) {
+        if (dbFile.exists()) dbFile.delete();
+        for(String fname : DB_FILES) {
+            File f = new File(dbFile + fname);
             if (f.exists()) f.delete();
-        }
-        if (deleteFile) {
-            for(String fname : DB_FILES) {
-                File f = new File(dbFile + fname);
-                if (f.exists()) f.delete();
-            }
         }
     }
 

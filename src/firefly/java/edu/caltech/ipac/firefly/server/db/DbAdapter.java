@@ -7,6 +7,7 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 
@@ -129,6 +130,7 @@ public interface DbAdapter {
     }
 
     class EmbeddedDbInstance extends DbInstance {
+        ReentrantLock lock = new ReentrantLock();
         long lastAccessed;
         long created;
         File dbFile;
@@ -177,6 +179,9 @@ public interface DbAdapter {
             isCompact = false;
         }
 
+        public ReentrantLock getLock() {
+            return lock;
+        }
         public void setCompact(boolean compact) { isCompact = compact;}
         public boolean isCompact() { return isCompact; }
         public int getTblCount() { return tblCount; }
