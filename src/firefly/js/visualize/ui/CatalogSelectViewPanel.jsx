@@ -411,6 +411,7 @@ class CatalogSelectView extends PureComponent {
                 </div>
             );
         }
+        const tabWrapper = {padding:5, minWidth:950, minHeight:200};
 
         return (
             <FieldGroup groupKey={gkey}
@@ -418,11 +419,12 @@ class CatalogSelectView extends PureComponent {
                         keepState={true}>
                 <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
                     <Tab name='Search Catalogs' id='catalog'>
-                        <CatalogDDList {...this.props} {...this.state} />
+                        <div style={tabWrapper}>
+                            <CatalogDDList {...this.props} {...this.state} />
+                        </div>
                     </Tab>
                     <Tab name='Load Catalog' id='loadcat'>
-                        <div
-                            style={{padding:5, width:'800px', height:'300px'}}>
+                        <div style={tabWrapper}>
                             <UploadOptionsDialog fromGroupKey={gkey}
                                                  preloadWsFile={false}
                                                  fieldKeys={{local: 'fileUpload',
@@ -439,14 +441,14 @@ class CatalogSelectView extends PureComponent {
                         </div>
                     </Tab>
                     <Tab name='VO Catalog' id='vosearch'>
-
-                        <VoSearchPanel fieldKey='vopanel'/>
-
+                        <div style={tabWrapper}>
+                            <VoSearchPanel fieldKey='vopanel'/>
+                        </div>
                     </Tab>
                     <Tab name='NED' id='nedsearch'>
-
-                        <NedSearchPanel fieldKey='nedpanel'/>
-
+                        <div style={tabWrapper}>
+                            <NedSearchPanel fieldKey='nedpanel'/>
+                        </div>
                     </Tab>
                 </FieldGroupTabs>
             </FieldGroup>
