@@ -42,7 +42,7 @@ import java.util.Map;
  */
 public class Simbad4Client {
 
-    public static final String SIMBAD_URL = "http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oF/S?%s";
+    public static final String SIMBAD_URL = "http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-o/S?%s";
 
     private static final String J2000 = "%J";
     private static final String PM = "%P";
