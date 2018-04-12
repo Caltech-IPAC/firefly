@@ -393,8 +393,8 @@ public class QueryUtil {
      */
     public static int getInt(Object val) {
         if (val != null) {
-            if (val instanceof Integer) {
-                return (Integer)val;
+            if (val instanceof Number) {
+                return ((Number)val).intValue();
             } else {
                 try {
                     return Integer.parseInt(String.valueOf(val));

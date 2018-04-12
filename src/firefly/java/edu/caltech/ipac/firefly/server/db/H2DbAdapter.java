@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
-import edu.caltech.ipac.firefly.data.TableServerRequest;
-
 import java.io.File;
 
 /**

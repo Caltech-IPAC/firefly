@@ -10,11 +10,13 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
@@ -22,6 +24,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.NestedRuntimeException;
@@ -72,6 +75,7 @@ import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery
 abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, CanGetDataFile {
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
+    private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
 
     /**
@@ -94,7 +98,14 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      */
     public File getDbFile(TableServerRequest treq) {
         String fname = String.format("%s_%s.%s", treq.getRequestId(), DigestUtils.md5Hex(getUniqueID(treq)), DbAdapter.getAdapter(treq).getName());
-        return new File(ServerContext.getTempWorkDir(), fname);
+        return new File(getTempDir(), fname);
+    }
+
+    protected File getTempDir() {
+        String sessId = ServerContext.getRequestOwner().getRequestAgent().getSessId();
+        File tempDir = new File(ServerContext.getTempWorkDir(), sessId.substring(0, 3));
+        if (!tempDir.exists()) tempDir.mkdirs();
+        return tempDir;
     }
 
     /**
@@ -137,7 +148,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
-            if (!dbFile.exists() || !EmbeddedDbUtil.hasTable(treq, dbFile, "DATA")) {
+            if (!dbFile.exists()) {
                 StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
                 dbFile = populateDataTable(treq);
                 dbFileCreated = true;

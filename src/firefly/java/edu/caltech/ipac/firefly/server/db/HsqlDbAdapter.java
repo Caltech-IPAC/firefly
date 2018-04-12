@@ -16,7 +16,7 @@ public class HsqlDbAdapter extends BaseDbAdapter{
     public String getName() {
         return HSQL;
     }
-    private static final String[] DB_FILES = new String[]{".properties",".script",".log",".data",".backup"};
+    private static final String[] DB_FILES = new String[]{".properties",".script",".log",".data",".lck",".backup"};
 
     protected EmbeddedDbInstance createDbInstance(File dbFile) {
         String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_size=1024;sql.syntax_ora=true;sql.ignore_case=true", dbFile.getPath());
@@ -27,16 +27,17 @@ public class HsqlDbAdapter extends BaseDbAdapter{
         return String.format("CREATE TABLE %s AS (%s) WITH DATA", tblName, selectSql);
     }
 
-    public void close(File dbFile, boolean deleteFile) {
-        DbInstance db = getDbInstance(dbFile, false);
-        if (db != null) {
-            JdbcFactory.getTemplate(db).execute("SHUTDOWN");
-        }
-        if (deleteFile) {
-            for(String fname : DB_FILES) {
-                File f = new File(dbFile + fname);
-                if (f.exists()) f.delete();
-            }
+    protected void shutdown(EmbeddedDbInstance db) {
+        JdbcFactory.getTemplate(db).execute("SHUTDOWN");
+        File f = new File(db.getDbFile() + ".lck");
+        if (f.exists()) f.delete();
+    }
+
+    protected void removeDbFiles(File dbFile) {
+        if (dbFile.exists()) dbFile.delete();
+        for(String fname : DB_FILES) {
+            File f = new File(dbFile + fname);
+            if (f.exists()) f.delete();
         }
     }
 

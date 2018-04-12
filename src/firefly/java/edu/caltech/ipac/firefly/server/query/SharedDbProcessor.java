@@ -36,7 +36,7 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
     public File getDbFile(TableServerRequest treq) {
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         String fname = String.format("%s_%s.%s", treq.getRequestId(), ServerContext.getRequestOwner().getRequestAgent().getSessId(), dbAdapter.getName());
-        return new File(ServerContext.getTempWorkDir(), fname);
+        return new File(getTempDir(), fname);
     }
 
     public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {

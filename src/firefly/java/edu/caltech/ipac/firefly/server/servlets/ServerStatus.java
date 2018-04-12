@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
-import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
 import edu.caltech.ipac.firefly.server.Counters;
@@ -13,10 +13,8 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.distribution.CacheManagerPeerListener;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
-import net.sf.ehcache.distribution.RMICachePeer;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -79,18 +78,6 @@ public class ServerStatus extends BaseHttpServlet {
             writer.println("Host IP Address: n/a" );
         }
 
-
-        CacheManagerPeerListener listeners = cm.getCachePeerListener("RMI");
-        if (listeners == null || listeners.getBoundCachePeers() == null) return;
-
-        for (Object cp : listeners.getBoundCachePeers()) {
-            RMICachePeer rcp = (RMICachePeer) cp;
-            try{
-                writer.println("\tRMICachePeer : " + rcp.getUrl());
-            } catch (Exception e) {}    //ignore
-        }
-
-
         writer.println("Caches: ");
         Map<String, CacheManagerPeerProvider> peerProvs = cm.getCacheManagerPeerProviders();
         String[] cacheNames = cm.getCacheNames();
@@ -117,13 +104,28 @@ public class ServerStatus extends BaseHttpServlet {
     }
 
     private static void showDatabaseStatus(PrintWriter writer) {
+
+        DbAdapter.EmbeddedDbStats stats = DbAdapter.getAdapter().getRuntimeStats();
         writer.println("DATABASE INFORMATION");
         writer.println("--------------------");
-        writer.println("Open: " + BaseDbAdapter.getDbInstances().size());
-        writer.println("Details: idle time is in (mm:ss)");
-        Collections.unmodifiableCollection(BaseDbAdapter.getDbInstances().values()).stream()
+        writer.println(String.format("CHECK_INTVL(secs): %,10d  MAX_IDLE(min):       %,10d", DbAdapter.CLEANUP_INTVL/1000, DbAdapter.MAX_IDLE_TIME/1000/60));
+        writer.println(String.format("DB In Memory:      %,10d  Total DB count:      %,10d", stats.memDbs, stats.totalDbs));
+        writer.println(String.format("MAX_MEM_ROWS:      %,10d  PEAK_MAX_MEM_ROWS:   %,10d", stats.maxMemRows, stats.peakMaxMemRows));
+        writer.println(String.format("Rows In Memory:    %,10d  Peak Rows In Memory: %,10d", stats.memRows, stats.peakMemRows));
+        writer.println(              "Cleanup Last Ran:  " + new SimpleDateFormat("HH:mm:ss").format(stats.lastCleanup));
+        writer.println("");
+        writer.println("Idled   Age     Tables  Rows        Columns  File Path         (elapsed time are in min:sec)");
+        writer.println("------  ------  ------  ----------  -------  ---------");
+        Collections.unmodifiableCollection(DbAdapter.getAdapter().getDbInstances().values()).stream()
                     .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
-                    .forEach((db) -> writer.println(String.format("\tidled: %2$tM:%2$tS %s", db.getDbFile().getPath(), System.currentTimeMillis() - db.getLastAccessed())));
+                    .forEach((db) -> writer.println(String.format("%5$tM:%5$tS   %5$tM:%5$tS   %6d  %,10d  %,7d  %s",
+                                                        db.getTblCount(),
+                                                        db.getRowCount(),
+                                                        db.getColCount(),
+                                                        db.getDbFile().getPath(),
+                                                        System.currentTimeMillis() - db.getLastAccessed(),
+                                                        System.currentTimeMillis() - db.getCreated()
+                    )));
     }
 
     private static String getStats(Ehcache c) {

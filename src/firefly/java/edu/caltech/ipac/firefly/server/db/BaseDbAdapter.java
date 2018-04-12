@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
@@ -12,13 +13,12 @@ import edu.caltech.ipac.util.StringUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
@@ -28,9 +28,10 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
 abstract public class BaseDbAdapter implements DbAdapter {
-    private static long MAX_IDLE_TIME = 1000 * 60 * 15;      // will be purged up if idle more than 15 minutes.
-    private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
+    private static ConcurrentHashMap<String, EmbeddedDbInstance> dbInstances = new ConcurrentHashMap<>();
+    private static long LAST_CHECK = System.currentTimeMillis();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
     private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
@@ -177,68 +178,166 @@ abstract public class BaseDbAdapter implements DbAdapter {
         if (ins == null && create) {
             ins = createDbInstance(dbFile);
             dbInstances.put(dbFile.getPath(), ins);
+            getRuntimeStats().totalDbs++;
+            getRuntimeStats().peakMemDbs = Math.max(dbInstances.size(), getRuntimeStats().peakMemDbs);
         }
-        if (ins != null ) ins.touch();
+        if (ins != null) {
+            try {
+                ins.getLock().lock();
+                ins.touch();
+            } finally {
+                ins.getLock().unlock();
+            }
+        }
         return ins;
 
     }
 
-    public void close(File dbFile, boolean deleteFile) {}          // subclass should override this to properly closes the database and cleanup resources.
+    public void close(File dbFile, boolean deleteFile) {
+        EmbeddedDbInstance db = dbInstances.get(dbFile.getPath());
+        if (db != null) {
+            try {
+                db.getLock().lock();
+                if (!deleteFile) {
+                    compact(db);
+                }
+                shutdown(db);
+            } finally {
+                db.getLock().unlock();
+            }
+            dbInstances.remove(db.dbFile.getPath());
+        }
+        if (deleteFile) removeDbFiles(dbFile);
+    }
+
+    protected void shutdown(EmbeddedDbInstance db) {}
+    protected void removeDbFiles(File dbFile) {}
+
+    public Map<String, EmbeddedDbInstance> getDbInstances() { return dbInstances; }
 
     protected abstract EmbeddedDbInstance createDbInstance(File dbFile);
 
-    public static Map<String, EmbeddedDbInstance> getDbInstances() { return dbInstances; }
 
-    public static void cleanup() {
+//====================================================================
+//  cleanup related functions
+//====================================================================
+    public void cleanup() {
         cleanup(false);
     }
 
-    public static void cleanup(boolean force) {
-        List<EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
-                                                    .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
-        if (toBeRemove.size() > 0) {
-            LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
-            toBeRemove.forEach((db) -> {
-                DbAdapter.getAdapter(db.name).close(db.dbFile, false);
-                dbInstances.remove(db.dbFile.getPath());
-            });
+    public EmbeddedDbStats getRuntimeStats() {
+        return dbStats;
+    }
+
+    public void cleanup(boolean force) {
+
+        try {
+            long MAX_MEMORY_ROWS = DbAdapter.maxMemRows();
+
+            // remove expired search results
+            List<EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
+                    .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
+            if (toBeRemove.size() > 0) {
+                LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
+                toBeRemove.forEach((db) -> close(db.getDbFile(), false));
+            }
+            // remove search results based on LRU when count is greater than the high-water mark
+            long totalRows = dbInstances.values().stream().mapToInt((db) -> db.getRowCount()).sum();
+            if (totalRows > MAX_MEMORY_ROWS) {
+                long cRows = 0, highWaterMark = (long) (MAX_MEMORY_ROWS * .8);      // bring max down to 80% capacity
+                List<EmbeddedDbInstance> active = new ArrayList<>(dbInstances.values());
+                Collections.sort(active, (db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()));  // sorted descending..
+                for(EmbeddedDbInstance db : active) {
+                    cRows += db.getRowCount();
+                    if (cRows > highWaterMark) {
+                        close(db.getDbFile(), false);
+                    }
+                }
+            }
+
+            List<EmbeddedDbInstance> cDbInstances = new ArrayList<>(dbInstances.values());
+
+            // compact long active databases - should only check if it's been recently accessed and that it was not just created.
+            List<EmbeddedDbInstance> toCompact = cDbInstances.stream()
+                    .filter((db) -> !db.isCompact() && db.getRowCount() > 0 && db.getLastAccessed() < LAST_CHECK)
+                    .collect(Collectors.toList());
+            if (toCompact.size() > 0) {
+                toCompact.forEach((db) -> compact(db));
+            }
+
+            // record stats if needed
+            for(EmbeddedDbInstance db : cDbInstances) {
+                if (db.getRowCount() < 1) {
+                    DbStats stats = getDbStats(db);
+                    db.setRowCount(stats.rowCount);
+                    db.setColCount(stats.colCount);
+                }
+                if (db.getLastAccessed() > LAST_CHECK) {
+                    db.setTblCount(getTempTables(db).size()+1);
+                }
+            }
+
+            int memRows = cDbInstances.stream().mapToInt((db) -> db.getRowCount()).sum();
+            EmbeddedDbStats stats = getRuntimeStats();
+            stats.lastCleanup = System.currentTimeMillis();
+            stats.maxMemRows = MAX_MEMORY_ROWS;
+            stats.peakMaxMemRows = Math.max(MAX_MEMORY_ROWS, stats.peakMaxMemRows);
+            stats.memDbs = cDbInstances.size();
+            stats.memRows = memRows;
+            stats.peakMemRows = Math.max(memRows, stats.peakMemRows);
+
+        }catch (Exception e) {
+            LOGGER.error(e);
+        }
+        LAST_CHECK = System.currentTimeMillis();
+    }
+
+    private static void compact(EmbeddedDbInstance db) {
+        List<String> tables = getTempTables(db);
+        if (tables.size() > 0) {
+            // do compact.. remove all temporary tables
+            for (String tblName : tables) {
+                String dataSql = String.format("drop table %s if exists", tblName);
+                String metaSql = String.format("drop table %s if exists", tblName + "_meta");
+                String ddSql = String.format("drop table %s if exists", tblName + "_dd");
+                Arrays.asList(dataSql, metaSql, ddSql).stream().forEach(
+                        (sql) -> JdbcFactory.getSimpleTemplate(db).update(sql));
+            }
+        }
+        db.setCompact(true);
+        db.setTblCount(1);
+    }
+
+    private static class DbStats {
+        int rowCount;
+        int colCount;
+
+        public DbStats(int rowCount, int colCount) {
+            this.rowCount = rowCount;
+            this.colCount = colCount;
         }
     }
 
-    public static class EmbeddedDbInstance extends DbInstance {
-        long lastAccessed;
-        File dbFile;
-
-        public EmbeddedDbInstance(String type, File dbFile, String dbUrl, String driver) {
-            super(false, null, dbUrl, null, null, driver, type);
-            lastAccessed = System.currentTimeMillis();
-            this.dbFile = dbFile;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return StringUtils.areEqual(this.dbUrl,((EmbeddedDbInstance)obj).dbUrl);
-        }
-
-        @Override
-        public int hashCode() {
-            return this.dbUrl.hashCode();
-        }
-
-        public long getLastAccessed() {
-            return lastAccessed;
-        }
-
-        public boolean hasExpired() {
-            return System.currentTimeMillis() - lastAccessed > MAX_IDLE_TIME;
-        }
-
-        public File getDbFile() {
-            return dbFile;
-        }
-
-        public void touch() {
-            lastAccessed = System.currentTimeMillis();
+    private static DbStats getDbStats(EmbeddedDbInstance db) {
+        try {
+            String sql = " SELECT CARDINALITY, count(*) FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS c, INFORMATION_SCHEMA.SYSTEM_TABLESTATS t" +
+                         " WHERE c.TABLE_NAME = t.TABLE_NAME" +
+                         " AND c.TABLE_NAME = 'DATA'" +
+                         " GROUP BY CARDINALITY";
+            return  JdbcFactory.getSimpleTemplate(db).queryForObject(sql, (rs, i) -> new DbStats(rs.getInt(1), rs.getInt(2)));
+        } catch (Exception e) {
+            return new DbStats(-1,-1);
         }
     }
+
+    private static List<String> getTempTables(EmbeddedDbInstance db) {
+        String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.SYSTEM_TABLESTATS \n" +
+                "where table_schema = 'PUBLIC' \n" +
+                "and TABLE_NAME != 'DATA'\n" +
+                "and TABLE_NAME not like '%_META'\n" +
+                "and TABLE_NAME not like '%_DD'\n";
+
+        return JdbcFactory.getSimpleTemplate(db).query(sql, (rs, i) -> rs.getString(1));
+    }
+
 }
