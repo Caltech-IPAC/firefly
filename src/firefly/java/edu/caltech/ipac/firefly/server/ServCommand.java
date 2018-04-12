@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import javax.servlet.ServletOutputStream;
@@ -20,41 +21,45 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
         String callback = sp.getOptional("callback");
         boolean doJsonp = sp.getOptionalBoolean(ServerParams.DO_JSONP, false);
         if (doJsonp) res.setContentType("application/javascript");
-
-        String jsonData;
         JSONObject json=new JSONObject();
-
-        try {
+        String jsonData;
+          try {
             String result = doCommand(new SrvParam(sp.getParamMap()));
 
             if (getCanCreateJson()) {
                 jsonData = result;
             } else {
+
                 json.put("success","true" );
                 json.put("data", result );
-                jsonData = "["+json.toJSONString()+"]";
+
+                //make it size=1 array since the UI side expects an array
+                JSONArray jArray = new JSONArray();
+                jArray.add(json);
+                jsonData =jArray.toJSONString();
+
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             json.put("success", "false");
             json.put("error", e.getMessage());
-            StringBuilder sb = new StringBuilder(500);
+
             int cnt = 1;
-            String causeMsg= new String();
             for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
-                causeMsg.concat((new Integer(cnt)).toString());
-                causeMsg.concat(":"+t.toString());
+                json.put("cause"+(new Integer(cnt)).toString(),t.toString() );
                 cnt++;
             }
-            json.put("cause", causeMsg);
-            jsonData = "["+json.toJSONString()+"]";
 
+            //make it size=1 array since the UI side expects an array
+            JSONArray list = new JSONArray();
+            list.add(json);
+            jsonData = list.toJSONString();
        }
 
         String retval;
         if (doJsonp && callback != null) {
-            retval = callback + jsonData;
+            retval = callback + "(" + jsonData + ");";
         } else {
             retval = jsonData;
         }

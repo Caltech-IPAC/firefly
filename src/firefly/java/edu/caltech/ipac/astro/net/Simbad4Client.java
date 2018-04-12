@@ -17,6 +17,15 @@ import java.util.Map;
 /**
  * This class provide the ability to query Simbad using Sesame HTTP-GET access.
  * For more information: http://cdsweb.u-strasbg.fr/doc/sesame.htx
+ *  Output Options:
+ *  -ox: output in XML (W3C-compliant XML, includes a working URI to an XML Schema description of the output at
+ *   http://vizier.u-strasbg.fr/xml/sesame_4x.xsd); with the -ox4 option, the output conforms to the old XML schema
+ *   (http://vizier.u-strasbg.fr/xml/sesame_4.xsd), and with the -ox2 option, the output conforms to the even older
+ *   XML schema (http://vizier.u-strasbg.fr/xml/sesame_2.xsd). The result is of text/xml mime-type; use -oxp for an
+ *   XML output in text/plain mime-type.
+ * -oI: output all Identifiers for the objects retrieved; by default, only the main designation of the object
+ *  (in the queried database) is returned.
+ * -oF: output fluxes (magnitudes) for the objects retrieved; this option works only for Simbad results.
  *
  *  Below is a sample query output
  * <p/>
@@ -42,7 +51,7 @@ import java.util.Map;
  */
 public class Simbad4Client {
 
-    public static final String SIMBAD_URL = "http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-o/S?%s";
+    public static final String SIMBAD_URL = "http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oI/S?%s";
 
     private static final String J2000 = "%J";
     private static final String PM = "%P";
