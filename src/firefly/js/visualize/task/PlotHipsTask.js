@@ -369,6 +369,7 @@ export function convertToHiPS(pv, fromAllSky= false) {
 
     const attributes= clone(plot.attributes, getCornersAttribute(pv) || {});
     if (!fromAllSky) {
+        const cenPt= CCUtil.getWorldCoords(primePlot(pv), findCurrentCenterPoint(pv));
         wpRequest.setWorldPt(cenPt);
         wpRequest.setSizeInDeg(pv.plotViewCtx.hipsImageConversion.fovDegFallOver);
         const dl = getDrawLayerByType(dlRoot(), ImageOutline.TYPE_ID);
@@ -379,7 +380,6 @@ export function convertToHiPS(pv, fromAllSky= false) {
         artAry.forEach( (a) => dispatchDetachLayerFromPlot(a.drawLayerId,plotId));
 
 
-        const cenPt= CCUtil.getWorldCoords(primePlot(pv), findCurrentCenterPoint(pv));
     }
 
     dispatchPlotHiPS({plotId, wpRequest, attributes, enableRestore:false});
