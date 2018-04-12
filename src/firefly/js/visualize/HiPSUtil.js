@@ -245,8 +245,8 @@ export function getHiPSZoomLevelToFit(pv,size) {
     // make version of plot centered at 0,0
     const tmpPlot= changeProjectionCenter(plot, makeWorldPt(0,0, plot.imageCoordSys));
     const cc= CysConverter.make(tmpPlot);
-    const pt1= cc.getImageCoords( makeWorldPt(0,0));
-    const pt2= cc.getImageCoords( makeWorldPt(size,0));
+    const pt1= cc.getImageCoords( makeWorldPt(0,0, plot.imageCoordSys));
+    const pt2= cc.getImageCoords( makeWorldPt(size,0, plot.imageCoordSys));
     return Math.min(width, height)/Math.abs(pt2.x-pt1.x);
 }
 
