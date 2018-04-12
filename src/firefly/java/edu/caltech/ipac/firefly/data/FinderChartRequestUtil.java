@@ -94,10 +94,10 @@ public class FinderChartRequestUtil {
      * Expected format :  metadata expected to be as "schema.table-band;title"
      */
     private final static String akariCombo[]={
-            "akari.akari_images:N60;FIS N60 (65 micron)",
-            "akari.akari_images:WideS;FIS WideS (90 micron)",
-            "akari.akari_images:WideL;FIS WideL (140 micron)",
-            "akari.akari_images:N160;FIS N160 (160 micron)"
+            "akari.akari_images:N60;FIS N60 (65 microns)",
+            "akari.akari_images:WideS;FIS WideS (90 microns)",
+            "akari.akari_images:WideL;FIS WideL (140 microns)",
+            "akari.akari_images:N160;FIS N160 (160 microns)"
     };
 
     private final static String sDssCombo[]={
