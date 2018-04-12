@@ -41,11 +41,11 @@ import {makeTblRequest, makeIrsaCatalogRequest} from '../tables/TableRequestUtil
 import {dispatchAddViewerItems,getAViewFromMultiView,getMultiViewRoot, DEFAULT_FITS_VIEWER_ID, IMAGE} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage, dispatchPlotHiPS} from '../visualize/ImagePlotCntlr.js';
-import {hipsSURVEYS} from '../visualize/HiPSUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {HiPSId, HiPSSurveyTableColumn} from '../visualize/HiPSListUtil.js';
-import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel, getHiPSSourcesChecked} from './HiPSSurveyListDisplay.jsx';
+import {HiPSId, URL_COL} from '../visualize/HiPSListUtil.js';
+import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel,
+        getHiPSSourcesChecked, sourcesPerChecked} from './HiPSSurveyListDisplay.jsx';
 import {getCellValue} from '../tables/TableUtil.js';
 
 const options = [
@@ -525,7 +525,7 @@ function doHiPSLoad(request) {
 
     dispatchHideDropDown();
 
-    const sources = getHiPSSourcesChecked();
+    const sources = sourcesPerChecked();
     if (!sources) {
         return HiPSPopupMsg('No HiPS source selected', 'HiPS search');
     }
@@ -535,7 +535,7 @@ function doHiPSLoad(request) {
     }
 
     const {highlightedRow=0} = tableModel;
-    const rootUrl= getCellValue(tableModel, highlightedRow, HiPSSurveyTableColumn.Url.key);
+    const rootUrl= getCellValue(tableModel, highlightedRow, URL_COL);
     const wpRequest= WebPlotRequest.makeHiPSRequest(rootUrl, null);
     wpRequest.setPlotGroupId(DEFAULT_FITS_VIEWER_ID);
     wpRequest.setPlotId('aHiPSid');

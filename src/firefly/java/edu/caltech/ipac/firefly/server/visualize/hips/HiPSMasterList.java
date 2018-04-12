@@ -24,9 +24,7 @@ import java.io.File;
 import java.util.*;
 import java.io.IOException;
 
-import static edu.caltech.ipac.util.IpacTableUtil.VISI_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.WIDTH_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.util.IpacTableUtil.*;
 
 /**
  * @author Cindy Wang
@@ -42,7 +40,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
                                                        ServerParams.CATALOG};
 
     private static Map<String, HiPSMasterListSourceType> sources= new HashMap<>();
-    public static String[] defaultSourceOrder = new String[]{ServerParams.CDS, ServerParams.IRSA, ServerParams.LSST,
+    public static String[] defaultSourceOrder = new String[]{ServerParams.IRSA, ServerParams.LSST, ServerParams.CDS,
                                                             ServerParams.EXTERNAL};
 
     static {
@@ -57,52 +55,28 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
 
     public FileInfo ingestDataIntoDb(TableServerRequest request, File dbFile) throws DataAccessException {
         String hipsSources = request.getParam(ServerParams.HIPS_SOURCES);
-        String sortOrder = request.getParam(ServerParams.SORT_ORDER);
         String hipsDataTypes = request.getParam(ServerParams.HIPS_DATATYPES);
+        String hipsMergePriority = request.getParam(ServerParams.HIPS_MERGE_PRIORITY);
         String workingSources[] = (hipsSources != null) ? hipsSources.split(",") : null;
-        String workingOrder[] = (sortOrder != null) ? sortOrder.split(",") : null;
         String workingTypes[] = (hipsDataTypes != null) ? hipsDataTypes.split(",") : null;
-        List<String> orderedSources = new ArrayList<>();
+        String prioritySources[] = (hipsMergePriority != null) ? hipsMergePriority.split(",") : null;
         List<HiPSMasterListEntry> allSourceData = new ArrayList<>();
+
         DbAdapter dbAdapter = DbAdapter.getAdapter(request);
+
 
         if (workingSources == null || workingSources.length == 0 ||
                 (workingSources.length == 1 && workingSources[0].equalsIgnoreCase(ServerParams.ALL))) {
-            workingSources = sources.keySet().toArray(new String[sources.size()]);
+            workingSources = defaultSourceOrder.clone();
         }
         if (workingTypes == null || workingTypes.length == 0 ||
                 (workingTypes.length == 1 && workingTypes[0].equalsIgnoreCase(ServerParams.ALL))) {
             workingTypes = new String[]{ServerParams.IMAGE, ServerParams.CUBE};
         }
 
-        // define the sources in searching order based on defined order or default source order
-        if (workingOrder == null || workingOrder.length == 0 ||
-                (workingOrder.length == 1 && workingOrder[0].equalsIgnoreCase(ServerParams.ALL))) {
-            // add elements defined in sources in default order
-            for (int i = 0; i < defaultSourceOrder.length; i++) {
-                if (Arrays.asList(workingSources).contains(defaultSourceOrder[i])) {
-                    orderedSources.add(defaultSourceOrder[i]);
-                }
-            }
-        } else {
-            // add element defined in sort order first
-            for (int i = 0; i < workingOrder.length; i++) {
-                if (Arrays.asList(workingSources).contains(workingOrder[i])) {
-                    orderedSources.add(workingOrder[i]);
-                }
-            }
-            // add elements defined in sources but not defined in sort order
-            for (int i = 0; i < defaultSourceOrder.length; i++) {
-                if (!orderedSources.contains(defaultSourceOrder[i]) &&
-                        Arrays.asList(workingSources).contains(defaultSourceOrder[i])) {
-                    orderedSources.add(defaultSourceOrder[i]);
-                }
-            }
-        }
-
         try {
 
-            for (String source : orderedSources) {
+            for (String source : workingSources) {
                 HiPSMasterListSourceType hipsls = sources.get(source);
 
                 if (hipsls != null) {
@@ -117,18 +91,90 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
                 throw new IOException(errMsg);
             }
 
+            if (workingSources.length > 1 && prioritySources.length != 0) {
+                allSourceData = mergeData(Arrays.asList(prioritySources), allSourceData);
+            }
+
             DataGroup dg = createTableDataFromListEntry(allSourceData);
             dg.shrinkToFitData();
 
-            setupMeta(dg, (orderedSources.size() > 1));
+            setupMeta(dg, (workingSources.length > 1));
 
-            FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
-            return finfo;
+            return EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
         } catch (Exception e) {
             _log.warn(e.getMessage());
             throw new DataAccessException(errMsg);
         }
     }
+
+    private List<HiPSMasterListEntry> mergeData(List<String> prioritySources, List<HiPSMasterListEntry> allSourceData) {
+        int totalS = allSourceData.size();
+        HiPSMasterListEntry[] dataAry = new HiPSMasterListEntry[totalS];
+        dataAry = allSourceData.toArray(dataAry);
+
+        for (int i = 0; i < totalS; i++) {
+            String ivo1 = dataAry[i].getMapInfo().get(PARAMS.IVOID.getKey());
+            if (ivo1 == null) continue;
+
+            String src1 = dataAry[i].getMapInfo().get(PARAMS.SOURCE.getKey());
+            int n;
+
+            // skip the entries from 'src1'
+            for (n = i+1; n < totalS; n++) {
+                if (!dataAry[n].getMapInfo().get(PARAMS.SOURCE.getKey()).equals(src1)) {
+                    break;
+                }
+            }
+            if (n >= totalS) break;
+
+            // move to entries not from 'src1'
+            for (int j = n; j < totalS; j++) {
+                String ivo2 = dataAry[j].getMapInfo().get(PARAMS.IVOID.getKey());
+
+                if (ivo2 == null || !ivo1.equals(ivo2)) continue;
+                String src2 = dataAry[j].getMapInfo().get(PARAMS.SOURCE.getKey());
+                String hsrc = getHigherPriority(src1, src2, prioritySources);
+
+                if (hsrc == null) continue;
+                if (hsrc.equals(src2)) {                           // skip to the one next to index i
+                    dataAry[i].set(PARAMS.IVOID.getKey(), null);
+                    break;
+                } else {
+                    dataAry[j].set(PARAMS.IVOID.getKey(), null);
+                    for (int k = j+1; k < totalS; j = k, k++) {    // skip all entries from src2
+                        if (!dataAry[k].getMapInfo().get(PARAMS.SOURCE.getKey()).equals(src2)) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        List<HiPSMasterListEntry> newDataList = new ArrayList<>();
+        for (HiPSMasterListEntry oneEntry : allSourceData) {
+            if (oneEntry.getMapInfo().get(PARAMS.IVOID.getKey()) != null) {
+                newDataList.add(oneEntry);
+            }
+        }
+
+        return newDataList;
+    }
+
+    private String getHigherPriority(String src1, String src2, List<String> prioritySources) {
+        if (src1.equals(src2)) return null;
+
+        int idx1 = prioritySources.indexOf(src1);
+        int idx2 = prioritySources.indexOf(src2);
+
+        if (idx2 > idx1) {
+            return idx1 == -1 ? src2 : src1;
+        } else if (idx2 < idx1) {
+            return idx2 == -1 ? src1 : src2;
+        } else {
+            return null;
+        }
+    }
+
 
     private void setupMeta(DataGroup dg, boolean bMulti) {
         int    sWidth = 30;

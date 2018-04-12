@@ -5,8 +5,8 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {HiPSId, updateHiPSTblHighlightOnUrl, HiPSSurveyTableColumn} from '../visualize/HiPSListUtil.js';
-import {HiPSSurveyListSelection, HiPSPopupMsg, getTblModelOnPanel, getHiPSSourcesChecked} from './HiPSSurveyListDisplay.jsx';
+import {HiPSId, updateHiPSTblHighlightOnUrl, URL_COL} from '../visualize/HiPSListUtil.js';
+import {HiPSSurveyListSelection, HiPSPopupMsg, getTblModelOnPanel, sourcesPerChecked} from './HiPSSurveyListDisplay.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from './ValidationField.jsx';
 import {getCellValue} from '../tables/TableUtil.js';
@@ -80,11 +80,12 @@ SelectUrl.propTypes = {
  */
 export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VIEWER_ID) {
     let url;
+    const sources = sourcesPerChecked();
+
     if (get(request, 'imageSource', 'archive') === 'url') {
         url = get(request, 'txURL').trim();
-        updateHiPSTblHighlightOnUrl(url, hipsPanelId, getHiPSSourcesChecked());
+        updateHiPSTblHighlightOnUrl(url, hipsPanelId, sources);
     } else {
-        const sources = getHiPSSourcesChecked();
         if (!sources) {
             HiPSPopupMsg('No HiPS source selected', 'HiPS search');
             return null;
@@ -95,7 +96,7 @@ export function makeHiPSWebPlotRequest(request, plotId, groupId= DEFAULT_FITS_VI
             return null;
         }
         const {highlightedRow=0} = tableModel;
-        url = getCellValue(tableModel, highlightedRow, HiPSSurveyTableColumn.Url.key);
+        url = getCellValue(tableModel, highlightedRow, URL_COL);
         if (url) {
             url = url.trim();
         }

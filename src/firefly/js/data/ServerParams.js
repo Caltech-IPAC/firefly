@@ -84,6 +84,7 @@ export const ServerParams = {
         HIPS_SOURCES : 'hipsSources',
         HIPS_DATATYPES: 'hipsDataTypes',
         HIPS_DEFSOURCES: 'defHipsSources',
+        HIPS_MERGE_PRIORITY: 'mergedListPriority',
         CUBE: 'cube',
         CATALOG: 'catalog',
 
