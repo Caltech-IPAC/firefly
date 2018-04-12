@@ -271,15 +271,14 @@ export class VisToolbarView extends PureComponent {
                                         iconOff={COMPASS_OFF}
                                         visible={mi.northArrow}
                 />
-
+                {!hips &&
                 <SimpleLayerOnOffButton plotView={pv}
                                         typeId={WebGrid.TYPE_ID}
                                         tip='Add grid layer to the image'
-                                        todo={hips}
                                         iconOn={GRID_ON}
                                         iconOff={GRID_OFF}
                                         visible={mi.grid}
-                />
+                />}
 
                 <ToolbarButton icon={DS9_REGION}
                                tip='Load a DS9 Region File'
