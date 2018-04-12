@@ -1118,7 +1118,7 @@ export function dispatchError(chartId, traceNum, reason) {
 
     const {data=[]} = getChartData(chartId);
     const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
-    const message = `Failed to fetch ${name} data`;
+    let message = `Failed to fetch ${name} data`;
     logError(`${message}: ${reason}`);
 
     let reasonStr = `${reason}`.toLowerCase();
@@ -1126,6 +1126,9 @@ export function dispatchError(chartId, traceNum, reason) {
         reasonStr = 'Unsupported feature requested. Please choose valid options.';
     } else if (reasonStr.match(/invalid column/)) {
         reasonStr = 'Non-existent column or invalid expression. Please choose valid X and Y.';
+    } else if (reasonStr.match(/rows exceed/)) {
+        message = 'Please filter the table or use different chart type.';
+        reasonStr = reason;
     } else {
         reasonStr = 'Please contact Help Desk. Check browser console for more information.';
     }

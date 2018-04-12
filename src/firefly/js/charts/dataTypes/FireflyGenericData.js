@@ -5,17 +5,11 @@ import {get, isArray, truncate, uniqueId} from 'lodash';
 import {COL_TYPE, getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits} from '../ChartsCntlr.js';
-import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d} from '../ChartUtil.js';
+import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows} from '../ChartUtil.js';
+
 
 /**
  * This function creates table source entries to get plotly chart data from the server
- * (The search processor knows how to handle expressions and eliminates null mapping key)
- *
- */
-
-/**
- * This function creates table source entries to get plotly chart data from the server
- * (The search processor knows how to handle expressions and eliminates null mapping key)
  * For the non-firefly plotly chart types
  * @param traceTS
  * @returns {{options: *, fetchData: fetchData}}
@@ -48,7 +42,14 @@ function fetchData(chartId, traceNum, tablesource) {
     if (!mappings) { return; }
 
     const originalTableModel = getTblById(tbl_id);
-    const {request, highlightedRow, selectInfo} = originalTableModel;
+    const {request, highlightedRow, selectInfo, totalRows} = originalTableModel;
+
+    const maxScatterRows = getMaxScatterRows();
+    if (totalRows > maxScatterRows && get(getChartData(chartId), `data.${traceNum}.type`, 'scatter') === 'scatter') {
+        dispatchError(chartId, traceNum, `${totalRows} rows exceed scatter chart best performance limit of ${maxScatterRows}.`);
+        return;
+    }
+
     const numericCols = getColumns(originalTableModel, COL_TYPE.NUMBER).map((c) => c.name);
 
     // default behavior
