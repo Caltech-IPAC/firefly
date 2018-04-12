@@ -39,7 +39,7 @@ public interface DbAdapter {
     long MAX_IDLE_TIME  = 1000 * 60 * 15;   // will shutdown database if idle more than 15 minutes.
     int  CLEANUP_INTVL  = 1000 * 60;        // check every 1 minutes
     static long maxMemRows() {
-        long availMem = Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long availMem = Runtime.getRuntime().maxMemory() - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
         return Math.min(10000000, Math.max(1000000, availMem/1024/1024/1024 * 250000));
     }
 

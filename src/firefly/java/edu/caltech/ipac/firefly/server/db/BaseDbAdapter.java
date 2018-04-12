@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
@@ -27,7 +28,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
 abstract public class BaseDbAdapter implements DbAdapter {
-    private static Map<String, EmbeddedDbInstance> dbInstances = new HashMap<>();
+    private static ConcurrentHashMap<String, EmbeddedDbInstance> dbInstances = new ConcurrentHashMap<>();
     private static long LAST_CHECK = System.currentTimeMillis();
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
@@ -254,8 +255,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 }
             }
 
+            List<EmbeddedDbInstance> cDbInstances = new ArrayList<>(dbInstances.values());
+
             // compact long active databases - should only check if it's been recently accessed and that it was not just created.
-            List<EmbeddedDbInstance> toCompact = dbInstances.values().stream()
+            List<EmbeddedDbInstance> toCompact = cDbInstances.stream()
                     .filter((db) -> !db.isCompact() && db.getRowCount() > 0 && db.getLastAccessed() < LAST_CHECK)
                     .collect(Collectors.toList());
             if (toCompact.size() > 0) {
@@ -263,7 +266,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             }
 
             // record stats if needed
-            for(EmbeddedDbInstance db : dbInstances.values()) {
+            for(EmbeddedDbInstance db : cDbInstances) {
                 if (db.getRowCount() < 1) {
                     DbStats stats = getDbStats(db);
                     db.setRowCount(stats.rowCount);
@@ -274,12 +277,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 }
             }
 
-            int memRows = dbInstances.values().stream().mapToInt((db) -> db.getRowCount()).sum();
+            int memRows = cDbInstances.stream().mapToInt((db) -> db.getRowCount()).sum();
             EmbeddedDbStats stats = getRuntimeStats();
             stats.lastCleanup = System.currentTimeMillis();
             stats.maxMemRows = MAX_MEMORY_ROWS;
             stats.peakMaxMemRows = Math.max(MAX_MEMORY_ROWS, stats.peakMaxMemRows);
-            stats.memDbs = dbInstances.size();
+            stats.memDbs = cDbInstances.size();
             stats.memRows = memRows;
             stats.peakMemRows = Math.max(memRows, stats.peakMemRows);
 
