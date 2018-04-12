@@ -81,6 +81,8 @@ export class MultiChartViewer extends PureComponent {
         if (isUndefined(activeItemId) || !getChartData(activeItemId)) {
             activeItemId = viewer.itemIdAry[0];
         }
+        // if there are more than 1 chart in the viewer, they should be deletable by default
+        const deletable = viewer.itemIdAry.length > 1;
 
         const onChartSelect = (ev,chartId) => {
             if (chartId !== activeItemId) {
@@ -95,7 +97,7 @@ export class MultiChartViewer extends PureComponent {
                  onClick={(ev)=>onChartSelect(ev,chartId)}
                  onTouchStart={stopPropagation}
                  onMouseDown={stopPropagation}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
             </div>
         );
 
@@ -103,7 +105,7 @@ export class MultiChartViewer extends PureComponent {
             <div onClick={stopPropagation}
                  onTouchStart={stopPropagation}
                  onMouseDown={stopPropagation}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId}/>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
             </div>
         );
 
@@ -120,7 +122,7 @@ export class MultiChartViewer extends PureComponent {
         <div className='ChartPanel__container'>
             <div className='ChartPanel__wrapper'>
                 {expandedMode ? <MultiChartToolbarExpanded {...{closeable, viewerId, layoutType, activeItemId}}/> : <MultiChartToolbarStandard {...{viewerId, layoutType, activeItemId}}/>}
-                <ChartPanel key={'toolbar-'+activeItemId} expandedMode={expandedMode} expandable={!expandedMode}  showChart={false} chartId={activeItemId}/>
+                <ChartPanel key={'toolbar-'+activeItemId} expandedMode={expandedMode} expandable={!expandedMode}  showChart={false} chartId={activeItemId} deletable={deletable}/>
 
                 <div className='ChartPanel__chartarea--withToolbar'>
                     <MultiItemViewerView {...this.props} {...newProps}/>

@@ -60,7 +60,7 @@ class ChartPanelView extends PureComponent {
     render() {
         const {chartId, deletable:deletableProp, expandable, expandedMode, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
         const chartData =  getChartData(chartId);
-        const deletable = isUndefined(deletableProp) ? get(chartData, 'deletable') : deletableProp;
+        const deletable = isUndefined(get(chartData, 'deletable')) ? deletableProp : get(chartData, 'deletable');
         const showMultiTrace = !singleTraceUI();
 
         if (isEmpty(chartData) || isUndefined(Toolbar) || isUndefined(Options)) {

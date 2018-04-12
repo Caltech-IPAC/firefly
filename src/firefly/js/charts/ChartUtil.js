@@ -8,7 +8,7 @@
  * Created by tatianag on 3/17/16.
  */
 
-import {assign, get, uniqueId, isArray, isUndefined, omitBy, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has} from 'lodash';
+import {assign, get, uniqueId, isArray, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -64,6 +64,11 @@ export function multitraceDesign() {
 export function singleTraceUI() {
     return get(getAppOptions(), 'charts.singleTraceUI');
 }
+
+export function getMaxScatterRows() {
+    return get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
+}
+
 
 /**
  * This method returns an object with the keys x,y,highlightedRow
@@ -1027,8 +1032,7 @@ export function getDefaultChartProps(tbl_id) {
                     yaxis: {showgrid: false}
                 }
             };
-            const maxRowsForScatter = get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
-            if (totalRows > maxRowsForScatter) {
+            if (totalRows > getMaxScatterRows()) {
                 Object.assign(chartData.data[0], {type: 'fireflyHeatmap', colorscale: 'Greys', reversescale: true});
             } else {
                 const DATAPOINTS_COLOR = `rgba(63, 127, 191, ${DEFAULT_ALPHA})`;

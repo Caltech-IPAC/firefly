@@ -492,9 +492,9 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     const range = !fields[`__${a}reset`] && get(layout, `${a}axis.range`);
 
                     if (opts.includes('flip')) {
-                        if (range) {  
+                        if (range) {
                             changes[`layout.${a}axis.range`] = (range[0]<range[1]) ? reverse(range) : range;
-                            changes[`layout.${a}axis.autorange`] = false;
+                            if (range[0]<range[1]) { changes[`layout.${a}axis.autorange`] = false; }
                         } else {
                             changes[`layout.${a}axis.autorange`] = 'reversed';
                             changes[`layout.${a}axis.range`] = undefined;
@@ -502,7 +502,7 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     } else {
                         if (range) {
                             changes[`layout.${a}axis.range`] = (range[1]<range[0]) ? reverse(range) : range;
-                            changes[`layout.${a}axis.autorange`] = false;
+                            if (range[1]<range[0]) { changes[`layout.${a}axis.autorange`] = false; }
                         } else {
                             changes[`layout.${a}axis.autorange`] = true;
                             changes[`layout.${a}axis.range`] = undefined;
@@ -576,7 +576,7 @@ export function submitChanges({chartId, fields, tbl_id}) {
         // create chart data from changes and add chart
         const newChartData = {chartId, groupId: tbl_id};
         Object.entries(changes).forEach(([k,v]) => set(newChartData, k, v));
-        dispatchChartAdd({chartId, chartType: 'plot.ly', groupId: tbl_id, deletable: true, ...newChartData});
+        dispatchChartAdd({chartId, chartType: 'plot.ly', groupId: tbl_id, ...newChartData});
     } else {
         // update chart from options scenario
         dispatchChartUpdate({chartId, changes});
