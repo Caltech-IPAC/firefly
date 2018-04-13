@@ -30,6 +30,7 @@ import Artifact from '../../drawingLayers/Artifact.js';
 import {isHiPS} from '../WebPlot';
 import {dispatchChangeHiPS} from '../ImagePlotCntlr';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
+import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 
 
@@ -38,9 +39,6 @@ import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
-
-let firstTime = true;
-
 
 function hipsFail(dispatcher, plotId, wpRequest, reason) {
     dispatcher( {
@@ -179,9 +177,8 @@ export function makePlotHiPSAction(rawAction) {
         let attemptedFetch= false;
 
 
-        if (firstTime) {
+        if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
             initBuildInDrawLayers();
-            firstTime= false;
         }
 
         resolveHiPSIvoURL(wpRequest.getHipsRootUrl())

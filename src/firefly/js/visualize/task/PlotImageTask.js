@@ -25,6 +25,7 @@ import {enableMatchingRelatedData, enableRelatedDataLayer} from '../RelatedDataU
 import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
+import {getDlAry} from '../DrawLayerCntlr.js';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -175,9 +176,8 @@ export function makePlotImageAction(rawAction) {
             }
         }
 
-        if (firstTime) {
+        if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
             initBuildInDrawLayers();
-            firstTime= false;
         }
 
         payload.requestKey= requestKey;

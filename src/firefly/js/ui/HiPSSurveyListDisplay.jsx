@@ -13,7 +13,7 @@ import {HelpIcon} from './HelpIcon.jsx';
 import {CompleteButton} from './CompleteButton.jsx';
 import {INFO_POPUP} from './PopupUtil.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import {isLoadingHiPSSurverys, HiPSId, HiPSData, URL_COL, IVO_ID_COL,updateHiPSTblHighlightOnUrl,
+import {isLoadingHiPSSurverys, HiPSId, HiPSData, URL_COL, updateHiPSTblHighlightOnUrl,
         getHiPSSurveys,  getHiPSLoadingMessage, makeHiPSSurveysTableName, getDefHiPSSources,
         loadHiPSSurverysWithHighlight, getHiPSSources, defHiPSSources} from '../visualize/HiPSListUtil.js';
 import {FieldGroup} from './FieldGroup.jsx';

@@ -12,7 +12,7 @@ import {TABLE_LOADED} from '../tables/TablesCntlr';
 export const HiPSId = 'hips';
 export const HiPSDataType= new Enum([ 'image', 'cube', 'catalog'], { ignoreCase: true });
 export const HiPSData = [HiPSDataType.image, HiPSDataType.cube];
-export const HiPSSources = ServerParams.IRSA.toLowerCase() + ',' + ServerParams.CDS.toLowerCase();
+export const HiPSSources = ServerParams.IRSA + ',' + ServerParams.CDS;
 
 const HiPSSurvey = 'HiPS_Surveys_';
 export const IVO_ID_COL= 'CreatorID';
@@ -38,12 +38,13 @@ const itemStrToAry = (items, sep = ',') => {
     }, []);
 };
 
+const HIPS_SEARCH = 'hipsSearch';
 /**
  * get all available HiPS sources
  * @returns {string}
  */
 export function getHiPSSources() {
-    let srcs =  get(getAppOptions(), ['hips', ServerParams.HIPS_SOURCES], ServerParams.ALL);
+    let srcs =  get(getAppOptions(), [HIPS_SEARCH, ServerParams.HIPS_SOURCES], ServerParams.ALL);
 
     if (srcs.toLowerCase() === ServerParams.ALL.toLowerCase()) {
         srcs = HiPSSources;
@@ -57,7 +58,7 @@ export function getHiPSSources() {
  * @returns {Array}
  */
 export function defHiPSSources() {
-    const defObj = get(getAppOptions(), ['hips', ServerParams.HIPS_DEFSOURCES]);
+    const defObj = get(getAppOptions(), [HIPS_SEARCH, ServerParams.HIPS_DEFSOURCES]);
     const allSources = getHiPSSources();
 
     if (allSources.length < 1) return [];
@@ -104,7 +105,7 @@ export function getDefHiPSLabel() {
  * @returns {string}
  */
 export function getHiPSMergePriority() {
-    const mergeP = get(getAppOptions(), ['hips', ServerParams.HIPS_MERGE_PRIORITY], '');
+    const mergeP = get(getAppOptions(), [HIPS_SEARCH, ServerParams.HIPS_MERGE_PRIORITY], '');
 
     return itemStrToAry(mergeP).join('.');
 }
