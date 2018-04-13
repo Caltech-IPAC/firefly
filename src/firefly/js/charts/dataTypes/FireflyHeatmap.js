@@ -1,13 +1,16 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get} from 'lodash';
+import {get, uniqueId} from 'lodash';
 import {getTblById, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {singleTraceUI} from '../ChartUtil.js';
+import {singleTraceUI, replaceQuotesIfSurrounding} from '../ChartUtil.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
+import {formatColExpr} from '../ChartUtil.js';
+import {cloneRequest} from '../../tables/TableRequestUtil.js';
+import {COL_TYPE, getColumns} from '../../tables/TableUtil.js';
 
 /**
  * This function creates table source entries to get firefly scatter and error data from the server
@@ -53,12 +56,26 @@ function fetchData(chartId, traceNum, tablesource) {
 
     const {tbl_id, options, mappings} = tablesource;
     const tableModel = getTblById(tbl_id);
+    const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
     const {request} = tableModel;
 
     const {xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax} = options;
+
+    const xColName = numericCols.includes(xColOrExpr) ? xColOrExpr : 'xColumnExpression';
+    const asX = (xColName === xColOrExpr) ? '' : ` as "${xColName}"`;
+    const yColName = numericCols.includes(yColOrExpr) ? yColOrExpr : 'yColumnExpression';
+    const asY = (yColName === yColOrExpr) ? '' : ` as "${yColName}"`;
+
+    // inclCols should not have duplicates
+    const sameXY = xColName === yColName;
+    const sreq = cloneRequest(request, {
+        inclCols: `${formatColExpr({colOrExpr:xColOrExpr, quoted: true, colNames: numericCols})}${asX}`+
+        (sameXY ? '' : `,${formatColExpr({colOrExpr:yColOrExpr, quoted: true, colNames: numericCols})}${asY}`)
+    });
+
     // min rows for decimation is 0
-    const req = makeTableFunctionRequest(request, 'DecimateTable', 'heatmap',
-        {decimate: serializeDecimateInfo(xColOrExpr, yColOrExpr, maxbins, xyratio, xmin, xmax, ymin, ymax, 0), pageSize: MAX_ROW});
+    const req = makeTableFunctionRequest(sreq, 'DecimateTable', 'heatmap',
+        {decimate: serializeDecimateInfo(xColName, yColName, maxbins, xyratio, xmin, xmax, ymin, ymax, 0), pageSize: MAX_ROW});
 
     doFetchTable(req).then((tableModel) => {
         if (tableModel.tableData && tableModel.tableData.data) {
@@ -88,8 +105,8 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
     }
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
-    const xLabel = get(mappings, 'x').replace(/^"(.+)"$/, '$1');
-    const yLabel = get(mappings, 'y').replace(/^"(.+)"$/, '$1');
+    const xLabel = replaceQuotesIfSurrounding(get(mappings, 'x'));
+    const yLabel = replaceQuotesIfSurrounding(get(mappings, 'y'));
     const xTipLabel = xLabel.length > 20 ? xLabel.substring(0,18)+'...' : xLabel;
     const yTipLabel = yLabel.length > 20 ? yLabel.substring(0,18)+'...' : yLabel;
 

@@ -263,8 +263,8 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
         if (table.totalRows > 10000) {
             const cenCol = options.getCenterColumns(table);
             if (!cenCol) return null;
-            params.decimate = serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000);
-            req = makeTableFunctionRequest(table.request, 'DecimateTable', 'coverage',
+            const sreq = cloneRequest(table.request, {inclCols: `"${cenCol.lonCol}","${cenCol.latCol}"`});
+            req = makeTableFunctionRequest(sreq, 'DecimateTable', 'coverage',
                 {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000), pageSize: MAX_ROW});
         }
 

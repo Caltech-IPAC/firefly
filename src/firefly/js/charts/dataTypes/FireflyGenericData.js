@@ -5,7 +5,7 @@ import {get, isArray, truncate, uniqueId} from 'lodash';
 import {COL_TYPE, getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits} from '../ChartsCntlr.js';
-import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows} from '../ChartUtil.js';
+import {formatColExpr, getDataChangesForMappings, replaceQuotesIfSurrounding, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows} from '../ChartUtil.js';
 
 
 /**
@@ -115,8 +115,8 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     const yUnit = get(yColumn, 'units', '');
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
-    const xLabel = get(mappings, 'x').replace(/^"(.+)"$/, '$1');
-    const yLabel = get(mappings, 'y').replace(/^"(.+)"$/, '$1');
+    const xLabel = replaceQuotesIfSurrounding(get(mappings, 'x'));
+    const yLabel = replaceQuotesIfSurrounding(get(mappings, 'y'));
     const xTipLabel = truncate(xLabel, {length: 20});
     const yTipLabel = truncate(yLabel, {length: 20});
 

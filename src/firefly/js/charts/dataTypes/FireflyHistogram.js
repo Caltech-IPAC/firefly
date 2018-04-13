@@ -1,18 +1,18 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray, uniqueId} from 'lodash';
+import {get, identity, isArray, isUndefined, uniqueId} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {formatColExpr} from '../ChartUtil.js';
+import {formatColExpr, replaceQuotesIfSurrounding} from '../ChartUtil.js';
 
 
-import {toMaxFixed} from '../../util/MathUtil.js';
+import {toMaxFixed, getDecimalPlaces} from '../../util/MathUtil.js';
 import Color from '../../util/Color.js';
 
-const HIST_DEC = 6;
+//const HIST_DEC = 6;
 
 /**
  * This function creates table source entries to get aggregated firefly histogram data from the server
@@ -61,11 +61,12 @@ function fetchData(chartId, traceNum, tablesource) {
     const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
 
     const {request} = tableModel;
+    const valueColName = 'columnExpression';
     const sreq = cloneRequest(request, {
         startIdx: 0,
         pageSize: MAX_ROW,
-        inclCols: `${formatColExpr({colOrExpr:options.columnExpression, quoted: true, colNames: numericCols})} as "${options.columnExpression}"`,
-        sortInfo: `ASC,"${options.columnExpression}"`
+        inclCols: `${formatColExpr({colOrExpr:options.columnExpression, quoted: true, colNames: numericCols})} as "${valueColName}"`,
+        sortInfo: `ASC,"${valueColName}"`
     });
     const sreqTblId = uniqueId(request.tbl_id);
     sreq.META_INFO.tbl_id = sreqTblId;
@@ -74,7 +75,7 @@ function fetchData(chartId, traceNum, tablesource) {
     const req = makeTableFunctionRequest(sreq, 'HistogramProcessor', 'histogram', {sortedColData: true, pageSize: MAX_ROW});
 
     Object.entries(options).forEach(([k,v]) => req[k] = v);
-
+    req['columnExpression'] = valueColName;
 
     doFetchTable(req).then(
         (tableModel) => {
@@ -117,7 +118,7 @@ function fetchData(chartId, traceNum, tablesource) {
                     const xColumn = getColumn(getTblById(tbl_id), xLabel);
                     const xUnit = get(xColumn, 'units', '');
                     //remove surrounding quotes, if any
-                    if (xLabel.startsWith('"')) { xLabel = xLabel.replace(/^"(.+)"$/, '$1'); }
+                    if (xLabel.startsWith('"')) { xLabel = replaceQuotesIfSurrounding(xLabel); }
                     changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
                 }
                 const yAxisLabel = get(layout, 'yaxis.title');
@@ -247,14 +248,18 @@ function createXY(data, binColor) { // removed '#d1d1d1' to use default colors
 
         xySeries.x.push(xVal);
         xySeries.y.push(y);
-        xySeries.binWidth.push(x1 === x2 ? minWidth: x2-x1);
+        const binWidth = x1 === x2 ? minWidth: x2-x1;
+        xySeries.binWidth.push(binWidth);
 
         //prevColor = (x1 <= lastX) ? (prevColor+1)%2 : 0;  // when two bars are next to each other, color is changed
         //xySeries.color.push(prevColor);
 
+        const numDecimalPlaces = getDecimalPlaces(binWidth, 3);
+        const doFmt = isUndefined(numDecimalPlaces) ? identity : (n) => toMaxFixed(n, numDecimalPlaces);
+        
         xySeries.text.push(
-            `<span> ${x1 !== x2 ? '<b>Bin center: </b>' + toMaxFixed(xVal, HIST_DEC) + '<br>' : ''}` +
-            `${x1 !== x2 ? '<b>Range: </b>' + toMaxFixed(x1, HIST_DEC) + ' to ' + toMaxFixed(x2, HIST_DEC) + '<br>' : ''}` +
+            `<span> ${x1 !== x2 ? '<b>Bin center: </b>' + doFmt(xVal) + '<br>' : ''}` +
+            `${x1 !== x2 ? '<b>Range: </b>' + doFmt(x1) + ' to ' + doFmt(x2) + '<br>' : ''}` +
             `<b>Count:</b> ${y}</span>`);
 
         //lastX = x2;

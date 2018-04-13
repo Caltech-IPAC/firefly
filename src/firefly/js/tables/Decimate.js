@@ -25,7 +25,7 @@ const DECIMATE_TAG='decimate';
  * @param {number} optional minimum number of points to enable decimation
  * @returns {string}
  */
-export const serializeDecimateInfo = function(xColumnName, yColumnName, maxPoints=10000, xyRatio=1, xMin, xMax, yMin, yMax, deciEnableLimit=Number.NaN) {
+export const serializeDecimateInfo = function(xColumnName, yColumnName, maxPoints=10000, xyRatio=1, xMin, xMax, yMin, yMax, deciEnableLimit=0) {
     const orderedNumericProps = [maxPoints, xyRatio, xMin, xMax, yMin, yMax, deciEnableLimit];
     const deciStrStart = `${DECIMATE_TAG}=${xColumnName},${yColumnName}`;
     return orderedNumericProps.reduce((sres, val)=>{
