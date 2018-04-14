@@ -136,6 +136,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         DataGroupPart sourceData = new SearchManager().getDataGroup(sReq);
         if (sourceData == null) {
             throw new DataAccessException("Unable to get source data");
+        } else if (sourceData.getErrorMsg() != null) {
+            throw new DataAccessException(sourceData.getErrorMsg());
         }
         DataGroup sourceDataGroup = sourceData.getData();
         double[] columnData = getColumnData(sourceDataGroup);

@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.util.DataGroup;
 
 import java.io.File;
@@ -34,8 +35,14 @@ public class DecimationProcessor extends TableFunctionProcessor {
             String [] requestedCols = x.equals(y) ? new String[]{"\""+x+"\""} : new String[]{"\""+x+"\",\""+y+"\""};
             sreq.setInclColumns(requestedCols);
         }
-
-        DataGroup dg = new SearchManager().getDataGroup(sreq).getData();
+        
+        DataGroupPart sourceData = new SearchManager().getDataGroup(sreq);
+        if (sourceData == null) {
+            throw new DataAccessException("Unable to get source data");
+        } else if (sourceData.getErrorMsg() != null) {
+            throw new DataAccessException(sourceData.getErrorMsg());
+        }
+        DataGroup dg = sourceData.getData();
 
         if (decimateInfo != null) {
             DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);

@@ -70,6 +70,11 @@ function fetchData(chartId, traceNum, tablesource) {
 
     doFetchTable(sreq).then(
         (tableModel) => {
+            if (tableModel.error) {
+                dispatchError(chartId, traceNum, tableModel.error);
+                return;
+            }
+
             if (tableModel.tableData && tableModel.tableData.data) {
                 const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
 

@@ -78,6 +78,11 @@ function fetchData(chartId, traceNum, tablesource) {
         {decimate: serializeDecimateInfo(xColName, yColName, maxbins, xyratio, xmin, xmax, ymin, ymax, 0), pageSize: MAX_ROW});
 
     doFetchTable(req).then((tableModel) => {
+        if (tableModel.error) {
+            dispatchError(chartId, traceNum, tableModel.error);
+            return;
+        }
+
         if (tableModel.tableData && tableModel.tableData.data) {
 
             const changes = getChanges({tableModel, mappings, chartId, traceNum});

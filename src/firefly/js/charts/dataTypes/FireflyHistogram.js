@@ -80,6 +80,11 @@ function fetchData(chartId, traceNum, tablesource) {
     doFetchTable(req).then(
         (tableModel) => {
 
+            if (tableModel.error) {
+                dispatchError(chartId, traceNum, tableModel.error);
+                return;
+            }
+
             let histogramData = [];
             if (tableModel.tableData && tableModel.tableData.data) {
                 // if logarithmic values were requested, convert the returned exponents back
@@ -225,7 +230,7 @@ function createXY(data, binColor) { // removed '#d1d1d1' to use default colors
     //emptyData.colorScale = [[0, getRGBAStr(binColor, A)], [1, lightColor]];
 
     // compute bin width for the bin has the same xMin & xMan
-    var startW = data[data.length-1][2] - data[0][1];
+    var startW = data.length && data[data.length-1][2] - data[0][1];
     if (startW === 0.0) startW = 1.0;
 
     var   minWidth = data.find((row) => {return row[1]===row[2];}) ?
