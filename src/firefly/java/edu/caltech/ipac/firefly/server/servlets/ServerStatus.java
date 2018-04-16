@@ -118,7 +118,7 @@ public class ServerStatus extends BaseHttpServlet {
         writer.println("------  ------  ------  ----------  -------  ---------");
         Collections.unmodifiableCollection(DbAdapter.getAdapter().getDbInstances().values()).stream()
                     .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
-                    .forEach((db) -> writer.println(String.format("%5$tM:%5$tS   %5$tM:%5$tS   %6d  %,10d  %,7d  %s",
+                    .forEach((db) -> writer.println(String.format("%5$tM:%5$tS   %6$tM:%6$tS   %6d  %,10d  %,7d  %s",
                                                         db.getTblCount(),
                                                         db.getRowCount(),
                                                         db.getColCount(),

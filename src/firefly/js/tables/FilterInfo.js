@@ -4,12 +4,10 @@
 
 import {getColumnIdx, getColumn, isNumericType, getTblById} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
-import {isUndefined, get, isArray} from 'lodash';
+import {isUndefined, get, isArray, isEmpty} from 'lodash';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
-const cond_regex = new RegExp('(!=|>=|<=|<|>|=|like|in|is|is not)?\\s*(.+)');
-const cond_only_regex = new RegExp('^' + cond_regex.source, 'i');
-const filter_regex = new RegExp('(\\S+)\\s*' + cond_regex.source, 'i');
+const operators = /(!=|>=|<=|<|>|=| like | in | is not | is )/i;
 
 export const FILTER_CONDITION_TTIPS =
 `Valid values are one of (=, >, <, !=, >=, <=, LIKE, IS, IS NOT) followed by a value separated by a space.
@@ -19,6 +17,26 @@ Examples:  > 12345; != 3000; IN a,b,c,d`;
 export const FILTER_TTIPS =
 `Filters are "column_name operator condition" separated by commas.
 ${FILTER_CONDITION_TTIPS}`;
+
+/**
+ * return [column_name, operator, value] triplet.
+ * @param {string} input
+ * @param {object} options
+ * @prop {boolean} options.removeQuotes  remove double-quotes from column name if present
+ * @returns {string[]}
+ */
+function parseInput(input, options={}) {
+    const {removeQuotes=false} = options;
+    let [cname='', op='', val='', ...rest] = (' '+input).split(operators);
+    op = op.trim();
+    val = op ? val.trim() : cname.trim();      // when op is missing, val is returned as cname(index 0).
+    cname = op ? cname.trim() : '';
+    if (!isEmpty(rest)) val += rest.join(); // value contains operators.  just put it back.
+    if (removeQuotes) {
+        cname = cname.replace(/^"(.+)"$/, '$1');
+    }
+    return [cname, op, val];
+}
 
 
 /**
@@ -47,9 +65,8 @@ export class FilterInfo {
     static parse(filterString) {
         var filterInfo = new FilterInfo();
         filterString && filterString.split(';').forEach( (v) => {
-                let [, cname, op, val] = v.trim().match(filter_regex) || [];
+                const [cname, op, val] = parseInput(v, {removeQuotes: true});
                 if (cname && op) {
-                    cname = cname.replace(/"(.+?)"/g, '$1');      // strip quotes if any
                     filterInfo.addFilter(cname, `${op} ${val}`);
                 }
             });
@@ -65,7 +82,7 @@ export class FilterInfo {
     static autoCorrectFilter(filterInfo) {
         if (filterInfo) {
             const filters = filterInfo.split(';').map( (v) => {
-                const [, cname, op, val] = v.trim().match(filter_regex) || [];
+                const [cname, op, val] = parseInput(v);
                 if (!cname) return v;
                 return `${cname} ${autoCorrectCondition(op + ' ' + val)}`;
             });
@@ -82,7 +99,8 @@ export class FilterInfo {
      */
     static isConditionValid(conditions) {
         return !conditions || conditions.split(';').reduce( (rval, v) => {
-            return rval && (!v || cond_only_regex.test(v.trim()));
+                const [cname, op, val] = parseInput(v);
+                return rval && op && val && !cname;
         }, true);
     }
 
@@ -121,7 +139,7 @@ export class FilterInfo {
         if (filterInfo && filterInfo.trim().length > 0) {
             filterInfo = filterInfo.replace(/"(.+?)"/g, '$1'); // remove quotes
             return filterInfo.split(';').reduce( ([isValid, msg], v) => {
-                const [, cname] = v.trim().match(filter_regex) || [];
+                const [cname] = parseInput(v);
                 if (!cname) {
                         msg += `\n"${v}" is not a valid filter.`;
                     } else if (!allowCols.some( (c) => c.name === cname)) {
@@ -157,7 +175,7 @@ export class FilterInfo {
      * @returns {function(): boolean}
      */
     static createComparator(filterStr, tableModel) {
-        var [ , cname, op, val] =filterStr.match(filter_regex) || [];
+        let [cname, op, val] = parseInput(filterStr);
         if (!cname) return () => false;       // bad filter.. returns nothing.
 
         // remove the double quote or the single quote around cname and val (which is added in auto-correction)
@@ -267,7 +285,7 @@ export class FilterInfo {
         Reflect.deleteProperty(this.filters, colName);
         if (conditions) {
             conditions.split(';').forEach( (v) => {
-                const [, op, val] = v.trim().match(cond_only_regex) || [];
+                const [, op, val] = parseInput(v);
                 if (op) this.addFilter(colName, `${op} ${val}`);
             });
         }
@@ -396,7 +414,7 @@ function autoCorrectCondition(v, isNumeric=false) {
         return (txt.match(/^'.*'$/) ? txt : encloseByQuote(txt));
     };
 
-    let [, op, val=''] = v.trim().match(cond_only_regex) || [];
+    let [, op, val] = parseInput(v);
 
     // empty string or string with no value
     if (!op && !val) return v.trim();
