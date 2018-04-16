@@ -1124,6 +1124,8 @@ export function dispatchError(chartId, traceNum, reason) {
     let reasonStr = `${reason}`.toLowerCase();
     if (reasonStr.match(/not supported/)) {
         reasonStr = 'Unsupported feature requested. Please choose valid options.';
+    } else if (reasonStr.match(/data exception/)) {
+        reasonStr = reasonStr.replace('error: ', '');
     } else if (reasonStr.match(/invalid column/)) {
         reasonStr = 'Non-existent column or invalid expression. Please choose valid X and Y.';
     } else if (reasonStr.match(/rows exceed/)) {

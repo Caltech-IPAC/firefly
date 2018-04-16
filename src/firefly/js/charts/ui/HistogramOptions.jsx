@@ -89,9 +89,10 @@ function columnNameReducer(colValStats, basicFieldsReducer) {
                         if (inFields['layout.xaxis.title']) {
                             inFields = updateSet(inFields, ['layout.xaxis.title', 'value'], undefined);
                         }
-                        if (isSingleColumn(colName, colValStats)) {
+                        const col = colName.replace(/^"(.+)"$/, '$1'); // remove quotes if any
+                        if (isSingleColumn(col, colValStats)) {
                             for (let i = 0; i < colValStats.length; i++) {
-                                if (colName === colValStats[i].name) {
+                                if (col === colValStats[i].name) {
                                     const dataMin = colValStats[i].min;
                                     const dataMax = colValStats[i].max;
                                     const binWidth = ((dataMax - dataMin) / numBins).toFixed(6);

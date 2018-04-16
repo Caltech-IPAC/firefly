@@ -48,9 +48,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         new DataType("binMax", Double.class)
     };
     static {
-        // set default precision to 9 significant digits
-        columns[1].getFormatInfo().setDataFormat("%.14g");
-        columns[2].getFormatInfo().setDataFormat("%.14g");
+        // set default precision to 14 significant digits
+        columns[1].getFormatInfo().setDataFormat("%.14e");
+        columns[2].getFormatInfo().setDataFormat("%.14e");
     }
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String FIXED_BIN_SIZE_SELECTION="fixedBinSizeSelection";
@@ -136,6 +136,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         DataGroupPart sourceData = new SearchManager().getDataGroup(sReq);
         if (sourceData == null) {
             throw new DataAccessException("Unable to get source data");
+        } else if (sourceData.getErrorMsg() != null) {
+            throw new DataAccessException(sourceData.getErrorMsg());
         }
         DataGroup sourceDataGroup = sourceData.getData();
         double[] columnData = getColumnData(sourceDataGroup);

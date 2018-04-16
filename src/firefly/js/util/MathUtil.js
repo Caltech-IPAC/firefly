@@ -6,28 +6,34 @@ export const getFormatString = function(range, numSigDigits) {
 
     if (range===0) { return '0'; }
 
-    var format; // string format
+    const numDecPlaces = getDecimalPlaces(range, numSigDigits);
+    if (numDecPlaces > 0) {
+        let format = '0.';
+        for (let n = 0; n < numDecPlaces; n++) {
+            format += '0';
+        }
+        return format;
+    } else {
+        return '0';
+    }
+};
 
+export function getDecimalPlaces(range, numSigDigits) {
+    if (range===0) { return undefined; }
+
+    let numDecPlaces = 0;
     // before ES6, use Math.log(val)/Math.LN10 for Math.log10;
-    var firstSigDigitPos = Math.floor(Math.log10(Math.abs(range)))+1;
+    const firstSigDigitPos = Math.floor(Math.log10(Math.abs(range)))+1;
     if (firstSigDigitPos < numSigDigits) {
-        format = '0.';
-        var numDecPlaces;
         // find how many places after the decimal
         if (firstSigDigitPos > 0) {
             numDecPlaces = Math.abs(numSigDigits - firstSigDigitPos);
         } else {
             numDecPlaces = Math.abs(firstSigDigitPos) + numSigDigits;
         }
-        for (let n = 0; n < numDecPlaces; n++) {
-            format += '0';
-        }
-
-    } else {
-        format = '0';
     }
-    return format;
-};
+    return numDecPlaces;
+}
 
 /*
  * remove trailing zero from toFixed result

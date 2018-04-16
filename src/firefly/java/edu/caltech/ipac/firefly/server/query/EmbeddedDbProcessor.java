@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
@@ -24,11 +23,9 @@ import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.NestedRuntimeException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
@@ -162,7 +159,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             } catch (Exception e) {
                 // table data exists.. but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
-                DataGroup dg = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data limit 0", "data");
+                // limit 0 does not work with oracle-like syntax
+                DataGroup dg = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data where ROWNUM < 1", "data");
                 results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
                 results.setErrorMsg(retrieveMsgFromError(e, treq));
             }
@@ -409,7 +407,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         if (e instanceof NestedRuntimeException) {
             List<String> possibleErrors = new ArrayList<>();
             NestedRuntimeException ex = (NestedRuntimeException) e;
-            String msg = ex.getRootCause().getMessage();
+
             TableServerRequest prevReq = QueryUtil.convertToServerRequest(treq.getMeta().get(TableServerRequest.RESULTSET_REQ));
             if (treq.getInclColumns() != null && !StringUtils.areEqual(treq.getInclColumns(), prevReq.getInclColumns())) {
                 possibleErrors.add(treq.getInclColumns());
@@ -422,14 +420,24 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 possibleErrors.add(treq.getSortInfo().toString());
             }
 
-            if (msg.toLowerCase().contains(" cast")) {
-                return "Data type mismatch: \n" + StringUtils.toString(possibleErrors, "\n");
+            if (ex.getRootCause() != null ) {
+                String msg = ex.getRootCause().getMessage();
+                if (msg != null) {
+                    if (msg.toLowerCase().contains("data exception:")) {
+                        return msg;
+                    }
+
+                    if (msg.toLowerCase().contains(" cast")) {
+                        return "Data type mismatch: \n" + StringUtils.toString(possibleErrors, "\n");
+                    }
+
+                    if (msg.toLowerCase().contains("unexpected token:")) {
+                        return CollectionUtil.get(msg.split("required:"), 0, "").trim() +
+                                "\n" + StringUtils.toString(possibleErrors, "\n");
+                    }
+                }
             }
 
-            if ( msg.toLowerCase().contains("unexpected token:")) {
-                return CollectionUtil.get(msg.split("required:"), 0, "").trim() +
-                        "\n" + StringUtils.toString(possibleErrors, "\n");
-            }
             return "Invalid statement: \n" + StringUtils.toString(possibleErrors, "\n");
         }
 

@@ -121,7 +121,8 @@ function handleCatalogUpdate(tbl_id) {
     let req = cloneRequest(sourceTable.request, params);
     var dataTooBigForSelection= false;
     if (totalRows>50000) {
-        req = makeTableFunctionRequest(sourceTable.request, 'DecimateTable', 'heatmap',
+        const sreq = cloneRequest(sourceTable.request, {inclCols: `"${columns.lonCol}","${columns.latCol}"`});
+        req = makeTableFunctionRequest(sreq, 'DecimateTable', 'heatmap',
             {decimate: serializeDecimateInfo(columns.lonCol, columns.latCol, 10000), pageSize: MAX_ROW});
         dataTooBigForSelection= true;
     }

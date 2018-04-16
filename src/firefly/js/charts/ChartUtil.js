@@ -766,7 +766,10 @@ export function formatColExpr({colOrExpr, quoted, colNames}) {
     return colOrExpr;
 }
 
-
+export function replaceQuotesIfSurrounding(s) {
+    const newS = s.replace(/^"(.+)"$/, '$1');
+    return newS.includes('"') ? s : newS;
+}
 
 // plotly default color (items 0-7) + color-blind friendly colors
 export const TRACE_COLORS = [  '#1f77b4', '#2ca02c', '#d62728', '#9467bd',
