@@ -38,7 +38,7 @@ const itemStrToAry = (items, sep = ',') => {
     }, []);
 };
 
-const HIPS_SEARCH = 'hipsSearch';
+const HIPS_SEARCH = 'hips';
 /**
  * get all available HiPS sources
  * @returns {string}
