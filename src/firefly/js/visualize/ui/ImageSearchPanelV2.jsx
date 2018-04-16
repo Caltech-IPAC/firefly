@@ -33,7 +33,7 @@ import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getAppHiPSConfig} from '../HiPSListUtil.js';
 import {HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.jsx';
-import {getHiPSSourcesChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
+import {sourcesPerChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
 
 import './ImageSearchPanelV2.css';
 
@@ -511,7 +511,7 @@ function getHipsValidateInfo(request) {
         if (isNil(request.txURL) || (!request.txURL.trim())){
             return ({valid:false, message:'invalid URL'});
         }
-    } else if (!getHiPSSourcesChecked()) {
+    } else if (!sourcesPerChecked()) {
         return ({valied: false, message: 'No HiPS source selected'});
     }
     return {valid:true, message: 'success'};

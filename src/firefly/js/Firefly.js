@@ -74,7 +74,10 @@ const defConfigOptions = {
     imageMasterSources: ['ALL'],
     imageMasterSourcesOrder: '',
     workspace : { showOptions: false},
-    hips : {useForCoverage: true, useForImageSearch: true, hipsSources: 'all', defHipsSources: 'irsa'},
+    hips : {useForCoverage: true, useForImageSearch: true,
+            hipsSources: 'all',
+            defHipsSources: {source: 'irsa', label: 'Featured'},
+            mergedListPriority: 'irsa'}
 };
 
 
