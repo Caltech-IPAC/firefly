@@ -155,12 +155,15 @@ function detachLayerFromPlot(drawLayer,action,factory) {
 function detachPerPlotData(drawData, plotId) {
     if (!drawData) return null;
     let highlightData= null;
+    let data= null;
     const selectIdxs= drawData.selectIdxs;
 
-    const data= Object.keys(drawData.data).reduce( (d,key) => {
-        if (key!==plotId) d[key]= drawData.data[key];
-        return d;
-    },{});
+    if (drawData.data) {
+        data= Object.keys(drawData.data).reduce( (d,key) => {
+            if (key!==plotId) d[key]= drawData.data[key];
+            return d;
+        },{});
+    }
 
     if (drawData.highlightData) {
         highlightData= Object.keys(drawData.highlightData).reduce( (d,key) => {

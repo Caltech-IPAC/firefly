@@ -15,6 +15,16 @@ import {parseResolver} from '../astro/net/Resolver.js';
 import {RangeValues} from './RangeValues.js';
 
 
+
+
+const DEFAULT_IMAGE_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORTH_UP_COMPASS_TYPE',
+    'WEB_GRID_TYPE', 'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE',
+    'HIPS_GRID_TYPE'];
+
+const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORTH_UP_COMPASS_TYPE',
+    'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE', 'HIPS_GRID_TYPE'];
+
+
 export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'NONE'],
                                               { ignoreCase: true });
 export const TitleOptions= new Enum([
@@ -1339,15 +1349,15 @@ export class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     * @return {Array} array of Order enums
+     * @return {Array.<String>} array of string DrawLayerType IDs
      */
     getOverlayIds() {
-        return this.containsParam(C.OVERLAY_IDS) ?
-            this.getParam(C.OVERLAY_IDS).split(';') :
-            ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORTH_UP_COMPASS_TYPE',
-             'WEB_GRID_TYPE', 'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE',
-             'HIPS_GRID_TYPE'];
-            //[ActiveTarget.TYPE_ID,'OTHER'];
+        if (this.containsParam(C.OVERLAY_IDS)) {
+            return this.getParam(C.OVERLAY_IDS).split(';');
+        }
+        else {
+            return this.getRequestType()!==RequestType.HiPS ? DEFAULT_IMAGE_OVERLAYS : DEFAULT_HIPS_OVERLAYS;
+        }
     }
 
 

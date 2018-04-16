@@ -15,7 +15,8 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
 import { makeGridDrawData } from './ComputeWebGridData.js';
-import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import {isImage} from '../visualize/WebPlot.js';
+ import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
@@ -107,8 +108,14 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
              }
              break;
          case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
-             drawData= Object.assign({},drawLayer.drawData, {data:null});
-             return {drawData};
+             if (drawLayer.drawData.data ) {
+                 const data = Object.keys(drawLayer.drawData.data).reduce((d, plotId) => {
+                     d[plotId] = isImage(primePlot(visRoot(), plotId)) ? drawLayer.drawData.data[plotId] : null;
+                     return d;
+                 }, {});
+                 drawData= Object.assign({},drawLayer.drawData, {data});
+                 return {drawData};
+             }
          case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
              const {coordinate}= action.payload.changes;
              if (coordinate !== drawLayer.coordinate ) {
