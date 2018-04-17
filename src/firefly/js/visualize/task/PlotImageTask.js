@@ -8,7 +8,7 @@ import ImagePlotCntlr, {visRoot, makeUniqueRequestKey,
     IMAGE_PLOT_KEY, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
-import {WebPlot,PlotAttribute, RDConst} from '../WebPlot.js';
+import {WebPlot,PlotAttribute, RDConst, isImage} from '../WebPlot.js';
 import CsysConverter from '../CsysConverter.js';
 import VisUtils from '../VisUtil.js';
 import {PlotState} from '../PlotState.js';
@@ -334,7 +334,7 @@ export function addDrawLayers(request, plot ) {
         });
     });
 
-    if (request.getGridOn()!==GridOnStatus.FALSE) {
+    if (request.getGridOn()!==GridOnStatus.FALSE && isImage(plot)) {
         const dl = getDrawLayerByType(dlRoot(), WebGrid.TYPE_ID);
         const useLabels= request.getGridOn()===GridOnStatus.TRUE;
         if (!dl) dispatchCreateDrawLayer(WebGrid.TYPE_ID, {useLabels});

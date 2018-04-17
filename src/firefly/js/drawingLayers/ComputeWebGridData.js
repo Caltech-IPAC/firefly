@@ -502,47 +502,24 @@ function calculateDelta(min, max,factor){
 
 
 /**
- * Find the labels according to the coordinates
- * @param levels
- * @param csys
- * @param labelFormat
- * @returns {Array}
+ * Find the labels according to the coordinates.
+ * @param {Array.<Array.<number>>} levels
+ * @param {CoordinateSys} csys
+ * @param {String} labelFormat  pass 'hms' for sexigesimal
+ * @returns {Array.<String>}
  */
-
 function getLabels(levels,csys, labelFormat) {
 
+    const labels = [];
+    const isHms= labelFormat === 'hms' && (csys===CoordinateSys.EQ_J2000 || csys===CoordinateSys.EQ_B1950);
 
-    var labels = [];
-    var offset = 0;
-    var delta;
-
-    var sexigesimal = (csys.toString()===CoordinateSys.EQ_J2000 || csys.toString()===CoordinateSys.EQ_B1950);
     for (let i=0; i < 2; i++){
-
-         if (levels[i].length >=2){
-            delta = levels[i][1]-levels[i][0];
-            delta = delta<0?delta+360:delta;
-         }
-
-         var lon, lat;
-         for (let j=0; j < levels[i].length; j++) {
-              if (sexigesimal) {
-                  if (i === 0) { //ra labels
-                      lon = CoordUtil.convertLonToString(levels[i][j], csys);
-                      labels[offset] = labelFormat === 'hms' ? lon : CoordUtil.convertStringToLon(lon, csys).toFixed(3);
-                  }
-                  else {
-                      lat = CoordUtil.convertLatToString(levels[i][j], csys);
-                      labels[offset] = labelFormat === 'hms' ? lat : CoordUtil.convertStringToLat(lat, csys).toFixed(3);
-                  }
-              }
-              else {
-                  labels[offset] = `${numeral(levels[i][j]).format(precision3Digit)}`;
-              }
-             offset += 1;
+        const toHms= i===0 ? CoordUtil.convertLonToString : CoordUtil.convertLatToString;
+        for (let j=0; j < levels[i].length; j++) {
+            const value= levels[i][j];
+            labels.push(isHms ? toHms(value, csys) : numeral(value).format(precision3Digit));
         }
     }
-
     return labels;
 }
 /**

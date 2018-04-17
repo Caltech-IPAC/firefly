@@ -15,10 +15,10 @@ import {primePlot, getPlotViewById, hasGroupLock} from '../PlotViewUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getHiPSZoomLevelToFit} from '../HiPSUtil.js';
 import {getCenterOfProjection, findCurrentCenterPoint, getCorners,
-        getDrawLayerByType, getDrawLayersByType} from '../PlotViewUtil.js';
+        getDrawLayerByType, getDrawLayersByType, getOnePvOrGroup} from '../PlotViewUtil.js';
 import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot,
-         makeHipsUrl, getHiPSFoV, resolveHiPSConstant} from '../HiPSUtil.js';
+         makeHipsUrl, getHiPSFoV, resolveHiPSConstant, getPointMaxSide} from '../HiPSUtil.js';
 import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
 import {ensureWPR, determineViewerId, getHipsImageConversion,
@@ -106,28 +106,36 @@ function initCorrectCoordinateSys(pv) {
 function watchForHiPSViewDim(action, cancelSelf, params) {
     const {plotId}= action.payload;
     if (plotId!==params.plotId) return;
-    const pv= getPlotViewById(visRoot(), plotId);
+    const vr= visRoot();
+    const pv= getPlotViewById(vr, plotId);
     const {width,height}= pv.viewDim;
     if (width && height && width>30 && height>30) {
         const plot= primePlot(pv);
         if (!plot) return;
-
-
-        let size= pv.request.getSizeInDeg()  || Number(plot.hipsProperties.hips_initial_fov) || 180;
-
-        if (size) {
-            if (size<.00027 || size>70) { // if size is really small (<1 arcsec) or big then do a fill, small size is probably an error
-                dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
-            }
-            else {
-                if (size<.0025) size= .0025; //if between 1 arcsec and 9 then set to 9 arcsec
-                const level= getHiPSZoomLevelToFit(pv,size);
-                dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
-            }
-        }
-
         const wp= pv.request && pv.request.getWorldPt();
-        if (wp) dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});
+
+        if (!pv.request.getSizeInDeg() && !wp && lockedToOtherHiPS(vr,pv)) { //if nothing enter, match to existing HiPS
+            const otherPlot= primePlot(getOtherLockedHiPS(vr,pv));
+            dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level:otherPlot.zoomFactor });
+            const {centerWp}= getPointMaxSide(otherPlot, otherPlot.viewDim);
+            dispatchChangeCenterOfProjection({plotId,centerProjPt:centerWp});
+        }
+        else {
+            let size= pv.request.getSizeInDeg()  || Number(plot.hipsProperties.hips_initial_fov) || 180;
+
+            if (size) {
+                if (size<.00027 || size>70) { // if size is really small (<1 arcsec) or big then do a fill, small size is probably an error
+                    dispatchZoom({ plotId, userZoomType: UserZoomTypes.FILL});
+                }
+                else {
+                    if (size<.0025) size= .0025; //if between 1 arcsec and 9 then set to 9 arcsec
+                    const level= getHiPSZoomLevelToFit(pv,size);
+                    dispatchZoom({ plotId, userZoomType: UserZoomTypes.LEVEL, level });
+                }
+            }
+
+            if (wp) dispatchChangeCenterOfProjection({plotId,centerProjPt:wp});
+        }
 
 
         initCorrectCoordinateSys(pv);
@@ -136,6 +144,21 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
         cancelSelf();
     }
 }
+
+
+
+function lockedToOtherHiPS(vr, pv) {
+    return Boolean(getOtherLockedHiPS(vr,pv));
+}
+
+function getOtherLockedHiPS(vr, pv) {
+    const plotGroup= getPlotGroupById(vr, pv.plotGroupId);
+    const ary= getOnePvOrGroup(vr.plotViewAry, pv.plotId, plotGroup);
+    if (ary===1) return false;
+    return ary.find( (testPv) => (testPv!==pv  && isHiPS(primePlot(testPv))) );
+}
+
+
 
 export function addAllSky(plot) {
     const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
