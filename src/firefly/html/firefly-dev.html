@@ -12,7 +12,7 @@
     <script>
         window.firefly = {
             app: {
-                template: 'FireflyViewer',
+                template: 'FireflyViewer',          // set to app mode, instead of api.
                 menu: [
                     {label:'Images', action:'ImageSelectDropDownCmd'},
                     {label:'Catalogs', action:'IrsaCatalogDropDown'},
@@ -22,15 +22,10 @@
                     {label:'Test Searches', action:'TestSearches'},
                     {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'},
                 ],
-                options : {
-                    MenuItemKeys: {maskOverlay:true},
-                    workspace : {showOptions: true},
-                    imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
-                    hips : {useForCoverage: true, useForImageSearch: true,
-                            hipsSources: 'all',
-                            defHipsSources: {source: 'irsa', label: 'IRSA Featured'},
-                            mergedListPriority: 'irsa'}
-                }
+            },
+            options : {
+                workspace : {showOptions: true},
+                hips : {hipsSources: 'all'}
             }
         };
     </script>

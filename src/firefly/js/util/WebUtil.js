@@ -4,7 +4,7 @@
 
 import shallowequal from 'shallowequal';
 import {get, set, has, omit, isObject, union, isFunction, isEqual,  isNil,
-        last, isPlainObject, forEach, fromPairs} from 'lodash';
+        last, isPlainObject, forEach, fromPairs, merge, mergeWith, isArray} from 'lodash';
 
 import {getRootURL} from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
@@ -621,6 +621,22 @@ export function updateWith(object, path, command) {
 export function updateDelete(object, path, value) {
     const v = omit(get(object, path), value);
     return updateSet(object, path, v);
+}
+
+
+/**
+ * similar to deep merge, except when a value is an array, it will replace the value instead of merging.
+ * @param {Object} target  - the target or destination object
+ * @param {Object} sources - the source objects
+ */
+export function mergeObjectOnly(target, sources) {
+    return mergeWith(target, sources,
+        (tval, sval) => {
+            if (isArray(tval)) {
+                return sval;
+            }                
+        }
+    );
 }
 
 /**

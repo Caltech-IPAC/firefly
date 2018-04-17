@@ -163,12 +163,17 @@ export function bgDownload({dlRequest, searchRequest, selectInfo}, {key, onCompl
                     onComplete && onComplete(bgStatus);
                     dispatchComponentStateChange(key, {inProgress:false, bgStatus:undefined});
                 } else {
-                    dispatchAddActionWatcher({  actions:[BG_STATUS,BG_JOB_ADD],
-                                                callback: bgTracker,
-                                                params: {bgID:bgStatus.ID, key, onComplete, sentToBg}});
+                    // not done; track progress
+                    trackBackgroundJob({bgID: bgStatus.ID, key, onComplete, sentToBg});
                 }
             }
         });
+}
+
+export function trackBackgroundJob({bgID, key, onComplete, sentToBg}) {
+    dispatchAddActionWatcher({  actions:[BG_STATUS,BG_JOB_ADD],
+                callback: bgTracker,
+                params: {bgID, key, onComplete, sentToBg}});
 }
 
 /**
@@ -184,7 +189,7 @@ function bgTracker(action, cancelSelf, params={}) {
     if (ID === bgID) {
         switch (action.type) {
             case BG_STATUS:
-                if (isSuccess(STATE)) {
+                if (isDone(STATE)) {
                     cancelSelf();
                     dispatchComponentStateChange(key, {inProgress:false, bgStatus:undefined});
                     onComplete && onComplete(bgStatus);

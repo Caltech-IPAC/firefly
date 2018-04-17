@@ -31,16 +31,18 @@ public class RequestAgent {
     private String baseUrl;
     private String remoteIP;
     private String sessId;
+    private String deployedPath;
 
     public RequestAgent() {}
 
-    public RequestAgent(Map<String, Cookie> cookies, String protocol, String requestUrl, String baseUrl, String remoteIP, String sessId) {
+    public RequestAgent(Map<String, Cookie> cookies, String protocol, String requestUrl, String baseUrl, String remoteIP, String sessId, String deployedPath) {
         this.cookies = cookies;
         this.protocol = protocol;
         this.requestUrl = requestUrl;
         this.baseUrl = baseUrl;
         this.remoteIP = remoteIP;
         this.sessId = sessId;
+        this.deployedPath = deployedPath;
     }
 
     public void setCookies(Map<String, Cookie> cookies) {
@@ -62,6 +64,9 @@ public class RequestAgent {
         this.sessId = sessId;
     }
 
+    public String getDeployedPath() { return deployedPath; }
+    public void setDeployedPath(String deployedPath) { this.deployedPath = deployedPath; };
+
     public String getProtocol() {
         return protocol;
     }
@@ -78,9 +83,7 @@ public class RequestAgent {
         this.requestUrl = requestUrl;
     }
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
+    public String getBaseUrl() { return baseUrl; }
 
     void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -156,6 +159,7 @@ public class RequestAgent {
             String baseUrl = String.format("%s://%s%s%s/", scheme, serverName, serverPortDesc, request.getContextPath());
             String requestUrl = String.format("%s://%s%s%s", scheme, serverName, serverPortDesc, request.getRequestURI());
 
+            setDeployedPath(request.getContextPath());
             setRemoteIP(remoteIP);
             setProtocol(scheme);
             setRequestUrl(requestUrl);

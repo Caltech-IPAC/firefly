@@ -1,15 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*global __$version_tag*/
 
 import 'babel-polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {set, get} from 'lodash';
 import 'styles/global.css';
 
-import {APP_LOAD} from './core/AppDataCntlr.js';
+import {APP_LOAD, dispatchUpdateAppData, dispatchAppOptions} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
@@ -24,10 +24,9 @@ import {getJsonData } from './rpc/SearchServicesJson.js';
 import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
-import {dispatchAppOptions} from './core/AppDataCntlr.js';
 import {init} from './rpc/CoreServices.js';
-import {getProp} from './util/WebUtil.js';
-import {initLostConnectionWarning} from './ui/LostConnection.jsx'; 
+import {getProp, mergeObjectOnly} from './util/WebUtil.js';
+import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 
 export const flux = reduxFlux;
 
@@ -50,7 +49,29 @@ export const Templates = {
 /**
  * @global
  * @public
- * @typedef {Object} StartupConfigOptions
+ * @typedef {Object} AppProps
+ * @summary A property object used for customizing the application
+ *
+ * @prop {String} [template] - UI template to display.  API mode if not given
+ * @prop {string} [views]    - some template may have multiple views.  If not given, the default view of the template will be used.
+ * @prop {string} [div=app]  - ID of a div to place the viewer in.
+ * @prop {string} [appTitle] - title of this application.
+ * @prop {boolean} [showUserInfo=false] - show user information.  This is used when authentication is available
+ * @prop {boolean} [showViewsSwitch] - show/hide the swith views buttons
+ * @prop {Array.<function>} [rightButtons]    - function(s) returning a button to be displayed on the top-right of the result page.
+ * 
+ *
+ * @prop {Object} menu         custom menu bar
+ * @prop {string} menu.label   button's label
+ * @prop {string} menu.action  action to fire on button clicked
+ * @prop {string} menu.type    use 'COMMAND' for actions that's not drop-down related.
+ */
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} FireflyOptions
  *
  * @summary An object that is defined in the html that has configuration options for Firefly
  *
@@ -65,35 +86,81 @@ export const Templates = {
  *
  */
 
+/** @type {AppProps} */
+const defAppProps = {
+    div: 'app',
+    template: undefined,        // don't set a default value for this.  it's also used as a switch for API vs UI mode
+    appTitle: '',
+    showUserInfo: false,
+    showViewsSwitch: false,
+    rightButtons: undefined,
 
-const defConfigOptions = {
+    menu: [
+        {label:'Images', action:'ImageSelectDropDownCmd'},
+        {label:'Catalogs', action:'IrsaCatalogDropDown'},
+        {label:'Charts', action:'ChartSelectDropDownCmd'},
+        {label:'Upload', action: 'FileUploadDropDownCmd'},
+        //{label:'Workspace', action: 'WorkspaceDropDownCmd'}
+    ],
+};
+
+/** @type {FireflyOptions} */
+const defFireflyOptions = {
     MenuItemKeys: {},
     imageTabs: undefined,
     irsaCatalogFilter: undefined,
     catalogSpacialOp: undefined,
     imageMasterSources: ['ALL'],
-    imageMasterSourcesOrder: '',
+    imageMasterSourcesOrder: undefined,
     workspace : { showOptions: false},
-    hips : {useForCoverage: true, useForImageSearch: true,
-            hipsSources: 'all',
-            defHipsSources: {source: 'irsa', label: 'Featured'},
-            mergedListPriority: 'irsa'}
+
+    charts: {
+        // TODO: need to define all options with defaults here.
+    },
+    hips : {
+        useForCoverage: true,
+        useForImageSearch: true,
+        hipsSources: 'all',
+        defHipsSources: {source: 'irsa', label: 'Featured'},
+        mergedListPriority: 'irsa'
+    },
+    coverage : {
+        // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
+    }
 };
 
 
-function fireflyInit() {
+function fireflyInit(props, options={}) {
+    props = mergeObjectOnly(defAppProps, props);
+    options = mergeObjectOnly(defFireflyOptions, options);
+    const {template} = props;
 
-    if (! (window.firefly && window.firefly.initialized) ) {
-        flux.bootstrap();
-        const touch= false; // ToDo: determine if we are on a touch device
-        if (touch) {
-            React.initializeTouchEvents(true);
+    const viewer = get(Templates, template);
+
+    const touch= false; // ToDo: determine if we are on a touch device
+    if (touch) {
+        React.initializeTouchEvents(true);
+    }
+
+    // setup application options
+    dispatchAppOptions(options);
+    if (options.disableDefaultDropDown) {
+        dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+    }
+
+    // initialize UI or API depending on entry mode.
+    if (viewer) {
+        if (window.document.readyState==='complete' || window.document.readyState==='interactive') {
+            renderRoot(viewer, props);
         }
+        else {
+            console.log('Waiting for document to finish loading');
+            window.addEventListener('load', () => renderRoot(viewer, props) ); // maybe could use: document.addEventListener('DOMContentLoaded'
+        }
+    } else {
+        initApi();
 
-        if (!window.firefly) window.firefly= {};
-
-        // to call histogram and other react components from GWT
-
+        // TODO: if we're still using this, it should be moved into our API code.
         // a method to get JSON data from external task launcher
         window.firefly.getJsonFromTask= function(launcher, task, taskParams) {
             const req = new ServerRequest('JsonFromExternalTask');
@@ -102,71 +169,51 @@ function fireflyInit() {
             req.setParam({name : 'taskParams', value : JSON.stringify(taskParams)});
             return getJsonData(req);
         };
-        window.firefly.initialized = true;
-
-        // start WebSocketClient
-        wsConnect((client) => {
-            client.addListener(ActionEventHandler);
-            window.firefly.wsClient = client;
-            init();    //TODO.. need to add spaName when we decide to support it.
-            initLostConnectionWarning();
-        });
     }
 }
 
 export function getVersion() {
   return getProp('version_tag', 'unknown');
-} 
+}
 
 
 export const firefly = {
-
     bootstrap,
-
-    process(rawAction, condition) {
-        return flux.process(rawAction, condition);
-    },
-
-    addListener(listener, ...types) {
-
-    }
-
+    addListener: flux.addListener,
+    process: flux.process,
 };
-
 
 
 
 /**
  * boostrap Firefly api or application.
- * @param options   global options used by both application and api
- * @param viewer    render this viewer onto the document.  if viewer does not exists, it will init api instead.
- * @param props     viewer's props used for rendering.
+ * @param {AppProps} props - application properties
+ * @param {FireflyOptions} options - startup options
  * @returns {Promise.<boolean>}
  */
-function bootstrap(options={}, viewer, props) {
+function bootstrap(props, options) {
 
+    // if initialized, don't run it again.
+    if (window.firefly && window.firefly.initialized) return Promise.resolve();
+
+    set(window, 'firefly.initialized', true);
     return  new Promise((resolve) => {
 
-        fireflyInit();
-        flux.process( {type : APP_LOAD} );
-        resolve && resolve();
+        flux.bootstrap();
+        flux.process( {type : APP_LOAD} );  // setup initial store/state
 
-        dispatchAppOptions(Object.assign({},defConfigOptions, options));
-        if (options.disableDefaultDropDown) {
-            dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
-        }
+        ensureUsrKey();
+        // establish websocket connection first before doing anything else.
+        wsConnect((client) => {
+            fireflyInit(props, options);
 
-        if (viewer) {
-            if (window.document.readyState==='complete' || window.document.readyState==='interactive') {
-                renderRoot(viewer, props);
-            }
-            else {
-                console.log('Waiting for document to finish loading');
-                window.addEventListener('load', () => renderRoot(viewer, props) ); // maybe could use: document.addEventListener('DOMContentLoaded'
-            }
-        } else {
-            initApi();
-        }
+            client.addListener(ActionEventHandler);
+            window.firefly.wsClient = client;
+            init();    //TODO.. need to add spaName when we decide to support it.
+            initLostConnectionWarning();
+
+            resolve && resolve();
+        });
     });
 }
 
@@ -179,4 +226,36 @@ function renderRoot(viewer, props) {
         showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');
         console.log(`DOM Element "${props.div}" is not found in the document, Firefly cannot start.`);
     }
+}
+
+
+
+function ensureUsrKey() {
+    const usrKey = getCookie('usrkey');
+    if (!usrKey || usrKey.includes(' ')) {
+        document.cookie = `usrkey=${uuid()};max-age=${3600 * 24 * 7 * 2}`;
+    }
+}
+
+function uuid() {
+    var seed = Date.now();
+    if (window.performance && typeof window.performance.now === 'function') {
+        seed += performance.now();
+    }
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (seed + Math.random() * 16) % 16 | 0;
+        seed = Math.floor(seed/16);
+
+        return (c === 'x' ? r : r & (0x3|0x8)).toString(16);
+    });
+
+    return uuid;
+}
+
+function getCookie(name) {
+    return ('; ' + document.cookie)
+        .split('; ' + name + '=')
+        .pop()
+        .split(';')
+        .shift();
 }

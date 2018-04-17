@@ -64,7 +64,7 @@ public interface SearchProcessor<Type> {
 
     /**
      * return the unique ID for the original data set of this request.  This means parameters related
-     * to paging, filtering, sorting, decimating, etc or ignored.
+     * to paging, filtering, sorting, decimating, etc are ignored.
      * @param request
      * @return
      */

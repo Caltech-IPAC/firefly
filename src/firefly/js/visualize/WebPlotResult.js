@@ -13,7 +13,6 @@ const WebPlotResult= {
     STRING: 'String',
     PLOT_IMAGES: 'PlotImages',
     FLUX_VALUE: 'FluxValue',
-    RAW_DATA_SET: 'RawDataSet',
     DATA_HISTOGRAM: 'DataHistogram',
     DATA_BIN_MEAN_ARRAY: 'DataBinMeanArray',
     DATA_HIST_IMAGE_URL: 'DataHistImageUrl',

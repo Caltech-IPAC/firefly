@@ -4,7 +4,6 @@
 import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset} from 'lodash';
 
 import {flux} from '../Firefly.js';
-import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TblUtil from './TableUtil.js';
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
@@ -14,9 +13,11 @@ import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {updateMerge, logError} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
-import {BG_STATUS, BG_JOB_ADD} from '../core/background/BackgroundCntlr.js';
-import {isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
+import {BG_STATUS, BG_JOB_ADD, dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
+import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
+
 
 export const TABLE_SPACE_PATH = 'table_space';
 export const TABLE_RESULTS_PATH = 'table_space.results.tables';
@@ -580,60 +581,38 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
         });
 }
 
-
 function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
-    submitBackgroundSearch(request, request, 1000).then ( (bgStatus) => {
-        const {ID, STATE} = bgStatus;
-        if (isDone(STATE)) {
-            if (isSuccess(STATE)) {
-                syncFetch(request, hlRowIdx, dispatch, tbl_id);
-            } else {
-                dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(bgStatus))});
-            }
+    const onComplete = (bgStatus) => {
+        const {STATE} = bgStatus || {};
+        if (isSuccess(STATE)) {
+            syncFetch(request, hlRowIdx, dispatch, tbl_id);
         } else {
-            // not done; track progress
-            dispatch({type: TABLE_UPDATE, payload: {tbl_id, bgStatus}});
-            dispatchAddActionWatcher({  actions:[BG_STATUS,BG_JOB_ADD],
-                callback: bgTracker,
-                params: {bgID: ID, request, hlRowIdx, dispatch, tbl_id}});
+            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(bgStatus))});
         }
-    }).catch( (error) => {
-        dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});
-    });
-}
+    };
 
-/**
- * @callback actionWatcherCallback
- * @param action
- * @param cancelSelf
- * @param params
- * @param params.bgID
- * @param params.request
- * @param params.hlRowIdx
- * @param params.dispatch
- * @param params.tbl_id
- */
-function bgTracker(action, cancelSelf, {bgID, request, hlRowIdx, dispatch, tbl_id}) {
-    const {type} = action;
-    const {ID, STATE} = action.payload || {};
+    const sentToBg = (bgStatus) => {
+        dispatchTblResultsRemove(tbl_id);
+        dispatchJobAdd(bgStatus);
+    };
 
-    switch (type) {
-        case  BG_STATUS :
-            if (isDone(STATE)) {
-                if (isSuccess(STATE)) {
-                    syncFetch(request, hlRowIdx, dispatch, tbl_id);
+    const bgKey = TblUtil.makeBgKey(tbl_id);
+    dispatchComponentStateChange(bgKey, {inProgress:true, bgStatus:undefined});
+    submitBackgroundSearch(request, request, 1000)
+        .then ( (bgStatus) => {
+            if (bgStatus) {
+                dispatchComponentStateChange(bgKey, {bgStatus});
+                if (isDone(bgStatus.STATE)) {
+                    onComplete(bgStatus);
+                    dispatchComponentStateChange(bgKey, {inProgress:false, bgStatus:undefined});
                 } else {
-                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(action.payload))});
+                    // not done; track progress
+                    trackBackgroundJob({bgID: bgStatus.ID, key: bgKey, onComplete, sentToBg});
                 }
-                cancelSelf();
             }
-            break;
-        case BG_JOB_ADD :
-            if (ID === bgID) {
-                // sent to background... no need to track this anymore.
-                cancelSelf();
-            }
-    }
+        }).catch( (error) => {
+            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});
+        });
 }
 
 const isDebug = () => get(window, 'firefly.debug', false);

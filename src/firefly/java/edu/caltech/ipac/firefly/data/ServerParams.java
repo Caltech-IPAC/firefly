@@ -129,12 +129,7 @@ public class ServerParams {
     public static final String FITS_HEADER = "CmdFitsHeader";  //LZ 3/21/16  DM-4494
 
     public static final String DELETE = "CmdDelete";
-    public static final String USER_KEY = "CmdUserKey";
-    public static final String VERSION = "CmdVersion";
-    public static final String RAW_DATA_SET = "RawDataSet";
     public static final String JSON_DATA = "JsonData";
-    public static final String CHK_FILE_STATUS = "CmdChkFileStatus";
-    public static final String GET_ENUM_VALUES = "getEnumValues";
     public static final String RESOLVE_NAME= "CmdResolveName";
     public static final String PROGRESS = "CmdProgress";
     public static final String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";
@@ -142,7 +137,6 @@ public class ServerParams {
     public static final String ADD_JOB = "addBgJob";
     public static final String REMOVE_JOB = "removeBgJob";
     public static final String CANCEL= "cancel";
-    public static final String ADD_ID_TO_CRITERIA= "addIDToCriteria";
     public static final String CLEAN_UP= "cleanup";
     public static final String DOWNLOAD_PROGRESS= "downloadProgress";
     public static final String SET_EMAIL= "setEmail";

@@ -13,7 +13,6 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.rpc.JsonDataCommands;
 import edu.caltech.ipac.firefly.server.rpc.PushCommands;
 import edu.caltech.ipac.firefly.server.rpc.ResolveServerCommands;
-import edu.caltech.ipac.firefly.server.rpc.ResourceServerCommands;
 import edu.caltech.ipac.firefly.server.rpc.VisServerCommands;
 import edu.caltech.ipac.firefly.server.servlets.HttpServCommands;
 import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
@@ -63,9 +62,6 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.ADD_SAVED_REQUEST,    new VisServerCommands.AddSavedRequest());
         _cmdMap.put(ServerParams.GET_IMAGE_MASTER_DATA, new VisServerCommands.GetMasterImageData());
 
-        _cmdMap.put(ServerParams.USER_KEY,   new ResourceServerCommands.UserKey());
-        _cmdMap.put(ServerParams.VERSION,      new ResourceServerCommands.GetVersion());
-
         //Workspaces
         _cmdMap.put(ServerParams.WS_LIST,               new WsServerCommands.WsList());
         _cmdMap.put(ServerParams.WS_GET_FILE,           new WsServerCommands.WsGetFile());
@@ -77,16 +73,12 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.WS_PUT_TABLE_FILE,     new WsServerCommands.WsPutTableFile());
         _cmdMap.put(ServerParams.WS_PUT_IMAGE_FILE,     new WsServerCommands.WsPutImgFile());
 
-        _cmdMap.put(ServerParams.RAW_DATA_SET,           new SearchServerCommands.GetRawDataSet());
         _cmdMap.put(ServerParams.JSON_DATA,              new SearchServerCommands.GetJSONData());
-        _cmdMap.put(ServerParams.CHK_FILE_STATUS,        new SearchServerCommands.ChkFileStatus());
-        _cmdMap.put(ServerParams.GET_ENUM_VALUES,        new SearchServerCommands.GetEnumValues());
         _cmdMap.put(ServerParams.SUB_BACKGROUND_SEARCH,  new SearchServerCommands.SubmitBackgroundSearch());
         _cmdMap.put(ServerParams.GET_STATUS,             new SearchServerCommands.GetStatus());
         _cmdMap.put(ServerParams.ADD_JOB,                new SearchServerCommands.AddBgJob());
         _cmdMap.put(ServerParams.REMOVE_JOB,             new SearchServerCommands.RemoveBgJob());
         _cmdMap.put(ServerParams.CANCEL,                 new SearchServerCommands.Cancel());
-        _cmdMap.put(ServerParams.ADD_ID_TO_CRITERIA,     new SearchServerCommands.AddIDToPushCriteria());
         _cmdMap.put(ServerParams.CLEAN_UP,               new SearchServerCommands.CleanUp());
         _cmdMap.put(ServerParams.DOWNLOAD_PROGRESS,      new SearchServerCommands.DownloadProgress());
         _cmdMap.put(ServerParams.SET_EMAIL,              new SearchServerCommands.SetEmail());
