@@ -10,7 +10,7 @@ import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceDeletePath,
         dispatchWorkspaceMovePath,
         dispatchWorkspaceUpdate,
-        getWorkspaceStatus,
+        getWorkspaceErrorMsg,
         getWorkspaceList, getFolderUnderLevel,
         getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
@@ -369,7 +369,7 @@ export function showWorkspaceUploadPopup({onClickUpload, value}) {
         };
 
         if (!newList || isEmpty(newList)) {
-            workspacePopupMsg('Workspace access error: ' + getWorkspaceStatus(), 'Workspace access');
+            workspacePopupMsg('Workspace access error: ' + getWorkspaceErrorMsg() , 'Workspace access');
         } else {
             startWorkspaceReadPopup();
         }

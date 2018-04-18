@@ -258,6 +258,26 @@ export function getWorkspaceStatus() {
     return isEmpty(getWorkspaceList()) && get(flux.getState(), [WORKSPACE_PATH, 'status']);
 }
 
+export function getWorkspaceErrorMsg(){
+    const statusMsg = getWorkspaceStatus();
+    //The status code and corresponding messages are in ResponseMessage.java
+    var errorMsg;
+    switch (statusMsg){
+        case 'Unauthorized':
+            errorMsg = 'You have not logged in';
+            break;
+        case 'Forbidden':
+            errorMsg = 'You do not have access right';
+            break;
+        case 'Not Found':
+            errorMsg = 'The request resources can not be found';
+            break;
+        default:
+            errorMsg = statusMsg;
+            break;
+    }
+    return errorMsg;
+}
 export function isAccessWorkspace() {
     return get(flux.getState(), [WORKSPACE_PATH, 'isLoading']);
 }
