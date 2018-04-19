@@ -16,7 +16,7 @@ import {get, isUndefined} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeWorldPt, makeDevicePt} from './Point.js';
-import {SpatialVector, HealpixIndex} from '../externalSource/aladinProj/HealpixIndex.js';
+import {SpatialVector, HealpixIndex, ORDER_MAX} from '../externalSource/aladinProj/HealpixIndex.js';
 import {convert, computeDistance} from './VisUtil.js';
 import {replaceHeader, getScreenPixScaleArcSec} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
@@ -26,7 +26,7 @@ import {getRootURL} from '../util/BrowserUtil.js';
 import {toDegrees} from './VisUtil.js';
 
 
-export const MAX_SUPPORTED_HIPS_LEVEL= 14;
+export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-1;
 
 /**
  *
@@ -49,7 +49,7 @@ export function changeProjectionCenter(plot, wp) {
 export function getMaxDisplayableHiPSGridLevel(plot) {
     let {norder}= getHiPSNorderlevel(plot);
     norder = norder>3 ? norder+3 : norder+2;
-    if (norder>14) norder= 14;
+    if (norder>MAX_SUPPORTED_HIPS_LEVEL) norder= MAX_SUPPORTED_HIPS_LEVEL;
     return norder;
 }
 
@@ -126,13 +126,13 @@ const nOrderForPixAsSizeCacheMap= {};
  * @return {Number} the best norder for the pixel
  */
 function getNOrderForPixArcSecSize(sizeInArcSec) {
-    const sizeInArcSecKey= Math.trunc(sizeInArcSec*10000)+'';
+    const sizeInArcSecKey= sizeInArcSec.toFixed(7);
     let norder= nOrderForPixAsSizeCacheMap[sizeInArcSecKey];
     if (isUndefined(norder)) {
-        let nside = HealpixIndex.calculateNSide(sizeInArcSec*512); // 512 size tiles hardcoded, should fix
-        if (nside===8192 && sizeInArcSec<.04) nside=16384 ;
+        const nside = HealpixIndex.calculateNSide(sizeInArcSec*512); // 512 size tiles hardcoded, should fix
 
-        norder = Math.log(nside)/Math.log(2); // convert to a base 2 log - 	logb(x) = logc(x) / logc(b)
+        // norder = Math.log(nside)/Math.log(2); // convert to a base 2 log - 	logb(x) = logc(x) / logc(b)
+        norder = Math.log2(nside); // convert to a base 2 log - 	logb(x) = logc(x) / logc(b)
         norder= Math.max(3, norder);
         nOrderForPixAsSizeCacheMap[sizeInArcSecKey]= norder;
     }

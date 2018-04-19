@@ -1,7 +1,5 @@
 package edu.caltech.ipac.firefly.server;
 
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.util.BrowserInfo;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -18,28 +16,19 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
 
     @Override
     public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
-        String callback = sp.getOptional("callback");
-        boolean doJsonp = sp.getOptionalBoolean(ServerParams.DO_JSONP, false);
-        if (doJsonp) res.setContentType("application/javascript");
         JSONObject json=new JSONObject();
         String jsonData;
-          try {
+        try {
             String result = doCommand(new SrvParam(sp.getParamMap()));
 
             if (getCanCreateJson()) {
                 jsonData = result;
             } else {
-
-                json.put("success","true" );
-                json.put("data", result );
-
+                json.put("success", "true");
+                json.put("data", result);
                 //make it size=1 array since the UI side expects an array
-                JSONArray jArray = new JSONArray();
-                jArray.add(json);
-                jsonData =jArray.toJSONString();
-
+                jsonData = makeOneEntryArray(json);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             json.put("success", "false");
@@ -50,40 +39,32 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
                 json.put("cause"+(new Integer(cnt)).toString(),t.toString() );
                 cnt++;
             }
-
             //make it size=1 array since the UI side expects an array
-            JSONArray list = new JSONArray();
-            list.add(json);
-            jsonData = list.toJSONString();
-       }
-
-        String retval;
-        if (doJsonp && callback != null) {
-            retval = callback + "(" + jsonData + ");";
-        } else {
-            retval = jsonData;
+            jsonData= makeOneEntryArray(json);
         }
 
-        BrowserInfo b= new BrowserInfo(req.getHeader("user-agent"));
-        if ((b.isIE() && b.getMajorVersion()<=9)) {
-            res.setContentType("text/html");
-        }
-        else {
-            if (doJsonp) {
-                res.setContentType("application/javascript");
-            } else {
-                res.setContentType("application/json");
-            }
-        }
-        res.setContentLength(retval.length());
+        res.setContentType("application/json");
+        res.setContentLength(jsonData.length());
         ServletOutputStream out = res.getOutputStream();
-        out.write(retval.getBytes());
+        out.write(jsonData.getBytes());
         out.close();
     }
 
     public boolean getCanCreateJson() { return true; }
     public abstract String doCommand(SrvParam params) throws Exception;
+
+    private static String makeOneEntryArray(JSONObject entry) {
+        JSONArray jArray = new JSONArray();
+        jArray.add(entry);
+        return jArray.toJSONString();
+    }
 }
+
+
+
+
+
+
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
 * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH

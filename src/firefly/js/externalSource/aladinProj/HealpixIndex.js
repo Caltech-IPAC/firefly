@@ -151,6 +151,8 @@ class LongRangeSetBuilder {
 }
 
 
+const powerOf2=  new Array(53).fill(0).map((val,idx) => Math.pow(2,idx));
+
 const Utils = {
     radecToPolar(ra, dec) {
         return { theta: Math.PI / 2 - dec / 180 * Math.PI, phi: ra / 180 * Math.PI };
@@ -160,7 +162,45 @@ const Utils = {
     },
     castToInt(t) {
         return t > 0 ? Math.floor(t) : Math.ceil(t);
+    },
+
+    shiftRight(v,bits) {
+        return Math.trunc(v / powerOf2[bits]);
+    },
+    shiftLeft(v,bits) {
+        return Math.trunc(v * powerOf2[bits]);
+    },
+
+
+    bigAnd(v1, v2) {
+        const hi = 0x80000000;
+        const low = 0x7fffffff;
+        const hi1 = ~~(v1 / hi);
+        const hi2 = ~~(v2 / hi);
+        const low1 = (v1 & low) >>> 0;
+        const low2 = (v2 & low) >>> 0;
+        const h = (hi1 & hi2) >>> 0;
+        const l = (low1 & low2) >>> 0;
+        return h*hi + l;
+    },
+    bigOr(v1, v2) {
+        const hi = 0x80000000;
+        const low = 0x7fffffff;
+        const hi1 = ~~(v1 / hi);
+        const hi2 = ~~(v2 / hi);
+        const low1 = (v1 & low) >>> 0;
+        const low2 = (v2 & low) >>> 0;
+        const h = (hi1 | hi2) >>> 0;
+        const l = (low1 | low2) >>> 0;
+        return h*hi + l;
+    },
+
+    orAll(...args) {
+        return args.reduce( (prev,curr) => {
+            return Utils.bigOr(prev,curr);
+        },0);
     }
+
 };
 
 
@@ -190,25 +230,27 @@ const Utils = {
 // const XOFFSET = [-1, -1, 0, 1, 1, 1, 0, -1];
 // const YOFFSET = [0, 1, 1, 1, 0, -1, -1, -1];
 // const ORDER_MAX = 13;
-const NSIDELIST = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192];
+// const NSIDELIST = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536,
+//     131072,  262144, 524288]; //level 19
+
+export const ORDER_MAX = 21;
+const NSIDELIST =  new Array(ORDER_MAX).fill(0).map((val,idx) => Math.pow(2,idx));
 const JPLL = [1, 3, 5, 7, 0, 2, 4, 6, 1, 3, 5, 7];
 const JRLL = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4];
-const NS_MAX = 8192;
+const NS_MAX = NSIDELIST[NSIDELIST.length-1];
 const Z0 = Constants.TWOTHIRD;
 
+const TAB_SIZE = 256;
+const CTAB= new Array(TAB_SIZE).fill(0).map( (v,i) =>
+               1 & i | (2 & i) << 7 | (4 & i) >>> 1 | (8 & i) << 6 | (16 & i) >>> 2 | (32 & i) << 5 | (64 & i) >>> 3 | (128 & i) << 4);
+const UTAB= new Array(TAB_SIZE).fill(0).map( (v,i) =>
+               1 & i | (2 & i) << 1 | (4 & i) << 2 | (8 & i) << 3 | (16 & i) << 4 | (32 & i) << 5 | (64 & i) << 6 | (128 & i) << 7);
 
 
 export class HealpixIndex {
 
     constructor(nside) {
         this.nside = nside;
-        const s = 256;
-        this.ctab = Array(s);
-        this.utab = Array(s);
-        for (let i = 0; i < 256; ++i) {
-            this.ctab[i] = 1 & i | (2 & i) << 7 | (4 & i) >> 1 | (8 & i) << 6 | (16 & i) >> 2 | (32 & i) << 5 | (64 & i) >> 3 | (128 & i) << 4;
-            this.utab[i] = 1 & i | (2 & i) << 1 | (4 & i) << 2 | (8 & i) << 3 | (16 & i) << 4 | (32 & i) << 5 | (64 & i) << 6 | (128 & i) << 7;
-        }
         this.nl2 = 2 * nside;
         this.nl3 = 3 * nside;
         this.nl4 = 4 * nside;
@@ -246,11 +288,9 @@ export class HealpixIndex {
         return i;
     }
     static nside2order(nside) {
-        return (nside & nside - 1) > 0 ? -1 : Utils.castToInt(HealpixIndex.log2(nside));
+        return (nside & nside - 1) > 0 ? -1 : Utils.castToInt(Math.log2(nside));
     }
-    static log2(t) {
-        return Math.log(t) / Math.log(2);
-    }
+
     ang2pix_nest(theta, phi) {
         let  tp, o, c, jp, jm, ntt, face_num, ix, iy;
         phi >= Constants.TWOPI && (phi -= Constants.TWOPI);
@@ -275,8 +315,8 @@ export class HealpixIndex {
             const y = this.nside * .75 * z;
             const u = M - y;
             const p = M + y;
-            o = u >> this.order;
-            c = p >> this.order;
+            o = u >>> this.order;
+            c = p >>> this.order;
             face_num = o===c ?
                 4===o ?
                     4 :
@@ -310,18 +350,92 @@ export class HealpixIndex {
         }
         return this.xyf2nest(ix, iy, face_num);
     }
-    xyf2nest(t, s, i) {
-        return (i << 2 * this.order) + (this.utab[255 & t] | this.utab[255 & t >> 8] << 16 | this.utab[255 & t >> 16] << 32 | this.utab[255 & t >> 24] << 48 | this.utab[255 & s] << 1 | this.utab[255 & s >> 8] << 17 | this.utab[255 & s >> 16] << 33 | this.utab[255 & s >> 24] << 49);
+
+    xyf2nestORGIN_A(ix, iy, face_num) {
+        return (face_num << 2 * this.order) + (UTAB[255 & ix] | UTAB[255 & ix >> 8] << 16 | UTAB[255 & ix >> 16] << 32 | UTAB[255 & ix >> 24] << 48 | UTAB[255 & iy] << 1 | UTAB[255 & iy >> 8] << 17 | UTAB[255 & iy >> 16] << 33 | UTAB[255 & iy >> 24] << 49);
     }
-    nest2xyf(t) {
+
+
+    xyf2nestORGIN_B(ix, iy, face_num) {
+        return (face_num << 2 * this.order) +
+            (UTAB[255 & ix] |
+             UTAB[255 & ix >>> 8] << 16 |
+             UTAB[255 & ix >>> 16] << 32 |
+             UTAB[255 & ix >>> 24] << 48 |
+             UTAB[255 & iy] << 1 |
+             UTAB[255 & iy >>> 8] << 17 |
+             UTAB[255 & iy >>> 16] << 33 |
+             UTAB[255 & iy >>> 24] << 49);
+    }
+    xyf2nest(ix, iy, face_num) {
+        // if (ix>0x7FFFFFF || iy>0x7FFFFFF) {
+        //     console.log('xyf2nest: ix or iy greater');
+        // }
+        // const nest= (face_num << 2 * this.order) +
+        //     (this.utab[255 & ix] |
+        //         this.utab[255 & ix >>> 8] * Math.pow(2,16) |
+        //         this.utab[255 & ix >>> 16] * Math.pow(2,32)|
+        //         this.utab[255 & ix >>> 24] * Math.pow(2,48)|
+        //         this.utab[255 & iy] << 1 |
+        //         this.utab[255 & iy >>> 8] * Math.pow(2,17) |
+        //         this.utab[255 & iy >>> 16] * Math.pow(2,33) |
+        //         this.utab[255 & iy >>> 24] * Math.pow(2,49));
+        const nest= Utils.shiftLeft(face_num, 2 * this.order) +
+            Utils.orAll(UTAB[255 & ix] ,
+                UTAB[255 & ix >>> 8] * Math.pow(2,16) ,
+                UTAB[255 & ix >>> 16] * Math.pow(2,32),
+                UTAB[255 & ix >>> 24] * Math.pow(2,48),
+                UTAB[255 & iy] << 1 ,
+                UTAB[255 & iy >>> 8] * Math.pow(2,17) ,
+                UTAB[255 & iy >>> 16] * Math.pow(2,33) ,
+                UTAB[255 & iy >>> 24] * Math.pow(2,49));
+        // if (nest>0x7FFFFFF) {
+        //     console.log('xyf2nest: nest greater');
+        // }
+        return nest;
+    }
+
+    nest2xyf(ipix) {
+        // if (ipix>0x7FFFFFF) {
+        //     console.log('nest2xyf: ipix greater');
+        // }
         const s = {};
-        s.face_num = t >> 2 * this.order;
-        let i = t & this.npface - 1;
-        let n = (93823560581120 & i) >> 16 | (614882086624428e4 & i) >> 31 | 21845 & i | (1431633920 & i) >> 15;
-        s.ix = this.ctab[255 & n] | this.ctab[255 & n >> 8] << 4 | this.ctab[255 & n >> 16] << 16 | this.ctab[255 & n >> 24] << 20;
-        i >>= 1;
-        n = (93823560581120 & i) >> 16 | (614882086624428e4 & i) >> 31 | 21845 & i | (1431633920 & i) >> 15;
-        s.iy = this.ctab[255 & n] | this.ctab[255 & n >> 8] << 4 | this.ctab[255 & n >> 16] << 16 | this.ctab[255 & n >> 24] << 20;
+        // s.face_num = ipix >> 2 * this.order;
+        s.face_num = Utils.shiftRight(ipix,2 * this.order);
+        // let i = ipix & this.npface - 1;
+        let i = Utils.bigAnd(ipix, this.npface - 1);
+        // let n = (93823560581120 & i) >>> 16 | (614882086624428e4 & i) >>> 31 | 21845 & i | (1431633920 & i) >>> 15;
+        let n = Utils.orAll(Utils.shiftRight(Utils.bigAnd(93823560581120,i),16),
+                            Utils.shiftRight(Utils.bigAnd(614882086624428e4, i),31),
+                            Utils.bigAnd(21845, i),
+                            Utils.shiftRight(Utils.bigAnd(1431633920,i),15));
+
+        // s.ix = this.ctab[255 & n] | this.ctab[255 & n >>> 8] << 4 | this.ctab[255 & n >>> 16] << 16 | this.ctab[255 & n >>> 24] << 20;
+
+        // if (n>0x7FFFFFF) {
+        //     console.log('nest2xyf: n greater');
+        // }
+
+        s.ix = Utils.orAll(CTAB[Utils.bigAnd(255, n)],
+                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,8)], 4),
+                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,16)], 16),
+                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,24)], 20));
+
+        //i >>= 1;
+        i= Utils.shiftRight(i,1);
+        // n = (93823560581120 & i) >>> 16 | (614882086624428e4 & i) >>> 31 | 21845 & i | (1431633920 & i) >>> 15;
+        n = Utils.orAll(Utils.shiftRight(Utils.bigAnd(93823560581120,i), 16),
+                        Utils.shiftRight(Utils.bigAnd(614882086624428e4, i), 31),
+                        Utils.bigAnd(21845, i),
+                        Utils.shiftRight(Utils.bigAnd(1431633920,i),15));
+
+
+
+        // s.iy = this.ctab[255 & n] | this.ctab[255 & n >>> 8] << 4 | this.ctab[255 & n >>> 16] << 16 | this.ctab[255 & n >>> 24] << 20;
+        s.iy = Utils.orAll(CTAB[Utils.bigAnd(255, n)],
+                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n, 8)], 4),
+                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n, 16)], 16),
+                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,24)], 20));
         return  s;
     }
     pix2ang_nest(ipix) {
@@ -434,7 +548,7 @@ export class HealpixIndex {
                 ip = ipix - this.ncap;
                 iring = ip / this.nl4 + this.nside;
                 iphi = ip % this.nl4 + 1;
-                fodd = (1 & iring + this.nside) > 0 ? 1 : .5;
+                fodd = Utils.bigAnd(1, iring + this.nside) > 0 ? 1 : .5;
                 theta = Math.acos((this.nl2 - iring) * this.fact1);
                 phi = (iphi - fodd) * Constants.PI / this.nl2;
             }
@@ -653,7 +767,11 @@ export class HealpixIndex {
                 U.indexOf(O) >= 0 || U.push(O);
             }
             b = U;
-        } else b = R.items;
+            // console.log(b);
+        }
+        else {
+            b = R.items;
+        }
         return b;
     }
 
@@ -739,75 +857,79 @@ export class HealpixIndex {
         return Utils.castToInt(this.nside * (2 - 1.5 * z));
     }
 
-    ring2nest(t) {
-        const xyf = this.ring2xyf(t);
-        return this.xyf2nest(xyf.ix, xyf.iy, xyf.face_num);
+    ring2nest(ipRing) {
+        const xyf = this.ring2xyf(ipRing);
+        const nest=  this.xyf2nest(xyf.ix, xyf.iy, xyf.face_num);
+        return nest;
     }
 
-    ring2xyf(s) {
-        let i, n, a, e;
-        const h = {};
-        if (this.ncap > s) {
-            i = Utils.castToInt(.5 * (1 + Math.sqrt(1 + 2 * s)));
-            n = s + 1 - 2 * i * (i - 1);
-            a = 0;
-            e = i;
-            h.face_num = 0;
-            let r = n - 1;
-            if (r >= 2 * i) {
-                h.face_num = 2;
-                r -= 2 * i;
+    ring2xyf(pix) {
+        let iring, iphi, kshift, nr;
+        const ret = {}; // Xyf
+        if (this.ncap > pix) { // North Polar cap
+            iring = Utils.castToInt(.5 * (1 + Math.sqrt(1 + 2 * pix)));
+            iphi = pix + 1 - 2 * iring * (iring - 1);
+            kshift = 0;
+            nr = iring;
+             ret.face_num = 0;
+            let r = iphi - 1;
+            if (r >= 2 * iring) {
+                 ret.face_num = 2;
+                r -= 2 * iring;
             }
-            r >= i && ++h.face_num;
-        } else if (this.npix - this.ncap > s) {
-            const o = s - this.ncap;
+            r >= iring && ++ ret.face_num;
+        } else if (this.npix - this.ncap > pix) {  // Equatorial region
+            const ip = pix - this.ncap;
             if (this.order >= 0)  {
-                i = (o >> this.order + 2) + this.nside;
-                n = (o & this.nl4 - 1) + 1;
+                iring = Utils.shiftRight(ip,this.order + 2) + this.nside;
+                // iphi = (ip & this.nl4 - 1) + 1;
+                iphi = Utils.bigAnd(ip, this.nl4 - 1) + 1;
             } else {
-                i = o / this.nl4 + this.nside;
-                n = o % this.nl4 + 1;
+                iring = ip / this.nl4 + this.nside;
+                iphi = ip % this.nl4 + 1;
             }
-            a = 1 & i + this.nside;
-            e = this.nside;
+            kshift = Utils.bigAnd(1 , iring + this.nside);
+            nr = this.nside;
             let c, u;
-            const p = i - this.nside + 1;
-            const l = this.nl2 + 2 - p;
+            const ire = iring - this.nside + 1;
+            const irm = this.nl2 + 2 - ire;
             if (this.order>=0) {
-                c = n - Utils.castToInt(p / 2) + this.nside - 1 >> this.order;
-                u = n - Utils.castToInt(l / 2) + this.nside - 1 >> this.order;
+                c = Utils.shiftRight(iphi - Utils.castToInt(ire / 2) + this.nside - 1, this.order);
+                u = Utils.shiftRight(iphi - Utils.castToInt(irm / 2) + this.nside - 1,this.order);
             }
             else {
-                c = (n - Utils.castToInt(p / 2) + this.nside - 1) / this.nside;
-                u = (n - Utils.castToInt(l / 2) + this.nside - 1) / this.nside;
+                c = (iphi - Utils.castToInt(ire / 2) + this.nside - 1) / this.nside;
+                u = (iphi - Utils.castToInt(irm / 2) + this.nside - 1) / this.nside;
             }
             if (u===c) {
-                h.face_num= 4===u ? 4 : Utils.castToInt(u) + 4;
+                 ret.face_num= 4===u ? 4 : Utils.castToInt(u) + 4;
             }
             else  {
-                h.face_num=c > u ? Utils.castToInt(u) : Utils.castToInt(c) + 8;
+                 ret.face_num=c > u ? Utils.castToInt(u) : Utils.castToInt(c) + 8;
             }
-        } else {
-            const o = this.npix - s;
-            i = Utils.castToInt(.5 * (1 + Math.sqrt(2 * o - 1)));
-            n = 4 * i + 1 - (o - 2 * i * (i - 1));
-            a = 0;
-            e = i;
-            i = 2 * this.nl2 - i;
-            h.face_num = 8;
-            let r = n - 1;
-            if (r >= 2 * e) {
-                h.face_num = 10;
-                r -= 2 * e;
+        } else {  // South Polar cap
+            const ip = this.npix - pix;
+            iring = Utils.castToInt(.5 * (1 + Math.sqrt(2 * ip - 1)));
+            iphi = 4 * iring + 1 - (ip - 2 * iring * (iring - 1));
+            kshift = 0;
+            nr = iring;
+            iring = 2 * this.nl2 - iring;
+             ret.face_num = 8;
+            let r = iphi - 1;
+            if (r >= 2 * nr) {
+                 ret.face_num = 10;
+                r -= 2 * nr;
             }
-            r >= e && ++h.face_num;
+            r >= nr && ++ ret.face_num;
         }
-        const d = i - JRLL[h.face_num] * this.nside + 1;
-        let f = 2 * n - JPLL[h.face_num] * e - a - 1;
+        const d = iring - JRLL[ ret.face_num] * this.nside + 1;
+        let f = 2 * iphi - JPLL[ ret.face_num] * nr - kshift - 1;
         f >= this.nl2 && (f -= 8 * this.nside);
-        h.ix = f - d >> 1;
-        h.iy = -(f + d) >> 1;
-        return h;
+        // ret.ix = f - d >>> 1;
+        //  ret.iy = -(f + d) >>> 1;
+         ret.ix = Utils.shiftRight(f - d, 1);
+         ret.iy = Utils.shiftRight(-(f + d),1);
+        return  ret;
     }
 }
 
