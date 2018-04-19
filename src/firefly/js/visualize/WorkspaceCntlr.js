@@ -264,7 +264,7 @@ export function getWorkspaceErrorMsg(){
     var errorMsg;
     switch (statusMsg){
         case 'Unauthorized':
-            errorMsg = 'You have not logged in';
+            errorMsg = 'You are not logged in. Please click \'Login\' in the upper right corner of the window';
             break;
         case 'Forbidden':
             errorMsg = 'You do not have access right';
