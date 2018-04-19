@@ -62,6 +62,7 @@ const fKeyDef = {
 
 const STEP = 1;            // step for slider
 const DEC_PHASE = 3;       // decimal digit
+const PERIOD_MIN = 0;      // set the period min value at 0, validation for period is larger than 0
 
 // defValues used to keep the initial values for parameters in phase finding field group
 // time: time column
@@ -835,8 +836,8 @@ const isPeriodMinValid = (valStr, description) => {
     const max = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.max.fkey);
     const mmax = max ? parseFloat(max) : periodRange.max;
 
-    return (val >= periodRange.min && val < mmax) ? {valid: true} :
-            {valid: false, message: `${description}: must be between ${periodRange.min} and ${max}`};
+    return (val > PERIOD_MIN && val < mmax) ? {valid: true} :
+            {valid: false, message: `${description}: must be between ${PERIOD_MIN} and ${max}`};
 
 };
 
@@ -851,11 +852,9 @@ const isPeriodMaxValid = (valStr, description) => {
     if (!retval.valid || !valStr) return {valid: false, message: `${description}: must be a float`};
 
     const val = parseFloat(valStr);
-    const min = getValidValueFrom(FieldGroupUtils.getGroupFields(pfinderkey), fKeyDef.min.fkey);
-    const mmin = min ? parseFloat(min) : periodRange.min;
 
-    return (val > mmin) ? {valid: true} :
-                          {valid: false, message: `${description}: must be greater than ${mmin}`};
+    return (val > PERIOD_MIN) ? {valid: true} :
+                          {valid: false, message: `${description}: must be greater than ${PERIOD_MIN}`};
 };
 
 /**
@@ -868,11 +867,10 @@ function periodValidator(description) {
         const retRes = Validate.isFloat(description, valStr);
 
         if (retRes.valid) {
-            if (!valStr || parseFloat(valStr) < periodRange.min) {
+            if (!valStr || parseFloat(valStr) < PERIOD_MIN) {
                 return {
                     valid: false,
-                    message:  `period: must be greater than ${periodRange.min}`
-                    //message: `period: must be between ${min} and ${max}`
+                    message:  `period: must be greater than ${PERIOD_MIN}`
                 };
             }
         }
