@@ -82,6 +82,8 @@ public class WsServerCommands {
             } else {
                 resultJson.put("ok", RESPONSE.FALSE.name().toLowerCase());
                 resultJson.put("status", resp.getStatusText());
+                resultJson.put("statusCode", resp.getStatusCode());
+
             }
 
             return resultJson.toJSONString();

@@ -11,6 +11,7 @@ import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceMovePath,
         dispatchWorkspaceUpdate,
         getWorkspaceErrorMsg,
+        getWorkspaceStatus,
         getWorkspaceList, getFolderUnderLevel,
         getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
