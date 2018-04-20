@@ -15,6 +15,9 @@ const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10
 
 const bandMap= {b1:'1', b2:'2',b3:'3',b4:'4'};
 
+const ThreeBandTables = ['allsky_3band_p1bm_frm'];
+const TwoBandTables =['allsky_2band_p1bm_frm'];
+
 /**
  * make a list of plot request for wise. This function works with ConverterFactory.
  * @param table
@@ -47,6 +50,16 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
                 req.setParam('subsize', `${newSize}`);
             }
         }
+        /*
+        if (table.request.table_name.includes('3band')||table.request.table_name.includes('2band')) {
+            const tblBand = table.request.table_name.includes('3band') ? 3 : 2;
+
+            // add note to replace the query returned fail reason 'No Found'
+            if (Number(extraParams.band) > tblBand) {
+                req.setParam('userFailReason', {'not found': 'No image for band ' + extraParams.band});
+            }
+        }
+        */
         return req;
     };
 
@@ -60,10 +73,14 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
     if (includeStandard) {
         retval.standard= [
             builder('wise-1','ibe_file_retrieve', 'Wise band 1', row, {band:'1'}),
-            builder('wise-2','ibe_file_retrieve', 'Wise band 2', row, {band:'2'}),
-            builder('wise-3','ibe_file_retrieve', 'Wise band 3', row, {band:'3'}),
-            builder('wise-4','ibe_file_retrieve', 'Wise band 4', row, {band:'4'})
-        ];
+            builder('wise-2','ibe_file_retrieve', 'Wise band 2', row, {band:'2'})];
+
+        if (!TwoBandTables.find((tbl) => table.request.table_name.toLowerCase().includes(tbl))) {
+            retval.standard.push(builder('wise-3', 'ibe_file_retrieve', 'Wise band 3', row, {band: '3'}));
+            if (!ThreeBandTables.find((tbl) => table.request.table_name.toLowerCase().includes(tbl))) {
+                retval.standard.push(builder('wise-4', 'ibe_file_retrieve', 'Wise band 4', row, {band: '4'}));
+            }
+        }
         const idx= Number(band)-1;
         if (retval.standard[idx]) retval.highlightPlotId= retval.standard[idx].getPlotId();
     }

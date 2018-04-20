@@ -6,13 +6,14 @@ import {union,get,isEmpty,difference} from 'lodash';
 import {Band,allBandAry} from '../Band.js';
 import {TABLE_SELECT,TABLE_HIGHLIGHT,
         TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
-import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
+import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView, dispatchZoom,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {UserZoomTypes} from '../ZoomUtil.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
-import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById, getActivePlotView} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceViewerItems, dispatchUpdateCustom, getViewerItemIds,
-                        dispatchChangeViewerLayout,
+                        dispatchChangeViewerLayout, isImageViewerSingleLayout,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
@@ -36,7 +37,8 @@ export function startImageMetadataWatcher({viewerId, paused=true}) {
         MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
         MultiViewCntlr.VIEWER_UNMOUNTED,
         MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
-        ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW];
+        ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
+        ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT];
 
     dispatchAddActionWatcher({id: `imw-${viewerId}`, actions, callback: watchImageMetadata, params: {viewerId, paused, tbl_id}});
 }
@@ -82,7 +84,7 @@ function watchImageMetadata(action, cancelSelf, params) {
 
         case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
         case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
-            if (!paused) updateImagePlots(tbl_id, viewerId, true);
+            if (!paused) updateImagePlots(tbl_id, viewerId);
             break;
 
 
@@ -107,6 +109,14 @@ function watchImageMetadata(action, cancelSelf, params) {
             if (!paused) changeActivePlotView(action.payload.plotId,tbl_id);
             break;
 
+        case ImagePlotCntlr.ANY_REPLOT:
+            resetFullGridActivePlot(tbl_id, action.payload.plotIdAry);
+            break;
+
+        case ImagePlotCntlr.UPDATE_VIEW_SIZE:
+            zoomPlotPerViewSize(payload.plotId);
+            break;
+
         case REINIT_APP:
             cancelSelf();
             break;
@@ -121,10 +131,9 @@ const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].co
  * 
  * @param tbl_id
  * @param viewerId
- * @param layoutChange
  * @return {Array}
  */
-function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
+function updateImagePlots(tbl_id, viewerId) {
 
     var viewer = getViewer(getMultiViewRoot(), viewerId);
 
@@ -165,10 +174,25 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
     const tabState= getTblInfo(table);
     const {highlightedRow}= tabState;
 
-    if (layoutChange && viewer.layout===SINGLE && !isEmpty(viewer.itemIdAry)) {
+    // keep the plotId array for 'single' layout
+
+    if (viewer.layout===SINGLE && !isEmpty(viewer.itemIdAry)) {
+        if (viewer.itemIdAry[0].includes(GRID_FULL.toLowerCase())) {   // from full grid images
+            const activePid = visRoot().activePlotId;
+
+            viewer.itemIdAry.find((id) => {
+                const plot = primePlot(visRoot(), id);
+                if (plot && id !== activePid &&
+                    get(plot.attributes, PlotAttribute.TABLE_ROW, -1) === highlightedRow) {
+                    dispatchChangeActivePlotView(id);
+                    return true;
+                }
+                return false;
+            });
+        }
         return;
     }
-    
+
 
     if (viewer.layout===SINGLE) {
         const {single}= converter.makeRequest(table,highlightedRow,true);
@@ -192,7 +216,8 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
     }
     else if (viewer.layout===GRID) {
         reqRet= converter.makeRequest(table,highlightedRow,false,true,threeColorOps);
-        highlightPlotId= reqRet.highlightPlotId;
+        reqRet.highlightPlotId = viewer.highlightPlotId;
+        //highlightPlotId= reqRet.highlightPlotId;
         reqAry= reqRet.standard;
         if (isEmpty(reqAry)) return [];
         threeReqAry= reqRet.threeColor;
@@ -244,7 +269,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId, tbl_id)  {
     if (!isEmpty(wpRequestAry)) {
         dispatchPlotGroup({wpRequestAry, viewerId, holdWcsMatch:true,
                            pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false} },
-                           attributes: { tbl_id },
+                           attributes: { tbl_id }
         });
     }
     if (activeId) dispatchChangeActivePlotView(activeId);
@@ -258,7 +283,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId, tbl_id)  {
                 {
                     plotId:threeCPlotId, viewerId, wpRequest:plotThreeReqAry, threeColor:true,
                                pvOptions: {userCanDeletePlots: true, menuItemKeys:{imageSelect : false}},
-                    attributes: { tbl_id },
+                    attributes: { tbl_id }
                 });
         }
     }
@@ -314,4 +339,25 @@ function changeActivePlotView(plotId,tbl_id) {
     if (!table) return;
     if (table.highlightedRow===row) return;
     dispatchTableHighlight(tbl_id,row,table.request);
+}
+
+function resetFullGridActivePlot(tbl_id, plotIdAry) {
+    const {highlightedRow = 0} = getTblById(tbl_id)||{};
+    const vr = visRoot();
+
+    plotIdAry.find((pId) => {
+        const plot = primePlot(vr, pId);
+
+        if (get(plot.attributes, PlotAttribute.TABLE_ROW, -1) !== highlightedRow) return false;
+
+        dispatchChangeActivePlotView(pId);
+        return true;
+    });
+}
+
+
+function zoomPlotPerViewSize(plotId) {
+    if (isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), plotId)) {
+        dispatchZoom({plotId, userZoomType: UserZoomTypes.FILL});
+    }
 }

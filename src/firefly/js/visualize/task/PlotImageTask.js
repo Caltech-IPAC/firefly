@@ -31,10 +31,6 @@ import {getDlAry} from '../DrawLayerCntlr.js';
 //======================================== Exported Functions =============================
 
 
-
-let firstTime= true;
-
-
 export function ensureWPR(inVal) {
     if (isArray(inVal)) {
         return inVal.map( (v) => WebPlotRequest.makeFromObj(v));
@@ -305,10 +301,17 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     failAry.forEach( (r) => {
         const {data}= r;
         if (payload.plotId) dispatchAddViewerItems(EXPANDED_MODE_RESERVED, [payload.plotId], IMAGE);
+        /*
+        const req = payload.wpRequestAry.find((req) => req.getParam('plotId') === data.plotId);
+        let   reason = req && req.getParam('userFailReason');
+        reason = reason ? get(reason, [data.userFailReason.toLowerCase()], '') : '';
+        */
+
         resultPayload= Object.assign({},payload);
         // todo: add failure stuff to resultPayload here
         resultPayload.briefDescription= data.briefFailReason;
         resultPayload.description= 'Failed- ' + data.userFailReason;
+        //resultPayload.description= reason || ('Failed- ' + data.userFailReason);
         resultPayload.detailFailReason= data.detailFailReason;
         resultPayload.plotId= data.plotId;
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:resultPayload} );

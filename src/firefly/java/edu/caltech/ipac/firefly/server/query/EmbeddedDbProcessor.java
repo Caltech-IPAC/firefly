@@ -261,6 +261,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
 
+
         if (!EmbeddedDbUtil.hasTable(treq, dbFile, resultSetID)) {
             // does not exists.. create table from original 'data' table
             List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? getColumnNames(dbInstance, "DATA")
@@ -315,8 +316,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     private String makeResultSetReqStr(TableServerRequest treq) {
         // only keep state one deep.
         TableServerRequest savedRequest = (TableServerRequest) treq.cloneRequest();
-        savedRequest.getMeta().remove(TableServerRequest.RESULTSET_REQ);
-        savedRequest.getMeta().remove(TableServerRequest.RESULTSET_ID);
+        Map<String, String> meta = savedRequest.getMeta();
+        if (meta != null) {
+            meta.remove(TableServerRequest.RESULTSET_REQ);
+            meta.remove(TableServerRequest.RESULTSET_ID);
+        }
         savedRequest.setSelectInfo(null);
         return JsonTableUtil.toJsonTableRequest(savedRequest).toString();
     }

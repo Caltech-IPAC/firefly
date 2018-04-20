@@ -69,8 +69,8 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
         }
     }
 
-    const ra = getCellValue(tableModel, hlrow, ra_dec[0]);
-    const dec = getCellValue(tableModel, hlrow, ra_dec[1]);
+    const ra = Number(getCellValue(tableModel, hlrow, ra_dec[0]));
+    const dec = Number(getCellValue(tableModel, hlrow, ra_dec[1]));
 
     //For images from AllWise:
     const frameId = getCellValue(tableModel, hlrow, 'frame_id');
@@ -122,7 +122,7 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
         sr.setParam('frame_num', `${frame_num}`);
         var wp = null;
         sr.setParam('doCutout', 'false');
-        if (!isNil(ra) && !isNil(dec)) {
+        if (!Number.isNaN(ra) && !Number.isNaN(dec)) {
             sr.setParam('center', `${ra},${dec}`);
             sr.setParam('in_ra', `${ra}`);
             sr.setParam('in_dec', `${dec}`);

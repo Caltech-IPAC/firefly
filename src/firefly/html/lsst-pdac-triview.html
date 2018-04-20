@@ -18,13 +18,17 @@
                     {label: 'External Images', action: 'ImageSelectDropDownCmd'},
                     {label: 'External Catalogs', action: 'IrsaCatalogDropDown'},
                     {label: 'Add Chart', action: 'ChartSelectDropDownCmd'}
-                ],
+                ]
             },
             options: {
                 MenuItemKeys: {maskOverlay: true},
                 imageTabs: ['fileUpload', 'url', '2mass', 'wise', 'sdss', 'msx', 'dss', 'iras'],
                 irsaCatalogFilter: 'lsstFilter',
-                catalogSpacialOp: 'polygonWhenPlotExist'
+                catalogSpacialOp: 'polygonWhenPlotExist',
+                hips : {useForCoverage: false, useForImageSearch: true,
+                    hipsSources: 'all',
+                    defHipsSources: {source: 'irsa', label: 'Featured'},
+                    mergedListPriority: 'irsa'}
             }
         };
     </script>

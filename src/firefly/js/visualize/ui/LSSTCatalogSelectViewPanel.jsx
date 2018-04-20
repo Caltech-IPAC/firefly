@@ -27,6 +27,7 @@ import {validateSql, validateConstraints} from './CatalogSelectViewPanel.jsx';
 import {LSSTImageSpatialType} from './LSSTImageSpatialType.jsx';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import {sortInfoString}  from '../../tables/SortInfo.js';
 
 //import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
@@ -133,28 +134,32 @@ const LSSTTables = [
                         label: ' AllWISE Atlas Image',
                         value: 'wise_00.allwise_p3am_cdd',
                         type: IMAGETYPE,
-                        cat: {}
+                        cat: {},
+                        sortCols: 'coadd_id,band'
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE All-Sky Single Exposure (L1b) Image',
                         value: 'wise_00.allsky_4band_p1bm_frm',
                         type: IMAGETYPE,
-                        cat: {}
+                        cat: {},
+                        sortCols: 'scan_id,frame_num,band'
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
                         value: 'wise_00.allsky_3band_p1bm_frm',
                         type: IMAGETYPE,
-                        cat: {}
+                        cat: {},
+                        sortCols: 'scan_id,frame_num,band'
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE Post-Cryo Single Exposure (L1b) Image',
                         value: 'wise_00.allsky_2band_p1bm_frm',
                         type: IMAGETYPE,
-                        cat: {}
+                        cat: {},
+                        sortCols: 'scan_id,frame_num,band'
                     }
                 ]
             },
@@ -181,7 +186,7 @@ const LSSTTables = [
                         id: SINGLEEXPSOURCE,
                         label: 'WISE Post-Cryo Single Exposure (L1b) Source Table',
                         value: 'wise_2band_00.allsky_2band_p1bs_psd',
-                        type: IMAGETYPE
+                        type: CATTYPE
                     },
                     {
                         id: SINGLEEXPSOURCE,
@@ -196,21 +201,24 @@ const LSSTTables = [
                         label: 'WISE All-Sky Single Exposure (L1b) Image',
                         value: 'wise_00.allsky_4band_p1bm_frm',
                         type: IMAGETYPE,
-                        cat: {}
+                        cat: {},
+                        sortCols: 'scan_id,frame_num,band'
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
                         value: 'wise_00.allsky_3band_p1bm_frm',
                         type: IMAGETYPE,
-                        cat: {}
+                        cat: {},
+                        sortCols: 'scan_id,frame_num,band'
                     },
                     {
                         id: CCDEXPOSURE,
                         label: 'WISE Post-Cryo Single Exposure (L1b) Image',
                         value: 'wise_00.allsky_2band_p1bm_frm',
                         type: IMAGETYPE,
-                        cat: {}
+                        cat: {},
+                        sortCols: 'scan_id,frame_num,band'
                     }],
                 imagenote: 'Single-epoch images for the NEOWISE-R mission are not currently available on the PDAC.'
             }]
@@ -231,6 +239,25 @@ function getLSSTMasterTable() {
     return [{projectMaster: projectName, missions: LSSTTables}];
 }
 
+function getSortCols(tableName) {
+    const tblFound = LSSTTables.map((project) => {
+        return project.subproject
+                .map((oneSub) => {
+                    const allTables = [...oneSub.catalogs, ...oneSub.images];
+
+                    return allTables.find((oneTable) => {
+                        if (oneTable.value.includes(tableName)) {
+                            return oneTable;
+                        } else {
+                            return false;
+                        }
+                    });
+                })
+                .find((tbl) => tbl);
+    }).find((tbl) => tbl);
+
+    return tblFound ? tblFound.sortCols : null;
+}
 /**
  * @summary component for LSST catalog search panel
  */
@@ -441,6 +468,8 @@ function doImage(request, imgPart) {
                                        SearchMethod: spatial},
                                        {use: 'lsst_image'});
 
+    const sortCols = getSortCols(tableName);
+    if (sortCols) tReq.sortInfo = sortInfoString(sortCols.split(','));
 
     tReq = addConstraintToQuery(tReq);
     const downloadButton = ({tbl_id}) => {
