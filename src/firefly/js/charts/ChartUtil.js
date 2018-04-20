@@ -668,7 +668,7 @@ export function applyDefaults(chartData={}, resetColor = true) {
     const noXYAxis = Boolean(!nonPieChart);
 
     const defaultLayout = {
-        hovermode: 'closest',
+        hovermode: 'compare',
         legend: {
             font: {size: FSIZE},
             orientation: 'v',
