@@ -17,6 +17,7 @@ export const STANDARD_READOUT= 'standardReadout';
 
 export const NUM_VAL= 'value';
 export const POINT_VAL= 'point';
+export const HEALPIX_VAL= 'healpix';
 export const DESC_VAL= 'desc';
 
 export function readoutRoot() { return flux.getState()[READOUT_KEY]; }
@@ -106,6 +107,11 @@ export function makePointReadoutItem(title,pt) {
     return {type:POINT_VAL,title,value:pt};
 }
 
+export function makeHealpixReadoutItem(title,norder, value) {
+    return {type:HEALPIX_VAL,title,norder, value};
+}
+
+
 export function makeDescriptionItem(title) {
     return {value:title, type:DESC_VAL};
 }
@@ -164,7 +170,9 @@ const initState= function() {
             imageMouseReadout2: 'fitsIP',
             pixelSize: 'pixelSize',
             hipsMouseReadout1:'eqj2000hms',
-            hipsMouseReadout2:'galactic'
+            hipsMouseReadout2:'galactic',
+            healpixPixel:'healpixPixel',
+            healpixNorder:'healpixNorder',
         }
     };
 

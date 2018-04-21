@@ -3,49 +3,23 @@
  */
 
 import React, {PureComponent} from 'react';
+import {get} from 'lodash';
 import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
-
-export class VisHeader_old extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx()};
-    }
-
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-        if (this.removeMouseListener) this.removeMouseListener();
-    }
-
-
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.removeMouseListener= addMouseListener(() => this.storeUpdate());
-    }
-
-    storeUpdate() {
-        if (visRoot()!==this.state.visRoot || lastMouseCtx() !==this.state.currMouseState) {
-            this.setState({visRoot:visRoot(), currMouseState:lastMouseCtx()});
-        }
-    }
-
-    render() {
-        var {visRoot,currMouseState}= this.state;
-        return <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}/>;
-    }
-}
 
 
 
 export class VisHeader extends PureComponent {
     constructor(props) {
         super(props);
-        this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot()};
+        const showHealpixPixel= get(getAppOptions(), 'hips.readoutShowsPixel');
+        this.state= {visRoot:visRoot(), currMouseState:lastMouseCtx(), readout:readoutRoot(), showHealpixPixel};
     }
 
     componentWillUnmount() {
@@ -70,10 +44,10 @@ export class VisHeader extends PureComponent {
 
     render() {
         const {showHeader=true, showPreview=true} = this.props; 
-        var {visRoot,currMouseState,readout}= this.state;
+        const {visRoot,currMouseState,readout, showHealpixPixel}= this.state;
         return (
             <div>
-                {showHeader && <VisHeaderView {...{showPreview, visRoot, currMouseState, readout}}/>}
+                {showHeader && <VisHeaderView {...{showPreview, visRoot, currMouseState, readout, showHealpixPixel}}/>}
                 {showPreview && <VisPreview {...{showPreview, visRoot, currMouseState, readout}}/>}
             </div>
         );

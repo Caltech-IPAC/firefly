@@ -6,7 +6,7 @@ import {race,call} from 'redux-saga/effects';
 import {get} from 'lodash';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {clone} from '../../util/WebUtil.js';
-import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadoutItem,
+import {readoutRoot, dispatchReadoutData, makeValueReadoutItem, makePointReadoutItem,makeHealpixReadoutItem,
         makeDescriptionItem, isLockByClick} from '../MouseReadoutCntlr.js';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
@@ -32,7 +32,7 @@ export function* watchReadout() {
 
         let getNextWithFlux= false;
         const lockByClick= isLockByClick(readoutRoot());
-        const {plotId,worldPt,screenPt,imagePt,mouseState}= mouseCtx;
+        const {plotId,worldPt,screenPt,imagePt,mouseState, healpixPixel, norder}= mouseCtx;
 
         let readout= undefined;
         const plotView= getPlotViewById(visRoot(), plotId);
@@ -47,7 +47,8 @@ export function* watchReadout() {
                     getNextWithFlux= true;
                 }
                 else {
-                    dispatchReadoutData({plotId,readoutItems:makeReadout(plot,worldPt,screenPt,imagePt), isHiPS:true});
+                    dispatchReadoutData({plotId,readoutItems:makeReadout(plot,worldPt,screenPt,imagePt, healpixPixel, norder),
+                                         isHiPS:true});
                 }
             }
         }
@@ -135,9 +136,11 @@ function usePayload(mouseState, lockByClick) {
  * @param {WorldPt} worldPt
  * @param {ScreenPt} screenPt
  * @param {ImagePt} imagePt
+ * @param {number} [healpixPixel] the healpix pixel for the current tile, only passed with HiPS
+ * @param {number} [norder] the healpix pixel norder
  * @return {{worldPt: *, screenPt: *, imagePt: *, threeColor: (boolean), title: *, pixel: ({title, value, unit, precision}|{title: *, value: *, unit: *, precision: *})}}
  */
-function makeReadout(plot, worldPt, screenPt, imagePt) {
+function makeReadout(plot, worldPt, screenPt, imagePt, healpixPixel, norder) {
     if (CysConverter.make(plot).pointInPlot(imagePt)) {
         if (isImage(plot)) {
             return {
@@ -156,7 +159,9 @@ function makeReadout(plot, worldPt, screenPt, imagePt) {
                 imagePt: makePointReadoutItem('Image Point', imagePt),
                 title: makeDescriptionItem(plot.title),
                 pixel: makeHiPSPixelReadoutItem(plot),
-                screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
+                screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),
+                healpixPixel:makeValueReadoutItem('Healpix Pixel', healpixPixel, 'pixel', 0),
+                healpixNorder:makeValueReadoutItem('Healpix norder', norder,'norder', 0),
             };
 
         }

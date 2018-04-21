@@ -12,21 +12,32 @@
  */
 
 
-import {get, isUndefined} from 'lodash';
+import {get, isUndefined, isNumber} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeWorldPt, makeDevicePt} from './Point.js';
-import {SpatialVector, HealpixIndex, ORDER_MAX} from '../externalSource/aladinProj/HealpixIndex.js';
+import {SpatialVector, HealpixIndex, radecToPolar, ORDER_MAX} from '../externalSource/aladinProj/HealpixIndex.js';
 import {convert, computeDistance} from './VisUtil.js';
 import {replaceHeader, getScreenPixScaleArcSec} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
 import CoordinateSys from './CoordSys';
 import {encodeServerUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
-import {toDegrees} from './VisUtil.js';
+import {toDegrees, toRadians} from './VisUtil.js';
 
 
 export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-1;
+
+
+
+var workingHealpixIdx;
+function getHealpixIndex(nside) {
+    if (!isNumber(nside)) return undefined;
+    if (!workingHealpixIdx || workingHealpixIdx.nside!==nside) workingHealpixIdx= new HealpixIndex(nside);
+    return workingHealpixIdx;
+}
+
+
 
 /**
  *
@@ -86,7 +97,8 @@ const tilePixelAngSizeCacheMap= {};
 export function getTilePixelAngSize(nOrder) {
     nOrder= Math.trunc(nOrder);
     if (tilePixelAngSizeCacheMap[nOrder]) return tilePixelAngSizeCacheMap[nOrder];
-    const rad= Math.sqrt(4*Math.PI / (12*Math.pow(512*Math.pow(2,nOrder) , 2)));
+    // const rad= Math.sqrt(4*Math.PI / (12*Math.pow(512*Math.pow(2,nOrder) , 2)));
+    const rad= Math.sqrt(4*Math.PI / (12*((512*(2**nOrder))**2)));
     tilePixelAngSizeCacheMap[nOrder]= toDegrees(rad);
     return tilePixelAngSizeCacheMap[nOrder];
 }
@@ -266,10 +278,14 @@ export function getHiPSFoV(pv) {
 }
 
 
-function makeCorners(hpIdx, pixList, coordSys) {
+function makeAllCorners(nOrder, coordSys) {
+    const nside= 2**nOrder;
+    const pixCnt = HealpixIndex.nside2Npix(nside);
+    const pixList= new Array(pixCnt).fill(0).map( (v,ipix) => ipix);
+    const hpxIdx = getHealpixIndex(nside);
     const spVec = new SpatialVector();
     return pixList.map( (ipix) => {
-        const corners = hpIdx.corners_nest(ipix, 1);
+        const corners = hpxIdx.corners_nest(ipix, 1);
         const wpCorners= corners.map( (c) => {
             spVec.setXYZ(c.x, c.y, c.z);
             return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
@@ -279,58 +295,64 @@ function makeCorners(hpIdx, pixList, coordSys) {
 }
 
 
-
-
 /**
  * This function make an object (with functions) to cache allsky type computations.
  * @return {*}
  */
-function makeSimpleHpxCornerCache() {
-    const tmpHealpixIdx3 = new HealpixIndex(8);
-    const tmpHealpixIdx2 = new HealpixIndex(4);
-    const npix = HealpixIndex.nside2Npix(8);
-    const cachedCorners8= [];
-    for (let ipix=0; ipix<npix; ipix++) {
-        cachedCorners8.push(tmpHealpixIdx3.corners_nest(ipix, 1));
-    }
+function makeHealpixCornerCacheTool() {
 
+    const nsideToNorder= {8:3, 4:2, 2:1}; // this is what is in the cache
 
-    const level3pixelCnt = HealpixIndex.nside2Npix(8);
-    const level2pixelCnt = HealpixIndex.nside2Npix(4);
-    const cachedLevel3FullPixelList= [];
-    const cachedLevel2FullPixelList= [];
-    for (let ipix=0; ipix<level3pixelCnt; ipix++) cachedLevel3FullPixelList[ipix]= ipix;
-    const j2000Leve3Corners= makeCorners(tmpHealpixIdx3, cachedLevel3FullPixelList, CoordinateSys.EQ_J2000);
-    const galLevel3Corners= makeCorners(tmpHealpixIdx3, cachedLevel3FullPixelList, CoordinateSys.GALACTIC);
+    const j2Corners=[undefined,
+        makeAllCorners(1, CoordinateSys.EQ_J2000),
+        makeAllCorners(2, CoordinateSys.EQ_J2000),
+        makeAllCorners(3, CoordinateSys.EQ_J2000),
+    ];
 
-
-    for (let ipix=0; ipix<level2pixelCnt; ipix++) cachedLevel2FullPixelList[ipix]= ipix;
-    const j2000Leve2Corners= makeCorners(tmpHealpixIdx2, cachedLevel2FullPixelList, CoordinateSys.EQ_J2000);
-    const galLevel2Corners= makeCorners(tmpHealpixIdx2, cachedLevel2FullPixelList, CoordinateSys.GALACTIC);
+    const galCorners=  [undefined,
+        makeAllCorners(1, CoordinateSys.GALACTIC),
+        makeAllCorners(2, CoordinateSys.GALACTIC),
+        makeAllCorners(3, CoordinateSys.GALACTIC),
+    ];
 
 
     return {
-        cornersNest(ipix,nside, healpixIdx) {
-            return nside === 8 ? cachedCorners8[ipix] : healpixIdx.corners_nest(ipix, 1);
-        },
-        getFullLevel3CornerList(coordSys)  {
-            switch (coordSys) {
-                case CoordinateSys.EQ_J2000: return j2000Leve3Corners;
-                case CoordinateSys.GALACTIC: return galLevel3Corners;
-                default: return null;
-            }
-        },
-        getFullLevel2CornerList(coordSys)  {
-            switch (coordSys) {
-                case CoordinateSys.EQ_J2000: return j2000Leve2Corners;
-                case CoordinateSys.GALACTIC: return galLevel2Corners;
-                default: return null;
-            }
-        }
+       findCacheData(nside, coordSys, ipix= undefined)  {
+           const norder= nsideToNorder[nside];
+           if (!norder) return null;
+           const fullAry= isUndefined(ipix);
+           switch (coordSys) {
+               case CoordinateSys.EQ_J2000: return fullAry ? j2Corners[norder] : j2Corners[norder][ipix];
+               case CoordinateSys.GALACTIC: return fullAry ? galCorners[norder] :galCorners[norder][ipix];
+               default: return null;
+           }
+       },
 
+        makeCornersForPix(ipix, nside, coordSys) {
+            const cacheEntry= this.findCacheData(nside,coordSys, ipix);
+            if (cacheEntry) return cacheEntry;
+
+            const corners = getHealpixIndex(nside).corners_nest(ipix, 1);
+            const spVec = new SpatialVector();
+            const wpCorners= corners.map( (c) => {
+                spVec.setXYZ(c.x, c.y, c.z);
+                return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
+            });
+            return { ipix, wpCorners };
+        },
+
+        /**
+         *
+         * @param {number} norder - must be 1, 2 or 3
+         * @param coordSys
+         * @return {*}
+         */
+        getFullCellList(norder, coordSys)  {
+            return this.findCacheData(2**norder,coordSys);
+        },
     };
-
 }
+
 
 /**
  * @Function
@@ -339,8 +361,29 @@ function makeSimpleHpxCornerCache() {
  * @param {number} nside
  * @param {HealpixIndex} healpixIdx
  */
-let healpixCache;
+var healpixCache;
 
+export function getHealpixCornerTool() {
+    if (!healpixCache) healpixCache= makeHealpixCornerCacheTool();
+    return healpixCache;
+}
+
+/**
+ *
+ * @param {WebPlot} plot
+ * @param {WorldPt} wp
+ * @return {{norder:number, pixel:number}} the pixel if we can go that deep, undefined otherwise
+ */
+export function getHealpixPixel(plot, wp) {
+    //todo
+
+    const {norder}= getHiPSNorderlevel(plot, true);
+    if (norder>MAX_SUPPORTED_HIPS_LEVEL-9) return undefined;
+    const hpxIdx= getHealpixIndex(2**(norder+9));
+
+    const polar = radecToPolar(wp.x,wp.y);
+    return {norder:norder+9, pixel:hpxIdx.ang2pix_nest(polar.theta, polar.phi)};
+}
 
 
 /**
@@ -353,60 +396,43 @@ let healpixCache;
  *            pixel number and a worldPt array of corners
  */
 export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
-    if (!healpixCache) healpixCache= makeSimpleHpxCornerCache();
-    const nside = Math.pow(2, norder);
+    const healpixCache= getHealpixCornerTool();
     const dataCenterWp= convert(centerWp, dataCoordSys);
-    let hpxIdx;
 
-         // ------------------------------
-         // first, find the Healpix pixels for the field of view, if the fov is large just return all of them
-         // ------------------------------
-    let pixList;
-    if (fov>80 && norder===3) { // this case if so common, don't recompute, use cache
-        return filterAllSky(dataCenterWp, healpixCache.getFullLevel3CornerList(dataCoordSys));
+    if (fov>80 && norder<=3) { // get all the cells and filter them
+        return filterAllSky(dataCenterWp, healpixCache.getFullCellList(norder,dataCoordSys));
     }
-    else if (fov>80 && norder===2) { // this case if so common, don't recompute, use cache
-        return filterAllSky(dataCenterWp, healpixCache.getFullLevel2CornerList(dataCoordSys));
+    else { // get only the healpix number for the fov and create the cell list
+        const nside = 2**norder;
+        const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), getSearchRadiusInRadians(fov), true, true);
+        return pixList.map( (ipix) => healpixCache.makeCornersForPix(ipix, nside, dataCoordSys));
     }
-    else if (fov>80) { // with norder 1 or 2
-        hpxIdx = new HealpixIndex(nside);
-        pixList= [];
-        const npix = HealpixIndex.nside2Npix(nside);
-        for (let ipix=0; ipix<npix; ipix++) pixList[ipix]= ipix;
-    }
-    else {
-        hpxIdx = new HealpixIndex(nside);
-        const spatialVector = new SpatialVector();
-        spatialVector.set(dataCenterWp.x, dataCenterWp.y);
-        let radius = fov/2;
-                          // we need to extend the radius (suggestion from Aladin)
-        if (fov>60) radius *= 1.6;
-        else if (fov>12) radius *=1.45;
-        else radius *= 1.1;
-
-        pixList = hpxIdx.queryDisc(spatialVector, radius*Math.PI/180.0, true, true);
-    }
-
-         // ------------------------------
-         // second, find the 4 corners for every Healpix pixel
-         // ------------------------------
-    const spVec = new SpatialVector();
-    let cells= pixList.map( (ipix) => {
-        const corners = healpixCache.cornersNest(ipix, nside, hpxIdx);
-        const wpCorners= corners.map( (c) => {
-            spVec.setXYZ(c.x, c.y, c.z);
-            return makeWorldPt(spVec.ra(), spVec.dec(), dataCoordSys);
-        });
-        return { ipix, wpCorners };
-    });
-
-    if (fov>80) {
-        cells= filterAllSky(dataCenterWp, cells);
-    }
-
-    return cells;
 }
 
+
+/**
+ *
+ * @param {WorldPt} wp
+ * @return {SpatialVector}
+ */
+export function makeSpatialVector(wp) {
+    const spatialVector = new SpatialVector();
+    spatialVector.set(wp.getLon(),wp.getLat());
+    return spatialVector;
+}
+
+
+/**
+ * convert to radius and extend a litte (suggestion from Aladin)
+ * @param {number} fov in degrees
+ * @return {number} exetended radius in radians
+ */
+function getSearchRadiusInRadians(fov) {
+
+    if (fov>60) return toRadians((fov/2)* 1.6);
+    else if (fov>12) return toRadians((fov/2)*1.45);
+    else return toRadians((fov/2)* 1.1);
+}
 
 
 function filterAllSky(centerWp, cells) {

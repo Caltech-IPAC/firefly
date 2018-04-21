@@ -8,16 +8,15 @@ import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
 import {MouseReadout} from './MouseReadout.jsx';
-import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 
 
 /**
  *
- * @param visRoot visualization store root
  * @param {object} currMouseState  the current state of the mouse
+ * @param {boolean} true to enable healpix pixel readout
  * @return {XML}
  */
-export function VisHeaderView({readout}) {
+export function VisHeaderView({readout, showHealpixPixel=false}) {
 
     var rS= {
         width: 700,
@@ -36,7 +35,7 @@ export function VisHeaderView({readout}) {
         <div style={{display:'inline-block', float:'right', whiteSpace:'nowrap'}}>
             <div style={rS}>
                 <div style={{position:'absolute', color:'white'}}>
-                    <MouseReadout readout={readout}/>
+                    <MouseReadout readout={readout} showHealpixPixel={showHealpixPixel}/>
                 </div>
             </div>
         </div>
@@ -45,6 +44,7 @@ export function VisHeaderView({readout}) {
 
 VisHeaderView.propTypes= {
     readout:  PropTypes.object.isRequired,
+    showHealpixPixel : PropTypes.bool
 };
 
 

@@ -8,7 +8,7 @@
 // it was written in C the ported to other languages including java.
 // The java Healpix code was expanded to include a class called healpix.core.HealpixIndex
 // This is the javascript for of HealpixIndex.
-// it has the following objects: HealpixIndex, SpatialVector, LongRangeSetBuilder, Utils
+// it has the following objects: HealpixIndex, SpatialVector, and some utilities
 // in java they are all part of the healpix.code package.
 // docs:
 // https://healpix.jpl.nasa.gov/html/java/healpix/core/HealpixIndex.html
@@ -30,6 +30,39 @@ const Constants = {
     TWOTHIRD : 2 / 3,
     ARCSECOND_RADIAN : 484813681109536e-20
 };
+
+const powerOf2= new Array(53).fill(0).map((val,idx) => 2**idx);
+const shiftRight= (v,bits) => Math.trunc(v / powerOf2[bits]);
+const shiftLeft= (v,bits) => Math.trunc(v * powerOf2[bits]);
+export const radecToPolar= (ra, dec) => ({ theta: Math.PI / 2 - dec / 180 * Math.PI, phi: ra / 180 * Math.PI });
+export const polarToRadec= (t, s) => ({ ra: 180 * s / Math.PI, dec: 180 * (Math.PI / 2 - t) / Math.PI });
+
+function bigAnd(v1, v2) {
+    const hi = 0x80000000;
+    const low = 0x7fffffff;
+    const hi1 = ~~(v1 / hi);
+    const hi2 = ~~(v2 / hi);
+    const low1 = (v1 & low) >>> 0;
+    const low2 = (v2 & low) >>> 0;
+    const h = (hi1 & hi2) >>> 0;
+    const l = (low1 & low2) >>> 0;
+    return h*hi + l;
+}
+
+function bigOr(v1, v2) {
+    const hi = 0x80000000;
+    const low = 0x7fffffff;
+    const hi1 = ~~(v1 / hi);
+    const hi2 = ~~(v2 / hi);
+    const low1 = (v1 & low) >>> 0;
+    const low2 = (v2 & low) >>> 0;
+    const h = (hi1 | hi2) >>> 0;
+    const l = (low1 | low2) >>> 0;
+    return h*hi + l;
+}
+
+const orAll= (...args) => args.reduce( (prev,curr) => bigOr(prev,curr) ,0);
+
 
 
 
@@ -151,58 +184,6 @@ class LongRangeSetBuilder {
 }
 
 
-const powerOf2=  new Array(53).fill(0).map((val,idx) => Math.pow(2,idx));
-
-const Utils = {
-    radecToPolar(ra, dec) {
-        return { theta: Math.PI / 2 - dec / 180 * Math.PI, phi: ra / 180 * Math.PI };
-    },
-    polarToRadec(t, s) {
-        return { ra: 180 * s / Math.PI, dec: 180 * (Math.PI / 2 - t) / Math.PI };
-    },
-    castToInt(t) {
-        return t > 0 ? Math.floor(t) : Math.ceil(t);
-    },
-
-    shiftRight(v,bits) {
-        return Math.trunc(v / powerOf2[bits]);
-    },
-    shiftLeft(v,bits) {
-        return Math.trunc(v * powerOf2[bits]);
-    },
-
-
-    bigAnd(v1, v2) {
-        const hi = 0x80000000;
-        const low = 0x7fffffff;
-        const hi1 = ~~(v1 / hi);
-        const hi2 = ~~(v2 / hi);
-        const low1 = (v1 & low) >>> 0;
-        const low2 = (v2 & low) >>> 0;
-        const h = (hi1 & hi2) >>> 0;
-        const l = (low1 & low2) >>> 0;
-        return h*hi + l;
-    },
-    bigOr(v1, v2) {
-        const hi = 0x80000000;
-        const low = 0x7fffffff;
-        const hi1 = ~~(v1 / hi);
-        const hi2 = ~~(v2 / hi);
-        const low1 = (v1 & low) >>> 0;
-        const low2 = (v2 & low) >>> 0;
-        const h = (hi1 | hi2) >>> 0;
-        const l = (low1 | low2) >>> 0;
-        return h*hi + l;
-    },
-
-    orAll(...args) {
-        return args.reduce( (prev,curr) => {
-            return Utils.bigOr(prev,curr);
-        },0);
-    }
-
-};
-
 
 // const FACEARRAY = [
 //     [8, 9, 10, 11, -1, -1, -1, -1, 10, 11, 8, 9],
@@ -233,8 +214,8 @@ const Utils = {
 // const NSIDELIST = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536,
 //     131072,  262144, 524288]; //level 19
 
-export const ORDER_MAX = 21;
-const NSIDELIST =  new Array(ORDER_MAX).fill(0).map((val,idx) => Math.pow(2,idx));
+export const ORDER_MAX = 26;
+const NSIDELIST = new Array(ORDER_MAX).fill(0).map((val,idx) => 2**idx);
 const JPLL = [1, 3, 5, 7, 0, 2, 4, 6, 1, 3, 5, 7];
 const JRLL = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4];
 const NS_MAX = NSIDELIST[NSIDELIST.length-1];
@@ -266,7 +247,7 @@ export class HealpixIndex {
         const n = pixsize * pixsize;
         const a = 180 / Constants.PI;
         const e = 3600 * 3600 * 4 * Constants.PI * a * a;
-        const h = Utils.castToInt(e / n);
+        const h = parseInt(e / n);
         const r = h / 12;
         const o = Math.sqrt(r);
         let c = NS_MAX;
@@ -288,7 +269,7 @@ export class HealpixIndex {
         return i;
     }
     static nside2order(nside) {
-        return (nside & nside - 1) > 0 ? -1 : Utils.castToInt(Math.log2(nside));
+        return (nside & nside - 1) > 0 ? -1 : parseInt(Math.log2(nside));
     }
 
     ang2pix_nest(theta, phi) {
@@ -315,8 +296,10 @@ export class HealpixIndex {
             const y = this.nside * .75 * z;
             const u = M - y;
             const p = M + y;
-            o = u >>> this.order;
-            c = p >>> this.order;
+            // o = u >>> this.order;
+            // c = p >>> this.order;
+            o = shiftRight(u,this.order);
+            c = shiftRight(p, this.order);
             face_num = o===c ?
                 4===o ?
                     4 :
@@ -324,23 +307,23 @@ export class HealpixIndex {
                 c > o ?
                     o :
                     c + 8;
-            ix = Utils.castToInt(p & this.nside - 1);
-            iy = Utils.castToInt(this.nside - (u & this.nside - 1) - 1);
+            ix = parseInt(p & this.nside - 1);
+            iy = parseInt(this.nside - (u & this.nside - 1) - 1);
         } else { // polar region, za > 2/3
-            ntt = Utils.castToInt(tt);
+            ntt = parseInt(tt);
             if (ntt >= 4) ntt = 3;
             tp = tt - ntt;
             const tmp = this.nside * Math.sqrt(3 * (1 - za));
             //   (the index of edge lines increase when distance from the closest pole goes up)
-            jp = Utils.castToInt(tp * tmp);
-            jm = Utils.castToInt((1 - tp) * tmp);
+            jp = parseInt(tp * tmp);
+            jm = parseInt((1 - tp) * tmp);
             jp = Math.min(NS_MAX - 1, jp);
             jm = Math.min(NS_MAX - 1, jm);
             // finds the face and pixel's (x,y)
             if (z>=0) {
                 face_num = ntt; // in {0,3}
-                ix = Utils.castToInt(this.nside - jm - 1);
-                iy = Utils.castToInt(this.nside - jp - 1);
+                ix = parseInt(this.nside - jm - 1);
+                iy = parseInt(this.nside - jp - 1);
             }
             else {
                 face_num = ntt + 8; // in {8,11}
@@ -351,26 +334,7 @@ export class HealpixIndex {
         return this.xyf2nest(ix, iy, face_num);
     }
 
-    xyf2nestORGIN_A(ix, iy, face_num) {
-        return (face_num << 2 * this.order) + (UTAB[255 & ix] | UTAB[255 & ix >> 8] << 16 | UTAB[255 & ix >> 16] << 32 | UTAB[255 & ix >> 24] << 48 | UTAB[255 & iy] << 1 | UTAB[255 & iy >> 8] << 17 | UTAB[255 & iy >> 16] << 33 | UTAB[255 & iy >> 24] << 49);
-    }
-
-
-    xyf2nestORGIN_B(ix, iy, face_num) {
-        return (face_num << 2 * this.order) +
-            (UTAB[255 & ix] |
-             UTAB[255 & ix >>> 8] << 16 |
-             UTAB[255 & ix >>> 16] << 32 |
-             UTAB[255 & ix >>> 24] << 48 |
-             UTAB[255 & iy] << 1 |
-             UTAB[255 & iy >>> 8] << 17 |
-             UTAB[255 & iy >>> 16] << 33 |
-             UTAB[255 & iy >>> 24] << 49);
-    }
     xyf2nest(ix, iy, face_num) {
-        // if (ix>0x7FFFFFF || iy>0x7FFFFFF) {
-        //     console.log('xyf2nest: ix or iy greater');
-        // }
         // const nest= (face_num << 2 * this.order) +
         //     (this.utab[255 & ix] |
         //         this.utab[255 & ix >>> 8] * Math.pow(2,16) |
@@ -380,15 +344,15 @@ export class HealpixIndex {
         //         this.utab[255 & iy >>> 8] * Math.pow(2,17) |
         //         this.utab[255 & iy >>> 16] * Math.pow(2,33) |
         //         this.utab[255 & iy >>> 24] * Math.pow(2,49));
-        const nest= Utils.shiftLeft(face_num, 2 * this.order) +
-            Utils.orAll(UTAB[255 & ix] ,
-                UTAB[255 & ix >>> 8] * Math.pow(2,16) ,
-                UTAB[255 & ix >>> 16] * Math.pow(2,32),
-                UTAB[255 & ix >>> 24] * Math.pow(2,48),
-                UTAB[255 & iy] << 1 ,
-                UTAB[255 & iy >>> 8] * Math.pow(2,17) ,
-                UTAB[255 & iy >>> 16] * Math.pow(2,33) ,
-                UTAB[255 & iy >>> 24] * Math.pow(2,49));
+        const nest= shiftLeft(face_num, 2 * this.order) +
+            orAll(UTAB[255 & ix] ,
+                shiftLeft(UTAB[bigAnd(255, shiftRight(ix, 8))], 16) ,
+                shiftLeft(UTAB[bigAnd(255, shiftRight(ix, 16))], 32),
+                shiftLeft(UTAB[bigAnd(255, shiftRight(ix, 24))], 48),
+                shiftLeft(UTAB[bigAnd(255, iy)], 1) ,
+                shiftLeft(UTAB[bigAnd(255, shiftRight(iy, 8))], 17) ,
+                shiftLeft(UTAB[bigAnd(255, shiftRight(iy, 16))], 33) ,
+                shiftLeft(UTAB[bigAnd(255, shiftRight(iy, 24))], 49));
         // if (nest>0x7FFFFFF) {
         //     console.log('xyf2nest: nest greater');
         // }
@@ -400,42 +364,32 @@ export class HealpixIndex {
         //     console.log('nest2xyf: ipix greater');
         // }
         const s = {};
-        // s.face_num = ipix >> 2 * this.order;
-        s.face_num = Utils.shiftRight(ipix,2 * this.order);
-        // let i = ipix & this.npface - 1;
-        let i = Utils.bigAnd(ipix, this.npface - 1);
-        // let n = (93823560581120 & i) >>> 16 | (614882086624428e4 & i) >>> 31 | 21845 & i | (1431633920 & i) >>> 15;
-        let n = Utils.orAll(Utils.shiftRight(Utils.bigAnd(93823560581120,i),16),
-                            Utils.shiftRight(Utils.bigAnd(614882086624428e4, i),31),
-                            Utils.bigAnd(21845, i),
-                            Utils.shiftRight(Utils.bigAnd(1431633920,i),15));
+        s.face_num = shiftRight(ipix,2 * this.order);
+        let i = bigAnd(ipix, this.npface - 1);
+        // n = (93823560581120 & i) >>> 16 | (614882086624428e4 & i) >>> 31 | 21845 & i | (1431633920 & i) >>> 15;
+        let n = orAll(shiftRight(bigAnd(0x555500000000,i),16),
+                      shiftRight(bigAnd(0x5555000000000000,  i),31),
+                      bigAnd(0x5555, i),
+                      shiftRight(bigAnd(0x55550000,i),15));
 
         // s.ix = this.ctab[255 & n] | this.ctab[255 & n >>> 8] << 4 | this.ctab[255 & n >>> 16] << 16 | this.ctab[255 & n >>> 24] << 20;
+        s.ix = orAll(CTAB[bigAnd(255, n)],
+                           shiftLeft(CTAB[255 & shiftRight(n,8)], 4),
+                           shiftLeft(CTAB[255 & shiftRight(n,16)], 16),
+                           shiftLeft(CTAB[255 & shiftRight(n,24)], 20));
 
-        // if (n>0x7FFFFFF) {
-        //     console.log('nest2xyf: n greater');
-        // }
-
-        s.ix = Utils.orAll(CTAB[Utils.bigAnd(255, n)],
-                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,8)], 4),
-                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,16)], 16),
-                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,24)], 20));
-
-        //i >>= 1;
-        i= Utils.shiftRight(i,1);
+        i= shiftRight(i,1);
         // n = (93823560581120 & i) >>> 16 | (614882086624428e4 & i) >>> 31 | 21845 & i | (1431633920 & i) >>> 15;
-        n = Utils.orAll(Utils.shiftRight(Utils.bigAnd(93823560581120,i), 16),
-                        Utils.shiftRight(Utils.bigAnd(614882086624428e4, i), 31),
-                        Utils.bigAnd(21845, i),
-                        Utils.shiftRight(Utils.bigAnd(1431633920,i),15));
-
-
+        n = orAll(shiftRight(bigAnd(0x555500000000,i), 16),
+                        shiftRight(bigAnd(0x5555000000000000, i), 31),
+                        bigAnd(0x5555, i),
+                        shiftRight(bigAnd(0x55550000,i),15));
 
         // s.iy = this.ctab[255 & n] | this.ctab[255 & n >>> 8] << 4 | this.ctab[255 & n >>> 16] << 16 | this.ctab[255 & n >>> 24] << 20;
-        s.iy = Utils.orAll(CTAB[Utils.bigAnd(255, n)],
-                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n, 8)], 4),
-                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n, 16)], 16),
-                           Utils.shiftLeft(CTAB[255 & Utils.shiftRight(n,24)], 20));
+        s.iy = orAll(CTAB[bigAnd(255, n)],
+                           shiftLeft(CTAB[255 & shiftRight(n, 8)], 4),
+                           shiftLeft(CTAB[255 & shiftRight(n, 16)], 16),
+                           shiftLeft(CTAB[255 & shiftRight(n,24)], 20));
         return  s;
     }
     pix2ang_nest(ipix) {
@@ -537,8 +491,8 @@ export class HealpixIndex {
         if (this.ncap >= ipix1) {
 
             hip = ipix1 / 2;
-            fihip = Utils.castToInt(hip);
-            iring = Utils.castToInt(Math.sqrt(hip - Math.sqrt(fihip))) + 1;
+            fihip = parseInt(hip);
+            iring = parseInt(Math.sqrt(hip - Math.sqrt(fihip))) + 1;
             iphi = ipix1 - 2 * iring * (iring - 1);
             theta = Math.acos(1 - iring * iring * this.fact2);
             phi = (iphi - .5) * Constants.PI / (2 * iring);
@@ -548,13 +502,13 @@ export class HealpixIndex {
                 ip = ipix - this.ncap;
                 iring = ip / this.nl4 + this.nside;
                 iphi = ip % this.nl4 + 1;
-                fodd = Utils.bigAnd(1, iring + this.nside) > 0 ? 1 : .5;
+                fodd = bigAnd(1, iring + this.nside) > 0 ? 1 : .5;
                 theta = Math.acos((this.nl2 - iring) * this.fact1);
                 phi = (iphi - fodd) * Constants.PI / this.nl2;
             }
             else {
                 ip = this.npix - ipix;
-                iring = Utils.castToInt(.5 * (1 + Math.sqrt(2 * ip - 1)));
+                iring = parseInt(.5 * (1 + Math.sqrt(2 * ip - 1)));
                 iphi = 4 * iring + 1 - (ip - 2 * iring * (iring - 1));
                 theta = Math.acos(-1 + Math.pow(iring, 2) * this.fact2);
                 phi = (iphi - .5) * Constants.PI / (2 * iring);
@@ -569,18 +523,18 @@ export class HealpixIndex {
 
         if (this.ncap >= a ) {
             i = a / 2;
-            e = Utils.castToInt(i);
-            n = Utils.castToInt(Math.sqrt(i - Math.sqrt(e))) + 1;
+            e = parseInt(i);
+            n = parseInt(Math.sqrt(i - Math.sqrt(e))) + 1;
         }
         else if (this.nl2 * (5 * this.nside + 1) >= a ) {
-            s = Utils.castToInt(a - this.ncap - 1);
-            n = Utils.castToInt(s / this.nl4 + this.nside);
+            s = parseInt(a - this.ncap - 1);
+            n = parseInt(s / this.nl4 + this.nside);
         }
         else {
             s = this.npix - a + 1;
             i = s / 2;
-            e = Utils.castToInt(i);
-            n = Utils.castToInt(Math.sqrt(i - Math.sqrt(e))) + 1;
+            e = parseInt(i);
+            n = parseInt(Math.sqrt(i - Math.sqrt(e))) + 1;
             n = this.nl4 - n;
         }
         return n;
@@ -664,13 +618,13 @@ export class HealpixIndex {
         let h = Math.cos(e[0]);
         let r = e[0];
         const o = e[1];
-        const c = Utils.castToInt(o / Constants.PIOVER2);
+        const c = parseInt(o / Constants.PIOVER2);
         const u = this.ring(pix);
         const p = Math.min(u, Math.min(this.nside, this.nl4 - u));
         const d = Constants.PIOVER2 / p;
         let l = (u >= this.nside && this.nl3 >= u) ?
-            Utils.castToInt(o / d + u % 2 / 2) + 1 :
-            Utils.castToInt(o / d) + 1;
+            parseInt(o / d + u % 2 / 2) + 1 :
+            parseInt(o / d) + 1;
         l -= c * p;
         const f = n / 2;
         const I = this.integration_limits_in_costh(u);
@@ -712,6 +666,15 @@ export class HealpixIndex {
         return [i, n];
     }
 
+    /**
+     * Returns a range set of pixels whose centers lie within a given disk. <p>
+     *  This method is more efficient in the RING scheme.
+     *  @param {SpatialVector} spatialVector the angular coordinates of the disk center
+     *  @param {number} radius the radius (in radians) of the disk
+     *  @param {boolean} nest true if nest, false if ring
+     *  @param {boolean} inclusive
+     *  @return {Array.<number> }the requested set of pixel number ranges
+     */
     queryDisc(spatialVector, radius, nest, inclusive) {
         if (0 > radius || radius > Constants.PI) {
             throw {
@@ -719,60 +682,54 @@ export class HealpixIndex {
                 message: 'angular radius is in RADIAN and should be in [0,pi]'
             };
         }
-        let r, d, f, y, v;
-        const R = new LongRangeSetBuilder;
-        let c = radius;
-        inclusive && (c += Constants.PI / this.nl4);
-        const T = HealpixIndex.vec2Ang(spatialVector);
-        const u = T[0];
-        const p = T[1];
-        const I = this.fact2;
-        const M = this.fact1;
-        const o = Math.cos(u);
-        const _ = 1 / Math.sqrt((1 - o) * (1 + o));
-        const g = u - c;
-        const P = u + c;
-        const l = Math.cos(c);
-        const C = Math.cos(g);
-        const e = this.ringAbove(C) + 1;
-        const x = Math.cos(P);
-        let h = this.ringAbove(x);
-        if (e > h && 0===h ) h= e;
-        if (0 >= g) {
-            for (let m = 1; e > m; ++m) {
-                this.inRing(m, 0, Math.PI, R);
+        let d, f, y, v;
+        const pixset = new LongRangeSetBuilder;
+
+        const rsmall = inclusive ? (radius + (Constants.PI / this.nl4)) : radius;
+        const [theta,phi]= HealpixIndex.vec2Ang(spatialVector);
+        const z0 = Math.cos(theta);
+        const xa = 1 / Math.sqrt((1 - z0) * (1 + z0));
+        const rlat1 = theta - rsmall;
+        const rlat2 = theta + rsmall;
+        const cosrsmall = Math.cos(rsmall);
+        const zmax = Math.cos(rlat1);
+        const irmin = this.ringAbove(zmax) + 1;
+        const zmin = Math.cos(rlat2);
+        let h = this.ringAbove(zmin);
+        if (irmin > h && 0===h ) h= irmin;
+        if (0 >= rlat1) {
+            for (let m = 1; irmin > m; ++m) {
+                this.inRing(m, 0, Math.PI, pixset);
             }
         }
-        for (r = e; h >= r; ++r) {
-            v = this.nside > r ?
-                1 - r * r * I :
-                this.nl3 >= r ?
-                    (this.nl2 - r) * M :
-                    -1 + (this.nl4 - r) * (this.nl4 - r) * I;
-            d = (l - v * o) * _;
+        for (let iz = irmin; h >= iz; ++iz) {
+            v = this.nside > iz ?
+                1 - iz * iz * this.fact2 :
+                this.nl3 >= iz ?
+                    (this.nl2 - iz) * this.fact1 :
+                    -1 + (this.nl4 - iz) * (this.nl4 - iz) * this.fact2;
+            d = (cosrsmall - v * z0) * xa;
             f = 1 - v * v - d * d;
             y = Math.atan2(Math.sqrt(f), d);
-            if (isNaN(y)) y = c;
-            this.inRing(r, p, y, R);
+            if (isNaN(y)) y = rsmall;
+            this.inRing(iz, phi, y, pixset);
         }
-        if (P >= Math.PI) {
-            for (let m = h + 1; this.nl4 > m; ++m) this.inRing(m, 0, Math.PI, R, false);
+        if (rlat2 >= Math.PI) {
+            for (let m = h + 1; this.nl4 > m; ++m) this.inRing(m, 0, Math.PI, pixset, false);
         }
-        let b;
+
         if (nest) {
-            const S = R.items;
-            const U = [];
-            for (let A = 0; S.length > A; A++) {
-                const O = this.ring2nest(S[A]);
-                U.indexOf(O) >= 0 || U.push(O);
+            const nestPixset = [];
+            for (let i = 0; pixset.items.length > i; i++) {
+                const nestPix = this.ring2nest(pixset.items[i]);
+                nestPixset.indexOf(nestPix) >= 0 || nestPixset.push(nestPix);
             }
-            b = U;
-            // console.log(b);
+            // console.log(retPixAry);
+            return nestPixset;
         }
         else {
-            b = R.items;
+            return pixset.items;
         }
-        return b;
     }
 
     inRing(iz, phi0, dphi, nest, conservative) {
@@ -818,8 +775,8 @@ export class HealpixIndex {
         }
         else {
             f = Math.ceil(h * M / Constants.TWOPI - l);
-            I = Utils.castToInt(h * g / Constants.TWOPI - l);
-            f > I && 1===iz && (I = Utils.castToInt(h * y / Constants.TWOPI - l));
+            I = parseInt(h * g / Constants.TWOPI - l);
+            f > I && 1===iz && (I = parseInt(h * y / Constants.TWOPI - l));
             f===(I + 1) && (f = I);
             if (1===(f - I) && Constants.PI > dphi * h) {
                 console.log('the interval is too small and away from center');
@@ -851,10 +808,10 @@ export class HealpixIndex {
     ringAbove(z) {
         const az = Math.abs(z);
         if (az > Constants.TWOTHIRD) {
-            const iring = Utils.castToInt(this.nside * Math.sqrt(3 * (1 - az)));
+            const iring = parseInt(this.nside * Math.sqrt(3 * (1 - az)));
             return z > 0 ? iring : 4 * this.nside - iring - 1;
         }
-        return Utils.castToInt(this.nside * (2 - 1.5 * z));
+        return parseInt(this.nside * (2 - 1.5 * z));
     }
 
     ring2nest(ipRing) {
@@ -867,7 +824,7 @@ export class HealpixIndex {
         let iring, iphi, kshift, nr;
         const ret = {}; // Xyf
         if (this.ncap > pix) { // North Polar cap
-            iring = Utils.castToInt(.5 * (1 + Math.sqrt(1 + 2 * pix)));
+            iring = parseInt(.5 * (1 + Math.sqrt(1 + 2 * pix)));
             iphi = pix + 1 - 2 * iring * (iring - 1);
             kshift = 0;
             nr = iring;
@@ -881,35 +838,35 @@ export class HealpixIndex {
         } else if (this.npix - this.ncap > pix) {  // Equatorial region
             const ip = pix - this.ncap;
             if (this.order >= 0)  {
-                iring = Utils.shiftRight(ip,this.order + 2) + this.nside;
+                iring = shiftRight(ip,this.order + 2) + this.nside;
                 // iphi = (ip & this.nl4 - 1) + 1;
-                iphi = Utils.bigAnd(ip, this.nl4 - 1) + 1;
+                iphi = bigAnd(ip, this.nl4 - 1) + 1;
             } else {
                 iring = ip / this.nl4 + this.nside;
                 iphi = ip % this.nl4 + 1;
             }
-            kshift = Utils.bigAnd(1 , iring + this.nside);
+            kshift = bigAnd(1 , iring + this.nside);
             nr = this.nside;
             let c, u;
             const ire = iring - this.nside + 1;
             const irm = this.nl2 + 2 - ire;
             if (this.order>=0) {
-                c = Utils.shiftRight(iphi - Utils.castToInt(ire / 2) + this.nside - 1, this.order);
-                u = Utils.shiftRight(iphi - Utils.castToInt(irm / 2) + this.nside - 1,this.order);
+                c = shiftRight(iphi - parseInt(ire / 2) + this.nside - 1, this.order);
+                u = shiftRight(iphi - parseInt(irm / 2) + this.nside - 1,this.order);
             }
             else {
-                c = (iphi - Utils.castToInt(ire / 2) + this.nside - 1) / this.nside;
-                u = (iphi - Utils.castToInt(irm / 2) + this.nside - 1) / this.nside;
+                c = (iphi - parseInt(ire / 2) + this.nside - 1) / this.nside;
+                u = (iphi - parseInt(irm / 2) + this.nside - 1) / this.nside;
             }
             if (u===c) {
-                 ret.face_num= 4===u ? 4 : Utils.castToInt(u) + 4;
+                 ret.face_num= 4===u ? 4 : parseInt(u) + 4;
             }
             else  {
-                 ret.face_num=c > u ? Utils.castToInt(u) : Utils.castToInt(c) + 8;
+                 ret.face_num=c > u ? parseInt(u) : parseInt(c) + 8;
             }
         } else {  // South Polar cap
             const ip = this.npix - pix;
-            iring = Utils.castToInt(.5 * (1 + Math.sqrt(2 * ip - 1)));
+            iring = parseInt(.5 * (1 + Math.sqrt(2 * ip - 1)));
             iphi = 4 * iring + 1 - (ip - 2 * iring * (iring - 1));
             kshift = 0;
             nr = iring;
@@ -927,8 +884,8 @@ export class HealpixIndex {
         f >= this.nl2 && (f -= 8 * this.nside);
         // ret.ix = f - d >>> 1;
         //  ret.iy = -(f + d) >>> 1;
-         ret.ix = Utils.shiftRight(f - d, 1);
-         ret.iy = Utils.shiftRight(-(f + d),1);
+         ret.ix = shiftRight(f - d, 1);
+         ret.iy = shiftRight(-(f + d),1);
         return  ret;
     }
 }

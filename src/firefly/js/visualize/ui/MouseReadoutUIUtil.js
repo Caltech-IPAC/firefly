@@ -24,16 +24,19 @@ const labelMap = {
     fitsIP: 'Image Pixel:',
     pixelSize: 'Pixel Size:',
     sPixelSize: 'Screen Pixel Size:',
+    healpixPixel: 'Pixel: ',
+    healpixNorder: 'Norder: ',
 };
 
 
 export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= false) {
     const objList= getNonFluxReadoutElements(readoutItems,  readoutPref, isHiPS);
 
-    const {imageMouseReadout1, imageMouseReadout2, hipsMouseReadout1, hipsMouseReadout2, pixelSize} = objList;
+    const {imageMouseReadout1, imageMouseReadout2, hipsMouseReadout1,
+                     hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder} = objList;
 
 
-    let readout1, readout2;
+    let readout1, readout2, healpixPixelReadout, healpixNorderReadout;
     let showReadout1PrefChange, showReadout2PrefChange;
 
     if (isHiPS) {
@@ -41,19 +44,19 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
         readout2= {value:hipsMouseReadout2, label: labelMap[readoutPref.hipsMouseReadout2]};
         showReadout1PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout1', readoutPref.hipsMouseReadout1);
         showReadout2PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout2', readoutPref.hipsMouseReadout2);
+        healpixPixelReadout= {value:healpixPixel, label: labelMap.healpixPixel};
+        healpixNorderReadout= {value:healpixNorder, label: labelMap.healpixNorder};
     }
     else {
         readout1= {value:imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
         readout2= {value:imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
         showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1);
         showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2);
-
     }
-
 
     return {
         readout1, readout2,
-        showReadout1PrefChange, showReadout2PrefChange,
+        showReadout1PrefChange, showReadout2PrefChange, healpixPixelReadout, healpixNorderReadout,
         pixelSize: {value: pixelSize, label: labelMap[readoutPref.pixelSize]},
         showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize)
     };
@@ -103,6 +106,12 @@ export function getReadoutElement(readoutItems, readoutKey) {
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, true);
         case 'fitsIP' :
             return makeImagePtReturn(get(readoutItems, 'imagePt.value'));
+        case 'healpixPixel' :
+            const {healpixPixel}= readoutItems;
+            return (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : '';
+        case 'healpixNorder' :
+            const {healpixNorder}= readoutItems;
+            return (healpixNorder && healpixNorder.value) ? `${healpixNorder.value}` : '';
     }
 
     return '';

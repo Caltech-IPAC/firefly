@@ -47,7 +47,7 @@ const column6 = {width: 170,addingLeft: 2, textAlign: 'left', display: 'inline-b
 const lockByClickStyle = {width: 100, display: 'inline-block', float: 'right', margin: '-10px 24px 0 0 '};
 
 
-export function PopupMouseReadoutFull({readout}){
+export function PopupMouseReadoutFull({readout, showHealpixPixel=false}){
 
 
     //get the standard readouts
@@ -66,8 +66,10 @@ export function PopupMouseReadoutFull({readout}){
     const lock = readout.isLocked ? LOCKED:UNLOCKED;
     const {isHiPS, readoutItems}= sndReadout;
     const displayEle= getNonFluxDisplayElements(readoutItems,  readout.readoutPref, isHiPS);
-    const {readout1, readout2, pixelSize, showReadout1PrefChange, showReadout2PrefChange, showPixelPrefChange}= displayEle;
+    const {readout1, readout2, pixelSize, showReadout1PrefChange, showReadout2PrefChange,
+           showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
     const fluxArray = getFluxInfo(sndReadout);
+    const hipsPixel= showHealpixPixel && isHiPS;
 
     return (
         <div style={{display:'flex', height: '100%', alignItems:'center'}}>
@@ -88,8 +90,10 @@ export function PopupMouseReadoutFull({readout}){
                     <div style={column6}> {readout1.value} </div>
                 </div>
                 <div style={{paddingTop: 3}}>{/* row2*/}
-                    <div style={ column3_r2}>{fluxArray[0].label}</div>
-                    <div style={ column4}> {fluxArray[0].value}</div>
+                    {!isHiPS && <div style={ column3_r2}>{fluxArray[0].label}</div>}
+                    {!isHiPS && <div style={ column4}> {fluxArray[0].value}</div>}
+                    {hipsPixel && <div style={ column3_r2}>{healpixPixelReadout.label}</div>}
+                    {hipsPixel && <div style={ column4}>{healpixPixelReadout.value}</div>}
 
                     <div style={ clone(column5,linkLook)} onClick={ showReadout2PrefChange}>
                         {readout2.label } </div>
@@ -101,6 +105,8 @@ export function PopupMouseReadoutFull({readout}){
                      {threeColor && <div style={ column4}>{fluxArray[1].value}</div>}
                      {threeColor && <div style={ column5}>{fluxArray[2].label}</div>}
                      {threeColor && <div style={ column6}>{fluxArray[2].value}</div>}
+                     {hipsPixel && <div style={ column3}>{healpixNorderReadout.label} </div>}
+                     {hipsPixel && <div style={ column4}> {healpixNorderReadout.value}  </div>}
                 </div>
                 <div style={lockByClickStyle} title='Click on an image to lock the display at that point.'>
                     <input type='checkbox' name='aLock' value='lock'
@@ -117,5 +123,6 @@ export function PopupMouseReadoutFull({readout}){
     );
 }
 PopupMouseReadoutFull.propTypes = {
-    readout: PropTypes.object
+    readout: PropTypes.object,
+    showHealpixPixel : PropTypes.bool
 };
