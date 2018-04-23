@@ -661,14 +661,14 @@ function getTraceTSEntries({chartDataType, traceTS, chartId, traceNum}) {
  * @param resetColor reset color generator for default color assignment of the chart
  */
 export function applyDefaults(chartData={}, resetColor = true) {
-    //const chartType = get(chartData, ['data', '0', 'type']);
-    //const noXYAxis = chartType && (chartType === 'pie');
 
     const nonPieChart = isEmpty(chartData) || !has(chartData, 'data') || chartData.data.find((d) => get(d, 'type') !== 'pie');
     const noXYAxis = Boolean(!nonPieChart);
 
+    const chartType = get(chartData, ['data', '0', 'type']);
+    const hMode = chartType ==='fireflyHistogram'? 'x':'closest';
     const defaultLayout = {
-        hovermode: 'compare',
+        hovermode: hMode,
         legend: {
             font: {size: FSIZE},
             orientation: 'v',
