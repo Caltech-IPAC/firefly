@@ -192,6 +192,8 @@ function getPathList(action) {
                     } else {
                         set(action, ['payload', 'files'], []);
                         set(action, ['payload', 'status'], value.status);
+                        set(action, ['payload', 'statusCode'], value.statusCode);
+
                         dispatch(action);
                     }
                 });
@@ -209,8 +211,8 @@ function getPathList(action) {
 function updatePathList(action) {
     return (dispatch) => {
         startLoadWorkspace(dispatch);
-        const doUpdate = (files, status) => {
-            const result = createWorkspaceList(files, null, status);
+        const doUpdate = (files, status, statusCode) => {
+            const result = createWorkspaceList(files, null, status, statusCode);
 
             action = updateMerge(action, 'payload', result);
             dispatch(action);
@@ -228,7 +230,7 @@ function updatePathList(action) {
 
             fetchUrl(WS_URL, {params}).then((response) => {
                 response.json().then((value) => {
-                    doUpdate(value.result, value.status);
+                    doUpdate(value.result, value.status, value.statusCode);
                 });
             }).catch((error) => {
                 workspacePopupMsg('Workspace update fails" ' + error.message,
@@ -258,6 +260,38 @@ export function getWorkspaceStatus() {
     return isEmpty(getWorkspaceList()) && get(flux.getState(), [WORKSPACE_PATH, 'status']);
 }
 
+
+export function getWorkspaceStatusCode() {
+
+    return isEmpty(getWorkspaceList()) && get(flux.getState(), [WORKSPACE_PATH, 'statusCode']);
+}
+export function getWorkspaceErrorMsg(){
+    const statusCode = getWorkspaceStatusCode();
+
+    var errorMsg;
+    switch (statusCode){
+        case '401':
+            errorMsg = 'You are not logged in. Please click \'Login\' in the upper right corner of the window';
+            break;
+        case '403':
+            errorMsg = 'You do not have access right';
+            break;
+        case '404':
+            errorMsg = 'The request resources can not be found';
+            break;
+        case '500':
+            errorMsg = 'Internal Server Error';
+            break;
+        case '412':
+            errorMsg = 'Precondition Failed: one or more preconditions were not met';
+            break;
+
+        default:
+            errorMsg = getWorkspaceStatus();
+            break;
+    }
+    return errorMsg;
+}
 export function isAccessWorkspace() {
     return get(flux.getState(), [WORKSPACE_PATH, 'isLoading']);
 }
@@ -472,17 +506,17 @@ function convertFilesToList(wFiles) {
     return list;
 }
 
-function updateWorkspaceList(wfiles, ws_data, status, state) {
+function updateWorkspaceList(wfiles, ws_data, status, statusCode, state) {
     const files = wfiles || [];
     const data = ws_data || [];
     status = (isEmpty(files)) ? (status||'No Source') : status;
 
-    return Object.assign({}, state, {files, data, status});
+    return Object.assign({}, state, {files, data, status, statusCode});
 }
 
-function createWorkspaceList(wFiles = [], state, status) {
+function createWorkspaceList(wFiles = [], state, status, statusCode) {
     if (isEmpty(wFiles)) {
-        return Object.assign({}, {data: [], files: [], status: status||'No source'});
+        return Object.assign({}, {data: [], files: [], statusCode:statusCode, status: status||'No source'});
     }
 
     const list = convertFilesToList(wFiles);
@@ -531,7 +565,7 @@ function reducer(state=initState(), action={}) {
 
     if (!type || !action.payload) return state;
 
-    const {oldFile, file, files, data, newPath, status, isLoading} = action.payload;
+    const {oldFile, file, files, data, newPath, status, statusCode, isLoading} = action.payload;
     let   retState = state;
 
     switch(type) {
@@ -553,11 +587,11 @@ function reducer(state=initState(), action={}) {
             }
             break;
         case WORKSPACE_LIST_UPDATE:
-            retState = updateWorkspaceList(files, data, status, state);
+            retState = updateWorkspaceList(files, data, status, statusCode, state);
             retState.isLoading = false;
             break;
         case WORKSPACE_LIST:
-            retState = createWorkspaceList(files, state, status);
+            retState = createWorkspaceList(files, state, status, statusCode);
             retState.isLoading = false;
             break;
         case WORKSPACE_IN_LOADING:

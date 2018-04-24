@@ -8,7 +8,7 @@ import {isEmpty, get, isNil} from 'lodash';
 import {ValidationField} from './ValidationField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import {getWorkspaceList, isExistWorspaceFile, getWorkspacePath, getWorkspaceStatus,
+import {getWorkspaceList, isExistWorspaceFile, getWorkspacePath, getWorkspaceErrorMsg,
         dispatchWorkspaceUpdate, isAccessWorkspace} from '../visualize/WorkspaceCntlr.js';
 import {WorkspaceSave, workspacePopupMsg} from './WorkspaceViewer.jsx';
 
@@ -141,7 +141,7 @@ export class DownloadOptionsDialog extends PureComponent {
 
             return (
                 (isUpdating) ? loading() :
-                    (!isEmpty(wsList) ? showSave() : showNoWSFiles('Workspace access error: ' + getWorkspaceStatus()))
+                    (!isEmpty(wsList) ? showSave() : showNoWSFiles('Workspace access error: ' + getWorkspaceErrorMsg()))
             );
         };
 

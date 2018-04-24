@@ -10,6 +10,7 @@ import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceDeletePath,
         dispatchWorkspaceMovePath,
         dispatchWorkspaceUpdate,
+        getWorkspaceErrorMsg,
         getWorkspaceStatus,
         getWorkspaceList, getFolderUnderLevel,
         getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME} from '../visualize/WorkspaceCntlr.js';
@@ -369,7 +370,7 @@ export function showWorkspaceUploadPopup({onClickUpload, value}) {
         };
 
         if (!newList || isEmpty(newList)) {
-            workspacePopupMsg('Workspace access error: ' + getWorkspaceStatus(), 'Workspace access');
+            workspacePopupMsg('Workspace access error: ' + getWorkspaceErrorMsg() , 'Workspace access');
         } else {
             startWorkspaceReadPopup();
         }
