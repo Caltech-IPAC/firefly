@@ -156,7 +156,7 @@ export class HistogramPlotly extends Component {
             plotlyLayout: {
                 height,
                 width,
-                hovermode: 'x',
+                hovermode: 'compare',
                  xaxis: {
                     title: `${desc} ` + (xUnit ? `(${xUnit})` : ''),
                     type: (logs && logs.includes('x') ? LOG : LINEAR),
