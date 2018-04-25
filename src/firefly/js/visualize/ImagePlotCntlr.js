@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has,isArray} from 'lodash';
+import {has,isArray,omit} from 'lodash';
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {ZoomType} from './ZoomType.js';
@@ -131,6 +131,7 @@ const PLOT_MASK_LAZY_LOAD=`${PLOTS_PREFIX}.plotMaskLazyLoad`;
 const PLOT_MASK_FAIL= `${PLOTS_PREFIX}.plotMaskFail`;
 const DELETE_OVERLAY_PLOT=`${PLOTS_PREFIX}.deleteOverlayPlot`;
 const OVERLAY_PLOT_CHANGE_ATTRIBUTES=`${PLOTS_PREFIX}.overlayPlotChangeAttributes`;
+const CHANGE_HIPS_IMAGE_CONVERSION=`${PLOTS_PREFIX}.changeHipsImageConversion`;
 
 const WCS_MATCH=`${PLOTS_PREFIX}.wcsMatch`;
 
@@ -276,7 +277,8 @@ export default {
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT,
-    OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE
+    OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, ADD_PROCESSED_TILES, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
+    CHANGE_HIPS_IMAGE_CONVERSION
 };
 
 const KEY_ROOT= 'progress-';
@@ -618,6 +620,8 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
  * @param {WebPlotRequest} p.allSkyRequest - must be a allsky type request
  * @param {boolean} p.plotAllSkyFirst - if there is an all sky set up then plot that first
  * @param {number} p.fovDegFallOver - the size in degrees that the image will switch between hips and a image cutout
+ * @param {number} p.fovMaxFitsSize- the max size the fits image service can support
+ * @param {boolean} p.autoConvertOnZoom- convert between images and FITS on zoom
  * @param {string} p.viewerId
  * @param {PVCreateOptions} p.pvOptions PlotView init Options
  * @param {Object} [p.attributes] meta data that is added the plot
@@ -625,12 +629,26 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchPlotImageOrHiPS({plotId,hipsRequest, imageRequest, allSkyRequest, viewerId, fovDegFallOver=.12,
+                                            fovMaxFitsSize= .12, autoConvertOnZoom= false,
                                             pvOptions= {}, attributes={}, plotAllSkyFirst= false,
                                             setNewPlotAsActive= true, dispatcher= flux.process }) {
 
     dispatcher( { type: PLOT_HIPS_OR_IMAGE,
         payload: {hipsRequest, imageRequest, allSkyRequest, plotId, fovDegFallOver, pvOptions,
-                  attributes, setNewPlotAsActive, viewerId, plotAllSkyFirst} });
+                 fovMaxFitsSize, autoConvertOnZoom, attributes, setNewPlotAsActive, viewerId, plotAllSkyFirst} });
+}
+
+/**
+ *
+ * @param {Object} p this function takes a single parameter
+ * @param {string} p.plotId
+ * @param {HipsImageConversionSettings} p.hipsImageConversionChanges  changes to HipsImageConversionSettings, newOptions can contain any key in
+ * HipsImageConversionSettings
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ */
+export function dispatchChangeHipsImageConversion({plotId, hipsImageConversionChanges,
+                                                           dispatcher= flux.process}) {
+    dispatcher( { type: CHANGE_HIPS_IMAGE_CONVERSION, payload: {plotId, hipsImageConversionChanges}});
 }
 
 
@@ -912,7 +930,7 @@ const changeActions= convertToIdentityObj([
     CHANGE_PLOT_ATTRIBUTE, COLOR_CHANGE, COLOR_CHANGE_START, COLOR_CHANGE_FAIL, ROTATE, FLIP,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL, RECENTER, GROUP_LOCKING,
     PLOT_PROGRESS_UPDATE, OVERLAY_PLOT_CHANGE_ATTRIBUTES, CHANGE_PRIME_PLOT, CHANGE_CENTER_OF_PROJECTION,
-    CHANGE_HIPS, ADD_PROCESSED_TILES
+    CHANGE_HIPS, ADD_PROCESSED_TILES, CHANGE_HIPS_IMAGE_CONVERSION
 ]);
 
 const adminActions= convertToIdentityObj([

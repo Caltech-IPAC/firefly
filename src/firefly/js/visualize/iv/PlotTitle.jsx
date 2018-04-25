@@ -12,6 +12,7 @@ import {primePlot} from '../PlotViewUtil.js';
 
 import './PlotTitle.css';
 import LOADING from 'html/images/gxt/loading.gif';
+import {isImage} from '../WebPlot.js';
 
 export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 
@@ -30,7 +31,10 @@ export function PlotTitle({plotView:pv, titleType, brief, working}) {
             break;
 
     }
-    let zlStr= getZoomDesc(pv);
+    const zlRet= getZoomDesc(pv);
+    let zlStr= `FOV: ${zlRet.fovFormatted}`;
+    let tooltip= `${plot.title}\nHorizontal field of view: ${zlRet.fovFormatted}`;
+    if (isImage(plot)) tooltip+= `\nZoom Level: ${zlRet.zoomLevelFormatted}`;
     let rotString= null;
     if (pv.rotation) {
         if (pv.plotViewCtx.rotateNorthLock) {
@@ -40,13 +44,14 @@ export function PlotTitle({plotView:pv, titleType, brief, working}) {
             rotString= angleStr + String.fromCharCode(176);
         }
         zlStr+=',';
+        tooltip+= `, ${rotString}`;
     }
 
     return (
-        <div className={styleName} title={plot.title}>
+        <div className={styleName} title={tooltip}>
             <div className='plot-title-title'>{plot.title}</div>
-            {!brief ? <div className='plot-title-zoom'><div dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
-            {!brief && rotString ? <div className='plot-title-rotation'>{rotString}</div> : ''}
+            {!brief ? <div className='plot-title-zoom'><div title={tooltip} dangerouslySetInnerHTML={{__html:zlStr}}/> </div> : ''}
+            {!brief && rotString ? <div title={tooltip} className='plot-title-rotation'>{rotString}</div> : ''}
             {working ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
         </div>
     );

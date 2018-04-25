@@ -34,6 +34,7 @@ import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import Point from '../Point.js';
 import {updateTransform} from '../PlotTransformUtils.js';
+import {WebPlotRequest} from '../WebPlotRequest.js';
 
 
 //============ EXPORTS ===========
@@ -130,6 +131,9 @@ export function reducer(state, action) {
             retState= changeOverlayPlotAttributes(state,action);
             break;
 
+        case Cntlr.CHANGE_HIPS_IMAGE_CONVERSION :
+            retState= changeHipsImageConversionSettings(state,action);
+            break;
 
 
         case Cntlr.ADD_PROCESSED_TILES:
@@ -650,6 +654,26 @@ function changeOverlayPlotAttributes(state,action) {
         });
     return clone(state,{plotViewAry});
 }
+
+function changeHipsImageConversionSettings(state,action) {
+    const {plotId, hipsImageConversionChanges}= action.payload;
+    const changes= {...hipsImageConversionChanges};
+    const plotViewAry= state.plotViewAry
+        .map( (pv) => {
+            if (pv.plotId!==plotId || !pv.plotViewCtx.hipsImageConversion) return pv;
+            if (changes.hipsRequestRoot) changes.hipsRequestRoot= WebPlotRequest.makeFromObj(changes.hipsRequestRoot);
+            if (changes.imageRequestRoot) changes.imageRequestRoot= WebPlotRequest.makeFromObj(changes.imageRequestRoot);
+            if (changes.allSkyRequest) changes.allSkyRequest= WebPlotRequest.makeFromObj(changes.allSkyRequest);
+            pv= {...pv};
+            pv.plotViewCtx= {...pv.plotViewCtx};
+            pv.plotViewCtx.hipsImageConversion= {...pv.plotViewCtx.hipsImageConversion, ...changes};
+            return pv;
+        });
+    return clone(state,{plotViewAry});
+
+}
+
+
 
 function addProcessedTileData(state,action) {
     const {plotId, plotImageId, imageOverlayId, zoomFactor}= action.payload;

@@ -83,7 +83,9 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  *
  * @prop {WebPlotRequest} hipsRequestRoot a WebPlotRequest that contains the base parameter to display a HiPS
  * @prop {WebPlotRequest} imageRequestRoot a WebPlotRequest that contains the base parameter to display an image. It must be a service type.
- * @prop {fovDegFallOver} The field of view size to determine when to move between and HiPS and an image
+ * @prop {number} fovDegFallOver The field of view size to determine when to move between and HiPS and an image
+ * @prop {number} fovMaxFitsSize how big this fits image can be
+ * @prop {boolean} autoConvertOnZoom do auto convert on zoom
  */
 
 /**
@@ -156,7 +158,9 @@ function createPlotViewContextData(req, pvOptions={}) {
 
     const {hipsImageConversion:hi}= pvOptions;
     if (hi && hi.hipsRequestRoot && hi.imageRequestRoot && hi.fovDegFallOver) {  // confirm all three parameters are there
-        plotViewCtx.hipsImageConversion= hi;
+        const defaults= {autoConvertOnZoom: false};
+        plotViewCtx.hipsImageConversion= {...defaults, ...hi};
+        if (!hi.fovMaxFitsSize ) hi.fovMaxFitsSize= hi.fovDegFallOver;
     }
     return plotViewCtx;
 }

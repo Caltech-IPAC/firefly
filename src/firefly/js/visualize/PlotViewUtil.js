@@ -1,15 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {difference,isArray,has,isString,get, isEmpty,flatten, isUndefined} from 'lodash';
+import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
-import {makeImagePt, makeDevicePt, pointEquals} from './Point.js';
-import {CysConverter} from './CsysConverter.js';
+import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {clone} from '../util/WebUtil.js';
-import {getDlAry, dispatchDestroyDrawLayer} from './DrawLayerCntlr.js';
+import {dispatchDestroyDrawLayer, getDlAry} from './DrawLayerCntlr.js';
 import {makeTransform} from './PlotTransformUtils.js';
-import {makeWorldPt} from './Point.js';
-import {isImage} from './WebPlot.js';
+import CysConverter from './CsysConverter';
+import {computeDistance} from './VisUtil.js';
+import {isHiPS, isImage} from './WebPlot.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -690,4 +690,40 @@ export function getAllCanvasLayersForPlot(plotId) {
             return n1<n2;
         });
     return [...imageLayers,...dlLayers];
+}
+
+/**
+ *
+ * @param {PlotView} pv
+ * @param {number} alternateZoomFactor
+ * @return {number} fov in degrees
+ */
+export function getFoV(pv, alternateZoomFactor) {
+    const plot= primePlot(pv);
+    const cc = CysConverter.make(plot);
+    const {width, height} = pv.viewDim;
+    const allSkyImage= Boolean(isImage(plot) && plot.projection.isWrappingProjection());
+    if (!cc || !width || !height) return;
+    if (alternateZoomFactor) cc.zoomFactor= alternateZoomFactor;
+    const pt1 = cc.getWorldCoords(makeDevicePt(1, height / 2));
+    const pt2 = (allSkyImage) ? cc.getWorldCoords(makeDevicePt(width/2, height / 2))  :
+                                cc.getWorldCoords(makeDevicePt(width - 1, height / 2));
+
+    const dist= (pt1 && pt2) && computeDistance(pt1, pt2);
+    if (dist) return allSkyImage ? dist*2 : dist;
+
+    if (isHiPS(plot)) {
+        return 180; // todo: this may need to consider the projection type in to future, ie aitoff 360
+    }
+    else if (allSkyImage) {
+        return 360;
+    }
+    else { // not allsky image, but computation is outside of projection, use an alternate approach
+        const ip1=  cc.getWorldCoords(makeImagePt(0, 0));
+        const ip2=  cc.getWorldCoords(makeImagePt(plot.dataWidth, 0));
+        const idist= (ip1 && ip2) && computeDistance(ip1, ip2);
+        if (!idist) return false;
+        return (pv.viewDim.width/plot.screenSize.width) * idist;
+    }
+
 }

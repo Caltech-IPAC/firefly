@@ -6,8 +6,7 @@ import Enum from 'enum';
 import numeral from 'numeral';
 import {logError} from '../util/WebUtil.js';
 import {getPixScaleArcSec, PlotAttribute, isImage} from './WebPlot.js';
-import {primePlot} from './PlotViewUtil.js';
-import {getHiPSFoV} from './HiPSUtil.js';
+import {primePlot, getFoV} from './PlotViewUtil.js';
 import VisUtil from './VisUtil.js';
 
 
@@ -131,35 +130,39 @@ export function convertZoomToString(level) {
     return retval;
 }
 
+const formatFOV = (charCode, fNum) => {
+    const nFormat = (fNum > 10.0) ? '0' : ((fNum >= 1.0) ? '0.0' : '0.00');
+    return `${numeral(fNum).format(nFormat)}${charCode}`;
+};
 
-const SHOW_ZOOM_PREFIX= false; // for hips debugging
+export function makeFoVString(fov) {
+    let fovFormatted;
+    if (fov > 1.0) {
+        fovFormatted= formatFOV(String.fromCharCode(176), fov);
+    } else {
+        const fovMin = VisUtil.convertAngle('deg', 'arcmin', fov);
 
+        fovFormatted= fovMin > 1.0 ? formatFOV("'", fovMin) :
+            formatFOV('"', VisUtil.convertAngle('arcmin', 'arcsec', fovMin));
+    }
+    return fovFormatted;
+}
+
+/**
+ *
+ * @param {PlotView} pv
+ * @return {{fovFormatted:string,zoomLevelFormatted:string}}
+ */
 export function getZoomDesc(pv) {
     const plot= primePlot(pv);
-    if (!plot) return '';
-    const zstr= convertZoomToString(plot.zoomFactor);
+    if (!plot || !plot.viewDim) return {fovFormatted:'',zoomLevelFormatted:''};
 
-    if (isImage(plot)) {
-        return zstr;
-    }
-    else {
-        if (!plot.viewDim) return '';
-        const zprefix= SHOW_ZOOM_PREFIX ? zstr+', ' : '';
-        const fov= getHiPSFoV(pv);
-        const zoomNumber = (charCode, fNum) => {
-            const nFormat = (fNum > 10.0) ? '0' : ((fNum >= 1.0) ? '0.0' : '0.00');
+    const zoomLevelFormatted= isImage(plot) ? convertZoomToString(plot.zoomFactor) : '';
+    const fov= getFoV(pv);
+    const fovFormatted= makeFoVString(fov);
 
-            return `${zprefix}FOV: ${numeral(fNum).format(nFormat)}${charCode}`;
-        };
-
-        if (fov > 1.0) {
-            return zoomNumber(String.fromCharCode(176), fov);
-        } else {
-            const fovMin = VisUtil.convertAngle('deg', 'arcmin', fov);
-
-            return fovMin > 1.0 ? zoomNumber("'", fovMin) :
-                                  zoomNumber('"', VisUtil.convertAngle('arcmin', 'arcsec', fovMin));
-        }
-    }
+    return {fovFormatted,zoomLevelFormatted};
 
 }
+
+
