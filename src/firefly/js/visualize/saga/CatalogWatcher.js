@@ -17,6 +17,7 @@ import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
+import {getMaxScatterRows} from "../../charts/ChartUtil.js";
 
 
 /**
@@ -80,8 +81,8 @@ function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
 
     
-    const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo}= sourceTable;
-    
+    const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo, title}= sourceTable;
+    const maxScatterRows = getMaxScatterRows();
 
 
 
@@ -120,9 +121,9 @@ function handleCatalogUpdate(tbl_id) {
 
     let req = cloneRequest(sourceTable.request, params);
     var dataTooBigForSelection= false;
-    if (totalRows>50000) {
+    if (totalRows > maxScatterRows) {
         const sreq = cloneRequest(sourceTable.request, {inclCols: `"${columns.lonCol}","${columns.latCol}"`});
-        req = makeTableFunctionRequest(sreq, 'DecimateTable', 'heatmap',
+        req = makeTableFunctionRequest(sreq, 'DecimateTable', title,
             {decimate: serializeDecimateInfo(columns.lonCol, columns.latCol, 10000), pageSize: MAX_ROW});
         dataTooBigForSelection= true;
     }
