@@ -8,21 +8,15 @@ import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.IpacTableUtil;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -43,17 +37,6 @@ import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.SERVER_R
  */
 public class SearchManager {
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-
-//====================================================================
-//  RPC.. returning RawDataSet
-//====================================================================
-    public RawDataSet getRawDataSet(TableServerRequest request) throws DataAccessException {
-        DataGroupPart dgp = getDataGroup(request);
-        RawDataSet ds = QueryUtil.getRawDataSet(dgp);
-        // merge TableDef info into ds.meta
-        dgp.getTableDef().setMetaTo(ds.getMeta());
-        return ds;
-    }
 
     /**
      * This search function is to support the CommandServices interface
@@ -131,35 +114,6 @@ public class SearchManager {
         }
     }
 
-    public FileStatus getFileStatus(File inf) {
-        try {
-            TableDef headers = IpacTableUtil.getMetaInfo(inf);
-            FileStatus fs = new FileStatus();
-            fs.setState(FileStatus.State.valueOf(headers.getStatus().name()));
-            fs.setRowCount(headers.getRowCount());
-
-            return fs;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new FileStatus(FileStatus.State.FAILED, 0);
-        }
-    }
-
-    // use edu.caltech.ipac.firefly.server.query.SearchServerCommands.SelectedValues instead
-    @Deprecated
-    public List<String> getDataFileValues(File file, List<Integer> rows, String colName) throws DataAccessException, IOException {
-
-        if (!file.canRead() ||
-                !file.getAbsolutePath().startsWith(ServerContext.getWorkingDir().getAbsolutePath())) {
-            throw new DataAccessException("Unable to access this file:" + file.getAbsolutePath());
-        }
-        IpacTableParser.MappedData data = IpacTableParser.getData(file, rows, colName);
-        if (data != null) {
-            return data.getValues(colName);
-        }
-        return null;
-    }
-
     public SearchProcessor getProcessor(String requestId) {
         SearchProcessor processor = SearchProcessorFactory.getProcessor(requestId);
 
@@ -211,7 +165,7 @@ public class SearchManager {
 
 
 
-    public BackgroundStatus getRawDataSetBackground(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
+    public BackgroundStatus submitBackgroundSearch(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
 
         Logger.briefDebug("Backgrounded search started:" + waitMillis + " wait, req:" + request);
         String email= request.getMeta(ServerParams.EMAIL);
@@ -224,18 +178,6 @@ public class SearchManager {
                                                                     ServerContext.getRequestOwner() );
         return BackgroundEnv.backgroundProcess(waitMillis, processor, BackgroundStatus.BgType.SEARCH);
     }
-
-    public RawDataSet getEnumValues(File file) throws IOException {
-        DataGroupPart dgp = new DataGroupPart();
-        if (file.canRead()) {
-            TableDef headers = IpacTableUtil.getMetaInfo(file);
-            dgp.setTableDef(headers);
-            dgp.setData(DataGroupReader.getEnumValues(file, 10));
-        }
-        RawDataSet ds = QueryUtil.getRawDataSet(dgp);
-        return ds;
-    }
-
 
     private class SearchWorker implements BackgroundEnv.Worker {
 

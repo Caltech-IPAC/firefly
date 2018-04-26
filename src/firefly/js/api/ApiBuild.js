@@ -4,6 +4,8 @@
 
 import {isString} from 'lodash';
 import {dispatchOnAppReady} from '../core/AppDataCntlr.js';
+import {ServerRequest } from '../data/ServerRequest.js';
+import {getJsonData } from '../rpc/SearchServicesJson.js';
 
 // Used for dispatch and action type constants
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
@@ -45,8 +47,6 @@ import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx'
 // builds the highlevel api
 import {buildHighLevelApi} from './ApiHighlevelBuild.js';
 import {buildViewerApi} from './ApiViewer.js';
-
-
 
 // CSS
 import './ApiStyle.css';
@@ -108,7 +108,17 @@ export function initApi() {
     const viewInterface= buildViewerApi();
 
     const highLevelApi= buildHighLevelApi(lowlevelApi);
-    if (!window.firefly) window.firefly= {};
+
+    // a method to get JSON data from external task launcher
+    const getJsonFromTask = function(launcher, task, taskParams) {
+        const req = new ServerRequest('JsonFromExternalTask');
+        req.setParam({name : 'launcher', value : launcher});
+        req.setParam({name : 'task', value : task});
+        req.setParam({name : 'taskParams', value : JSON.stringify(taskParams)});
+        return getJsonData(req);
+    };
+
+    if (!window.firefly) window.firefly= {getJsonFromTask};
     window.firefly.ignoreHistory = true;
     Object.assign(window.firefly, lowlevelApi, highLevelApi, viewInterface);
     const firefly= window.firefly;

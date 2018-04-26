@@ -10,9 +10,6 @@ import {doJsonRequest} from '../core/JsonUtils.js';
 /**
  * tableRequest will be sent to the server as a json string.
  * @returns {Promise}
- * @public
- * @func doFetchTable
- * @memberof firefly.util.table
  */
 export function logout() {
     return doJsonRequest(ServerParams.LOG_OUT);
@@ -24,9 +21,6 @@ export function logout() {
  *                         This is not the same as a webapp, as we support multiple 
  *                         SPAs running out of one webapp
  * @returns {Promise}
- * @public
- * @func doFetchTable
- * @memberof firefly.util.table
  */
 export function init({spaName}={}) {
     return doJsonRequest(ServerParams.INIT_APP, {spaName});

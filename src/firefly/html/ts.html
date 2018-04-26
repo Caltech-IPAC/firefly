@@ -10,14 +10,11 @@
     <script>
         window.firefly = {
             app: {
-                template: 'LightCurveViewer',
+                template: 'LightCurveViewer',           // set to app mode, instead of api.
                 menu: [
                     {label:'Upload', action:'LCUpload'},
                     {label:'Help', action:'app_data.helpLoad', type:'COMMAND'},
-                    ],
-                options : {
-                    charts: {singleTraceUI: true}
-                }
+                ],
             },
         };
     </script>

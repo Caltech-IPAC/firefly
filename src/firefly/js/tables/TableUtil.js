@@ -891,6 +891,14 @@ export function isTextType(col={}) {
     return char_types.includes(col.type);
 }
 
+/**
+ * @param {string} tbl_id
+ * @returns {string} returns a key used by table to store backgrounding information.  This is used by BgMaskPanel.
+ */
+export function makeBgKey(tbl_id) {
+    return `tables:${tbl_id}`;
+}
+
 /*-------------------------------------private------------------------------------------------*/
 /**
  * Action watcher callback for table update, which is invoked when

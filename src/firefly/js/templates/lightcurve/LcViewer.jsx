@@ -35,6 +35,8 @@ import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
+import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
+
 
 const vFileKey = LC.FG_FILE_FINDER;
 const DEFAULT_TITLE = 'Time Series Tool';
@@ -82,7 +84,7 @@ export class LcViewer extends PureComponent {
     }
 
     render() {
-        var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown, missionOptions,
+        var {isReady, menu={}, appTitle, appIcon, altAppIcon, additionalTitleStyle, dropDown,
             dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation, error} = this.state;
         const {visible, view} = dropDown || {};
         const periodProps = {
@@ -90,7 +92,7 @@ export class LcViewer extends PureComponent {
             fluxColName: get(missionEntries, [LC.META_FLUX_CNAME])
         };
 
-        dropdownPanels.push(<UploadPanel {...{missionOptions, fileLocation}}/>);
+        dropdownPanels.push(<UploadPanel {...{fileLocation}}/>);
 
         const MainView = () => {
             if (error) {
@@ -202,42 +204,16 @@ const labelW = 150;
  * @param {Object} props react component's props
  */
 
-export class UploadPanel extends PureComponent {
-    constructor(props) {
-        super(props);
-        const fields= FieldGroupUtils.getGroupFields(vFileKey);
-        const fl = FieldGroupUtils.getFldValue(fields, 'uploadContainer', 'isLocal');
-        this.state = {fileLocation: fl};
-    }
-
-    componentWillUnmount() {
-        if (this.unbinder) this.unbinder();
-        this.iAmMounted = false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.unbinder = FieldGroupUtils.bindToStore(vFileKey, (fields) => {
-            if (this.iAmMounted) {
-                const newLoc = get(fields, ['uploadContainer', 'value'], 'isLocal');
-
-                if (newLoc !== this.state.fileLocation) {
-                this.setState(
-                    {fileLocation: newLoc});
-                }
-                /*
-                this.setState((state) => {
-                    state.fileLocation = get(fields, ['uploadContainer', 'value'], 'isLocal');
-                    return state;
-                });
-                */
-            }
-        });
+export class UploadPanel extends SimpleComponent {
+    getNextState(np) {
+        const {missionOptions} = getLayouInfo();
+        const fileLocation = getFieldVal(vFileKey, 'uploadContainer', 'isLocal');
+        return {missionOptions, fileLocation};
     }
 
     render() {
         const wrapperStyle = {color: 'inherit', margin: '5px 0'};
-        const {missionOptions=getAllConverterIds()} = this.props || {};
+        const {fileLocation, missionOptions=getAllConverterIds()} = this.state || {};
 
         const instruction = 'Plot time series data, view associated images, find period, and phase fold.';
 
@@ -264,8 +240,6 @@ export class UploadPanel extends PureComponent {
         };
 
         const showFileUploadButton = () => {
-            const {fileLocation} = this.state;
-
             return (
                 <div style={{padding:5, display:'flex', alignItems:'center', minWidth: 450, height: 50}}>
                     <div style={{display:'flex', flexDirection:'column', width: labelW}}>
@@ -337,7 +311,6 @@ export class UploadPanel extends PureComponent {
 
 UploadPanel.propTypes = {
     name: PropTypes.oneOf(['LCUpload']),
-    fileLocation: PropTypes.string
 };
 
 UploadPanel.defaultProps = {
