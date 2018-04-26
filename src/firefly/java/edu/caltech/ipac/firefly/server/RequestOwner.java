@@ -252,7 +252,7 @@ public class RequestOwner implements Cloneable {
             if (!userKey.equals(cVal)) {
                 Cookie cookie = new Cookie(USER_KEY, userKey);
                 cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
-                cookie.setPath(requestAgent.getDeployedPath());
+                cookie.setPath(requestAgent.getContextPath());
                 requestAgent.sendCookie(cookie);
             }
         }

@@ -31,18 +31,18 @@ public class RequestAgent {
     private String baseUrl;
     private String remoteIP;
     private String sessId;
-    private String deployedPath;
+    private String contextPath;
 
     public RequestAgent() {}
 
-    public RequestAgent(Map<String, Cookie> cookies, String protocol, String requestUrl, String baseUrl, String remoteIP, String sessId, String deployedPath) {
+    public RequestAgent(Map<String, Cookie> cookies, String protocol, String requestUrl, String baseUrl, String remoteIP, String sessId, String contextPath) {
         this.cookies = cookies;
         this.protocol = protocol;
         this.requestUrl = requestUrl;
         this.baseUrl = baseUrl;
         this.remoteIP = remoteIP;
         this.sessId = sessId;
-        this.deployedPath = deployedPath;
+        this.contextPath = contextPath;
     }
 
     public void setCookies(Map<String, Cookie> cookies) {
@@ -64,8 +64,8 @@ public class RequestAgent {
         this.sessId = sessId;
     }
 
-    public String getDeployedPath() { return deployedPath; }
-    public void setDeployedPath(String deployedPath) { this.deployedPath = deployedPath; };
+    public String getContextPath() { return contextPath; }
+    public void setContextPath(String contextPath) { this.contextPath = contextPath; };
 
     public String getProtocol() {
         return protocol;
@@ -155,11 +155,12 @@ public class RequestAgent {
             String serverName = request.getServerName();
             int serverPort = request.getServerPort();
             String serverPortDesc = serverPort == 80 || serverPort == 443 ? "" : ":" + serverPort;
+            String contextPath = getPath(request);
 
-            String baseUrl = String.format("%s://%s%s%s/", scheme, serverName, serverPortDesc, request.getContextPath());
+            String baseUrl = String.format("%s://%s%s%s/", scheme, serverName, serverPortDesc, contextPath);
             String requestUrl = String.format("%s://%s%s%s", scheme, serverName, serverPortDesc, request.getRequestURI());
 
-            setDeployedPath(request.getContextPath());
+            setContextPath(contextPath);
             setRemoteIP(remoteIP);
             setProtocol(scheme);
             setRequestUrl(requestUrl);
@@ -194,9 +195,29 @@ public class RequestAgent {
 
         @Override
         public String getHeader(String name, String def) {
-            String retval = request != null ? request.getHeader(name) : null;
-            return StringUtils.isEmpty(retval) ? def : retval;
+            if (request != null) {
+                String retval = request.getHeader(name);
+                retval = retval == null ? request.getHeader(name.toLowerCase()) : retval;
+                return StringUtils.isEmpty(retval) ? def : retval;
+            } else {
+                return def;
+            }
         }
+
+        private String getPath(HttpServletRequest request) {
+            String path = request.getHeader("X-Forwarded-Path");
+            if (path == null) {
+                path = request.getHeader("x-original-uri");
+                if (path != null) {
+                    path = path.substring(0, path.indexOf(request.getContextPath()) + request.getContextPath().length());
+                }
+            }
+            if (path == null) {
+                path = request.getContextPath();
+            }
+            return path;
+        }
+
 
         @Override
         public void sendRedirect(String url) {

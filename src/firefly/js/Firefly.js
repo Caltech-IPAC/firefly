@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom';
 import {set, get} from 'lodash';
 import 'styles/global.css';
 
-import {APP_LOAD, dispatchUpdateAppData, dispatchAppOptions} from './core/AppDataCntlr.js';
+import {APP_LOAD, dispatchAppOptions} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
@@ -17,9 +17,6 @@ import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
-
-import {ServerRequest } from './data/ServerRequest.js';
-import {getJsonData } from './rpc/SearchServicesJson.js';
 
 import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
@@ -115,7 +112,11 @@ const defFireflyOptions = {
     workspace : { showOptions: false},
 
     charts: {
-        // TODO: need to define all options with defaults here.
+        maxRowsForScatter: 5000, // maximum table rows for scatter chart support
+        multitrace: true,  // deprecated - by default we use multi-trace architecture
+        singleTraceUI: false, // by default we support multi-trace in UI
+        upperLimitUI: false, // by default user can not set upper limit column in scatter options
+        ui: {HistogramOptions: {fixedAlgorithm: undefined}} // by default we allow both "uniform binning" and "bayesian blocks"
     },
     hips : {
         useForCoverage: true,
@@ -159,16 +160,6 @@ function fireflyInit(props, options={}) {
         }
     } else {
         initApi();
-
-        // TODO: if we're still using this, it should be moved into our API code.
-        // a method to get JSON data from external task launcher
-        window.firefly.getJsonFromTask= function(launcher, task, taskParams) {
-            const req = new ServerRequest('JsonFromExternalTask');
-            req.setParam({name : 'launcher', value : launcher});
-            req.setParam({name : 'task', value : task});
-            req.setParam({name : 'taskParams', value : JSON.stringify(taskParams)});
-            return getJsonData(req);
-        };
     }
 }
 
@@ -231,8 +222,12 @@ function renderRoot(viewer, props) {
 
 
 function ensureUsrKey() {
+    if (hasOldUsrKey()) {
+        document.cookie = 'usrkey=;path=/;max-age=-1';
+        document.cookie = `usrkey=;path=${location.pathname};max-age=-1`;
+    }
     const usrKey = getCookie('usrkey');
-    if (!usrKey || usrKey.includes(' ')) {
+    if (!usrKey) {
         document.cookie = `usrkey=${uuid()};max-age=${3600 * 24 * 7 * 2}`;
     }
 }
@@ -250,6 +245,15 @@ function uuid() {
     });
 
     return uuid;
+}
+
+function hasOldUsrKey() {
+    return document.cookie.split(';').map((s) => s.trim())
+        .some( (c) => {
+            const [name='', val=''] = c.split('=');
+            return name === 'usrkey' && val.includes('/');
+        });
+
 }
 
 function getCookie(name) {
