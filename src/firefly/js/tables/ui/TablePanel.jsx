@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 
 import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
-import {dispatchTableRemove, dispatchTblExpanded, dispatchTblResultsRemove, dispatchTableSearch} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchTblExpanded, dispatchTableSearch} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
@@ -18,9 +18,9 @@ import {PagingBar} from '../../ui/PagingBar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {dispatchJobAdd} from '../../core/background/BackgroundCntlr.js';
 import {showTableDownloadDialog} from './TableSave.jsx';
-import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
+import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
+import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
@@ -304,22 +304,12 @@ function Title({title, removable, tbl_id}) {
 }
 
 function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
-    const toBg = () => {
-        dispatchTblResultsRemove(tbl_id);
-        dispatchJobAdd(bgStatus);
-    };
     const height = showTitle ? 'calc(100% - 20px)': '100%';
-
     return (
         <div style={{position: 'relative', width: '100%', height: '100%', border: 'solid 1px rgba(0,0,0,.2)', boxSizing: 'border-box'}}>
             {showTitle && <Title {...{title, removable, tbl_id}}/>}
             <div style={{height, position: 'relative'}}>
-                <div className='loading-mask'/>
-                {bgStatus &&
-                <div className='TablePanel__mask'>
-                    <button type='button' className='TablePanel__mask--button button std' onClick={toBg}>Send to background</button>
-                </div>
-                }
+                <BgMaskPanel componentKey={TblUtil.makeBgKey(tbl_id)}/>
             </div>
         </div>
     );

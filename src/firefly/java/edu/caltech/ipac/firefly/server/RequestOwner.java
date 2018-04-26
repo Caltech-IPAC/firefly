@@ -95,9 +95,8 @@ public class RequestOwner implements Cloneable {
 
     public String getUserKey() {
         if (userKey == null) {
-            String userKeyAndName = requestAgent == null ? null : requestAgent.getCookieVal(USER_KEY);
-            userKey = userKeyAndName == null ? null :
-                    userKeyAndName.split("/", 2)[0];
+            userKey = requestAgent == null ? null : requestAgent.getCookieVal(USER_KEY);
+            userKey = userKey == null || userKey.contains(" ") ? null : userKey;
 
             if (userKey == null) {
                 userKey = newUserKey();
@@ -248,6 +247,16 @@ public class RequestOwner implements Cloneable {
     }
 
     private void updateUserKey(UserInfo userInfo) {
+        if (requestAgent != null) {
+            String cVal = requestAgent.getCookieVal(USER_KEY, "");
+            if (!userKey.equals(cVal)) {
+                Cookie cookie = new Cookie(USER_KEY, userKey);
+                cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
+                cookie.setPath(requestAgent.getContextPath());
+                requestAgent.sendCookie(cookie);
+            }
+        }
+
         // send UserInfo to client
         FluxAction action = new FluxAction(SET_USERINFO_ACTION);
         action.setValue(userInfo.getLoginName(), "loginName");
@@ -256,18 +265,6 @@ public class RequestOwner implements Cloneable {
         action.setValue(userInfo.getInstitute(), "institute");
         action.setValue(SsoAdapter.getAdapter().makeAuthCheckUrl(""), "login_url");
         ServerEventManager.fireAction(action);
-
-        String userName = userInfo.getName();
-        String nVal = userKey + "/" + userName;
-        if (requestAgent != null) {
-            String cVal = requestAgent.getCookieVal(USER_KEY, "");
-            if (!nVal.equals(cVal)) {
-                Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
-                cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
-                cookie.setPath("/"); // to make it available to all subpasses within base URL
-                requestAgent.sendCookie(cookie);
-            }
-        }
     }
 
     public String getEventChannel() {

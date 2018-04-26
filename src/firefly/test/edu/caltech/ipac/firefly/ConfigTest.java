@@ -127,7 +127,7 @@ public class ConfigTest {
     }
     protected static void setupServerContext(String webappConfigPath, String reqUrl, String baseUrl) {
         System.setProperty("stats.log.dir", System.getProperty("java.io.tmpdir"));
-        ServerContext.getRequestOwner().setRequestAgent(new RequestAgent(null, "HTTP", reqUrl, baseUrl, "unknow", UUID.randomUUID().toString()));
+        ServerContext.getRequestOwner().setRequestAgent(new RequestAgent(null, "HTTP", reqUrl, baseUrl, "unknow", UUID.randomUUID().toString(), "/firefly"));
         ServerContext.init("/firefly", "firefly", webappConfigPath);
 
     }

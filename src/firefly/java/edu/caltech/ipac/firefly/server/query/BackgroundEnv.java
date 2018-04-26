@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
-import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -43,6 +42,9 @@ import java.util.stream.Collectors;
  * @author Trey Roby
  */
 public class BackgroundEnv {
+
+    public enum DownloadProgress { STARTING, WORKING, DONE, UNKNOWN, FAIL}
+
     private static final String BG_USER_PREFIX = "BG_USER";
 
     private static final String _hostname= FileUtil.getHostname();
@@ -276,24 +278,21 @@ public class BackgroundEnv {
      * @param fileKey the key of the file to check
      * @return the enum with the status
      */
-    public static SearchServicesImpl.DownloadProgress getDownloadProgress(String fileKey) {
+    public static DownloadProgress getDownloadProgress(String fileKey) {
         Cache cache= AnyFileDownload.getCache(); // use the any file download choice of cache
         StringKey key= new StringKey(fileKey);
-        SearchServicesImpl.DownloadProgress retval= SearchServicesImpl.DownloadProgress.UNKNOWN;
+        DownloadProgress retval= DownloadProgress.UNKNOWN;
         if (cache.isCached(key)) {
-            retval= (SearchServicesImpl.DownloadProgress)cache.get(key);
-            if (retval== SearchServicesImpl.DownloadProgress.FAIL) {
+            retval= (DownloadProgress)cache.get(key);
+            if (retval== DownloadProgress.FAIL) {
                 // once a fail is returned then put the unknown state,
                 // this will keep retries from showing fail before an actual fail
                 // note- most of the time a fail is when the user just canceled the download
-                cache.put(key, SearchServicesImpl.DownloadProgress.UNKNOWN);
+                cache.put(key, DownloadProgress.UNKNOWN);
 
             }
         }
         return retval;
-    }
-    public static BackgroundStatus backgroundProcess(int waitMills, BackgroundProcessor processor) {
-        return backgroundProcess(waitMills, processor, null);
     }
 
     public static BackgroundStatus backgroundProcess(int waitMills, BackgroundProcessor processor, BackgroundStatus.BgType type) {
@@ -444,9 +443,6 @@ public class BackgroundEnv {
         }
         return status;
     }
-
-
-
 
 
 //======================================================================

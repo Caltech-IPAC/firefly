@@ -258,14 +258,6 @@ public class QueryUtil {
         return url + qStr;
     }
 
-    public static RawDataSet getRawDataSet(DataGroup dg, int startIndex, int pageSize) {
-        return convertToRawDataset(dg, startIndex, pageSize);
-    }
-
-    public static RawDataSet getRawDataSet(DataGroup dg) {
-        return convertToRawDataset(dg,0,20000);
-    }
-
     public static void doSort(DataGroup dg, SortInfo sortInfo) {
         if (sortInfo != null) {
             String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG) == null ? "" : dg.getAttribute(SortInfo.SORT_INFO_TAG).getValue();
@@ -304,38 +296,6 @@ public class QueryUtil {
         return filterList.toArray(new CollectionUtil.Filter[filterList.size()]);
     }
 
-
-    public static RawDataSet convertToRawDataset(DataGroup dg, int startIdx, int pageSize) {
-
-        RawDataSet dataset = new RawDataSet();
-        dataset.setStartingIndex(startIdx);
-
-        if (dg != null) {
-            int endIdx = Math.min(dg.size(), startIdx + pageSize);
-            if (startIdx >= endIdx) {
-                startIdx = (endIdx - pageSize > 0) ? endIdx - pageSize : 0;
-            }
-            ByteArrayOutputStream vals = new ByteArrayOutputStream();
-
-            DataGroup subset = dg.subset(startIdx, endIdx);
-
-            // move attributes into TableMeta.. and clear the ipac table's attributes
-            for(Map.Entry<String, DataGroup.Attribute> entry : dg.getAttributes().entrySet()) {
-                dataset.getMeta().setAttribute(entry.getKey(), String.valueOf(entry.getValue().getValue()));
-            }
-            subset.getAttributes().clear();
-
-            try {
-                IpacTableWriter.save(vals, subset);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            dataset.setTotalRows(dg.size());
-            dataset.setDataSetString(vals.toString());
-        }
-        return dataset;
-    }
 
     public static DataGroupPart convertToDataGroupPart(DataGroup dg, int startIdx, int pageSize) {
         DataGroup page = dg.subset(startIdx, startIdx+pageSize);
@@ -435,20 +395,6 @@ public class QueryUtil {
 
             return (T) o;
 
-    }
-
-    public static Date convertDate(java.util.Date date) {
-        return date == null ? null : new Date(date.getTime());
-    }
-
-    public static RawDataSet getRawDataSet(DataGroupPart page) {
-        RawDataSet rds = convertToRawDataset(page.getData(), 0, Integer.MAX_VALUE);
-        rds.setTotalRows(page.getRowCount());
-        rds.setStartingIndex(page.getStartRow());
-        if (page.getTableDef() != null) {
-            rds.getMeta().setSource(page.getTableDef().getSource());
-        }
-        return rds;
     }
 
     public static <T extends ServerRequest> T assureType(Class<T> s, ServerRequest req) {

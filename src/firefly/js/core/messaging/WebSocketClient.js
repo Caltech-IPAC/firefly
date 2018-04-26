@@ -151,8 +151,8 @@ function makePinger(onConnectCallback, wsUrl) {
     const onConnected = (channel, connId) => {
         console.log(`WebSocket connected.  connId:${connId} channel:${channel}`);
         wsClient = makeWsClient(channel, connId);
-        onConnectCallback && onConnectCallback(wsClient);
         dispatchUpdateAppData({websocket: {isConnected: true, channel, connId}});
+        onConnectCallback && onConnectCallback(wsClient);
     };
 
     const onError = () => {

@@ -74,6 +74,8 @@ public class BackgroundInfoCacher {
                 ServerEvent ev= new ServerEvent(Name.SVR_BACKGROUND_REPORT,
                         target, info.getStatus());
                 ServerEventManager.fireEvent(ev);
+            } else {
+                Logger.debug(String.format("!!!!!!!Status not updated.  Title: %s  Status: %s", info.getTitle(), info.getStatus().serialize()));
             }
         }
     }

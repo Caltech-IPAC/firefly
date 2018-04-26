@@ -13,11 +13,9 @@ import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
-import edu.caltech.ipac.firefly.server.rpc.SearchServicesImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
@@ -25,7 +23,6 @@ import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -124,34 +121,13 @@ public class SearchServerCommands {
         }
     }
 
-    public static class ChkFileStatus extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            File f= new File(params.getRequired(ServerParams.SOURCE));
-            FileStatus fstatus = new SearchManager().getFileStatus(f);
-            return fstatus.toString();
-        }
-
-    }
-
-    public static class GetEnumValues extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            File f= new File(params.getRequired(ServerParams.SOURCE));
-            RawDataSet data = new SearchManager().getEnumValues(f);
-            return data.serialize();
-        }
-
-    }
-
-
     public static class SubmitBackgroundSearch extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
             TableServerRequest serverRequest = params.getTableServerRequest();
             int waitMil = params.getRequiredInt(ServerParams.WAIT_MILS);
 
-            BackgroundStatus bgStat =  new SearchManager().getRawDataSetBackground(serverRequest, null, waitMil);
+            BackgroundStatus bgStat =  new SearchManager().submitBackgroundSearch(serverRequest, null, waitMil);
             return QueryUtil.convertToJsonObject(bgStat).toJSONString();
         }
     }
@@ -159,17 +135,9 @@ public class SearchServerCommands {
     public static class GetStatus extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            BackgroundStatus bgStat= new SearchServicesImpl().getStatus(params.getID(),
+            BackgroundStatus bgStat= BackgroundEnv.getStatus(params.getID(),
                     params.getRequiredBoolean(ServerParams.POLLING));
             return QueryUtil.convertToJsonObject(bgStat).toJSONString();
-        }
-    }
-
-    public static class AddIDToPushCriteria extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            new SearchServicesImpl().addIDToPushCriteria(params.getID());
-            return "true";
         }
     }
 
@@ -201,7 +169,7 @@ public class SearchServerCommands {
     public static class CleanUp extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            new SearchServicesImpl().cleanup(params.getID());
+            BackgroundEnv.cleanup(params.getID());
             return "true";
         }
     }
@@ -211,7 +179,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String file= params.getRequired(ServerParams.FILE);
-            SearchServicesImpl.DownloadProgress dp= new SearchServicesImpl().getDownloadProgress(file);
+            BackgroundEnv.DownloadProgress dp= BackgroundEnv.getDownloadProgress(file);
             return dp.toString();
         }
     }
@@ -263,7 +231,7 @@ public class SearchServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             String id= params.getRequired(ServerParams.ID);
             int idx=   params.getRequiredInt(ServerParams.IDX);
-            new SearchServicesImpl().clearPushEntry(id,idx);
+            BackgroundEnv.clearPushEntry(id,idx);
             return "true";
         }
     }
@@ -274,7 +242,7 @@ public class SearchServerCommands {
             String channel= params.getRequired(ServerParams.CHANNEL_ID);
             String desc= params.getRequired(ServerParams.DESC);
             String data= params.getRequired(ServerParams.DATA);
-            new SearchServicesImpl().reportUserAction(channel,desc,data);
+            BackgroundEnv.reportUserAction(channel,desc,data);
             return "true";
         }
     }
@@ -295,18 +263,6 @@ public class SearchServerCommands {
             BackgroundEnv.ScriptRet retval= BackgroundEnv.createDownloadScript(id, file, source, attList);
             return retval!=null ? retval.getServlet() : null;
         }
-    }
-
-    @Deprecated
-    public static class GetRawDataSet extends ServCommand {
-
-        public String doCommand(SrvParam params) throws Exception {
-            String reqString = params.getRequired(ServerParams.REQUEST);
-            TableServerRequest request = TableServerRequest.parse(reqString);
-            RawDataSet dataSet = new SearchManager().getRawDataSet(request);
-            return dataSet.serialize();
-        }
-
     }
 
 }
