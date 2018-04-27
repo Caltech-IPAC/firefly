@@ -122,12 +122,12 @@ export class TablePanel extends PureComponent {
             showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton,
             totalRows, showLoading, columns, showUnits, showFilters, textView,
             tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
-            filterInfo, filterCount, sortInfo, data, bgStatus} = this.state;
+            filterInfo, filterCount, sortInfo, data, backgroundable} = this.state;
         var {leftButtons, rightButtons} =  this.state;
         const {tbl_ui_id} = this.tableConnector;
 
         if (error) return <TableError {...{error, tbl_id, message: error}}/>;
-        if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable, bgStatus}}/>;
+        if (isEmpty(columns)) return <Loading {...{showTitle, tbl_id, title, removable, backgroundable}}/>;
 
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
@@ -303,13 +303,14 @@ function Title({title, removable, tbl_id}) {
     );
 }
 
-function Loading({showTitle, tbl_id, title, removable, bgStatus}) {
+function Loading({showTitle, tbl_id, title, removable, backgroundable}) {
     const height = showTitle ? 'calc(100% - 20px)': '100%';
+    const maskPanel = backgroundable ? <BgMaskPanel componentKey={TblUtil.makeBgKey(tbl_id)}/> : <div className='loading-mask'/>;
     return (
         <div style={{position: 'relative', width: '100%', height: '100%', border: 'solid 1px rgba(0,0,0,.2)', boxSizing: 'border-box'}}>
             {showTitle && <Title {...{title, removable, tbl_id}}/>}
             <div style={{height, position: 'relative'}}>
-                <BgMaskPanel componentKey={TblUtil.makeBgKey(tbl_id)}/>
+                {maskPanel}
             </div>
         </div>
     );
