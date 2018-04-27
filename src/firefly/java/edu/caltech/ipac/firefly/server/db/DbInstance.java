@@ -37,7 +37,7 @@ public class DbInstance {
      */
     public DbInstance(String name) {
         this.name = name;
-        isPooled = AppProperties.getBooleanProperty(name + "." + USE_POOL, true);
+        isPooled = AppProperties.getBooleanProperty(name + "." + USE_POOL, false);
         datasourcePath = AppProperties.getProperty(name + "." + POOL_PATH);
         dbUrl = AppProperties.getProperty(name + "." + DB_URL);
         userId = AppProperties.getProperty(name + "." + USER_NAME);
