@@ -115,13 +115,16 @@ public class FitsHDUUtil {
         DataGroup dg = new DataGroup("fits", cols);
         String invalidMsg = "invalid fits file";
 
+        // FitsFactory.useThreadLocalSettings(true);
+        boolean prevLongStringEnabled = FitsFactory.isLongStringsEnabled();
+
         try {
             Fits fits = new Fits(fitsFile); // open fits file
             BasicHDU hdu;
             int index = 0;
             List<JSONObject> headerColumns = createHeaderTableColumns(true);
 
-            FitsFactory.useThreadLocalSettings(true);
+            FitsFactory.setLongStringsEnabled(true);
 
             while ((hdu = fits.readHDU()) != null) {
                 JSONObject extensionInfo;
@@ -205,6 +208,7 @@ public class FitsHDUUtil {
             e.printStackTrace();
         }
 
+        FitsFactory.setLongStringsEnabled(prevLongStringEnabled);
         return dg;
     }
 }

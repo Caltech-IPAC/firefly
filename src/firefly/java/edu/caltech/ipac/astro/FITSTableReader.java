@@ -220,7 +220,8 @@ public final class FITSTableReader
         // disable long string for HeaderCard create while collecting tables from StarTableFactory to work around the exception error
         // sent from nom.tam.fits.
 
-        FitsFactory.useThreadLocalSettings(true);
+        //FitsFactory.useThreadLocalSettings(true);
+        boolean prevLongStringEnabled = FitsFactory.isLongStringsEnabled();
         FitsFactory.setLongStringsEnabled(false);
 
         try {
@@ -238,6 +239,8 @@ public final class FITSTableReader
         } catch (Exception e) {
             logger.error("unable to get table from fits file " + fits_filename + ", reason: " + e.getMessage());
         }
+
+        FitsFactory.setLongStringsEnabled(prevLongStringEnabled);
         return tList;
     }
 
