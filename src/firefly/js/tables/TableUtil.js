@@ -587,7 +587,7 @@ export function getTblInfoById(tbl_id, aPageSize) {
  * collects all available table information given the tableModel.
  * @param {TableModel} tableModel
  * @param {number} aPageSize  use this pageSize instead of the one in the request.
- * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, tableMeta, bgStatus}}
+ * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, tableMeta, backgroundable}}
  * @public
  * @memberof firefly.util.table
  * @func getTblInfo
@@ -607,8 +607,9 @@ export function getTblInfo(tableModel, aPageSize) {
     const startIdx = (currentPage-1) * pageSize;
     const endIdx = Math.min(startIdx+pageSize, totalRows) || get(tableModel,'tableData.data.length', startIdx) ;
     const totalPages = Math.ceil((totalRows || 0)/pageSize);
-    const bgStatus = get(tableModel, 'bgStatus');
-    return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error, tableMeta, bgStatus};
+    const backgroundable = get(tableModel, 'request.META_INFO.backgroundable', false);
+
+    return { tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error, tableMeta, backgroundable};
 }
 
 
