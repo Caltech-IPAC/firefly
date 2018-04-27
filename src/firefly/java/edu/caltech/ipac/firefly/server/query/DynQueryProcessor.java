@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.data.dyn.xstream.QueryTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.dyn.DynConfigManager;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
@@ -22,6 +23,7 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;
@@ -64,6 +66,21 @@ abstract public class DynQueryProcessor extends IpacTablePartProcessor {
     }
 
     protected abstract File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException;
+
+    @Override
+    public String getUniqueID(ServerRequest request) {
+        ServerRequest req = request.cloneRequest();
+        setXmlParams(req);
+        return super.getUniqueID(req);
+
+    }
+
+    @Override
+    public String getDataKey(ServerRequest request) {
+        ServerRequest req = request.cloneRequest();
+        setXmlParams(req);
+        return super.getDataKey(req);
+    }
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
