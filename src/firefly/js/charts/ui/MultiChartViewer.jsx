@@ -27,7 +27,7 @@ export class MultiChartViewer extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state= {viewer : null};
+        this.state= {viewer : getViewer(getMultiViewRoot(), props.viewerId)};
     }
 
     componentWillReceiveProps(nextProps) {

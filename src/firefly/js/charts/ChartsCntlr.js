@@ -339,15 +339,6 @@ function chartAdd(action) {
             if (viewerId) {
                 // viewer will be added if it does not exist already
                 dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
-                // remove chart item from the viewer when the chart is removed
-                // @callback {actionWatcherCallback}
-                const onChartRemove = (action, cancelSelf) => {
-                    if (get(action.payload, 'chartId') === chartId) {
-                        dispatchRemoveViewerItems(viewerId, [chartId]);
-                        cancelSelf && cancelSelf();
-                    }
-                };
-                dispatchAddActionWatcher({actions: [CHART_REMOVE], callback: onChartRemove});
             }
 
             // lazy table connection
@@ -395,7 +386,9 @@ function chartRemove(action) {
     return (dispatch) => {
         const {chartId} = action.payload;
         clearChartConn({chartId});
-        dispatch(action);
+        const viewerId = get(getChartData(chartId), 'viewerId');
+        if (viewerId) { dispatchRemoveViewerItems(viewerId, [chartId]); }
+        dispatch({type: action.type, payload: Object.assign({},action.payload, {viewerId})});
     };
 }
 
@@ -941,7 +934,7 @@ export function getAnnotations(chartId) {
     const chartData = getChartData(chartId);
     let annotations = get(chartData, 'fireflyLayout.annotations', EMPTY_ARRAY);
     get(chartData, 'fireflyData', []).forEach((d) => {
-        if (isArray(d.annotations)) {
+        if (isArray(get(d, 'annotations'))) {
             const filtered = d.annotations.filter((e) => !isUndefined(e));
             if (filtered.length > 0) {
                 annotations = annotations.concat(filtered);

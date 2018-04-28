@@ -49,8 +49,8 @@ function fetchData(chartId, traceNum, tablesource) {
         dispatchError(chartId, traceNum, `${totalRows} rows exceed scatter chart best performance limit of ${maxScatterRows}.`);
         return;
     }
-
-    const numericCols = getColumns(originalTableModel, COL_TYPE.NUMBER).map((c) => c.name);
+    
+    const colNames = getColumns(originalTableModel).map((c) => c.name);
 
     // default behavior
     const sreq = cloneRequest(request, {
@@ -60,7 +60,7 @@ function fetchData(chartId, traceNum, tablesource) {
             // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
             //const asStr = (numericCols.includes(v)) ? '' : k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
             const asStr = k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
-            return `${formatColExpr({colOrExpr: v, quoted: true, colNames: numericCols})}${asStr}`;
+            return `${formatColExpr({colOrExpr: v, quoted: true, colNames})}${asStr}`;
         }).join(', ')    // allows to use the same columns, ex. "w1" as "x", "w1" as "marker.color"
     });
 

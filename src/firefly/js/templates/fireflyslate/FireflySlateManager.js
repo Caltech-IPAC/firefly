@@ -151,7 +151,6 @@ function handleTableDelete(layoutInfo, action) {
     if (tbl_group && isEmpty(tblIdAry)) {
         dispatchRemoveCell({cellId:tbl_group});
     }
-
 }
 
 function handlePlotDelete(layoutInfo, action) {
@@ -163,8 +162,11 @@ function handlePlotDelete(layoutInfo, action) {
 }
 
 function handleChartDelete(layoutInfo, action) {
-    //todo: implement
-    console.log('implement chart delete');
+    const {viewerId}= action.payload;
+    const itemAry= getViewerItemIds(getMultiViewRoot(), viewerId);
+    if (isEmpty(itemAry)) {
+        dispatchRemoveCell({cellId:viewerId});
+    }
 }
 
 
@@ -207,25 +209,16 @@ function handleNewImage(layoutInfo, action) {
 
 function handleNewChart(layoutInfo, action) {
 
-    const {chartId, groupId, viewerId, chartType}= action.payload;
+    const {chartId, viewerId}= action.payload;
     const {gridView=[]}= layoutInfo;
 
-    if (chartType!=='plot.ly') {
-        if (groupId) {
-            let viewer= getViewer(getMultiViewRoot(), groupId);
-            if (!viewer) {
-                dispatchAddViewer(groupId,true,PLOT2D,true);
-            }
-            dispatchAddViewerItems(groupId, [chartId], PLOT2D);
-
-            const item= gridView.find( (g) => g.cellId===groupId);
-            if (!item) {
-                viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
-                const cell= getNextCell(gridView,3,1);
-                dispatchAddCell({row:cell.row,col:cell.col,width:3,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
-            }
-        }
+    // viewer should be updated before cell adding
+    const viewer= getViewer(getMultiViewRoot(), viewerId);
+    if (!viewer) {
+        dispatchAddViewer(viewerId,true,PLOT2D,true);
     }
+    dispatchAddViewerItems(viewerId, [chartId], PLOT2D);
+
     const item= gridView.find( (g) => g.cellId===viewerId);
     if (!item) {
         const viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
