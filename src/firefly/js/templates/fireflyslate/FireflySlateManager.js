@@ -7,7 +7,6 @@ import {filter, isEmpty, get, isArray, uniq} from 'lodash';
 
 import {startImageMetadataWatcher} from '../../visualize/saga/ImageMetaDataWatcher.js';
 import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher.js';
-import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, ENABLE_SPECIAL_VIEWER, SPECIAL_VIEWER,
           getLayouInfo, dispatchUpdateLayoutInfo, dispatchAddCell, dispatchRemoveCell, getNextCell} from '../../core/LayoutCntlr.js';
@@ -17,9 +16,8 @@ import {dispatchLoadTblStats} from '../../charts/TableStatsCntlr';
 
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
-import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
-import {REPLACE_VIEWER_ITEMS, DEFAULT_FITS_VIEWER_ID, IMAGE, PLOT2D, dispatchAddViewer, dispatchAddViewerItems,
-    getViewer, getViewerItemIds, getMultiViewRoot, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
+import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
+import {REPLACE_VIEWER_ITEMS, IMAGE, getViewerItemIds, getMultiViewRoot, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 /**
@@ -171,8 +169,6 @@ function handleChartDelete(layoutInfo, action) {
 
 
 function handleNewImage(layoutInfo, action) {
-
-
     const {payload}= action;
     const {gridView=[]}= layoutInfo;
     const mvRoot= getMultiViewRoot();
@@ -209,23 +205,14 @@ function handleNewImage(layoutInfo, action) {
 
 function handleNewChart(layoutInfo, action) {
 
-    const {chartId, viewerId}= action.payload;
+    const {viewerId}= action.payload;
     const {gridView=[]}= layoutInfo;
-
-    // viewer should be updated before cell adding
-    const viewer= getViewer(getMultiViewRoot(), viewerId);
-    if (!viewer) {
-        dispatchAddViewer(viewerId,true,PLOT2D,true);
-    }
-    dispatchAddViewerItems(viewerId, [chartId], PLOT2D);
 
     const item= gridView.find( (g) => g.cellId===viewerId);
     if (!item) {
-        const viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
         const cell= getNextCell(gridView,3,1);
-        dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
+        dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewerId,type:LO_VIEW.xyPlots});
     }
-
 
     return layoutInfo;
 }

@@ -76,7 +76,19 @@ export class MultiChartViewer extends PureComponent {
         const {viewerId, expandedMode, closeable} = this.props;
         const {viewer}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
-        if (!viewer || isEmpty(viewer.itemIdAry)) return false;
+        if (!viewer || isEmpty(viewer.itemIdAry)) {
+            if (expandedMode && closeable) {
+                return (
+                    <div className='ChartPanel__container'>
+                        <div style={{position: 'relative', flexGrow: 1}}>
+                        {expandedMode && closeable && <CloseButton style={{paddingLeft: 10, position: 'absolute', top: 0, left: 0}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+                        </div>
+                    </div>
+                );
+            } else {
+                return false;
+            }
+        }
         let activeItemId = getActiveViewerItemId(viewerId);
         if (isUndefined(activeItemId) || !getChartData(activeItemId)) {
             activeItemId = viewer.itemIdAry[0];
@@ -140,7 +152,7 @@ const stopPropagation= (ev) => ev.stopPropagation();
 
 
 MultiChartViewer.propTypes= {
-    viewerId : PropTypes.string.isRequired,
+    viewerId : PropTypes.string,
     canReceiveNewItems : PropTypes.string,
     forceRowSize : PropTypes.number,
     forceColSize : PropTypes.number,

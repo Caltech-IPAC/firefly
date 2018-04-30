@@ -112,6 +112,7 @@ const defFireflyOptions = {
     workspace : { showOptions: false},
 
     charts: {
+        defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable
         maxRowsForScatter: 5000, // maximum table rows for scatter chart support
         multitrace: true,  // deprecated - by default we use multi-trace architecture
         singleTraceUI: false, // by default we support multi-trace in UI

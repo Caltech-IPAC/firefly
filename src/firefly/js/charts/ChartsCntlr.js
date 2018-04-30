@@ -11,14 +11,14 @@ import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUt
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
-import {dispatchAddViewerItems} from '../visualize/MultiViewCntlr.js';
+import {DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems} from '../visualize/MultiViewCntlr.js';
 import {formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {makeHistogramParams, makeXYPlotParams} from './ChartUtil.js';
-import {dispatchRemoveViewerItems} from '../visualize/MultiViewCntlr.js';
+import {dispatchUpdateCustom, getMultiViewRoot, getViewer} from "../visualize/MultiViewCntlr";
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
@@ -98,6 +98,7 @@ function reducers() {
  *  @param {string} p.chartType - chart type, ex. 'scatter', 'histogram'
  *  @param {Array<ChartDataElement>} p.chartDataElements array
  *  @param {string} [p.groupId] - chart group for grouping charts together
+ *  @param {string} [p.viewerId] – viewer where chart will be displayed
  *  @param {boolean} [p.deletable] - is the chart deletable, if undefined: single chart in a group is not deletable, multiple are deletable
  *  @param {string} [p.help_id] - help id, if undefined, no help icon shows up
  *  @param {Function} [p.dispatcher=flux.process] - only for special dispatching uses such as remote
@@ -105,8 +106,8 @@ function reducers() {
  *  @function dispatchChartAdd
  *  @memberof firefly.action
  */
-export function dispatchChartAdd({chartId, chartType='plot.ly', chartDataElements, groupId='main', deletable, help_id, mounted=undefined, dispatcher= flux.process, ...rest}) {
-    dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, groupId, deletable, help_id, mounted, ...rest}});
+export function dispatchChartAdd({chartId, chartType='plot.ly', chartDataElements, groupId='main', viewerId=DEFAULT_PLOT2D_VIEWER_ID, deletable, help_id, mounted=undefined, dispatcher= flux.process, ...rest}) {
+    dispatcher({type: CHART_ADD, payload: {chartId, chartType, chartDataElements, groupId, viewerId, deletable, help_id, mounted, ...rest}});
 }
 
 /*
@@ -327,12 +328,16 @@ export function makeChartDataFetch (getChartDataType) {
 
 function chartAdd(action) {
     return (dispatch) => {
-        const {chartId, chartType} = action.payload;
+        const {chartId, chartType, deletable} = action.payload;
         clearChartConn({chartId});
 
         if (chartType === 'plot.ly') {
             // the action payload might need to be updated for firefly trace types
             const newPayload = handleFireflyTraceTypes(action.payload);
+            // use application default if deletable is not defined for this chart
+            if (isUndefined(deletable)) {
+                newPayload.deletable = get(getAppOptions(), 'charts.defaultDeletable');
+            }
             const actionToDispatch = (newPayload === action.payload) ? action : Object.assign({}, action, {payload: newPayload});
             dispatch(actionToDispatch);
             const {viewerId, data, fireflyData} = actionToDispatch.payload;
@@ -387,14 +392,19 @@ function chartRemove(action) {
         const {chartId} = action.payload;
         clearChartConn({chartId});
         const viewerId = get(getChartData(chartId), 'viewerId');
-        if (viewerId) { dispatchRemoveViewerItems(viewerId, [chartId]); }
+        if (viewerId) {
+            dispatchRemoveViewerItems(viewerId, [chartId]);
+            if (getViewer(getMultiViewRoot(), viewerId).customData.activeItemId === chartId) {
+                dispatchUpdateCustom(viewerId, {activeItemId: undefined});
+            }
+        }
         dispatch({type: action.type, payload: Object.assign({},action.payload, {viewerId})});
     };
 }
 
 function chartUpdate(action) {
     return (dispatch) => {
-        var {chartId, changes} = action.payload;
+        const {chartId, changes} = action.payload;
         // remove any table's mappings from changes because it will be applied by the connectors.
         const changesWithoutTblMappings = omitBy(changes, (v) => isString(v) && v.match(TBL_SRC_PATTERN));
         set(action, 'payload.changes', changesWithoutTblMappings);
@@ -986,6 +996,11 @@ function reduceUI(state={}, action={}) {
         case (CHART_UI_EXPANDED) :
             const {chartId}  = action.payload;
             return updateSet(state, 'expanded', chartId);
+        case (CHART_REMOVE) :
+            if (get(action.payload, 'chartId') === get(getExpandedChartProps(), 'chartId')) {
+                return omit(state, 'expanded');
+            }
+            return state;
         default:
             return state;
     }
@@ -1235,4 +1250,3 @@ export function isChartMounted(chartId) {
     // when chart is added, consider it mounted
     return Boolean(get(flux.getState(), [CHART_SPACE_PATH, 'data', chartId, 'mounted']));
 }
-

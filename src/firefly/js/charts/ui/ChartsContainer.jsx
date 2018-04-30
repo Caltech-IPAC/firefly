@@ -136,7 +136,7 @@ export class ChartsContainer extends PureComponent {
                 <ChartPanel key={chartId} expandable={true} chartId={chartId}/>;
         } else {
             return (
-                <MultiChartViewer {...{closeable, viewerId, expandedMode}}/>
+                <MultiChartViewer {...{closeable, viewerId : viewerId, expandedMode}}/>
             );
         }
     }
