@@ -17,7 +17,7 @@ import {WcsMatchOptions} from './WcsMatchOptions.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
-import GRID_GROUP from 'html/images/icons-2014/Images-Tiled.png';
+import GRID_GROUP from 'html/images/icons-2014/Images-plus-related.png';
 import FULL_GRID from 'html/images/icons-2014/Images-Tiled-full.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
@@ -48,11 +48,11 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
     const vr= visRoot();
     const pv= getPlotViewById(vr, activePlotId);
     const pvDlAry= getAllDrawLayersForPlot(dlAry,activePlotId,true);
+    let   cIdx = cIdx= viewerPlotIds.findIndex( (plotId) => plotId===activePlotId);
+    if (cIdx<0) cIdx= 0;
 
     // single mode stuff
     if (layoutType===SINGLE) {
-        var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===activePlotId);
-        if (cIdx<0) cIdx= 0;
         nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
         prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
 
@@ -63,7 +63,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
             visibility : viewerPlotIds.length===2 ? 'hidden' : 'visible'// hide left arrow when single mode and 2 images
         };
     }
-    const showThreeColorButton= converter.threeColor && viewer.layout===GRID && viewer.layoutDetail!==GRID_FULL;
+    const showThreeColorButton= converter.threeColor && viewer.layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
     const showPager= activeTable && viewer.layoutDetail===GRID_FULL;
 
 
@@ -75,17 +75,19 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                enabled={true} visible={true}
                                horizontal={true}
-                               onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE)}/>
-                {converter.hasRelatedBands  &&
-                            <ToolbarButton icon={GRID_GROUP} tip={'Show all as tiles'}
-                                           enabled={true} visible={true} horizontal={true}
-                                           imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
-                                           onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_RELATED)}/>
-                }
+                               onClick={() => handleViewerLayout(viewerId,SINGLE)}/>
+
                 <ToolbarButton icon={FULL_GRID} tip={'Show full grid'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
-                               onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_FULL)}/>
+                               onClick={() => handleViewerLayout(viewerId,'grid',GRID_FULL)}/>
+
+                {converter.hasRelatedBands  &&
+                            <ToolbarButton icon={GRID_GROUP} tip={'Show all as tiles'}
+                               enabled={true} visible={true} horizontal={true}
+                               imageStyle={{width:24,height:24,  paddingLeft:20, flex: '0 0 auto'}}
+                               onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_RELATED)}/>
+                }
                 {showThreeColorButton &&
                              <ToolbarButton icon={THREE_COLOR} tip={'Show three color image'}
                                          enabled={true} visible={true} horizontal={true}
@@ -120,6 +122,10 @@ ImageMetaDataToolbarView.propTypes= {
     handleInlineTools : PropTypes.bool
 };
 
+function handleViewerLayout(viewerId, grid, gridLayout) {
+    dispatchChangeViewerLayout(viewerId, grid, gridLayout);
+    // add the dispatchZoom in metaDataWatcher on ImagePlotCntlr.UPDATE_VIEW_SIZE per viewer size change
+}
 
 function InlineRightToolbarWrapper({visRoot,pv,dlAry}){
     if (!pv) return <div></div>;

@@ -35,8 +35,9 @@ export function makeLsstSdssPlotRequest(table, rowIdx, cutoutSize) {
     const filterName= getCellValue(table, rowIdx, 'filterName');
 
     // cutout center
-    const ra = getCellValue(table, rowIdx, 'coord_ra');
-    const decl = getCellValue(table, rowIdx, 'coord_decl');
+    const ra = Number(getCellValue(table, rowIdx, 'coord_ra'));   // convert number string to number if the number is exponent format
+    const decl = Number(getCellValue(table, rowIdx, 'coord_decl'));
+
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
@@ -45,9 +46,15 @@ export function makeLsstSdssPlotRequest(table, rowIdx, cutoutSize) {
     const sr= new ServerRequest('LSSTImageSearch');
     sr.setParam('imageType', 'calexp');
     sr.setParam('imageId', scienceCcdId);
-    sr.setParam('ra', ra);
-    sr.setParam('dec', decl);
-    sr.setParam('subsize', `${cutoutSizeInDeg}`); // in degrees
+
+    let wp = null;
+    if (!Number.isNaN(ra) && !Number.isNaN(decl)) {
+        sr.setParam('ra', `${ra}`);
+        sr.setParam('dec', `${decl}`);
+        sr.setParam('subsize', `${cutoutSizeInDeg}`); // in degrees
+
+        wp = makeWorldPt(ra, decl, CoordinateSys.EQ_J2000);
+    }
 
     const title =scienceCcdId.substr(0, 4) + bandMap[filterName].toString() + scienceCcdId.substr(5, 10)+'-'+filterName+(cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
     const plot_desc = `lsst-sdss-${scienceCcdId}`;
@@ -58,5 +65,5 @@ export function makeLsstSdssPlotRequest(table, rowIdx, cutoutSize) {
     // r.setZoomType(ZoomType.TO_WIDTH);  TODO:LLY
     r.setMultiImageIdx(0);
 
-    return addCommonReqParams(r, title, makeWorldPt(ra,decl,CoordinateSys.EQ_J2000));
+    return addCommonReqParams(r, title, wp);
 }

@@ -1,3 +1,5 @@
+import {isArray} from 'lodash';
+
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
@@ -8,12 +10,13 @@ export const UNSORTED = '';
 
 /**
  * convenience function to create the serialized string representation of SortInfo
- * @param {string} colName column's name
+ * @param {string|array} colName one column's name or multiple columns' names
  * @param {boolean} [isAscending=true] false for descending order, otherwise it's default to ascending.
  */
 export function sortInfoString(colName, isAscending=true) {
     if (!colName) return '';
-    return SortInfo.newInstance( (isAscending ? SORT_ASC : SORT_DESC), colName).serialize();
+    return !isArray(colName) ? SortInfo.newInstance( (isAscending ? SORT_ASC : SORT_DESC), colName).serialize() :
+                               SortInfo.newInstance( (isAscending ? SORT_ASC : SORT_DESC), ...colName).serialize();
 }
 
 /**

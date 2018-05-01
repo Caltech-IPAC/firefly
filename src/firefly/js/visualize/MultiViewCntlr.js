@@ -13,7 +13,7 @@ import {primePlot, getPlotViewById} from './PlotViewUtil.js';
 import Enum from 'enum';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
-
+export const META_VIEWER_ID = 'triViewImageMetaData';
 export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
 export const IMAGE_MULTI_VIEW_PREFIX= 'MultiViewCntlr';
 
@@ -388,13 +388,14 @@ export function getAViewFromMultiView(multiViewRoot, containerType) {
  * @return {boolean}
  */
 export function isImageViewerSingleLayout(multiViewRoot, visRoot, plotId) {
-    var viewer;
     if (visRoot.expandedMode!==ExpandType.COLLAPSE) {
         return visRoot.expandedMode!==ExpandType.GRID;
     }
     else {
         const viewerId= findViewerWithItemId(multiViewRoot, plotId, IMAGE);
-        return viewer ? getViewer(multiViewRoot,viewerId).viewType===SINGLE : true;
+        const viewer = viewerId ? getViewer(multiViewRoot, viewerId) : null;
+
+        return viewer ? viewer.layout===SINGLE : true;
     }
 }
 
@@ -506,8 +507,10 @@ function addViewer(state,payload) {
         }
         return [...state];
     } else {
+        // set default layout for the viewer with viewerId, META_VIEWER_ID, is full-grid type
+        const layoutDetail = viewerId === META_VIEWER_ID ? GRID_FULL : undefined;
         const entry = {viewerId, containerType, canReceiveNewPlots, layout, mounted, itemIdAry: [], customData: {},
-                       lastActiveItemId};
+                       lastActiveItemId, layoutDetail};
         return [...state, entry];
     }
 }
