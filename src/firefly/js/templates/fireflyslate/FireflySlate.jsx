@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy, isEmpty} from 'lodash';
+import {get, pickBy, isEmpty} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
@@ -131,8 +131,8 @@ function mainView({expanded,gridView, gridColumns, leftButtons, centerButtons, r
             return <ImageExpandedMode closeFunc={closeExpanded}/>;
             break;
         case LO_VIEW.xyPlots:
-            const obj= getExpandedChartProps();
-            const chartViewerId= obj ? findViewerWithItemId(getMultiViewRoot(), obj.chartId, PLOT2D) : null;
+            const chartId = get(getExpandedChartProps(), 'chartId');
+            const chartViewerId= chartId ? findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D) : null;
             return <ChartsContainer closeable={true} expandedMode={true} viewerId={chartViewerId}/>;
             break;
         case LO_VIEW.tables:

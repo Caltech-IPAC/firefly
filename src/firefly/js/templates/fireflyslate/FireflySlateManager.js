@@ -7,7 +7,6 @@ import {filter, isEmpty, get, isArray, uniq} from 'lodash';
 
 import {startImageMetadataWatcher} from '../../visualize/saga/ImageMetaDataWatcher.js';
 import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher.js';
-import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, ENABLE_SPECIAL_VIEWER, SPECIAL_VIEWER,
           getLayouInfo, dispatchUpdateLayoutInfo, dispatchAddCell, dispatchRemoveCell, getNextCell} from '../../core/LayoutCntlr.js';
@@ -17,9 +16,8 @@ import {dispatchLoadTblStats} from '../../charts/TableStatsCntlr';
 
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
-import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
-import {REPLACE_VIEWER_ITEMS, DEFAULT_FITS_VIEWER_ID, IMAGE, PLOT2D, dispatchAddViewer, dispatchAddViewerItems,
-    getViewer, getViewerItemIds, getMultiViewRoot, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
+import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
+import {REPLACE_VIEWER_ITEMS, IMAGE, getViewerItemIds, getMultiViewRoot, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 /**
@@ -151,7 +149,6 @@ function handleTableDelete(layoutInfo, action) {
     if (tbl_group && isEmpty(tblIdAry)) {
         dispatchRemoveCell({cellId:tbl_group});
     }
-
 }
 
 function handlePlotDelete(layoutInfo, action) {
@@ -163,14 +160,15 @@ function handlePlotDelete(layoutInfo, action) {
 }
 
 function handleChartDelete(layoutInfo, action) {
-    //todo: implement
-    console.log('implement chart delete');
+    const {viewerId}= action.payload;
+    const itemAry= getViewerItemIds(getMultiViewRoot(), viewerId);
+    if (isEmpty(itemAry)) {
+        dispatchRemoveCell({cellId:viewerId});
+    }
 }
 
 
 function handleNewImage(layoutInfo, action) {
-
-
     const {payload}= action;
     const {gridView=[]}= layoutInfo;
     const mvRoot= getMultiViewRoot();
@@ -207,32 +205,14 @@ function handleNewImage(layoutInfo, action) {
 
 function handleNewChart(layoutInfo, action) {
 
-    const {chartId, groupId, viewerId, chartType}= action.payload;
+    const {viewerId}= action.payload;
     const {gridView=[]}= layoutInfo;
 
-    if (chartType!=='plot.ly') {
-        if (groupId) {
-            let viewer= getViewer(getMultiViewRoot(), groupId);
-            if (!viewer) {
-                dispatchAddViewer(groupId,true,PLOT2D,true);
-            }
-            dispatchAddViewerItems(groupId, [chartId], PLOT2D);
-
-            const item= gridView.find( (g) => g.cellId===groupId);
-            if (!item) {
-                viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
-                const cell= getNextCell(gridView,3,1);
-                dispatchAddCell({row:cell.row,col:cell.col,width:3,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
-            }
-        }
-    }
     const item= gridView.find( (g) => g.cellId===viewerId);
     if (!item) {
-        const viewer= findViewerWithItemId(getMultiViewRoot(), chartId, PLOT2D);
         const cell= getNextCell(gridView,3,1);
-        dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewer,type:LO_VIEW.xyPlots});
+        dispatchAddCell({row:cell.row,col:cell.col,width:1,height:1,cellId:viewerId,type:LO_VIEW.xyPlots});
     }
-
 
     return layoutInfo;
 }
