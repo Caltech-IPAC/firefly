@@ -8,7 +8,10 @@
 import Enum from 'enum';
 import {primePlot} from './PlotViewUtil.js';
 import {visRoot} from './ImagePlotCntlr.js';
-import CsysConverter from './CsysConverter.js';
+import {CysConverter} from './CsysConverter.js';
+import {isHiPS} from './WebPlot.js';
+import {getHealpixCornerTool} from './HiPSUtil.js';
+import {getHealpixPixel} from './HiPSUtil';
 
 export const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP',
     'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK',
@@ -67,15 +70,20 @@ export function fireMouseCtxChange(mouseCtx) {
  */
 export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY,
                                {shiftDown,controlDown,metaDown}= {}) {
-    var payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown};
-    if (plotId) {
-        var cc= CsysConverter.make(primePlot(visRoot(),plotId));
-        if (cc) {
-            payload.plotId= plotId;
-            payload.imagePt= cc.getImageCoords(screenPt);
-            payload.worldPt= cc.getWorldCoords(screenPt);
+    const payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown};
+    const plot= primePlot(visRoot(),plotId);
+    const cc= CysConverter.make(plot);
+    if (!plotId || !plot) return payload;
+    payload.plotId= plotId;
+    payload.imagePt= cc.getImageCoords(screenPt);
+    const worldPt= cc.getWorldCoords(screenPt);
+    payload.worldPt= worldPt;
+    if (isHiPS(plot) && worldPt) {
+        const result= getHealpixPixel(plot,worldPt);
+        if (result) {
+            payload.healpixPixel= result.pixel;
+            payload.norder= result.norder;
         }
-
     }
     return payload;
 }

@@ -64,7 +64,7 @@ const column6 = {width: 160,addingLeft: 2, textAlign: 'left', display: 'inline-b
 const column7 = {width: 109, paddingLeft: 6, display: 'inline-block'};
 const column7_r2 = {width: 90, paddingLeft: 3, display: 'inline-block'};
 
-export function MouseReadout({readout}){
+export function MouseReadout({readout, showHealpixPixel=true }){
 
 
    //get the standard readouts
@@ -78,9 +78,11 @@ export function MouseReadout({readout}){
 
 
     const displayEle= getNonFluxDisplayElements(readoutItems,  readout.readoutPref, isHiPS);
-    const {readout1, readout2, pixelSize, showReadout1PrefChange, showReadout2PrefChange, showPixelPrefChange}= displayEle;
+    const {readout1, readout2, pixelSize, showReadout1PrefChange,
+         showReadout2PrefChange, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
 
     const fluxArray = getFluxInfo(sndReadout);
+    const hipsPixel= showHealpixPixel && isHiPS;
 
     return (
 
@@ -88,8 +90,11 @@ export function MouseReadout({readout}){
 
             {/*row1*/}
             <div  >
-                <div style={ column1}>{fluxArray[1].label} </div>
-                <div style={ column2}>  {fluxArray[1].value}  </div>
+                {!isHiPS && <div style={ column1}>{fluxArray[1].label} </div>}
+                {!isHiPS && <div style={ column2}>  {fluxArray[1].value}  </div>}
+                {hipsPixel && <div style={ column1}>{healpixNorderReadout.label} </div>}
+                {hipsPixel && <div style={ column2}>  {healpixNorderReadout.value}  </div>}
+                
                 <div style={ column3} onClick={ showPixelPrefChange}>
                     {pixelSize.label}
                 </div>
@@ -107,8 +112,10 @@ export function MouseReadout({readout}){
                 <div style={ column1}>{fluxArray[2].label} </div>
                 <div style={ column2}> {fluxArray[2].value} </div>
 
-                <div style={ column3_r2}>{fluxArray[0].label}</div>
-                <div style={ column4}> {fluxArray[0].value}</div>
+                {!isHiPS && <div style={ column3_r2}>{fluxArray[0].label}</div>}
+                {!isHiPS && <div style={ column4}> {fluxArray[0].value}</div>}
+                {hipsPixel && <div style={ column3_r2}>{healpixPixelReadout.label} </div>}
+                {hipsPixel && <div style={ column4}>{healpixPixelReadout.value}  </div>}
 
                 <div style={ column5} onClick={ showReadout2PrefChange}>
                     {readout2.label } </div>
@@ -133,7 +140,8 @@ export function MouseReadout({readout}){
 }
 
 MouseReadout.propTypes = {
-    readout: PropTypes.object
+    readout: PropTypes.object,
+    showHealpixPixel : PropTypes.bool
 };
 
 
