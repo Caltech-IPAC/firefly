@@ -13,8 +13,6 @@ import nom.tam.fits.BasicHDU;
 import nom.tam.fits.HeaderCard;
 import nom.tam.fits.TableHDU;
 import nom.tam.util.Cursor;
-import nom.tam.fits.FitsFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -115,16 +113,11 @@ public class FitsHDUUtil {
         DataGroup dg = new DataGroup("fits", cols);
         String invalidMsg = "invalid fits file";
 
-        FitsFactory.useThreadLocalSettings(true);
-        boolean prevLongStringEnabled = FitsFactory.isLongStringsEnabled();
-
         try {
             Fits fits = new Fits(fitsFile); // open fits file
             BasicHDU hdu;
             int index = 0;
             List<JSONObject> headerColumns = createHeaderTableColumns(true);
-
-            FitsFactory.setLongStringsEnabled(true);
 
             while ((hdu = fits.readHDU()) != null) {
                 JSONObject extensionInfo;
@@ -208,7 +201,6 @@ public class FitsHDUUtil {
             e.printStackTrace();
         }
 
-        FitsFactory.setLongStringsEnabled(prevLongStringEnabled);
         return dg;
     }
 }

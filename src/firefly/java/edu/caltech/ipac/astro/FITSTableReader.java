@@ -64,19 +64,18 @@ public final class FITSTableReader
 
     static void usage()
     {
-	System.out.println("usage java edu.caltech.ipac.astro.FITSTableReader <fits_filename> <ipac_filename> <table_index>");
+	System.out.println("usage java edu.caltech.ipac.astro.FITSTableReader <fits_filename> <ipac_filename>");
 	System.exit(1);
     }
 
     public static void main(String[] args)
     {
-        if (args.length != 3)
+        if (args.length != 2)
         {
             usage();
         }
         String fits_filename = args[0];
         String ipac_filename = args[1];
-        int    table_index = Integer.parseInt(args[2]);
 
         FITSTableReader fits_to_ipac = new FITSTableReader();
 
@@ -128,7 +127,7 @@ public final class FITSTableReader
                     fits_filename,
                     dataCols,
                     headerCols,
-                    strategy, table_index);
+                    strategy);
 
             File output_file = new File(ipac_filename);
             DataGroup dg = dgListTotal.get(whichDG);
@@ -156,7 +155,7 @@ public final class FITSTableReader
         try
         {
             //List<DataGroup> dgList = fits_to_ipac.convertFITSToDataGroup(fits_filename, null);
-            List<DataGroup> dgList = fits_to_ipac.convertFitsToDataGroup(fits_filename, null, null, TOP_MOST, table_index);
+            List<DataGroup> dgList = fits_to_ipac.convertFitsToDataGroup(fits_filename, null, null, TOP_MOST);
 
             File output_file = new File(ipac_filename);
             DataGroup dg = dgList.get(0);
@@ -191,50 +190,69 @@ public final class FITSTableReader
     public static List<DataGroup> convertFitsToDataGroup(String fits_filename,
                                                          String[] dataCols,
                                                          String[] headerCols,
-                                                         String strategy, int idx)
+                                                         String strategy)
         throws FitsException, IOException {
-
-        List tList = getStarTableList(fits_filename, idx);
+        List tList = getStarTableList(fits_filename);
 
         List<DataGroup> dgListTotal = new ArrayList();
 
-        for (int i = 0; i < tList.size(); i++) {
-            StarTable table = (StarTable) tList.get(i);
-            DataGroup dataGroup = convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+        for (Object table : tList) {
+            DataGroup dataGroup = convertStarTableToDataGroup((StarTable)table, dataCols, headerCols, strategy);
             dgListTotal.add(dataGroup);
         }
         return dgListTotal;
     }
 
     /**
-     * Get a list of star tables from a FITS file.
+     * Convert a table from a FITS file to DataGroup based on table index
+     * @param fits_filename
+     * @param dataCols: The names of the columns which will be copied to the data section of the DataGroups.
+     *                If dataCols = null, get all the columns into the data group.
+     * @param headerCols: The names of the columns which will be copied to the header section of the DataGroups.
+     *                If headerCols = null, get none of the columns into the header of the data group.
+     * @param strategy The strategy used to deal with the repeat count  of the data in the given dataCols columns.
+     * @param table_idx
+     * @return
+     * @throws FitsException
+     * @throws IOException
+     */
+    public static DataGroup convertFitsToDataGroup(String fits_filename,
+                                                         String[] dataCols,
+                                                         String[] headerCols,
+                                                         String strategy, int table_idx)
+            throws FitsException, IOException {
+
+        StarTable table = getStarTableList(fits_filename, table_idx);
+        return table != null ? convertStarTableToDataGroup(table, dataCols, headerCols, strategy) : null;
+    }
+
+    /**
+     * Get a star tables from a FITS file.
      * @param fits_filename
      * @param table_idx
-     * @return List of star tables.
+     * @return one star table or none
      * @throws IOException
      */
 
-    public static List getStarTableList(String fits_filename, int table_idx) {
-
-        ArrayList<StarTable> tList =  new ArrayList<>();
+    public static StarTable getStarTableList(String fits_filename, int table_idx) {
 
         // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
         // the exception error sent from nom.tam.fits.
 
-        FitsFactory.useThreadLocalSettings(true);
-        boolean prevLongStringEnabled = FitsFactory.isLongStringsEnabled();
+        StarTable retTbl = null;
 
+        FitsFactory.useThreadLocalSettings(true);
         FitsFactory.setLongStringsEnabled(false);
 
         try {
             StarTableFactory stFactory = new StarTableFactory();
-            StarTable tbl;
 
-            if (table_idx >= 0) {
-                tbl = stFactory.makeStarTable(fits_filename + "#" + table_idx, "fits");
+            if (table_idx > 0) {
+                StarTable tbl = stFactory.makeStarTable(fits_filename + "#" + table_idx, "fits");
                 DescribedValue dValue = tbl.getParameterByName("ZIMAGE");   // check if 'BINTABLE' is actually compressed image HDU
+
                 if (dValue == null || dValue.getValue() != Boolean.TRUE) {
-                    tList.add(tbl);
+                    retTbl = tbl;
                 }
             }
 
@@ -242,8 +260,17 @@ public final class FITSTableReader
             logger.error("unable to get table from fits file " + fits_filename + "from" + table_idx + ", reason: " + e.getMessage());
         }
 
-        FitsFactory.setLongStringsEnabled(prevLongStringEnabled);
-        return tList;
+        FitsFactory.useThreadLocalSettings(false);
+        return retTbl;
+    }
+
+    /**
+     * Get a list of star tables from a FITS file.
+     * @param fits_filename
+     * @throws RuntimeException
+     */
+    public static List getStarTableList(String fits_filename) {
+        throw new UnsupportedOperationException();
     }
 
 
@@ -604,9 +631,9 @@ public final class FITSTableReader
      * @param catName data group title (catName is not used).
      * @deprecated
      */
-    public static List<DataGroup> convertFITSToDataGroup(String FITS_filename, String catName, int idx)
+    public static List<DataGroup> convertFITSToDataGroup(String FITS_filename, String catName)
             throws FitsException, IOException
     {
-        return convertFitsToDataGroup(FITS_filename, null, null, TOP_MOST, idx);
+        return convertFitsToDataGroup(FITS_filename, null, null, TOP_MOST);
     }
 }
