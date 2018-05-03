@@ -63,10 +63,6 @@ import java.nio.Buffer;
 public class FitsRead implements Serializable {
     //class variable
     private static RangeValues DEFAULT_RANGE_VALUE = new RangeValues();
-    static {
-        FitsFactory.setAllowTerminalJunk(true);
-        FitsFactory.setUseHierarch(true);
-    }
 
     //private variables
     private final int planeNumber;

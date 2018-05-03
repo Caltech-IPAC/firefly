@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {uniqBy, isEmpty} from 'lodash';
 import {clone} from '../../util/WebUtil.js';
@@ -54,7 +54,7 @@ const config = {
 };
 
 
-class SlateView extends PureComponent {
+class SlateView extends Component {
 
 
     constructor(props) {

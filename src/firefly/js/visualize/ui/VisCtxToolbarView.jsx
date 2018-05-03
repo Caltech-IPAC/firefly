@@ -637,7 +637,7 @@ export function MultiImageControllerView({plotView:pv}) {
     return (
         <div style={mulImStyle}>
             <div style={{fontStyle: 'italic', padding: '0 0 0 5px'}}>Image:</div>
-            <img style={leftImageStyle} src={PAGE_LEFT}
+            <img style={{...leftImageStyle}} src={PAGE_LEFT}
                  onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:prevIdx}) : dispatchChangeHiPS({plotId, cubeIdx:prevIdx})}/>
             <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:3, flex: '0 0 auto'}}
                  src={PAGE_RIGHT}

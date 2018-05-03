@@ -46,13 +46,7 @@ public class DataGroupReader {
         } else if (format == Format.FITS ) {
             try {
                 // Switch to the new function:
-                List<DataGroup> retval = FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, FITSTableReader.DEFAULT);
-                if (retval != null && retval.size() > 0) {
-                    return retval.get(tableIndex);
-                } else {
-                    return null;
-                }
-
+                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, FITSTableReader.DEFAULT, tableIndex);
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }

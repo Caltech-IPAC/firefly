@@ -77,7 +77,6 @@ public final class FITSTableReader
         String fits_filename = args[0];
         String ipac_filename = args[1];
 
-
         FITSTableReader fits_to_ipac = new FITSTableReader();
 
         String strategy = EXPAND_BEST_FIT;
@@ -193,70 +192,87 @@ public final class FITSTableReader
                                                          String[] headerCols,
                                                          String strategy)
         throws FitsException, IOException {
-
         List tList = getStarTableList(fits_filename);
 
         List<DataGroup> dgListTotal = new ArrayList();
-        // for testing:
-        //for (int i = 4; i < tList.size(); i++) {
-        for (int i = 0; i < tList.size(); i++) {
-            StarTable table = (StarTable) tList.get(i);
-            DataGroup dataGroup = convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+
+        for (Object table : tList) {
+            DataGroup dataGroup = convertStarTableToDataGroup((StarTable)table, dataCols, headerCols, strategy);
             dgListTotal.add(dataGroup);
         }
         return dgListTotal;
     }
 
     /**
-     * Get a list of star tables from a FITS file.
+     * Convert a table from a FITS file to DataGroup based on table index
      * @param fits_filename
-     * @return List of star tables.
+     * @param dataCols: The names of the columns which will be copied to the data section of the DataGroups.
+     *                If dataCols = null, get all the columns into the data group.
+     * @param headerCols: The names of the columns which will be copied to the header section of the DataGroups.
+     *                If headerCols = null, get none of the columns into the header of the data group.
+     * @param strategy The strategy used to deal with the repeat count  of the data in the given dataCols columns.
+     * @param table_idx table index, i.e. HDU number in FITS
+     * @return
+     * @throws FitsException
      * @throws IOException
      */
-    public static List getStarTableList(String fits_filename) {
+    public static DataGroup convertFitsToDataGroup(String fits_filename,
+                                                         String[] dataCols,
+                                                         String[] headerCols,
+                                                         String strategy, int table_idx)
+            throws FitsException, IOException {
 
-        ArrayList<StarTable> tList = new ArrayList<>();
+        StarTable table = getStarTable(fits_filename, table_idx);
+        return table != null ? convertStarTableToDataGroup(table, dataCols, headerCols, strategy) : null;
+    }
 
-        // disable long string for HeaderCard create while collecting tables from StarTableFactory to work around the exception error
-        // sent from nom.tam.fits.
+    /**
+     * Get a StarTable from a FITS file by giving table index, i.e. HDU number in FITS
+     * @param fits_filename
+     * @param table_idx
+     * @return one star table or none
+     * @throws IOException
+     */
+
+    public static StarTable getStarTable(String fits_filename, int table_idx) {
+
+        // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
+        // the exception error sent from nom.tam.fits.
+
+        StarTable retTbl = null;
 
         FitsFactory.useThreadLocalSettings(true);
         FitsFactory.setLongStringsEnabled(false);
 
         try {
-            TableSequence tseq;
             StarTableFactory stFactory = new StarTableFactory();
-            tseq = stFactory.makeStarTables(fits_filename, null);
 
-            for (StarTable tbl; (tbl = tseq.nextTable()) != null; ) {
+            if (table_idx > 0) {
+                StarTable tbl = stFactory.makeStarTable(fits_filename + "#" + table_idx, "fits");
                 DescribedValue dValue = tbl.getParameterByName("ZIMAGE");   // check if 'BINTABLE' is actually compressed image HDU
+
                 if (dValue == null || dValue.getValue() != Boolean.TRUE) {
-                    tList.add(tbl);
+                    retTbl = tbl;
                 }
             }
 
         } catch (Exception e) {
-            logger.error("unable to get table from fits file " + fits_filename + ", reason: " + e.getMessage());
+            logger.error("unable to get table from fits file " + fits_filename + "from" + table_idx + ", reason: " + e.getMessage());
         }
-        return tList;
+
+        FitsFactory.useThreadLocalSettings(false);
+        return retTbl;
     }
 
     /**
-
-    public static List<DataGroup> convertFitsToDataGroup(int index,
-                                                         String fits_filename,
-                                                         String[] dataCols,
-                                                         String[] headerCols,
-                                                         String strategy)
-            throws FitsException, TableFormatException, IOException {
-
-        List<DataGroup> dgListTotal = new ArrayList<DataGroup>();
-
-
-        return dgListTotal;
+     * Get a list of star tables from a FITS file.
+     * @param fits_filename
+     * @throws RuntimeException
+     */
+    public static List getStarTableList(String fits_filename) {
+        throw new UnsupportedOperationException();
     }
 
-     */
 
     /**
      * Convert a StarTable into DataGroup(s).  Depending on the strategy, this function may return
@@ -620,5 +636,4 @@ public final class FITSTableReader
     {
         return convertFitsToDataGroup(FITS_filename, null, null, TOP_MOST);
     }
-
 }

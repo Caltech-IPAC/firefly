@@ -13,8 +13,6 @@ import nom.tam.fits.BasicHDU;
 import nom.tam.fits.HeaderCard;
 import nom.tam.fits.TableHDU;
 import nom.tam.util.Cursor;
-import nom.tam.fits.FitsFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -120,8 +118,6 @@ public class FitsHDUUtil {
             BasicHDU hdu;
             int index = 0;
             List<JSONObject> headerColumns = createHeaderTableColumns(true);
-
-            FitsFactory.useThreadLocalSettings(true);
 
             while ((hdu = fits.readHDU()) != null) {
                 JSONObject extensionInfo;

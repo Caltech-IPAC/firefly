@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.CacheManager;
+import nom.tam.fits.FitsFactory;
 import org.apache.log4j.PropertyConfigurator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -115,6 +116,11 @@ public class ServerContext {
 
             // alerts monitoring
             AlertsMonitor.startMonitor();
+
+            // init fits read global settting
+            FitsFactory.setAllowTerminalJunk(true);
+            FitsFactory.setUseHierarch(true);
+            FitsFactory.setLongStringsEnabled(true);
         }
     }
 
