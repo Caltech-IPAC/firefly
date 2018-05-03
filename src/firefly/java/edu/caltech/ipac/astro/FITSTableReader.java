@@ -211,7 +211,7 @@ public final class FITSTableReader
      * @param headerCols: The names of the columns which will be copied to the header section of the DataGroups.
      *                If headerCols = null, get none of the columns into the header of the data group.
      * @param strategy The strategy used to deal with the repeat count  of the data in the given dataCols columns.
-     * @param table_idx
+     * @param table_idx table index, i.e. HDU number in FITS
      * @return
      * @throws FitsException
      * @throws IOException
@@ -222,19 +222,19 @@ public final class FITSTableReader
                                                          String strategy, int table_idx)
             throws FitsException, IOException {
 
-        StarTable table = getStarTableList(fits_filename, table_idx);
+        StarTable table = getStarTable(fits_filename, table_idx);
         return table != null ? convertStarTableToDataGroup(table, dataCols, headerCols, strategy) : null;
     }
 
     /**
-     * Get a star tables from a FITS file.
+     * Get a StarTable from a FITS file by giving table index, i.e. HDU number in FITS
      * @param fits_filename
      * @param table_idx
      * @return one star table or none
      * @throws IOException
      */
 
-    public static StarTable getStarTableList(String fits_filename, int table_idx) {
+    public static StarTable getStarTable(String fits_filename, int table_idx) {
 
         // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
         // the exception error sent from nom.tam.fits.
