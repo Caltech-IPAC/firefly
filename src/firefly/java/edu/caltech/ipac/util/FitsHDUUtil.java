@@ -115,7 +115,7 @@ public class FitsHDUUtil {
         DataGroup dg = new DataGroup("fits", cols);
         String invalidMsg = "invalid fits file";
 
-        // FitsFactory.useThreadLocalSettings(true);
+        FitsFactory.useThreadLocalSettings(true);
         boolean prevLongStringEnabled = FitsFactory.isLongStringsEnabled();
 
         try {

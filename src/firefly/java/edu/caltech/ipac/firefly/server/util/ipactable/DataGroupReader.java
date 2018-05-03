@@ -46,9 +46,9 @@ public class DataGroupReader {
         } else if (format == Format.FITS ) {
             try {
                 // Switch to the new function:
-                List<DataGroup> retval = FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, FITSTableReader.DEFAULT);
+                List<DataGroup> retval = FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, FITSTableReader.DEFAULT, tableIndex);
                 if (retval != null && retval.size() > 0) {
-                    return retval.get(tableIndex);
+                    return retval.get(0);
                 } else {
                     return null;
                 }

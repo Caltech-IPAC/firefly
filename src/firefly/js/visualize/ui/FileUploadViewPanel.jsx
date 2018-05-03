@@ -704,7 +704,8 @@ function sendTableRequest(fileCacheKey, fName, idx, extMap, totalRows) {
     });
 
     if (!(isNil(idx))) {
-        set(tblReq, 'tbl_index', extMap[idx]);
+        //set(tblReq, 'tbl_index', extMap[idx]);
+        set(tblReq, 'tbl_index', idx);
     }
 
     dispatchTableSearch(tblReq);
