@@ -34,7 +34,7 @@ const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoo
 
 
 function getZoomer() {
-    var lastClick= Date.now();
+    let lastClick= Date.now();
     return (pv,zType) => {
         const time= Date.now();
         const deltaClick= time-lastClick;
@@ -57,16 +57,12 @@ function getZoomer() {
             }
         }
 
-        if (deltaClick < CLICK_TIME   && isImage(plot)) {
+        if (deltaClick < CLICK_TIME   && isImage(plot) && !plot.projection.isWrappingProjection()) {
             showZoomOptionsPopup();
             return;
         }
 
-        dispatchZoom({
-            plotId:pv.plotId,
-            userZoomType:zType.utilZt,
-            forceDelay:!isFitFill(zType.utilZt)
-        });
+        dispatchZoom({ plotId:pv.plotId, userZoomType:zType.utilZt, forceDelay:!isFitFill(zType.utilZt) });
     };
 }
 
@@ -84,10 +80,9 @@ export function isZoomMax(pv) {
 }
 
 export function ZoomButton({plotView:pv,zoomType,visible}) {
-    var enable= primePlot(pv) ? true : false;
     return (
         <ToolbarButton icon={zoomType.icon} tip={zoomType.tip}
-                       enabled={enable} visible={visible}
+                       enabled={Boolean(primePlot(pv))} visible={visible}
                        horizontal={true} onClick={() => zoom(pv,zoomType)}/>
     );
 }

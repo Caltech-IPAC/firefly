@@ -16,10 +16,12 @@ import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {logError} from '../../util/WebUtil.js';
 import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
+import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 
 import {dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
-        dispatchZoom, dispatchProcessScroll, dispatchChangeHiPS, visRoot} from '../ImagePlotCntlr.js';
+        dispatchZoom, dispatchProcessScroll,
+        dispatchChangeHiPS, dispatchChangeHipsImageConversion, visRoot} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
@@ -38,7 +40,7 @@ import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
 import {isOutlineImageForSelectArea, detachSelectArea, SELECT_AREA_TITLE} from './SelectAreaDropDownView.jsx';
 import {convertAngle} from '../VisUtil.js';
-import {convertToHiPS, convertToImage} from '../task/PlotHipsTask.js';
+import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
 import {RequestType} from '../RequestType.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
@@ -355,43 +357,70 @@ function zoomIntoSelection(pv, dlAry) {
 
 }
 
-export function canConvertHipsAndAllSky(pv) {
+export function canConvertHipsAndFits(pv) {
     if (!pv || !pv.plotViewCtx.hipsImageConversion) return false;
-    const {allSkyRequest, hipsRequestRoot}= pv.plotViewCtx.hipsImageConversion;
-    if (isImage(primePlot(pv))) {
-        return pv.request.getRequestType() === RequestType.ALL_SKY;
-    }
-    else {
-        return (allSkyRequest && hipsRequestRoot);
-    }
+    const {allSkyRequest, hipsRequestRoot, imageRequestRoot}= pv.plotViewCtx.hipsImageConversion;
+    return (hipsRequestRoot && ( allSkyRequest ||imageRequestRoot));
 }
 
-function doConvert(pv) {
-    if (!canConvertHipsAndAllSky(pv)) return;
-    const plot= primePlot(pv);
-    if (isHiPS(plot)) {
+function doConvert(pv,target) {
+    if (!canConvertHipsAndFits(pv)) return;
+    if (target==='fits') {
+        convertToImage(pv,false);
+    }
+    else if (target==='hips') {
+        convertToHiPS(pv,pv.request.getRequestType()===RequestType.ALL_SKY);
+    }
+    else if (target==='allsky') {
         convertToImage(pv,true);
     }
-    else if (isImage(plot)) {
-        convertToHiPS(pv,true);
-    }
 
+}
+
+function changeAutoConvert(pv, auto) {
+    dispatchChangeHipsImageConversion({plotId:pv.plotId, hipsImageConversionChanges:{autoConvertOnZoom:auto}});
+    if (auto) doHiPSImageConversionIfNecessary(pv);
 }
 
 
 function makeConvertButton(pv) {
     const plot= primePlot(pv);
     if (!plot) return null;
+    const {allSkyRequest}= pv.plotViewCtx.hipsImageConversion;
 
-    const label= isHiPS(primePlot(pv)) ? 'To Image' : 'To HiPS';
+    let value;
+    if (isHiPS(plot)) {
+        value= 'hips';
+    }
+    else {
+        value= (pv.request.getRequestType()===RequestType.ALL_SKY) ? 'allsky' : 'fits';
+    }
+
+    const options= [
+        {label: 'FITS', value: 'fits', tooltip: 'Scientific pixel data over limited regions'},
+        {label: 'HiPS', value: 'hips', tooltip: 'All-sky multi-resolution picture with spherical projection'},
+    ];
+    allSkyRequest && options.push({label: 'Aitoff', value: 'allsky',
+                            tooltip:'All-Sky single-resolution picture with Aitoff projection'});
+
+    const buttonGroupTip= allSkyRequest  ? 'Auto-transition between FITS, HiPS, and Aitoff depending on zoom' :
+                                           'Auto-transition between FITS and HiPS depending on zoom';
+
+    const {autoConvertOnZoom:auto}= pv.plotViewCtx.hipsImageConversion;
     return (
-        <div style={{marginLeft: 5, marginRight: 5, marginTop: -6}}>
-            <input  type='button'
-                    value={label}
-                    onClick={()=>doConvert(pv) } />
-        </div>
+            <div style={{display: 'flex', marginLeft: 5, marginRight: 5, marginTop: -6, padding: '1px 2px 1px 2px',
+                         border: '1px solid rgba(60,60,60,.2', borderRadius: '5px'}}>
+                <RadioGroupInputFieldView options={options}  value={value}
+                                          buttonGroup={true}
+                                          onChange={(ev) => doConvert(pv,ev.target.value)} />
+                <div style={{paddingLeft: 3}} title={buttonGroupTip}>
+                    <input type='checkbox' checked={auto} onChange={() => changeAutoConvert(pv, !auto)} />
+                    Auto
+                </div>
+            </div>
     );
 }
+// Auto-transition
 
 function makeHiPSImageTable(pv, surveysId) {
     const plot= primePlot(pv);
@@ -399,9 +428,10 @@ function makeHiPSImageTable(pv, surveysId) {
 
     const inputEntry = () => {
         return (
-            <div style={{marginLeft: 9, marginRight: 5}}>
+            <div style={{margin: '0 5px 7px 4px'}}>
                 <input  type='button'
                         value='Change HiPS'
+                        title={'Choose a different HiPS Survey'}
                         onClick={()=>showHiPSSurverysPopup(get(primePlot(pv), 'hipsUrlRoot'),
                                                            pv, surveysId)} />
             </div>
@@ -433,7 +463,7 @@ function makeHiPSCoordSelect(pv) {
 
 
     return (
-        <div >
+        <div style={{marginBottom:7}}>
             <ListBoxInputFieldView
 
                 inline={true}
@@ -442,7 +472,7 @@ function makeHiPSCoordSelect(pv) {
                     dispatchChangeHiPS( {plotId:pv.plotId,  coordSys: options[Number(ev.target.value)].c})}
                 labelWidth={0}
                 label={' '}
-                tooltip={ 'Choose a different HiPS survey'}
+                tooltip={ 'Change HiPS survey coordinate system'}
                 options={options}
                 multiple={false}
             />
@@ -497,13 +527,13 @@ export class VisCtxToolbarView extends PureComponent {
         const plot= primePlot(pv);
         const showOptions= showSelectionTools|| showCatSelect|| showCatUnSelect ||
                            showFilter || showClearFilter || !isEmpty(extensionAry) ||
-                           isHiPS(plot) || canConvertHipsAndAllSky(pv);
+                           isHiPS(plot) || canConvertHipsAndFits(pv);
 
         return (
             <div style={rS}>
                 {showMultiImageController && <MultiImageControllerView plotView={pv} />}
                 {showOptions && <div
-                    style={{padding: '0 7px 0 8px', fontStyle: 'italic'}}>
+                    style={{padding: '0 0 5px 2px', fontStyle: 'italic'}}>
                     Options:</div>
                 }
                 {showSelectionTools && isImage(plot) &&
@@ -542,7 +572,7 @@ export class VisCtxToolbarView extends PureComponent {
 
                 {makeExtensionButtons(extensionAry,pv,dlAry)}
 
-                {canConvertHipsAndAllSky(pv) && makeConvertButton(pv)}
+                {canConvertHipsAndFits(pv) && makeConvertButton(pv)}
                 {isHiPS(plot) && makeHiPSCoordSelect(pv)}
                 {isHiPS(plot) && makeHiPSImageTable(pv, HiPSId)}
 

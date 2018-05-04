@@ -10,13 +10,12 @@ import {get, isNil} from 'lodash';
 import {Matrix} from 'transformation-matrix-js';
 import {primePlot} from './PlotViewUtil.js';
 import {clone, updateSet} from '../util/WebUtil.js';
-import {getCenterOfProjection} from './PlotViewUtil.js';
+import {getCenterOfProjection, getFoV} from './PlotViewUtil.js';
 
 import {toRadians} from './VisUtil.js';
 import {CysConverter}  from './CsysConverter.js';
 import {makeScreenPt, makeDevicePt} from './Point.js';
 import {isImage} from './WebPlot.js';
-import {getHiPSFoV} from './HiPSUtil.js';
 
 /**
  *
@@ -152,7 +151,7 @@ export function plotMover(originalDeviceX ,originalDeviceY , originalScrollPt, m
             }
 
 
-            if (lastWorldPt && Math.abs(lastWorldPt.y)>88 && getHiPSFoV(pv)>30) {
+            if (lastWorldPt && Math.abs(lastWorldPt.y)>88 && getFoV(pv)>30) {
                 // xdiff/=8;
                 ydiff/=8;
                 xdiff/=8;

@@ -23,13 +23,13 @@ import {FileUpload} from '../ui/FileUpload.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getActivePlotView} from '../visualize/PlotViewUtil.js';
+import {primePlot, getActivePlotView, getFoV} from '../visualize/PlotViewUtil.js';
 import { makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt} from '../visualize/Point.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-
 import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
+
 import './CatalogSearchMethodType.css';
-import {getHiPSFoV} from "../visualize/HiPSUtil";
+
 /*
  Component which suppose to handle the catalog method search such as cone, elliptical,etc.
  each of the option has different option panel associated
@@ -161,7 +161,7 @@ function calcCornerString(pv, method) {
     var w = plot.dataWidth;
     var h = plot.dataHeight;
     var cc = CsysConverter.make(plot);
-    const radiusSearch = getHiPSFoV(pv) > maxHipsRadiusSearch ? maxHipsRadiusSearch * 3600 : getHiPSFoV(pv) * 3600; // in arcsec
+    const radiusSearch = getFoV(pv) > maxHipsRadiusSearch ? maxHipsRadiusSearch * 3600 : getFoV(pv) * 3600; // in arcsec
 
     if (method==='image' || (!sel && method==='area-selection') ) {
         pt1 = cc.getWorldCoords(makeImagePt(0,0));

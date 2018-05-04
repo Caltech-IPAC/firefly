@@ -1,0 +1,35 @@
+
+.buttonGroupButton {
+    background-color: #aaa;
+    border: 1px solid #ccc;
+    border-left: 0;
+    cursor: pointer;
+    margin: 0;
+    /*padding: 5px 10px;*/
+    position: relative;
+}
+
+.buttonGroupButton.Off {
+    background-color: white;
+}
+
+.buttonGroupButton.On {
+    background-color: #aaa;
+}
+
+
+
+.buttonGroupButton.On:focus {
+    outline-width: 0;
+}
+
+.buttonGroupButton.Off:focus {
+    outline-width: 0;
+}
+
+.buttonGroupButton.Off:hover {
+    background-color: #999;
+}
+.buttonGroupButton.On:hover {
+    background-color: #999;
+}

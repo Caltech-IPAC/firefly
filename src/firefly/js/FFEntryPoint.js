@@ -38,12 +38,6 @@ var options = {
         mergedListPriority: 'Irsa'
     },
     coverage : { // example of using DSS and wise combination for coverage (not that anyone would want to combination)
-        hipsSourceURL : 'http://alasky.u-strasbg.fr/DSS/DSSColor', // url
-            imageSourceParams: {
-            Service : 'WISE',
-                SurveyKey: '1b',
-                SurveyKeyBand: '4'
-        }
     }
 };
 

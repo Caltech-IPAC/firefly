@@ -231,9 +231,9 @@ export class HiPSSurveyListSelection extends PureComponent {
 
     componentWillMount() {
         const sources = sourcesPerChecked();
-        const {dataType, surveysId} = this.props;
+        const {dataType, surveysId, hipsUrl} = this.props;
 
-        loadHiPSSurverysWithHighlight({dataTypes: dataType, id: surveysId, sources});
+        loadHiPSSurverysWithHighlight({dataTypes: dataType, id: surveysId, sources, ivoOrUrl: hipsUrl, columnName: URL_COL});
         this.setState({isUpdatingHips: isLoadingHiPSSurverys(makeHiPSSurveysTableName(surveysId, sources))});
     }
 

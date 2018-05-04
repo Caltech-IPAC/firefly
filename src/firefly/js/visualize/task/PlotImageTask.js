@@ -52,7 +52,9 @@ export function getHipsImageConversion(hipsImageConversion ) {
         imageRequestRoot:ensureWPR(hipsImageConversion.imageRequestRoot),
         allSkyRequest: ensureWPR(hipsImageConversion.allSkyRequest),
         fovDegFallOver: hipsImageConversion.fovDegFallOver,
-        plotAllSkyFirst: hipsImageConversion.plotAllSkyFirst
+        fovMaxFitsSize: hipsImageConversion.fovMaxFitsSize,
+        plotAllSkyFirst: hipsImageConversion.plotAllSkyFirst,
+        autoConvertOnZoom: hipsImageConversion.autoConvertOnZoom
     };
 
 }
