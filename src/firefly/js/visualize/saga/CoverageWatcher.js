@@ -60,7 +60,7 @@ const PLOT_ID= 'CoveragePlot';
 
 
 const defOptions= {
-    title: 'Coverage',
+    title: '2MASS k',
     tip: 'Coverage',
     getCoverageBaseTitle : (table) => '',   // eslint-disable-line no-unused-vars
     coverageType : CoverageType.BOTH,
@@ -81,10 +81,13 @@ const defOptions= {
         Service : 'TWOMASS',
         SurveyKey: 'asky',
         SurveyKeyBand: 'k',
+        title : '2MASS k'
     },
 
     useAllSkyFitsForPlus180 : true,
-    fovDegFallOver: .4,
+    fovDegFallOver: .13,
+    fovMaxFitsSize: .2,
+    autoConvertOnZoom: false,
 
 
     canDoCorners : defaultCanDoCorners,
@@ -316,7 +319,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     const {overlayPosition= avgOfCenters }=  options;
 
     if (!avgOfCenters || maxRadius<=0) return;
-    const {fovDegFallOver, hipsSourceURL, imageSourceParams, useHiPS}= options;
+    const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, hipsSourceURL, imageSourceParams, useHiPS}= options;
 
     if (useHiPS) {
         // const baseTitle= options.getCoverageBaseTitle(allRowsTable);
@@ -340,11 +343,6 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
             hipsRequest= initRequest(hipsRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
             hipsRequest.setSizeInDeg(size);
 
-            if (options.title) {
-                imageRequest.setTitleOptions(TitleOptions.NONE);
-                imageRequest.setTitle(options.title);
-            }
-
             //todo: fixed this like the else to change isPlotted , also add if for overlayCoverageDrawing
 
 
@@ -361,6 +359,8 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
                     imageRequest,
                     allSkyRequest,
                     fovDegFallOver,
+                    fovMaxFitsSize,
+                    autoConvertOnZoom,
                     viewerId,
                     plotAllSkyFirst,
                     attributes: {

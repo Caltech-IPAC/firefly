@@ -34,6 +34,7 @@ import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
 import Point from '../Point.js';
 import {updateTransform} from '../PlotTransformUtils.js';
+import {WebPlotRequest} from '../WebPlotRequest.js';
 
 
 //============ EXPORTS ===========
@@ -130,6 +131,9 @@ export function reducer(state, action) {
             retState= changeOverlayPlotAttributes(state,action);
             break;
 
+        case Cntlr.CHANGE_HIPS_IMAGE_CONVERSION :
+            retState= changeHipsImageConversionSettings(state,action);
+            break;
 
 
         case Cntlr.ADD_PROCESSED_TILES:
@@ -293,15 +297,15 @@ function processProjectionChange(state,action) {
 }
 
 function changeHiPS(state,action) {
-    const {plotId,hipsProperties, hipsUrlRoot, coordSys, cubeIdx, applyToGroup}= action.payload;
+    const {plotId,hipsProperties, coordSys, hipsUrlRoot, cubeIdx, applyToGroup}= action.payload;
     let {centerProjPt}= action.payload;
     let {plotViewAry}= state;
 
     let pv= getPlotViewById(state, plotId);
-    let plot= primePlot(pv);
-    if (!plot) return state;
+    const originalPlot= primePlot(pv);
+    if (!originalPlot) return state;
 
-    plot= clone(plot);
+    let plot= clone(originalPlot);
 
 
     // single plot stuff
@@ -313,6 +317,9 @@ function changeHiPS(state,action) {
         plot.cubeDepth= Number(get(hipsProperties, 'hips_cube_depth')) || 1;
         plot.cubeIdx= Number(get(hipsProperties, 'hips_cube_firstframe')) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
+        if (!centerProjPt && originalPlot.dataCoordSys!==plot.dataCoordSys) {
+            centerProjPt= convert(getCenterOfProjection(originalPlot), plot.dataCoordSys);
+        }
     }
 
     if (!isUndefined(cubeIdx) && plot.cubeDepth>1 && cubeIdx<plot.cubeDepth) {
@@ -329,7 +336,7 @@ function changeHiPS(state,action) {
 
     if (coordSys) {
         plotViewAry= changeHipsCoordinateSys(plotViewAry, state.plotGroupAry,pv, coordSys, applyToGroup);
-        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(plot), coordSys);
+        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(originalPlot), coordSys);
     }
 
     if (centerProjPt) {
@@ -650,6 +657,26 @@ function changeOverlayPlotAttributes(state,action) {
         });
     return clone(state,{plotViewAry});
 }
+
+function changeHipsImageConversionSettings(state,action) {
+    const {plotId, hipsImageConversionChanges}= action.payload;
+    const changes= {...hipsImageConversionChanges};
+    const plotViewAry= state.plotViewAry
+        .map( (pv) => {
+            if (pv.plotId!==plotId || !pv.plotViewCtx.hipsImageConversion) return pv;
+            if (changes.hipsRequestRoot) changes.hipsRequestRoot= WebPlotRequest.makeFromObj(changes.hipsRequestRoot);
+            if (changes.imageRequestRoot) changes.imageRequestRoot= WebPlotRequest.makeFromObj(changes.imageRequestRoot);
+            if (changes.allSkyRequest) changes.allSkyRequest= WebPlotRequest.makeFromObj(changes.allSkyRequest);
+            pv= {...pv};
+            pv.plotViewCtx= {...pv.plotViewCtx};
+            pv.plotViewCtx.hipsImageConversion= {...pv.plotViewCtx.hipsImageConversion, ...changes};
+            return pv;
+        });
+    return clone(state,{plotViewAry});
+
+}
+
+
 
 function addProcessedTileData(state,action) {
     const {plotId, plotImageId, imageOverlayId, zoomFactor}= action.payload;

@@ -13,17 +13,15 @@
 
 
 import {get, isUndefined} from 'lodash';
-import {clone} from '../util/WebUtil.js';
+import {clone, encodeServerUrl} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
-import {makeWorldPt, makeDevicePt} from './Point.js';
-import {SpatialVector, HealpixIndex} from '../externalSource/aladinProj/HealpixIndex.js';
-import {convert, computeDistance} from './VisUtil.js';
-import {replaceHeader, getScreenPixScaleArcSec} from './WebPlot.js';
+import {makeDevicePt, makeWorldPt} from './Point.js';
+import {HealpixIndex, SpatialVector} from '../externalSource/aladinProj/HealpixIndex.js';
+import {computeDistance, convert, toDegrees} from './VisUtil.js';
+import {getScreenPixScaleArcSec, replaceHeader} from './WebPlot.js';
 import {primePlot} from './PlotViewUtil.js';
 import CoordinateSys from './CoordSys';
-import {encodeServerUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
-import {toDegrees} from './VisUtil.js';
 
 
 export const MAX_SUPPORTED_HIPS_LEVEL= 14;
@@ -247,22 +245,8 @@ export function getHiPSZoomLevelToFit(pv,size) {
     const cc= CysConverter.make(tmpPlot);
     const pt1= cc.getImageCoords( makeWorldPt(0,0, plot.imageCoordSys));
     const pt2= cc.getImageCoords( makeWorldPt(size,0, plot.imageCoordSys));
-    return Math.min(width, height)/Math.abs(pt2.x-pt1.x);
-}
-
-/**
- *
- * @param {PlotView} pv
- * @return {number} fov in degrees
- */
-export function getHiPSFoV(pv) {
-    const cc= CysConverter.make(primePlot(pv));
-    const {width,height}=pv.viewDim;
-    if (!cc || !width || !height) return;
-
-    const pt1= cc.getWorldCoords( makeDevicePt(1,height/2));
-    const pt2= cc.getWorldCoords( makeDevicePt(width-1,height/2));
-    return (pt1 && pt2) ? computeDistance(pt1,pt2) : 180;
+    // return Math.min(width, height)/Math.abs(pt2.x-pt1.x);
+    return width/Math.abs(pt2.x-pt1.x);
 }
 
 

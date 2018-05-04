@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {uniqBy,unionBy, isEmpty} from 'lodash';
+import {uniqBy,unionBy, differenceBy, isEmpty} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
 import {replacePlots, makePlotView, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, updateScrollToWcsMatch} from './PlotView.js';
@@ -341,8 +341,12 @@ function preNewPlotPrep(plotViewAry,action) {
         return pv;
     });
 
-    return unionBy(pvChangeAry,plotViewAry, 'plotId');
+    // return unionBy(pvChangeAry,plotViewAry, 'plotId');
+    const toAdd= differenceBy(pvChangeAry, plotViewAry, 'plotId');
+    const originalAndReplaced= plotViewAry.map( (pv) => pvChangeAry.find( (tPv) => tPv.plotId===pv.plotId) || pv);
+    return [...originalAndReplaced, ...toAdd];
 }
+
 
 export function endServerCallFail(state,action) {
     const {plotId,message}= action.payload;

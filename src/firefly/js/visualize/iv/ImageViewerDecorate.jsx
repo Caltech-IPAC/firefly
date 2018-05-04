@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 import {get,isEmpty,omit} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {VisCtxToolbarView, canConvertHipsAndAllSky} from './../ui/VisCtxToolbarView.jsx';
+import {VisCtxToolbarView, canConvertHipsAndFits} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
@@ -100,13 +100,12 @@ function showUnselect(pv,dlAry) {
 
 
 function contextToolbar(pv,dlAry,extensionList) {
-    if (!pv) return;
     const plot= primePlot(pv);
     if (!plot) return;
 
     const showMulti= isImage(plot) ? pv.plots.length>1 : plot.cubeDepth>1;
+    const hipsFits= canConvertHipsAndFits(pv);
 
-    // todo
 
     if (plot.attributes[PlotAttribute.SELECTION]) {
         const select= showSelect(pv,dlAry);
@@ -126,7 +125,7 @@ function contextToolbar(pv,dlAry,extensionList) {
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
         const distAry= extensionList.filter( (ext) => ext.extType===LINE_SELECT);
-        if (!distAry.length && !showMulti && isImage(plot)) return false;
+        if (!distAry.length && !showMulti && !hipsFits) return false;
         return (
             <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(distAry)?EMPTY_ARRAY:distAry}
                                showMultiImageController={showMulti}/>
@@ -134,7 +133,7 @@ function contextToolbar(pv,dlAry,extensionList) {
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) {
         const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
-        if (!ptAry.length && !showMulti && isImage(plot)) return false;
+        if (!ptAry.length && !showMulti && !hipsFits) return false;
         return (
             <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(ptAry)?EMPTY_ARRAY:ptAry}
                                showMultiImageController={showMulti}/>
@@ -156,13 +155,7 @@ function contextToolbar(pv,dlAry,extensionList) {
             />
         );
     }
-    else if (showMulti || isHiPS(plot)) {
-        return (
-            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={EMPTY_ARRAY}
-                               showMultiImageController={showMulti}/>
-        );
-    }
-    else if (isImage(plot) && canConvertHipsAndAllSky(pv)) {
+    else if (showMulti || hipsFits || isHiPS(plot)) {
         return (
             <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={EMPTY_ARRAY}
                                showMultiImageController={showMulti}/>

@@ -6,18 +6,16 @@ import {get} from 'lodash';
 import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale} from '../ZoomUtil.js';
 import {logError} from '../../util/WebUtil.js';
-import {getHiPSFoV} from '../HiPSUtil.js';
 import {isImage, isHiPS} from '../WebPlot.js';
 import ImagePlotCntlr, {ActionScope, IMAGE_PLOT_KEY,
                        dispatchUpdateViewSize, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getPlotViewById,primePlot,getPlotStateAry,
-        operateOnOthersInGroup, applyToOnePvOrGroup, findPlotGroup} from '../PlotViewUtil.js';
+        operateOnOthersInGroup, applyToOnePvOrGroup, findPlotGroup, getFoV} from '../PlotViewUtil.js';
 import {callSetZoomLevel} from '../../rpc/PlotServicesJson.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import WebPlotResult from '../WebPlotResult.js';
 import VisUtil from '../VisUtil.js';
-import {convertToHiPS, convertToImage} from './PlotHipsTask.js';
-import {RequestType} from '../RequestType.js';
+import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 
 
 const ZOOM_WAIT_MS= 1500; // 1.5 seconds
@@ -202,8 +200,9 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
 
 
     const pv= getPlotViewById(preZoomVisRoot,plotId);
-    if (pv.plotViewCtx.hipsImageConversion) {
-        const converted= doConversionIfNecessary(pv, preZoomVisRoot,oldZoomLevel, zoomLevel);
+    const autoConvertOnZoom= get(pv.plotViewCtx, 'hipsImageConversion.autoConvertOnZoom',false);
+    if (autoConvertOnZoom) {
+        const converted= doHiPSImageConversionIfNecessary(pv, oldZoomLevel, zoomLevel);
         if (converted) return;
     }
 
@@ -232,35 +231,6 @@ function doZoom(dispatcher,plot,zoomLevel,isFullScreen, zoomLockingEnabled, user
     zoomTimers.push({plotId,timerId});
 }
 
-
-/**
- *
- * @param {PlotView} pv
- * @param {VisRoot} preZoomVisRoot
- * @param {number} oldZoomLevel
- * @param {number} zoomLevel
- * @return {boolean}
- */
-function doConversionIfNecessary(pv, preZoomVisRoot, oldZoomLevel, zoomLevel) {
-    if (!pv.plotViewCtx.hipsImageConversion) return false;
-    const plot= primePlot(pv);
-    const {fovDegFallOver, allSkyRequest}=  pv.plotViewCtx.hipsImageConversion;
-    const {width,height}= pv.viewDim;
-
-    if (isHiPS(plot) ) {
-        if (fovDegFallOver && oldZoomLevel<zoomLevel && getHiPSFoV(pv) < fovDegFallOver) {
-            convertToImage(pv);
-            return true;
-        }
-    }
-    else if (isImage(plot) ) {
-        if (oldZoomLevel>zoomLevel && (width-10)>plot.dataWidth*zoomLevel && (height-10) >plot.dataHeight*zoomLevel ) { //zoom out an image
-            convertToHiPS(pv);
-            return true;
-        }
-    }
-    return false;
-}
 
 
 /**

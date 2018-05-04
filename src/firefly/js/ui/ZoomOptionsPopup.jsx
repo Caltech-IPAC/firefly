@@ -7,9 +7,9 @@ import {flux} from '../Firefly.js';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
+import {getActivePlotView, primePlot, getFoV} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchZoom} from '../visualize/ImagePlotCntlr.js';
-import {levels, UserZoomTypes, convertZoomToString} from '../visualize/ZoomUtil';
+import {levels, UserZoomTypes, convertZoomToString, makeFoVString} from '../visualize/ZoomUtil';
 import {ToolbarButton} from './ToolbarButton.jsx';
 
 const _levels = levels;
@@ -19,7 +19,7 @@ function getDialogBuilder() {
     return () => {
         if (!popup) {
             const popup = (
-                <PopupPanel title={'Zoom Level'}>
+                <PopupPanel title={'Choose Field of View'}>
                     <ZoomOptionsPopup groupKey={'ZOOM_OPTIONS_FORM'}/>
                 </PopupPanel>
             );
@@ -64,7 +64,9 @@ class ZoomOptionsPopup extends PureComponent {
 
     constructor(props)  {
         super(props);
-        this.state = {plot:primePlot(visRoot()),initcurrLevel:primePlot(visRoot()).zoomFactor};
+        this.state = {plot:primePlot(visRoot()),
+            initcurrLevel:primePlot(visRoot()).zoomFactor,
+            plotView:getActivePlotView(visRoot())};
     }
 
     componentWillUnmount() {
@@ -89,17 +91,21 @@ class ZoomOptionsPopup extends PureComponent {
 
 
     render() {
-        const { plot, initcurrLevel} = this.state;
-        return <ZoomOptionsPopupForm  plot={plot} initcurrLevel={initcurrLevel}/>;
+        const { plot, initcurrLevel, plotView} = this.state;
+        return <ZoomOptionsPopupForm  plotView={plotView} plot={plot} initcurrLevel={initcurrLevel}/>;
     }
 
 }
 
+function makeZoomLabel(pv, zfactor) {
+    return makeFoVString(getFoV(pv,zfactor));
+}
+
 function ZoomOptionsPopupForm() {
 
-   const {plot, initcurrLevel} = getInitialPlotState();
+   const {plot, pv, initcurrLevel} = getInitialPlotState();
 
-    var verticalColumn = {display: 'inline-block', paddingLeft: 10, paddingBottom: 20, paddingRight: 10};
+    var verticalColumn = {display: 'inline-block', padding: '10px 10px 20px 25px'};
     var zoom_levels = _levels;
 
     var initcurrZoomLevelStr = convertZoomToString(initcurrLevel);
@@ -107,11 +113,12 @@ function ZoomOptionsPopupForm() {
 
     var optionArray = [];
     for (var i = 0; i < zoom_levels.length; i++) {
-        optionArray[i] = {label: convertZoomToString(zoom_levels[i]), value: zoom_levels[i]};
+        // optionArray[i] = {label: convertZoomToString(zoom_levels[i]), value: zoom_levels[i]};
+        optionArray[i] = {label: makeZoomLabel(pv,zoom_levels[i]), value: zoom_levels[i]};
     }
 
     return (
-            <div style={{ minWidth:100, minHeight: 300} }>
+            <div style={{ minWidth:150, minHeight: 300} }>
 
                 <div style={verticalColumn}>
                     {makezoomItems(plot, optionArray)}
