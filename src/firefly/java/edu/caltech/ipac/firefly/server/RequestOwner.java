@@ -184,6 +184,10 @@ public class RequestOwner implements Cloneable {
         ro.referrer = referrer;
         ro.host = host;
         ro.wsManager = wsManager;
+        ro.userKey = userKey;
+        ro.eventChannel = eventChannel;
+        ro.eventConnID = eventConnID;
+
         return ro;
     }
 
@@ -237,7 +241,7 @@ public class RequestOwner implements Cloneable {
         if (!nVal.equals(String.valueOf(cVal))) {
             Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
             cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
-            cookie.setPath("/"); // to make it available to all subpasses within base URL
+            cookie.setPath(requestAgent.getContextPath());
             requestAgent.sendCookie(cookie);
         }
     }
