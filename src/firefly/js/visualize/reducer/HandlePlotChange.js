@@ -297,15 +297,15 @@ function processProjectionChange(state,action) {
 }
 
 function changeHiPS(state,action) {
-    const {plotId,hipsProperties, hipsUrlRoot, coordSys, cubeIdx, applyToGroup}= action.payload;
+    const {plotId,hipsProperties, coordSys, hipsUrlRoot, cubeIdx, applyToGroup}= action.payload;
     let {centerProjPt}= action.payload;
     let {plotViewAry}= state;
 
     let pv= getPlotViewById(state, plotId);
-    let plot= primePlot(pv);
-    if (!plot) return state;
+    const originalPlot= primePlot(pv);
+    if (!originalPlot) return state;
 
-    plot= clone(plot);
+    let plot= clone(originalPlot);
 
 
     // single plot stuff
@@ -317,6 +317,9 @@ function changeHiPS(state,action) {
         plot.cubeDepth= Number(get(hipsProperties, 'hips_cube_depth')) || 1;
         plot.cubeIdx= Number(get(hipsProperties, 'hips_cube_firstframe')) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
+        if (!centerProjPt && originalPlot.dataCoordSys!==plot.dataCoordSys) {
+            centerProjPt= convert(getCenterOfProjection(originalPlot), plot.dataCoordSys);
+        }
     }
 
     if (!isUndefined(cubeIdx) && plot.cubeDepth>1 && cubeIdx<plot.cubeDepth) {
@@ -333,7 +336,7 @@ function changeHiPS(state,action) {
 
     if (coordSys) {
         plotViewAry= changeHipsCoordinateSys(plotViewAry, state.plotGroupAry,pv, coordSys, applyToGroup);
-        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(plot), coordSys);
+        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(originalPlot), coordSys);
     }
 
     if (centerProjPt) {
