@@ -245,7 +245,8 @@ export function getHiPSZoomLevelToFit(pv,size) {
     const cc= CysConverter.make(tmpPlot);
     const pt1= cc.getImageCoords( makeWorldPt(0,0, plot.imageCoordSys));
     const pt2= cc.getImageCoords( makeWorldPt(size,0, plot.imageCoordSys));
-    return Math.min(width, height)/Math.abs(pt2.x-pt1.x);
+    // return Math.min(width, height)/Math.abs(pt2.x-pt1.x);
+    return width/Math.abs(pt2.x-pt1.x);
 }
 
 

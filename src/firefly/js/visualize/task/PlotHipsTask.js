@@ -406,6 +406,7 @@ export function convertToHiPS(pv, fromAllSky= false) {
     const wpRequest= pv.plotViewCtx.hipsImageConversion.hipsRequestRoot.makeCopy();
     wpRequest.setPlotId(plotId);
     wpRequest.setPlotGroupId(plotGroupId);
+    wpRequest.setSizeInDeg(getFoV(pv));
     const plot= primePlot(pv);
 
 
