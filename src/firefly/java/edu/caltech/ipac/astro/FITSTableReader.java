@@ -247,15 +247,17 @@ public final class FITSTableReader
         try {
             StarTableFactory stFactory = new StarTableFactory();
 
-            if (table_idx > 0) {
-                StarTable tbl = stFactory.makeStarTable(fits_filename + "#" + table_idx, "fits");
+            int tIdx = table_idx < 1 ? 1 : table_idx;
+
+            StarTable tbl = stFactory.makeStarTable(fits_filename + "#" + tIdx, "fits");
+
+            if (tbl != null) {
                 DescribedValue dValue = tbl.getParameterByName("ZIMAGE");   // check if 'BINTABLE' is actually compressed image HDU
 
                 if (dValue == null || dValue.getValue() != Boolean.TRUE) {
                     retTbl = tbl;
                 }
             }
-
         } catch (Exception e) {
             logger.error("unable to get table from fits file " + fits_filename + "from" + table_idx + ", reason: " + e.getMessage());
         }
