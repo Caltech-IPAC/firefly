@@ -138,7 +138,7 @@ export class BandState {
 
         bState.workingFitsFileStr= bsJson.workingFitsFileStr;
         bState.originalFitsFileStr= bsJson.originalFitsFileStr;
-        if (bState.uploadFileNameStr) bState.uploadFileNameStr= bsJson.uploadFileNameStr;
+        if (bsJson.uploadFileNameStr) bState.uploadFileNameStr= bsJson.uploadFileNameStr;
         bState.imageIdx= bsJson.imageIdx || 0;
         bState.originalImageIdx= bsJson.originalImageIdx || 0;
         bState.plotRequestSerialize= bsJson.plotRequestSerialize;

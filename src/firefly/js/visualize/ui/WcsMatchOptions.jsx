@@ -61,7 +61,10 @@ function wcsMatchTarget(doWcsTarget, plotId) {
 
 
 export function HiPSMatchingOptions({visRoot, plotIdAry}) {
-    const imageDataViewers= plotIdAry.filter( (plotId) => isImage(primePlot(visRoot,plotId)));
+    const imageDataViewers= plotIdAry.filter( (plotId) => {
+        const p= primePlot(visRoot,plotId);
+        return p && isImage(p) && p.projection.isSpecified();
+    });
     const hipsViewers= plotIdAry.filter( (plotId) => isHiPS(primePlot(visRoot,plotId)));
     const activePV= getPlotViewById(visRoot, visRoot.activePlotId);
     const matchPV= isImage(primePlot(activePV)) ? activePV : getPlotViewById(visRoot, imageDataViewers[0]);

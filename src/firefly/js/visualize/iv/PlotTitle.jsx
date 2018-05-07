@@ -19,6 +19,7 @@ export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 export function PlotTitle({plotView:pv, titleType, brief, working}) {
     let styleName= '';
     const plot= primePlot(pv);
+    const world= plot.projection.isSpecified();
     switch (titleType) {
         case TitleType.INLINE:
             styleName= 'plot-title-inline-title-container';
@@ -32,8 +33,8 @@ export function PlotTitle({plotView:pv, titleType, brief, working}) {
 
     }
     const zlRet= getZoomDesc(pv);
-    let zlStr= `FOV: ${zlRet.fovFormatted}`;
-    let tooltip= `${plot.title}\nHorizontal field of view: ${zlRet.fovFormatted}`;
+    let zlStr= world ? `FOV: ${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
+    let tooltip= world ? `${plot.title}\nHorizontal field of view: ${zlRet.fovFormatted}` : plot.title;
     if (isImage(plot)) tooltip+= `\nZoom Level: ${zlRet.zoomLevelFormatted}`;
     let rotString= null;
     if (pv.rotation) {
