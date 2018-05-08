@@ -52,7 +52,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         try {
-            DataGroup dg = getDataFromURL(request);
+            DataGroup dg = getDataFromURL(request); //
             //DM-9964 : TODO this is a temporary solution until the meta server is up
             if (dg == null) {
                 throw new DataAccessException("No data is found in the search range.");
@@ -110,8 +110,8 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
 
         //TODO this should NOT be needed when the MetaServer is running
-        JSONArray metaInData = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
-        DataType[] dataType = getTypeDef(request, metaInData);
+        JSONArray columnsMeta = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
+        DataType[] dataType = getTypeDef(columnsMeta);
         DataGroup dg = new DataGroup("result", dataType  );
 
         //add column description as the attribute so that it can be displayed
@@ -202,94 +202,18 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
      }
 
 
-    //TODO this method will be used when the MetaServer is working
-    private  DataType[] getTypeDef(TableServerRequest request) throws IOException, DataAccessException {
-
-        DataType[] allColumns = geDataTypeFromMetaSearch(request);
-        String selColumnsStr = request.getParam(CatalogRequest.SELECTED_COLUMNS);
-        if (selColumnsStr == null) {
-            return allColumns;
-        } else {
-            String[] selColumns = selColumnsStr.split(",");
-            DataType[] dataTypes = new DataType[selColumns.length];
-
-            for (int i = 0; i < selColumns.length; i++) {
-                dataTypes[i]=getDataType(allColumns, selColumns[i]);
-                if (dataTypes[i]==null){
-                    throw new IOException(selColumns[i]+ " Is not found");
-                }
-            }
-            return dataTypes;
-        }
-    }
-
-    //TODO this method will not needed when the MetaServer is running and the data types are consistent
-    public static  DataType[] getTypeDef(TableServerRequest request, JSONArray columns)  throws  DataAccessException {
+    //TODO get metadata from metadata section of the result set
+    public static  DataType[] getTypeDef(JSONArray columns)  throws  DataAccessException {
 
         DataType[] dataTypes = new DataType[columns.size()];
 
-        if (request.getParam("meta_table") != null) {
-            TableServerRequest metaRequest = new TableServerRequest("LSSTMetaSearch");
-            metaRequest.setParam("table_name", request.getParam("meta_table"));
-            //metaRequest.setParam("database", request.getParam("database"));
-            metaRequest.setPageSize(Integer.MAX_VALUE);
-            //call LSSTMetaSearch processor to get the meta data as a DataGroup
-            DataGroup metaData = getMeta(metaRequest);
-            DataObject[] dataObjects = metaData.values().toArray(new DataObject[metaData.size()]);
 
-            //all columns are selected, the default
-            if (columns.size() == dataObjects.length) {
-                for (int i = 0; i < columns.size(); i++) {
-                    JSONObject col = (JSONObject) columns.get(i);
-                    boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes");
-                    //TODO always get the data type from the data meta
-                    Class cls = getDataClass(col.get("datatype").toString());
-                    if (cls == null) {
-                        cls = getDataClass((String) dataObjects[i].getDataElement("Type"));
-                    }
-                    String colName = col.get("name").toString().trim();
-                    dataTypes[i] = new DataType(colName, colName,
-                            cls,
-                            DataType.Importance.HIGH,
-                            (String) dataObjects[i].getDataElement("Unit"),
-                            maybeNull
-                    );
-                    dataTypes[i].setShortDesc((String) dataObjects[i].getDataElement("Description"));
-                }
-
-
-            } else {
-                for (int k = 0; k < columns.size(); k++) {
-                    JSONObject col = (JSONObject) columns.get(k);
-                    for (DataObject dataObject : dataObjects) {
-                        String keyName = ((String) dataObject.getDataElement("Field")).trim();
-                        if (keyName.equalsIgnoreCase(col.get("name").toString().trim())) {
-                            boolean maybeNull = dataObject.getDataElement("Null").toString().equalsIgnoreCase("yes");
-                            //TODO always get the data type from the data meta unless it is null
-                            Class cls = getDataClass(col.get("datatype").toString());
-                            if (cls == null) {
-                                cls = getDataClass((String) dataObject.getDataElement("Type"));
-                            }
-                            dataTypes[k] = new DataType(keyName, keyName,
-                                    cls,
-                                    DataType.Importance.HIGH,
-                                    (String) dataObject.getDataElement("Unit"),
-                                    maybeNull
-                            );
-                            dataTypes[k].setShortDesc((String) dataObject.getDataElement("Description"));
-                            break;
-                        }
-                    }
-                }
-            }
-        } else {
-            // no meta info except the one that came with the result
-            for (int i = 0; i < columns.size(); i++) {
-                JSONObject col = (JSONObject) columns.get(i);
-                String keyName = col.get("name").toString().trim();
-                Class cls = getDataClass(col.get("datatype").toString());
-                dataTypes[i] = new DataType(keyName, cls);
-            }
+        // no meta info except the one that came with the result
+        for (int i = 0; i < columns.size(); i++) {
+            JSONObject col = (JSONObject) columns.get(i);
+            String keyName = col.get("name").toString().trim();
+            Class cls = getDataClass(col.get("datatype").toString());
+            dataTypes[i] = new DataType(keyName, cls);
         }
 
         return dataTypes;
@@ -313,37 +237,6 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
     }
 
-
-    private DataType[] geDataTypeFromMetaSearch(TableServerRequest request) throws DataAccessException {
-        TableServerRequest metaRequest = new TableServerRequest("LSSTMetaSearch");
-        metaRequest.setParam("table_name", request.getParam("meta_table"));
-        metaRequest.setPageSize(Integer.MAX_VALUE);
-        //call LSSTMetaSearch processor to get the meta data as a DataGroup
-        DataGroup metaData = getMeta(metaRequest);
-        DataObject[] dataObjects = metaData.values().toArray(new DataObject[metaData.size()]);
-        DataType[] dataTypes = new DataType[dataObjects.length];
-        for (int i = 0; i < dataObjects.length; i++) {
-            boolean maybeNull = dataObjects[i].getDataElement("Null").toString().equalsIgnoreCase("yes");
-            String colName = dataObjects[i].getDataElement("Field").toString();
-            dataTypes[i] = new DataType(colName, colName,
-                    getDataClass((String) dataObjects[i].getDataElement("Type")),
-                    DataType.Importance.HIGH,
-                    (String) dataObjects[i].getDataElement("Unit"),
-                    maybeNull
-            );
-            dataTypes[i].setShortDesc((String) dataObjects[i].getDataElement("Description"));
-        }
-        return dataTypes;
-    }
-
-    private DataType  getDataType(DataType[] allColumns, String colName){
-        for (DataType col : allColumns) {
-            if (col.getKeyName().equalsIgnoreCase(colName)) {
-                return col;
-            }
-        }
-        return null;
-    }
 
     /**
      * This method translates the mySql data type to corresponding java data type
@@ -403,23 +296,43 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     }
 
-    private static JSONObject jsonDataSet = LSSTQuery.getDataSet();
-    private static JSONObject getDataSet() {
-        JSONObject obj = new JSONObject();
+    private static JSONObject jsonMetaInfo;
+    private static JSONObject getMetaInfo() {
 
-        try {
-            InputStream lsstMetaInfo = LSSTQuery.class.getResourceAsStream("/edu/caltech/ipac/firefly/resources/LSSTMetaInfo.json");
-            String lsstMetaStr = FileUtil.readFile(lsstMetaInfo);
-            obj = (JSONObject) new JSONParser().parse(lsstMetaStr);
-        } catch (Exception e) {
-            LOGGER.error(e);
+        if (jsonMetaInfo == null) {
+            String resource = "/edu/caltech/ipac/firefly/resources/LSSTMetaInfo.json";
+            try {
+                InputStream lsstMetaInfo = LSSTQuery.class.getResourceAsStream(resource);
+                String lsstMetaStr = FileUtil.readFile(lsstMetaInfo);
+                jsonMetaInfo = (JSONObject) new JSONParser().parse(lsstMetaStr);
+            } catch (Exception e) {
+                jsonMetaInfo = new JSONObject();
+                LOGGER.error("Failed retrieving info from " + resource);
+                LOGGER.error(e);
+            }
         }
-        return obj;
+        return jsonMetaInfo;
+    }
+
+    private static JSONObject jsonTableMeta;
+    private static JSONObject getJsonTableMeta() {
+        if (jsonTableMeta == null) {
+            jsonTableMeta = (JSONObject) getMetaInfo().get("LSSTTableMeta");
+        }
+        return jsonTableMeta;
+    }
+
+    private static JSONArray jsonTables;
+    public static JSONArray getJsonTables() {
+        if (jsonTables == null) {
+            jsonTables = (JSONArray) getMetaInfo().get("LSSTTables");
+        }
+        return jsonTables;
     }
 
     public static Object getDatasetInfo(String tableName, String[] pathAry) {
-        for (Object key : jsonDataSet.keySet()) {     // test SDSS or WISE
-            JSONObject missionObj = (JSONObject)jsonDataSet.get(key);
+        for (Object key : getJsonTableMeta().keySet()) {     // test SDSS or WISE
+            JSONObject missionObj = (JSONObject) getJsonTableMeta().get(key);
             String[]   dataSet = {"catalog", "imagemeta"};
 
             for (Object dataType : dataSet) {      // test imagemeta or catalog
@@ -452,8 +365,8 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     }
 
     public static Object getImageMetaSchema(String tableName) {
-        for (Object key : jsonDataSet.keySet()) {
-            JSONObject missionObj = (JSONObject)jsonDataSet.get(key);
+        for (Object key : getJsonTableMeta().keySet()) {
+            JSONObject missionObj = (JSONObject) getJsonTableMeta().get(key);
             Object   imageDataSets = missionObj.get("imagemeta");
             Object   foundImageSet = null;
 

@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import { get,set, merge, isEmpty, capitalize} from 'lodash';
+import { get,set, merge, isArray, isEmpty, capitalize} from 'lodash';
 import {updateMerge} from '../../util/WebUtil.js';
 import {FormPanel} from '../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -17,6 +17,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {validateFieldGroup} from '../../fieldGroup/FieldGroupUtils';
+import {doJsonRequest} from '../../core/JsonUtils.js';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
@@ -29,7 +30,6 @@ import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {sortInfoString}  from '../../tables/SortInfo.js';
 
-//import './CatalogTableListField.css';
 import './CatalogSelectViewPanel.css';
 
 /**
@@ -42,189 +42,10 @@ const constraintskey = 'inputconstraint';
 const projectName = 'Lsst';
 const RADIUS_COL = '7';
 
-export const SOURCE = 0;
-export const FORCEDSOURCE = 1;
-export const SINGLEEXPSOURCE = 2;
-export const COADD = 3;
-export const CCDEXPOSURE = 4;
-
-export const LSSTCatalogTableType = {
-    [SOURCE]: 'source',
-    [FORCEDSOURCE]: 'forcedSource',
-    [SINGLEEXPSOURCE]: 'singleExpSource'
-};
-
 const CATTYPE = '0';
 const IMAGETYPE = '1';
 
 const DEC = 3;
-const LSSTTables = [
-    {
-        project: 'SDSS',
-        label: 'SDSS',
-        subproject: [{
-            label: 'SDSS Stripe 82, 2013 LSST Processing',
-            project: 'SDSS',
-            value: 'sdss',
-            infourl: 'https://confluence.lsstcorp.org/display/DM/Properties+of+the+2013+SDSS+Stripe+82+reprocessing',
-            infodesc: 'Documentation on the Stripe 82 reprocessing dataset',
-            catalogs: [
-                {
-                    id: SOURCE,
-                    label: 'Object (Measurements on coadds)',
-                    value: 'sdss_stripe82_01.RunDeepSource',
-                    type: CATTYPE
-                },
-                {
-                    id: FORCEDSOURCE,
-                    label: 'Forced photometry based on i-band coadds',
-                    value: 'sdss_stripe82_01.RunDeepForcedSource',
-                    type: CATTYPE
-                }
-            ],
-            images: [
-                {
-                    id: COADD,
-                    label: 'Single-band coadded image metadata',
-                    value: 'sdss_stripe82_01.DeepCoadd',
-                    type: IMAGETYPE
-                },
-                {
-                    id: CCDEXPOSURE,
-                    label: 'Calibrated single-epoch image metadata',
-                    value: 'sdss_stripe82_01.Science_Ccd_Exposure',
-                    type: IMAGETYPE
-                }
-            ]
-        }]
-    },
-    {
-        project: 'WISE',
-        label: 'WISE',
-        subproject: [
-            {
-                label: 'AllWISE Processing of WISE pre-hibernation (2010-2011)',
-                project: 'WISE',
-                value: 'allwise',
-                infourl: 'http://wise2.ipac.caltech.edu/docs/release/allwise/expsup/',
-                infodesc: 'Documentation on the AllWISE dataset',
-                catalogs: [
-                    {
-                        id: SOURCE,
-                        label: 'AllWISE Source Catalog (comparable to LSST Object)',
-                        value: 'wise_00.allwise_p3as_psd',
-                        type: CATTYPE
-                    },
-                    {
-                        id: FORCEDSOURCE,
-                        label: 'AllWISE Multiepoch Photometry Table (comparable to ForcedSource)',
-                        value: 'wise_00.allwise_p3as_mep',
-                        type: CATTYPE
-                    },
-                    {
-                        id: SOURCE,
-                        label: 'AllWISE Reject Table (no LSST analog)',
-                        value: 'wise_ext_00.allwise_p3as_psr',
-                        type: CATTYPE
-                    }
-                ],
-                images: [
-                    {
-                        id: COADD,
-                        label: ' AllWISE Atlas Image',
-                        value: 'wise_00.allwise_p3am_cdd',
-                        type: IMAGETYPE,
-                        cat: {},
-                        sortCols: 'coadd_id,band'
-                    },
-                    {
-                        id: CCDEXPOSURE,
-                        label: 'WISE All-Sky Single Exposure (L1b) Image',
-                        value: 'wise_00.allsky_4band_p1bm_frm',
-                        type: IMAGETYPE,
-                        cat: {},
-                        sortCols: 'scan_id,frame_num,band'
-                    },
-                    {
-                        id: CCDEXPOSURE,
-                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
-                        value: 'wise_00.allsky_3band_p1bm_frm',
-                        type: IMAGETYPE,
-                        cat: {},
-                        sortCols: 'scan_id,frame_num,band'
-                    },
-                    {
-                        id: CCDEXPOSURE,
-                        label: 'WISE Post-Cryo Single Exposure (L1b) Image',
-                        value: 'wise_00.allsky_2band_p1bm_frm',
-                        type: IMAGETYPE,
-                        cat: {},
-                        sortCols: 'scan_id,frame_num,band'
-                    }
-                ]
-            },
-            {
-                label: 'WISE & NEOWISE Single-Epoch Photometry (2010-2014)',
-                project: 'WISE',
-                value: 'single-epoch',
-                infourl: 'http://wise2.ipac.caltech.edu/docs/release/neowise/expsup/',
-                infodesc: 'Documentation on the NEOWISE data releases',
-                catalogs: [
-                    {
-                        id: SINGLEEXPSOURCE,
-                        label: 'WISE All-Sky Single Exposure (L1b) Source Table',
-                        value: 'wise_4band_00.allsky_4band_p1bs_psd',
-                        type: CATTYPE
-                    },
-                    {
-                        id: SINGLEEXPSOURCE,
-                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Source Table',
-                        value: 'wise_3band_00.allsky_3band_p1bs_psd',
-                        type: CATTYPE
-                    },
-                    {
-                        id: SINGLEEXPSOURCE,
-                        label: 'WISE Post-Cryo Single Exposure (L1b) Source Table',
-                        value: 'wise_2band_00.allsky_2band_p1bs_psd',
-                        type: CATTYPE
-                    },
-                    {
-                        id: SINGLEEXPSOURCE,
-                        label: 'NEOWISE-R Year 1 Single Exposure (L1b) Source Table',
-                        value: 'neowiser_yr1_00.neowiser_yr1_p1bs_psd',
-                        type: CATTYPE
-                    }
-                ],
-                images: [
-                    {
-                        id: CCDEXPOSURE,
-                        label: 'WISE All-Sky Single Exposure (L1b) Image',
-                        value: 'wise_00.allsky_4band_p1bm_frm',
-                        type: IMAGETYPE,
-                        cat: {},
-                        sortCols: 'scan_id,frame_num,band'
-                    },
-                    {
-                        id: CCDEXPOSURE,
-                        label: 'WISE 3-Band Cryo Single Exposure (L1b) Image',
-                        value: 'wise_00.allsky_3band_p1bm_frm',
-                        type: IMAGETYPE,
-                        cat: {},
-                        sortCols: 'scan_id,frame_num,band'
-                    },
-                    {
-                        id: CCDEXPOSURE,
-                        label: 'WISE Post-Cryo Single Exposure (L1b) Image',
-                        value: 'wise_00.allsky_2band_p1bm_frm',
-                        type: IMAGETYPE,
-                        cat: {},
-                        sortCols: 'scan_id,frame_num,band'
-                    }],
-                imagenote: 'Single-epoch images for the NEOWISE-R mission are not currently available on the PDAC.'
-            }]
-    }
-];
-
 
 const LSSTTableTypes = {
     [CATTYPE]: 'Catalogs',
@@ -233,14 +54,33 @@ const LSSTTableTypes = {
 
 const LSSTDDPID = 'LSSTMetaSearch';
 
-//var catmaster = [{masterProject: projectName, missions:: LSSTTables}];
+
+var lsstTables;
+//var lsstTablesLoading;
 
 function getLSSTMasterTable() {
-    return [{projectMaster: projectName, missions: LSSTTables}];
+    if (isArray(lsstTables)) {
+        return [{projectMaster: projectName, missions: lsstTables}];
+    }
+}
+
+function currentSelection() {
+    const catmaster = getLSSTMasterTable();
+    if (catmaster) {
+        const fields = FieldGroupUtils.getGroupFields(gkey);
+        const project = get(fields, ['project', 'value'], getDefaultProjectName(catmaster));
+        const cattype = get(fields, ['cattype', 'value'], CATTYPE);
+        const cattable = get(fields, ['cattable', 'value'], getDefaultTableName(catmaster, project, cattype));
+
+        // cattable: table selected from select view, cattype: catalog/image from select view
+        return {catmaster, project, cattype, cattable, error: undefined};
+    } else {
+        return {};
+    }
 }
 
 function getSortCols(tableName) {
-    const tblFound = LSSTTables.map((project) => {
+    const tblFound = lsstTables && lsstTables.map((project) => {
         return project.subproject
                 .map((oneSub) => {
                     const allTables = [...oneSub.catalogs, ...oneSub.images];
@@ -258,6 +98,7 @@ function getSortCols(tableName) {
 
     return tblFound ? tblFound.sortCols : null;
 }
+
 /**
  * @summary component for LSST catalog search panel
  */
@@ -266,14 +107,7 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.catmaster = getLSSTMasterTable();
-        const fields = FieldGroupUtils.getGroupFields(gkey);
-        const project = get(fields, ['project', 'value'], getDefaultProjectName(this.catmaster));
-        const cattype = get(fields, ['cattype', 'value'], CATTYPE);
-        const cattable = get(fields, ['cattable', 'value'], getDefaultTableName(this.catmaster, project, cattype));
-
-            // cattable: table selected from select view, cattype: catalog/image from select view
-        this.state = { project, cattype, cattable};
+        this.state = currentSelection();
     }
 
     componentWillUnmount() {
@@ -283,8 +117,20 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
+        if (!this.state.cattable) {
+            doJsonRequest(ServerParams.JSON_SEARCH, {[ServerParams.REQUEST]: JSON.stringify({id: 'LSSTTables'})}).then((jsonTables) => {
+                lsstTables = jsonTables;
+                //lsstTablesLoading = false;
+                this.setState(currentSelection());
+
+            }).catch((err) => {
+                console.log(err);
+                //lsstTablesLoading = false;
+                this.setState({error: `${err}`});
+            });
+        }
         this.unbinder = FieldGroupUtils.bindToStore(gkey, (fields) => {
-            if (fields.cattable.value !== this.state.cattable && this.iAmMounted) {
+            if (this.iAmMounted && lsstTables && fields.cattable.value !== this.state.cattable) {
                 this.setState({cattable: fields.cattable.value,
                                cattype: fields.cattype.value,
                                project: fields.project.value});
@@ -294,7 +140,10 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
 
 
     render() {
-        const {cattable, cattype, project}= this.state;
+        const {error, catmaster, cattable, cattype, project}= this.state;
+        if (error) {
+            return (<div>{error}</div>);
+        }
         return (
             <div>
                 <FormPanel
@@ -302,10 +151,9 @@ export class LSSTCatalogSelectViewPanel extends PureComponent {
                     groupKey={[gkey,gkeySpatial]}
                     onSubmit={onSearchSubmit()}
                     onCancel={hideSearchPanel}>
-                    <LSSTCatalogSelectView cattype={cattype} cattable={cattable} project={project} master={this.catmaster}/>
+                    <LSSTCatalogSelectView cattype={cattype} cattable={cattable} project={project} master={catmaster}/>
                 </FormPanel>
             </div>
-
         );
     }
 }
@@ -800,7 +648,7 @@ function getDefaultProjectName(catmaster) {
 
     projIndex = projIndex === -1 ? 0 : projIndex;
 
-    const subProj = get((get(oneMaster, 'missions')||LSSTTables), [projIndex, 'subproject', '0']);
+    const subProj = get(get(oneMaster, 'missions'), [projIndex, 'subproject', '0']);
     return get(subProj, 'value', '');
 }
 
@@ -987,20 +835,21 @@ CatalogLoad.propTypes = {};
  Define fields init and per action
  */
 function fieldInit(tblId) {
-    const project = LSSTTables[0].subproject[0];
-    const catalogs = project.catalogs;
+    if (!lsstTables) return {};
+    const project = get(lsstTables, '0.subproject.0');
+    const catalogs = get(project, 'catalogs');
     const constraintV = {constraints: '', selcols: '', filters: undefined};
 
     return (
         {
             'project': {
                 fieldKey: 'project',
-                value: project.value,
+                value: get(project, 'value'),
                 labelWidth: 100
             },
             'cattype': {
                 fieldKey: 'cattype',
-                value: catalogs[0].type
+                value: get(catalogs, ['0', 'type'])
             },
             'cattable': {
                 fieldKey: 'cattable',
