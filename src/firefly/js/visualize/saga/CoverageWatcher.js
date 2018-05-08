@@ -60,7 +60,7 @@ const PLOT_ID= 'CoveragePlot';
 
 
 const defOptions= {
-    title: '2MASS k',
+    title: '2MASS K',
     tip: 'Coverage',
     getCoverageBaseTitle : (table) => '',   // eslint-disable-line no-unused-vars
     coverageType : CoverageType.BOTH,
@@ -81,7 +81,7 @@ const defOptions= {
         Service : 'TWOMASS',
         SurveyKey: 'asky',
         SurveyKeyBand: 'k',
-        title : '2MASS k'
+        title : '2MASS K'
     },
 
     useAllSkyFitsForPlus180 : true,
