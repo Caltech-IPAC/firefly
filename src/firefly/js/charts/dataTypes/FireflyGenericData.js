@@ -79,7 +79,7 @@ function fetchData(chartId, traceNum, tablesource) {
                 const changes = getDataChangesForMappings({tableModel, mappings, traceNum});
 
                 // extra changes based on trace type
-                addOtherChanges({changes, chartId, traceNum, tablesource, tableModel});
+                addOtherChanges({changes, chartId, traceNum, tablesource, tableModel: originalTableModel});
 
                 dispatchChartUpdate({chartId, changes});
                 updateHighlighted(chartId, traceNum, highlightedRow);
@@ -109,7 +109,7 @@ function addOtherChanges({changes, chartId, traceNum, tablesource, tableModel}) 
  * @param p.chartId chart id
  * @param p.traceNum
  * @param p.tablesource
- * @param p.tableModel
+ * @param p.tableModel - original table model
  */
 function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}) {
 
