@@ -3,12 +3,14 @@ package edu.caltech.ipac.firefly.server.query.lsst;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.util.DataType;
 
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.data.table.MetaConst.DATASET_CONVERTER;
 
 /**
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
@@ -20,10 +22,10 @@ import java.util.List;
 public class LSSTLightCurveQuery extends LSSTQuery {
 
     @Override
-    String buildSqlQueryString(TableServerRequest request) throws Exception {
-        //Sample query from https://confluence.lsstcorp.org/display/DM/PDAC+sample+queries+and+test+cases :
+    String buildSqlQueryString(TableServerRequest request) throws DataAccessException, EndUserException {
+        //Sample query from https://confluence.lsstcorp.org/display/DM/PDAC+sample+queries+and+test+cases:
         //get time series table based on the objectId (id in RunDeepSource and cntr in allwise_p3as_psd) from the object table
-        //for sdss:
+        //for SDSS:
         //SELECT objectId, id, fsrc.exposure_id, fsrc.exposure_time_mid, exp.run,
         //   scisql_dnToAbMag(fsrc.flux_psf,exp.fluxMag0) AS g,
         //   scisql_dnToAbMagSigma(fsrc.flux_psf, fsrc.flux_psf_err, exp.fluxMag0, exp.fluxMag0Sigma) AS gErr
@@ -36,11 +38,14 @@ public class LSSTLightCurveQuery extends LSSTQuery {
         //FROM  wise_00.allwise_p3as_mep
         //WHERE <inherit sql constraints and geometric constraints from object table search> AND cntr_mf=<objectId>
 
-        //String database = request.getParam("database");
         String tableName = request.getParam("table_name");
         String forcedTable = LSSTQuery.getTableColumn(tableName, "forcedSourceTable");
         String [] parts = forcedTable.split("\\.");
-        String database = parts[0];
+        if (parts.length != 3) {
+            throw new DataAccessException("Unsupported table name: "+forcedTable);
+        }
+        // table should be specified by 3 parts: logical database, resource schema, and table name
+        String database = parts[0]+"."+parts[1];
 
         String objectId = request.getParam("objectId");
         if (objectId == null) {
@@ -52,7 +57,10 @@ public class LSSTLightCurveQuery extends LSSTQuery {
         String filterId = forcedFilterColumn != null ? request.getParam("filterId") : null;
 
         String requestStr = "";
-        String mission = (String)LSSTQuery.getDatasetInfo(tableName, new String[]{MetaConst.DATASET_CONVERTER});
+        String mission = (String)LSSTQuery.getDatasetInfo(tableName, new String[]{DATASET_CONVERTER});
+        if (mission == null) {
+            throw new DataAccessException(DATASET_CONVERTER + " is not specifiedl for " + tableName);
+        }
 
         if (mission.toLowerCase().contains("sdss")) {
             String exp = database + ".Science_Ccd_Exposure";
@@ -77,9 +85,9 @@ public class LSSTLightCurveQuery extends LSSTQuery {
         return requestStr;
     }
 
-    String buildExistingConstraints(TableServerRequest request, String objectIdConstraints) throws Exception {
-        String constraints = LSSTCataLogSearch.getConstraints(request);
-        String searchMethod = LSSTCataLogSearch.getSearchMethodCatalog(request);
+    private String buildExistingConstraints(TableServerRequest request, String objectIdConstraints) throws EndUserException {
+        String constraints = LSSTCatalogSearch.getConstraints(request);
+        String searchMethod = LSSTCatalogSearch.getSearchMethodCatalog(request);
         String whereStr;
 
         if (searchMethod.length()==0 && constraints.length()==0) {
@@ -96,9 +104,8 @@ public class LSSTLightCurveQuery extends LSSTQuery {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
-        meta.setAttribute(MetaConst.DATASET_CONVERTER, "lsst_sdss");
-
-        String database = request.getParam("database");
+        meta.setAttribute(DATASET_CONVERTER, "lsst_sdss");
+        
         String tableName = request.getParam("table_name");
 
         // add ra&dec column name info

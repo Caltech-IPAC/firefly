@@ -29,22 +29,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This is a base class for LSSTCatlogSearch and LSSTLightCurveQuery
- * DM-9964:
- *   Since the MetaSeaver is not ready the meta data(columns) are from the serach result.  Therefore, the empty table can not be
- *   displayed since there is no column information.  In order to let multi-object search work, the set the DataGroup=null when
- *   the empty result is returned.  The loadFile will check and display the error message if the dg==null.
- *
- *   In Mutli-Objet search, it the dg==null, it skip this data group.
- *
+ * Base class for LSSTCatalogSearch and LSSTLightCurveQuery
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     public static final String PORT = "5000";
-    public static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+
+    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL","http://lsst-qserv-dax01:8080/sync/");
+    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL","http://lsst-qserv-dax01:5000/meta/v1/db/");
 
     //set default timeout to 180 seconds
-    private int timeout  = Integer.parseInt(AppProperties.getProperty("lsst.database.timeoutLimit", "180"));
+    private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 180);
 
     abstract String buildSqlQueryString(TableServerRequest request) throws Exception;
 
@@ -53,9 +49,9 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
         try {
             DataGroup dg = getDataFromURL(request); //
-            //DM-9964 : TODO this is a temporary solution until the meta server is up
+            //should not happen - metadata should always be returned even if there are no data
             if (dg == null) {
-                throw new DataAccessException("No data is found in the search range.");
+                throw new DataAccessException("No data.");
             }
             dg.shrinkToFitData();
             File outFile = createFile(request, ".tbl");
@@ -73,14 +69,12 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
         String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
         _log.briefDebug("Executing SQL query: " + sql);
-        String url = "http://"+HOST +":"+PORT+"/"
-                + LSSTQuery.getDatasetInfo(request.getParam("table_name"), new String[]{"meta"});
         File file = createFile(request, ".json");
         Map<String, String> requestHeader=new HashMap<>();
         requestHeader.put("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();
-        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null, timeout);
+        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(DBSERVURL),  sql,null,  requestHeader, file, null, timeout);
         _log.briefDebug("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");
 
         if (fileData.getResponseCode() >= 400) {
@@ -88,37 +82,24 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             throw new DataAccessException("[DAX] " + (err == null ? fileData.getResponseCodeMsg() : err));
         }
 
-        return getTableDataFromJson( request,file);
+        return getTableDataFromJson(file);
     }
 
     /**
      * This method convert the json data file to data group
-     * @param request table request
      * @param jsonFile JSON file with the result
      * @return DataGroup
      * @throws Exception on error
      */
-    private DataGroup getTableDataFromJson(TableServerRequest request,  File jsonFile) throws Exception {
+    private DataGroup getTableDataFromJson(File jsonFile) throws Exception {
 
         JSONParser parser = new JSONParser();
         JSONObject obj = (JSONObject) parser.parse(new FileReader(jsonFile));
-        JSONArray data =  (JSONArray) ((JSONObject) ((JSONObject) obj.get("result")).get("table")).get("data");
+        JSONArray data =  (JSONArray) obj.get("results");
 
-        //no data found, return the meta data only
-        if (data.size()==0){
-            return  null;
-        }
-
-        //TODO this should NOT be needed when the MetaServer is running
-        JSONArray columnsMeta = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
+        JSONArray columnsMeta = (JSONArray) ( (JSONObject) obj.get("metadata")).get("columns");
         DataType[] dataType = getTypeDef(columnsMeta);
         DataGroup dg = new DataGroup("result", dataType  );
-
-        //add column description as the attribute so that it can be displayed
-        for (DataType dt : dataType) {
-            dg.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, dt.getKeyName()),
-                    dt.getShortDesc());
-        }
 
         for (Object jsonRow : data) {
             JSONArray rowTblData = (JSONArray) jsonRow;
@@ -128,16 +109,13 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
                 if (d == null) {
                     dataType[j].setMayBeNull(true);
                     row.setDataElement(dataType[j], null);
-                    continue;
-                }
-                if (d instanceof Number) {
-                    Number nd = (Number) d;
-                    addNumberToRow(dataType[j], nd, row);
-                } else if (d instanceof String) {
-                    String sd = (String) d;
-                    addStringToRow(dataType[j], sd, row);
                 } else {
-                    throw new Exception(d.getClass() + "to " + dataType[j].getDataType().getSimpleName() + " is not supported");
+                    if (d instanceof Number) {
+                        Number nd = (Number) d;
+                        addNumberToRow(dataType[j], nd, row);
+                    } else {
+                        row.setDataElement(dataType[j], d);
+                    }
                 }
             }
             dg.add(row);
@@ -147,7 +125,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     }
 
     /**
-     * This method add a number to a DataObject
+     * This method adds a number to a DataObject
      * @param dataType data type
      * @param nd       number object
      * @param row      row object
@@ -176,50 +154,28 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
     }
 
-    /**
-     * This method adds a String to a DataObject
-     * @param dataType data type
-     * @param sd       string to be added
-     * @param row      row object
-     */
-    private void addStringToRow(DataType dataType, String sd,DataObject row){
-        switch (dataType.getDataType().getSimpleName()) {
-            case "Boolean":
-                char c = sd.toCharArray()[0];
-                if (c == '\u0000') { // null control character
-                    System.out.println(c);
-                }
-                if (sd.equalsIgnoreCase("\u0000") || sd.length() == 0) {//\u0000 is "", an empty string
-                    row.setDataElement(dataType, false);
-                } else {
-                    row.setDataElement(dataType, true);
-                }
-                break;
-            case "String":
-                row.setDataElement(dataType, sd);
-                break;
-        }
-     }
-
-
-    //TODO get metadata from metadata section of the result set
-    public static  DataType[] getTypeDef(JSONArray columns)  throws  DataAccessException {
+    private static  DataType[] getTypeDef(JSONArray columns)  throws  DataAccessException {
 
         DataType[] dataTypes = new DataType[columns.size()];
 
-
-        // no meta info except the one that came with the result
+        // meta info is coming with the result
         for (int i = 0; i < columns.size(); i++) {
             JSONObject col = (JSONObject) columns.get(i);
             String keyName = col.get("name").toString().trim();
             Class cls = getDataClass(col.get("datatype").toString());
             dataTypes[i] = new DataType(keyName, cls);
+            Object o = col.get("unit");
+            if (o != null) dataTypes[i].setUnits((String)o);
+            o = col.get("nullable");
+            if (o != null) dataTypes[i].setMayBeNull((Boolean)o);
+            o = col.get("description");
+            if (o != null) dataTypes[i].setShortDesc((String)o);
+            else dataTypes[i].setShortDesc("no description for "+keyName); // TODO: remove after DM-14320
         }
-
         return dataTypes;
     }
 
-
+    
     /**
      * This method is calling the LSSTMetaSearch processor to search the data type definitions
      * @param request table request
@@ -237,63 +193,27 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
     }
 
-
     /**
-     * This method translates the mySql data type to corresponding java data type
-     * @param classType data type from the database
-     * @return corresponding Java class
+     * Translates the dbserv data type to the corresponding Java class
+     * @param typeName data type from the dbserv
+     * @return Java class
      */
-    private static Class getDataClass(String classType) throws DataAccessException {
-
-        if (classType.equalsIgnoreCase("double")){
-            return Double.class;
-        }
-        else if (classType.equalsIgnoreCase("float") || classType.equalsIgnoreCase("real") ){
-            return Float.class;
-        }
-        else if (classType.equalsIgnoreCase("int(11)") || classType.equalsIgnoreCase("int")){
-            return Integer.class;
-        }
-        else if (classType.equalsIgnoreCase("BigInt(20)") ||  classType.equalsIgnoreCase("long")){
-            return Long.class;
-        }
-        else if (classType.equalsIgnoreCase("TINYINT") || classType.equalsIgnoreCase("byte")){
-            return Byte.class;
-        }
-        else if (classType.equalsIgnoreCase("SMALLINT") || classType.equalsIgnoreCase("short)")){
+    private static Class<?> getDataClass(String typeName) {
+        if (typeName.equals("short"))
             return Short.class;
-        }
-        else if (classType.equalsIgnoreCase("string") || classType.equalsIgnoreCase("text") ||
-                classType.equalsIgnoreCase("character") ||   classType.equalsIgnoreCase("varchar") ||
-                classType.equalsIgnoreCase("longchar") | classType.equalsIgnoreCase("binary")) {
-
-            return String.class;
-
-        }
-        else if (classType.equalsIgnoreCase("bit(1)") || classType.equalsIgnoreCase("boolean")){
+        else if (typeName.equals("int"))
+            return Integer.class;
+        else if (typeName.equals("long"))
+            return Long.class;
+        else if (typeName.equals("float"))
+            return Float.class;
+        else if (typeName.equals("double"))
+            return Double.class;
+        else if (typeName.equals("boolean"))
             return Boolean.class;
-        }
-        /*else if (classType.equalsIgnoreCase("binary") || classType.equalsIgnoreCase("varbinary")
-                                                      || classType.equalsIgnoreCase("longvarbinary")){
-            return Byte[].class;
-        }*/
-        else if ( classType.equalsIgnoreCase("date") ){
-            return java.sql.Date.class;
-        }
-        else if ( classType.equalsIgnoreCase("time") ){
-            return java.sql.Time.class;
-        }
-        else if ( classType.equalsIgnoreCase("timestamp") ){
-            return java.sql.Timestamp.class;
-        }
-        else if ( classType.equalsIgnoreCase("NUMERIC") || classType.equalsIgnoreCase("DECIMAL")){
-            return java.math.BigDecimal.class;
-        }
         else {
-            System.out.println(classType + "is not supported");
-            throw new DataAccessException(classType + "is not handled");
+            return String.class;
         }
-
     }
 
     private static JSONObject jsonMetaInfo;

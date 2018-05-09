@@ -32,42 +32,48 @@ import java.util.Map;
 
 /**
  * Created by zhang on 10/12/16.
- * This search processor is searching the MetaData (or Data Definition from DAX database, then save to a
- * IpacTable file.
+ * This search processor is returning column metadata for a specified database table.
+ * The data come from metaserv, see http://dm.lsst.org/dax_metaserv/api.html
+ * Database table name should consist of 3 parts: logical database name, schema, table name.
+ * Example: W13_sdss_v2.sdss_stripe82_01.RunDeepSource
  */
 @SearchProcessorImpl(id = "LSSTMetaSearch",
         params =
-                {@ParamDoc(name=CatalogRequest.CATALOG, desc="catalog table to query")})
+                {@ParamDoc(name="table_name", desc="database table to query")})
 
 public class LSSTMetaSearch  extends IpacTablePartProcessor{
-     private static final Logger.LoggerImpl _log = Logger.getLogger();
-     private static final String PORT = "5000";
-     private static final String HOST = AppProperties.getProperty("lsst.dd.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+    private static final Logger.LoggerImpl _log = Logger.getLogger();
 
-    //set default timeout to 30seconds
-    int timeout  = new Integer( AppProperties.getProperty("lsst.database.timeoutLimit" , "30")).intValue();
+    //set default timeout to 30 seconds
+    private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 30);
 
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-         String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
-         _log.briefDebug("Executing SQL query: " + sql);
+        String dbTable = LSSTQuery.getDBTableNameFromRequest(request);
+        String[] parts = dbTable.split("\\.");
+        if (parts.length != 3) {
+            throw new DataAccessException("Unsupported table name: "+dbTable);
+        }
+        if (parts[0].contains("/")) {
+            throw new DataAccessException("Unable to retrieve metadata for "+dbTable);
+        }
 
-         String url = "http://"+HOST +":"+PORT+"/db/v0/tap/sync";
+        String url = LSSTQuery.METASERVURL + URLEncoder.encode(parts[0], "UTF-8") + "/tables/" + URLEncoder.encode(parts[2], "UTF-8");
+        _log.briefDebug("Getting metadata: " + url);
 
-         File file = createFile(request, ".json");
-         Map<String, String> requestHeader=new HashMap<>();
-         requestHeader.put("Accept", "application/json");
+        File file = createFile(request, ".json");
+        Map<String, String> requestHeader=new HashMap<>();
+        requestHeader.put("Accept", "application/json");
 
-         long cTime = System.currentTimeMillis();
-         FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),sql,null,  requestHeader, file, null,timeout);
-        _log.briefDebug("SHOW COLUMNS took " + (System.currentTimeMillis() - cTime) + "ms");
+        long cTime = System.currentTimeMillis();
+        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),null,null,  requestHeader, file, null, timeout);
+        _log.briefDebug("Metadata call took " + (System.currentTimeMillis() - cTime) + "ms");
 
-         if (fileData.getResponseCode() >= 400) {
-             String err = LSSTQuery.getErrorMessageFromFile(file);
-             throw new DataAccessException("[DAX] " + (err == null ? fileData.getResponseCodeMsg() : err));
-         }
-         DataGroup dg =  getMetaData(file);
-         return dg;
+        if (fileData.getResponseCode() >= 400) {
+            String err = LSSTQuery.getErrorMessageFromFile(file);
+            throw new DataAccessException("[DAX] " + (err == null ? fileData.getResponseCodeMsg() : err));
+        }
+        return getMetaData(file);
     }
 
     @Override
@@ -91,30 +97,11 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
     }
 
     /**
-     * This method processes the input JSONArray and then return a DataType array.
-     * Since there is no unit data,this method fakes the unit and description.
-     *
-     * @param metaData meta data
-     * @return DataType[] data type with fake unit and description
-     */
-    private DataType[] getDataType(JSONArray metaData){
-        DataType[] dataTypes = new DataType[metaData.size()+2];//add unit and descriptions
-        for (int i=0; i<metaData.size(); i++){
-            JSONObject element = (JSONObject) metaData.get(i);
-            dataTypes[i] = new DataType(element.get("name").toString(),  element.get("datatype").getClass());
-        }
-        dataTypes[metaData.size()] =new DataType("Unit",  (new String()).getClass());
-        dataTypes[metaData.size()+1] =new DataType("Description",  (new String()).getClass());
-        return dataTypes;
-
-    }
-
-    /**
      * This method reads the json file from DAX and process it. The output is a DataGroup of the Meta data
      * @param file json file
      * @return DataGroup  DataGroup of the Meta data
-     * @throws IOException
-     * @throws ParseException
+     * @throws IOException on file read error
+     * @throws ParseException on json parse error
      */
 
     private DataGroup getMetaData(File file) throws IOException, ParseException {
@@ -123,30 +110,37 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
         JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
 
-        JSONArray metaData = (JSONArray) ( (JSONObject) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("metadata")).get("elements");
+        // https://jira.lsstcorp.org/browse/DM-14385 "result:" -> "result"
+        JSONObject result = (JSONObject) obj.get("result:");
+        if (result == null) {
+            result = (JSONObject) obj.get("result");
+        }
+        JSONArray columns = (JSONArray) (result).get("columns");
 
-        DataType[] dataTypes = getDataType( metaData );
-        JSONArray  data = (JSONArray) ( (JSONObject)( (JSONObject) obj.get("result")).get("table")).get("data");
+        //"name":"coord_ra","datatype":"double","ucd":"pos.eq.ra","unit":"deg","tableName":"RunDeepSource"
+        String [] fields = new String[]{"name", "unit", "description", "datatype", "ucd", "nullable"};
+        DataType[] dataTypes = new DataType[fields.length];
 
+        for (int i=0; i<fields.length; i++){
+            dataTypes[i] = new DataType(fields[i], String.class);
+        }
         DataGroup dg = new DataGroup(file.getName(), dataTypes);
 
-        for (int i=0; i<data.size(); i++){
+        Object o;
+        for (Object c : columns){
 
             DataObject row = new DataObject(dg);
-            for (int j=0; j<dataTypes.length-2; j++){
-                row.setDataElement(dataTypes[j], ( (JSONArray)data.get(i)).get(j));
+            for (int i=0; i<fields.length; i++){
+                o = ((JSONObject)c).get(fields[i]);
+                if (o != null) {
+                    row.setDataElement(dataTypes[i], o.toString());
+                } else {
+                    dataTypes[i].setMayBeNull(true);
+                }
             }
-            row.setDataElement(dataTypes[dataTypes.length-2], "dummyUnit1");
-            row.setDataElement(dataTypes[dataTypes.length-1], "description of "+ ((JSONArray)data.get(i)).get(0).toString());
             dg.add(row);
         }
-
         return dg;
-    }
-
-    String buildSqlQueryString(TableServerRequest request) throws Exception {
-        String dbTable = LSSTQuery.getDBTableNameFromRequest(request);
-        return "SHOW COLUMNS FROM " + dbTable + ";";
     }
 
     @Override

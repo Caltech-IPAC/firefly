@@ -418,7 +418,7 @@ function doCatalog(request, spatPart) {
  * @param {Object} request
  */
 function doLoadTable(request) {
-    var tReq = makeTblRequest('userCatalogFromFile', 'Lsst Table Upload', {
+    const tReq = makeTblRequest('userCatalogFromFile', 'Lsst Table Upload', {
         filePath: get(request, 'fileUpload')
     });
     dispatchTableSearch(tReq);
@@ -434,7 +434,7 @@ class LSSTCatalogSelectView extends PureComponent {
     }
 
     render() {
-        var  {cattable, project, cattype, master} = this.props;
+        const {cattable, project, cattype, master} = this.props;
 
         if (isEmpty(master)) {
             return (
@@ -444,8 +444,11 @@ class LSSTCatalogSelectView extends PureComponent {
             );
         }
 
+       
+        const tblId = getTblId((cattable ? cattable : getDefaultTableName(master, project, cattype)));
 
-        var tblId = getTblId((cattable ? cattable : getDefaultTableName(master, project, cattype)));
+        // keep all tabs the same size
+        const tabWrapper = {padding:5, minWidth:1020, minHeight:200};
 
         // pass cattable and master to  LsstCatalogDDList
         return (
@@ -454,10 +457,14 @@ class LSSTCatalogSelectView extends PureComponent {
                         keepState={true}>
                 <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
                     <Tab name='Search' id='catalogLsst'>
-                        <LsstCatalogDDList {...this.props}/>
+                        <div style={tabWrapper}>
+                            <LsstCatalogDDList {...this.props}/>
+                        </div>
                     </Tab>
                     <Tab name='Load Catalog' id='loadcatLsst'>
-                        <CatalogLoad forGroup={gkey} />
+                        <div style={tabWrapper}>
+                            <CatalogLoad forGroup={gkey} />
+                        </div>
                     </Tab>
                 </FieldGroupTabs>
             </FieldGroup>
@@ -688,7 +695,7 @@ class LsstCatalogDDList extends PureComponent {
         const {cattable, cattype, project} = this.props;
 
         const spatialH = 300;
-        const spatialPanelStyle = {height: spatialH, width: 550, paddingLeft: 2, paddingRight: 2};
+        const spatialPanelStyle = {height: spatialH, width: 500, paddingLeft: 2, paddingRight: 2};
         const catPanelStyle = {paddingLeft: 20, paddingRight: 20, height: spatialH, width: 450};
 
         const metadataSelector = () => {
