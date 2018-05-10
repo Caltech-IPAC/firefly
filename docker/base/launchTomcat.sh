@@ -32,7 +32,7 @@ echo
 echo "Properties: "
 echo "          Description                  Property             Value"
 echo "          -----------                  --------             -----"
-echo "          Min JVM size                 MIN_JVM_SIZE         ${MIN_JVM_SIZE}"
+echo "          Min JVM size                 MIN_JVM_SIZE        ${MIN_JVM_SIZE}"
 echo "          Min JVM size                 MAX_JVM_SIZE         ${MAX_JVM_SIZE}"
 echo "          Multi node sticky routing    jvmRoute             ${JVM_ROUTE}"
 echo "          Admin username               ADMIN_USER           ${ADMIN_USER}"
@@ -46,7 +46,6 @@ echo
 echo "Ports: "
 echo "        8080 - http"
 echo "        5050 - debug"
-echo "        9050 - jmx (jconsole)"
 echo
 echo "Volume Mount Points: "
 echo "        Log directory : /usr/local/tomcat/logs : Directory for logs files"
