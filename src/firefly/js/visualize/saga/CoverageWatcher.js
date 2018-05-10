@@ -81,7 +81,7 @@ const defOptions= {
         Service : 'TWOMASS',
         SurveyKey: 'asky',
         SurveyKeyBand: 'k',
-        title : '2MASS K'
+        title : '2MASS K_s'
     },
 
     useAllSkyFitsForPlus180 : true,
