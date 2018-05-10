@@ -60,7 +60,7 @@ const PLOT_ID= 'CoveragePlot';
 
 
 const defOptions= {
-    title: '2MASS K',
+    title: '2MASS K_s',
     tip: 'Coverage',
     getCoverageBaseTitle : (table) => '',   // eslint-disable-line no-unused-vars
     coverageType : CoverageType.BOTH,
