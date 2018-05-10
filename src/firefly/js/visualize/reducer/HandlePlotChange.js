@@ -317,7 +317,7 @@ function changeHiPS(state,action) {
         plot.cubeDepth= Number(get(hipsProperties, 'hips_cube_depth')) || 1;
         plot.cubeIdx= Number(get(hipsProperties, 'hips_cube_firstframe')) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
-        if (!centerProjPt && originalPlot.dataCoordSys!==plot.dataCoordSys) {
+        if (!centerProjPt) {
             centerProjPt= convert(getCenterOfProjection(originalPlot), plot.dataCoordSys);
         }
     }
