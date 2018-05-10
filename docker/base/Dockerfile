@@ -17,10 +17,9 @@ RUN apt-get update && apt-get install -y \
         && rm -rf /var/lib/apt/lists/*
 
 
-# These environment varibles are not really make to be overridden
+# These environment varibles are not really made to be overridden
 # they can be but are mostly for setup
 ENV JPDA_ADDRESS=5050
-ENV JMX_ADDRESS=9050
 ENV CATALINA_PID=${CATALINA_BASE}/bin/catalina.pid
 
 # work dir and config dir might be overridden if they were used in a mounted volume
@@ -62,8 +61,7 @@ COPY setenv.sh /usr/local/tomcat/bin/
 
 # 8080 - http
 # 5050 - debug
-# 9050 - jmx (jconsole)
-EXPOSE 8080 5050 9050 7011
+EXPOSE 8080 5050
 
 
 # ----------------------------------------------------------
