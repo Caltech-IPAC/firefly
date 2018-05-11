@@ -19,22 +19,9 @@ import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 
 const {Cell} = FixedDataTable;
 const html_regex = /<.+>/;
+const filterStyle = {width: '100%', boxSizing: 'border-box'};
 
 /*---------------------------- COLUMN HEADER RENDERERS ----------------------------*/
-function Label({sortable, label, name, sortByCols, sortInfoCls, onSort}) {
-    const sortDir = sortInfoCls.getDirection(name);
-    sortByCols = sortByCols || name;
-
-    if (toBoolean(sortable, true)) {
-        return (
-            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(sortByCols)}>{label || name}
-                { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
-            </div>
-        );
-    } else {
-        return <div>{label || name}</div>;
-    }
-}
 
 function SortSymbol({sortDir}) {
     return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
@@ -46,33 +33,40 @@ export class HeaderCell extends PureComponent {
     }
 
     render() {
-        const {col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, style, tbl_id} = this.props;
-        const cname = col.name;
-        const cdesc = col.desc || col.label || cname;
-        const filterStyle = {width: '100%', boxSizing: 'border-box'};
+        const {col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, style, tbl_id} = this.props;
+        const {label, name, desc, sortByCols, sortable} = col || {};
+        const cdesc = desc || label || name;
         const filterInfoCls = FilterInfo.parse(filterInfo);
-        const sortInfoCls = SortInfo.parse(sortInfo);
-        const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, cname);
+        const sortDir = SortInfo.parse(sortInfo).getDirection(name);
+        const sortCol = sortByCols || name;
+        const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, name);
+        const typeVal = col.type || '';
+        const unitsVal = col.units ? `(${col.units})`: '';
         
+        const filter = get(col, 'filterable', true) ?
+                        (<InputField
+                            validator={validator}
+                            fieldKey={name}
+                            tooltip={FILTER_CONDITION_TTIPS}
+                            value={filterInfoCls.getFilter(name)}
+                            onChange={(v) => onFilter(v)}
+                            actOn={['blur','enter']}
+                            showWarning={false}
+                            style={filterStyle}
+                            wrapperStyle={filterStyle}/>
+                        )
+                        : <div style={{height:19}} />;
+
+        const onClick = toBoolean(sortable, true) && (() => onSort(sortCol));
         return (
-            <div style={style} title={cdesc} className='TablePanel__header'>
-                <Label {...{sortInfoCls, onSort}} {...col}/>
-                {showUnits && col.units &&
-                <div style={{fontWeight: 'normal'}}>({col.units})</div>
-                }
-                {showFilters && get(col, 'filterable', true) &&
-                <InputField
-                    validator={validator}
-                    fieldKey={cname}
-                    tooltip={FILTER_CONDITION_TTIPS}
-                    value={filterInfoCls.getFilter(cname)}
-                    onChange={(v) => onFilter(v)}
-                    actOn={['blur','enter']}
-                    showWarning={false}
-                    style={filterStyle}
-                    wrapperStyle={filterStyle}
-                />
-                }
+            <div style={style} title={cdesc} className='TablePanel__header clickable' onClick={onClick}>
+                <div>
+                    {label || name}
+                    { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
+                </div>
+                {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic', color: 'brown'}}>{typeVal}</div>}
+                {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
+                {showFilters && filter}
             </div>
         );
     }
@@ -84,7 +78,7 @@ export class SelectableHeader extends Component {
     }
 
     shouldComponentUpdate(nProps) {
-        const toCompare = ['checked', 'showUnits', 'showFilters'];
+        const toCompare = ['checked', 'showUnits', 'showTypes', 'showFilters'];
         return !isEqual(pick(nProps, toCompare), pick(this.props, toCompare));
     }
 
@@ -95,15 +89,17 @@ export class SelectableHeader extends Component {
     // }
     //
     render() {
-        const {checked, onSelectAll, showUnits, showFilters, onFilterSelected, style} = this.props;
+        const {checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, style} = this.props;
         return (
             <div style={{padding: 0, ...style}} className='TablePanel__header'>
                 <input type='checkbox'
                        tabIndex={-1}
                        checked={checked}
                        onChange={(e) => onSelectAll(e.target.checked)}/>
+                {showTypes && <div/>}
                 {showUnits && <div/>}
                 {showFilters && <img className='clickable'
+                                     style={{marginBottom: 3}}
                                      src={FILTER_SELECTED_ICO}
                                      onClick={onFilterSelected}
                                      title='Filter on selected rows'/>}

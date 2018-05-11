@@ -28,7 +28,7 @@ class BasicTableViewInternal extends PureComponent {
         this.state = {
             showMask: false,
             data: [],
-            columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
+            columnWidths: makeColWidth(props.columns, props.showUnits, props.showTypes)
         };
 
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
@@ -53,7 +53,7 @@ class BasicTableViewInternal extends PureComponent {
 
     componentWillReceiveProps(nProps) {
         if (isEmpty(this.state.columnWidths) && !isEmpty(nProps.columns)) {
-            this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data, nProps.showUnits)});
+            this.setState({columnWidths: makeColWidth(nProps.columns, nProps.showUnits, nProps.showTypes)});
         }
     }
 
@@ -118,7 +118,7 @@ class BasicTableViewInternal extends PureComponent {
 
     render() {
         const {width, height}= this.props.size;
-        const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo, renderers, bgColor,
+        const {columns, data, hlRowIdx, showUnits, showTypes, showFilters, filterInfo, renderers, bgColor,
             selectable, selectInfoCls, sortInfo, callbacks, textView, rowHeight, showMask, error, tbl_ui_id} = this.props;
         const {columnWidths} = this.state;
         const {onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected} = this;
@@ -130,10 +130,10 @@ class BasicTableViewInternal extends PureComponent {
         // const sortInfoCls = SortInfo.parse(sortInfo);
         //
         const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
-                                  columnWidths, filterInfo, sortInfo, showUnits, showFilters,
+                                  columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
                                   onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
 
-        const headerHeight = 22 + (showUnits && 8) + (showFilters && 22);
+        const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
 
         return (
             <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' >
@@ -171,6 +171,7 @@ BasicTableViewInternal.propTypes = {
     sortInfo: PropTypes.string,
     selectable: PropTypes.bool,
     showUnits: PropTypes.bool,
+    showTypes: PropTypes.bool,
     showFilters: PropTypes.bool,
     textView: PropTypes.bool,
     rowHeight: PropTypes.number,
@@ -199,6 +200,7 @@ BasicTableViewInternal.propTypes = {
 BasicTableViewInternal.defaultProps = {
     selectable: false,
     showUnits: false,
+    showTypes: false,
     showFilters: false,
     showMask: false,
     rowHeight: 20,
@@ -218,20 +220,21 @@ const TextView = ({columns, data, showUnits, width, height}) => {
     );
 };
 
-function makeColWidth(columns, showUnits) {
+function makeColWidth(columns, showUnits, showTypes) {
     return !columns ? {} : columns.reduce((widths, col, idx) => {
         const label = col.name;
         let nchar = col.prefWidth;
         const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
+        const typeLength = showTypes ? get(col, 'type.length', 0) : 0;
         if (!nchar) {
-            nchar = Math.max(label.length+2, unitLength+2, get(col,'width', 0)); // 2 is for padding and sort symbol
+            nchar = Math.max(label.length+2, unitLength+2, typeLength+2, get(col,'width', 0)); // 2 is for padding and sort symbol
         }
         widths[idx] = nchar * 7;
         return widths;
     }, {});
 }
 
-function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers, bgColor='white',
+function makeColumns ({columns, columnWidths, data, selectable, showUnits, showTypes, showFilters, renderers, bgColor='white',
             selectInfoCls, filterInfo, sortInfo, onRowSelect, onSelectAll, onSort, onFilter, onFilterSelected, tbl_id}) {
     if (!columns) return false;
 
@@ -246,7 +249,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
             <Column
                 key={col.name}
                 columnKey={idx}
-                header={<HeadRenderer {...{col, showUnits, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
+                header={<HeadRenderer {...{col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
                 cell={<CellRenderer style={style} data={data} colIdx={idx} />}
                 fixed={fixed}
                 width={columnWidths[idx]}
@@ -260,7 +263,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         var cbox = (<Column
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
-            header={<SelectableHeader {...{checked, onSelectAll, showUnits, showFilters, onFilterSelected}} />}
+            header={<SelectableHeader {...{checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected}} />}
             cell={<SelectableCell style={{backgroundColor: bgColor}} selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
