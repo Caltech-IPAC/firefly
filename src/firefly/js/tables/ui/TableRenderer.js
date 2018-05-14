@@ -59,13 +59,15 @@ export class HeaderCell extends PureComponent {
 
         const onClick = toBoolean(sortable, true) && (() => onSort(sortCol));
         return (
-            <div style={style} title={cdesc} className='TablePanel__header clickable' onClick={onClick}>
-                <div>
-                    {label || name}
-                    { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
+            <div style={style} title={cdesc} className='TablePanel__header'>
+                <div style={{height: '100%'}} className='clickable' onClick={onClick}>
+                    <div>
+                        {label || name}
+                        { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
+                    </div>
+                    {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic', color: 'brown'}}>{typeVal}</div>}
+                    {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
                 </div>
-                {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic', color: 'brown'}}>{typeVal}</div>}
-                {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
                 {showFilters && filter}
             </div>
         );
