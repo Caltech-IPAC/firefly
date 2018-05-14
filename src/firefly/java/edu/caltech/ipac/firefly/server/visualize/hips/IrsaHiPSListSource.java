@@ -32,7 +32,7 @@ import java.io.FileReader;
  */
 public class IrsaHiPSListSource implements HiPSMasterListSourceType {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    private static final String irsaHiPSSource = AppProperties.getProperty("irsa.hips.list.source", "file");
+    private static final String irsaHiPSSource = AppProperties.getProperty("irsa.hips.list.source", "url");
     private static final String irsaHipsTable = "/edu/caltech/ipac/firefly/resources/irsa-hips-master-table.csv";
     private static final String irsaHipsUrl = "https://irsa.ipac.caltech.edu/data/hips/list";
     private static final String irsaHiPSListFrom = irsaHiPSSource.equals("file") ?
