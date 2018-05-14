@@ -6,6 +6,9 @@
 /**
  * Information related to searches
  * @typedef {Object} SearchInfo
+ * @prop {string} [title]    main title if any.  It will appears on top.
+ * @prop {string} [flow]     'horizontal' or 'vertical'.  defaults to 'vertical'.
+ * @prop {string} activeSearch    currently selected search.
  * @prop {Object.<string,Search>} allSearchItems  flatten maps of searches keyed by name
  * @prop {SearchGroup[]}          groups   search group
  */
@@ -24,7 +27,8 @@
  * @prop {string} title title of the search
  * @prop {string} desc  desc of the search
  * @prop {SearchForm} form  define form info
- * @prop {function} results  a function that returns the search results.
+ * @prop {function} renderStandardView    a function to render the search results in standard mode.
+ * @prop {function} [renderExpandedView]  a function to render the search results in expanded mode
  * @prop {function} download  a function that returns the download dialog.
  */
 

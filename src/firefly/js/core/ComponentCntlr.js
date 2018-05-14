@@ -17,7 +17,7 @@ const COMPONENT_KEY = 'component';
 const SHOW_DIALOG = 'ComponentCntlr.showDialog';
 const HIDE_DIALOG = 'ComponentCntlr.hideDialog';
 const HIDE_ALL_DIALOGS = 'ComponentCntlr.hideAllDialogs';
-const COMPONENT_STATE_CHANGE = 'ComponentCntlr.componentStateChange';
+export const COMPONENT_STATE_CHANGE = 'ComponentCntlr.componentStateChange';
 
 
 

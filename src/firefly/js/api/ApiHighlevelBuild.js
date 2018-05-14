@@ -135,7 +135,7 @@ function buildTablePart(llApi) {
 
     /**
      * @param {string|HTMLDivElement} targetDiv to put the table in.
-     * @param {Object} request         request object created from
+     * @param {TableRequest} request         request object created from
      * @param {TblOptions} options     table options.
      * @memberof firefly
      * @public

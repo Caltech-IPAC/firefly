@@ -149,11 +149,11 @@ function ResultSection({layoutInfo}) {
 
     const {allSearchItems} = getSearchInfo();
     if (!allSearchItems) return <div/>;
-    const {renderStandardView, renderExpandedView} = allSearchItems[currentSearch] || {};
-    const showExpandedImpl= renderExpandedView || showExpandedView;
-    const standard = renderStandardView ? renderStandardView(layoutInfo) : <div/>;
+    const {renderStandardView:StandardView, renderExpandedView} = allSearchItems[currentSearch] || {};
+    const ExpandedImpl= renderExpandedView || showExpandedView;
+    const standard = StandardView ? <StandardView {...{layoutInfo}}/> : <div/>;
 
-    return expanded === LO_VIEW.none ? standard : showExpandedImpl({layoutInfo, expanded, images});
+    return expanded === LO_VIEW.none ? standard : <ExpandedImpl {...{layoutInfo, expanded, images}}/>;
 }
 
 function showExpandedView ({expanded,  images}) {
