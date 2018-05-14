@@ -14,4 +14,3 @@ RUN   a2enmod proxy; \
 
 EXPOSE 80 443
 
-ENTRYPOINT ["httpd-foreground"]
