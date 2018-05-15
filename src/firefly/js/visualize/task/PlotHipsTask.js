@@ -32,10 +32,9 @@ import {dispatchChangeHiPS} from '../ImagePlotCntlr';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
-import {makeDevicePt, makeWorldPt} from '../Point.js';
 
 
-//const INIT_STATUS_UPDATE_DELAY= 7000;
+const PROXY= true;
 
 
 //======================================== Exported Functions =============================
@@ -192,7 +191,6 @@ export function makePlotHiPSAction(rawAction) {
         const {payload}= rawAction;
         const {plotId, attributes, pvOptions}= payload;
         const wpRequest= ensureWPR(payload.wpRequest);
-        const PROXY= true;
 
         const newPayload= clone(payload, {wpRequest, plotType:'hips', wpRequestAry:[wpRequest]});
         newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
@@ -219,7 +217,7 @@ export function makePlotHiPSAction(rawAction) {
 
             })
             .then( (url) => {
-                return fetchUrl(url, {}, true, false);
+                return fetchUrl(url, {}, true, PROXY);
             })
             .then( (result)=> {
                 if (!result.text) throw new Error('Could not retrieve HiPS properties file');
@@ -274,7 +272,7 @@ export function makeChangeHiPSAction(rawAction) {
         const url= makeHipsUrl(`${hipsUrlRoot}/properties`, true);
         if (hipsUrlRoot) {
             dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-            fetchUrl(url, {}, true, false)
+            fetchUrl(url, {}, true, PROXY)
                 .catch( (e) => {
                     console.log('properties not found');
                     throw new Error('Could not retrieve HiPS properties file');
