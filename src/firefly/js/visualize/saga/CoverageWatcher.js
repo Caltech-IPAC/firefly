@@ -51,9 +51,12 @@ const PLOT_ID= 'CoveragePlot';
  * @prop {string} tip
  * @prop {string} coverageType- one of 'GUESS', 'BOX', 'BOTH', or 'X' default is 'BOTH'
  * @prop {string} overlayPosition search position point to overlay, e.g '149.08;68.739;EQ_J2000'
- * @prop {string|Object.<String,String>} shape - a shape name for the symbol or an object keyed by table id and value is symbol name, symbol name one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE','BOXCIRCLE', 'ARROW'
+ * @prop {string|Object.<String,String>} symbol - symbol name one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE','BOXCIRCLE', 'ARROW'
  * @prop {string|Object.<String,Number>} symbolSize - a number of the symbol size or an object keyed by table id and value the symbol size
  * @prop {string|Object.<String,String>} color - a color the symbol size or an object keyed by table id and color
+ * @prop {number} fovMaxFitsSize how big this fits image can be (in degrees)
+ * @prop {number} fovDegMinSize - minimum field of view size in degrees
+ * @prop {number} fovDegFallOver - the field of view size to determine when to move between and HiPS and an image
  * @prop {boolean} multiCoverage - overlay more than one table  on the coverage
  * @prop {string} gridOn : one of 'FALSE','TRUE','TRUE_LABELS_FALSE'
  */
@@ -84,18 +87,15 @@ const defOptions= {
         title : '2MASS K_s'
     },
 
-    useAllSkyFitsForPlus180 : true,
     fovDegFallOver: .13,
     fovMaxFitsSize: .2,
     autoConvertOnZoom: false,
+    fovDegMinSize: 100/3600, //defaults to 100 arcsec
 
 
-    canDoCorners : defaultCanDoCorners,
     hasCoverageData,
     getCornersColumns,
     getCenterColumns,
-    // getQueryCenter,
-    // getExtraColumns: () => []   // eslint-disable-line no-unused-vars
 };
 
 
@@ -319,7 +319,8 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     const {overlayPosition= avgOfCenters }=  options;
 
     if (!avgOfCenters || maxRadius<=0) return;
-    const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, hipsSourceURL, imageSourceParams, useHiPS}= options;
+    const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, hipsSourceURL,
+                imageSourceParams, useHiPS, fovDegMinSize}= options;
 
     if (useHiPS) {
         // const baseTitle= options.getCoverageBaseTitle(allRowsTable);
@@ -328,7 +329,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
         if (coverageNeedsUpdating(pv,avgOfCenters,maxRadius)) {
             let imageRequest;
             let allSkyRequest= null;
-            const size= Math.max(maxRadius*2.2, 600/3600);
+            const size= Math.max(maxRadius*2.2, fovDegMinSize);
             if (size>160) {
                 allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
                 allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
@@ -642,23 +643,11 @@ function hasCoverageData(options, table) {
     return !isEmpty(options.getCenterColumns(table)) || !isEmpty(options.getCornersColumns(table));
 }
 
-
-
-function defaultCanDoCorners(table) {// eslint-disable-line no-unused-vars
-    return true;
-}
-
 function getCovColumnsForQuery(options, table) {
     const cAry= [...options.getCornersColumns(table), options.getCenterColumns(table)];
     const base = cAry.filter((c)=>!isEmpty(c)).map( (c)=> `"${c.lonCol}","${c.latCol}"`).join();     // column names should be in quotes
     return base+',"ROW_IDX"';
 }
-
-
-
-
-// function getQueryCenter(table) { // eslint-disable-line no-unused-vars  //todo not supported yet,
-// }
 
 function cleanUpOptions(options) {
     const opStrList= Object.keys(defOptions);
