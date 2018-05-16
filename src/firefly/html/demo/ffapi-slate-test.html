@@ -55,7 +55,7 @@
 Add Some Tables
 <ul>
     <li>
-        <a href="javascript:loadMovingTable(0, 0,4,2)">load Moving Table</a> <span class='smallCoords'>at row: 0, col: 0, w:4 h: 2<span>
+        <a href="javascript:loadMovingTable(0, 0,4,2)">load Moving Table</a> <span class='smallCoords'>at row: 0, col: 0, w:4 h: 2</span>
     </li>
     <li>
         <a href="javascript:addSimpleM31ImageTable()">load m31 image Table</a> in same cell
@@ -107,6 +107,7 @@ Add more images
     </li>
 </ul>
 
+</body>
 
 <script type="text/javascript">
     if (!window.firefly) window.firefly= {};
@@ -249,46 +250,14 @@ Add more images
             //         {MouseReadoutComponent:ui.PopupMouseReadoutMinimal, showThumb:false,showMag:false});
             // -----------------
 
-            var req= {
-                plotId: 'xxq',
-                Type      : 'SERVICE',
-                plotGroupId : 'myGroup',
-                Service   : 'TWOMASS',
-                Title     : '2mass from service',
-                GridOn     : true,
-//                GridOn     : 'TRUE_LABELS_FALSE',
-                SurveyKey  : 'k',
-                WorldPt    : '10.68479;41.26906;EQ_J2000',
-                SizeInDeg  : '.12',
-                AllowImageSelection : true
-            };
-
-            var req2= {
-                Type      : 'SERVICE',
-                plotGroupId : 'myGroup',
-                Service  : 'WISE',
-                Title     : 'Wise',
-                GridOn     : true,
-//                GridOn     : 'TRUE_LABELS_FALSE',
-                SurveyKey  : 'Atlas',
-                bad1  : 'hello',
-                bad2  : 'bye',
-                bad3  : 'again',
-                SurveyKeyBand  : '2',
-                WorldPt    : '10.68479;41.26906;EQ_J2000',
-                SizeInDeg  : '.12',
-                RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
-                AllowImageSelection : true };
-
-
-
             window.threeC= [
                 {
                     type      : 'SERVICE',
 //                    plotGroupId : 'myGroup',
                     Service   : 'TWOMASS',
-                    Title     : '3 color',
-                    SurveyKey  : 'j',
+                    Title     : '2mass 3 color',
+                    SurveyKey  : 'asky',
+                    SurveyKeyBand: 'j',
                     WorldPt    : '10.68479;41.26906;EQ_J2000',
                     SizeInDeg  : '.12'
                 },
@@ -296,8 +265,9 @@ Add more images
                     Type      : 'SERVICE',
 //                    PLOTgroupId : 'myGroup',
                     Service   : 'TWOMASS',
-                    Title     : '3 color',
-                    SurveyKey  : 'h',
+                    Title     : '2mass 3 color',
+                    SurveyKey  : 'asky',
+                    SurveyKeyBand: 'h',
                     WorldPt    : '10.68479;41.26906;EQ_J2000',
                     SizeInDeg  : '.12'
                 },
@@ -305,8 +275,9 @@ Add more images
                     Type      : 'SERVICE',
 //                    plotGroupId : 'myGroup',
                     Service   : 'TWOMASS',
-                    title     : '3 color',
-                    SurveyKey  : 'k',
+                    title     : '2mass 3 color',
+                    SurveyKey  : 'asky',
+                    SurveyKeyBand: 'k',
                     WorldPt    : '10.68479;41.26906;EQ_J2000',
                     moreBadKeys : 'qqq',
                     SizeInDeg  : '.12'
@@ -345,16 +316,19 @@ Add more images
 
 
         plotRemote= function() {
+
             firefly.getViewer().showImage({plotId: 'xxq',
                 Service: 'TWOMASS',
                 Title  : '2mass from service',
                 ZoomType : 'LEVEL',
                 initZoomLevel : 2,
-                SurveyKey  : 'k',
+                SurveyKey  : 'asky',
+                SurveyKeyBand: 'k',
                 WorldPt    : '10.68479;41.26906;EQ_J2000',
                 RangeValues : firefly.util.image.serializeSimpleRangeValues("Sigma",-1,2,"Linear"),
                 SizeInDeg  : '.12'
             })
+
         }
    }
    
@@ -365,3 +339,4 @@ Add more images
 <script  type="text/javascript" src="../firefly_loader.js"></script>
 
 
+</html>
