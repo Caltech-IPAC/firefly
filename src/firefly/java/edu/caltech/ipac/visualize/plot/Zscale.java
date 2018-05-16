@@ -52,7 +52,7 @@ public class Zscale
 
   /* CDL_ZSCALE -- Sample the image and compute optimal Z1 and Z2 values.
   */
-  static ZscaleRetval
+  public static ZscaleRetval
     cdl_zscale (
     float[] float1d,		/* image data to be sampled		*/
     int nx,
