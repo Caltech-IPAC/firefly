@@ -290,7 +290,7 @@ function doImage(request, imgPart) {
     const noSubsizeMethod = ['ALLSKY', 'ENCLOSED'];
     const noTargetMethod = ['ALLSKY'];
     const {project, cattable} = request[gkey] || {};
-    const [,tableName] = cattable ? cattable.split('\.') : [];
+    const [,,tableName] = cattable ? cattable.split('\.') : []; // [logical database].[schema].[table]
     const spatial =  get(imgPart, ['spatial', 'value']);
     const intersect = get(imgPart, ['intersect', 'value']);
     const size = (!noSizeMethod.includes(intersect)) ? get(imgPart, ['size', 'value']) : '';
@@ -353,7 +353,7 @@ function doCatalog(request, spatPart) {
 
     const catPart = request[gkey];
     const {cattable} = catPart;
-    const [,tableName] = cattable ? cattable.split('\.') : [];
+    const [,,tableName] = cattable ? cattable.split('\.') : [];  // [logical database].[schema].[table]
     const spatial =  get(spatPart, ['spatial', 'value']);
     const conesize = get(spatPart, ['conesize', 'value']);
     const wp = get(spatPart, [ServerParams.USER_TARGET_WORLD_PT,'value']);
@@ -448,7 +448,7 @@ class LSSTCatalogSelectView extends PureComponent {
         const tblId = getTblId((cattable ? cattable : getDefaultTableName(master, project, cattype)));
 
         // keep all tabs the same size
-        const tabWrapper = {padding:5, minWidth:1020, minHeight:200};
+        const tabWrapper = {padding:5, minWidth:1070, minHeight:200};
 
         // pass cattable and master to  LsstCatalogDDList
         return (
@@ -695,7 +695,7 @@ class LsstCatalogDDList extends PureComponent {
         const {cattable, cattype, project} = this.props;
 
         const spatialH = 300;
-        const spatialPanelStyle = {height: spatialH, width: 500, paddingLeft: 2, paddingRight: 2};
+        const spatialPanelStyle = {height: spatialH, width: 550, paddingLeft: 2, paddingRight: 2};
         const catPanelStyle = {paddingLeft: 20, paddingRight: 20, height: spatialH, width: 450};
 
         const metadataSelector = () => {

@@ -80,7 +80,7 @@ public class LSSTLightCurveQuery extends LSSTQuery {
 
             requestStr  = "SELECT *" +
                           " FROM " + forcedTable +
-                          " WHERE " + constraints +";";
+                          " WHERE " + constraints;
         }
         return requestStr;
     }
