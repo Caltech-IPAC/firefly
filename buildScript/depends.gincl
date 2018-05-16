@@ -263,7 +263,7 @@ task dockerImage (dependsOn: loadConfig) {
 
     def res = exec {
       workingDir "${buildDir}/docker"
-      commandLine "docker build -t ${docker_registry}${docker_repo}:${docker_tag} --build-arg IMAGE_NAME=${docker_registry}${docker_repo} .".split(' ')
+      commandLine "docker build --pull -t ${docker_registry}${docker_repo}:${docker_tag} --build-arg IMAGE_NAME=${docker_registry}${docker_repo} .".split(' ')
     }
     if (res.getExitValue() != 0) {
       throw new GradleException("Fail to create docker image")
