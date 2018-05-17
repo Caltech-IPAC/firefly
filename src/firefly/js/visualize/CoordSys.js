@@ -14,14 +14,13 @@ const ECLIPTIC_J   = 13;
 
 /**
  * @typedef {Object} CoordinateSys
- * value on of the following constants; EQ_J2000, EQ_B2000, EQ_B1950, GALACTIC,
+ * @summary coordinate system
+ * @description value is one of the following constants; EQ_J2000, EQ_B2000, EQ_B1950, GALACTIC,
  * SUPERGALACTIC, ECL_J2000, ECL_B1950, PIXEL, SCREEN_PIXEL, UNDEFINED,
  *
  * @global
  * @public
  */
-
-
 
 
 export const CoordinateSys = function () {

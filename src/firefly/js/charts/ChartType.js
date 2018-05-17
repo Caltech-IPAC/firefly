@@ -8,7 +8,8 @@ import {logError} from '../util/WebUtil.js';
 /**
  * @global
  * @public
- * @typedef {Object} ChartType - an object which specifies how to render a chart type
+ * @typedef {Object} ChartType
+ * @summary an object which specifies how to render a chart type
  * @prop {string} id - unique chart type id
  * @prop {Function} Chart - React functional component to render chart part: Chart({chartId, ...chartProps, widthPx, heightPx})
  * @prop {Function} Options - React functional component to render chart options: Options({chartId, optionsKey})

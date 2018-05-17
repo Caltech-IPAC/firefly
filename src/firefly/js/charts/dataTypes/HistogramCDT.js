@@ -42,7 +42,8 @@ export const DATATYPE_HISTOGRAM = {
 /**
  * @global
  * @public
- * @typedef {Object} HistogramParams - histogram parameters
+ * @typedef {Object} HistogramParams
+ * @summary histogram parameters
  * @prop {string} columnOrExpr - column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3
  * @prop {string} algorithm - 'fixedSizeBins' or 'bayesianBlocks'
  * @prop {number} [numBins] - number of bins for fixed bins algorithm (default)

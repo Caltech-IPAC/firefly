@@ -49,7 +49,7 @@ const PLOT_ID= 'CoveragePlot';
  *
  * @prop {string} title
  * @prop {string} tip
- * @prop {string} coverageType- one of 'GUESS', 'BOX', 'BOTH', or 'X' default is 'BOTH'
+ * @prop {string} coverageType - one of 'GUESS', 'BOX', 'BOTH', or 'X' default is 'BOTH'
  * @prop {string} overlayPosition search position point to overlay, e.g '149.08;68.739;EQ_J2000'
  * @prop {string|Object.<String,String>} symbol - symbol name one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE','BOXCIRCLE', 'ARROW'
  * @prop {string|Object.<String,Number>} symbolSize - a number of the symbol size or an object keyed by table id and value the symbol size
@@ -58,7 +58,7 @@ const PLOT_ID= 'CoveragePlot';
  * @prop {number} fovDegMinSize - minimum field of view size in degrees
  * @prop {number} fovDegFallOver - the field of view size to determine when to move between and HiPS and an image
  * @prop {boolean} multiCoverage - overlay more than one table  on the coverage
- * @prop {string} gridOn : one of 'FALSE','TRUE','TRUE_LABELS_FALSE'
+ * @prop {string} gridOn - one of 'FALSE','TRUE','TRUE_LABELS_FALSE'
  */
 
 

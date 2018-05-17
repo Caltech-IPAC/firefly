@@ -79,7 +79,8 @@ function reducers() {
 /**
  * @global
  * @public
- * @typedef {Object} ChartDataElement - object, which describes a chart element
+ * @typedef {Object} ChartDataElement
+ * @summary object, which describes a chart element
  * @prop {string} [id] chart data element id
  * @prop {string} type - data type like 'xycols' or 'histogram'
  * @prop {string} tblId - table id of the source table

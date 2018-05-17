@@ -78,7 +78,7 @@ export function setViewerConfig(viewerType, htmlFile= '') {
  * @public
  * @param {string} [channel] the channel id string, if not specified then one will be generated
  * @param file the html of the viewer to launch. In time there will be several
- * @return {object} viewer interface @link{firefly.ApiViewer}
+ * @return {object} viewer interface {@link firefly.ApiViewer}
  * @memberof firefly
  *
  */
@@ -195,7 +195,7 @@ function buildImagePart(channel,file,dispatch) {
 
     /**
      * @summary show a image in the firefly viewer in another tab
-     * @param request Web plot request
+     * @param {WebPlotParams} request Web plot request
      * @param {String} viewerId
      * @memberof firefly.ApiViewer
      * @public
@@ -212,6 +212,13 @@ function buildImagePart(channel,file,dispatch) {
         });
     };
 
+    /**
+     * @summary show a HiPS in the firefly viewer in another tab
+     * @param {WebPlotParams} request Web plot request on HiPS type
+     * @param {String} viewerId
+     * @memberof firefly.ApiViewer
+     * @public
+     */
     const showHiPS= (request, viewerId) => {
         doViewerOperation(channel,file, () => {
             request= clone(request,defP);
@@ -220,7 +227,7 @@ function buildImagePart(channel,file,dispatch) {
     };
 
     /**
-     * @summary show a image in the firefly viewer in another tab, the the file first then the url
+     * @summary show a image in the firefly viewer in another tab, the file first then the url
      * @param file a file on the server
      * @param url a url to a fits file
      * @memberof firefly.ApiViewer
