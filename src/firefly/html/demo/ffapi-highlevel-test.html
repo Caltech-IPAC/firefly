@@ -60,6 +60,10 @@
     <a href='javascript:firefly.getViewer().showTable(tblReq1)'>Open allwise</a>
     <a href='javascript:tblReq1.sortInfo="ASC,ra"; firefly.getViewer().fetchTable(tblReq1)'>Sort allwise by ra</a>
     <a href='javascript:launchLC()'>Launch WISE LcViewer</a>
+    <a href='javascript:launchTimeSeries()'>Launch Time Series</a>
+    <a href='javascript:firefly.getViewer(null, "ts.html").showTable(firefly.util.table.makeFileRequest(null, "http://web.ipac.caltech.edu/staff/ejoliet/demo/WISE-mep-2764p772_ac51-010204.tbl",null,{ tbl_id: "raw_table",META_INFO: {TSDatasetId: "wise"} }))'>Launch TS</a>
+    <a href='javascript:firefly.getViewer(null, "ts.html").showTable(firefly.util.table.makeFileRequest(null, "https://irsadev.ipac.caltech.edu:9028/cgi-bin/g2p/nph-g2p?dataid=source_id_mf&ws=/pubspace/70/12/b09751929eff1b93c90edca3eb30/g2p/32412&id=2948m228_ac51-042528",null,{ tbl_id: "raw_table",META_INFO: {TSDatasetId: "wise"} }))'>2948m228_ac51-042528</a>
+    <a href='javascript:firefly.getViewer(null, "ts.html").showTable(firefly.util.table.makeFileRequest(null, "https://irsadev.ipac.caltech.edu:9028/cgi-bin/g2p/nph-g2p?dataid=source_id_mf&ws=/pubspace/70/12/b09751929eff1b93c90edca3eb30/g2p/12875&id=2948m228_ac51-042528",null,{ tbl_id: "raw_table",META_INFO: {TSDatasetId: "wise"} }))' target='_blank'>Launch TS1</a>
     <div style="display: inline-flex; background-color: white">
         <div id="tables-2" style="width: 550px; height: 300px; margin: 10px"></div>
         <div id="tables-1" style="width: 550px; height: 300px; margin: 10px"></div>
@@ -208,6 +212,35 @@
                     });
         }
 
+        function launchTimeSeries(req) {
+            var req = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/ejoliet/demo/WISE-mep-2764p772_ac51-010204.tbl',null,
+                    { tbl_id: 'raw_table',
+                      META_INFO: {TSDatasetId: 'wise'} });
+            firefly.getViewer(null, "ts.html").showTable(req);
+
+/*            if (isTimeSeriesTable(tableModel)) {
+                req = cloneDeep(get(tableModel, 'request'));
+                req.tbl_id = LC.RAW_TABLE;
+                set(req, 'META_INFO.tbl_id', LC.RAW_TABLE);
+                req && getViewer(undefined, 'timeseries').showTable(req);
+            } else {
+                const row = getTblRowAsObj(getTblById(tbl_id), highlightedRow) || {};
+                const {mission, tableName, database, objectIdColumn} = get(tableModel, 'tableMeta') || {};
+                const objectId = objectIdColumn ? get(row, objectIdColumn, undefined) : undefined;
+
+                if (!isNil(objectId)) {
+                    const META_INFO = {[LC.META_MISSION]: mission};
+
+                    req = makeTblRequest('LSSTLightCurveQuery', objectId, {objectId, table_name: tableName, database}, {tbl_id: LC.RAW_TABLE, META_INFO});
+
+                    if (mission.toLowerCase().includes('wise')) {
+                        req = req && addExistingConstraints(tableModel, req);
+                    }
+
+                    req && getViewer(undefined, 'timeseries').showTable(req);
+                }
+            }*/
+        }
         function launchLC(req) {
             var req = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/ejoliet/demo/WISE-mep-2764p772_ac51-010204.tbl',null,
                     { tbl_id: 'raw_table',

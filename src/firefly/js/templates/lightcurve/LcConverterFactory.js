@@ -15,6 +15,8 @@ import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRa
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
 import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest,isValidWiseTable} from './wise/WiseMissionOptions.js';
 import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest, isValidPTFTable, ptfDownloaderOptPanel} from './ptf/PTFMissionOptions.js';
+import {ZTFSettingBox, ztfOnNewRawTable, ztfOnFieldUpdate, ztfRawTableRequest, isValidZTFTable, ztfDownloaderOptPanel} from './ztf/ZTFMissionOptions.js';
+import {getWebPlotRequestViaZTFIbe} from './ztf/ZTFPlotRequests.js';
 
 import {LC} from './LcManager.js';
 
@@ -135,6 +137,26 @@ const converters = {
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid:isValidPTFTable,
         downloadOptions: ptfDownloaderOptPanel,
+        yNamesChangeImage: [],
+        showPlotTitle:getPlotTitle
+    },
+    'ztf': {
+        converterId: 'ztf',
+        defaultImageCount: 5,
+        defaultTimeCName: 'mjd',
+        defaultYCname: '',  //TODO: add later
+        defaultYErrCname: '',
+        missionName: 'ZTF',
+        MissionOptions: ZTFSettingBox,
+        onNewRawTable: ztfOnNewRawTable,
+        onFieldUpdate: ztfOnFieldUpdate,
+        rawTableRequest: ztfRawTableRequest,
+        yErrNames: '',
+        dataSource: 'field',
+        webplotRequestCreator: getWebPlotRequestViaZTFIbe,
+        shouldImagesBeDisplayed: () => {return true;},
+        isTableUploadValid:isValidZTFTable,
+        downloadOptions: ztfDownloaderOptPanel,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },
