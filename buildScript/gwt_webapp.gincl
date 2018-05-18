@@ -89,6 +89,23 @@ test {
   }
 }
 
+task onlinehelp (dependsOn: [loadConfig]) {
+  ext.onlinehelp_dir = "$rootDir/../ife-onlinehelp/"
+  doLast {
+    exec {
+      workingDir onlinehelp_dir
+      commandLine 'gradle', ":${project['app-name']}:build"
+    }
+
+    new File("${gwt.warDir}/onlinehelp").mkdirs()
+    copy {
+      from zipTree("$onlinehelp_dir/build/dist/${project['app-name']}_help.zip")
+      into "${gwt.warDir}/onlinehelp"
+    }
+  }
+}
+
+
 task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
   description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
   group = MISC_GROUP
