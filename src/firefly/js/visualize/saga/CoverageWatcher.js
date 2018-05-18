@@ -5,21 +5,19 @@
 import Enum from 'enum';
 import {get,isEmpty,isObject, flattenDeep, values, isUndefined} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
-import {WebPlotRequest, TitleOptions, isImageDataRequeestedEqual} from '../WebPlotRequest.js';
+import {WebPlotRequest, TitleOptions} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
-    dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
-import {primePlot, getPlotViewById, getDrawLayerById} from '../PlotViewUtil.js';
+import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
+import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {doFetchTable, getTblById, getTblIdsByGroup, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {DrawSymbol} from '../draw/PointDataObj.js';
-import {computeCentralPtRadiusAverage} from '../VisUtil.js';
+import {computeCentralPtRadiusAverage, toDegrees} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
-import {getCoverageRequest} from './CoverageChooser.js';
 import {logError} from '../../util/WebUtil.js';
 import {getCornersColumns, getCenterColumns} from '../../tables/TableInfoUtil.js';
 import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
@@ -104,7 +102,6 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
 export function startCoverageWatcher(options) {
 
-    defOptions.useHiPS= get(getAppOptions(), 'hips.useForCoverage', false);
     const {viewerId='DefCoverageId'}= options;
     let {paused=true}= options;
     const decimatedTables=  {};
@@ -201,8 +198,8 @@ function watchCoverage(action, cancelSelf, params) {
         case MultiViewCntlr.VIEWER_MOUNTED:
             if (action.payload.viewerId === viewerId) {
                 paused = false;
-                tbl_id = getActiveTableId();
-                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+                const tblIdAry = getTblIdsByGroup();
+                tblIdAry.forEach((tbl_id)=>updateCoverage(tbl_id, viewerId, decimatedTables, options));
             }
             break;
 
@@ -314,102 +311,46 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
  */
 function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
     const {maxRadius, avgOfCenters}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
-
-
-    const {overlayPosition= avgOfCenters }=  options;
-
     if (!avgOfCenters || maxRadius<=0) return;
+
+    const plot= primePlot(visRoot(), PLOT_ID);
+
+    if (plot &&
+        pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) && plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
+        overlayCoverageDrawing(decimatedTables, options);
+        return;
+    }
+
     const {fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, hipsSourceURL,
-                imageSourceParams, useHiPS, fovDegMinSize}= options;
+        imageSourceParams, useHiPS, fovDegMinSize, overlayPosition= avgOfCenters}= options;
 
-    if (useHiPS) {
-        // const baseTitle= options.getCoverageBaseTitle(allRowsTable);
-        const pv= getPlotViewById(visRoot(), PLOT_ID);
-        let plotAllSkyFirst= false;
-        if (coverageNeedsUpdating(pv,avgOfCenters,maxRadius)) {
-            let imageRequest;
-            let allSkyRequest= null;
-            const size= Math.max(maxRadius*2.2, fovDegMinSize);
-            if (size>160) {
-                allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
-                allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
-                allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
-                plotAllSkyFirst= true;
-            }
-            imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
-                          WebPlotRequest.make2MASSRequest(avgOfCenters, 'asky', 'k', size);
-            imageRequest= initRequest(imageRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
-
-            let hipsRequest= WebPlotRequest.makeHiPSRequest(hipsSourceURL, null);
-            hipsRequest= initRequest(hipsRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
-            hipsRequest.setSizeInDeg(size);
-
-            //todo: fixed this like the else to change isPlotted , also add if for overlayCoverageDrawing
-
-
-            const plot= primePlot(visRoot(), PLOT_ID);
-            if (plot &&
-                pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) &&
-                plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
-                overlayCoverageDrawing(decimatedTables, options);
-            }
-            else {
-                dispatchPlotImageOrHiPS({
-                    plotId: PLOT_ID,
-                    hipsRequest,
-                    imageRequest,
-                    allSkyRequest,
-                    fovDegFallOver,
-                    fovMaxFitsSize,
-                    autoConvertOnZoom,
-                    viewerId,
-                    plotAllSkyFirst,
-                    attributes: {
-                        [COVERAGE_TARGET]: avgOfCenters,
-                        [COVERAGE_RADIUS]: maxRadius,
-                        [COVERAGE_TABLE]: tbl_id,
-                        [COVERAGE_CREATED]: true,
-                    },
-                });
-            }
-        }
-
+    let plotAllSkyFirst= false;
+    let allSkyRequest= null;
+    const size= Math.max(maxRadius*2.2, fovDegMinSize);
+    if (size>160) {
+        allSkyRequest= WebPlotRequest.makeAllSkyPlotRequest();
+        allSkyRequest.setTitleOptions(TitleOptions.PLOT_DESC);
+        allSkyRequest= initRequest(allSkyRequest, viewerId, PLOT_ID, overlayPosition);
+        plotAllSkyFirst= true;
     }
-    else {
-        const wpRequest= getCoverageRequest(avgOfCenters,maxRadius,
-            options.getCoverageBaseTitle(allRowsTable), false, options.gridOn);
-        wpRequest.setPlotId(PLOT_ID);
-        wpRequest.setPlotGroupId(viewerId);
-        if (!isUndefined(options.overlayPosition)) wpRequest.setOverlayPosition(options.overlayPosition);
-        if (options.title) {
-            wpRequest.setTitleOptions(TitleOptions.NONE);
-            wpRequest.setTitle(options.title);
-        }
+    let imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
+                            WebPlotRequest.make2MASSRequest(avgOfCenters, 'asky', 'k', size);
+    imageRequest= initRequest(imageRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
 
-        const plot= primePlot(visRoot(), PLOT_ID);
-        if (plot &&
-            pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) &&
-            plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
-            overlayCoverageDrawing(decimatedTables, options);
-        }
-        else {
-            if (!isPlotted(wpRequest)) {
-                dispatchPlotImage({
-                        wpRequest,
-                        viewerId,
-                        attributes: {
-                            [COVERAGE_TARGET]: avgOfCenters,
-                            [COVERAGE_RADIUS]: maxRadius,
-                            [COVERAGE_TABLE]: tbl_id,
-                            [COVERAGE_CREATED]: true,
-                        },
-                        pvOptions: { userCanDeletePlots: false}
-                    }
-                );
-            }
-        }
-    }
+    const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(hipsSourceURL, null),
+                       viewerId, PLOT_ID, overlayPosition, avgOfCenters);
+    hipsRequest.setSizeInDeg(size);
 
+    dispatchPlotImageOrHiPS({
+        plotId: PLOT_ID, viewerId, hipsRequest, imageRequest, allSkyRequest,
+        fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
+        attributes: {
+            [COVERAGE_TARGET]: avgOfCenters,
+            [COVERAGE_RADIUS]: maxRadius,
+            [COVERAGE_TABLE]: tbl_id,
+            [COVERAGE_CREATED]: true,
+        },
+    });
 }
 
 /**
@@ -430,45 +371,6 @@ function initRequest(r,viewerId,plotId, overlayPos, wp) {
     if (wp) r.setWorldPt(wp);
     return r;
 }
-
-
-/**
- * Determine if the plotted request match the passed request.  If the plotted request is not plotter by this
- * file then return true anyway.
- * @param {WebPlotRequest} r
- * @return {boolean}
- */
-function isPlotted(r) {
-    const pv= getPlotViewById(visRoot(),r.getPlotId());
-    if (!pv || !pv.request) return false;
-    const plot= primePlot(pv);
-    if (plot) {
-        if (plot.attributes[COVERAGE_CREATED]) {
-            return isImageDataRequeestedEqual(pv.request, r);
-        }
-        else {
-            return true;
-        }
-    }
-    else {
-        return isImageDataRequeestedEqual(pv.request,r);
-    }
-}
-
-
-
-function coverageNeedsUpdating(pv, centralPoint, maxRadius) {
-    const plot= primePlot(pv);
-    if (!plot) return true;
-    const {attributes} = plot;
-    if (attributes[COVERAGE_RADIUS] && attributes[COVERAGE_TARGET]) {
-        return (maxRadius!==attributes[COVERAGE_RADIUS] || !pointEquals(attributes[COVERAGE_TARGET],centralPoint));
-    }
-    else {
-        return false;
-    }
-}
-
 
 
 
@@ -610,7 +512,7 @@ const hasCorners= (options, table) =>!isEmpty(options.getCornersColumns(table));
 
 function toAngle(d, radianToDegree)  {
     const v= Number(d);
-    return (!isNaN(v) && radianToDegree) ? v*180/Math.PI : v;
+    return (!isNaN(v) && radianToDegree) ? toDegrees(v): v;
 }
 
 function makePt(lonStr,latStr, csys, radianToDegree) {

@@ -86,10 +86,6 @@ public class CacheHelper {
         else if (cacheObj instanceof File) {
             f= (File)cacheObj;
         }
-        else if (cacheObj instanceof FileInfo[]){
-            FileInfo fData[]= (FileInfo[])cacheObj;
-            f= fData[0].getFile();
-        }
         else if (cacheObj instanceof FileInfo){
             f= ((FileInfo)cacheObj).getFile();
         }
@@ -118,27 +114,19 @@ public class CacheHelper {
 
     public static FileInfo getFileData(CacheKey key)   {
         Cache cache= getFileCache();
-        if(cache == null){
-           return null;
-        }
+        if(cache == null) return null;
+
         Object cacheObj= cache.get(key);
-        FileInfo fd;
 
         if (cacheObj==null){
-            fd= null;
-        }
-        else if (cacheObj instanceof FileInfo[]){
-            FileInfo fData[]= (FileInfo[])cacheObj;
-            fd= fData[0];
+            return null;
         }
         else if (cacheObj instanceof FileInfo){
-            fd= (FileInfo)cacheObj;
+            return (FileInfo)cacheObj;
         }
         else {
-            fd= null;
-            Assert.argTst(false, "expected type FileInfo, found: " +cacheObj.getClass().getName() );
+            return null;
         }
-        return fd;
     }
 }
 
