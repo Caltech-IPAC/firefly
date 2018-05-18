@@ -86,8 +86,10 @@ export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 export const RegionSelectStyle = ['UprightBox', 'DottedOverlay', 'SolidOverlay',
                                   'DottedReplace', 'SolidReplace'];
-export const  defaultRegionSelectColor = '#DAA520';   // golden
-export const  defaultRegionSelectStyle = RegionSelectStyle[0];
+export const defaultRegionSelectColor = '#DAA520';   // golden
+export const defaultRegionSelectStyle = RegionSelectStyle[0];
+export const RegionSelColor = 'selectColor';
+export const RegionSelStyle = 'selectStyle';
 
 
 export function getRegionSelectStyle(style = defaultRegionSelectStyle) {

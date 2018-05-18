@@ -49,6 +49,7 @@ import Catalog from '../drawingLayers/Catalog.js';
 import Artifact from '../drawingLayers/Artifact.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 import HiPSGrid from '../drawingLayers/HiPSGrid.js';
+import HiPSMOC from '../drawingLayers/HiPSMOC.js';
 
 import RegionPlot from '../drawingLayers/RegionPlot.js';
 import MarkerTool from '../drawingLayers/MarkerTool.js';
@@ -100,7 +101,7 @@ const actionCreators = new Map();
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
                                                      Catalog, Artifact, WebGrid, RegionPlot,
-                                                     MarkerTool, FootprintTool, HiPSGrid,
+                                                     MarkerTool, FootprintTool, HiPSGrid, HiPSMOC,
                                                      ImageOutline);
 
 /**

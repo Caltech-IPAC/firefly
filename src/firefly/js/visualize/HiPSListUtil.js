@@ -133,7 +133,7 @@ function updateHiPSId(id, sources) {
  *  @param {string} params.sources HiPS sources to be searched, the sequence determines the order in the merged list
  *  @param {string} params.sourceMergePriority the sequence determines the priority in the merged list
  */
-export function onHiPSSurveys({dataTypes, id, sources=getDefHiPSSources(),
+function onHiPSSurveys({dataTypes, id, sources=getDefHiPSSources(),
                                               sourceMergePriority = getHiPSMergePriority()}) {
     if (!sources) return;
 

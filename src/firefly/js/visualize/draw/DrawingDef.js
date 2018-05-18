@@ -46,7 +46,7 @@ export const TextLocation = new Enum([ 'DEFAULT',
     'REGION_SW',
     'CENTER']); // use MID_X, MID_X_LONG, MID_Y, MID_Y_LONG for vertical or horizontal lines
 
-export const Style= new Enum(['STANDARD','HANDLED', 'LIGHT']);
+export const Style= new Enum(['STANDARD','HANDLED', 'LIGHT', 'FILL']);
 
 export const DEFAULT_FONT_SIZE = '9pt';
 

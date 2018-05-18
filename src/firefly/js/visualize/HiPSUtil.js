@@ -441,3 +441,18 @@ export function resolveHiPSConstant(c) {
 
 }
 
+
+/**
+ * get property value, some key may have alternate one to get the value, need more investigation
+ * @param properties
+ * @param pkey
+ * @returns {*}
+ */
+
+export function getPropertyItem(properties, pkey) {
+    if (pkey === 'ivoid') {
+        return properties['creator_did'] || properties['publisher_did'];
+    } else {
+        return properties[pkey];
+    }
+}

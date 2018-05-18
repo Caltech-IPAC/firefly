@@ -6,7 +6,7 @@ import VisUtil, {convertAngle} from '../VisUtil.js';
 import ShapeDataObj, {rectOnImage, lengthToImagePixel, widthAfterRotation, heightAfterRotation } from './ShapeDataObj.js';
 import {makeScreenPt, makeImagePt} from '../Point.js';
 import {get, isNil, set, has, cloneDeep} from 'lodash';
-import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
+import {defaultRegionSelectColor, defaultRegionSelectStyle, RegionSelColor, RegionSelStyle} from '../DrawLayerCntlr.js';
 import {TextLocation} from './DrawingDef.js';
 import {SimplePt} from '../Point.js';
 import {isHiPS} from '../WebPlot.js';
@@ -754,8 +754,8 @@ function makeHighlightOnRegion(drawObj, color, style, lineW) {
  * @returns {*}
  */
 export function makeHighlightShapeDataObj(drawObj, cc, def) {
-    var color = def && has(def, 'selectColor') ? def.selectColor : defaultRegionSelectColor;
-    var style = def && has(def, 'selectStyle') ? def.selectStyle : defaultRegionSelectStyle;
+    var color = def && has(def, RegionSelColor) ? def[RegionSelColor] : defaultRegionSelectColor;
+    var style = def && has(def, RegionSelStyle) ? def[RegionSelStyle] : defaultRegionSelectStyle;
 
     if (style !== defaultRegionSelectStyle) {
         return makeHighlightOnRegion(drawObj, color, style, (def&&has(def, 'lineWidth') ? def.lineWidth : 0));

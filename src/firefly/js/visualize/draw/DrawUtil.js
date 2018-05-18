@@ -13,7 +13,7 @@ export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, draw
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
                 drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize,
-                getSymbolSize, getSymbolSizeBasedOn};
+                getSymbolSize, getSymbolSizeBasedOn, beginFillPath, endFillPath, fillPath};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     let slope= NaN;
@@ -247,6 +247,30 @@ function stroke(ctx) {
     ctx.restore();
 }
 
+/**
+ * start fill path
+ * @param {object} ctx
+ * @param {string} color
+ * @param {object} [renderOptions]
+ */
+function beginFillPath(ctx,color,renderOptions) {
+    ctx.save();
+    ctx.fillStyle=color;
+    if (renderOptions) addStyle(ctx,renderOptions);
+    ctx.beginPath();
+}
+
+/**
+ * end fill path
+ * @param ctx
+ * @param close
+ */
+function endFillPath(ctx, close = true) {
+    if (close) ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
 function addStyle(ctx,renderOptions) {
     if (!ctx || !renderOptions) return;
     const {shadow,rotAngle,translation, lineDash}= renderOptions;
@@ -314,7 +338,6 @@ function drawLine(ctx,color, lineWidth, sx, sy, ex, ey,renderOptions) {
     ctx.restore();
 }
 
-
 function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
     ctx.save();
     if (renderOptions) addStyle(ctx,renderOptions);
@@ -330,6 +353,19 @@ function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
     ctx.restore();
 }
 
+function fillPath(ctx, color, pts, close, renderOptions) {
+    ctx.save();
+    if (renderOptions) addStyle(ctx,renderOptions);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+
+    pts.forEach( (pt,idx) => {
+        (idx===0) ? ctx.moveTo(pt.x,pt.y) : ctx.lineTo(pt.x,pt.y);
+    });
+    if (close) ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
 
 function rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) {
     const pti = plot.getScreenCoords(worldPt);
