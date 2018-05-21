@@ -28,7 +28,10 @@ spec:
         - name: MANAGER
           value: "TRUE"
         - name: ADMIN_PASSWORD
-          value: "lsst"
+          valueFrom:
+            secretKeyRef:
+              name: firefly-secret
+              key: ADMIN_PASSWORD
         - name: FIREFLY_OPTS
           value: "-Dvisualize.fits.search.path=/datasets"
         - name: MAX_JVM_SIZE
