@@ -18,7 +18,7 @@ import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {makeHistogramParams, makeXYPlotParams} from './ChartUtil.js';
-import {dispatchUpdateCustom, getMultiViewRoot, getViewer} from "../visualize/MultiViewCntlr";
+import {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;

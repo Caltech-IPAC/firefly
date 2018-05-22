@@ -117,6 +117,19 @@ export function getViewer(channel,file=defaultViewerFile) {
     }
 }
 
+/**
+ * wrapper function to return the API's getViewer object.  This allow one firefly app to
+ * gain access to another app's API.  To use this function, it should be loaded first.  @see ApiViewer#loadRemoteApi
+ * @param {object} p            parmeter
+ * @param {String} [p.channel]  default to current connected channel.
+ * @param {String} [p.file]     url path, or the html file to load.  Defaults to blank(index of the app).
+ * @param {String} [p.iframeId]
+ */
+export function getRemoteViewer({channel, file, iframeId}) {
+    const win = iframeId ? document.getElementById(iframeId).contentWindow : window;
+    const getViewer = get(win, 'firefly.getViewer');
+    return getViewer && getViewer(channel, file);
+}
 
 function buildSlateControl(channel,file,dispatcher) {
 

@@ -404,6 +404,25 @@ export function downloadViaAnchor(url, filename) {
     downloadAnchor.click();
 }
 
+export function loadRemoteApi({url, id}) {
+    id = id || 'div_' + new Date().getTime();
+    let apiFrame = document.getElementById(id);
+    if (apiFrame) return;
+
+    apiFrame = document.createElement('iframe');
+    apiFrame.id = id;
+    apiFrame.style.display = 'none';
+    apiFrame.style.width = '0px';
+    apiFrame.style.height = '0px';
+    document.body.appendChild(apiFrame);
+    apiFrame.onload = () => {
+        const myscript = document.createElement('script');
+        myscript.type = 'text/javascript';
+        myscript.src = url;
+        const headEl = apiFrame.contentDocument.getElementsByTagName('head')[0];
+        headEl.appendChild(myscript);
+    };
+}
 
 export function parseUrl(url) {
     const parser = document.createElement('a');
