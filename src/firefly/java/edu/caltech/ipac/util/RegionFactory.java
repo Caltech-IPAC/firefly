@@ -165,6 +165,7 @@ public class RegionFactory {
                     }
                 }
 
+                region_type = region_type.toLowerCase();
                 boolean isWorldCoord = isWorldCoords(coordSys);
                 if (st.hasMoreToken()) {
 
@@ -204,7 +205,7 @@ public class RegionFactory {
                     }
                     else if (isPointTypeTwo(virtualLineNoInclude)) {
                         if (st.hasMoreToken()) {
-                            if (st.nextToken().equals("point")) {
+                            if (st.nextToken().toLowerCase().equals("point")) {
                                 WorldPt wp= parseWorldPt(coordSys, st.nextToken(), st.nextToken());
                                 RegionPoint.PointType pointType = convertPointType(region_type);
                                 if (options!=null)  ops= parseRegionOption(options,globalOps,include);
@@ -568,15 +569,19 @@ public class RegionFactory {
                     unit= RegionValue.Unit.ARCMIN;
                     break;
                 case 'd':      // degrees
+                case 'D':
                     unit= RegionValue.Unit.DEGREE;
                     break;
                 case 'r':      // radians
+                case 'R':
                     unit= RegionValue.Unit.RADIANS;
                     break;
                 case 'p':      // physical
+                case 'P':
                     unit= RegionValue.Unit.SCREEN_PIXEL;
                     break;
                 case 'i':      // image
+                case 'I':
                     unit= RegionValue.Unit.IMAGE_PIXEL;
                     break;
                 default:
@@ -728,7 +733,7 @@ public class RegionFactory {
         else if (s.equalsIgnoreCase("cross"))     retval = RegionPoint.PointType.Cross;
         else if (s.equalsIgnoreCase("x"))         retval = RegionPoint.PointType.X;
         else if (s.equalsIgnoreCase("arrow"))     retval = RegionPoint.PointType.Arrow;
-        else if (s.equals("boxcircle")) retval = RegionPoint.PointType.BoxCircle;
+        else if (s.equalsIgnoreCase("boxcircle")) retval = RegionPoint.PointType.BoxCircle;
         return retval;
     }
 
