@@ -165,6 +165,7 @@ public class RegionFactory {
                     }
                 }
 
+                region_type = region_type.toLowerCase();
                 boolean isWorldCoord = isWorldCoords(coordSys);
                 if (st.hasMoreToken()) {
 
@@ -204,7 +205,7 @@ public class RegionFactory {
                     }
                     else if (isPointTypeTwo(virtualLineNoInclude)) {
                         if (st.hasMoreToken()) {
-                            if (st.nextToken().equals("point")) {
+                            if (st.nextToken().toLowerCase().equals("point")) {
                                 WorldPt wp= parseWorldPt(coordSys, st.nextToken(), st.nextToken());
                                 RegionPoint.PointType pointType = convertPointType(region_type);
                                 if (options!=null)  ops= parseRegionOption(options,globalOps,include);
@@ -559,7 +560,7 @@ public class RegionFactory {
         {
 	    /* remove trailing character */
             radius_string = radius_string.substring(0, radius_string.length() - 1);
-            switch(unit_char)
+            switch(Character.toLowerCase(unit_char))
             {
                 case '"':      // arcsec
                     unit= RegionValue.Unit.ARCSEC;
@@ -728,7 +729,7 @@ public class RegionFactory {
         else if (s.equalsIgnoreCase("cross"))     retval = RegionPoint.PointType.Cross;
         else if (s.equalsIgnoreCase("x"))         retval = RegionPoint.PointType.X;
         else if (s.equalsIgnoreCase("arrow"))     retval = RegionPoint.PointType.Arrow;
-        else if (s.equals("boxcircle")) retval = RegionPoint.PointType.BoxCircle;
+        else if (s.equalsIgnoreCase("boxcircle")) retval = RegionPoint.PointType.BoxCircle;
         return retval;
     }
 

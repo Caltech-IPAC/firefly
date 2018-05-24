@@ -11,7 +11,6 @@ import ShapeDataObj from '../draw/ShapeDataObj.js';
 import {DrawSymbol, make as makePoint } from '../draw/PointDataObj.js';
 import {union, isArray} from 'lodash';
 import {TextLocation} from '../draw/DrawingDef.js';
-import Point from '../Point.js';
 
 export const DEFAULT_TEXTLOC = {
     [RegionType.circle.key]: TextLocation.CIRCLE_SE,
@@ -207,7 +206,7 @@ function updateDrawobjProp(rgPropAry, rgOptions, dObj) {
                 if (dObj.text) {
                     var x = get(rgOptions, regionPropsList.OFFX, getRegionDefault(regionPropsList.OFFX));
                     var y = get(rgOptions, regionPropsList.OFFY, getRegionDefault(regionPropsList.OFFY));
-                    if (x != 0 || y != 0) {
+                    if (x !== 0 || y !== 0) {
                         dObj.textOffset = makeOffsetPt(x, y);
                     }
                 }
@@ -333,10 +332,10 @@ function drawRegionAnnulus(regionObj) {
  * make one drawobj for box with ratote angle, makeRectangleByCenter is used
  * @param w  width
  * @param h  height
+ * @param a rotation angle
  * @param wp center of box
  * @param options region properties
  * @param propChkAry property cheeck list
- * @param a rotation angle
  * @param isOnWorld
  * @returns {*}
  */
@@ -485,10 +484,10 @@ function drawRegionPolygon(regionObj) {
  * make one drawobj for ellipse with ratote angle, makeEllipse is used
  * @param r1  radius1
  * @param r2  radius2
+ * @param a rotation angle
  * @param wp center of ellipse
  * @param options region properties
  * @param propChkAry property cheeck list
- * @param a rotation angle
  * @param isOnWorld
  * @returns {*}
  */
