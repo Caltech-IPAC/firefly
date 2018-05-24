@@ -560,7 +560,7 @@ public class RegionFactory {
         {
 	    /* remove trailing character */
             radius_string = radius_string.substring(0, radius_string.length() - 1);
-            switch(unit_char)
+            switch(Character.toLowerCase(unit_char))
             {
                 case '"':      // arcsec
                     unit= RegionValue.Unit.ARCSEC;
@@ -569,19 +569,15 @@ public class RegionFactory {
                     unit= RegionValue.Unit.ARCMIN;
                     break;
                 case 'd':      // degrees
-                case 'D':
                     unit= RegionValue.Unit.DEGREE;
                     break;
                 case 'r':      // radians
-                case 'R':
                     unit= RegionValue.Unit.RADIANS;
                     break;
                 case 'p':      // physical
-                case 'P':
                     unit= RegionValue.Unit.SCREEN_PIXEL;
                     break;
                 case 'i':      // image
-                case 'I':
                     unit= RegionValue.Unit.IMAGE_PIXEL;
                     break;
                 default:
