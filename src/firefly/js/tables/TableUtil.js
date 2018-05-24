@@ -818,7 +818,7 @@ export function isTableUsingRadians(tableOrMeta) {
 }
 
 export function createErrorTbl(tbl_id, error) {
-    return set({tbl_id, error}, 'tableMeta.Loading-Status', 'COMPLETED');
+    return set({tbl_id, error: error||'something went wrong'}, 'tableMeta.Loading-Status', 'COMPLETED');
 }
 
 

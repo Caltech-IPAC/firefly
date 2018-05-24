@@ -83,7 +83,7 @@ public class LSSTDbServTest extends ConfigTest {
 		try {
 			String sql = "query=" + URLEncoder.encode(query, "UTF-8");
 
-			String url = "http://" + LSSTQuery.HOST + ":" + LSSTQuery.PORT + "/db/v0/tap/sync";
+			String url = LSSTQuery.DBSERVURL;
 			File file = File.createTempFile("lssttest", "json");
 			file.deleteOnExit();
 			Map<String, String> requestHeader = new HashMap<>();
@@ -115,11 +115,11 @@ public class LSSTDbServTest extends ConfigTest {
 	 */
 	private static boolean dbservAvailable() {
 		try {
-			URL urlServer = new URL("http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/db/v0/tap/");
+			URL urlServer = new URL(LSSTQuery.DBSERVURL);
 			HttpURLConnection urlConn = (HttpURLConnection) urlServer.openConnection();
 			urlConn.setConnectTimeout(3000); // 3 seconds timeout
 			urlConn.connect();
-			return urlConn.getResponseCode() == 200;
+			return urlConn.getResponseCode() == 405; //HTTP 405 Method Not Allowed
 		} catch (IOException e) {
 		    LOG.info("dbserv is not available "+e.getMessage());
 			return false;

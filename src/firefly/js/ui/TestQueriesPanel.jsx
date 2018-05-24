@@ -256,7 +256,7 @@ function lsstSearchSubmit(isDD) {
 
        });
     } else {//Catalog Search
-        tReq = makeTblRequest('LSSTCataLogSearch', 'RunDeepForcedSource', {
+        tReq = makeTblRequest('LSSTCatalogSearch', 'RunDeepForcedSource', {
             'table_name': 'RunDeepForcedSource',
             'table_path': '/hydra/cm/firefly_test_data/DAXTestData/',
             'meta_table':  'RunDeepForcedSource',

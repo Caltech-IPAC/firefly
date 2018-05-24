@@ -34,7 +34,7 @@ import java.util.concurrent.TimeoutException;
  */
 
 @SearchProcessorImpl(id = "LSSTMultiObjectSearch")
-public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
+public class LSSTMultiObjectSearch extends LSSTCatalogSearch {
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -121,7 +121,7 @@ public class LSSTMultiObjectSearch extends LSSTCataLogSearch{
         @Override
         public DataGroup call() throws Exception {
 
-            TableServerRequest req = new TableServerRequest("LSSTCataLogSearch");
+            TableServerRequest req = new TableServerRequest("LSSTCatalogSearch");
 
             req.setParam("UserTargetWorldPt", inRow.getDataElement("ra").toString()+";"+ inRow.getDataElement("dec").toString());
             req.setParam(CatalogRequest.RADIUS, radius);
