@@ -33,11 +33,11 @@ import java.util.Map;
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    public static final String PORT = "5000";
+    public static final String PORT = AppProperties.getProperty("lsst.dax.port","5001");
     public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
 
-    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL","http://lsst-qserv-dax01:8080/sync/");
-    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL","http://lsst-qserv-dax01:5000/meta/v1/db/");
+    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL","http://lsst-qserv-dax01:8080/api/db/v1/tap/sync/");
+    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL","http://"+ HOST +":"+PORT+"/api/meta/v1/db/");
 
     //set default timeout to 180 seconds
     private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 180);

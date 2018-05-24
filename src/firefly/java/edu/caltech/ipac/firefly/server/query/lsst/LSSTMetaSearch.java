@@ -114,10 +114,10 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
         JSONObject obj = ( JSONObject) parser.parse(new FileReader(file ));
 
-        // https://jira.lsstcorp.org/browse/DM-14385 "result:" -> "result"
-        JSONObject result = (JSONObject) obj.get("result:");
+        JSONObject result = (JSONObject) obj.get("result");
         if (result == null) {
-            result = (JSONObject) obj.get("result");
+            _log.error("No result entry in "+file.getAbsolutePath());
+            return new DataGroup("No result", new DataType[0]); // should not happen
         }
         JSONArray columns = (JSONArray) (result).get("columns");
 

@@ -31,9 +31,9 @@ public class LSSTImgServTest extends ConfigTest {
                 // deep coadd image
                 String deepCoaddUrl = LSSTImageSearch.createURLForDeepCoadd("0", "225,1", "r");
                 // calexp cutout
-                String ccdCutoutUrl = LSSTImageSearch.DAX_URL+"?ds=calexp&sid=5646240694&ra=37.6292&dec=0.104625&width=300.0&height=450.0&unit=arcsec";
+                String ccdCutoutUrl = LSSTImageSearch.IMGSERVURL+"?ds=calexp&sid=5646240694&ra=37.6292&dec=0.104625&width=300.0&height=450.0&unit=arcsec";
                 // deep coadd cutout
-                String deepCoaddCutoutUrl = LSSTImageSearch.DAX_URL+"?ds=deepcoadd&ra=19.36995&dec=-0.3147&filter=r&width=300&height=400&unit=arcsec";
+                String deepCoaddCutoutUrl = LSSTImageSearch.IMGSERVURL+"?ds=deepcoadd&ra=19.36995&dec=-0.3147&filter=r&width=300&height=400&unit=arcsec";
 
                 String[] urls = {ccdUrl, deepCoaddUrl, ccdCutoutUrl, deepCoaddCutoutUrl};
                 boolean passed;
