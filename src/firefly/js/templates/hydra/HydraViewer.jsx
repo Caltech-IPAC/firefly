@@ -179,7 +179,7 @@ function showExpandedView ({expanded,  images}) {
                 );
     }
     return (
-        <div style={{ flexGrow: 1, overflow: 'hidden'}}>
+        <div style={{ display: 'flex', flexGrow: 1, overflow: 'hidden'}}>
             {view}
         </div>
     );

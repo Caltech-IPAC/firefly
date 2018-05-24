@@ -730,7 +730,7 @@ export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
     const colWidths = calcColumnWidths(columns, dataAry);
     const meta = tableMeta && Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`).join('\n');
     const head = [
-                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.name, colWidths[idx])),
+                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.label || c.name, colWidths[idx])),
                     columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.type, colWidths[idx])),
                     showUnits && columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.units, colWidths[idx]))
                 ]
