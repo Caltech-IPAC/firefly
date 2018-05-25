@@ -357,7 +357,7 @@ function tblResultsAdded(action) {
             var {tbl_id, title, options={}, tbl_ui_id} = action.payload;
 
             title = title || tbl_id;
-            options = Object.assign({tbl_group: 'main', removable: true}, options);
+            options = Object.assign({tbl_group: 'main', removable: true, setAsActive:true}, options);
             const pageSize = get(options, 'pageSize');
             if ( pageSize && !Number.isInteger(pageSize)) {
                 options.pageSize = parseInt(pageSize);
@@ -366,7 +366,9 @@ function tblResultsAdded(action) {
                 tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
                 dispatch({type: TBL_RESULTS_ADDED, payload: {tbl_id, title, tbl_ui_id, options}});
             }
-            dispatchActiveTableChanged(tbl_id, options.tbl_group);
+            if (options.setAsActive) {
+                dispatchActiveTableChanged(tbl_id, options.tbl_group);
+            }
         }
     };
 }
