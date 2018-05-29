@@ -1,10 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, isArray, truncate, uniqueId} from 'lodash';
-import {COL_TYPE, getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
+import {get, isArray, isUndefined, truncate, uniqueId} from 'lodash';
+import {getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits} from '../ChartsCntlr.js';
+import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
 import {formatColExpr, getDataChangesForMappings, replaceQuotesIfSurrounding, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows} from '../ChartUtil.js';
 
 
@@ -20,14 +20,16 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     if (mappings) {
         const options = Object.assign({}, mappings);
 
-        if (hasUpperLimits(chartId, traceNum)) {
+        if (hasUpperLimits(chartId, traceNum) || hasLowerLimits(chartId, traceNum)) {
             const {layout, data, fireflyData} = getChartData(chartId);
             const {range=[], autorange=true, type='linear'} = get(layout, 'yaxis', {});
             const symbol = getTraceSymbol(data, fireflyData, traceNum);
+            const mode = get(data, `${traceNum}.mode`);
             const reversed = (autorange === 'reversed') || (range[1] < range[0]);
             options['ytype'] = type;
             options['yreversed'] = reversed;
             options['symbol'] = symbol;
+            options['mode'] = mode;
         }
         return {options, fetchData};
 
@@ -122,8 +124,6 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     // default axes labels for the first trace (remove surrounding quotes, if any)
     const xLabel = replaceQuotesIfSurrounding(get(mappings, 'x'));
     const yLabel = replaceQuotesIfSurrounding(get(mappings, 'y'));
-    const xTipLabel = truncate(xLabel, {length: 20});
-    const yTipLabel = truncate(yLabel, {length: 20});
 
     const colors = get(changes, [`data.${traceNum}.marker.color`]);
     let cTipLabel = isArray(colors) ? get(mappings, 'marker.color') : '';
@@ -146,43 +146,60 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
 
     // set default title if it's the first trace
     // and no title is set by the user
+    let xAxisLabel = get(layout, 'xaxis.title');
+    let yAxisLabel = get(layout, 'yaxis.title');
     if (data && data.length === 1) {
-        const xAxisLabel = get(layout, 'xaxis.title');
         if (!xAxisLabel) {
-            changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
+            xAxisLabel = xLabel + (xUnit ? ` (${xUnit})` : '');
+            changes['layout.xaxis.title'] = xAxisLabel;
         }
-        const yAxisLabel = get(layout, 'yaxis.title');
+
         if (!yAxisLabel) {
-            changes['layout.yaxis.title'] = yLabel + (yUnit ? ` (${yUnit})` : '');
+            yAxisLabel = yLabel + (yUnit ? ` (${yUnit})` : '');
+            changes['layout.yaxis.title'] = yAxisLabel;
         }
     }
+
+
 
     const x = get(changes, [`data.${traceNum}.x`]);
     if (!x) return;
 
-    // handle upper limits: update new or erase old
-    let annotations = [];
+    // point tooltip labels
+    let xTipLabel = truncate(xLabel, {length: 20});
+    let yTipLabel = truncate(yLabel, {length: 20});
+
+    const {xTTLabelSrc, yTTLabelSrc} = get(fireflyData, traceNum, {});
+    if (xTTLabelSrc) {
+        xTipLabel = (xTTLabelSrc === 'axis') ? (xAxisLabel || 'x') : 'x';
+    }
+    if (yTTLabelSrc) {
+        yTipLabel = (yTTLabelSrc === 'axis') ? (yAxisLabel || 'y') : 'y';
+    }
+
+    // handle limits: update new or erase old
+    const annotations = [];
     const symbol = getTraceSymbol(data, fireflyData, traceNum);
-    if (mappings[`fireflyData.${traceNum}.yMax`]) {
-        // if there is an upper limit value and no y value, y is set to upper limit value
+    if (mappings[`fireflyData.${traceNum}.yMax`] || mappings[`fireflyData.${traceNum}.yMin`]) {
+        // if there is a limit value and no y value, y is set to the limit value
         let numNewPts = 0;
         let symbolArr = undefined;
         const arrowcolor = get(data, `${traceNum}.marker.color`);
         const {range = [], autorange = true, type: ytype} = get(layout, 'yaxis', {});
         const {type: xtype} = get(layout, 'xaxis', {});
         const reversed = (autorange === 'reversed') || (range[1] < range[0]);
-        const sign = reversed ? -1 : 1;
+        let sign = reversed ? -1 : 1;
 
+        // there should be an upper limit value or lower limit value, but not both at the same time
+        // both will appear if present, but there a single point value associated with both limits
+        // if we have a use case, we can think how to handle it
 
-
-        // per trace annotations
-        annotations = changes[`fireflyData.${traceNum}.yMax`].map((v, i) => {
-
+        const addAnnotations = (v, i) => {
             let yy = parseFloat(v);
             if (Number.isFinite(yy)) {
                 // create a point if not present and change its symbol
                 if (!Number.isFinite(parseFloat(changes[`data.${traceNum}.y`][i]))) {
-                    changes[`data.${traceNum}.y`][i] = changes[`fireflyData.${traceNum}.yMax`][i];
+                    changes[`data.${traceNum}.y`][i] = v;
                     // change the symbol
                     if (numNewPts === 0) {
                         symbolArr = new Array(x.length);
@@ -193,14 +210,20 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
                 }
 
 
-
                 // annotation position should take into account axis type
                 let xx = parseFloat(changes[`data.${traceNum}.x`][i]);
-                if (xtype === 'log') { xx = Math.log10(xx); }
+                if (xtype === 'log') {
+                    xx = Math.log10(xx);
+                }
 
-                if (ytype === 'log') { yy = Math.log10(yy); }
+                if (ytype === 'log') {
+                    yy = Math.log10(yy);
+                }
 
-                return {
+                if (isUndefined(annotations[i])) {
+                    annotations[i] = [];
+                }
+                annotations[i].push({
                     x: xx,
                     y: yy,
                     xref: 'x',
@@ -212,11 +235,20 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
                     yshift: sign * (-30),
                     standoff: 10,
                     arrowcolor
-                };
-            } else {
-                return undefined;
+                });
             }
-        });
+        };
+
+        // per trace annotations
+        const upperLimitArray = changes[`fireflyData.${traceNum}.yMax`];
+        if (upperLimitArray) { upperLimitArray.forEach(addAnnotations); }
+
+        const lowerLimitArray = changes[`fireflyData.${traceNum}.yMin`];
+        if (lowerLimitArray) {
+            sign = -sign;
+            lowerLimitArray.forEach(addAnnotations);
+        }
+
         // set an array of marker symbols
         if (numNewPts > 0) {
             changes[`data.${traceNum}.marker.symbol`] = symbolArr;

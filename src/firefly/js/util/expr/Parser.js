@@ -9,11 +9,21 @@ import * as Expr from './Expr.js';
 import {Scanner} from './Scanner.js';
 
 // Built-in constants
-const pi = makeVariable('pi');
-pi.setValue(Math.PI);
+
+// JDBC defines function pi() - no need for a constant
+//const pi = makeVariable('pi');
+//pi.setValue(Math.PI);
+
+const nullVal = makeVariable('NULL');
+nullVal.setValue(null);
 
 const operatorChars = '*/+-^<>=,()';
 
+const procs0 = ['pi'];
+
+const rators0 = [
+    Expr.PI
+];
 
 const procs1 = [
         'abs', 'acos', 'asin', 'atan',
@@ -37,6 +47,14 @@ const rators2 = [
     Expr.ATAN2, Expr.MAX, Expr.MIN, Expr.POW, Expr.IFNULL
 ];
 
+const procs3 = [
+    'nvl2'
+];
+
+const rators3 = [
+    Expr.NVL2
+];
+
 /**
  Parses strings representing mathematical formulas with variables.
  The following operators, in descending order of precedence, are
@@ -54,14 +72,19 @@ const rators2 = [
 
  ^ associates right-to-left; other operators associate left-to-right.
 
+
+ <P>These nullary functions are defined:
+ pi
+
  <P>These unary functions are defined:
  abs, acos, asin, atan,
  ceil, cos, exp, floor,
  log, round, sin, sqrt,
  tan.  Each requires one argument enclosed in parentheses.
 
- <P>There are also binary functions: atan2, min, max; and a ternary
- conditional function: if(test, then, else).
+ <P>There are also binary functions: atan2, min, max;
+ ternary functions: nvl2 (HyperSQL);
+ and a ternary conditional function: if(test, then, else).
 
  <P>Whitespace outside identifiers is ignored.
 
@@ -111,7 +134,8 @@ const rators2 = [
             return;
         } else if (!this.allowedVariables) {
             this.allowedVariables = new Set();
-            this.allowedVariables.add(pi);
+            //this.allowedVariables.add(pi);
+            this.allowedVariables.add(nullVal);
         }
         this.allowedVariables.add(optVariable);
     }
@@ -224,6 +248,14 @@ const rators2 = [
                 return lit;
             }
             case Token.TT_WORD: {
+                for (i = 0; i < procs0.length; ++i) {
+                    if (procs0[i]===this.token.sval) {
+                        this.nextToken();
+                        this.expect('(');
+                        this.expect(')');
+                        return Expr.makeApp0(rators0[i]);
+                    }
+                }
                 for (i = 0; i < procs1.length; ++i) {
                     if (procs1[i]===this.token.sval) {
                         this.nextToken();
@@ -242,6 +274,19 @@ const rators2 = [
                         const rand2 = this.parseExpr(0);
                         this.expect(')');
                         return Expr.makeApp2(rators2[i], rand1, rand2);
+                    }
+                }
+                for (i = 0; i < procs3.length; ++i) {
+                    if (procs3[i]===this.token.sval) {
+                        this.nextToken();
+                        this.expect('(');
+                        const rand1 = this.parseExpr(0);
+                        this.expect(',');
+                        const rand2 = this.parseExpr(0);
+                        this.expect(',');
+                        const rand3 = this.parseExpr(0);
+                        this.expect(')');
+                        return Expr.makeApp3(rators3[i], rand1, rand2, rand3);
                     }
                 }
                 if (this.token.sval === 'if') {
