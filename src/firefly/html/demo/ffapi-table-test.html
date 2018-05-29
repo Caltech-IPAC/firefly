@@ -82,7 +82,7 @@
             }
             if (a["meta-info"].value.trim()) {
                 var META_INFO = JSON.parse(a["meta-info"].value);
-                request.META_INFO = META_INFO;
+                Object.assign(request.META_INFO, META_INFO);
             }
 
             firefly.showTable('table-display', request, options);
