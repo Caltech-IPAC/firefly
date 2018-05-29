@@ -65,8 +65,8 @@ export class HeaderCell extends PureComponent {
                         {label || name}
                         { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
                     </div>
-                    {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic', color: 'brown'}}>{typeVal}</div>}
                     {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
+                    {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic'}}>{typeVal}</div>}
                 </div>
                 {showFilters && filter}
             </div>
@@ -98,8 +98,8 @@ export class SelectableHeader extends Component {
                        tabIndex={-1}
                        checked={checked}
                        onChange={(e) => onSelectAll(e.target.checked)}/>
-                {showTypes && <div/>}
                 {showUnits && <div/>}
+                {showTypes && <div/>}
                 {showFilters && <img className='clickable'
                                      style={{marginBottom: 3}}
                                      src={FILTER_SELECTED_ICO}
