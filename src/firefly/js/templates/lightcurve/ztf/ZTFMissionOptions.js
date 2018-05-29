@@ -78,12 +78,12 @@ export function isValidZTFTable() {
 
     const tableModel = getTblById(LC.RAW_TABLE);
 
-    const pid = getCellValue(tableModel, 0, 'pid');
-    if (!isNil(pid)) {
+    const field = getCellValue(tableModel, 0, 'field');
+    if (!isNil(field)) {
         return {errorMsg: undefined, isValid: true};
     }
     else {
-         const errorMsg = `The uploaded table is not valid. The ZTF option requires pid.
+         const errorMsg = `The uploaded table is not valid. The ZTF option requires field.
                         Please select the "Other" upload option for tables that do not meet these requirements.`;
         return {errorMsg, isValid:false};
    }
@@ -173,7 +173,7 @@ export function ztfDownloaderOptPanel (mission, cutoutSizeInDeg) {
                     DataSource: `${mission} images`,
                     FileGroupProcessor: 'ZtfLcDownload',
                     ProductLevel:'sci',
-                    schema:'images',
+                    schema:'products',
                     table:'sci'
                 }}>
                 <ValidationField

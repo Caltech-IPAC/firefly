@@ -25,7 +25,7 @@ public class ZtfRefimsFileRetrieve extends URLFileInfoProcessor {
     public static final String ZTF_FILESYSTEM_BASEPATH = AppProperties.getProperty("ztf.filesystem_basepath");
 
     public static enum FILE_TYPE {
-        REFIMAGE, REFCOV, REFUNC, REFSEXCAT, REFPSFCAT
+        REFIMAGE, REFCOV, REFUNC, REFSEXCAT, REFPSFCAT, REFIMLOG, REFLOG
     }
 
     public static String createCutoutURLString_l2(String baseUrl,String field,String filtercode,String ccdid,String qid,FILE_TYPE type,String lon,String lat,String size) {
@@ -67,15 +67,19 @@ public class ZtfRefimsFileRetrieve extends URLFileInfoProcessor {
         String refbaseFile = refbaseDir + "ztf_" + formatfield + "_" + filtercode +"_c" + formatccdid + "_q" + qid;
 
         if (type == FILE_TYPE.REFIMAGE) {
-            refbaseFile += "_refimg.fits";
+            refbaseFile += ZtfRequest.REFIMAGE;
         } else if (type == FILE_TYPE.REFCOV) {
-            refbaseFile += "_refcov.fits";
+            refbaseFile += ZtfRequest.REFCOV;
         } else if (type == FILE_TYPE.REFPSFCAT) {
-            refbaseFile += "_refsexcat.fits";
+            refbaseFile += ZtfRequest.REFPSFRFCAT;
         } else if (type == FILE_TYPE.REFSEXCAT) {
-            refbaseFile += "_refpsfcat.fits";
+            refbaseFile += ZtfRequest.REFSEXRDCAT;
         } else if (type == FILE_TYPE.REFUNC) {
-            refbaseFile += "_refunc.fits";
+            refbaseFile += ZtfRequest.REFUNC;
+        } else if (type == FILE_TYPE.REFIMLOG) {
+            refbaseFile += ZtfRequest.REFIMLOG;
+        } else if (type == FILE_TYPE.REFLOG) {
+            refbaseFile += ZtfRequest.REFLOG;
         }
 
         return refbaseFile;

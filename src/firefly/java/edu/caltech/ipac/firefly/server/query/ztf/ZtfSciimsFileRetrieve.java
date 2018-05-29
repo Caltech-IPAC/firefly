@@ -6,6 +6,7 @@ import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
+//import edu.caltech.ipac.firefly.server.query.ztf.ZtfRequest;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -16,7 +17,6 @@ import java.net.URL;
  * edu.caltech.ipac.hydra.server.query
  */
 
-
 @SearchProcessorImpl(id = "ZtfSciimsFileRetrieve")
 public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
 
@@ -25,7 +25,7 @@ public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
     public static final String ZTF_FILESYSTEM_BASEPATH = AppProperties.getProperty("ztf.filesystem_basepath");
 
     public static enum FILE_TYPE {
-        SCI, MASK, RAW, SEXCATL, PSFCATL
+        SCI,MASK,RAW,SEXCATL,PSFCATL,SCIIMGDAO,SCIIMGDAOPSFCENT,SCIIMLOG,SCIMREFDIFFIMG,DIFFIMGPSF,DIFFIMLOG,SCILOG
     }
 
     // example: http://irsadev.ipac.caltech.edu/ibe/data/ztf/products/sci?lon={center lon}&lat={center lat}&size={subsize}
@@ -75,15 +75,29 @@ public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
         String rawbaseFile = rawbaseDir + "ztf_" + filefracday + "_" + formatfield +"_" + filtercode +"_c" + formatccdid + "_o.fits.fz";
 
         if (type == FILE_TYPE.SCI) {
-            baseFile += "_sciimg.fits";
+            baseFile += ZtfRequest.SCIIMAGE;
         } else if (type == FILE_TYPE.MASK) {
-            baseFile += "_mskimg.fits";
+            baseFile += ZtfRequest.MSKIMAGE;
         } else if (type == FILE_TYPE.SEXCATL) {
-            baseFile += "_sexcat.fits";
+            baseFile += ZtfRequest.SEXCATL;
         } else if (type == FILE_TYPE.PSFCATL) {
-            baseFile += "_psfcat.fits";
+            baseFile += ZtfRequest.PSFCATL;
         } else if (type == FILE_TYPE.RAW) {
             baseFile = rawbaseFile;
+        } else if (type == FILE_TYPE.SCIIMGDAO) {
+            baseFile += ZtfRequest.SCIIMGDAO;
+        } else if (type == FILE_TYPE.SCIIMGDAOPSFCENT) {
+            baseFile += ZtfRequest.SCIIMGDAOPSFCEN;
+        } else if (type == FILE_TYPE.SCIIMLOG) {
+            baseFile += ZtfRequest.SCIIMLOG;
+        } else if (type == FILE_TYPE.SCIMREFDIFFIMG) {
+            baseFile += ZtfRequest.SCIMEFDIFFIMG;
+        } else if (type == FILE_TYPE.DIFFIMGPSF) {
+            baseFile += ZtfRequest.DIFFIMGPSF;
+        } else if (type == FILE_TYPE.DIFFIMLOG) {
+            baseFile += ZtfRequest.DIFFIMLOG;
+        } else if (type == FILE_TYPE.SCILOG) {
+            baseFile += ZtfRequest.SCILOG;
         }
 
         return baseFile;
@@ -112,7 +126,7 @@ public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
 //
 //        String baseFile = baseDir + "ztf_" + filefracday + "_" + formatfield +"_" + filtercode +"_c" + formatccdid + "_" + imgtypecode + "_q" + qid + "_sciimg.fits";
 
-        String baseFile = getFilePath_sci(filefracday,field,filtercode,ccdid,imgtypecode,qid, FILE_TYPE.SCI);
+        String baseFile = getFilePath_sci(filefracday,field,filtercode,ccdid,imgtypecode,qid,FILE_TYPE.SCI);
 
         if (doCutOut) {
             // look for ra_obj returned by moving object search
@@ -139,7 +153,7 @@ public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
 
             String subSize = sr.getSafeParam("subsize");
 
-            return new URL(createCutoutURLString_l1(baseUrl,filefracday,field,filtercode,ccdid,imgtypecode,qid, FILE_TYPE.SCI, subLon, subLat, subSize));
+            return new URL(createCutoutURLString_l1(baseUrl,filefracday,field,filtercode,ccdid,imgtypecode,qid,FILE_TYPE.SCI, subLon, subLat, subSize));
         } else {
             return new URL(baseUrl + baseFile);
         }
@@ -159,7 +173,6 @@ public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
         return true;
     }
 }
-
 
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

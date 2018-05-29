@@ -21,8 +21,8 @@ import {convertAngle} from '../../../visualize/VisUtil.js';
  * @returns {WebPlotRequest}
  */
 export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params = {
-    fluxCol: 'mag_autocorr',
-    dataSource: 'pid'
+    fluxCol: 'meanmag',
+    dataSource: 'field'
 }) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
     const dec = getCellValue(tableModel, hlrow, 'dec');
@@ -42,18 +42,18 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
         // flux/value column control this | unless UI has radio button band enabled, put bandName back here to match band
         //const band = `${params.bandName}`;
 
-        let title = 'ZTF-' + pid + '-'+ band;
+        let title = 'ZTF-' + field + '-'+ ccdid+'-'+qid+'-'+filtercode;
 
         const sr = new ServerRequest('ibe_file_retrieve');
         sr.setParam('mission', 'ztf');
         sr.setParam('PROC_ID', 'ibe_file_retrieve');
         sr.setParam('ProductLevel', 'sci');
         sr.setParam('table', 'sci');
-        sr.setParam('schema', 'images');
+        sr.setParam('schema', 'products');
         sr.setParam('field', field);
         sr.setParam('ccdid', ccdid);
         sr.setParam('qid', qid);
-        sr.setParam('filterdode', filtercode);
+        sr.setParam('filtercode', filtercode);
         sr.setParam('filefracday', filefracday);
 
         let wp = null;
