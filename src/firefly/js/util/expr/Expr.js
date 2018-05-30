@@ -2,6 +2,8 @@
 // Copyright 2002 by Darius Bacon <darius@wry.me>
 // Altered and converted to JS
 
+/** Nullary operator: pi             */ export const PI = 500;
+
 /** Binary operator: addition        */  export const ADD =  0;
 /** Binary operator: subtraction     */  export const SUB =  1;
 /** Binary operator: multiplication  */  export const MUL =  2;
@@ -38,6 +40,9 @@
 /** Unary operator: log 10 */          export const LOG10 = 115;
 /** Unary operator: log 10 */          export const LG    = 116;
 
+// NVL2 - If <value expr 1> is not null, returns <value expr 2>, otherwise returns <value expr 3>. (HyperSQL)
+/** Ternary operator: if null         */  export const NVL2  = 200;
+
 /**
  * Make a literal expression.
  * @param {number} v the constant value of the expression
@@ -45,6 +50,20 @@
  */
 export function makeLiteral(v) {
     return new LiteralExpr(v);
+}
+
+/**
+ * Make an expression that applies a nullary operator (no arguments).
+ * @param {number} rator (int) a code for a nullary operator
+ * @return an expression meaning rator()
+ */
+export function makeApp0(rator) {
+    switch (rator) {
+        case PI:
+            return Math.PI();
+        default:
+            throw 'BUG: bad rator: ' + this.rator;
+    }
 }
 
 /**
@@ -69,6 +88,20 @@ export function makeApp1(rator, rand) {
 export function makeApp2(rator, rand0, rand1) {
     const app = new BinaryExpr(rator, rand0, rand1);
     return rand0 instanceof LiteralExpr && rand1 instanceof LiteralExpr
+            ? new LiteralExpr(app.value())
+            : app;
+}
+/**
+ * Make an expression that applies a ternary operator to three operands.
+ * @param {number} rator - a code for a binary operator
+ * @param {Expr} rand0 - first operand
+ * @param {Expr} rand1  second operand
+ * @param {Expr} rand2  third operand
+ * @return an expression meaning rator(rand0, rand1, rand2)
+ */
+export function makeApp3(rator, rand0, rand1, rand2) {
+    const app = new TernaryExpr(rator, rand0, rand1, rand2);
+    return rand0 instanceof LiteralExpr && rand1 instanceof LiteralExpr && rand2 instanceof LiteralExpr
             ? new LiteralExpr(app.value())
             : app;
 }
@@ -160,6 +193,25 @@ class BinaryExpr {
             case GT:    return arg0  > arg1 ? 1.0 : 0.0;
             case AND:   return arg0 !== 0 && arg1 !== 0 ? 1.0 : 0.0;
             case OR:    return arg0 !== 0 || arg1 !== 0 ? 1.0 : 0.0;
+            default: throw 'BUG: bad rator: '+this.rator;
+        }
+    }
+}
+
+class TernaryExpr {
+
+    constructor(rator, rand0, rand1, rand2) {
+        this.rator = rator;
+        this.rand0 = rand0;
+        this.rand1 = rand1;
+        this.rand2 = rand2;
+    }
+    value() {
+        const arg0 = this.rand0.value();
+        const arg1 = this.rand1.value();
+        const arg2 = this.rand2.value();
+        switch (this.rator) {
+            case NVL2: Number.isFinite(arg0) ? arg1 : arg2;
             default: throw 'BUG: bad rator: '+this.rator;
         }
     }

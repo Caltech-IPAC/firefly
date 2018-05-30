@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {isArray, get, isUndefined, omit} from 'lodash';
 
 import {Expression} from '../../../util/expr/Expression.js';
-import {getChartData, getTraceSymbol, hasUpperLimits} from '../../ChartsCntlr.js';
+import {getChartData, getTraceSymbol, hasLowerLimits, hasUpperLimits} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
@@ -23,8 +23,9 @@ const fieldProps = {labelWidth: 62, size: 15};
  * Should we display Upper Limit field under Y?
  * @returns {*}
  */
-export function upperLimitUI() {
-    return get(getAppOptions(), 'charts.upperLimitUI');
+export function yLimitUI() {
+    const upperLimitUI =  get(getAppOptions(), 'charts.upperLimitUI');
+    return upperLimitUI || get(getAppOptions(), 'charts.yLimitUI');
 }
 
 export class ScatterOptions extends SimpleComponent {
@@ -117,63 +118,51 @@ export function fieldReducer({chartId, activeTrace}) {
             [`_tables.data.${activeTrace}.x`]: {
                 fieldKey: `_tables.data.${activeTrace}.x`,
                 value: get(tablesourceMappings, 'x', ''),
-                //tooltip: 'X axis',
-                label: 'X:',
                 ...fieldProps
             },
             [`_tables.data.${activeTrace}.y`]: {
                 fieldKey: `_tables.data.${activeTrace}.y`,
                 value: get(tablesourceMappings, 'y', ''),
-                //tooltip: 'Y axis',
-                label: 'Y:',
                 ...fieldProps
             },
             [`_tables.fireflyData.${activeTrace}.yMax`]: {
                 fieldKey: `_tables.fireflyData.${activeTrace}.yMax`,
                 value: get(tablesourceMappings, `fireflyData.${activeTrace}.yMax`, ''),
-                label: 'Limit:',
+                ...fieldProps
+            },
+            [`_tables.fireflyData.${activeTrace}.yMin`]: {
+                fieldKey: `_tables.fireflyData.${activeTrace}.yMin`,
+                value: get(tablesourceMappings, `fireflyData.${activeTrace}.yMin`, ''),
                 ...fieldProps
             },
             [errorFieldKey(activeTrace, 'x')]: {
                 fieldKey: errorFieldKey(activeTrace, 'x'),
                 value: get(tablesourceMappings, ['error_x.array'], ''),
-                //tooltip: 'X error',
-                label: 'X error\u2191:',
                 ...fieldProps
             },
             [errorMinusFieldKey(activeTrace, 'x')]: {
                 fieldKey: errorMinusFieldKey(activeTrace, 'x'),
                 value: get(tablesourceMappings, ['error_x.arrayminus'], ''),
-                //tooltip: 'X error',
-                label: 'Error\u2193:',
                 ...fieldProps
             },
             [errorFieldKey(activeTrace, 'y')]: {
                 fieldKey: errorFieldKey(activeTrace, 'y'),
                 value: get(tablesourceMappings, ['error_y.array'], ''),
-                //tooltip: '',
-                label: 'Y error\u2191:',
                 ...fieldProps
             },
             [errorMinusFieldKey(activeTrace, 'y')]: {
                 fieldKey: errorMinusFieldKey(activeTrace, 'y'),
                 value: get(tablesourceMappings, ['error_y.arrayminus'], ''),
-                //tooltip: 'Y error',
-                label: 'Y error\u2193:',
                 ...fieldProps
             },
             [`_tables.data.${activeTrace}.marker.color`]: {
                 fieldKey: `_tables.data.${activeTrace}.marker.color`,
                 value: get(tablesourceMappings, 'marker.color', ''),
-                //tooltip: 'Use a column for color map',
-                label: 'Color Map:',
                 ...fieldProps
             },
             [`_tables.data.${activeTrace}.marker.size`]: {
                 fieldKey: `_tables.data.${activeTrace}.marker.size`,
                 value: get(tablesourceMappings, 'marker.size', ''),
-                //tooltip: 'Use a column for size map',
-                label: 'Size Map:',
                 ...fieldProps
             }
         };
@@ -221,8 +210,10 @@ export function TableSourcesOptions({chartId, tablesource={}, activeTrace, group
     const labelWidth = 30;
     const xProps = {fldPath:`_tables.data.${activeTrace}.x`, label: 'X:', name: 'X', nullAllowed: false, colValStats, groupKey, labelWidth};
     const yProps = {fldPath:`_tables.data.${activeTrace}.y`, label: 'Y:', name: 'Y', nullAllowed: false, colValStats, groupKey, labelWidth};
-    const yMaxProps = {fldPath:`_tables.fireflyData.${activeTrace}.yMax`, label: 'Limit:', name: 'Upper Limit', nullAllowed: true, colValStats, groupKey, labelWidth};
-    
+    const yMaxProps = {fldPath:`_tables.fireflyData.${activeTrace}.yMax`, label: '\u21A7:', name: 'Upper Limit', nullAllowed: true, colValStats, groupKey, labelWidth};
+    const yMinProps = {fldPath:`_tables.fireflyData.${activeTrace}.yMin`, label: '\u21A5:', name: 'Lower Limit', nullAllowed: true, colValStats, groupKey, labelWidth};
+
+
     const commonProps = {colValStats, groupKey, labelWidth: 62, nullAllowed: true};
     const sizemapTooltip = 'marker size. Please use expression to convert column value to valid pixels';
     const flds = [
@@ -243,7 +234,8 @@ export function TableSourcesOptions({chartId, tablesource={}, activeTrace, group
             <Errors axis='x' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
             <br/>
             <ColumnOrExpression {...yProps}/>
-            {(upperLimitUI() || hasUpperLimits(chartId, activeTrace)) && <ColumnOrExpression {...yMaxProps}/>}
+            {(yLimitUI() || hasUpperLimits(chartId, activeTrace)) && <ColumnOrExpression {...yMaxProps}/>}
+            {(yLimitUI() || hasLowerLimits(chartId, activeTrace)) && <ColumnOrExpression {...yMinProps}/>}
             <Errors axis='y' {...{groupKey, colValStats, activeTrace, labelWidth}}/>
             {showMultiTrace &&  <div style={{paddingTop: 10}}>
                 <ColumnOrExpression {...sizeMapProps}/>

@@ -8,7 +8,10 @@
  * Created by tatianag on 3/17/16.
  */
 
-import {assign, get, uniqueId, isArray, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has} from 'lodash';
+import {
+    assign, flatten, get, uniqueId, isArray, isEmpty, range, set, isObject, isString, pick, cloneDeep, merge, isNil, has,
+    isUndefined
+} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -397,7 +400,8 @@ export function newTraceFrom(data, selIndexes, newTraceProps, traceAnnotations) 
     if (isArray(traceAnnotations) && traceAnnotations.length > 0) {
         const annotations = cloneDeep(traceAnnotations);
         const color = get(newTraceProps, 'marker.color');
-        annotations.forEach((a) => {a && (a.arrowcolor = color);});
+
+        flattenAnnotations(annotations).forEach((a) => {a && (a.arrowcolor = color);});
         set(sdata, 'firefly.annotations', annotations);
     }
 
@@ -420,7 +424,20 @@ export function newTraceFrom(data, selIndexes, newTraceProps, traceAnnotations) 
     return sdata;
 }
 
-
+/**
+ * Get trace annotation as a one level deep array
+ * @param {array} annotations - trace annotations (there could be none, a single, or an array of annotations per point
+ */
+export function flattenAnnotations(annotations) {
+    if (isArray(annotations)) {
+        const filtered = annotations.filter((e) => !isUndefined(e));
+        if (filtered.length > 0) {
+            // trace annotations can have a single annotation or an array of annotations per point
+            return flatten(filtered);
+        }
+    }
+    return [];
+}
 
 export function updateSelected(chartId, selectInfo) {
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
@@ -760,6 +777,7 @@ export function formatColExpr({colOrExpr, quoted, colNames}) {
                     colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
                 }
             });
+            colOrExpr = colOrExpr.replace(/"NULL"/g, 'NULL'); // unquote NULL
         }
     }
 

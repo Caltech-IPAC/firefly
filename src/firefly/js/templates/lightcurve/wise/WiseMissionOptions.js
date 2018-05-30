@@ -162,3 +162,22 @@ export function wiseOnFieldUpdate(fieldKey, value) {
         return {[fieldKey]: value};
     }
 }
+
+export function wiseYColMappings(tbl_id, yCol) {
+    const tableModel = getTblById(tbl_id);
+
+    if (['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'].includes(yCol)) {
+        const yUnc = yCol.replace('mpro', 'sigmpro');
+        if (getColumnIdx(tableModel, yUnc)>=0) {
+            return {
+                // when using ycol for y, column value mapping is transparent:
+                // the limit is represented only by the annotation;
+                // when using an expression (dash instead of a point for upper limits),
+                // yTTLabelSrc needs to be set to avoid showing the truncated expression in point tooltip
+                y: `nvl2(${yUnc}, ${yCol}, NULL)`,
+                yMin: `nvl2(${yUnc}, NULL, ${yCol})`
+            };
+        }
+    }
+    return {y: yCol};
+}
