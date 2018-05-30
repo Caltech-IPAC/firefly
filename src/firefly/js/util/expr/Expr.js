@@ -54,7 +54,7 @@ export function makeLiteral(v) {
 
 /**
  * Make an expression that applies a nullary operator (no arguments).
- * @param {number} rator (int) a code for a unary operator
+ * @param {number} rator (int) a code for a nullary operator
  * @return an expression meaning rator()
  */
 export function makeApp0(rator) {

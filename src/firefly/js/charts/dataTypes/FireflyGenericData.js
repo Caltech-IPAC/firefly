@@ -180,7 +180,7 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     // handle limits: update new or erase old
     const annotations = [];
     const symbol = getTraceSymbol(data, fireflyData, traceNum);
-    if (mappings[`fireflyData.${traceNum}.yMax`] || mappings[`fireflyData.${traceNum}.yMin`]) {
+    if (hasUpperLimits(chartId, traceNum) || hasLowerLimits(chartId, traceNum)) {
         // if there is a limit value and no y value, y is set to the limit value
         let numNewPts = 0;
         let symbolArr = undefined;
