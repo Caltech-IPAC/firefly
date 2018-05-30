@@ -60,7 +60,7 @@ export function makeLiteral(v) {
 export function makeApp0(rator) {
     switch (rator) {
         case PI:
-            return Math.PI();
+            return new LiteralExpr(Math.PI);
         default:
             throw 'BUG: bad rator: ' + this.rator;
     }

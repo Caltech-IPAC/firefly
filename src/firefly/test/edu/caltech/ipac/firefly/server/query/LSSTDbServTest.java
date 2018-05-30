@@ -26,35 +26,35 @@ public class LSSTDbServTest extends ConfigTest {
 
 	private static String [] queries = {
 			//catalog searches
-			"SELECT * FROM sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_circle(9.469,-1.152,0.01);",
-			"SELECT * FROM wise_00.allwise_p3as_mep WHERE qserv_areaspec_circle(9.469,-1.152,0.01);",
-			"SELECT * FROM sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_box(9.5,-1.23,9.6,-1.22);",
-			"SELECT * FROM sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_ellipse(9.469,-1.152,58,36,0);",
-			"SELECT * FROM sdss_stripe82_01.RunDeepForcedSource WHERE qserv_areaspec_poly(9.4,-1.2,9.6,-1.2,9.4,-1.1);",
+			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_circle(9.469,-1.152,0.01)",
+			"SELECT * FROM \"//lsst-qserv-master01:4040\".wise_00.allwise_p3as_mep WHERE qserv_areaspec_circle(9.469,-1.152,0.01)",
+			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_box(9.5,-1.23,9.6,-1.22)",
+			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_ellipse(9.469,-1.152,58,36,0)",
+//			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepForcedSource WHERE qserv_areaspec_poly(9.4,-1.2,9.5,-1.2,9.4,-1.1)",
 			// image metadata searches
-			"SELECT * FROM sdss_stripe82_01.DeepCoadd WHERE scisql_s2PtInCPoly(9.462, -1.152, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1;",
-			"SELECT * FROM wise_00.allwise_p3am_cdd WHERE scisql_s2PtInCPoly(9.462, -1.152, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1;",
-			"SELECT * FROM sdss_stripe82_01.Science_Ccd_Exposure WHERE " +
+			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.DeepCoadd WHERE scisql_s2PtInCPoly(9.462, -1.152, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1",
+			"SELECT * FROM \"//lsst-qserv-master01:4040\".wise_00.allwise_p3am_cdd WHERE scisql_s2PtInCPoly(9.462, -1.152, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1",
+			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.Science_Ccd_Exposure WHERE " +
 					"(scisql_s2PtInCPoly(9.5, -1.23, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND " +
 					"(scisql_s2PtInCPoly(9.5, -1.22, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND " +
 					"(scisql_s2PtInCPoly(9.6, -1.23, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1) AND " +
-					"(scisql_s2PtInCPoly(9.6, -1.22, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1);",
-			"SELECT * FROM wise_00.allsky_2band_p1bm_frm WHERE " +
+					"(scisql_s2PtInCPoly(9.6, -1.22, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1)",
+			"SELECT * FROM \"//lsst-qserv-master01:4040\".wise_00.allsky_2band_p1bm_frm WHERE " +
 					"(scisql_s2PtInCPoly(9.5, -1.23, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1) AND " +
 					"(scisql_s2PtInCPoly(9.5, -1.22, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1) AND " +
 					"(scisql_s2PtInCPoly(9.6, -1.23, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1) AND " +
-					"(scisql_s2PtInCPoly(9.6, -1.22, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1);",
-            "SELECT * FROM sdss_stripe82_01.Science_Ccd_Exposure WHERE " +
-                    "(scisql_s2PtInBox(corner1Ra, corner1Decl, 0, -1, 5, 1)=1) AND " +
-                    "(scisql_s2PtInBox(corner2Ra, corner2Decl,0, -1, 5, 1) =1) AND " +
-                    "(scisql_s2PtInBox(corner3Ra, corner3Decl, 0, -1, 5, 1)=1) AND " +
-                    "(scisql_s2PtInBox(corner4Ra, corner4Decl, 0, -1, 5, 1)=1);",
-            "SELECT * FROM wise_00.allwise_p3am_cdd WHERE " +
+					"(scisql_s2PtInCPoly(9.6, -1.22, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1)",
+//            "SELECT * FROM W13_sdss_v2.sdss_stripe82_01.Science_Ccd_Exposure WHERE " +
+//                    "(scisql_s2PtInBox(corner1Ra, corner1Decl, 0, -1, 5, 1)=1) AND " +
+//                    "(scisql_s2PtInBox(corner2Ra, corner2Decl,0, -1, 5, 1) =1) AND " +
+//                    "(scisql_s2PtInBox(corner3Ra, corner3Decl, 0, -1, 5, 1)=1) AND " +
+//                    "(scisql_s2PtInBox(corner4Ra, corner4Decl, 0, -1, 5, 1)=1)",
+			"SELECT * FROM \"//lsst-qserv-master01:4040\".wise_00.allwise_p3am_cdd WHERE " +
                     "(scisql_s2PtInBox(ra1, dec1, 0, -1, 5, 1)=1) AND " +
                     "(scisql_s2PtInBox(ra2, dec2,0, -1, 5, 1) =1) AND " +
                     "(scisql_s2PtInBox(ra3, dec3, 0, -1, 5, 1)=1) AND " +
-                    "(scisql_s2PtInBox(ra4, dec4, 0, -1, 5, 1)=1);",
-            "SELECT count(*) FROM sdss_stripe82_01.RunDeepForcedSource WHERE objectId=3448068867358968;"
+                    "(scisql_s2PtInBox(ra4, dec4, 0, -1, 5, 1)=1)",
+            "SELECT count(*) FROM W13_sdss_v2.sdss_stripe82_01.RunDeepForcedSource WHERE objectId=3448068867358968"
             
 	};
 	
@@ -132,7 +132,7 @@ public class LSSTDbServTest extends ConfigTest {
 	 */
 	public static boolean daxAvailable() {
 		try {
-			URL urlServer = new URL("http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/");
+			URL urlServer = new URL("http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/api");
 			HttpURLConnection urlConn = (HttpURLConnection) urlServer.openConnection();
 			urlConn.setConnectTimeout(3000); // 3 seconds timeout
 			urlConn.connect();

@@ -100,7 +100,7 @@ describe('A test suite for expr/Expression.js', function () {
 
     it('valid expression (operators)', function () {
         const x= 0.5, y=-2.2;
-        const expressionGood = new Expression('2*(sin(pi-acos(x))+abs(y)^3)/x', ['x','y']);
+        const expressionGood = new Expression('2*(sin(pi()-acos(x))+abs(y)^3)/x', ['x','y']);
         expect(expressionGood.isValid()).to.be.true;
         expect(!expressionGood.getError()).to.be.true;
         expressionGood.setVariableValue('x', x);
