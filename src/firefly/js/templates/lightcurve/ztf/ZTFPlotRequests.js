@@ -21,7 +21,7 @@ import {convertAngle} from '../../../visualize/VisUtil.js';
  * @returns {WebPlotRequest}
  */
 export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params = {
-    fluxCol: 'meanmag',
+    fluxCol: 'bestmeanmag',
     dataSource: 'field'
 }) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
