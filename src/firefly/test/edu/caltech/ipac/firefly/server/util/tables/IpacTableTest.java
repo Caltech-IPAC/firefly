@@ -1,12 +1,16 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.firefly.server.util.tables;
 
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DecimationProcessor;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
@@ -26,8 +30,8 @@ import java.util.Arrays;
  */
 public class IpacTableTest {
 
-    private static final File ipacTable = FileLoader.resolveFile(IpacTableTest.class,  "test_data.tbl");
-    private static final File jsonResults = FileLoader.resolveFile(IpacTableTest.class,"test_data.json");
+    private static final File ipacTable = FileLoader.resolveFile(IpacTableTest.class,  "IpacTableTest.tbl");
+    private static final File jsonResults = FileLoader.resolveFile(IpacTableTest.class,"IpacTableTest.json");
     private static TableServerRequest request;
 
     @BeforeClass

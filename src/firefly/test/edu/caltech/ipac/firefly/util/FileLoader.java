@@ -32,6 +32,14 @@ public class FileLoader {
     public static final String TEST_DATA_ROOT = "firefly_test_data/";
 
     /**
+     * @return the path to firefly_test_data.
+     */
+    public static String getTestDataRoot() {
+        String rootPath = Paths.get("").toAbsolutePath().getParent().toUri().getPath();
+        return rootPath + TEST_DATA_ROOT;
+    }
+
+    /**
      * This method returns the data path for where the test class is located and where is the data is stored.
      * @param cls
      * @return
@@ -39,14 +47,12 @@ public class FileLoader {
      */
     public static String getDataPath(Class cls) {
 
-        String rootPath = Paths.get("").toAbsolutePath().getParent().toUri().getPath();
-        String testDataPath = TEST_DATA_ROOT+cls.getCanonicalName().replaceAll("\\.", "/")
+        String clsDataPath = cls.getCanonicalName().replaceAll("\\.", "/")
                 .replace(cls.getSimpleName(), "");
 
-        String dataPath = rootPath + testDataPath;
+        String dataPath = getTestDataRoot() + clsDataPath;
         return dataPath;
     }
-
 
     public static FitsRead loadFitsRead(Class cls, String fitsFile)  {
 
