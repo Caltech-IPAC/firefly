@@ -90,10 +90,10 @@ export function isValidZTFTable() {
 }
 
 /**
- * Pregex pattern for ztf, at least to find obsmjd and mag_autocorr if present
+ * Pregex pattern for ztf, at least to find mjd and meanmag if present
  * @type {string[]}
  */
-const xyColPattern = ['obsmjd', 'mag_autocorr'];
+const xyColPattern = ['mjd', 'bestmeanmag'];
 export function ztfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
