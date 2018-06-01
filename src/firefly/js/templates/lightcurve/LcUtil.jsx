@@ -154,6 +154,8 @@ export function getInitialDefaultValues(labelWidth, missionName) {
             return Object.assign ({},commonDefault, wiseDefault );
         case 'ptf':
             return commonDefault;
+        case 'ztf':
+            return commonDefault;
     }
 
 }

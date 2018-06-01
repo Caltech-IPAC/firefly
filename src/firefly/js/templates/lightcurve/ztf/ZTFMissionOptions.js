@@ -138,7 +138,7 @@ export function ztfRawTableRequest(converter, source, uploadFileName='') {
 
 
 export function ztfOnFieldUpdate(fieldKey, value) {
-    // images are controlled by radio button -> filter g, R.
+    // images are controlled by radio button -> filter zg, zr etc.
     if (fieldKey === LC.META_TIME_CNAME) {
         return fileUpdateOnTimeColumn(fieldKey, value);
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME,  LC.META_FLUX_BAND].includes(fieldKey)) {

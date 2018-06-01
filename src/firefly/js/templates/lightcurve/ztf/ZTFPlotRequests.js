@@ -35,12 +35,12 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
     const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize);
-    var band = null;
+    //var band = null;
 
     try {
 
         // flux/value column control this | unless UI has radio button band enabled, put bandName back here to match band
-        //const band = `${params.bandName}`;
+        //const band = `${params.filtercode}`;
 
         let title = 'ZTF-' + field + '-'+ ccdid+'-'+qid+'-'+filtercode;
 
