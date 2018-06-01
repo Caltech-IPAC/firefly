@@ -12,7 +12,7 @@ import {intValidator} from '../../util/Validate.js';
 import * as TblUtil from '../TableUtil.js';
 
 
-const labelStyle = {display: 'inline-block', width: 50};
+const labelStyle = {display: 'inline-block', whiteSpace: 'nowrap', width: 50};
 
 
 export class TablePanelOptions extends SimpleComponent  {
@@ -54,9 +54,9 @@ export class TablePanelOptions extends SimpleComponent  {
                                                            onChange={(e) => onPropChanged(e.target.checked, 'showUnits')}
                                                            checked={showUnits}/>Units
                             </div>
-                            <div style={labelStyle}><input type='checkbox'
+                            <div style={{...labelStyle, width: 80}}><input type='checkbox'
                                                            onChange={(e) => onPropChanged(e.target.checked, 'showTypes')}
-                                                           checked={showTypes}/>Types
+                                                           checked={showTypes}/>Data Types
                             </div>
                             <div style={labelStyle}><input type='checkbox'
                                                            onChange={(e) => onPropChanged(e.target.checked, 'showFilters')}
