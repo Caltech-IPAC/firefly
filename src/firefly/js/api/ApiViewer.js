@@ -17,7 +17,7 @@ import {getRootURL}  from '../util/BrowserUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
 import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
-import {clone, logError}  from '../util/WebUtil.js';
+import {clone, logError, hashCode}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
 import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
@@ -119,16 +119,42 @@ export function getViewer(channel,file=defaultViewerFile) {
 
 /**
  * wrapper function to return the API's getViewer object.  This allow one firefly app to
- * gain access to another app's API.  To use this function, it should be loaded first.  @see ApiViewer#loadRemoteApi
- * @param {object} p            parmeter
+ * gain access to another app's API.
+ * To use this function, it should be loaded first.  @see loadRemoteApi
+ * It cannot be implemented as async because the common use case for getViewer is to launch a new Tab/Window.
+ * This will be blocked by browser's popup blocker if it's done asynchronously.
+ * @param {object} p            parameter
  * @param {String} [p.channel]  default to current connected channel.
  * @param {String} [p.file]     url path, or the html file to load.  Defaults to blank(index of the app).
- * @param {String} [p.iframeId]
+ * @param {String} [p.scriptUrl]  url of the script to load.
+ * @returns {Object} the API's getViewer object
  */
-export function getRemoteViewer({channel, file, iframeId}) {
-    const win = iframeId ? document.getElementById(iframeId).contentWindow : window;
-    const getViewer = get(win, 'firefly.getViewer');
+export function getRemoteViewer({channel, file, scriptUrl}) {
+    if (!scriptUrl) return getViewer(channel, file); // when scriptUrl is not given, return the local Viewer
+    
+    const getViewer = get(loadRemoteApi(scriptUrl), 'getViewer');
     return getViewer && getViewer(channel, file);
+}
+
+export function loadRemoteApi(scriptUrl) {
+    const frameId = 'id_' + hashCode(scriptUrl);
+    let apiFrame = document.getElementById(frameId);
+    console.log('apiFrame:' + apiFrame);
+    if (!apiFrame) {
+        apiFrame = document.createElement('iframe');
+        apiFrame.id = frameId;
+        apiFrame.style.display = 'none';
+        apiFrame.style.width = '0px';
+        apiFrame.style.height = '0px';
+        document.body.appendChild(apiFrame);
+        // apiFrame.onload = () => {}   this event is not fired in Safari when src is blank.  it's treated as synchronous.
+            const myscript = apiFrame.contentDocument.createElement('script');
+            myscript.type = 'text/javascript';
+            myscript.src = scriptUrl;
+            const headEl = apiFrame.contentDocument.getElementsByTagName('head')[0];
+            headEl.appendChild(myscript);
+    }
+    return get(apiFrame, 'contentWindow.firefly');
 }
 
 function buildSlateControl(channel,file,dispatcher) {
