@@ -229,7 +229,8 @@ var makePositionParser = function(helper) {
                     dec = numericList[1];
 
                 } else if (numericList.length>2) {
-                    idx=0;
+                    throw 'Invalid input';
+                   /* idx=0;
                     for (i=0; (i<numericList.length); i++) {
                         item= numericList[i];
                         if ((idx++)*2<numericList.length) {
@@ -237,7 +238,7 @@ var makePositionParser = function(helper) {
                         } else {
                             dec += (item + ' ');
                         }
-                    }
+                    }*/
                 } else if (numericList.length===1) {
                     ra= tokenAry[0];
                     if (tokenAry.length>1) {
