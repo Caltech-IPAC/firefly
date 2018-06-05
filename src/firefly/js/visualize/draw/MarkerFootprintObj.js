@@ -20,6 +20,7 @@ import BrowserInfo from '../../util/BrowserInfo.js';
 import {clone} from '../../util/WebUtil.js';
 import Enum from 'enum';
 import {has, isNil, get, isEmpty, isArray, set} from 'lodash';
+import {isHiPS} from '../WebPlot.js';
 
 const HANDLER_BOX = 6;        // handler size (square size in screen coordinate)
 const CENTER_BOX = 60;
@@ -29,6 +30,8 @@ const DEF_WIDTH = 1;
 export const MARKER_DATA_OBJ= 'MarkerObj';
 
 const DEFAULT_STYLE= Style.STANDARD;
+const textLocSeq = [TextLocation.REGION_SE, TextLocation.REGION_SW, TextLocation.REGION_NW, TextLocation.REGION_NE];
+
 
 export const ROTATE_BOX = 32;
 export const MARKER_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
@@ -461,7 +464,7 @@ function getRectCorners(pt, width, height, unitType, cc, outUnit = Point.W_PT) {
 }
 
 /**
- * calculate the footprint overal rectangular area in image coordinate
+ * calculate the footprint overall rectangular area in image coordinate
  * @param rDrawAry
  * @param cc
  * @returns {{width: number, height: number, unitType: *}}
@@ -507,9 +510,10 @@ export function getMarkerImageSize(rDrawAry, cc) {
  * get the rectangular area of any drawobj (pointdata or shapadata), in image coordinate
  * @param obj
  * @param cc
+ * @param onlyCheckCenter only check if area center exists or not
  * @returns {{upperLeft: *, width: *, height: *}}
  */
-function getObjArea(obj, cc) {
+function getObjArea(obj, cc, onlyCheckCenter = false) {
     const area= (obj.type === ShapeDataObj.SHAPE_DATA_OBJ) ? getDrawobjArea(obj, cc): getPointDataobjArea(obj, cc);
     if (!area) return null;
 
@@ -519,8 +523,9 @@ function getObjArea(obj, cc) {
         centerPt = center;
     }
 
-    if (!isPointInView(centerPt, cc) ||
-        !isDrawobjAreaInView(cc, null, area)) {    // in case the cover area is out of plot area
+    if (!centerPt ||
+        (!onlyCheckCenter &&
+            (!isPointInView(centerPt, cc) || !isDrawobjAreaInView(cc, null, area)))) {    // in case the cover area is out of plot area
         return null;
     }
 
@@ -1080,44 +1085,62 @@ export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath)
 function drawFootprintText(drawObj, plot, def, ctx) {
 
     var drawParams = makeDrawParams(drawObj, def);
-    var {text, textLoc} = drawObj;
+    var {text, textLoc, textWorldLoc} = drawObj;
     var {fontSize} = drawParams;
 
     if (isNil(text)) return;
-
-    var outlineObj = (drawObj.drawObjAry.length > drawObj.outlineIndex) ?
+    const outlineObj = (drawObj.drawObjAry.length > drawObj.outlineIndex) ?
                       drawObj.drawObjAry[drawObj.outlineIndex] :
-                      (updateHandle(drawObj, plot, []))[0];
+                      (isHiPS(plot) ? (updateHandle(drawObj, plot, []))[0] : null);
 
-    if (!outlineObj) return;
 
-    var objArea  = getObjArea(outlineObj, plot); // in image coordinate
+    // if no outline exists, display text as stored location
+    // if outline exists, display text at defined textLoc or alternate location defined textLoc is out of image area
+    if (!outlineObj) {
+        if (textWorldLoc && !isHiPS(plot)) {
+            drawText(drawObj, ctx, plot, textWorldLoc, drawParams);
+        }
+    } else {
 
-    if (objArea) {
-        textLoc = flipTextLocAroundY(plot, textLoc);
+        const objArea = getObjArea(outlineObj, plot, true); // in image coordinate
 
-        var textPt = makeTextLocationComposite(plot, textLoc, fontSize,
-                        objArea.width * plot.zoomFactor,
-                        objArea.height * plot.zoomFactor,
-                        objArea.centerPt);
-        if (textPt) {
-            drawText(drawObj, ctx, plot, textPt, drawParams);
+        if (objArea) {
+            textLoc = flipTextLocAroundY(plot, textLoc);
+            const firstIdx = textLocSeq.findIndex((t) => t.key === textLoc.key);
+
+            for (let t = firstIdx; t < firstIdx + textLocSeq.length; t++) {
+                const tLoc = textLocSeq[t % textLocSeq.length];
+
+                const textPt = makeTextLocationComposite(plot, tLoc, fontSize,
+                    objArea.width * plot.zoomFactor,
+                    objArea.height * plot.zoomFactor,
+                    objArea.centerPt);
+                if (textPt) {
+                    drawText(drawObj, ctx, plot, textPt, drawParams);
+                    if (drawObj.pointNotInDisplay) {
+                        drawObj.pointNotInDisplay = undefined;
+                        continue;   // draw text fails, try next location
+                    }
+                    break;
+                }
+            }
         }
     }
 }
 
 
 /**
- * update the footprint outline box once some object is clicked to be selected, render the entire footprint in case the
- * plot zoom changes.
+ * update the footprint outline box once some object is clicked to be selected or relocated.
+ * re-render the entire footprint in case the plot zoom changes or footprint on HiPS plot is relocated
  * @param drawObj
  * @param cc
+ * @param bForced force to recalculate the drawObj from the original regions
  * @returns {*}
  */
-export function updateFootprintOutline(drawObj, cc) {
+export function updateFootprintOutline(drawObj, cc, bForced = false) {
 
 
-    if (drawObj.sType === MarkerType.Marker || drawObj.lastZoom === cc.zoomFactor) {
+    if (drawObj.sType === MarkerType.Marker || (!bForced && drawObj.lastZoom === cc.zoomFactor)) {
     //if (drawObj.sType === MarkerType.Marker || drawObj.sType === MarkerType.Footprint) {
         updateOutlineBox(drawObj, cc, true);
     } else {
@@ -1174,8 +1197,8 @@ function updateOutlineBox(drawObj, cc, upgradeOutline = false) {
 }
 
 /**
- * update the translation information of the footprint or marker, stored in world coordinate or image coordinate
- * is used in case world coordinate is not available. The computation is made on image coordinate
+ * update the translation information of the footprint or marker, store it in either world coordinate or image coordinate.
+ * The computation is either made on image coordinate or originally defined regions (for HiPS)
  * @param drawObj
  * @param cc
  * @param apt
@@ -1200,7 +1223,6 @@ export function updateFootprintTranslate(drawObj, cc, apt, isSet = false) {
     var newApt = {x: tx.len, y: ty.len, type: tx.unit};
     var newObj = translateMarker(drawObj, cc, {x: deltaX, y: deltaY, type: tx.unit});
 
-    updateOutlineBox(newObj, cc);
     return clone(newObj, {translation: newApt});
 }
 
@@ -1208,10 +1230,10 @@ export function updateFootprintTranslate(drawObj, cc, apt, isSet = false) {
  * update object rotate angle
  * @param drawObj
  * @param plot
- * @param worldPt  certer point to rotate around
+ * @param worldPt  center point to rotate around
  * @param angle
  * @param angleUnit
- * @param isSet set or increment the angle
+ * @param isSet set or increment the rotation angle
  * @returns {*}
  */
 export function updateFootprintDrawobjAngle(drawObj, plot, worldPt, angle = 0.0, angleUnit = ANGLE_UNIT.radian,  isSet = false) {
@@ -1223,94 +1245,43 @@ export function updateFootprintDrawobjAngle(drawObj, plot, worldPt, angle = 0.0,
     // get current angle status
     if (!isSet) {
         deltaAngle = newAngle;
-        newAngle += crtAngle;
+        //newAngle += crtAngle;
     } else {
         deltaAngle = newAngle - crtAngle;
     }
 
-    var newObj = rotateMarkerAround(drawObj, plot, deltaAngle, worldPt);
-    while (newAngle < -Math.PI) {
-        newAngle += 2 * Math.PI;
-    }
-    while (newAngle > Math.PI) {
-        newAngle -= 2 * Math.PI;
-    }
-
-    updateOutlineBox(newObj, plot);
-    return clone(newObj, {angle: newAngle, angleUnit: ANGLE_UNIT.radian});
+    return rotateMarkerAround(drawObj, plot, deltaAngle, worldPt);
 }
 
 
 /**
- * translate the marker by apt on image coordinate
+ * translate marker or footprint
+ *  - marker or non HiPS image: translate the marker/footprint by apt on image coordinate
+ *  - HiPS: recompute the footprint per originally defined regions by translating the footprint center first
  * @param drawObj
  * @param plot
  * @param apt
  * @returns {*} an array of translated objects contained in drawObj
  */
 export function translateMarker(drawObj, plot, apt) {
-    var deltaImgX = lengthToImagePixel(apt.x, plot, apt.type);
-    var deltaImgY = lengthToImagePixel(apt.y, plot, apt.type);
+    const deltaImgX = lengthToImagePixel(apt.x, plot, apt.type);
+    const deltaImgY = lengthToImagePixel(apt.y, plot, apt.type);
 
 
-    var moveFrom = (pti, deltaX, deltaY) => {   // translate on image coordinate
+    const moveFrom = (pti, deltaX, deltaY) => {   // translate on image coordinate
         return makeImagePt(pti.x + deltaX, pti.y + deltaY);
     };
 
-    var newPti = moveFrom(plot.getImageCoords(drawObj.pts[0]), deltaImgX, deltaImgY);
-    var newObj = clone(drawObj, {pts: [makePoint(newPti, plot, drawObj.pts[0].type)]});
-    var dObjAry = collectDrawobjAry(drawObj, [MARKER_HANDLE.outline]);
+    const newPti = moveFrom(plot.getImageCoords(drawObj.pts[0]), deltaImgX, deltaImgY);
+    const newObj = clone(drawObj, {pts: [makePoint(newPti, plot, drawObj.pts[0].type)]});
 
-    newObj.drawObjAry = dObjAry.reduce( (prev, oneDrawobj) => {
-         prev.push(DrawOp.translateTo(oneDrawobj, plot, apt));
-        return prev;
-    }, [] );
-
-    if (get(newObj, 'originalOutlineBox', null)) {
-        const outlineBox = newObj.drawObjAry.length > newObj.outlineIndex ? newObj.drawObjAry[newObj.outlineIndex] : null;
-        newObj.originalOutlineBox = (outlineBox&&(outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
+    if (isHiPS(plot) && (drawObj.sType !== MarkerType.Marker)) {  // do translation on world instead of on image domain
+        return updateFootprintOutline(newObj, plot, true);
     }
 
-    return newObj;
-}
-
-
-/**
- * rotate a marker around worldPt by angle on image coordinate
- * @param drawObj
- * @param plot
- * @param angle  screen coordinate direction, in radian
- * @param worldPt
- * @returns {array} a array of rotated objects contained in drawObj
- */
-export function rotateMarkerAround(drawObj,plot, angle, worldPt) {
-    var {pts} = drawObj;
-    if (!pts || !pts[0] || !worldPt) return null;
-
-    var worldImg = plot.getImageCoords(worldPt);
-    var drawObjPt = plot.getImageCoords(pts[0]);
-
-    var rotateAroundPt = (imgPt) => {   // rotate around given worldPt on immage coordinate
-        var x1 = imgPt.x - worldImg.x;
-        var y1 = imgPt.y - worldImg.y;
-        var cos = Math.cos(-angle);
-        var sin = Math.sin(-angle);
-
-        var x2 = x1 * cos - y1 * sin + worldImg.x;
-        var y2 = x1 * sin + y1 * cos + worldImg.y;
-
-        return getWorldOrImage(makeImagePt(x2, y2), plot);
-    };
-
-    var newObj = clone(drawObj, {pts: [rotateAroundPt(drawObjPt)]});
-    var dAry = collectDrawobjAry(drawObj, [MARKER_HANDLE.outline]);
-
-    newObj.drawObjAry = dAry.reduce((prev, oneObj) => {
-        var centerPt = has(oneObj, 'outlineType')&&oneObj.outlineType === OutlineType.plotcenter ?
-                       oneObj.pts[0] : worldPt;
-        var rObj = DrawOp.rotateAround(oneObj, plot, angle, centerPt);
-
-        prev.push(rObj);
+    const dObjAry = collectDrawobjAry(drawObj, [MARKER_HANDLE.outline]);
+    newObj.drawObjAry = dObjAry.reduce((prev, oneDrawobj) => {
+        prev.push(DrawOp.translateTo(oneDrawobj, plot, apt));
         return prev;
     }, []);
 
@@ -1319,7 +1290,68 @@ export function rotateMarkerAround(drawObj,plot, angle, worldPt) {
         newObj.originalOutlineBox = (outlineBox&&(outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
     }
 
+    updateOutlineBox(newObj, plot);
     return newObj;
+}
+
+
+function adjustAngle(angle) {
+    let newAngle = angle;
+
+    while (newAngle < -Math.PI) {
+        newAngle += 2 * Math.PI;
+    }
+    while (newAngle > Math.PI) {
+        newAngle -= 2 * Math.PI;
+    }
+    return newAngle;
+}
+/**
+ * rotate a marker around worldPt by angle on image coordinate
+ * @param drawObj
+ * @param plot
+ * @param dAngle  screen coordinate direction, in radian
+ * @param worldPt
+ * @returns {array} a array of rotated objects contained in drawObj
+ */
+export function rotateMarkerAround(drawObj,plot, dAngle, worldPt) {
+    const {pts, outlineIndex} = drawObj;
+    if (!pts || !pts[0] || !worldPt) return null;
+
+    const worldImg = plot.getImageCoords(worldPt);
+    const drawObjPt = plot.getImageCoords(pts[0]);
+
+    var rotateAroundPt = (imgPt) => {   // rotate around given worldPt on image coordinate
+        var x1 = imgPt.x - worldImg.x;
+        var y1 = imgPt.y - worldImg.y;
+        var cos = Math.cos(-dAngle);
+        var sin = Math.sin(-dAngle);
+
+        var x2 = x1 * cos - y1 * sin + worldImg.x;
+        var y2 = x1 * sin + y1 * cos + worldImg.y;
+
+        return getWorldOrImage(makeImagePt(x2, y2), plot);
+    };
+
+    const newObj = clone(drawObj, {pts: [rotateAroundPt(drawObjPt)]});
+    const dAry = collectDrawobjAry(drawObj, [MARKER_HANDLE.outline]);
+    const newAngle =  adjustAngle(getMarkerAngleInRad(newObj) + dAngle);
+
+    const centerPt = (outlineIndex > 0 && get(newObj.drawObjAry[outlineIndex], 'outlineType') === OutlineType.plotcenter) ?
+                      get(newObj.drawObjAry[outlineIndex], ['pts', 0], worldPt) : worldPt;
+    newObj.drawObjAry = dAry.reduce((prev, oneObj) => {
+        prev.push(DrawOp.rotateAround(oneObj, plot, dAngle, centerPt));
+        return prev;
+    }, []);
+
+    if (get(newObj, 'originalOutlineBox', null)) {
+        const outlineBox = newObj.drawObjAry.length > newObj.outlineIndex ? newObj.drawObjAry[newObj.outlineIndex] : null;
+        newObj.originalOutlineBox = (outlineBox&&(outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
+    }
+
+    updateOutlineBox(newObj, plot);
+
+    return clone(newObj, {angle: newAngle, angleUnit: ANGLE_UNIT.radian});
 }
 
 /**

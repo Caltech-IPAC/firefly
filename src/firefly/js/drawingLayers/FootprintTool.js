@@ -462,16 +462,18 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
      var footprintObj;
 
      if (footprintStatus === FootprintStatus.attached ||
-         footprintStatus === FootprintStatus.attached_relocate) {  // position is relocated after the layer is attached
+         footprintStatus === FootprintStatus.attached_relocate) {
          footprintObj = makeFootprint(regions, wpt, isHandle, cc, text, textLoc);
+
+         // position is relocated after the layer is attached by the click
          if (footprintStatus === FootprintStatus.attached_relocate) {
              footprintObj = translateForRelocate(footprintObj,  move, cc);
+             wpt = get(footprintObj, ['pts', '0']);
          }
 
      } else if (crtFpObj) {
          if ((footprintStatus === FootprintStatus.rotate || footprintStatus === FootprintStatus.relocate) && !isEmpty(move)) {
              var {apt} = move;    // move to relocate or rotate
-
 
              if (apt) {      // translate
                  footprintObj = updateFootprintTranslate(crtFpObj, cc, apt);
@@ -559,7 +561,7 @@ function resetRotateSide(footprintObj) {
 }
 
 /**
- * add the footprint drawing objects into the new plot reated after the drawing layer is created
+ * add the footprint drawing objects into the new plot after the drawing layer is created
  * @param drawLayer
  * @param newPlotId new plot
  * @returns {*}
@@ -584,7 +586,7 @@ function attachToNewPlot(drawLayer, newPlotId) {
 
     if (!isEmpty(translation)) {
         footprintObj = updateFootprintTranslate(footprintObj, cc, translation);
-        footprintObj= updateFootprintOutline(footprintObj, cc);
+        //footprintObj= updateFootprintOutline(footprintObj, cc);
         resetRotateSide(footprintObj);
         wpt = get(footprintObj, ['pts', '0']);
     }

@@ -518,11 +518,13 @@ function createMarkerObjs(action, dl, plotId, wpt, size, prevRet) {
     var markObj;
 
     if (markerStatus === MarkerStatus.attached ||
-        markerStatus === MarkerStatus.attached_relocate) {  // position is reloacated after the layer is attached
-
+        markerStatus === MarkerStatus.attached_relocate) {
         markObj = makeMarker(wpt, markerW, markerH, isHandle, cc, text, textLoc, unitT);
+
+        // position is relocated after the layer is attached by the click
         if (markerStatus === MarkerStatus.attached_relocate) {
             markObj = translateForRelocate(markObj,  move, cc);
+            wpt = get(markObj, ['pts', '0']);
         }
     } else if (crtMarkerObj) {
         if ((markerStatus === MarkerStatus.resize || markerStatus === MarkerStatus.relocate) && !isEmpty(move)) {
@@ -674,7 +676,7 @@ function attachToNewPlot(drawLayer, newPlotId) {
 
     if (!isEmpty(translation)) {
         markerObj = updateFootprintTranslate(markerObj, cc, translation);
-        markerObj = updateFootprintOutline(markerObj, cc);
+        //markerObj = updateFootprintOutline(markerObj, cc);
         wpt = get(markerObj, ['pts', '0']);
     }
 

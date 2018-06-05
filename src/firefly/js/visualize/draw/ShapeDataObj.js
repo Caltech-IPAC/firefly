@@ -719,6 +719,8 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
         );
 
         drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
+    } else {
+        drawObj.pointNotInDisplay = true;  // note on failure
     }
 }
 
@@ -1221,7 +1223,7 @@ export function makeTextLocationComposite(cc, textLoc, fontSize, width, height, 
     const h = height/2 + lineWidth + 2;   // leave space for highlight box
     const scrCenterPt = cc.getScreenCoords(centerPt);
 
-    if (!scrCenterPt || width < 1 || height < 1) return null;
+    if (!scrCenterPt || width <= 0 || height <= 0) return null;
 
     let opt;
     const offy = fontHeight(fontSize);
