@@ -242,7 +242,7 @@ function buildImagePart(llApi) {
      * @prop {string} SurveyKey the survey, used with  Type='SERVICE'
      * @prop {string} SurveyKeyBand the survey band, used with Type=='SERVICE' and Service='WISE', 'TWOMASS' or 'ATLAS'
      * @prop {string} WorldPt target for service request or HiPS request in serialized version
-     * @Prop {string} PlotId plot Id
+     * @prop {string} PlotId plot Id
      * @prop {string} PlotGroupId plot group id
      * @prop {string} Title plot title
      * @prop {string} TitleOptions title options, see available options at {@link TitleOptions}
@@ -285,7 +285,7 @@ function buildImagePart(llApi) {
     /**
      * @summary The general plotting function to plot a FITS image.
      * @param {String|HTMLDivElement} targetDiv to put the image in.
-     * @param {WebPlotParams} request a request object with the plotting parameters
+     * @param {WebPlotParams|WebPlotRequest} request a request object with the plotting parameters
      * @param {HipsImageConversionSettings} [hipsImageConversion= undefined] if defined, use these parameter to
      *                                                convert between image and HiPS
      * @memberof firefly
@@ -350,7 +350,7 @@ function buildImagePart(llApi) {
     /**
      * @summary The plotting function to display a HiPS
      * @param {String|HTMLDivElement} targetDiv to put the image in.
-     * @param {WebPlotParams} request a request object with Type=='HiPS' used to display a HiPS
+     * @param {WebPlotParams|WebPlotRequest} request a request object with Type=='HiPS' used to display a HiPS
      * @param {HipsImageConversionSettings} [hipsImageConversion=undefined] if defined, use these parameter to
      *                                                convert between image and HiPS
      * @memberof firefly
@@ -383,10 +383,10 @@ function buildImagePart(llApi) {
     /**
      * @summary The plotting function to display a HiPS or an image
      * @param {String|HTMLDivElement} targetDiv to put the image in.
-     * @param {WebPlotParams} hipsRequest a request object used to display a HiPS
-     * @param {WebPlotParams} imageRequest  a request object used to display an image
+     * @param {WebPlotParams|WebPlotRequest} hipsRequest a request object used to display a HiPS
+     * @param {WebPlotParams|WebPlotRequest} imageRequest  a request object used to display an image
      * @param {number} fovDegFallOver the field of view size to determine when to move between a HiPS and an image
-     * @param {WebPlotParams} allSkyRequest a request object used to display allsky image.
+     * @param {WebPlotParams|WebPlotRequest} allSkyRequest a request object used to display allsky image.
      * @param {boolean} plotAllSkyFirst if plot allsky first
      *
      * @memberof firefly

@@ -203,18 +203,17 @@ const makeOrderList = (orderStr) => orderStr ? orderStr.split(';').map( (v) => O
 
 const DEF_ORDER= makeOrderList(DEFAULT_PIPELINE_ORDER);
 
-
+/**
+ * @summary Web plot request. This object can be created by using the method of making survey request like *makexxxRequest*
+ * and the method of setting the parameters.
+ * @param {RequestType} type request type
+ * @param {string} userDesc description
+ * @param {ServiceType} serviceType service type if type == RequestType.SERVICE
+ *
+ * @public
+ * @global
+ */
 export class WebPlotRequest extends ServerRequest {
-
-    /**
-     * @summary WebPlotRequest
-     * @param {RequestType} type request type
-     * @param {string} userDesc description
-     * @param {ServiceType} serviceType service type if type == RequestType.SERVICE
-     *
-     * @author Trey Roby
-     */
-
     constructor(type,userDesc,serviceType) {
         super(type);
         if (type) this.setRequestType(type);

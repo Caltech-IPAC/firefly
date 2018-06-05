@@ -195,7 +195,7 @@ function buildImagePart(channel,file,dispatch) {
 
     /**
      * @summary show a image in the firefly viewer in another tab
-     * @param {WebPlotParams} request Web plot request
+     * @param {WebPlotParams|WebPlotRequest} request The object contains parameters for web plot request
      * @param {String} viewerId
      * @memberof firefly.ApiViewer
      * @public
@@ -214,7 +214,7 @@ function buildImagePart(channel,file,dispatch) {
 
     /**
      * @summary show a HiPS in the firefly viewer in another tab
-     * @param {WebPlotParams} request Web plot request on HiPS type
+     * @param {WebPlotParams|WebPlotRequest} request The object contains parameters for web plot request on HiPS type
      * @param {String} viewerId
      * @memberof firefly.ApiViewer
      * @public

@@ -23,7 +23,7 @@ import {clone} from '../util/WebUtil.js';
  * @prop {string} projectTypeDesc - description of the project type
  * @prop {number} minRangeDeg  - for radius search, smallest radius accepted
  * @prop {number} maxRangeDeg  - for radius search, largest radius accepted
- * @prop {object} plotRequestParams  - a plot request object for {@link WebPlotParams}
+ * @prop {object} plotRequestParams  - a plot request object for {@link WebPlotParams} or {@link WebPlotRequest}
  *
  */
 
