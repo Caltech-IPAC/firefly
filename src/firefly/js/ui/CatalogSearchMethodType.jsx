@@ -24,7 +24,7 @@ import {FieldGroup} from './FieldGroup.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getActivePlotView, getFoV} from '../visualize/PlotViewUtil.js';
-import { makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt} from '../visualize/Point.js';
+import { makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt, xy0Fitsll} from '../visualize/Point.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 
@@ -164,10 +164,10 @@ function calcCornerString(pv, method) {
     const radiusSearch = getFoV(pv) > maxHipsRadiusSearch ? maxHipsRadiusSearch * 3600 : getFoV(pv) * 3600; // in arcsec
 
     if (method==='image' || (!sel && method==='area-selection') ) {
-        pt1 = cc.getWorldCoords(makeImagePt(0,0));
-        pt2 = cc.getWorldCoords(makeImagePt(w, 0));
-        pt3 = cc.getWorldCoords(makeImagePt(w, h));
-        pt4 = cc.getWorldCoords(makeImagePt(0, h));
+        pt1 = cc.getWorldCoords(makeImagePt(0+xy0Fitsll,0+xy0Fitsll));
+        pt2 = cc.getWorldCoords(makeImagePt(w+xy0Fitsll, 0+xy0Fitsll));
+        pt3 = cc.getWorldCoords(makeImagePt(w+xy0Fitsll, h+xy0Fitsll));
+        pt4 = cc.getWorldCoords(makeImagePt(0+xy0Fitsll, h+xy0Fitsll));
 
         if(isHiPS(plot)){
             const centerDevPt= makeDevicePt(plot.viewDim.width/2, plot.viewDim.height/2);

@@ -13,7 +13,7 @@ import {PlotAttribute} from '../WebPlot.js';
 import {CCUtil} from '../CsysConverter.js';
 import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
-import {makeImagePt} from '../Point.js';
+import {makeImagePt, xy0Fitsll} from '../Point.js';
 import {clone} from '../../util/WebUtil.js';
 
 
@@ -136,7 +136,7 @@ function addHiPS(state,action, setActive= true, newPlot= true) {
         pv.flipX= false;
 
         if (pv.viewDim) {
-            const centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
+            const centerImagePt= makeImagePt( plot.dataWidth/2 + xy0Fitsll, plot.dataHeight/2 + xy0Fitsll);
             pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
         }
         return pv;

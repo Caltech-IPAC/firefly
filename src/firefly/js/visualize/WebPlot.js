@@ -11,7 +11,7 @@ import CoordinateSys from './CoordSys.js';
 import {makeProjection} from './projection/Projection.js';
 import PlotState from './PlotState.js';
 import BandState from './BandState.js';
-import {makeWorldPt, makeScreenPt} from './Point.js';
+import {makeWorldPt, makeScreenPt, xy0Fitsll} from './Point.js';
 import {changeProjectionCenter} from './HiPSUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';

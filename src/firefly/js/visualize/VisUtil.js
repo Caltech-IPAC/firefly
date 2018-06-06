@@ -16,7 +16,7 @@ import {CCUtil, CysConverter} from './CsysConverter.js';
 import DrawOp from './draw/DrawOp.js';
 import {primePlot} from './PlotViewUtil.js';
 import {doConv} from '../astro/conv/CoordConv.js';
-import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
+import Point, {xy0Fitsll, makeImageWorkSpacePt, makeImagePt, makeScreenPt,
                makeWorldPt, makeDevicePt, isValidPoint, pointEquals} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
 import {getPixScaleDeg, getFluxUnits} from './WebPlot.js';
@@ -385,8 +385,8 @@ export const getRotationAngle= function(plot) {
     const ix = iWidth / 2;
     const iy = iHeight / 2;
     const cc= CysConverter.make(plot);
-    const wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
-    const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy+iHeight/4));
+    const wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix+xy0Fitsll, iy+xy0Fitsll));
+    const wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix+xy0Fitsll, iy+xy0Fitsll+iHeight/4));
     if (wptC && wpt2) {
         retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
     }
@@ -712,7 +712,7 @@ function getSelectedPtsFromRect(selection, plot, objList) {
  */
 export function getCenterPtOfPlot(plot) {
     if (!plot) return null;
-    const ip= makeImagePt(plot.dataWidth/2,plot.dataHeight/2);
+    const ip= makeImagePt(plot.dataWidth/2+xy0Fitsll,plot.dataHeight/2+xy0Fitsll);
     return CCUtil.getWorldCoords(plot,ip);
 }
 
@@ -906,10 +906,10 @@ export function getTopmostVisiblePoint(pv,xOff, yOff) {
     const {viewDim} = pv;
 
     const lineSegs= [
-       {pt1: cc.getDeviceCoords(makeImagePt(0,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,0))},
-       {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,0)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight))},
-       {pt1: cc.getDeviceCoords(makeImagePt(dataWidth,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,dataHeight))},
-       {pt1: cc.getDeviceCoords(makeImagePt(0,dataHeight)), pt2: cc.getDeviceCoords(makeImagePt(0,0))}
+       {pt1: cc.getDeviceCoords(makeImagePt(0+xy0Fitsll,0+xy0Fitsll)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth+xy0Fitsll,0+xy0Fitsll))},
+       {pt1: cc.getDeviceCoords(makeImagePt(dataWidth+xy0Fitsll,0+xy0Fitsll)), pt2: cc.getDeviceCoords(makeImagePt(dataWidth+xy0Fitsll,dataHeight+xy0Fitsll))},
+       {pt1: cc.getDeviceCoords(makeImagePt(dataWidth+xy0Fitsll,dataHeight+xy0Fitsll)), pt2: cc.getDeviceCoords(makeImagePt(0+xy0Fitsll,dataHeight+xy0Fitsll))},
+       {pt1: cc.getDeviceCoords(makeImagePt(0+xy0Fitsll,dataHeight+xy0Fitsll)), pt2: cc.getDeviceCoords(makeImagePt(0+xy0Fitsll,0+xy0Fitsll))}
     ];
 
     const foundSegs= lineSegs

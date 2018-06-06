@@ -471,6 +471,11 @@ public class VisServerOps {
             Band bands[] = state.getBands();
             WebPlotRequest cropRequest[] = new WebPlotRequest[bands.length];
 
+            int c1_x = (int)Math.floor(c1.getX());
+            int c2_x = (int)Math.ceil(c2.getX());
+            int c1_y = (int)Math.ceil(c1.getY());
+            int c2_y = (int)Math.floor(c2.getY());
+
             for (int i = 0; (i < bands.length); i++) {
 
                 File workingFilsFile = PlotStateUtil.getWorkingFitsFile(state, bands[i]);
@@ -486,20 +491,24 @@ public class VisServerOps {
                     if (cropMultiAll) {
                         File originalFile = PlotStateUtil.getOriginalFile(state, bands[i]);
                         CropFile.crop_extensions(originalFile.getPath(), cropFile.getPath(),
-                                (int) c1.getX(), (int) c1.getY(),
-                                (int) c2.getX(), (int) c2.getY());
+                                c1_x, c1_y, c2_x, c2_y);
+                                //(int) c1.getX(), (int) c1.getY(),
+                                //(int) c2.getX(), (int) c2.getY());
                         cropFits = new Fits(cropFile);
                         saveCropFits = false;
                     } else {
                         Fits fits = new Fits(PlotStateUtil.getWorkingFitsFile(state, bands[i]));
                         cropFits = CropFile.do_crop(fits, state.getImageIdx(bands[i]) + 1,
-                                (int) c1.getX(), (int) c1.getY(),
-                                (int) c2.getX(), (int) c2.getY());
+                                c1_x, c1_y, c2_x, c2_y);
+                                //(int) c1.getX(), (int) c1.getY(),
+                                //(int) c2.getX(), (int) c2.getY());
                     }
                 } else {
                     Fits fits = new Fits(PlotStateUtil.getWorkingFitsFile(state, bands[i]));
-                    cropFits = CropFile.do_crop(fits, (int) c1.getX(), (int) c1.getY(),
-                            (int) c2.getX(), (int) c2.getY());
+                    cropFits = CropFile.do_crop(fits,
+                                                //(int) c1.getX(), (int) c1.getY(),
+                                                //(int) c2.getX(), (int) c2.getY());
+                                                c1_x, c1_y, c2_x, c2_y);
                 }
 
                 FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile);

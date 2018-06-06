@@ -10,7 +10,7 @@ import {isArray} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
-
+import {xy0Fitsll} from '../visualize/Point.js';
 
 
 /**
@@ -135,9 +135,15 @@ export function callRecomputeStretch(state, stretchDataAry) {
 }
 
 
-
 export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll) {
 
+    //console.log('corner1ImagePt: ' + corner1ImagePt.x + ';'+ corner1ImagePt.y);
+    //console.log('corner2ImagePt: ' + corner2ImagePt.x + ';'+ corner2ImagePt.y);
+
+    corner1ImagePt.x -= xy0Fitsll;
+    corner1ImagePt.y -= xy0Fitsll;
+    corner2ImagePt.x -= xy0Fitsll;
+    corner2ImagePt.y -= xy0Fitsll;
     var params= makeParamsWithStateAry(stateAry,false, [
         {name:ServerParams.PT1, value: corner1ImagePt.toString()},
         {name:ServerParams.PT2, value: corner2ImagePt.toString()},

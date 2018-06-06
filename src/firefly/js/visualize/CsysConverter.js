@@ -4,11 +4,10 @@
 import CoordinateSys from './CoordSys.js';
 import VisUtil from './VisUtil.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
-import Point, {makeImageWorkSpacePt, makeImagePt,
+import Point, {xy0Fits, xy0Fitsll, makeImageWorkSpacePt, makeImagePt,
                makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
 import {getPixScaleDeg} from './WebPlot.js';
-
 
 function convertToCorrect(wp) {
     if (!wp) return null;
@@ -90,7 +89,7 @@ export class CysConverter {
             const ipt= this.getImageCoords(iwPt);
             const x= ipt.x;
             const y= ipt.y;
-            retval= (x >= 0 && x <= this.dataWidth && y >= 0 && y <= this.dataHeight );
+            retval= (x >= 0+xy0Fitsll && x <= this.dataWidth+xy0Fitsll && y >= 0+xy0Fitsll && y <= this.dataHeight+xy0Fitsll);
         }
         return retval;
     }
@@ -133,7 +132,7 @@ export class CysConverter {
     imageWorkSpacePtInPlot(ipt) {
         if (!ipt) return false;
         const {x,y}= ipt;
-        return (x >= 0 && x <= this.dataWidth && y >= 0 && y <= this.dataHeight );
+        return (x >= 0+xy0Fitsll && x <= this.dataWidth+xy0Fitsll && y >= 0+xy0Fitsll && y <= this.dataHeight+xy0Fitsll );
     }
 
     /**
@@ -238,7 +237,8 @@ export class CysConverter {
     makeIWPtFromSPt(screenPt, altZoomLevel) {
         if (!screenPt) return null;
         const zoom= altZoomLevel || this.zoomFactor;
-        return makeImageWorkSpacePt(screenPt.x / zoom, this.dataHeight-screenPt.y/zoom);
+        //return makeImageWorkSpacePt(screenPt.x / zoom, this.dataHeight-screenPt.y/zoom);
+        return makeImageWorkSpacePt(screenPt.x / zoom + xy0Fitsll, this.dataHeight-(screenPt.y/zoom) + xy0Fitsll);
     }
 
 //========================================================================================
@@ -304,7 +304,8 @@ export class CysConverter {
                     wpt= VisUtil.convert(wpt,this.imageCoordSys);
                 }
                 const projPt= this.projection.getImageCoords(wpt.getLon(),wpt.getLat());
-                retval= projPt ? makeImagePt( projPt.x+ 0.5 ,  projPt.y+ 0.5) : null;
+                //retval= projPt ? makeImagePt( projPt.x+ 0.5 ,  projPt.y+ 0.5) : null;
+                retval= projPt ? makeImagePt( projPt.x + xy0Fits,  projPt.y + xy0Fits) : null;
                 this.putInConversionCache(originalWp,retval);
             }
         }
@@ -460,9 +461,11 @@ export class CysConverter {
 
                 const  proj_pt= this.projection.getImageCoords(wpt.getLon(),wpt.getLat());
                 if (proj_pt) {
-                    const imageX= proj_pt.x  + 0.5;
-                    const imageY= proj_pt.y  + 0.5;
+                    //const imageX= proj_pt.x  + 0.5;
+                    //const imageY= proj_pt.y  + 0.5;
 
+                    const imageX= proj_pt.x + xy0Fits;
+                    const imageY= proj_pt.y + xy0Fits;
                     imagePt= makeImagePt(imageX,imageY);
                     this.putInConversionCache(originalWp, imagePt);
 
@@ -483,8 +486,10 @@ export class CysConverter {
     makeScreenPtFromImPtOptimized(imagePt,retPt) {
         if (!imagePt) return null;
         // convert image to image workspace
-        const imageWorkspaceX= imagePt.x;
-        const imageWorkspaceY= imagePt.y;
+        //const imageWorkspaceX= imagePt.x;
+        //const imageWorkspaceY= imagePt.y;
+        const imageWorkspaceX= imagePt.x - xy0Fitsll;
+        const imageWorkspaceY= imagePt.y - xy0Fitsll;
 
         // convert image workspace to screen
         const zFact= this.zoomFactor;
@@ -502,8 +507,10 @@ export class CysConverter {
     makeSPtFromIWPt(iwpt, altZoomLevel) {
         if (!iwpt) return null;
         const zoom= altZoomLevel || this.zoomFactor;
-        return makeScreenPt(iwpt.x*zoom,
-                            (this.dataHeight - iwpt.y) *zoom );
+        //return makeScreenPt(iwpt.x*zoom,
+        //                  (this.dataHeight - iwpt.y) *zoom );
+        return makeScreenPt((iwpt.x-xy0Fitsll)*zoom,
+                            (this.dataHeight - (iwpt.y-xy0Fitsll)) *zoom );
     }
 
 
@@ -542,7 +549,8 @@ export class CysConverter {
 
     makeWorldPtFromIPt( ipt, outputCoordSys) {
         if (!ipt) return null;
-        let wpt = this.projection.getWorldCoords(ipt.x - .5 ,ipt.y - .5);
+        //let wpt = this.projection.getWorldCoords(ipt.x - .5 ,ipt.y - .5);
+        let wpt = this.projection.getWorldCoords(ipt.x - xy0Fits , ipt.y - xy0Fits);
         if (wpt && outputCoordSys!==wpt.getCoordSys()) {
             wpt= VisUtil.convert(wpt, outputCoordSys);
         }

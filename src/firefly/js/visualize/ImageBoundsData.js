@@ -4,7 +4,7 @@
 
 import CoordinateSys from './CoordSys.js';
 import VisUtil from './VisUtil.js';
-import {makeImagePt} from './Point';
+import {makeImagePt, xy0Fits, xy0Fitsll} from './Point';
 import {getPixScaleDeg} from './WebPlot.js';
 
 
@@ -29,10 +29,10 @@ export const makeRoughGuesser= function(cc) {
 
 
     const {dataWidth, dataHeight}= cc;
-    const topLeft= cc.getWorldCoords(makeImagePt(0,0));
-    const topRight= cc.getWorldCoords(makeImagePt(dataWidth,0));
-    const bottomRight= cc.getWorldCoords(makeImagePt(dataWidth,dataHeight));
-    const bottomLeft= cc.getWorldCoords(makeImagePt(0,dataHeight));
+    const topLeft= cc.getWorldCoords(makeImagePt(0+xy0Fitsll,0+xy0Fitsll));
+    const topRight= cc.getWorldCoords(makeImagePt(dataWidth+xy0Fitsll,0+xy0Fitsll));
+    const bottomRight= cc.getWorldCoords(makeImagePt(dataWidth+xy0Fitsll,dataHeight+xy0Fitsll));
+    const bottomLeft= cc.getWorldCoords(makeImagePt(0+xy0Fitsll,dataHeight+xy0Fitsll));
     const scale= getPixScaleDeg(cc);
 
 
