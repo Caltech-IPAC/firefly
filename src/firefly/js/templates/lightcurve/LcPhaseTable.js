@@ -4,8 +4,6 @@
 
 import {get, set, slice, isArray, isString, cloneDeep, pick, omit} from 'lodash';
 import {doUpload} from '../../ui/FileUpload.jsx';
-import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
-import {multitraceDesign} from '../../charts/ChartUtil.js';
 import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
@@ -13,8 +11,7 @@ import {tableToIpac, getColumnIdx} from '../../tables/TableUtil.js';
 import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {LC, getFullRawTable, getConverterId} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
-import {getConverter} from './LcConverterFactory.js';
-import {getYColMappings} from "./LcConverterFactory";
+import {getConverter, getYColMappings} from './LcConverterFactory.js';
 
 
 const DEC_PHASE = 3;       // decimal digit

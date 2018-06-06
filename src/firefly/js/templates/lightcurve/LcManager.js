@@ -18,7 +18,7 @@ import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
-import {CHART_ADD, getChartDataElement, getChartData} from '../../charts/ChartsCntlr.js';
+import {CHART_ADD, getChartData} from '../../charts/ChartsCntlr.js';
 import {getConverter, getYColMappings} from './LcConverterFactory.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';

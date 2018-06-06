@@ -24,7 +24,6 @@ import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName, DL_DATA_TAG} from './LcConverterFactory.js';
@@ -50,7 +49,6 @@ export class LcViewer extends PureComponent {
         this.state = this.getNextState();
         dispatchAddSaga(watchCatalogs);
         dispatchAddSaga(lcManager);
-        dispatchAddSaga(syncChartViewer);
         if (getWorkspaceConfig()) { initWorkspace();}
     }
 

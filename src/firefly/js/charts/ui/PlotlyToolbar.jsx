@@ -1,5 +1,6 @@
 import './ChartPanel.css';
 import React from 'react';
+import PropTypes from 'prop-types';
 import {get, isEmpty} from 'lodash';
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
@@ -9,10 +10,44 @@ import {downloadChart} from './PlotlyWrapper.jsx';
 import {getColValidator} from './ColumnOrExpression.jsx';
 import {getColValStats} from '../TableStatsCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
+import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {showChartsDialog} from './ChartSelectPanel.jsx';
-import {showFilterDialog} from '../chartTypes/PlotlyChart.jsx';
+import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
+import {isScatter2d} from '../ChartUtil.js';
 
 
+export function PlotlyToolbar({chartId, expandable, expandedMode, showMultiTrace}) {
+    const {activeTrace} = getChartData(chartId);
+    const ToolbarUI = getToolbarUI(chartId, activeTrace, showMultiTrace);
+    return (
+        <div className={`PanelToolbar ChartPanel__toolbar ${expandedMode?'ChartPanel__toolbar--offsetLeft':''}`}>
+            <div className='PanelToolbar__group'/>
+            <div className='PanelToolbar__group'>
+                <ToolbarUI {...{chartId, expandable, showMultiTrace}}/>
+                </div>
+        </div>
+    );
+}
+
+PlotlyToolbar.propTypes = {
+    chartId: PropTypes.string,
+    expandable: PropTypes.bool,
+    expandedMode: PropTypes.bool,
+    showMultiTrace:PropTypes.bool
+};
+
+function getToolbarUI(chartId, activeTrace=0, showMultiTrace) {
+
+    if (!showMultiTrace) { return SingleTraceUIToolbar; }
+
+    const {data} =  getChartData(chartId);
+    const type = get(data, [activeTrace, 'type'], 'scatter');
+    if (isScatter2d(type)) {
+        return ScatterToolbar;
+    } else {
+        return BasicToolbar;
+    }
+}
 
 function getToolbarStates(chartId) {
     const {selection, hasSelected, activeTrace=0, tablesources, layout, data=[]} = getChartData(chartId);
@@ -27,7 +62,7 @@ function getToolbarStates(chartId) {
 }
 
 
-export class SingleTraceUIToolbar extends SimpleComponent {
+class SingleTraceUIToolbar extends SimpleComponent {
     getNextState(np) {
         const {chartId} = np || this.props;
         return getToolbarStates(chartId);
@@ -53,7 +88,7 @@ export class SingleTraceUIToolbar extends SimpleComponent {
 
 }
 
-export class ScatterToolbar extends SimpleComponent {
+class ScatterToolbar extends SimpleComponent {
 
     getNextState(np) {
         const {chartId} = np || this.props;
@@ -129,7 +164,7 @@ function isSelectable(tbl_id, chartId, type) {
     return (noSelectionTraceIdx < 0);
 }
 
-export class BasicToolbar extends SimpleComponent {
+class BasicToolbar extends SimpleComponent {
 
     getNextState(np) {
         const {chartId} = np || this.props;
@@ -368,4 +403,19 @@ function ClearFilter({style={}, tbl_id}) {
              title='Remove all filters'
              className='ChartToolbar__clear-filters'/>
     );
+}
+
+/**
+ * Creates and shows the modal dialog with filter options.
+ * @param {string} chartId
+ */
+function showFilterDialog(chartId) {
+    const {data, fireflyData, activeTrace} = getChartData(chartId);
+    const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
+    const tableModel = getTblById(tbl_id);
+    const content= (
+        <FilterEditorWrapper tableModel={tableModel}/>
+    );
+
+    showOptionsPopup({content, title: 'Filters', modal: true, show: true});
 }
