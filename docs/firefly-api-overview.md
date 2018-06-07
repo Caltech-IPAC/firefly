@@ -607,7 +607,7 @@ Charts support the same table formats as Table:
 
 Firefly has extended Plotly library by adding `fireflyHistogram` and `fireflyHeatmap` trace types.
 
-Both `fireflyHistogram` and `fireflyHeatmap` aggregate data on the server, which is particularly beneficial, when for large tables.
+Both `fireflyHistogram` and `fireflyHeatmap` aggregate data on the server, which is particularly beneficial for large tables.
 
 *Example of a heatmap:*
 ```js

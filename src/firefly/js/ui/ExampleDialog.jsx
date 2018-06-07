@@ -12,6 +12,7 @@ import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
+import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../fieldGroup/FieldGroupCntlr.js';
@@ -144,7 +145,7 @@ export class AllTest extends PureComponent {
                         <Tab name='Second'>
                             <div style={{minWidth: 300, minHeight: 150}}>
                                 <CollapsiblePanel componentKey='exampleHistogramCollapsible' isOpen={true} header='Sample Histogram'>
-
+                                    {createSampleHistogram()}
                                 </CollapsiblePanel>
                             </div>
                         </Tab>
@@ -157,6 +158,46 @@ export class AllTest extends PureComponent {
     }
 }
 
+function createSampleHistogram() {
+    const {x=[], y=[], binWidth=[]} = {};
+    [[1,-2.5138013781265,-2.0943590644815],
+    [4,-2.0943590644815,-1.8749167508365],
+    [11,-1.8749167508365,-1.6554744371915],
+    [12,-1.6554744371915,-1.4360321235466],
+    [18,-1.4360321235466,-1.2165898099016],
+    [15,-1.2165898099016,-1.1571474962565],
+    [20,-1.1571474962565,-0.85720518261159],
+    [24,-0.85720518261159,-0.77770518261159],
+    [21,-0.77770518261159,-0.55826286896661],
+    [36,-0.55826286896661,-0.33882055532162],
+    [40,-0.33882055532162,-0.11937824167663],
+    [51,-0.11937824167663,0.10006407196835],
+    [59,0.10006407196835,0.21850638561334],
+    [40,0.21850638561334,0.31950638561334],
+    [42,0.31950638561334,0.53894869925832],
+    [36,0.53894869925832,0.75839101290331],
+    [40,0.75839101290331,0.9778333265483],
+    [36,0.9778333265483,1.1972756401933],
+    [23,1.1972756401933,1.4167179538383],
+    [18,1.4167179538383,1.6361602674833],
+    [9,1.6361602674833,1.8556025811282],
+    [12,1.8556025811282,2.0750448947732],
+    [0,2.0750448947732,2.2944872084182],
+    [4,2.2944872084182,2.312472786789]].forEach((row) => {
+        x.push((row[2]+row[1])/2);
+        y.push(row[0]);
+        binWidth.push(row[2]-row[1]);
+    });
+    const data = [{type: 'bar', x, y, width: binWidth, marker: {line: {width: 1, color: 'lightgray'}}}];
+    const layout = {title: 'Sample Histogram'};
+    return (
+        <PlotlyWrapper data={data}
+                       layout={layout}
+                       style={{width: '700px',height: '400px'}}/>
+    );
+
+
+}
 
 class FieldGroupTest extends PureComponent {
 

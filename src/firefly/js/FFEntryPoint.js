@@ -27,7 +27,6 @@ var options = {
         workspace : {showOptions: false},
     imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
         charts: {
-        multitrace: true,
             singleTraceUI: false
     },
     hips : {
