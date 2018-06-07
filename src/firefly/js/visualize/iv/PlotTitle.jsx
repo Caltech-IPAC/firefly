@@ -19,7 +19,7 @@ export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 export function PlotTitle({plotView:pv, titleType, brief, working}) {
     let styleName= '';
     const plot= primePlot(pv);
-    const world= plot.projection.isSpecified();
+    const world= plot.projection.isSpecified() && plot.projection.isImplemented();
     switch (titleType) {
         case TitleType.INLINE:
             styleName= 'plot-title-inline-title-container';
