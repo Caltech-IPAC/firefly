@@ -3,26 +3,28 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
-
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ztf.ZtfSciimsFileRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.firefly.server.query.ztf.ZtfFileRetrieve;
+import edu.caltech.ipac.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 
@@ -47,17 +49,15 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
         // create unique list of filesystem-based and url-based files
         Set<String> zipFiles = new HashSet<String>();
 
-        Collection<Integer> selectedRows = request.getSelectedRows();
-        DataGroupPart dgp = new SearchManager().getDataGroup(request.getSearchRequest());
+        ArrayList<Integer> selectedRows = new ArrayList<>(request.getSelectedRows());
+
+        //Collection<Integer> selectedRows = request.getSelectedRows();
+        //DataGroupPart dgp = new SearchManager().getDataGroup(request.getSearchRequest());
 
         ArrayList<FileInfo> fiArr = new ArrayList<FileInfo>();
         long fgSize = 0;
 
-        String sciImage = request.getParam("sciImage");
-        boolean dlSciImage = false;
-        if (sciImage.equalsIgnoreCase("yes")) {
-            dlSciImage = true;
-        }
+        boolean dlSciImage = true;
 
         // values = cut or orig
         String dlCutouts = request.getParam("dlCutouts");
@@ -67,119 +67,91 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
         String zipType = request.getParam("zipType");
         boolean doFolders = zipType != null && zipType.equalsIgnoreCase("folder");
 
-        // build file types list
-        String artFiles = request.getParam("anciFiles");
+        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
 
-        ArrayList<ZtfSciimsFileRetrieve.FILE_TYPE> types = new ArrayList<ZtfSciimsFileRetrieve.FILE_TYPE>();
-
-     //   List<String> types = new ArrayList<String>();
-        if (dlSciImage) {
-            types.add(ZtfSciimsFileRetrieve.FILE_TYPE.SCI);
+        if (request.getParam("ProductLevel") == null) {
+            request.setParam("ProductLevel", "sci");
         }
-        if (artFiles != null && artFiles.length() > 0 && !artFiles.equalsIgnoreCase("_none_")) {
-            String[] artArr = artFiles.split(",");
-            for (String art : artArr) {
-                if (art.equalsIgnoreCase("M")) {
-                    types.add(ZtfSciimsFileRetrieve.FILE_TYPE.MASK);
-                } else if (art.equalsIgnoreCase("R")) {
-                    types.add(ZtfSciimsFileRetrieve.FILE_TYPE.RAW);
-                } else if (art.equalsIgnoreCase("S")) {
-                    types.add(ZtfSciimsFileRetrieve.FILE_TYPE.SEXCATL);
-                } else if (art.equalsIgnoreCase("P")) {
-                    types.add(ZtfSciimsFileRetrieve.FILE_TYPE.PSFCATL);
-                }
-            }
-        }
-
-        String baseFilename = ZtfSciimsFileRetrieve.ZTF_FILESYSTEM_BASEPATH;
-
-        IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, "field","filtercode","ccdid","qid","filefracday","imgtypecode", "in_ra", "crval1", "in_dec", "crval2");
-
-        String baseUrl = ZtfSciimsFileRetrieve.getBaseURL(request);
-        String subSize = request.getSafeParam("subsize");
+        String subSize = request.getSafeParam("cutoutSize");
         double sizeD = StringUtils.isEmpty(subSize) ? 0 : Double.parseDouble(subSize);
         String sizeAsecStr = String.valueOf((int) (sizeD * 3600));
+        String baseUrl = getBaseURL(request);
+
 
         Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
 
         for (int rowIdx : selectedRows) {
-
-
             String filefracday = String.valueOf(dgData.get(rowIdx, "filefracday"));
             String field = String.valueOf(dgData.get(rowIdx, "field"));
             String filtercode = (String) dgData.get(rowIdx, "filtercode");
+            filtercode = "z" + filtercode;
             String ccdid = String.valueOf(dgData.get(rowIdx, "ccdid"));
-            String imgtypcode = (String) dgData.get(rowIdx, "imgtypecode");
+            String imgtypcode = "o";
             String qid = String.valueOf(dgData.get(rowIdx, "qid"));
 
-            //for (String col : types) {
-            for (ZtfSciimsFileRetrieve.FILE_TYPE t : types) {
-                FileInfo fi = null;
+            FileInfo fi = null;
 
-                String fName = ZtfSciimsFileRetrieve.createFilepath_l1(filefracday,field,filtercode,ccdid,imgtypcode,qid,t);
+            String fName = ZtfSciimsFileRetrieve.createFilepath_l1(filefracday,field,filtercode,ccdid,imgtypcode,qid, ZtfSciimsFileRetrieve.FILE_TYPE.SCI);
 
-                File f = new File("", fName);
+            File f = new File(fName);
 
-                String extName = doFolders ? fName : f.getName();
+            String extName = doFolders ? fName : f.getName();
 
-                //long estSize = 5000;
-                int estSize;
-                // ZTF pixscal = 1.01 arcsec/pix
+            //long estSize = 5000;
+            int estSize;
+            // ZTF pixscal = 1.01 arcsec/pix
 
-                double ratiol = sizeD / ((2048 * 1.01) / 3600);  // pixel length * asec/pixel / 3600
-                double ratioh = 0.5 * ratiol; // ratioh = sizeD / ((4096 * 1.01) / 3600);pixel height * asec/pixel / 3600
-                if (ratiol < 1.0) {
-                    estSize = (int) (((SCI_FITS_SIZE - 31750) * (ratiol * ratioh)) + 31750);  // 31750 = SCI header size
-                } else {
-                    estSize = SCI_FITS_SIZE;
+            double ratiol = sizeD / ((2048 * 1.01) / 3600);  // pixel length * asec/pixel / 3600
+            double ratioh = 0.5 * ratiol; // ratioh = sizeD / ((4096 * 1.01) / 3600);pixel height * asec/pixel / 3600
+            if (ratiol < 1.0) {
+                estSize = (int) (((SCI_FITS_SIZE - 31750) * (ratiol * ratioh)) + 31750);  // 31750 = SCI header size
+            } else {
+                estSize = SCI_FITS_SIZE;
+            }
+
+
+            if (doCutout) {
+                // look for in_ra and in_dec returned by IBE
+                // if it fails, try using ra and dec
+                String subLon = dgData.get(rowIdx, "in_ra") != null ? String.format("%.4f", (Double) dgData.get(rowIdx, "in_ra")) : null;
+                if (StringUtils.isEmpty(subLon)) {
+                    subLon = String.format("%.4f", (Double) dgData.get(rowIdx, "ra"));
                 }
-                if (types.equals(ZtfSciimsFileRetrieve.FILE_TYPE.MASK)) {
-                    estSize = (int) (0.5 * estSize);
+
+                String subLat = dgData.get(rowIdx, "in_dec") != null ? String.format("%.4f", (Double) dgData.get(rowIdx, "in_dec")) : null;
+                if (StringUtils.isEmpty(subLat)) {
+                    subLat = String.format("%.4f", (Double) dgData.get(rowIdx, "dec"));
                 }
+                String cutoutInfo = "_ra" + subLon + "_dec" + subLat + "_asec" + sizeAsecStr;
 
-                if (doCutout && (t == ZtfSciimsFileRetrieve.FILE_TYPE.SCI || t == ZtfSciimsFileRetrieve.FILE_TYPE.MASK)) {
+                extName = extName.replace(".fits",cutoutInfo+".fits");
 
-                    // look for in_ra and in_dec returned by IBE
-                    String subLon = String.format("%.4f", (Double) dgData.get(rowIdx, "in_ra"));
-                    if (StringUtils.isEmpty(subLon)) {
-                        subLon = String.format("%.4f", (Double) dgData.get(rowIdx, "crval1"));
-                    }
-
-                    // look for in_ra and in_dec returned by IBE
-                    String subLat = String.format("%.4f", (Double) dgData.get(rowIdx, "in_dec"));
-                    if (StringUtils.isEmpty(subLat)) {
-                        // if it fails, try using crval2
-                        subLat = String.format("%.4f", (Double) dgData.get(rowIdx, "crval2"));
-                    }
-                    String cutoutInfo = "_ra" + subLon + "_dec" + subLat + "_asec" + sizeAsecStr;
-
-                    String url = ZtfSciimsFileRetrieve.createCutoutURLString_l1(baseUrl, filefracday,field,filtercode,ccdid,imgtypcode,qid, t, subLon, subLat, subSize);
-                    // strip out filename when using file resolver
-                    if (doFolders) {
-                        int idx = extName.lastIndexOf("/");
-                        idx = idx < 0 ? 0 : idx;
-                        extName = extName.substring(0, idx) + "/";
-                    } else {
-                        extName = null;
-                    }
-
-                    fi = new FileInfo(url, extName + cutoutInfo, estSize);
-                } else {
-                    String url = baseUrl + fName;
-                    fi = new FileInfo(url, extName, estSize);
-                }
-                if (fi != null) {
-                    fi.setCookies(cookies);
-                    fiArr.add(fi);
-                    fgSize += fi.getSizeInBytes();
-                }
+                String url = ZtfSciimsFileRetrieve.createCutoutURLString_l1(baseUrl, filefracday,field,filtercode,ccdid,imgtypcode,qid, ZtfSciimsFileRetrieve.FILE_TYPE.SCI, subLon, subLat, subSize);
+                logger.briefInfo("cutout url: " + url);
+                // strip out filename when using file resolver
+                fi = new FileInfo(url, extName, 0);
+            } else {
+                String url = baseUrl + fName;
+                fi = new FileInfo(url, extName,0);
+            }
+            if (fi != null) {
+                fi.setCookies(cookies);
+                fiArr.add(fi);
+                fgSize += fi.getSizeInBytes();
             }
         }
+
         FileGroup fg = new FileGroup(fiArr, null, fgSize, "ZTF Download Files");
         ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
         fgArr.add(fg);
         return fgArr;
+    }
+
+
+    private static String getBaseURL(ServerRequest sr) throws MalformedURLException {
+            // build service
+            return ZtfFileRetrieve.getBaseURL(sr);
+
     }
 
 }

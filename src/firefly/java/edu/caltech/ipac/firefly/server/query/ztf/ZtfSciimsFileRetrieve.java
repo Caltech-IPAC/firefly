@@ -53,8 +53,8 @@ public class ZtfSciimsFileRetrieve extends URLFileInfoProcessor {
     // example for cal files retrieve
 
     public static String getBaseURL(ServerRequest sr) {
-        String host = sr.getSafeParam("host");
-        String schemaGroup = sr.getSafeParam("schemaGroup");
+        String host = sr.getSafeParam("host") != null ? sr.getSafeParam("host") : ZtfFileRetrieve.IBE_HOST;
+        String schemaGroup = sr.getSafeParam("schemaGroup")!= null ? sr.getSafeParam("schemaGroup"):"ztf";
         String schema = sr.getSafeParam("schema");
 //        String table = sr.getSafeParam("table");
 

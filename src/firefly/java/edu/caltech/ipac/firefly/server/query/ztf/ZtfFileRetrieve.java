@@ -3,6 +3,8 @@ package edu.caltech.ipac.firefly.server.query.ztf;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
+import edu.caltech.ipac.firefly.server.query.ztf.ZtfSciimsFileRetrieve;
+import edu.caltech.ipac.firefly.server.query.ztf.ZtfRefimsFileRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 
@@ -18,8 +20,8 @@ import java.net.URL;
 
 @SearchProcessorImpl(id = "ZtfFileRetrieve")
 public class ZtfFileRetrieve extends URLFileInfoProcessor {
+    static final String IBE_HOST = AppProperties.getProperty("ztf.ibe.host", "https://irsa.ipac.caltech.edu/ibe");
 
-    public static final boolean USE_HTTP_AUTHENTICATOR = false;
     public static final String ZTF_DATA_RETRIEVAL_TYPE = AppProperties.getProperty("ztf.data_retrieval_type");  // url or filesystem
     public static final String ZTF_FILESYSTEM_BASEPATH = AppProperties.getProperty("ztf.filesystem_basepath");
 
@@ -29,19 +31,32 @@ public class ZtfFileRetrieve extends URLFileInfoProcessor {
         String productLevel = sr.getSafeParam("ProductLevel");
 
         if (productLevel.equalsIgnoreCase("ref")) {
-            ZtfRefimsFileRetrieve l2FileRetrieve = new ZtfRefimsFileRetrieve();
+            ZtfRefimsFileRetrieve refFileRetrieve = new ZtfRefimsFileRetrieve();
 
-            return l2FileRetrieve.getURL(sr);
+            return refFileRetrieve.getURL(sr);
         } else if (productLevel.equalsIgnoreCase("sci")) {
-            ZtfSciimsFileRetrieve l1FileRetrieve = new ZtfSciimsFileRetrieve();
+            ZtfSciimsFileRetrieve sciFileRetrieve = new ZtfSciimsFileRetrieve();
 
-            return l1FileRetrieve.getURL(sr);
+            return sciFileRetrieve.getURL(sr);
         } else {
             Logger.warn("cannot find param: productLevel or the param returns null");
             throw new MalformedURLException("Can not find the file");
         }
 
     }
+    public static String getBaseURL(ServerRequest sr) throws MalformedURLException {
+            String productLevel = sr.getSafeParam("ProductLevel");
+
+            if (productLevel.equalsIgnoreCase("ref")) {
+               return ZtfRefimsFileRetrieve.getBaseURL(sr);
+            } else if (productLevel.equalsIgnoreCase("sci")) {
+                return ZtfSciimsFileRetrieve.getBaseURL(sr);
+            } else {
+                Logger.warn("cannot find param: productLevel or the param returns null");
+                throw new MalformedURLException("Can not find the file");
+            }
+
+        }
 
     @Override
     protected boolean identityAware() {
