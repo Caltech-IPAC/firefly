@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
@@ -45,7 +46,6 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.util.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.util.DataGroup.ROW_NUM;
-import static edu.caltech.ipac.util.IpacTableUtil.*;
 
 /**
  * @author loi
@@ -76,6 +76,7 @@ public class EmbeddedDbUtil {
     public static FileInfo ingestDataGroup(File dbFile, DataGroup dg, DbAdapter dbAdapter, String forTable) {
 
         // remove ROW_IDX or ROW_NUM if exists
+        // these are transient values and should not be persisted.
         dg.removeDataDefinition(DataGroup.ROW_IDX);
         dg.removeDataDefinition(DataGroup.ROW_NUM);
 
@@ -304,29 +305,21 @@ public class EmbeddedDbUtil {
         String createDDSql = dbAdapter.createDDSql(tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createDDSql);
 
-        Map<String, DataGroup.Attribute> meta = dg.getAttributes();
         List<Object[]> data = new ArrayList<>();
         for(DataType dt : colsAry) {
-            int width = getIntVal(meta, WIDTH_TAG, dt, 0);
-            width = width > 0 ? width : dt.getFormatInfo().getWidth();
-            String format = getStrVal(meta, FORMAT_TAG, dt, null);
-            format = format == null ? dt.getFormatInfo().getDataFormatStr() : format;
-            String visi = dt.getKeyName().equals(ROW_IDX) ? VISI_HIDDEN :
-                            getStrVal(meta, VISI_TAG, dt, VISI_SHOW);
-
             data.add( new Object[]
                     {
                             dt.getKeyName(),
-                            getStrVal(meta, LABEL_TAG, dt, dt.getKeyName()),
+                            dt.getLabel(),
                             dt.getTypeDesc(),
-                            dt.getDataUnit(),
+                            dt.getUnits(),
                             dt.getNullString(),
-                            format,
-                            width,
-                            visi,
-                            Boolean.valueOf(getStrVal(meta, SORTABLE_TAG, dt, "true")),
-                            Boolean.valueOf(getStrVal(meta, FILTERABLE_TAG, dt, "true")),
-                            getStrVal(meta, DESC_TAG, dt, dt.getShortDesc())
+                            dt.getFormat(),
+                            dt.getWidth(),
+                            dt.getVisibility().name(),
+                            dt.isSortable(),
+                            dt.isFilterable(),
+                            dt.getDesc()
                     }
             );
         }
@@ -365,40 +358,17 @@ public class EmbeddedDbUtil {
                 boolean filterable = rs.getBoolean("filterable");
 
                 DataType dtype = dg.getDataDefintion(cname, true);
+
                 if (dtype != null) {
-                    dtype.setKeyName(cname);
-                    if (!StringUtils.areEqual(label, cname)) {
-                        String attr = makeAttribKey(LABEL_TAG, cname);
-                        dg.addAttribute(attr, label);
-                    }
-                    if (!StringUtils.isEmpty(units)) {
-                        dtype.setUnits(units);
-                    }
-                    if (!StringUtils.isEmpty(nullStr)) {
-                        dtype.setNullString(nullStr);
-                    }
-                    if (!StringUtils.isEmpty(format)) {
-                        dtype.getFormatInfo().setDataFormat(format);
-                    }
-                    if (width > 0) {
-                        dtype.getFormatInfo().setWidth(width);
-                    }
-                    if (!StringUtils.areEqual(visibility, VISI_SHOW)) {
-                        String attr = makeAttribKey(VISI_TAG, cname);
-                        dg.addAttribute(attr, visibility);
-                    }
-                    if (!StringUtils.isEmpty(desc)) {
-                        String attr = makeAttribKey(DESC_TAG, cname);
-                        dg.addAttribute(attr, desc);
-                    }
-                    if (!sortable) {
-                        String attr = makeAttribKey(SORTABLE_TAG, cname);
-                        dg.addAttribute(attr, String.valueOf(false));
-                    }
-                    if (!filterable) {
-                        String attr = makeAttribKey(FILTERABLE_TAG, cname);
-                        dg.addAttribute(attr, String.valueOf(false));
-                    }
+                    if (!StringUtils.isEmpty(label)) dtype.setLabel(label);
+                    if (!StringUtils.isEmpty(units)) dtype.setUnits(units);
+                    if (!StringUtils.isEmpty(nullStr)) dtype.setNullString(nullStr);
+                    if (!StringUtils.isEmpty(format)) dtype.setFormat(format);
+                    if (!StringUtils.isEmpty(visibility)) dtype.setVisibility(DataType.Visibility.valueOf(visibility));
+                    if (!StringUtils.isEmpty(desc)) dtype.setDesc(desc);
+                    if (width > 0) dtype.setWidth(width);
+                    if (!sortable) dtype.setSortable(false);
+                    if (!filterable) dtype.setFilterable(false);
                 }
             } while (rs.next());
         } catch (SQLException e) {
@@ -433,13 +403,11 @@ public class EmbeddedDbUtil {
         System.arraycopy(dg.getDataDefinitions(), 0, cols, 0, cols.length-2);
         cols[cols.length-2] = DataGroup.makeRowIdx();
         cols[cols.length-1] = DataGroup.makeRowNum();
-        dg.addAttribute(makeAttribKey(VISI_TAG, ROW_IDX), VISI_HIDDEN);
-        dg.addAttribute(makeAttribKey(VISI_TAG, ROW_NUM), VISI_HIDDEN);
         return cols;
     }
 
     private static String getStrVal(Map<String, DataGroup.Attribute> meta, String tag, DataType col, String def) {
-        DataGroup.Attribute val = meta.get(makeAttribKey(tag, col.getKeyName()));
+        DataGroup.Attribute val = meta.get(TableMeta.makeAttribKey(tag, col.getKeyName()));
         return val == null ? def : val.getValue();
     }
 

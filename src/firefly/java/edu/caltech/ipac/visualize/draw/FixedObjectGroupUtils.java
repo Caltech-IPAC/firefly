@@ -152,8 +152,7 @@ public class FixedObjectGroupUtils {
                             String.class : getTranslateDatatype(sType);
             }
 
-            dType=  new edu.caltech.ipac.util.DataType(fieldID, title, cType,
-                        edu.caltech.ipac.util.DataType.Importance.HIGH, field.getUnit(), false);
+            dType=  new edu.caltech.ipac.util.DataType(fieldID, cType, title, field.getUnit(), null, null);
 
             AnyTEXT descAry[]= field.getDESCRIPTIONArray();
             if (descAry.length>0) {
@@ -164,20 +163,9 @@ public class FixedObjectGroupUtils {
                     s= cleanXML(desc);
                     sb.append(s);
                 }
-                dType.setShortDesc(sb.toString());
+                dType.setDesc(sb.toString());
             }
 
-            // set format info, in which width will be saved
-            // align character data left, everything else - right
-            edu.caltech.ipac.util.DataType.FormatInfo formatInfo = new edu.caltech.ipac.util.DataType.FormatInfo();
-            if (cType.equals(String.class)) {
-                formatInfo.setHeaderAlign(edu.caltech.ipac.util.DataType.FormatInfo.Align.LEFT);
-                formatInfo.setDataAlign(edu.caltech.ipac.util.DataType.FormatInfo.Align.LEFT);
-            } else {
-                formatInfo.setHeaderAlign(edu.caltech.ipac.util.DataType.FormatInfo.Align.RIGHT);
-                formatInfo.setDataAlign(edu.caltech.ipac.util.DataType.FormatInfo.Align.RIGHT);
-            }
-            dType.setFormatInfo(formatInfo);
             dTypeList.add(dType);
 
         }
@@ -206,9 +194,6 @@ public class FixedObjectGroupUtils {
                     dataObject.setDataElement(dType,
                                               dType.convertStringToData(vStr) );
                     //System.out.println("   " +vStr);
-                    if (vStr.length()>dType.getFormatInfo().getWidth()) {
-                        dType.getFormatInfo().setWidth(vStr.length());
-                    }
                 }
             }
             dataGroup.add(dataObject);

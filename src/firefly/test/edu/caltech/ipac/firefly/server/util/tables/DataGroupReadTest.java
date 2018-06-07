@@ -4,13 +4,14 @@
 package edu.caltech.ipac.firefly.server.util.tables;
 
 import edu.caltech.ipac.astro.FITSTableReader;
+import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.util.VoTableUtil;
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
 
 import nom.tam.fits.FitsException;
 import org.junit.Assert;
@@ -30,7 +31,7 @@ import java.util.List;
  */
 public class DataGroupReadTest {
 
-    private static final File largeIpacTable = FileLoader.resolveFile(DataGroupReadTest.class, "50k.tbl");
+    private static final File largeIpacTable = new File("/hydra/cm/firefly_test_data/large-ipac-tables/wise-950000.tbl"); //FileLoader.resolveFile(DataGroupReadTest.class, "50k.tbl");
     private static final File ipacTable = FileLoader.resolveFile(DataGroupReadTest.class, "DataGroupTest.tbl");
     private static final File voTable = FileLoader.resolveFile(DataGroupReadTest.class, "p3am_cdd.xml");
     private static final File fitsTable = FileLoader.resolveFile(DataGroupReadTest.class, "lsst-table.fits");
@@ -43,16 +44,16 @@ public class DataGroupReadTest {
         // test col header
         DataType ra = data.getDataDefintion("ra");
         Assert.assertEquals("column name", "ra", ra.getKeyName());
-        Assert.assertEquals("column unit", "deg", ra.getDataUnit());
+        Assert.assertEquals("column unit", "deg", ra.getUnits());
         Assert.assertEquals("column desc", "null", ra.getNullString());
         Assert.assertEquals("column type", "double", ra.getTypeDesc());
 
         // test col attributes
-        String width = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.WIDTH_TAG, "designation")).getValue();
-        String prefWidth = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.PREF_WIDTH_TAG, "designation")).getValue();
-        String sortable = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.SORTABLE_TAG, "designation")).getValue();
-        String filterable = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.FILTERABLE_TAG, "designation")).getValue();
-        String visibility = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, "designation")).getValue();
+        String width = data.getAttribute(TableMeta.makeAttribKey(TableMeta.WIDTH_TAG, "designation"));
+        String prefWidth = data.getAttribute(TableMeta.makeAttribKey(TableMeta.PREF_WIDTH_TAG, "designation"));
+        String sortable = data.getAttribute(TableMeta.makeAttribKey(TableMeta.SORTABLE_TAG, "designation"));
+        String filterable = data.getAttribute(TableMeta.makeAttribKey(TableMeta.FILTERABLE_TAG, "designation"));
+        String visibility = data.getAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, "designation"));
         Assert.assertEquals("column width", "100", width);
         Assert.assertEquals("column prefWidth", "10", prefWidth);
         Assert.assertEquals("column sortable", "false", sortable);
@@ -100,16 +101,20 @@ public class DataGroupReadTest {
         long start = System.currentTimeMillis();
 
         DataGroup data = DataGroupReader.read(largeIpacTable);
-
         long elapsed = System.currentTimeMillis() - start;
         long usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
         Runtime.getRuntime().gc();
         long usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("READ:  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs %n", usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0);
 
-        System.out.printf("Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs %n", usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0);
-        Assert.assertNotNull(data);
-        Assert.assertEquals("Number of rows", 49933, data.size());
+        IpacTableWriter.save(new File("./tmp.tbl"), data);
+        usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - usedAfGc;
+        Runtime.getRuntime().gc();
+        usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - usedAfGc;
+        elapsed = System.currentTimeMillis() - start - elapsed;
+        System.out.printf("WRITE:  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
 
+        System.out.println("");
         List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
         for (MemoryPoolMXBean pool : pools) {
             MemoryUsage peak = pool.getPeakUsage();

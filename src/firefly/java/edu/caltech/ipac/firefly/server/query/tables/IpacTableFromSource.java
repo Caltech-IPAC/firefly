@@ -158,6 +158,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
         }
         return null;
     }

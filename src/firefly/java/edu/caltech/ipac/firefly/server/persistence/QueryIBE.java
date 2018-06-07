@@ -106,7 +106,7 @@ public class QueryIBE extends IpacTablePartProcessor {
                 String col = String.valueOf(row.getDataElement("name"));
                 if (exists(columns, col)) {
                     String desc = String.valueOf(row.getDataElement("description"));
-                    meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, col), desc);
+                    meta.setAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, col), desc);
                 }
             }
 
@@ -124,7 +124,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             String [] colsToHide = source.getColsToHide();
 
             for (String c : colsToHide) {
-                meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, c), IpacTableUtil.VISI_HIDE);
+                meta.setAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, c), DataType.Visibility.hide.name());
             }
 
             // mission specific attributes

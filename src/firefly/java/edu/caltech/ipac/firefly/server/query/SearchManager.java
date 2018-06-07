@@ -29,6 +29,7 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.CLIENT_REQ;
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.SERVER_REQ;
+import static edu.caltech.ipac.firefly.data.table.TableMeta.IS_FULLY_LOADED;
 
 
 /**
@@ -77,7 +78,7 @@ public class SearchManager {
                 dgp = (DataGroupPart) processor.getData(req);
                 TableMeta meta = new TableMeta();
                 DataGroupPart.State status = dgp.getTableDef().getStatus();
-                meta.setIsLoaded(!status.equals(DataGroupPart.State.INPROGRESS));
+                meta.setAttribute(IS_FULLY_LOADED, String.valueOf(!status.equals(DataGroupPart.State.INPROGRESS)));
 
                 processor.prepareTableMeta(meta,
                         Collections.unmodifiableList(dgp.getTableDef().getCols()),

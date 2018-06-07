@@ -47,7 +47,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -222,14 +221,11 @@ public class QueryWise extends IBESearchProcessor {
         DataGroup dg = IpacTableReader.readIpacTable(outFile, "Search Result");
         DataType[] inDefinitions = inDg.getDataDefinitions();
         DataGroup dgJoined = DataGroupQuery.join(inDg, inDefinitions, dg, dg.getDataDefinitions(),
-                                                 new Comparator<DataObject>() {
-                                                     public int compare(DataObject dataObject, DataObject dataObject1) {
-                                                         return ((String) dataObject.getDataElement(colName)).compareTo((String) dataObject1.getDataElement(colName));
-                                                     }
-                                                 });
+                                                    (dataObject, dataObject1) -> ((String) dataObject.getDataElement(colName))
+                                                                                    .compareTo((String) dataObject1.getDataElement(colName)));
         DataType[] outDefinitions = dgJoined.getDataDefinitions();
         for (int i = 0; i < inDefinitions.length; i++) {
-            outDefinitions[i].setKeyNamePrefix("in_");
+            outDefinitions[i].setKeyName("in_" + outDefinitions[i].getKeyName());
         }
 
         File newOutFile = File.createTempFile("wise-catalog-joined-", ".tbl", ServerContext.getPermWorkDir());

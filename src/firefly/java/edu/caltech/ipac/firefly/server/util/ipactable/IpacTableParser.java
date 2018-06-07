@@ -33,39 +33,39 @@ public class IpacTableParser {
 
         Arrays.sort(colNames);
 
-        TableDef meta = IpacTableUtil.getMetaInfo(inf);
+        TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
 
         List<DataType> selCols;
         if (colNames.length == 0) {
-            selCols = meta.getCols().stream().map(DataType::copyOf).collect(Collectors.toList());
+            selCols = tableDef.getCols().stream().map(DataType::newCopyOf).collect(Collectors.toList());
         } else {
             selCols = Arrays.stream(colNames).map( (s -> {
                 if (s.equals(DataGroup.ROW_IDX)) {
                     return DataGroup.makeRowIdx();
                 } else {
-                    DataType dt = meta.getColByName(s);
-                    return dt != null ? dt.copyOf() : new DataType(s, String.class);
+                    DataType dt = tableDef.getColByName(s);
+                    return dt != null ? dt.newCopyOf() : new DataType(s, String.class);
                 }
             })).collect(Collectors.toList());
         }
 
         DataGroup results = new DataGroup(inf.getName(), selCols);
-        results.setAttributes(meta.getAttributes());
+        results.setKeywords(tableDef.getAttributeList());
 
         RandomAccessFile reader = new RandomAccessFile(inf,"r");
         try {
             ArrayList<Integer> sortedIndices = new ArrayList<Integer>(indices);
             Collections.sort(sortedIndices);
 
-            DataGroup dg = new DataGroup("dummy", meta.getCols());
+            DataGroup dg = new DataGroup("dummy", tableDef.getCols());
             boolean hasRowid = dg.containsKey(DataGroup.ROW_IDX);
             long cidx = 0, pidx = -1;
             for(int idx : sortedIndices) {
                 cidx = idx;
-                advanceReaderToNextIdx(pidx, cidx, meta, reader);
+                advanceReaderToNextIdx(pidx, cidx, tableDef, reader);
                 String line = reader.readLine();
                 if (line != null) {
-                    DataObject row = IpacTableUtil.parseRow(dg, line);
+                    DataObject row = IpacTableUtil.parseRow(dg, line, tableDef);
                     DataObject resRow = new DataObject(results);
                     for (String s : colNames) {
                         Object val = null;
@@ -97,22 +97,22 @@ public class IpacTableParser {
 
         Arrays.sort(colNames);
 
-        TableDef meta = IpacTableUtil.getMetaInfo(inf);
+        TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
 
         RandomAccessFile reader = new RandomAccessFile(inf,"r");
         try {
             ArrayList<Integer> sortedIndices = new ArrayList<Integer>(indices);
             Collections.sort(sortedIndices);
 
-            DataGroup dg = new DataGroup("dummy", meta.getCols());
+            DataGroup dg = new DataGroup("dummy", tableDef.getCols());
             boolean hasRowid = dg.containsKey(DataGroup.ROW_IDX);
             long cidx = 0, pidx = -1;
             for(int idx : sortedIndices) {
                 cidx = idx;
-                advanceReaderToNextIdx(pidx, cidx, meta, reader);
+                advanceReaderToNextIdx(pidx, cidx, tableDef, reader);
                 String line = reader.readLine();
                 if (line != null) {
-                    DataObject row = IpacTableUtil.parseRow(dg, line);
+                    DataObject row = IpacTableUtil.parseRow(dg, line, tableDef);
                     for (String s : colNames) {
                         Object val = null;
                         if (s.equals(DataGroup.ROW_IDX) && !hasRowid) {
@@ -140,7 +140,6 @@ public class IpacTableParser {
         TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
 
         DataGroup dg = new DataGroup(null, tableDef.getCols());
-        dg.setRowIdxOffset(start);
 
         RandomAccessFile reader = new RandomAccessFile(inf, "r");
         long skip = ((long)start * (long)tableDef.getLineWidth()) + (long)tableDef.getRowStartOffset();
@@ -149,14 +148,13 @@ public class IpacTableParser {
             reader.seek(skip);
             String line = reader.readLine();
             while (line != null && count < rows) {
-                DataObject row = IpacTableUtil.parseRow(dg, line);
+                DataObject row = IpacTableUtil.parseRow(dg, line, tableDef);
                 if (row != null) {
                     dg.add(row);
                     count++;
                 }
                 line = reader.readLine();
             }
-            dg.shrinkToFitData();
         } finally {
             reader.close();
         }
@@ -164,9 +162,9 @@ public class IpacTableParser {
         // sync attributes in datagroup with tabledef.
         Map<String, DataGroup.Attribute> attribs = dg.getAttributes();
         if (attribs.size() > 0) {
-            tableDef.addAttributes(attribs.values().toArray(new DataGroup.Attribute[attribs.size()]));
+            tableDef.setKeywords(attribs.values());
         }
-        dg.setAttributes(tableDef.getAllAttributes());
+        dg.setKeywords(tableDef.getKeywords());
 
         long totalRow = tableDef.getLineWidth() == 0 ? 0 :
                         (inf.length()+1 - tableDef.getRowStartOffset())/tableDef.getLineWidth();

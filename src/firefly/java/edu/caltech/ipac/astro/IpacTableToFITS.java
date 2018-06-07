@@ -114,7 +114,7 @@ public final class IpacTableToFITS
 	    if (debug)
 	    {
 		System.out.println("column = " + column);
-		System.out.println("  title = " + data_type[column].getDefaultTitle());
+		System.out.println("  title = " + data_type[column].getLabel());
 		System.out.println("  TypeDesc = " + data_type[column].getTypeDesc());
 		System.out.println("  datatype = " + cl);
 	    }
@@ -170,7 +170,7 @@ public final class IpacTableToFITS
 	for (int column = 0; column < data_type.length; column++)
 	{
 	    bhdu.setColumnName(column, 
-	     data_type[column].getDefaultTitle(), null);
+	     data_type[column].getLabel(), null);
 	}
 	return(f);
 

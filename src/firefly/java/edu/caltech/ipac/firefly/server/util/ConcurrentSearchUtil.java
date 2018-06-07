@@ -194,7 +194,6 @@ public class ConcurrentSearchUtil {
 
             }
         }
-        joinedResult.shrinkToFitData();
         return joinedResult;
     }
 

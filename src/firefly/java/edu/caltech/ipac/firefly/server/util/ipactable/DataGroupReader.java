@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 import edu.caltech.ipac.astro.FITSTableReader;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
-import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -25,7 +24,6 @@ import java.util.*;
  */
 public class DataGroupReader {
     public static final int MIN_PREFETCH_SIZE = AppProperties.getIntProperty("IpacTable.min.prefetch.size", 500);
-    public static final String LINE_SEP = System.getProperty("line.separator");
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
     public static DataGroup readAnyFormat(File inf) throws IOException {
@@ -35,7 +33,7 @@ public class DataGroupReader {
     public static DataGroup readAnyFormat(File inf, int tableIndex) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
-            return read(inf, false, false, true);
+            return read(inf, true);
         } else if (format == Format.VO_TABLE) {
             DataGroup[] tables = VoTableUtil.voToDataGroups(inf.getAbsolutePath());
             if (tables.length > tableIndex) {
@@ -80,36 +78,30 @@ public class DataGroupReader {
 
     }
 
-    public static DataGroup read(File inf, boolean readAsString, String... onlyColumns) throws IOException {
-        return read(inf, true, readAsString, onlyColumns);
-    }
-
-    public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, String... onlyColumns) throws IOException {
-        return read(inf, isFixedLength, readAsString, false, onlyColumns);
-    }
-
-    public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
+    public static DataGroup read(File inf, boolean saveFormattedData, String... onlyColumns) throws IOException {
         TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
+        tableDef.setSaveFormattedData(saveFormattedData);
         BufferedReader bufferedReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        return doRead(bufferedReader, tableDef, isFixedLength, readAsString, saveFormattedData, onlyColumns);
+        return doRead(bufferedReader, tableDef, onlyColumns);
     }
 
     public static DataGroup read(InputStream inputStream, String... onlyColumns) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         TableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
-        return  doRead(bufferedReader, tableDef, true, false, false, onlyColumns);
+        return  doRead(bufferedReader, tableDef, onlyColumns);
     }
 
-    public static DataGroup read(Reader  reader, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
+    public static DataGroup read(Reader  reader, boolean saveFormattedData, String... onlyColumns) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(reader, IpacTableUtil.FILE_IO_BUFFER_SIZE);
         TableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
-        return  doRead(bufferedReader, tableDef, isFixedLength, readAsString, saveFormattedData, onlyColumns);
+        tableDef.setSaveFormattedData(saveFormattedData);
+        return  doRead(bufferedReader, tableDef, onlyColumns);
     }
 
     public static DataGroup getEnumValues(File inf, int cutoffPoint)  throws IOException {
 
-        TableDef tableMeta = IpacTableUtil.getMetaInfo(inf);
-        List<DataType> cols = tableMeta.getCols();
+        TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
+        List<DataType> cols = tableDef.getCols();
 
         HashMap<DataType, List<String>> enums = new HashMap<DataType, List<String>>();
         ArrayList<DataType> workList = new ArrayList<DataType>();
@@ -131,7 +123,7 @@ public class DataGroupReader {
             line = reader.readLine();
             lineNum++;
             while (line != null) {
-                DataObject row = IpacTableUtil.parseRow(dg, line, false);
+                DataObject row = IpacTableUtil.parseRow(dg, line, tableDef);
                 if (row != null) {
                     List<DataType> ccols = new ArrayList<DataType>(workList);
                     for(DataType dt : ccols) {
@@ -165,8 +157,9 @@ public class DataGroupReader {
             for(DataType dt : enums.keySet()) {
                 List<String> values = enums.get(dt);
                 Collections.sort(values, DataGroupUtil.getComparator(dt));
-                dg.addAttribute(TemplateGenerator.createAttributeKey(
-                        TemplateGenerator.Tag.ITEMS_TAG, dt.getKeyName()), StringUtils.toString(values, ","));
+                dg.addAttribute(TableMeta.makeAttribKey(
+                        TableMeta.ITEMS_TAG, dt.getKeyName()),
+                        StringUtils.toString(values, ","));
             }
         }
 
@@ -259,19 +252,13 @@ public class DataGroupReader {
 
     }
 
-    private static DataGroup doRead(BufferedReader bufferedReader, TableDef tableDef, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
+    private static DataGroup doRead(BufferedReader bufferedReader, TableDef tableDef, String... onlyColumns) throws IOException {
 
-        List<DataGroup.Attribute> attributes = tableDef.getAllAttributes();
+        List<DataGroup.Attribute> attributes = tableDef.getKeywords();
         List<DataType> cols = tableDef.getCols();
 
-        if (readAsString) {
-            for (DataType dt : cols) {
-                dt.setDataType(String.class);
-            }
-        }
-
         DataGroup inData = new DataGroup(null, cols);
-        DataGroup outData = null;
+        DataGroup outData;
         boolean isSelectedColumns = onlyColumns != null && onlyColumns.length > 0;
 
         if (isSelectedColumns) {
@@ -289,7 +276,7 @@ public class DataGroupReader {
             outData = inData;
         }
 
-        outData.setAttributes(attributes);
+        outData.setKeywords(attributes);
 
         String line = null;
         int lineNum = tableDef.getExtras() == null ? 0 : tableDef.getExtras().getKey();
@@ -297,17 +284,14 @@ public class DataGroupReader {
         try {
             line = tableDef.getExtras() == null ? bufferedReader.readLine() : tableDef.getExtras().getValue();
             lineNum++;
+            DataObject row, arow;
             while (line != null) {
-                DataObject row = IpacTableUtil.parseRow(inData, line, isFixedLength, saveFormattedData);
+                row = IpacTableUtil.parseRow(inData, line, tableDef);
                 if (row != null) {
                     if (isSelectedColumns) {
-                        DataObject arow = new DataObject(outData);
+                        arow = new DataObject(outData);
                         for (DataType dt : outData.getDataDefinitions()) {
                             arow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
-                            if (dt.getFormatInfo().isDefault()) {
-                                dt.getFormatInfo().setDataFormat(
-                                        inData.getDataDefintion(dt.getKeyName()).getFormatInfo().getDataFormatStr());
-                            }
                         }
                         outData.add(arow);
                     } else {
@@ -326,11 +310,7 @@ public class DataGroupReader {
             bufferedReader.close();
         }
 
-        if (!saveFormattedData) {
-            outData.shrinkToFitData();
-        }
         return outData;
-
     }
 
 //====================================================================

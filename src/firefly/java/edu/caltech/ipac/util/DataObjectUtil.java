@@ -60,7 +60,7 @@ public class DataObjectUtil {
         }
 
         public String getFormattedValue(DataObject row) {
-            return row.getFormatedData(col);
+            return row.getFixedFormatedData(col);
         }
     }
 }

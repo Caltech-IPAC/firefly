@@ -73,7 +73,6 @@ public class DsvToDataGroup {
                     dg.add(row);
                 }
             }
-            dg.shrinkToFitData();
             return dg;
         }
         return null;
@@ -126,13 +125,10 @@ public class DsvToDataGroup {
                     if (!type.isKnownType()) {
                         IpacTableUtil.guessDataType(type,val);
                     }
-                    row.setFormattedData(type,val);
+                    row.setFixedFormattedData(type,val);
                     row.setDataElement(type, type.convertStringToData(val));
 
-                    if (val != null && val.length() > type.getMaxDataWidth()) {
-                        type.setMaxDataWidth(val.length());
-                    }
-                    if (type.getFormatInfo().isDefault()) {
+                    if (type.getFormat() == null) {
                         IpacTableUtil.guessFormatInfo(type, val);
                     }
                 }

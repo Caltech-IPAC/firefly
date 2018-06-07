@@ -4,15 +4,9 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.server.packagedata.PackagedBundle;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import uk.ac.starlink.table.*;
-import uk.ac.starlink.util.DataSource;
 import uk.ac.starlink.votable.VOStarTable;
 import uk.ac.starlink.votable.VOTableBuilder;
-import uk.ac.starlink.votable.VOTableWriter;
-import uk.ac.starlink.votable.DataFormat;
-import uk.ac.starlink.votable.VOTableVersion;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -116,7 +110,7 @@ public class VoTableUtil {
 
         for ( MetaInfo meta : MetaInfo.values()) {    // index, name, row, column
             DataType dt = new DataType(meta.getKey(), meta.getTitle(), meta.getMetaClass());
-            dt.setShortDesc(meta.getDescription());
+            dt.setDesc(meta.getDescription());
             cols.add(dt);
         }
         DataGroup dg = new DataGroup("votable", cols);
@@ -172,7 +166,6 @@ public class VoTableUtil {
                 row.setDataElement(cols.get(0), index);
                 row.setDataElement(cols.get(1),tableName );
                 row.setDataElement(cols.get(2), "Table");
-                row.setRowIdx(index);
                 dg.add(row);
                 dg.addAttribute(Integer.toString(index), voParamsHeader.toJSONString());
                 index++;
@@ -213,12 +206,11 @@ public class VoTableUtil {
                     // problem with VOTable vinfo precision: should be numeric - keep default min precision
                 }
             }
-            DataType dt = new DataType(cinfo.getName(), cinfo.getName(),
-                    cinfo.isArray() ? String.class : cinfo.getContentClass(),
-                    null, cinfo.getUnitString(), false); // mayBeNull is false to use empty space instead of null
+            Class clz = cinfo.isArray() ? String.class : cinfo.getContentClass();
+            DataType dt = new DataType(cinfo.getName(), clz, null, cinfo.getUnitString(), null, null);
             String desc = cinfo.getDescription();
             if (desc != null) {
-                dt.setShortDesc(desc.replace("\n", " "));
+                dt.setDesc(desc.replace("\n", " "));
             }
             String ucd = cinfo.getUCD();
             if ( ucd != null) { // should we save all UCDs?
@@ -254,22 +246,16 @@ public class VoTableUtil {
                         if (dtype.getDataType().isAssignableFrom(String.class) && !(val instanceof String)) {
                             row.setDataElement(dtype, sval);   // array value
                         } else {
-                            if (val instanceof Double && Double.isNaN((Double)val)) {
+                            if (val instanceof Double && Double.isNaN((Double) val)) {
                                 val = null;
                             }
                             row.setDataElement(dtype, val);
                         }
-                        if (dtype.getFormatInfo().isDefault()) {
-                            IpacTableUtil.guessFormatInfo(dtype, sval, precision);// precision min 8 can come from VOTable attribute 'precision' later on.
-                        }
-                        if (sval != null && sval.length() > dtype.getMaxDataWidth()) {
-                            dtype.setMaxDataWidth(sval.length());
-                        }
+                        IpacTableUtil.guessFormatInfo(dtype, sval, precision);// precision min 8 can come from VOTable attribute 'precision' later on.
                     }
                     dg.add(row);
                 }
             }
-            dg.shrinkToFitData();
         } catch (IOException e) {
             e.printStackTrace();
         }

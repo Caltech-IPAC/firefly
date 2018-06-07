@@ -111,19 +111,11 @@ public class JsonToDataGroup {
                         for (Object value : (List)row) {
                             DataType type = columns.get(idx);
                             dObj.setDataElement(type,value);
-                            if (value != null && value.toString().length() > type.getMaxDataWidth()) {
-                                type.setMaxDataWidth(value.toString().length());
-                            }
-                            if (type.getFormatInfo().isDefault()) {
-                                IpacTableUtil.guessFormatInfo(type, value.toString());
-                            }
-
                             idx++;
                         }
                         dg.add(dObj);
                     }
                 }
-                dg.shrinkToFitData();
                 return dg;
             }
         }

@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -16,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Map;
 
 /**
  * @author tatianag
@@ -55,7 +55,6 @@ public class NedSearch extends QueryByConeSearchURL {
 //            DataGroup extra = new DataGroup();
 
             TableDef tableDef = IpacTableUtil.getMetaInfo(dgFile);
-            int maxWidth = 0;
 
             DataType linkNed = new DataType(linkColName, String.class);
             resDg.addDataDefinition(linkNed);
@@ -68,23 +67,16 @@ public class NedSearch extends QueryByConeSearchURL {
                 String nedUrl = url.replace("%s", newOname);
                 String descLink = oname + " details";
                 String sval = "<a target=\"_blank\" href=\"" + nedUrl + "\">" + descLink + "</a>";
-                if (sval.length() > linkNed.getMaxDataWidth()) {
-                    linkNed.getFormatInfo().setWidth(sval.length());
-                }
                 row.setDataElement(linkNed, sval);
-                if (descLink.length() > maxWidth) {
-                    maxWidth = descLink.length();
+            }
+
+
+            for(DataGroup.Attribute att : tableDef.getAttributeList()) {
+                if (resDg.getAttribute(att.getKey()) == null) {
+                    // add all missing meta
+                    resDg.addAttribute(att.getKey(), att.getValue());
                 }
             }
-
-
-            tableDef.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.WIDTH_TAG, linkColName), maxWidth + "");
-            Map<String, DataGroup.Attribute> attribs = resDg.getAttributes();
-            if (attribs.size() > 0) {
-                tableDef.addAttributes(attribs.values().toArray(new DataGroup.Attribute[attribs.size()]));
-            }
-            resDg.setAttributes(tableDef.getAllAttributes());
-
 
             IpacTableWriter.save(dgFile, resDg);
         } catch (IOException e) {

@@ -17,72 +17,25 @@ public class DataObject implements Serializable, Cloneable {
 //======================================================================
 //----------------------- private / protected variables ----------------
 //======================================================================
-    private Object _data[]= null;
-    private String _formattedData[] = null;
+    private Object[] _data= null;
+    private String[] _formattedData = null;
     private final DataGroup _group;
-    private int rowIdx = -1;
+    private int _rowNum = -1;
 
     public DataObject(DataGroup group) {
         _group= group;
     }
 
+    public int getRowNum() {
+        return _rowNum;
+    }
+
+    public void setRowNum(int rowNum) {
+        this._rowNum = rowNum;
+    }
+
     public void setData(Object[] data) {
         _data = data;
-    }
-
-    public int getRowIdx() {
-        DataType dtype = getDataType(DataGroup.ROW_IDX);
-        if (dtype != null && dtype.getColumnIdx() < _data.length) {
-            try {
-                return Integer.parseInt(String.valueOf(_data[dtype.getColumnIdx()]));
-            } catch (Exception ex) {
-                return rowIdx;
-            }
-        }
-        return rowIdx;
-    }
-
-    public void setRowIdx(int rowIdx) {
-        this.rowIdx = rowIdx;
-    }
-
-    public void setFormattedData(DataType fdt, String val) {
-        checkSize();
-        if (_formattedData == null || _formattedData.length != _data.length) {
-            _formattedData = new String[_data.length];
-        }
-        _formattedData[fdt.getColumnIdx()] = val;
-    }
-
-    public void setDataElement(DataType fdt, Object fde) {
-        checkSize();
-        Class dtypeClass= fdt.getDataType();
-        if (fde !=null && dtypeClass!=null && !dtypeClass.isInstance(fde)) { // more optimal in if
-            Assert.argTst(false,
-                          "Parameter fde is instance of " +
-                          fde.getClass().toString() +
-                          ". The parameter fdt requires it to be an instance of "+
-                          fdt.getDataType().toString()+ "\n" +
-                          "DataType passed: " + fdt.toString() +"\n" +
-                          "Data Value(fde): " + fde.toString());
-        }
-        _data[fdt.getColumnIdx()]=fde;
-        if (_formattedData != null && _formattedData.length == _data.length) {
-            _formattedData[fdt.getColumnIdx()]=null;
-        }
-    }
-
-    public boolean containsKey(String key) {
-        return  _group.containsKey(key);
-    }
-
-    public Object getDataElement(DataType fdt) {
-        checkSize();
-        if (fdt != null && fdt.getKeyName().equals(DataGroup.ROW_IDX)) {
-            return getRowIdx();
-        } else {
-            return _data[fdt.getColumnIdx()];
-        }
     }
 
     /**
@@ -92,8 +45,24 @@ public class DataObject implements Serializable, Cloneable {
      * @return a view of the data.
      */
     public Object[] getData() {
+        checkSize();        // this expand the _data array if it's not large enough
+        if (_data.length > _group.getDataDefinitions().length) {
+            Object[] sparseAry = new Object[_group.getDataDefinitions().length];
+            for(DataType dt : _group.getDataDefinitions()) {
+                sparseAry[dt.getColumnIdx()] = _data[dt.getColumnIdx()];
+            }
+            return sparseAry;
+        } else {
+            return _data;
+        }
+    }
+
+    public void setFixedFormattedData(DataType fdt, String val) {
         checkSize();
-        return _data;
+        if (_formattedData == null || _formattedData.length != _data.length) {
+            _formattedData = new String[_data.length];
+        }
+        _formattedData[fdt.getColumnIdx()] = val;
     }
 
     /**
@@ -107,59 +76,82 @@ public class DataObject implements Serializable, Cloneable {
         DataType[] types = getDataDefinitions();
         for(DataType dt : types) {
             int idx = dt.getColumnIdx();
-            fdata[idx] = dt.getFormatInfo().formatDataOnly(data[idx]);
+            fdata[idx] =  dt.formatData(data[idx]);
         }
         return fdata;
     }
 
     public String getFormatedData(DataType dt) {
+        Object v = getDataElement(dt);
+        return dt.formatData(v);
+    }
+
+    public String getFixedFormatedData(DataType dt) {
         int idx = dt.getColumnIdx();
-        String val;
+        String val = null;
         if (_formattedData != null && _formattedData.length > idx && _formattedData[idx] != null) {
             val = _formattedData[idx];
-        } else {
-            Object v = getDataElement(dt);
-            val = dt.getFormatInfo().formatData(v);
         }
+        if (val == null) {
+            Object v = getDataElement(dt);
+            val = dt.formatData(v);
+        }
+        int w = dt.getWidth() > 0 ? dt.getWidth() : dt.getMaxDataWidth();
+        if (val.length() != w) val = dt.fitValueInto(val, w, dt.isNumeric());
         return val;
     }
 
-    /**
-     * returns the the length of the formatted string representation of the data.
-     * @param dt  column info
-     * @return
-     */
-    public int getDataWidth(DataType dt) {
-        int idx = dt.getColumnIdx();
-        String val;
-        if (_formattedData != null && _formattedData.length > idx && _formattedData[idx] != null) {
-            val = _formattedData[idx];
-        } else {
-            Object v = getDataElement(dt);
-            val = dt.getFormatInfo().formatDataOnly(v);
+    public Object getDataElement(DataType fdt) {
+        checkSize();
+        Object rval = _data[fdt.getColumnIdx()];
+        if (rval == null) {
+            if (fdt.getKeyName().equals(DataGroup.ROW_IDX) || fdt.getKeyName().equals(DataGroup.ROW_NUM)) {
+                // if these columns do not exists, return the current index of this row.
+                rval = _rowNum;
+            }
         }
-        return val == null ? 0 : val.length();
+        return rval;
+    }
+
+    public void setDataElement(String colName, Object fde) {
+        setDataElement(getDataType(colName), fde);
+    }
+
+    public void setDataElement(DataType fdt, Object fde) {
+        checkSize();
+        Class dtypeClass= fdt.getDataType();
+        if (fde !=null && dtypeClass!=null && !dtypeClass.isInstance(fde)) { // more optimal in if
+            Assert.argTst(false,
+                    "Parameter fde is instance of " +
+                            fde.getClass().toString() +
+                            ". The parameter fdt requires it to be an instance of "+
+                            fdt.getDataType().toString()+ "\n" +
+                            "DataType passed: " + fdt.toString() +"\n" +
+                            "Data Value(fde): " + fde.toString());
+        }
+
+        _data[fdt.getColumnIdx()]=fde;
+        if (_formattedData != null && _formattedData.length == _data.length) {
+            _formattedData[fdt.getColumnIdx()]=null;
+        }
+    }
+
+    public boolean containsKey(String key) {
+        return  _group.containsKey(key);
     }
 
     public Object getDataElement(String name) {
-        checkSize();
         DataType dtype = getDataType(name);
         if (dtype == null) {
             Assert.argTst(false, "The data element that you ask for, " +name +
                                  ", does not exist.\n" +
-                                 _group.availableKeys());
+                                 StringUtils.toString(_group.getKeySet()));
         }
         return getDataElement(dtype);
     }
 
     public DataType getDataType(String name) {
-        DataType[] types = getDataDefinitions();
-        for (int i = 0; types != null && i < types.length; i++) {
-            if ( types[i] != null && types[i].getKeyName().equals(name) ) {
-                return types[i];
-            }
-        }
-        return null;
+        return _group.getDataDefintion(name);
     }
 
     public DataType[] getDataDefinitions() {
@@ -167,7 +159,6 @@ public class DataObject implements Serializable, Cloneable {
     }
 
     public int size() { return _group.getDataDefinitions().length; }
-
 
     public String getStringData(String name) {
         return getStringData(name, null);
@@ -190,19 +181,14 @@ public class DataObject implements Serializable, Cloneable {
 //------------------ Private / Protected / Package Methods --------------
 //======================================================================
 
-    private void checkSize() {
+    void checkSize() {
         if (_data==null) {
             _data= new Object[_group.getDataDefinitions().length];
-        }
-        else if (_data.length!=_group.getDataDefinitions().length) {
-            DataType dataDefList[]= _group.getDataDefinitions();
-            Assert.tst(dataDefList.length>_data.length);
+        } else if (_data.length < _group.getDataDefinitions().length) {
+            DataType[] dataDefList = _group.getDataDefinitions();
             Object newData[]= new Object[dataDefList.length];
             System.arraycopy(_data,0,newData,0,_data.length);
             _data= newData;
-        }
-        else {
-            // do nothing - everthing check outs
         }
     }
 

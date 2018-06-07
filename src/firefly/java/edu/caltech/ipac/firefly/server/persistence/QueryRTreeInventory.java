@@ -18,7 +18,6 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -132,7 +131,7 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
 
         // set columns to hide
         for (String c : colsToHide) {
-            meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, c), IpacTableUtil.VISI_HIDE);
+            meta.setAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, c), DataType.Visibility.hide.name());
         }
 
     }

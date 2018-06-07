@@ -26,6 +26,7 @@ public class DataGroupWriter {
 
 
     public static void write(File outFile, DataGroup source) throws IOException {
+        source.shrinkToFitData();
         write(new IpacTableHandler(outFile, source));
     }
 

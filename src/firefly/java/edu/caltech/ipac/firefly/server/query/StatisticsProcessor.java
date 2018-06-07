@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
@@ -134,7 +133,7 @@ class StatisticsProcessorOld extends IpacTablePartProcessor {
         String[] unit = new String[numericColumns.length];
         for (int i=0; i<numericColumns.length; i++){
             columnNames[i]=numericColumns[i].getKeyName();
-            unit[i]=numericColumns[i].getDataUnit();
+            unit[i]=numericColumns[i].getUnits();
         }
 
         Object[] retArrays = getDataArrays (dgjList,numericColumns );
@@ -153,8 +152,6 @@ class StatisticsProcessorOld extends IpacTablePartProcessor {
             statisticsTable.add(row);
         }
 
-        // adjust the width of all columns to fit the data
-        statisticsTable.shrinkToFitData(true);
         return statisticsTable;
     }
 
@@ -261,10 +258,10 @@ class StatisticsProcessorOld extends IpacTablePartProcessor {
                 results[i]=columns[i].getKeyName();
             }
             else if (field.equalsIgnoreCase("unit")){
-                results[i]=columns[i].getDataUnit();
+                results[i]=columns[i].getUnits();
             }
                 else if (field.equalsIgnoreCase("description") ){
-                results[i]=columns[i].getShortDesc()!=null?columns[i].getShortDesc():" ";
+                results[i]=columns[i].getDesc()!=null?columns[i].getDesc():" ";
             }
         }
         return results;
@@ -331,7 +328,7 @@ class StatisticsProcessorOld extends IpacTablePartProcessor {
         DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
         statisticsDataGroup.addAttribute("searchRequest", sReq.toString());
         File statisticsFile = createFile(request);
-        DataGroupWriter.write(statisticsFile, statisticsDataGroup);
+        IpacTableWriter.save(statisticsFile, statisticsDataGroup);
         return statisticsFile;
     }
 

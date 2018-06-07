@@ -25,11 +25,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
 
@@ -213,10 +210,10 @@ public class IpacTableExtractor {
                 if (obj instanceof String && ((String)obj).indexOf("\r")>=0) {
                     obj = ((String)obj).replaceAll("\r", "");
                 }
-                writer.print(" " + dt.getFormatInfo().formatData(obj));
+                writer.print(" " + dt.formatData(obj));
             } catch (SQLException e) {
                 LOG.warn(e, "SQLException at col:" + headers.get(i).getKeyName());
-                writer.print(" " + dt.getFormatInfo().formatData("#ERROR#"));
+                writer.print(" " + dt.formatData("#ERROR#"));
             }
         }
         writer.println();

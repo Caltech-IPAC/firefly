@@ -256,9 +256,6 @@ public class SDSSQuery extends IpacTablePartProcessor {
         DataType inRowIdType = uDg.getDataDefintion(CatalogRequest.UPDLOAD_ROW_ID);
         DataType raType = uDg.getDataDefintion("ra");
         DataType decType = uDg.getDataDefintion("dec");
-        DataType.FormatInfo raFmt = raType.getFormatInfo();
-        DataType.FormatInfo decFmt = decType.getFormatInfo();
-        DataType.FormatInfo inRowIdFmt = inRowIdType.getFormatInfo();
         File sdssUFile = File.createTempFile("sdss_upload", ".csv", ServerContext.getTempWorkDir());
         BufferedWriter writer = new BufferedWriter(new FileWriter(sdssUFile));
         try {
@@ -267,7 +264,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             DataObject dob;
             while(i.hasNext()) {
                 dob = (DataObject)i.next();
-                String line = inRowIdFmt.formatDataOnly(dob.getDataElement(inRowIdType))+","+raFmt.formatDataOnly(dob.getDataElement(raType))+","+decFmt.formatDataOnly(dob.getDataElement(decType))+"\n";
+                String line = inRowIdType.formatData(dob.getDataElement(inRowIdType))+","+raType.formatData(dob.getDataElement(raType))+","+decType.formatData(dob.getDataElement(decType))+"\n";
                 writer.write(line);
             }
         } catch (Exception e) {
@@ -395,10 +392,9 @@ public class SDSSQuery extends IpacTablePartProcessor {
             boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
 
             DataGroup results = DataGroupQuery.join(upDg, upDefsToSave.toArray(new DataType[upDefsToSave.size()]), resDg, null, comparator, !nearestOnly, true);
-            results.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, "up_id"), "hide");
-            results.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, "distance"), "distance in arcmin");
+            results.addAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, "up_id"), "hide");
+            results.addAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, "distance"), "distance in arcmin");
             DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, CatalogRequest.UPDLOAD_ROW_ID);
-            results.shrinkToFitData(true);
             IpacTableWriter.save(dgFile, results);
         }
         return dgFile;

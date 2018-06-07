@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -22,10 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Date: Nov 16, 2009
@@ -35,30 +31,7 @@ import java.util.Map;
  */
 public class TemplateGenerator {
 
-
-    public static enum Tag {LABEL_TAG(IpacTableUtil.LABEL_TAG),
-                      VISI_TAG(IpacTableUtil.VISI_TAG),
-                      DESC_TAG(IpacTableUtil.DESC_TAG),
-                      ITEMS_TAG(IpacTableUtil.ITEMS_TAG),
-                      UNIT_TAG(IpacTableUtil.UNIT_TAG);
-        public static final String VISI_SHOW = IpacTableUtil.VISI_SHOW;
-        public static final String VISI_HIDE = IpacTableUtil.VISI_HIDE;
-        public static final String VISI_HIDDEN = IpacTableUtil.VISI_HIDDEN;
-        String name;
-        Tag(String name) { this.name = name;}
-
-        public String getName() {
-            return name;
-        }
-        public String generateKey(String col) {
-            return getName().replaceFirst("@", col);
-        }
-    }
-
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-
-    private static final Map<String, String[]> enumColValues =  loadEnumColValues();
-
 
     public static DataGroup generate(String templateName, String querySql, DataSource dataSource) {
 
@@ -80,11 +53,6 @@ public class TemplateGenerator {
         }
         return null;
     }
-
-    public static String createAttributeKey(Tag tag, String col) {
-        return tag.getName().replaceFirst("@", col);
-    }
-
 
     private static void setupFormat(DataGroup template, String querySql, DataSource dataSource) throws SQLException {
             Connection conn = null;
@@ -108,25 +76,6 @@ public class TemplateGenerator {
                         int cwidth = meta.getColumnDisplaySize(i);
                         cwidth = Math.max(cwidth, 6);
                         cwidth = Math.max(cwidth, cname.length());
-
-                        // create format info
-                        if (!dt.hasFormatInfo()) {
-                            DataType.FormatInfo fInfo = dt.getFormatInfo();
-                            String format = null;
-                            if (colClass == Float.class || colClass == Double.class) {
-                                int scale = Math.max(meta.getScale(i), 6);
-                                int prec = Math.max(meta.getPrecision(i), cwidth);
-                                format = "%" + prec + "." + scale + "f"; // double or float
-                            } else if (Date.class.isAssignableFrom(colClass)) {
-                                format = "%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"; // date
-                            }
-                            if (format != null) {
-                                fInfo.setDataFormat(format);
-                            }
-                        }
-
-                        dt.getFormatInfo().setWidth(cwidth);
-
                     }
                 }
             } finally {
@@ -158,80 +107,24 @@ public class TemplateGenerator {
                 label = StringUtils.isEmpty(label) ? name : label;
                 desc = StringUtils.isEmpty(desc) ? label : desc;
 
-                // temporarily using Importance to indicate hidden status
-                // HIGH is not hidden, MEDIUM is hidden, LOW is not visible(data transfer only)
-                DataType.Importance isVisible = DataType.Importance.LOW;
-                if (!StringUtils.isEmpty(sel)) {
-                    if (sel.equals("y")) {
-                        isVisible = DataType.Importance.HIGH;
-                    } else if (sel.equals("n")) {
-                        isVisible = DataType.Importance.MEDIUM;
+                DataType dt = new DataType(name, label, String.class);
+                dt.setDesc(desc);
+
+                if (StringUtils.areEqual(sel, "n")) {
+                    dt.setVisibility(DataType.Visibility.hide);
+                }
+                if (!StringUtils.isEmpty(format)) {
+                    if (format.equals("RA") || format.equals("DEC")) {
+                        // this is weird.. should see how it's used.
+                        dt.setUnits(format);
+                    } else {
+                        dt.setFormat(format);
                     }
                 }
-
-
-                DataType dt = new DataType(name, label, String.class, isVisible);
-                dt.setShortDesc(desc);
-                if (!StringUtils.isEmpty(format)) {
-                    dt.getFormatInfo().setDataFormat(format);
-                }
-
                 return dt;
             }
         });
 
-        DataGroup template = new DataGroup(templateName, headers);
-        for (DataType dt : headers) {
-            String visi = Tag.VISI_HIDDEN;
-            if (dt.getImportance() == DataType.Importance.HIGH) {
-                visi = Tag.VISI_SHOW;
-            } else if (dt.getImportance() == DataType.Importance.MEDIUM) {
-                visi = Tag.VISI_HIDE;
-            }
-
-            template.addAttribute(createAttributeKey(Tag.VISI_TAG, dt.getKeyName()), visi);
-
-            if (!StringUtils.isEmpty(dt.getShortDesc())) {
-                template.addAttribute(createAttributeKey(Tag.DESC_TAG, dt.getKeyName()), dt.getShortDesc());
-            }
-
-            dt.setImportance(DataType.Importance.HIGH);
-            template.addAttribute(createAttributeKey(Tag.LABEL_TAG, dt.getKeyName()), dt.getDefaultTitle());
-
-            if ( enumColValues.containsKey(dt.getKeyName()) ) {
-                template.addAttribute(createAttributeKey(Tag.ITEMS_TAG, dt.getKeyName()),
-                        StringUtils.toString(enumColValues.get(dt.getKeyName()), ","));
-            }
-
-            if (dt.hasFormatInfo()) {
-                String fi = dt.getFormatInfo().getDataFormatStr();
-                if (fi.equals("RA") || fi.equals("DEC")) {
-                    dt.setFormatInfo(null);
-                    template.addAttribute(createAttributeKey(Tag.UNIT_TAG, dt.getKeyName()), fi);
-                }
-            }
-
-        }
-        return template;
-    }
-
-    private static Map<String, String[]> loadEnumColValues() {
-        HashMap<String, String[]> map = new HashMap<String, String[]>();
-
-        if (true) return map;
-
-        // remove default hard-coded enum types from SHA
-        map.put("wavelength",  new String[] {"IRAC 3.6um", "IRAC 4.5um", "IRAC 5.8um", "IRAC 8.0um",
-                                 "IRS LH 18.7-37.2um", "IRS LL 14.0-21.7um", "IRS LL 14.0-38.0um", "IRS LL 19.5-38.0um",
-                                 "IRS PU Blue 13.3-18.7um", "IRS PU Red 18.5-26.0um", 
-                                 "IRS SH 9.9-19.6um", "IRS SL 5.2-14.5um", "IRS SL 5.2-8.7um", "IRS SL 7.4-14.5um",
-                                 "MIPS 24um", "MIPS 70um", "MIPS 160um"}
-                );
-        map.put("modedisplayname", new String[] {"IRAC Map", "IRAC Map PC", "IRS Map", "IRS Stare", "IRS Peakup Image",
-                         "MIPS Phot", "MIPS SED", "MIPS Scan", "MIPS TP", "IRAC IER","IRAC Post-Cryo IER", "IRS IER","MIPS IER"}
-                );
-        map.put("filetype", new String[] {"Image", "Table"});
-
-        return map;
+        return new DataGroup(templateName, headers);
     }
 }

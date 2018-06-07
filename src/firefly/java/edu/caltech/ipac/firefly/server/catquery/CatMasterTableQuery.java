@@ -112,7 +112,6 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
             DataGroup outputDG;
             if (dgExtra == null) {
                 outputDG= dg;
-//                DataGroupWriter.write(catOutFile, dg, 0);
 
             } else {
                 // concat dg to dgExtra
@@ -122,18 +121,14 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
                 }
 
                 outputDG= dgExtra;
-//                DataGroupWriter.write(catOutFile, dgExtra, 0);
             }
-            DataGroupWriter.write(catOutFile, outputDG);
 
-            DataGroup data = DataGroupReader.read(catOutFile);
             // append hostname to relative path urls.
-            appendHostToUrls(data, "moreinfo", "description");
-            makeIntoUrl(data, "infourl", "info");
-            makeIntoUrl(data, "ddlink", "Column Def");
-            addSearchProcessorCols(data);
-            data.shrinkToFitData(true);
-            IpacTableWriter.save(catOutFile, data);
+            appendHostToUrls(outputDG, "moreinfo", "description");
+            makeIntoUrl(outputDG, "infourl", "info");
+            makeIntoUrl(outputDG, "ddlink", "Column Def");
+            addSearchProcessorCols(outputDG);
+            IpacTableWriter.save(catOutFile, outputDG);
 
             retval = catOutFile;
 

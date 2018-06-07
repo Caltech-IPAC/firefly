@@ -96,7 +96,6 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             }
 
             DataGroup dg = createTableDataFromListEntry(allSourceData);
-            dg.shrinkToFitData();
 
             setupMeta(dg, (workingSources.length > 1));
 
@@ -177,20 +176,14 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
 
 
     private void setupMeta(DataGroup dg, boolean bMulti) {
-        int    sWidth = 30;
 
         for (DataType colDT : dg.getDataDefinitions()) {
             String colName = colDT.getKeyName();
 
             if (colDT.getDataType() != String.class) continue;
 
-            int crtWidth = colDT.getFormatInfo().getWidth();
-            if (crtWidth > sWidth && !colName.equals(PARAMS.PROPERTIES.getKey())) {
-                dg.addAttribute(makeAttribKey(WIDTH_TAG, colName), Integer.toString(sWidth));
-            }
-
             if ((!bMulti && colName.equals(PARAMS.SOURCE.getKey())) || colName.equals(PARAMS.URL.getKey())) {
-                dg.addAttribute(makeAttribKey(VISI_TAG, colName), "hidden");
+                colDT.setVisibility(DataType.Visibility.hidden);
             }
         }
     }

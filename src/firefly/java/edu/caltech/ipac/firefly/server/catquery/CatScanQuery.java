@@ -23,9 +23,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import static edu.caltech.ipac.util.IpacTableUtil.VISI_HIDDEN;
-import static edu.caltech.ipac.util.IpacTableUtil.VISI_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.firefly.data.table.TableMeta.VISI_TAG;
+import static edu.caltech.ipac.firefly.data.table.TableMeta.makeAttribKey;
 
 /**
  * Date: Nov 11, 2010
@@ -77,7 +76,7 @@ public class CatScanQuery extends IpacTablePartProcessor {
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
         for(String s : new String[]{"identifier", "archive", "notes", "nrec"}) {
-            meta.setAttribute(makeAttribKey(VISI_TAG, s), VISI_HIDDEN);
+            meta.setAttribute(makeAttribKey(VISI_TAG, s), DataType.Visibility.hidden.name());
         }
         super.prepareTableMeta(meta, columns, request);
     }

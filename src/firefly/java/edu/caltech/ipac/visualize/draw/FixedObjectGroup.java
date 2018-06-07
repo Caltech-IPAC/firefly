@@ -383,7 +383,7 @@ public class FixedObjectGroup implements TableConnectionList,
 
         for(int i=0; i<originalDataDef.length; i++) {
             if (i == tnameIdx || i== raIdx || i==decIdx) {
-                originalDataDef[i].setImportance(DataType.Importance.IGNORE);
+                originalDataDef[i].setVisibility(DataType.Visibility.hidden);
             }
             else {
                 extraDataRemapAry[outIdx++]= i;
@@ -784,7 +784,7 @@ public class FixedObjectGroup implements TableConnectionList,
             int realLength= getExtraUsedLength();
             for(int i= 0; (i<realLength); i++) {
                 _colNames[BASE_NUM_COLUMNS+i]=
-                               getExtraDataElement(i).getDefaultTitle();
+                               getExtraDataElement(i).getLabel();
             }
         }
     }

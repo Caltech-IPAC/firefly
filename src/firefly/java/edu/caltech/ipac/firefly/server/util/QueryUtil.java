@@ -255,8 +255,8 @@ public class QueryUtil {
 
     public static void doSort(DataGroup dg, SortInfo sortInfo) {
         if (sortInfo != null) {
-            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG) == null ? "" : dg.getAttribute(SortInfo.SORT_INFO_TAG).getValue();
-            if (!infoStr.equals(sortInfo.toString())) {
+            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG);
+            if (!StringUtils.areEqual(infoStr, sortInfo.toString())) {
                 DataGroupQuery.SortDir sortDir = DataGroupQuery.SortDir.valueOf(sortInfo.getDirection().name());
                 DataGroupQuery.sort(dg, sortDir, true, sortInfo.getSortColumnAry());
                 dg.addAttribute(SortInfo.SORT_INFO_TAG, sortInfo.toString());
@@ -294,9 +294,8 @@ public class QueryUtil {
 
     public static DataGroupPart convertToDataGroupPart(DataGroup dg, int startIdx, int pageSize) {
         DataGroup page = dg.subset(startIdx, startIdx+pageSize);
-        page.setRowIdxOffset(startIdx);
         TableDef tableDef = new TableDef();
-        tableDef.addAttributes(dg.getKeywords().toArray(new DataGroup.Attribute[0]));
+        tableDef.setKeywords(dg.getKeywords());
         tableDef.setStatus(DataGroupPart.State.COMPLETED);
         tableDef.setCols(Arrays.asList(page.getDataDefinitions()));
 
@@ -554,7 +553,6 @@ public class QueryUtil {
                 }
                 newdg.add(nrow);
             }
-            newdg.shrinkToFitData(true);
             return newdg;
         } catch (Exception e) {
             String msg = e.getMessage();
@@ -608,10 +606,10 @@ public class QueryUtil {
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
 
 
-        columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0);
+        columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).newCopyOf();
         colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getxColumnName()));
 
-        columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1);
+        columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).newCopyOf();
         colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getyColumnName()));
 
 
@@ -624,7 +622,7 @@ public class QueryUtil {
         Class yColClass = columns[1].getDataType();
 
         DataGroup retval = new DataGroup("decimated results", columns);
-        retval.setAttributes(colMeta);
+        retval.setKeywords(colMeta);
 
         // determine min/max values of x and y
         boolean checkDeciLimits = false;
@@ -691,7 +689,7 @@ public class QueryUtil {
 
                 List<DataGroup.Attribute> attributes = retval.getKeywords();
                 retval = new DataGroup("decimated results", new DataType[]{columns[0],columns[1],columns[2]});
-                retval.setAttributes(attributes);
+                retval.setKeywords(attributes);
 
                 for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
                     DataObject row = dg.get(rIdx);
@@ -792,8 +790,6 @@ public class QueryUtil {
                 Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
             }
         }
-
-        retval.shrinkToFitData();
 
         return retval;
     }

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -10,7 +11,6 @@ import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.ws.WsResponse;
@@ -176,7 +176,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 uf = File.createTempFile("upload_", ".tbl", destDir); // cleaned ipac file.
                 rPathInfo = ServerContext.replaceWithPrefix(uf);
                 DataGroup dg = DataGroupReader.readAnyFormat(fi.getFile(), 0);
-                DataGroupWriter.write(new DataGroupWriter.IpacTableHandler(uf, dg));
+                IpacTableWriter.save(uf, dg);
                 fi = new UploadFileInfo(rPathInfo, uf, fileName, (file != null ? file.getContentType() : null));
             }
 

@@ -49,7 +49,7 @@ public final class IpacTableReader {
                                           String onlyColumns[],
                                           boolean isHeadersOnlyAllow) throws IpacTableException {
         try {
-            DataGroup retval = DataGroupReader.read(fr, true, false, false, onlyColumns);
+            DataGroup retval = DataGroupReader.read(fr, false, onlyColumns);
             ensureIpac(retval, catName, isHeadersOnlyAllow);
             return retval;
         } catch (IOException e) {
@@ -78,7 +78,7 @@ public final class IpacTableReader {
                                           String catName,
                                           boolean isHeadersOnlyAllow) throws IpacTableException {
         try {
-            DataGroup retval = DataGroupReader.read(f, true, false, false, onlyColumns);
+            DataGroup retval = DataGroupReader.read(f, false, onlyColumns);
             ensureIpac(retval, catName, isHeadersOnlyAllow);
             return retval;
         } catch (FileNotFoundException fnfe) {

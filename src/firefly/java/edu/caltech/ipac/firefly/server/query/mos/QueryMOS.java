@@ -40,8 +40,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.util.IpacTableUtil.LABEL_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.firefly.data.table.TableMeta.LABEL_TAG;
+import static edu.caltech.ipac.firefly.data.table.TableMeta.makeAttribKey;
 
 
 @SearchProcessorImpl(id = "MOSQuery")
@@ -383,7 +383,6 @@ Thread.sleep(1000);
                 if (namesLst.contains(s)) {
                     DataGroup.Attribute attr = attrMap.get(s);
                     DataType dt = new DataType(s, String.class);
-                    dt.getFormatInfo().setWidth(Math.max(s.length(), attr.getValue().length()));
                     newDT.add(dt);
                 }
             }

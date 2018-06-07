@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query.lsst;
 
+import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -11,7 +12,6 @@ import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
@@ -53,9 +53,8 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             if (dg == null) {
                 throw new DataAccessException("No data.");
             }
-            dg.shrinkToFitData();
             File outFile = createFile(request, ".tbl");
-            DataGroupWriter.write(outFile, dg);
+            IpacTableWriter.save(outFile, dg);
             _log.info("table loaded");
             return outFile;
         } catch (IOException | DataAccessException ee) {
@@ -107,7 +106,6 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             for (int j = 0; j < dataType.length; j++) {
                 Object d = rowTblData.get(j);
                 if (d == null) {
-                    dataType[j].setMayBeNull(true);
                     row.setDataElement(dataType[j], null);
                 } else {
                     if (d instanceof Number) {
@@ -166,11 +164,9 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             dataTypes[i] = new DataType(keyName, cls);
             Object o = col.get("unit");
             if (o != null) dataTypes[i].setUnits((String)o);
-            o = col.get("nullable");
-            if (o != null) dataTypes[i].setMayBeNull((Boolean)o);
             o = col.get("description");
-            if (o != null) dataTypes[i].setShortDesc((String)o);
-            else dataTypes[i].setShortDesc("no description for "+keyName); // TODO: remove after DM-14320
+            if (o != null) dataTypes[i].setDesc((String)o);
+            else dataTypes[i].setDesc("no description for "+keyName); // TODO: remove after DM-14320
         }
         return dataTypes;
     }

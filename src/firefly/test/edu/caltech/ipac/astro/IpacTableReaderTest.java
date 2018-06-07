@@ -77,7 +77,7 @@ public class IpacTableReaderTest extends ConfigTest{
         attributeValues = new String[]{"\'Sample Catalog1\'", "\'Sample Catalog2\'"};
         attributeComments = new String[]{"\\ Comment1", "\\ Comment2"};
         //The header:
-        colTitles = new String[]{"ra", "dec", "n_obs", "V", "SpType"};
+        colTitles = new String[]{null, null, null, null, null};
         colKeyNames = new String[]{"ra", "dec", "n_obs", "V", "SpType"};
         colDataTypeDesc = new String[]{"double", "double", "int", "float", "char"};
         colDataTypes = new String[]{"class java.lang.Double", "class java.lang.Double", "class java.lang.Integer", "class java.lang.Float", "class java.lang.String"};
@@ -150,7 +150,7 @@ public class IpacTableReaderTest extends ConfigTest{
         attributeValues = new String[]{"\'Sample Catalog1\'", "\'Sample Catalog2\'"};
         attributeComments = new String[]{"\\ Comment1", "\\ Comment2"};
         //Set the header:
-        colTitles = new String[]{"ra", "dec"};
+        colTitles = new String[]{null, null};
         colKeyNames = new String[]{"ra", "dec"};
         colDataTypeDesc = new String[]{"double", "double"};
         colDataTypes = new String[]{"class java.lang.Double", "class java.lang.Double"};
@@ -486,12 +486,12 @@ public class IpacTableReaderTest extends ConfigTest{
         DataType[] dataTypes = dataGroup.getDataDefinitions();
 
         for (int i = 0; i < dataTypes.length; i++) {
-            Assert.assertEquals("check column title", dataTypes[i].getDefaultTitle().toString(), colTitles[i]);
-            Assert.assertEquals("check column key name", dataTypes[i].getKeyName().toString(), colKeyNames[i]);
-            Assert.assertEquals("check column data type short description", dataTypes[i].getTypeDesc().toString(), colDataTypeDesc[i]);
+            Assert.assertEquals("check column title", dataTypes[i].getLabel(), colTitles[i]);
+            Assert.assertEquals("check column key name", dataTypes[i].getKeyName(), colKeyNames[i]);
+            Assert.assertEquals("check column data type short description", dataTypes[i].getTypeDesc(), colDataTypeDesc[i]);
             Assert.assertEquals("check column data type class", dataTypes[i].getDataType().toString(), colDataTypes[i]);
-            Assert.assertEquals("check the column unit", dataTypes[i].getDataUnit().toString(), colDataUnits[i]);
-            Assert.assertEquals("check column null string", dataTypes[i].getNullString().toString(), colNullStrings[i]);
+            Assert.assertEquals("check the column unit", dataTypes[i].getUnits(), colDataUnits[i]);
+            Assert.assertEquals("check column null string", dataTypes[i].getNullString(), colNullStrings[i]);
         }
 
         //Check the Attributes (comments):
@@ -532,7 +532,7 @@ public class IpacTableReaderTest extends ConfigTest{
         List<DataObject> objList = dataGroup.values(); //
         for (int row = 0; row < objList.size(); row++) {
             for (int col = 0; col < dataTypes.length; col++) {
-                String dataExpected = objList.get(row).getDataElement(dataTypes[col]).toString();
+                String dataExpected = String.valueOf(objList.get(row).getDataElement(dataTypes[col]));
                 Assert.assertEquals("check the data value", dataExpected, dataValues[row][col]);
             }
         }

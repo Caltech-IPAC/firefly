@@ -80,11 +80,11 @@ public class CatSummaryQuery  extends IpacTablePartProcessor {
             String jsonContent = baos.toString();
             HashMap<String, Integer> keyValues = parse(jsonContent);
             DataType setType = new DataType("set", String.class);
-            setType.getFormatInfo().setWidth(15);
+            setType.setWidth(15);
             DataType catType = new DataType("catalog", String.class);
-            catType.getFormatInfo().setWidth(30);
+            catType.setWidth(30);
             DataType ddlink = new DataType("ddlink", String.class);
-            catType.getFormatInfo().setWidth(30);
+            catType.setWidth(30);
 
             DataType countType = new DataType("count", Integer.class);
             DataType[] dt = new DataType[]{setType, catType, ddlink, countType};
@@ -108,8 +108,7 @@ public class CatSummaryQuery  extends IpacTablePartProcessor {
             }
             File outf = createFile(req);
             //File outf = new File("/tmp/a.txt");
-            dg.shrinkToFitData(true);
-            IpacTableWriter.save(outf, dg);            
+            IpacTableWriter.save(outf, dg);
 
             return outf;
         } catch (FailedRequestException e) {

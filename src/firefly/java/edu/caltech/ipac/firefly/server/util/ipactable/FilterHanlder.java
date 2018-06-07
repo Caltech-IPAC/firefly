@@ -30,12 +30,14 @@ public class FilterHanlder extends BgIpacTableHandler {
     private List<DataGroup.Attribute> attributes;
     private List<DataType> headers;
     private DataGroup dg;
+    private TableDef tableDef;
 
     public FilterHanlder(File ofile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
         super(ofile, null, null, null, request);
-        TableDef tableMeta = IpacTableUtil.getMetaInfo(source);
-        attributes = tableMeta.getAllAttributes();
-        headers = tableMeta.getCols();
+        tableDef = IpacTableUtil.getMetaInfo(source);
+        tableDef.setSaveFormattedData(true);
+        attributes = tableDef.getKeywords();
+        headers = tableDef.getCols();
         reader = new BufferedReader(new FileReader(source), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         this.filters = Arrays.asList(filters);
         if (filters != null) {
@@ -47,9 +49,8 @@ public class FilterHanlder extends BgIpacTableHandler {
             }
         }
         // if this file does not contain ROWID, add it.
-        if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROW_IDX)) {
+        if (!headers.stream().anyMatch(dt -> dt.getKeyName().equals(DataGroup.ROW_IDX))) {
             headers.add(DataGroup.makeRowIdx());
-            attributes.add(new DataGroup.Attribute("col." + DataGroup.ROW_IDX + ".Visibility", "hidden"));
         }
         dg = new DataGroup(null, headers);
     }
@@ -95,16 +96,16 @@ public class FilterHanlder extends BgIpacTableHandler {
             while (next == null && !eof) {
                 line = reader.readLine();
                 eof = line == null;
-                DataObject row = eof ? null:  IpacTableUtil.parseRow(dg, line, true, true);
+                DataObject row = eof ? null:  IpacTableUtil.parseRow(dg, line, tableDef);
                 if (row != null) {
                     int rowIdx = ++cRowNum;
                     if (hasRowIdFilter) {
-                        rowIdx = row.getRowIdx();
+                        rowIdx = row.getIntData(DataGroup.ROW_IDX);
                         rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
                     }
 
                     if (CollectionUtil.matches(rowIdx, row, filters)) {
-                        row.setRowIdx(rowIdx);
+                        row.setDataElement(DataGroup.ROW_IDX, rowIdx);
                         ++rowsFound;
                         next = row;
                     }

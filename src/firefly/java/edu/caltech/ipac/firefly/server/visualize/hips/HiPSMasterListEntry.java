@@ -78,7 +78,7 @@ public class HiPSMasterListEntry {
     static {
         for (PARAMS param : orderCols) {
             DataType dt = new DataType(param.getKey(), param.getTitle(), param.getMetaClass()) ;
-            dt.setShortDesc(param.getDescription());
+            dt.setDesc(param.getDescription());
             dt.setUnits(param.getUnits());
             cols.add(dt);
         }

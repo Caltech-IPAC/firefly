@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.events;
 
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import org.json.simple.JSONObject;
 import java.util.Arrays;
 
@@ -50,30 +51,7 @@ public class FluxAction {
             throw new IllegalArgumentException("path may not be null");
         }
         String[] npath = path.length == 1 ? null : Arrays.copyOfRange(path, 0, path.length - 1);
-        getNode(npath).put(path[path.length-1], value);
-    }
-
-    /**
-     * returns a JSONObject (map) for the given path.
-     * This will create new node along the path if one does not exists.
-     * @param path
-     * @return
-     */
-    public JSONObject getNode(String... path) {
-        if (path == null || path.length == 0) {
-            return getPayload();
-        } else {
-            JSONObject current = getPayload();
-            for(String p : path) {
-                JSONObject next = (JSONObject) current.get(p);
-                if (next == null) {
-                    next = new JSONObject();
-                    current.put(p, next);
-                }
-                current = next;
-            }
-            return current;
-        }
+        JsonTableUtil.getPath(getPayload(), npath).put(path[path.length-1], value);
     }
 
     @Override

@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.*;
@@ -87,8 +88,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
         if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
             TableDef tableDef = IpacTableUtil.getMetaInfo(tblFile);
-            DataGroup.Attribute fixlen = tableDef.getAttribute("fixlen");
-            if (fixlen != null && fixlen.getValue().equalsIgnoreCase("T") &&
+            String fixlen = tableDef.getAttribute("fixlen");
+            if (fixlen != null && fixlen.equalsIgnoreCase("T") &&
                 !tableDef.getCols().stream().anyMatch(c -> !c.isKnownType()) ) {
                 // table is in fixed length ipac format.. and pass validation
                 return tblFile;
@@ -99,7 +100,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             // read in any format.. then write it back out as ipac table
             DataGroup dg = DataGroupReader.readAnyFormat(tblFile, tblIdx);
             File convertedFile = File.createTempFile(request.getRequestId(), ".tbl", ServerContext.getTempWorkDir());
-            DataGroupWriter.write(convertedFile, dg);
+            IpacTableWriter.save(convertedFile, dg);
             return convertedFile;
         } else {
             throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(tblFile));
@@ -398,7 +399,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
-                DataGroupWriter.write(deciFile, retval);
+                IpacTableWriter.save(deciFile, retval);
                 cache.put(key, deciFile);
             }
             resultsFile = deciFile;
@@ -446,7 +447,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         StopWatch timer = StopWatch.getInstance();
         timer.start("read");
         int pageSize = request.getPageSize();
-        DataGroup dg = DataGroupReader.read(inFile, true, false, true);
+        DataGroup dg = DataGroupReader.read(inFile, true);
         // if this file does not contain ROW_IDX, add it.
         if (!dg.containsKey(DataGroup.ROW_IDX)) {
             dg.addDataDefinition(DataGroup.makeRowIdx());
@@ -457,7 +458,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         QueryUtil.doSort(dg, sortInfo);
         timer.printLog("sort");
         timer.start("write");
-        DataGroupWriter.write(new BgIpacTableHandler(outFile, dg, request));
+        IpacTableWriter.save(outFile, dg);
         timer.printLog("write");
     }
 

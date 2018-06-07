@@ -6,6 +6,7 @@ package edu.caltech.ipac.util;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.io.BufferedOutputStream;
@@ -118,10 +119,10 @@ public class DataGroupQuery {
         try {
             String line = reader.readLine();
             lineNum++;
-            List<DataType> cols = null;
             boolean hasType = false, hasUnit = false, hasNullStr = false;
             DataGroup dg = null;
             List<DataType> selectedCols = null;
+            TableDef tableDef = null;
 
             boolean needToWriteHeader = true;
             while (line != null) {
@@ -131,26 +132,27 @@ public class DataGroupQuery {
                         writer.println(line);
                     }
                 } else if (line.startsWith("|")) {
-                    if (cols == null) {
-                        cols = IpacTableUtil.createColumnDefs(line);
+                    if (tableDef == null) {
+                        tableDef = IpacTableUtil.createColumnDefs(line);
+                        tableDef.setSaveFormattedData(true);
                     } else if (!hasType) {
-                        IpacTableUtil.setDataType(cols, line);
+                        IpacTableUtil.setDataType(tableDef.getCols(), line);
                         hasType = true;
                     } else if (!hasUnit) {
-                        IpacTableUtil.setDataUnit(cols, line);
+                        IpacTableUtil.setDataUnit(tableDef.getCols(), line);
                         hasUnit = true;
                     } else if (!hasNullStr) {
-                        IpacTableUtil.setDataNullStr(cols, line);
+                        IpacTableUtil.setDataNullStr(tableDef.getCols(), line);
                         hasNullStr = true;
                     }
                 } else if (line.trim().length() == 0) {
                     // skip
                 } else {
                     if (dg == null) {
-                        if (cols == null) {
+                        if (tableDef.getCols() == null) {
                             throw new IpacTableException("Invalid IPAC table.  No column headers.");
                         }
-                        dg = new DataGroup("doQuery", cols);
+                        dg = new DataGroup("doQuery", tableDef.getCols());
 
                         if (getColumnNames().size() > 0) {
                             selectedCols = new ArrayList<DataType>();
@@ -168,11 +170,11 @@ public class DataGroupQuery {
                                 }
                             }
                         } else {
-                            selectedCols = cols;
+                            selectedCols = tableDef.getCols();
                         }
                     }
 
-                    DataObject row = IpacTableUtil.parseRow(dg, line, true, true);
+                    DataObject row = IpacTableUtil.parseRow(dg, line, tableDef);
                     if (needToWriteHeader) {
                         needToWriteHeader = false;
                         if (addedAttributes != null) {
@@ -182,7 +184,7 @@ public class DataGroupQuery {
                     }
 
                     if (CollectionUtil.matches(lineNum, row, getDataFilters())) {
-                        if (selectedCols != cols) {
+                        if (selectedCols != tableDef.getCols()) {
                             IpacTableUtil.writeRow(writer, selectedCols, row);
                         } else {
                             writer.println(line);
@@ -303,7 +305,7 @@ public class DataGroupQuery {
 
         };
 
-        List<DataObject> data = sortedDG.getValues();
+        List<DataObject> data = sortedDG.values();
         Collections.sort(data, comp);
         return sortedDG;
     }
@@ -421,9 +423,9 @@ public class DataGroupQuery {
                                  Comparator<DataObject> comparator,
                                  boolean isInnerJoin, boolean includeAttributes) {
 
-        ArrayList<DataObject> list1 = new ArrayList<DataObject>(dgOne.values());
+        ArrayList<DataObject> list1 = new ArrayList<>(dgOne.values());
         Collections.sort(list1, comparator);
-        ArrayList<DataObject> list2 = new ArrayList<DataObject>(dgTwo.values());
+        ArrayList<DataObject> list2 = new ArrayList<>(dgTwo.values());
         Collections.sort(list2, comparator);
 
         DataType[] dgcols1 = dgOneCols == null ? dgOne.getDataDefinitions() : dgOneCols;
@@ -793,7 +795,7 @@ public class DataGroupQuery {
         public boolean accept(DataObject dataObject) {
             initFilter();
             ensureType(dataObject);
-            Object val = _colName.equals(DataGroup.ROW_IDX) ? dataObject.getRowIdx() : dataObject.getDataElement(_dataType);
+            Object val = dataObject.getDataElement(_dataType);
             val = val == null || val.toString().toLowerCase().equals("null") ? "" : val;
             if (_optype.equals(OpType.LIKE)) {
                 return String.valueOf(val).toLowerCase().indexOf(_compareTo) >= 0;

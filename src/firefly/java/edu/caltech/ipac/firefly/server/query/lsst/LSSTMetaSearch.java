@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
+import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -10,7 +11,6 @@ import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -87,8 +87,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         try {
             dg = getDataFromURL(request);
             File outFile = createFile(request, ".tbl");
-            dg.shrinkToFitData();
-            DataGroupWriter.write(outFile, dg);
+            IpacTableWriter.save(outFile, dg);
             return outFile;
 
         } catch (IOException | DataAccessException ee) {
@@ -138,8 +137,6 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
                 o = ((JSONObject)c).get(fields[i]);
                 if (o != null) {
                     row.setDataElement(dataTypes[i], o.toString());
-                } else {
-                    dataTypes[i].setMayBeNull(true);
                 }
             }
             dg.add(row);

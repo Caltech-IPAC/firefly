@@ -39,8 +39,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Locale;
 
-import static edu.caltech.ipac.util.IpacTableUtil.DESC_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.firefly.data.table.TableMeta.DESC_TAG;
+import static edu.caltech.ipac.firefly.data.table.TableMeta.makeAttribKey;
 /**
  * User: roby
  * Date: Jul 29, 2010
@@ -353,7 +353,7 @@ public class GatorQuery extends BaseGator {
                 if (dg.containsKey(RA)) {
                     Object val = row.getDataElement(RA);
                     if (StringUtils.isEmpty(val)) {
-                        dg.remove(row);
+                        dg.clearData();
                         IpacTableWriter.save(f, dg);
                     }
                 }
@@ -382,7 +382,6 @@ public class GatorQuery extends BaseGator {
                 String queryStmt = "select col " + cols + " from " + f.getPath();
                 DataGroup dg = DataGroupQueryStatement.parseStatement(queryStmt).execute();
                 dg.getDataDefintion(uploadedRowId).setKeyName(CatalogRequest.UPDLOAD_ROW_ID);
-                dg.shrinkToFitData(true);
                 IpacTableWriter.save(f, dg);
             }
         }

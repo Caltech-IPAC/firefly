@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.*;
 
 import java.io.File;
@@ -47,8 +46,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     };
     static {
         // set default precision to 14 significant digits
-        columns[1].getFormatInfo().setDataFormat("%.14e");
-        columns[2].getFormatInfo().setDataFormat("%.14e");
+        columns[1].setFormat("%.14e");
+        columns[2].setFormat("%.14e");
     }
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String FIXED_BIN_SIZE_SELECTION="fixedBinSizeSelection";
@@ -142,11 +141,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         double[] columnData = getColumnData(sourceDataGroup);
         DataGroup histogramDataGroup = createHistogramTable(columnData);
         histogramDataGroup.addAttribute("searchRequest", sReq.toString());
-        addFormatInfoAtt(histogramDataGroup, columns[1]);
-        addFormatInfoAtt(histogramDataGroup, columns[2]);
 
         File histogramFile = createFile(request);
-        DataGroupWriter.write(histogramFile, histogramDataGroup);
+        IpacTableWriter.save(histogramFile, histogramDataGroup);
         return histogramFile;
     }
 
@@ -200,11 +197,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                algorithm = FIXED_SIZE_ALGORITHM;
            }
         }
-    }
-
-    private void addFormatInfoAtt(DataGroup dg, DataType dt) {
-        String fkey = IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_DISP_TAG, dt.getKeyName());
-        dg.addAttribute(fkey, dt.getFormatInfo().getDataFormatStr());
     }
 
     /**

@@ -562,10 +562,10 @@ public class VisServerOps {
         DataType keyword = new DataType("Keyword", String.class);
         DataType value = new DataType("Value", String.class);
         DataType num = new DataType("#", Integer.class);
-        comment.getFormatInfo().setWidth(30);
-        value.getFormatInfo().setWidth(10);
-        keyword.getFormatInfo().setWidth(10);
-        num.getFormatInfo().setWidth(3);
+        comment.setWidth(30);
+        value.setWidth(10);
+        keyword.setWidth(10);
+        num.setWidth(3);
         DataType[] types = new DataType[]{num, keyword, value, comment};
         DataGroup dg = new DataGroup("Headers - " + name, types);
 

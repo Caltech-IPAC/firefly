@@ -3,18 +3,19 @@
  */
 package edu.caltech.ipac.firefly.data.table;
 
+import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.decimate.DecimateKey;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Date: Oct 21, 2008
@@ -24,104 +25,185 @@ import java.util.Map;
  */
 public class TableMeta implements Serializable {
 
-    private final static String SPLIT_TOKEN = "--TableMeta--";
-    private final static String ELEMENT_TOKEN = "--TMElement--";
+    public static final String LABEL_TAG = "col.@.Label";
+    public static final String VISI_TAG = "col.@.Visibility";
+    public static final String WIDTH_TAG = "col.@.Width";
+    public static final String PREF_WIDTH_TAG = "col.@.PrefWidth";
+    public static final String DESC_TAG = "col.@.ShortDescription";
+    public static final String UNIT_TAG = "col.@.Unit";
+    public static final String FORMAT_TAG = "col.@.Fmt";     // can be AUTO, NONE or a valid java format string.  defaults to AUTO.
+    public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
+    public static final String SORTABLE_TAG = "col.@.Sortable";
+    public static final String FILTERABLE_TAG = "col.@.Filterable";
+    public static final String ITEMS_TAG = "col.@.Items";
+    public static final String SORT_BY_TAG = "col.@.SortByCols";
+    public static final String ENUM_VALS_TAG = "col.@.EnumVals";
+    public static final String RELATED_COLS_TAG = "col.related";
+    public static final String GROUPBY_COLS_TAG = "col.groupby";
 
+    public static final String RESULTSET_ID = "resultSetID";        // this meta if exists contains the ID of the resultset returned.
+    public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this of the resultset.
 
-    public static final String HAS_ACCESS_CNAME = "hasAccessCName";
-    public static final String SHOW_UNITS = "show-units";
-    public static final String PARAM_SEP = "&";
+    public static final String IS_FULLY_LOADED = "isFullyLoaded";     // do not format data
 
-    private String source;
-    private long fileSize;
-    private boolean isFullyLoaded;
-    private List<String> relatedCols;
-    private List<String> groupByCols;
-    private Map<String, String> attributes = new HashMap<String, String>();
+    /*
+      attributes is a key/value map of table meta information.
+      keywords is a list of all table meta information including comments and duplicate attribute entries.
+     */
+    private Map<String, DataGroup.Attribute> attributes = new HashMap<>();
+    private List<DataGroup.Attribute> keywords = new ArrayList<>();
 
-
-    public TableMeta() {
-        this(null);
+    public static String makeAttribKey(String tag, String colName) {
+        return tag.replaceFirst("@", colName);
     }
 
-    public TableMeta(String source) {
-        this(source, null, null);
+    public void clear() {
+        attributes.clear();
+        keywords.clear();
     }
 
-    public TableMeta(String source, String raColumnName, String decColumnName) {
-        this.source = source;
-        if (!StringUtils.isEmpty(raColumnName) && !StringUtils.isEmpty(decColumnName)) {
-            LonLatColumns center = new LonLatColumns(raColumnName, decColumnName, CoordinateSys.EQ_J2000);
-            setCenterCoordColumns(center);
+    /**
+     * Return only the meta that's not a comment.
+     * @return all of the meta information excluding comments.
+     */
+    public Map<String, DataGroup.Attribute> getAttributes() {
+        return attributes;
+    }
+
+    /**
+     * @return Return key/value meta as a list of Attribute.
+     */
+    public List<DataGroup.Attribute> getAttributeList() {
+        return new ArrayList<>(attributes.values());
+    }
+
+    /**
+     * @return all attributes including comments and duplicated keyed values.
+     */
+    public List<DataGroup.Attribute> getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(Collection<DataGroup.Attribute> keywords) {
+        clear();
+        if (keywords != null) {
+            keywords.stream()
+                    .forEach(att -> setAttribute(att.getKey(), att.getValue()));
         }
-        isFullyLoaded = true;
+    }
+
+    public void setAttributes(Map<String, String> metas) {
+        clear();
+        metas.entrySet().stream()
+                .forEach((e -> setAttribute(e.getKey(), e.getValue())));
+    }
+
+    public String getAttribute(String key) {
+        DataGroup.Attribute v = attributes.get(key);
+        return v == null ? null : v.getValue();
+    }
+
+    public DataGroup.Attribute getKeyword(String key) {
+        return attributes.get(key);
+    }
+
+    public boolean contains(String key) {
+        return attributes.containsKey(key);
+    }
+
+
+    /**
+     * @param key   if null, meta will be treated as a comment
+     * @param value meta value
+     */
+    public void setAttribute(String key, String value) {
+        DataGroup.Attribute att = new DataGroup.Attribute(key, value);
+        if (!StringUtils.isEmpty(key)) {
+            attributes.put(key, att);
+        }
+        keywords.add(att);
+    }
+
+    public void removeAttribute(String key) {
+        DataGroup.Attribute val = attributes.remove(key);
+        if (val != null) {
+            keywords = keywords.stream()
+                        .filter(at -> at.getKey() != null && at.getKey().equals(key))
+                        .collect(Collectors.toList());
+        }
+
     }
 
     public TableMeta clone() {
         TableMeta newMeta = new TableMeta();
-        newMeta.source = source;
-        newMeta.fileSize = fileSize;
-        newMeta.isFullyLoaded = isFullyLoaded;
-        newMeta.relatedCols = relatedCols == null ? null : new ArrayList<String>(relatedCols);
-        newMeta.groupByCols = groupByCols == null ? null : new ArrayList<String>(groupByCols);
         newMeta.attributes.putAll(attributes);
         return newMeta;
     }
 
     /**
-     * the source of this DataSet.  It could be a file on the server; a url used to create this DataSet, or an
-     * identifier known by the server.
-     *
-     * @return return the identifier
+     * @param key  meta key
+     * @return  return a comma-separated values as a list of string
      */
-    public String getSource() {
-        return source;
+    public List<String> getValueAsList(String key) {
+        String cols = getAttribute(key);
+        return StringUtils.isEmpty(cols) ? new ArrayList<>() : StringUtils.asList(cols, ",");
     }
 
-    public void setSource(String source) {
-        this.source = source;
+    /**
+     * @param key meta key
+     * @param values  Set a list of string as a comma-separated value
+     */
+    public void setValueAsList(String key, List<String> values) {
+        String val = StringUtils.toString(values, ",");
+        setAttribute(key, val);
     }
 
-    public long getFileSize() {
-        return fileSize;
+//====================================================================
+//  convenience getter/setter
+//====================================================================
+
+    public void setAttribute(String key, Number value) {
+    setAttribute(key, value.toString());
+}
+
+    public void setWorldPtMeta(String key, WorldPt pt) {
+        if (pt != null) setAttribute(key, pt.toString());
     }
 
-    public void setFileSize(long fileSize) {
-        this.fileSize = fileSize;
+    public WorldPt getWorldPtMeta(String key) {
+        return WorldPt.parse(getAttribute(key));
     }
 
-    public List<String> getRelatedCols() {
-        if (relatedCols == null) {
-            relatedCols = new ArrayList<String>();
-        }
-        return relatedCols;
+    public boolean getBooleanMeta(String key) {
+        return StringUtils.getBoolean(getAttribute(key));
     }
 
+    public int getIntMeta(String key) {
+        return StringUtils.getInt(getAttribute(key));
+    }
+
+    public double getDoubleMeta(String key) {
+        return StringUtils.getDouble(getAttribute(key));
+    }
+
+    public float getFloatMeta(String key) {
+        return StringUtils.getFloat(getAttribute(key));
+    }
+
+    public Date getDateMeta(String key) {
+        return StringUtils.getDate(getAttribute(key));
+    }
+
+
+    public List<String> getRelatedCols() { return getValueAsList(RELATED_COLS_TAG); }
     public void setRelatedCols(List<String> relatedCols) {
-        this.relatedCols = relatedCols;
-    }
+        setValueAsList(RELATED_COLS_TAG, relatedCols); }
 
-    public List<String> getGroupByCols() {
-        if (groupByCols == null) {
-            groupByCols = new ArrayList<String>();
-        }
-        return groupByCols;
-    }
-
-    public void setGroupByCols(List<String> groupByCols) {
-        this.groupByCols = groupByCols;
-    }
+    public List<String> getGroupByCols() { return getValueAsList(GROUPBY_COLS_TAG); }
+    public void setGroupByCols(List<String> groupByCols) { setValueAsList(GROUPBY_COLS_TAG, groupByCols); }
 
     public void setCenterCoordColumns(LonLatColumns centerColumns) {
         setLonLatColumnAttr(MetaConst.CENTER_COLUMN, centerColumns);
-    }
-
-    public LonLatColumns getCenterCoordColumns() {
-        return getLonLatColumnAttr(attributes, MetaConst.CENTER_COLUMN);
-    }
-
-    public static LonLatColumns getCenterCoordColumns(Map<String, String> map) {
-        return getLonLatColumnAttr(map, MetaConst.CENTER_COLUMN);
     }
 
     public void setLonLatColumnAttr(String key, LonLatColumns llc) {
@@ -132,26 +214,10 @@ public class TableMeta implements Serializable {
         return getLonLatColumnAttr(attributes, key);
     }
 
-    public DecimateKey getDecimateKey() {
-        DecimateKey retval= null;
-        String keyStr = attributes.get(DecimateKey.DECIMATE_KEY);
-        if (keyStr!=null) {
-            retval= DecimateKey.parse(keyStr);
-        }
-        return retval;
-
+    public static LonLatColumns getLonLatColumnAttr(Map<String, DataGroup.Attribute> map, String key) {
+        DataGroup.Attribute att = map.get(key);
+        return att == null || StringUtils.isEmpty(att.getValue()) ? null : LonLatColumns.parse(att.getValue());
     }
-
-
-    public static LonLatColumns getLonLatColumnAttr(Map<String, String> map, String key) {
-        String cStr = map.get(key);
-        LonLatColumns retval = null;
-        if (cStr != null) {
-            retval = LonLatColumns.parse(cStr);
-        }
-        return retval;
-    }
-
 
     public void setCorners(LonLatColumns... corners) {
         StringBuffer sb = new StringBuffer(corners.length * 15);
@@ -166,11 +232,11 @@ public class TableMeta implements Serializable {
         return getCorners(attributes, MetaConst.ALL_CORNERS);
     }
 
-    public static LonLatColumns[] getCorners(Map<String, String> map, String key) {
+    public static LonLatColumns[] getCorners(Map<String, DataGroup.Attribute> map, String key) {
         LonLatColumns retval[] = null;
-        String cStr = map.get(key);
-        if (cStr != null) {
-            String sAry[] = cStr.split(",");
+        DataGroup.Attribute att = map.get(key);
+        if (att != null && !StringUtils.isEmpty(att.getValue())) {
+            String sAry[] = att.getValue().split(",");
             retval = new LonLatColumns[sAry.length];
             int i = 0;
             for (String s : sAry) {
@@ -182,141 +248,9 @@ public class TableMeta implements Serializable {
     }
 
 
-    public void setAttributes(Map<String, String> attribs) {
-        if (attribs == null) {
-            attributes.clear();
-        } else {
-            attributes.putAll(attribs);
-        }
-    }
-
-//    public void setAttribute(String key, String value) {
-//        setAttribute(key, value);
-//    }
-
-    public void setAttribute(String key, Number value) {
-        setAttribute(key, value.toString());
-    }
-
-    public void setAttribute(String key, String value) {
-        attributes.put(key, value);
-    }
-    public void removeAttribute(String key) {
-        attributes.remove(key);
-    }
-
-
-    public void setWorldPtAttribute(String key, WorldPt pt) {
-        if (pt != null) attributes.put(key, pt.toString());
-    }
-
-    public boolean contains(String key) {
-        return attributes.containsKey(key);
-    }
-
-
-    public WorldPt getWorldPtAttribute(String key) {
-        return WorldPt.parse(getAttribute(key));
-    }
-
-
-    public boolean getBooleanAttribute(String key) {
-        return StringUtils.getBoolean(getAttribute(key));
-    }
-
-    public int getIntAttribute(String key) {
-        return StringUtils.getInt(getAttribute(key));
-    }
-
-    public double getDoubleAttribute(String key) {
-        return StringUtils.getDouble(getAttribute(key));
-    }
-
-    public float getFloatAttribute(String key) {
-        return StringUtils.getFloat(getAttribute(key));
-    }
-
-    public Date getDateAttribute(String key) {
-        return StringUtils.getDate(getAttribute(key));
-    }
-
-    public String getAttribute(String key) {
-        return attributes.get(key);
-    }
-
-
-    public Map<String, String> getAttributes() {
-        return Collections.unmodifiableMap(attributes);
-    }
-
-    public boolean isLoaded() {
-        return isFullyLoaded;
-    }
-
-    public void setIsLoaded(boolean flag) {
-        isFullyLoaded = flag;
-    }
-
-
-    public String serialize() {
-
-        StringBuffer sb = new StringBuffer(500);
-        sb.append(source).append(SPLIT_TOKEN);
-        sb.append(fileSize).append(SPLIT_TOKEN);
-        sb.append(isFullyLoaded).append(SPLIT_TOKEN);
-
-
-        // relatedCols
-        sb.append('[');
-        if (relatedCols != null) {
-            for (String s : relatedCols) sb.append(s).append(ELEMENT_TOKEN);
-        }
-        sb.append(']').append(SPLIT_TOKEN);
-
-
-        // groupByCols
-        sb.append('[');
-        if (groupByCols != null) {
-            for (String s : groupByCols) sb.append(s).append(ELEMENT_TOKEN);
-        }
-        sb.append(']').append(SPLIT_TOKEN);
-
-
-        // attributes
-        sb.append('[');
-        if (attributes != null) {
-            for (Map.Entry<String, String> entry : attributes.entrySet()) {
-                sb.append(entry.getKey()).append(ELEMENT_TOKEN);
-                sb.append(entry.getValue()).append(ELEMENT_TOKEN);
-            }
-        }
-        sb.append(']').append(SPLIT_TOKEN);
-
-        return sb.toString();
-    }
-
-    public static TableMeta parse(String s) {
-        if (s == null) return null;
-        String sAry[] = s.split(SPLIT_TOKEN, 7);
-        TableMeta retval = null;
-        if (sAry.length == 7) {
-            try {
-                int idx = 0;
-                retval = new TableMeta();
-                retval.source = sAry[idx].equals("null") ? null : sAry[idx];
-                idx++;
-                retval.fileSize = Long.parseLong(sAry[idx++]);
-                retval.isFullyLoaded = Boolean.parseBoolean(sAry[idx++]);
-                retval.relatedCols = StringUtils.parseStringList(sAry[idx++], ELEMENT_TOKEN);
-                retval.groupByCols = StringUtils.parseStringList(sAry[idx++], ELEMENT_TOKEN);
-                retval.attributes = StringUtils.parseStringMap(sAry[idx++], ELEMENT_TOKEN);
-            } catch (NumberFormatException e) {
-                retval = null;
-            }
-        }
-        return retval;
-    }
-
+//====================================================================
+//  convenience inner class dealing with table meta
+//====================================================================
 
     public static class LonLatColumns implements Serializable {
         private String lonCol;

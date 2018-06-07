@@ -338,7 +338,7 @@ public class FixedObject implements Serializable {
         }
         else {
             throw new NumberFormatException("cannot convert "+
-                   da.getDataDefinitions()[idx].getDefaultTitle() + " of type "+
+                   da.getDataDefinitions()[idx].getLabel() + " of type "+
                    v.getClass().getName() + " to a double");
         }
         return retval;

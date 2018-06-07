@@ -137,13 +137,13 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 	private void testMeta(DataGroup data) {
 		// test meta
-		Assert.assertEquals("'ORIGIN value'", data.getAttribute("ORIGIN").getValue());
-		Assert.assertEquals("'SQL value'", data.getAttribute("SQL").getValue());
-		Assert.assertEquals("%.6g", data.getAttribute("col.dec.FmtDisp").getValue());
+		Assert.assertEquals("'ORIGIN value'", data.getAttribute("ORIGIN"));
+		Assert.assertEquals("'SQL value'", data.getAttribute("SQL"));
+		Assert.assertEquals("%.6g", data.getAttribute("col.dec.FmtDisp"));
 
 		// test column meta
 		DataType dt = data.getDataDefintion("dec");
-		Assert.assertEquals("deg", dt.getDataUnit());
+		Assert.assertEquals("rad", dt.getUnits());
 		Assert.assertEquals(Double.class, dt.getDataType());
 	}
 
