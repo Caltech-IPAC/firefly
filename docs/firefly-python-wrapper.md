@@ -4,9 +4,9 @@ This document explains how to use the python library included in Firefly to inte
 
 The python class name is **FireflyClient**.  It is located in firefly/src/fftools/python.   
 
-##Getting Started
+## Getting Started
 
-####Pre-requirements
+#### Pre-requirements
 
 1. Install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
    (If you are using conda package manager, you can use [conda-pipbuild](http://conda.pydata.org/docs/commands/build/conda-pipbuild.html) tool for building conda packages just using pip install.) 
@@ -17,11 +17,11 @@ setenv PYTHONPATH /where-git-repository-is/firefly/src/fftools/python/display
 	
 To get a feel for API `cd firefly/src/fftools/test` and take a look at `initFF.py`, `initFF2.py`, `testAll.py`. If you are within an interpreter, `execfile('./initFF2.py')` is the best, because it leaves the connection to the browser open while allowing you to execute other commands.
 
-####Import the FireflyClient into your script
+#### Import the FireflyClient into your script
 
    `from FireflyClient import *`
    
-####Create an instance of the FireflyClient
+#### Create an instance of the FireflyClient
 
 ```python
 fc = FireflyClient( 'localhost:8080')
@@ -31,7 +31,7 @@ fc = FireflyClient( 'localhost:8080')
 fc=FireflyClient('localhost:8080', channel='myNewChannel')
 ```
  
-####Launch Browser and load Firefly Tools
+#### Launch Browser and load Firefly Tools
  
 ```python
 fc.launchBrowser()
@@ -39,7 +39,7 @@ fc.launchBrowser()
 
 Wait until Firefly Tools finish loading and you see 'Waiting for data' before sending other commands.
  
-####Show a Fits image
+#### Show a Fits image
  
 ```python
 data = '/your/path/yourFits.fits'
@@ -53,7 +53,7 @@ For the details of FITS plotting parameters see: [see fits-plotting-parameters.m
 
       
 
-####Overlay a region
+#### Overlay a region
 
 ```python 
 regFile=/your/path/yourRegion.reg
@@ -61,7 +61,7 @@ regPathInfo= fc.uploadFile(regFile)
 fc.overlayRegion(regPathInfo)
 ``` 
 
-####Show a table
+#### Show a table
  
 ```python 
 table ='/your/path/yourTable.tbl'    
@@ -69,7 +69,7 @@ tablePathInfo = fc.uploadFile(table)
 fc.showTable(tablePathInfo)
 ```
 
-####Show a XY Plot
+#### Show a XY Plot
  
 ```python 
 table ='/your/path/yourTable.tbl'    
@@ -79,17 +79,17 @@ fc.showXYPlot(fileOnServer=tablePathInfo, additionalParams={'xColExpr' : 'col1/c
 See *XY Plot Visualization* parameters in [fftools-api-overview.md](fftools-api-overview.md) for the available XY Plot parameters.
 
 
-###Run in python prompt
+### Run in python prompt
 
 1. start python session by typing `python` in the terminal
 2. enter: `execfile("yourScript.py")` at the python prompt
 
-###Run in iPyton
+### Run in iPython
 
 1. start the iPython session by typing `iPython` in the terminal
 2. type : 'run yourScript.py' at the ipython prompt
 
-###Run in iPython notebook
+### Run in iPython notebook
 
 Enter the python code below to initializes Firefly.
 Beside opening Firefly in the current cell, it also
@@ -123,7 +123,7 @@ fc.addListener(myCallback)
 IFrame(fc.getFireflyUrl(), 1100, 600)
 ```
 
-In another cell, enter the code to perform the desire tasks
+In another cell, enter the code to perform the desired tasks
 
 ```python
 
@@ -147,7 +147,7 @@ status = fc.showXYPlot(fileOnServer=file, additionalParams={'xColExpr' : 'h_m-k_
 print 'showXYPlot success: %s' % status['success']
 ```
 
-##FireflyClient's methods
+## FireflyClient's methods
 
 - *addListener(callback, name=ALL)*
    
@@ -215,7 +215,7 @@ print 'showXYPlot success: %s' % status['success']
     **extensionId** - the id of the extension
     **image** - a url of an icon to display in the toolbar instead of title
 
-###FireflyClient's Image control Methods 
+### FireflyClient's Image control Methods 
 
 - `pan(plotId, x, y)`
 
@@ -242,7 +242,7 @@ print 'showXYPlot success: %s' % status['success']
     - serializedRV: the range values parameter [see Fits Stretch help methods](#fireflyclients-fits-stretch-help-methods)
     - *return* status of call
 
-###FireflyClient's Region Methods
+### FireflyClient's Region Methods
 
 - `overylayRegion(path, title=None, regionLayerId=None, plotId=None)`
      
@@ -304,7 +304,7 @@ fc.addListener(myCallback)
 ```
 
 
-###FireflyClient's Mask Overlay Methods
+### FireflyClient's Mask Overlay Methods
 
 - `addMask(maskId,bitNumber,imageNumber,color,plotId,bitDesc=None,fileKey=None)`
      
@@ -326,7 +326,7 @@ fc.addListener(myCallback)
    
        - maskId: id of mask
 
-###FireflyClient's Fits Stretch Help Methods
+### FireflyClient's Fits Stretch Help Methods
 
 When setting the stretch through `FireflyClient.showFits()` or `FireflyClient.stretch()` you must create a serialized range values string.
 
