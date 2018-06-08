@@ -75,7 +75,7 @@ function fetchData(chartId, traceNum, tablesource) {
     const req = makeTableFunctionRequest(sreq, 'HistogramProcessor', 'histogram', {sortedColData: true, pageSize: MAX_ROW});
 
     Object.entries(options).forEach(([k,v]) => req[k] = v);
-    req['columnExpression'] = valueColName;
+    req['columnName'] = valueColName;
 
     doFetchTable(req).then(
         (tableModel) => {

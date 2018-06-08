@@ -8,11 +8,7 @@ import CompleteButton from './CompleteButton.jsx';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-import {onTableLoaded} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
-import {getDefaultXYPlotOptions, DT_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
-import {SCATTER} from '../charts/ChartUtil.js';
-import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import {isNil, get} from 'lodash';
 
 function handleFailfure() {
@@ -32,9 +28,6 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
                 switch (action) {
                     case TablesCntlr.TABLE_SEARCH  :
                         TablesCntlr.dispatchTableSearch(request);
-                        break;
-                    case ChartsCntlr.CHART_ADD  :
-                        handleChartAdd(request);
                         break;
                 }
             }
@@ -115,18 +108,3 @@ FormPanel.propTypes = {
     changeMasking: PropTypes.func,
     includeUnmounted: PropTypes.bool
 };
-
-function handleChartAdd(request) {
-    const {tbl_id} = request;
-    onTableLoaded(tbl_id).then( () => {
-        const defaultOptions = getDefaultXYPlotOptions(tbl_id);
-        if (defaultOptions) {
-            ChartsCntlr.dispatchChartAdd({
-                chartId: 'xyplot-' + tbl_id,
-                chartType: SCATTER,
-                groupId: tbl_id,
-                chartDataElements: [{tblId: tbl_id, type: DT_XYCOLS, options: defaultOptions}]
-            });
-        }
-    });
-}

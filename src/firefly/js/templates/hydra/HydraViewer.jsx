@@ -17,7 +17,6 @@ import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {syncChartViewer, addDefaultScatter} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 
 import {TriViewImageSection, launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -35,8 +34,6 @@ export class HydraViewer extends PureComponent {
         this.state = this.getNextState();
         dispatchAddSaga(hydraManager);
         dispatchAddSaga(watchCatalogs);
-        dispatchAddSaga(syncChartViewer);
-        dispatchAddSaga(addDefaultScatter);
         launchImageMetaDataSega();
     }
 

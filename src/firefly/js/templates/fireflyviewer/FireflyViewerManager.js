@@ -12,7 +12,6 @@ import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
-import {resetChartSelectOptions} from '../../ui/ChartSelectDropdown.jsx';
 
 /**
  * this manager manages what main components get display on the screen.
@@ -56,18 +55,11 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
 
-        switch (action.type) {
-            case TBL_RESULTS_ACTIVE:
-                newLayoutInfo = handleActiveTableChange(newLayoutInfo, action);
-                break;
-        }
-
         newLayoutInfo = onAnyAction(newLayoutInfo, action, views);
         // newLayoutInfo = dropDownHandler(newLayoutInfo, action);     // replaced with manager up above
 
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);
-
         }
     }
 }
@@ -117,7 +109,4 @@ function onAnyAction(layoutInfo, action, views) {
 }
 
 
-function handleActiveTableChange (layoutInfo, action) {
-    resetChartSelectOptions();
-    return layoutInfo;
-}
+
