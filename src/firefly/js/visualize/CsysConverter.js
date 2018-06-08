@@ -246,6 +246,20 @@ export class CysConverter {
 //========================================================================================
 
 
+    getFitsStandardImagePtFromInternal(pt) {
+        const imPt= this.getImageCoords(pt);
+        return makeImagePt(imPt.x+.5, imPt.y+.5);
+    }
+
+    getLsstStandardImagePtFromInternal(pt) {
+        const imPt= this.getImageCoords(pt);
+        return makeImagePt(imPt.x-.5, imPt.y-.5);
+    }
+
+    convertFitsStandardImagePtToInternalImage(pt) {
+        return makeImagePt(pt.x-.5, pt.y-.5);
+    }
+
     /**
      * Return the ImagePt coordinates given Pt
      * @param {object} pt the point to translate
