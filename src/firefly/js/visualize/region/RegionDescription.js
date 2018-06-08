@@ -11,6 +11,7 @@ import Point from '../Point.js';
 import {RegionType, regionPropsList, getRegionDefault, RegionValue, RegionValueUnit} from './Region.js';
 import {get, has, isNil, isEmpty} from 'lodash';
 import {MARKER_DATA_OBJ, markerToRegion} from '../draw/MarkerFootprintObj.js';
+import CysConverter from '../CsysConverter.js';
 
 
 const RegionPropertyName = {
@@ -153,8 +154,7 @@ export function startRegionDes(regionType, cc, ptAry,
             sys = Point.IM_PT;
             des = `image;${DS9RegionName[regionType.key]}`;
             ptAry.forEach((pt) => {
-                var imgPt = cc.getImageCoords(pt);
-
+                const imgPt = cc.getFitsStandardImagePtFromInternal(cc.getImageCoords(pt)); // screen
                 des += ` ${imgPt.x} ${imgPt.y}`;
             });
             break;
@@ -163,8 +163,10 @@ export function startRegionDes(regionType, cc, ptAry,
         case Point.IM_WS_PT:
             sys = Point.IM_PT;
             des = `image;${DS9RegionName[regionType.key]}`;
+
             ptAry.forEach((pt) => {
-                des += ` ${pt.x} ${pt.y}`;
+                const ipt = cc.getFitsStandardImagePtFromInternal(pt); // internal to fits
+                des += ` ${ipt.x} ${ipt.y}`;
             });
             break;
 

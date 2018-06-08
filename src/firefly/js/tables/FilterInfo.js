@@ -33,7 +33,7 @@ function parseInput(input, options={}) {
     cname = op ? cname.trim() : '';
     if (!isEmpty(rest)) val += rest.join(); // value contains operators.  just put it back.
     if (removeQuotes) {
-        cname = cname.replace(/^"(.+)"$/, '$1');
+        cname = cname.replace(/"([A-Za-z\d_]+)"/g, '$1');
     }
     return [cname, op, val];
 }
@@ -298,7 +298,12 @@ export class FilterInfo {
      * @returns {string}
      */
     getFilter(colName) {
-        return this.filters[colName] && this.filters[colName].toString();
+        let filter =  this.filters[colName] && this.filters[colName].toString();
+        if (!filter) {
+            const quotedColName = `"${colName}"`;
+            filter =  this.filters[quotedColName] && this.filters[quotedColName].toString();
+        }
+        return filter;
     }
 
     isEqual(colName, value) {

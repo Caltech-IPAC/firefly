@@ -94,7 +94,7 @@ const group2 = {
 const sampleSearches = [group1, group2];
 
 
-function WiseForm (searchItem) {
+function WiseForm ({searchItem}) {
     const groupKey = searchItem.name;
     return (
         <FieldGroup key={groupKey} groupKey={groupKey} validatorFunc={null} keepState={true}>
@@ -109,7 +109,7 @@ function WiseForm (searchItem) {
     );
 }
 
-function Triview(layout) {
+function Triview({layout}) {
     const {mode={}, images={}} = layout;
     const {expanded, closeable} = mode;
 
@@ -143,7 +143,7 @@ function Triview(layout) {
 }
 
 
-function TableChart (layout) {
+function TableChart ({layout}) {
     const expanded = get(layout, 'mode.expanded');
     return (
         <SplitPane split='horizontal' maxSize={-20} minSize={20} defaultSize={'60%'}>
@@ -161,7 +161,7 @@ function TableChart (layout) {
     );
 }
 
-function TableOnly (layout) {
+function TableOnly ({layout}) {
     const expanded = get(layout, 'mode.expanded');
     return (
         <TablesContainer mode='both'

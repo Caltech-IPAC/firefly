@@ -52,30 +52,38 @@ test {
   description= 'Run Java and JavaScript unit test'
   group = DEV_GROUP
 
-  dependsOn jsTest
-  // set a system property for the test JVM(s)
-  systemProperty 'some.prop', 'value'
+  dependsOn loadConfig, jsTest
+  // should rerun this everytime.  properties could be modified from external files.
+  outputs.upToDateWhen { false }
 
   workingDir = rootDir
 
   // explicitly include or exclude tests
   include 'edu/**'
 
+  if (project.hasProperty("category")) {
+    if (project.category) {
+      logger.lifecycle("Running test for category: " + project.category)
+      useJUnit {
+        includeCategories project.category
+      }
+    }
+  } else {
+    useJUnit {
+      excludeCategories 'edu.caltech.ipac.TestCategory$Perf', 'edu.caltech.ipac.TestCategory$Integration'
+    }
+  }
+
   // show standard out and standard error of the test JVM(s) on the console
   testLogging.showStandardStreams = true
 
   // set heap size for the test JVM(s)
   minHeapSize = "128m"
-  maxHeapSize = "512m"
+  maxHeapSize = "2g"
 
   // listen to events in the test execution lifecycle
   beforeTest { descriptor ->
     logger.lifecycle("Running test: " + descriptor)
-  }
-
-  // listen to standard out and standard error of the test JVM(s)
-  onOutput { descriptor, event ->
-    logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
   }
 
   doFirst {

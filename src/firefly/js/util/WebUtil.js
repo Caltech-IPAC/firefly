@@ -404,7 +404,6 @@ export function downloadViaAnchor(url, filename) {
     downloadAnchor.click();
 }
 
-
 export function parseUrl(url) {
     const parser = document.createElement('a');
     const pathAry = [];
@@ -787,4 +786,17 @@ function removeEmpties(o) {
             delete o[k]; // The object had no properties, so delete that property
         }
     }
+}
+
+export function hashCode(str) {
+    let hash = 5381;
+    let i = str.length;
+
+    while(i) {
+        hash = (hash * 33) ^ str.charCodeAt(--i);
+    }
+    /* JavaScript does bitwise operations (like XOR, above) on 32-bit signed
+     * integers. Since we want the results to be always positive, convert the
+     * signed int to an unsigned by doing an unsigned bitshift. */
+    return hash >>> 0;
 }

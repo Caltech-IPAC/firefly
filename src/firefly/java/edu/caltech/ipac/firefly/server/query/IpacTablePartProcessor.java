@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
@@ -23,7 +24,6 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.util.expr.Expression;
 import org.apache.commons.httpclient.HttpStatus;
 
 import java.io.*;
@@ -390,14 +390,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             File deciFile = validateFile((File) cache.get(key));
             if (deciFile == null) {
                 // only read in the required columns
-                Expression xColExpr = new Expression(decimateInfo.getxColumnName(), null);
-                Expression yColExpr = new Expression(decimateInfo.getyColumnName(), null);
-                List<String> requestedCols = new ArrayList<>();
-                if (xColExpr.isValid() && yColExpr.isValid()) {
-                    requestedCols.addAll(xColExpr.getParsedVariables());
-                    requestedCols.addAll(yColExpr.getParsedVariables());
-                }
-                DataGroup dg = DataGroupReader.read(resultsFile, requestedCols.toArray(new String[requestedCols.size()]));
+                String xColExpr = decimateInfo.getxColumnName();
+                String yColExpr = decimateInfo.getyColumnName();
+                String [] requestedCols = new String[]{xColExpr, yColExpr};
+
+                DataGroup dg = DataGroupReader.read(resultsFile, requestedCols);
 
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);

@@ -6,7 +6,7 @@ The main Firefly components are:
 
  - [FITS Visualizer](#fits-visualization)
  - [Table](#table-visualization)
- - [Charts](#xy-plot-and-histogram-visualization)
+ - [Charts](#charts)
    
 These components can be setup to share the same data model.  Therefore you can do the following combinations:
  
@@ -539,64 +539,136 @@ The Table tools currently supports the following file formats:
  - TSV - first row should be column header
  - FITS Tables
 
+### Charts
 
-
-### XY Plot and Histogram Visualization
-
-- `firefly.showXYPlot(targetDiv, parameters)`
-- `firefly.showHistogram(targetDiv, parameters)`
+- `firefly.showChart(targetDiv, parameters)`
 
 | Parameter  | Type | Description |
 | ---------- | ---- | ----------- |
 | targetDiv | string | target div to put the XY Plot in |
-| parameters  | object | XY plot parameters |
+| parameters  | object | chart parameters |
 
 
-XYPlot parameters object literal can contain the following values.
-
-| Parameter | Description |
-| ------------ | ------------- |
-| source | location of the ipac table: url or file path.|
-| xCol | column or expression to use for x values, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
-| yCol | column or expression to use for y values, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
-| xyRatio | optional; aspect ratio between 1 and 10, if not defined the chart will fill all available space |
-| stretch | 'fit' to fit plot into available space or 'fill' to fill the available width; applied when xyPlotRatio is defined |
-| xLabel | label to use with x axis |
-| yLabel | label to use with y axis |
-| xUnit | unit for x axis |
-| yUnit | unit for y axis |
-| xOptions | comma separated list of x axis options: grid,flip,log |
-| yOptions | comma separated list of y axis options: grid,flip,log |
-
-
-Histogram parameters object literal can contain the following values.
+Chart parameters object literal can contain the following attributes.
 
 | Parameter | Description |
 | ------------ | ------------- |
-| source | location of the ipac table: url or file path.|
-| col | column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
-| xyRatio | optional; aspect ratio between 1 and 10, if not defined the chart will fill all available space |
-| numBins | number of bins for fixed bins algorithm (default) |
-| falsePositiveRate | false positive rate for bayesian blocks algorithm |
-| xOptions | comma separated list of x axis options: flip,log |
-| yOptions | comma separated list of y axis options: flip,log |
+| data | An array of Plotly trace objects, see [plotly.js reference](https://plot.ly/javascript/reference) |
+| layout | Optional. Plotly layout object, see [plotly.js layout reference](https://plot.ly/javascript/reference/#layout) |
+| chartId | Optional. A unique identifier of the chart |
+| groupId | Optional. Chart group for grouping charts together |
+| deletable | Optional. If not set, single chart in a group is not deletable, multiple are deletable |
+| tbl_group | When set, all other chart parameters are ignored. <br>Show the default chart for an active table in the specified table group. |
 
-*Example:*
+
+Firefly is using [plotly.js](https://plot.ly/javascript/) library to display charts. Plotly charts are described declaratively as JSON objects. Every aspect of a plotly chart (the colors, the grids, the data, and so on) has a corresponding JSON attribute. [plotly.js reference](https://plot.ly/javascript/reference/) contains an extensive list of these attributes.
+
+All chart attributes fall into two categories: traces (objects that describe a single series of data in a graph) and layout (attributes that apply to the rest of the chart, like the title, xaxis, or annotations). Traces are categorized by chart type (e.g. scatter, heatmap). 
+
+To use a table as a source of chart data, trace object needs to contain `tbl_id` attribute and references to the table columns in the form of `tables::<columnNameOrExpression>`. Firefly will substitute table column references with the arrays of column data. The length of each array will match the number of rows in the table. 
+
+*Example of a scatter chart connected to a table:*
 ```js
-chartParams = {
-    source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-    xCol: 'ra1',
-    yCol: 'dec1'
-};
-firefly.showXYPlot('chart_div', chartParams);
+firefly.showChart('chart-div', 
+    {data: [{tbl_id: 'myTblId', x: 'tables::col1', y: 'tables::col2', mode: 'markers'}]});
 ```
 
-XY Plot and Histogram support the same table formats as Table:
+*Example with tbl_group:*
+```js
+var tblReq1 =  firefly.util.table.makeIrsaCatalogRequest('allwise-500', 'WISE', 'allwise_p3as_psd',
+    {   position: '10.68479;41.26906;EQ_J2000',
+        SearchMethod: 'Cone',
+        radius: 300
+    },
+    {   tbl_id: 'tbl1',
+        META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w1mpro', y: 'tables::w2mpro', mode: 'markers'}]})}
+    });
+var tblReq2 =  firefly.util.table.makeIrsaCatalogRequest('allwise-10', 'WISE', 'allwise_p3as_psd',
+    {   position: '202.48;47.23;EQ_J2000',
+        SearchMethod: 'Cone',
+        radius: 30
+    },
+    {   tbl_id: 'tbl2',
+        META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w1mpro', y: 'tables::w2mpro', mode: 'markers'}]})}
+    });
+    firefly.showTable('table-div', tblReq1, {tbl_group: 'allwise'});
+    firefly.showTable('table-div', tblReq2, {tbl_group: 'allwise'});
+    firefly.showChart('chart-div', {tbl_group: 'allwise'});
+```
+
+Charts support the same table formats as Table:
 
  - IPAC Table file format
  - CSV - first row should be column headers
  - TSV - first row should be column headers
  - FITS Tables
+
+### Firefly Charts Extensions
+
+Firefly has extended Plotly library by adding `fireflyHistogram` and `fireflyHeatmap` trace types.
+
+Both `fireflyHistogram` and `fireflyHeatmap` aggregate data on the server, which is particularly beneficial for large tables.
+
+*Example of a heatmap:*
+```js
+var heatmapData = [
+    {
+        type: 'fireflyHeatmap',
+        tbl_id: 'myLargeTbl',
+        x: 'tables::w1mpro',
+        y: 'tables::w2mpro',
+        name: 'w1-w2',
+        colorscale: 'Blues',
+        firefly: { nbins: {x: 100, y: 100} }
+}];
+firefly.showChart('heatmap-div', {data: heatmapData});
+```
+
+*Example of two histogram traces:*
+```js
+var fireflyHistogramData = [
+{
+    type: 'fireflyHistogram',
+    firefly: {
+        tbl_id: 'mytbl',
+        options: {
+            numBins: 30,
+            algorithm: 'fixedSizeBins',
+            fixedBinSizeSelection: 'numBins',
+            columnOrExpr: 'col-0.02'
+        }
+    },
+    name: 'col-0.02',
+    marker: {color: 'rgba(153, 51, 153, 0.8)'}
+},
+{
+    type: 'fireflyHistogram',
+    firefly: {
+        tbl_id: 'mytbl',
+        options: {
+            numBins: 40,
+            algorithm: 'fixedSizeBins',
+            fixedBinSizeSelection: 'numBins',
+            columnOrExpr: 'col+0.02' // same column shifted
+        }
+    },
+    name: 'col+0.02',
+    marker: {color: 'rgba(102,153,0, 0.7)'}}
+];
+firefly.showChart('histogram-div', {data: fireflyHistogramData});
+```
+ 
+Histogram options object literal can contain the following attributes.
+
+| Parameter | Description |
+| ------------ | ------------- |
+| columnOrExpr | column or expression to use for histogram, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
+| algorithm | `fixedSizeBins` or `bayesianBlocks` |
+| fixedBinSizeSelection | option for `fixedSizeBins` algorithm: `numBins` or `binWidth` |
+| numBins | number of bins for fixed bins algorithm, `numBins` option |
+| binWidth | binWidth for fixed bins algorithm, `binWidth` option |
+| falsePositiveRate | false positive rate for bayesian blocks algorithm |
+
 
 
 ### Connecting Coverage image to table
@@ -649,24 +721,9 @@ firefly.showCoverage('coverage_div', {gridOn:true})
 
 ### Connecting Charts to table
 
-`firefly.showXYPlot(targetDiv, parameters)` - add an XY Plot to a div
-`firefly.showHistogram(targetDiv, parameters)` - add a Histogram to a div
+`firefly.showChart(targetDiv, parameters)` - add a chart to a div
 
-Multiple charts can be connected to the same table.
-
-| parameters | type        |
-| ---------- | ----------- |
-|targetDiv   | string, the div to put the XY plot into |
-|parameters  | object literal |
-
-The most important parameters, relevant to all charts, connected to a table are:
-
- - **`tbl_id`**:   Table ID, the string that connects this XY Plot to the table data.
- - **`tbl_group`**: Table group, when specified instead of `tbl_id`, the plot will reflect the data in the active table of the group.                    
-                      
-If both `tbl_id` and `tbl_group` are missing, the XY viewer will be connected to the active table in the main group.
-
-Please, see `firefly.showXYPlot` and `firefly.showHistogram` for the list of other parameters.
+Please, see `firefly.showChart` for usage.
 
 *Example:*
 ```js
@@ -676,9 +733,8 @@ tblReq = firefly.util.table.makeIrsaCatalogRequest('wise catalog', 'WISE', 'allw
         SearchMethod: 'Cone',
         radius: 300
     });
-firefly.showXYPlot('xyplot_div', {tbl_id: tblReq.tbl_id, xCol: 'w1mpro+w4mpro', yCol: 'w2mpro'});
-firefly.showHistogram('histogram1_div', {tbl_id: tblReq.tbl_id, col: 'w1mpro+w4mpro'});
-firefly.showHistogram('histogram2_div', {tbl_id: tblReq.tbl_id, col: 'w2mpro'});
+firefly.showChart('scatter_div', 
+    {data: [{tbl_id: tblReq.tbl_id, x: 'tables::w1mpro+w4mpro', y: 'tables::w2mpro', mode: 'markers'}]});
 ```
 
 

@@ -37,11 +37,22 @@ public class VoTableUtil {
             Pattern.compile( "POS_EQ_DEC.*|pos\\.eq\\.dec.*",
                     Pattern.CASE_INSENSITIVE );
 
-    public static DataGroup[] voToDataGroups(String voTableFile) {
-        return voToDataGroups(voTableFile,false);
+    /**
+     * returns an array of DataGroup from a vo table.
+     * @param location  location of the vo table data source using automatic format detection.  Can be file or url.
+     * @return
+     */
+    public static DataGroup[] voToDataGroups(String location) {
+        return voToDataGroups(location,false);
     }
 
-    public static DataGroup[] voToDataGroups(String voTableFile, boolean headerOnly) {
+    /**
+     * returns an array of DataGroup from a vo table.
+     * @param location  location of the vo table data source using automatic format detection.  Can be file or url.
+     * @param headerOnly  if true, returns only the headers, not the data.
+     * @return
+     */
+    public static DataGroup[] voToDataGroups(String location, boolean headerOnly) {
         VOTableBuilder votBuilder = new VOTableBuilder();
         List<DataGroup> groups = new ArrayList<DataGroup>();
         try {
@@ -49,7 +60,7 @@ public class VoTableUtil {
             //StoragePolicy policy = StoragePolicy.getDefaultPolicy();
             //TableSequence tseq = votBuilder.makeStarTables( datsrc, policy );
             StarTableFactory stFactory = new StarTableFactory();
-            TableSequence tseq = stFactory.makeStarTables(voTableFile, null);
+            TableSequence tseq = stFactory.makeStarTables(location, null);
 
             for ( StarTable table; ( table = tseq.nextTable() ) != null; ) {
                 DataGroup dg = convertToDataGroup(table, headerOnly);

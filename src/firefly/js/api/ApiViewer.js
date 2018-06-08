@@ -17,7 +17,7 @@ import {getRootURL}  from '../util/BrowserUtil.js';
 import {dispatchRemoteAction}  from '../core/JsonUtils.js';
 import {dispatchPlotImage, dispatchPlotHiPS}  from '../visualize/ImagePlotCntlr.js';
 import {RequestType}  from '../visualize/RequestType.js';
-import {clone, logError}  from '../util/WebUtil.js';
+import {clone, logError, hashCode}  from '../util/WebUtil.js';
 import {confirmPlotRequest,findInvalidWPRKeys}  from '../visualize/WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableFetch}  from '../tables/TablesCntlr.js';
 import {dispatchChartAdd} from '../charts/ChartsCntlr.js';
@@ -74,49 +74,99 @@ export function setViewerConfig(viewerType, htmlFile= '') {
 }
 
 /**
- *
+ * wrapper function to return the API's remote Viewer object.  This allow one firefly app to
+ * gain access to another app's API.
+ * To use this function, it should be loaded first.  @see loadRemoteApi
+ * It cannot be implemented as async because the common use case for getViewer is to launch a new Tab/Window.
+ * This will be blocked by browser's popup blocker if it's done asynchronously.
+ * @param {String} [channel]  the channel id string, default to current connected channel.
+ * @param {String} [file]     url path, or the html file to load.  Defaults to blank(index of the app).
+ * @param {String} [scriptUrl]  url of the script to load.  When scriptUrl is not given, return the Viewer of the loaded app.
+ * @returns {Object} the API's Viewer interface @link{firefly.ApiViewer}
  * @public
- * @param {string} [channel] the channel id string, if not specified then one will be generated
- * @param file the html of the viewer to launch. In time there will be several
- * @return {object} viewer interface {@link firefly.ApiViewer}
  * @memberof firefly
- *
  */
-export function getViewer(channel,file=defaultViewerFile) {
-    channel = (channel || getWsChannel()) + VIEWER_ID;
-    const dispatch= (action) => dispatchRemoteAction(channel,action);
+export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
+    if (scriptUrl) {
+        // requesting for a viewer that's different from the currently loadded app.
+        const getViewer = get(loadRemoteApi(scriptUrl), 'getViewer');
+        return getViewer && getViewer(channel, file);
+    } else {
+        // returnn currently loaded app's Viewer
+        channel = (channel || getWsChannel()) + VIEWER_ID;
+        const dispatch= (action) => dispatchRemoteAction(channel,action);
 
 
-    const reinitViewer= () => dispatch({ type: REINIT_APP, payload: {}});
+        const reinitViewer= () => dispatch({ type: REINIT_APP, payload: {}});
 
-    /**
-     * The interface to remotely communicate to the firefly viewer.
-     * @public
-     * @namespace firefly.ApiViewer
-     */
-    const viewer= Object.assign({dispatch, reinitViewer, channel},
-        buildImagePart(channel,file,dispatch),
-        buildTablePart(channel,file,dispatch),
-        buildChartPart(channel,file,dispatch)
-    );
+        /**
+         * The interface to remotely communicate to the firefly viewer.
+         * @public
+         * @namespace firefly.ApiViewer
+         */
+        const viewer= Object.assign({dispatch, reinitViewer, channel},
+            buildImagePart(channel,file,dispatch),
+            buildTablePart(channel,file,dispatch),
+            buildChartPart(channel,file,dispatch)
+        );
 
 
-    // add anything else
-    switch (defaultViewerType) {
-        case ViewerType.TriView:
-            return viewer;
-            break;
-        case ViewerType.Grid:
-            return Object.assign({}, viewer, buildSlateControl(channel,file,dispatch));
-            break;
-        default:
-            debug('Unknown viewer type: ${defaultViewerType}, returning TriView');
-            return viewer;
-            break;
+        // add anything else
+        switch (defaultViewerType) {
+            case ViewerType.TriView:
+                return viewer;
+                break;
+            case ViewerType.Grid:
+                return Object.assign({}, viewer, buildSlateControl(channel,file,dispatch));
+                break;
+            default:
+                debug('Unknown viewer type: ${defaultViewerType}, returning TriView');
+                return viewer;
+                break;
 
+        }
     }
 }
 
+/**
+ * wrapper function to return the API's remote Viewer object.  This allow one firefly app to
+ * gain access to another app's API.
+ * To use this function, it should be loaded first.  @see loadRemoteApi
+ * It cannot be implemented as async because the common use case for getViewer is to launch a new Tab/Window.
+ * This will be blocked by browser's popup blocker if it's done asynchronously.
+ * @param {object} p            parameter
+ * @param {String} [p.channel]  default to current connected channel.
+ * @param {String} [p.file]     url path, or the html file to load.  Defaults to blank(index of the app).
+ * @param {String} [p.scriptUrl]  url of the script to load.  When scriptUrl is not given, return the Viewer of the loaded app.
+ * @returns {Object} the API's getViewer object
+ */
+function getRemoteViewer({channel, file, scriptUrl}) {
+    if (!scriptUrl) return getViewer(channel, file);
+
+    const getViewer = get(loadRemoteApi(scriptUrl), 'getViewer');
+    return getViewer && getViewer(channel, file);
+}
+
+export function loadRemoteApi(scriptUrl) {
+    const frameId = 'id_' + hashCode(scriptUrl);
+    let apiFrame = document.getElementById(frameId);
+    console.log('apiFrame:' + apiFrame);
+    if (!apiFrame) {
+        apiFrame = document.createElement('iframe');
+        apiFrame.id = frameId;
+        apiFrame.style.display = 'none';
+        apiFrame.style.width = '0px';
+        apiFrame.style.height = '0px';
+        document.body.appendChild(apiFrame);
+        // apiFrame.onload = () => {}   this event is not fired in Safari when src is blank.  it's treated as synchronous.
+            const myscript = apiFrame.contentDocument.createElement('script');
+            myscript.type = 'text/javascript';
+            myscript.src = scriptUrl;
+            const headEl = apiFrame.contentDocument.getElementsByTagName('head')[0];
+            headEl.appendChild(myscript);
+    }
+    return get(apiFrame, 'contentWindow.firefly');
+}
 
 function buildSlateControl(channel,file,dispatcher) {
 

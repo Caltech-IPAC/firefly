@@ -235,15 +235,15 @@ TablePanel.propTypes = {
     tbl_id: PropTypes.string,
     tbl_ui_id: PropTypes.string,
     tableModel: PropTypes.object,
-    pageSize: PropTypes.number,
-    rowHeight: PropTypes.number,
-    selectable: PropTypes.bool,
-    expandedMode: PropTypes.bool,
-    expandable: PropTypes.bool,
-    border: PropTypes.bool,
     title: PropTypes.string,
+    rowHeight: PropTypes.number,
     help_id: PropTypes.string,
+    expandedMode: PropTypes.bool,
+    pageSize: PropTypes.number,
+    selectable: PropTypes.bool,
+    expandable: PropTypes.bool,
     removable: PropTypes.bool,
+    border: PropTypes.bool,
     showUnits: PropTypes.bool,
     showFilters: PropTypes.bool,
     showToolbar: PropTypes.bool,
@@ -252,6 +252,8 @@ TablePanel.propTypes = {
     showSave: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
+    leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
+    rightButtons: PropTypes.arrayOf(PropTypes.func),  // an array of functions that returns a button-like component laid out on the right side of this table header.
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,

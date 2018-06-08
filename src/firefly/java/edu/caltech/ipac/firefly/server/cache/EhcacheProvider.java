@@ -3,13 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.cache;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.util.cache.FileHolder;
 import edu.caltech.ipac.util.download.URLDownload;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
@@ -222,10 +222,8 @@ public class EhcacheProvider implements Cache.Provider {
             Object o = super.get(key);
 
             if (o==null) return null;
-            else if (o instanceof File)         o= exist(key,(File)o);
-            else if (o instanceof FileHolder)   o= exist(key,(FileHolder)o);
-            else if (o instanceof File[])       o= exist(key,(File[])o);
-            else if (o instanceof FileHolder[]) o= exist(key,(FileHolder[])o);
+            else if (o instanceof File)     o= exist(key,(File)o);
+            else if (o instanceof FileInfo) o= exist(key,(FileInfo)o);
             else  o= null;
 
             return o;
@@ -239,36 +237,13 @@ public class EhcacheProvider implements Cache.Provider {
             return f;
         }
 
-        private Object exist(CacheKey key, FileHolder f) {
+        private Object exist(CacheKey key, FileInfo f) {
             Object retval= f;
             if (exist(key,f.getFile())==null) {
                 retval= null;
             }
             return retval;
         }
-
-        private Object exist(CacheKey key, File fAry[]) {
-            Object retval= fAry;
-            for(File f : fAry) {
-                if (exist(key,f)==null) {
-                    retval= null;
-                    break;
-                }
-            }
-            return retval;
-        }
-
-        private Object exist(CacheKey key, FileHolder fhAry[]) {
-            Object retval= fhAry;
-            for(FileHolder fh : fhAry) {
-                if (exist(key,fh.getFile())==null) {
-                    retval= null;
-                    break;
-                }
-            }
-            return retval;
-        }
-
 
     }
 
@@ -318,12 +293,8 @@ public class EhcacheProvider implements Cache.Provider {
                 Object val= el.getValue();
                 if (val instanceof File) {
                     deleteFile((File)val);
-                } else if (val instanceof FileHolder) {
-                    deleteFile(((FileHolder)val).getFile());
-                } else if (val instanceof FileHolder[]) {
-                    for(FileHolder fh : (FileHolder[])val) deleteFile(fh.getFile());
-                } else if (val instanceof File[]) {
-                    for(File f : (File[])val) deleteFile(f);
+                } else if (val instanceof FileInfo) {
+                    deleteFile(((FileInfo)val).getFile());
                 }
             }
         }

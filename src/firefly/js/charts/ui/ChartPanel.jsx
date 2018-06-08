@@ -4,9 +4,10 @@ import PropTypes from 'prop-types';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {flux} from '../../Firefly.js';
 import {get, isEmpty, isUndefined} from 'lodash';
-import {reduxFlux} from '../../core/ReduxFlux.js';
 import {singleTraceUI} from '../ChartUtil.js';
-import {dispatchChartUpdate, dispatchChartMounted, dispatchChartRemove, dispatchChartUnmounted, getChartData, getErrors} from '../ChartsCntlr.js';
+import {PlotlyChartArea} from './PlotlyChartArea.jsx';
+import {PlotlyToolbar} from './PlotlyToolbar.jsx';
+import {dispatchChartMounted, dispatchChartRemove, dispatchChartUnmounted, getChartData, getErrors} from '../ChartsCntlr.js';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
 
@@ -14,22 +15,8 @@ class ChartPanelView extends PureComponent {
 
     constructor(props) {
         super(props);
-        //this.state = {};
-        this.toggleOptions = this.toggleOptions.bind(this);
     }
 
-    toggleOptions(key) {
-        const {chartId, showOptions, optionsKey} = this.props;
-        if (key === optionsKey) {
-            const newShowOptions = !showOptions;
-            const newKey = newShowOptions ? key : undefined;
-            dispatchChartUpdate({chartId, changes: {showOptions: newShowOptions, optionsKey: newKey}});
-        } else if (key) {
-            dispatchChartUpdate({chartId, changes: {showOptions: true, optionsKey: key}});
-        } else {
-            dispatchChartUpdate({chartId, changes: {showOptions: false, optionsKey: key}});
-        }
-    }
 
     componentDidMount() {
         const {chartId, showChart} = this.props;
@@ -58,12 +45,11 @@ class ChartPanelView extends PureComponent {
     }
 
     render() {
-        const {chartId, deletable:deletableProp, expandable, expandedMode, Options, Toolbar, showToolbar, showChart, showOptions, optionsKey} = this.props;
-        const chartData =  getChartData(chartId);
+        const {chartId, chartData, deletable:deletableProp, expandable, expandedMode, Toolbar, showToolbar, showChart} = this.props;
         const deletable = isUndefined(get(chartData, 'deletable')) ? deletableProp : get(chartData, 'deletable');
         const showMultiTrace = !singleTraceUI();
 
-        if (isEmpty(chartData) || isUndefined(Toolbar) || isUndefined(Options)) {
+        if (isEmpty(chartData) || isUndefined(Toolbar)) {
             return (
                 <div/>
             );
@@ -72,29 +58,17 @@ class ChartPanelView extends PureComponent {
         // var {widthPx, heightPx} = this.state;
         const errors  = getErrors(chartId);
 
-        //console.log(`${chartId}: ${showChart}, ${showToolbar}, ${showOptions}`);
-
         if (showChart) {
-            // chart with toolbar and options
+            // chart with toolbar
             if (showToolbar) {
                 return (
                     <div className='ChartPanel__container'>
                         <div className='ChartPanel__wrapper'>
-                            <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
+                            <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace}}/>
                             <div className='ChartPanel__chartarea--withToolbar'>
-                                {showOptions &&
-                                <div className='ChartPanelOptions'>
-                                    <div style={{height: 14}}>
-                                        <div style={{ right: -6, float: 'right'}}
-                                             className='btn-close'
-                                             title='Remove Panel'
-                                             onClick={() => this.toggleOptions()}/>
-                                    </div>
-                                    <Options {...{chartId, optionsKey}}/>
-                                </div>}
                                 <ResizableChartArea
                                     {...Object.assign({}, this.props, {errors})} />
-                                { !showOptions && deletable &&
+                                { deletable &&
                                 <img style={{display: 'inline-block', position: 'absolute', top: 29, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                      title='Delete this chart'
                                      src={DELETE}
@@ -122,26 +96,10 @@ class ChartPanelView extends PureComponent {
                 );
             }
         } else {
-            // toolbar and options
+            // toolbar only
             return (
                 <div className='ChartPanel__chartarea'>
-                    <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace, toggleOptions: this.toggleOptions}}/>
-                    <div className='ChartPanel__chartarea--withToolbar'>
-                        {showOptions &&
-                        <div className='ChartPanelOptions'
-                             onClick={stopPropagation}
-                             onTouchStart={stopPropagation}
-                             onMouseDown={stopPropagation}>
-                            <div style={{height: 14}}>
-                                <div style={{ right: -6, float: 'right'}}
-                                     className='btn-close'
-                                     title='Remove Panel'
-                                     onClick={() => this.toggleOptions()}/>
-                            </div>
-                            <Options {...{chartId, optionsKey}}/>
-                        </div>
-                        }
-                    </div>
+                    <Toolbar {...{chartId, expandable, expandedMode, showMultiTrace}}/>
                 </div>
             );
         }
@@ -154,18 +112,17 @@ ChartPanelView.propTypes = {
     deletable: PropTypes.bool,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
-    showOptions: PropTypes.bool,
-    optionsKey: PropTypes.string,
     showToolbar: PropTypes.bool,
     showChart: PropTypes.bool,
     Chart: PropTypes.func,
-    Options: PropTypes.func,
     Toolbar: PropTypes.func
 };
 
 ChartPanelView.defaultProps = {
     showToolbar: true,
-    showChart: true
+    showChart: true,
+    Chart: PlotlyChartArea,
+    Toolbar: PlotlyToolbar
 };
 
 
@@ -237,16 +194,9 @@ export class ChartPanel extends PureComponent {
         const {chartId} = this.props;
         const chartData =  getChartData(chartId);
         if (!isEmpty(chartData)) {
-            const errors = getErrors(chartId);
-            const {chartType, activeTrace, showOptions, optionsKey} = chartData;
-            //if (chartType === 'plot.ly') return {};
-            const {Chart,Options,Toolbar,getChartProperties=()=>{},updateOnStoreChange} = reduxFlux.getChartType(chartType) || {};
+
             return {
-                chartData, activeTrace, showOptions, optionsKey, errors, ...getChartProperties(chartId),
-                Chart,
-                Options,
-                Toolbar,
-                updateOnStoreChange
+                chartData
             };
         } else {
             return {};
@@ -255,18 +205,9 @@ export class ChartPanel extends PureComponent {
 
     storeUpdate() {
         if (this.iAmMounted) {
-            const {updateOnStoreChange} = this.state;
-            if (!updateOnStoreChange) {
-                if (getChartData(this.props.chartId) !== this.state.chartData) {
-                    this.setState(this.getNextState());
-                }
-            } else if (updateOnStoreChange(this.state)) {
-                    this.setState(this.getNextState());
-            }  else {
-                const {showOptions, optionsKey} = getChartData(this.props.chartId);
-                if (showOptions !== this.state.showOptions || optionsKey !== this.state.optionsKey) {
-                    this.setState({showOptions, optionsKey});
-                }
+
+            if (getChartData(this.props.chartId) !== this.state.chartData) {
+                this.setState(this.getNextState());
             }
         }
     }

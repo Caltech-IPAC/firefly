@@ -72,7 +72,7 @@ public class LSSTImgServTest extends ConfigTest {
 
    	private static boolean imgservAvailable() {
         try {
-      			URL urlServer = new URL("http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/image/v1");
+      			URL urlServer = new URL("http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/api/image/v1");
       			HttpURLConnection urlConn = (HttpURLConnection) urlServer.openConnection();
       			urlConn.setConnectTimeout(3000); // 3 seconds timeout
       			urlConn.connect();

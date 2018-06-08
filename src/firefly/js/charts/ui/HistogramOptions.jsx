@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 
 import {get, isEmpty} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
-import {DATATYPE_HISTOGRAM} from '../dataTypes/HistogramCDT.js';
-import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup,} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils,{revalidateFields} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -28,15 +26,6 @@ export const histogramParamsShape = PropTypes.shape({
          maxCutoff :PropTypes.oneOfType([PropTypes.string,PropTypes.number])
       });
 
-
-export function resultsSuccess(callback, flds, tblId) {
-    const options = Object.assign({}, flds, {tblId, type: DATATYPE_HISTOGRAM.id});
-    callback(options);
-}
-
-export function resultsFail() {
-    // TODO: do I need to do anything here?
-}
 
 export function setOptions(groupKey, histogramParams) {
     const flds = [
@@ -227,7 +216,6 @@ export class HistogramOptions extends Component {
             dispatchValueChange(payload);
             if (histogramParams) {
                 setOptions(groupKey, histogramParams);
-                //defer(setOptions, groupKey, histogramParams);
             }
         }
 
@@ -301,7 +289,7 @@ export class HistogramOptions extends Component {
     }
 
     render() {
-        const { colValStats, groupKey, histogramParams, defaultParams, onOptionsSelected, basicFieldsReducer, basicFields} = this.props;
+        const { colValStats, groupKey, histogramParams, basicFieldsReducer, basicFields} = this.props;
         const {fixedAlgorithm=false} = this.state;
         const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression:',labelWidth:120,name: 'X',tooltip:'X Axis',nullAllowed:false};
 
@@ -311,23 +299,9 @@ export class HistogramOptions extends Component {
         // to avoid width change due to scroll bar appearing when full height suggest box is rendered
         return (
             <div style={{padding:'0 5px'}}>
-                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={!Boolean(basicFieldsReducer)}
+                <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false}
                             reducerFunc={columnNameReducer(colValStats,basicFieldsReducer)}>
 
-                    {onOptionsSelected &&
-                    <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}}>
-                        <CompleteButton style={{flexGrow: 0}}
-                                        groupKey={groupKey}
-                                        onSuccess={(flds) => resultsSuccess(onOptionsSelected, flds)}
-                                        onFail={resultsFail}
-                                        text = 'Apply'
-                        />
-                        <div style={{flexGrow: 1}}/>
-                        <div style={{flexGrow: 0}}>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, {})}>Clear</button>
-                            <button type='button' className='button std' onClick={() => setOptions(groupKey, defaultParams)}>Reset</button>
-                        </div>
-                    </div>}
                     <ColumnOrExpression {...xProps}/>
 
                     {!basicFields && <FieldGroupCollapsible  header='Options'
@@ -437,9 +411,7 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
 HistogramOptions.propTypes = {
     groupKey: PropTypes.string.isRequired,
     colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-    onOptionsSelected: PropTypes.func,
     histogramParams: histogramParamsShape,
-    defaultParams: histogramParamsShape,
     fixedAlgorithm: PropTypes.bool,
     basicFieldsReducer: PropTypes.func,
     basicFields: PropTypes.element

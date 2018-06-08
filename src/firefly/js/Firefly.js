@@ -114,13 +114,11 @@ const defFireflyOptions = {
     charts: {
         defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable
         maxRowsForScatter: 5000, // maximum table rows for scatter chart support
-        multitrace: true,  // deprecated - by default we use multi-trace architecture
         singleTraceUI: false, // by default we support multi-trace in UI
         upperLimitUI: false, // by default user can not set upper limit column in scatter options
         ui: {HistogramOptions: {fixedAlgorithm: undefined}} // by default we allow both "uniform binning" and "bayesian blocks"
     },
     hips : {
-        useForCoverage: true,
         useForImageSearch: true,
         hipsSources: 'all',
         defHipsSources: {source: 'irsa', label: 'Featured'},

@@ -156,7 +156,7 @@ export function removeTablesFromGroup(tbl_group_id = 'main') {
  */
 export function getTblIdsByGroup(tbl_group_id = 'main') {
     const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
-    return Object.keys(get(tableGroup, 'tables', {}));
+    return Object.keys(get(tableGroup, 'tables', []));
 }
 
 /**
@@ -730,7 +730,7 @@ export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
     const colWidths = calcColumnWidths(columns, dataAry);
     const meta = tableMeta && Object.entries(tableMeta).map(([k,v]) => `\\${k} = ${v}`).join('\n');
     const head = [
-                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.name, colWidths[idx])),
+                    columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.label || c.name, colWidths[idx])),
                     columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.type, colWidths[idx])),
                     showUnits && columns.map((c, idx) => get(c,'visibility', 'show') === 'show' && padEnd(c.units, colWidths[idx]))
                 ]
@@ -755,20 +755,31 @@ export function tableTextView(columns, dataAry, showUnits=false, tableMeta) {
  * the header and the data in a table given columns and dataAry.
  * @param {TableColumn[]} columns  array of column object
  * @param {TableData} dataAry  array of array.
- * @returns {Object.<string,number>} a map of cname -> width
+ * @returns {number[]} an array of widths corresponding to the given columns array.
  * @memberof firefly.util.table
  * @func calcColumnWidths
  */
 export function calcColumnWidths(columns, dataAry) {
-    return columns.reduce( (pv, cv, idx) => {
+    return columns.map( (cv, idx) => {
         const cname = cv.label || cv.name;
         var width = Math.max(cname.length, get(cv, 'units.length', 0),  get(cv, 'type.length', 0));
         width = dataAry.reduce( (maxWidth, row) => {
             return Math.max(maxWidth, get(row, [idx, 'length'], 0));
         }, width);  // max width of data
-        pv[idx] = width;
-        return pv;
-    }, {ROW_IDX: 8});
+        return width;
+    });
+}
+
+/**
+ * There are some inconsistencies in how a request is created.
+ * This fixes any of the inconsistencies it finds.
+ * @param request
+ */
+export function fixRequest(request) {
+    // ensure tbl_id exists and it's set correctly.
+    const tbl_id = request.tbl_id || get(request, 'META_INFO.tbl_id', uniqueTblId());
+    request.tbl_id = tbl_id;
+    set(request, 'META_INFO.tbl_id', tbl_id);
 }
 
 /**
