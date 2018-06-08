@@ -156,7 +156,7 @@ export function removeTablesFromGroup(tbl_group_id = 'main') {
  */
 export function getTblIdsByGroup(tbl_group_id = 'main') {
     const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
-    return Object.keys(get(tableGroup, 'tables', {}));
+    return Object.keys(get(tableGroup, 'tables', []));
 }
 
 /**

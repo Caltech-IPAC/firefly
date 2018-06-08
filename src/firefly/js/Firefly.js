@@ -120,7 +120,6 @@ const defFireflyOptions = {
         ui: {HistogramOptions: {fixedAlgorithm: undefined}} // by default we allow both "uniform binning" and "bayesian blocks"
     },
     hips : {
-        useForCoverage: true,
         useForImageSearch: true,
         hipsSources: 'all',
         defHipsSources: {source: 'irsa', label: 'Featured'},
