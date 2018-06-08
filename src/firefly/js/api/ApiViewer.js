@@ -245,7 +245,7 @@ function buildImagePart(channel,file,dispatch) {
 
     /**
      * @summary show a image in the firefly viewer in another tab
-     * @param request Web plot request
+     * @param {WebPlotParams|WebPlotRequest} request The object contains parameters for web plot request
      * @param {String} viewerId
      * @memberof firefly.ApiViewer
      * @public
@@ -262,6 +262,13 @@ function buildImagePart(channel,file,dispatch) {
         });
     };
 
+    /**
+     * @summary show a HiPS in the firefly viewer in another tab
+     * @param {WebPlotParams|WebPlotRequest} request The object contains parameters for web plot request on HiPS type
+     * @param {String} viewerId
+     * @memberof firefly.ApiViewer
+     * @public
+     */
     const showHiPS= (request, viewerId) => {
         doViewerOperation(channel,file, () => {
             request= clone(request,defP);
@@ -270,7 +277,7 @@ function buildImagePart(channel,file,dispatch) {
     };
 
     /**
-     * @summary show a image in the firefly viewer in another tab, the the file first then the url
+     * @summary show a image in the firefly viewer in another tab, the file first then the url
      * @param file a file on the server
      * @param url a url to a fits file
      * @memberof firefly.ApiViewer

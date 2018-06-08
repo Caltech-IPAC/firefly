@@ -525,11 +525,10 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
 
 /**
  * @summary Plot an image.
- * Note this dispatch function only takes an object with the parameters
- * Note - function parameter is a single object
+ * @description Note - function parameter is a single object
  * @param {Object}  p
  * @param {string} [p.plotId] is required unless defined in the WebPlotRequest
- * @param {Object|WebPlotRequest|Array} p.wpRequest -  plotting parameters, required or for 3 color pass an array of WebPlotRequest
+ * @param {WebPlotParams|WebPlotRequest|Array} p.wpRequest -  plotting parameters, required or for 3 color pass an array of WebPlotParams or WebPlotRequest
  * @param {boolean} [p.threeColor] is a three color request, if true the wpRequest should be an array
  * @param {boolean} [p.useContextModifications=true] it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
@@ -588,10 +587,10 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
 
 /**
  * @summary Plot a HiPS display
- * Note - function parameter is a single object
+ * @description Note - function parameter is a single object
  * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
- * @param {WebPlotRequest} p.wpRequest
+ * @param {WebPlotParams|WebPlotRequest} p.wpRequest
  * @param {HipsImageConversionSettings} [p.hipsImageConversion= undefined] if defined, use these parameter to
  * @param {string} p.viewerId
  * @param {PVCreateOptions} p.pvOptions PlotView init Options
@@ -599,6 +598,10 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public
+ * @function dispatchPlotHiPS
+ * @memberof firefly.action
  */
 export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, attributes={},
                                    hipsImageConversion= undefined,
@@ -612,12 +615,12 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
 
 /**
  * @summary Plot a HiPS or a image depending on the FOV size
- * Note - function parameter is a single object
+ * @description Note - function parameter is a single object
  * @param {Object}  p this function takes a single parameter
  * @param {string} p.plotId
- * @param {WebPlotRequest} p.hipsRequest
- * @param {WebPlotRequest} p.imageRequest - must be a ServiceType request.
- * @param {WebPlotRequest} p.allSkyRequest - must be a allsky type request
+ * @param {WebPlotParams|WebPlotRequest} p.hipsRequest
+ * @param {WebPlotParams|WebPlotRequest} p.imageRequest - must be a ServiceType request.
+ * @param {WebPlotParams|WebPlotRequest} p.allSkyRequest - must be a allsky type request
  * @param {boolean} p.plotAllSkyFirst - if there is an all sky set up then plot that first
  * @param {number} p.fovDegFallOver - the size in degrees that the image will switch between hips and a image cutout
  * @param {number} p.fovMaxFitsSize- the max size the fits image service can support
@@ -627,6 +630,10 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
+ *
+ * @public 
+ * @function dispatchPlotImageOrHiPS
+ * @memberof firefly.action
  */
 export function dispatchPlotImageOrHiPS({plotId,hipsRequest, imageRequest, allSkyRequest, viewerId, fovDegFallOver=.12,
                                             fovMaxFitsSize= .12, autoConvertOnZoom= false,
@@ -687,7 +694,7 @@ export function dispatchChangeHiPS({ plotId, hipsUrlRoot, coordSys, centerProjPt
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
- * @function dispatchPlotImage
+ * @function dispatchPlotMask
  * @memberof firefly.action
  */
 export function dispatchPlotMask({plotId,imageOverlayId, maskValue, fileKey,

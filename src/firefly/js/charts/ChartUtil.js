@@ -167,7 +167,8 @@ export function makeXYPlotParams(params) {
 /**
  * @global
  * @public
- * @typedef {Object} HistogramOptions - shallow object with histogram parameters
+ * @typedef {Object} HistogramOptions
+ * @summary shallow object with histogram parameters
  * @prop {string}  [source]     location of the ipac table, url or file path; ignored when histogram view is added to table
  * @prop {string}  [tbl_id]     table id of the table this plot is connected to
  * @prop {string}  [chartTitle] title of the chart

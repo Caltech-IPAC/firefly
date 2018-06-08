@@ -8,6 +8,13 @@
  */
 
 import Enum from 'enum';
+
+/**
+ * @summary zoom type
+ * @description can be 'STANDARD', 'LEVEL', 'FULL_SCREEN', 'TO_WIDTH_HEIGHT', 'TO_WIDTH', 'TO_HEIGHT', 'ARCSEC_PER_SCREEN_PIX'
+ * @public
+ * @global
+ */
 export const ZoomType= new Enum([
                       'STANDARD',       // use normal zoom, zoom to given zoom level or 1x if not specified
                       'LEVEL',       // use normal zoom, zoom to given zoom level or 1x if not specified

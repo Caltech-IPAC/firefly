@@ -79,10 +79,10 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @global
  * @public
  * @typedef {Object} HipsImageConversionSettings
- * Parameters to do conversion between hips and images
+ * @summary Parameters to do conversion between hips and images
  *
- * @prop {WebPlotRequest} hipsRequestRoot a WebPlotRequest that contains the base parameter to display a HiPS
- * @prop {WebPlotRequest} imageRequestRoot a WebPlotRequest that contains the base parameter to display an image. It must be a service type.
+ * @prop {WebPlotParams|WebPlotRequest} hipsRequestRoot a request object that contains the base parameter to display a HiPS
+ * @prop {WebPlotParams|WebPlotRequest} imageRequestRoot a request object that contains the base parameter to display an image. It must be a service type.
  * @prop {number} fovDegFallOver The field of view size to determine when to move between and HiPS and an image
  * @prop {number} fovMaxFitsSize how big this fits image can be
  * @prop {boolean} autoConvertOnZoom do auto convert on zoom
