@@ -14,6 +14,7 @@ import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt, makeImagePt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
 import {logError} from '../../util/WebUtil.js';
+import CysConverter from '../CsysConverter.js';
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';
@@ -680,7 +681,8 @@ export class RegionFactory {
 
         var makePt = (vx, vy, cs) => {
             if (vx.unit === RegionValueUnit.IMAGE_PIXEL || vx.unit === RegionValueUnit.SCREEN_PIXEL) {
-                return makeImagePt(vx.value, vy.value);
+                // fits to internal
+                return CysConverter.convertFitsStandardImagePtToInternalImage(makeImagePt(vx.value, vy.value));
             } else {
                 return makeWorldPt(vx.value, vy.value, this.parse_coordinate(cs));
             }
