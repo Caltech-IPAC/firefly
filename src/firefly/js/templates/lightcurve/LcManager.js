@@ -5,7 +5,7 @@ import {get, has, isEmpty, isNil, cloneDeep, defer} from 'lodash';
 import {take, fork} from 'redux-saga/effects';
 import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
         dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
-import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,TABLE_FILTER,
+import {TBL_RESULTS_ADDED, TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_HIGHLIGHT, TABLE_SEARCH, TABLE_FETCH,
         dispatchTableRemove, dispatchTableHighlight, dispatchTableFetch, dispatchTableSort} from '../../tables/TablesCntlr.js';
 import {getCellValue, getTblById, getTblIdsByGroup, getActiveTableId, smartMerge, getColumnIdx, removeTablesFromGroup} from '../../tables/TableUtil.js';
 import {updateSet, updateMerge, logError} from '../../util/WebUtil.js';
@@ -18,10 +18,8 @@ import {CHANGE_VIEWER_LAYOUT} from '../../visualize/MultiViewCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {VALUE_CHANGE, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
-import {multitraceDesign} from '../../charts/ChartUtil.js';
-import {loadXYPlot} from '../../charts/dataTypes/XYColsCDT.js';
 import {CHART_ADD, getChartDataElement, getChartData} from '../../charts/ChartsCntlr.js';
-import {getConverter} from './LcConverterFactory.js';
+import {getConverter, getYColMappings} from './LcConverterFactory.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeMissionEntries, keepHighlightedRowSynced} from './LcUtil.jsx';
 import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -274,42 +272,34 @@ function updateRawTableChart(timeCName, fluxCName, converterId) {
 
         const title =getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.RAW_TABLE):'';
 
-        if (multitraceDesign()) {
-            const chartX = get(getChartData(LC.RAW_TABLE), ['tablesources', 0, 'mappings', 'x']);
-            const chartY = get(getChartData(LC.RAW_TABLE), ['tablesources', 0, 'mappings', 'y']);
+        const chartX = get(getChartData(LC.RAW_TABLE), ['tablesources', 0, 'mappings', 'x']);
+        const chartY = get(getChartData(LC.RAW_TABLE), ['tablesources', 0, 'mappings', 'y']);
 
-            if (chartX === timeCName && chartY === fluxCName) return;
+        if (chartX === timeCName && chartY === fluxCName) return;
 
-            const dispatchParams= {
-                groupId: LC.RAW_TABLE,
-                chartId: LC.RAW_TABLE,
-                help_id: 'main1TSV.plot',
-                data: [{
-                    tbl_id: LC.RAW_TABLE,
-                    x: `tables::${timeCName}`,
-                    y: `tables::${fluxCName}`,
-                    mode: 'markers'
-                }],
-                layout: {
-                    title,
-                    yaxis: {autorange: 'reversed', showgrid: true}
-                }
-            };
-            dispatchChartAdd(dispatchParams);
+        const {y, yMin, yMax} = getYColMappings(LC.RAW_TABLE, fluxCName);
 
-        } else {
-            const chartX = get(getChartDataElement(LC.RAW_TABLE), ['options', 'x', 'columnOrExpr']);
-            const chartY = get(getChartDataElement(LC.RAW_TABLE), ['options', 'y', 'columnOrExpr']);
-
-            if (chartX === timeCName && chartY === fluxCName) return;
-
-            const xyPlotParams = {
-                x: {columnOrExpr: timeCName},
-                y: {columnOrExpr: fluxCName, options: 'grid,flip'},
-                plotTitle: title
-            };
-            loadXYPlot({chartId: LC.RAW_TABLE, tblId: LC.RAW_TABLE, xyPlotParams, help_id: 'main1TSV.plot'});
-        }
+        const dispatchParams= {
+            groupId: LC.RAW_TABLE,
+            chartId: LC.RAW_TABLE,
+            help_id: 'main1TSV.plot',
+            data: [{
+                tbl_id: LC.RAW_TABLE,
+                x: `tables::${timeCName}`,
+                y: `tables::${y}`,
+                firefly: {
+                    yMin: yMin && `tables::${yMin}`,
+                    yMax: yMax && `tables::${yMax}`,
+                    yTTLabelSrc: 'axis'
+                },
+                mode: 'markers'
+            }],
+            layout: {
+                title,
+                yaxis: {autorange: 'reversed', showgrid: true, title: fluxCName}
+            }
+        };
+        dispatchChartAdd(dispatchParams);
     }
 }
 
@@ -319,42 +309,35 @@ function updatePhaseTableChart(flux, converterId) {
 
         const title = getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.PHASE_FOLDED):'';
 
-        if (multitraceDesign()) {
-            const chartY = get(getChartData(LC.PHASE_FOLDED), ['tablesources', 0, 'mappings', 'y']);
+        const chartY = get(getChartData(LC.PHASE_FOLDED), ['tablesources', 0, 'mappings', 'y']);
 
-            if (chartY === flux) return;
+        if (chartY === flux) return;
 
-            const dispatchParams= {
-                groupId: LC.PHASE_FOLDED,
-                chartId: LC.PHASE_FOLDED,
-                help_id: 'main1TSV.plot',
-                data: [{
-                    tbl_id: LC.PHASE_FOLDED,
-                    x: `tables::${LC.PHASE_CNAME}`,
-                    y: `tables::${flux}`,
-                    mode: 'markers'
-                }],
-                layout: {
-                    title,
-                    xaxis: {showgrid: true, range: [undefined, 2]},
-                    yaxis: {autorange: 'reversed', showgrid: true},
-                }
-            };
-            dispatchChartAdd(dispatchParams);
+        const {y, yMin, yMax} = getYColMappings(LC.RAW_TABLE, flux);
 
-        } else {
-            const chartY = get(getChartDataElement(LC.PHASE_FOLDED), ['options', 'y', 'columnOrExpr']);
+        const dispatchParams= {
+            groupId: LC.PHASE_FOLDED,
+            chartId: LC.PHASE_FOLDED,
+            help_id: 'main1TSV.plot',
+            data: [{
+                tbl_id: LC.PHASE_FOLDED,
+                x: `tables::${LC.PHASE_CNAME}`,
+                y: `tables::${y}`,
+                firefly: {
+                    yMin: yMin && `tables::${yMin}`,
+                    yMax: yMax && `tables::${yMax}`,
+                    yTTLabelSrc: 'axis'
+                },
+                mode: 'markers',
+            }],
+            layout: {
+                title,
+                xaxis: {showgrid: true, range: [undefined, 2]},
+                yaxis: {autorange: 'reversed', showgrid: true, title: flux},
+            }
+        };
+        dispatchChartAdd(dispatchParams);
 
-            if (chartY === flux) return;
-
-            const xyPlotParams = {
-                userSetBoundaries: {xMax: 2},
-                x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
-                y: {columnOrExpr: flux, options: 'grid,flip'},
-                plotTitle:title
-            };
-            loadXYPlot({chartId: LC.PHASE_FOLDED, tblId: LC.PHASE_FOLDED, xyPlotParams, help_id: 'main1TSV.plot'});
-        }
     }
 }
 

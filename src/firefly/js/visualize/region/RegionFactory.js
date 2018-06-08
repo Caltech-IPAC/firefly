@@ -290,7 +290,8 @@ export class RegionFactory {
         var ptIdx;
 
         // region point with shape in description, ex. circle point x y
-        if ((regionType = getRegionType(regionParams[1])) === RegionType.point) {
+        regionType = getRegionType(regionParams[1]);
+        if (regionType === RegionType.point) {
             if ((pointType = getRegionPointType(regionParams[0])) === RegionPointType.undefined) {
                 return makeRegionMsg(`[${RegionParseError.InvalidType}] ${rgMsg}`);
             }
@@ -751,7 +752,7 @@ export class RegionFactory {
         var isTransformationChecked = false;
 
         if (!validator.isInt(unit_char) && (unit_char !== 's')) {
-            switch(unit_char) {
+            switch(unit_char.toLowerCase()) {
                 case '"':
                     unit = RegionValueUnit.ARCSEC;
                     break;
@@ -1042,7 +1043,7 @@ export class RegionFactory {
                 break;
             }
 
-            switch (opName) {
+            switch (opName.toLowerCase()) {
                 case 'color':
                     opValRes = getOptionValue(ops, getValueBeforeChar, ' ');
                     if (opValRes.valueStr) {

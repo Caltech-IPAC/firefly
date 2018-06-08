@@ -1,0 +1,223 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Table</title>
+
+    <style type="text/css">
+        label {
+            font-weight: bold;
+        }
+        .input-field {
+            padding: 5px;
+            margin: 5px;
+            background-color: antiquewhite;
+            border: 1px solid #9a7f5c;
+            display: flex;
+            flex-direction: column;        }
+        .Tabs {
+            background-color: antiquewhite;
+            margin-left: 30px;
+        }
+        button {
+            padding: 4px 8px;
+        }
+        .tabHeader {
+            background-color: burlywood;
+            padding: 3px;
+            border-bottom: 1px solid #9a7f5c;
+        }
+        .tabContent {
+            padding: 5px;
+        }
+    </style>
+
+
+    <script type="text/javascript">
+    window.onload = function () {
+        showTab('General');
+    }
+
+    function showTab(tabId) {
+        var x = document.getElementsByClassName("tabItem");
+        for (var i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+        document.getElementById(tabId).style.display = "block";
+    }
+
+    function showTable() {
+        try {
+            var a = document.forms["a"]
+            var request;
+            if (a.wise.checked) {
+                request = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                        {
+                            position: '148.9;68.8;EQ_J2000',
+                            SearchMethod: 'Cone',
+                            radius: 300
+                        });
+            } else {
+                request = firefly.util.table.makeFileRequest(null, a.url.value, null,
+                        {META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}});
+            }
+
+            var params = {};
+            if (a.params.value.trim()) {
+                params = JSON.parse(a.params.value);
+                Object.assign(request, params);
+            }
+            var options = {};
+            if (a.options.value.trim()) {
+                options = JSON.parse(a.options.value);
+            }
+            if (a["meta-info"].value.trim()) {
+                var META_INFO = JSON.parse(a["meta-info"].value);
+                Object.assign(request.META_INFO, META_INFO);
+            }
+
+            firefly.showTable('table-display', request, options);
+        } catch (e) {
+            alert(e);
+        }
+    }
+    </script>
+
+    <script  type="text/javascript" src="../firefly_loader.js"></script>
+
+</head>
+
+<body>
+
+
+<h3>  Table Test </h3>
+<div style="display:inline-flex">
+    <div>
+        <form name="a">
+            <div class="input-field">
+                <label> Use WISE catalog:
+                    <input name="wise" type="checkbox" checked/>
+                </label>&nbsp;&nbsp;&nbsp;OR&nbsp;&nbsp;&nbsp;
+                <label> URL:
+                    <input name="url" value="http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl" size=60/>
+                </label>
+            </div>
+
+            <div class="input-field">
+                <label> Params</label>
+                <textarea id="params" name="params" rows="5" cols="70">{"sortInfo": "ASC,clon"}</textarea>
+            </div>
+
+            <div class="input-field">
+                <label> META_INFO</label>
+                <textarea id="meta-info" name="meta-info" rows="5" cols="70">{"col.clon.PrefWidth": 100}</textarea>
+            </div>
+
+            <div class="input-field">
+                <label> Options:</label>
+                <textarea name="options" rows="5" cols="70">{"pageSize": 100}</textarea>
+            </div>
+
+        </form>
+        <div class="input-field">
+            <button style="width: 100px" onclick="showTable()">Show Table</button>
+        </div>
+    </div>
+
+    <div class="Tabs">
+        <div class="tabHeader">
+            <button class="tabButton" onclick="showTab('ParamInfo')">ParamInfo</button>
+            <button class="tabButton" onclick="showTab('META_INFO')">META_INFO</button>
+            <button class="tabButton" onclick="showTab('TblOptions')">TblOptions</button>
+        </div>
+        <div class="tabContent">
+
+            <div id="General" class="tabItem">
+                <h3>How to use these input fields</h3>
+                <pre>
+These input fields are in JSON string format.  Remember to enclosed property and string values in double-quotes.
+Backslash '\' can be used to escape double-quotes.
+
+There are additional information specific to each input field.  Click the top buttons to navigate to them.
+                </pre>
+            </div>
+
+            <div id="TblOptions" class="tabItem">
+                <h3>TblOptions</h3>
+                <pre>
+* @typedef {object} TblOptions
+* @prop {string}  [tbl_group]    the group this table belongs to.  Defaults to 'main'.
+* @prop {boolean} [backgroundable=false]    true if this search can be sent to background.  Defaults to false.
+* @prop {string}  [title]        title of this table.
+* @prop {boolean} [setAsActive=true]  make this the active table once it's added to the UI.
+* @prop {number}  [pageSize]     the starting page size.  Will use the request's pageSize if not given.
+* @prop {boolean} [selectable=true]
+* @prop {boolean} [expandable=true]
+* @prop {boolean} [removable=true]  true if this table can be removed from view.
+* @prop {boolean} [border=true]
+* @prop {boolean} [showUnits=true]
+* @prop {boolean} [showFilters=false]
+* @prop {boolean} [showToolbar=true]
+* @prop {boolean} [showTitle=true]
+* @prop {boolean} [showPaging=true]
+* @prop {boolean} [showSave=true]
+* @prop {boolean} [showOptionButton=true]
+* @prop {boolean} [showFilterButton=true]
+* @prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.
+* @prop {function[]}  [rightButtons]  an array of functions that returns a button-like component laid out on the right side of this table header.
+                </pre>
+            </div>
+
+            <div id="META_INFO"  class="tabItem">
+                <h3>META_INFO</h3>
+                <pre>
+Anything set in META_INFO will go into the resulting table as tableMeta.
+
+Column property can be set via META_INFO as well.  However, there's a discrepancy between the JS and Java constants.
+This will be resolved in the near future.
+Use format:  col.[col-name].[col-prop]
+
+[col-prop] : java -> javascript
+Name                * @prop {string} name      name of the column
+Label               * @prop {string} label     display name of the column
+Unit                * @prop {string} units     data units
+ShortDescription    * @prop {string} desc      description of the column
+Width               * @prop {number} width     column display width
+PrefWidth           * @prop {number} prefWidth     preferred width.  if width is not defined
+Sortable            * @prop {boolean} sortable     true if undefined
+Filterable          * @prop {boolean} filterable   true if undefined
+Visibility          * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
+                </pre>
+            </div>
+
+            <div id="ParamInfo"  class="tabItem">
+                <h3>ParamInfo</h3>
+                <pre>
+Beside query paremters, you can also set these parameters to farther constraint the results.
+** Remember, column name must be enclosed in double-quotes.  You may use sql expressions in these properties as well.
+
+* @prop {string} filters   list of conditions separted by comma(,). Format:  (col_name|index) operator value.
+*                  operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
+* @prop {string} sortInfo  sort information.  Format:  (ASC|DESC),col_name[,col_name]*
+* @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="table-display" style="margin: 5px; width: 1200px; height: 600px;"/>
+
+
+
+

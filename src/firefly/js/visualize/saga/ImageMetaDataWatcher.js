@@ -110,11 +110,11 @@ function watchImageMetadata(action, cancelSelf, params) {
             break;
 
         case ImagePlotCntlr.ANY_REPLOT:
-            resetFullGridActivePlot(tbl_id, action.payload.plotIdAry);
+            if (!paused) resetFullGridActivePlot(tbl_id, action.payload.plotIdAry);
             break;
 
         case ImagePlotCntlr.UPDATE_VIEW_SIZE:
-            zoomPlotPerViewSize(payload.plotId);
+            if (!paused) zoomPlotPerViewSize(payload.plotId);
             break;
 
         case REINIT_APP:
@@ -358,7 +358,8 @@ function resetFullGridActivePlot(tbl_id, plotIdAry) {
 
 
 function zoomPlotPerViewSize(plotId) {
-    if (isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), plotId)) {
+    const vr= visRoot();
+    if (!vr.wcsMatchType &&  isImageViewerSingleLayout(getMultiViewRoot(), vr, plotId)) {
         dispatchZoom({plotId, userZoomType: UserZoomTypes.FILL});
     }
 }

@@ -14,6 +14,7 @@ import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {LC, getFullRawTable, getConverterId} from './LcManager.js';
 import {getLayouInfo} from '../../core/LayoutCntlr.js';
 import {getConverter} from './LcConverterFactory.js';
+import {getYColMappings} from "./LcConverterFactory";
 
 
 const DEC_PHASE = 3;       // decimal digit
@@ -39,7 +40,9 @@ export function uploadPhaseTable(tbl, flux) {
         dispatchTableSearch(tReq, {removable: true});
         const converterId =getConverterId(getLayouInfo());
         const plotTitle = getConverter(converterId).showPlotTitle?getConverter(converterId).showPlotTitle(LC.PHASE_FOLDED):'';
-        if (multitraceDesign()) {
+
+        const {y, yMin, yMax} = getYColMappings(LC.RAW_TABLE, flux);
+
             const dispatchParams = {
                 groupId: tbl_id,
                 chartId: tbl_id,
@@ -47,25 +50,21 @@ export function uploadPhaseTable(tbl, flux) {
                 data: [{
                     tbl_id,
                     x: `tables::${LC.PHASE_CNAME}`,
-                    y: `tables::${flux}`,
+                    y: `tables::${y}`,
+                    firefly: {
+                        yMin: yMin && `tables::${yMin}`,
+                        yMax: yMax && `tables::${yMax}`,
+                        yTTLabelSrc: 'axis'
+                    },
                     mode: 'markers'
                 }],
                 layout: {
                     title: plotTitle,
                     xaxis: {showgrid: true, range: [undefined, 2]},
-                    yaxis: {autorange: 'reversed', showgrid: true}
+                    yaxis: {autorange: 'reversed', showgrid: true, title: flux}
                 }
             };
             dispatchChartAdd(dispatchParams);
-        } else {
-            const xyPlotParams = {
-                userSetBoundaries: {xMax: 2},
-                x: {columnOrExpr: LC.PHASE_CNAME, options: 'grid'},
-                y: {columnOrExpr: flux, options: 'grid,flip'},
-                plotTitle
-            };
-            loadXYPlot({chartId: tbl_id, tblId: tbl_id, xyPlotParams, help_id: 'main1TSV.plot'});
-        }
     });
 
 

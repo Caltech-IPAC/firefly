@@ -13,8 +13,8 @@ FROM tomcat:8.0-jre8
 # add packages: vim, etc
 # add any other standard apt packages here
 RUN apt-get update && apt-get install -y \
-        vim \
-        && rm -rf /var/lib/apt/lists/*
+        vim procps wget emacs24-nox \
+        && rm -rf var/lib/apt/lists//*
 
 
 # These environment varibles are not really made to be overridden

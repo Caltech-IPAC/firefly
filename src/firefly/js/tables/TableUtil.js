@@ -156,7 +156,7 @@ export function removeTablesFromGroup(tbl_group_id = 'main') {
  */
 export function getTblIdsByGroup(tbl_group_id = 'main') {
     const tableGroup = get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', tbl_group_id]);
-    return Object.keys(get(tableGroup, 'tables', {}));
+    return Object.keys(get(tableGroup, 'tables', []));
 }
 
 /**
@@ -829,7 +829,7 @@ export function isTableUsingRadians(tableOrMeta) {
 }
 
 export function createErrorTbl(tbl_id, error) {
-    return set({tbl_id, error}, 'tableMeta.Loading-Status', 'COMPLETED');
+    return set({tbl_id, error: error||'something went wrong'}, 'tableMeta.Loading-Status', 'COMPLETED');
 }
 
 

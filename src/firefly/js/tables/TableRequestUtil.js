@@ -134,7 +134,7 @@ export function makeLsstCatalogRequest(title, project, catalog, params={}, optio
     title = title || catalog;
     options.use = options.use || 'lsst_catalog_overlay';
     const tbl_id = options.tbl_id || uniqueTblId();
-    const id = get(params, 'SearchMethod')==='Table'?'LSSTMultiObjectSearch':'LSSTCataLogSearch';
+    const id = get(params, 'SearchMethod')==='Table'?'LSSTMultiObjectSearch':'LSSTCatalogSearch';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
     const table_name = catalog;
     const meta_table = catalog;

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {cloneDeep, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range} from 'lodash';
+import {cloneDeep, flatten, has, get, isArray, isEmpty, isString, isUndefined, omit, omitBy, set, range} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -11,14 +11,14 @@ import {getTblById, getColumns, isFullyLoaded, COL_TYPE} from '../tables/TableUt
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
-import {DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchRemoveViewerItems} from '../visualize/MultiViewCntlr.js';
-import {formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
+import {DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchUpdateCustom, dispatchRemoveViewerItems,
+    getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
+import {flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
         applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {makeHistogramParams, makeXYPlotParams} from './ChartUtil.js';
-import {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
@@ -508,11 +508,14 @@ function chartFilterSelection(action) {
 
             let {x,y} = mappings;
             let upperLimit = get(mappings,  `fireflyData.${activeTrace}.yMax`);
+            let lowerLimit = get(mappings,  `fireflyData.${activeTrace}.yMin`);
             // use standard form without spaces for filter key
             // to make sure the key is replaced when setFilter is used
-            [x,y,upperLimit] = [x, y, upperLimit].map((v) => v && formatColExpr({colOrExpr:v, colNames:numericCols}));
+            [x,y,upperLimit,lowerLimit] = [x, y, upperLimit,lowerLimit].map((v) => v && formatColExpr({colOrExpr:v, colNames:numericCols}));
             if (upperLimit) {
                 y = `ifnull(${y},${upperLimit})`;
+            } else if (lowerLimit) {
+                y = `ifnull(${y},${lowerLimit})`;
             }
 
             const [xMin, xMax] = get(selection, 'range.x', []);
@@ -943,12 +946,11 @@ function reduceData(state={}, action={}) {
 export function getAnnotations(chartId) {
     const chartData = getChartData(chartId);
     let annotations = get(chartData, 'fireflyLayout.annotations', EMPTY_ARRAY);
+
     get(chartData, 'fireflyData', []).forEach((d) => {
-        if (isArray(get(d, 'annotations'))) {
-            const filtered = d.annotations.filter((e) => !isUndefined(e));
-            if (filtered.length > 0) {
-                annotations = annotations.concat(filtered);
-            }
+        const traceAnnotations = flattenAnnotations(d.annotations);
+        if (traceAnnotations.length > 0) {
+            annotations = annotations.concat(traceAnnotations);
         }
     });
     return annotations;
@@ -1037,6 +1039,11 @@ function cleanupRelatedChartData(action) {
 export function hasUpperLimits(chartId, traceNum) {
     const yMax = get(getChartData(chartId), `fireflyData.${traceNum}.yMax`);
     return !isUndefined(yMax);
+}
+
+export function hasLowerLimits(chartId, traceNum) {
+    const yMin = get(getChartData(chartId), `fireflyData.${traceNum}.yMin`);
+    return !isUndefined(yMin);
 }
 
 export function dataLoadedUpdate(changes) {

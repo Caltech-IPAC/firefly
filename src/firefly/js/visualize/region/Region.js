@@ -49,7 +49,7 @@ var cloneArg = (arg) => Object.keys(arg).reduce((prev, key) =>
  * @param {string} message parsing message
  * @function makeRegion
  */
-export var makeRegion = (
+export const makeRegion = (
             {
                 wpAry,       // for polygon, polygonCenter is added optionally based on VisUtil.computerCentralAndRadius
                 radiusAry,
@@ -100,7 +100,7 @@ export var makeRegion = (
  * @function makeRegionOptions
  */
 
-export var makeRegionOptions = (
+export const makeRegionOptions = (
             {
                 color = 'green',
                 text,
@@ -157,7 +157,7 @@ export const regionPropsList = {
         MSG:     'message'
 };
 
-export var defaultRegionProperty = {
+export const defaultRegionProperty = {
     color: 'green',
     text:  '',
     font:  {name: 'helvetica', point: '10', weight: 'normal', slant: 'normal'},
@@ -186,8 +186,8 @@ export var defaultRegionProperty = {
     message: ''
 };
 
-export var getRegionDefault = (prop) => (has(defaultRegionProperty, prop) ? defaultRegionProperty[prop] : null);
-export var setRegionPropDefault = (prop, value) => {
+export const getRegionDefault = (prop) => (has(defaultRegionProperty, prop) ? defaultRegionProperty[prop] : null);
+export const setRegionPropDefault = (prop, value) => {
             if (has(defaultRegionProperty, prop)) {
                 defaultRegionProperty[prop] = value;
             }
@@ -201,7 +201,7 @@ export var setRegionPropDefault = (prop, value) => {
  * @function RegionValue
  */
 
-export var RegionValue =
+export const RegionValue =
     (value = 0.0, unit = RegionValueUnit.CONTEXT) => ({value, unit});
 
 /**
@@ -210,7 +210,7 @@ export var RegionValue =
  * @param {Object} height RegionValue height of box or second radius of ellipse
  * @function RegionDimension
  */
-export var RegionDimension = (width, height) => ({width, height});
+export const RegionDimension = (width, height) => ({width, height});
 
 /**
  * regiopn parse exception
@@ -223,28 +223,28 @@ export class RegParseException extends Error {
     }
 }
 
-export var makeRegionMsg = (msg) => makeRegion({type: RegionType.message, message: msg});
+export const makeRegionMsg = (msg) => makeRegion({type: RegionType.message, message: msg});
 
 /**
  * @summary get region type
  * @param {string} rgTypeStr
  * @returns {Object} RegionType
  */
-export var getRegionType = (rgTypeStr) => (RegionType.get(rgTypeStr) || RegionType.undefined);
+export const getRegionType = (rgTypeStr) => (RegionType.get(rgTypeStr) || RegionType.undefined);
 
 /**
  * $summary get region point type
  * @param {string} typeStr
  * @returns {Object} RegionPointType
  */
-export var getRegionPointType = (typeStr) => (RegionPointType.get(typeStr) || RegionPointType.undefined);
+export const getRegionPointType = (typeStr) => (RegionPointType.get(typeStr) || RegionPointType.undefined);
 
 /**
  * @summary get coordinate system
  * @param {string} coordStr
  * @returns {Object} RegionCsys
  */
-export var getRegionCoordSys = (coordStr) => (RegionCsys.get(coordStr) || RegionCsys.UNDEFINED);
+export const getRegionCoordSys = (coordStr) => (RegionCsys.get(coordStr) || RegionCsys.UNDEFINED);
 
 /**
  * @summary get region font object
@@ -254,7 +254,7 @@ export var getRegionCoordSys = (coordStr) => (RegionCsys.get(coordStr) || Region
  * @param {string} slant ex: normal, italic
  * @returns {Object}
  */
-export var makeRegionFont = (name = 'helvetica', point = '10', weight = 'normal', slant = 'normal') => (
+export const makeRegionFont = (name = 'helvetica', point = '10', weight = 'normal', slant = 'normal') => (
         {name, point, weight, slant});
 
 /**

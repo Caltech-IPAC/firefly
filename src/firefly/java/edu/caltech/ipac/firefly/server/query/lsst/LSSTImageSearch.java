@@ -28,7 +28,7 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     // image repository (DC_W13_Stripe82) is a part of the URL, but it is not clear where it comes from
     // and how we should get it: via metaserv or image/v1/capabilities
     // I am hardcoding it here for now
-    public static String DAX_URL="http://lsst-qserv-dax01.ncsa.illinois.edu:5000/image/v1/DC_W13_Stripe82";
+    public static String IMGSERVURL="http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/api/image/v1/DC_W13_Stripe82";
 
     /**
      * Implement the abstract method, "getURL"
@@ -89,14 +89,14 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
             String imageId = request.getParam("imageId");
             // width and height in arcseconds
             // ImageServAPI-I11
-            return new URL(DAX_URL+"?ds="+imageType+"&sid="+imageId+
+            return new URL(IMGSERVURL+"?ds="+imageType+"&sid="+imageId+
                     "&ra="+ra+"&dec="+dec+"&width="+subsizeArcSec+"&height="+subsizeArcSec+"&unit=arcsec");
         } else {
             // coadd
             String filterName = request.getParam("filterName");
             // width and height in arcseconds, for pixels use cutoutPixel instead of cutout
             // ImageServAPI-I9
-            return new URL(DAX_URL+"?ds="+imageType+
+            return new URL(IMGSERVURL+"?ds="+imageType+
                     "&ra="+ra+"&dec="+dec+"&filter="+filterName+"&width="+subsizeArcSec+"&height="+subsizeArcSec+"&unit=arcsec");
         }
 
@@ -160,12 +160,12 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     private static  String getBaseURL(boolean isDeepCoadd){
         if (isDeepCoadd) {
             // ImageServAPI-I14
-            return DAX_URL+"?ds=deepCoadd&";
+            return IMGSERVURL+"?ds=deepCoadd&";
 
         }
         else {
             // ImageServAPI-I7
-            return DAX_URL+"?ds=calexp&";
+            return IMGSERVURL+"?ds=calexp&";
         }
     }
 

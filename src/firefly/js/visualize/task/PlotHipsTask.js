@@ -394,7 +394,8 @@ export function convertToImage(pv, allSky= false) {
         }
     }
 
-    dispatchPlotImage({plotId, wpRequest, attributes, enableRestore:false});
+    dispatchPlotImage({plotId, wpRequest, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
+                       attributes, enableRestore:false});
 }
 
 
@@ -414,7 +415,8 @@ export function convertToHiPS(pv, fromAllSky= false) {
         prepFromImageConversion(pv,wpRequest);
     }
 
-    dispatchPlotHiPS({plotId, wpRequest, attributes, enableRestore:false});
+    dispatchPlotHiPS({plotId, wpRequest, attributes, hipsImageConversion: pv.plotViewCtx.hipsImageConversion,
+        enableRestore:false});
 }
 
 function getCenterPt(pv) {

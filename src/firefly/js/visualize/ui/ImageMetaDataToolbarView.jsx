@@ -79,19 +79,22 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
 
                 <ToolbarButton icon={FULL_GRID} tip={'Show full grid'}
                                enabled={true} visible={true} horizontal={true}
-                               imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
+                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                               additionalStyle={{marginLeft: 5}}
                                onClick={() => handleViewerLayout(viewerId,'grid',GRID_FULL)}/>
 
                 {converter.hasRelatedBands  &&
                             <ToolbarButton icon={GRID_GROUP} tip={'Show all as tiles'}
                                enabled={true} visible={true} horizontal={true}
-                               imageStyle={{width:24,height:24,  paddingLeft:20, flex: '0 0 auto'}}
+                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                               additionalStyle={{marginLeft: 20}}
                                onClick={() => dispatchChangeViewerLayout(viewerId,'grid',GRID_RELATED)}/>
                 }
                 {showThreeColorButton &&
                              <ToolbarButton icon={THREE_COLOR} tip={'Show three color image'}
                                          enabled={true} visible={true} horizontal={true}
-                                         imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
+                                         imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                                         additionalStyle={{marginLeft: 5}}
                                          onClick={() => showThreeColorOps(viewer,dataId)}/>
                 }
                 {layoutType===SINGLE && viewerPlotIds.length>1 &&

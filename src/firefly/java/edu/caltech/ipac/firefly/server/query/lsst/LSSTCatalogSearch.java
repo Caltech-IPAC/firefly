@@ -44,8 +44,8 @@ import java.util.Locale;
  *     3. ENCLOSED
  *
  */
-@SearchProcessorImpl(id = "LSSTCataLogSearch")
-public class LSSTCataLogSearch extends LSSTQuery {
+@SearchProcessorImpl(id = "LSSTCatalogSearch")
+public class LSSTCatalogSearch extends LSSTQuery {
 
     /**
      * This method will return the search method string based on the method.  If the method is not supported, the exception
@@ -56,7 +56,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
      * @throws EndUserException on invalid request parameters
      */
 
-    public static String getSearchMethodCatalog(TableServerRequest req)throws EndUserException { //, String raCol, String decCol) throws Exception {
+    public static String getSearchMethodCatalog(TableServerRequest req) throws EndUserException { //, String raCol, String decCol) throws EndUserException {
 
         String method = req.getParam("SearchMethod");
         if (method.equalsIgnoreCase("allSky")){
@@ -141,7 +141,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
      * @return request based on search method
      * @throws EndUserException on invalid request
      */
-    private String getSearchMethodImageMeta(TableServerRequest req)throws Exception {
+    private String getSearchMethodImageMeta(TableServerRequest req) throws EndUserException {
 
 
         String searchType = req.getParam("intersect");
@@ -230,7 +230,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
         return strAry;
     }
 
-    String getCornerWithLimit(String[] cornerRa, String[] cornerDec, int idx, double minRa, double minDec, double maxRa, double maxDec) {
+    private String getCornerWithLimit(String[] cornerRa, String[] cornerDec, int idx, double minRa, double minDec, double maxRa, double maxDec) {
         String cornerStr = "";
 
         if ((cornerRa != null) && (cornerDec != null) && idx < cornerRa.length) {
@@ -249,7 +249,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
     }
 
 
-    String buildSqlQueryString(TableServerRequest request) throws Exception {
+    String buildSqlQueryString(TableServerRequest request) throws EndUserException {
 
         String dbTable = LSSTQuery.getDBTableNameFromRequest(request);
         boolean isCatalogTable = LSSTQuery.isCatalogTable(dbTable);
@@ -271,10 +271,10 @@ public class LSSTCataLogSearch extends LSSTQuery {
         if (searchMethod.length()>0 && constraints.length()>0){
             whereStr = searchMethod +  " AND " + constraints;
         }
-        else if (searchMethod.length()>0 &&constraints.length()==0 ){
+        else if (searchMethod.length()>0){
             whereStr = searchMethod ;
         }
-        else if ( searchMethod.length()==0 &&constraints.length()>0 ){
+        else if (constraints.length()>0 ){
             whereStr = constraints;
         }
         else {
@@ -284,7 +284,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
         String sql = "SELECT " + columns + " FROM " + dbTable;
         //add the guard to prevent from seaching the whole database when users do not enter a constrain
         if (whereStr.length()>0){
-            return sql +  " WHERE " + whereStr + ";";
+            return sql +  " WHERE " + whereStr;
         }
         else {
             throw new EndUserException("Error: Search without constrains will cause database hanging!!!", sql);
@@ -335,11 +335,13 @@ public class LSSTCataLogSearch extends LSSTQuery {
             String[] DECs = getCorners(catTable, "dec");
             TableMeta.LonLatColumns[] c = new TableMeta.LonLatColumns[4];
 
-            for (int i = 0; i < 4; i++) {
-                c[i] = new TableMeta.LonLatColumns(RAs[i], DECs[i],  CoordinateSys.EQ_J2000);
+            if (RAs != null && DECs != null) {
+                for (int i = 0; i < 4; i++) {
+                    c[i] = new TableMeta.LonLatColumns(RAs[i], DECs[i], CoordinateSys.EQ_J2000);
+                }
+                meta.setCorners(c[0], c[1], c[2], c[3]);
             }
 
-            meta.setCorners(c[0], c[1], c[2], c[3]);
             // only set for image meta table
             meta.setAttribute(MetaConst.DATASET_CONVERTER,
                     (String)LSSTQuery.getDatasetInfo(catTable, new String[]{MetaConst.DATASET_CONVERTER}));
@@ -353,7 +355,7 @@ public class LSSTCataLogSearch extends LSSTQuery {
         meta.setAttribute("tableName", catTable);
         meta.setAttribute("mission",
                           (String)LSSTQuery.getDatasetInfo(catTable, new String[]{MetaConst.DATASET_CONVERTER}));
-        meta.setAttribute("tableType", (String)LSSTQuery.getTableColumn(catTable, "tableType"));
+        meta.setAttribute("tableType", LSSTQuery.getTableColumn(catTable, "tableType"));
         super.prepareTableMeta(meta, columns, request);
     }
 

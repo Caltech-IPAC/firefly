@@ -13,10 +13,11 @@ import {basicURLPlotRequest} from './basic/BasicPlotRequests';
 import {LsstSdssSettingBox, lsstSdssOnNewRawTable, lsstSdssOnFieldUpdate, lsstSdssRawTableRequest} from './lsst_sdss/LsstSdssMissionOptions.js';
 import {DefaultSettingBox, defaultOnNewRawTable, defaultOnFieldUpdate, defaultRawTableRequest} from './generic/DefaultMissionOptions.js';
 import {BasicSettingBox, basicOnNewRawTable, basicOnFieldUpdate, basicRawTableRequest, imagesShouldBeDisplayed} from './basic/BasicMissionOptions.js';
-import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest,isValidWiseTable} from './wise/WiseMissionOptions.js';
+import {WiseSettingBox, wiseOnNewRawTable, wiseOnFieldUpdate, wiseRawTableRequest, wiseYColMappings, isValidWiseTable} from './wise/WiseMissionOptions.js';
 import {PTFSettingBox, ptfOnNewRawTable, ptfOnFieldUpdate, ptfRawTableRequest, isValidPTFTable, ptfDownloaderOptPanel} from './ptf/PTFMissionOptions.js';
 
 import {LC} from './LcManager.js';
+import {getColumnIdx, getTblInfoById} from '../../tables/TableUtil';
 
 export const DL_DATA_TAG = 'timeseries-package';
 export const UNKNOWN_MISSION = 'generic';
@@ -84,6 +85,7 @@ const converters = {
         defaultTimeCName: 'mjd',
         defaultYCname: 'w1mpro_ep',
         defaultYErrCname: '',
+        getYColMappings: wiseYColMappings,
         missionName: 'WISE/NEOWISE',
         MissionOptions: WiseSettingBox,
         onNewRawTable: wiseOnNewRawTable,
@@ -215,6 +217,17 @@ export function getConverter(converterId = UNKNOWN_MISSION) {
 export function getMissionName(converterId) {
     const converterData = converterId && converters[converterId];
     return get(converterData, 'missionName', converterId);
+}
+
+export function getYColMappings(tbl_id, yCol) {
+    const {tableMeta} = getTblInfoById(tbl_id);
+    const mission = get(tableMeta, LC.META_MISSION);
+    const func = get(converters, [mission, 'getYColMappings']);
+    if (func) {
+        return func(tbl_id, yCol);
+    } else {
+        return {y: yCol};
+    }
 }
 
 /**

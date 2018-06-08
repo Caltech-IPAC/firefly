@@ -7,7 +7,7 @@ import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import {dispatchChartUpdate, dispatchChartHighlighted, getAnnotations, getChartData} from '../ChartsCntlr.js';
-import {isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
+import {flattenAnnotations, isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
 
 const X_TICKLBL_PX = 60;
 const TITLE_PX = 30;
@@ -127,13 +127,15 @@ export class PlotlyChartArea extends Component {
             if (selected) {
                 pdata = pdata.concat([selected]);
                 if (annotations.length>0) {
-                    annotations = annotations.concat(get(selected, 'firefly.annotations'));
+                    const selectedAnnotations = flattenAnnotations(get(selected, 'firefly.annotations'));
+                    if (selectedAnnotations.length>0) { annotations = annotations.concat(selectedAnnotations); }
                 }
             }
             if (highlighted) {
                 pdata = pdata.concat([highlighted]);
                 if (annotations.length>0) {
-                    annotations = annotations.concat(get(highlighted, 'firefly.annotations'));
+                    const highlightedAnnotations = flattenAnnotations(get(highlighted, 'firefly.annotations'));
+                    annotations = annotations.concat(highlightedAnnotations);
                 }
             }
         }

@@ -113,8 +113,7 @@ function startSpecialViewerSaga(action, alreadyStarted) {
             startImageMetadataWatcher({viewerId: cellId, paused:false});
             break;
         case SPECIAL_VIEWER.coverageImage:
-            const useHiPS= get(getAppOptions(), 'hips.useForCoverage',false);
-            startCoverageWatcher({viewerId:cellId, ignoreCatalogs:true, paused:false, useHiPS});
+            startCoverageWatcher({viewerId:cellId, ignoreCatalogs:true, paused:false});
             break;
 
     }
