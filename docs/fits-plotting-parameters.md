@@ -25,7 +25,7 @@ Categories of parameters:
 
  
 
-###Parameters for specifying FITS file from a URL or on the server
+### Parameters for specifying FITS file from a URL or on the server
 
 | Parameter | Description |
 | --------- | ----------- |
@@ -38,7 +38,7 @@ If you specify `URL` and it is relative then one of two things happen:
   - The url is made absolute based on the host web page url. 
     
 
-###Parameters for specifying FITS files retrieved from a service
+### Parameters for specifying FITS files retrieved from a service
 
 | Service Parameter | Description |
 | --------- | ----------- |
@@ -80,7 +80,7 @@ The possible values for SurveyKeyBand are listed below for each service:
   - The general syntax is `lon;lat;coordinate_sys`, e.g. `'12.2;33.4;EQ_J2000'` or `'11.1;22.2;GALACTIC'`
   - coordinate system can be: `'EQ_J2000'`, `'EQ_B1950'`, `'EC_J2000'`, `'EC_B1950'`, `'GALACTIC'`, or `'SUPERGALACTIC'`;
 
-###Parameters that Color and Stretch
+### Parameters that Color and Stretch
 
 | Parameter | Description |
 | --------- | ----------- |
@@ -90,7 +90,7 @@ The possible values for SurveyKeyBand are listed below for each service:
 
 
 
-###Parameters that control Flipping
+### Parameters that control Flipping
 
 | Flip Parameter | Description |
 | --------- | ----------- |
@@ -98,7 +98,7 @@ The possible values for SurveyKeyBand are listed below for each service:
 | `FlipY` | Flip this image on the Y axis |
 
 
-###Parameters that control Rotation
+### Parameters that control Rotation
 
 | Rotate north Parameter | Description |
 | --------- | ----------- |
@@ -111,7 +111,7 @@ The possible values for SurveyKeyBand are listed below for each service:
 | `RotationAngle` | the angle to rotate to, use with `Rotate` |
 
 
-###Parameters that control Cropping
+### Parameters that control Cropping
 
 | Crop Parameter | Description |
 | --------- | ----------- |
@@ -127,7 +127,7 @@ Notes-
  - `CropPt1` and `CropPt2` are diagonal of each other and `CropWorldPt1` and `CropWorldPt2` are diagonal of each other.
  - See documentation on WorldPt to find proper syntax
 
-###Parameters that control Zoom
+### Parameters that control Zoom
   
    `ZoomType`:  Set the zoom type, based on the ZoomType other zoom set methods may be required
 Notes for ZoomType:
@@ -146,7 +146,8 @@ Notes for ZoomType:
 
       
       
-###Parameters that control the plot title
+### Parameters that control the plot title
+
 `TitleOptions`:  The parameter sets other ways to title the plot. The following 4 values are options for title:
 
  - NONE - The default, use the value set in <code>Title</code>, if this is empty use the plot description that come from the server
@@ -166,7 +167,7 @@ Notes for ZoomType:
 | `HeaderKeyForTitle` | Sets the title to the fits header key if `TitleOptions` is set to `HEADER_KEY` |
 
 
-###The Type parameter
+### The Type parameter
 
 The request `Type` parameter can be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.  However, most of the type the type is inferred from these other parameters so it is unnecessary.  It the `Type` is specified is will do some checking on the other parameters..
 
@@ -182,7 +183,7 @@ Options are:
   - `BLANK` make a blank image
   - `ALL_SKY`
 
-###Less commonly used parameters 
+### Less commonly used parameters 
 
 | Title Parameter | Description |
 | --------- | ----------- |
