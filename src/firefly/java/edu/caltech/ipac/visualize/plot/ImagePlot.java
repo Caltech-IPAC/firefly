@@ -4,6 +4,7 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.util.Assert;
@@ -34,7 +35,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class ImagePlot extends Plot implements Serializable {
 
-    private static final int CORE_CNT;
     public static final int  SQUARE = 1500; // this is the size of the image data tiles
 
     private Projection     _projection;
@@ -50,16 +50,6 @@ public class ImagePlot extends Plot implements Serializable {
     private boolean  _threeColor;
     private boolean _isSharedDataPlot = false;
     private final boolean useForMask;
-
-    static {
-        int cores= Runtime.getRuntime().availableProcessors();
-        if      (cores<4)  CORE_CNT= 1;
-        else if (cores<=5) CORE_CNT= cores-1;
-        else if (cores<16) CORE_CNT= cores-2;
-        else if (cores<22) CORE_CNT= cores-4;
-        else               CORE_CNT= cores-6;
-    }
-
 
    public ImagePlot(PlotGroup plotGroup, boolean useForMask) {
        super(plotGroup);
@@ -242,11 +232,12 @@ public class ImagePlot extends Plot implements Serializable {
         if (_imageData.isUpToDate()) return;
         synchronized (this) {
             if (_imageData.isUpToDate()) return;
-            if (_imageData.size()<4 || CORE_CNT==1) {
+            int coreCnt= ServerContext.getParallelProcessingCoreCnt();
+            if (_imageData.size()<4 || coreCnt==1) {
                 for(ImageData id : _imageData)  id.getImage(frGroup.getFitsReadAry());
             }
             else {
-                ExecutorService executor = Executors.newFixedThreadPool(CORE_CNT);
+                ExecutorService executor = Executors.newFixedThreadPool(coreCnt);
                 for(ImageData id : _imageData)  {
                     final ImageData idSave= id;
                     Runnable worker = new Runnable() {
