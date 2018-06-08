@@ -38,12 +38,12 @@ export class ActiveTableButton extends PureComponent {
         if (!this.isUnmounted) {
             var {tbl_id, tbl_grp, onChange} = this.props;
             tbl_id = tbl_id || getActiveTableId(tbl_grp);
-            const {highlightedRow} = getTblInfoById(tbl_id);
-            const nextState= Object.assign({}, this.state, {tbl_id, highlightedRow});
+            const {highlightedRow, selectInfo} = getTblInfoById(tbl_id);
+            const nextState= Object.assign({}, this.state, {tbl_id, highlightedRow, selectInfo});
 
             if (!shallowequal(this.state, nextState)) {
-                this.setState({tbl_id, highlightedRow});
-                onChange && this.setState(onChange({tbl_id, highlightedRow}));
+                this.setState({tbl_id, highlightedRow, selectInfo});
+                onChange && this.setState(onChange({tbl_id, highlightedRow, selectInfo}));
             }
         }
     }

@@ -178,6 +178,9 @@ public class IpacTableParser {
 //====================================================================
 
 
+    /**
+     * Sparse table data indexed into a hash map for easy access to cell data.
+     */
     public static class MappedData {
         private HashMap<String, Object> data = new HashMap<String, Object>();
 
@@ -209,8 +212,36 @@ public class IpacTableParser {
             return vals;
         }
 
+        /**
+         * get a row of data.  Map is keyed by column name.
+         * @param idx row index to get the data from
+         * @return
+         */
+        public Map<String, Object> getRow(int idx) {
+            Map<String, Object> retval = new HashMap<>();
+            for(Map.Entry<String, Object> e : data.entrySet()) {
+                if (e.getKey().startsWith(String.valueOf(idx))) {
+                    retval.put(getCnameFromKey(e.getKey()), e.getValue());
+                }
+            }
+            return retval;
+        }
+
         private String makeKey(int idx, String colName) {
             return idx + "-" + colName;
+        }
+        private String getCnameFromKey(String key) {
+            try {
+                String[] parts = String.valueOf(key).split("-", 2);
+                if (parts.length > 1) {
+                    return parts[1];
+                } else {
+                    throw new RuntimeException("Key missing column name:" + key);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
         }
 
     }

@@ -116,26 +116,8 @@ function doShowTable(llApi, targetDiv, request, options={}) {
 function buildTablePart(llApi) {
 
     /**
-     * @global
-     * @public
-     * @typedef {object} TblOptions
-     * @prop {string}  tbl_group    the group this table belongs to.  Defaults to 'main'.
-     * @prop {number}  pageSize     the starting page size.  Will use the request's pageSize if not given.
-     * @prop {boolean} removable    true if this table can be removed from view.  Defaults to true.
-     * @prop {boolean} backgroundable    true if this search can be sent to background.  Defaults to false.
-     * @prop {boolean} showUnits    defaults to false
-     * @prop {boolean} showFilters  defaults to false
-     * @prop {boolean} selectable   defaults to true
-     * @prop {boolean} expandable   defaults to true
-     * @prop {boolean} showToolbar  defaults to true
-     * @prop {boolean} border       defaults to true
-     * @prop {function[]}  leftButtons   an array of functions that returns a button-like component laid out on the left side of this table header.  Function will be called with table's state.
-     * @prop {function[]}  rightButtons  an array of functions that returns a button-like component laid out on the left side of this table header.  Function will be called with table's state.
-     */
-
-    /**
      * @param {string|HTMLDivElement} targetDiv to put the table in.
-     * @param {Object} request         request object created from
+     * @param {TableRequest} request         request object created from
      * @param {TblOptions} options     table options.
      * @memberof firefly
      * @public
