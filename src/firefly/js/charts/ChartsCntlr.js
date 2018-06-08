@@ -406,7 +406,9 @@ function chartFilterSelection(action) {
 
 
             // filters are processed by db, column expressions need to use syntax db understands
-            const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:numericCols});
+            // filters can be set for any column type, numeric or non-numeric
+            const allColumns = getColumns(getTblById(tbl_id)).map((c) => c.name);
+            const formatKey = (k) => formatColExpr({colOrExpr:k, quoted:true, colNames:allColumns});
 
             const newRequest = Object.assign({}, request, {filters: filterInfoCls.serialize(formatKey)});
             TablesCntlr.dispatchTableFilter(newRequest);
