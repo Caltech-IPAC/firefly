@@ -256,7 +256,7 @@ export class CysConverter {
         return makeImagePt(imPt.x-.5, imPt.y-.5);
     }
 
-    convertFitsStandardImagePtToInternalImage(pt) {
+    static convertFitsStandardImagePtToInternalImage(pt) {
         return makeImagePt(pt.x-.5, pt.y-.5);
     }
 
