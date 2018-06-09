@@ -384,7 +384,7 @@ public class ImagePlot extends Plot implements Serializable {
                 wpt= convert(wpt,_imageCoordSys);
             }
             ProjectionPt proj_pt= _projection.getImageCoords(wpt.getLon(),wpt.getLat());
-            retval= new ImageWorkSpacePt( proj_pt.getX() + 0.5F ,  proj_pt.getY() + 0.5F);
+            retval= new ImageWorkSpacePt( proj_pt.getX() + 1.0F,  proj_pt.getY() + 1.0F);
         }
         return retval;
     }

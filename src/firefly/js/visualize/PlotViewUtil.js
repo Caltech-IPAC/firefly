@@ -3,7 +3,7 @@
  */
 import {difference, flatten, get, has, isArray, isEmpty, isString, isUndefined} from 'lodash';
 import {getPlotGroupById} from './PlotGroup.js';
-import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
+import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals, xy0Fitsll} from './Point.js';
 import {clone} from '../util/WebUtil.js';
 import {dispatchDestroyDrawLayer, getDlAry} from './DrawLayerCntlr.js';
 import {makeTransform} from './PlotTransformUtils.js';
@@ -546,10 +546,10 @@ export function isMultiImageFitsWithSameArea(pv) {
     const plot= primePlot(pv);
     const {dataWidth:w, dataHeight:h} = plot;
 
-    const ic1= makeImagePt(0,0);
-    const ic2= makeImagePt(w,0);
-    const ic3= makeImagePt(0,h);
-    const ic4= makeImagePt(w,h);
+    const ic1= makeImagePt(0+xy0Fitsll,0+xy0Fitsll);
+    const ic2= makeImagePt(w+xy0Fitsll,0+xy0Fitsll);
+    const ic3= makeImagePt(0+xy0Fitsll,h+xy0Fitsll);
+    const ic4= makeImagePt(w+xy0Fitsll,h+xy0Fitsll);
 
     const projName= plot.projection.getProjectionName();
     const cc= CysConverter.make(plot);
@@ -659,10 +659,10 @@ export function getCorners(plot) {
     const cc= CysConverter.make(plot);
     const {dataWidth:w, dataHeight:h} = plot;
 
-    const c1= cc.getWorldCoords(makeImagePt(0,0));
-    const c2= cc.getWorldCoords(makeImagePt(w,0));
-    const c3= cc.getWorldCoords(makeImagePt(w,h));
-    const c4= cc.getWorldCoords(makeImagePt(0,h));
+    const c1= cc.getWorldCoords(makeImagePt(0+xy0Fitsll,0+xy0Fitsll));
+    const c2= cc.getWorldCoords(makeImagePt(w+xy0Fitsll,0+xy0Fitsll));
+    const c3= cc.getWorldCoords(makeImagePt(w+xy0Fitsll,h+xy0Fitsll));
+    const c4= cc.getWorldCoords(makeImagePt(0+xy0Fitsll,h+xy0Fitsll));
     if (!c1 || !c2 || !c3 || !c4) return null;
     return [c1,c2,c3,c4];
 }
@@ -719,8 +719,8 @@ export function getFoV(pv, alternateZoomFactor) {
         return 360;
     }
     else { // not allsky image, but computation is outside of projection, use an alternate approach
-        const ip1=  cc.getWorldCoords(makeImagePt(0, 0));
-        const ip2=  cc.getWorldCoords(makeImagePt(plot.dataWidth, 0));
+        const ip1=  cc.getWorldCoords(makeImagePt(0+xy0Fitsll, 0+xy0Fitsll));
+        const ip2=  cc.getWorldCoords(makeImagePt(plot.dataWidth+xy0Fitsll, 0+xy0Fitsll));
         const idist= (ip1 && ip2) && computeDistance(ip1, ip2);
         if (!idist) return false;
         return (pv.viewDim.width/plot.screenSize.width) * idist;

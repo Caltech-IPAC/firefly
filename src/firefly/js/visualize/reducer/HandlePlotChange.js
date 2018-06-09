@@ -32,7 +32,7 @@ import {primePlot,
 import {makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {RotateType} from '../PlotState.js';
-import Point from '../Point.js';
+import Point, {xy0Fitsll} from '../Point.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 
@@ -196,7 +196,7 @@ function zoomStart(state, action) {
 
     // update zoom factor and scroll position
     const centerImagePt= isFitFill(userZoomType) ?
-                          makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
+                          makeImagePt(plot.dataWidth/2 + xy0Fitsll, plot.dataHeight/2 + xy0Fitsll) :
                           findCurrentCenterPoint(pv);
 
     pv= replacePrimaryPlot(pv,clonePlotWithZoom(plot,zoomLevel));
@@ -499,7 +499,7 @@ function updateViewSize(state,action) {
 
         if (plot) {
             centerImagePt= (pv.scrollX===-1 && pv.scrollY===-1) ?
-                makeImagePt(plot.dataWidth/2, plot.dataHeight/2) :
+                makeImagePt(plot.dataWidth/2 + xy0Fitsll, plot.dataHeight/2 + xy0Fitsll) :
                 findCurrentCenterPoint(pv);
         }
         const w= isUndefined(width) ? pv.viewDim.width : width;
@@ -511,7 +511,7 @@ function updateViewSize(state,action) {
         pv= updateTransform(pv);
 
         if (isHiPS(plot)) {
-            centerImagePt= makeImagePt( plot.dataWidth/2, plot.dataHeight/2);
+            centerImagePt= makeImagePt( plot.dataWidth/2 + xy0Fitsll, plot.dataHeight/2 + xy0Fitsll);
             pv= updatePlotViewScrollXY(pv, findScrollPtToCenterImagePt(pv,centerImagePt));
         }
         else if (state.wcsMatchType===WcsMatchType.Standard && state.mpwWcsPrimId!==plotId) {
@@ -585,7 +585,7 @@ function recenterPv(centerPt,  centerOnImage) {
                 centerImagePt = CCUtil.getImageCoords(plot, wp);
             }
             else {
-                centerImagePt = makeImagePt(plot.dataWidth / 2, plot.dataHeight / 2);
+                centerImagePt = makeImagePt(plot.dataWidth / 2 + xy0Fitsll, plot.dataHeight / 2 + xy0Fitsll);
             }
         }
 

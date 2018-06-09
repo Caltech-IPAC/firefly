@@ -12,7 +12,7 @@ import {WebPlot,PlotAttribute, RDConst, isImage} from '../WebPlot.js';
 import CsysConverter from '../CsysConverter.js';
 import VisUtils from '../VisUtil.js';
 import {PlotState} from '../PlotState.js';
-import Point, {makeImagePt} from '../Point.js';
+import Point, {makeImagePt, xy0Fitsll} from '../Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
@@ -428,10 +428,10 @@ function updateActiveTarget(plot) {
         const w= plot.dataWidth;
         const h= plot.dataHeight;
         const cc= CsysConverter.make(plot);
-        const pt1= cc.getWorldCoords(makeImagePt(0, 0));
-        const pt2= cc.getWorldCoords(makeImagePt(w, 0));
-        const pt3= cc.getWorldCoords(makeImagePt(w,h));
-        const pt4= cc.getWorldCoords(makeImagePt(0, h));
+        const pt1= cc.getWorldCoords(makeImagePt(0+xy0Fitsll, 0+xy0Fitsll));
+        const pt2= cc.getWorldCoords(makeImagePt(w+xy0Fitsll, 0+xy0Fitsll));
+        const pt3= cc.getWorldCoords(makeImagePt(w+xy0Fitsll, h+xy0Fitsll));
+        const pt4= cc.getWorldCoords(makeImagePt(0+xy0Fitsll, h+xy0Fitsll));
         if (pt1 && pt2 && pt3 && pt4) {
             corners= [pt1,pt2,pt3,pt4];
         }

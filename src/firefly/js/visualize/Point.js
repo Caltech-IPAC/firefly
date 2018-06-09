@@ -14,7 +14,8 @@ const OFFSET_PT= 'OffsetPt';
 
 const Point = {  SPT, IM_PT, IM_WS_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
 
-
+export const xy0Fits = 1;
+export const xy0Fitsll = xy0Fits-0.5;
 
 /**
  * @typedef {Object} Point
