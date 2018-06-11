@@ -337,7 +337,7 @@ export class CysConverter {
     makeIPtFromxZeroImPt(pt) {
         if (!pt) return null;
         const {ltv1,ltv2}= CysConverter.getLtv(this.projection.header);
-        return makeZeroBasedImagePt(pt.x+.5+ltv1, pt.y+.5+ltv2);
+        return makeImagePt(pt.x+.5+ltv1, pt.y+.5+ltv2);
     }
 
 

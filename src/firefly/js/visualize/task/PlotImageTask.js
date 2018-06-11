@@ -281,12 +281,12 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry}});
 
-        if (isEmpty(payload.oldOverlayPlotViews)) {
+        // if (isEmpty(payload.oldOverlayPlotViews)) {
             matchAndActivateOverlayPlotViewsByGroup(plotIdAry);
-        }
-        else {
-            matchAndActivateOverlayPlotViews(plotIdAry, payload.oldOverlayPlotViews);
-        }
+        // }
+        // else {
+        //     matchAndActivateOverlayPlotViews(plotIdAry, payload.oldOverlayPlotViews);
+        // }
 
 
         pvNewPlotInfoAry
@@ -450,7 +450,7 @@ export function initBuildInDrawLayers() {
  * @param {Object.<string, OverlayPlotView[]>} oldOverlayPlotViews
  */
 function matchAndActivateOverlayPlotViews(plotIdAry, oldOverlayPlotViews) {
-    plotIdAry.forEach( (plotId) => dispatchDeleteOverlayPlot({plotId, deleteAll:true}));
+    // plotIdAry.forEach( (plotId) => dispatchDeleteOverlayPlot({plotId, deleteAll:true}));
 
     plotIdAry
         .map( (plotId) => getPlotViewById(visRoot(), plotId))
