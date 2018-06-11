@@ -417,7 +417,7 @@ export class RegionFactory {
                     return prev;
                 }, []);
             } else {
-                pAry = desWithnoText.split(/\s+/);   // blank string is ignored
+                pAry = desWithnoText.trim().split(/\s+/);   // blank string is ignored
             }
 
             if (textRes.text) {
@@ -428,7 +428,7 @@ export class RegionFactory {
 
 
         if ( rIdx >= 0 && lIdx >= 0 && rIdx > lIdx ) {    // with ()
-            newdes = regionDes.slice(0, rIdx).replace('(', ' ').trim();
+            newdes = regionDes.slice(0, rIdx).replace('(', ' ').trim() + regionDes.slice(rIdx+1);
             return getParams(newdes);
         } else if (rIdx < 0 && lIdx < 0) {               // with no ()
             return getParams(regionDes);
