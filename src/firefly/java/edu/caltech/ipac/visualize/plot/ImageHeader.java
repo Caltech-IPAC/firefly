@@ -119,6 +119,9 @@ public class ImageHeader implements Serializable
 			maskHeaders.put(hc.getKey(), hc.getValue());
 			sendToClientHeaders.put(hc.getKey(), hc.getValue());
 		}
+		if (hc.getKey().startsWith("LTV") || hc.getKey().startsWith("CR")) {
+			sendToClientHeaders.put(hc.getKey(), hc.getValue());
+        }
 	}
 	hc= header.findCard("EXTTYPE");
 	if (hc!=null) sendToClientHeaders.put(hc.getKey(), hc.getValue());

@@ -16,6 +16,7 @@ import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
+import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
 
 import {reduxFlux} from './core/ReduxFlux.js';
@@ -146,6 +147,9 @@ function fireflyInit(props, options={}) {
     dispatchAppOptions(options);
     if (options.disableDefaultDropDown) {
         dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+    }
+    if (options.readoutDefaultPref) {
+        dispatchChangeReadoutPrefs(options.readoutDefaultPref);
     }
 
     // initialize UI or API depending on entry mode.

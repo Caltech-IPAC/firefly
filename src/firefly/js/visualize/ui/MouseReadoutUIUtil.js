@@ -109,7 +109,7 @@ export function getReadoutElement(readoutItems, readoutKey) {
             // return makeImagePtReturn(get(readoutItems, 'imagePt.value'));  // - if we rollback, restore this line
             return makeImagePtReturn(get(readoutItems, 'fitsImagePt.value'));
         case 'zeroIP' :
-            return makeImagePtReturn(get(readoutItems, 'lsstImagePt.value'));
+            return makeImagePtReturn(get(readoutItems, 'zeroBasedImagePt.value'));
         case 'healpixPixel' :
             const {healpixPixel}= readoutItems;
             return (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : '';
