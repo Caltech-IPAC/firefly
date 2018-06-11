@@ -2,12 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import CoordinateSys from './CoordSys.js';
+import {isUndefined} from 'lodash';
 import VisUtil from './VisUtil.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeImagePt,
                makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
 import {getPixScaleDeg} from './WebPlot.js';
+import {makeFitsImagePt, makeZeroBasedImagePt} from './Point';
 
 
 function convertToCorrect(wp) {
@@ -208,6 +210,11 @@ export class CysConverter {
             case Point.IM_WS_PT:
                 retval= pt;
                 break;
+            case Point.FITS_IM_PT:
+            case Point.ZERO_BASED_IM_PT:
+                const imPt= this.getImagePt(pt);
+                retval= makeImageWorkSpacePt(imPt.x, imPt.y);
+                break;
             case Point.IM_PT:
                 retval= makeImageWorkSpacePt(pt.x, pt.y);
                 break;
@@ -248,16 +255,35 @@ export class CysConverter {
 
     getFitsStandardImagePtFromInternal(pt) {
         const imPt= this.getImageCoords(pt);
-        return makeImagePt(imPt.x+.5, imPt.y+.5);
+        return makeFitsImagePt(imPt.x+.5, imPt.y+.5);
     }
 
-    getLsstStandardImagePtFromInternal(pt) {
+    getZeroBasedImagePtFromInternal(pt) {
+        const {ltv1,ltv2}= CysConverter.getLtv(this.projection.header);
         const imPt= this.getImageCoords(pt);
-        return makeImagePt(imPt.x-.5, imPt.y-.5);
+        return makeZeroBasedImagePt(imPt.x-.5-ltv1, imPt.y-.5-ltv2);
     }
 
     static convertFitsStandardImagePtToInternalImage(pt) {
         return makeImagePt(pt.x-.5, pt.y-.5);
+    }
+
+    static getLtv(header) {
+        const {LTV1,LTV2, CRVAL1A,CRVAL2A}= header;
+        let ltv1, ltv2;
+        if (!isNaN(Number(LTV1)) && !isNaN(Number(LTV2))) {
+            ltv1= Number(LTV1);
+            ltv2= Number(LTV2);
+        }
+        else if (!isNaN(Number(CRVAL1A)) && !isNaN(Number(CRVAL2A))) {
+            ltv1= -Number(CRVAL1A);
+            ltv2= -Number(CRVAL2A);
+        }
+        else {
+            ltv1= 0;
+            ltv2= 0;
+        }
+        return {ltv1,ltv2};
     }
 
     /**
@@ -281,6 +307,12 @@ export class CysConverter {
             case Point.IM_PT:
                 retval = pt;
                 break;
+            case Point.FITS_IM_PT:
+                retval= CysConverter.makeIPtFromFitsImPt(pt);
+                break;
+            case Point.ZERO_BASED_IM_PT:
+                retval= this.makeIPtFromxZeroImPt(pt);
+                break;
             case Point.W_PT:
                 retval = this.getImageCoordsFromWorldPt(pt);
                 break;
@@ -295,8 +327,17 @@ export class CysConverter {
      * returns {ImagePt}
      */
     static makeIPtFromIWPt(iwPt) {
-        if (!iwPt) return null;
-        return makeImagePt(iwPt.x, iwPt.y);
+        return iwPt ? makeImagePt(iwPt.x, iwPt.y) : null;
+    }
+
+    static makeIPtFromFitsImPt(pt) {
+        return pt ? makeImagePt(pt.x-.5, pt.y-.5) : null;
+    }
+
+    makeIPtFromxZeroImPt(pt) {
+        if (!pt) return null;
+        const {ltv1,ltv2}= CysConverter.getLtv(this.projection.header);
+        return makeZeroBasedImagePt(pt.x+.5+ltv1, pt.y+.5+ltv2);
     }
 
 
@@ -349,6 +390,8 @@ export class CysConverter {
             case Point.DEV_PT:
                 retval= pt;
                 break;
+            case Point.FITS_IM_PT:
+            case Point.ZERO_BASED_IM_PT:
             case Point.IM_WS_PT:
             case Point.IM_PT:
             case Point.W_PT:
@@ -414,6 +457,11 @@ export class CysConverter {
                 break;
             case Point.SPT:
                 retval= pt;
+                break;
+            case Point.FITS_IM_PT:
+            case Point.ZERO_BASED_IM_PT:
+                const imPt= this.getImagePt(pt);
+                retval= this.makeSPtFromIWPt(this.getImageWorkSpaceCoords(imPt), altZoomLevel);
                 break;
             case Point.IM_PT:
                 retval= this.makeSPtFromIWPt(this.getImageWorkSpaceCoords(pt), altZoomLevel);
@@ -541,6 +589,8 @@ export class CysConverter {
             case Point.IM_PT:
                 retval= this.makeWorldPtFromIPt(pt,outputCoordSys);
                 break;
+            case Point.FITS_IM_PT:
+            case Point.ZERO_BASED_IM_PT:
             case Point.IM_WS_PT:
             case Point.SPT:
             case Point.DEV_PT:
