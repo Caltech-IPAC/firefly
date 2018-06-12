@@ -173,8 +173,12 @@ public class ServerContext {
         CacheManager.setCacheProvider(EhcacheProvider.class.getName());
 
         // setup working area
+        File f = null;
         String workDirRoot = AppProperties.getProperty(WORK_DIR_PROP);
-        File f = StringUtils.isEmpty(workDirRoot) ? null : new File(workDirRoot);
+        if (!StringUtils.isEmpty(workDirRoot)) {
+            f = new File(workDirRoot);
+            if (!f.exists()) f.mkdirs();
+        }
         if (f == null || !f.canWrite()) {
             f = new File(System.getProperty("java.io.tmpdir"),"workarea");
         }
