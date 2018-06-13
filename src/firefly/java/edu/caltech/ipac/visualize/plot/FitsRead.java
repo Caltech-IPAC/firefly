@@ -7,7 +7,6 @@ import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.HeaderCardException;
-import nom.tam.fits.FitsFactory;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageData;
@@ -23,7 +22,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.nio.Buffer;
 
 
 /**
@@ -820,7 +818,7 @@ public class FitsRead implements Serializable {
          */
         if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ASINH) {
             stretchPixelsUsingAsin( startPixel, lastPixel,startLine,lastLine, naxis1, imageHeader,
-               float1dArray, pixeldata, rangeValues,slow,shigh);
+                    blank_pixel_value, float1dArray, pixeldata, rangeValues,slow,shigh);
 
 
         }
@@ -898,6 +896,7 @@ public class FitsRead implements Serializable {
                                       int lastLine,
                                       int naxis1,
                                       ImageHeader imageHeader,
+                                      byte blank_pixel_value,
                                       float[] float1dArray,
                                       byte[] pixeldata,
                                       RangeValues rangeValues,
@@ -919,11 +918,17 @@ public class FitsRead implements Serializable {
             minFlux = getFlux(minMax[1], imageHeader);
         }
         int pixelCount = 0;
+        double flux;
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
             int last_index = line * naxis1 + lastPixel;
             for (int index = start_index; index <= last_index; index++) {
-                pixeldata[pixelCount] =(byte)  getASinhStretchedPixelValue(getFlux(float1dArray[index], imageHeader), maxFlux, minFlux, beta);
+                flux = getFlux(float1dArray[index], imageHeader);
+                if (Double.isNaN(flux)) { //original pixel value is NaN, assign it to blank
+                    pixeldata[pixelCount] = blank_pixel_value;
+                } else {
+                    pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(flux, maxFlux, minFlux, beta);
+                }
                 pixelCount++;
             }
         }
@@ -1122,9 +1127,11 @@ public class FitsRead implements Serializable {
 
     private static double getPowerLawGammaStretchedPixelValue(double x, double gamma, double zp, double mp){
 
-        double  rd =  x-zp;
-        double  nsd = Math.pow(rd, 1.0 / gamma)/ Math.pow(mp - zp, 1.0 / gamma);
-        double pixValue = 255*nsd;
+        if (x <= zp) { return 0d; }
+        if (x >= mp) { return 254d; }
+        double rd = x - zp;
+        double nsd = Math.pow(rd, 1.0 / gamma) / Math.pow(mp - zp, 1.0 / gamma);
+        double pixValue = 255 * nsd;
 
         return pixValue;
 
@@ -1140,10 +1147,16 @@ public class FitsRead implements Serializable {
      *
      *   Since  mu_0 and a are constant, we can use just:
      *     mu =  asinh( flux/(2.0*b)) ) = asin(x/beta); where beta=2*b;
+     * @param flux
+     * @param maxFlux
+     * @param minFlux
      * @param beta
      * @return
      */
     private static double  getASinhStretchedPixelValue(double flux, double maxFlux, double minFlux, double beta)  {
+
+        if (flux <= minFlux) { return 0d; }
+        if (flux >= maxFlux) { return 254d; }
 
         /*
          Since the data range is from minFlux to maxFlux, we can shift the data to  the range [0 - (maxFlux-minFlux)].
@@ -1155,12 +1168,12 @@ public class FitsRead implements Serializable {
          max = (max-min) = asinh( maxFlux_new/beta) = asinh( (maxFlux-minFlux)/beta)
          diff = max - min = max
          */
-        double asinhMagnitude =  asinh( (flux-minFlux) / beta); //beta = 2*b
+        double asinhMagnitude = asinh((flux - minFlux) / beta); //beta = 2*b
 
         //normalize to 0 - 255:  (nCorlor-1 )*(x - Min)/(Max - Min), 8 bit nCorlor=256
         //this formula is referred from IDL function: BYTSCL
-        double diff =   asinh ( (maxFlux-minFlux)/beta );
-        return  255* asinhMagnitude/ diff ;
+        double diff = asinh((maxFlux - minFlux) / beta);
+        return 255 * asinhMagnitude / diff;
 
     }
 
