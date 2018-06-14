@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.NotLoggedInException;
 import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -17,9 +17,9 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacFileQuery;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.cache.Cache;
 
 import java.io.File;

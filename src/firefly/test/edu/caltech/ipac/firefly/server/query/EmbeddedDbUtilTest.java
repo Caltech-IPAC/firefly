@@ -3,8 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SortInfo;
@@ -12,11 +12,11 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.MappedData;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,10 +41,10 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 			HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
 			testFile = FileLoader.resolveFile(EmbeddedDbUtilTest.class, "/embedded_db_test.tbl");
-			DataGroup data = IpacTableReader.readIpacTable(testFile, "test");
+			DataGroup data = IpacTableReader.read(testFile);
 			EmbeddedDbUtil.createDbFile(dbFile,dbAdapter);
 			EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, "data");
-		} catch (IpacTableException | IOException e) {
+		} catch (IOException e) {
 			Assert.fail("Unable to ingest data into the database");
 		}
 	}
@@ -128,7 +128,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		treq.setSortInfo(new SortInfo("sigra"));
 		treq.setFilters(Arrays.asList("\"sigra\" < 0.06"));
 
-		IpacTableParser.MappedData selVals = EmbeddedDbUtil.getSelectedMappedData(treq, Arrays.asList(1, 3, 5), "dec", "clon+1", "RA(deg)");
+		MappedData selVals = EmbeddedDbUtil.getSelectedMappedData(treq, Arrays.asList(1, 3, 5), "dec", "clon+1", "RA(deg)");
 
 		Assert.assertEquals("13h29m56.55s", selVals.get(1, "clon+1"));
 		Assert.assertEquals(47.2321996, selVals.get(3, "dec"));

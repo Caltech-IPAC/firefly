@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.util;
 
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+
 /**
  * @author tatianag
  */

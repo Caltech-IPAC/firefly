@@ -8,7 +8,7 @@
 
 package edu.caltech.ipac.firefly.server.visualize.hips;
 
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataType;
 
 import java.util.HashMap;
 import java.util.Map;

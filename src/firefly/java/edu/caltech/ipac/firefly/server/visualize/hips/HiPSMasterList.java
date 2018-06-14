@@ -7,9 +7,9 @@ package edu.caltech.ipac.firefly.server.visualize.hips;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -23,8 +23,6 @@ import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS
 import java.io.File;
 import java.util.*;
 import java.io.IOException;
-
-import static edu.caltech.ipac.util.IpacTableUtil.*;
 
 /**
  * @author Cindy Wang

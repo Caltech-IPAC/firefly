@@ -1,10 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.util;
+package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -325,14 +326,16 @@ public class IpacTableUtil {
 
                     rval = line.substring(offset, endoffset);
                     val = rval.trim();
-                    dt.ensureMaxDataWidth(val.length());
                     if (!dt.isKnownType()) {
                         IpacTableUtil.guessDataType(dt, val);
                     }
 
                     row.setDataElement(dt, dt.convertStringToData(val));
                     if (tableDef.isSaveFormattedData() && val.length() > 0) {
-                        row.setFixedFormattedData(dt, rval.substring(1));
+                        row.setFixedFormattedData(dt, rval);
+                        dt.ensureMaxDataWidth(rval.length());
+                    } else {
+                        dt.ensureMaxDataWidth(val.length());
                     }
 
                     offset = endoffset;

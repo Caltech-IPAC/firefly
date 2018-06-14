@@ -3,19 +3,19 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.util.Assert;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -29,7 +29,7 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.CLIENT_REQ;
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.SERVER_REQ;
-import static edu.caltech.ipac.firefly.data.table.TableMeta.IS_FULLY_LOADED;
+import static edu.caltech.ipac.table.TableMeta.IS_FULLY_LOADED;
 
 
 /**

@@ -1,9 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.data.table;
+package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;

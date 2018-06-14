@@ -6,7 +6,8 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.MappedData;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
@@ -15,12 +16,11 @@ import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -44,8 +44,7 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.firefly.server.db.DbCustomFunctions.createCustomFunctions;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
-import static edu.caltech.ipac.util.DataGroup.ROW_IDX;
-import static edu.caltech.ipac.util.DataGroup.ROW_NUM;
+import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
 
 /**
  * @author loi
@@ -243,7 +242,7 @@ public class EmbeddedDbUtil {
      * @param cols              columns to return.  Will return all columns if not given.
      * @return
      */
-    public static IpacTableParser.MappedData getSelectedMappedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
+    public static MappedData getSelectedMappedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
         if (cols != null && cols.length > 0) {
             ArrayList<String> colsAry = new ArrayList<>(Arrays.asList(cols));
             if (!colsAry.contains(DataGroup.ROW_NUM)) {
@@ -252,7 +251,7 @@ public class EmbeddedDbUtil {
                 cols = colsAry.toArray(new String[colsAry.size()]);
             }
         }
-        IpacTableParser.MappedData results = new IpacTableParser.MappedData();
+        MappedData results = new MappedData();
         DataGroup data = getSelectedData(searchRequest, selRows, cols);
         for (DataObject row : data) {
             int idx = row.getIntData(DataGroup.ROW_NUM);

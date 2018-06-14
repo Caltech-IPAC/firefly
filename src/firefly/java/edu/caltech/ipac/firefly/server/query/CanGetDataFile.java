@@ -4,7 +4,7 @@
 
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 
 import java.io.File;

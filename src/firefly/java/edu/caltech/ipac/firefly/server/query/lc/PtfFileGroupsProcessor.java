@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -12,13 +12,11 @@ import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ptf.PtfFileRetrieve;
 import edu.caltech.ipac.firefly.server.query.ptf.PtfIbeResolver;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.table.MappedData;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -65,7 +63,7 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 
         List<String> types = new ArrayList<String>();
 
-        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
+        MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
 // because some columns below may not be in the resultset, we will select all(*) then determine if they exists.
 //                selectedRows, "oid", "pfilename", "fid", "pid", "ccdid", "ra", "dec");
 

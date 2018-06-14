@@ -1,9 +1,9 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.server.query.lc.PhaseFoldedLightCurve;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroup;
 import nom.tam.fits.FitsException;
 import org.junit.Assert;
 import org.junit.Test;

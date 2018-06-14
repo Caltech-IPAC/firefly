@@ -3,7 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.net.NedParams;
 import edu.caltech.ipac.astro.net.SimbadParams;
 import edu.caltech.ipac.astro.net.TargetNetwork;
@@ -20,10 +21,14 @@ import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableDef;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 import org.apache.commons.httpclient.URIException;
@@ -425,7 +430,7 @@ public class QueryUtil {
         final String DEC= "dec";
         String ra = null, dec = null, name = null;
         try {
-            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            DataGroup dg= TableUtil.readAnyFormat(ufile);
             if (dg != null) {
                 for (DataType dt: dg.getDataDefinitions()) {
                     if (dt.getKeyName().toLowerCase().equals("object") ||
@@ -490,7 +495,7 @@ public class QueryUtil {
         try {
             List<DataType> newCols = new ArrayList<DataType>();
             newCols.add(new DataType(CatalogRequest.UPDLOAD_ROW_ID, Integer.class));
-            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            DataGroup dg= TableUtil.readAnyFormat(ufile);
             if (dg == null) {
                 throw createEndUserException("Unable to read file:" + ufile.getName());
             }

@@ -1,12 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.HasAccessInfos;
-import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 /**

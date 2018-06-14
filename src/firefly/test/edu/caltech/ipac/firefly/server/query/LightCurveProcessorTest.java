@@ -3,16 +3,16 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.query.lc.IrsaLightCurveHandler;
 import edu.caltech.ipac.firefly.server.query.lc.LightCurveHandler;
 import edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -63,12 +63,12 @@ public class LightCurveProcessorTest extends ConfigTest {
         File p = t.getPeriodogramTable(req);
 
         try {
-            DataGroup inDataGroup = IpacTableReader.readIpacTable(p, "periodogram");
+            DataGroup inDataGroup = IpacTableReader.read(p);
             List<DataObject> dgjList = inDataGroup.values();
             DataType[] inColumns = inDataGroup.getDataDefinitions();
             Assert.assertTrue(inColumns.length + " is not 3", inColumns.length > 1);
             Assert.assertTrue("expected " + dgjList.size(), dgjList.size() > 0);
-        } catch (IpacTableException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -102,13 +102,13 @@ public class LightCurveProcessorTest extends ConfigTest {
         File peaks = t.getPeaksTable(req);
 
         try {
-            DataGroup inPeaksDataGroup = IpacTableReader.readIpacTable(peaks, "peaks");
+            DataGroup inPeaksDataGroup = IpacTableReader.read(peaks);
             DataType[] inColumns = inPeaksDataGroup.getDataDefinitions();
             Assert.assertTrue(inColumns.length + " is not 5", inColumns.length == 5);
             List<DataObject> dgjList = inPeaksDataGroup.values();
             inColumns = inPeaksDataGroup.getDataDefinitions();
             Assert.assertTrue("expected " + dgjList.size(), dgjList.size() == req.getNumberPeaks());
-        } catch (IpacTableException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -132,8 +132,8 @@ public class LightCurveProcessorTest extends ConfigTest {
 
         DataGroup inDataGroup = null;
         try {
-            inDataGroup = IpacTableReader.readIpacTable(rlc, "lc_raw");
-        } catch (IpacTableException e) {
+            inDataGroup = IpacTableReader.read(rlc);
+        } catch (IOException e) {
             e.printStackTrace();
         }
         List<DataObject> dgjListOrigin = inDataGroup.values();
@@ -142,7 +142,7 @@ public class LightCurveProcessorTest extends ConfigTest {
         File p = t.toPhaseFoldedTable(rlc, req.getPeriod(), req.getTimeColName());
 
         try {
-            inDataGroup = IpacTableReader.readIpacTable(p, "phasefolded");
+            inDataGroup = IpacTableReader.read(p);
             List<DataObject> dgjList = inDataGroup.values();
             DataType[] inColumnsPhaseFolded = inDataGroup.getDataDefinitions();
             //should be one more extra column (Phase)
@@ -158,7 +158,7 @@ public class LightCurveProcessorTest extends ConfigTest {
             double phaseExpected = (mjdTest - tzero) / period - Math.floor((mjdTest - tzero) / period);
 
             Assert.assertEquals(phaseExpected, phaseTested, 0.0001);
-        } catch (IpacTableException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 

@@ -1,8 +1,8 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
@@ -10,9 +10,9 @@ import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -343,7 +343,7 @@ class StatisticsProcessorOld extends IpacTablePartProcessor {
      */
     private  DataGroup  createTableStatistic(File file) throws IpacTableException, IOException, DataAccessException  {
 
-        DataGroup dg = IpacTableReader.readIpacTable(file, null, "inputTable" );
+        DataGroup dg = IpacTableReader.read(file);
         return createTableStatistic(dg);
 
     }

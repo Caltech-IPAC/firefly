@@ -3,22 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
-import edu.caltech.ipac.astro.InvalidStatementException;
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
+import edu.caltech.ipac.table.query.InvalidStatementException;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -242,7 +241,7 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
     }
 
     public static DataGroup getBaseGatorData(String originalFilename) throws IOException, DataAccessException {
-        return DataGroupReader.read(new File(ServerContext.getPermWorkDir(), originalFilename));
+        return IpacTableReader.read(new File(ServerContext.getPermWorkDir(), originalFilename));
     }
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {

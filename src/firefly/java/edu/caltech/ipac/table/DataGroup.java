@@ -1,9 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.util;
+package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.util.HREF;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.*;

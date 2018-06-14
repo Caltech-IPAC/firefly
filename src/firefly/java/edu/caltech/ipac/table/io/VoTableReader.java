@@ -1,9 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.util;
+package edu.caltech.ipac.table.io;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.util.FitsHDUUtil;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.VOStarTable;
 import uk.ac.starlink.votable.VOTableBuilder;
@@ -22,7 +27,7 @@ import java.util.Arrays;
  * @author loi
  * @version $Id: VoTableUtil.java,v 1.4 2013/01/07 22:10:01 tatianag Exp $
  */
-public class VoTableUtil {
+public class VoTableReader {
 
     private static final Pattern HMS_UCD_PATTERN =
             Pattern.compile( "POS_EQ_RA.*|pos\\.eq\\.ra.*",

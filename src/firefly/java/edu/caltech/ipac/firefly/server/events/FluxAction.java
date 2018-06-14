@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.events;
 
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.table.JsonTableUtil;
 import org.json.simple.JSONObject;
 import java.util.Arrays;
 

@@ -1,21 +1,12 @@
 package edu.caltech.ipac.firefly.util;
 
 
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.visualize.plot.*;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.Fits;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -103,7 +94,7 @@ public class FileLoader {
         try {
             File inFile = new File(getDataPath(cls) + tblFile);
 
-            return IpacTableReader.readIpacTable(inFile, null, "inputTable");
+            return IpacTableReader.read(inFile);
         }
         catch (Exception e){
             e.printStackTrace();

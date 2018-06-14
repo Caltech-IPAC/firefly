@@ -2,8 +2,11 @@ package edu.caltech.ipac.firefly.server.util;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -33,8 +36,8 @@ public class ConcurrentSearchUtil {
      * @throws CloneNotSupportedException
      */
 
-    public static DataGroup doSearch( Callable<DataGroup>[] workers, int nThread, DataGroup inDg,
-                 String raCol, String decCol) throws TimeoutException, CloneNotSupportedException {
+    public static DataGroup doSearch(Callable<DataGroup>[] workers, int nThread, DataGroup inDg,
+                                     String raCol, String decCol) throws TimeoutException, CloneNotSupportedException {
 
 
         ExecutorService executor =  Executors.newFixedThreadPool(nThread);
@@ -213,7 +216,7 @@ public class ConcurrentSearchUtil {
             File uploadFile = ServerContext.convertToFile(filename);
             if (uploadFile.canRead()) {
                 //can read .tbl or .csv file
-                return  DataGroupReader.readAnyFormat(uploadFile);
+                return  TableUtil.readAnyFormat(uploadFile);
             }
         }
         if (badParam) {

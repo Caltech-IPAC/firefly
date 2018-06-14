@@ -1,7 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.util;
+package edu.caltech.ipac.table;
+
+import edu.caltech.ipac.util.HREF;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -269,7 +272,10 @@ public class DataType implements Serializable, Cloneable {
             StringUtils.Align align = isNumeric ? StringUtils.Align.RIGHT : StringUtils.Align.LEFT;
             return StringUtils.pad(width, value, align);
         } else {
-            return value.substring(0, width);
+            value = value.trim();
+            if (value.length() > width) value = value.substring(0, width);
+            StringUtils.Align align = isNumeric ? StringUtils.Align.RIGHT : StringUtils.Align.LEFT;
+            return StringUtils.pad(width, value, align);
         }
     }
 

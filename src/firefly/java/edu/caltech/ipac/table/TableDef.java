@@ -1,8 +1,6 @@
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import javafx.util.Pair;
 

@@ -1,11 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.astro;
+package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import nom.tam.fits.Fits;
 import nom.tam.fits.Header;
 import nom.tam.fits.BinaryTable;
@@ -75,7 +74,7 @@ public final class IpacTableToFITS
 
 	File file = new File(Ipac_filename);
 
-	data_group = IpacTableReader.readIpacTable(file, null);
+	data_group = IpacTableReader.read(file);
 
 	Fits f = convertToFITS(data_group);
 	    if (debug)

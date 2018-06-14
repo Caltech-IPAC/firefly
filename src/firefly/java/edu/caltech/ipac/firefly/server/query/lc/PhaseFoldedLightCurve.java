@@ -1,12 +1,12 @@
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +94,7 @@ public class PhaseFoldedLightCurve {
             try {
                 File inFile = new File(args[0]);
                 //Get a datagroup from the IPAC table file:
-                DataGroup dataGroup = DataGroupReader.readAnyFormat(inFile);
+                DataGroup dataGroup = TableUtil.readAnyFormat(inFile);
 
                 //Add the new phase column:
                 PhaseFoldedLightCurve pflc = new PhaseFoldedLightCurve();

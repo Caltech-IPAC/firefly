@@ -3,14 +3,17 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -24,8 +27,8 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.data.table.TableMeta.DESC_TAG;
-import static edu.caltech.ipac.firefly.data.table.TableMeta.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.DESC_TAG;
+import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 
 /**
  * @author tatianag

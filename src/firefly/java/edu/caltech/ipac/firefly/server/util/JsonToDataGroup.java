@@ -1,9 +1,8 @@
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 

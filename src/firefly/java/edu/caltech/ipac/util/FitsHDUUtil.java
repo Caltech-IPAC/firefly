@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.util;
 
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import org.json.simple.JSONObject;
 import nom.tam.fits.Fits;

@@ -1,13 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.astro;
+package edu.caltech.ipac.table.query;
 
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataGroupQuery;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.io.BufferedOutputStream;
@@ -135,16 +137,16 @@ public class DataGroupQueryStatement {
         return results;
     }
 
-    public DataGroup getFromData() throws IpacTableException {
+    public DataGroup getFromData() throws IOException {
         if (getFromFile() == null) return null;
 
-        return IpacTableReader.readIpacTable(getFromFile(), null, "Source Table");
+        return IpacTableReader.read(getFromFile());
     }
 
-    public DataGroup getIntoData() throws IpacTableException {
+    public DataGroup getIntoData() throws IOException {
         if (getIntoFile() == null) return null;
 
-        return IpacTableReader.readIpacTable(getIntoFile(), "From Select Statement");
+        return IpacTableReader.read(getIntoFile());
     }
 
     public void validate() throws InvalidStatementException {

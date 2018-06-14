@@ -3,15 +3,15 @@
  */
 package edu.caltech.ipac.firefly.server.util.tables;
 
-import edu.caltech.ipac.astro.FITSTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.io.FITSTableReader;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.TestCategory;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 
 import nom.tam.fits.FitsException;
 import org.junit.Assert;
@@ -31,14 +31,14 @@ import java.util.List;
  */
 public class DataGroupReadTest {
 
-    private static final File largeIpacTable = new File("/hydra/cm/firefly_test_data/large-ipac-tables/wise-950000.tbl"); //FileLoader.resolveFile(DataGroupReadTest.class, "50k.tbl");
+    private static final File largeIpacTable = FileLoader.resolveFile(DataGroupReadTest.class, "50k.tbl");
     private static final File ipacTable = FileLoader.resolveFile(DataGroupReadTest.class, "DataGroupTest.tbl");
     private static final File voTable = FileLoader.resolveFile(DataGroupReadTest.class, "p3am_cdd.xml");
     private static final File fitsTable = FileLoader.resolveFile(DataGroupReadTest.class, "lsst-table.fits");
 
     @Test
     public void ipacTable() throws IOException {
-        DataGroup data = DataGroupReader.read(ipacTable);
+        DataGroup data = IpacTableReader.read(ipacTable);
         Assert.assertNotNull(data);
 
         // test col header
@@ -68,7 +68,7 @@ public class DataGroupReadTest {
 
     @Test
     public void voTable() throws IOException {
-        DataGroup data = VoTableUtil.voToDataGroups(voTable.getPath())[0];
+        DataGroup data = VoTableReader.voToDataGroups(voTable.getPath())[0];
         Assert.assertNotNull(data);
         Assert.assertEquals("Number of rows", 40, data.size());
         Assert.assertEquals("Number of columns", 20, data.getDataDefinitions().length);
@@ -100,7 +100,7 @@ public class DataGroupReadTest {
         long beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         long start = System.currentTimeMillis();
 
-        DataGroup data = DataGroupReader.read(largeIpacTable);
+        DataGroup data = IpacTableReader.read(largeIpacTable);
         long elapsed = System.currentTimeMillis() - start;
         long usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
         Runtime.getRuntime().gc();

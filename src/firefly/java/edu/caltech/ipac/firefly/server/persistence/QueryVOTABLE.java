@@ -3,18 +3,18 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 
@@ -24,8 +24,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static edu.caltech.ipac.firefly.data.table.TableMeta.DESC_TAG;
-import static edu.caltech.ipac.firefly.data.table.TableMeta.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.DESC_TAG;
+import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 
 /**
  * @author tatianag
@@ -55,7 +55,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
 
         try {
             File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
-            DataGroup[] groups = VoTableUtil.voToDataGroups(votable.getAbsolutePath(), false);
+            DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), false);
             DataGroup dg;
             if (groups.length<1) {
                 dg = new DataGroup("empty",new DataType[]{new DataType("empty", String.class)});

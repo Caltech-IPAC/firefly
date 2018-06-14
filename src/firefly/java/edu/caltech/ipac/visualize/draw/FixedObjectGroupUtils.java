@@ -3,17 +3,17 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
+import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.apache.xmlbeans.XmlAnySimpleType;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 import org.usVo.xml.voTable.*;
+import org.usVo.xml.voTable.DataType;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -103,19 +103,19 @@ public class FixedObjectGroupUtils {
         String tableDesc= cleanXML(resource.getDESCRIPTION());
         TABLEDocument.TABLE table[] = resource.getTABLEArray();
         if (table == null || table.length == 0) {
-            return new DataGroup("No Data", new ArrayList<edu.caltech.ipac.util.DataType>(0));
+            return new DataGroup("No Data", new ArrayList<edu.caltech.ipac.table.DataType>(0));
         }
         FIELDDocument.FIELD fields[] = table[0].getFIELDArray();
         if (tableDesc==null) tableDesc= cleanXML(table[0].getDESCRIPTION());
         DATADocument.DATA data= table[0].getDATA();
         if (data == null) {
-            return new DataGroup("No Data", new ArrayList<edu.caltech.ipac.util.DataType>(0));
+            return new DataGroup("No Data", new ArrayList<edu.caltech.ipac.table.DataType>(0));
         }
         TABLEDATADocument.TABLEDATA tabledata = data.getTABLEDATA();
 
-        edu.caltech.ipac.util.DataType dType;
-        List<edu.caltech.ipac.util.DataType> dTypeList=
-                  new ArrayList<edu.caltech.ipac.util.DataType>(fields.length);
+        edu.caltech.ipac.table.DataType dType;
+        List<edu.caltech.ipac.table.DataType> dTypeList=
+                  new ArrayList<edu.caltech.ipac.table.DataType>(fields.length);
        String fieldID;
         for(FIELDDocument.FIELD field: fields){
             DataType.Enum sType= field.getDatatype();
@@ -152,7 +152,7 @@ public class FixedObjectGroupUtils {
                             String.class : getTranslateDatatype(sType);
             }
 
-            dType=  new edu.caltech.ipac.util.DataType(fieldID, cType, title, field.getUnit(), null, null);
+            dType=  new edu.caltech.ipac.table.DataType(fieldID, cType, title, field.getUnit(), null, null);
 
             AnyTEXT descAry[]= field.getDESCRIPTIONArray();
             if (descAry.length>0) {
@@ -216,7 +216,7 @@ public class FixedObjectGroupUtils {
         String decField[]= makeDecFieldAry(pgList);
 
         // might be dangerous if pgList is not used
-        for (edu.caltech.ipac.util.DataType dType : dataGroup.getDataDefinitions()) {
+        for (edu.caltech.ipac.table.DataType dType : dataGroup.getDataDefinitions()) {
             Class cType = dType.getDataType();
             if (cType==String.class &&
                     (ServerStringUtil.matchesRegExpList(dType.getKeyName(), raField, true)  ||
@@ -390,10 +390,10 @@ public class FixedObjectGroupUtils {
 
 
     private static  void guessUndefinedTypes(DataGroup dataGroup) {
-        edu.caltech.ipac.util.DataType dTypeAry[]=
+        edu.caltech.ipac.table.DataType dTypeAry[]=
                                        dataGroup.getDataDefinitions();
         boolean guessed;
-        for(edu.caltech.ipac.util.DataType dataType: dTypeAry) {
+        for(edu.caltech.ipac.table.DataType dataType: dTypeAry) {
             if (dataType.getDataType()==null) {
                 guessed=  guessDataType(dataGroup,dataType);
                 if (guessed) {
@@ -405,7 +405,7 @@ public class FixedObjectGroupUtils {
     }
 
     private static boolean guessDataType(DataGroup dataGroup,
-                               edu.caltech.ipac.util.DataType dataType) {
+                               edu.caltech.ipac.table.DataType dataType) {
 
         boolean       useFloatsForDoubles= false;
         Class         guessClass    = Object.class;
@@ -448,7 +448,7 @@ public class FixedObjectGroupUtils {
 
     private static void setAllInColumnToType(
                                   DataGroup dataGroup,
-                                  edu.caltech.ipac.util.DataType dataType) {
+                                  edu.caltech.ipac.table.DataType dataType) {
         Object        data;
         Assert.tst( dataType.isKnownType());
         for(DataObject dataObj: dataGroup) {

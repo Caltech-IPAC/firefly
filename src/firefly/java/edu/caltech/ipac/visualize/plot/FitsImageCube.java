@@ -1,9 +1,9 @@
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import nom.tam.fits.*;
 
 import java.io.File;

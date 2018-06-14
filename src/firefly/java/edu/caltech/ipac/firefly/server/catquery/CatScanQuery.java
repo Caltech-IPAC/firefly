@@ -5,15 +5,15 @@ package edu.caltech.ipac.firefly.server.catquery;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -23,8 +23,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.data.table.TableMeta.VISI_TAG;
-import static edu.caltech.ipac.firefly.data.table.TableMeta.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.VISI_TAG;
+import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 
 /**
  * Date: Nov 11, 2010

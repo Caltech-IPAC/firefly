@@ -3,22 +3,22 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.ws.WsResponse;
 import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -175,7 +175,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             if (fType != null && fType == FileType.TABLE) {
                 uf = File.createTempFile("upload_", ".tbl", destDir); // cleaned ipac file.
                 rPathInfo = ServerContext.replaceWithPrefix(uf);
-                DataGroup dg = DataGroupReader.readAnyFormat(fi.getFile(), 0);
+                DataGroup dg = TableUtil.readAnyFormat(fi.getFile(), 0);
                 IpacTableWriter.save(uf, dg);
                 fi = new UploadFileInfo(rPathInfo, uf, fileName, (file != null ? file.getContentType() : null));
             }
@@ -210,8 +210,8 @@ public class AnyFileUpload extends BaseHttpServlet {
         File f = fi.getFile();
         long size = f.length();
 
-        DataGroupReader.Format fileFormat = DataGroupReader.guessFormat(f);
-        DataGroup dgAnalysis = DataGroupReader.readAnyFormatHeader(f, fileFormat);
+        TableUtil.Format fileFormat = TableUtil.guessFormat(f);
+        DataGroup dgAnalysis = TableUtil.readAnyFormatHeader(f, fileFormat);
         if (dgAnalysis != null) {
             analysisSummary = dgAnalysis.getTitle();
             if (!analysisSummary.contains("invalid")) {
@@ -299,7 +299,7 @@ public class AnyFileUpload extends BaseHttpServlet {
 //        }
 //    }
 
-    private static JSONObject toJsonAnalysisTableModel(DataGroup dg, DataGroupReader.Format ff, long size ) {
+    private static JSONObject toJsonAnalysisTableModel(DataGroup dg, TableUtil.Format ff, long size ) {
         JSONObject tableModel = new JSONObject();
         JSONObject tableData = JsonTableUtil.toJsonTableData(dg, null);
         String tblId =  "UPLOAD_ANALYSIS";

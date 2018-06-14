@@ -1,36 +1,113 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
-
+import static edu.caltech.ipac.table.IpacTableUtil.makeAttributes;
 
 /**
- * Writes a DataGroup into an IPAC table file.  This class support different handlers.
- * IpacTableHandler: This default handler works like a typical synchronous method where the control is returned after
- * the whole file is written to disk.
- * BgIpacTableHandler:  add the ability to background the write process after a page of data is written.
- * FilterHandler: subclass from BgIpacTableHandler; in-place filtering with background option.
+ * This class handles an action to save a catalog in IPAC table format to local file.
+ *
+ * @author Xiuqin Wu
+ * @see DataGroup
+ * @see DataObject
+ * @see DataType
+ * @version $Id: IpacTableWriter.java,v 1.11 2012/08/10 20:58:28 tatianag Exp $
  */
-public class DataGroupWriter {
+public class IpacTableWriter {
+
     private static Logger.LoggerImpl LOG = Logger.getLogger();
 
-
-    public static void write(File outFile, DataGroup source) throws IOException {
-        source.shrinkToFitData();
-        write(new IpacTableHandler(outFile, source));
+    /**
+     * save the catalogs to a file
+     *
+     * @param file the file name to be saved
+     * @param dataGroup data group
+     * @throws IOException on error
+     */
+    public static void save(File file, DataGroup dataGroup)
+        throws IOException {
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter(new BufferedWriter(new FileWriter(file), IpacTableUtil.FILE_IO_BUFFER_SIZE));
+            save(out, dataGroup, false);
+        } finally {
+            if (out != null) out.close();
+        }
     }
 
-    public static void write(IpacTableHandler handler) throws IOException {
+    /**
+     * save the catalogs to a stream, stream is not closed
+     *
+     * @param stream the output stream to write to
+     * @param dataGroup data group
+     * @throws IOException on error
+     */
+    public static void save(OutputStream stream, DataGroup dataGroup)
+            throws IOException {
+        save(stream, dataGroup, false);
+    }
+
+    /**
+     * save the catalogs to a stream, stream is not closed
+     *
+     * @param stream the output stream to write to
+     * @param dataGroup data group
+     * @param ignoreSysMeta ignore meta use by system.
+     * @throws IOException on error
+     */
+    public static void save(OutputStream stream, DataGroup dataGroup, boolean ignoreSysMeta)
+            throws IOException {
+        save(new PrintWriter(new BufferedOutputStream(stream, IpacTableUtil.FILE_IO_BUFFER_SIZE)), dataGroup, ignoreSysMeta);
+    }
+
+    private static void save(PrintWriter out, DataGroup dataGroup, boolean ignoreSysMeta) throws IOException {
+        dataGroup.shrinkToFitData();
+        List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
+        int totalRow = dataGroup.size();
+
+        if (ignoreSysMeta) {
+            // this should return only visible columns
+            headers = headers.stream().filter((dt) -> IpacTableUtil.isVisible(dataGroup, dt)).collect(Collectors.toList());
+        }
+
+        IpacTableUtil.writeAttributes(out, dataGroup.getKeywords(), ignoreSysMeta);
+        IpacTableUtil.writeHeader(out, headers);
+
+        for (int i = 0; i < totalRow; i++) {
+            IpacTableUtil.writeRow(out, headers, dataGroup.get(i));
+        }
+        out.flush();
+    }
+
+//====================================================================
+//  async option to write in the background after
+//====================================================================
+
+    public static void asyncSave(IpacTableHandler handler) throws IOException {
         try {
             WriteTask task = new WriteTask(handler);
             Thread t = new Thread(task);
@@ -40,10 +117,6 @@ public class DataGroupWriter {
         } catch (InterruptedException e) {
             LOG.info("DataGroupWriter interrupted:" + e.getMessage());
         }
-    }
-
-    public static void writeStatus(PrintWriter writer, DataGroupPart.State status) {
-        writer.println("\\" + DataGroupPart.LOADING_STATUS + " = " + status + "                           ");
     }
 
     public static void insertStatus(File outf, DataGroupPart.State state) {
@@ -67,6 +140,9 @@ public class DataGroupWriter {
         }
     }
 
+    public static void writeStatus(PrintWriter writer, DataGroupPart.State status) {
+        writer.println("\\" + DataGroupPart.LOADING_STATUS + " = " + status + "                           ");
+    }
 
     public interface Handler {
         void onStart() throws InterruptedException;
@@ -173,6 +249,10 @@ public class DataGroupWriter {
         }
     }
 
-}
 
+    // ============================================================
+    // ----------------------------------- Private Methods ---------------------------------------
+    // ============================================================
+
+}
 

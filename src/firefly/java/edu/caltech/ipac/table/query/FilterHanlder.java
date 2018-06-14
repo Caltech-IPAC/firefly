@@ -1,16 +1,18 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table.query;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.io.BgIpacTableHandler;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -65,7 +67,7 @@ public class FilterHanlder extends BgIpacTableHandler {
 
             CollectionUtil.Filter<DataObject> filters [] = new CollectionUtil.Filter[1];
             filters[1] = filter;
-            DataGroupWriter.write(new FilterHanlder(new File(in.getParent(), in.getName() + ".out"), in, filters, request));
+            IpacTableWriter.asyncSave(new FilterHanlder(new File(in.getParent(), in.getName() + ".out"), in, filters, request));
         } catch (Exception e) {
             e.printStackTrace();
         }

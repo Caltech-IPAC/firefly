@@ -1,12 +1,20 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.util;
+package edu.caltech.ipac.table.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.DataObjectUtil;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.io.BufferedOutputStream;
@@ -95,7 +103,7 @@ public class DataGroupQuery {
         }
         doQuery(src, new FileOutputStream(dest), addedAttributes);
         if (orderBy != null && orderBy.length > 0 && !(sortDir.equals(SortDir.NONE))) {
-            DataGroup newDG = IpacTableReader.readIpacTable(dest, "doQuery");
+            DataGroup newDG = IpacTableReader.read(dest);
             sort(newDG, sortDir, true, orderBy);
             IpacTableWriter.save(dest, newDG);
         }

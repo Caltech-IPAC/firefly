@@ -1,13 +1,16 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.*;
 
 import java.io.File;
@@ -90,7 +93,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             if (args.length > 0) {
                 try {
                     File inFile = new File(args[0]);
-                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "inputTable");
+                    DataGroup dg = IpacTableReader.read(inFile);
 
                     HistogramProcessor hp = new HistogramProcessor();
                     hp.columnName = "f_y";
@@ -102,7 +105,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                     File outFile = new File(outFileName);
                     IpacTableWriter.save(outFile, outDg);
 
-                } catch (IpacTableException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
