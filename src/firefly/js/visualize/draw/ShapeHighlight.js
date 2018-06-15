@@ -14,6 +14,7 @@ import {isHiPS} from '../WebPlot.js';
 const doAry = 'drawObjAry';
 export const defaultDashline = [8, 5, 2, 5];
 
+/*
 export const isPointInView = (pt, cc) => {
     if (!pt) return false;
     if (isHiPS(cc)) {
@@ -28,9 +29,8 @@ export const isPointInView = (pt, cc) => {
     } else {
         return cc.pointInData(pt);
     }
-
 };
-
+*/
 // in image coordinate or screen coordinate
 var areaObj = (min_x, max_x, min_y, max_y, unit = ShapeDataObj.UnitType.IMAGE_PIXEL) => {
     var c_x = (min_x + max_x) / 2;
@@ -111,7 +111,7 @@ export function isDrawobjAreaInView(cc, drawObj = null, coverArea = null, def={}
         const y = center.y + c[1] * height / 2;
         const cornerP = Object.assign(new SimplePt(x, y), {type: center.type});
 
-        return !isPointInView(cornerP, cc);
+        return !cc.pointInView(cornerP);
     });
 
     return !cornerNotInView;

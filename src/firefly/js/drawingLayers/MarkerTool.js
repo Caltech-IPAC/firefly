@@ -15,7 +15,7 @@ import {getWorldOrImage, makeMarker, findClosestIndex,  updateFootprintTranslate
         updateFootprintDrawobjText, updateFootprintOutline,  lengthSizeUnit,
         MARKER_DISTANCE, OutlineType, MarkerType, ROTATE_BOX} from '../visualize/draw/MarkerFootprintObj.js';
 import {getMarkerToolUIComponent} from './MarkerToolUI.jsx';
-import {getDrawobjArea, isPointInView} from '../visualize/draw/ShapeHighlight.js';
+import {getDrawobjArea} from '../visualize/draw/ShapeHighlight.js';
 import ShapeDataObj, {lengthToScreenPixel, lengthToArcsec} from '../visualize/draw/ShapeDataObj.js';
 import {makeDevicePt, makeImagePt} from '../visualize/Point.js';
 import {clone} from '../util/WebUtil.js';
@@ -46,7 +46,7 @@ export var initMarkerPos = (plot, cc) => {
 
     if (!cc) cc = CsysConverter.make(plot);
 
-    if (!pos || !isPointInView(getWorldOrImage(pos, cc), cc)) {
+    if (!pos || !cc.pointInView(getWorldOrImage(pos, cc))) {
         pos = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
     }
     return getWorldOrImage(pos, cc);
@@ -130,7 +130,7 @@ export function markerToolStartActionCreator(rawAction) {
             refPt = imagePt;                   // refPt is used as the reference point for next relocation
         }
 
-        if (nextStatus && isPointInView(refPt, cc)) {
+        if (nextStatus && cc.pointInView(refPt)) {
             showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_START, plotId, nextStatus, markerInterval,
                                drawLayerId, {isOutline: true, isResize:true}, wpt, evenSize(currentSize), refPt, move);
         }
@@ -181,7 +181,7 @@ export function markerToolMoveActionCreator(rawAction) {
         cancelTimeoutProcess(timeoutProcess);
 
         if (markerStatus === MarkerStatus.resize)  {               // mmarker stay at current point, and change size
-            if (!isPointInView(getWorldOrImage(imagePt, cc), cc)) return;               // resize stops
+            if (!cc.pointInView(getWorldOrImage(imagePt, cc))) return;               // resize stops
 
             var imgUnit = ShapeDataObj.UnitType.IMAGE_PIXEL;
 
@@ -202,7 +202,7 @@ export function markerToolMoveActionCreator(rawAction) {
                 dy = imagePt.y - prePt.y;
                 wpt = getWorldOrImage(makeImagePt(imageCenter.x + dx, imageCenter.y + dy), cc);
 
-                if (!isPointInView(wpt, cc)) {  // HiPS plot, wpt is out of range, no move
+                if (!cc.pointInView(wpt)) {  // HiPS plot, wpt is out of range, no move
                     //if (isHiPS(cc)) rotateHiPSImage(cc, imageCenter, null, dx, dy);
                     dx = 0;
                     dy = 0;
@@ -221,7 +221,7 @@ export function markerToolMoveActionCreator(rawAction) {
         }
 
         // resize (newDize) or relocate (wpt),  status remains the same
-        if (!isEmpty(move) && isPointInView(refPt, cc)) {
+        if (!isEmpty(move) && cc.pointInView(refPt)) {
             showMarkersByTimer(dispatcher, DrawLayerCntlr.MARKER_MOVE, plotId,
                 markerStatus, 0, drawLayerId, isHandle, wpt, newSize, refPt, move);
         }

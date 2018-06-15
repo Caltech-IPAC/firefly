@@ -8,7 +8,7 @@ import {CoordinateSys} from '../CoordSys.js';
 import ShapeDataObj, {lengthToImagePixel, lengthToScreenPixel,
        lengthToArcsec, makePoint, drawText, makeTextLocationComposite, flipTextLocAroundY} from './ShapeDataObj.js';
 import {POINT_DATA_OBJ, getPointDataobjArea, makePointDataObj, DrawSymbol} from './PointDataObj.js';
-import {getDrawobjArea, isWithinPolygon, isPointInView, isDrawobjAreaInView} from './ShapeHighlight.js';
+import {getDrawobjArea, isWithinPolygon, isDrawobjAreaInView} from './ShapeHighlight.js';
 import {defaultMarkerTextLoc} from '../../drawingLayers/MarkerToolUI.jsx';
 import {defaultFootprintTextLoc} from '../../drawingLayers/FootprintToolUI.jsx';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
@@ -525,7 +525,7 @@ function getObjArea(obj, cc, onlyCheckCenter = false) {
 
     if (!centerPt ||
         (!onlyCheckCenter &&
-            (!isPointInView(centerPt, cc) || !isDrawobjAreaInView(cc, null, area)))) {    // in case the cover area is out of plot area
+            (!cc.pointInView(centerPt) || !isDrawobjAreaInView(cc, null, area)))) {    // in case the cover area is out of plot area
         return null;
     }
 
@@ -567,7 +567,7 @@ var rectCornerInView = (drawObj, cc) => {
     return corners.reduce( (prev, corner) =>
     {
         var rCorner = corner ? simpleRotateAroundPt(cc.getImageCoords(corner), cc.getImageCoords(pts[0]), -rotAngle, Point.IM_PT) : null;
-        if (rCorner && isPointInView(rCorner, cc)) {
+        if (rCorner && cc.pointInView(rCorner)) {
             prev++;
         }
         return prev;
@@ -598,7 +598,7 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
     var {originalOutlineBox:tryOutline} = drawObj;
     var angle = getMarkerAngleInRad(drawObj);
 
-    if (!isPointInView(drawObj.pts[0], cc)) {
+    if (!cc.pointInView(drawObj.pts[0])) {
         return null;
     }
 
@@ -621,7 +621,7 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
                     var rCenterPt = simpleRotateAroundPt(cc.getImageCoords(centerPt), cc.getImageCoords(drawObj.pts[0]),
                                                          -angle, Point.IM_PT);
 
-                    if (!isPointInView(rCenterPt, cc)) {
+                    if (!cc.pointInView(rCenterPt)) {
                         tryOutline = null;
                     } else {
                         tryOutline = ShapeDataObj.makeRectangleByCenter(getWorldOrImage(rCenterPt, cc), width, height, ut,
@@ -892,7 +892,7 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
 
         // bottom center of the handle
         const handleBottom = getWorldOrImage(hBottom, cc);
-        if (!isPointInView(handleBottom, cc)  || !isPointInView(getWorldOrImage(hCenter, cc), cc)) continue;
+        if (!cc.pointInView(handleBottom)  || !cc.pointInView(getWorldOrImage(hCenter, cc))) continue;
 
         // test if all cornres of the circle at the handle after rotation are seen
         const cCenter = makeScreenPt((ends[0].x + ends[1].x)/2 + circleLoc[i][0] * ROTATE_BOX,
@@ -902,9 +902,9 @@ function createRotateHandle(outlineBox, cc, rotAngle) {
             var vp = makeScreenPt(cCenter.x + c[0] * ROTATE_BOX * 0.25, cCenter.y + c[1] * ROTATE_BOX * 0.25);
             var rVp = simpleRotateAroundPt(vp, hBottom, rotAngle, Point.SPT);
 
-            return !isPointInView(getWorldOrImage(rVp, cc), cc);
+            return !cc.pointInView(getWorldOrImage(rVp, cc));
         });
-        if (hNotInView >= 0 || !isPointInView(hBottom, cc)) continue;
+        if (hNotInView >= 0 || !cc.pointInView(hBottom)) continue;
 
         rotateObj = makePointDataObj(handleBottom, ROTATE_BOX, DrawSymbol.ROTATE);
 
@@ -1116,12 +1116,9 @@ function drawFootprintText(drawObj, plot, def, ctx) {
                     objArea.height * plot.zoomFactor,
                     objArea.centerPt);
                 if (textPt) {
-                    drawText(drawObj, ctx, plot, textPt, drawParams);
-                    if (drawObj.pointNotInDisplay) {
-                        drawObj.pointNotInDisplay = undefined;
-                        continue;   // draw text fails, try next location
+                    if (drawText(drawObj, ctx, plot, textPt, drawParams)) {
+                        break;   // text is drawn
                     }
-                    break;
                 }
             }
         }
@@ -1551,7 +1548,7 @@ export function getScreenDistToMarker(drawObj, plot, pt) {
          } else if (drawObj.sType === ShapeDataObj.ShapeType.Circle) {
              var r = lengthToScreenPixel(drawObj.radius, plot, drawObj.unitType);
 
-             if (isPointInView(drawObj.pts[0], plot)) {
+             if (plot.pointInView(drawObj.pts[0])) {
                  cScreen = plot.getScreenCoords(drawObj.pts[0]);
                  distance = distToPt(cScreen.x, cScreen.y);
                  distance = distance > r ? distance - r : 0;

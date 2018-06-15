@@ -646,9 +646,10 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
  * @param plot
  * @param inPt
  * @param drawParams
+ * @return {boolean} text is drawn or not
  */
 export function drawText(drawObj, ctx, plot, inPt, drawParams) {
-    if (!inPt) return;
+    if (!inPt) return false;
     
     const {text, textOffset, renderOptions, rotationAngle, textBaseline= 'top', textAlign='start'}= drawObj;
     //the angle of the grid line
@@ -674,54 +675,54 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     const color = drawParams.color || drawObj.color || 'black';
 
     const devicePt= plot.getDeviceCoords(inPt);
-    if (plot.pointOnDisplay(devicePt)) {
-
-        let {x,y}= devicePt;
-
-        let textHeight= 12;
-        if (validator.isFloat(fontSize.substring(0, fontSize.length - 2))) {
-            textHeight = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
-        }
-
-
-        const textWidth = textHeight*text.length*8/20;
-        if (textOffset) {
-            x+=textOffset.x;
-            y+=textOffset.y;
-        }
-
-
-        if (x<2) {
-            if (x<=-textWidth) return; // don't draw
-            x = 2;
-        }
-        if (y<2) {
-            if (y<=-textHeight) return; // don't draw
-            y = 2;
-        }
-
-        const dim= plot.viewDim;
-        const south = dim.height - textHeight - 2;
-        const east = dim.width - textWidth - 2;
-
-        if (x > east) {
-            if (x>dim.width) return; // don't draw
-            x = east;
-        }
-        if (y > south) {
-            if (y>dim.height) return; // don't draw
-            y = south;
-        }
-
-        DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
-            {rotationAngle:angle, textBaseline, textAlign},
-            {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
-        );
-
-        drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
-    } else {
-        drawObj.pointNotInDisplay = true;  // note on failure
+    if (!plot.pointOnDisplay(devicePt)) {
+        return false;
     }
+
+    let {x,y}= devicePt;
+
+    let textHeight= 12;
+    if (validator.isFloat(fontSize.substring(0, fontSize.length - 2))) {
+        textHeight = parseFloat(fontSize.substring(0, fontSize.length - 2)) * 14 / 10;
+    }
+
+
+    const textWidth = textHeight*text.length*8/20;
+    if (textOffset) {
+        x+=textOffset.x;
+        y+=textOffset.y;
+    }
+
+
+    if (x<2) {
+        if (x<=-textWidth) return false; // don't draw
+        x = 2;
+    }
+    if (y<2) {
+        if (y<=-textHeight) return false; // don't draw
+        y = 2;
+    }
+
+    const dim= plot.viewDim;
+    const south = dim.height - textHeight - 2;
+    const east = dim.width - textWidth - 2;
+
+    if (x > east) {
+        if (x>dim.width) return false; // don't draw
+        x = east;
+    }
+    if (y > south) {
+        if (y>dim.height) return false; // don't draw
+        y = south;
+    }
+
+    DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
+        {rotationAngle:angle, textBaseline, textAlign},
+        {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
+    );
+
+    drawObj.textWorldLoc = plot.getImageCoords(makeDevicePt(x, y));
+    return true;
 }
 
 /**

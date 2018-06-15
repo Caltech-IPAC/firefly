@@ -17,7 +17,6 @@ import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos, getPlot,
         updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {isPointInView} from '../visualize/draw/ShapeHighlight.js';
 import {clone} from '../util/WebUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
@@ -137,7 +136,7 @@ export function footprintStartActionCreator(rawAction) {
             refPt = imagePt;                   // refPt is used for calculating the relocated offset of next time
         }
 
-        if (nextStatus && isPointInView(refPt, cc)) {
+        if (nextStatus && cc.pointInView(refPt)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_START, regions, plotId,
                 nextStatus, footprintInterval, drawLayerId, {isOutline: true, isRotate:true}, fpInfo, wpt, refPt, move);
         }
@@ -202,7 +201,7 @@ export function footprintMoveActionCreator(rawAction) {
         cancelTimeoutProcess(timeoutProcess);
 
         if (footprintStatus === FootprintStatus.rotate)  {    // footprint rotate by angle on screen angle
-            if (!isPointInView(imagePt, cc)) return;   // rotate stops
+            if (!cc.pointInView(imagePt)) return;   // rotate stops
             const rotateCenter = cc.getImageCoords(centerForRotation(footprintObj, wpt)); // center of outline
 
             move.angle = -angleBetween(rotateCenter, prePt, imagePt); // angle on screen
@@ -221,7 +220,7 @@ export function footprintMoveActionCreator(rawAction) {
             const nextOlCenter = olCenterImg ? getWorldOrImage(makeImagePt(olCenterImg.x + deltaX, olCenterImg.y + deltaY), cc)
                                                : null;
 
-            if (!wpt || !isPointInView(nextOlCenter, cc)) {  // HiPS plot, wpt is out of range, no move
+            if (!wpt || !cc.pointInView(nextOlCenter)) {  // HiPS plot, wpt is out of range, no move
                 //if (isHiPS(cc)) rotateHiPSImage(cc, fpCenterImg, olCenterImg, deltaX, deltaY);
                 deltaX = 0;
                 deltaY = 0;
@@ -238,7 +237,7 @@ export function footprintMoveActionCreator(rawAction) {
             isHandle = {isOutline: true, isRotate: true};
         }
 
-        if (!isEmpty(move) && isPointInView(refPt, cc)) {
+        if (!isEmpty(move) && cc.pointInView(refPt)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_MOVE, regions, plotId,
                                  footprintStatus, 0, drawLayerId, isHandle, fpInfo, wpt, refPt, move);
         }
@@ -297,6 +296,8 @@ function creator(initPayload) {
 function getLayerChanges(drawLayer, action) {
     const {drawLayerId, plotId} = action.payload;
 
+    //console.log('action type = ' + action.type);
+
     if (![ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) &&
         (!drawLayerId || drawLayerId !== drawLayer.drawLayerId))  {
         return null;
@@ -350,14 +351,13 @@ function getLayerChanges(drawLayer, action) {
             break;
         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
         case ImagePlotCntlr.ANY_REPLOT:
-            console.log('type '+action.type);
             if (plotIdAry) {
                 plotIdAry.forEach((pId) => {
                     if (isGoodPlot(pId)) {
                         wptObj = get(dd, ['data', pId, 'pts', '0']);
                         const cc = getCC(pId);
 
-                        if (isHiPS(cc) && wptObj && isPointInView(wptObj, cc)) {
+                        if (isHiPS(cc) && wptObj && cc.pointInView(wptObj)) {
                             retV = createFootprintObjs(action, drawLayer, pId, wptObj, retV);
                         }
                     }
