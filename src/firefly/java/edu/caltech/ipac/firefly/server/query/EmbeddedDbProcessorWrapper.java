@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -76,6 +78,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
                 dg.addAttribute(key, meta.getAttribute(key));
             }
         }
+        IpacTableUtil.consumeColumnInfo(dg);
     }
 
 }

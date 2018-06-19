@@ -10,6 +10,8 @@ import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableMeta;
+import nom.tam.fits.Data;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -91,10 +93,16 @@ public class IpacTableWriter {
 
         if (ignoreSysMeta) {
             // this should return only visible columns
-            headers = headers.stream().filter((dt) -> IpacTableUtil.isVisible(dataGroup, dt)).collect(Collectors.toList());
+            headers = headers.stream()
+                            .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt)
+                                    && !dt.getKeyName().equals(DataGroup.ROW_IDX)
+                                    && !dt.getKeyName().equals(DataGroup.ROW_NUM))
+                            .collect(Collectors.toList());
         }
 
-        IpacTableUtil.writeAttributes(out, dataGroup.getKeywords(), ignoreSysMeta);
+        List<DataGroup.Attribute> attributes = IpacTableUtil.makeAttributes(dataGroup);  // add column info as attributes
+
+        IpacTableUtil.writeAttributes(out, attributes, ignoreSysMeta);
         IpacTableUtil.writeHeader(out, headers);
 
         for (int i = 0; i < totalRow; i++) {
@@ -225,7 +233,7 @@ public class IpacTableWriter {
         public IpacTableHandler(File ofile, List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr) {
             this.ofile = ofile;
             this.headers = headers;
-            this.attributes = attributes;
+            this.attributes = IpacTableUtil.makeAttributes(attributes, headers.toArray(new DataType[0]));
             this.itr = itr;
         }
 

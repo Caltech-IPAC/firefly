@@ -33,111 +33,19 @@ import java.util.List;
  * @author Xiuqin Wu
  */
 
-//TODO: must work with IrsaAncilDataGetter
-
 public final class IpacTableReader {
 
-
-    private static final String NO_DATA = "No data found";
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
-//    /**
-//     * Parse the file in IPAC table format and put the data in a
-//     * DataObjectGroup. If there is no data in the file, throw
-//     * IpacTableException
-//     */
-//    public static DataGroup readIpacTable(Reader fr, String catName) throws IpacTableException {
-//        return readIpacTable(fr, catName, null, true);
-//    }
-//
-//
-//    /**
-//     * Parse the file in IPAC table format and put the data in a
-//     * DataObjectGroup. If there is no data in the file, throw
-//     * IpacTableException
-//     *
-//     * @param isHeadersOnlyAllow set to true to allow ipac table with only headers(refer to as
-//     *                           attributes in this class) information.
-//     *                           don't confuse this with column's headers(refer to as headers in this class).
-//     */
-//    public static DataGroup readIpacTable(Reader fr,
-//                                          String catName,
-//                                          String onlyColumns[],
-//                                          boolean isHeadersOnlyAllow) throws IpacTableException {
-//        try {
-//            DataGroup retval = read(fr, false, onlyColumns);
-//            ensureIpac(retval, catName, isHeadersOnlyAllow);
-//            return retval;
-//        } catch (IOException e) {
-//            throw new IpacTableException(e.getMessage(), e);
-//        }
-//    }
-//
-//
-//    public static DataGroup readIpacTable(File f, String catName) throws IpacTableException {
-//        return readIpacTable(f, null, catName);
-//    }
-//
-//    public static DataGroup readIpacTable(File f,
-//                                          String onlyColumns[],
-//                                          String catName) throws IpacTableException {
-//        return readIpacTable(f, onlyColumns, catName, true);
-//    }
-//
-//    /**
-//     * Parse the file in IPAC table format and put the data in a
-//     * DataObjectGroup. If there is no data in the file, throw
-//     * IpacTableException
-//     */
-//    public static DataGroup readIpacTable(File f,
-//                                          String onlyColumns[],
-//                                          String catName,
-//                                          boolean isHeadersOnlyAllow) throws IpacTableException {
-//        try {
-//            DataGroup retval = read(f, false, onlyColumns);
-//            ensureIpac(retval, catName, isHeadersOnlyAllow);
-//            return retval;
-//        } catch (FileNotFoundException fnfe) {
-//            System.out.println("File not found Exception");
-//            throw new IpacTableException("File or object not found");
-//        } catch (IOException e) {
-//            throw new IpacTableException(e.getMessage(), e);
-//        }
-//    }
-//
-//
-//    private static void ensureIpac(DataGroup retval, String catName, boolean isHeadersOnlyAllow) throws IpacTableException {
-//        retval.setTitle(catName);
-//        if (retval.size() == 0) {
-//            if (!isHeadersOnlyAllow) {
-//                String name = AppProperties.getProperty("CatalogDialog.cats."
-//                        + catName + ".ShortName");
-//                if (name == null)
-//                    name = catName;
-//                throw new IpacTableException(NO_DATA + ": " + name);
-//            }
-//        }
-//    }
-
     public static DataGroup read(File inf, String... onlyColumns) throws IOException {
-        return read(inf, false, onlyColumns);
-    }
-
-    public static DataGroup read(File inf, boolean saveFormattedData, String... onlyColumns) throws IOException {
         TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
-        tableDef.setSaveFormattedData(saveFormattedData);
         BufferedReader bufferedReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         return doRead(bufferedReader, tableDef, onlyColumns);
     }
 
     public static DataGroup read(InputStream inputStream, String... onlyColumns) throws IOException {
-        return  read(inputStream, false, onlyColumns);
-    }
-
-    public static DataGroup read(InputStream  inputStream, boolean saveFormattedData, String... onlyColumns) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         TableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
-        tableDef.setSaveFormattedData(saveFormattedData);
         return  doRead(bufferedReader, tableDef, onlyColumns);
     }
 
@@ -228,7 +136,7 @@ public final class IpacTableReader {
         } finally {
             bufferedReader.close();
         }
-
+        IpacTableUtil.consumeColumnInfo(outData);   // move column attributes into columns
         return outData;
     }
 

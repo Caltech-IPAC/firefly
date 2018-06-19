@@ -32,7 +32,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
-    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
             "  cname    varchar(1023)" +
@@ -41,6 +41,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", units    varchar(255)" +
             ", null_str varchar(255)" +
             ", format   varchar(255)" +
+            ", fmtDisp  varchar(255)" +
             ", width    int" +
             ", visibility varchar(255)" +
             ", sortable boolean" +

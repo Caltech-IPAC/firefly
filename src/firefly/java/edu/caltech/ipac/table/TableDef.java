@@ -19,9 +19,7 @@ public class TableDef extends TableMeta {
     private int lineWidth;
     private int rowCount;
     private int rowStartOffset;
-    private int lineSepLength;
     private SelectionInfo selectInfo;
-    private boolean saveFormattedData;
     private transient Pair<Integer, String> extras;     // used by IpacTableUtil to store extras data while parsing an ipac table via input stream
 
     public Pair<Integer, String> getExtras() {
@@ -36,28 +34,12 @@ public class TableDef extends TableMeta {
         colOffsets.add(idx, offset);
     }
 
-    public boolean isSaveFormattedData() {
-        return saveFormattedData;
-    }
-
-    public void setSaveFormattedData(boolean saveFormattedData) {
-        this.saveFormattedData = saveFormattedData;
-    }
-
     public void setExtras(Integer numHeaderLines, String unreadLine) {
         this.extras = new Pair<>(numHeaderLines, unreadLine);
     }
 
     public List<DataType> getCols() {
         return cols;
-    }
-
-    public DataType getColByName(String name) {
-        name = name == null ? "" : name;
-        for (DataType dt : cols) {
-            if (dt.getKeyName().equals(name)) return dt;
-        }
-        return null;
     }
 
     public void setCols(List<DataType> cols) {
@@ -87,14 +69,6 @@ public class TableDef extends TableMeta {
 
     public void setStatus(DataGroupPart.State status) {
         setAttribute(DataGroupPart.LOADING_STATUS, status.name());
-    }
-
-    public int getLineSepLength() {
-        return lineSepLength;
-    }
-
-    public void setLineSepLength(int lineSepLength) {
-        this.lineSepLength = lineSepLength;
     }
 
     public int getLineWidth() {
@@ -141,11 +115,10 @@ public class TableDef extends TableMeta {
     public TableDef clone() {
         TableDef copy = (TableDef) super.clone();
         copy.cols = new ArrayList<>(cols);
-        copy.colOffsets = colOffsets;
+        copy.colOffsets = new ArrayList<>(colOffsets);
         copy.lineWidth = lineWidth;
         copy.rowCount = rowCount;
         copy.rowStartOffset = rowStartOffset;
-        copy.lineSepLength = lineSepLength;
         return copy;
     }
 }

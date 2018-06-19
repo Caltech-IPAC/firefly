@@ -455,7 +455,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         StopWatch timer = StopWatch.getInstance();
         timer.start("read");
         int pageSize = request.getPageSize();
-        DataGroup dg = IpacTableReader.read(inFile, true);
+        DataGroup dg = IpacTableReader.read(inFile);
         // if this file does not contain ROW_IDX, add it.
         if (!dg.containsKey(DataGroup.ROW_IDX)) {
             dg.addDataDefinition(DataGroup.makeRowIdx());

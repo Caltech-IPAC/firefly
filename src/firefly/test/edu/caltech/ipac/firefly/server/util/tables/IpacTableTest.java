@@ -82,7 +82,7 @@ public class IpacTableTest {
 
         // tableData.columns
         checkColumn(JsonTableUtil.getPathValue(json, "tableData", "columns", "0"),           // first column
-                                        "ra", "double", "deg", "null", 99);
+                                        "ra", "double", "deg", "null", null);
         checkColumn(JsonTableUtil.getPathValue(json, "tableData", "columns", "17"),           // middle column
                                         "k_cmsig", "double", "mag", "null", null);
         checkColumn(JsonTableUtil.getPathValue(json, "tableData", "columns", "43"),           // last column

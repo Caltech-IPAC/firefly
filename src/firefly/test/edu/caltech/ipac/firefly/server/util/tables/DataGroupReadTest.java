@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,7 +32,8 @@ import java.util.List;
  */
 public class DataGroupReadTest {
 
-    private static final File largeIpacTable = FileLoader.resolveFile(DataGroupReadTest.class, "50k.tbl");
+    private static final File largeIpacTable = new File("/hydra/cm/firefly_test_data/large-ipac-tables/wise-950000.tbl");
+    private static final File midIpacTable = FileLoader.resolveFile(DataGroupReadTest.class, "50k.tbl");
     private static final File ipacTable = FileLoader.resolveFile(DataGroupReadTest.class, "DataGroupTest.tbl");
     private static final File voTable = FileLoader.resolveFile(DataGroupReadTest.class, "p3am_cdd.xml");
     private static final File fitsTable = FileLoader.resolveFile(DataGroupReadTest.class, "lsst-table.fits");
@@ -48,17 +50,13 @@ public class DataGroupReadTest {
         Assert.assertEquals("column desc", "null", ra.getNullString());
         Assert.assertEquals("column type", "double", ra.getTypeDesc());
 
-        // test col attributes
-        String width = data.getAttribute(TableMeta.makeAttribKey(TableMeta.WIDTH_TAG, "designation"));
-        String prefWidth = data.getAttribute(TableMeta.makeAttribKey(TableMeta.PREF_WIDTH_TAG, "designation"));
-        String sortable = data.getAttribute(TableMeta.makeAttribKey(TableMeta.SORTABLE_TAG, "designation"));
-        String filterable = data.getAttribute(TableMeta.makeAttribKey(TableMeta.FILTERABLE_TAG, "designation"));
-        String visibility = data.getAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, "designation"));
-        Assert.assertEquals("column width", "100", width);
-        Assert.assertEquals("column prefWidth", "10", prefWidth);
-        Assert.assertEquals("column sortable", "false", sortable);
-        Assert.assertEquals("column filterable", "true", filterable);
-        Assert.assertEquals("column visibility", "hidden", visibility);
+        // test col info
+        DataType desig = data.getDataDefintion("designation");
+        Assert.assertEquals("column width", 100, desig.getWidth());
+        Assert.assertEquals("column prefWidth", 10, desig.getPrefWidth());
+        Assert.assertEquals("column sortable", false, desig.isSortable());
+        Assert.assertEquals("column filterable", true, desig.isFilterable());
+        Assert.assertEquals("column visibility", DataType.Visibility.hidden, desig.getVisibility());
 
         // random value test
         Assert.assertEquals("cell (ra, 4)", 10.744471, data.get(4).getDataElement("ra"));           // in the middle
@@ -92,27 +90,184 @@ public class DataGroupReadTest {
         Assert.assertEquals("cell (base_GaussianCentroid_x, 764)", 850.043863, getDouble(data.get(764).getDataElement("base_GaussianCentroid_x")), 0.000001);       // last row
     }
 
+    @Test
+    public void cloneWithoutData() throws IOException, FitsException {
+        DataGroup data = IpacTableReader.read(ipacTable);
+        DataGroup newClone = data.cloneWithoutData();
+        Assert.assertEquals("Number of rows", 0, newClone.size());
+
+        // test col header
+        DataType ra = newClone.getDataDefintion("ra");
+        Assert.assertEquals("column name", "ra", ra.getKeyName());
+        Assert.assertEquals("column unit", "deg", ra.getUnits());
+        Assert.assertEquals("column desc", "null", ra.getNullString());
+        Assert.assertEquals("column type", "double", ra.getTypeDesc());
+
+        // test col info
+        DataType desig = newClone.getDataDefintion("designation");
+        Assert.assertEquals("column width", 100, desig.getWidth());
+        Assert.assertEquals("column prefWidth", 10, desig.getPrefWidth());
+        Assert.assertEquals("column sortable", false, desig.isSortable());
+        Assert.assertEquals("column filterable", true, desig.isFilterable());
+        Assert.assertEquals("column visibility", DataType.Visibility.hidden, desig.getVisibility());
+
+    }
+
+
     @Category({TestCategory.Perf.class})
     @Test
-    public void perfTest() throws IOException {
+    public void perfTestMidSize() throws IOException {
+        tableIoTest(midIpacTable);
+    }
 
+    @Category({TestCategory.Perf.class})
+    @Test
+    public void perfTestLargeSize() throws IOException {
+        tableIoTest(largeIpacTable);
+    }
+
+    @Category({TestCategory.Perf.class})
+    @Test
+    public void memTest() throws IOException {
         Runtime.getRuntime().gc();
         long beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         long start = System.currentTimeMillis();
+        int testSize = 5000000;
 
-        DataGroup data = IpacTableReader.read(largeIpacTable);
+        List<Object> objects = new ArrayList<>(100);
+        for (int i=0; i< testSize; i++) {
+            objects.add(i + Math.random());
+        }
+
         long elapsed = System.currentTimeMillis() - start;
         long usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
         Runtime.getRuntime().gc();
         long usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
-        System.out.printf("READ:  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs %n", usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0);
+        System.out.printf("List<Object>(%,d):  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs %n", testSize, usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0);
 
-        IpacTableWriter.save(new File("./tmp.tbl"), data);
+        //-------------------
+
+        beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        start = System.currentTimeMillis();
+        Object[] objectAry = new Object[testSize];
+        for (int i=0; i< testSize; i++) {
+            objectAry[i] = i + Math.random();
+        }
+
+        elapsed = System.currentTimeMillis() - start;
+        usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        Runtime.getRuntime().gc();
+        usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("Object[](%,d)    :  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", testSize, usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
+
+        //-------------------
+
+        beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        start = System.currentTimeMillis();
+        List<Double> doubles = new ArrayList<>(100);
+        for (int i=0; i< testSize; i++) {
+            doubles.add(i + Math.random());
+        }
+
+        elapsed = System.currentTimeMillis() - start;
+        usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        Runtime.getRuntime().gc();
+        usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("List<Double>(%,d):  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs %n", testSize, usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0);
+
+        //-------------------
+
+        beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        start = System.currentTimeMillis();
+        double[] doubleAry = new double[testSize];
+        for (int i=0; i< testSize; i++) {
+            doubleAry[i] = i + Math.random();
+        }
+
+        elapsed = System.currentTimeMillis() - start;
+        usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        Runtime.getRuntime().gc();
+        usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("double[](%,d)    :  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", testSize, usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
+
+
+        //-------------------
+
+        beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        start = System.currentTimeMillis();
+        int[] intAry = new int[testSize];
+        for (int i=0; i< testSize; i++) {
+            intAry[i] = (int) (i + Math.random());
+        }
+
+        elapsed = System.currentTimeMillis() - start;
+        usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        Runtime.getRuntime().gc();
+        usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("int[](%,d)       :  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", testSize, usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
+
+        //-------------------
+
+        beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        start = System.currentTimeMillis();
+        String[] strAry = new String[testSize];
+        for (int i=0; i< testSize; i++) {
+            strAry[i] = String.valueOf(i%10);
+        }
+
+        elapsed = System.currentTimeMillis() - start;
+        usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        Runtime.getRuntime().gc();
+        usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("strAry[](%,d)      :  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", testSize, usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
+
+        //-------------------
+
+        beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        start = System.currentTimeMillis();
+        List<String> strList = new ArrayList<>();
+        for (int i=0; i< testSize; i++) {
+            strList.add(String.valueOf(i%10));
+        }
+
+        elapsed = System.currentTimeMillis() - start;
+        usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        Runtime.getRuntime().gc();
+        usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("strList[](%,d)       :  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", testSize, usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
+
+        //-------------------
+
+        Object v = objects.get(0);
+        v = objectAry[0];
+        v = doubles.get(0);
+        v = doubleAry[0];
+        v = intAry[0];
+        v = strAry[0];
+        v = strList.get(0);
+
+    }
+
+    private static void tableIoTest(File inFile) throws IOException {
+        Runtime.getRuntime().gc();
+        long beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long start = System.currentTimeMillis();
+
+        DataGroup data = IpacTableReader.read(inFile);
+        long elapsed = System.currentTimeMillis() - start;
+        long usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        Runtime.getRuntime().gc();
+        long usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
+        System.out.printf("READ(%,d):  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs %n", data.size(), usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0);
+
+        File outf = new File("./tmp.tbl");
+        outf.deleteOnExit();
+        IpacTableWriter.save(outf, data);
         usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - usedAfGc;
         Runtime.getRuntime().gc();
         usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - usedAfGc;
         elapsed = System.currentTimeMillis() - start - elapsed;
-        System.out.printf("WRITE:  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
+        System.out.printf("WRITE(%,d):  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs  total:%.2fsecs %n", data.size(), usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0, (System.currentTimeMillis()-start)/1000.0);
 
         System.out.println("");
         List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
@@ -120,8 +275,8 @@ public class DataGroupReadTest {
             MemoryUsage peak = pool.getPeakUsage();
             System.out.printf("Peak %s memory used: %,d %n", pool.getName(), peak.getUsed());
         }
-    }
 
+    }
 
     private static double getDouble(Object val) {
         if (val instanceof Double) {

@@ -142,7 +142,6 @@ public class DataGroupQuery {
                 } else if (line.startsWith("|")) {
                     if (tableDef == null) {
                         tableDef = IpacTableUtil.createColumnDefs(line);
-                        tableDef.setSaveFormattedData(true);
                     } else if (!hasType) {
                         IpacTableUtil.setDataType(tableDef.getCols(), line);
                         hasType = true;
@@ -673,7 +672,6 @@ public class DataGroupQuery {
                     }
                     if (dt != null) {
                         DataType cdt = (DataType) dt.clone();
-                        cdt.setColumnIdx(l.size());
                         l.add(cdt);
                     }
                 }

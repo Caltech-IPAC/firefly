@@ -139,12 +139,12 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		// test meta
 		Assert.assertEquals("'ORIGIN value'", data.getAttribute("ORIGIN"));
 		Assert.assertEquals("'SQL value'", data.getAttribute("SQL"));
-		Assert.assertEquals("%.6g", data.getAttribute("col.dec.FmtDisp"));
 
 		// test column meta
 		DataType dt = data.getDataDefintion("dec");
 		Assert.assertEquals("rad", dt.getUnits());
 		Assert.assertEquals(Double.class, dt.getDataType());
+		Assert.assertEquals("%.6g", dt.getFmtDisp());
 	}
 
 }

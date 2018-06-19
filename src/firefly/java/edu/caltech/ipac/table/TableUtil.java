@@ -30,7 +30,7 @@ public class TableUtil {
     public static DataGroup readAnyFormat(File inf, int tableIndex) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
-            return IpacTableReader.read(inf, true);
+            return IpacTableReader.read(inf);
         } else if (format == Format.VO_TABLE) {
             DataGroup[] tables = VoTableReader.voToDataGroups(inf.getAbsolutePath());
             if (tables.length > tableIndex) {

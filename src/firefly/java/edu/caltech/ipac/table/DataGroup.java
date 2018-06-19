@@ -17,12 +17,11 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     public static final String ROW_IDX = "ROW_IDX";               // this contains the original row index of the table before any sorting or filtering
     public static final String ROW_NUM = "ROW_NUM";               // this is row number of the current dataset. (oracle's rownum)
 
-    private ArrayList<DataObject> data = new ArrayList<>(200);
     private LinkedHashMap<String, DataType> columns = new LinkedHashMap<>();
     private TableMeta meta = new TableMeta();
     private String title;
+    private int size;
     private transient DataType[] cachedColumnsAry = null;
-
 
     public DataGroup(String title, DataType[] dataDefs) {
         this(title, Arrays.asList(dataDefs));
@@ -37,6 +36,8 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         return title;
     }
 
+    public TableMeta getTableMeta() { return meta; }
+
     public void setTitle(String title) {
         this.title = title;
     }
@@ -46,8 +47,8 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      * @param dataType  the column to append
      */
     public void addDataDefinition(DataType dataType) {
+        dataType.clearData();
         columns.put(dataType.getKeyName(), dataType);
-        dataType.setColumnIdx(columns.size()-1);
     }
 
     /**
@@ -99,22 +100,30 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      * @return
      */
     public List<DataObject> values() {
-        return data;
+        ArrayList<DataObject> rval = new ArrayList<>(size());
+        for (int i=0; i<size(); i++) {
+            rval.add(DataObject.getDataAt(this, i));
+        }
+        return rval;
+    }
+
+    public void clearData() {
+        for(DataType dt : getDataDefinitions()) {
+            dt.clearData();
+        }
     }
 
     /**
-     * set the data to the given list.
-     * @return
+     * add a row represented by the given DataObject into this DataGroup
+     * @param s
      */
-    public void setData(List<DataObject> data) {
-        this.data = new ArrayList<>(data);
-    }
-
-    public void clearData() { data.clear(); }
-
     public void add(DataObject s) {
-        data.add(s);
-        s.setRowNum(data.size()-1);
+        if (s != null) {
+            for (DataType dt : getDataDefinitions()) {
+                dt.addData(s.getDataElement(dt.getKeyName()));
+            }
+            size++;
+        }
     }
 
     /**
@@ -178,8 +187,8 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         return meta.getKeywords();
     }
 
-    public DataObject get(int i) {
-        return data.get(i);
+    public DataObject get(int rowIdx) {
+        return DataObject.getDataAt(this, rowIdx);
     }
 
     public boolean containsKey(String key) {
@@ -193,21 +202,22 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     @Override
     public Object clone() throws CloneNotSupportedException {
         DataGroup copy = new DataGroup(title, getDataDefinitions());
-        copy.data = new ArrayList<>(data);
-        copy.columns = new LinkedHashMap<>(columns);
         copy.meta = meta.clone();
         return copy;
     }
 
     public DataGroup cloneWithoutData() {
-        DataGroup copy = new DataGroup(title, getDataDefinitions());
-        copy.columns = new LinkedHashMap<>(columns);
+        ArrayList<DataType> copyCols = new ArrayList<>(columns.size());
+        for (DataType dt: getDataDefinitions()) {
+            copyCols.add(dt.newCopyOf());
+        }
+        DataGroup copy = new DataGroup(title, copyCols);
         copy.meta = meta.clone();
         return copy;
     }
 
     public int size() {
-        return data.size();
+        return size;
     }
 
     /**
@@ -219,8 +229,8 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
                 String[] headers = {dt.getKeyName(), dt.getTypeDesc(), dt.getUnits(), dt.getNullString()};
                 int hWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
                 dt.ensureMaxDataWidth(hWidth);
-                for (DataObject row : data) {
-                    int vlength = row.getFormatedData(dt).length();
+                for (int i=0; i<size(); i++) {
+                    int vlength = dt.getFormatedData(i).length();
                     dt.ensureMaxDataWidth(vlength);
                 }
             }
@@ -237,10 +247,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      * @return returns a subset of the datagroup between the specified fromIndex, inclusive, and toIndex, exclusive
      */
     public DataGroup subset(int fromIndex, int toIndex) {
+        int size = toIndex - fromIndex;
         DataGroup retval = cloneWithoutData();
-        if (fromIndex < size() && fromIndex < toIndex) {
-            int endIdx = Math.min(size(), toIndex);
-            retval.setData(values().subList(fromIndex, endIdx));
+        for(int i=0; i<size; i++) {
+            add(DataObject.getDataAt(this, fromIndex+i));
         }
         return retval;
     }
@@ -336,7 +346,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     }
 
     public Iterator<DataObject> iterator() {
-        return data.iterator();
+        return values().iterator();
     }
 
 
@@ -345,7 +355,6 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 //===================================================================
 
     public static class Attribute implements Serializable, Cloneable {
-        private static Random rnd = new Random();
         private String _key;
         private String _value;
 

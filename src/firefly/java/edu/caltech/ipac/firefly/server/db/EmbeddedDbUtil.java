@@ -314,6 +314,7 @@ public class EmbeddedDbUtil {
                             dt.getUnits(),
                             dt.getNullString(),
                             dt.getFormat(),
+                            dt.getFmtDisp(),
                             dt.getWidth(),
                             dt.getVisibility().name(),
                             dt.isSortable(),
@@ -350,6 +351,7 @@ public class EmbeddedDbUtil {
                 String units = rs.getString("units");
                 String nullStr = rs.getString("null_str");
                 String format = rs.getString("format");
+                String fmtDisp = rs.getString("fmtDisp");
                 int width = rs.getInt("width");
                 String visibility = rs.getString("visibility");
                 String desc = rs.getString("desc");
@@ -363,6 +365,7 @@ public class EmbeddedDbUtil {
                     if (!StringUtils.isEmpty(units)) dtype.setUnits(units);
                     if (!StringUtils.isEmpty(nullStr)) dtype.setNullString(nullStr);
                     if (!StringUtils.isEmpty(format)) dtype.setFormat(format);
+                    if (!StringUtils.isEmpty(fmtDisp)) dtype.setFmtDisp(fmtDisp);
                     if (!StringUtils.isEmpty(visibility)) dtype.setVisibility(DataType.Visibility.valueOf(visibility));
                     if (!StringUtils.isEmpty(desc)) dtype.setDesc(desc);
                     if (width > 0) dtype.setWidth(width);

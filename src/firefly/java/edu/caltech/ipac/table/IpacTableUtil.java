@@ -27,16 +27,16 @@ public class IpacTableUtil {
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
 
 
+    public static List<DataGroup.Attribute> makeAttributes(DataGroup dataGroup) {
+        return makeAttributes(dataGroup.getKeywords(), dataGroup.getDataDefinitions());
+    }
     /**
      * Returns the table's attributes in original sorted order, plus additional
      * attributes from column's info is present.
-     * @param dataGroup
-     * @return
      */
-    public static List<DataGroup.Attribute> makeAttributes(DataGroup dataGroup) {
-        List<DataGroup.Attribute> attribs = dataGroup.getKeywords();
+    public static List<DataGroup.Attribute> makeAttributes(List<DataGroup.Attribute> attribs, DataType[] cols) {
         // add column's attributes as table meta
-        for(DataType col : dataGroup.getDataDefinitions()) {
+        for(DataType col : cols) {
             ensureKey(attribs, col.getKeyName(), col.getLabel(), TableMeta.LABEL_TAG);
             ensureKey(attribs, col.getKeyName(), col.getDesc(), TableMeta.DESC_TAG);
             ensureKey(attribs, col.getKeyName(), col.getFormat(), TableMeta.FORMAT_TAG);
@@ -69,40 +69,82 @@ public class IpacTableUtil {
         }
     }
 
-    private static void ensureColumn(TableDef tableDef, DataType col) {
-        int ival;
-        String val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.LABEL_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setLabel(val);
+    /**
+     * update column information stored as attributes and then remove the attributes from the table meta.
+     * @param table
+     */
+    public static void consumeColumnInfo(DataGroup table) {
+        for (DataType dt : table.getDataDefinitions()) {
+            ensureColumn(table.getTableMeta(), dt);
+        }
+    }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setVisibility(DataType.Visibility.valueOf(val));
+    private static void ensureColumn(TableMeta tableMeta, DataType col) {
+        String key = TableMeta.makeAttribKey(TableMeta.LABEL_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setLabel(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
 
-        ival = tableDef.getIntMeta(TableMeta.makeAttribKey(TableMeta.WIDTH_TAG, col.getKeyName()));
-        if (ival > 0) col.setWidth(ival);
+        key = TableMeta.makeAttribKey(TableMeta.VISI_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setVisibility(DataType.Visibility.valueOf(tableMeta.getAttribute(key)));
+            tableMeta.removeAttribute(key);
+        }
 
-        ival = tableDef.getIntMeta(TableMeta.makeAttribKey(TableMeta.PREF_WIDTH_TAG, col.getKeyName()));
-        if (ival > 0) col.setPrefWidth(ival);
+        key = TableMeta.makeAttribKey(TableMeta.WIDTH_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setWidth(tableMeta.getIntMeta(key));
+            tableMeta.removeAttribute(key);
+        }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setDesc(val);
+        key = TableMeta.makeAttribKey(TableMeta.PREF_WIDTH_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setPrefWidth(tableMeta.getIntMeta((key)));
+            tableMeta.removeAttribute(key);
+        }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.UNIT_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setUnits(val);
+        key = TableMeta.makeAttribKey(TableMeta.DESC_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setDesc(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.FORMAT_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setFormat(val);
+        key = TableMeta.makeAttribKey(TableMeta.UNIT_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setUnits(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.FORMAT_DISP_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setFmtDisp(val);
+        key = TableMeta.makeAttribKey(TableMeta.FORMAT_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setFormat(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.SORTABLE_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setSortable(Boolean.parseBoolean(val));
+        key = TableMeta.makeAttribKey(TableMeta.FORMAT_DISP_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setFmtDisp(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.FILTERABLE_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setFilterable(Boolean.parseBoolean(val));
+        key = TableMeta.makeAttribKey(TableMeta.SORTABLE_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setSortable(Boolean.parseBoolean(tableMeta.getAttribute(key)));
+            tableMeta.removeAttribute(key);
+        }
 
-        val = tableDef.getAttribute(TableMeta.makeAttribKey(TableMeta.SORT_BY_TAG, col.getKeyName()));
-        if (!StringUtils.isEmpty(val)) col.setSortByCols(val);
+        key = TableMeta.makeAttribKey(TableMeta.FILTERABLE_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setFilterable(Boolean.parseBoolean(tableMeta.getAttribute(key)));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.SORT_BY_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setSortByCols(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
 
     }
 
@@ -302,7 +344,6 @@ public class IpacTableUtil {
     public static DataObject parseRow(DataGroup source, String line, TableDef tableDef) {
         if (line==null) return null;
         DataType[] headers = source.getDataDefinitions();
-        String rval=null, val=null;
         int offset=0, endOfLine=0, endoffset=0;
         try {
             if (line.startsWith(" ") && line.trim().length() > 0) {
@@ -324,21 +365,11 @@ public class IpacTableUtil {
                         endoffset = endOfLine;
                     }
 
-                    rval = line.substring(offset, endoffset);
-                    val = rval.trim();
+                    String val = line.substring(offset, endoffset).trim();
                     if (!dt.isKnownType()) {
                         IpacTableUtil.guessDataType(dt, val);
                     }
 
-                    row.setDataElement(dt, dt.convertStringToData(val));
-                    if (tableDef.isSaveFormattedData() && val.length() > 0) {
-                        row.setFixedFormattedData(dt, rval);
-                        dt.ensureMaxDataWidth(rval.length());
-                    } else {
-                        dt.ensureMaxDataWidth(val.length());
-                    }
-
-                    offset = endoffset;
                     if (dt.getFormat() == null) {
                         IpacTableUtil.guessFormatInfo(dt, val);
 
@@ -352,6 +383,11 @@ public class IpacTableUtil {
                             }
                         }
                     }
+
+                    row.setDataElement(dt, dt.convertStringToData(val));
+                    dt.ensureMaxDataWidth(val.length());
+
+                    offset = endoffset;
                 }
                 return row;
             } else if (line.trim().length() > 0 && !line.startsWith("\\") && !line.startsWith("|")) {
@@ -456,14 +492,12 @@ public class IpacTableUtil {
             }
         }
 
-        tableDef.setLineSepLength(nlchar);
         tableDef.setRowStartOffset(dataStartOffset);
         if (attribs.size() > 0) {
             tableDef.setKeywords(attribs);
         }
         if (tableDef.getCols() != null) {
             for(DataType dt: tableDef.getCols()) {
-                ensureColumn(tableDef, dt);
                 String[] headers = {dt.getKeyName(), dt.getTypeDesc(), dt.getUnits(), dt.getNullString()};
                 int hWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
                 dt.ensureMaxDataWidth(hWidth);

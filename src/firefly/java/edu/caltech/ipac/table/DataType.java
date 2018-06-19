@@ -52,11 +52,9 @@ public class DataType implements Serializable, Cloneable {
     private       String fmtDisp;          // format string for diplay ... this is deprecated
     private       String sortByCols;       // comma-separated of column names
 
-    /* temporary variables used so it does not need to be recalculated each time */
-    private transient int columnIdx = -1;    // the columnIdx assigned after added to a DataGroup
-    private transient int maxDataWidth = 0;  // this is the max width of the data...from reading the file.  only used by shrinkToFit
-    private transient String useFormat;      // format to use based on processing and not user's input.
-    private transient Boolean isNumeric;     // cached to improve formatting performance.
+    private transient PrimitiveList data;       // column-based data
+    private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
+    private transient Boolean isNumeric;        // cached to improve formatting performance.
 
 
     public DataType(String keyName,
@@ -200,14 +198,6 @@ public class DataType implements Serializable, Cloneable {
 
     public void setSortByCols(String sortByCols) {
         this.sortByCols = sortByCols;
-    }
-
-    public int getColumnIdx() {
-        return columnIdx;
-    }
-
-    public void setColumnIdx(int columnIdx) {
-        this.columnIdx = columnIdx;
     }
 
     int getMaxDataWidth() {
@@ -391,25 +381,78 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public String toString() {
-        return String.format("{Key: %s, Label: %s, Type: %s, TypeDesc: %s, Units: %s, Column idx: %s}",
-                getKeyName(), getLabel(), getDataType(), getTypeDesc(), getDesc(), getUnits(), getColumnIdx());
+        return String.format("{Key: %s, Label: %s, Type: %s, TypeDesc: %s, Units: %s}",
+                getKeyName(), getLabel(), getDataType(), getTypeDesc(), getDesc(), getUnits());
     }
 
     public Object clone() throws CloneNotSupportedException {
-        return super.clone();
+        try {
+            DataType rval = (DataType) super.clone();
+            rval.data = null;
+            rval.isNumeric = null;
+            return rval;
+        } catch (CloneNotSupportedException e) {
+            return null; // should not happen;
+        }
     }
 
     /**
-     * clone DataType and reset columnIdx.
+     * convenience clone method to avoid catching exception and casting
      * @return
      */
     public DataType newCopyOf() {
         try {
-            DataType rval = (DataType) clone();
-            rval.columnIdx = -1;
-            return rval;
+            return (DataType) clone();
         } catch (CloneNotSupportedException e) {
             return null; // should not happen;
+        }
+    }
+
+//====================================================================
+// data retrieval methods  .. protect this to keep DataGroup consistent
+//====================================================================
+
+    void clearData() {
+        if (data != null) {
+            data.clear();
+        }
+    }
+
+    Object getData(int rowIdx) {
+        ensureData();
+        return data.get(rowIdx);
+    }
+
+    void setData(int rowIdx, Object val) {
+        ensureData();
+        data.set(rowIdx, val);
+    }
+
+    void addData(Object val) {
+        ensureData();
+        data.add(val);
+    }
+
+    String getFormatedData(int rowIdx) {
+        return formatData(getData(rowIdx));
+    }
+
+    private void ensureData() {
+        if (data == null) {
+            Class clz = getDataType();
+            if (clz == Double.class) {
+                data = new PrimitiveList.Doubles();
+            } else if (clz == Float.class) {
+                data = new PrimitiveList.Floats();
+            } else if (clz == Long.class) {
+                data = new PrimitiveList.Longs();
+            } else if (clz == Integer.class) {
+                data = new PrimitiveList.Integers();
+            } else if (clz == Boolean.class) {
+                data = new PrimitiveList.Booleans();
+            } else {
+                data = new PrimitiveList.Objects();
+            }
         }
     }
 }

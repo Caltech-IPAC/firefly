@@ -103,10 +103,6 @@ public class TableMeta implements Serializable {
         return v == null ? null : v.getValue();
     }
 
-    public DataGroup.Attribute getKeyword(String key) {
-        return attributes.get(key);
-    }
-
     public boolean contains(String key) {
         return attributes.containsKey(key);
     }
@@ -128,7 +124,7 @@ public class TableMeta implements Serializable {
         DataGroup.Attribute val = attributes.remove(key);
         if (val != null) {
             keywords = keywords.stream()
-                        .filter(at -> at.getKey() != null && at.getKey().equals(key))
+                        .filter(at -> at.getKey() == null || !at.getKey().equals(key))
                         .collect(Collectors.toList());
         }
 
