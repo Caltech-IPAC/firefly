@@ -52,7 +52,7 @@ public class DataType implements Serializable, Cloneable {
     private       String fmtDisp;          // format string for diplay ... this is deprecated
     private       String sortByCols;       // comma-separated of column names
 
-    private transient PrimitiveList data;       // column-based data
+//    private transient PrimitiveList data;       // column-based data
     private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
     private transient Boolean isNumeric;        // cached to improve formatting performance.
 
@@ -386,14 +386,9 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        try {
-            DataType rval = (DataType) super.clone();
-            rval.data = null;
-            rval.isNumeric = null;
-            return rval;
-        } catch (CloneNotSupportedException e) {
-            return null; // should not happen;
-        }
+        DataType rval = (DataType) super.clone();
+        rval.isNumeric = null;
+        return rval;
     }
 
     /**
@@ -405,54 +400,6 @@ public class DataType implements Serializable, Cloneable {
             return (DataType) clone();
         } catch (CloneNotSupportedException e) {
             return null; // should not happen;
-        }
-    }
-
-//====================================================================
-// data retrieval methods  .. protect this to keep DataGroup consistent
-//====================================================================
-
-    void clearData() {
-        if (data != null) {
-            data.clear();
-        }
-    }
-
-    Object getData(int rowIdx) {
-        ensureData();
-        return data.get(rowIdx);
-    }
-
-    void setData(int rowIdx, Object val) {
-        ensureData();
-        data.set(rowIdx, val);
-    }
-
-    void addData(Object val) {
-        ensureData();
-        data.add(val);
-    }
-
-    String getFormatedData(int rowIdx) {
-        return formatData(getData(rowIdx));
-    }
-
-    private void ensureData() {
-        if (data == null) {
-            Class clz = getDataType();
-            if (clz == Double.class) {
-                data = new PrimitiveList.Doubles();
-            } else if (clz == Float.class) {
-                data = new PrimitiveList.Floats();
-            } else if (clz == Long.class) {
-                data = new PrimitiveList.Longs();
-            } else if (clz == Integer.class) {
-                data = new PrimitiveList.Integers();
-            } else if (clz == Boolean.class) {
-                data = new PrimitiveList.Booleans();
-            } else {
-                data = new PrimitiveList.Objects();
-            }
         }
     }
 }

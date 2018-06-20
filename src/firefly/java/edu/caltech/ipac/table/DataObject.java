@@ -65,7 +65,7 @@ public class DataObject implements Serializable, Cloneable {
             Object[] rval = new Object[group.getDataDefinitions().length];
             DataType[] cols = group.getDataDefinitions();
             for (int i=0; i <cols.length; i++) {
-                rval[i] = cols[i].getData(rowNum);
+                rval[i] = group.getData(cols[i].getKeyName(), rowNum);
             }
             return rval;
         }
@@ -109,8 +109,7 @@ public class DataObject implements Serializable, Cloneable {
             if (rowData != null) {
                 return rowData.get(colName);
             } else {
-                DataType col = group.getDataDefintion(colName);
-                return col == null ? null : col.getData(rowNum);
+                return group.getData(colName, rowNum);
             }
         }
         return null;
@@ -121,10 +120,7 @@ public class DataObject implements Serializable, Cloneable {
             if (rowData != null) {
                 rowData.put(colName, fde);
             } else {
-                DataType col = group.getDataDefintion(colName);
-                if (col != null) {
-                    col.setData(rowNum, fde);
-                }
+                group.setData(colName, rowNum, fde);
             }
         }
     }

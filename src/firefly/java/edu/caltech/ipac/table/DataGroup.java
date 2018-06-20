@@ -18,6 +18,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     public static final String ROW_NUM = "ROW_NUM";               // this is row number of the current dataset. (oracle's rownum)
 
     private LinkedHashMap<String, DataType> columns = new LinkedHashMap<>();
+    private HashMap<String, PrimitiveList> data = new HashMap<>();
     private TableMeta meta = new TableMeta();
     private String title;
     private int size;
@@ -47,7 +48,6 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      * @param dataType  the column to append
      */
     public void addDataDefinition(DataType dataType) {
-        dataType.clearData();
         columns.put(dataType.getKeyName(), dataType);
     }
 
@@ -58,7 +58,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      */
     public void removeDataDefinition(String ...names) {
         if (names == null) return;
-        Arrays.stream(names).forEach(cn -> columns.remove(cn));
+        Arrays.stream(names).forEach(cn -> {
+            columns.remove(cn);
+            data.remove(cn);
+        });
     }
 
     /**
@@ -108,9 +111,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     }
 
     public void clearData() {
-        for(DataType dt : getDataDefinitions()) {
-            dt.clearData();
-        }
+        data.clear();
     }
 
     /**
@@ -120,7 +121,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     public void add(DataObject s) {
         if (s != null) {
             for (DataType dt : getDataDefinitions()) {
-                dt.addData(s.getDataElement(dt.getKeyName()));
+                addData(dt.getKeyName(), s.getDataElement(dt.getKeyName()));
             }
             size++;
         }
@@ -230,7 +231,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
                 int hWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
                 dt.ensureMaxDataWidth(hWidth);
                 for (int i=0; i<size(); i++) {
-                    int vlength = dt.getFormatedData(i).length();
+                    int vlength = getFormatedData(dt.getKeyName(), i).length();
                     dt.ensureMaxDataWidth(vlength);
                 }
             }
@@ -407,4 +408,58 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         }
     }
 
+
+//====================================================================
+// data retrieval methods  .. protect this to keep DataGroup consistent
+//====================================================================
+
+    Object getData(String cname, int rowIdx) {
+        PrimitiveList data = getDataList(cname);
+        return data == null ? null : data.get(rowIdx);
+    }
+
+    void setData(String cname, int rowIdx, Object val) {
+        PrimitiveList data = getDataList(cname);
+        if (data != null) {
+            data.set(rowIdx, val);
+        }
+    }
+
+    void addData(String cname, Object val) {
+        PrimitiveList data = getDataList(cname);
+        if (data != null) {
+            data.add(val);
+        }
+    }
+
+    String getFormatedData(String cname, int rowIdx) {
+        DataType dt = getDataDefintion(cname);
+        Object val = getData(cname, rowIdx);
+        return dt == null ? null : dt.formatData(val);
+    }
+
+    private PrimitiveList getDataList(String cname) {
+        PrimitiveList dataList = data.get(cname);
+        if (dataList == null) {
+            DataType dt = getDataDefintion(cname);
+            if (dt != null) {
+                Class clz = dt.getDataType();
+                if (clz == Double.class) {
+                    dataList = new PrimitiveList.Doubles();
+                } else if (clz == Float.class) {
+                    dataList = new PrimitiveList.Floats();
+                } else if (clz == Long.class) {
+                    dataList = new PrimitiveList.Longs();
+                } else if (clz == Integer.class) {
+                    dataList = new PrimitiveList.Integers();
+                } else if (clz == Boolean.class) {
+                    dataList = new PrimitiveList.Booleans();
+                } else {
+                    dataList = new PrimitiveList.Objects();
+                }
+                data.put(cname, dataList);
+            }
+        }
+        return dataList;
+    }
 }
