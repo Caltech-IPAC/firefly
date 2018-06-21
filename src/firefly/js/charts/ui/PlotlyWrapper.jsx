@@ -8,7 +8,7 @@ import shallowequal from 'shallowequal';
 
 import {get, debounce, isEmpty, set, omit} from 'lodash';
 import {getPlotLy} from '../PlotlyConfig.js';
-import {getChartData, useChartRedraw, useScatterGL} from '../ChartsCntlr.js';
+import {getChartData, useChartRedraw, useScatterGL, usePlotlyReact} from '../ChartsCntlr.js';
 import {logError, deltas, flattenObject} from '../../util/WebUtil.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
@@ -19,7 +19,7 @@ let counter= 0;
 
 const isDebug = () => get(window, 'firefly.debug', false);
 
-export const RenderType= new Enum([ 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
+export const RenderType= new Enum([ 'REACT', 'RESIZE', 'UPDATE', 'RESTYLE', 'RELAYOUT',
                                     'RESTYLE_AND_RELAYOUT', 'NEW_PLOT', 'PAUSE_DRAWING' ],
              { ignoreCase: true });
 
@@ -176,40 +176,45 @@ export class PlotlyWrapper extends Component {
         const {lastUpdated} = getChartData(chartId);
 
         if (!useChartRedraw && lastUpdated && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
-            // omitting 'firefly' from data[*] for now
-            const ndata = data.map((d) => omit(d, 'firefly'));
-            const nlayout = omit(layout, 'lastInputTime');
+            if (usePlotlyReact) {
+                renderType = RenderType.REACT;
+            } else {
 
-            const dataDelta = deltas(ndata, graphDiv.data || []);
-            const layoutDelta = flattenObject(deltas(nlayout, graphDiv.layout || {}, false));
+                // omitting 'firefly' from data[*] for now
+                const ndata = data.map((d) => omit(d, 'firefly'));
+                const nlayout = omit(layout, 'lastInputTime');
 
-            const hasLayout = !isEmpty(layoutDelta);
-            const hasData = !isEmpty(dataDelta);
-            if(hasData) {
-                dataUpdate = Object.values(dataDelta).map((d) => flattenObject(d));
-                dataUpdateTraces = Object.keys(dataDelta).map((k) => parseInt(k));
-                renderType = RenderType.RESTYLE;
-            }
-            if (hasLayout) {
-                layoutUpdate = layoutDelta;
-                renderType = RenderType.RELAYOUT;
-            }
-            if (hasData && hasLayout) {
-                renderType = RenderType.RESTYLE_AND_RELAYOUT;
-            }
+                const dataDelta = deltas(ndata, graphDiv.data || []);
+                const layoutDelta = flattenObject(deltas(nlayout, graphDiv.layout || {}, false));
 
-            // handling trace removal – replot
-            if (ndata.length < graphDiv.data.length) {
-                renderType = RenderType.NEW_PLOT;
-            }
+                const hasLayout = !isEmpty(layoutDelta);
+                const hasData = !isEmpty(dataDelta);
+                if(hasData) {
+                    dataUpdate = Object.values(dataDelta).map((d) => flattenObject(d));
+                    dataUpdateTraces = Object.keys(dataDelta).map((k) => parseInt(k));
+                    renderType = RenderType.RESTYLE;
+                }
+                if (hasLayout) {
+                    layoutUpdate = layoutDelta;
+                    renderType = RenderType.RELAYOUT;
+                }
+                if (hasData && hasLayout) {
+                    renderType = RenderType.RESTYLE_AND_RELAYOUT;
+                }
 
-            if (!useScatterGL) {
-                // when using SVG, it's actually faster to redraw then to do multiple updates
-                // if renderType is restyle, plotly render the inactive trace on top of the active trace
-                // for chart with type histogram2d or histogram2dcontour
-                if (renderType === RenderType.RESTYLE_AND_RELAYOUT || dataUpdate.length > 1 ||
-                    (data.find((d) => get(d, 'type', '').includes('histogram2d')))) {
+                // handling trace removal – replot
+                if (ndata.length < graphDiv.data.length) {
                     renderType = RenderType.NEW_PLOT;
+                }
+
+                if (!useScatterGL) {
+                    // when using SVG, it's actually faster to redraw then to do multiple updates
+                    // if renderType is restyle, plotly render the inactive trace on top of the active trace
+                    // for chart with type histogram2d or histogram2dcontour
+                    if (renderType === RenderType.RESTYLE_AND_RELAYOUT || dataUpdate.length > 1 ||
+                        (data.find((d) => get(d, 'type', '').includes('histogram2d')))) {
+                        renderType = RenderType.NEW_PLOT;
+                    }
                 }
             }
         }
@@ -225,12 +230,15 @@ export class PlotlyWrapper extends Component {
 
             const optimized = this.optimize(this.div || {}, renderType, this.props);
 
-            const {chartId, data,layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces} = optimized;
+            const {chartId, data, layout, config= defaultConfig, newPlotCB, dataUpdate, layoutUpdate, dataUpdateTraces} = optimized;
             renderType = optimized.renderType;
 
             if (this.div) { // make sure the div is still there
-const now = Date.now();
+                const now = Date.now();
                 switch (renderType) {
+                    case RenderType.REACT:
+                        Plotly.react(this.div, data, layout, config);
+                        break;
                     case RenderType.RESTYLE:
                         this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
                         break;

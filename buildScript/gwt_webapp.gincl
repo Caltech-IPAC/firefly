@@ -161,6 +161,14 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
       from ("html/") { include '**/*' }
       into gwt.warDir
     }
+
+    // to avoid storing multiple copies of plotly library under project html
+    // copy minimized plotly from firefly
+    copy {
+      from ("$fireflyPath/src/firefly/html/") { include 'plotly*min.js' }
+      into gwt.warDir
+    }
+
     copy {
       from { // use of closure defers evaluation until execution time
         configurations.webappLib
