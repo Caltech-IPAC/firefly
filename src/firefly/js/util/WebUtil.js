@@ -39,6 +39,31 @@ export function getProp(key, def) {
     return get(GLOBAL_PROPS, [key], def);
 }
 
+/**
+ * returns an object of key:value where keyPrefix is removed from the keys.  i.e
+ * <code>
+ *      {
+ *          version_a: a_val,
+ *          version_b: b_val
+ *      }
+ *      getPropsWith('version_')  => {a: a_val, b: b_val}
+ * </code>
+ * @param keyPrefix
+ * @returns {*}
+ */
+export function getPropsWith(keyPrefix) {
+    /*global __PROPS__*/        // this is defined at build-time.
+    GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;
+    if (!GLOBAL_PROPS) return {};
+    return Object.entries(GLOBAL_PROPS)
+        .filter(([k,]) => k.startsWith(keyPrefix))
+        .reduce((rval, [k,v]) => {
+            const prop = k.substring(keyPrefix.length);
+            rval[prop] = v;
+            return rval;
+        }, {});
+}
+
 export function getModuleName() {
     return getProp('MODULE_NAME');
 }

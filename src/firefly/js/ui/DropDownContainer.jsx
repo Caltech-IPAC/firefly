@@ -19,6 +19,7 @@ import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewP
 import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
 import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
+import {showOptionsPopup} from '../ui/PopupUtil.jsx';
 
 import './DropDownContainer.css';
 
@@ -96,6 +97,7 @@ export class DropDownContainer extends Component {
         const {footer, alerts} = this.props;
         const { visible, selected }= this.state;
         const view = dropDownMap[selected];
+        const {BuildMajor, BuildMinor, BuildRev, Build, BuildType, BuildDate, BuildCommit, BuildCommitFirefly} = getVersion() || {};
 
         if (!visible) return <div/>;
         return (
@@ -110,7 +112,7 @@ export class DropDownContainer extends Component {
                     <div id='footer' className='DD-ToolBar__footer'>
                         {footer}
                         <div className='DD-ToolBar__version'>
-                            {getVersion()}
+                            <VersionInfo versionInfo={getVersion()}/>
                         </div>
                     </div>
                 </div>
@@ -129,6 +131,59 @@ DropDownContainer.propTypes = {
 DropDownContainer.defaultProps = {
     visible: false
 };
+
+function VersionInfo({versionInfo={}}) {
+    const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = versionInfo;
+    const showFullInfo = () => {
+            showOptionsPopup({content: versionInfoFull(versionInfo), title: 'Version Information', modal: true, show: true});
+        };
+
+    let version = `v${BuildMajor}.${BuildMinor}.${BuildRev}`;
+    version += BuildType === 'Final' ? '' : `_${BuildType}`;
+    const builtOn = ` Built On: ${BuildDate}`;
+    return (
+        <div onClick={showFullInfo}>{version + builtOn}</div>
+    );
+
+}
+
+function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildCommitFirefly}) {
+    return (
+        <div className='DD-Version'>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Version</div>
+                <div className='DD-Version__value'>{`${BuildMajor}.${BuildMinor}.${BuildRev}`}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Type</div>
+                <div className='DD-Version__value'>{BuildType}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Build Number</div>
+                <div className='DD-Version__value'>{BuildNumber}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Built On</div>
+                <div className='DD-Version__value'>{BuildTime}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>VCS Tag</div>
+                <div className='DD-Version__value'>{BuildTag}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>VCS commit</div>
+                <div className='DD-Version__value'>{BuildCommit}</div>
+            </div>
+            { BuildCommitFirefly &&
+                <div className='DD-Version__item'>
+                    <div className='DD-Version__key'>VCS Firefly commit</div>
+                    <div className='DD-Version__value'>{BuildCommitFirefly}</div>
+                </div>
+            }
+        </div>
+    );
+
+}
 
 export class Alerts extends PureComponent {
 

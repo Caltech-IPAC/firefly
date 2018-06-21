@@ -56,23 +56,45 @@ task createVersionTag  {
 
   doLast {
     // generate version tag
-    def tag = getVersionTag()
-    def props = new Properties();
+    def major = appConfigProps.get('BuildMajor')
+    def minor = appConfigProps.get('BuildMinor')
+    def rev = appConfigProps.get('BuildRev')
+    def type = appConfigProps.get('BuildType')
+    def buildNum = appConfigProps.get('BuildNumber')
+    def tag = "${project.ext['app-name']}_$major.$minor.${rev}_${type}-$buildNum"
+
+    def props = new Properties()
     file(project.buildDir).mkdirs()
-    props.setProperty('tag', tag)
+    props.setProperty('BuildMajor', major)
+    props.setProperty('BuildMinor', minor)
+    props.setProperty('BuildRev', rev)
+    props.setProperty('BuildType', type)
+    props.setProperty('BuildNumber', buildNum)
+    props.setProperty('BuildDate', build_date)
+    props.setProperty('BuildTime', build_time)
+    props.setProperty('BuildTag', tag)
+    props.setProperty('BuildCommit', getCommitHash())
+
+    if (fireflyPath != rootDir.getPath()) {
+      props.setProperty('BuildCommitFirefly', getCommitHash(fireflyPath))
+    }
+
     props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
   }
 }
 
-ext.getVersionTag = { ->
-  // generate version tag
-  def major = appConfigProps.get('BuildMajor')
-  def minor = appConfigProps.get('BuildMinor')
-  def rev = appConfigProps.get('BuildRev')
-  def type = appConfigProps.get('BuildType')
-  def buildNum = appConfigProps.get('BuildNumber')
-
-  return "$major.$minor.${rev}_${type}-$buildNum"
+ext.getCommitHash = { workDir="." ->
+  try {
+    def hashOut = new ByteArrayOutputStream()
+    exec {
+      commandLine "git", "rev-parse", "--short", "HEAD"
+      workingDir = workDir
+      standardOutput = hashOut
+    }
+    return hashOut.toString().trim();
+  } catch (Exception e) {
+    return 'n/a'
+  }
 }
 
 task createTag(dependsOn: loadConfig) {
@@ -80,14 +102,14 @@ task createTag(dependsOn: loadConfig) {
   group = MISC_GROUP
 
   doLast {
-    def tag_label = project.ext.createTagLabel();
-    println "tag: $tag_label"
+    def tag = project.ext.getVersionInfo('BuildTag');
+    println "tag: $tag"
 
     exec {
       executable 'git'
       args 'tag'
       args '-a'
-      args tag_label
+      args tag
       args '-m'
       if (project.hasProperty("tag_message")) {
         args tag_message
@@ -104,7 +126,7 @@ task createTag(dependsOn: loadConfig) {
       } else {
         args 'origin'
       }
-      args tag_label
+      args tag
     }
   }
 }
@@ -162,20 +184,14 @@ class ConfigRepo {
 
 }
 
-ext.createTagLabel = {  ->
-  if (!project.hasProperty("tag_name")) {
-    if (!project.hasProperty("tag_file")) {
-      project.ext.tag_file = "${project.buildDir}/version.tag"
-    }
-    Properties props = new Properties()
-    props.load(new File(tag_file).newDataInputStream())
-    project.ext.tag_name = props.getProperty('tag')
+ext.getVersionInfo = { key ->
+  if (!project.hasProperty("tag_file")) {
+    project.ext.tag_file = "${project.buildDir}/version.tag"
   }
-
-  def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix}_" : ""
-  def suffix = project.hasProperty("tag_suffix") ? "_${tag_suffix}" : ""
-  def tag_label = prefix + tag_name + suffix
-  return tag_label;
+  Properties props = new Properties()
+  props.load(new File(tag_file).newDataInputStream())
+  def val = props.getProperty(key)
+  return val;
 }
 
 ext.mergeDevIntoMaster = {  ->
