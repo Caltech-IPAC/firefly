@@ -44,7 +44,7 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
         // flux/value column control this | unless UI has radio button band enabled, put bandName back here to match band
         //const band = `${params.filtercode}`;
 
-        let title = 'ZTF-f' + field + 'c'+ ccdid+'q'+qid+'-'+filtercode+'-exp'+expid;
+        let title = 'ZTF-'+ 'expid-'+expid;
 
         const sr = new ServerRequest('ibe_file_retrieve');
         sr.setParam('mission', 'ztf');
