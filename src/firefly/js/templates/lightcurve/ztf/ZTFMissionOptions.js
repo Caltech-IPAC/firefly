@@ -93,7 +93,7 @@ export function isValidZTFTable() {
  * Pregex pattern for ztf, at least to find mjd and meanmag if present
  * @type {string[]}
  */
-const xyColPattern = ['mjd', 'bestmeanmag'];
+const xyColPattern = ['mjd', 'mag'];
 export function ztfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
