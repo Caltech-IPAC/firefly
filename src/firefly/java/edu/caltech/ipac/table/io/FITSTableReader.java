@@ -332,18 +332,14 @@ public final class FITSTableReader
         // setting DataGroup meta info
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
             DataType dt = dataTypes.get(colIdx);
-            if (!StringUtils.isEmpty(dt.getDesc())) {
-                dataGroup.addAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, dt.getKeyName()), dt.getDesc());
-            }
             String format = getParam(table, "TDISP" + (colIdx + 1), 20);
             format = format == null ? null : convertFormat(format);
             if (Double.class.isAssignableFrom(dt.getDataType()) ||
                 Float.class.isAssignableFrom(dt.getDataType())) {
                 format = format == null && Double.class.isAssignableFrom(dt.getDataType()) ? "%.9g" : format;
-                dataGroup.addAttribute(TableMeta.makeAttribKey(TableMeta.FORMAT_TAG, dt.getKeyName()), "NONE");
             }
             if (!StringUtils.isEmpty(format)) {
-                dataGroup.addAttribute(TableMeta.makeAttribKey(TableMeta.FORMAT_DISP_TAG, dt.getKeyName()), format);
+                dt.setFormat(format);
             }
         }
 

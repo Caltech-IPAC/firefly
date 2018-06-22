@@ -39,17 +39,17 @@ public class PhaseFoldedLightCurve {
             throw new IpacTableException("Period should be positive, but value passed = " + period);
         }
 
+        // add meta info for the added phase column
+        String desc = "number of period elapsed since starting time.";
+        dg.addAttribute(null, PHASE_COL);
+        dg.addAttribute(null, "___ " + desc);
+
         //Add a new data type and colunm: phase
         DataType phaseType = new DataType(PHASE_COL, Double.class);
         dg.addDataDefinition(phaseType);
         phaseType.setFormat("%.8f");
         phaseType.setWidth(15);
-
-        // add meta info for the added phase column
-        String desc = "number of period elapsed since starting time.";
-        dg.addAttribute(null, PHASE_COL);
-        dg.addAttribute(null, "___ " + desc);
-        dg.addAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, PHASE_COL), desc);
+        phaseType.setDesc(desc);
 
         //Find the minimum time:
         double tzero = Double.MAX_VALUE;
