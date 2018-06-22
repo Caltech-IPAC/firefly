@@ -21,7 +21,7 @@ import {convertAngle} from '../../../visualize/VisUtil.js';
  * @returns {WebPlotRequest}
  */
 export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params = {
-    fluxCol: 'bestmeanmag',
+    fluxCol: 'mag',
     dataSource: 'field'
 }) {
     const ra = getCellValue(tableModel, hlrow, 'ra');
@@ -31,6 +31,8 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
     const qid = getCellValue(tableModel, hlrow, 'qid');
     const filtercode = getCellValue(tableModel, hlrow, 'filtercode');
     const filefracday = getCellValue(tableModel, hlrow, 'filefracday');
+    const expid = getCellValue(tableModel, hlrow, 'expid');
+
 
 
     // convert the default Cutout size in arcmin to deg for WebPlotRequest
@@ -42,7 +44,7 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
         // flux/value column control this | unless UI has radio button band enabled, put bandName back here to match band
         //const band = `${params.filtercode}`;
 
-        let title = 'ZTF-' + field + '-'+ ccdid+'-'+qid+'-'+filtercode;
+        let title = 'ZTF-f' + field + 'c'+ ccdid+'q'+qid+'-'+filtercode+'-exp'+expid;
 
         const sr = new ServerRequest('ibe_file_retrieve');
         sr.setParam('mission', 'ztf');
@@ -55,6 +57,7 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
         sr.setParam('qid', qid);
         sr.setParam('filtercode', filtercode);
         sr.setParam('filefracday', filefracday);
+        sr.setParam('expid', expid);
 
         let wp = null;
         sr.setParam('doCutout', 'false');
@@ -66,7 +69,7 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
             sr.setParam('doCutout', 'true');
             sr.setParam('size', `${cutoutSizeInDeg}`);
             sr.setParam('subsize', `${cutoutSizeInDeg}`);
-            title ='ZTF-' + field + '-'+ ccdid +'-' + qid + '-'+ filtercode + (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
+            title += (cutoutSize ? ` size: ${cutoutSize}(arcmin)` : '');
         }
 
         const reqParams = WebPlotRequest.makeProcessorRequest(sr, 'ztf');

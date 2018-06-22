@@ -144,7 +144,7 @@ const converters = {
         converterId: 'ztf',
         defaultImageCount: 5,
         defaultTimeCName: 'mjd',
-        defaultYCname: 'bestmeanmag',
+        defaultYCname: 'mag',
         defaultYErrCname: '',
         missionName: 'ZTF',
         MissionOptions: ZTFSettingBox,

@@ -90,13 +90,15 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
             String qid = pathInfo.get("qid");
             String ccdid = pathInfo.get("ccdid");
             String filefracday = pathInfo.get("filefracday");
+            String mjd = pathInfo.get("mjd");
+            String expid = pathInfo.get("expid");
             String YYYY = filefracday.substring(0,4);
             String MMDD = filefracday.substring(4,8);
             String dddddd = filefracday.substring(8,14);
             String formatccdid = ("00" + ccdid).substring(ccdid.length());
             String formatfield =  ("000000" + field).substring(field.length());
             String baseDir = YYYY + "/" + MMDD+ "/" + dddddd +"/";
-            String baseFile = "ztf_" + filefracday + "_" + formatfield +"_z" + filtercode +"_c" + formatccdid + "_o_" + "q" + qid + ZtfRequest.SCIIMAGE;
+            String baseFile = "ztf_" + filefracday + "_" + formatfield +"_" + filtercode +"_c" + formatccdid + "_o_" + "q" + qid + ZtfRequest.SCIIMAGE;
             //String rawbaseDir = "raw/" + YYYY + "/" + MMDD+ "/" + dddddd +"/";
             //String rawbaseFile = rawbaseDir + "ztf_" + filefracday + "_" + formatfield +"_" + filtercode +"_c" + formatccdid + "_o.fits.fz";
 
