@@ -93,7 +93,6 @@ export function isValidZTFTable() {
  * Pregex pattern for ztf, at least to find mjd and meanmag if present
  * @type {string[]}
  */
-const xyColPattern = ['mjd', 'mag'];
 export function ztfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
@@ -102,7 +101,7 @@ export function ztfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     const numericalCols = getColumns(rawTable, COL_TYPE.NUMBER).map((c) => c.name);
     const defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
-    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
+    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,rawTable,converterData );
 
     const defaultValues = {
         [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),

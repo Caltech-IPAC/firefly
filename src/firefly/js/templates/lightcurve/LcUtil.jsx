@@ -286,17 +286,17 @@ export function validate(fldsWithValidators, missionEntries, typeColumns ){
     }, {});
 }
 
-export function getTimeAndYColInfo(numericalCols, xyColPattern, rawTable, converterData ){
+export function getTimeAndYColInfo(numericalCols, rawTable, converterData ){
     let defaultCTimeName = (getColumnIdx(rawTable, converterData.defaultTimeCName) > 0) ? converterData.defaultTimeCName : numericalCols[0];
     let defaultYColName = (getColumnIdx(rawTable, converterData.defaultYCname) > 0) ? converterData.defaultYCname : numericalCols[1];
 
     defaultYColName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase().match(xyColPattern[1]) !== null) {
+            if (el.toLocaleLowerCase() === converterData.defaultYCname) {
                 return el;
             }
         })[0] || defaultYColName;
     defaultCTimeName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase().match(xyColPattern[0]) !== null) {
+            if (el.toLocaleLowerCase() === converterData.defaultCTimeName) {
                 return el;
             }
         })[0] || defaultCTimeName;
