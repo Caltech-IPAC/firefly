@@ -1,8 +1,5 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.table.io.IpacTableException;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -11,7 +8,9 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.util.DataObjectUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -286,9 +285,15 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             }
 
         }
-        for (int i=0; i<nBins; i++){
-            binMin[i]=min+i*binSize;
-            binMax[i]=binMin[i]+binSize;
+        if  (nBins > 0) {
+            binMin[0] = min;
+            binMax[0] = min+binSize;
+
+            // make sure binMax of a row is binMin of the following row
+            for (int i=1; i<nBins; i++){
+                binMin[i]=binMax[i-1];
+                binMax[i]=binMin[i]+binSize;
+            }
         }
 
 
