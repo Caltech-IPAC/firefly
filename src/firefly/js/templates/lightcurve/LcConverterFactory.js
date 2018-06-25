@@ -124,7 +124,7 @@ const converters = {
         converterId: 'ptf',
         defaultImageCount: 5,
         defaultTimeCName: 'obsmjd',
-        defaultYCname: 'magerr_auto',
+        defaultYCname: 'mag_autocorr',
         defaultYErrCname: '',
         missionName: 'PTF',
         MissionOptions: PTFSettingBox,
