@@ -176,7 +176,9 @@ export class PlotlyWrapper extends Component {
         const {lastUpdated} = getChartData(chartId);
 
         if (!useChartRedraw && lastUpdated && renderType ===  RenderType.NEW_PLOT && graphDiv.data) {
-            if (usePlotlyReact) {
+            if (usePlotlyReact || (data || []).find((e) => get(e, 'type', '').endsWith('gl'))) {
+                // use RenderType.REACT for scattergl plots to avoid creating new WebGL context
+                // there are two WebGL contexts per plotly div
                 renderType = RenderType.REACT;
             } else {
 
