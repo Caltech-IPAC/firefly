@@ -13,7 +13,7 @@ import {DL_DATA_TAG} from '../LcConverterFactory.js';
 
 
 const labelWidth = 80;
-export class PTFSettingBox extends PureComponent {
+export class ZTFSettingBox extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -28,25 +28,25 @@ export class PTFSettingBox extends PureComponent {
             <br /> </div>);
 
         const imageStyle = { padding: '0 6px 0 6px', marginLeft: '54px'};
-        return renderMissionView({generalEntries,missionEntries,missionFilters,tblModel,wrapperStyle, imageEntriesStyle:imageStyle, labelWidth , callback:ptfOptionsReducer});
+        return renderMissionView({generalEntries,missionEntries,missionFilters,tblModel,wrapperStyle, imageEntriesStyle:imageStyle, labelWidth , callback:ztfOptionsReducer});
 
 
     }
 }
 
-PTFSettingBox.propTypes = {
+ZTFSettingBox.propTypes = {
     generalEntries: PropTypes.object,
     missionEntries: PropTypes.object
 };
 
-export const ptfOptionsReducer = (missionEntries, generalEntries) => {
+export const ztfOptionsReducer = (missionEntries, generalEntries) => {
     return (inFields, action) => {
         if (inFields) {
             return inFields;
         }
 
 
-        const defValues =getInitialDefaultValues(labelWidth,'ptf');
+        const defValues =getInitialDefaultValues(labelWidth,'ztf');
 
         var defV = Object.assign({}, defValues);
 
@@ -74,26 +74,26 @@ function getFieldValidators(missionEntries) {
 }
 
 
-export function isValidPTFTable() {
+export function isValidZTFTable() {
 
     const tableModel = getTblById(LC.RAW_TABLE);
 
-    const pid = getCellValue(tableModel, 0, 'pid');
-    if (!isNil(pid)) {
+    const field = getCellValue(tableModel, 0, 'field');
+    if (!isNil(field)) {
         return {errorMsg: undefined, isValid: true};
     }
     else {
-         const errorMsg = `The uploaded table is not valid. The PTF option requires pid.
+         const errorMsg = `The uploaded table is not valid. The ZTF option requires field.
                         Please select the "Other" upload option for tables that do not meet these requirements.`;
         return {errorMsg, isValid:false};
    }
 }
 
 /**
- * Pregex pattern for ptf, at least to find obsmjd and mag_autocorr if present
+ * Pregex pattern for ztf, at least to find mjd and meanmag if present
  * @type {string[]}
  */
-export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
+export function ztfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
     const metaInfo = rawTable && rawTable.tableMeta;
@@ -119,8 +119,8 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     return {newLayoutInfo, shouldContinue: false};
 }
 
-//TODO if ptfRawTableRequest and ptfOnFieldUpdate are nothing different from the ones in ptfMssionOption, these two can be replaced.
-export function ptfRawTableRequest(converter, source, uploadFileName='') {
+//TODO if ztfRawTableRequest and ztfOnFieldUpdate are nothing different from the ones in ztfMssionOption, these two can be replaced.
+export function ztfRawTableRequest(converter, source, uploadFileName='') {
     const timeCName = converter.defaultTimeCName;
     const mission = converter.converterId;
     const options = {
@@ -136,8 +136,8 @@ export function ptfRawTableRequest(converter, source, uploadFileName='') {
 }
 
 
-export function ptfOnFieldUpdate(fieldKey, value) {
-    // images are controlled by radio button -> filter g, R.
+export function ztfOnFieldUpdate(fieldKey, value) {
+    // images are controlled by radio button -> filter zg, zr etc.
     if (fieldKey === LC.META_TIME_CNAME) {
         return fileUpdateOnTimeColumn(fieldKey, value);
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME,  LC.META_FLUX_BAND].includes(fieldKey)) {
@@ -148,13 +148,13 @@ export function ptfOnFieldUpdate(fieldKey, value) {
 }
 
 /**
- *  This is specialized for PTF download.
- *  Gets the download option panel for PTF with specific file processor id 'PtfDownload'
+ *  This is specialized for ZTF download.
+ *  Gets the download option panel for ZTF with specific file processor id 'ZtfDownload'
  * @param mission
  * @param cutoutSizeInDeg
  * @returns {XML}
  */
-export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
+export function ztfDownloaderOptPanel (mission, cutoutSizeInDeg) {
     const currentTime = (new Date()).toLocaleString('en-US', { hour12: false });
 
     const style = {width: 167};
@@ -164,22 +164,22 @@ export function ptfDownloaderOptPanel (mission, cutoutSizeInDeg) {
                 groupKey = {mission}
                 dataTag = {DL_DATA_TAG}
                 cutoutSize={cutoutSizeInDeg}
-                title={'Image Download Options'}
+                title={'Image Download Option'}
                 dlParams={{
-                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ptf image is ~33mb
+                    MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each ztf image is ~37mb
                     FilePrefix: `${mission}_Files`,
                     BaseFileName: `${mission}_Files`,
                     DataSource: `${mission} images`,
-                    FileGroupProcessor: 'PtfLcDownload',
-                    ProductLevel:'l1',
-                    schema:'images',
-                    table:'level1'
+                    FileGroupProcessor: 'ZtfLcDownload',
+                    ProductLevel:'sci',
+                    schema:'products',
+                    table:'sci'
                 }}>
                 <ValidationField
                     style={style}
                     initialState={{
                         value: `${mission}_Files: ${currentTime}`,
-                        label: 'PTF:'
+                        label: 'ZTF:'
                     }}
 
                     fieldKey='Title'
