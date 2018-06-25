@@ -19,7 +19,7 @@ import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewP
 import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
 import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
-import {showOptionsPopup} from '../ui/PopupUtil.jsx';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import './DropDownContainer.css';
 
@@ -134,9 +134,7 @@ DropDownContainer.defaultProps = {
 
 function VersionInfo({versionInfo={}}) {
     const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = versionInfo;
-    const showFullInfo = () => {
-            showOptionsPopup({content: versionInfoFull(versionInfo), title: 'Version Information', modal: true, show: true});
-        };
+    const showFullInfo = () => showInfoPopup(versionInfoFull(versionInfo), 'Version Information');
 
     let version = `v${BuildMajor}.${BuildMinor}.${BuildRev}`;
     version += BuildType === 'Final' ? '' : `_${BuildType}`;
@@ -167,16 +165,12 @@ function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildTy
                 <div className='DD-Version__value'>{BuildTime}</div>
             </div>
             <div className='DD-Version__item'>
-                <div className='DD-Version__key'>VCS Tag</div>
-                <div className='DD-Version__value'>{BuildTag}</div>
-            </div>
-            <div className='DD-Version__item'>
-                <div className='DD-Version__key'>VCS commit</div>
+                <div className='DD-Version__key'>Git commit</div>
                 <div className='DD-Version__value'>{BuildCommit}</div>
             </div>
             { BuildCommitFirefly &&
                 <div className='DD-Version__item'>
-                    <div className='DD-Version__key'>VCS Firefly commit</div>
+                    <div className='DD-Version__key'>Git commit - Firefly</div>
                     <div className='DD-Version__value'>{BuildCommitFirefly}</div>
                 </div>
             }
