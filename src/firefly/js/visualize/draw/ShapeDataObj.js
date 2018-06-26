@@ -1144,9 +1144,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         return;
     }
 
-    const adjustPointOnDisplay = (pt) => {
-        let devPt= plot.getDeviceCoords(pt);
-
+    const adjustPointOnDisplay = (devPt, pt) => {
         if (!devPt) {
             const newPt = getEdgePtOnGreatCircleFromCenterTo(pt, plot);
             devPt = plot.getDeviceCoords(newPt);
@@ -1166,23 +1164,23 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         return retPt;
     };
 
-    const isPolygonInDisplay = (pts, plot) => {
-        const sideNo = pts.length/4;
+    const isPolygonInDisplay = (pts) => {
+        const devPts = pts.map((onePt) => plot.getDeviceCoords(onePt));
 
-        return pts.filter( (pt, idx) => idx%sideNo === 0)
-                  .find((oneCorner) => plot.getDeviceCoords(oneCorner));
+        return {devPts, inDisplay: devPts.find((onePt) => onePt)};
     };
 
     const {pts, renderOptions}= drawObj;
 
     if (pts) {
-        if (!isPolygonInDisplay(pts, plot)) {
-            return;
-        }
-        const devPtAll = pts.map((pt) => adjustPointOnDisplay(pt))
-                            .filter((pt) => pt);
+       const {devPts, inDisplay} = isPolygonInDisplay(pts);  // check if polygon is out of display
 
-        DrawUtil.fillPath(ctx, color, devPtAll, true, renderOptions);
+        if (inDisplay) {
+            const devPtAll = devPts.map((dPt, idx) => adjustPointOnDisplay(dPt, pts[idx]))
+                                   .filter((pt) => pt);
+
+            DrawUtil.fillPath(ctx, color, devPtAll, true, renderOptions);
+        } 
     }
 
     //drawCompositeText(drawObj, ctx, plot, drawParams);
