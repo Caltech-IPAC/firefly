@@ -18,7 +18,7 @@ export const getUIComponent = (drawLayer,pv) => <HiPSMOCUI drawLayer={drawLayer}
 function HiPSMOCUI({drawLayer,pv}) {
     const {style}= drawLayer.drawingDef || {};
     const fillStyle = (!style || style === Style.STANDARD) ? 'outline' : 'fill';
-    const  showLabel = drawLayer.showLabel;
+    const {showLabel=false} = drawLayer;
 
     return (
             <div style={{display: 'flex', width: '48%', padding: '1px 2px 1px 2px',

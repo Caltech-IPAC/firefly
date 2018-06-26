@@ -70,6 +70,7 @@ function highlightChange(mouseStatePayload) {
     let done = false;
     let closestInfo = null;
     let closestObjId = -1;
+    const maxChunk = 1000;
     const {data} = drawLayer.drawData;
     const plot = primePlot(visRoot(), plotId);
     const dataPlot = get(data, plotId);
@@ -77,7 +78,6 @@ function highlightChange(mouseStatePayload) {
 
     function* getDrawObjIndex() {
         let index = 0;
-        const dataPlot = get(data, plotId);
 
         while (index < dataPlot.length) {
             yield index++;
@@ -89,8 +89,7 @@ function highlightChange(mouseStatePayload) {
         if (done) {
             window.clearInterval(sId);
 
-            // set the highlight region on current drawLayer,
-            // unset the highlight on other drawLayer if a highlight is found for current layer
+            // highlight or de-highlight region on current drawLayer,
 
             dlRoot().drawLayerAry.forEach( (dl) => {
                 if (dl.drawLayerId === drawLayer.drawLayerId) {
@@ -99,12 +98,12 @@ function highlightChange(mouseStatePayload) {
             });
         }
 
-        for (let i = 0; i < dataPlot.length + 1; i++ ) {
+        for (let i = 0; i < maxChunk; i++ ) {
             const nextId = gen.next().value;
-            const dObj = dataPlot[nextId];
 
             if (!isNil(nextId)) {
-                const distInfo = DrawOp.isScreenPointInside(screenPt, dObj, plot);
+                const distInfo = DrawOp.isScreenPointInside(screenPt, dataPlot[nextId], plot);
+
                 if (distInfo.inside) {
                    if (!closestInfo || closestInfo.dist > distInfo.dist) {
                        closestInfo = distInfo;
