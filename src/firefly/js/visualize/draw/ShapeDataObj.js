@@ -1180,7 +1180,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
                                    .filter((pt) => pt);
 
             DrawUtil.fillPath(ctx, color, devPtAll, true, renderOptions);
-        } 
+        }
     }
 
     //drawCompositeText(drawObj, ctx, plot, drawParams);

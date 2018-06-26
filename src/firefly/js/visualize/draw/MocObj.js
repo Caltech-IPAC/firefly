@@ -5,7 +5,7 @@ import {isEmpty} from 'lodash';
 import {makeRegionPolygon, makeRegionOptions} from '../region/Region.js';
 import {drawRegions} from '../region/RegionDrawer.js';
 import {distanceToPolygon} from './ShapeDataObj.js';
-import {getMocOrderIndex, computeSideCellsToOrder} from '../HiPSMOCUtil.js';
+import {getMocOrderIndex, computeSideCellsToOrder} from '../HiPSMocUtil.js';
 import {getHealpixCornerTool} from '../HiPSUtil.js';
 import {TextLocation} from './DrawingDef.js';
 import DrawOp from './DrawOp.js';
