@@ -109,7 +109,7 @@ export function ztfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
         [LC.META_TIME_NAMES]: get(metaInfo, LC.META_TIME_NAMES, numericalCols),
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
-        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'g')
+        [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'zg')
 
     };
 

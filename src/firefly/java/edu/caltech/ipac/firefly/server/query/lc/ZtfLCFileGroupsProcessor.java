@@ -84,7 +84,6 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
             String filefracday = String.valueOf(dgData.get(rowIdx, "filefracday"));
             String field = String.valueOf(dgData.get(rowIdx, "field"));
             String filtercode = (String) dgData.get(rowIdx, "filtercode");
-            filtercode = "z" + filtercode;
             String ccdid = String.valueOf(dgData.get(rowIdx, "ccdid"));
             String imgtypcode = "o";
             String qid = String.valueOf(dgData.get(rowIdx, "qid"));
