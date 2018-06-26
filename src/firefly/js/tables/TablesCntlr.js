@@ -5,6 +5,7 @@ import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unse
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
+import {MAX_ROW} from './TableRequestUtil.js'
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
@@ -317,10 +318,14 @@ function tableSearch(action) {
             dispatch(action);
             var {request={}, options={}} = action.payload;
             TblUtil.fixRequest(request);
-            const {tbl_ui_id, backgroundable = false} = options;
+            const {tbl_ui_id, backgroundable = false, showPaging=true} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
-            request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
+            if (showPaging) {
+                request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
+            } else {
+                request.pageSize = MAX_ROW;
+            }
             if (TblUtil.getTblById(tbl_id)) {
                 // table exists... this is a new search.  old data should be removed.
                 dispatchTableRemove(tbl_id);

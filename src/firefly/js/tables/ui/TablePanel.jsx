@@ -52,7 +52,7 @@ export class TablePanel extends PureComponent {
 
 
     setupInitState(props) {
-        var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
+        var {tbl_id, tbl_ui_id, tableModel, ...options} = props;
 
         if (!tbl_id && tableModel) {
             if (!tableModel.tbl_id) {
@@ -61,7 +61,7 @@ export class TablePanel extends PureComponent {
             tbl_id = tableModel.tbl_id;
         }
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
-        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, options);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
         return Object.assign({}, this.props, uiState);
     }

@@ -16,8 +16,9 @@ export function uiReducer(state={ui:{}}, action={}) {
     switch (action.type) {
         case (Cntlr.TBL_UI_UPDATE)    :
         {
-            const {tbl_ui_id, tbl_id} = action.payload;
-            return updateAllUi(root, tbl_id, tbl_ui_id, action.payload);
+            const {tbl_ui_id} = action.payload;
+            const payload = onUiUpdate(action.payload);
+            return updateMerge(root, tbl_ui_id, payload);
         }
         case (Cntlr.TABLE_REMOVE)    :
         case (Cntlr.TBL_RESULTS_REMOVE)    :
@@ -25,8 +26,9 @@ export function uiReducer(state={ui:{}}, action={}) {
 
         case (Cntlr.TBL_RESULTS_ADDED) :
         {
-            const {tbl_ui_id, tbl_id, options} = action.payload;
-            return Object.assign(root, {[tbl_ui_id]:{tbl_ui_id, tbl_id, ...options}});
+            const {tbl_ui_id, tbl_id} = action.payload;
+            const options = onUiUpdate(get(action, 'payload.options', {}));
+            return updateSet(root, tbl_ui_id, {tbl_ui_id, tbl_id, ...options});
         }
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
@@ -92,18 +94,12 @@ function uiStateReducer(ui, tableModel) {
     return ui;
 }
 
-function updateAllUi(ui, tbl_id, tbl_ui_id, payload) {
-    if (tbl_ui_id) {
-        return updateMerge(ui, tbl_ui_id, payload);
-    } else {
-        Object.keys(ui).filter( (ui_id) => {
-            return get(ui, [ui_id, 'tbl_id']) === tbl_id;
-        }).forEach( (tbl_ui_id) => {
-            const changes = set({}, [tbl_ui_id], payload);
-            ui = TblUtil.smartMerge(ui, changes);
-        });
+function onUiUpdate(uiData) {
+    if (!get(uiData, 'showToolbar', true)) {
+        // if showToolbar is false, make the other related UI props to be fasl
+        uiData =  Object.assign(uiData, {showFilters:false, showTitle:false, showPaging:false, showSave:false, showFilterButton:false});
     }
-    return ui;
+    return uiData;
 }
 
 const ensureColumns = ({tableModel, columns}) => {

@@ -27,7 +27,7 @@ export class TablePanelOptions extends SimpleComponent  {
 
     render() {
         const {onChange, onOptionReset, tbl_ui_id} = this.props;
-        const {columns, pageSize, showUnits=false, showFilters=false, showToolbar=true, optSortInfo, filterInfo} = this.state;
+        const {columns, pageSize, showUnits=false, showFilters=false, showPaging=true, optSortInfo, filterInfo} = this.state;
 
         if (isEmpty(columns)) return false;
 
@@ -49,7 +49,7 @@ export class TablePanelOptions extends SimpleComponent  {
                                    checked={showFilters}/>
                         </div>
                     </div>
-                    {showToolbar &&
+                    {showPaging &&
                         <div style={{display: 'inline-block'}}>
                             <div style={{marginTop: 17}}>
                                 <InputField
