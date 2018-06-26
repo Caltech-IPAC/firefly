@@ -6,6 +6,9 @@ import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.output.PlotOutput;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -53,7 +56,7 @@ public class ImagePlotTest extends ConfigTest{
 
         LOG.info("Load FITS file and then prepare data for testing");
         inFits = new Fits( FileLoader.getDataPath(ImagePlotTest.class)+inFitsFileName);
-        fitsRead = FitsRead.createFitsReadArray(inFits)[0];
+        fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
         frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.NO_BAND, fitsRead);
         LOG.info("Create an ImagePlot object using the input data");
@@ -156,7 +159,7 @@ public class ImagePlotTest extends ConfigTest{
     @Test
     public void testSetThreeColorBand() throws FitsException, ClassNotFoundException, IOException, GeomException {
         Fits inFits = new Fits( FileLoader.getDataPath(ImagePlotTest.class)+colorBandFitsFileName);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
         ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.RED, fitsRead);
         ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
@@ -175,7 +178,7 @@ public class ImagePlotTest extends ConfigTest{
     @Test
     public void testRemoveBand() throws FitsException, ClassNotFoundException, IOException, GeomException {
         Fits inFits = new Fits(FileLoader.getDataPath(ImagePlotTest.class) + colorBandFitsFileName);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
         ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.RED, fitsRead);
         ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
@@ -195,41 +198,7 @@ public class ImagePlotTest extends ConfigTest{
         Assert.assertEquals("GNOMONIC", projectionName);
     }
 
-    /**
-     * The color band used is Band.RED.  The method is to test if it returns the correct color band used.
-     * @throws FitsException
-     * @throws ClassNotFoundException
-     * @throws IOException
-     * @throws GeomException
-     */
-    @Test
-    public void testIsColorBandUsed() throws FitsException, ClassNotFoundException, IOException, GeomException{
-        Fits inFits = new Fits(FileLoader.getDataPath(ImagePlotTest.class) + colorBandFitsFileName);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(inFits)[0];
-        ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
-        frGroup.setFitsRead(Band.RED, fitsRead);
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
-        Assert.assertTrue(!imagePlot.isColorBandInUse(Band.BLUE, frGroup));
-    }
 
-    /**
-     * The color band used is Band.RED.  It is to test if the Band.RED is visible.
-     * @throws FitsException
-     * @throws ClassNotFoundException
-     * @throws IOException
-     * @throws GeomException
-     */
-    @Test
-    public void testIsColorBandVisible() throws FitsException, ClassNotFoundException, IOException, GeomException {
-        Fits inFits = new Fits( FileLoader.getDataPath(ImagePlotTest.class)+colorBandFitsFileName);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(inFits)[0];
-        ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
-        frGroup.setFitsRead(Band.RED, fitsRead);
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
-        imagePlot.setThreeColorBand(fitsRead, Band.RED, frGroup);
-        Assert.assertTrue(imagePlot.isColorBandVisible(Band.RED, frGroup));
-
-    }
 
     /**
      * In this method:
@@ -239,9 +208,9 @@ public class ImagePlotTest extends ConfigTest{
      * one calculated by ImagePlot.
      */
     @Test
-    public void testGetCoordinatesOfPlot(){
+    public void testGetCoordinatesOfPlot() throws FitsException {
 
-        ImageHeader   imageHeader =  fitsRead.getImageHeader();
+        ImageHeader   imageHeader =  new ImageHeader(fitsRead.getHeader());
         CoordinateSys  expectedCoordinateSys= CoordinateSys.makeCoordinateSys( imageHeader.getJsys(), imageHeader .getEquinox() );
         CoordinateSys coordinateSys = imagePlot.getCoordinatesOfPlot();
         Assert.assertEquals(expectedCoordinateSys,coordinateSys );
@@ -282,7 +251,7 @@ public class ImagePlotTest extends ConfigTest{
      */
     @Test
     public void testGetWorldPlotWidth() throws FitsException, IOException {
-        ImageHeader   imageHeader =  fitsRead.getImageHeader();
+        ImageHeader   imageHeader =  new ImageHeader(fitsRead.getHeader());
         Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
 
         double ww = projection.getPixelWidthDegree() *width;
@@ -299,7 +268,7 @@ public class ImagePlotTest extends ConfigTest{
 
     @Test
     public void testGetWorldPlotHeight() throws FitsException, IOException {
-        ImageHeader   imageHeader =  fitsRead.getImageHeader();
+        ImageHeader   imageHeader =  new ImageHeader(fitsRead.getHeader());
         Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
 
         double hh  = projection.getPixelWidthDegree() * height;
@@ -427,7 +396,7 @@ public class ImagePlotTest extends ConfigTest{
         Fits fits = new Fits( FileLoader.getDataPath(ImagePlotTest.class)+inFitsName);
 
 
-        FitsRead fitsRead = FitsRead.createFitsReadArray(fits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(fits)[0];
         ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.NO_BAND, fitsRead);
 

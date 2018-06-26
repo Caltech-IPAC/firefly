@@ -31,7 +31,7 @@ public class BandState implements Serializable {
 
     private String plotRequestSerialize = null; // Serialized WebPlotRequest
     private String rangeValuesSerialize = null; // Serialized RangeValues
-    private ClientFitsHeader fitsHeader;
+    private ClientFitsHeader directFileAcessData;
     private boolean bandVisible = true;
     private boolean multiImageFile = false;
     private boolean tileCompress = false;
@@ -127,16 +127,13 @@ public class BandState implements Serializable {
      * reflected here.
      * @param header
      */
-    public void setFitsHeader(ClientFitsHeader header) {
-        fitsHeader= header;
+    public void setDirectFileAccessData(ClientFitsHeader header) {
+        directFileAcessData = header;
     }
 
     public FileAndHeaderInfo getFileAndHeaderInfo() {
-        return new FileAndHeaderInfo(workingFitsFileStr, fitsHeader);
+        return new FileAndHeaderInfo(workingFitsFileStr, directFileAcessData);
     }
-
-    public ClientFitsHeader getHeader() { return fitsHeader; }
-
 
     public String getWorkingFitsFileStr() { return workingFitsFileStr; }
     public void setWorkingFitsFileStr(String fileStr) { workingFitsFileStr = fileStr; }
@@ -163,7 +160,7 @@ public class BandState implements Serializable {
                 originalImageIdx +"",
                 plotRequestSerialize,
                 rangeValuesSerialize,
-                fitsHeader+"",
+                directFileAcessData +"",
                 bandVisible +"",
                 multiImageFile+"",
                 tileCompress+"",
@@ -183,7 +180,7 @@ public class BandState implements Serializable {
                  ComparisonUtil.equals(uploadFileNameStr, bs.uploadFileNameStr) &&
                  ComparisonUtil.equals(plotRequestSerialize, bs.plotRequestSerialize) &&
                  ComparisonUtil.equals(rangeValuesSerialize, bs.rangeValuesSerialize) &&
-                 ComparisonUtil.equals(fitsHeader, bs.fitsHeader) &&
+                 ComparisonUtil.equals(directFileAcessData, bs.directFileAcessData) &&
                  imageIdx ==bs.imageIdx &&
                  originalImageIdx ==bs.originalImageIdx &&
                  bandVisible ==bs.bandVisible) {

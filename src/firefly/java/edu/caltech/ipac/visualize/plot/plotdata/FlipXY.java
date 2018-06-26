@@ -1,13 +1,21 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.visualize.plot;
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.visualize.plot.plotdata;
 /**
  * Author: Lijun
  * Date: 03/24/15
  */
 
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.ImageHeader;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.*;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.fits.ImageData;
@@ -34,11 +42,11 @@ public class FlipXY {
      * @param inFitsRead - a FitsRead object
      * @param fipDirection - a String, "xAxis" or "yAsix"
      */
-    public FlipXY(FitsRead inFitsRead, String fipDirection) throws HeaderCardException {
+    public FlipXY(FitsRead inFitsRead, String fipDirection) throws FitsException {
         fitsRead = inFitsRead;
         direction = fipDirection;
-        inFitsHeader = inFitsRead.getHeader();
-        inImageHeader = inFitsRead.getImageHeader();
+        inFitsHeader = FitsReadUtil.cloneHeaderFrom(inFitsRead.getHeader());
+        inImageHeader = new ImageHeader(inFitsHeader);
         inNaxis1 = inImageHeader.naxis1;
         inNaxis2 = inImageHeader.naxis2;
 
@@ -87,7 +95,7 @@ public class FlipXY {
         Fits newFits = new Fits();
         newFits.addHDU(outHDU);
 
-        FitsRead[] outFitsRead = FitsRead.createFitsReadArray(newFits);
+        FitsRead[] outFitsRead = FitsReadFactory.createFitsReadArray(newFits);
         FitsRead fr = outFitsRead[0];
 
         return fr;

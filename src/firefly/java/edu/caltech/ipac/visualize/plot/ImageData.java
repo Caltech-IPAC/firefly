@@ -4,7 +4,7 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.util.Assert;
-import nom.tam.fits.FitsException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -47,15 +47,13 @@ public class ImageData implements Serializable {
 
    
 
-    public ImageData(FitsRead fitsReadAry[],
-                     ImageType imageType,
+    public ImageData(ImageType imageType,
                      int colorTableID,
                      RangeValues rangeValues,
                      int x,
                      int y,
                      int width,
-                     int height,
-                     boolean constructNow) throws FitsException {
+                     int height) {
 
         _x= x;
         _y= y;
@@ -72,19 +70,16 @@ public class ImageData implements Serializable {
         if (imageType==ImageType.TYPE_24_BIT) {
             _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
         }
-        if (constructNow) constructImage(fitsReadAry);
     }
 
     //LZ 7/20/15 add this to make an ImageData with given IndexColorModel
-    public ImageData(FitsRead fitsReadAry[],
-                     ImageType imageType,
+    public ImageData(ImageType imageType,
                      ImageMask[] iMasks,
                      RangeValues rangeValues,
                      int x,
                      int y,
                      int width,
-                     int height,
-                     boolean constructNow) throws FitsException {
+                     int height) {
 
         _x= x;
         _y= y;
@@ -104,8 +99,6 @@ public class ImageData implements Serializable {
         if (imageType==ImageType.TYPE_24_BIT) {
             _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
         }
-        if (constructNow) constructImage(fitsReadAry);
-
 
     }
 

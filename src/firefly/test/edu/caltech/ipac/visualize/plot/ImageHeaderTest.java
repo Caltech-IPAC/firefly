@@ -3,6 +3,8 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsHeaderToJson;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
 import nom.tam.fits.*;
@@ -63,7 +65,7 @@ public class ImageHeaderTest  extends ConfigTest {
 
         ConfigTest.LOG.info("load input file");
         inFits = FileLoader.loadFits(ImageHeaderTest.class,fitsFileName);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         header = fitsRead0.getHeader();
 
         ConfigTest.LOG.info("done loading testing data");
@@ -117,7 +119,7 @@ public class ImageHeaderTest  extends ConfigTest {
 
         String fitsFileName = "fitsWithSpotExt.fits";
         Fits inFits = FileLoader.loadFits(ImageHeaderTest.class,fitsFileName);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         Header header = fitsRead0.getHeader();
         ImageHDU imageHdu = (ImageHDU) fitsRead0.getHDU();
         int planeNumber = header.getIntValue("SPOT_PL", 0);
@@ -150,7 +152,7 @@ public class ImageHeaderTest  extends ConfigTest {
         ConfigTest.LOG.info("load input file");
         String  fitsFileName = "iris-25-GNOMONIC.fits";
         Fits inFits = FileLoader.loadFits(ImageHeaderTest.class,fitsFileName);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         Header header = fitsRead0.getHeader();
         ImageHeader calculatedImageHeader = new ImageHeader(header);
         validate(expectedImageHeader,calculatedImageHeader);
@@ -178,7 +180,7 @@ public class ImageHeaderTest  extends ConfigTest {
         ConfigTest.LOG.info("load input file");
         String  fitsFileName = "twomass-j-SIN.fits";
         Fits inFits = FileLoader.loadFits(ImageHeaderTest.class,fitsFileName);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         Header header = fitsRead0.getHeader();
         ImageHeader calculatedImageHeader = new ImageHeader(header);
         validate(expectedImageHeader,calculatedImageHeader);
@@ -207,7 +209,7 @@ public class ImageHeaderTest  extends ConfigTest {
         ConfigTest.LOG.info("load input file");
         String  fitsFileName = "SIP.fits";
         Fits inFits = FileLoader.loadFits(ImageHeaderTest.class,fitsFileName);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         Header header =fitsRead0.getHeader();
         ImageHeader calculatedImageHeader = new ImageHeader(header);
         validate(expectedImageHeader,calculatedImageHeader);
@@ -384,7 +386,7 @@ public class ImageHeaderTest  extends ConfigTest {
             String inputFitsFile = FileLoader.getDataPath(ImageHeaderTest.class) + fitsFilesName[i];
 
             Fits fits = new Fits(inputFitsFile);
-            FitsRead fitsRead0 = FitsRead.createFitsReadArray(fits)[0];
+            FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(fits)[0];
             Header header = fitsRead0.getHeader();
             ImageHeader imageHeader = new ImageHeader(header);
             String outJsonFile = inputFitsFile.substring(0, inputFitsFile.length() - 5) + "Header.json";
@@ -405,7 +407,7 @@ public class ImageHeaderTest  extends ConfigTest {
         String outJsonFileSpot = inFitsFile.substring(0, inFitsFile.length()-5 ) + "Header.json";
 
         Fits inFits = new Fits(inFitsFile);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
 
 
         ImageHDU imageHdu = (ImageHDU) fitsRead0.getHDU();

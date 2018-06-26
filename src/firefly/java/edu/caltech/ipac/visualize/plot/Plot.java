@@ -193,11 +193,11 @@ public abstract class Plot {
         return getImageCoords(new Point(ev.getX(), ev.getY()));
 
     }
-    public ImageWorkSpacePt getImageWorkSpaceCoords(MouseEvent ev)
-                                  throws NoninvertibleTransformException {
-        return getImageWorkSpaceCoords(new Point(ev.getX(), ev.getY()));
-
-    }
+//    public ImageWorkSpacePt getImageWorkSpaceCoords(MouseEvent ev)
+//                                  throws NoninvertibleTransformException {
+//        return getImageWorkSpaceCoords(new Point(ev.getX(), ev.getY()));
+//
+//    }
     /**
      * Return the image coordinates given screen x & y.
      * @param pt screen coordinates to convert from
@@ -401,13 +401,13 @@ public abstract class Plot {
      * @return ImagePt the new point
      * @throws ProjectionException if the point cannot be projected into an ImagePt
      */
-    public ImagePt getDistanceCoords(WorldPt wp, double x, double y)
-                                                throws ProjectionException {
-
-       ImageWorkSpacePt iwpt= getImageCoords(wp);
-       ImagePt pt= new ImagePt(iwpt.getX(), iwpt.getY());
-       return getDistanceCoords(pt, x, y);
-    }
+//    public ImagePt getDistanceCoords(WorldPt wp, double x, double y)
+//                                                throws ProjectionException {
+//
+//       ImageWorkSpacePt iwpt= getImageCoords(wp);
+//       ImagePt pt= new ImagePt(iwpt.getX(), iwpt.getY());
+//       return getDistanceCoords(pt, x, y);
+//    }
 
     /**
      * Return a point the represents the passed point with a distance in
@@ -436,11 +436,6 @@ public abstract class Plot {
                                               double  x,
                                               double  y)
                                                throws ProjectionException;
-
-
-
-//   public abstract void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup);
-
 
     /**
      * return if this plot is actually plotted.
@@ -478,9 +473,9 @@ public abstract class Plot {
      * Get the inverse transform this plot uses
      * @return AffineTransform the transform
      */
-    public AffineTransform getInverseTransform() {
-       return (AffineTransform )_plotGroup.getInverseTransform().clone();
-    }
+//   public AffineTransform getInverseTransform() {
+//       return (AffineTransform )_plotGroup.getInverseTransform().clone();
+//    }
 
 
 
@@ -492,9 +487,9 @@ public abstract class Plot {
         return _attributes.get(key);
     }
 
-    public boolean containsAttributeKey(String key) {
-        return _attributes.containsKey(key);
-    }
+//    public boolean containsAttributeKey(String key) {
+//        return _attributes.containsKey(key);
+//    }
 
     /**
      * Set the factor to zoom this plot on the next zoom call.
@@ -527,26 +522,6 @@ public abstract class Plot {
     public float getInitialZoomLevel() {
        return _initialZoomLevel;
     }
-
-
-
-
-    /**
-     * Get the base plot.  This return a non-null plot if this plot
-     * should be drawn on top of a plot.
-     * @return Plot the PlotView this plot is in.
-     */
-    //public Plot getBasePlot() { return _basePlot; }
-
-    /**
-     * repair a potion of this plot.
-     * @param r  the area to repair.
-     */
-//    public void repair(Rectangle r) { _plotGroup.repair(r); }
-    /**
-     * repair the whole plot
-     */
-//    public void repair() { repair(null); }
 
     /**
      * set whether to show or hide this plot
@@ -660,10 +635,7 @@ public abstract class Plot {
    protected void firePlotStatusNewPlot() {
         List<NewPlotNotificationListener> newlist;
         NewPlotNotificationEvent    e= new NewPlotNotificationEvent(this);
-        synchronized (this) {
-            newlist = new ArrayList<NewPlotNotificationListener>(_plotStatus);
-        }
-
+        newlist = new ArrayList<>(_plotStatus);
         for(NewPlotNotificationListener listener: newlist) {
             listener.newPlot(e);
         }

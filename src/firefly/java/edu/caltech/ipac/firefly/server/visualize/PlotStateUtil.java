@@ -15,10 +15,6 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.ImageHeader;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
 
 import java.io.File;
 import java.util.Map;
@@ -94,29 +90,6 @@ public class PlotStateUtil {
         state.setNewPlot(false);
         state.setColorTableId(initializerState.getColorTableId());
         state.setZoomLevel(initializerState.getZoomLevel());
-    }
-
-    static void setPixelAccessInfo(ImagePlot plot, PlotState state, ActiveFitsReadGroup frGroup) {
-        if (plot.isThreeColor()) {
-            if (plot.isColorBandInUse(Band.RED, frGroup)) {
-                setPixelAccessInfoBand(plot,frGroup,state, Band.RED);
-            }
-            if (plot.isColorBandInUse(Band.GREEN, frGroup)) {
-                setPixelAccessInfoBand(plot,frGroup,state, Band.GREEN);
-            }
-            if (plot.isColorBandInUse(Band.BLUE, frGroup)) {
-                setPixelAccessInfoBand(plot,frGroup,state, Band.BLUE);
-            }
-        }
-        else {
-            setPixelAccessInfoBand(plot,frGroup,state, Band.NO_BAND);
-        }
-    }
-
-    static void setPixelAccessInfoBand(ImagePlot plot, ActiveFitsReadGroup frGroup, PlotState state, Band band) {
-        FitsRead resultFr= plot.getHistogramOps(band,frGroup).getFitsRead();
-        ImageHeader ih= resultFr.getImageHeader();
-        state.setFitsHeader(ih.makeMiniHeader(), band);
     }
 
     public static File getWorkingFitsFile(PlotState state, Band band) {

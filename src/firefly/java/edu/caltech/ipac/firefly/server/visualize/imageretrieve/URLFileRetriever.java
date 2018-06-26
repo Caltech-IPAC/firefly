@@ -19,7 +19,7 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URL;

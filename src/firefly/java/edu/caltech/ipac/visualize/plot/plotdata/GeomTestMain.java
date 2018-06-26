@@ -1,24 +1,19 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.visualize.plot;
 
-import java.lang.reflect.*;
-import java.io.IOException;
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.visualize.plot.plotdata;
+
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.util.BufferedDataOutputStream;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import edu.caltech.ipac.util.SUTDebug;
-
-import nom.tam.fits.BasicHDU;
-import nom.tam.fits.ImageHDU;
-import nom.tam.fits.BinaryTableHDU;
-import nom.tam.fits.Fits;
-import nom.tam.fits.Header;
-import nom.tam.fits.HeaderCardException;
-import nom.tam.fits.FitsException;
-import nom.tam.util.ArrayFuncs;
-import nom.tam.util.BufferedDataInputStream;
-import nom.tam.util.BufferedDataOutputStream;
+import java.io.IOException;
 
 
 public class GeomTestMain

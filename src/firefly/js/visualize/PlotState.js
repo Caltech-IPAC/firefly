@@ -226,7 +226,7 @@ export class PlotState {
         if (band.value) {
             idx= band.value;
         }
-        else if (typeof idx === 'number') {
+        else if (typeof band === 'number') {
             idx= band;
         }
         else {
@@ -238,8 +238,8 @@ export class PlotState {
         return this.bandStateAry[idx];
     }
 
-    toJson(includeHeader= true) {
-        return JSON.stringify(PlotState.convertToJSON(this, includeHeader));
+    toJson(includeDirectAccessData= true) {
+        return JSON.stringify(PlotState.convertToJSON(this, includeDirectAccessData));
     }
 
     static makePlotState() {
@@ -272,8 +272,9 @@ export class PlotState {
     /**
      * @summary convert his PlotState to something can be used with JSON.stringify
      * @param {PlotState} s
+     * @param {boolean} includeDirectAccessData include the clientFitsHeader object
      */
-    static convertToJSON(s, includeHeader= true) {
+    static convertToJSON(s, includeDirectAccessData= true) {
         if (!s) return null;
         const json= {};
         json.ctxStr=s.ctxStr;
@@ -298,7 +299,7 @@ export class PlotState {
         if (!isNaN(s.rotationAngle)) json.rotationAngle= s.rotationAngle;
 
 
-        json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ,includeHeader));
+        json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ,includeDirectAccessData));
         return json;
     }
 

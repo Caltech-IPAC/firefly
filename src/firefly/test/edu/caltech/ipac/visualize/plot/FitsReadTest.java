@@ -6,6 +6,11 @@ import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsValidation;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsImageCube;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.Wavelength;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;
@@ -58,7 +63,7 @@ public class FitsReadTest extends FitsValidation {
     private String expectedRAFromNorthFileName ="f3_rotationFromNorth_out.fits";
     private String expectedRANotFromNorthFileName ="f3_rotationNotFromNorth_out.fits";
 
-    private  FitsRead  fitsRead0;
+    private FitsRead fitsRead0;
 
     @Before
     /**
@@ -91,7 +96,7 @@ public class FitsReadTest extends FitsValidation {
         expectedOutCubeFits = FileLoader.loadFits(FitsReadTest.class, expectedCubeFitsFileName);
 
         //Create an instance of FitsRead here
-        fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
 
     }
     @After
@@ -121,7 +126,7 @@ public class FitsReadTest extends FitsValidation {
     }
     @Test
     public void testFitsReadArrayCount() throws FitsException {
-        FitsRead[]  fitsReadArray= FitsRead.createFitsReadArray(threeExtensionFits);
+        FitsRead[]  fitsReadArray= FitsReadFactory.createFitsReadArray(threeExtensionFits);
         Assert.assertEquals(fitsReadArray.length, 3);
     }
     @Test
@@ -135,16 +140,16 @@ public class FitsReadTest extends FitsValidation {
     @Test
     public void testCreateFitsReadRotatedAngle() throws FitsException, IOException, GeomException {
          double angle = 30;
-         FitsRead raFromNorthUp = FitsRead.createFitsReadRotated(fitsRead0, angle, true);
+         FitsRead raFromNorthUp = FitsReadFactory.createFitsReadRotated(fitsRead0, angle, true);
          validateFits(expectedRAFromNorthup, raFromNorthUp.createNewFits() );
-         FitsRead raNotFromNorthUp = FitsRead.createFitsReadRotated(fitsRead0, angle, false);
+         FitsRead raNotFromNorthUp = FitsReadFactory.createFitsReadRotated(fitsRead0, angle, false);
          validateFits(expectedRANotFromNorthup, raNotFromNorthUp.createNewFits() );
     }
 
     @Test
     public void testCreateFitsImageCube() throws FitsException, IOException {
 
-        FitsImageCube fic = FitsRead.createFitsImageCube(inCubeFits);
+        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
         Object[] keys = fic.getMapKeys();
         FitsRead calFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
         Fits  newFits = calFitsRead0.createNewFits();
@@ -190,10 +195,11 @@ public class FitsReadTest extends FitsValidation {
         ArrayList<Double> cResult = new ArrayList<>();
 
         ImagePt imagePt;
+        Wavelength wl= new Wavelength(frArray[0].getHeader(), frArray[0].getTableHDU());
         for (int i = 0; i < naxis1; i++) {
             for (int j = 0; j < naxis2; j++) {
                 imagePt = new ImagePt(i, j);
-                cResult.add(frArray[0].getWaveLength(imagePt));
+                cResult.add(wl.getWaveLength(imagePt));
             }
 
         }
@@ -212,7 +218,7 @@ public class FitsReadTest extends FitsValidation {
 
         String inFitsName = "testTable.fits";
         Fits fits = FileLoader.loadFits(FitsReadTest.class, inFitsName);
-        FitsRead[] frArray = FitsRead.createFitsReadArray(fits);
+        FitsRead[] frArray = FitsReadFactory.createFitsReadArray(fits);
         ArrayList<Double> cResult = calculateExpectedResult(fits,frArray );
         validateWaveLengthResult("Table", cResult);
 
@@ -222,7 +228,7 @@ public class FitsReadTest extends FitsValidation {
 
         String inFitsName = "test"+algorithm+".fits";
         Fits fits = FileLoader.loadFits(FitsReadTest.class, inFitsName);
-        FitsRead[] frArray = FitsRead.createFitsReadArray(fits);
+        FitsRead[] frArray = FitsReadFactory.createFitsReadArray(fits);
         ArrayList<Double> cResult = calculateExpectedResult(fits,frArray );
         validateWaveLengthResult(algorithm, cResult);
     }
@@ -278,7 +284,7 @@ public class FitsReadTest extends FitsValidation {
         String fileName="f3.fits";
         String outFitsName=dataPath+"/f3_out.fits";
         Fits  inFits = FileLoader.loadFits(FitsReadTest.class, fileName);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         FileOutputStream fo = new java.io.FileOutputStream(outFitsName);
         fitsRead0.writeSimpleFitsFile(fo);
         fo.close();
@@ -289,14 +295,14 @@ public class FitsReadTest extends FitsValidation {
 
         double angle = 30;
         String rotationFitsName=dataPath+"/f3_rotationFromNorth_out.fits";
-        FitsRead frRotaionAnglefromNorth = FitsRead.createFitsReadRotated(fitsRead0,angle, true);
+        FitsRead frRotaionAnglefromNorth = FitsReadFactory.createFitsReadRotated(fitsRead0,angle, true);
 
         fo = new java.io.FileOutputStream(rotationFitsName);
         frRotaionAnglefromNorth.writeSimpleFitsFile(fo);
         fo.close();
 
         String rotation1FitsName=dataPath+"/f3_rotationNotFromNorth_out.fits";
-        FitsRead frRotaionAngleNotfromNorth = FitsRead.createFitsReadRotated(fitsRead0,angle, false);
+        FitsRead frRotaionAngleNotfromNorth = FitsReadFactory.createFitsReadRotated(fitsRead0,angle, false);
         fo = new java.io.FileOutputStream(rotation1FitsName);
         frRotaionAngleNotfromNorth.writeSimpleFitsFile(fo);
         fo.close();
@@ -304,7 +310,7 @@ public class FitsReadTest extends FitsValidation {
         String cubeFitsName="cube1.fits";
         String outCubeFitsName=dataPath+"/cube1_out.fits";
         Fits  inCubeFits = FileLoader.loadFits(FitsReadTest.class, cubeFitsName);
-        FitsImageCube fic = FitsRead.createFitsImageCube(inCubeFits);
+        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
         Object[] keys = fic.getMapKeys();
         FitsRead cubeFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
          fo = new java.io.FileOutputStream( outCubeFitsName);

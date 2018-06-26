@@ -10,7 +10,7 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -20,6 +20,7 @@ import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+import nom.tam.fits.FitsException;
 
 import java.awt.Shape;
 import java.awt.geom.Point2D;
@@ -423,8 +424,16 @@ public class AreaStatisticsUtil {
         double stdev = Math.sqrt(squareSum/nPixels - averageFlux*averageFlux);
 
 	// calculate integrated flux
-	ImageHeader imageHdr = fitsRead.getImageHeader();
-	// pixel area in steradian
+//	ImageHeader imageHdr = fitsRead.getImageHeader();
+
+        ImageHeader imageHdr = null;
+        try {
+            imageHdr = new ImageHeader(fitsRead.getHeader());
+        } catch (FitsException e) {
+            e.printStackTrace();
+        }
+
+        // pixel area in steradian
 	double pixelArea =  Math.abs(imageHdr.cdelt1*DtoR*imageHdr.cdelt2*DtoR);
 	if (SUTDebug.isDebug()) System.out.println("pixelArea (STER)="+pixelArea);
 	//double integratedFlux = nPixels*pixelArea*fluxSum;

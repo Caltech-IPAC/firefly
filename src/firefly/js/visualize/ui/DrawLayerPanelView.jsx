@@ -174,7 +174,7 @@ function makeOverlayTitle(opv,mouseOn) {
     const { colorAttributes:{color}, plot, visible, uiCanAugmentTitle}= opv;
     maskNumber= Number(maskNumber);
     if (plot && uiCanAugmentTitle) {
-        const {header}= plot.projection;
+        const {header}= plot;
         const titleKey= Object.keys(header)
             .filter( (k) => k.includes('MP'))
             .find( (k) => parseInt(header[k])===maskNumber);

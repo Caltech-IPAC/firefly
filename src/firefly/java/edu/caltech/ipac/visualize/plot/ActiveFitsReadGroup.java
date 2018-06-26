@@ -12,6 +12,7 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
 import java.io.Serializable;
 
@@ -20,7 +21,7 @@ import java.io.Serializable;
  */
 public class ActiveFitsReadGroup implements Serializable {
 
-    private static final int LENGTH= 3;
+    public static final int LENGTH= 3;
 
     private FitsRead fitsReadAry[]= new FitsRead[LENGTH];
     private boolean inUse[]= new boolean[LENGTH];
