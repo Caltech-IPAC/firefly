@@ -26,7 +26,8 @@
             flex-direction: column;        }
         .Tabs {
             background-color: antiquewhite;
-            margin-left: 30px;
+            border: 1px solid #9a7f5c;
+            margin: 5px 10px;
         }
         button {
             padding: 4px 8px;
@@ -43,53 +44,66 @@
 
 
     <script type="text/javascript">
-    window.onload = function () {
-        showTab('General');
-    }
 
-    function showTab(tabId) {
-        var x = document.getElementsByClassName("tabItem");
-        for (var i = 0; i < x.length; i++) {
-            x[i].style.display = "none";
+        onFireflyLoaded = function (firefly) {
+            /*----- setup and place a workspace button at div ID 'WS_input' */
+            var onSelect = function (v) {
+                document.getElementById("WS_input").value = v.selFile;
+            }
+            firefly.util.renderDOM("WS_popup", firefly.ui.WorkspacePickerPopup,{onComplete: onSelect, fieldKey: 'selFile'});
+            /*---------------------------------------------------------------*/
         }
-        document.getElementById(tabId).style.display = "block";
-    }
 
-    function showTable() {
-        try {
-            var a = document.forms["a"]
-            var request;
-            if (a.wise.checked) {
-                request = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
-                        {
-                            position: '148.9;68.8;EQ_J2000',
-                            SearchMethod: 'Cone',
-                            radius: 300
-                        });
-            } else {
-                request = firefly.util.table.makeFileRequest(null, a.url.value, null,
-                        {META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}});
-            }
 
-            var params = {};
-            if (a.params.value.trim()) {
-                params = JSON.parse(a.params.value);
-                Object.assign(request, params);
-            }
-            var options = {};
-            if (a.options.value.trim()) {
-                options = JSON.parse(a.options.value);
-            }
-            if (a["meta-info"].value.trim()) {
-                var META_INFO = JSON.parse(a["meta-info"].value);
-                Object.assign(request.META_INFO, META_INFO);
-            }
-
-            firefly.showTable('table-display', request, options);
-        } catch (e) {
-            alert(e);
+        window.onload = function () {
+            showTab('General');
         }
-    }
+
+        function showTab(tabId) {
+            var x = document.getElementsByClassName("tabItem");
+            for (var i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            document.getElementById(tabId).style.display = "block";
+        }
+
+        function showTable() {
+            try {
+                var a = document.forms["a"]
+                var request;
+                if (a.fromWS.value) {
+                    request = firefly.util.table.makeIrsaWorkspaceRequest(a.fromWS.value);
+                } else if (a.wise.checked) {
+                    request = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                            {
+                                position: '148.9;68.8;EQ_J2000',
+                                SearchMethod: 'Cone',
+                                radius: 300
+                            });
+                } else {
+                    request = firefly.util.table.makeFileRequest(null, a.url.value, null,
+                            {META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}});
+                }
+
+                var params = {};
+                if (a.params.value.trim()) {
+                    params = JSON.parse(a.params.value);
+                    Object.assign(request, params);
+                }
+                var options = {};
+                if (a.options.value.trim()) {
+                    options = JSON.parse(a.options.value);
+                }
+                if (a["meta-info"].value.trim()) {
+                    var META_INFO = JSON.parse(a["meta-info"].value);
+                    Object.assign(request.META_INFO, META_INFO);
+                }
+
+                firefly.showTable('table-display', request, options);
+            } catch (e) {
+                alert(e);
+            }
+        }
     </script>
 
     <script  type="text/javascript" src="../firefly_loader.js"></script>
@@ -104,9 +118,14 @@
     <div>
         <form name="a">
             <div class="input-field">
+                <div style="margin-bottom: 10px"><b>Load table from first available source</b></div>
+                <div>
+                    <div id="WS_popup"></div>
+                    <input id="WS_input" name="fromWS" type="hidden"/>
+                </div>
                 <label> Use WISE catalog:
                     <input name="wise" type="checkbox" checked/>
-                </label>&nbsp;&nbsp;&nbsp;OR&nbsp;&nbsp;&nbsp;
+                </label>
                 <label> URL:
                     <input name="url" value="http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl" size=60/>
                 </label>

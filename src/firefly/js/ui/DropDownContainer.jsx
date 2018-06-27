@@ -170,7 +170,7 @@ function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildTy
             </div>
             { BuildCommitFirefly &&
                 <div className='DD-Version__item'>
-                    <div className='DD-Version__key'>Git commit - Firefly</div>
+                    <div className='DD-Version__key'>Git commit(Firefly)</div>
                     <div className='DD-Version__value'>{BuildCommitFirefly}</div>
                 </div>
             }

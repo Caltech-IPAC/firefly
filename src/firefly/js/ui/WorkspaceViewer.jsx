@@ -13,7 +13,7 @@ import {dispatchWorkspaceCreatePath,
         getWorkspaceErrorMsg,
         getWorkspaceStatus,
         getWorkspaceList, getFolderUnderLevel,
-        getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME} from '../visualize/WorkspaceCntlr.js';
+        getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME, WORKSPACE_LIST_UPDATE} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -23,52 +23,20 @@ import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup, INFO_POPUP} from './PopupUtil.jsx';
 import {HelpIcon} from './HelpIcon.jsx';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 
 const UL_URL = `${getRootURL()}sticky/CmdSrv`;
 const HMargin = 15;
 const VMargin = 15;
-const workspaceUploadGroup = 'workspaceUpload';
+const workspacePopupGroup = 'workspacePopupGroup';
 const workspaceUploadDef = { file: {fkey: 'uploadfile', label: 'Workspace Upload'} };
-const wsUploadPopupId = 'workspacesUpload';
+const workspacePopupId = 'workspacePopupId';
 
 import LOADING from 'html/images/gxt/loading.gif';
 
-export function onRenameFile() {
-    return (oldKey, newKey) => {
-        dispatchWorkspaceMovePath({oldKey, newKey, isFile: true});
-    };
-}
-
-export function onRenameFolder() {
-    return (oldKey, newKey) => {
-    };
-}
-
-export function onCreateFolder() {
-    return (key) => {
-        dispatchWorkspaceCreatePath({newPath: key});
-    };
-}
-
-export function onCreateFiles() {
-    return (files) => {
-        dispatchWorkspaceCreatePath({files: files});
-    };
-}
-
-export function onDeleteFile() {
-    return (key) => {
-        dispatchWorkspaceDeletePath({file: key});
-    };
-}
-
-export function onDeleteFolder() {
-    return (key) => {
-        dispatchWorkspaceDeletePath();
-    };
-}
-
-// component as FilePicker wrapper
+/*-----------------------------------------------------------------------------------------*/
+/* core component as FilePicker wrapper
+/*-----------------------------------------------------------------------------------------*/
 export class WorkspaceView extends PureComponent {
     constructor(props) {
         super(props);
@@ -96,17 +64,17 @@ export class WorkspaceView extends PureComponent {
 
 
     render () {
-        const {onCreateFolder, onCreateFiles, onRenameFolder, onRenameFile,
-               onDeleteFolder, onDeleteFile, onClickItem, files, wrapperStyle={width: '100%', height: '100%'},
+        const {canCreateFolder, canCreateFiles, canRenameFolder, canRenameFile,
+               canDeleteFolder, canDeleteFile, onClickItem, files, wrapperStyle={width: '100%', height: '100%'},
                keepSelect, folderLevel=1} = this.props;
         const {selectedItem} = this.props;
         const eventHandlers = {
-                onCreateFolder,
-                onCreateFiles,
-                onRenameFolder,
-                onRenameFile,
-                onDeleteFolder,
-                onDeleteFile,
+                onCreateFolder: canCreateFolder ? onCreateFolder : undefined,
+                onCreateFiles: canCreateFiles ? onCreateFiles : undefined,
+                onRenameFolder: canRenameFolder ? onRenameFolder : undefined,
+                onRenameFile: canRenameFile ? onRenameFile : undefined,
+                onDeleteFolder: canDeleteFolder ? onDeleteFolder : undefined,
+                onDeleteFile: canDeleteFile ? onDeleteFile : undefined,
                 onClickItem};
 
         const openFolders = getFolderUnderLevel(folderLevel);
@@ -119,23 +87,23 @@ export class WorkspaceView extends PureComponent {
 }
 
 WorkspaceView.defaultProps = {
-    onCreateFolder: null,
-    onCreateFiles: null,
-    onRenameFolder: null,
-    onRenameFile: null,
-    onDeleteFolder: null,
-    onDeleteFile: null,
+    canCreateFolder: false,
+    canCreateFiles: false,
+    canRenameFolder: false,
+    canRenameFile: false,
+    canDeleteFolder: false,
+    canDeleteFile: false,
     onClickItem: null,
     files: []
 };
 
 WorkspaceView.propTypes = {
-    onCreateFolder: PropTypes.func,
-    onCreateFiles: PropTypes.func,
-    onRenameFolder: PropTypes.func,
-    onRenameFile: PropTypes.func,
-    onDeleteFolder: PropTypes.func,
-    onDeleteFile: PropTypes.func,
+    canCreateFolder: PropTypes.bool,
+    canCreateFiles: PropTypes.bool,
+    canRenameFolder: PropTypes.bool,
+    canRenameFile: PropTypes.bool,
+    canDeleteFolder: PropTypes.bool,
+    canDeleteFile: PropTypes.bool,
     onClickItem: PropTypes.func,
     files: PropTypes.arrayOf(PropTypes.object),
     wrapperStyle: PropTypes.object,
@@ -144,13 +112,23 @@ WorkspaceView.propTypes = {
     folderLevel: PropTypes.number
 };
 
+/*-----------------------------------------------------------------------------------------*/
 
+/**
+ /* WorkspaceView as an input field
+ */
 export const WorkspaceViewField = fieldGroupConnector(WorkspaceView, getViewProps);
+
+const defaultWorkspaceFieldPropTypes = {    fieldKey: PropTypes.string.isRequired,
+                                            files: PropTypes.arrayOf(PropTypes.object),
+                                            value: PropTypes.string};
+
 
 // get key from FilePicker
 function getViewProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
+            value: params.value,
             selectedItem: params.value,
             onClickItem: (key) => {
                 fireValueChange({value: key});
@@ -158,79 +136,108 @@ function getViewProps(params, fireValueChange) {
     });
 }
 
-// component for 'save to workspace' - FilePicker with 'add folder' action
+// Workspace input field used for 'save to workspace' - same as WorkspaceViewField with 'add folder' enabled
 export const WorkspaceSave = ({fieldKey, files, value}) => {
     return (
         <WorkspaceViewField fieldKey={fieldKey}
                             files={files}
                             value={value}
                             keepSelect={true}
-                            onCreateFolder={onCreateFolder()}
+                            canCreateFolder={true}
 
         />
     );
 };
-
-WorkspaceSave.propTypes = {
-    fieldKey: PropTypes.string.isRequired,
-    files: PropTypes.arrayOf(PropTypes.object),
-    value: PropTypes.string
-};
+WorkspaceSave.propTypes = defaultWorkspaceFieldPropTypes;
 
 /*
- * view of WorkspaceUpload
- * @param wrapperStyle
- * @param onClickUpload
- * @param value key from file picker
- * @param isLoading
- * @returns {XML}
- * @constructor
+ * Show WorkspaceView as a pop up field.  A button is used to trigger the popup.
+ * A label next to the button to show the selected item.
  */
-function WorkspaceReadView({wrapperStyle, onClickUpload, value, isLoading}) {
+export const WorkspacePickerPopup =  fieldGroupConnector(WorkspaceAsPopup,
+                                        ({fieldKey, onComplete, value={}, ...rest}, fireValueChange) => {
+                                            const onSelComplete = (v) => {
+                                                fireValueChange({value: v});
+                                                onComplete && onComplete(v);
+                                            };
+                                            return Object.assign({}, rest,
+                                                {
+                                                    fieldKey,
+                                                    keepSelect: true,
+                                                    value: value[fieldKey],
+                                                    onComplete: onSelComplete
+                                                });
+                                        });
+
+WorkspacePickerPopup.propTypes = defaultWorkspaceFieldPropTypes;
+
+
+
+/*-----------------------------------------------------------------------------------------*/
+
+/**
+ * Show workspace as a popup with updated content.
+ * @param {Object} p param
+ * @param {function} p.onComplete   called when selection completes
+ * @param {string} p.value          selected value
+ * @param {string} p.fieldKey       the key used to store the selected value sent back from 'onComplete'
+ */
+export function showWorkspaceDialog({onComplete, value, fieldKey}) {
+    dispatchAddActionWatcher({
+        actions:[WORKSPACE_LIST_UPDATE],
+        callback: (a , cancelSelf) => {
+            cancelSelf();
+
+            const newList = getWorkspaceList() || [];
+            if (isEmpty(newList)) {
+                workspacePopupMsg('Workspace access error: ' + getWorkspaceErrorMsg() , 'Workspace access');
+            } else {
+                showWorkspaceAsPopup({onComplete, value, fieldKey});
+            }
+        }
+    });
+    dispatchWorkspaceUpdate();
+}
+
+/*-----------------------------------------------------------------------------------------*/
+
+export function WorkspaceAsPopup({wrapperStyle, onComplete, value, isLoading, fieldKey}) {
     const style = Object.assign({whiteSpace:'nowrap', display: 'inline-block', height: 22}, wrapperStyle);
-
-    const inputEntry = () => {
-        return (
-            <div style={style}>
-                <input  type='button'
-                        value='Choose Workspace File'
-                        onClick={()=>updateAndShowWorkspace({onClickUpload, value})} />
-            </div>
-        );
-    };
-
-    // value is key from file picker
-    const resultFile = () => {
-        return (
-            <div style={{display:'inline-block', marginLeft: 5}}>
-                {value ? getWorkspacePath(value) : 'No workspace file chosen'}
-            </div>
-        );
-    };
-
 
     return (
         <div>
-            {inputEntry()}
-            {resultFile()}
+            <div style={style}>
+                <input  type='button'
+                        value='Choose Workspace File'
+                        onClick={()=>showWorkspaceDialog({onComplete, value, fieldKey})} />
+            </div>
+            <div style={{display:'inline-block', marginLeft: 5}}>
+                {value ? getWorkspacePath(value) : 'No workspace file chosen'}
+            </div>
             {isLoading && <img style={{display: 'inline-block', marginLeft: 10, width:14,height:14}} src={LOADING}/> }
         </div>
     );
 }
 
-WorkspaceReadView.propTypes = {
+WorkspaceAsPopup.propTypes = {
+    fieldKey: PropTypes.string,
     value: PropTypes.string,
     wrapperStyle: PropTypes.object,
-    onClickUpload: PropTypes.func.isRequired,
+    onComplete: PropTypes.func.isRequired,
     isLoading: PropTypes.bool.isRequired
 };
 
-WorkspaceReadView.defaultProps = {
+WorkspaceAsPopup.defaultProps = {
     isLoading: false
 };
 
-// component for 'read from workspace' - a button and popup panel showing a FilePicker when the button is clicked
-export  const WorkspaceUpload =  fieldGroupConnector(WorkspaceReadView, getUploadProps);
+
+/**
+ *  Custom input field used to select a file from workspace then upload it to Firefly server.
+ *  The value of this field is an ID/key to the uploaded file.
+ *  Field is represented as a button.  Upon clicked, WorkspaceView will appear as a popup.
+ */
+export  const WorkspaceUpload =  fieldGroupConnector(WorkspaceAsPopup, getUploadProps);
 
 // the value defined is display value as shown on UI
 WorkspaceUpload.propTypes = {
@@ -247,7 +254,7 @@ function getUploadProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             value: params.displayValue,
-            onClickUpload: resultSuccess(fireValueChange, params.fileAnalysis, params.preloadWsFile)
+            onComplete: resultSuccess(fireValueChange, params.fileAnalysis, params.preloadWsFile)
         }
     );
 }
@@ -277,104 +284,17 @@ function resultFail() {
     return (request) => {
         const name = getWorkspacePath(get(request, [workspaceUploadDef.file.fkey], ''));
 
-        showInfoPopup(name + ' is not a file to be read from workspace', 'Upload from workspace');
+        workspacePopupMsg(name + ' is not a file to be read from workspace', 'Upload from workspace');
 
         return false;
     };
 }
 
 function resultCancel() {
-    dispatchHideDialog(wsUploadPopupId);
+    dispatchHideDialog(workspacePopupId);
     if (isDialogVisible(INFO_POPUP)) {
         dispatchHideDialog(INFO_POPUP);
     }
-}
-
-function updateAndShowWorkspace({onClickUpload, value}) {
-    dispatchWorkspaceUpdate({callback: showWorkspaceUploadPopup({onClickUpload, value})});
-}
-
-/* workspace upload popup */
-/* get displayValue from store => 'value' to WorkspaceUpload => 'value' to WorkspaceReadValue => popup =>
-   selectedItem in WorkspaceViewField => WorkspaceView
- */
-export function showWorkspaceUploadPopup({onClickUpload, value}) {
-    return (files) => {
-        const newList = files || getWorkspaceList() || [];
-        const dialogWidth = 500;
-        const dialogHeight = 350;
-        const popupPanelResizableStyle = {
-                        width: dialogWidth,
-                        height: dialogHeight,
-                        minWidth: dialogWidth,
-                        minHeight: dialogHeight,
-                        resize: 'both',
-                        overflow: 'hidden'};
-        const style = {
-                        marginLeft: HMargin,
-                        marginRight: HMargin,
-                        marginTop: VMargin,
-                        width: `calc(100% - ${HMargin*2+20}px)`,
-                        height: `calc(100% - ${VMargin+25}px)`,
-                        paddingLeft: 10,
-                        paddingRight: 10,
-                        paddingTop: 10,
-                        border: '1px solid #a3aeb9',
-                        borderRadius: 5,
-                        overflow: 'auto'
-        };
-
-        const startWorkspaceReadPopup = () => {
-            const popup = (
-                <PopupPanel title={'Read file from workspace'}>
-                    <div style={popupPanelResizableStyle}>
-                        <FieldGroup style={{height: 'calc(100% - 80px)', width: '100%'}}
-                                    groupKey={workspaceUploadGroup} keepState={true}>
-                            <div style={style}>
-                                <WorkspaceViewField fieldKey={workspaceUploadDef.file.fkey}
-                                                    files={newList}
-                                                    keepSelect={true}
-                                                    value={value}
-                                                    initialState={{validator: isWsFolder(false)}}/>
-                            </div>
-                        </FieldGroup>
-
-                        <div style={{display: 'flex', justifyContent: 'space-between',
-                                     margin: `20px ${HMargin}px ${VMargin}px ${HMargin}px`}}>
-                            <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
-                                <div style={{marginRight: 10}}>
-                                    <CompleteButton
-                                        groupKey={workspaceUploadGroup}
-                                        onSuccess={onClickUpload}
-                                        onFail={resultFail()}
-                                        text={'Open'}
-                                        dialogId={wsUploadPopupId}
-                                    />
-                                </div>
-                                <div>
-                                    <button type='button' className='button std hl'
-                                            onClick={() => resultCancel()}>Cancel
-                                    </button>
-                                </div>
-                            </div>
-                            <div style={{ textAlign:'right', marginRight: 10}}>
-                                <HelpIcon helpId={'visualization.imageoptions'}/>
-                            </div>
-                        </div>
-                    </div>
-                </PopupPanel>
-            );
-
-            DialogRootContainer.defineDialog(wsUploadPopupId, popup);
-            dispatchShowDialog(wsUploadPopupId);
-        };
-
-        if (!newList || isEmpty(newList)) {
-            workspacePopupMsg('Workspace access error: ' + getWorkspaceErrorMsg() , 'Workspace access');
-        } else {
-            startWorkspaceReadPopup();
-        }
-    };
 }
 
 /*
@@ -482,3 +402,112 @@ export function workspacePopupMsg(msg, title) {
      */
     showInfoPopup(msg, title);
 }
+
+
+/* workspace upload popup */
+/* get displayValue from store => 'value' to WorkspaceUpload => 'value' to WorkspaceReadValue => popup =>
+ selectedItem in WorkspaceViewField => WorkspaceView
+ */
+function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.file.fkey}) {
+    const newList = getWorkspaceList() || [];
+    const dialogWidth = 500;
+    const dialogHeight = 350;
+    const popupPanelResizableStyle = {
+        width: dialogWidth,
+        height: dialogHeight,
+        minWidth: dialogWidth,
+        minHeight: dialogHeight,
+        resize: 'both',
+        overflow: 'hidden'};
+    const style = {
+        marginLeft: HMargin,
+        marginRight: HMargin,
+        marginTop: VMargin,
+        width: `calc(100% - ${HMargin*2+20}px)`,
+        height: `calc(100% - ${VMargin+25}px)`,
+        paddingLeft: 10,
+        paddingRight: 10,
+        paddingTop: 10,
+        border: '1px solid #a3aeb9',
+        borderRadius: 5,
+        overflow: 'auto'
+    };
+
+    const startWorkspaceReadPopup = () => {
+        const popup = (
+            <PopupPanel title={'Read file from workspace'}>
+                <div style={popupPanelResizableStyle}>
+                    <FieldGroup style={{height: 'calc(100% - 80px)', width: '100%'}}
+                                groupKey={workspacePopupGroup} keepState={true}>
+                        <div style={style}>
+                            <WorkspaceViewField fieldKey={fieldKey}
+                                                files={newList}
+                                                keepSelect={true}
+                                                value={value}
+                                                initialState={{validator: isWsFolder(false)}}/>
+                        </div>
+                    </FieldGroup>
+
+                    <div style={{display: 'flex', justifyContent: 'space-between',
+                                 margin: `20px ${HMargin}px ${VMargin}px ${HMargin}px`}}>
+                        <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
+                            <div style={{marginRight: 10}}>
+                                <CompleteButton
+                                    groupKey={workspacePopupGroup}
+                                    onSuccess={onComplete}
+                                    onFail={resultFail()}
+                                    text={'Open'}
+                                    dialogId={workspacePopupId}
+                                />
+                            </div>
+                            <div>
+                                <button type='button' className='button std hl'
+                                        onClick={() => resultCancel()}>Cancel
+                                </button>
+                            </div>
+                        </div>
+                        <div style={{ textAlign:'right', marginRight: 10}}>
+                            <HelpIcon helpId={'visualization.imageoptions'}/>
+                        </div>
+                    </div>
+                </div>
+            </PopupPanel>
+        );
+
+        DialogRootContainer.defineDialog(workspacePopupId, popup);
+        dispatchShowDialog(workspacePopupId);
+    };
+
+    if (!newList || isEmpty(newList)) {
+        workspacePopupMsg('Workspace access error: ' + getWorkspaceErrorMsg() , 'Workspace access');
+    } else {
+        startWorkspaceReadPopup();
+    }
+}
+
+
+/*----------------------    default WS opertion impl     -------------------------------*/
+function onRenameFile(oldKey, newKey) {
+    dispatchWorkspaceMovePath({oldKey, newKey, isFile: true});
+}
+
+function onRenameFolder(oldKey, newKey) {
+    // not implemented, yet.
+}
+
+function onCreateFolder(key) {
+    dispatchWorkspaceCreatePath({newPath: key});
+}
+
+function onCreateFiles(files){
+    dispatchWorkspaceCreatePath({files});
+}
+
+function onDeleteFile(key) {
+    dispatchWorkspaceDeletePath({file: key});
+}
+
+function onDeleteFolder(key) {
+    dispatchWorkspaceDeletePath();
+}
+/*-----------------------------------------------------------------------------------------*/

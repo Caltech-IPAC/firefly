@@ -91,6 +91,7 @@
     width: 125px;
     text-align: right;
     margin-right: 5px;
+    white-space: nowrap;
 }
 
 .DD-Version__value {

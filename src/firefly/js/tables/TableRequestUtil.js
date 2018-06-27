@@ -7,6 +7,8 @@ import {get, set, unset, cloneDeep, omit, omitBy, isNil} from 'lodash';
 import {uniqueTblId} from './TableUtil.js';
 import {Keys} from '../core/background/BackgroundStatus.js';
 import {SelectInfo} from './SelectInfo.js';
+import {ServerParams} from '../data/ServerParams.js';
+import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
 
 export const MAX_ROW = Math.pow(2,31) - 1;
 export const DataTagMeta = ['META_INFO', Keys.DATA_TAG]; // a tag describing the content of this table.  ie. 'catalog', 'imagemeta'
@@ -34,7 +36,7 @@ export function makeTblRequest(id, title, params={}, options={}) {
 }
 
 /**
- * Creates a table request for tabular data from a file.  Source of file may be
+ * Creates a table request for tabular data from a file or url.  Source of file may be
  * from a url or an absolute path on the server.
  * @param {string} [title]      title to display with this table.
  * @param {string} source       required; location of the ipac table. url or file path.
@@ -53,6 +55,24 @@ export function makeFileRequest(title, source, alt_source, options={}) {
     options = omit(options, 'tbl_id');
     var META_INFO = Object.assign(options.META_INFO || {}, {title, tbl_id});
     return omitBy(Object.assign(req, options, {source, alt_source, META_INFO, tbl_id, id}), isNil);
+}
+
+/**
+ * Creates a table request for tabular data from IRSA workspace.
+ * Source should be an IRSA workspace path.  i.e value returned from WorkspaceViewer
+ * @param {string} source       required; IRSA workspace path.
+ * @param {string} [title]      title to display with this table.
+ * @param {TableRequest} [options]  more options.  see TableRequest for details.
+ * @returns {TableRequest}
+ * @public
+ * @func makeIrsaWorkspaceRequest
+ * @memberof firefly.util.table
+ */
+export function makeIrsaWorkspaceRequest(source, title, options={}) {
+    source = source.replace(WS_HOME, '');
+    const request = makeFileRequest(title, source, undefined, options);
+    request[ServerParams.SOURCE_FROM] = ServerParams.IS_WS;
+    return request;
 }
 
 
