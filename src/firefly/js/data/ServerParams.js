@@ -98,7 +98,6 @@ export const ServerParams = {
         CREATE_PLOT_GROUP : 'CmdCreatePlotGroup',
         ZOOM : 'CmdZoom',
         STRETCH : 'CmdStretch',
-        GET_BETA : 'CmdGetBeta',
         REMOVE_BAND : 'CmdRemoveBand',
         CHANGE_COLOR : 'CmdChangeColor',
         ROTATE_NORTH : 'CmdRotateNorth',

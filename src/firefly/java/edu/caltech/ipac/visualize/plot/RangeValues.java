@@ -1,8 +1,5 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- *
- * 05/04/16
- * LZ Remove DP, WP parameters and changed DR to beta instead due to the changes in the asinh algorithm
  */
 package edu.caltech.ipac.visualize.plot;
 
@@ -30,7 +27,7 @@ public class RangeValues implements Cloneable, Serializable {
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
 
-    public static final double BETA =Double.NaN;
+    public static final double ASINH_Q =10.0;
     public static final double GAMMA=2.0;
 
     public static final String LINEAR_STR= "Linear";
@@ -58,7 +55,7 @@ public class RangeValues implements Cloneable, Serializable {
     private double _lowerValue;
     private int    _upperWhich;
     private double _upperValue;
-    private double _betaValue;
+    private double _asinhQValue;
     private double _gammaValue;
     private int    _algorithm= STRETCH_LINEAR;
     private int    _zscale_contrast;
@@ -68,19 +65,19 @@ public class RangeValues implements Cloneable, Serializable {
     private double _contrast;
 
     public RangeValues() {
-       this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, BETA, GAMMA, STRETCH_LINEAR, 25, 600, 120);
+        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120);
     }
 
     public RangeValues(int algorithm ) {
 
-        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, BETA, GAMMA, algorithm, 25, 600, 120);
+        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, algorithm, 25, 600, 120);
     }
     public RangeValues( int    lowerWhich,
                         double lowerValue,
                         int    upperWhich,
                         double upperValue,
-                     int    algorithm) {
-        this( lowerWhich, lowerValue, upperWhich, upperValue,BETA, GAMMA,algorithm, 25, 600, 120);
+                        int    algorithm) {
+        this( lowerWhich, lowerValue, upperWhich, upperValue, ASINH_Q, GAMMA,algorithm, 25, 600, 120);
     }
 
     //added
@@ -88,13 +85,13 @@ public class RangeValues implements Cloneable, Serializable {
                         double lowerValue,
                         int    upperWhich,
                         double upperValue,
-                        double betaValue,
+                        double asinhQValue,
                         double gammaValue,
                         int    algorithm) {
-        this( lowerWhich, lowerValue, upperWhich, upperValue,betaValue, gammaValue, algorithm, 25, 600, 120);
+        this( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue, gammaValue, algorithm, 25, 600, 120);
     }
 
-        public RangeValues( int    lowerWhich,
+    public RangeValues( int    lowerWhich,
                         double lowerValue,
                         int    upperWhich,
                         double upperValue,
@@ -103,7 +100,7 @@ public class RangeValues implements Cloneable, Serializable {
                         int    zscale_samples,
                         int    zscale_samples_per_line) {
 
-        this( lowerWhich, lowerValue, upperWhich, upperValue, BETA, GAMMA, algorithm,
+        this( lowerWhich, lowerValue, upperWhich, upperValue, ASINH_Q, GAMMA, algorithm,
                 zscale_contrast, zscale_samples, zscale_samples_per_line,
                 0.5, 1.0);
     }
@@ -112,14 +109,14 @@ public class RangeValues implements Cloneable, Serializable {
                         double lowerValue,
                         int    upperWhich,
                         double upperValue,
-                        double betaValue,
+                        double asinhQValue,
                         double gammaValue,
                         int    algorithm,
                         int    zscale_contrast,
                         int    zscale_samples,
                         int    zscale_samples_per_line) {
 
-        this( lowerWhich, lowerValue, upperWhich, upperValue,betaValue,gammaValue, algorithm,
+        this( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue, gammaValue, algorithm,
                 zscale_contrast, zscale_samples, zscale_samples_per_line,
                 0.5, 1.0);
     }
@@ -130,7 +127,7 @@ public class RangeValues implements Cloneable, Serializable {
                         double lowerValue,
                         int    upperWhich,
                         double upperValue,
-                        double betaValue,
+                        double asinhQValue,
                         double gammaValue,
                         int    algorithm,
                         int    zscale_contrast,
@@ -144,8 +141,8 @@ public class RangeValues implements Cloneable, Serializable {
         _upperWhich= upperWhich;
         _upperValue= upperValue;
         _algorithm = algorithm;
-         _betaValue = betaValue;
-         _gammaValue=gammaValue;
+        _asinhQValue = asinhQValue;
+        _gammaValue=gammaValue;
         _zscale_contrast = zscale_contrast;
         _zscale_samples = zscale_samples;
         _zscale_samples_per_line = zscale_samples_per_line;
@@ -190,7 +187,7 @@ public class RangeValues implements Cloneable, Serializable {
     //LZ 6/11/15 added this method
     public static RangeValues create(String stretchType,
                                      double lowerValue,
-                                     double upperValue, double betaValue, double gammaValue,
+                                     double upperValue, double asinhQValue, double gammaValue,
                                      String algorithm) {
         int s= PERCENTAGE;
         if (!isEmpty(stretchType)) {
@@ -210,11 +207,11 @@ public class RangeValues implements Cloneable, Serializable {
             else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
 
         }
-        return new RangeValues(s,lowerValue,s,upperValue,betaValue, gammaValue, a);
+        return new RangeValues(s,lowerValue,s,upperValue,asinhQValue, gammaValue, a);
     }
 
    //LZ 05/21/15 add the following two lines
-    public double getBetaValue() { return _betaValue; }
+    public double getAsinhQValue() { return _asinhQValue; }
     public double getGammaValue() { return _gammaValue; }
 
     public int    getLowerWhich() { return _lowerWhich; }
@@ -243,7 +240,7 @@ public class RangeValues implements Cloneable, Serializable {
 
     public Object clone() {
         return new RangeValues( _lowerWhich, _lowerValue, _upperWhich,
-		_upperValue, _betaValue, _gammaValue, _algorithm,
+		_upperValue, _asinhQValue, _gammaValue, _algorithm,
 		_zscale_contrast, _zscale_samples, _zscale_samples_per_line, _bias, _contrast );
     }
 
@@ -273,7 +270,7 @@ public class RangeValues implements Cloneable, Serializable {
             double lowerValue=              parseDouble(s[i++]);
             int    upperWhich=              Integer.parseInt(s[i++]);
             double upperValue=              parseDouble(s[i++]);
-            double betaValue=               parseDouble(s[i++]);
+            double asinhQValue=             parseDouble(s[i++]);
             double gammaValue=              parseDouble(s[i++]);
             int    algorithm=               Integer.parseInt(s[i++]);
             int    zscale_contrast=         Integer.parseInt(s[i++]);
@@ -284,7 +281,7 @@ public class RangeValues implements Cloneable, Serializable {
                                    lowerValue,
                                    upperWhich,
                                    upperValue,
-                                   betaValue,
+                                   asinhQValue,
                                    gammaValue,
                                    algorithm,
                                    zscale_contrast,
@@ -304,7 +301,7 @@ public class RangeValues implements Cloneable, Serializable {
                getLowerValue()+","+
                getUpperWhich()+","+
                getUpperValue()+","+
-               getBetaValue()+","+
+               getAsinhQValue()+","+
                getGammaValue()+","+
                getStretchAlgorithm()+","+
                getZscaleContrast()+","+

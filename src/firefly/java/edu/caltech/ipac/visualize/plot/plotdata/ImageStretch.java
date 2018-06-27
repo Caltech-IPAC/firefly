@@ -307,51 +307,58 @@ public class ImageStretch {
         return dtbl;
     }
 
-
     private static void stretchPixelsUsingAsin(int startPixel,
-                                               int lastPixel,
-                                               int startLine,
-                                               int lastLine,
-                                               int naxis1,
-                                               ImageHeader imageHeader,
-                                               byte blank_pixel_value,
-                                               float[] float1dArray,
-                                               byte[] pixeldata,
-                                               RangeValues rangeValues,
-                                               double slow,
-                                               double shigh){
+                                                 int lastPixel,
+                                                 int startLine,
+                                                 int lastLine,
+                                                 int naxis1,
+                                                 ImageHeader imageHeader,
+                                                 byte blank_pixel_value,
+                                                 float[] float1dArray,
+                                                 byte[] pixeldata,
+                                                 RangeValues rangeValues,
+                                                 double slow,
+                                                 double shigh){
 
-        double beta = rangeValues.getBetaValue();
-        // Here we use flux instead of data since the original paper is using flux. But I don't think it is matter.
-        // flux = raw_dn * imageHeader.bscale + imageHeader.bzero, when bscale=1 and bzero=0, flux=raw_dn
-        double maxFlux = getFlux(shigh, imageHeader);
-        double minFlux = getFlux(slow, imageHeader);
-        if (Double.isNaN(minFlux) || Double.isInfinite((minFlux))){
-            double[] minMax=getMinMaxData(float1dArray);
-            minFlux = getFlux(minMax[0],imageHeader);
-        }
 
-        if ( Double.isNaN(maxFlux) || Double.isInfinite((maxFlux)) ) {
-            double[] minMax=getMinMaxData(float1dArray);
-            minFlux = getFlux(minMax[1], imageHeader);
-        }
-        int pixelCount = 0;
-        double flux;
-        for (int line = startLine; line <= lastLine; line++) {
-            int start_index = line * naxis1 + startPixel;
-            int last_index = line * naxis1 + lastPixel;
-            for (int index = start_index; index <= last_index; index++) {
-                flux = getFlux(float1dArray[index], imageHeader);
-                if (Double.isNaN(flux)) { //original pixel value is NaN, assign it to blank
-                    pixeldata[pixelCount] = blank_pixel_value;
-                } else {
-                    pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(flux, maxFlux, minFlux, beta);
-                }
-                pixelCount++;
-            }
-        }
+          double qvalue = rangeValues.getAsinhQValue();
 
-    }
+          if (qvalue < 1e-10) {
+              qvalue = 0.1;
+          } else if (qvalue > 1e10) {
+              qvalue = 1e10;
+          }
+
+          double maxFlux = getFlux(shigh, imageHeader);
+          double minFlux = getFlux(slow, imageHeader);
+          if (Double.isNaN(minFlux) || Double.isInfinite((minFlux))){
+              double[] minMax=getMinMaxData(float1dArray);
+              minFlux = getFlux(minMax[0],imageHeader);
+          }
+
+          if ( Double.isNaN(maxFlux) || Double.isInfinite((maxFlux)) ) {
+              double[] minMax=getMinMaxData(float1dArray);
+              minFlux = getFlux(minMax[1], imageHeader);
+          }
+          int pixelCount = 0;
+          double flux;
+
+          for (int line = startLine; line <= lastLine; line++) {
+              int start_index = line * naxis1 + startPixel;
+              int last_index = line * naxis1 + lastPixel;
+              for (int index = start_index; index <= last_index; index++) {
+                  flux = getFlux(float1dArray[index], imageHeader);
+                  if (Double.isNaN(flux)) { // if original pixel value is NaN, assign it to blank
+                      pixeldata[pixelCount] = blank_pixel_value;
+                  } else {
+                      pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(flux, maxFlux, minFlux, qvalue);
+                  }
+                  pixelCount++;
+              }
+          }
+      }
+
+
 
     /**
      * fill the 256 element table with values for a squared stretch

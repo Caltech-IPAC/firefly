@@ -138,16 +138,6 @@ public class FitsRead implements Serializable {
     public BinaryTableHDU getTableHDU() { return tableHDU; } //todo - remove this methdo
 
 
-
-
-    public double getDefaultBeta() {
-        if (Double.isNaN(this.defBetaValue)) {
-            this.defBetaValue= ImageStretch.computeSigma(float1d, imageHeader);
-        }
-        return this.defBetaValue;
-    }
-
-
     public static RangeValues getDefaultFutureStretch() {
         return DEFAULT_RANGE_VALUE;
     }

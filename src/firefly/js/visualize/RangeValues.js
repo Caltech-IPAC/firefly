@@ -3,8 +3,6 @@
  */
 
 //LZ 06/11/15 add arcsine and power law gamma parameters
-//LZ 06/26/15 add zp and wp parameters
-//LZ 05/03/16 Remove zp, wp parameters and changed dp to beta
 import validator from 'validator';
 
 
@@ -18,18 +16,7 @@ export const ABSOLUTE   = 90;
 export const ZSCALE     = 91;
 export const SIGMA      = 92;
 
-
-export const LINEAR_STR= 'linear';
-export const LOG_STR= 'log';
-export const LOGLOG_STR= 'loglog';
-export const EQUAL_STR= 'equal';
-export const SQUARED_STR= 'squared';
-export const SQRT_STR= 'sqrt';
-
-export const ASINH_STR= 'asinh';
-export const POWERLAW_GAMMA_STR= 'powerlaw_gamma';
-
-
+// the values should match the constants in RangeValues.java
 export const STRETCH_LINEAR= 44;
 export const STRETCH_LOG   = 45;
 export const STRETCH_LOGLOG= 46;
@@ -39,13 +26,7 @@ export const STRETCH_SQRT    = 49;
 export const STRETCH_ASINH   = 50;
 export const STRETCH_POWERLAW_GAMMA   = 51;
 
-const BYTE_MAX_VALUE= 127;
-
-const boundsStrToConst = {
-    percent:  PERCENTAGE,
-    absolute: ABSOLUTE,
-    sigma: SIGMA
-};
+const LINEAR_STR= 'linear';
 
 const alStrToConst = {
     log : STRETCH_LOG,
@@ -57,13 +38,21 @@ const alStrToConst = {
     powerlaw_gamma : STRETCH_POWERLAW_GAMMA,
 };
 
+const BYTE_MAX_VALUE= 127;
+
+const boundsStrToConst = {
+    percent:  PERCENTAGE,
+    absolute: ABSOLUTE,
+    sigma: SIGMA
+};
+
 
 export class RangeValues {
     constructor( lowerWhich= PERCENTAGE,
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
-                 betaValue=NaN,
+                 asinhQValue=10.0,
                  gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
@@ -75,7 +64,7 @@ export class RangeValues {
         this.lowerValue= parseFloat(lowerValue);
         this.upperWhich= parseInt(upperWhich);
         this.upperValue= parseFloat(upperValue);
-        this.betaValue = parseFloat(betaValue);
+        this.asinhQValue = parseFloat(asinhQValue);
         this.gammaValue=parseFloat(gammaValue);
         this.algorithm=  parseInt(algorithm);
         this.zscaleContrast= parseInt(zscaleContrast);
@@ -103,7 +92,7 @@ export class RangeValues {
      */
     static clone() {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
-                                this.upperValue, this.betaValue,  this.gammaValue, this.algorithm,
+                                this.upperValue, this.asinhQValue,  this.gammaValue, this.algorithm,
                                 this.zscaleContrast, this.zscaleSamples,
                                 this.zscaleSamplesPerLine,
                                 this.bias, this.contrast );
@@ -142,7 +131,7 @@ export class RangeValues {
      * @param p.lowerValue
      * @param p.upperWhich
      * @param p.upperValue
-     * @param p.betaValue
+     * @param p.asinhQValue
      * @param p.gammaValue
      * @param p.algorithm
      * @param p.zscaleContrast
@@ -157,7 +146,7 @@ export class RangeValues {
                    lowerValue= 1.0,
                    upperWhich,
                    upperValue= 99.0,
-                   betaValue=NaN,
+                   asinhQValue= 10.0,
                    gammaValue=2.0,
                    algorithm= STRETCH_LINEAR,
                    zscaleContrast= 25,
@@ -168,7 +157,7 @@ export class RangeValues {
 
         lowerWhich= lowerWhich || which;
         upperWhich= upperWhich || which;
-        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, betaValue,
+        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
             gammaValue, algorithm, zscaleContrast, zscaleSamples,
             zscaleSamplesPerLine, bias, contrast);
     }
@@ -179,7 +168,7 @@ export class RangeValues {
      * @param lowerValue
      * @param upperWhich
      * @param upperValue
-     * @param betaValue
+     * @param asinhQValue
      * @param gammaValue
      * @param algorithm
      * @param zscaleContrast
@@ -193,7 +182,7 @@ export class RangeValues {
                 lowerValue= 1.0,
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
-                betaValue=NaN,
+                asinhQValue=10.0,
                 gammaValue=2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,
@@ -202,7 +191,7 @@ export class RangeValues {
                 bias= 0.5,
                 contrast= 1.0 ) {
 
-        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, betaValue,
+        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
              gammaValue, algorithm, zscaleContrast, zscaleSamples,
             zscaleSamplesPerLine, bias, contrast);
     }
@@ -273,7 +262,7 @@ export class RangeValues {
                rv.lowerValue+','+
                rv.upperWhich+','+
                rv.upperValue+','+
-               rv.betaValue+','+
+               rv.asinhQValue+','+
                rv.gammaValue+','+
                rv.algorithm+','+
                rv.zscaleContrast+','+

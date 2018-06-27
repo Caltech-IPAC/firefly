@@ -315,7 +315,6 @@ public class ImagePlotCreator {
 
 
     /**
-     * 5/13/16 LZ modified to add the beta in the WebFitsData calling parameter
      * @param frGroup group
      * @param band which band
      * @param f file
