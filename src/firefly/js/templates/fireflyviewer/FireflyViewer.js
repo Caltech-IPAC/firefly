@@ -5,7 +5,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get, pickBy} from 'lodash';
+import {pickBy} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
@@ -18,7 +18,6 @@ import {TriViewPanel} from './TriViewPanel.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
-import {syncChartViewer, addDefaultScatter} from '../../visualize/saga/ChartsSync.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
@@ -54,8 +53,6 @@ export class FireflyViewer extends PureComponent {
         dispatchAddSaga(watchCatalogs);
         if (views.has(LO_VIEW.images) ) launchImageMetaDataSega();
         dispatchAddSaga(layoutManager,{views: props.views});
-        dispatchAddSaga(syncChartViewer);
-        dispatchAddSaga(addDefaultScatter);
         if (getWorkspaceConfig()) { initWorkspace(); }
     }
 
@@ -84,7 +81,7 @@ export class FireflyViewer extends PureComponent {
     }
 
     render() {
-        var {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo,
+        const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo,
                 dropdownPanels, views, footer, style, showViewsSwitch, leftButtons, centerButtons, rightButtons} = this.state;
         const {visible, view} = dropDown || {};
 

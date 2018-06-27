@@ -173,8 +173,12 @@ public class ServerContext {
         CacheManager.setCacheProvider(EhcacheProvider.class.getName());
 
         // setup working area
+        File f = null;
         String workDirRoot = AppProperties.getProperty(WORK_DIR_PROP);
-        File f = StringUtils.isEmpty(workDirRoot) ? null : new File(workDirRoot);
+        if (!StringUtils.isEmpty(workDirRoot)) {
+            f = new File(workDirRoot);
+            if (!f.exists()) f.mkdirs();
+        }
         if (f == null || !f.canWrite()) {
             f = new File(System.getProperty("java.io.tmpdir"),"workarea");
         }
@@ -182,9 +186,10 @@ public class ServerContext {
 
         DEBUG_MODE = AppProperties.getBooleanProperty("debug.mode", false);
 
-        Logger.info("CACHE_PROVIDER = " + EhcacheProvider.class.getName(),
-                "WORK_DIR = " + ServerContext.getWorkingDir(),
-                "DEBUG_MODE = " + DEBUG_MODE);
+        Logger.info("CACHE_PROVIDER : " + EhcacheProvider.class.getName(),
+                "WORK_DIR : " + ServerContext.getWorkingDir(),
+                "DEBUG_MODE : " + DEBUG_MODE,
+                "Available Cores: "+ getAvailableCores() );
     }
 
 
@@ -449,6 +454,24 @@ public class ServerContext {
         }
         return retval;
     }
+
+    public static int getParallelProcessingCoreCnt() {
+        int cores= getAvailableCores();
+        int coreCnt;
+        if      (cores<4)  coreCnt= 1;
+        else if (cores<=5) coreCnt= cores-1;
+        else if (cores<16) coreCnt= cores-2;
+        else if (cores<22) coreCnt= cores-4;
+        else               coreCnt= cores-6;
+        return coreCnt;
+    }
+
+    public static int getAvailableCores() {
+        int availableCores= AppProperties.getIntProperty("server.cores", 0);
+        if (availableCores==0) availableCores= Runtime.getRuntime().availableProcessors();
+        return availableCores;
+    }
+
 
     public static Object convertFilePaths(Object json) {
 

@@ -7,7 +7,6 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.util.decimate.DecimateKey;
-import edu.caltech.ipac.util.expr.Expression;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -24,7 +23,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
 
 /**
  * Use this class as if it's a query builder.  Add filters for data and/or for headers as needed.  Set a list of columns
@@ -747,9 +745,6 @@ public class DataGroupQuery {
         private boolean _isNumber;
         private int _colIdx; // use if _colName is not given
         private transient DataType _dataType; // calculated value;
-        private transient boolean _colNameIsExpression; // _colName represents an expression, where variables are column names
-        private transient Expression _expression;  // expression stored in _colName
-        private transient DataType[] _colDataTypes; // data types of the columns that are variables in the expression
         private transient List<String> _inList;
 
         public DataFilter(int colIdx, OpType optype, String compareTo) {
@@ -767,7 +762,6 @@ public class DataGroupQuery {
 
         protected void init(String colName, OpType optype, String compareTo, boolean isNumber) {
             _colName = colName;
-            _colNameIsExpression = false;
             _optype = optype;
             _compareTo = compareTo == null || compareTo.toLowerCase().equals("null") ? "" : compareTo.toLowerCase();
             _isNumber = _colName != null && _colName.equals(DataGroup.ROW_IDX) ? true : isNumber;
@@ -799,16 +793,6 @@ public class DataGroupQuery {
         public boolean accept(DataObject dataObject) {
             initFilter();
             ensureType(dataObject);
-            if (_colNameIsExpression) {
-                for (DataType dt : _colDataTypes) {
-                    try {
-                        _expression.setVariableValue(dt.getKeyName(), ((Number) dataObject.getDataElement(dt)).doubleValue());
-                    } catch (Exception e) {
-                        return false;
-                    }
-                }
-                return isTrue(_expression.getValue(), _optype, Double.parseDouble(_compareTo));
-            }
             Object val = _colName.equals(DataGroup.ROW_IDX) ? dataObject.getRowIdx() : dataObject.getDataElement(_dataType);
             val = val == null || val.toString().toLowerCase().equals("null") ? "" : val;
             if (_optype.equals(OpType.LIKE)) {
@@ -874,8 +858,7 @@ public class DataGroupQuery {
                 return;
             }
 
-            if (_dataType == null && !_colNameIsExpression) {
-
+            if (_dataType == null) {
                 if (_colName == null) {
                     _dataType = data.getDataDefinitions()[_colIdx];
                     _colName = _dataType.getKeyName();
@@ -889,36 +872,7 @@ public class DataGroupQuery {
                             _dataType = null;  //colName is neither an existing column or an index.
                         }
                         if (_dataType == null) {
-                            // try to parse expression
-                            DataType[] colDefs = data.getDataDefinitions();
-                            ArrayList<String> allowedVars = new ArrayList(colDefs.length);
-                            for (DataType dt : colDefs) {
-                                allowedVars.add(dt.getKeyName());
-                            }
-
-                            _expression = new Expression(_colName, allowedVars);
-                            if (_expression.isValid()) {
-                                Set<String> vars = _expression.getParsedVariables();
-                                _colDataTypes = new DataType[vars.size()];
-                                DataType varDataType;
-                                int varIdx = 0;
-                                for (String var : vars) {
-                                    varDataType = data.getDataType(var);
-                                    if (varDataType == null) {
-                                        throw new IllegalArgumentException(var +
-                                                " is not defined in this DataGroup");
-                                    } else if (!isNumberType(varDataType)) {
-                                        // make sure all variables are column names and these columns are numeric
-                                        throw new IllegalArgumentException(var + " in expression " + _colName + " is not a numeric column");
-                                    }
-                                    _colDataTypes[varIdx] = varDataType;
-                                    varIdx++;
-                                }
-                                _colNameIsExpression = true;
-
-                            } else {
-                                throw new IllegalArgumentException(_colName + ": " + _expression.getErrorMessage());
-                            }
+                            throw new IllegalArgumentException("Invalid column name or index:" + _colName);
                         }
                     }
                 }

@@ -38,8 +38,8 @@ import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ChartPanel} from '../charts/ui/ChartPanel.jsx';
 import {MultiChartViewer} from '../charts/ui/MultiChartViewer.jsx';
+import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 
-import {Histogram} from '../charts/ui/Histogram.jsx';
 import {PopupMouseReadoutMinimal} from  '../visualize/ui/PopupMouseReadoutMinimal.jsx';
 import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx';
 
@@ -199,7 +199,7 @@ export function buildLowlevelAPI() {
         ChartsContainer,
         MultiChartViewer,
         ChartPanel,
-        Histogram,
+        PlotlyWrapper,
         PopupMouseReadoutMinimal,
         PopupMouseReadoutFull
     };

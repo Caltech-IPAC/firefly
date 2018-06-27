@@ -11,10 +11,15 @@ import {getFieldVal, getReducerFunc} from '../../fieldGroup/FieldGroupUtils.js';
 import {RadioGroupInputField} from './../../ui/RadioGroupInputField.jsx';
 import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
 import {CHART_UPDATE, dataLoadedUpdate, getChartData, removeTrace} from '../ChartsCntlr.js';
-import {getOptionsUI} from '../ChartUtil.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 
 import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
+
+import {isScatter2d} from '../ChartUtil.js';
+import {BasicOptions} from './options/BasicOptions.jsx';
+import {ScatterOptions} from './options/ScatterOptions.jsx';
+import {HeatmapOptions} from './options/HeatmapOptions.jsx';
+import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
 
 const chartActionPanelKey = 'ChartSelectPanel-actions';
 const chartActionKey = 'chartAction';
@@ -293,6 +298,24 @@ SyncedOptionsUI.propTypes = {
     groupKey: PropTypes.string
 };
 
+export function getOptionsUI(chartId) {
+    // based on chartData, determine what options to display
+    const {data, fireflyData, activeTrace=0} = getChartData(chartId);
+    const type = get(data, [activeTrace, 'type'], 'scatter');
+    const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
+    // check firefly types first -
+    // trace type for them is populated
+    // when the data arrive
+    if (dataType === 'fireflyHistogram') {
+        return FireflyHistogramOptions;
+    } else if (dataType === 'fireflyHeatmap') {
+        return HeatmapOptions;
+    } else if (isScatter2d(type)) {
+        return ScatterOptions;
+    } else {
+        return BasicOptions;
+    }
+}
 
 /**
  * Creates and shows the modal dialog with chart options.

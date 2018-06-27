@@ -19,28 +19,36 @@ export class SearchPanel extends SimpleComponent {
 
     render() {
         const {style={}} = this.props;
-        const {activeSearch, groups, flow='vertical'} = this.state;
-        if (!groups) return null;
-        const {allSearchItems} = getSearchInfo();
-
-        const sideBar = Object.keys(allSearchItems).length > 1 ? <SideBar {...{activeSearch, groups}}/> : null;
+        const {activeSearch, groups, allSearchItems={}, flow='vertical', title} = this.state;
         const searchItem = allSearchItems[activeSearch];
 
-        if (flow === 'vertical') {
+        const isSingleSearch = Object.keys(allSearchItems).length === 1;
+        if (isSingleSearch) {
             return (
-                <div className='SearchPanel' style={style}>
-                    {sideBar}
-                    {searchItem &&
-                    <div className='SearchPanel__form'>
-                        <SearchForm searchItem={searchItem} />
+                <div>
+                    {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
+                    <SearchForm searchItem={searchItem} />
+                </div>
+            );
+        }
+
+        if (flow === 'vertical') {
+            const sideBar = <SideBar {...{activeSearch, groups}}/> ;
+            return (
+                <div>
+                    {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
+                    <div className='SearchPanel' style={style}>
+                        {sideBar}
+                        {searchItem &&
+                        <div className='SearchPanel__form'>
+                            <SearchForm searchItem={searchItem} />
+                        </div>
+                        }
                     </div>
-                    }
                 </div>
             );
         } else {
-            const title = get(groups, [0, 'title']);
             const onTabSelect = (index,id,name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
-
             return (
                 <div>
                     {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
@@ -56,7 +64,6 @@ export class SearchPanel extends SimpleComponent {
 SearchPanel.propTypes = {
     style:  PropTypes.object
 };
-
 
 function searchesAsTabs(allSearchItems) {
 
@@ -77,10 +84,10 @@ function searchesAsTabs(allSearchItems) {
 
 function SearchForm({searchItem}) {
     const {name, form, } = searchItem;
-    const {render, ...rest} = form;
+    const {render:Render, ...rest} = form;
     return (
         <FormPanel groupKey={name} {...rest}>
-            {render(searchItem)}
+            <Render {...{searchItem}} />
         </FormPanel>
     );
 }

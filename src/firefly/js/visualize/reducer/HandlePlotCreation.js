@@ -326,9 +326,7 @@ function preNewPlotPrep(plotViewAry,action) {
 
     const pvChangeAry= wpRequestAry.map( (req) => {
         const plotId= req.getPlotId();
-        let pv= getPlotViewById(plotViewAry,plotId);
-        pv= pv ? clone(pv, { plottingStatus:'Plotting...', plots:[],  primeIdx:-1, request: req && req.makeCopy() }) :
-                 makePlotView(plotId, req,payload.pvOptions);
+        const pv= makePlotView(plotId, req,payload.pvOptions);
 
         const {hipsImageConversion}= payload;
         if (hipsImageConversion) {

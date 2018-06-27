@@ -2,7 +2,8 @@
 CATALINA_OPTS="\
         -Xms${MIN_JVM_SIZE} \
         -Xmx${MAX_JVM_SIZE} \
-        -DjvmRoute=${JVM_ROUTE}
+        -Dserver.cores=${JVM_CORES} \
+        -DjvmRoute=${JVM_ROUTE} \
         -Djava.net.preferIPv4Stack=true"
 
 #        -Dcom.sun.management.jmxremote.port=${JMX_ADDRESS} \

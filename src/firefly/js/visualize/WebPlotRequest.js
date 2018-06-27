@@ -25,8 +25,20 @@ const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORT
     'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE', 'HIPS_GRID_TYPE'];
 
 
+/**
+ * @summary service type
+ * @description can be 'IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'NONE'
+ * @public
+ * @global
+ */
 export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'ATLAS', 'NONE'],
                                               { ignoreCase: true });
+/**
+ * @summary title options
+ * @description can be 'NONE', 'PLOT_DESC', 'FILE_NAME', 'HEADER_KEY', 'PLOT_DESC_PLUS', 'SERVICE_OBS_DATE'
+ * @public
+ * @global
+ */
 export const TitleOptions= new Enum([
     'NONE',  // use what it in the title
     'PLOT_DESC', // use the plot description key
@@ -191,12 +203,17 @@ const makeOrderList = (orderStr) => orderStr ? orderStr.split(';').map( (v) => O
 
 const DEF_ORDER= makeOrderList(DEFAULT_PIPELINE_ORDER);
 
-
 /**
- * @author Trey Roby
+ * @summary Web plot request. This object can be created by using the method of making survey request like *makexxxRequest*
+ * and the method of setting the parameters.
+ * @param {RequestType} type request type
+ * @param {string} userDesc description
+ * @param {ServiceType} serviceType service type if type == RequestType.SERVICE
+ *
+ * @public
+ * @global
  */
 export class WebPlotRequest extends ServerRequest {
-//class WebPlotRequest {
     constructor(type,userDesc,serviceType) {
         super(type);
         if (type) this.setRequestType(type);
@@ -460,9 +477,7 @@ export class WebPlotRequest extends ServerRequest {
      */
     static makeAtlasRequest(wp, survey, band, filter, sizeInDeg) {
         const req = this.makePlotServiceReq(ServiceType.ATLAS, wp, survey, sizeInDeg);
-        req.setParam(C.SURVEY_KEY, survey.split('.')[0]);
-        req.setParam('dataset', survey.split('.')[0]);
-        req.setParam('table', survey.split('.')[1]);
+        req.setParam(C.SURVEY_KEY, survey);
         req.setParam('filter', filter); //Needed for the query but not for fetching the data (see QueryIBE metadata)
         req.setParam(C.SURVEY_KEY_BAND, band + '');
         req.setTitle(survey + ',' + band);

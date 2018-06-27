@@ -39,7 +39,7 @@ export class SettingBox extends PureComponent {
             if (tblColumns && tblColumns !== this.state.tblColumns) {
                 const numColumns = getColsByType(tblColumns, COL_TYPE.NUMBER).map((c) => c.name);
                 const charColumns = getColsByType(tblColumns, COL_TYPE.TEXT).map((c) => c.name);
-                ;//getColNames(tblColumns, ['char', 'c', 's', 'str']);
+                //getColNames(tblColumns, ['char', 'c', 's', 'str']);
                 this.setState({tblColumns, charColumns, numColumns});
             }
         }

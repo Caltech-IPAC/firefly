@@ -191,9 +191,10 @@ public class RegionFactory {
                             coordStr= st.nextToken();
                             String textPart= st.nextToken();
                             String end=  (textStart.equals("{")) ? "}" : textStart;
-                            int endIdx= textPart.indexOf(end);
+                            int sIdx = textInput.indexOf(textStart);
+                            int endIdx= textInput.indexOf(end, sIdx+1);
                             if (endIdx>-1) {
-                                String textString= textPart.substring(0,endIdx);
+                                String textString= textInput.substring(sIdx+1,endIdx);
                                 ops.setText(textString);
                             }
                         }

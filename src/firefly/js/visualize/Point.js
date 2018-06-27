@@ -6,13 +6,15 @@ import validator from 'validator';
 
 const SPT= 'ScreenPt';
 const IM_PT= 'ImagePt';
+const FITS_IM_PT= 'FitsImagePt';
+const ZERO_BASED_IM_PT= 'ZeroBasedImagePt';
 const IM_WS_PT= 'ImageWorkSpacePt';
 const W_PT= 'WorldPt';
 const DEV_PT= 'DevicePt';
 const PROJ_PT= 'ProjectionPt';
 const OFFSET_PT= 'OffsetPt';
 
-const Point = {  SPT, IM_PT, IM_WS_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
+const Point = {  SPT, IM_PT, IM_WS_PT, FITS_IM_PT, ZERO_BASED_IM_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
 
 
 
@@ -56,6 +58,29 @@ const Point = {  SPT, IM_PT, IM_WS_PT, DEV_PT, PROJ_PT, W_PT, OFFSET_PT};
  * @public
  * @global
  */
+
+/**
+ * @typedef {Object} FitsImagePt
+ * @summary a point in FITS standard image file coordinates
+ * @prop {Number} x
+ * @prop {Number} y
+ * @prop {String} type constant must be 'ImagePt'
+ * @public
+ * @global
+ */
+
+
+
+/**
+ * @typedef {Object} ZeroBasedImagePt
+ * @summary a point in Zero based image file coordinates, ca be offset by LTV1 and LTV2
+ * @prop {Number} x
+ * @prop {Number} y
+ * @prop {String} type constant must be 'ImagePt'
+ * @public
+ * @global
+ */
+
 
 /**
  * @typedef {Object} WorldPt
@@ -239,6 +264,33 @@ export function makeWorldPt(lon,lat,coordSys,objName,resolver) {
  */
 export const makeImagePt= (x,y) => Object.assign(new SimplePt(x,y), {type:IM_PT});
 
+/**
+ * @summary A image point in a FITS file with FITS based offset Standard
+ * @param {number|string} x - the x, string is converted to number
+ * @param {number|string} y - the y, string is converted to number
+ *
+ * @return {FitsImagePt}
+ *
+ * @function makeFitsImagePt
+ * @memberof firefly.util.image
+ * @public
+ * @global
+ */
+export const makeFitsImagePt= (x,y) => Object.assign(new SimplePt(x,y), {type:FITS_IM_PT});
+
+/**
+ * @summary A image point in a Zero based standard, can be offset with the LVT1 and LTV2 headers
+ * @param {number|string} x - the x, string is converted to number
+ * @param {number|string} y - the y, string is converted to number
+ *
+ * @return {ImagePt}
+ *
+ * @function makeZeroBasedImagePt
+ * @memberof firefly.util.image
+ * @public
+ * @global
+ */
+export const makeZeroBasedImagePt= (x,y) => Object.assign(new SimplePt(x,y), {type:ZERO_BASED_IM_PT});
 
 /**
  *

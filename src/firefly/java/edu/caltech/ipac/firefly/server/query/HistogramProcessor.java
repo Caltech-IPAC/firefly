@@ -9,11 +9,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataObjectUtil;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.util.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +19,7 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 
-@SearchProcessorImpl(id = "HistogramProcessor")
+
 /**
  * Created by zhang on 10/16/15.
  * This class is a Histogram processor.  Its input is TableServerRequest where it contains the needed parameters to calculate
@@ -40,7 +36,9 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
  * IRSA-371 Changed the showEmptyBin to true.  It was false previously.
  *
  */
+@SearchProcessorImpl(id = "HistogramProcessor")
 public class HistogramProcessor extends IpacTablePartProcessor {
+
     private static final String SEARCH_REQUEST = "searchRequest";
     private static DataType[] columns = new DataType[]{
         new DataType("numInBin", Long.class),
@@ -55,7 +53,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String FIXED_BIN_SIZE_SELECTION="fixedBinSizeSelection";
     private final String BIN_SIZE = "binSize";
-    private final String COLUMN = "columnExpression";
+    // column expressions should be handled by search request
+    private final String COLUMN = "columnName";
     private final String SORTED_COL_DATA = "sortedColData";
     private final String MIN = "min";
     private final String MAX = "max";
@@ -66,7 +65,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private double binWidth=0.0;
     private String binSelection=null;
     private String binSize;
-    private String columnExpression;
+    private String columnName;
     private boolean sortedColData = false;
     private double falsePostiveRate = 0.05;
 
@@ -95,7 +94,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                     DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "inputTable");
 
                     HistogramProcessor hp = new HistogramProcessor();
-                    hp.columnExpression = "f_y";
+                    hp.columnName = "f_y";
 
                     double[] columnData = hp.getColumnData(dg);
 
@@ -142,7 +141,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         DataGroup sourceDataGroup = sourceData.getData();
         double[] columnData = getColumnData(sourceDataGroup);
         DataGroup histogramDataGroup = createHistogramTable(columnData);
-        histogramDataGroup.addAttribute("column", columnExpression);
         histogramDataGroup.addAttribute("searchRequest", sReq.toString());
         addFormatInfoAtt(histogramDataGroup, columns[1]);
         addFormatInfoAtt(histogramDataGroup, columns[2]);
@@ -161,8 +159,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             String value = p.getValue();
             if (name==null || value==null ) continue;
             if (name.equalsIgnoreCase(COLUMN)) {
-                //columnName = (String) value;
-                columnExpression = value;
+                columnName = value;
             } else if (name.equalsIgnoreCase(MIN)) {
                 min =  Double.parseDouble(value);
 
@@ -351,9 +348,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         List<DataObject> objList = dg.values();
         int nRow = objList.size();
         DataType[] dataTypes=dg.getDataDefinitions();
-        DataObjectUtil.DoubleValueGetter dGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, columnExpression);
+        DataObjectUtil.DoubleValueGetter dGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, columnName);
         if (!dGetter.isValid()) {
-            throw new DataAccessException("Invalid column or expression: "+columnExpression);
+            throw new DataAccessException("Invalid column: "+ columnName);
         }
 
         double[] data = new double[nRow];

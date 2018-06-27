@@ -18,22 +18,14 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
-import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import ChartsCntlrDef from '../charts/ChartsCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
 import WorkspaceCntlr from '../visualize/WorkspaceCntlr.js';
 
-import {chartTypeFactory} from '../charts/ChartType.js';
-import {PLOTLY_CHART} from '../charts/chartTypes/PlotlyChart.jsx';
-import {SCATTER_TBLVIEW} from '../charts/chartTypes/ScatterTblView.jsx';
-import {HISTOGRAM_TBLVIEW} from '../charts/chartTypes/HistogramTblView.jsx';
-import {chartDataTypeFactory} from '../charts/ChartDataType.js';
-import {DATATYPE_XYCOLS} from '../charts/dataTypes/XYColsCDT.js';
-import {DATATYPE_HISTOGRAM} from '../charts/dataTypes/HistogramCDT.js';
 
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
+import MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 
 
@@ -111,10 +103,6 @@ const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,Dis
                                                      MarkerTool, FootprintTool, HiPSGrid,
                                                      ImageOutline);
 
-const cdtFactory= chartDataTypeFactory([DATATYPE_XYCOLS, DATATYPE_HISTOGRAM]);
-const chartsFactory= chartTypeFactory([PLOTLY_CHART, SCATTER_TBLVIEW, HISTOGRAM_TBLVIEW]);
-
-
 /**
  * A collection of reducers keyed by the node's name under the root.
  * @type {Object<string, function>}
@@ -150,9 +138,6 @@ let redux = null;
 // pre-map a set of action => creator prior to bootstrapping.
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
-actionCreators.set(ChartsCntlr.CHART_DATA_FETCH, ChartsCntlr.makeChartDataFetch(cdtFactory.getChartDataType));
-actionCreators.set(ChartsCntlr.CHART_OPTIONS_REPLACE, ChartsCntlr.makeChartOptionsReplace(cdtFactory.getChartDataType));
-actionCreators.set(ChartsCntlr.CHART_OPTIONS_UPDATE, ChartsCntlr.makeChartOptionsUpdate(cdtFactory.getChartDataType));
 
 
 
@@ -322,26 +307,6 @@ function createDrawLayer(drawLayerTypeId, params) {
     return drawLayerFactory.create(drawLayerTypeId,params);
 }
 
-/**
- *
- * @param {ChartDataType} chartDataType
- */
-function registerChartDataType(chartDataType) {
-    cdtFactory.addChartDataType(chartDataType);
-}
-
-/**
- *
- * @param {ChartType} chartType
- */
-function registerChartType(chartType) {
-    chartsFactory.addChartDataType(chartType);
-}
-
-function getChartType(id) {
-    return chartsFactory.getChartType(id);
-}
-
 export var reduxFlux = {
     registerCreator,
     registerReducer,
@@ -349,9 +314,6 @@ export var reduxFlux = {
     getState,
     process,
     addListener,
-    registerChartDataType,
-    registerChartType,
-    getChartType,
     registerDrawLayer,
     createDrawLayer,
     getDrawLayerFactory,

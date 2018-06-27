@@ -14,6 +14,7 @@ import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt, makeImagePt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
 import {logError} from '../../util/WebUtil.js';
+import CysConverter from '../CsysConverter.js';
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';
@@ -416,7 +417,7 @@ export class RegionFactory {
                     return prev;
                 }, []);
             } else {
-                pAry = desWithnoText.split(/\s+/);   // blank string is ignored
+                pAry = desWithnoText.trim().split(/\s+/);   // blank string is ignored
             }
 
             if (textRes.text) {
@@ -427,7 +428,7 @@ export class RegionFactory {
 
 
         if ( rIdx >= 0 && lIdx >= 0 && rIdx > lIdx ) {    // with ()
-            newdes = regionDes.slice(0, rIdx).replace('(', ' ').trim();
+            newdes = regionDes.slice(0, rIdx).replace('(', ' ').trim() + regionDes.slice(rIdx+1);
             return getParams(newdes);
         } else if (rIdx < 0 && lIdx < 0) {               // with no ()
             return getParams(regionDes);
@@ -680,7 +681,8 @@ export class RegionFactory {
 
         var makePt = (vx, vy, cs) => {
             if (vx.unit === RegionValueUnit.IMAGE_PIXEL || vx.unit === RegionValueUnit.SCREEN_PIXEL) {
-                return makeImagePt(vx.value, vy.value);
+                // fits to internal
+                return CysConverter.convertFitsStandardImagePtToInternalImage(makeImagePt(vx.value, vy.value));
             } else {
                 return makeWorldPt(vx.value, vy.value, this.parse_coordinate(cs));
             }

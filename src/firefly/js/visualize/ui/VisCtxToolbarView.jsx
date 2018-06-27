@@ -379,7 +379,8 @@ function doConvert(pv,target) {
 
 function changeAutoConvert(pv, auto) {
     dispatchChangeHipsImageConversion({plotId:pv.plotId, hipsImageConversionChanges:{autoConvertOnZoom:auto}});
-    if (auto) doHiPSImageConversionIfNecessary(pv);
+    const nextPv= getPlotViewById(visRoot(), pv.plotId);
+    if (auto) doHiPSImageConversionIfNecessary(nextPv);
 }
 
 

@@ -141,12 +141,15 @@ function usePayload(mouseState, lockByClick) {
  * @return {{worldPt: *, screenPt: *, imagePt: *, threeColor: (boolean), title: *, pixel: ({title, value, unit, precision}|{title: *, value: *, unit: *, precision: *})}}
  */
 function makeReadout(plot, worldPt, screenPt, imagePt, healpixPixel, norder) {
-    if (CysConverter.make(plot).pointInPlot(imagePt)) {
+    const csys= CysConverter.make(plot);
+    if (csys.pointInPlot(imagePt)) {
         if (isImage(plot)) {
             return {
                 worldPt: makePointReadoutItem('World Point', worldPt),
                 screenPt: makePointReadoutItem('Screen Point', screenPt),
                 imagePt: makePointReadoutItem('Image Point', imagePt),
+                fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
+                zeroBasedImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getZeroBasedImagePtFromInternal(imagePt)),
                 title: makeDescriptionItem(plot.title),
                 pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
                 screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3)
@@ -157,6 +160,8 @@ function makeReadout(plot, worldPt, screenPt, imagePt, healpixPixel, norder) {
                 worldPt: makePointReadoutItem('World Point', worldPt),
                 screenPt: makePointReadoutItem('Screen Point', screenPt),
                 imagePt: makePointReadoutItem('Image Point', imagePt),
+                fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
+                zeroBasedImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getZeroBasedImagePtFromInternal(imagePt)),
                 title: makeDescriptionItem(plot.title),
                 pixel: makeHiPSPixelReadoutItem(plot),
                 screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),

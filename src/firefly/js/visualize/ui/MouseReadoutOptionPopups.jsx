@@ -26,7 +26,8 @@ const coordOptions= [
 	{label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
 	{label: 'Galactic', value: 'galactic'},
 	{label: 'EQ B1950', value: 'eqb1950'},
-	{label: 'FITS Image Pixel', value: 'fitsIP'}
+	{label: 'FITS Image Pixel', value: 'fitsIP'},
+    {label: 'Zero based Image Pixel', value: 'zeroIP'}
 ];
 
 const hipsCoordOptions= [
@@ -92,7 +93,7 @@ function doDispatch(fieldGroup,  fieldKey){
 	window.setTimeout(() => { // since the mouse click happens before the store can update, we must defer the actions
 		const results= getFieldGroupResults(fieldGroup,true);
 		const prefValue= results[fieldKey];
-		if (prefValue==='fitsIP') {
+		if (prefValue==='fitsIP' || prefValue==='zeroIP' ) {
             dispatchChangeReadoutPrefs({[fieldKey]:prefValue});
         }
 		else if (fieldKey==='imageMouseReadout1' || fieldKey==='hipsMouseReadout1') {

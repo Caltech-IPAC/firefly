@@ -77,6 +77,7 @@ EXPOSE 8080 5050
 # parameter such as: -e "MAX_JVM_SIZE=4G"
 ENV MIN_JVM_SIZE=1G
 ENV MAX_JVM_SIZE=8G
+ENV JVM_CORES=0
 
 
 #User name and password to use admin

@@ -15,18 +15,13 @@ import {
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
-import {getTblById, getColumnIdx, getCellValue, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
+import {getTblById, isFullyLoaded, watchTableChanges} from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT} from '../tables/TablesCntlr.js';
 import {dispatchLoadTblStats} from './TableStatsCntlr.js';
 import {dispatchChartUpdate, dispatchChartHighlighted, dispatchChartSelect, getChartData} from './ChartsCntlr.js';
 import {Expression} from '../util/expr/Expression.js';
 import {quoteNonAlphanumeric}  from '../util/expr/Variable.js';
-import {logError, flattenObject} from '../util/WebUtil.js';
-import {ScatterOptions} from './ui/options/ScatterOptions.jsx';
-import {HeatmapOptions} from './ui/options/HeatmapOptions.jsx';
-import {FireflyHistogramOptions} from './ui/options/FireflyHistogramOptions.jsx';
-import {BasicOptions} from './ui/options/BasicOptions.jsx';
-import {ScatterToolbar, BasicToolbar, SingleTraceUIToolbar} from './ui/PlotlyToolbar';
+import {flattenObject} from '../util/WebUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogram.js';
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
@@ -38,7 +33,6 @@ export const DEFAULT_ALPHA = 0.5;
 
 export const SCATTER = 'scatter';
 export const HEATMAP = 'heatmap';
-export const HISTOGRAM = 'histogram';
 
 export const SELECTED_COLOR = 'rgba(255, 200, 0, 1)';
 export const SELECTED_PROPS = {
@@ -60,86 +54,12 @@ const FSIZE = 12;
 
 export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
-export function multitraceDesign() {
-    return get(getAppOptions(), 'charts.multitrace', true);
-}
-
 export function singleTraceUI() {
     return get(getAppOptions(), 'charts.singleTraceUI');
 }
 
 export function getMaxScatterRows() {
     return get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
-}
-
-
-/**
- * This method returns an object with the keys x,y,highlightedRow
- *
- * @param {XYPlotParams} xyPlotParams
- * @param {string} tblId
- * @returns {{x: number, y: number, rowIdx}}
- */
-export function getHighlighted(xyPlotParams, tblId) {
-
-    const tableModel = getTblById(tblId);
-    if (tableModel && xyPlotParams) {
-        const rowIdx = tableModel.highlightedRow;
-        const highlighted = {rowIdx};
-        [
-            {n:'x',v:xyPlotParams.x.columnOrExpr},
-            {n:'y',v:xyPlotParams.y.columnOrExpr},
-            {n:'xErr', v:xyPlotParams.x.error},
-            {n:'xErrLow', v:xyPlotParams.x.errorLow},
-            {n:'xErrHigh', v:xyPlotParams.x.errorHigh},
-            {n:'yErr', v:xyPlotParams.y.error},
-            {n:'yErrLow', v:xyPlotParams.y.errorLow},
-            {n:'yErrHigh', v:xyPlotParams.y.errorHigh}
-        ].map((entry) => {
-            if (entry.v) {
-                highlighted[entry.n] = getColOrExprValue(tableModel, rowIdx, entry.v);
-            }
-        });
-        return highlighted;
-    }
-}
-
-/**
- * This method returns the value of the column cell or an expression from multiple column cells in a given row
- *
- * @param {TableModel} tableModel - table model
- * @param {number} rowIdx - row index in the table
- * @param {string} colOrExpr - column name or expression
- * @returns {number} value of the column or expression in the given row
- */
-export function getColOrExprValue(tableModel, rowIdx, colOrExpr) {
-    if (tableModel) {
-        let val;
-        if (getColumnIdx(tableModel, colOrExpr) >= 0) {
-            val = getCellValue(tableModel, rowIdx, colOrExpr);
-            val = isFinite(parseFloat(val)) ? Number(val) : Number.NaN;
-        } else {
-            val = getExpressionValue(tableModel, rowIdx, colOrExpr);
-        }
-        return val;
-    }
-}
-
-function getExpressionValue(tableModel, rowIdx, strExpr) {
-
-    const expr = new Expression(strExpr); // no check for allowed variables, already validated
-    if (expr.isValid()) {
-        const parsedVars = expr.getParsedVariables();
-        parsedVars.forEach((v)=> {
-            if (getColumnIdx(tableModel, v) >= 0) {
-                const val = getCellValue(tableModel, rowIdx, v);
-                expr.setVariableValue(v, Number(val));
-            }
-        });
-        return expr.getValue();
-    } else {
-        logError('Invalid expression '+expr.getInput(), expr.getError().error);
-    }
 }
 
 /**
@@ -247,7 +167,8 @@ export function makeXYPlotParams(params) {
 /**
  * @global
  * @public
- * @typedef {Object} HistogramOptions - shallow object with histogram parameters
+ * @typedef {Object} HistogramOptions
+ * @summary shallow object with histogram parameters
  * @prop {string}  [source]     location of the ipac table, url or file path; ignored when histogram view is added to table
  * @prop {string}  [tbl_id]     table id of the table this plot is connected to
  * @prop {string}  [chartTitle] title of the chart
@@ -340,37 +261,6 @@ export function isScatter2d(type) {
     return type.includes('scatter') && !type.endsWith('3d');
 }
 
-export function getOptionsUI(chartId) {
-    // based on chartData, determine what options to display
-    const {data, fireflyData, activeTrace=0} = getChartData(chartId);
-    const type = get(data, [activeTrace, 'type'], 'scatter');
-    const dataType = get(fireflyData, [activeTrace, 'dataType'], '');
-    // check firefly types first -
-    // trace type for them is populated
-    // when the data arrive
-    if (dataType === 'fireflyHistogram') {
-        return FireflyHistogramOptions;
-    } else if (dataType === 'fireflyHeatmap') {
-        return HeatmapOptions;
-    } else if (isScatter2d(type)) {
-        return ScatterOptions;
-    } else {
-        return BasicOptions;
-    }
-}
-
-export function getToolbarUI(chartId, activeTrace=0, showMultiTrace) {
-
-    if (!showMultiTrace) { return SingleTraceUIToolbar; }
-
-    const {data} =  getChartData(chartId);
-    const type = get(data, [activeTrace, 'type'], 'scatter');
-    if (isScatter2d(type)) {
-        return ScatterToolbar;
-    } else {
-        return BasicToolbar;
-    }
-}
 
 export function clearChartConn({chartId}) {
     const oldTablesources = get(getChartData(chartId), 'tablesources',[]);
@@ -626,7 +516,7 @@ function makeTableSources(chartId, data=[], fireflyData=[]) {
 
     const convertToDS = (flattenData) =>
                         Object.entries(flattenData)
-                                .filter(([k,v]) => typeof v === 'string' && v.startsWith('tables::'))
+                                .filter(([,v]) => typeof v === 'string' && v.startsWith('tables::'))
                                 .reduce( (p, [k,v]) => {
                                     const [,colExp] = v.match(TBL_SRC_PATTERN) || [];
                                     if (colExp) set(p, ['mappings',k], colExp);
@@ -774,7 +664,9 @@ export function formatColExpr({colOrExpr, quoted, colNames}) {
             expr.getParsedVariables().forEach((v) => {
                 if (!v.startsWith('"')) {
                     const re = new RegExp('([^A-Za-z\d_"]|^)(' + v + ')([^A-Za-z\d_"]|$)', 'g');
-                    colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
+                    while (colOrExpr.match(re)) { // while is needed to handle cases like v*v
+                        colOrExpr = colOrExpr.replace(re, '$1"$2"$3'); // add quotes
+                    }
                 }
             });
             colOrExpr = colOrExpr.replace(/"NULL"/g, 'NULL'); // unquote NULL

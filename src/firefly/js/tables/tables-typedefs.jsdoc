@@ -134,3 +134,30 @@
  * @global
  * @public
  */
+
+
+/**
+ * Available options when a table is added.
+ * @global
+ * @public
+ * @typedef {object} TblOptions
+ * @prop {string}  [tbl_group]    the group this table belongs to.  Defaults to 'main'.
+ * @prop {boolean} [backgroundable=false]    true if this search can be sent to background.  Defaults to false.
+ * @prop {string}  [title]        title of this table.
+ * @prop {boolean} [setAsActive=true]  make this the active table once it's added to the UI.
+ * @prop {number}  [pageSize]     the starting page size.  Will use the request's pageSize if not given.
+ * @prop {boolean} [selectable=true]
+ * @prop {boolean} [expandable=true]
+ * @prop {boolean} [removable=true]  true if this table can be removed from view.
+ * @prop {boolean} [border=true]
+ * @prop {boolean} [showUnits=true]
+ * @prop {boolean} [showFilters=false]
+ * @prop {boolean} [showToolbar=true]
+ * @prop {boolean} [showTitle=true]
+ * @prop {boolean} [showPaging=true]
+ * @prop {boolean} [showSave=true]
+ * @prop {boolean} [showOptionButton=true]
+ * @prop {boolean} [showFilterButton=true]
+ * @prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.
+ * @prop {function[]}  [rightButtons]  an array of functions that returns a button-like component laid out on the right side of this table header.
+ */

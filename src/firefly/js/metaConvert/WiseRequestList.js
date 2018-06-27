@@ -75,9 +75,9 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
             builder('wise-1','ibe_file_retrieve', 'Wise band 1', row, {band:'1'}),
             builder('wise-2','ibe_file_retrieve', 'Wise band 2', row, {band:'2'})];
 
-        if (!TwoBandTables.find((tbl) => table.request.table_name.toLowerCase().includes(tbl))) {
+        if (!TwoBandTables.find((tbl) => get(table,'request.table_name', '').toLowerCase().includes(tbl))) {
             retval.standard.push(builder('wise-3', 'ibe_file_retrieve', 'Wise band 3', row, {band: '3'}));
-            if (!ThreeBandTables.find((tbl) => table.request.table_name.toLowerCase().includes(tbl))) {
+            if (!ThreeBandTables.find((tbl) => get(table,'request.table_name','').toLowerCase().includes(tbl))) {
                 retval.standard.push(builder('wise-4', 'ibe_file_retrieve', 'Wise band 4', row, {band: '4'}));
             }
         }

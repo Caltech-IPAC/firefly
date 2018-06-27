@@ -17,7 +17,7 @@ import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
-import {getMaxScatterRows} from "../../charts/ChartUtil.js";
+import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 
 
 /**

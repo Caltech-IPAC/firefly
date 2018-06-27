@@ -46,7 +46,6 @@ If you specify `URL` and it is relative then one of two things happen:
 | `ObjectName` | the object name that can be looked up by NED or Simbad |
 | `Resolver` | The object name resolver to use, options are: `NED`, `Simbad`, `NedThenSimbad`, `SimbadThenNed`, `PTF` |
 | `SizeInDeg` | The radius or side (in degrees) depending of the service type, used with `Type=='SERVICE'` |
-| `SurveyKeyBand` | So far only used with `'Type===SERVICE'` and `'Service===WISE'`. Possible values are: `1`, `2`, `3`, `4` |
 
 `SurveyKey`:   The value of SurveyKey depends on the value of "Service".
 The possible values for SurveyKey are listed below for each service:        
@@ -55,9 +54,25 @@ The possible values for SurveyKey are listed below for each service:
  - ISSA: 12, 25, 60, 100
  - DSS: poss2ukstu_red, poss2ukstu_ir, poss2ukstu_blue, poss1_red, poss1_blue, quickv, phase2_gsc2,  phase2_gsc1
  - SDSS: u, g, r, i, z
- - TWOMASS: j, h, k
+ - TWOMASS: asky, askyw, sx, sxw, cal
  - MSX: 3, 4, 5, 6
- - WISE: 1b, 3a
+ - WISE: Atlas, 1b, 3a
+ - ATLAS: spitzer.seip_science, spitzer.frontier_images, spitzer.s4g_images, spitzer.s_candels_images,
+          spitzer.servs_images,spitzer.shela_images, spitzer.spies_images, spitzer.glimpsei_0_6,
+          spitzer.glimpseii_0_6, spitzer.glimpse3d_0_6, spitzer.glimpse360_0_6,spitzer.glimpse_deepglimpse_0_6,
+          spitzer.glimpse_velacar_0_6, spitzer.glimpse_smog_0_6, spitzer.glimpse_cygx_0_6, akari.akari_images
+
+`SurveyKeyBand`: The value of SurveyKeyBand depends on the value of "Service". So far only used with `Type=='SERVICE'` and `Service=='WISE'`, `'Service=='TWOMASS'` or `Service=='ATLAS'`.
+The possible values for SurveyKeyBand are listed below for each service:
+
+ - WISE: 1, 2, 3, 4
+ - TWOMASS: j, h, k
+ - ATLAS: The possible values also depends on the value of `SurveyKey`:
+     - spitzer.seip_science, spitzer.frontier_images: IRAC1, IRAC2, IRAC3, IRAC4, MIPS24
+     - spitzer.s4g_images, spitzer.s_candels_images, spitzer.servs_images, spitzer.shela_images, spitzer.spies_images: IRAC1, IRAC2
+     - spitzer.glimpsei_0_6, spitzer.glimpseii_0_6, spitzer.glimpse3d_0_6, spitzer.glimpse360_0_6,
+       spitzer.glimpse_deepglimpse_0_6, spitzer.glimpse_velacar_0_6, spitzer.glimpse_smog_0_6, spitzer.glimpse_cygx_0_6: IRAC1, IRAC2, IRAC3, IRAC4
+     - akari.akari_images: N60, WideS, WideL, N160
 
 `WorldPt`:  This is target for service request.
 

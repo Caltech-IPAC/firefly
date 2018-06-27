@@ -16,6 +16,7 @@ import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
+import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
 
 import {reduxFlux} from './core/ReduxFlux.js';
@@ -114,13 +115,11 @@ const defFireflyOptions = {
     charts: {
         defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable
         maxRowsForScatter: 5000, // maximum table rows for scatter chart support
-        multitrace: true,  // deprecated - by default we use multi-trace architecture
         singleTraceUI: false, // by default we support multi-trace in UI
         upperLimitUI: false, // by default user can not set upper limit column in scatter options
         ui: {HistogramOptions: {fixedAlgorithm: undefined}} // by default we allow both "uniform binning" and "bayesian blocks"
     },
     hips : {
-        useForCoverage: true,
         useForImageSearch: true,
         hipsSources: 'all',
         defHipsSources: {source: 'irsa', label: 'Featured'},
@@ -148,6 +147,9 @@ function fireflyInit(props, options={}) {
     dispatchAppOptions(options);
     if (options.disableDefaultDropDown) {
         dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+    }
+    if (options.readoutDefaultPref) {
+        dispatchChangeReadoutPrefs(options.readoutDefaultPref);
     }
 
     // initialize UI or API depending on entry mode.

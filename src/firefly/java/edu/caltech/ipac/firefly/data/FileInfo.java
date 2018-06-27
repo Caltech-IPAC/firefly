@@ -36,6 +36,11 @@ public class FileInfo implements HasAccessInfo, Serializable {
 
     protected FileInfo() {}
 
+    /**
+     * @param internalFilename   this can be a local file path or a url
+     * @param externalName       the file path/name to package as
+     * @param sizeInBytes        size in bytes of this file.
+     */
     public FileInfo(String internalFilename, String externalName, long sizeInBytes) {
         setInternalName(internalFilename);
         setExternalName(externalName);
