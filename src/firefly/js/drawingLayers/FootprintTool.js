@@ -14,15 +14,16 @@ import {ANGLE_UNIT, OutlineType, getWorldOrImage, findClosestIndex, makeFootprin
         lengthSizeUnit, updateFootprintDrawobjAngle,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
 import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos, getPlot,
-        updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot, rotateHiPSImage} from './MarkerTool.js';
+        updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {isPointInView} from '../visualize/draw/ShapeHighlight.js';
 import {clone} from '../util/WebUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {FootprintFactory} from '../visualize/draw/FootprintFactory.js';
 import {makeImagePt} from '../visualize/Point.js';
 import {get, set, isArray, has, isNil, isEmpty} from 'lodash';
+import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import {isHiPS} from '../visualize/WebPlot.js';
 import Enum from 'enum';
 
 
@@ -135,7 +136,7 @@ export function footprintStartActionCreator(rawAction) {
             refPt = imagePt;                   // refPt is used for calculating the relocated offset of next time
         }
 
-        if (nextStatus && isPointInView(refPt, cc)) {
+        if (nextStatus && cc.pointInView(refPt)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_START, regions, plotId,
                 nextStatus, footprintInterval, drawLayerId, {isOutline: true, isRotate:true}, fpInfo, wpt, refPt, move);
         }
@@ -200,7 +201,7 @@ export function footprintMoveActionCreator(rawAction) {
         cancelTimeoutProcess(timeoutProcess);
 
         if (footprintStatus === FootprintStatus.rotate)  {    // footprint rotate by angle on screen angle
-            if (!isPointInView(imagePt, cc)) return;   // rotate stops
+            if (!cc.pointInView(imagePt)) return;   // rotate stops
             const rotateCenter = cc.getImageCoords(centerForRotation(footprintObj, wpt)); // center of outline
 
             move.angle = -angleBetween(rotateCenter, prePt, imagePt); // angle on screen
@@ -219,7 +220,7 @@ export function footprintMoveActionCreator(rawAction) {
             const nextOlCenter = olCenterImg ? getWorldOrImage(makeImagePt(olCenterImg.x + deltaX, olCenterImg.y + deltaY), cc)
                                                : null;
 
-            if (!wpt || !isPointInView(nextOlCenter, cc)) {  // HiPS plot, wpt is out of range, no move
+            if (!wpt || !cc.pointInView(nextOlCenter)) {  // HiPS plot, wpt is out of range, no move
                 //if (isHiPS(cc)) rotateHiPSImage(cc, fpCenterImg, olCenterImg, deltaX, deltaY);
                 deltaX = 0;
                 deltaY = 0;
@@ -236,7 +237,7 @@ export function footprintMoveActionCreator(rawAction) {
             isHandle = {isOutline: true, isRotate: true};
         }
 
-        if (!isEmpty(move) && isPointInView(refPt, cc)) {
+        if (!isEmpty(move) && cc.pointInView(refPt)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_MOVE, regions, plotId,
                                  footprintStatus, 0, drawLayerId, isHandle, fpInfo, wpt, refPt, move);
         }
@@ -295,11 +296,17 @@ function creator(initPayload) {
 function getLayerChanges(drawLayer, action) {
     const {drawLayerId, plotId} = action.payload;
 
-    if (!drawLayerId || drawLayerId !== drawLayer.drawLayerId) return null;
+    //console.log('action type = ' + action.type);
+
+    if (![ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) &&
+        (!drawLayerId || drawLayerId !== drawLayer.drawLayerId))  {
+        return null;
+    }
 
     const dd = Object.assign({}, drawLayer.drawData);
     const {plotIdAry=[]} = drawLayer;
     var  retV = null;
+    let  wptObj;
 
     switch (action.type) {
 
@@ -316,7 +323,6 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.FOOTPRINT_START:
         case DrawLayerCntlr.FOOTPRINT_MOVE:
         case DrawLayerCntlr.FOOTPRINT_END:
-            var wptObj;
             const {wpt} = action.payload;
 
             plotIdAry.forEach((pId) => {
@@ -342,6 +348,22 @@ function getLayerChanges(drawLayer, action) {
             if (!isEmpty(get(drawLayer, ['drawData', 'data']))) {
                 return attachToNewPlot(drawLayer, get(action.payload, ['plotIdAry', '0']));
             }
+            break;
+        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
+        case ImagePlotCntlr.ANY_REPLOT:
+            if (plotIdAry) {
+                plotIdAry.forEach((pId) => {
+                    if (isGoodPlot(pId)) {
+                        wptObj = get(dd, ['data', pId, 'pts', '0']);
+                        const cc = getCC(pId);
+
+                        if (isHiPS(cc) && wptObj && cc.pointInView(wptObj)) {
+                            retV = createFootprintObjs(action, drawLayer, pId, wptObj, retV);
+                        }
+                    }
+                });
+            }
+
             break;
         default:
             return null;
@@ -448,7 +470,8 @@ function showFootprintByTimer(dispatcher, actionType, regions, plotId, doneStatu
 function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
     if (!plotId || !wpt) return null;
 
-    const {isHandle, footprintStatus, regions, timeoutProcess, refPt, move} = action.payload;
+    const {isHandle, regions, timeoutProcess, refPt, move} = action.payload;
+    let {footprintStatus} = action.payload;
     const crtFpObj = get(dl, ['drawData', DataTypes.DATA, plotId], {});
     var  {text = ''} = crtFpObj;
     const {textLoc = TextLocation.REGION_SE} = crtFpObj;
@@ -461,17 +484,20 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
      var cc = getCC(plotId);
      var footprintObj;
 
+
      if (footprintStatus === FootprintStatus.attached ||
-         footprintStatus === FootprintStatus.attached_relocate) {  // position is relocated after the layer is attached
+         footprintStatus === FootprintStatus.attached_relocate) {
          footprintObj = makeFootprint(regions, wpt, isHandle, cc, text, textLoc);
+
+         // position is relocated after the layer is attached by the click
          if (footprintStatus === FootprintStatus.attached_relocate) {
              footprintObj = translateForRelocate(footprintObj,  move, cc);
+             wpt = get(footprintObj, ['pts', '0']);
          }
 
      } else if (crtFpObj) {
          if ((footprintStatus === FootprintStatus.rotate || footprintStatus === FootprintStatus.relocate) && !isEmpty(move)) {
              var {apt} = move;    // move to relocate or rotate
-
 
              if (apt) {      // translate
                  footprintObj = updateFootprintTranslate(crtFpObj, cc, apt);
@@ -483,7 +509,7 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
              }
          } else {       // start to move or rotate (mouse down) or end the operation (mouse up)
              if (footprintStatus !== FootprintStatus.select ) {
-                        // update the outlinebox when the target starts to move or rotate
+                        // update the outlinebox when the target starts to move or rotate or change project center
                  footprintObj = updateFootprintOutline(crtFpObj, cc);
              } else {
                  footprintObj = Object.assign({}, crtFpObj);
@@ -492,6 +518,10 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
          updateHandle(isHandle, footprintObj);
      }
 
+     if ([ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) &&
+         !footprintStatus) {
+         footprintStatus = get(dl.drawData, [DataTypes.DATA, plotId, 'actionInfo', 'footprintStatus'],  FootprintStatus.select);
+     }
      footprintObj.plotId = plotId;
      footprintObj.lastZoom = cc.zoomFactor;
      const actionInfo = {currentPt: wpt,       // marker center, world or image coordinate
@@ -559,7 +589,7 @@ function resetRotateSide(footprintObj) {
 }
 
 /**
- * add the footprint drawing objects into the new plot reated after the drawing layer is created
+ * add the footprint drawing objects into the new plot after the drawing layer is created
  * @param drawLayer
  * @param newPlotId new plot
  * @returns {*}
@@ -584,7 +614,7 @@ function attachToNewPlot(drawLayer, newPlotId) {
 
     if (!isEmpty(translation)) {
         footprintObj = updateFootprintTranslate(footprintObj, cc, translation);
-        footprintObj= updateFootprintOutline(footprintObj, cc);
+        //footprintObj= updateFootprintOutline(footprintObj, cc);
         resetRotateSide(footprintObj);
         wpt = get(footprintObj, ['pts', '0']);
     }

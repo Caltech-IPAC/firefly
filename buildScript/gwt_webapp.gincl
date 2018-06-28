@@ -121,6 +121,9 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
   // should rerun this everytime.  properties could be modified from external files.
   outputs.upToDateWhen { false }
 
+  from("${buildDir}/version.tag") {
+    into 'WEB-INF/config'
+  }
   from("$rootDir/config/") {
     include '*.prop', '*.xml', 'ignore_sizeof.txt', '*.properties'
     into 'WEB-INF/config'
@@ -161,6 +164,14 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
       from ("html/") { include '**/*' }
       into gwt.warDir
     }
+
+    // to avoid storing multiple copies of plotly library under project html
+    // copy minimized plotly from firefly
+    copy {
+      from ("$fireflyPath/src/firefly/html/") { include 'plotly*min.js' }
+      into gwt.warDir
+    }
+
     copy {
       from { // use of closure defers evaluation until execution time
         configurations.webappLib
@@ -292,13 +303,13 @@ task buildAndPublish( dependsOn: war ) {
 }
 
 
-def getVersionLabel() {
+def getReleaseTitle() {
   def major = appConfigProps.get('BuildMajor')
   def minor = appConfigProps.get('BuildMinor')
   def rev = appConfigProps.get('BuildRev')
   def type = appConfigProps.get('BuildType')
 
-  def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix} " : ""
+  def prefix = project.hasProperty("rel_prefix") ? "${rel_prefix} " : ""
   def label = prefix + "v${major}.${minor}.${rev} ${type}"
   return label;
 }
@@ -310,8 +321,8 @@ task publishToGithub (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
-    def tag_label = project.ext.createTagLabel();
-    def rel_title = getVersionLabel();
+    def tag = project.ext.getVersionInfo('BuildTag');
+    def rel_title = getReleaseTitle();
 
     try {
       def process = "node -v".execute()
@@ -328,7 +339,7 @@ task publishToGithub (dependsOn: loadConfig) {
                     |  "assets": ["%s", "%s"]
                     |}
                     """.stripMargin(),
-                    tag_label,
+                    tag,
                     project.property("github.auth.token"),
                     rel_title,
                     "${buildDir}/exec/${webapp.baseWarName}-exec.war", "${buildDir}/exec/${webapp.baseWarName}.war")

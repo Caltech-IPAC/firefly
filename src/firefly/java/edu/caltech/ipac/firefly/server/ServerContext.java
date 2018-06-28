@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -793,6 +794,7 @@ public class ServerContext {
             System.out.println("contextInitialized...");
             ServletContext cntx = servletContextEvent.getServletContext();
             ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
+            VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
             Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> DbAdapter.getAdapter().cleanup(false),
                         DbAdapter.CLEANUP_INTVL, DbAdapter.CLEANUP_INTVL, TimeUnit.MILLISECONDS);
         }

@@ -114,6 +114,7 @@ export function isValidWiseTable(){
  * @type {string[]}
  */
 const xyColPattern = ['\\w*jd\\w*', 'w[1-4]mpro\\w*'];
+
 export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
@@ -121,7 +122,7 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
     const numericalCols = getColumns(rawTable, COL_TYPE.NUMBER).map((c) => c.name);
     let defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
-    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
+    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols, xyColPattern, rawTable,converterData );
     const defaultValues = {
         [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),
         [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, defaultYColName),

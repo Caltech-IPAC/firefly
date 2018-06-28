@@ -7,6 +7,7 @@ import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
+import edu.caltech.ipac.astro.ibe.datasource.ZtfIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.Param;
@@ -36,6 +37,8 @@ public class IBEUtils {
             ibeDataSource = new WiseIbeDataSource();
         } else if (mission.equals(PtfIbeDataSource.PTF)) {
             ibeDataSource = new PtfIbeDataSource();
+        } else if (mission.equals(ZtfIbeDataSource.ZTF)) {
+            ibeDataSource = new ZtfIbeDataSource();
         } else if (mission.equals(TwoMassIbeDataSource.TWOMASS)) {
             ibeDataSource = new TwoMassIbeDataSource();
         } else if (mission.equals(AtlasIbeDataSource.ATLAS)){

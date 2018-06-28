@@ -24,6 +24,7 @@ export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
 export const DATA_PREFIX = `${CHART_SPACE_PATH}.data`;
 
+export const usePlotlyReact = toBoolean(sessionStorage.getItem('plotlyReact'));   // defaults to false
 export const useScatterGL = toBoolean(sessionStorage.getItem('scatterGL'));       // defaults to false
 export const useChartRedraw = toBoolean(sessionStorage.getItem('chartRedraw'));   // defaults to false
 
@@ -40,7 +41,6 @@ export const CHART_UI_EXPANDED      = `${UI_PREFIX}.expanded`;
 export const CHART_MOUNTED = `${UI_PREFIX}/mounted`;
 export const CHART_UNMOUNTED = `${UI_PREFIX}/unmounted`;
 
-const FIRST_CDEL_ID = '0'; // first data element id (if missing)
 
 const FIREFLY_TRACE_TYPES = ['scatter', 'fireflyHistogram', 'fireflyHeatmap'];
 

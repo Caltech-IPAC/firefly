@@ -8,7 +8,7 @@ import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeImagePt,
                makeScreenPt, makeWorldPt, makeDevicePt, isValidPoint} from './Point.js';
 import {Matrix} from 'transformation-matrix-js';
-import {getPixScaleDeg} from './WebPlot.js';
+import {getPixScaleDeg, isHiPS} from './WebPlot.js';
 import {makeFitsImagePt, makeZeroBasedImagePt} from './Point';
 
 
@@ -178,6 +178,23 @@ export class CysConverter {
         return retval;
     }
 
+    /* check if the point within display range for either regular image or hips */
+    pointInView(pt) {
+        if (!pt) return false;
+        if (isHiPS(this)) {
+            const inViewDim = (pt) => {
+                const devPt = this.getDeviceCoords(pt);
+
+                return (devPt) && (devPt.x >= 0 && devPt.x < this.viewDim.width) &&
+                    (devPt.y >= 0 && devPt.y < this.viewDim.height);
+            };
+
+            return inViewDim(pt);
+        } else {
+            return this.pointInData(pt);
+        }
+
+    };
 
 //========================================================================================
 //----------------------------- End pointIn Methods  -------------------------------------
