@@ -18,8 +18,6 @@ import java.io.Serializable;
  * @author Trey Roby
  */
 public class Version implements Serializable {
-    private final static String SPLIT_TOKEN= "--Version--";
-
     public enum VersionType {Final, Development,
                              Alpha, Beta, RC, Unknown}
 
@@ -30,6 +28,10 @@ public class Version implements Serializable {
     private VersionType _vType= VersionType.Unknown;
     private int         _build = 0;
     private String      _buildDate= "Don't Know";
+    private String      _buildTime= "Don't Know";
+    private String      _buildTag= "";
+    private String      _buildCommit= "";
+    private String      _buildCommitFirefly= "";
     private long        _configLastModTime = 0;
 
 //======================================================================
@@ -37,7 +39,6 @@ public class Version implements Serializable {
 //======================================================================
 
     public Version() {  }
-
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -51,14 +52,43 @@ public class Version implements Serializable {
     public void setVersionType(VersionType vt) { _vType= vt; }
     public void setBuildDate(String date) { _buildDate= date;}
     public void setRev(int rev) { _rev = rev;  }
-
     /**
      * The build number is only use if type is not final.  Finals should not have a build number
      * @param build build number, not used with final
      */
     public void setBuild(int build) { _build = build; }
 
+    public void setBuildTime(String _buildTime) {
+        this._buildTime = _buildTime;
+    }
 
+    public void setBuildTag(String _buildTag) {
+        this._buildTag = _buildTag;
+    }
+
+    public void setBuildCommit(String _buildCommit) {
+        this._buildCommit = _buildCommit;
+    }
+
+    public void setBuildCommitFirefly(String _buildCommitFirefly) {
+        this._buildCommitFirefly = _buildCommitFirefly;
+    }
+
+    public String getBuildTime() {
+        return _buildTime;
+    }
+
+    public String getBuildTag() {
+        return _buildTag;
+    }
+
+    public String getBuildCommit() {
+        return _buildCommit;
+    }
+
+    public String getBuildCommitFirefly() {
+        return _buildCommitFirefly;
+    }
 
     public int getMajor() { return _major;}
     public int getMinor() { return _minor;}
@@ -138,18 +168,6 @@ public class Version implements Serializable {
             retval= "Unknown";
         }
         return retval;
-    }
-
-    public String serialize() {
-        return StringUtils.combine(SPLIT_TOKEN,
-                                   _appName,
-                                   _major+"",
-                                   _minor+"",
-                                   _rev+"",
-                                   _vType.toString(),
-                                   _build+"",
-                                   _buildDate,
-                                   _configLastModTime+"");
     }
 
 }

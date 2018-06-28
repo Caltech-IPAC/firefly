@@ -4,6 +4,21 @@
 
 
 /**
+ * Version information
+ * @typedef {Object} VersionInfo
+ * @prop {string} BuildMajor    major version number
+ * @prop {string} BuildMinor    minor version number
+ * @prop {string} BuildRev      revision version number
+ * @prop {string} BuildType     one of Final, Development, Alpha, Beta, or RC
+ * @prop {string} BuildNumber   build version number
+ * @prop {string} BuildDate     built date
+ * @prop {string} BuildTime     built date including time
+ * @prop {string} BuildTag      vcs tag string if it were tagged
+ * @prop {string} BuildCommit   vcs commit used to build this app
+ * @prop {string} BuildCommitFirefly    Firefly's vcs commit used to build this app.
+ */
+
+/**
  * Information related to searches
  * @typedef {Object} SearchInfo
  * @prop {string} [title]    main title if any.  It will appears on top.

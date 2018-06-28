@@ -23,7 +23,7 @@ import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {init} from './rpc/CoreServices.js';
-import {getProp, mergeObjectOnly} from './util/WebUtil.js';
+import {getPropsWith, mergeObjectOnly} from './util/WebUtil.js';
 import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 
 export const flux = reduxFlux;
@@ -168,8 +168,12 @@ function fireflyInit(props, options={}) {
     }
 }
 
+/**
+ * returns version information in a key/value object.
+ * @returns {VersionInfo}
+ */
 export function getVersion() {
-  return getProp('version_tag', 'unknown');
+  return getPropsWith('version.');
 }
 
 
