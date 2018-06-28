@@ -86,8 +86,8 @@ public class TpvProjection {
         double Y = axis2poly[0];
         double dx;
         double dy;
-        double xx = 0;
-        double yy = 0;
+        double xx = fsamp;
+        double yy = fline;
         int niter = 20; //Seems that after 4 is already enough but this is a rule of thumb.
         int iter = 0;
         double m1, m2, m3, m4;
@@ -149,7 +149,7 @@ public class TpvProjection {
             X = axis1poly[0] +
                     axis1poly[2] * yy +
                     axis1poly[1] * xx +
-                    axis1poly[3] * Math.sqrt(xx * xx + yy * yy) +
+                    axis1poly[3] * r +
                     axis1poly[6] * yy * yy +
                     axis1poly[4] * xx * xx +
                     axis1poly[5] * yy * xx +
@@ -162,7 +162,7 @@ public class TpvProjection {
             Y = axis2poly[0] +
                     axis2poly[1] * yy +
                     axis2poly[2] * xx +
-                    axis2poly[3] * Math.sqrt(xx * xx + yy * yy) +
+                    axis2poly[3] * r +
                     axis2poly[4] * yy * yy +
                     axis2poly[6] * xx * xx +
                     axis2poly[5] * yy * xx +
@@ -173,6 +173,8 @@ public class TpvProjection {
                     axis2poly[11] * r * r * r;
         }
 
+        fsamp = xx;
+        fline = yy;
 
         // Finally, image pixel derived from above intermdiate coordinates found
 
