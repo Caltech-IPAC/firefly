@@ -54,12 +54,39 @@ const FSIZE = 12;
 
 export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
+/**
+ * Does the application only support single trace
+ * @returns {*} true, if all charts are single trace
+ */
 export function singleTraceUI() {
     return get(getAppOptions(), 'charts.singleTraceUI');
 }
 
+/**
+ * Maximum number of points scatter chart supports
+ * @returns {*}
+ */
 export function getMaxScatterRows() {
-    return get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
+    return get(getAppOptions(), 'charts.maxRowsForScatter', Number.MAX_SAFE_INTEGER);
+}
+
+/**
+ * Maximum number of rows when the default chart created for a table is scatter
+ * For larger tables, the default chart will be heatmap
+ * @returns {*}
+ */
+export function getMaxDefaultScatterRows() {
+    return get(getAppOptions(), 'charts.maxRowsForDefaultScatter', 5000);
+}
+
+/**
+ * For scatter charts, the minimum number of points to use 'scattergl' (Web GL);
+ * If the number of points less than this, 'scatter' (SVG) is used.
+ * Web GL and SVG traces can be displayed in the same chart.
+ * @returns {*}
+ */
+export function getMinScatterGLRows() {
+    return get(getAppOptions(), 'charts.minScatterGLRows', 1000);
 }
 
 /**
@@ -945,11 +972,13 @@ export function getDefaultChartProps(tbl_id) {
                     yaxis: {showgrid: false}
                 }
             };
-            if (totalRows > getMaxScatterRows()) {
+            if (totalRows > getMaxDefaultScatterRows()) {
                 Object.assign(chartData.data[0], {type: 'fireflyHeatmap', colorscale: 'Greys', reversescale: true});
             } else {
                 const DATAPOINTS_COLOR = `rgba(63, 127, 191, ${DEFAULT_ALPHA})`;
-                Object.assign(chartData.data[0], {mode: 'markers', marker: {color: DATAPOINTS_COLOR}});
+                Object.assign(chartData.data[0], {
+                    type: totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter',
+                    mode: 'markers', marker: {color: DATAPOINTS_COLOR}});
             }
             return chartData;
         }

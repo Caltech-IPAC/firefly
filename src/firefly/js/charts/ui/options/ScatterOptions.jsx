@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {isArray, get, isUndefined, omit} from 'lodash';
+import {get, isUndefined, omit} from 'lodash';
 
 import {Expression} from '../../../util/expr/Expression.js';
 import {getChartData, getTraceSymbol, hasLowerLimits, hasUpperLimits} from '../../ChartsCntlr.js';
+import {getMinScatterGLRows} from '../../ChartUtil.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
@@ -16,6 +17,8 @@ import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {Errors, errorTypeFieldKey, errorFieldKey, errorMinusFieldKey} from './Errors.jsx';
 import {getAppOptions} from '../../../core/AppDataCntlr.js';
+import {getTblById} from '../../../tables/TableUtil.js';
+
 
 const fieldProps = {labelWidth: 62, size: 15};
 
@@ -251,6 +254,7 @@ export function TableSourcesOptions({chartId, tablesource={}, activeTrace, group
 }
 
 TableSourcesOptions.propTypes = {
+    chartId: PropTypes.string,
     tablesource: PropTypes.object,
     activeTrace: PropTypes.number,
     groupKey: PropTypes.string,
@@ -259,7 +263,8 @@ TableSourcesOptions.propTypes = {
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
 
-    const changes = {[`data.${activeTrace}.type`] : getTraceType(chartId, activeTrace)};
+    // trace type can switch between scatter and scattergl depending on the number of points
+    const changes = {[`data.${activeTrace}.type`] : getTraceType(chartId, tbl_id, activeTrace)};
 
     // check if size field is a constant
     const sizeMap = fields[`_tables.data.${activeTrace}.marker.size`];
@@ -279,22 +284,18 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
 }
 
 /**
- * Returns gl or non-gl scatter type based on already used trace type
- * (GL and non-GL traces do not work well together)
+ * Returns gl or non-gl scatter type based on the number of table rows (if unknown)
  * @param chartId
+ * @param tbl_id
  * @param activeTrace
  */
-function getTraceType(chartId, activeTrace) {
+function getTraceType(chartId, tbl_id, activeTrace) {
     const chartData = getChartData(chartId);
     let type = get(chartData, `data.${activeTrace}.type`);
     if (isUndefined(type)) {
-        if (activeTrace > 0) {
-            // check previous trace type
-            const isGL = get(chartData, `data.${activeTrace-1}.type`, 'scatter').endsWith('gl');
-            type = isGL ? 'scattergl' : 'scatter';
-        } else {
-            type = 'scatter';
-        }
+        const {totalRows=0}= getTblById(tbl_id);
+        // use scatter or scattergl depending on the number of rows
+        type = (totalRows > getMinScatterGLRows()) ? 'scattergl' : 'scatter';
     }
     return type;
 }

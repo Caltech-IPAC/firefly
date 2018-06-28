@@ -5,7 +5,7 @@ import {get, isArray, isUndefined, truncate, uniqueId} from 'lodash';
 import {getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
-import {formatColExpr, getDataChangesForMappings, replaceQuotesIfSurrounding, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows} from '../ChartUtil.js';
+import {formatColExpr, getDataChangesForMappings, replaceQuotesIfSurrounding, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
 
 
 /**
@@ -140,10 +140,6 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
         changes[`data.${traceNum}.legendgroup`] = uniqueId('grp');
     }
 
-    if (!get(data, `${traceNum}.type`)) {
-        changes[`data.${traceNum}.type`] = 'scatter';
-    }
-
     // set default title if it's the first trace
     // and no title is set by the user
     let xAxisLabel = get(layout, 'xaxis.title');
@@ -164,6 +160,9 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
 
     const x = get(changes, [`data.${traceNum}.x`]);
     if (!x) return;
+
+    const traceType = (isArray(x) && x.length > getMinScatterGLRows()) ? 'scattergl' : 'scatter';
+    changes[`data.${traceNum}.type`] = traceType;
 
     // point tooltip labels
     let xTipLabel = truncate(xLabel, {length: 20});
@@ -289,7 +288,13 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
             return `<span> ${xTipLabel} = ${parseFloat(xval)}${xerr} ${xUnit} <br>` +
                 ` ${yTipLabel} = ${parseFloat(yval)}${yerr} ${yUnit} ${ul} ${cval}</span>`;
         });
-        changes[`data.${traceNum}.hovertext`] = text;
+
+        if (traceType === 'scatter') {
+            changes[`data.${traceNum}.hovertext`] = text;
+        } else {
+            //scattergl does not support hovertext
+            changes[`data.${traceNum}.text`] = text;
+        }
         changes[`data.${traceNum}.hoverinfo`] = 'text';
     }
 
