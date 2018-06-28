@@ -286,20 +286,20 @@ export function validate(fldsWithValidators, missionEntries, typeColumns ){
     }, {});
 }
 
-export function getTimeAndYColInfo(numericalCols, rawTable, converterData ){
+export function getTimeAndYColInfo(numericalCols, xyColPattern=[], rawTable, converterData ){
     let defaultCTimeName = (getColumnIdx(rawTable, converterData.defaultTimeCName) > 0) ? converterData.defaultTimeCName : numericalCols[0];
     let defaultYColName = (getColumnIdx(rawTable, converterData.defaultYCname) > 0) ? converterData.defaultYCname : numericalCols[1];
 
-    defaultYColName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase() === converterData.defaultYCname) {
+    defaultYColName = (xyColPattern[1] && numericalCols.filter((el) => {
+            if (el.toLocaleLowerCase().match(xyColPattern[1])) {
                 return el;
             }
-        })[0] || defaultYColName;
-    defaultCTimeName = numericalCols.filter((el) => {
-            if (el.toLocaleLowerCase() === converterData.defaultCTimeName) {
+        })[0]) || defaultYColName;
+    defaultCTimeName = (xyColPattern[0] && numericalCols.filter((el) => {
+            if (el.toLocaleLowerCase().match(xyColPattern[0])) {
                 return el;
             }
-        })[0] || defaultCTimeName;
+        })[0]) || defaultCTimeName;
 
     return {defaultCTimeName,defaultYColName};
 }
