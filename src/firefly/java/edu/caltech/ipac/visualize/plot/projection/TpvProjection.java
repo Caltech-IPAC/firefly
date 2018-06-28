@@ -88,8 +88,8 @@ public class TpvProjection {
         double Y = axis2poly[0];
         double dx;
         double dy;
-        double xx = 0;
-        double yy = 0;
+        double xx = fsamp;
+        double yy = fline;
         int niter = 20; //Seems that after 4 is already enough but this is a rule of thumb.
         int iter = 0;
         double m1, m2, m3, m4;
@@ -175,8 +175,10 @@ public class TpvProjection {
                     axis2poly[11] * r * r * r;
         }
 
-
-        // Finally, image pixel derived from above intermdiate coordinates found
+	fsamp = xx;
+	fline = yy;
+        
+	// Finally, image pixel derived from above intermdiate coordinates found
 
         if (using_cd) {
             temp = -(dc1_1 * fsamp + dc1_2 * fline) * rtd;
