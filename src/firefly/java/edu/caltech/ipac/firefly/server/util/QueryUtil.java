@@ -296,17 +296,6 @@ public class QueryUtil {
         return filterList.toArray(new CollectionUtil.Filter[filterList.size()]);
     }
 
-
-    public static DataGroupPart convertToDataGroupPart(DataGroup dg, int startIdx, int pageSize) {
-        DataGroup page = dg.subset(startIdx, startIdx+pageSize);
-        TableDef tableDef = new TableDef();
-        tableDef.setKeywords(dg.getKeywords());
-        tableDef.setStatus(DataGroupPart.State.COMPLETED);
-        tableDef.setCols(Arrays.asList(page.getDataDefinitions()));
-
-        return new DataGroupPart(tableDef, dg, startIdx, page.size());
-    }
-
     /**
      * return Float.NaN if val is null or not a float
      * @param val

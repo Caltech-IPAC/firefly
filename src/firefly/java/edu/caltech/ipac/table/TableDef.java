@@ -5,6 +5,7 @@ import edu.caltech.ipac.util.StringUtils;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -120,6 +121,14 @@ public class TableDef extends TableMeta {
         copy.rowCount = rowCount;
         copy.rowStartOffset = rowStartOffset;
         return copy;
+    }
+
+    public static TableDef newInstanceOf(DataGroup dataGroup) {
+        TableDef tableDef = new TableDef();
+        tableDef.setKeywords(dataGroup.getTableMeta().getKeywords());
+        tableDef.ensureStatus();
+        tableDef.setCols(Arrays.asList(dataGroup.getDataDefinitions()));
+        return tableDef;
     }
 }
 /*

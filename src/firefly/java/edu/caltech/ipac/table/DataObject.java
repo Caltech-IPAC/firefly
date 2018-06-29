@@ -77,7 +77,7 @@ public class DataObject implements Serializable, Cloneable {
 
     public String getFixedFormatedData(DataType dt) {
         String val = getFormatedData(dt);
-        int w = dt.getWidth() > 0 ? dt.getWidth() : dt.getMaxDataWidth();
+        int w = dt.getMaxDataWidth();
         if (val.length() != w) val = dt.fitValueInto(val, w, dt.isNumeric());
         return val;
     }

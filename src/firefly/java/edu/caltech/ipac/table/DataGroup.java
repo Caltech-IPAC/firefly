@@ -248,10 +248,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      * @return returns a subset of the datagroup between the specified fromIndex, inclusive, and toIndex, exclusive
      */
     public DataGroup subset(int fromIndex, int toIndex) {
-        int size = toIndex - fromIndex;
+        toIndex = Math.min(toIndex, size);
         DataGroup retval = cloneWithoutData();
-        for(int i=0; i<size; i++) {
-            add(DataObject.getDataAt(this, fromIndex+i));
+        for(int i=fromIndex; i<toIndex; i++) {
+            retval.add(DataObject.getDataAt(this, i));
         }
         return retval;
     }

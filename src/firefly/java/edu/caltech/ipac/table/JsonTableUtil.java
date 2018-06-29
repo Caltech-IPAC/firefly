@@ -293,7 +293,8 @@ public class JsonTableUtil {
     public static JSONObject toJsonTableModelMap(Map<String, DataGroup> dataMap, TableServerRequest request) throws IOException {
         JSONObject jsoObj = new JSONObject();
         for (Object key : dataMap.keySet()) {
-            DataGroupPart dp = QueryUtil.convertToDataGroupPart(dataMap.get(key), 0, Integer.MAX_VALUE);
+            DataGroup dataGroup = dataMap.get(key);
+            DataGroupPart dp = new DataGroupPart(TableDef.newInstanceOf(dataGroup), dataGroup, 0, dataGroup.size());
             JSONObject aJsonTable = JsonTableUtil.toJsonTableModel(dp, request);
 
             jsoObj.put(key, aJsonTable);
@@ -303,7 +304,6 @@ public class JsonTableUtil {
     }
 
     //============================= //============================= //============================= //============================= //============================= //=============================
-
 
 
 }

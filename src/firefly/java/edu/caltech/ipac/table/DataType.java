@@ -202,7 +202,7 @@ public class DataType implements Serializable, Cloneable {
     }
 
     int getMaxDataWidth() {
-        return width > 0 ? width : maxDataWidth;
+        return maxDataWidth;
     }
 
     void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
@@ -217,10 +217,8 @@ public class DataType implements Serializable, Cloneable {
      * @return
      */
     public String formatHeader(String val) {
-        int width = getWidth();
-        width = width > 0 ? width : getMaxDataWidth();
         val = val == null ? "" : val;
-        return fitValueInto(val, width, false);
+        return fitValueInto(val, getMaxDataWidth(), false);
     }
 
     /**
