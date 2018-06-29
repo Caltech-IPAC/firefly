@@ -65,6 +65,7 @@ public class IpacTableWriter {
      * save the catalogs to a stream, stream is not closed
      *
      * @param stream the output stream to write to
+     *
      * @param dataGroup data group
      * @throws IOException on error
      */

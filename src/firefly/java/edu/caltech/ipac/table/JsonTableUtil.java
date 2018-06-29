@@ -219,6 +219,7 @@ public class JsonTableUtil {
         tableDef = mergeAttributes(tableDef, dataGroup);
 
         DataType[] dataTypes = tableDef.getCols().size() > 0 ? tableDef.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
+        IpacTableUtil.consumeColumnInfo(dataTypes, tableDef);
 
         ArrayList<JSONObject> cols = new ArrayList<JSONObject>();
         for (DataType dt :dataTypes) {

@@ -1,10 +1,10 @@
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.astro.FITSTableReader;
+import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;

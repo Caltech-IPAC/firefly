@@ -1,6 +1,9 @@
 package edu.caltech.ipac.visualize.plot;
-import edu.caltech.ipac.astro.FITSTableReader;
-import edu.caltech.ipac.astro.IpacTableToFITS;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.io.FITSTableReader;
+import edu.caltech.ipac.table.IpacTableToFITS;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;

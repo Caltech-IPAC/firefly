@@ -74,8 +74,12 @@ public class IpacTableUtil {
      * @param table
      */
     public static void consumeColumnInfo(DataGroup table) {
-        for (DataType dt : table.getDataDefinitions()) {
-            ensureColumn(table.getTableMeta(), dt);
+        consumeColumnInfo(table.getDataDefinitions(), table.getTableMeta());
+    }
+
+    public static void consumeColumnInfo(DataType[] cols, TableMeta meta) {
+        for (DataType dt : cols) {
+            ensureColumn(meta, dt);
         }
     }
 

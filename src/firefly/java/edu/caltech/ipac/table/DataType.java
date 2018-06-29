@@ -110,6 +110,7 @@ public class DataType implements Serializable, Cloneable {
 
     public void setDataType(Class type) {
         this.type = type;
+        typeDesc = resolveTypeDesc();
     }
 
     public String getUnits() {
