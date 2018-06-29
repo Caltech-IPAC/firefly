@@ -6,8 +6,8 @@ package edu.caltech.ipac.astro.target;
 import edu.caltech.ipac.astro.net.NedParams;
 import edu.caltech.ipac.astro.net.SimbadParams;
 import edu.caltech.ipac.astro.net.TargetNetwork;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 
 /**

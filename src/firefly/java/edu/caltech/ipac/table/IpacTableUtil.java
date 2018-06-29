@@ -1,9 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.util;
+package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,59 +23,133 @@ import java.util.stream.Collectors;
  * @version $Id: IpacTableUtil.java,v 1.5 2012/11/08 23:56:49 tlau Exp $
  */
 public class IpacTableUtil {
-    // -------- meta used for additional column's attributes when dealing with ipac table -------//
-    public static final String LABEL_TAG = "col.@.Label";
-    public static final String VISI_TAG = "col.@.Visibility";
-    public static final String WIDTH_TAG = "col.@.Width";
-    public static final String PREF_WIDTH_TAG = "col.@.PrefWidth";
-    public static final String DESC_TAG = "col.@.ShortDescription";
-    public static final String UNIT_TAG = "col.@.Unit";
-    public static final String FORMAT_TAG = "col.@.Fmt";     // can be AUTO, NONE or a valid java format string.  defaults to AUTO.
-    public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
-    public static final String SORTABLE_TAG = "col.@.Sortable";
-    public static final String FILTERABLE_TAG = "col.@.Filterable";
-    public static final String ITEMS_TAG = "col.@.Items";
-    public static final String SORT_BY_TAG = "col.@.SortByCols";
-    public static final String ENUM_VALS_TAG = "col.@.EnumVals";
-    public static final String RELATED_COLS_TAG = "col.related";
-    public static final String GROUPBY_COLS_TAG = "col.groupby";
 
-    public static final String VISI_SHOW = "show";
-    public static final String VISI_HIDE = "hide";
-    public static final String VISI_HIDDEN = "hidden";      // for application use only.
-    public static final String FMT_AUTO = "AUTO";     // guess format from data
-    public static final String FMT_NONE = "NONE";     // do not format data
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
-    private static final String STRING_TYPE[]= {"cha.*", "str.*", "s", "c"};
 
 
-    public static String makeAttribKey(String tag, String colName) {
-        return tag.replaceFirst("@", colName);
+    public static List<DataGroup.Attribute> makeAttributes(DataGroup dataGroup) {
+        return makeAttributes(dataGroup.getKeywords(), dataGroup.getDataDefinitions());
     }
-
     /**
      * Returns the table's attributes in original sorted order, plus additional
      * attributes from column's info is present.
-     * @param dataGroup
-     * @return
      */
-    public static List<DataGroup.Attribute> makeAttributes(DataGroup dataGroup) {
-        List<DataGroup.Attribute> attribs = dataGroup.getKeywords();
+    public static List<DataGroup.Attribute> makeAttributes(List<DataGroup.Attribute> attribs, DataType[] cols) {
         // add column's attributes as table meta
-        for(DataType col : dataGroup.getDataDefinitions()) {
-            String descKey = makeAttribKey(DESC_TAG, col.getKeyName());
-            String fmtKey = makeAttribKey(FORMAT_TAG, col.getKeyName());
+        for(DataType col : cols) {
+            ensureKey(attribs, col.getKeyName(), col.getLabel(), TableMeta.LABEL_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getDesc(), TableMeta.DESC_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getFormat(), TableMeta.FORMAT_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getFmtDisp(), TableMeta.FORMAT_DISP_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getSortByCols(), TableMeta.SORT_BY_TAG);
 
-            if (!StringUtils.isEmpty(col.getShortDesc()) &&
-                    dataGroup.getAttribute(descKey) == null) {
-                attribs.add(new DataGroup.Attribute(descKey, col.getShortDesc()));
+            if (col.getVisibility() != DataType.Visibility.show) {
+                ensureKey(attribs, col.getKeyName(), col.getVisibility().name(), TableMeta.VISI_TAG);
             }
-            if (!StringUtils.isEmpty(!col.getFormatInfo().isDefault()) &&
-                    dataGroup.getAttribute(fmtKey) == null) {
-                attribs.add(new DataGroup.Attribute(fmtKey, col.getFormatInfo().getDataFormatStr()));
+            if (!col.isSortable()) {
+                ensureKey(attribs, col.getKeyName(), "false", TableMeta.SORTABLE_TAG);
+            }
+            if (!col.isFilterable()) {
+                ensureKey(attribs, col.getKeyName(), "false", TableMeta.FILTERABLE_TAG);
+            }
+            if(col.getWidth() > 0) {
+                ensureKey(attribs, col.getKeyName(), String.valueOf(col.getWidth()), TableMeta.WIDTH_TAG);
+            }
+            if(col.getPrefWidth() >0) {
+                ensureKey(attribs, col.getKeyName(), String.valueOf(col.getPrefWidth()), TableMeta.PREF_WIDTH_TAG);
             }
         }
         return attribs;
+    }
+
+    private static void ensureKey(List<DataGroup.Attribute> attribs, String name, String value, String tag) {
+        if (!StringUtils.isEmpty(value)) {
+            String key = TableMeta.makeAttribKey(tag, name);
+            attribs.add(new DataGroup.Attribute(key, value));
+        }
+    }
+
+    /**
+     * update column information stored as attributes and then remove the attributes from the table meta.
+     * @param table
+     */
+    public static void consumeColumnInfo(DataGroup table) {
+        consumeColumnInfo(table.getDataDefinitions(), table.getTableMeta());
+    }
+
+    public static void consumeColumnInfo(DataType[] cols, TableMeta meta) {
+        for (DataType dt : cols) {
+            ensureColumn(meta, dt);
+        }
+    }
+
+    private static void ensureColumn(TableMeta tableMeta, DataType col) {
+        String key = TableMeta.makeAttribKey(TableMeta.LABEL_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setLabel(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.VISI_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setVisibility(DataType.Visibility.valueOf(tableMeta.getAttribute(key)));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.WIDTH_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setWidth(tableMeta.getIntMeta(key));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.PREF_WIDTH_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setPrefWidth(tableMeta.getIntMeta((key)));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.DESC_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setDesc(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.UNIT_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setUnits(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.FORMAT_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setFormat(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.FORMAT_DISP_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setFmtDisp(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.SORTABLE_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setSortable(Boolean.parseBoolean(tableMeta.getAttribute(key)));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.FILTERABLE_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setFilterable(Boolean.parseBoolean(tableMeta.getAttribute(key)));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.SORT_BY_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setSortByCols(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
+
     }
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
@@ -111,7 +187,7 @@ public class IpacTableUtil {
         writer.println("\\");
         for (int i = 0; i < headers.size(); i++) {
             DataType dt = headers.get(i);
-            writer.print("|" + dt.getFormatInfo().formatHeader(dt.getKeyName()));
+            writer.print("|" + dt.formatHeader(dt.getKeyName()));
             if (i == headers.size()-1) {
                 writer.print("|");
             }
@@ -119,7 +195,7 @@ public class IpacTableUtil {
         writer.println();
         for (int i = 0; i < headers.size(); i++) {
             DataType dt = headers.get(i);
-            writer.print("|" + dt.getFormatInfo().formatHeader(dt.getTypeDesc()));
+            writer.print("|" + dt.formatHeader(dt.getTypeDesc()));
             if (i == headers.size()-1) {
                 writer.print("|");
             }
@@ -128,7 +204,7 @@ public class IpacTableUtil {
         // check to see if we need to print the other headers.
         boolean hasMoreHeaders = false;
         for (DataType dt : headers) {
-            if (dt.getDataUnit() != null || dt.getNullString() != null) {
+            if (dt.getUnits() != null || dt.getNullString() != null) {
                 hasMoreHeaders = true;
                 break;
             }
@@ -137,7 +213,7 @@ public class IpacTableUtil {
         if (hasMoreHeaders) {
             for (int i = 0; i < headers.size(); i++) {
                 DataType dt = headers.get(i);
-                writer.print("|" + dt.getFormatInfo().formatHeader(dt.getDataUnit()));
+                writer.print("|" + dt.formatHeader(dt.getUnits()));
                 if (i == headers.size()-1) {
                     writer.print("|");
                 }
@@ -145,7 +221,7 @@ public class IpacTableUtil {
             writer.println();
             for (int i = 0; i < headers.size(); i++) {
                 DataType dt = headers.get(i);
-                writer.print("|" + dt.getFormatInfo().formatHeader(dt.getNullString()));
+                writer.print("|" + dt.formatHeader(dt.getNullString()));
                 if (i == headers.size()-1) {
                     writer.print("|");
                 }
@@ -156,13 +232,10 @@ public class IpacTableUtil {
 
     public static void writeRow(PrintWriter writer, List<DataType> headers, DataObject row) {
         for (DataType dt : headers) {
-            String v = row.getFormatedData(dt);
+            String v = row.getFixedFormatedData(dt);
             // when writing out the IPAC table.. if ROWID is given, and data is not found. use the getRowId() value instead.
             if (v == null && dt.getKeyName().equals(DataGroup.ROW_IDX)) {
-                v = dt.getFormatInfo().formatData(row.getRowIdx());
-            }
-            if (dt.getDataType() == String.class && v != null) {
-                v =  StringUtils.convertExtendedAscii(new StringBuilder(v));
+                v = dt.formatData(row.getRowNum());
             }
             writer.print(" " + v);
         }
@@ -170,31 +243,23 @@ public class IpacTableUtil {
     }
 
 
-    public static  List<DataType> createColumnDefs(String line) {
+    public static  TableDef createColumnDefs(String line) {
+        TableDef tableDef = new TableDef();
         ArrayList<DataType> cols = new ArrayList<DataType>();
         if (line != null && line.startsWith("|")) {
             String[] names = parseHeadings(line.trim());
-            for(String n : names) {
-                DataType dt = new DataType(n.trim(), Object.class);
-                dt.getFormatInfo().setWidth(n.length());
+            int cursor = 1;
+            String cname;
+            for (int idx = 0; idx < names.length; idx++) {
+                cname = names[idx];
+                DataType dt = new DataType(cname.trim(), Object.class);
                 cols.add(dt);
+                tableDef.setColOffsets(idx, cursor);
+                cursor += cname.length() + 1;
             }
         }
-        return cols;
-    }
-
-    /**
-     * return the meta info for the given cname column if it exists.
-     * @param metas  a list of meta from the table
-     * @param cname  the column name to search
-     * @param tag    the column tag to search.  see DataSetParser.java for a list of tags.
-     * @return
-     */
-    public static String getColMeta(Collection<DataGroup.Attribute> metas, String cname, String tag) {
-        String mkey = makeAttribKey(tag, cname);
-        Optional<DataGroup.Attribute> att = metas.stream().filter(m -> Objects.equals(m.getKey(), mkey)).findFirst();
-        return att.isPresent() ? att.get().getValue() : null;
-
+        tableDef.setCols(cols);
+        return tableDef;
     }
 
     /**
@@ -214,6 +279,7 @@ public class IpacTableUtil {
             String[] types = parseHeadings(line.trim());
             for (int i = 0; i < types.length; i++) {
                 String typeDesc = types[i].trim();
+                cols.get(i).setTypeDesc(typeDesc);
                 cols.get(i).setDataType(DataType.parseDataType(typeDesc));
             }
         }
@@ -243,14 +309,15 @@ public class IpacTableUtil {
 
     public static void guessFormatInfo(DataType dataType, String value, int precision) {
 
-        if (StringUtils.isEmpty(value)) return; //LZ added IRSA-816
-        String formatStr = guessFormatStr(dataType, value.trim(), precision);
+        if (dataType.getFormat() != null ||
+                dataType.getFormat() != null ||
+                StringUtils.isEmpty(value)) {
+            return;     // format exists
+        }
+
+        String formatStr = guessFormatStr(dataType, value, precision);
         if (formatStr != null) {
-            DataType.FormatInfo.Align align = value.startsWith(" ") ? DataType.FormatInfo.Align.RIGHT
-                    : DataType.FormatInfo.Align.LEFT;
-            DataType.FormatInfo fi = dataType.getFormatInfo();
-            fi.setDataFormat(formatStr);
-            fi.setDataAlign(align);
+            dataType.setFormat(formatStr);
         }
     }
 
@@ -272,84 +339,59 @@ public class IpacTableUtil {
         type.setDataType(String.class);
     }
 
-    public static DataObject parseRow(DataGroup source, String line) {
-        return parseRow(source,  line, true);
-    }
-
-    public static DataObject parseRow(DataGroup source, String line, boolean isFixedLength) {
-        return parseRow(source, line, isFixedLength, false);
-    }
-
     /**
      *
      * @param source
      * @param line
-     * @param isFixedLength true if all columns are given.  line with missing columns will throws exception.
      * @return
      */
-    public static DataObject parseRow(DataGroup source, String line, boolean isFixedLength, boolean saveFormattedData) {
+    public static DataObject parseRow(DataGroup source, String line, TableDef tableDef) {
         if (line==null) return null;
         DataType[] headers = source.getDataDefinitions();
-        String rval, val;
         int offset=0, endOfLine=0, endoffset=0;
         try {
             if (line.startsWith(" ") && line.trim().length() > 0) {
                 DataObject row = new DataObject(source);
-                offset = 0;
                 endOfLine = line.length();
 
-                for (DataType type : headers) {
-                    endoffset = offset + type.getFormatInfo().getWidth() + 1;
-
+                DataType dt;
+                for (int idx = 0; idx < headers.length; idx++) {
+                    dt = headers[idx];
+                    offset = tableDef.getColOffset(idx);
                     if (offset > endOfLine) {
-                        // expecting more data, but end of line has been reached.
-                        if (isFixedLength) {
-                            throw new RuntimeException("Expecting more data when end-of-end has been reached:\n" + " [" + offset + "-" + endoffset + "]  line:" + line );
-                        } else {
-                            // it's okay.  we'll take what's given and treat the rest as null.
-                            break;
-                        }
+                        // it's okay.  we'll take what's given and treat the rest as null.
+                        break;
                     }
+                    endoffset = idx < headers.length-1 ? tableDef.getColOffset(idx+1) : endOfLine;
+
                     // if ending spaces are missing... just ignore it.
                     if (endoffset > endOfLine) {
                         endoffset = endOfLine;
                     }
 
-                    rval = line.substring(offset, endoffset);
-                    val = rval == null ? null : rval.trim();
-
-                    if (!type.isKnownType()) {
-                        IpacTableUtil.guessDataType(type, val);
+                    String val = line.substring(offset, endoffset).trim();
+                    if (!dt.isKnownType()) {
+                        IpacTableUtil.guessDataType(dt, val);
                     }
 
-                    row.setDataElement(type, type.convertStringToData(val));
-                    if (saveFormattedData) {
-                        String fval = rval == null || rval.length() < 2 ? null : rval.substring(1);
-                        row.setFormattedData(type, fval);
-                    }
-
-                    if (val != null && val.length() > type.getMaxDataWidth()) {
-                        type.setMaxDataWidth(val.length());
-                    }
-                    offset = endoffset;
-                    if (type.getFormatInfo().isDefault()) {
-                        DataGroup.Attribute format = source.getAttribute(makeAttribKey(FORMAT_TAG, type.getKeyName()));
-                        if (format == null || Objects.equals(format.getValue(), FMT_AUTO)) {
-                            IpacTableUtil.guessFormatInfo(type, rval);
-                        } else if (!Objects.equals(format.getValue(), FMT_NONE)){
-                            type.getFormatInfo().setDataFormat(format.getValue());
-                        }
+                    if (dt.getFormat() == null) {
+                        IpacTableUtil.guessFormatInfo(dt, val);
 
                         // disable sorting if value is HTML, or unit is 'html'
                         // this block should only be executed once, when formatInfo is not set.
-                        if (type.getDataType().isAssignableFrom(String.class)) {
-                            if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("html") ||
-                                    rval.trim().matches("<[^>]+>.*")) {
-                                source.addAttribute(makeAttribKey(SORTABLE_TAG, type.getKeyName()), "false");
-                                source.addAttribute(makeAttribKey(FILTERABLE_TAG, type.getKeyName()), "false");
+                        if (dt.getDataType().isAssignableFrom(String.class)) {
+                            if (String.valueOf(dt.getUnits()).equalsIgnoreCase("html") ||
+                                    val.matches("<[^>]+>.*")) {
+                                dt.setSortable(false);
+                                dt.setFilterable(false);
                             }
                         }
                     }
+
+                    row.setDataElement(dt, dt.convertStringToData(val));
+                    dt.ensureMaxDataWidth(val.length());
+
+                    offset = endoffset;
                 }
                 return row;
             } else if (line.trim().length() > 0 && !line.startsWith("\\") && !line.startsWith("|")) {
@@ -394,16 +436,14 @@ public class IpacTableUtil {
     }
 
     private static TableDef doGetMetaInfo(BufferedReader reader, File src) throws IOException {
-        TableDef meta = new TableDef();
         int nlchar = findLineSepLength(reader);
-        meta.setLineSepLength(nlchar);
 
-        List<DataGroup.Attribute> attribs = new ArrayList<DataGroup.Attribute>();
-        List<DataType> cols = null;
+        List<DataGroup.Attribute> attribs = new ArrayList<>();
         int dataStartOffset = 0;
 
         int lineNum = 0;
 
+        TableDef tableDef = new TableDef();
         String line = reader.readLine();
         // skip to column desc
         while (line != null) {
@@ -421,25 +461,25 @@ public class IpacTableUtil {
                 line = reader.readLine();
             } else if (line.startsWith("|")) {
                 // column name
-                cols = createColumnDefs(line);
+                tableDef = createColumnDefs(line);
 
                 // column type
                 dataStartOffset += line.length() + nlchar;
                 line = reader.readLine();
                 if (line != null && line.startsWith("|")) {
-                    setDataType(cols, line);
+                    setDataType(tableDef.getCols(), line);
 
                     // column unit
                     dataStartOffset += line.length() + nlchar;
                     line = reader.readLine();
                     if (line != null && line.startsWith("|")) {
-                        setDataUnit(cols, line);
+                        setDataUnit(tableDef.getCols(), line);
 
                         // column null string identifier
                         dataStartOffset += line.length() + nlchar;
                         line = reader.readLine();
                         if (line != null && line.startsWith("|")) {
-                            setDataNullStr(cols, line);
+                            setDataNullStr(tableDef.getCols(), line);
                             dataStartOffset += line.length() + nlchar;
                             line = reader.readLine();
                         }
@@ -447,43 +487,42 @@ public class IpacTableUtil {
                 }
             } else {
                 // data row begins.
-                meta.setLineWidth(line.length() + nlchar);
+                tableDef.setLineWidth(line.length() + nlchar);
                 if (src == null) {
                     // reading from stream, store the line read for later processing.
-                    meta.setExtras(lineNum-1, line);
+                    tableDef.setExtras(lineNum-1, line);
                 }
                 break;
             }
         }
 
-        meta.setRowStartOffset(dataStartOffset);
+        tableDef.setRowStartOffset(dataStartOffset);
         if (attribs.size() > 0) {
-            meta.addAttributes(attribs.toArray(new DataGroup.Attribute[attribs.size()]));
+            tableDef.setKeywords(attribs);
         }
-        if (cols != null) {
-            meta.setCols(cols);
+        if (tableDef.getCols() != null) {
+            for(DataType dt: tableDef.getCols()) {
+                String[] headers = {dt.getKeyName(), dt.getTypeDesc(), dt.getUnits(), dt.getNullString()};
+                int hWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
+                dt.ensureMaxDataWidth(hWidth);
+            }
         }
         if (src != null) {
-            long totalRow = meta.getLineWidth() == 0 ? 0 :
-                    (src.length()+1 - (long) meta.getRowStartOffset()) / meta.getLineWidth();
-            meta.setRowCount((int) totalRow);
+            long totalRow = tableDef.getLineWidth() == 0 ? 0 :
+                    (src.length()+1 - (long) tableDef.getRowStartOffset()) / tableDef.getLineWidth();
+            tableDef.setRowCount((int) totalRow);
         }
         if (src != null) {
-            meta.setSource(src.getAbsolutePath());
+            tableDef.setSource(src.getAbsolutePath());
         }
-        return meta;
+
+        return tableDef;
     }
 
-    public static String guessFormatStr(DataType type, String val, int precision) {
-        if (type.getTypeDesc() != null &&
-                ServerStringUtil.matchesRegExpList(type.getTypeDesc(), STRING_TYPE, true)) {
+    private static String guessFormatStr(DataType type, String val, int precision) {
+        if (String.class.isAssignableFrom(type.getDataType())) {
             return "%s";
-        } else {
-            return guessFormatStr(val, type.getDataType(), precision);
         }
-    }
-
-    private static String guessFormatStr(String val, Class cls, int minPrecision) {
 
         String formatStr = null;
         try {
@@ -505,9 +544,9 @@ public class IpacTableUtil {
                     // decimal format
                     int idx = val.indexOf(".");
                     int prec = val.length() - idx - 1;
-                    return "%." + Math.max(prec,minPrecision) + "f";
+                    return "%." + Math.max(prec, precision) + "f";
                 } else {
-                    boolean isFloat= (cls==Float.class || cls==Double.class);
+                    boolean isFloat= (type.getDataType()==Float.class || type.getDataType()==Double.class);
                     formatStr = isFloat ?  "%.0f" : "%d";
                 }
             }
@@ -549,7 +588,8 @@ public class IpacTableUtil {
 
 
     public static boolean isVisible(DataGroup dataGroup, DataType dt) {
-        return dataGroup.getMeta(makeAttribKey(VISI_TAG, dt.getKeyName()), VISI_SHOW).equals(VISI_SHOW);
+        return dataGroup.getAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, dt.getKeyName()), DataType.Visibility.show.name()).equals(DataType.Visibility.show.name());
     }
+
 }
 

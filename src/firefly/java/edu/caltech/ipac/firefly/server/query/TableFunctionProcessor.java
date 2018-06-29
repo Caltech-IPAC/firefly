@@ -9,9 +9,8 @@ import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 

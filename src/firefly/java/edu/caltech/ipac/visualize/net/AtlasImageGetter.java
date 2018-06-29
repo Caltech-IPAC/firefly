@@ -4,8 +4,8 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
@@ -13,9 +13,9 @@ import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
 
@@ -77,7 +77,7 @@ public class AtlasImageGetter {
             //queryParam.setIntersect(IbeQueryParam.Intersect.CENTER);
             ibe.query(queryTbl, queryParam);
 
-            DataGroup data = IpacTableReader.readIpacTable(queryTbl, "results");
+            DataGroup data = IpacTableReader.read(queryTbl);
 
 
             if (data.values().size() == 1) {
@@ -94,7 +94,7 @@ public class AtlasImageGetter {
                 throw new FailedRequestException("Area not covered "+errorMsg);
             }
 
-        } catch (IpacTableException me) {
+        } catch (IOException me) {
             throw new FailedRequestException("Could not parse results", "Details in exception", me);
         }
 

@@ -1,11 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.astro;
+package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import nom.tam.fits.Fits;
 import nom.tam.fits.Header;
 import nom.tam.fits.BinaryTable;
@@ -75,7 +74,7 @@ public final class IpacTableToFITS
 
 	File file = new File(Ipac_filename);
 
-	data_group = IpacTableReader.readIpacTable(file, null);
+	data_group = IpacTableReader.read(file);
 
 	Fits f = convertToFITS(data_group);
 	    if (debug)
@@ -114,7 +113,7 @@ public final class IpacTableToFITS
 	    if (debug)
 	    {
 		System.out.println("column = " + column);
-		System.out.println("  title = " + data_type[column].getDefaultTitle());
+		System.out.println("  title = " + data_type[column].getLabel());
 		System.out.println("  TypeDesc = " + data_type[column].getTypeDesc());
 		System.out.println("  datatype = " + cl);
 	    }
@@ -170,7 +169,7 @@ public final class IpacTableToFITS
 	for (int column = 0; column < data_type.length; column++)
 	{
 	    bhdu.setColumnName(column, 
-	     data_type[column].getDefaultTitle(), null);
+	     data_type[column].getLabel(), null);
 	}
 	return(f);
 

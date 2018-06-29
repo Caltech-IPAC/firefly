@@ -6,15 +6,14 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -74,7 +73,7 @@ public abstract class IBESearchProcessor extends IpacTablePartProcessor {
                     String col = String.valueOf(row.getDataElement("name"));
                     if (exists(columns, col)) {
                         String desc = String.valueOf(row.getDataElement("description"));
-                        meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, col), desc);
+                        meta.setAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, col), desc);
                     }
                 }
             } catch (DataAccessException e) {

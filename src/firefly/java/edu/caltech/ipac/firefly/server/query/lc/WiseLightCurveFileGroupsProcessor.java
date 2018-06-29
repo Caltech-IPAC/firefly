@@ -1,22 +1,18 @@
 package edu.caltech.ipac.firefly.server.query.lc;
 
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.ibe.IBE;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.wise.WiseFileRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.table.MappedData;
 import edu.caltech.ipac.util.*;
 
 import java.io.File;
@@ -106,7 +102,7 @@ public class WiseLightCurveFileGroupsProcessor extends FileGroupsProcessor {
         // For LC viewer we only want single exposure - product level = 1b
         String pl = request.getSafeParam("ProductLevel");
         String productLevel = pl != null ? pl : "1b";
-        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
+        MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
         // some of these columns may not exists depending on the data type and therefore cannot be queried.
         // in this case, we select all columns.
         //"source_id_mf", "source_id", "frame_id", "scan_id", "frame_num", "ra", "dec"

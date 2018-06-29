@@ -28,7 +28,7 @@ class BasicTableViewInternal extends PureComponent {
         this.state = {
             showMask: false,
             data: [],
-            columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
+            columnWidths: makeColWidth(props.columns, props.data)
         };
 
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
@@ -53,7 +53,7 @@ class BasicTableViewInternal extends PureComponent {
 
     componentWillReceiveProps(nProps) {
         if (isEmpty(this.state.columnWidths) && !isEmpty(nProps.columns)) {
-            this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data, nProps.showUnits)});
+            this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data)});
         }
     }
 
@@ -218,15 +218,28 @@ const TextView = ({columns, data, showUnits, width, height}) => {
     );
 };
 
-function makeColWidth(columns, showUnits) {
-    return !columns ? {} : columns.reduce((widths, col, idx) => {
-        const label = col.name;
-        let nchar = col.prefWidth;
-        const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
-        if (!nchar) {
-            nchar = Math.max(label.length+2, unitLength+2, get(col,'width', 0)); // 2 is for padding and sort symbol
+function calcMaxWidth(idx, col, data) {
+    let nchar = col.prefWidth || col.width;
+    if (!nchar) {
+        const label = col.label || col.name;
+        const hWidth = Math.max(
+            get(label, 'length', 0) + 2,
+            get(col, 'units.length', 0) + 2,
+            get(col, 'type.length', 0) + 2
+        );
+        nchar = hWidth;
+        for (const r in data) {
+            const w = get(data, [r, idx, 'length'], 0);
+            if (w > nchar) nchar = w;
         }
-        widths[idx] = nchar * 7;
+    }
+    return nchar * 7;
+}
+
+function makeColWidth(columns, data) {
+
+    return !columns ? {} : columns.reduce((widths, col, idx) => {
+        widths[idx] = calcMaxWidth(idx, col, data);
         return widths;
     }, {});
 }

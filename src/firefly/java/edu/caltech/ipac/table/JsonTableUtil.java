@@ -1,14 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
@@ -48,7 +45,7 @@ public class JsonTableUtil {
         if (!StringUtils.isEmpty(request.getTblId())) {
             tableModel.put("tbl_id",  request.getTblId());
         } else if (meta.contains(TableServerRequest.TBL_ID)) {
-            tableModel.put("tbl_id",  meta.getAttribute(TableServerRequest.TBL_ID).getValue());
+            tableModel.put("tbl_id",  meta.getAttribute(TableServerRequest.TBL_ID));
         }
         tableModel.put("title", page.getData().getTitle());
         tableModel.put("type", guessType(meta));
@@ -131,41 +128,10 @@ public class JsonTableUtil {
      */
     public static JSONObject toJsonTableData(DataGroup data, TableDef tableDef) {
 
-        tableDef = mergeAttributes(tableDef, data);
-
-        // set display format if exists.  this modifies DataType directly because it assumes it will no longer be used.
-        // if that is not the case, DataType will have to be cloned.
-        // also set flag to recalculate the max width of column's data
-        boolean formatChanged = false;
-        DataType[] columns = data.getDataDefinitions();
-        for (int colIdx = 0; colIdx < columns.length; colIdx++) {
-            DataType dt = columns[colIdx];
-            String fkey = IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_DISP_TAG, dt.getKeyName());
-            if (tableDef.contains(fkey)) {
-                dt.getFormatInfo().setDataFormat(tableDef.getAttribute(fkey).getValue());
-                String[] headers = new String[] {dt.getKeyName(), dt.getTypeDesc(), dt.getDataUnit(), dt.getNullString()};
-                int maxLength =  Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
-                dt.getFormatInfo().setWidth(maxLength);
-                formatChanged = true;
-            }
-        }
-
         List<List<String>> tableData = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {
-            List<String> row = new ArrayList<>();
-
-
             String[] rowData = data.get(i).getFormatedData();
-            for (int colIdx = 0; colIdx < rowData.length; colIdx++) {
-                row.add(rowData[colIdx]);
-                if (formatChanged) {
-                    DataType.FormatInfo fi = columns[colIdx].getFormatInfo();
-                    int dlength = rowData[colIdx].length();
-                    if (fi.getWidth() < dlength) fi.setWidth(dlength);
-                }
-
-            }
-            tableData.add(row);
+            tableData.add(Arrays.asList(rowData));
         }
 
         JSONObject tdata = new JSONObject();
@@ -183,11 +149,66 @@ public class JsonTableUtil {
      */
     public static JSONObject toJsonTableMeta(TableDef tableDef) {
         JSONObject tmeta = new JSONObject();
-        for (DataGroup.Attribute att : tableDef.getAttributes()) {
+        for (DataGroup.Attribute att : tableDef.getAttributeList()) {
             tmeta.put(att.getKey(), att.getValue());
         }
         return tmeta;
     }
+
+
+    /**
+     * returns a JSONObject (map) for the given path.
+     * This will create new node along the path if one does not exists.
+     * Note:  this method may alter your source data.
+     * @param source  json object to search
+     * @param path
+     * @return
+     */
+    public static JSONObject getPath(JSONObject source, String... path) {
+        if (path == null || path.length == 0) {
+            return source;
+        } else {
+            JSONObject current = source;
+            for(String p : path) {
+                JSONObject next = (JSONObject) current.get(p);
+                if (next == null) {
+                    next = new JSONObject();
+                    current.put(p, next);
+                }
+                current = next;
+            }
+            return current;
+        }
+    }
+
+    /**
+     * returns a value for the given path.
+     * @param source  json object to search
+     * @param path    path to the data
+     * @return
+     */
+    public static Object getPathValue(JSONObject source, String... path) {
+        if (path == null || path.length == 0) {
+            return source;
+        } else {
+            Object rval = source;
+            try {
+                for(int idx = 0; rval !=null && idx < path.length; idx++) {
+                    if (rval instanceof Map) {
+                        rval = ((Map)rval).get(path[idx]);
+                    } else if (rval instanceof List) {
+                        rval = ((List)rval).get(Integer.parseInt(path[idx]));
+                    } else {
+                        rval = null;
+                    }
+                }
+            } catch (Exception e) {
+                rval = null;
+            }
+            return rval;
+        }
+    }
+
 
 //====================================================================
 //
@@ -198,6 +219,7 @@ public class JsonTableUtil {
         tableDef = mergeAttributes(tableDef, dataGroup);
 
         DataType[] dataTypes = tableDef.getCols().size() > 0 ? tableDef.getCols().toArray(new DataType[0]) : dataGroup.getDataDefinitions();
+        IpacTableUtil.consumeColumnInfo(dataTypes, tableDef);
 
         ArrayList<JSONObject> cols = new ArrayList<JSONObject>();
         for (DataType dt :dataTypes) {
@@ -205,64 +227,42 @@ public class JsonTableUtil {
             JSONObject c = new JSONObject();
 
             c.put("name", cname);
-            c.put("width", dt.getFormatInfo().getWidth());
-            if (!StringUtils.isEmpty(dt.getTypeDesc())) {
+            if (dt.getWidth() > 0)
+                c.put("width", dt.getWidth());
+            if (!StringUtils.isEmpty(dt.getTypeDesc()))
                 c.put("type", dt.getTypeDesc());
-            }
-            if (!StringUtils.isEmpty(dt.getDataUnit())) {
-                c.put("units", dt.getDataUnit());
-            }
-            if (!StringUtils.isEmpty(dt.getNullString())) {
+            if (!StringUtils.isEmpty(dt.getUnits()))
+                c.put("units", dt.getUnits());
+            if (!StringUtils.isEmpty(dt.getNullString()))
                 c.put("nullString", dt.getNullString());
-            }
-            if (!StringUtils.isEmpty(dt.getShortDesc())) {
-                c.put("desc", dt.getShortDesc());
-            }
+            if (!StringUtils.isEmpty(dt.getDesc()))
+                c.put("desc", dt.getDesc());
+            if (!StringUtils.isEmpty(dt.getLabel()))
+                c.put("label", dt.getLabel());
+            if (!StringUtils.isEmpty(dt.getDesc()))
+                c.put("desc", dt.getDesc());
+            if (dt.getVisibility() != DataType.Visibility.show)
+                c.put("visibility", dt.getVisibility().name());
+            if (dt.getWidth() > 0)
+                c.put("width", dt.getWidth());
+            if (dt.getPrefWidth() > 0)
+                c.put("prefWidth", dt.getPrefWidth());
+            if (!dt.isSortable())
+                c.put("sortable", false);
+            if (!dt.isFilterable())
+                c.put("filterable", false);
+            if (!StringUtils.isEmpty(dt.getUnits()))
+                c.put("units", dt.getUnits());
+            if (!StringUtils.isEmpty(dt.getSortByCols()))
+                c.put("sortByCols", dt.getSortByCols());
 
-            // modify column's attributes based on meta
-            String label = getColAttr(tableDef, IpacTableUtil.LABEL_TAG, cname);
-            if (!StringUtils.isEmpty(label)) {
-                c.put("label", label);
-            }
-            String desc = getColAttr(tableDef, IpacTableUtil.DESC_TAG, cname);
-            if (!StringUtils.isEmpty(desc)) {
-                c.put("desc", desc);
-            }
-            String visibility = getColAttr(tableDef, IpacTableUtil.VISI_TAG, cname);
-            if (!StringUtils.isEmpty(visibility)) {
-                c.put("visibility", visibility);
-            }
-            String width = getColAttr(tableDef, IpacTableUtil.WIDTH_TAG, cname);
-            if (!StringUtils.isEmpty(width)) {
-                c.put("width", width);
-            }
-            String prefWidth = getColAttr(tableDef, IpacTableUtil.PREF_WIDTH_TAG, cname);
-            if (!StringUtils.isEmpty(prefWidth)) {
-                c.put("prefWidth", prefWidth);
-            }
-            String sortable = getColAttr(tableDef, IpacTableUtil.SORTABLE_TAG, cname);
-            if (!StringUtils.isEmpty(sortable)) {
-                c.put("sortable", Boolean.parseBoolean(sortable));
-            }
-            String filterable = getColAttr(tableDef, IpacTableUtil.FILTERABLE_TAG, cname);
-            if (!StringUtils.isEmpty(filterable)) {
-                c.put("filterable", Boolean.parseBoolean(filterable));
-            }
-            String units = getColAttr(tableDef, IpacTableUtil.UNIT_TAG, cname);
-            if (!StringUtils.isEmpty(units)) {
-                c.put("units", units);
-            }
-            String items = getColAttr(tableDef, IpacTableUtil.ITEMS_TAG, cname);
+            String items = getColAttr(tableDef, TableMeta.ITEMS_TAG, cname);
             if (!StringUtils.isEmpty(items)) {
                 c.put("items", items);
             }
-            String sortBy = getColAttr(tableDef, IpacTableUtil.SORT_BY_TAG, cname);
-            if (!StringUtils.isEmpty(sortBy)) {
-                c.put("sortByCols", sortBy);
-            }
             cols.add(c);
         }
-        for (DataGroup.Attribute att :  tableDef.getAttributes()) {
+        for (DataGroup.Attribute att :  tableDef.getAttributeList()) {
             // clean up all of the column's attributes since we already set it to the columns
             if (att.getKey().startsWith("col.")) {
                 tableDef.removeAttribute(att.getKey());
@@ -272,8 +272,8 @@ public class JsonTableUtil {
     }
 
     private static String getColAttr(TableDef meta, String tag, String cname) {
-        DataGroup.Attribute att = meta.getAttribute(IpacTableUtil.makeAttribKey(tag, cname));
-        return (att == null) ? "" : att.getValue();
+        String att = meta.getAttribute(TableMeta.makeAttribKey(tag, cname));
+        return (att == null) ? "" : att;
     }
 
     /**

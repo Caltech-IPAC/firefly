@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
-import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -11,7 +11,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.table.MappedData;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -75,7 +75,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
         String[] deeoCoaddCols={"deepCoaddId","tract", "patch", "filterName"};
         String[] columns= isDeepCoadd?deeoCoaddCols:sccdCols;
 
-        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(),
+        MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(),
                 selectedRows, columns);
 
         ArrayList<FileInfo> fiArr = new ArrayList<>();
@@ -107,7 +107,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
         return fgArr;
     }
 
-    private String getFileName(boolean isDeepCoadd, IpacTableParser.MappedData dgData, int rowIdx){
+    private String getFileName(boolean isDeepCoadd, MappedData dgData, int rowIdx){
         String filterName =(String) dgData.get(rowIdx,"filterName");
         if (isDeepCoadd) {
             return  dgData.get(rowIdx,"deepCoaddId").toString()+"-"+filterName+".fits";
@@ -119,7 +119,7 @@ public class LSSTFileGroupProcessor  extends FileGroupsProcessor {
 
 
     }
-    private  String  getDataURLString( IpacTableParser.MappedData dgData, int rowIdx,  boolean isDeepCoadd) throws MalformedURLException {
+    private  String  getDataURLString(MappedData dgData, int rowIdx, boolean isDeepCoadd) throws MalformedURLException {
 
 
         if (isDeepCoadd){

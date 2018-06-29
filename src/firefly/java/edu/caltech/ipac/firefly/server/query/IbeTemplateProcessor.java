@@ -6,8 +6,8 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import org.apache.tools.ant.filters.StringInputStream;
 
 import java.io.ByteArrayOutputStream;
@@ -31,7 +31,7 @@ public class IbeTemplateProcessor extends SharedDbProcessor {
             String url = treq.getParam("url");
             ByteArrayOutputStream results = new ByteArrayOutputStream();
             HttpServices.getData(url, results, HttpServiceInput.createWithCredential());
-            return DataGroupReader.read(new StringInputStream(results.toString()));
+            return IpacTableReader.read(new StringInputStream(results.toString()));
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }

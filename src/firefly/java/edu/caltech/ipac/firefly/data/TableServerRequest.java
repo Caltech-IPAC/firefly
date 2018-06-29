@@ -20,8 +20,6 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
 
     public static final String TBL_FILE_PATH = "tblFilePath";       // this meta if exists contains source of the data
     public static final String TBL_FILE_TYPE = "tblFileType";       // this meta if exists contains storage type, ipac, h2, sqlite, etc
-    public static final String RESULTSET_ID = "resultSetID";        // this meta if exists contains the ID of the resultset returned.
-    public static final String RESULTSET_REQ = "resultSetRequest";      // this meta if exists contains the Request used to create this of the resultset.
 
     public static final String TBL_ID = "tbl_id";
     public static final String TITLE = "title";

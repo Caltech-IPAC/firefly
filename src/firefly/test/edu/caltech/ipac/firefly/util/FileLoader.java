@@ -1,8 +1,8 @@
 package edu.caltech.ipac.firefly.util;
 
 
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.visualize.plot.*;
 import nom.tam.fits.Fits;
 
@@ -94,7 +94,7 @@ public class FileLoader {
         try {
             File inFile = new File(getDataPath(cls) + tblFile);
 
-            return IpacTableReader.readIpacTable(inFile, null, "inputTable");
+            return IpacTableReader.read(inFile);
         }
         catch (Exception e){
             e.printStackTrace();

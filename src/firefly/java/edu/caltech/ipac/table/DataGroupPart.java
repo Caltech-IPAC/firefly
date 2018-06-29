@@ -1,12 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.HasAccessInfos;
-import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
@@ -100,20 +97,6 @@ public class DataGroupPart implements HasAccessInfos {
         }
 
         return Boolean.parseBoolean(data.get(index).getDataElement(getHasAccessCName()).toString());
-    }
-
-    public void setHasAccess(int index, boolean hasAccess) {
-        if (getHasAccessCName() == null) {
-            return;
-        }
-        DataType col = data.getDataDefintion(getHasAccessCName());
-        if (col == null) {
-            col = new DataType(getHasAccessCName(), String.class);
-            data.addDataDefinition(col);
-            data.addAttribute(TemplateGenerator.createAttributeKey(
-                    TemplateGenerator.Tag.VISI_TAG, getHasAccessCName()), TemplateGenerator.Tag.VISI_HIDDEN);
-        }
-        data.get(index).setDataElement(col, String.valueOf(hasAccess));
     }
 
 //====================================================================

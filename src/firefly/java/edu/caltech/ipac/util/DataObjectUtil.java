@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.util;
 
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+
 /**
  * @author tatianag
  */
@@ -60,7 +63,7 @@ public class DataObjectUtil {
         }
 
         public String getFormattedValue(DataObject row) {
-            return row.getFormatedData(col);
+            return row.getFixedFormatedData(col);
         }
     }
 }

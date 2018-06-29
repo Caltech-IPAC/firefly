@@ -8,8 +8,8 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataGroup;
 
 import java.io.File;
 
@@ -46,9 +46,7 @@ public class DecimationProcessor extends TableFunctionProcessor {
 
         if (decimateInfo != null) {
             DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
-            dg.getAttributeKeys().stream().forEach(k -> {
-                retval.addAttribute(k, dg.getAttribute(k).getValue());
-            });
+            retval.mergeAttributes(dg.getKeywords());
             return retval;
         } else {
             return dg;

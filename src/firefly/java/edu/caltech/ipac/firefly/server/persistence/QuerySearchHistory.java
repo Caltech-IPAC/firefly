@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.NotLoggedInException;
 import edu.caltech.ipac.firefly.data.SearchInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -16,10 +17,9 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacFileQuery;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.cache.Cache;
 
 import java.io.File;
@@ -54,9 +54,7 @@ public class QuerySearchHistory  extends IpacFileQuery {
                         new DataType("description", String.class),
                         new DataType("historytoken", String.class)
                     };
-            cols[2].getFormatInfo().setDataFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date: yyyy-mm-dd hh:mm:ss
-            cols[3].getFormatInfo().setWidth(2000);
-            cols[4].getFormatInfo().setWidth(2000);
+            cols[2].setFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date: yyyy-mm-dd hh:mm:ss
 
             DataGroup dg = new DataGroup("Search History", cols);
 
@@ -77,7 +75,7 @@ public class QuerySearchHistory  extends IpacFileQuery {
                 dg.add(row);
             }
             File f = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-            DataGroupWriter.write(f, dg);
+            IpacTableWriter.save(f, dg);
             return f;
         } else {
             return super.loadDataFile(request);

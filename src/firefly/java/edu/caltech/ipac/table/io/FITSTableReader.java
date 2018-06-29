@@ -1,13 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.astro;
+package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.StringUtils;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.FitsFactory;
@@ -332,18 +332,14 @@ public final class FITSTableReader
         // setting DataGroup meta info
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
             DataType dt = dataTypes.get(colIdx);
-            if (!StringUtils.isEmpty(dt.getShortDesc())) {
-                dataGroup.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, dt.getKeyName()), dt.getShortDesc());
-            }
             String format = getParam(table, "TDISP" + (colIdx + 1), 20);
             format = format == null ? null : convertFormat(format);
             if (Double.class.isAssignableFrom(dt.getDataType()) ||
                 Float.class.isAssignableFrom(dt.getDataType())) {
                 format = format == null && Double.class.isAssignableFrom(dt.getDataType()) ? "%.9g" : format;
-                dataGroup.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_TAG, dt.getKeyName()), "NONE");
             }
             if (!StringUtils.isEmpty(format)) {
-                dataGroup.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_DISP_TAG, dt.getKeyName()), format);
+                dt.setFormat(format);
             }
         }
 
@@ -361,7 +357,6 @@ public final class FITSTableReader
                 }
             }
         }
-        dataGroup.shrinkToFitData();
         return dataGroup;
     }
 
@@ -452,7 +447,7 @@ public final class FITSTableReader
         dataType.setDataType(java_class);
         dataType.setUnits(unit);
         dataType.setNullString(nullString);
-        dataType.setShortDesc(desc);
+        dataType.setDesc(desc);
 
         return dataType;
     }

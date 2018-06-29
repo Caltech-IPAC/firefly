@@ -23,9 +23,9 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.RegionParser;
@@ -562,10 +562,10 @@ public class VisServerOps {
         DataType keyword = new DataType("Keyword", String.class);
         DataType value = new DataType("Value", String.class);
         DataType num = new DataType("#", Integer.class);
-        comment.getFormatInfo().setWidth(30);
-        value.getFormatInfo().setWidth(10);
-        keyword.getFormatInfo().setWidth(10);
-        num.getFormatInfo().setWidth(3);
+        comment.setWidth(30);
+        value.setWidth(10);
+        keyword.setWidth(10);
+        num.setWidth(3);
         DataType[] types = new DataType[]{num, keyword, value, comment};
         DataGroup dg = new DataGroup("Headers - " + name, types);
 

@@ -3,13 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.query.mos;
 
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
@@ -18,11 +18,11 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -40,8 +40,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.util.IpacTableUtil.LABEL_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.LABEL_TAG;
+import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 
 
 @SearchProcessorImpl(id = "MOSQuery")
@@ -132,7 +132,7 @@ Thread.sleep(1000);
                     catSearchTread.join();
                 }
 
-                DataGroup[] groups = VoTableUtil.voToDataGroups(votable.getAbsolutePath(), headerOnly);
+                DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), headerOnly);
                 if (groups != null) {
                     for (DataGroup dg : groups) {
                         File tempFile = File.createTempFile(dg.getTitle() + "-", ".tbl", ServerContext.getTempWorkDir());
@@ -374,7 +374,8 @@ Thread.sleep(1000);
         final List<String> namesLst = Arrays.asList(names);
         File newFile = null;
         try {
-            DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "Result Table");
+            DataGroup dg = IpacTableReader.read(inFile);
+            dg.setTitle("Result Table");
             Map<String, DataGroup.Attribute> attrMap = dg.getAttributes();
 
 
@@ -383,7 +384,6 @@ Thread.sleep(1000);
                 if (namesLst.contains(s)) {
                     DataGroup.Attribute attr = attrMap.get(s);
                     DataType dt = new DataType(s, String.class);
-                    dt.getFormatInfo().setWidth(Math.max(s.length(), attr.getValue().length()));
                     newDT.add(dt);
                 }
             }

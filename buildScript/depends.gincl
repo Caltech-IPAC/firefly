@@ -329,7 +329,10 @@ ext.NODE = { ...cmd ->
   }
 
   def versionInfo = new Properties()
-  file("${project.buildDir}/version.tag").withInputStream { versionInfo.load(it) }
+  def versionFile = file("${project.buildDir}/version.tag")
+  if (versionFile.exists()) {
+    versionFile.withInputStream { versionInfo.load(it) }
+  }
 
   // any environment starting with '__$' will be defined as global.
   // this is a way send config info to JS code.

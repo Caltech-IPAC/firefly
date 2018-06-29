@@ -7,8 +7,8 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.DataGroup;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -31,7 +31,7 @@ public class SearchRequestUtils {
      */
     public static DataGroup dataGroupFromSearchRequest(String searchRequestJson) throws IOException, DataAccessException {
         FileInfo fi = fileInfoFromSearchRequest(searchRequestJson);
-        return DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+        return TableUtil.readAnyFormat(new File(fi.getInternalFilename()));
     }
 
     /**

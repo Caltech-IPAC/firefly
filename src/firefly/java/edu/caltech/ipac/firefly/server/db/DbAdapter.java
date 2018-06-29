@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;

@@ -1,13 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util;
+package edu.caltech.ipac.table.io;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -32,7 +32,7 @@ import java.util.List;
  * LZ added another method in order to read file through an InputStream
  *
  */
-public class DsvToDataGroup {
+public class DsvTableIO {
 
     public static DataGroup parse(InputStream inf, CSVFormat format) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inf, "UTF-8"), IpacTableUtil.FILE_IO_BUFFER_SIZE);
@@ -73,7 +73,6 @@ public class DsvToDataGroup {
                     dg.add(row);
                 }
             }
-            dg.shrinkToFitData();
             return dg;
         }
         return null;
@@ -126,13 +125,10 @@ public class DsvToDataGroup {
                     if (!type.isKnownType()) {
                         IpacTableUtil.guessDataType(type,val);
                     }
-                    row.setFormattedData(type,val);
+                    row.setFixedFormattedData(type,val);
                     row.setDataElement(type, type.convertStringToData(val));
 
-                    if (val != null && val.length() > type.getMaxDataWidth()) {
-                        type.setMaxDataWidth(val.length());
-                    }
-                    if (type.getFormatInfo().isDefault()) {
+                    if (type.getFormat() == null) {
                         IpacTableUtil.guessFormatInfo(type, val);
                     }
                 }

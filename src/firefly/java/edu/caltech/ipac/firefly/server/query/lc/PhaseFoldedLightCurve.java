@@ -1,12 +1,12 @@
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,18 +39,17 @@ public class PhaseFoldedLightCurve {
             throw new IpacTableException("Period should be positive, but value passed = " + period);
         }
 
-        //Add a new data type and colunm: phase
-        DataType phaseType = new DataType(PHASE_COL, PHASE_COL, Double.class, DataType.Importance.HIGH, null, false);
-        //DataType phaseType = new DataType("phase", Double.class);
-        dg.addDataDefinition(phaseType);
-        phaseType.getFormatInfo().setDataFormat("%.8f");
-        phaseType.getFormatInfo().setWidth(15);
-
         // add meta info for the added phase column
         String desc = "number of period elapsed since starting time.";
         dg.addAttribute(null, PHASE_COL);
         dg.addAttribute(null, "___ " + desc);
-        dg.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, PHASE_COL), desc);
+
+        //Add a new data type and colunm: phase
+        DataType phaseType = new DataType(PHASE_COL, Double.class);
+        dg.addDataDefinition(phaseType);
+        phaseType.setFormat("%.8f");
+        phaseType.setWidth(15);
+        phaseType.setDesc(desc);
 
         //Find the minimum time:
         double tzero = Double.MAX_VALUE;
@@ -95,7 +94,7 @@ public class PhaseFoldedLightCurve {
             try {
                 File inFile = new File(args[0]);
                 //Get a datagroup from the IPAC table file:
-                DataGroup dataGroup = DataGroupReader.readAnyFormat(inFile);
+                DataGroup dataGroup = TableUtil.readAnyFormat(inFile);
 
                 //Add the new phase column:
                 PhaseFoldedLightCurve pflc = new PhaseFoldedLightCurve();

@@ -6,10 +6,10 @@ package edu.caltech.ipac.firefly.server.query.ptf;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
@@ -69,7 +69,7 @@ public class PtfIbeResolver {
         }
 
 
-        DataGroup dataObjects = DataGroupReader.read(tempFile);
+        DataGroup dataObjects = IpacTableReader.read(tempFile);
         Iterator<DataObject> iterator = dataObjects.iterator();
         int size = dataObjects.size();
         List<String> lstFiles = new ArrayList<String>();

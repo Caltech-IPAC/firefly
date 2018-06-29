@@ -3,8 +3,8 @@ package edu.caltech.ipac.firefly.util;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.junit.Assert;
@@ -63,7 +63,7 @@ public class PostDownloadTest extends ConfigTest {
             posBuilder.post(writer);
             writer.close();
 
-            DataGroup[] dataGroups = VoTableUtil.voToDataGroups(fileTmp.getAbsolutePath());
+            DataGroup[] dataGroups = VoTableReader.voToDataGroups(fileTmp.getAbsolutePath());
 
             Assert.assertEquals("should be 2 tables but found " + dataGroups.length, dataGroups.length, 2);
         } catch (ConnectException e) {

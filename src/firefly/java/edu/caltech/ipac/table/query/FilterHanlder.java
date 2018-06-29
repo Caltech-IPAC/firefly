@@ -1,16 +1,18 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table.query;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.io.BgIpacTableHandler;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,12 +32,13 @@ public class FilterHanlder extends BgIpacTableHandler {
     private List<DataGroup.Attribute> attributes;
     private List<DataType> headers;
     private DataGroup dg;
+    private TableDef tableDef;
 
     public FilterHanlder(File ofile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
         super(ofile, null, null, null, request);
-        TableDef tableMeta = IpacTableUtil.getMetaInfo(source);
-        attributes = tableMeta.getAllAttributes();
-        headers = tableMeta.getCols();
+        tableDef = IpacTableUtil.getMetaInfo(source);
+        attributes = IpacTableUtil.makeAttributes(tableDef.getKeywords(), tableDef.getCols().toArray(new DataType[0]));
+        headers = tableDef.getCols();
         reader = new BufferedReader(new FileReader(source), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         this.filters = Arrays.asList(filters);
         if (filters != null) {
@@ -47,9 +50,8 @@ public class FilterHanlder extends BgIpacTableHandler {
             }
         }
         // if this file does not contain ROWID, add it.
-        if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROW_IDX)) {
+        if (!headers.stream().anyMatch(dt -> dt.getKeyName().equals(DataGroup.ROW_IDX))) {
             headers.add(DataGroup.makeRowIdx());
-            attributes.add(new DataGroup.Attribute("col." + DataGroup.ROW_IDX + ".Visibility", "hidden"));
         }
         dg = new DataGroup(null, headers);
     }
@@ -64,7 +66,7 @@ public class FilterHanlder extends BgIpacTableHandler {
 
             CollectionUtil.Filter<DataObject> filters [] = new CollectionUtil.Filter[1];
             filters[1] = filter;
-            DataGroupWriter.write(new FilterHanlder(new File(in.getParent(), in.getName() + ".out"), in, filters, request));
+            IpacTableWriter.asyncSave(new FilterHanlder(new File(in.getParent(), in.getName() + ".out"), in, filters, request));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -95,16 +97,16 @@ public class FilterHanlder extends BgIpacTableHandler {
             while (next == null && !eof) {
                 line = reader.readLine();
                 eof = line == null;
-                DataObject row = eof ? null:  IpacTableUtil.parseRow(dg, line, true, true);
+                DataObject row = eof ? null:  IpacTableUtil.parseRow(dg, line, tableDef);
                 if (row != null) {
                     int rowIdx = ++cRowNum;
                     if (hasRowIdFilter) {
-                        rowIdx = row.getRowIdx();
+                        rowIdx = row.getIntData(DataGroup.ROW_IDX);
                         rowIdx = rowIdx < 0 ? cRowNum : rowIdx;
                     }
 
                     if (CollectionUtil.matches(rowIdx, row, filters)) {
-                        row.setRowIdx(rowIdx);
+                        row.setDataElement(DataGroup.ROW_IDX, rowIdx);
                         ++rowsFound;
                         next = row;
                     }

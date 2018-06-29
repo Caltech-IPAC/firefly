@@ -1,8 +1,12 @@
-package edu.caltech.ipac.firefly.server.util.ipactable;
+package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.*;
 
 import java.io.File;
@@ -10,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
+import static edu.caltech.ipac.table.IpacTableUtil.makeAttributes;
 
 /**
  * Date: 11/21/16
@@ -18,7 +22,7 @@ import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
  * @author loi
  * @version $Id: $
  */
-public class BgIpacTableHandler extends DataGroupWriter.IpacTableHandler {
+public class BgIpacTableHandler extends IpacTableWriter.IpacTableHandler {
     private final CountDownLatch waitOn = new CountDownLatch(1);
     private TableServerRequest request;
     private int maxInteractiveRows;
@@ -28,7 +32,7 @@ public class BgIpacTableHandler extends DataGroupWriter.IpacTableHandler {
         this(ofile, Arrays.asList(source.getDataDefinitions()), makeAttributes(source), source.iterator(), request);
     }
 
-    public BgIpacTableHandler(File ofile,  List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr, TableServerRequest request) {
+    public BgIpacTableHandler(File ofile, List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr, TableServerRequest request) {
         super(ofile, headers, attributes, itr);
         this.request = request;
         maxInteractiveRows = request.getPageSize() < 0 ? Integer.MAX_VALUE : request.getPageSize();

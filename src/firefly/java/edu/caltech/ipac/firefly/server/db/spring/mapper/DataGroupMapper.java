@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.db.spring.mapper;
 
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroup;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 
 import java.sql.ResultSet;
