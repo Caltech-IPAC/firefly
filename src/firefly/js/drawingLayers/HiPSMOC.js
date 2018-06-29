@@ -6,15 +6,11 @@ import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLaye
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import {MouseState} from '../visualize/VisMouseSync.js';
-import DrawOp from '../visualize/draw/DrawOp.js';
-import DrawLayerCntlr, {dispatchSelectRegion,
-                        dlRoot} from '../visualize/DrawLayerCntlr.js';
-import {get, set, isEmpty, isNil} from 'lodash';
-import MocObj, {getMocCell} from '../visualize/draw/MocObj.js';
-import {RegionSelStyle, defaultRegionSelectStyle} from '../visualize/DrawLayerCntlr.js';
-import CoordinateSys from '../visualize/CoordSys.js';
+import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import {get, set, isEmpty, cloneDeep} from 'lodash';
+import MocObj, {createDrawObjsInMoc, getMaxDisplayOrder, setMocDisplayOrder} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
+import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
@@ -34,9 +30,7 @@ function creator(initPayload) {
 
     const drawingDef= makeDrawingDef(colorList[idCnt%colorN], {style: Style.STANDARD});
     drawingDef.textLoc = TextLocation.CENTER;
-    const pairs = {
-        [MouseState.DOWN.key]: highlightChange
-    };
+
 
     idCnt++;
     const options= {
@@ -50,74 +44,12 @@ function creator(initPayload) {
     const actionTypes = [DrawLayerCntlr.REGION_SELECT];
     const id = get(initPayload, 'tbl_id') || get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'MOC Plot - '+id.replace('_moc', '')),
-                                        options, drawingDef, actionTypes, pairs );
+                                        options, drawingDef, actionTypes);
 
     dl.moc_nuniq_nums = initPayload.moc_nuniq_nums || [];
-    dl.highlightedCell = get(initPayload, 'highlightedCell', null);
-    dl.selectMode = get(initPayload, 'selectMode', {[RegionSelStyle]: 'DottedOverlay' });
-    dl.fromPlot = get(initPayload, 'fromPlot');
+    dl.fromPlotId = get(initPayload, 'fromPlotId');
 
     return dl;
-}
-
-/**
- * find the drawObj which is selected for highlight
- * @param mouseStatePayload
- * @returns {Function}
- */
-function highlightChange(mouseStatePayload) {
-    const {drawLayer,plotId,screenPt} = mouseStatePayload;
-    let done = false;
-    let closestInfo = null;
-    let closestObjId = -1;
-    const maxChunk = 1000;
-    const {data} = drawLayer.drawData;
-    const plot = primePlot(visRoot(), plotId);
-    const dataPlot = get(data, plotId);
-
-
-    function* getDrawObjIndex() {
-        let index = 0;
-
-        while (index < dataPlot.length) {
-            yield index++;
-        }
-    }
-    const gen = getDrawObjIndex();
-
-    const sId = window.setInterval( () => {
-        if (done) {
-            window.clearInterval(sId);
-
-            // highlight or de-highlight region on current drawLayer,
-
-            dlRoot().drawLayerAry.forEach( (dl) => {
-                if (dl.drawLayerId === drawLayer.drawLayerId) {
-                    dispatchSelectRegion(dl.drawLayerId, closestObjId >= 0 ? dl.moc_nuniq_nums[closestObjId] : null);
-                }
-            });
-        }
-
-        for (let i = 0; i < maxChunk; i++ ) {
-            const nextId = gen.next().value;
-
-            if (!isNil(nextId)) {
-                const distInfo = DrawOp.isScreenPointInside(screenPt, dataPlot[nextId], plot);
-
-                if (distInfo.inside) {
-                   if (!closestInfo || closestInfo.dist > distInfo.dist) {
-                       closestInfo = distInfo;
-                       closestObjId = nextId;
-                   }
-                }
-            } else {
-                done = true;
-                break;
-            }
-        }
-    }, 0);
-
-    return () => window.clearInterval(sId);
 }
 
 /**
@@ -127,68 +59,45 @@ function highlightChange(mouseStatePayload) {
  * @returns {*}
  */
 function getLayerChanges(drawLayer, action) {
-    const {drawLayerId} = action.payload;
+    const {drawLayerId, plotId, plotIdAry} = action.payload;
 
     if (drawLayerId && drawLayerId !== drawLayer.drawLayerId) return null;
     const dd = Object.assign({}, drawLayer.drawData);
 
-    const reDrawData = () => {    // redraw all cells
-            Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
-                set(dd[DataTypes.DATA], plotId, null);
-            });
-        };
-
-    const setIsRendered = (obj, isRendered = 1) => {   // isRendered indicates if draw the obj or not while rendering
-        obj.isRendered = isRendered;
-    };
-
+    let pId;
     switch (action.type) {
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            if (!drawLayer.mocObj && drawLayer.fromPlot) {
-                const mocObj = createMocObj(drawLayer, drawLayer.fromPlot.plotId);
+            if (!drawLayer.mocObj && drawLayer.fromPlotId) {
+                const mocObj = createMocObj(drawLayer, drawLayer.fromPlotId);
 
                 return {mocObj};
             }
             break;
-        case DrawLayerCntlr.REGION_SELECT:
-            const {selectedRegion: highlightedCell} = action.payload;
-            const style = get(drawLayer.selectMode, RegionSelStyle, defaultRegionSelectStyle).toLowerCase();
-            let hlObj = null;
 
-            Object.keys(dd[DataTypes.HIGHLIGHT_DATA]).forEach((plotId) => {   // reset all highlight
-                set(dd[DataTypes.HIGHLIGHT_DATA], plotId, null);
-            });
+        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+            const {fillStyle, targetPlotId} = action.payload.changes;
 
+            if (fillStyle && targetPlotId) {
+                const {mocStyle={}} = drawLayer;
+                const style = fillStyle.includes('outline') ? Style.STANDARD : Style.FILL;
+                const mocObj = get(dd, [DataTypes.DATA, targetPlotId, 0]);
+                const newMocObj = mocObj ? Object.assign({}, mocObj, {style}) : null;
 
-            if (highlightedCell !== drawLayer.highlightedCell) {    // de-highlight or highlight a new one
-                if (highlightedCell) {
-                    hlObj = getCellDrawObj(drawLayer, highlightedCell);
-
-                    // render the highlight obj instead of the data obj if the style is with 'replace'
-                    hlObj && style.includes('replace') && setIsRendered(hlObj, 0);
-                }
-                if (drawLayer.highlightedObj) {
-                    setIsRendered(drawLayer.highlightedObj);
-                }
-                reDrawData();
-                return Object.assign({}, {highlightedObj: hlObj, highlightedCell}, {drawData: dd});
-
-            } else {
-                return null;
+                set(dd, [DataTypes.DATA, targetPlotId], [newMocObj]);
+                set(mocStyle, [targetPlotId], style);
+                return Object.assign({}, {mocStyle, drawData: dd});
             }
             break;
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            const {fillStyle, showLabel} = action.payload.changes;
-            if (fillStyle) {
-                const newDrawingDef = Object.assign({}, drawLayer.drawingDef,
-                    {style: fillStyle.includes('outline') ? Style.STANDARD : Style.FILL});
 
-                return {drawingDef: newDrawingDef};
-            } else {
-                reDrawData();
+        case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
+        case ImagePlotCntlr.ANY_REPLOT:
+            pId = plotIdAry ? plotIdAry[0] : plotId;
 
-                return Object.assign({}, {showLabel, drawData: dd});
+            if (pId) {
+                set(dd[DataTypes.DATA], [pId], null);
+                return Object.assign({}, {drawData: dd});
             }
+            break;
         default:
             return null;
     }
@@ -196,85 +105,37 @@ function getLayerChanges(drawLayer, action) {
 }
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    const {selectMode, highlightedCell} = drawLayer;
-
+    const {visiblePlotIdAry=[]} = drawLayer;
+    const showMoc = (action.type !== DrawLayerCntlr.ATTACH_LAYER_TO_PLOT) || visiblePlotIdAry.includes(plotId);
     switch (dataType) {
         case DataTypes.DATA:    // based on the same drawObjAry to draw the region on each plot
-            return isEmpty(lastDataRet) ? createObjsOfMoc(drawLayer, plotId) : lastDataRet;
-        case DataTypes.HIGHLIGHT_DATA:      // create the region drawObj based on the original region for upright case.
-            return isEmpty(lastDataRet) ?
-                   plotHighlightRegion(highlightedCell, drawLayer, plotId, selectMode) : lastDataRet;
+            return (isEmpty(lastDataRet) && showMoc)
+                                              ? [createMocData(drawLayer, plotId, action)] : lastDataRet;
     }
     return null;
 }
 
 /**
- * @summary create DrawingObj for highlighted region
- * @param {Object} highlightedCell
- * @param {Object} dl
- * @param {string} plotId
- * @param {Object} selectMode
- * @returns {Object[]}
- */
-function plotHighlightRegion(highlightedCell, dl, plotId, selectMode) {
-    if (!highlightedCell) {
-        return [];
-    }
-    let highlightedObj = getCellDrawObj(dl, highlightedCell);
-
-    if (highlightedObj) {
-        const {showLabel} = dl;
-
-        highlightedObj = Object.assign({}, highlightedObj, {style: Style.STANDARD,
-                                                            text: showLabel ? highlightedObj.text : ''});
-    }
-    return highlightedObj ? [DrawOp.makeHighlight(highlightedObj, primePlot(visRoot(), plotId), selectMode)] : [];
-}
-
-function getCellDrawObj(dl, cellNum) {
-    const idx = getNuniqIndex(cellNum, dl);
-    const mocObj = get(dl, 'mocObj');
-
-    return mocObj ? getMocCell(mocObj, idx) : null;
-}
-
-/**
- * find the index of the nuniq number in the nuniq number list for the layer
- * @param nuniq
- * @param dl
- * @returns {number|Promise.<number>}
- */
-function getNuniqIndex(nuniq, dl) {
-    return get(dl, 'moc_nuniq_nums', []).findIndex((n) => n === nuniq);
-}
-
-/**
  * create MocObj base on cell nuniq numbers and the coordinate systems
  * @param dl
- * @param plotId
  * @returns {Object}
  */
-function createMocObj(dl, plotId) {
-    const {moc_nuniq_nums = [], mocObj} = dl;
-    const pv = primePlot(visRoot(), plotId);
-    const coordsys = pv ? pv.dataCoordSys : CoordinateSys.EQ_J2000;
-    return  mocObj ? mocObj : MocObj.make(moc_nuniq_nums, coordsys,
-                                          {});
+function createMocObj(dl) {
+    const {moc_nuniq_nums = [], mocObj, drawingDef} = dl;
+
+    return mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, drawingDef);
 }
 
-/**
- * get polygon DrawObj for MOC cells
- * @param dl
- * @param plotId
- * @returns {null}
- */
-function createObjsOfMoc(dl, plotId) {
-    const mocObj = createMocObj(dl, plotId);
-    const drawObjAry = mocObj&&mocObj.drawObjAry ? mocObj.drawObjAry : null;
-    const {showLabel} = dl;
 
-    return !drawObjAry ? drawObjAry
-                       : drawObjAry.map((oneObj) => {
-                                return Object.assign({}, oneObj, {text: showLabel ? oneObj.text : ''});
-                            });
+function createMocData(dl, plotId) {
+    const {moc_nuniq_nums = [], mocObj, mocStyle} = dl;
+    const plot = primePlot(visRoot(), plotId);
+    let   newMocObj =  mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, {}, plot);  // create a new mocObj
+    const {minOrder=0, maxOrder=0} = get(mocObj, ['mocGroup']) || {};
+    const {displayOrder} = getMaxDisplayOrder(minOrder, maxOrder, plot, moc_nuniq_nums.length);
+
+    newMocObj = setMocDisplayOrder(newMocObj, plot, displayOrder);
+    newMocObj.style =  get(mocStyle, plotId, Style.STANDARD);
+    createDrawObjsInMoc(newMocObj, plot);
+    return newMocObj;
 }

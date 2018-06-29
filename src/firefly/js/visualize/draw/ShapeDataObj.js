@@ -1144,7 +1144,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         return;
     }
 
-    const adjustPointOnDisplay = (devPt, pt) => {
+    const adjustPointOnDisplay = (pt, devPt) => {
         if (!devPt) {
             const newPt = getEdgePtOnGreatCircleFromCenterTo(pt, plot);
             devPt = plot.getDeviceCoords(newPt);
@@ -1164,26 +1164,40 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         return retPt;
     };
 
-    const isPolygonInDisplay = (pts) => {
+    const isPolygonInDisplay = (pts, isMocTile) => {
         const devPts = pts.map((onePt) => plot.getDeviceCoords(onePt));
 
-        return {devPts, inDisplay: devPts.find((onePt) => onePt)};
+        let inDisplay = 0;
+        if (isMocTile && pts.length > 4) {
+            for (let i = 0; i < pts.length; i++) {
+                if (devPts[i]) {
+                    inDisplay++;
+                }
+            }
+        } else {
+            inDisplay = devPts.filter((onePt) => onePt).length;
+        }
+
+        return {devPts, inDisplay};
     };
 
     const {pts, renderOptions}= drawObj;
 
     if (pts) {
-       const {devPts, inDisplay} = isPolygonInDisplay(pts);  // check if polygon is out of display
-
-        if (inDisplay) {
-            const devPtAll = devPts.map((dPt, idx) => adjustPointOnDisplay(dPt, pts[idx]))
+       const isMocTile = drawObj.mocInfo;
+       const {devPts, inDisplay} = isPolygonInDisplay(pts, isMocTile);  // check if polygon is out of display
+        if (inDisplay === 4 ||
+            (inDisplay > 0 && isMocTile && get(drawObj, ['mocInfo', 'norder']) <= get(drawObj, ['mocInfo', 'displayOrder']))) {
+            const devPtAll = pts.map((pt, idx) => adjustPointOnDisplay(pt, devPts[idx]))
                                    .filter((pt) => pt);
-
             DrawUtil.fillPath(ctx, color, devPtAll, true, renderOptions);
+        } else if (inDisplay > 0) {
+            drawParams.style = Style.STANDARD;
+            drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
         }
     }
 
-    //drawCompositeText(drawObj, ctx, plot, drawParams);
+    drawCompositeText(drawObj, ctx, plot, drawParams);
 }
 
 

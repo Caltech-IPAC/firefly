@@ -26,6 +26,7 @@ import {modifyRequestForWcsMatch} from './WcsMatchTask.js';
 import WebGrid from '../../drawingLayers/WebGrid.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
+import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -333,8 +334,10 @@ export function addDrawLayers(request, plot ) {
                     dispatchAttachLayerToPlot(dl.drawLayerId, plotId);
                 }
             } else if (dl.canAttachNewPlot) {
-                const visibility = dl.drawLayerTypeId === HiPSGrid.TYPE_ID ? false : true;
-                dispatchAttachLayerToPlot(dl.drawLayerId, plotId, false, visibility);
+                const visibility = (dl.drawLayerTypeId === HiPSGrid.TYPE_ID) ||
+                                    (dl.drawLayerTypeId === HiPSMOC.TYPE_ID && isEmpty(dl.visiblePlotIdAry))
+                                    ? false : true;
+                dispatchAttachLayerToPlot(dl.drawLayerId, plotId,  true, visibility, false);
             }
         });
     });

@@ -32,7 +32,8 @@ import {dispatchChangeHiPS} from '../ImagePlotCntlr';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
-import {getHiPSMocTable, addNewMocLayer} from '../HiPSMocUtil.js';
+import {getHiPSMocTable, addNewMocLayer, makeMocTableId} from '../HiPSMocUtil.js';
+import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 
 const PROXY= true;
 
@@ -248,14 +249,25 @@ export function makePlotHiPSAction(rawAction) {
 
 function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
     const mocUrl = hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile;
+    const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
+    const tblId = makeMocTableId(ivoid);
+    let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tblId);
+    if (dl) {
+        if (plot.plotId) {
+            dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, false, false);
+        }
+        return;
+    }
 
+//const t0 = performance.now();
     getHiPSMocTable(mocUrl, ivoid).then((tableModel) => {
         const {tbl_id} = tableModel;
         const {data} = get(tableModel, ['tableData']) || {};
         const moc_nuniq_nums = data.map((row) => row[0]);
-
+//const t1 = performance.now();
+//console.log('moc fits load took ' + (t1-t0) + ' millisec');
         if (!isEmpty(data)) {
-            const dl =  addNewMocLayer(moc_nuniq_nums, tbl_id, plot);
+            dl =  addNewMocLayer(moc_nuniq_nums, tbl_id, plot.plotId);
             if (dl && plot.plotId) {
                 dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, false);
             }

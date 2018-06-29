@@ -456,3 +456,29 @@ export function getPropertyItem(properties, pkey) {
         return properties[pkey];
     }
 }
+
+/**
+ * check if tile1 (norder1 & npix1) is within tile2 (norder2 & npix2)
+ * @param norder1
+ * @param npix1
+ * @param norder2
+ * @param npix2
+ * @returns {boolean}
+ */
+export function isTileInside(norder1, npix1, norder2, npix2) {
+    // make norder1 as the lower order
+    if (norder1 === norder2) {
+        return npix1 === npix2;
+    }
+
+    if (norder1 < norder2) {
+        return false;
+    }
+
+    // norder1 > norder2
+    const subTotal = 4**(norder1-norder2);
+    const base_npix = npix2*subTotal;
+
+    return (npix1 >= base_npix) && (npix1 < (base_npix+subTotal));
+
+}
