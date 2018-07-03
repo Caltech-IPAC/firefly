@@ -7,8 +7,7 @@ import FieldGroupCntlr, {INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntl
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
-import RangeValues, {STRETCH_LINEAR, STRETCH_ASINH, PERCENTAGE, ABSOLUTE, SIGMA, ZSCALE} from './../RangeValues.js';
-import {toBoolean} from '../../util/WebUtil.js';
+import RangeValues, {STRETCH_LINEAR, PERCENTAGE, ABSOLUTE, SIGMA, ZSCALE} from './../RangeValues.js';
 
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
@@ -61,9 +60,6 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
                 return !fields[key].mounted ? true :  fields[key].valid;
             } );
             if (!valid) return fields;
-            if (['asinhQ','algorithm', 'zscale'].includes(action.payload.fieldKey)) {
-                fields = syncAsinhFields(fields,fitsData);
-            }
             return syncFields(fields,makeRangeValuesFromFields(fields),fitsData);
             break;
 
@@ -80,32 +76,6 @@ const computeColorPanelState= function(fields, plottedRV, fitsData, band, action
 
 };
 
-/**
- * For asinh algorithm if set upperRange that would enable to use full color range.
- * Finds xMax for which 0.1 * asinh(Q*(xDataMax-xDataMin)/(xMax-xDataMin)) / asinh(0.1*Q) = 1
- * @param fields
- * @param fitsData
- */
-function syncAsinhFields(fields,fitsData) {
-    // use double equal to handle string to number comparision
-    if (toBoolean(sessionStorage.getItem('autoAsinh')) && fields.algorithm.value == STRETCH_ASINH && fields.zscale.value !== 'zscale') {
-
-        const qvalue = Number.parseFloat(fields.asinhQ.value);
-
-        const xMax = fitsData.dataMin +
-            (fitsData.dataMax - fitsData.dataMin) * qvalue / Math.sinh(10 * Math.asinh(0.1 * qvalue));
-        if (xMax > fitsData.dataMin && xMax <= fitsData.dataMax) {
-            const newFields = clone(fields);
-
-            newFields.lowerRange= cloneWithValue(fields.lowerRange, 0);
-            newFields.lowerWhich = cloneWithValue(fields.lowerWhich, PERCENTAGE);
-            newFields.upperRange= cloneWithValue(fields.upperRange, xMax);
-            newFields.upperWhich = cloneWithValue(fields.upperWhich, ABSOLUTE);
-            return newFields;
-        }
-    }
-    return fields;
-}
 
 /**
  * Sync the fields so that are consistent with the passed RangeValues object.
@@ -284,7 +254,7 @@ var getFieldInit= function() {
 
         asinhQ: {
             fieldKey: 'asinhQ',
-            validator: Validate.floatRange.bind(null, 0, 30, 4, 'Q'),
+            validator: Validate.floatRange.bind(null, 0, Number.MAX_VALUE, 4, 'Q'),
             tooltip: 'The asinh softening parameter. Small Q values result in a linear stretch. Large values make a log stretch.',
             label: 'Q:'
         },

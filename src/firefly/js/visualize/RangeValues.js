@@ -46,13 +46,12 @@ const boundsStrToConst = {
     sigma: SIGMA
 };
 
-
 export class RangeValues {
     constructor( lowerWhich= PERCENTAGE,
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
-                 asinhQValue=10.0,
+                 asinhQValue=NaN,
                  gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
@@ -146,7 +145,7 @@ export class RangeValues {
                    lowerValue= 1.0,
                    upperWhich,
                    upperValue= 99.0,
-                   asinhQValue= 10.0,
+                   asinhQValue= NaN,
                    gammaValue=2.0,
                    algorithm= STRETCH_LINEAR,
                    zscaleContrast= 25,
@@ -182,7 +181,7 @@ export class RangeValues {
                 lowerValue= 1.0,
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
-                asinhQValue=10.0,
+                asinhQValue=NaN,
                 gammaValue=2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,

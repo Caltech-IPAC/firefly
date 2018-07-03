@@ -25,7 +25,6 @@ import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
-import {toBoolean} from '../../util/WebUtil.js';
 
 
 const LABEL_WIDTH= 105;
@@ -200,8 +199,8 @@ function suggestedValuesPanel( plot,band ) {
 
     const  fitsData= plot.webFitsData[band.value];
     const {dataMin, dataMax} = fitsData;
-    const dataMaxStr = `DataMax: ${numeral(dataMax).format(precision6Digit)} `;
-    const dataMinStr = `DataMin: ${numeral(dataMin).format(precision6Digit)}`;
+    const dataMaxStr = `Data Max: ${numeral(dataMax).format(precision6Digit)} `;
+    const dataMinStr = `Data Min: ${numeral(dataMin).format(precision6Digit)}`;
 
     return (
         <div style={style}>
@@ -345,10 +344,10 @@ function renderGamma(fields) {
 }
 
 const asinhSliderMarks = {
- 0: '0', 5: '5', 10: '10', 15: '15', 20: '20', 25: 'InF'
+ 0: '0', 5: '5', 10: '10', 15: '15', 20: '20'
 };
 
-
+const ASINH_Q_MAX_SLIDE_VAL = 20;
 
 function renderAsinH(fields, bandReplot) {
     const {zscale}= fields;
@@ -356,63 +355,30 @@ function renderAsinH(fields, bandReplot) {
     const qvalue = get(fields, ['asinhQ', 'value'], 10.0);
     const label = `Q: ${Number.parseFloat(qvalue).toFixed(1)} `;
 
-    const autorange = (zscale.value==='zscale') ? null : <Autorange auto={sessionStorage.getItem('autoAsinh')}/>;
-
     return (
-        <div>
+        <div style={{paddingBottom: 60}}>
             {range}
-            <span style={{float:'right', paddingRight:15, opacity:.4, textAlign: 'center' }}>
-                Q = 0 results in linear; Q = InF in log stretch
-            </span>
-            <div style={{paddingTop:2}}/>
+            <div style={{paddingTop: 5, paddingRight: 15, opacity: .4, textAlign: 'center'}}>
+                Q=0 for linear stretch;<br/> increase Q to make brighter features visible
+            </div>
             <RangeSlider fieldKey='asinhQ'
                          min={0}
-                         minStop={0.1}
-                         max={25}
-                         maxStop={25}
+                         minStop={0}
+                         max={ASINH_Q_MAX_SLIDE_VAL}
+                         maxStop={ASINH_Q_MAX_SLIDE_VAL}
                          marks={asinhSliderMarks}
-                         step={0.2}
+                         step={0.1}
                          slideValue={qvalue}
                          label={label}
                          labelWidth={60}
-                         wrapperStyle={{marginTop: 15, marginBottom: 20, marginRight: 15}}
+                         wrapperStyle={{marginTop: 10, marginBottom: 20, marginRight: 15}}
                          decimalDig={1}
                          onValueChange={bandReplot}
             />
-            {autorange}
         </div>
     );
 }
 
-class Autorange extends PureComponent {
-
-    constructor(props) {
-        super(props);
-        this.state = {auto: toBoolean(props.auto)};
-    }
-
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.auto != this.props.auto) {
-            this.setState({auto: toBoolean(nextProps.auto)});
-        }
-    }
-
-    render() {
-        const {auto} = this.state;
-        const toggleAuto = () => {
-            const newVal = !auto;
-            sessionStorage.setItem('autoAsinh', newVal);
-            this.setState({auto: newVal});
-        };
-        return (
-            <div style={{marginRight: 20, textAlign: 'center'}}>
-                <input type='checkbox' name='autoAsinh' checked={auto}
-                       onChange={toggleAuto}
-                /> Autofill for full range
-            </div>
-        );
-    }
-}
 
 function getReplotFunc(groupKey, band) {
 

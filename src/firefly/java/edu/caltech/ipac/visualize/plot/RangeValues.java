@@ -27,7 +27,7 @@ public class RangeValues implements Cloneable, Serializable {
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
 
-    public static final double ASINH_Q =10.0;
+    public static final double ASINH_Q =  Double.NaN; // if NaN, Q will be estimated based on range;
     public static final double GAMMA=2.0;
 
     public static final String LINEAR_STR= "Linear";
@@ -212,6 +212,7 @@ public class RangeValues implements Cloneable, Serializable {
 
    //LZ 05/21/15 add the following two lines
     public double getAsinhQValue() { return _asinhQValue; }
+    public void setAsinhQValue(double val) { _asinhQValue = val; }
     public double getGammaValue() { return _gammaValue; }
 
     public int    getLowerWhich() { return _lowerWhich; }
