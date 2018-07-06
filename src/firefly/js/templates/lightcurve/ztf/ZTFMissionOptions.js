@@ -1,15 +1,12 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get,  set, isNil} from 'lodash';
-import {RadioGroupInputField} from '../../../ui/RadioGroupInputField.jsx';
 import {getCellValue, getTblById, getColumnIdx, smartMerge, getColumns, COL_TYPE} from '../../../tables/TableUtil.js';
 import {makeFileRequest} from '../../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../../tables/SortInfo.js';
 import {getInitialDefaultValues,renderMissionView,validate,getTimeAndYColInfo,fileUpdateOnTimeColumn,setValueAndValidator} from '../LcUtil.jsx';
 import {LC} from '../LcManager.js';
-import {DownloadOptionPanel, DownloadButton} from '../../../ui/DownloadDialog.jsx';
-import {ValidationField} from '../../../ui/ValidationField.jsx';
-import {DL_DATA_TAG} from '../LcConverterFactory.js';
+
 
 
 const labelWidth = 80;
@@ -155,6 +152,7 @@ export function ztfOnFieldUpdate(fieldKey, value) {
  * @param cutoutSizeInDeg
  * @returns {XML}
  */
+/*
 export function ztfDownloaderOptPanel (mission, cutoutSizeInDeg) {
     const currentTime = (new Date()).toLocaleString('en-US', { hour12: false });
 
@@ -188,4 +186,4 @@ export function ztfDownloaderOptPanel (mission, cutoutSizeInDeg) {
             </DownloadOptionPanel>
         </DownloadButton>
     );
-}
+}*/

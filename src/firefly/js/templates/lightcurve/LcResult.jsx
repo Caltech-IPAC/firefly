@@ -13,7 +13,7 @@
  */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {pick, get, isEmpty, cloneDeep} from 'lodash';
+import {pick, get,set, isEmpty, cloneDeep} from 'lodash';
 import SplitPane from 'react-split-pane';
 import {flux} from '../../Firefly.js';
 import {LO_VIEW, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
@@ -24,9 +24,8 @@ import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {ValidationField} from '../../ui/ValidationField.jsx';
 import {LcImageToolbar} from './LcImageToolbar.jsx';
-import {DownloadOptionPanel, DownloadButton} from '../../ui/DownloadDialog.jsx';
+import { DownloadButton} from '../../ui/DownloadDialog.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
@@ -36,11 +35,19 @@ import {dispatchMultiValueChange, dispatchRestoreDefaults}  from '../../fieldGro
 import {logError} from '../../util/WebUtil.js';
 import {getConverter, getMissionName,  DL_DATA_TAG} from './LcConverterFactory.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
-
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import { getTypeData,WORKSPACE} from '../../ui/DownloadOptionsDialog.jsx';
 const resultItems = ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'searchDesc', 'images',
     LC.MISSION_DATA, LC.GENERAL_DATA, 'periodState'];
-
-
+import {getTblInfoById} from '../../tables/TableUtil.js';
+import {DataTagMeta} from '../../tables/TableRequestUtil.js';
+import {makeTblRequest} from '../../tables/TableRequestUtil.js';
+import {dispatchPackage} from '../../core/background/BackgroundCntlr.js';
+import {IRSADownloadOptionPanel} from '../../ui/IRSADownloadOptionalPanel';
+import {SelectInfo} from '../../tables/SelectInfo.js';
+import {WS_SERVER_PARAM,getWorkspacePath} from  '../../visualize/WorkspaceCntlr.js';
+import {ServerParams} from '../../data/ServerParams.js';
+import {LcDownloadPanel } from './LcDownloadPanel.jsx';
 export class LcResult extends PureComponent {
 
     constructor(props) {
@@ -134,11 +141,118 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
     const mission = getMissionName(converterId) || 'Mission';
     const showImages = isEmpty(imagePlot);
 
+
     // convert the default Cutout size in arcmin to deg for WebPlotRequest, expected to be string in download panel
     const cutoutSizeInDeg = (convertAngle('arcmin','deg', cutoutSize)).toString();
     const currentTime =  (new Date()).toLocaleString('en-US', { hour12: false });
-    const style = {width: 223};
-    const defaultOptPanel = (m, c) => {
+
+    const defaultOptPanel = (mission, cutoutSize) => {
+
+        const fKeyDef = {
+            fileName: {fKey: 'fileName', label: mission+':'},
+            location: {fKey: 'fileLocation', label: 'File Location:'},
+            wsSelect: {fKey: 'wsSelect', label: ''},
+            overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
+        };
+
+        const labelWidth = 110;
+        const defValues = {
+            [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, `${mission}_Files: ${currentTime}`,
+                'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
+            [fKeyDef.location.fKey]: Object.assign(getTypeData(fKeyDef.location.fKey, 'isLocal',
+                'select the location where the file is downloaded to', fKeyDef.location.label, labelWidth), {validator: null}),
+            [fKeyDef.wsSelect.fKey]: Object.assign(getTypeData(fKeyDef.wsSelect.fKey, '',
+                'workspace file system', fKeyDef.wsSelect.label, labelWidth), {validator: null}),
+            [fKeyDef.overWritable.fKey]: Object.assign(getTypeData(fKeyDef.overWritable.fKey, '0',
+                'File is overwritable', fKeyDef.overWritable.label, labelWidth), {validator: null})
+        };
+
+        const rParams = {fKeyDef, defValues, mission};
+
+        const onSearchSubmit = (options) => {
+            var {request, selectInfo} = getTblInfoById(LC.RAW_TABLE);
+            const {fileLocation, wsSelect, fileName} = options || {};
+
+            const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
+            const {FileGroupProcessor} = dlParams;
+            const Title = dlParams.Title || options.Title;
+            const dreq = makeTblRequest(FileGroupProcessor, Title, Object.assign(dlParams, {cutoutSize}, options));
+            request = set(cloneDeep(request), DataTagMeta, DL_DATA_TAG);
+
+            if (isWorkspace()){
+                const zipFileName = fileName.replace('/', '_').split(':')[0] + '.zip';
+                const params = {
+                    wsCmd: ServerParams.WS_PUT_IMAGE_FILE,
+                    [WS_SERVER_PARAM.currentrelpath.key]:getWorkspacePath(wsSelect, zipFileName),
+                    [WS_SERVER_PARAM.newpath.key]: zipFileName,
+                    [ServerParams.COMMAND]: ServerParams.WS_PUT_IMAGE_FILE,
+                    [WS_SERVER_PARAM.should_overwrite.key]: true};
+                dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString(), true, params);
+            }
+            else{
+                dispatchPackage(dreq, request, SelectInfo.newInstance(selectInfo).toString());
+            }
+
+        };
+        const dlParams={
+            MaxBundleSize: 200 * 1024 * 1024,    // set it to 200mb to make it easier to test multi-parts download.  each wise image is ~64mb
+                FilePrefix: `${mission}_Files`,
+                BaseFileName: `${mission}_Files`,
+                DataSource: `${mission} images`,
+                FileGroupProcessor: 'LightCurveFileGroupsProcessor'
+        };
+        const children = (<div>
+                {cutoutSize &&
+                <ListBoxInputField
+                    wrapperStyle={{marginTop: 5}}
+                    fieldKey ='dlCutouts'
+                    initialState = {{
+                        tooltip: 'Download Cutouts Option',
+                        label : 'Download:'
+                    }}
+                    options = {[
+                        {label: 'Specified Cutouts', value: 'cut'},
+                        {label: 'Original Images', value: 'orig'}
+                    ]}
+                    labelWidth = {110}
+                />
+                }
+                <ListBoxInputField
+                    wrapperStyle={{marginTop: 5}}
+                    fieldKey ='zipType'
+                    initialState = {{
+                        tooltip: 'Zip File Structure',
+                        label : 'Zip File Structure:'
+                    }}
+                    options = {[
+                        {label: 'Structured (with folders)', value: 'folder'},
+                        {label: 'Flattened (no folders)', value: 'flat'}
+                    ]}
+                    labelWidth = {labelWidth}
+                />
+
+            </div>
+        );
+
+
+        return (
+
+            <DownloadButton>
+                 <IRSADownloadOptionPanel
+                     groupKey = {mission}
+                     dlParams = {dlParams}
+                     children = {children}
+                     submitRequest = {(options)=>onSearchSubmit(options)}
+                     title = {'Image Download Options'}
+                     rParams={rParams}
+                 >
+                 </IRSADownloadOptionPanel>
+            </DownloadButton>
+
+        );
+
+    };
+    /*const defaultOptPanel = (m, c) => {
         return (
             <DownloadButton>
                 <DownloadOptionPanel
@@ -165,9 +279,9 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                 </DownloadOptionPanel>
             </DownloadButton>
         );
-    };
+    };*/
 
-    const downloaderOptPanel = convertData.downloadOptions || defaultOptPanel;
+   // const downloaderOptPanel =LcDownloadPanel; //convertData.downloadOptions || defaultOptPanel;
 
     let tsView = (err) => {
 
@@ -211,7 +325,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
             <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <div>{visToolbar}</div>
                 <div>
-                    {downloaderOptPanel(mission, cutoutSizeInDeg)}
+                    {LcDownloadPanel(mission, cutoutSizeInDeg)}
                 </div>
             </div>
             }

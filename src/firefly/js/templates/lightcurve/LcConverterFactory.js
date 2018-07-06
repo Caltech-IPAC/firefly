@@ -138,7 +138,7 @@ const converters = {
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid:isValidPTFTable,
-        downloadOptions: ptfDownloaderOptPanel,
+        //downloadOptions: ptfDownloaderOptPanel,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },
@@ -158,7 +158,7 @@ const converters = {
         webplotRequestCreator: getWebPlotRequestViaZTFIbe,
         shouldImagesBeDisplayed: () => {return true;},
         isTableUploadValid:isValidZTFTable,
-        downloadOptions: ztfDownloaderOptPanel,
+        //downloadOptions: ztfDownloaderOptPanel,
         yNamesChangeImage: [],
         showPlotTitle:getPlotTitle
     },

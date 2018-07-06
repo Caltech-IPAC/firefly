@@ -159,20 +159,21 @@ export class DownloadOptionsDialog extends PureComponent {
 
         return (
             <div style={{height: '100%', width: '100%'}}>
-                <div>
-                    {children}
-                </div>
                 <ValidationField
                     wrapperStyle={{marginTop: 10}}
                     size={40}
                     fieldKey={'fileName'}
                 />
-
+                <div>
+                    {children}
+                </div>
+                
                 {this.workspace && showLocation()}
 
                 <div  style={{width: dialogWidth, height: dialogHeight}}>
                     {where === WORKSPACE && showWorkspace()}
                 </div>
+
             </div>
         );
     }

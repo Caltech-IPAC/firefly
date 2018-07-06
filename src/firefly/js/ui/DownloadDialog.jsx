@@ -92,7 +92,7 @@ export class DownloadButton extends PureComponent {
     onClick() {
         const {tbl_id, selectInfo={}} = this.state;
         const selectInfoCls = SelectInfo.newInstance(selectInfo);
-        if (selectInfoCls.getSelectedCount()) {
+        if (selectInfoCls.getSelectedCount() || !this.props.requiredColsCount) {
             var panel = this.props.children ? React.Children.only(this.props.children) : <DownloadOptionPanel/>;
             panel = React.cloneElement(panel, {tbl_id});
             showDownloadDialog(panel);
@@ -105,12 +105,13 @@ export class DownloadButton extends PureComponent {
         const {selectInfo={}} = this.state;
         const selectInfoCls = SelectInfo.newInstance(selectInfo);
         const style = selectInfoCls.getSelectedCount() ? 'button std attn' : 'button std hl';
+        const buttonText = this.props.text||'Prepare Download';
         return (
             <button style={{display: 'inline-block'}}
                     type = 'button'
                     className = {style}
                     onClick = {this.onClick}
-            >Prepare Download</button>
+            >{buttonText}</button>
         );
     }
 }
@@ -119,8 +120,13 @@ export class DownloadButton extends PureComponent {
 DownloadButton.propTypes = {
     tbl_id      : PropTypes.string,
     tbl_grp     : PropTypes.string,
+    text        : PropTypes.string,
+    requiredColsCount: PropTypes.bool
 };
 
+DownloadButton.defaultProps = {
+    requiredColsCount: true
+};
 
 export class DownloadOptionPanel extends SimpleComponent {
 
@@ -252,7 +258,7 @@ DownloadOptionPanel.defaultProps= {
  * @param {Component}  panel  the panel to show in the popup.
  * @param {boolean} [show=true] show or hide this dialog
  */
-function showDownloadDialog(panel, show=true) {
+export function showDownloadDialog(panel, show=true) {
     const ttl = panel.props.title || DOWNLOAD_DIALOG_ID;
     if (show) {
         const content= (
