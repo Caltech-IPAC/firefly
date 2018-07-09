@@ -150,14 +150,14 @@
  * @prop {boolean} [expandable=true]
  * @prop {boolean} [removable=true]  true if this table can be removed from view.
  * @prop {boolean} [border=true]
- * @prop {boolean} [showUnits=true]
+ * @prop {boolean} [showToolbar=true]   when false, showFilters, showTitle, showPaging, showSave, and showFilterButton will be false as well.
  * @prop {boolean} [showFilters=false]
- * @prop {boolean} [showToolbar=true]
  * @prop {boolean} [showTitle=true]
- * @prop {boolean} [showPaging=true]
+ * @prop {boolean} [showPaging=true]    enable/disable paging feature.  When false, all data will be displayed.
  * @prop {boolean} [showSave=true]
- * @prop {boolean} [showOptionButton=true]
  * @prop {boolean} [showFilterButton=true]
+ * @prop {boolean} [showOptionButton=true]
+ * @prop {boolean} [showUnits=true]
  * @prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.
  * @prop {function[]}  [rightButtons]  an array of functions that returns a button-like component laid out on the right side of this table header.
  */
