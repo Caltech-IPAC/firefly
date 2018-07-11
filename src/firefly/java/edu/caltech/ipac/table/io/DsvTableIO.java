@@ -73,6 +73,7 @@ public class DsvTableIO {
                     dg.add(row);
                 }
             }
+            dg.trimToSize();
             return dg;
         }
         return null;

@@ -88,7 +88,7 @@ public class IpacTableWriter {
     }
 
     private static void save(PrintWriter out, DataGroup dataGroup, boolean ignoreSysMeta) throws IOException {
-        dataGroup.shrinkToFitData();
+        shrinkToFitData(dataGroup);
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();
 
@@ -110,6 +110,22 @@ public class IpacTableWriter {
             IpacTableUtil.writeRow(out, headers, dataGroup.get(i));
         }
         out.flush();
+    }
+
+    /**
+     * this method will shrink the Column's width to fit the maximum's width of the data
+     */
+    private static void shrinkToFitData(DataGroup dataGroup) {
+        for (DataType dt : dataGroup.getDataDefinitions()) {
+            String[] headers = {dt.getKeyName(), dt.getTypeDesc(), dt.getUnits(), dt.getNullString()};
+            int maxWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
+            for (int i=0; i<dataGroup.size(); i++) {
+                Object val = dataGroup.getData(dt.getKeyName(), i);
+                int dWidth = val == null ? 0 : dt.formatData(val).length();
+                if (dWidth > maxWidth) maxWidth = dWidth;
+            }
+            dt.setMaxDataWidth(maxWidth);
+        }
     }
 
 //====================================================================

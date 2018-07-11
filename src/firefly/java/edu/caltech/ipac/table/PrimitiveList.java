@@ -20,6 +20,7 @@ public interface PrimitiveList {
     void set(int idx, Object val);
     int size();
     void clear();
+    void trimToSize();
 
     default void add(Object val) {
         set(size(), val);
@@ -62,9 +63,9 @@ public interface PrimitiveList {
             return data.size();
         }
 
-        public void clear() {
-            data.clear();
-        }
+        public void clear() { data.clear(); }
+
+        public void trimToSize() { data.trimToSize(); }
     }
 
     public static class Doubles implements PrimitiveList {
@@ -107,6 +108,12 @@ public interface PrimitiveList {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
         }
+
+        public void trimToSize() {
+            if (size < data.length) {
+                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            }
+        }
     }
 
     public static class Floats implements PrimitiveList {
@@ -143,6 +150,12 @@ public interface PrimitiveList {
             }
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
+            }
+        }
+
+        public void trimToSize() {
+            if (size < data.length) {
+                data = (size == 0) ? null : Arrays.copyOf(data, size);
             }
         }
     }
@@ -183,6 +196,12 @@ public interface PrimitiveList {
                 data = Arrays.copyOf(data, newCapacity(minCapacity,data.length));
             }
         }
+
+        public void trimToSize() {
+            if (size < data.length) {
+                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            }
+        }
     }
 
     public static class Integers implements PrimitiveList {
@@ -221,6 +240,12 @@ public interface PrimitiveList {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
         }
+
+        public void trimToSize() {
+            if (size < data.length) {
+                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            }
+        }
     }
 
     public static class Booleans implements PrimitiveList {
@@ -257,6 +282,12 @@ public interface PrimitiveList {
             }
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
+            }
+        }
+
+        public void trimToSize() {
+            if (size < data.length) {
+                data = (size == 0) ? null : Arrays.copyOf(data, size);
             }
         }
     }

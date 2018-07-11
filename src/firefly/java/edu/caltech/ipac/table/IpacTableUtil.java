@@ -389,7 +389,6 @@ public class IpacTableUtil {
                     }
 
                     row.setDataElement(dt, dt.convertStringToData(val));
-                    dt.ensureMaxDataWidth(val.length());
 
                     offset = endoffset;
                 }
@@ -499,13 +498,6 @@ public class IpacTableUtil {
         tableDef.setRowStartOffset(dataStartOffset);
         if (attribs.size() > 0) {
             tableDef.setKeywords(attribs);
-        }
-        if (tableDef.getCols() != null) {
-            for(DataType dt: tableDef.getCols()) {
-                String[] headers = {dt.getKeyName(), dt.getTypeDesc(), dt.getUnits(), dt.getNullString()};
-                int hWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
-                dt.ensureMaxDataWidth(hWidth);
-            }
         }
         if (src != null) {
             long totalRow = tableDef.getLineWidth() == 0 ? 0 :

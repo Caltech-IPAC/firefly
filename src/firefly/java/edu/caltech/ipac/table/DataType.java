@@ -201,17 +201,10 @@ public class DataType implements Serializable, Cloneable {
         this.sortByCols = sortByCols;
     }
 
-    int getMaxDataWidth() {
-        return maxDataWidth;
-    }
+    public int getMaxDataWidth() { return maxDataWidth; }
 
-    void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
+    public void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
 
-    public void ensureMaxDataWidth(int dataWidth) {
-        if (dataWidth > maxDataWidth) {
-            setMaxDataWidth(dataWidth);
-        }
-    }
     /**
      * returns the formatted header of this column padded to max width
      * @return

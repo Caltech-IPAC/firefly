@@ -357,6 +357,7 @@ public final class FITSTableReader
                 }
             }
         }
+        dataGroup.trimToSize();
         return dataGroup;
     }
 

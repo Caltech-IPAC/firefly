@@ -221,23 +221,6 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         return size;
     }
 
-    /**
-     * this method will shrink the Column's width to fit the maximum's width of the data
-     */
-    public void shrinkToFitData() {
-        for (DataType dt : columns.values()) {
-            if (dt.getMaxDataWidth() <= 0) {
-                String[] headers = {dt.getKeyName(), dt.getTypeDesc(), dt.getUnits(), dt.getNullString()};
-                int hWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
-                dt.ensureMaxDataWidth(hWidth);
-                for (int i=0; i<size(); i++) {
-                    int vlength = getFormatedData(dt.getKeyName(), i).length();
-                    dt.ensureMaxDataWidth(vlength);
-                }
-            }
-        }
-    }
-
 //======================================================================
 //------------- Methods from TableConnectionList  ----------------------
 //======================================================================
@@ -408,34 +391,33 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         }
     }
 
-
-//====================================================================
-// data retrieval methods  .. protect this to keep DataGroup consistent
-//====================================================================
-
-    Object getData(String cname, int rowIdx) {
+    public Object getData(String cname, int rowIdx) {
         PrimitiveList data = getDataList(cname);
         return data == null ? null : data.get(rowIdx);
     }
 
-    void setData(String cname, int rowIdx, Object val) {
+    public void setData(String cname, int rowIdx, Object val) {
         PrimitiveList data = getDataList(cname);
         if (data != null) {
             data.set(rowIdx, val);
         }
     }
 
-    void addData(String cname, Object val) {
+    public void trimToSize() {
+        for (PrimitiveList plist : data.values()) {
+            plist.trimToSize();
+        }
+    }
+
+//====================================================================
+// data retrieval methods  .. protect this to keep DataGroup consistent
+//====================================================================
+
+    private void addData(String cname, Object val) {
         PrimitiveList data = getDataList(cname);
         if (data != null) {
             data.add(val);
         }
-    }
-
-    String getFormatedData(String cname, int rowIdx) {
-        DataType dt = getDataDefintion(cname);
-        Object val = getData(cname, rowIdx);
-        return dt == null ? null : dt.formatData(val);
     }
 
     private PrimitiveList getDataList(String cname) {

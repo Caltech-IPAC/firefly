@@ -264,7 +264,7 @@ public class VoTableReader {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        dg.trimToSize();
         return dg;
     }
 

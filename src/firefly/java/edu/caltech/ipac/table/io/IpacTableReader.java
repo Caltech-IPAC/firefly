@@ -137,6 +137,7 @@ public final class IpacTableReader {
             bufferedReader.close();
         }
         IpacTableUtil.consumeColumnInfo(outData);   // move column attributes into columns
+        outData.trimToSize();
         return outData;
     }
 
