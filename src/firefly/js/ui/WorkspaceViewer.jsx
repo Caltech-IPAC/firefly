@@ -11,7 +11,6 @@ import {dispatchWorkspaceCreatePath,
         dispatchWorkspaceMovePath,
         dispatchWorkspaceUpdate,
         getWorkspaceErrorMsg,
-        getWorkspaceStatus,
         getWorkspaceList, getFolderUnderLevel,
         getWorkspacePath, isWsFolder, WS_SERVER_PARAM, WS_HOME, WORKSPACE_LIST_UPDATE} from '../visualize/WorkspaceCntlr.js';
 import {CompleteButton} from './CompleteButton.jsx';
@@ -155,18 +154,19 @@ WorkspaceSave.propTypes = defaultWorkspaceFieldPropTypes;
  * A label next to the button to show the selected item.
  */
 export const WorkspacePickerPopup =  fieldGroupConnector(WorkspaceAsPopup,
-                                        ({fieldKey, onComplete, value={}, ...rest}, fireValueChange) => {
+                                        ({fieldKey='WorkspacePickerPopup', onComplete, value={}, ...rest}, fireValueChange) => {
                                             const onSelComplete = (v) => {
-                                                fireValueChange({value: v});
-                                                onComplete && onComplete(v);
-                                            };
+                                                        fireValueChange({value: v});
+                                                        onComplete && onComplete(v[fieldKey]);
+                                                    };
                                             return Object.assign({}, rest,
                                                 {
                                                     fieldKey,
                                                     keepSelect: true,
                                                     value: value[fieldKey],
                                                     onComplete: onSelComplete
-                                                });
+                                                }
+                                            );
                                         });
 
 WorkspacePickerPopup.propTypes = defaultWorkspaceFieldPropTypes;
@@ -254,14 +254,14 @@ function getUploadProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             value: params.displayValue,
-            onComplete: resultSuccess(fireValueChange, params.fileAnalysis, params.preloadWsFile)
+            onComplete: resultSuccess(fireValueChange, params.fileAnalysis, params.preloadWsFile, params.fieldKey)
         }
     );
 }
 
-function resultSuccess(fireValueChange, fileAnalysis, preloadWsFile) {
+function resultSuccess(fireValueChange, fileAnalysis, preloadWsFile, fieldKey=workspaceUploadDef.file.fkey) {
     return (request) => {
-        const itemValue = get(request, workspaceUploadDef.file.fkey);
+        const itemValue = get(request, fieldKey);
         const value= (itemValue && itemValue.startsWith(WS_HOME)) && itemValue.substring(WS_HOME.length);
         if (preloadWsFile) {
             handleUpload(itemValue, fireValueChange, fileAnalysis);
@@ -280,9 +280,9 @@ function resultSuccess(fireValueChange, fileAnalysis, preloadWsFile) {
 }
 
 
-function resultFail() {
+function resultFail(fieldKey=workspaceUploadDef.file.fkey) {
     return (request) => {
-        const name = getWorkspacePath(get(request, [workspaceUploadDef.file.fkey], ''));
+        const name = getWorkspacePath(get(request, [fieldKey], ''));
 
         workspacePopupMsg(name + ' is not a file to be read from workspace', 'Upload from workspace');
 
@@ -455,7 +455,7 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
                                 <CompleteButton
                                     groupKey={workspacePopupGroup}
                                     onSuccess={onComplete}
-                                    onFail={resultFail()}
+                                    onFail={resultFail(fieldKey)}
                                     text={'Open'}
                                     dialogId={workspacePopupId}
                                 />

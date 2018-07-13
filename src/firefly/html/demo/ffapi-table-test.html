@@ -1,3 +1,4 @@
+
 <!doctype html>
 
 <!--
@@ -48,9 +49,9 @@
         onFireflyLoaded = function (firefly) {
             /*----- setup and place a workspace button at div ID 'WS_input' */
             var onSelect = function (v) {
-                document.getElementById("WS_input").value = v.selFile;
+                document.getElementById("WS_input").value = v;
             }
-            firefly.util.renderDOM("WS_popup", firefly.ui.WorkspacePickerPopup,{onComplete: onSelect, fieldKey: 'selFile'});
+            firefly.util.renderDOM("WS_popup", firefly.ui.WorkspacePickerPopup,{onComplete: onSelect});
             /*---------------------------------------------------------------*/
         }
 
