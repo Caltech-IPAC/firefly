@@ -4,7 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
+import {SingleColumnMenu, DropDownSubMenu} from '../../ui/DropDownMenu.jsx';
 import {ToolbarButton,
         DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
 import { dispatchCreateMarkerLayer, dispatchCreateFootprintLayer } from '../DrawLayerCntlr.js';
@@ -45,37 +45,36 @@ export function addFootprintDrawLayer(pv, {footprint, instrument}) {
 }
 
 export function MarkerDropDownView({plotView:pv}) {
-    var enabled = !!pv;
+    const enabled = !!pv;
     var sep = 1;
 
+    const footprintCmdJSX = (text, footprint, instrument) => {
+        var key = footprint + (instrument ? `_${instrument}`: '');
+        var fpInfo = {footprint, instrument};
 
-    var footprintCommands = () => {
-        var footprintCmdJSX = (text, footprint, instrument) => {
-            var addText = `Add ${text}`;
-            var key = footprint + (instrument ? `_${instrument}`: '');
-            var fpInfo = {footprint, instrument};
-
-            return (<ToolbarButton key={key}
-                                   text={addText}
-                                   enabled={enabled} horizontal={false}
-                                   onClick={() => addFootprintDrawLayer(pv, fpInfo)}/>);
-        };
-
-        return FootprintList.reduce((prev, fp) => {
-            var cmd = FootprintFactory.footprintCommand(fp);
-
-            //SPITZER doesn't have any full footprint to overlay, skip
-            if (cmd && fp != 'SPITZER') prev.push(footprintCmdJSX(cmd, fp));
-            FootprintFactory.getInstruments(fp).reduce((cmdList, inst) => {
-                    cmd = FootprintFactory.instrumentCommand(fp, inst);
-                    if (cmd) cmdList.push(footprintCmdJSX(cmd, fp, inst));
-                    return cmdList;
-                }, prev);
-
-            prev.push(<DropDownVerticalSeparator key={sep++}/>);
-            return prev;
-        }, []);
+        return (<ToolbarButton key={key}
+                               text={text}
+                               enabled={enabled} horizontal={false}
+                               onClick={() => addFootprintDrawLayer(pv, fpInfo)}/>);
     };
+
+    const footprints = FootprintList.map((fp) => {
+            const fpDesc = FootprintFactory.footprintDesc(fp);
+            const instruments = FootprintFactory.getInstruments(fp);
+
+            if (instruments && instruments.length > 0) {
+                const items = instruments.map((inst) => footprintCmdJSX(inst, fp, inst));
+
+                //SPITZER doesn't have any full footprint to overlay, skip
+                if (fpDesc && fp !== 'SPITZER') {
+                    items.splice(0, 0, footprintCmdJSX('All', fp));  // add to the beginning of the array.
+                }
+
+                return <DropDownSubMenu key={fp} text={`Add ${fpDesc} footprint`}> {items} </DropDownSubMenu>;
+            } else {
+                return footprintCmdJSX(`Add ${fpDesc} footprint`, fp);
+            }
+        });
 
     return (
         <SingleColumnMenu>
@@ -84,7 +83,7 @@ export function MarkerDropDownView({plotView:pv}) {
                            enabled={enabled} horizontal={false}
                            onClick={()=> addNewDrawLayer(pv, 'marker')}/>
             <DropDownVerticalSeparator key={sep++}/>
-            {footprintCommands()}
+            {footprints}
         </SingleColumnMenu>
     );
 }
