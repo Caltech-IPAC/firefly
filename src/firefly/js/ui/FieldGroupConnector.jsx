@@ -145,7 +145,7 @@ export function fieldGroupConnector(FieldComponent,
     };
 
     if (connectorPropTypes) {
-        Object.assign(FGConnector.propTypes, connectorDefProps);
+        Object.assign(FGConnector.propTypes, connectorPropTypes);
     }
     if (connectorDefProps) {
         FGConnector.defaultProps = connectorDefProps;
