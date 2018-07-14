@@ -457,24 +457,29 @@ function drawRegionLine(regionObj) {
  * @returns {*}
  */
 function drawRegionPolygon(regionObj) {
-    var firstLine = drawOneLine(regionObj.wpAry[0], regionObj.wpAry[1], regionObj.options,
-                                commonProps);
-    var polygonObj = ShapeDataObj.makePolygon(regionObj.wpAry);
+    const {message} = regionObj.options || {};
+    let   polygonObj = ShapeDataObj.makePolygon(regionObj.wpAry);
 
     updateDrawobjProp( textProps, regionObj.options, polygonObj);
     polygonObj.textLoc = DEFAULT_TEXTLOC[RegionType.polygon.key];
 
-    polygonObj = Object.assign(polygonObj, pick(firstLine, commonProps));
+    if (message === 'polygon2') {
+        updateDrawobjProp(commonProps, regionObj.options, polygonObj);
+        polygonObj[doAry] = [];
+    } else {
+        const firstLine = drawOneLine(regionObj.wpAry[0], regionObj.wpAry[1], regionObj.options, commonProps);
+        polygonObj = Object.assign(polygonObj, pick(firstLine, commonProps));
 
-    var wpAry = [...regionObj.wpAry.slice(1), regionObj.wpAry[0]];
+        const wpAry = [...regionObj.wpAry.slice(1), regionObj.wpAry[0]];
 
-    var moreObj = wpAry.slice(0, -1).map( (wp, index) => {
-        var nextObj = drawOneLine(wp, wpAry[index+1], regionObj.options, []);
+        const moreObj = wpAry.slice(0, -1).map((wp, index) => {
+            var nextObj = drawOneLine(wp, wpAry[index + 1], regionObj.options, []);
 
-        return Object.assign(nextObj, pick(firstLine, commonProps));
-    });
+            return Object.assign(nextObj, pick(firstLine, commonProps));
+        });
 
-    polygonObj[doAry] = union([firstLine], moreObj);
+        polygonObj[doAry] = union([firstLine], moreObj);
+    }
     return [polygonObj];
 }
 

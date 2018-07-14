@@ -12,7 +12,7 @@ import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImageP
 import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
-import {has, isNil, get, set} from 'lodash';
+import {has, isNil, get, set, isEmpty} from 'lodash';
 import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
@@ -1127,7 +1127,7 @@ function getEdgePtOnGreatCircleFromCenterTo(pt, plot) {
 
     return getWorldPtByAngleFromProjectCenter(pt, plot, eastAngle);
 }
-
+let rm = 0;
 /**
  * draw polygon - draw outline of the polygon or fill the polygon
  * @param drawObj
@@ -1137,14 +1137,15 @@ function getEdgePtOnGreatCircleFromCenterTo(pt, plot) {
  * @param onlyAddToPath
  */
 function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
-    const {style, color} = drawParams;
+    const {style, color, lineWidth=1} = drawParams;
+    const isMocTile = drawObj.mocInfo;
 
-    if (style !== Style.FILL) {
+    if (style !== Style.FILL && !isEmpty(drawObj.drawObjAry)) {
         drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
         return;
     }
 
-    const adjustPointOnDisplay = (pt, devPt) => {
+    const adjustPointOnDisplay = (pt, devPt, style) => {
         if (!devPt) {
             const newPt = getEdgePtOnGreatCircleFromCenterTo(pt, plot);
             devPt = plot.getDeviceCoords(newPt);
@@ -1153,6 +1154,8 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
                 return devPt;
             }
          }
+
+        if (style !== Style.FILL) return devPt;
 
         const {x,y}= devPt;
         const {width,height}= plot.viewDim;
@@ -1164,40 +1167,82 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         return retPt;
     };
 
-    const isPolygonInDisplay = (pts, isMocTile) => {
+    const isPolygonInDisplay = (pts, isMocTile, style, plot) => {
         const devPts = pts.map((onePt) => plot.getDeviceCoords(onePt));
 
-        let inDisplay = 0;
-        if (isMocTile && pts.length > 4) {
-            for (let i = 0; i < pts.length; i++) {
-                if (devPts[i]) {
-                    inDisplay++;
+        if (style !== Style.FILL) {
+            const {width, height} = plot.viewDim;
+            let   notVisible = 0;
+            devPts.forEach((onePt) => {
+                if (!onePt || (onePt.x < 0) || (onePt.x > width) || (onePt.y < 0) || (onePt.y > height)) {
+                    notVisible++;
                 }
+            });
+
+            if (notVisible === devPts.length) {
+                return {devPts, inDisplay: 0};
             }
-        } else {
-            inDisplay = devPts.filter((onePt) => onePt).length;
         }
 
-        return {devPts, inDisplay};
+        let inDisplay = 0;
+        const newPts = devPts.map((onePt, idx) => {
+            const newPt = adjustPointOnDisplay(pts[idx], onePt);
+            if (newPt) {
+                inDisplay++;
+            }
+            return newPt;
+        });
+
+
+        return {devPts:newPts, inDisplay};
     };
 
     const {pts, renderOptions}= drawObj;
 
     if (pts) {
-       const isMocTile = drawObj.mocInfo;
-       const {devPts, inDisplay} = isPolygonInDisplay(pts, isMocTile);  // check if polygon is out of display
-        if (inDisplay === 4 ||
-            (inDisplay > 0 && isMocTile && get(drawObj, ['mocInfo', 'norder']) <= get(drawObj, ['mocInfo', 'displayOrder']))) {
-            const devPtAll = pts.map((pt, idx) => adjustPointOnDisplay(pt, devPts[idx]))
-                                   .filter((pt) => pt);
-            DrawUtil.fillPath(ctx, color, devPtAll, true, renderOptions);
-        } else if (inDisplay > 0) {
-            drawParams.style = Style.STANDARD;
-            drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
+
+        const {devPts, inDisplay} = isPolygonInDisplay(pts, isMocTile, style, plot);  // check if polygon is out of display
+
+        if ((style === Style.FILL)) {
+            if ((isMocTile && inDisplay > 0) || (inDisplay === devPts.length)) {
+                const devPtAll = devPts.filter((pt) => pt);
+                DrawUtil.fillPath(ctx, color, devPtAll, true, renderOptions);
+            }
+        } else {
+            if (inDisplay > 0) {
+                if (devPts.length === inDisplay) {
+                    DrawUtil.drawPath(ctx, color, lineWidth, devPts, true, renderOptions);
+                } else {
+                    // in case the polygon edge doesn't continue in display area
+                    for (let i = 0; i < devPts.length; ) {
+                        if (devPts[i]) {
+                            let   bDraw = true;
+                            let   j = i+1;
+
+                            for ( ; j < devPts.length; j++) {
+                                if (devPts[j]) continue;
+
+                                DrawUtil.drawPath(ctx, color, lineWidth, devPts.slice(i, j), false, renderOptions);
+                                i = j+1;
+                                bDraw = false;
+                                break;
+                            }
+                            if (bDraw) {
+                                DrawUtil.drawPath(ctx, color, lineWidth, devPts.slice(i, j), false, renderOptions);
+                                i = j;
+                            }
+                        } else {
+                            i++;
+                        }
+                    }
+                }
+            }
         }
     }
 
-    drawCompositeText(drawObj, ctx, plot, drawParams);
+    if (drawObj.text) {
+        drawCompositeText(drawObj, ctx, plot, drawParams);
+    }
 }
 
 

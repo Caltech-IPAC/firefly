@@ -7,7 +7,7 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import {get, set, isEmpty, cloneDeep} from 'lodash';
+import {get, set, isEmpty, cloneDeep, clone} from 'lodash';
 import MocObj, {createDrawObjsInMoc, getMaxDisplayOrder, setMocDisplayOrder} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
@@ -45,7 +45,6 @@ function creator(initPayload) {
     const id = get(initPayload, 'tbl_id') || get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'MOC Plot - '+id.replace('_moc', '')),
                                         options, drawingDef, actionTypes);
-
     dl.moc_nuniq_nums = initPayload.moc_nuniq_nums || [];
     dl.fromPlotId = get(initPayload, 'fromPlotId');
 
@@ -92,10 +91,20 @@ function getLayerChanges(drawLayer, action) {
         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
         case ImagePlotCntlr.ANY_REPLOT:
             pId = plotIdAry ? plotIdAry[0] : plotId;
+            const {visiblePlotIdAry=[]} = drawLayer;
 
-            if (pId) {
+            if (pId && visiblePlotIdAry.includes(pId)) {
                 set(dd[DataTypes.DATA], [pId], null);
                 return Object.assign({}, {drawData: dd});
+            }
+            break;
+        case DrawLayerCntlr.CHANGE_VISIBILITY:
+            if (action.payload.visible) {
+                pId = plotIdAry ? plotIdAry[0] : plotId;
+                if (pId) {
+                    set(dd[DataTypes.DATA], [pId], null);
+                    return Object.assign({}, {drawData: dd});
+                }
             }
             break;
         default:
@@ -106,7 +115,7 @@ function getLayerChanges(drawLayer, action) {
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
     const {visiblePlotIdAry=[]} = drawLayer;
-    const showMoc = (action.type !== DrawLayerCntlr.ATTACH_LAYER_TO_PLOT) || visiblePlotIdAry.includes(plotId);
+    const showMoc = (action.type !== DrawLayerCntlr.ATTACH_LAYER_TO_PLOT) && visiblePlotIdAry.includes(plotId);
     switch (dataType) {
         case DataTypes.DATA:    // based on the same drawObjAry to draw the region on each plot
             return (isEmpty(lastDataRet) && showMoc)
@@ -130,11 +139,12 @@ function createMocObj(dl) {
 function createMocData(dl, plotId) {
     const {moc_nuniq_nums = [], mocObj, mocStyle} = dl;
     const plot = primePlot(visRoot(), plotId);
-    let   newMocObj =  mocObj ? cloneDeep(mocObj) : MocObj.make(moc_nuniq_nums, {}, plot);  // create a new mocObj
-    const {minOrder=0, maxOrder=0} = get(mocObj, ['mocGroup']) || {};
-    const {displayOrder} = getMaxDisplayOrder(minOrder, maxOrder, plot, moc_nuniq_nums.length);
+    const {mocGroup} = mocObj || {};
+    let   newMocObj =  mocObj ? clone(mocObj) : MocObj.make(moc_nuniq_nums, {}, plot);  // keep original mocGroup
+    const {minOrder=0, maxOrder=0} = mocGroup || {};
+    const {displayOrder, hipsOrderLevel} = getMaxDisplayOrder(minOrder, maxOrder, plot);
 
-    newMocObj = setMocDisplayOrder(newMocObj, plot, displayOrder);
+    newMocObj = setMocDisplayOrder(newMocObj, plot, displayOrder, hipsOrderLevel);
     newMocObj.style =  get(mocStyle, plotId, Style.STANDARD);
     createDrawObjsInMoc(newMocObj, plot);
     return newMocObj;

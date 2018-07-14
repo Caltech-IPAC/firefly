@@ -70,14 +70,16 @@ export function getHiPSMocTable(mocUrl, id) {
     });
 }
 
+export const NSIDE2 = new Array(30).fill(0).map((v, i) => 2**i);
+export const NSIDE4 = new Array(20).fill(0).map((v, i) => 4**i);
 
 export function getMocNuniq(order, npix) {
-    return 4 * (4 ** Math.floor(order)) + Math.floor(npix);
+    return NSIDE4[order+1] + npix;
 }
 
 export function getMocOrderIndex(Nuniq) {
     const norder = Math.floor(Math.log2(Nuniq/4)/2);
-    const npix = Nuniq - 4 * (4**norder);
+    const npix = Nuniq - NSIDE4[norder + 1];
 
     return {norder, npix};
 }
@@ -139,7 +141,7 @@ export function computeSideCellsToOrder(maxOrder) {
     return sideCells;
 }
 
-export const NSIDE = new Array(26).fill(0).map((v, i) => 2**i);
+
 const sidePoints = {};
 const sideCorners = [[2, 3], [3, 0], [0, 1], [1, 2]];
 
@@ -168,10 +170,10 @@ export function getSidePointsNorder(order, npix, wpCorners) {
             corners = [2, 3, 0, 1].map((t) => wpCorners[t]);
             setPoints(order, npix, corners);
         }
-        retVal = wpCorners;
+        retVal = corners;
     }
 
-    return isEmpty(retVal) ? corners : retVal;
+    return retVal;
 }
 
 /**
@@ -200,6 +202,29 @@ export function initSidePoints() {
     }
 }
 
+
+/**
+ * get corners from healpix, some fixing on order 0, need more investigation later.
+ * @param wpCorners  in original order
+ * @param npix
+ * @param healpixCache
+ * @param coordsys
+ * @returns {*}      in original order
+ */
+export function fixCornersOrderZero(wpCorners, npix, healpixCache, coordsys) {
+    const base_npix = npix * 4;
+    const selCorners = [2, 3, 0, 1];
+    sideCells[1].forEach((ipx, idx) => {
+        const pt = healpixCache.makeCornersForPix(base_npix + ipx, 2, coordsys);
+        const cIdx = selCorners[idx];
+        if (pt.wpCorners[cIdx].x !== wpCorners[cIdx].x ||
+            pt.wpCorners[cIdx].y !== wpCorners[cIdx].y) {
+            wpCorners[cIdx] = pt.wpCorners[cIdx];
+        }
+    });
+    return wpCorners;
+}
+
 /**
  * return tile corner pixels.
  * Note: some tile of order 0 is fixed by side points of order 1, the calculation on the corners of
@@ -208,9 +233,9 @@ export function initSidePoints() {
  * @param npix
  * @param coordsys
  * @param healpixCache
- * @param corners
+ * @param corners  original corner
  * @param bKeep
- * @returns {*}
+ * @returns {*}  original corner
  */
 export function getCornerForPix(norder, npix, coordsys, healpixCache, corners, bKeep = true) {
     const ptAry = getSidePointsNorder(norder, npix, null);
@@ -218,23 +243,14 @@ export function getCornerForPix(norder, npix, coordsys, healpixCache, corners, b
     if (!isEmpty(ptAry)) {    // already exist
         const selCorners = getCornersFromSidePoints(ptAry);
 
-        return {wpCorners: selCorners};
+        return {wpCorners: [2, 3, 0, 1].map((i) => selCorners[i])};
     }
 
-    const {wpCorners} = corners ? {wpCorners: corners} : healpixCache.makeCornersForPix(npix, NSIDE[norder], coordsys);
+    const {wpCorners} = corners ? {wpCorners: corners} : healpixCache.makeCornersForPix(npix, NSIDE2[norder], coordsys);
 
     // correct the corners for order 0 to coincide with those of higher order
     if (norder === 0) {
-        const base_npix = npix * 4;
-        const selCorners = [2, 3, 0, 1];
-        sideCells[1].forEach((ipx, idx) => {
-            const pt = healpixCache.makeCornersForPix(base_npix + ipx, 2, coordsys);
-            const cIdx = selCorners[idx];
-            if (pt.wpCorners[cIdx].x !== wpCorners[cIdx].x ||
-                pt.wpCorners[cIdx].y !== wpCorners[cIdx].y) {
-                wpCorners[cIdx] = pt.wpCorners[cIdx];
-            }
-        });
+        fixCornersOrderZero(wpCorners, npix, healpixCache, coordsys);
     }
 
     if (bKeep) {
@@ -243,6 +259,9 @@ export function getCornerForPix(norder, npix, coordsys, healpixCache, corners, b
     return {wpCorners};
 }
 
+
+
+//const upMap = new Array(30).fill(0).map ((i, idx) => Math.floor(idx/2) + Math.floor(idx/3));
 /**
  * return the pixels around the MOC tile represented by polygon including at least 4 corners of the tile
  * more pixels between every two corners are produced for better rendering resolution
@@ -251,34 +270,32 @@ export function getCornerForPix(norder, npix, coordsys, healpixCache, corners, b
  * @param topOrder
  * @param coordsys
  * @param originWpCorners
+ * @param isAllSky
  * @returns {*}
  */
-
-export function getMocSidePointsNuniq(norder, npix, topOrder, coordsys, originWpCorners) {
+export function getMocSidePointsNuniq(norder, npix, topOrder, coordsys, originWpCorners, isAllSky) {
     const sPoints = getSidePointsNorder(norder, npix, originWpCorners);
     const healpixCache = getHealpixCornerTool();
     const newSidePoints = sPoints.slice();
-    const crtSidePointsOrder = Math.log2((newSidePoints.length / 4));  // order of current side points representation
 
-
-    if ((norder + crtSidePointsOrder) < topOrder) {
-        const dUp = (topOrder - norder);
+    if ((norder < topOrder)) {
+        const dUp = isAllSky ? Math.min((topOrder - norder), 8) : Math.floor((topOrder - norder +1)/2);
         const sideCells = computeSideCellsToOrder(dUp);
 
         // repeatedly insert the corner points into current side points representation order by order up
-        for (let i = crtSidePointsOrder + 1; i <= dUp ; i++) {    // order difference from norder
-            const nextOrder = norder + i ;             // order of next side points representation
-            const base_npix = npix * (4**i);
+
+        for (let i = 1; i <= dUp ; i++) {             // order difference from norder
+            const nextOrder = norder + i;             // order of next side points representation
+            const base_npix = npix * (NSIDE4[i]);
             const upCells = sideCells[i];
             const totalPtsOneSide = upCells.length / 4;
-            let   insertAt = 1;
+            let insertAt = 1;
 
             [0, 1, 2, 3].forEach((s) => {
                 const firstIdx = s * totalPtsOneSide + 1;
-                const lastIdx = firstIdx -1 + totalPtsOneSide;
-
+                const lastIdx = firstIdx - 1 + totalPtsOneSide;
                 for (let j = firstIdx; j <= lastIdx; j += 2) {
-                    const k = j%upCells.length;
+                    const k = j % upCells.length;
                     const nextNpix = base_npix + upCells[k];
                     const {wpCorners} = getCornerForPix(nextOrder, nextNpix, coordsys, healpixCache, null, false);
 
@@ -288,21 +305,34 @@ export function getMocSidePointsNuniq(norder, npix, topOrder, coordsys, originWp
             });
         }
 
-        setPoints(norder, npix, newSidePoints);
-        return newSidePoints;
-    } else if ((crtSidePointsOrder + norder) === topOrder) {
-        return newSidePoints;
-    } else if (topOrder > norder) {
-        const dDown = 2**(crtSidePointsOrder + norder - topOrder);
-        const newPoints = newSidePoints.filter((v, idx) => {
-            if (idx % dDown === 0) {
-                return v;
+/*
+        // insert the points directly to 'topCorner' level
+        const nextOrder = norder + dUp;             // order of next side points representation
+        const base_npix = npix * (NSIDE4[dUp]);
+        const upCells = sideCells[dUp];
+        const totalPtsOneSide = upCells.length / 4;
+        let insertAt = 0;
+
+        [0, 1, 2, 3].forEach((s) => {
+            const firstIdx = s * totalPtsOneSide + 1;
+            const lastIdx = firstIdx - 1 + totalPtsOneSide;
+            insertAt++;
+            for (let j = firstIdx; j <= lastIdx; j++) {
+                const k = j % upCells.length;
+                const nextNpix = base_npix + upCells[k];
+                const {wpCorners} = getCornerForPix(nextOrder, nextNpix, coordsys, healpixCache, null, false);
+
+                newSidePoints.splice(insertAt, 0, wpCorners[sideCorners[s][0]]);
+                insertAt += 1;
             }
         });
-        return newPoints;
+ */
+        setPoints(norder, npix, newSidePoints);
+        return newSidePoints;
     } else {
         return originWpCorners;
     }
+
 
 }
 
@@ -313,9 +343,7 @@ export function isTileVisibleByPosition(wpCorners, cc) {
 
     return selCorners.find((onePt) => {
         const devPt = cc.getDeviceCoords(onePt);
-        const bVisible = (devPt) ? ((devPt.x >= 0 && devPt.x <= width)&&(devPt.y >= 0 && devPt.y <= height)) : false;
-
-        return bVisible;
+        return (devPt) ? ((devPt.x >= 0 && devPt.x <= width)&&(devPt.y >= 0 && devPt.y <= height)) : false;
     });
 }
 
