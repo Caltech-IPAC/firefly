@@ -159,6 +159,7 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
 	    switch (ctype1End) {
             case '-TAN': p.maptype = GNOMONIC; break;
             case '-TPV': p.maptype = TPV; break;
+            case '-SIP':
             case '-SIN': p.maptype = ORTHOGRAPHIC; break;
             case '-NCP': p.maptype = NCP; break;
             case '-ARC': p.maptype = ARC; break;
