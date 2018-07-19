@@ -1,13 +1,10 @@
 
 .ff-MenuItem-dropDown {
     padding: 5px;
-    -moz-border-radius: 0 0 5px 5px;
-    -webkit-border-radius: 0 0 5px 5px;
     border-radius: 0 0 5px 5px;
     background-color: rgba(245,245,245,.97);
-    -webkit-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
-    -moz-box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
-    box-shadow: 0px 5px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+    min-width: 100px;
 }
 
 .ff-MenuItem-dropDown .menuItemText {
