@@ -39,6 +39,31 @@ export function getProp(key, def) {
     return get(GLOBAL_PROPS, [key], def);
 }
 
+/**
+ * returns an object of key:value where keyPrefix is removed from the keys.  i.e
+ * <code>
+ *      {
+ *          version_a: a_val,
+ *          version_b: b_val
+ *      }
+ *      getPropsWith('version_')  => {a: a_val, b: b_val}
+ * </code>
+ * @param keyPrefix
+ * @returns {*}
+ */
+export function getPropsWith(keyPrefix) {
+    /*global __PROPS__*/        // this is defined at build-time.
+    GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;
+    if (!GLOBAL_PROPS) return {};
+    return Object.entries(GLOBAL_PROPS)
+        .filter(([k,]) => k.startsWith(keyPrefix))
+        .reduce((rval, [k,v]) => {
+            const prop = k.substring(keyPrefix.length);
+            rval[prop] = v;
+            return rval;
+        }, {});
+}
+
 export function getModuleName() {
     return getProp('MODULE_NAME');
 }
@@ -403,7 +428,6 @@ export function downloadViaAnchor(url, filename) {
     downloadAnchor.href = url;
     downloadAnchor.click();
 }
-
 
 export function parseUrl(url) {
     const parser = document.createElement('a');
@@ -787,4 +811,17 @@ function removeEmpties(o) {
             delete o[k]; // The object had no properties, so delete that property
         }
     }
+}
+
+export function hashCode(str) {
+    let hash = 5381;
+    let i = str.length;
+
+    while(i) {
+        hash = (hash * 33) ^ str.charCodeAt(--i);
+    }
+    /* JavaScript does bitwise operations (like XOR, above) on 32-bit signed
+     * integers. Since we want the results to be always positive, convert the
+     * signed int to an unsigned by doing an unsigned bitshift. */
+    return hash >>> 0;
 }

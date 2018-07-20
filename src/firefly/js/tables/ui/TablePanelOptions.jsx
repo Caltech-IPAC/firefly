@@ -25,7 +25,7 @@ export class TablePanelOptions extends SimpleComponent  {
 
     render() {
         const {onChange, onOptionReset, tbl_ui_id} = this.props;
-        const {columns, pageSize, showUnits=false, showTypes=false, showFilters=false, showToolbar=true, optSortInfo, filterInfo} = this.state;
+        const {columns, pageSize, showUnits=false, showTypes=false, showFilters=false, showPaging=true, optSortInfo, filterInfo} = this.state;
 
         if (isEmpty(columns)) return false;
 
@@ -35,19 +35,7 @@ export class TablePanelOptions extends SimpleComponent  {
             <div className='TablePanelOptions'>
                 <div
                     style={{flexGrow: 0, marginBottom: 32, display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                    <div>
-                        {showToolbar &&
-                        <InputField
-                            validator={intValidator(1,10000)}
-                            tooltip='Set page size'
-                            label='Page Size:'
-                            labelStyle={{...labelStyle, width: 60}}
-                            size={3}
-                            value={pageSize+''}
-                            onChange={onPageSize}
-                            actOn={['blur','enter']}
-                        />
-                        }
+                    <div style={{display: 'inline-block', whiteSpace: 'nowrap'}}>
                         <div>
                             <div style={{...labelStyle, width: 44, marginLeft: 19}}>Show:</div>
                             <div style={labelStyle}><input type='checkbox'
@@ -55,8 +43,8 @@ export class TablePanelOptions extends SimpleComponent  {
                                                            checked={showUnits}/>Units
                             </div>
                             <div style={{...labelStyle, width: 80}}><input type='checkbox'
-                                                           onChange={(e) => onPropChanged(e.target.checked, 'showTypes')}
-                                                           checked={showTypes}/>Data Types
+                                                                           onChange={(e) => onPropChanged(e.target.checked, 'showTypes')}
+                                                                           checked={showTypes}/>Data Types
                             </div>
                             <div style={labelStyle}><input type='checkbox'
                                                            onChange={(e) => onPropChanged(e.target.checked, 'showFilters')}
@@ -64,6 +52,22 @@ export class TablePanelOptions extends SimpleComponent  {
                             </div>
                         </div>
                     </div>
+                    {showPaging &&
+                        <div style={{display: 'inline-block'}}>
+                            <div style={{marginTop: 17}}>
+                                <InputField
+                                    validator={intValidator(1,10000)}
+                                    tooltip='Set page size'
+                                    label='Page Size:'
+                                    labelStyle={{...labelStyle, width: 60}}
+                                    size={3}
+                                    value={pageSize+''}
+                                    onChange={onPageSize}
+                                    actOn={['blur','enter']}
+                                />
+                            </div>
+                        </div>
+                    }
                     <span>
                         <button type='button' className='TablePanelOptions__button' onClick={onOptionReset}
                                 title='Reset all options to defaults'>Reset</button>

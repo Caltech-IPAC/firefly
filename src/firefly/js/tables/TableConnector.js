@@ -9,18 +9,21 @@ import {SelectInfo} from './SelectInfo.js';
 
 export class TableConnector {
     
-    constructor({tbl_id, tbl_ui_id, tableModel, showUnits=true, showTypes=false, showFilters=false, pageSize}) {
+    constructor(tbl_id, tbl_ui_id, tableModel, options) {
+
         this.tbl_id = tbl_id || tableModel.tbl_id;
         this.tbl_ui_id = tbl_ui_id;
         this.tableModel = tableModel;
+        this.options = options;
 
+        const {pageSize, showUnits=true, showFilters=false, showTypes=false} = options || {};
         this.orig = {showUnits, showTypes, showFilters, pageSize};
     }
 
     onMount() {
         const {tbl_ui_id, tbl_id, tableModel} = this;
         if (!TblUtil.getTableUiByTblId(tbl_id)) {
-            TblCntlr.dispatchTableUiUpdate({tbl_ui_id, tbl_id});
+            TblCntlr.dispatchTableUiUpdate({tbl_ui_id, tbl_id, ...this.options});
             if (tableModel && !tableModel.origTableModel) {
                 set(tableModel, 'request.tbl_id', tbl_id);
                 const workingTableModel = cloneDeep(tableModel);
@@ -128,8 +131,8 @@ export class TableConnector {
                         showUnits, showTypes, showFilters});
     }
 
-    static newInstance({tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize}) {
-        return new TableConnector({tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize});
+    static newInstance(tbl_id, tbl_ui_id, tableModel, options) {
+        return new TableConnector(tbl_id, tbl_ui_id, tableModel, options);
     }
 }
 

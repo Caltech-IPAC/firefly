@@ -5,6 +5,7 @@ import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unse
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
+import {MAX_ROW} from './TableRequestUtil.js'
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
@@ -316,10 +317,15 @@ function tableSearch(action) {
         if (!action.err) {
             dispatch(action);
             var {request={}, options={}} = action.payload;
-            const {tbl_ui_id, backgroundable = false} = options;
+            TblUtil.fixRequest(request);
+            const {tbl_ui_id, backgroundable = false, showPaging=true} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
-            request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
+            if (showPaging) {
+                request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
+            } else {
+                request.pageSize = MAX_ROW;
+            }
             if (TblUtil.getTblById(tbl_id)) {
                 // table exists... this is a new search.  old data should be removed.
                 dispatchTableRemove(tbl_id);
@@ -342,7 +348,7 @@ function tableAddLocal(action) {
 
         Object.assign(tableModel, {isFetching: false});
         set(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
-        if (!tableModel.origTableModel) tableModel.origTableModel = tableModel;
+        if (!tableModel.origTableModel) tableModel.origTableModel = cloneDeep(tableModel);
         if (addUI) dispatchTblResultsAdded(tbl_id, title, options, tbl_ui_id);
         dispatch( {type: TABLE_REPLACE, payload: tableModel} );
         dispatchTableLoaded(Object.assign( TblUtil.getTblInfo(tableModel), {invokedBy: TABLE_FETCH}));
@@ -356,7 +362,7 @@ function tblResultsAdded(action) {
             var {tbl_id, title, options={}, tbl_ui_id} = action.payload;
 
             title = title || tbl_id;
-            options = Object.assign({tbl_group: 'main', removable: true}, options);
+            options = Object.assign({tbl_group: 'main', removable: true, setAsActive:true}, options);
             const pageSize = get(options, 'pageSize');
             if ( pageSize && !Number.isInteger(pageSize)) {
                 options.pageSize = parseInt(pageSize);
@@ -365,7 +371,9 @@ function tblResultsAdded(action) {
                 tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
                 dispatch({type: TBL_RESULTS_ADDED, payload: {tbl_id, title, tbl_ui_id, options}});
             }
-            dispatchActiveTableChanged(tbl_id, options.tbl_group);
+            if (options.setAsActive) {
+                dispatchActiveTableChanged(tbl_id, options.tbl_group);
+            }
         }
     };
 }
@@ -391,6 +399,7 @@ function tblRemove(action) {
 function highlightRow(action) {
     return (dispatch) => {
         const {tbl_id, highlightedRow, request={}} = action.payload;
+        TblUtil.fixRequest(request);
         var tableModel = TblUtil.getTblById(tbl_id);
         if (!tableModel || tableModel.error || highlightedRow < 0 || highlightedRow >= tableModel.totalRows) return;   // out of bound.. ignore.
         if (highlightedRow === tableModel.highlightedRow && !request.pageSize) return;   // nothing to change
@@ -425,6 +434,7 @@ function tableSelect(action) {
 function tableFetch(action) {
     return (dispatch) => {
         var {request, hlRowIdx} = action.payload;
+        TblUtil.fixRequest(request);
         const {tbl_id} = request;
 
         dispatch( updateMerge(action, 'payload', {tbl_id}) );
@@ -441,6 +451,7 @@ function tableSort(action) {
     return (dispatch) => {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
+            TblUtil.fixRequest(request);
             const {tbl_id} = request;
             const tableStub = setupTableOps(tbl_id, request);
             if (!tableStub) return;
@@ -472,6 +483,7 @@ function tableFilter(action) {
     return (dispatch) => {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
+            TblUtil.fixRequest(request);
             const {tbl_id} = request;
             const tableStub = setupTableOps(tbl_id, request);
             if (!tableStub) return;
@@ -508,6 +520,7 @@ function doTableFetch({request, hlRowIdx, dispatch, tbl_id}) {
 function tableFilterSelrow(action) {
     return () => {
         var {request={}, hlRowIdx, selected=[]} = action.payload || {};
+        TblUtil.fixRequest(request);
         const {tbl_id, filters} = request;
         const tableModel = TblUtil.getTblById(tbl_id);
         const filterInfoCls = FilterInfo.parse(filters);

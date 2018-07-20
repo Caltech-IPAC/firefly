@@ -50,7 +50,7 @@ public class Geom {
     double min_wgt = 0.5;
     int override_naxis1;
     int override_naxis2;
-    boolean n_override_naxis1 = false;
+    public boolean n_override_naxis1 = false;
     boolean n_override_naxis2 = false;
     String override_ctype1;
     boolean n_override_ctype1 = false;
@@ -137,7 +137,7 @@ public class Geom {
     float glop5;
 
 
-    ImageHeader open_in(FitsRead inFitsRead) throws
+    public ImageHeader open_in(FitsRead inFitsRead) throws
             FitsException, IOException, GeomException {
         //int stat;
         int i;

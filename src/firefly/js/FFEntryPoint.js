@@ -27,11 +27,9 @@ var options = {
         workspace : {showOptions: false},
     imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
         charts: {
-        multitrace: true,
             singleTraceUI: false
     },
     hips : {
-        useForCoverage: true,
             useForImageSearch: true,
             hipsSources: 'irsa,cds',
             defHipsSources: {source: 'irsa', label: 'IRSA Featured'},

@@ -102,9 +102,8 @@ TriViewImageSection.propTypes= {
 };
 
 export function launchImageMetaDataSega() {
-    const useHiPS= get(getAppOptions(), 'hips.useForCoverage',true);
     let coverageOps= get(getAppOptions(), 'coverage',{});
-    coverageOps= {...coverageOps, ...{viewerId:'coverageImages', ignoreCatalogs:true, useHiPS}};
+    coverageOps= {...coverageOps, ...{viewerId:'coverageImages', ignoreCatalogs:true}};
     startImageMetadataWatcher({viewerId: META_VIEWER_ID});
     startCoverageWatcher(coverageOps);
     startLayoutWatcher();

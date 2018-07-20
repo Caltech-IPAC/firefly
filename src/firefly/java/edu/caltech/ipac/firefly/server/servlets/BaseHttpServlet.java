@@ -31,7 +31,6 @@ public abstract class BaseHttpServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        VersionUtil.initVersion(config.getServletContext());  // can be called multiple times, only inits on the first call
         String allowFromValue = config.getInitParameter("AllowFrom");
         if (allowFromValue!=null) {
             allowAccess = false;        // if allowFromValue is given.. access is given based on it.

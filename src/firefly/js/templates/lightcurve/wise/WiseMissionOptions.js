@@ -114,6 +114,7 @@ export function isValidWiseTable(){
  * @type {string[]}
  */
 const xyColPattern = ['\\w*jd\\w*', 'w[1-4]mpro\\w*'];
+
 export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
@@ -121,7 +122,7 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
     const numericalCols = getColumns(rawTable, COL_TYPE.NUMBER).map((c) => c.name);
     let defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
-    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
+    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols, xyColPattern, rawTable,converterData );
     const defaultValues = {
         [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),
         [LC.META_FLUX_CNAME]: get(metaInfo, LC.META_FLUX_CNAME, defaultYColName),
@@ -161,4 +162,23 @@ export function wiseOnFieldUpdate(fieldKey, value) {
     } else if ([LC.META_FLUX_CNAME, LC.META_ERR_CNAME, LC.META_URL_CNAME, LC.META_FLUX_BAND].includes(fieldKey)) {
         return {[fieldKey]: value};
     }
+}
+
+export function wiseYColMappings(tbl_id, yCol) {
+    const tableModel = getTblById(tbl_id);
+
+    if (['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'].includes(yCol)) {
+        const yUnc = yCol.replace('mpro', 'sigmpro');
+        if (getColumnIdx(tableModel, yUnc)>=0) {
+            return {
+                // when using ycol for y, column value mapping is transparent:
+                // the limit is represented only by the annotation;
+                // when using an expression (dash instead of a point for upper limits),
+                // yTTLabelSrc needs to be set to avoid showing the truncated expression in point tooltip
+                y: `nvl2(${yUnc}, ${yCol}, NULL)`,
+                yMin: `nvl2(${yUnc}, NULL, ${yCol})`
+            };
+        }
+    }
+    return {y: yCol};
 }

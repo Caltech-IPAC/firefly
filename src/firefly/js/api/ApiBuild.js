@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
+import React from 'react';
 import {isString} from 'lodash';
 import {dispatchOnAppReady} from '../core/AppDataCntlr.js';
 import {ServerRequest } from '../data/ServerRequest.js';
@@ -16,9 +16,12 @@ import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
 import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
 import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import * as ComponentCntlr from '../core/ComponentCntlr.js';
 import {ApiExpandedView} from './ApiExpandedView.jsx';
 import {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer} from '../core/LayoutCntlr.js';
 import {dispatchAddSaga, dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {showWorkspaceDialog, WorkspacePickerPopup} from '../ui/WorkspaceViewer.jsx';
+import {FieldGroup} from '../ui/FieldGroup.jsx';
 
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
@@ -38,8 +41,8 @@ import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {ChartPanel} from '../charts/ui/ChartPanel.jsx';
 import {MultiChartViewer} from '../charts/ui/MultiChartViewer.jsx';
+import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 
-import {Histogram} from '../charts/ui/Histogram.jsx';
 import {PopupMouseReadoutMinimal} from  '../visualize/ui/PopupMouseReadoutMinimal.jsx';
 import {PopupMouseReadoutFull} from  '../visualize/ui/PopupMouseReadoutFull.jsx';
 
@@ -199,9 +202,11 @@ export function buildLowlevelAPI() {
         ChartsContainer,
         MultiChartViewer,
         ChartPanel,
-        Histogram,
+        PlotlyWrapper,
         PopupMouseReadoutMinimal,
-        PopupMouseReadoutFull
+        PopupMouseReadoutFull,
+        showWorkspaceDialog,
+        WorkspacePickerPopup: fieldGroupWrap(WorkspacePickerPopup)
     };
 
     const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );
@@ -254,4 +259,16 @@ function initExpandedView(div){
     }
     
     ApiUtil.renderDOM(expandedDivEl, ApiExpandedView);
+}
+
+function fieldGroupWrap(Component, groupKey='firefly-api-fieldgroup') {
+
+    return (props) => {
+        return (
+            <FieldGroup groupKey={groupKey}>
+                <Component {...props}/>
+            </FieldGroup>
+        );
+    };
+
 }

@@ -6,8 +6,8 @@ import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
-import {dispatchChartUpdate, dispatchChartHighlighted, getAnnotations, getChartData} from '../ChartsCntlr.js';
-import {isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
+import {dispatchChartUpdate, dispatchChartHighlighted, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
+import {flattenAnnotations, isScatter2d, handleTableSourceConnections, clearChartConn} from '../ChartUtil.js';
 
 const X_TICKLBL_PX = 60;
 const TITLE_PX = 30;
@@ -28,6 +28,15 @@ function adjustLayout(layout={}) {
     return layout;
 }
 
+function traceShallowCopy(trace) {
+    if (usePlotlyReact) {
+        return Object.assign({}, trace);
+    } else {
+        // whenever re-render happens, selectedpoints should be removed,
+        // otherwise the style of unselected points is not cleared will stay dimmed
+        return Object.assign({}, trace, {selectedpoints: null});
+    }
+}
 
 export class PlotlyChartArea extends Component {
 
@@ -90,7 +99,7 @@ export class PlotlyChartArea extends Component {
     }
 
     render() {
-        var {widthPx, heightPx, } = this.props;
+        const {widthPx, heightPx, } = this.props;
         const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = this.state;
         if (isLoading) {
             return (
@@ -112,12 +121,13 @@ export class PlotlyChartArea extends Component {
 
         // put the active trace after all inactive traces
 
+
         let pdata = data.reduce((rdata, e, idx) =>  {
-            (idx !== activeTrace) && rdata.push(Object.assign({}, e));
+            (idx !== activeTrace) && rdata.push(traceShallowCopy(e));
             return rdata;
         }, []);
 
-        pdata.push(Object.assign({}, data[activeTrace]));
+        pdata.push(traceShallowCopy(data[activeTrace]));
 
         //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
         let annotations = getAnnotations(this.props.chartId);
@@ -125,15 +135,17 @@ export class PlotlyChartArea extends Component {
             // highlight makes sense only for scatter at the moment
             // 3d scatter highlight and selected appear in front - not good: disable for the moment
             if (selected) {
-                pdata = pdata.concat([selected]);
+                pdata = pdata.concat([traceShallowCopy(selected)]);
                 if (annotations.length>0) {
-                    annotations = annotations.concat(get(selected, 'firefly.annotations'));
+                    const selectedAnnotations = flattenAnnotations(get(selected, 'firefly.annotations'));
+                    if (selectedAnnotations.length>0) { annotations = annotations.concat(selectedAnnotations); }
                 }
             }
             if (highlighted) {
-                pdata = pdata.concat([highlighted]);
+                pdata = pdata.concat([traceShallowCopy(highlighted)]);
                 if (annotations.length>0) {
-                    annotations = annotations.concat(get(highlighted, 'firefly.annotations'));
+                    const highlightedAnnotations = flattenAnnotations(get(highlighted, 'firefly.annotations'));
+                    annotations = annotations.concat(highlightedAnnotations);
                 }
             }
         }
@@ -250,12 +262,12 @@ function onSelect(chartId) {
                         changes: {'selection': {points, range: {x: [xMin, xMax], y: [yMin, yMax]}}}
                     });
                 }
-            } else {
-                const {selection} = getChartData(chartId);
-                if (selection) {
-                    // we need some change in plotly data or layout to remove the selection box - setting layout.dummy
-                    dispatchChartUpdate({chartId, changes: {'selection': undefined, 'layout.dummy': 0}});
-                }
+            }
+        } else {
+            const {selection} = getChartData(chartId);
+            if (selection) {
+                // we need some change in plotly data or layout to remove the selection box - setting layout.dummy
+                dispatchChartUpdate({chartId, changes: {'selection': undefined, 'layout.dummy': 0}});
             }
         }
     };

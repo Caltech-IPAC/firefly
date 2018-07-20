@@ -94,6 +94,7 @@ export function isValidPTFTable() {
  * @type {string[]}
  */
 const xyColPattern = ['obsmjd', 'mag_autocorr'];
+
 export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, converterData, layoutInfo) {
 
     // Update default values AND sortInfo and
@@ -102,7 +103,7 @@ export function ptfOnNewRawTable(rawTable, missionEntries, generalEntries, conve
     const numericalCols = getColumns(rawTable, COL_TYPE.NUMBER).map((c) => c.name);
     const defaultDataSource = (getColumnIdx(rawTable, converterData.dataSource) > 0) ? converterData.dataSource : numericalCols[3];
 
-    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols,xyColPattern,rawTable,converterData );
+    const {defaultCTimeName,defaultYColName } = getTimeAndYColInfo(numericalCols, xyColPattern, rawTable,converterData );
 
     const defaultValues = {
         [LC.META_TIME_CNAME]: get(metaInfo, LC.META_TIME_CNAME, defaultCTimeName),

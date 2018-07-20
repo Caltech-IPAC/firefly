@@ -22,6 +22,7 @@ const labelMap = {
     galactic: 'Gal:',
     eqb1950: 'Eq-B1950:',
     fitsIP: 'Image Pixel:',
+    zeroIP: '0 Based Pix:',
     pixelSize: 'Pixel Size:',
     sPixelSize: 'Screen Pixel Size:',
     healpixPixel: 'Pixel: ',
@@ -105,7 +106,10 @@ export function getReadoutElement(readoutItems, readoutKey) {
         case 'eqb1950' :
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, true);
         case 'fitsIP' :
-            return makeImagePtReturn(get(readoutItems, 'imagePt.value'));
+            // return makeImagePtReturn(get(readoutItems, 'imagePt.value'));  // - if we rollback, restore this line
+            return makeImagePtReturn(get(readoutItems, 'fitsImagePt.value'));
+        case 'zeroIP' :
+            return makeImagePtReturn(get(readoutItems, 'zeroBasedImagePt.value'));
         case 'healpixPixel' :
             const {healpixPixel}= readoutItems;
             return (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : '';

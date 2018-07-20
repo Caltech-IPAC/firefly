@@ -52,7 +52,7 @@ export class TablePanel extends PureComponent {
 
 
     setupInitState(props) {
-        var {tbl_id, tbl_ui_id, tableModel, ...rest} = props;
+        var {tbl_id, tbl_ui_id, tableModel, ...options} = props;
 
         if (!tbl_id && tableModel) {
             if (!tableModel.tbl_id) {
@@ -61,7 +61,7 @@ export class TablePanel extends PureComponent {
             tbl_id = tableModel.tbl_id;
         }
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
-        this.tableConnector = TableConnector.newInstance({tbl_id, tbl_ui_id, tableModel, ...rest});
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, options);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
         return Object.assign({}, this.props, uiState);
     }
@@ -235,15 +235,15 @@ TablePanel.propTypes = {
     tbl_id: PropTypes.string,
     tbl_ui_id: PropTypes.string,
     tableModel: PropTypes.object,
-    pageSize: PropTypes.number,
-    rowHeight: PropTypes.number,
-    selectable: PropTypes.bool,
-    expandedMode: PropTypes.bool,
-    expandable: PropTypes.bool,
-    border: PropTypes.bool,
     title: PropTypes.string,
+    rowHeight: PropTypes.number,
     help_id: PropTypes.string,
+    expandedMode: PropTypes.bool,
+    pageSize: PropTypes.number,
+    selectable: PropTypes.bool,
+    expandable: PropTypes.bool,
     removable: PropTypes.bool,
+    border: PropTypes.bool,
     showUnits: PropTypes.bool,
     showTypes: PropTypes.bool,
     showFilters: PropTypes.bool,
@@ -253,6 +253,8 @@ TablePanel.propTypes = {
     showSave: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
+    leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
+    rightButtons: PropTypes.arrayOf(PropTypes.func),  // an array of functions that returns a button-like component laid out on the right side of this table header.
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,

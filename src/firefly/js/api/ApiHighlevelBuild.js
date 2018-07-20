@@ -143,11 +143,19 @@ function buildTablePart(llApi) {
 
     /**
      * @param {string|HTMLDivElement} targetDiv to put the table in.
-     * @param {Object} request         request object created from
+     * @param {TableRequest} request         request object created from
      * @param {TblOptions} options     table options.
      * @memberof firefly
      * @public
-     * @example firefly.showTable
+     * @example var tblReq =  firefly.util.table.makeIrsaCatalogRequest(
+     *                 'allwise-500', 'WISE', 'allwise_p3as_psd',
+     *                 {position: '10.68479;41.26906;EQ_J2000',
+     *                  SearchMethod: 'Cone',
+     *                  radius: 300},
+     *                 {tbl_id: 'test-tbl',
+     *                  META_INFO: {defaultChartDef: JSON.stringify({data: [{x: 'tables::w1mpro', y: 'tables::w2mpro', mode: 'markers'}]})}
+     *                 });
+     * firefly.showTable('table-1', tblReq, {tbl_group: 'allwise'});
      */
     // @param {module:firefly.TblOptions} options     table options.
     const showTable= (targetDiv, request, options)  => doShowTable(llApi, targetDiv, request, options);
@@ -222,15 +230,86 @@ function buildImagePart(llApi) {
 
     const {RequestType}= llApi.util.image;
 
+
+    /**
+     * @summary object for web plot request
+     * @description Below is a list of predefined parameters available for web plot request.
+     * Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server.
+     * Others control the zoom, stretch, and color, title, and default overlays. There are also parameters to pre-process an
+     * image, such as crop, rotate or flip.
+     * @typedef {object} WebPlotParams
+     * @prop {string} Type the request type, see available types at {@link RequestType}.
+     * @prop {string} File file name of a file on the server if Type=='File'
+     * @prop {string} URL  url reference to a fits file if Type=='URL'
+     * @prop {string} Service the service type if Type=='SERVICE', see available services at {@link ServiceType}
+     * @prop {string} plotId plot ID
+     * @prop {string} plotGroupId plot group ID
+     * @prop {String} ObjectName object name that can be looked up by NED or Simbad
+     * @prop {string} Resolver the object name resolver to use, options are: NED, Simbad, NedThenSimbad, SimbadThenNed, PTF.
+     * @prop {string} SizeInDeg the radius or side (in degrees) depending of the service type, used with Type=='SERVICE' or 'HiPS'
+     * @prop {string} SurveyKey the survey, used with  Type='SERVICE'
+     * @prop {string} SurveyKeyBand the survey band, used with Type=='SERVICE' and Service='WISE', 'TWOMASS' or 'ATLAS'
+     * @prop {string} WorldPt target for service request or HiPS request in serialized version
+     * @prop {string} PlotId plot Id
+     * @prop {string} PlotGroupId plot group id
+     * @prop {string} Title plot title
+     * @prop {string} TitleOptions title options, see available options at {@link TitleOptions}
+     * @prop {string} PreTitle a String to append at the beginning of the title of the plot
+     * @prop {string} PostTitle a String to append at the end of the title of the plot
+     * @prop {string} hipsRootUrl HiPS root url or IVOID, e.g.: ivo://CDS/P/2MASS/J, used with Type='HiPS'
+     * @prop {string} ZoomType zoom type, see {@link ZoomType}
+     * @prop {string} ZoomToWidth the width of the viewable area to determine the zoom level, used with ZoomType.TO_WIDTH_HEIGHT, ZoomType.TO_WIDTH
+     * @prop {string} ZoomToHeight the height of the viewable area to determine the zoom level, used with ZoomType.TO_WIDTH_HEIGHT, ZoomType.TO_HEIGHT
+     * @prop {string} InitZoomLevel initialize zoom level, used with ZoomType.LEVEL
+     * @prop {string} ZoomArcsecPerScreenPix the arcseconds per screen pixel that will be used to determine the zoom level, Used with ZoomType.ARCSEC_PER_SCREEN_PIX
+     * @prop {boolean} RotateNorth plot should come up rotated north
+     * @prop {CoordinateSys} RotateNorthType set to coordinate system for rotate north, eq EQ_J2000 is the default
+     * @prop {boolean} Rotate set to rotate, if true, the angle should also be set
+     * @prop {string} RotationAngle set the angle to rotate to
+     * @prop {string} RotateFromNorth rotate angle from north
+     * @prop {boolean} FlipY set if this image should be flipped on the Y axis
+     * @prop {boolean} FlipX set if this image should be flipped on the X axis
+     * @prop {boolean} PostCrop crop the image before returning it.  If rotation is set then the crop will happen post rotation
+     * @prop {boolean} PostCropAndCenter crop and center the image before returning it. Note: SizeInDeg and WorldPt are required
+     * @prop {CoordinateSys} PostCropAndCenterType set to coordinate system for crop and center, eq EQ_J2000 is the default
+     * @prop {string} CropPt1 one corner of the rectangle, in image coordinates, to crop out of the image.
+     * @prop {string} CropPt2 second corner of the rectangle, in image coordinates, to crop out of the image.
+     * @prop {string} CropWorldPt1 one corner of the rectangle, in world coordinates, to crop out of the image.
+     * @prop {string} CropWorldPt2 second corner of the rectangle, in world coordinates, to crop out of the image.
+     * @prop {string} OverlayPosition string of overlay position in world coordinates
+     * @prop {string} ColorTable color table id, value 0 - 21 to represent different predefined color tables
+     * @prop {string} RangeValues a complex string for specify the stretch of this plot.
+     *                            Use the method firefly.serializeRangeValues() to produce this string
+     * @prop {string} MultiImageIdx number index of image
+     * @prop {string} MultiImageExts image extension list. ex: '3,4,5' for extension 3, 4, 5
+     * @prop {string} GridOn turn the coordinate grid on after the image is plotted, 'true' or 'false'
+     * @prop {number} thumbnailSize thumbnail size
+     * @prop {boolean} ContinueOnFail for 3 color, if this request fails then keep trying to make a plot with the other request
+     *
+     * @global
+     * @public
+     */
+
     /**
      * @summary The general plotting function to plot a FITS image.
-     * @param {String|div} targetDiv to put the image in.
-     * @param {Object} request the request object literal with the plotting parameters
+     * @param {String|HTMLDivElement} targetDiv to put the image in.
+     * @param {WebPlotParams|WebPlotRequest} request a request object with the plotting parameters
      * @param {HipsImageConversionSettings} [hipsImageConversion= undefined] if defined, use these parameter to
      *                                                convert between image and HiPS
      * @memberof firefly
      * @public
-     * @example firefly.showImage
+     * @example firefly.showImage('myPlot',
+     *                   {Type: 'SERVICE',
+     *                    plotId: 'myImage',
+     *                    plotGroupId: 'myGroup',
+     *                    Service: 'WISE'
+     *                    Title: 'Wise'
+     *                    GridOn: true,
+     *                    SurveyKey: 'Atlas'
+     *                    SurveyKeyBand: '2'
+     *                    WorldPt: '10.68479;41.26906;EQ_J2000',
+     *                    SizeInDeg: '.12'});
+     *
      *
      */
     const showImage= (targetDiv, request, hipsImageConversion)  =>
@@ -239,7 +318,7 @@ function buildImagePart(llApi) {
     /**
      * @summary A convenience plotting function to plot a file on the server or a url.  If first looks for the file then
      * the url is the fallback
-     * @param {string|div} targetDiv to put the image in.
+     * @param {string|HTMLDivElement} targetDiv to put the image in.
      * @param {string} file file on server
      * @param {string} url url reference to a fits file
      * @memberof firefly
@@ -268,16 +347,76 @@ function buildImagePart(llApi) {
 
     /**
      *
-     * @param div - targetDiv to put the coverage in.
-     * @param options - an object literal containing a list of the coverage options
+     * @param {string|HTMLDivElement} div - targetDiv to put the coverage in.
+     * @param {CoverageOptions} options - an object literal containing a list of the coverage options
      * @memberof firefly
      * @public
-     * @example firefly.showCoverage
+     * @example firefly.showCoverage('myDiv', {gridOn: true})
      */
     const showCoverage= (div,options) => initCoverage(llApi,div,options);
 
+    /**
+     * @summary The plotting function to display a HiPS
+     * @param {String|HTMLDivElement} targetDiv to put the image in.
+     * @param {WebPlotParams|WebPlotRequest} request a request object with Type=='HiPS' used to display a HiPS
+     * @param {HipsImageConversionSettings} [hipsImageConversion=undefined] if defined, use these parameter to
+     *                                                convert between image and HiPS
+     * @memberof firefly
+     * @public
+     * @example firefly.showHiPS('hipsDIV1',
+     *    {
+     *      plotId  : 'aHipsID1-1',
+     *      WorldPt : '148.892;69.0654;EQ_J2000',
+     *      title   : 'A HiPS',
+     *      hipsRootUrl: 'CDS/P/SDSS9/color'
+     *    },
+     *    {
+     *      imageRequestRoot: {
+     *              Service  : 'WISE',
+     *              Title    : 'Wise',
+     *              SurveyKey: '3a',
+     *              SurveyKeyBand: '2'
+     *       },
+     *       fovDegFallOver: .5
+     *     };
+     * );
+     *
+     *
+     */
+
     const showHiPS= (targetDiv, request, hipsImageConversion)  =>
                         showImageInMultiViewer(llApi, targetDiv, request, true, hipsImageConversion);
+
+
+    /**
+     * @summary The plotting function to display a HiPS or an image
+     * @param {String|HTMLDivElement} targetDiv to put the image in.
+     * @param {WebPlotParams|WebPlotRequest} hipsRequest a request object used to display a HiPS
+     * @param {WebPlotParams|WebPlotRequest} imageRequest  a request object used to display an image
+     * @param {number} fovDegFallOver the field of view size to determine when to move between a HiPS and an image
+     * @param {WebPlotParams|WebPlotRequest} allSkyRequest a request object used to display allsky image.
+     * @param {boolean} plotAllSkyFirst if plot allsky first
+     *
+     * @memberof firefly
+     * @public
+     * @example firefly.showImageOrHiPS('hipsDiv6',
+     *    {
+     *       plotId: 'aHipsID6',
+     *       title     : 'A HiPS - 0.2',
+     *       hipsRootUrl: 'http://alasky.u-strasbg.fr/AllWISE/RGB-W4-W2-W1',
+     *       SizeInDeg:.2
+     *    },
+     *    {
+     *       Service: 'WISE',
+     *       Title: 'Wise',
+     *       SurveyKey: '3a',
+     *       SurveyKeyBand: '2',
+     *       WorldPt: '148.892;69.0654;EQ_J2000'
+     *    }, 0.5
+     *  );
+     *
+     *
+     */
     const showImageOrHiPS = (targetDiv, hipsRequest, imageRequest,  fovDegFallOver, allSkyRequest, plotAllSkyFirst) =>
                         showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageRequest,
                                                      fovDegFallOver, allSkyRequest, plotAllSkyFirst);

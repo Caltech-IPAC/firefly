@@ -1,21 +1,12 @@
 package edu.caltech.ipac.firefly.util;
 
 
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.visualize.plot.*;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.Fits;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -39,7 +30,8 @@ public class FileLoader {
      */
     public static String getDataPath(Class cls) {
 
-        String rootPath = Paths.get("").toAbsolutePath().getParent().toUri().getPath();
+
+        String rootPath =Paths.get("").toAbsolutePath().getParent().toUri().getPath();//"/hydra/cm/"; when test it in IntelliJ
         String testDataPath = TEST_DATA_ROOT+cls.getCanonicalName().replaceAll("\\.", "/")
                 .replace(cls.getSimpleName(), "");
 
@@ -92,12 +84,17 @@ public class FileLoader {
         }
 
     }
+
     public static DataGroup loadIpacTable(Class cls, String tblFile) {
+
+        if (!tblFile.endsWith(".tbl")){
+            throw new IllegalArgumentException("Wrong file type, the file has to be a .tbl file");
+        }
 
         try {
             File inFile = new File(getDataPath(cls) + tblFile);
 
-            return IpacTableReader.readIpacTable(inFile, null, "inputTable");
+            return IpacTableReader.read(inFile);
         }
         catch (Exception e){
             e.printStackTrace();

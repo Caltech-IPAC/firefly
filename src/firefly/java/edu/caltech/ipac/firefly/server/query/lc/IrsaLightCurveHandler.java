@@ -3,15 +3,15 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 
@@ -79,7 +79,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         File tempFile = null;
 
         try {
-            DataGroup dg = DataGroupReader.readAnyFormat(tbl);
+            DataGroup dg = TableUtil.readAnyFormat(tbl);
             PhaseFoldedLightCurve plc = new PhaseFoldedLightCurve();
             plc.addPhaseCol(dg, period, timeColName);
             tempFile = createPhaseFoldedTempFile();
@@ -101,7 +101,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         File resultTblFile = null;
         try {
             resultTblFile = makeResultTempFile(resultTable);
-            DataGroup[] dataGroups = VoTableUtil.voToDataGroups(votableResult.getAbsolutePath());
+            DataGroup[] dataGroups = VoTableReader.voToDataGroups(votableResult.getAbsolutePath());
 
             IpacTableWriter.save(resultTblFile, dataGroups[resultTable.ordinal()]);
             return resultTblFile;

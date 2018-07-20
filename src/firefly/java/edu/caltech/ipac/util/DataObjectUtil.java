@@ -3,11 +3,8 @@
  */
 package edu.caltech.ipac.util;
 
-import edu.caltech.ipac.util.expr.Expression;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 
 /**
  * @author tatianag
@@ -35,48 +32,12 @@ public class DataObjectUtil {
 
    }
 
-
-    public static List<String> getNumericCols(DataType[] dataTypes) {
-        List<String> numericCols = new ArrayList<>();
-        for (DataType dt : dataTypes) {
-            Class type = dt.getDataType();
-            if (type.equals(Double.class) ||
-                    type.equals(Float.class) ||
-                    type.equals(Long.class) ||
-                    type.equals(Integer.class)) {
-                numericCols.add(dt.getKeyName());
-            }
-        }
-        return numericCols;
-    }
-
     public static class DoubleValueGetter {
         DataType col;
 
-        Expression colExpr = null;
-        ArrayList<DataType> colDataTypes = null;
 
         public DoubleValueGetter(DataType[] dataTypes, String columnNameOrExpr) {
             col = getDataDefinition(dataTypes, columnNameOrExpr);
-            if (col == null) {
-                // column must be an expression
-                colExpr = new Expression(columnNameOrExpr, getNumericCols(dataTypes));
-                if (!colExpr.isValid()) {
-                    System.out.println("invalid column \""+colExpr.getInput()+"\": "+colExpr.getErrorMessage());
-                    colExpr = null;
-                } else {
-                    Set<String> vars = colExpr.getParsedVariables();
-                    colDataTypes = new ArrayList<>(vars.size());
-                    DataType dt;
-                    for (String var : vars) {
-                        dt = getDataDefinition(dataTypes, var);
-                        // exclude predefined variables like pi or e
-                        if (dt != null) {
-                            colDataTypes.add(dt);
-                        }
-                    }
-                }
-            }
         }
 
         private static DataType getDataDefinition(DataType[] dataTypes, String key) {
@@ -90,35 +51,19 @@ public class DataObjectUtil {
         }
 
         public boolean isValid() {
-            return (col != null || colExpr != null);
+            return (col != null);
         }
 
         public boolean isExpression() {
-            return colExpr != null;
+            return false;
         }
 
         public double getValue(DataObject row) {
-            double val;
-            if (colExpr == null) {
-                val = getDouble(row.getDataElement(col));
-            } else {
-                // col is an expression
-                for (DataType dt : colDataTypes) {
-                    colExpr.setVariableValue(dt.getKeyName(), getDouble(row.getDataElement(dt)));
-                }
-                val = colExpr.getValue();
-            }
-            return val;
+            return getDouble(row.getDataElement(col));
         }
 
         public String getFormattedValue(DataObject row) {
-            String val;
-            if (colExpr == null) {
-                val = row.getFormatedData(col);
-            } else {
-                val = null;
-            }
-            return val;
+            return row.getFixedFormatedData(col);
         }
     }
 }

@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.db.spring.mapper;
 
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroup;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 

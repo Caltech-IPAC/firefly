@@ -3,8 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.net.NedParams;
 import edu.caltech.ipac.astro.net.SimbadParams;
 import edu.caltech.ipac.astro.net.TargetNetwork;
@@ -19,12 +19,16 @@ import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.data.table.*;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableDef;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 import org.apache.commons.httpclient.URIException;
@@ -34,16 +38,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Date;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.*;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.ACTIVE_REQUEST_CNT;
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.RESPONSE_CNT;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 
 /**
@@ -260,8 +260,8 @@ public class QueryUtil {
 
     public static void doSort(DataGroup dg, SortInfo sortInfo) {
         if (sortInfo != null) {
-            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG) == null ? "" : dg.getAttribute(SortInfo.SORT_INFO_TAG).getValue();
-            if (!infoStr.equals(sortInfo.toString())) {
+            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG);
+            if (!StringUtils.areEqual(infoStr, sortInfo.toString())) {
                 DataGroupQuery.SortDir sortDir = DataGroupQuery.SortDir.valueOf(sortInfo.getDirection().name());
                 DataGroupQuery.sort(dg, sortDir, true, sortInfo.getSortColumnAry());
                 dg.addAttribute(SortInfo.SORT_INFO_TAG, sortInfo.toString());
@@ -294,18 +294,6 @@ public class QueryUtil {
             filterList.add(filter);
         }
         return filterList.toArray(new CollectionUtil.Filter[filterList.size()]);
-    }
-
-
-    public static DataGroupPart convertToDataGroupPart(DataGroup dg, int startIdx, int pageSize) {
-        DataGroup page = dg.subset(startIdx, startIdx+pageSize);
-        page.setRowIdxOffset(startIdx);
-        TableDef tableDef = new TableDef();
-        tableDef.addAttributes(dg.getKeywords().toArray(new DataGroup.Attribute[0]));
-        tableDef.setStatus(DataGroupPart.State.COMPLETED);
-        tableDef.setCols(Arrays.asList(page.getDataDefinitions()));
-
-        return new DataGroupPart(tableDef, dg, startIdx, page.size());
     }
 
     /**
@@ -431,7 +419,7 @@ public class QueryUtil {
         final String DEC= "dec";
         String ra = null, dec = null, name = null;
         try {
-            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            DataGroup dg= TableUtil.readAnyFormat(ufile);
             if (dg != null) {
                 for (DataType dt: dg.getDataDefinitions()) {
                     if (dt.getKeyName().toLowerCase().equals("object") ||
@@ -496,7 +484,7 @@ public class QueryUtil {
         try {
             List<DataType> newCols = new ArrayList<DataType>();
             newCols.add(new DataType(CatalogRequest.UPDLOAD_ROW_ID, Integer.class));
-            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            DataGroup dg= TableUtil.readAnyFormat(ufile);
             if (dg == null) {
                 throw createEndUserException("Unable to read file:" + ufile.getName());
             }
@@ -559,7 +547,6 @@ public class QueryUtil {
                 }
                 newdg.add(nrow);
             }
-            newdg.shrinkToFitData(true);
             return newdg;
         } catch (Exception e) {
             String msg = e.getMessage();
@@ -597,9 +584,11 @@ public class QueryUtil {
 
         if (!xValGetter.isValid() || !yValGetter.isValid()) {
             System.out.println("QueryUtil.doDecimation: invalid x or y column.");
-            throw new DataAccessException("Invalid column or expression");
+            throw new DataAccessException("Invalid decimation column.");
         }
-        boolean sameXY = xColOrExpr.equals(yColOrExpr);
+        if (xColOrExpr.equals(yColOrExpr)) {
+            throw new DataAccessException("Same column is used for decimation.");
+        }
 
         int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
@@ -607,39 +596,27 @@ public class QueryUtil {
         boolean doDecimation = dg.size() >= deciEnableSize;
 
         DataType[] columns = new DataType[doDecimation ? 5 : 3];
-        Class xColClass = Double.class;
-        Class yColClass = Double.class;
 
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
-        try {
-            if (xValGetter.isExpression() || sameXY) {
-                columns[0] = new DataType("x", "x", xColClass, DataType.Importance.HIGH, "", false);
-            } else {
-                columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0);
-                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getxColumnName()));
-            }
 
-            if (yValGetter.isExpression() || sameXY) {
-                columns[1] = new DataType("y", "y", yColClass, DataType.Importance.HIGH, "", false);
-            } else {
-                columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1);
-                colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getyColumnName()));
-            }
 
-            columns[2] = new DataType("rowidx", Integer.class); // need it to tie highlighted and selected to table
-            if (doDecimation) {
-                columns[3] = new DataType("weight", Integer.class);
-                columns[4] = new DataType(DecimateKey.DECIMATE_KEY, String.class);
-            }
-            xColClass = columns[0].getDataType();
-            yColClass = columns[1].getDataType();
-        } catch (Exception e) {
+        columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).newCopyOf();
+        colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getxColumnName()));
 
+        columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).newCopyOf();
+        colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getyColumnName()));
+
+
+        columns[2] = new DataType("rowidx", Integer.class); // need it to tie highlighted and selected to table
+        if (doDecimation) {
+            columns[3] = new DataType("weight", Integer.class);
+            columns[4] = new DataType(DecimateKey.DECIMATE_KEY, String.class);
         }
-
+        Class xColClass = columns[0].getDataType();
+        Class yColClass = columns[1].getDataType();
 
         DataGroup retval = new DataGroup("decimated results", columns);
-        retval.setAttributes(colMeta);
+        retval.setKeywords(colMeta);
 
         // determine min/max values of x and y
         boolean checkDeciLimits = false;
@@ -706,7 +683,7 @@ public class QueryUtil {
 
                 List<DataGroup.Attribute> attributes = retval.getKeywords();
                 retval = new DataGroup("decimated results", new DataType[]{columns[0],columns[1],columns[2]});
-                retval.setAttributes(attributes);
+                retval.setKeywords(attributes);
 
                 for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
                     DataObject row = dg.get(rIdx);
@@ -807,25 +784,6 @@ public class QueryUtil {
                 Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
             }
         }
-
-
-        if (xValGetter.isExpression() || sameXY) {
-            DataType.FormatInfo fi = columns[0].getFormatInfo();
-            fi.setDataFormat(getFormatterString(xMin, xMax, 6));
-            columns[0].setFormatInfo(fi);
-            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-EXPR", decimateInfo.getxColumnName());
-            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-COL", "x");
-        }
-
-        if (yValGetter.isExpression() || sameXY) {
-            DataType.FormatInfo fi = columns[1].getFormatInfo();
-            fi.setDataFormat(getFormatterString(xMin, xMax, 6));
-            columns[1].setFormatInfo(fi);
-            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-EXPR", decimateInfo.getyColumnName());
-            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-COL", "y");
-        }
-
-        retval.shrinkToFitData();
 
         return retval;
     }

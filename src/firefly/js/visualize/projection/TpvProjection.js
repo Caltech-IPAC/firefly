@@ -147,7 +147,8 @@ export const TpvProjection= {
         }
 
         // Finally, image pixel derived from above intermdiate coordinates found
-
+        fsamp = xx;
+        fline = yy;
         if (using_cd) {
             temp = -(dc1_1 * fsamp + dc1_2 * fline) * RtoD;
             fline = -(dc2_1 * fsamp + dc2_2 * fline) * RtoD;

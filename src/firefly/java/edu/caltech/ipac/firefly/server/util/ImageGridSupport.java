@@ -4,9 +4,9 @@
 package edu.caltech.ipac.firefly.server.util;
 
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,9 +100,9 @@ public class ImageGridSupport {
 
         for (COLUMN key: getBasicWebPlotRequestColumns()) {dataDefs.add(new DataType(key.toString(), String.class));}
 
-        dataDefs.get(getBasicWebPlotRequestColumns().indexOf(COLUMN.THUMBNAIL)).getFormatInfo().setWidth(500);
-        dataDefs.get(getBasicWebPlotRequestColumns().indexOf(COLUMN.TYPE)).getFormatInfo().setWidth(8);
-        dataDefs.get(getBasicWebPlotRequestColumns().indexOf(COLUMN.DESC)).getFormatInfo().setWidth(40);
+        dataDefs.get(getBasicWebPlotRequestColumns().indexOf(COLUMN.THUMBNAIL)).setWidth(500);
+        dataDefs.get(getBasicWebPlotRequestColumns().indexOf(COLUMN.TYPE)).setWidth(8);
+        dataDefs.get(getBasicWebPlotRequestColumns().indexOf(COLUMN.DESC)).setWidth(40);
         return dataDefs;
     }
 

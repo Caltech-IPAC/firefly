@@ -3,13 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
@@ -18,11 +18,11 @@ import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.NestedRuntimeException;
@@ -300,8 +300,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         DataGroupPart page = execRequestQuery(nreq, dbFile, resultSetID);
 
         // save information needed to recreated this resultset
-        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_REQ, makeResultSetReqStr(treq));
-        page.getTableDef().setAttribute(TableServerRequest.RESULTSET_ID, resultSetID);
+        page.getTableDef().setAttribute(TableMeta.RESULTSET_REQ, makeResultSetReqStr(treq));
+        page.getTableDef().setAttribute(TableMeta.RESULTSET_ID, resultSetID);
 
         // handle selectInfo
         // selectInfo is sent to the server as Request.META_INFO.selectInfo
@@ -318,8 +318,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         TableServerRequest savedRequest = (TableServerRequest) treq.cloneRequest();
         Map<String, String> meta = savedRequest.getMeta();
         if (meta != null) {
-            meta.remove(TableServerRequest.RESULTSET_REQ);
-            meta.remove(TableServerRequest.RESULTSET_ID);
+            meta.remove(TableMeta.RESULTSET_REQ);
+            meta.remove(TableMeta.RESULTSET_ID);
         }
         savedRequest.setSelectInfo(null);
         return JsonTableUtil.toJsonTableRequest(savedRequest).toString();
@@ -338,16 +338,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     private String ensurePrevResultSetIfExists(TableServerRequest treq, File dbFile) {
 
-        String prevResultSetID = treq.getMeta().get(TableServerRequest.RESULTSET_ID);
+        String prevResultSetID = treq.getMeta().get(TableMeta.RESULTSET_ID);
         if (!StringUtils.isEmpty(prevResultSetID)) {
             if (!EmbeddedDbUtil.hasTable(treq, dbFile, prevResultSetID)) {
                 // does not exists.. create table from original 'data' table
-                String resultSetRequest = treq.getMeta().get(TableServerRequest.RESULTSET_REQ);
+                String resultSetRequest = treq.getMeta().get(TableMeta.RESULTSET_REQ);
                 if (!StringUtils.isEmpty(resultSetRequest)) {
                     try {
                         TableServerRequest req = QueryUtil.convertToServerRequest(resultSetRequest);
                         DataGroupPart page = getResultSet(req, dbFile);
-                        prevResultSetID = page.getTableDef().getAttribute(TableServerRequest.RESULTSET_ID).getValue();
+                        prevResultSetID = page.getTableDef().getAttribute(TableMeta.RESULTSET_ID);
                     } catch (DataAccessException e1) {
                         // can ignore for now.
                     }
@@ -365,7 +365,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             selectInfo = new SelectionInfo(false, null, rowCnt);
         }
 
-        String prevResultSetID = treq.getMeta(TableServerRequest.RESULTSET_ID);             // the previous resultset ID
+        String prevResultSetID = treq.getMeta(TableMeta.RESULTSET_ID);             // the previous resultset ID
         prevResultSetID = StringUtils.isEmpty(prevResultSetID) ? "data" : prevResultSetID;
 
         if ( selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
@@ -412,7 +412,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             List<String> possibleErrors = new ArrayList<>();
             NestedRuntimeException ex = (NestedRuntimeException) e;
 
-            TableServerRequest prevReq = QueryUtil.convertToServerRequest(treq.getMeta().get(TableServerRequest.RESULTSET_REQ));
+            TableServerRequest prevReq = QueryUtil.convertToServerRequest(treq.getMeta().get(TableMeta.RESULTSET_REQ));
             if (treq.getInclColumns() != null && !StringUtils.areEqual(treq.getInclColumns(), prevReq.getInclColumns())) {
                 possibleErrors.add(treq.getInclColumns());
             }

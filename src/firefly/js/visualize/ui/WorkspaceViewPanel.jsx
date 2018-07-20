@@ -4,8 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import {flux} from '../../Firefly.js';
-import {onCreateFolder, onCreateFiles, onRenameFile, onRenameFolder,
-        onDeleteFile, onDeleteFolder,  WorkspaceViewField}  from '../../ui/WorkspaceViewer.jsx';
+import {WorkspaceViewField}  from '../../ui/WorkspaceViewer.jsx';
 import {initWorkspace, getWorkspaceList, isExistWorkspaceList} from '../WorkspaceCntlr.js';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
@@ -122,11 +121,11 @@ export class WorkspaceViewPanel extends PureComponent {
                     <FieldGroup groupKey={workspacePopup} keepState={true}>
                         <WorkspaceViewField
                             files={wsList}
-                            onCreateFolder={onCreateFolder()}
-                            onCreateFiles={onCreateFiles}
-                            onDeleteFile={onDeleteFile()}
-                            onRenameFile={onRenameFile()}
-                            onMoveFile={onRenameFile()}
+                            canCreateFolder={true}
+                            canCreateFiles={true}
+                            canDeleteFile={true}
+                            canRenameFile={true}
+                            canMoveFile={true}
                             wrapperStyle={{width: 'calc(100%-10px)'}} />
                     </FieldGroup>
                 </div>) : workspacePopupMsg('Workspace access error', 'Workspace access')

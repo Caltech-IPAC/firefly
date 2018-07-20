@@ -20,8 +20,6 @@ import {GridLayoutPanel} from './GridLayoutPanel.jsx';
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
-import {launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
-import {syncChartViewer} from '../../visualize/saga/ChartsSync.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
@@ -50,9 +48,7 @@ export class FireflySlate extends PureComponent {
         super(props);
         this.state = this.getNextState();
         dispatchAddSaga(watchCatalogs);
-        dispatchAddSaga(syncChartViewer);
         dispatchAddSaga(layoutManager,{});
-        // dispatchAddSaga(addDefaultScatter);
     }
 
     getNextState() {

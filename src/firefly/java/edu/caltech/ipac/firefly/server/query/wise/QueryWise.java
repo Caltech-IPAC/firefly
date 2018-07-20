@@ -3,15 +3,15 @@
  */
 package edu.caltech.ipac.firefly.server.query.wise;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IBESearchProcessor;
@@ -24,10 +24,10 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataGroupQuery;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -47,7 +47,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -180,7 +179,7 @@ public class QueryWise extends IBESearchProcessor {
         return outFile;
     }
 
-    private DataGroup uploadedPreprocess(WiseRequest req) throws IpacTableException, EndUserException {
+    private DataGroup uploadedPreprocess(WiseRequest req) throws EndUserException, IOException {
         String colName;
         String paramName;
         String filenameParam;
@@ -196,7 +195,7 @@ public class QueryWise extends IBESearchProcessor {
             return null;
         }
 
-        DataGroup dg = IpacTableReader.readIpacTable(ServerContext.convertToFile(req.getParam(filenameParam)), "Uploaded Table");
+        DataGroup dg = IpacTableReader.read(ServerContext.convertToFile(req.getParam(filenameParam)));
         for (DataType dt : dg.getDataDefinitions()) {
             if (dt.getKeyName().equals(colName)) {
                 Set<String> vals = new LinkedHashSet<String>();
@@ -219,17 +218,14 @@ public class QueryWise extends IBESearchProcessor {
         } else {
             return outFile;
         }
-        DataGroup dg = IpacTableReader.readIpacTable(outFile, "Search Result");
+        DataGroup dg = IpacTableReader.read(outFile);
         DataType[] inDefinitions = inDg.getDataDefinitions();
         DataGroup dgJoined = DataGroupQuery.join(inDg, inDefinitions, dg, dg.getDataDefinitions(),
-                                                 new Comparator<DataObject>() {
-                                                     public int compare(DataObject dataObject, DataObject dataObject1) {
-                                                         return ((String) dataObject.getDataElement(colName)).compareTo((String) dataObject1.getDataElement(colName));
-                                                     }
-                                                 });
+                                                    (dataObject, dataObject1) -> ((String) dataObject.getDataElement(colName))
+                                                                                    .compareTo((String) dataObject1.getDataElement(colName)));
         DataType[] outDefinitions = dgJoined.getDataDefinitions();
         for (int i = 0; i < inDefinitions.length; i++) {
-            outDefinitions[i].setKeyNamePrefix("in_");
+            outDefinitions[i].setKeyName("in_" + outDefinitions[i].getKeyName());
         }
 
         File newOutFile = File.createTempFile("wise-catalog-joined-", ".tbl", ServerContext.getPermWorkDir());

@@ -17,7 +17,6 @@ import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {syncChartViewer, addDefaultScatter} from '../../visualize/saga/ChartsSync.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 
 import {TriViewImageSection, launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -35,8 +34,6 @@ export class HydraViewer extends PureComponent {
         this.state = this.getNextState();
         dispatchAddSaga(hydraManager);
         dispatchAddSaga(watchCatalogs);
-        dispatchAddSaga(syncChartViewer);
-        dispatchAddSaga(addDefaultScatter);
         launchImageMetaDataSega();
     }
 
@@ -149,11 +146,11 @@ function ResultSection({layoutInfo}) {
 
     const {allSearchItems} = getSearchInfo();
     if (!allSearchItems) return <div/>;
-    const {renderStandardView, renderExpandedView} = allSearchItems[currentSearch] || {};
-    const showExpandedImpl= renderExpandedView || showExpandedView;
-    const standard = renderStandardView ? renderStandardView(layoutInfo) : <div/>;
+    const {renderStandardView:StandardView, renderExpandedView} = allSearchItems[currentSearch] || {};
+    const ExpandedImpl= renderExpandedView || showExpandedView;
+    const standard = StandardView ? <StandardView {...{layoutInfo}}/> : <div/>;
 
-    return expanded === LO_VIEW.none ? standard : showExpandedImpl({layoutInfo, expanded, images});
+    return expanded === LO_VIEW.none ? standard : <ExpandedImpl {...{layoutInfo, expanded, images}}/>;
 }
 
 function showExpandedView ({expanded,  images}) {
@@ -179,7 +176,7 @@ function showExpandedView ({expanded,  images}) {
                 );
     }
     return (
-        <div style={{ flexGrow: 1, overflow: 'hidden'}}>
+        <div style={{ display: 'flex', flexGrow: 1, overflow: 'hidden'}}>
             {view}
         </div>
     );

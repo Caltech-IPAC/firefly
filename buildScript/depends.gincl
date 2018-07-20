@@ -312,7 +312,6 @@ task dockerPublish (dependsOn: dockerImage) {
  */
 ext.NODE = { ...cmd ->
   def wpBuildDir = "${buildDir}/war"
-  def tag = "v" + getVersionTag() + ' Built On:' + build_time;
 
   try {
     def process = "yarn version".execute()
@@ -329,10 +328,15 @@ ext.NODE = { ...cmd ->
     }
   }
 
+  def versionInfo = new Properties()
+  def versionFile = file("${project.buildDir}/version.tag")
+  if (versionFile.exists()) {
+    versionFile.withInputStream { versionInfo.load(it) }
+  }
+
   // any environment starting with '__$' will be defined as global.
   // this is a way send config info to JS code.
   def res = exec {
-    environment '__$version_tag': tag
     environment 'WP_BUILD_DIR': wpBuildDir
     environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
     environment 'BUILD_ENV': project.env
@@ -343,7 +347,11 @@ ext.NODE = { ...cmd ->
         println ">>   " + key + " = " + project.appConfigProps[key]
       }
     }
-
+    // load version info as JS global
+    for (String key : versionInfo.keySet()) {
+      environment ('__$version.'+key, versionInfo[key])
+      println ">>   " + '__$version.'+key + " = " + versionInfo[key]
+    }
   }
   return res;
 }

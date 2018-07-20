@@ -4,11 +4,11 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import org.apache.commons.csv.CSVFormat;
 
@@ -243,7 +243,7 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
                                                      String source) throws IOException, FailedRequestException {
 
         InputStream inf= IrsaHiPSListSource.class.getResourceAsStream(hipsMaster);
-        DataGroup dg = DsvToDataGroup.parse(inf, CSVFormat.DEFAULT);
+        DataGroup dg = DsvTableIO.parse(inf, CSVFormat.DEFAULT);
 
         return getListData(dg, paramsMap, source);
     }

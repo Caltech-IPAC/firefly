@@ -4,8 +4,9 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
@@ -13,6 +14,8 @@ import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -89,7 +92,7 @@ public class IbeImageGetter {
           queryParam.setIntersect(IbeQueryParam.Intersect.CENTER);
           ibe.query(queryTbl, queryParam);
 
-          DataGroup data = IpacTableReader.readIpacTable(queryTbl, "results");
+          DataGroup data = IpacTableReader.read(queryTbl);
 
 
           if (data.values().size() == 1) {
@@ -111,7 +114,7 @@ public class IbeImageGetter {
               throw new FailedRequestException("Area not covered");
           }
 
-      } catch (IpacTableException me){
+      } catch (IOException me){
           throw new FailedRequestException( "Could not parse results", "Details in exception", me );
       }
 

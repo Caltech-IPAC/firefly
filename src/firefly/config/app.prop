@@ -5,10 +5,11 @@ visualize.fits.search.path=@visualize.fits.search.path@:@alerts.dir@:@work.direc
 irsa.gator.hostname=@irsa.gator.hostname@
 wise.ibe.host=@wise.ibe.host@
 twomass.ibe.host=@twomass.ibe.host@
+ztf.ibe.host=@ztf.ibe.host@
 atlas.ibe.host=@atlas.ibe.host@
 
 FireflyTools.Advertise= @FireflyTools.Advertise@
-ignore.auth=true
+ignore.auth=@ignore.auth@
 
 lsst.dataAccess.uri = @lsst.dataAccess.uri@
 lsst.dataAccess.db = @lsst.dataAccess.db@

@@ -3,15 +3,17 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.firefly.server.util.ipactable.BgIpacTableHandler;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -25,8 +27,8 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.List;
 
-import static edu.caltech.ipac.util.IpacTableUtil.DESC_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.DESC_TAG;
+import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 
 /**
  * @author tatianag
@@ -87,7 +89,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
 
         DataGroup dg = JsonToDataGroup.parse(file);
         File inf = createFile(request, ".tbl");
-        DataGroupWriter.write(new BgIpacTableHandler(inf, dg, request));  // for big files write will happen in background
+        IpacTableWriter.save(inf, dg);
         return inf;
     }
 

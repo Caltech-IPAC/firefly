@@ -7,12 +7,14 @@ import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.PtfIbeDataSource;
+import edu.caltech.ipac.astro.ibe.datasource.ZtfIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.IOException;
@@ -35,6 +37,8 @@ public class IBEUtils {
             ibeDataSource = new WiseIbeDataSource();
         } else if (mission.equals(PtfIbeDataSource.PTF)) {
             ibeDataSource = new PtfIbeDataSource();
+        } else if (mission.equals(ZtfIbeDataSource.ZTF)) {
+            ibeDataSource = new ZtfIbeDataSource();
         } else if (mission.equals(TwoMassIbeDataSource.TWOMASS)) {
             ibeDataSource = new TwoMassIbeDataSource();
         } else if (mission.equals(AtlasIbeDataSource.ATLAS)){
@@ -140,12 +144,12 @@ public class IBEUtils {
         }
 
         for (String sortCol : sortByCols.keySet()) {
-            attribs.put(IpacTableUtil.makeAttribKey(IpacTableUtil.SORT_BY_TAG, sortCol), sortByCols.get(sortCol));
+            attribs.put(TableMeta.makeAttribKey(TableMeta.SORT_BY_TAG, sortCol), sortByCols.get(sortCol));
         }
 
         if (colsToHide != null) {
             for (String c : colsToHide) {
-                attribs.put(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, c), IpacTableUtil.VISI_HIDE);
+                attribs.put(TableMeta.makeAttribKey(TableMeta.VISI_TAG, c), DataType.Visibility.hide.name());
             }
         }
 

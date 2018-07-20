@@ -1,13 +1,13 @@
 package edu.caltech.ipac.astro.ibe;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.IpacTableUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +48,7 @@ public class TestAtlasIbe extends ConfigTest {
 //            Assert.assertTrue("no data found", datatmp.length > 0);
 
 //            if(datatmp.length>0) {
-            DataGroup data = IpacTableReader.readIpacTable(results, "result.tbl");
+            DataGroup data = IpacTableReader.read(results);
             Assert.assertTrue("no data found", data.size() > 0);
 
             for (int idx = 0; idx < data.size(); idx++) {
@@ -69,10 +69,6 @@ public class TestAtlasIbe extends ConfigTest {
 //            }
 
         } catch (IOException e) {
-            LOG.error("problem ", e.getMessage());
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        } catch (IpacTableException e) {
             LOG.error("problem ", e.getMessage());
             e.printStackTrace();
             Assert.fail(e.getMessage());

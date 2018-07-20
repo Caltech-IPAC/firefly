@@ -970,7 +970,7 @@ public class FileUtil
         try {
             long start = System.currentTimeMillis();
             FileUtil.writeFileToStream(new File(args[0]), new BufferedOutputStream(new FileOutputStream(args[1]), BUFFER_SIZE));
-            System.out.println(String.format ("elapsed time: %d ms", (System.currentTimeMillis() - start)));
+            System.out.printf("elapsed time: %d ms", (System.currentTimeMillis() - start));
         } catch (IOException e) {
             e.printStackTrace();
         }

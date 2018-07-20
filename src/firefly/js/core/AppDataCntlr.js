@@ -128,13 +128,10 @@ export function dispatchSetMenu(menu) {
 
 /**
  * Load search info into the application
- * @param p                     parameter object
- * @param {object[]}  p.groups  an array of search groups
- * @param {string}   [p.activeSearch] the current selected search.  defaults to the first search.
- * @param {string}   [p.flow]     'horizontal' or 'vertical'.  defaults to 'vertical'.
+ * @param {SearchInfo} searchInfo   search information
  */
-export function dispatchLoadSearches({groups, activeSearch, flow}) {
-    flux.process({ type : LOAD_SEARCHES, payload: {groups, activeSearch, flow} });
+export function dispatchLoadSearches(searchInfo) {
+    flux.process({ type : LOAD_SEARCHES, payload:searchInfo});
 }
 
 /**
@@ -305,14 +302,14 @@ function onlineHelpLoad( action )
 
 function loadSearches(action) {
     return function (dispatch) {
-        var {groups=[], activeSearch, flow} = action.payload;
+        var {groups=[], activeSearch, ...rest} = action.payload;
         groups.forEach( (g) => {
             Object.entries(get(g, 'searchItems',{}))
                   .forEach(([k,v]) => v.name = k);      // insert key as name into the search object.
         });
         activeSearch = activeSearch || get(Object.values(get(groups, [0, 'searchItems'], {})), [0, 'name']);    // defaults to first searchItem
         const allSearchItems = Object.assign({}, ...map(groups, 'searchItems'));
-        Object.assign(searchInfo, {allSearchItems, groups, flow});
+        Object.assign(searchInfo, rest, {allSearchItems, groups});
         dispatch({ type : APP_UPDATE, payload: {searches: {activeSearch}}});
     };
 }
