@@ -16,9 +16,8 @@ export class TableConnector {
         this.tableModel = tableModel;
         this.options = options;
 
-        this.origPageSize = options.pageSize;
-        this.origShowUnits = get(options,'showUnits', true);
-        this.origShowFilters = get(options, 'showFilters', false);
+        const {pageSize, showUnits=true, showFilters=false, showTypes=false} = options || {};
+        this.orig = {showUnits, showTypes, showFilters, pageSize};
     }
 
     onMount() {
@@ -106,14 +105,14 @@ export class TableConnector {
         TblCntlr.dispatchTableUiUpdate(changes);
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showFilters, sortInfo, filterInfo}) {
+    onOptionUpdate({pageSize, columns, showUnits, showTypes, showFilters, sortInfo, filterInfo}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
         }
         if (!isUndefined(filterInfo)) {
             this.onFilter(filterInfo);
         }
-        const changes = omitBy({columns, showUnits, showFilters, optSortInfo:sortInfo}, isUndefined);
+        const changes = omitBy({columns, showUnits, showTypes, showFilters, optSortInfo:sortInfo}, isUndefined);
         if (!isEmpty(changes)) {
             changes.tbl_ui_id = this.tbl_ui_id;
             TblCntlr.dispatchTableUiUpdate(changes);
@@ -124,11 +123,12 @@ export class TableConnector {
         const ctable = TblUtil.getTblById(this.tbl_id);
         var filterInfo = get(ctable, 'request.filters', '').trim();
         filterInfo = filterInfo !== '' ? '' : undefined;
-        const pageSize = get(ctable, 'request.pageSize') !== this.origPageSize ? this.origPageSize : undefined;
+        var {showUnits, showTypes, showFilters, pageSize} = this.orig || {};
+        
+        pageSize = get(ctable, 'request.pageSize') !== pageSize ? pageSize : undefined;
         this.onOptionUpdate({filterInfo, pageSize,
                         columns: cloneDeep(get(ctable, 'tableData.columns', [])),
-                        showUnits: this.origShowUnits,
-                        showFilters: this.origShowFilters});
+                        showUnits, showTypes, showFilters});
     }
 
     static newInstance(tbl_id, tbl_ui_id, tableModel, options) {
