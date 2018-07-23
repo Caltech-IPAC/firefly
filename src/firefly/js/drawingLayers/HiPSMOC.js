@@ -5,7 +5,7 @@ import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import {visRoot,dispatchUpdateDrawLayer} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {get, set, isEmpty, cloneDeep, clone} from 'lodash';
 import MocObj, {createDrawObjsInMoc, getMaxDisplayOrder, setMocDisplayOrder} from '../visualize/draw/MocObj.js';
@@ -14,7 +14,7 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
-const factoryDef= makeFactoryDef(TYPE_ID, creator, getDrawData, getLayerChanges, null, getUIComponent);
+const factoryDef= makeFactoryDef(TYPE_ID, creator, getDrawData, getLayerChanges, null, getUIComponent, asyncComputeDrawData);
 export default {factoryDef, TYPE_ID};
 
 let idCnt=0;
@@ -148,4 +148,9 @@ function createMocData(dl, plotId) {
     newMocObj.style =  get(mocStyle, plotId, Style.STANDARD);
     createDrawObjsInMoc(newMocObj, plot);
     return newMocObj;
+}
+
+function asyncComputeDrawData(drawLayer, action) {
+    console.log(`in HiPSMOC asyncComputeDrawData, this happens outside of reducer context, action.type: ${action.type}`);
+    //results should call dispatchUpdateDrawLayer(newDrawLayer)
 }

@@ -27,6 +27,7 @@ import {footprintCreateLayerActionCreator,
         footprintMoveActionCreator,
         footprintEndActionCreator
 } from '../drawingLayers/FootprintTool.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
@@ -40,6 +41,7 @@ export const GroupingScope= new Enum(['STANDARD', 'SUBGROUP', 'SINGLE']);
 
 
 const CREATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.createDrawLayer`;
+const UPDATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.updateDrawLayer`;
 const DESTROY_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.destroyDrawLayer`;
 const CHANGE_VISIBILITY= `${DRAWLAYER_PREFIX}.changeVisibility`;
 const CHANGE_DRAWING_DEF= `${DRAWLAYER_PREFIX}.changeDrawingDef`;
@@ -122,6 +124,19 @@ export function getDlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 
 export function getDrawLayerCntlrDef(drawLayerFactory) {
+
+    setTimeout( () => {
+        dispatchAddActionWatcher({
+            actions:[CHANGE_VISIBILITY, CHANGE_DRAWING_DEF, ATTACH_LAYER_TO_PLOT,
+                DETACH_LAYER_FROM_PLOT, FORCE_DRAW_LAYER_UPDATE, MODIFY_CUSTOM_FIELD,
+                ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_HIPS,
+                ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION,
+            ],
+            callback: asyncDrawDataWatcher,
+            params: {drawLayerFactory}
+        });
+    },10);
+    
     return {
         reducers() {return {[DRAWING_LAYER_KEY]: makeReducer(drawLayerFactory)}; },
 
@@ -276,6 +291,14 @@ export function dispatchModifyCustomField(id,changes, plotId) {
         .forEach( (drawLayerId) => {
             flux.process({type: MODIFY_CUSTOM_FIELD, payload: {drawLayerId, changes, plotIdAry}});
         });
+}
+
+/**
+ *
+ * @param {DrawLayer} drawLayer
+ */
+export function dispatchUpdateDrawLayer(drawLayer) {
+    flux.process({type: UPDATE_DRAWING_LAYER, payload: {drawLayer}});
 }
 
 /**
@@ -574,6 +597,21 @@ function makeDetachLayerActionCreator(factory) {
 }
 
 
+function asyncDrawDataWatcher(action, cancelSelf, params) {
+        const {drawLayerId, plotId}= action.payload;
+        const drawLayerAry= getDlAry();
+        const drawLayer= getDrawLayerById(drawLayerAry, drawLayerId);
+        const {drawLayerFactory}=  params;
+        if (drawLayer) {
+            drawLayerFactory.asyncComputeDrawData(drawLayer,action);
+        }
+        else if (plotId) {
+            drawLayerAry
+                .filter( (dl) => dl.visiblePlotIdAry
+                    .find( (testPlotId) => testPlotId===plotId))
+                .forEach( (dl) => drawLayerFactory.asyncComputeDrawData(dl,action));
+        }
+}
 
 
 //=============================================
@@ -601,6 +639,9 @@ function makeReducer(factory) {
             case FORCE_DRAW_LAYER_UPDATE:
             case MODIFY_CUSTOM_FIELD:
                 retState = deferToLayerReducer(state, action, dlReducer);
+                break;
+            case UPDATE_DRAWING_LAYER:
+                retState = doUpdateDrawLayer(state, action);
                 break;
             case CREATE_DRAWING_LAYER:
                 retState = createDrawLayer(state, action);
@@ -655,6 +696,12 @@ function createDrawLayer(state,action) {
 
     return Object.assign({}, state,
         {allowedActions, drawLayerAry: [...state.drawLayerAry, drawLayer] });
+}
+
+function doUpdateDrawLayer(state,action) {
+    const {drawLayer}= action.payload;
+    const drawLayerAry= state.drawLayerAry.map( (dl) => dl.drawLayerId===drawLayer.drawLayerId ? drawLayer : dl);
+    return Object.assign({}, state, {drawLayerAry} );
 }
 
 /**
