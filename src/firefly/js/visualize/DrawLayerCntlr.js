@@ -29,6 +29,7 @@ import {footprintCreateLayerActionCreator,
 } from '../drawingLayers/FootprintTool.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {dispatchTableFetch, TABLE_LOADED} from '../tables/TablesCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
 
@@ -130,7 +131,7 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
             actions:[CHANGE_VISIBILITY, CHANGE_DRAWING_DEF, ATTACH_LAYER_TO_PLOT,
                 DETACH_LAYER_FROM_PLOT, FORCE_DRAW_LAYER_UPDATE, MODIFY_CUSTOM_FIELD,
                 ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_HIPS,
-                ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION,
+                ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION
             ],
             callback: asyncDrawDataWatcher,
             params: {drawLayerFactory}
@@ -825,7 +826,7 @@ const initState= function() {
                           CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,TABLE_TO_IGNORE,
                           ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW,
                           ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION,
-                          ImagePlotCntlr.CHANGE_HIPS,
+                          ImagePlotCntlr.CHANGE_HIPS, UPDATE_DRAWING_LAYER
                         ],
         drawLayerAry : [],
         ignoreTables : [],

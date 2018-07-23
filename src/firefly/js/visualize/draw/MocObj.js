@@ -5,12 +5,10 @@ import {makeRegionPolygon} from '../region/Region.js';
 import {drawRegions} from '../region/RegionDrawer.js';
 import {distanceToPolygon} from './ShapeDataObj.js';
 import {getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
-        isTileVisibleByPosition, initSidePoints, NSIDE2, NSIDE4, fixCornersOrderZero} from '../HiPSMocUtil.js';
+        isTileVisibleByPosition, initSidePoints, NSIDE4} from '../HiPSMocUtil.js';
 import {getHealpixCornerTool,  getVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
 import DrawOp from './DrawOp.js';
 import CsysConverter from '../CsysConverter.js';
-import {primePlot} from '../PlotViewUtil.js';
-import {visRoot} from '../ImagePlotCntlr.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
 
 const MOC_OBJ= 'MOCObj';
@@ -42,61 +40,6 @@ function make(cellNums, drawingDef) {
     return obj;
 }
 
-/**
- * class MocGroup convert moc nuniq values into a set of norder and npix and store all nuniq per norder
- */
-class MocGroup {
-    constructor(cellList) {
-        this.cells = cellList;
-        this.groupInLevels = {};
-        this.minOrder = 100;
-        this.maxOrder = 0;
-        this.currentLastOrder = 0;
-    }
-
-    makeGroups() {
-       this.cells.forEach((oneNuniq) => {
-            const {norder, npix} = getMocOrderIndex(oneNuniq);
-            const newMember = {npix, nuniq: oneNuniq};
-
-            if (norder > this.maxOrder) {
-                this.maxOrder = norder;
-            }
-            if (norder < this.minOrder) {
-                this.minOrder = norder;
-            }
-            if (has(this.groupInLevels, [norder])) {
-                this.groupInLevels[norder].push(newMember);
-            } else {
-                this.groupInLevels[norder] = [newMember];
-            }
-        });
-        this.currentLastOrder = this.maxOrder;
-        this.isAllSky = (this.minOrder === 0) && (this.maxOrder === 0) && (this.cells.length === 12);
-        return this.groupInLevels;
-    }
-
-    // total number of tiles represented by MoCGroup object
-    countTiles() {
-        return this.cells.length;
-    }
-
-
-    // get all tiles at some order includeing the created tile containing children or not
-    getTilesAtOrder(order, includeChild = false) {
-        if (this.includeOrder(order)) {
-            if (includeChild) return this.groupInLevels[order];
-
-            return this.groupInLevels[order].filter((oneTile) => !oneTile.from);
-        } else {
-            return null;
-        }
-    }
-
-    includeOrder(order) {
-        return (order >= this.minOrder && order <= this.maxOrder && has(this.groupInLevels, [order]));
-    }
-}
 
 
 
@@ -207,62 +150,218 @@ function makeDrawParams(drawObj,def) {
     };
 }
 
-/**
- * collect all visible tiles from defined MOC based on plot and a selected maximum display number
- * the tile collection is for moc display on the given plot
- * the maximum display number is derived based on the plot features, such as pixel size, etc.
- * @param mocGroup
- * @param plot
- * @param displayOrder   maximum norder of the tile to be collected
- * @returns {{}}
- */
-function collectVisibleTilesFromMoc(mocGroup, plot, displayOrder) {
-    //const TOTAL = Math.min(Math.max(Math.trunc(mocGroup.countTiles() * 0.2), 5000), 7000);
-    const TOTAL = mocGroup.countTiles();
-    const healpixCache = getHealpixCornerTool();
-    const {visibleMap, highestOrderInMap} = getVisibleTiles(displayOrder, plot);  // search visible tiles of current plot at lower orders
-    const cc = CsysConverter.make(plot);
-    const resTiles = {};
 
-    // check if npix is included in a array of npix from visible tiles of some order
-    const isNotInsideMap = (visibleSet, ipix) => {
+const PROD_VISIBLE_TOTAL = 200000*2000;
+/**
+ * class MocGroup convert moc nuniq values into a set of norder and npix and store all nuniq per norder
+ */
+export class MocGroup {
+    constructor(cellList, mGroup = null, plot = {}) {
+        if (mGroup) {
+            this.cells = mGroup.cells;
+            this.groupInLevels = mGroup.groupInLevels;
+            this.minOrder = mGroup.minOrder;
+            this.maxOrder = mGroup.maxOrder;
+        } else {
+            this.cells = cellList;
+            this.groupInLevels = {};
+            this.minOrder = 100;
+            this.maxOrder = 0;
+        }
+        this.healpixCache = getHealpixCornerTool();
+
+        // for each collection of visible tiles
+        this.initCollection(plot);
+    }
+
+    initCollection(plot) {
+        this.displayOrder = 8; // default
+        this.hipsOrder = 2; // default
+        this.inCollectVisibleTiles = false;
+        this.visibleMap = {};
+        this.highestOrderInMap = 1; // set in getVisibleTileMap
+        this.resultCellsFromMoc = [];
+        this.vTiles = {};   // visible tiles after first step filter by looking at parent tiles of lower order
+        this.TOTAL = 0;
+        this.total = 0;     // count total collected visible tiles for rendering
+        this.incNpixs = {};     // npix of the tile that is tested as visible previously in reduceTiles
+        this.notIncNpixs = {};  // npix of the tile that is tested as invisible previously in reduceTiles
+        this.nextOrderToCollect = this.minOrder;
+        this.plot = plot;
+
+    }
+
+    makeGroups() {
+        this.cells.forEach((oneNuniq) => {
+            const {norder, npix} = getMocOrderIndex(oneNuniq);
+            const newMember = {npix, nuniq: oneNuniq};
+
+            if (norder > this.maxOrder) {
+                this.maxOrder = norder;
+            }
+            if (norder < this.minOrder) {
+                this.minOrder = norder;
+            }
+            if (has(this.groupInLevels, [norder])) {
+                this.groupInLevels[norder].push(newMember);
+            } else {
+                this.groupInLevels[norder] = [newMember];
+            }
+        });
+        this.isAllSky = (this.minOrder === 0) && (this.maxOrder === 0) && (this.cells.length > 0);
+        this.nextOrderToCollect = this.minOrder;
+        return this.groupInLevels;
+    }
+
+    // total number of tiles represented by MoCGroup object
+    countMocTiles() {
+        return this.cells.length;
+    }
+
+
+    // get all tiles at some order including the created tile containing children or not
+    getTilesAtOrder(order) {
+        return this.includeOrder(order) ? this.groupInLevels[order] : null;
+    }
+
+    includeOrder(order) {
+        return (order >= this.minOrder && order <= this.maxOrder && has(this.groupInLevels, [order]));
+    }
+
+    getMaxDisplayOrder() {
+        const {norder} = getHiPSNorderlevel(this.plot);
+
+        this.hipsOrder = norder;
+        this.displayOrder = Math.max(this.minOrder, this.hipsOrder) + 6;
+    }
+
+    getVisibleTileMap() {          // init the visibleMap by finding visible tiles with the order less than displayOrder
+        this.visibleMap = {};
+        this.highestOrderInMap = 0;
+
+        new Array(this.displayOrder).fill(0).map((i, idx) => idx + 1)
+            .find((d) => {
+                if ((d > 1) && Object.keys(this.visibleMap[d - 1]).length > 5000) {
+                    return true;
+                }
+
+                set(this.visibleMap, [d], getVisibleTilesAtOrderPerNpix(this.plot, d));
+                this.highestOrderInMap = d;
+                return false;
+            });
+    }
+
+    // npix collected from visibleMap at order
+    visibleNpixAt(order) {
+        return has(this.visibleMap, [order]) ? Object.keys(this.visibleMap[order]) : [];
+    }
+
+    noVisibleTilesAtOrder(order) {
+        return ((!has(this.vTiles, [order])) || (!this.vTiles[order]) || (this.vTiles[order].length === 0));
+    }
+
+    filterTilesOnOrder(tiles, fromOrder, pOrder, vSet) {
+        const fNum = (fromOrder - pOrder) * 2;
+
+        return tiles.filter((oneTile) => {
+            const ipix = oneTile.npix >> fNum;
+            if (has(vSet, [ipix])) {
+                return oneTile;
+            } else {
+                return false;
+            }
+        });
+    }
+
+    // first step filter out invisible tiles by looking at low  order parent tile
+    searchVisibleTiles(stopAtOrder) {
+        let parentOrder = this.highestOrderInMap;   // the order best fit for the plot
+        let len = this.visibleNpixAt(parentOrder).length;
+        const maxOrder = stopAtOrder ? Math.min(stopAtOrder, this.maxOrder) : this.maxOrder;
+
+        // find the order with small number of visible tiles from highestOrderInMap for current plot
+        for (let order = parentOrder-1; order >= 1; order--) {
+            if (has(this.visibleMap, [order]) && this.visibleNpixAt(order).length <= len) {
+                parentOrder = order;
+                len = this.visibleNpixAt(order).length;
+                if (len <= 50 && (order <= Math.max(1, maxOrder - 6))) break;
+            }
+        }
+
+        for (let d = this.minOrder; d <= maxOrder; d++) {
+            const tiles = this.getTilesAtOrder(d);
+            if (!tiles || tiles.length===0) {          // no tiles on this order
+                set(this.vTiles, [d], tiles);
+            } else if (d < parentOrder)  {  // tile with order less than parent order to reduced to (including 0)
+                set(this.vTiles, [d], tiles);
+            } else {                                   // filter out invisible tiles by looking at parent order
+                set(this.vTiles, [d], this.filterTilesOnOrder(tiles, d, parentOrder, this.visibleMap[parentOrder]));
+            }
+        }
+    }
+
+    addToResult(norder, npix, nuniq) {
+        const uniq = !nuniq ? getMocNuniq(norder, npix) : nuniq;
+
+        this.resultCellsFromMoc.push({nuniq: uniq, norder, npix});
+        this.total++;
+    }
+
+    isNotInsideMap(visibleSet, ipix) {
         return  {invisible: !has(visibleSet, ipix), wpCorners: visibleSet[ipix]} ;
     };
 
-    // add tile info including norder, npix and nuniq numbers into the returned visible tiles set
-    const addingCandidates = (ipix, nOrder, wpCorners, nuniq) => {
-        getCornerForPix(nOrder, ipix, plot.dataCoordSys, healpixCache, wpCorners);
-        addToResult(nOrder, ipix, nuniq);
+    addingCandidates(ipix, nOrder, wpCorners, nuniq){
+        getCornerForPix(nOrder, ipix, this.plot.dataCoordSys, this.healpixCache, wpCorners);
+        this.addToResult(nOrder, ipix, nuniq);
         return true;
-    };
+    }
 
-    let total = 0;           // total number in the return array
-    const addToResult = (norder, npix, nuniq) => {
-        const uniq = !nuniq ? getMocNuniq(norder, npix) : nuniq;
+    // select visible tile from the MOC at order 0 (visible map not include visible tiles at order 0)
+    selectTilesOrderZero(tiles) {
+        const cc = CsysConverter.make(this.plot);
+        tiles.find((oneTile) => {
+            const {npix, nuniq} = oneTile;
+            const {wpCorners} = getCornerForPix(0, npix, this.plot.dataCoordSys, this.healpixCache);
 
-        resTiles[uniq] = {norder, npix};
-        total++;
-    };
+            if (isTileVisibleByPosition(wpCorners, cc)) {
+                this.addToResult(0, npix,nuniq);
+            }
 
-    // npix array collected from visibleMap at some order
-    const visibleNpixAt = (order) => {
-        return has(visibleMap, [order]) ? Object.keys(visibleMap[order]) : [];
-    };
+            return this.total >= this.TOTAL;
+        });
+    }
 
-    const incNpixs = {};     // store npix of the tile that is tested visible previously
-    const notIncNpixs = {};  // store npix of the tile that is tested invisible previously
+    // find visible tile for the MOC by checking the visible map
+    selectTilesByMap(fromOrder, tiles) {
+        tiles = isUndefined(tiles) ? this.getTilesAtOrder(fromOrder) : tiles;
+        if (!tiles || tiles.length === 0) return;
 
-    // find visible tiles for the MOC by checking the visibility of the parent tiles at lower order
-    const reduceTiles = (fromOrder, toOrder, visibleNpixsToOrder, tiles) => {
-        tiles = isUndefined(tiles) ?  mocGroup.getTilesAtOrder(fromOrder, false) : tiles;
+        const vSet = get(this.visibleMap, [fromOrder], {});
 
-        if (!tiles || tiles.length === 0) return;                        // no tiles at child order
+        tiles.find((oneTile) => {
+            const {npix, nuniq} = oneTile;
+            // new nextNpix
+            const tileInfo = this.isNotInsideMap(vSet, npix);
+            if (tileInfo.invisible) {  // tile is not visible
+                return false;
+            }
 
-        const pVisibleSet = visibleNpixsToOrder;
-        if (Object.keys(pVisibleSet).length === 0) return;     // no visible tiles at parent order
+            this.addingCandidates(npix, fromOrder, tileInfo.wpCorners, nuniq);
+            return this.total >= this.TOTAL;
+        });
+    }
 
-        const includedNpixs = get(incNpixs, [toOrder], []);
-        const notIncludedNpixs = get(notIncNpixs, [toOrder], []);
+
+    reduceTiles(fromOrder, toOrder)  {
+        const tiles = this.vTiles[fromOrder];
+        if (!tiles || tiles.length === 0) return;                      // no tiles at child order
+
+        const pVisibleSet = this.visibleMap[toOrder];
+        if (Object.keys(pVisibleSet).length === 0) return;             // no visible tiles at parent order
+
+        const includedNpixs = get(this.incNpixs, [toOrder], []);
+        const notIncludedNpixs = get(this.notIncNpixs, [toOrder], []);
         const pNum = (fromOrder - toOrder) << 1;    // divide by 4 ** (from-to)
 
 
@@ -274,84 +373,45 @@ function collectVisibleTilesFromMoc(mocGroup, plot, displayOrder) {
                 return false;
             }
 
-            const tileInfo = isNotInsideMap(pVisibleSet, nextNpix);
+            const tileInfo = this.isNotInsideMap(pVisibleSet, nextNpix);
             if (tileInfo.invisible) {                // parent tile is not visible
                 notIncludedNpixs.push(nextNpix);
                 return false;
             }
-            if (addingCandidates(nextNpix, toOrder, tileInfo.wpCorners)) {    // add tile to the return list
+            if (this.addingCandidates(nextNpix, toOrder, tileInfo.wpCorners)) {    // add tile to the return list
                 includedNpixs.push(nextNpix);
             }
-            return (total >= TOTAL);
+            return (this.total >= this.TOTAL);
         });
 
 
-        set(incNpixs, [toOrder], includedNpixs);
-        set(notIncNpixs, [toOrder], notIncludedNpixs);
-    };
+        set(this.incNpixs, [toOrder], includedNpixs);
+        set(this.notIncNpixs, [toOrder], notIncludedNpixs);
+    }
 
-    // find visible tile for the MOC by checking the visible map
-    const selectTilesByMap = (fromOrder, tiles) => {
-        tiles = isUndefined(tiles) ? mocGroup.getTilesAtOrder(fromOrder, false) : tiles;
-        if (!tiles || tiles.length === 0) return;
-
-        const vSet = get(visibleMap, [fromOrder], {});
-
-        tiles.find((oneTile) => {
-            const {npix, nuniq} = oneTile;
-            // new nextNpix
-            const tileInfo = isNotInsideMap(vSet, npix);
-            if (tileInfo.invisible) {  // tile is not visible
-                return false;
-            }
-
-            addingCandidates(npix, fromOrder, tileInfo.wpCorners, nuniq);
-            return total >= TOTAL;
-        });
-    };
-
-    // select visible tile from the MOC at order 0 (visible map not include visible tiles at order 0)
-    const selectTilesOrderZero = (tiles) => {
-        tiles.find((oneTile) => {
-            const {npix, nuniq} = oneTile;
-            const {wpCorners} =  healpixCache.makeCornersForPix(npix, NSIDE2[0], plot.dataCoordSys);  // get corners
-            fixCornersOrderZero(wpCorners, npix, healpixCache, plot.dataCoordSys);
-
-            if (isTileVisibleByPosition(wpCorners, cc)) {
-                getCornerForPix(0, npix, plot.dataCoordSys, healpixCache, wpCorners);
-                addToResult(0, npix,nuniq);
-            }
-
-            return total >= TOTAL;
-        });
-    };
-
-    // add visible tiles to visibleMap for order 'toOrder'
-    const PROD_VISIBLE_TOTAL = 200000*2000;
-    const expandVisibleMap = (toOrder, plot, vTiles)  => {
-        if (has(visibleMap, toOrder)) {
+    expandVisibleMap(toOrder) {
+        if (has(this.visibleMap, toOrder)) {
             return true;
         }
 
-        if (toOrder > displayOrder) return false;
+        if (toOrder >this.displayOrder) return false;
 
-        const lastOrder = getHighestOrderFrom(visibleMap, toOrder);
+        const lastOrder = this.getHighestOrderFromMap(toOrder);
 
         for (let pOrder = lastOrder+1; pOrder <= toOrder; pOrder++) {
-            const incNum = NSIDE4[pOrder - lastOrder];   // npix increment
-            const sNpix = visibleNpixAt(pOrder-1).length * incNum;   // predicted maximum number of npix (tile) for 'toOrder in visibleMap
-            const nTiles = vTiles.length*0.5*(1+1/NSIDE4[toOrder-pOrder]);     // predicted max visible MOC tile at 'pOrder'
+            const incNum = NSIDE4[1];   // npix increment
+            const sNpix = this.visibleNpixAt(pOrder-1).length * incNum;   // predicted maximum number of npix (tile) for 'toOrder in visibleMap
+            const nTiles = this.vTiles[toOrder].length*0.5*(1+1/NSIDE4[toOrder-pOrder]);     // predicted max visible MOC tile at 'pOrder'
 
-        // exntend the visible list in case the total visible MOC tile and the predicted maximum number less than some criterion
+            // exntend the visible list in case the total visible MOC tile and the predicted maximum number less than some criterion
             if (((sNpix * nTiles <= PROD_VISIBLE_TOTAL)&&(sNpix <= 200000)) || (sNpix < nTiles && sNpix < 10000)) {
                 let nextSet;
 
-                if (get(visibleMap, [(pOrder - 1)]) && visibleNpixAt(pOrder - 1).length < 5000) {
-                    nextSet = getVisibleTilesAtOrderPerNpix(plot, toOrder);        // for not too big list
+                if (get(this.visibleMap, [(pOrder - 1)]) && this.visibleNpixAt(pOrder - 1).length < 5000) {
+                    nextSet = getVisibleTilesAtOrderPerNpix(this.plot, pOrder);        // for not too big list
                 } else {                                                       // extended from list of lower order
-
                     const npixAry = new Array(incNum).fill(0).map((i, idx) => idx);
-                    nextSet = Object.keys(visibleMap[pOrder - 1]).reduce((prev, oneNpix) => {
+                    nextSet = Object.keys(this.visibleMap[pOrder - 1]).reduce((prev, oneNpix) => {
                         const base_npix = oneNpix * incNum;
 
                         npixAry.forEach((i) => {
@@ -361,7 +421,7 @@ function collectVisibleTilesFromMoc(mocGroup, plot, displayOrder) {
                         return prev;
                     }, {});
                 }
-                set(visibleMap, [pOrder], nextSet);
+                set(this.visibleMap, [pOrder], nextSet);
             } else {
                 break;
             }
@@ -370,164 +430,123 @@ function collectVisibleTilesFromMoc(mocGroup, plot, displayOrder) {
             }
         }
         return false;
-    };
+    }
+    // for print and stats purpose
+    visibleCount() {
+        const tileCount = Object.keys(this.vTiles).reduce((prev, order) => {
+            set(prev, [order], (this.noTilesAtOrder(order) ? 0 : this.vTiles[order].length));
 
-    /*
-     get the highest order less than the given 'byOrder' in the visibleMap with tile corners data ( the visible list is
-     originally formed by  calling getVisibleHiPSCells, not extended from that of lower level)
-    */
-    const getHighestOrderFrom = (vMap, byOrder) => {
-        return Object.keys(vMap).reduce((prev, order) => {
+            return prev;
+        }, {});
+
+        const vCount = Object.keys(this.visibleMap).reduce((prev, order) => {
+            set(prev, [order], (has(this.visibleMap, [order])&&this.visibleMap[order] ? this.visibleNpixAt(order).length : 0));
+            return prev;
+        }, {});
+
+        return {tileCount, vCount};
+    }
+
+    getHighestOrderFromMap(byOrder) {
+        return Object.keys(this.visibleMap).reduce((prev, order) => {
             const norder = Number(order);
-            const vSet = visibleNpixAt(norder);
+            const vSet = this.visibleNpixAt(norder);
 
-            //if (!isEmpty(vSet) && get(visibleMap, [norder, vSet[0]])  && (norder > prev) && (norder < byOrder)) {
             if (!isEmpty(vSet) && (norder > prev) && (norder < byOrder)) {
                 prev = norder;
             }
             return prev;
         }, 0);
-    };
+    }
 
+    collectVisibleTilesFromMoc(plot, storedSidePoints, timeLimit=20) {
+        initSidePoints(storedSidePoints);
 
-    initSidePoints();
+        if (!this.inCollectVisibleTiles) {
+            this.initCollection(plot);
+            this.getMaxDisplayOrder();
+            this.getVisibleTileMap();
 
-    const filterTilesOnOrder = (tiles, fromOrder, pOrder, vSet) => {
-        const fNum = (fromOrder - pOrder) * 2;
+            this.searchVisibleTiles();      // filter out invisible tiles first, update this.vTiles
+            this.inCollectVisibleTiles = true;
+            this.nextOrderToCollect = this.minOrder;
+            this.TOTAL = Object.keys(this.vTiles).reduce((prev, order) => {
+                    prev += (this.noVisibleTilesAtOrder(order) ? 0 : this.vTiles[order].length);
+                    return prev;
+            }, 0);
 
-        return tiles.filter((oneTile) => {
-            const ipix = oneTile.npix >> fNum;
-            if (has(vSet, [ipix])) {
-                return oneTile;
-            } else {
-                return false;
-            }
-        });
-    };
-
-    /*
-     find visible tiles of the MOC based on the visible parents at lower parents for collecting the
-     visible tiles efficiently
-     */
-
-    const searchVisibleTiles = (stopAt) => {
-        let parentOrder = highestOrderInMap;   // the order best fit for the plot
-        let len = visibleNpixAt(parentOrder).length;
-        const maxOrder = stopAt ? Math.min(stopAt, mocGroup.maxOrder) : mocGroup.maxOrder;
-
-        // find the order with small number of visible tiles for current plot
-        for (let order = parentOrder; order >= 1; order--) {
-            if (has(visibleMap, [order]) && visibleNpixAt(order).length <= len) {
-                parentOrder = order;
-                len = visibleNpixAt(order).length;
-                if (len <= 50 && (order <= Math.max(1, maxOrder - 6))) break;
-            }
-        }
-
-        const vTiles = {};
-        const vSet = visibleMap[parentOrder];
-
-        for (let d = mocGroup.minOrder; d <= maxOrder; d++) {
-            const tiles = mocGroup.getTilesAtOrder(d);
-            if (!tiles || tiles.length===0) {
-                set(vTiles, [d], tiles);
-            } else if (d < parentOrder || d === 0)  {
-                set(vTiles, [d], tiles);
-            } else {
-                set(vTiles, [d], filterTilesOnOrder(tiles, d, parentOrder, vSet));
-            }
-        }
-        return vTiles;
-    };
-
-
-    // initial step to filter out all invisible tiles by looking at the parent tiles at lower order
-    const vTiles = searchVisibleTiles() ;
-    const noTilesAtOrder = (order) => {
-        return ((!has(vTiles, [order])) || (!vTiles[order]) || (vTiles[order].length === 0));
-    };
-
-    const visibleCount = () => {
-        const tileCount = Object.keys(vTiles).reduce((prev, order) => {
-            set(prev, [order], (noTilesAtOrder(order) ? 0 : vTiles[order].length));
-
-            return prev;
-        }, {});
-
-        const vCount = Object.keys(visibleMap).reduce((prev, order) => {
-            set(prev, [order], (has(visibleMap, [order])&&visibleMap[order] ? visibleNpixAt(order).length : 0));
-            return prev;
-        }, {});
-
-        return {tileCount, vCount};
-    };
-
-    /*
-     second step to find visible tiles by checking the visibleMap and convert all tiles of higher order to parent tiles
-     in case no list for selection  is not available in visibleMap
-    */
-
-    let firstAt = mocGroup.maxOrder+1;
-    for (let d = mocGroup.minOrder; d <= displayOrder; d++) {
-        if (noTilesAtOrder(d)) continue;
-
-        if (d === 0) {
-            selectTilesOrderZero(vTiles[0]);
         } else {
-            const isExpanded = expandVisibleMap(d, plot, vTiles[d]);
+            let nextOrder = this.nextOrderToCollect;
+            const t1 = performance.now();
 
-            if (isExpanded) {
-                selectTilesByMap(d, vTiles[d]);
-                firstAt = d+1;
-            } else {
-                firstAt = d;
-                break;
+            for (let d = Math.max(this.nextOrderToCollect, this.minOrder); d <= this.displayOrder; d++) {
+                if (this.noVisibleTilesAtOrder(d)) {
+                    nextOrder = d+1;
+                    continue;
+                }
+
+                if (d === 0) {
+                    this.selectTilesOrderZero(this.vTiles[0]);
+                    nextOrder = d+1;
+                } else {
+                    const isExpanded = this.expandVisibleMap(d);
+
+                    if (isExpanded) {
+                        this.selectTilesByMap(d, this.vTiles[d]);
+                        nextOrder = d+1;
+                    } else {
+                        nextOrder = d;
+                        break;
+                    }
+                }
+                if (timeLimit) {
+                    if (((performance.now() - t1) > timeLimit) || d === this.displayOrder) {
+                        this.nextOrderToCollect = nextOrder;
+                        return;
+                    }
+                }
+
+                if (this.total >= this.TOTAL) break;
             }
+
+            if ((this.total < this.TOTAL) && (nextOrder <= this.maxOrder) ) {
+                const parentOrder = this.getHighestOrderFromMap(nextOrder);
+                for (let rd = nextOrder; rd <= this.maxOrder; rd++) {
+                    if (this.noVisibleTilesAtOrder(rd)) continue;
+                    this.reduceTiles(rd, parentOrder);   // reduce tiles of higher order to parent tiles of lower order
+
+                    if (timeLimit && ((performance.now() - t1) > timeLimit)) {
+                        this.nextOrderToCollect= rd+1;
+                        return;
+                    }
+                }
+            }
+
+            this.inCollectVisibleTiles = false;
         }
-        if (total >= TOTAL) break;
     }
 
-    if ((total < TOTAL) && (firstAt <= mocGroup.maxOrder) ) {
-        const parentOrder = getHighestOrderFrom(visibleMap, firstAt);
-        for (let rd = firstAt; rd <= mocGroup.maxOrder; rd++) {
-            if (noTilesAtOrder(rd)) continue;
-            reduceTiles(rd, parentOrder,  get(visibleMap, [parentOrder], {}), vTiles[rd]);   // reduce tiles of higher order to parent tiles of lower order
-        }
+    isInCollection() {
+        return this.inCollectVisibleTiles;
     }
 
-    return resTiles;
 }
 
 
 function drawMoc(mocObj, ctx, cc, drawParams, vpPtM,onlyAddToPath) {
-    const plot = primePlot(visRoot(), cc.plotId);
-    const healpixCache = getHealpixCornerTool();
-    const {displayOrder, regionOptions={}, allCells, drawObjAry} = mocObj;
+    const {drawObjAry} = mocObj;
 
-    if (drawObjAry) {
-        drawObjAry && drawObjAry.forEach((dObj) => {
-            DrawOp.draw(dObj, ctx, cc, drawParams, vpPtM, onlyAddToPath);
-        });
-    } else {
-        Object.keys(allCells).forEach((nuniq) => {
-            const {norder, npix} = allCells[nuniq];
-            const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, plot.dataCoordSys,
-                healpixCache, regionOptions);
-
-            drawObj && DrawOp.draw(drawObj, ctx, cc, drawParams, vpPtM, onlyAddToPath);
-        });
-    }
-
+    drawObjAry && drawObjAry.forEach((dObj) => {
+        DrawOp.draw(dObj, ctx, cc, drawParams, vpPtM, onlyAddToPath);
+    });
 }
 
 
 // create one drawObj for one tile
-export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, coordsys, healpixCache, regionOptions, isAllSky) {
-    const {wpCorners} = getCornerForPix(norder, npix, coordsys, healpixCache, null);
+export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, coordsys, regionOptions, isAllSky) {
+    const polyPts = getMocSidePointsNuniq(norder, npix, hipsOrder+6, coordsys, isAllSky);
+    if (!polyPts)  return null;
 
-
-    //hipsOrder = (norder >= 8) ? norder : hipsOrder;   // no extra points inserted into the polygon's 4 corners if the order is high
-    const polyPts = getMocSidePointsNuniq(norder, npix, hipsOrder+6, coordsys, wpCorners, isAllSky);
     const polyRegion = makeRegionPolygon(polyPts, regionOptions);
     const drawObj = drawRegions([polyRegion])[0];
     const mocInfo = {norder, displayOrder, hipsOrder, npix, nuniq};
@@ -537,25 +556,31 @@ export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrd
 }
 
 // create all drawObjs
-export function createDrawObjsInMoc(mocObj, plot) {
-    const {displayOrder, regionOptions={}, allCells, hipsOrder, mocGroup} = mocObj;
-    const healpixCache = getHealpixCornerTool();
+export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePoints) {
+    initSidePoints(storedSidePoints);
+    const {displayOrder, regionOptions={}, allCells, hipsOrder, mocGroup, style=Style.STANDARD} = mocObj;
 
-    const drawObjAry = Object.keys(allCells).reduce((prev, nuniq) => {
-        const {norder, npix} = allCells[nuniq];
-            //if ((hipsOrder + 6 - norder) <= 10) {
+    startIdx = (startIdx >= 0 && startIdx < allCells.length) ? startIdx : 0;
+    endIdx = (endIdx && endIdx < allCells.length) ? endIdx : allCells.length-1;
+
+    if (startIdx === 0) {
+        mocObj.drawObjAry = [];
+    }
+
+    const drawObjs = allCells.slice(startIdx, endIdx+1).reduce((prev, oneCell) => {
+        const {norder, npix, nuniq} = oneCell;
         const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, plot.dataCoordSys,
-                healpixCache, regionOptions, mocGroup.isAllSky);
+                                              regionOptions, mocGroup.isAllSky);
 
         if (drawObj) {
             //  drawObj.text = ''+ nuniq;
+            drawObj.style = style;
             prev.push(drawObj);
         }
         return prev;
     }, []);
 
-    Object.assign(mocObj, {drawObjAry});
-    return drawObjAry;
+    return drawObjs;
 }
 
 
@@ -569,55 +594,9 @@ function getVisibleTilesAtOrderPerNpix(plot, order) {
             }, {});
 }
 
-
-function getVisibleTiles(order, plot) {
-    const visibleMap = {};
-    let   highestOrderInMap;
-
-    new Array(order).fill(0).map((i, idx) => idx+1)
-        .find((d) => {
-
-             if ((d > 1) && Object.keys(visibleMap[d - 1]).length > 5000) {
-                return true;
-             }
-
-             set(visibleMap, [d], getVisibleTilesAtOrderPerNpix(plot, d));
-             highestOrderInMap = d;
-            return false;
-        });
-
-    return {visibleMap, highestOrderInMap};
-}
-
-
-export function setMocDisplayOrder(mocObj, plot, newDisplayOrder, newHipsOrderLevel) {
-    if (newDisplayOrder) {
-        const {mocGroup} = mocObj;
-        const newAllCells = collectVisibleTilesFromMoc(mocGroup, plot, newDisplayOrder);
-
-        set(mocObj, ['allCells'], newAllCells);
-        return Object.assign({}, mocObj, {displayOrder: newDisplayOrder, hipsOrder: newHipsOrderLevel});
-    } else {
-        return mocObj;
-    }
-}
-
-
-/*
- displayOrder provides an order numbeer to hint if producing more pixels around the polygon for the tile with lower
- order than 'displayOdrder' to have better resolution for moc rendering
-*/
-export function getMaxDisplayOrder(minOrder, maxOrder, plot) {
-    const {norder} = getHiPSNorderlevel(plot);
-    const displayOrder = Math.max(minOrder, norder) + 6;
-    /*
-    if ((maxOrder - minOrder) < 3) {
-        displayOrder = Math.max(minOrder, norder) + 6;
-    } else {
-        displayOrder = Math.min(Math.max(norder, minOrder)+6, maxOrder);
-    }
-    */
-    return {displayOrder, hipsOrderLevel: norder};
+export function setMocDisplayOrder(mocObj) {
+    const {resultCellsFromMoc: allCells, displayOrder, hipsOrder} = mocObj.mocGroup || {};
+    return Object.assign(mocObj, {allCells, displayOrder, hipsOrder});
 }
 
 function toRegion(drawObjAry, plot, drawParams) {

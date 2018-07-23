@@ -1,13 +1,6 @@
-import {getTblById} from '../tables/TableUtil.js';
-import {dispatchTableFetch} from '../tables/TablesCntlr.js';
-import {makeTblRequest} from '../tables/TableRequestUtil.js';
-import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
-import {TABLE_LOADED} from '../tables/TablesCntlr';
-import {doUpload} from '../ui/FileUpload.jsx';
 import {getDrawLayersByType} from './PlotViewUtil.js';
 import {getDlAry, dispatchCreateDrawLayer} from './DrawLayerCntlr.js';
 import HiPSMOC from '../drawingLayers/HiPSMOC.js';
-import {MAX_ROW} from '../tables/TableRequestUtil.js';
 import {getHealpixCornerTool} from './HiPSUtil.js';
 import {get, set, isEmpty} from 'lodash';
 
@@ -22,52 +15,6 @@ export function makeMocTableId(ivoid) {
 
 export function ivoStr(ivoid) {
     return ivoid ? ivoid.trim().replace('ivo://', '').replace(/\//g,'_') : 'moc_table_' + (++mocCnt);
-}
-
-/**
- * @summary get HiPS MOC table
- *  @param {string} mocUrl moc url
- *  @param {string} tblId table Id for moc table
- */
-function onHiPSMoc(mocUrl, tblId) {
-    if (!getTblById(tblId)) {
-        doUpload(mocUrl, {isFromURL: true}).then(({status, cacheKey}) => {
-            if (status === '200') {
-                const tReq = makeTblRequest('userCatalogFromFile', 'Table Upload', {
-                    filePath: cacheKey,
-                    sourceFrom: 'isLocal'
-                }, {tbl_id: tblId, pageSize: MAX_ROW});
-                dispatchTableFetch(tReq, 0);  // change to dispatchTableFetch later
-            }
-        });
-    }
-}
-
-/**
- * @summary get HiPS MOC table
- * @param mocUrl
- * @param id
- * @returns {*}
- */
-export function getHiPSMocTable(mocUrl, id) {
-    const tblId = makeMocTableId(id);
-    const mocTable = getTblById(tblId);
-    if (mocTable && mocTable.tableData) return Promise.resolve(mocTable);
-
-
-    return new Promise((resolve) => {
-        const watcher= (action, cancelSelf) =>{
-            const {tbl_id}= action.payload;
-            if (!tbl_id.startsWith(tblId)) return;
-
-            const mocTable = getTblById(tbl_id);
-            if (mocTable) resolve(mocTable);
-            cancelSelf();
-        };
-
-        dispatchAddActionWatcher({actions:[TABLE_LOADED], callback: watcher});
-        onHiPSMoc(mocUrl, tblId);
-    });
 }
 
 export const NSIDE2 = new Array(30).fill(0).map((v, i) => 2**i);
@@ -86,17 +33,18 @@ export function getMocOrderIndex(Nuniq) {
 
 /**
  * add new layer on MOC table
- * @param {Array} moc_nuniq_nums moc number list
  * @param {string} tbl_id moc table id
- * @param {Object} fromPlotId the active plot issuing the new layer
+ * @param {string} fitsPath moc fits path
+ * @param {string} mocUrl  moc fits url
  * @returns {T|SelectInfo|*|{}}
  */
-export function addNewMocLayer(moc_nuniq_nums, tbl_id, fromPlotId) {
+export function addNewMocLayer(tbl_id, fitsPath, mocUrl) {
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tbl_id);
 
     if (!dl) {
-        dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID, {moc_nuniq_nums, tbl_id, fromPlotId});
+        const mocFitsInfo = {fitsPath, mocUrl, tbl_id};
+        dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID, {mocFitsInfo});
     }
     return dl;
 }
@@ -142,9 +90,8 @@ export function computeSideCellsToOrder(maxOrder) {
 }
 
 
-const sidePoints = {};
+let sidePoints = {};
 const sideCorners = [[2, 3], [3, 0], [0, 1], [1, 2]];
-
 
 function setPoints(norder, npix, corners) {
     if (!get(sidePoints, norder)) {
@@ -195,11 +142,8 @@ export function getCornersFromSidePoints(ptAry) {
     }
 }
 
-export function initSidePoints() {
-    const props = Reflect.ownKeys(sidePoints);
-    for (const prop of props) {
-        Reflect.deleteProperty(sidePoints, prop);
-    }
+export function initSidePoints(storedSidePoints) {
+    sidePoints = storedSidePoints;
 }
 
 
@@ -226,7 +170,8 @@ export function fixCornersOrderZero(wpCorners, npix, healpixCache, coordsys) {
 }
 
 /**
- * return tile corner pixels.
+ * return tile corner pixels from stored side points or the corners are either passed externally or calculated
+ * internally. The returned corners is in original order.
  * Note: some tile of order 0 is fixed by side points of order 1, the calculation on the corners of
  * order 0 tile is to be investigated later.
  * @param norder
@@ -269,22 +214,26 @@ export function getCornerForPix(norder, npix, coordsys, healpixCache, corners, b
  * @param npix
  * @param topOrder
  * @param coordsys
- * @param originWpCorners
  * @param isAllSky
  * @returns {*}
  */
-export function getMocSidePointsNuniq(norder, npix, topOrder, coordsys, originWpCorners, isAllSky) {
-    const sPoints = getSidePointsNorder(norder, npix, originWpCorners);
+export function getMocSidePointsNuniq(norder, npix, topOrder, coordsys, isAllSky) {
+    const sPoints = getSidePointsNorder(norder, npix);
+
+    if (!sPoints) return null;
     const healpixCache = getHealpixCornerTool();
     const newSidePoints = sPoints.slice();
+    const crtSidePointsOrder = Math.log2((newSidePoints.length / 4));
+    const  dUp = isAllSky ? Math.min((topOrder - norder), 8) : Math.floor((topOrder - norder +1)/2);
 
-    if ((norder < topOrder)) {
-        const dUp = isAllSky ? Math.min((topOrder - norder), 8) : Math.floor((topOrder - norder +1)/2);
+    if (crtSidePointsOrder === dUp) {
+        return newSidePoints;
+    } else if (crtSidePointsOrder < dUp) {   // needs to insert more points by dUp-crtSidePointsOrder levels
         const sideCells = computeSideCellsToOrder(dUp);
 
         // repeatedly insert the corner points into current side points representation order by order up
 
-        for (let i = 1; i <= dUp ; i++) {             // order difference from norder
+        for (let i = crtSidePointsOrder + 1; i <= dUp; i++) {             // order difference from norder
             const nextOrder = norder + i;             // order of next side points representation
             const base_npix = npix * (NSIDE4[i]);
             const upCells = sideCells[i];
@@ -304,36 +253,22 @@ export function getMocSidePointsNuniq(norder, npix, topOrder, coordsys, originWp
                 }
             });
         }
-
-/*
-        // insert the points directly to 'topCorner' level
-        const nextOrder = norder + dUp;             // order of next side points representation
-        const base_npix = npix * (NSIDE4[dUp]);
-        const upCells = sideCells[dUp];
-        const totalPtsOneSide = upCells.length / 4;
-        let insertAt = 0;
-
-        [0, 1, 2, 3].forEach((s) => {
-            const firstIdx = s * totalPtsOneSide + 1;
-            const lastIdx = firstIdx - 1 + totalPtsOneSide;
-            insertAt++;
-            for (let j = firstIdx; j <= lastIdx; j++) {
-                const k = j % upCells.length;
-                const nextNpix = base_npix + upCells[k];
-                const {wpCorners} = getCornerForPix(nextOrder, nextNpix, coordsys, healpixCache, null, false);
-
-                newSidePoints.splice(insertAt, 0, wpCorners[sideCorners[s][0]]);
-                insertAt += 1;
-            }
-        });
- */
         setPoints(norder, npix, newSidePoints);
         return newSidePoints;
-    } else {
-        return originWpCorners;
+    } else if (crtSidePointsOrder > dUp) {            // already insert enough points
+        if (topOrder < norder) {
+            return getCornersFromSidePoints(newSidePoints);   // original 4 corners
+        } else {
+            const levelDown = NSIDE2[crtSidePointsOrder - dUp];
+            const newPoints = newSidePoints.reduce((prev, v, idx) => {
+                if (idx%levelDown === 0) {
+                    prev.push(v);
+                }
+                return prev;
+            }, []);
+            return newPoints;
+        }
     }
-
-
 }
 
 export function isTileVisibleByPosition(wpCorners, cc) {
