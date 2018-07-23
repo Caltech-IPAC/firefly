@@ -2,6 +2,10 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsValidation;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.Geom;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;
@@ -22,7 +26,7 @@ public class GeomTest extends FitsValidation {
     private static String fileName = "f3.fits";
     private  Fits  inFits=null;
     private ImageHeader expectedImageHeader=null;
-    private  Geom geom=null;
+    private Geom geom=null;
 
 
     @Before
@@ -63,7 +67,7 @@ public class GeomTest extends FitsValidation {
 
     @Test
     public void testOpen_in() throws FitsException, IOException, GeomException, IllegalAccessException {
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         ImageHeader calculatedImageHeader = geom.open_in(fitsRead0);
         validateImageHeader(expectedImageHeader, calculatedImageHeader);
     }

@@ -4,6 +4,9 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.*;
 import nom.tam.fits.ImageData;
@@ -47,10 +50,11 @@ public class CropAndCenter  {
      * @throws FitsException
      */
     public static FitsRead do_crop(FitsRead in_fits_read,
-                                    double ra, double dec, double radius)
+                                   double ra, double dec, double radius)
             throws FitsException {
 
-        ImageHeader imageHeader= in_fits_read.getImageHeader();
+//        ImageHeader imageHeader= in_fits_read.getImageHeader();
+        ImageHeader imageHeader= new ImageHeader(in_fits_read.getHeader());
         CoordinateSys in_coordinate_sys = CoordinateSys.makeCoordinateSys(
                 imageHeader.getJsys(), imageHeader.file_equinox);
         Projection proj = imageHeader.createProjection(in_coordinate_sys);
@@ -78,7 +82,7 @@ public class CropAndCenter  {
             Fits ret_fits = new Fits();
             BasicHDU out_HDU = splitFITSCube(myHDU, min_x, min_y, max_x, max_y);;
             ret_fits.addHDU(out_HDU);
-            FitsRead[] fits_read_array = FitsRead.createFitsReadArray(ret_fits);
+            FitsRead[] fits_read_array = FitsReadFactory.createFitsReadArray(ret_fits);
 
             return(fits_read_array[0]);
 
@@ -283,7 +287,7 @@ public class CropAndCenter  {
 
     static Header clone_header(Header header) throws HeaderCardException
     {
-        return FitsRead.cloneHeaderFrom(header);
+        return FitsReadUtil.cloneHeaderFrom(header);
     }
 
 
@@ -338,7 +342,7 @@ public class CropAndCenter  {
           try
         {
             inFits = new Fits(in_name);
-            fits_read_array = FitsRead.createFitsReadArray(inFits);
+            fits_read_array = FitsReadFactory.createFitsReadArray(inFits);
             fits_read_0 = fits_read_array[0];
 
         }

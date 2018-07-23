@@ -1,14 +1,13 @@
 package edu.caltech.ipac.firefly.util;
 
 import edu.caltech.ipac.firefly.ConfigTest;
-import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.*;
 import nom.tam.util.Cursor;
 import org.junit.Assert;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Created by zhang on 12/13/16.
@@ -39,8 +38,8 @@ public class FitsValidation extends ConfigTest{
      * @throws FitsException
      */
    public void validateData(Fits expectedFits, Fits calculatedFits) throws FitsException {
-        FitsRead[] fitsReads = FitsRead.createFitsReadArray(calculatedFits);
-        FitsRead[] expectedFitsRead = FitsRead.createFitsReadArray(expectedFits);
+        FitsRead[] fitsReads = FitsReadFactory.createFitsReadArray(calculatedFits);
+        FitsRead[] expectedFitsRead = FitsReadFactory.createFitsReadArray(expectedFits);
         for (int i=0;  i<fitsReads.length; i++){
             Assert.assertArrayEquals(fitsReads[i].getDataFloat(), expectedFitsRead[i].getDataFloat(), (float) delta);
         }

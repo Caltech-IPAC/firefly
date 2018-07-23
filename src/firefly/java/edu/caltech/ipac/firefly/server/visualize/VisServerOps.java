@@ -44,7 +44,7 @@ import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CropFile;
-import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.HistogramOps;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -240,9 +240,11 @@ public class VisServerOps {
         }
     }
 
+    static final boolean USE_DIRECT_FLUX_IF_POSSIBLE = true;
 
     private static boolean isDirectFluxAccessAvailable(PlotState state) {
         //todo: make this test more sophisticated
+        if (!USE_DIRECT_FLUX_IF_POSSIBLE) return false;
 
         for(Band b : state.getBands()) {
             if (state.getWorkingFitsFileStr(b).endsWith("gz")) {
@@ -502,7 +504,7 @@ public class VisServerOps {
                             (int) c2.getX(), (int) c2.getY());
                 }
 
-                FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile);
+                FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile).getFitReadAry();
 
 
                 if (saveCropFits) {

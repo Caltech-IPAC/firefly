@@ -5,6 +5,9 @@ import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsImageCube;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;
@@ -35,7 +38,7 @@ public class FitsImageCubeTest {
                 null,
                 FITSTableReader.EXPAND_BEST_FIT, 1);
 
-        fitsCube = FitsRead.createFitsImageCube(inCubeFits);
+        fitsCube = FitsReadFactory.createFitsImageCube(inCubeFits);
 
 
 

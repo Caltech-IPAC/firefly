@@ -1,23 +1,23 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.visualize.plot;
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.visualize.plot.plotdata;
 
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.ImageHeader;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
-import nom.tam.fits.ImageHDU;
 import nom.tam.fits.ImageData;
-import nom.tam.util.ArrayFuncs;
-import nom.tam.util.BufferedDataOutputStream;
-import nom.tam.util.Cursor;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import nom.tam.fits.ImageHDU;
 
 public class FlipLR
 {
@@ -61,7 +61,7 @@ public class FlipLR
 
 	    try
 	    {
-		in_fits_header = inFitsRead.getHeader();
+		in_fits_header = FitsReadUtil.cloneHeaderFrom(inFitsRead.getHeader());
 		if (in_fits_header == null) 
 		{
 		    if (SUTDebug.isDebug())
@@ -79,7 +79,7 @@ public class FlipLR
 
 		hdu = inFitsRead.getHDU();
 
-		in_header = inFitsRead.getImageHeader();
+		in_header = new ImageHeader(in_fits_header);
 
 		int pixel_count = in_header.naxis1 * in_header.naxis2;
 
@@ -552,7 +552,7 @@ public class FlipLR
        Fits newFits = new Fits();
        newFits.addHDU(out_HDU);
 
-       FitsRead[] outFitsRead = FitsRead.createFitsReadArray(newFits);
+       FitsRead[] outFitsRead = FitsReadFactory.createFitsReadArray(newFits);
        FitsRead fr = outFitsRead[0];
        return fr;
     }

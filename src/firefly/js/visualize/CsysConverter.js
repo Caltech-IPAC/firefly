@@ -45,15 +45,16 @@ export class CysConverter {
     /**
      * @param {object} plot
      * @param {object} [altAffTrans] an alternate transform to use
+     * @param {String} [whichWCS] choose the wcs (must be defined) the default WCS is the empty string
      * @public
      */
-    constructor(plot, altAffTrans)  {
+    constructor(plot, altAffTrans, whichWCS='')  {
         this.plotImageId= plot.plotImageId;
         this.plotId = plot.plotId;
         this.plotState= plot.plotState;
         this.dataWidth= plot.dataWidth;
         this.dataHeight= plot.dataHeight;
-        this.projection= plot.projection;
+        this.projection= plot.allWCSMap[whichWCS];
         this.zoomFactor= plot.zoomFactor;
         this.imageCoordSys= plot.imageCoordSys;
         this.inPlotRoughGuess= null;
@@ -62,6 +63,7 @@ export class CysConverter {
         this.affTrans= altAffTrans || plot.affTrans;
         this.viewDim= plot.viewDim;
         this.plotType= plot.plotType;
+        this.header= plot.header;
     }
 
     // isRotated() { return !Matrix.from(this.affTrans).isIdentity(); }
@@ -276,7 +278,7 @@ export class CysConverter {
     }
 
     getZeroBasedImagePtFromInternal(pt) {
-        const {ltv1,ltv2}= CysConverter.getLtv(this.projection.header);
+        const {ltv1,ltv2}= CysConverter.getLtv(this.header);
         const imPt= this.getImageCoords(pt);
         return makeZeroBasedImagePt(imPt.x-.5-ltv1, imPt.y-.5-ltv2);
     }
@@ -353,7 +355,7 @@ export class CysConverter {
 
     makeIPtFromxZeroImPt(pt) {
         if (!pt) return null;
-        const {ltv1,ltv2}= CysConverter.getLtv(this.projection.header);
+        const {ltv1,ltv2}= CysConverter.getLtv(this.header);
         return makeImagePt(pt.x+.5+ltv1, pt.y+.5+ltv2);
     }
 

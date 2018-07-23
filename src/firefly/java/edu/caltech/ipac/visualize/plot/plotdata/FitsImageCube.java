@@ -1,11 +1,20 @@
-package edu.caltech.ipac.visualize.plot;
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+package edu.caltech.ipac.visualize.plot.plotdata;
 
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.FitsReadUtil;
-
-import nom.tam.fits.*;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.PixelValueException;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCardException;
+import nom.tam.fits.ImageHDU;
 import nom.tam.util.BufferedDataOutputStream;
 
 import java.io.File;
@@ -71,7 +80,7 @@ public class FitsImageCube {
             //in the TAB table header
             String ps3_0Name = header.getStringValue("PS3_0");
             BasicHDU[] hduPair = getHduPair(HDUs, wcs3Name, ps3_0Name,header, j);
-            FitsRead[] fitsReadAry = FitsRead.createFitsReadArray(hduPair, false);
+            FitsRead[] fitsReadAry = FitsReadFactory.createFitsReadArray(hduPair, false);
             if (fitsReadAry != null) {
                 // Make the fitsReadMap:
                 fitsReadMap.put(extName, fitsReadAry);
@@ -189,17 +198,18 @@ public class FitsImageCube {
      * @throws PixelValueException
      * @throws IOException
      */
-    private DataObject getDataRow (DataGroup dg, DataType[] dataTypes, FitsRead fitsRead,ImagePt imagePt, int pixPosition) throws DataFormatException, FitsException, PixelValueException, IOException {
+    private DataObject getDataRow (DataGroup dg, DataType[] dataTypes, FitsRead fitsRead, ImagePt imagePt, int pixPosition) throws DataFormatException, FitsException, PixelValueException, IOException {
 
         DataObject dataObject = new DataObject(dg);
         Header header = fitsRead.getHeader();
 
+        Wavelength wl= new Wavelength(fitsRead.getHeader(), fitsRead.getTableHDU());
         for (int i=0; i<dataTypes.length; i++){
 
             if (i==0 ) {
                 if (dataTypes[i].getKeyName().equalsIgnoreCase("wavelength")) {
                     //Use WCS keywords information in the header to calculate the wavelength
-                    double waveLengthVal = fitsRead.getWaveLength(imagePt);
+                    double waveLengthVal = wl.getWaveLength(imagePt);
 
                     // Set the image data value at the zth image and the imagePt to the second value of the dataObj:
                     dataObject.setDataElement(dataTypes[i], waveLengthVal);

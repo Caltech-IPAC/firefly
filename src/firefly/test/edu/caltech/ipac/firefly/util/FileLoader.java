@@ -3,7 +3,8 @@ package edu.caltech.ipac.firefly.util;
 
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.Fits;
 
 import java.io.File;
@@ -46,7 +47,7 @@ public class FileLoader {
             String inFitsName = getDataPath(cls) + fitsFile;
 
             Fits fits = new Fits(inFitsName);
-            return FitsRead.createFitsReadArray(fits)[0];
+            return FitsReadFactory.createFitsReadArray(fits)[0];
         }
         catch (Exception e){
             e.printStackTrace();
@@ -61,7 +62,7 @@ public class FileLoader {
             String inFitsName = getDataPath(cls) + fitsFile;
 
             Fits fits = new Fits(inFitsName);
-            return FitsRead.createFitsReadArray(fits);
+            return FitsReadFactory.createFitsReadArray(fits);
         }
         catch (Exception e){
             e.printStackTrace();

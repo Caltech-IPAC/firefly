@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.visualize.fitseval.FitsDataEval;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -22,11 +23,12 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +69,8 @@ public class WebPlotFactory {
         FileRetriever retrieve = ImageFileRetrieverFactory.getRetriever(wprList.get(0));
         FileInfo fileData = retrieve.getFile(wprList.get(0));
 
-        FitsRead[] frAry= FitsCacher.readFits(fileData.getFile(), false, false);
+        FitsDataEval fitsDataInfo = FitsCacher.readFits(fileData, wprList.get(0), false, false);
+        FitsRead[] frAry= fitsDataInfo.getFitReadAry();
         List<ImagePlotBuilder.Results> resultsList= new ArrayList<>(wprList.size());
         int length= Math.min(wprList.size(), frAry.length);
         WebPlotInitializer retval[]= new WebPlotInitializer[length];
@@ -219,7 +222,7 @@ public class WebPlotFactory {
 
     private static WebPlotInitializer makeWebPlotInitializer(PlotState state,
                                                              PlotImages images,
-                                                             ImagePlotInfo pInfo) {
+                                                             ImagePlotInfo pInfo) throws FitsException {
         // need a WebFits Data each band: normal is 1, 3 color is three
         WebFitsData wfDataAry[] = new WebFitsData[3];
 
@@ -228,12 +231,16 @@ public class WebPlotFactory {
         }
 
 
+
         ImagePlot plot = pInfo.getPlot();
+        FitsRead frAry[]= pInfo.getFrGroup().getFitsReadAry();
+        Header headerAry[]= new Header[frAry.length];
+        for(int i=0; i<headerAry.length; i++) headerAry[i]= frAry[i]!=null ? frAry[i].getHeader() : null;
         ImageDataGroup imageData = plot.getImageData();
         return new WebPlotInitializer(state,
                                       images,
                                       plot.getCoordinatesOfPlot(),
-                                      plot.getProjection(),
+                                      headerAry,
                                       imageData.getImageWidth(),
                                       imageData.getImageHeight(),
                                       pInfo.getFrGroup().getFitsRead(state.firstBand()).getImageScaleFactor(),

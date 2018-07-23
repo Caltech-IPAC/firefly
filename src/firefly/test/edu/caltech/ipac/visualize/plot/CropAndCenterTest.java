@@ -13,6 +13,8 @@ package edu.caltech.ipac.visualize.plot;
 
 
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.*;
 import nom.tam.util.BufferedDataOutputStream;
 import org.junit.After;
@@ -88,7 +90,7 @@ public class CropAndCenterTest extends CropTestBase  {
         double ra = 329.162375;
         double dec = 62.2954;
         double radius = 3.18;
-        FitsRead fits_read_0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fits_read_0 = FitsReadFactory.createFitsReadArray(inFits)[0];
 
         FitsRead newFitsRead =crop.do_crop(fits_read_0, ra, dec, radius); //crop.do_crop(fits_read_0, ra, dec, radius); //
         Fits outFits = newFitsRead.createNewFits();
@@ -127,7 +129,7 @@ public class CropAndCenterTest extends CropTestBase  {
         out1.close();
 
         //create the second FITS file
-        FitsRead fits_read_0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fits_read_0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         String outFitsName2 =dataPath+ "cropUsingRaDec_"+fileName.substring(0, fileName.length()-5 )+".fits";
         double ra = 329.162375;
         double dec = 62.2954;

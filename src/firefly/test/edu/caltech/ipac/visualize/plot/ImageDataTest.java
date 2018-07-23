@@ -2,6 +2,8 @@ package edu.caltech.ipac.visualize.plot;
 
 
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;
@@ -42,12 +44,12 @@ public class ImageDataTest {
         //this FITS file has three extensions.  Using it as expected value to get if the FitsRead can get all extensions
 
         inFits = FileLoader.loadFits(ImageDataTest.class , fileName);
-        frArray = FitsRead.createFitsReadArray(inFits);
+        frArray = FitsReadFactory.createFitsReadArray(inFits);
         rangeValues = FitsRead.getDefaultRangeValues();
         expectedImage = ImageIO.read(new File(FileLoader.getDataPath(ImageDataTest.class)+imageFileName));
         expectedImageWithMask = ImageIO.read(new File(FileLoader.getDataPath(ImageDataTest.class)+imageWithMaskFileName));
 
-        imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
     }
     @After
     /**
@@ -64,13 +66,13 @@ public class ImageDataTest {
     }
 
     /**
-     * To test to see if it gets the correct x value
-     * @throws FitsException
-     * @throws IOException
-     */
+//     * To test to see if it gets the correct x value
+//     * @throws FitsException
+//     * @throws IOException
+//     */
     @Test
     public void testGetX() throws FitsException, IOException{
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         Assert.assertEquals(0, imageData.getX());
     }
 
@@ -81,7 +83,7 @@ public class ImageDataTest {
      */
     @Test
     public void testGetY() throws FitsException, IOException{
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         Assert.assertEquals(0, imageData.getY());
     }
 
@@ -92,7 +94,7 @@ public class ImageDataTest {
      */
     @Test
     public void testGetHeight() throws FitsException, IOException{
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         Assert.assertEquals(100, imageData.getHeight());
     }
 
@@ -103,7 +105,7 @@ public class ImageDataTest {
      */
     @Test
     public void testGetWidth() throws FitsException, IOException{
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         Assert.assertEquals(100, imageData.getWidth());
     }
 
@@ -114,7 +116,7 @@ public class ImageDataTest {
      */
     @Test
     public void testGetColorID() throws FitsException, IOException{
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         Assert.assertEquals(0, imageData.getColorTableId());
     }
 
@@ -126,7 +128,7 @@ public class ImageDataTest {
     @Test
     public void testSetColorModel() throws FitsException, IOException{
         IndexColorModel colorModel = ColorTable.getColorModel(2);
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         imageData.setColorModel(colorModel);
         Assert.assertEquals(-1, imageData.getColorTableId());
 
@@ -164,7 +166,7 @@ public class ImageDataTest {
     @Test
     public void endToEndTest() throws FitsException, IOException, ClassNotFoundException {
 
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         //Test the ImageData without mask
         BufferedImage calculatedImage = imageData.getImage(frArray);
 
@@ -172,7 +174,7 @@ public class ImageDataTest {
 
 
         //Test the ImageData withmask
-        ImageData  imageDataWithMask = new ImageData(frArray, IMAGE_TYPE,imageMasks, rangeValues, 0,0, 100, 100, true );
+        ImageData  imageDataWithMask = new ImageData(IMAGE_TYPE,imageMasks, rangeValues, 0,0, 100, 100);
         BufferedImage calculatedImageWithMask  = imageDataWithMask.getImage(frArray);
         compareImage(expectedImageWithMask,calculatedImageWithMask);
 
@@ -224,9 +226,9 @@ public class ImageDataTest {
      */
     public static void  main (String[] args) throws FitsException, IOException, ClassNotFoundException {
         inFits = FileLoader.loadFits(ImageDataTest.class , fileName);
-        frArray = FitsRead.createFitsReadArray(inFits);
+        frArray = FitsReadFactory.createFitsReadArray(inFits);
         rangeValues = FitsRead.getDefaultRangeValues();
-        ImageData imageData = new ImageData(frArray, IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100, true );
+        ImageData imageData = new ImageData(IMAGE_TYPE,COLROID, rangeValues, 0,0, 100, 100);
         BufferedImage bufferedImage = imageData.getImage(frArray);
         File outputfile = new File(FileLoader.getDataPath(ImageDataTest.class)+"imageDataTest.png");
         ImageIO.write(bufferedImage, "png", outputfile);
@@ -234,7 +236,7 @@ public class ImageDataTest {
 
 
         //test ImageData with mask
-        imageData = new ImageData(frArray, IMAGE_TYPE,imageMasks,rangeValues, 0,0, 100, 100, true );
+        imageData = new ImageData(IMAGE_TYPE,imageMasks,rangeValues, 0,0, 100, 100);
         bufferedImage = imageData.getImage(frArray);
         outputfile = new File(FileLoader.getDataPath(ImageDataTest.class)+"imageDataWithMaskTest.png");
         ImageIO.write(bufferedImage, "png", outputfile);

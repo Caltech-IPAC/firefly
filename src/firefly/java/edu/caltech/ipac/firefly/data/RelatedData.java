@@ -24,9 +24,13 @@ public class RelatedData implements Serializable {
     private String dataKey;
     private Map<String,String> searchParams= new HashMap<>();
     private Map<String,String> availableMask= new HashMap<>();
+    private transient Map<String,Object> serverOnlyData= new HashMap<>();
+    private final boolean sendToClient;
 
 
-    private RelatedData() {}
+    private RelatedData(boolean sendToClient) {
+        this.sendToClient= sendToClient;
+    }
 
     /**
      * Factory method to create mask related data
@@ -53,7 +57,7 @@ public class RelatedData implements Serializable {
      * @return RelatedData
      */
     public static RelatedData makeMaskRelatedData(Map<String,String> searchParams, Map<String,String> availableMask, String dataKey) {
-        RelatedData d= new RelatedData();
+        RelatedData d= new RelatedData(true);
         d.dataType= IMAGE_MASK;
         d.availableMask= availableMask;
 
@@ -68,7 +72,7 @@ public class RelatedData implements Serializable {
      * @param fileName - name of the fits file
      * @param dataKey - should be a unique string for a fits file
      * @param desc - description of the data
-     * @param extensionNumber - extenions number in the fits file
+     * @param extensionNumber - extensions number in the fits file
      * @return RelatedData
      */
     public static RelatedData makeImageOverlayRelatedData(String fileName, String dataKey, String desc, int extensionNumber) {
@@ -87,7 +91,7 @@ public class RelatedData implements Serializable {
      * @return RelatedData
      */
     public static RelatedData makeImageOverlayRelatedData(Map<String,String> searchParams, String dataKey, String desc) {
-        RelatedData d= new RelatedData();
+        RelatedData d= new RelatedData(true);
         d.dataType= IMAGE_OVERLAY;
         d.desc= desc;
         d.dataKey = dataKey;
@@ -103,7 +107,7 @@ public class RelatedData implements Serializable {
      * @return RelatedData
      */
     public static RelatedData makeTabularRelatedData(Map<String,String> searchParams, String dataKey, String desc) {
-        RelatedData d= new RelatedData();
+        RelatedData d= new RelatedData(true);
         d.dataType= TABLE;
         d.searchParams= searchParams;
         d.dataKey = dataKey;
@@ -111,11 +115,20 @@ public class RelatedData implements Serializable {
         return d;
     }
 
+    public static RelatedData makeServerSideRelatedData(Map<String,Object> serverOnlyData, String dataKey, String desc) {
+        RelatedData d= new RelatedData(false);
+        d.dataKey = dataKey;
+        d.desc= desc;
+        d.serverOnlyData= serverOnlyData;
+        return d;
+    }
 
     public String getDataType() { return dataType;}
     public String getDataKey() { return dataKey;}
     public Map<String,String> getAvailableMask() { return availableMask;}
     public String getDesc() { return desc;}
     public Map<String,String> getSearchParams() { return searchParams;}
+
+    public boolean isSendToClient() { return sendToClient; }
 }
 

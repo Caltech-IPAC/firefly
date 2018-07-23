@@ -1,5 +1,7 @@
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.*;
 import nom.tam.util.Cursor;
 import org.junit.Assert;
@@ -42,8 +44,8 @@ public class CropTestBase {
      * @throws FitsException
      */
     void validateData(Fits expectedFits, Fits calculatedFits) throws FitsException {
-        FitsRead[] fitsReads = FitsRead.createFitsReadArray(calculatedFits);
-        FitsRead[] expectedFitsRead = FitsRead.createFitsReadArray(expectedFits);
+        FitsRead[] fitsReads = FitsReadFactory.createFitsReadArray(calculatedFits);
+        FitsRead[] expectedFitsRead = FitsReadFactory.createFitsReadArray(expectedFits);
         for (int i=0;  i<fitsReads.length; i++){
             Assert.assertArrayEquals(fitsReads[i].getDataFloat(), expectedFitsRead[i].getDataFloat(), (float) delta);
         }

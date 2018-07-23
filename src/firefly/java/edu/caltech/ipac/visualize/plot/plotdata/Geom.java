@@ -1,10 +1,20 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.visualize.plot;
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+package edu.caltech.ipac.visualize.plot.plotdata;
 
 import edu.caltech.ipac.util.SUTDebug;
-import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImageHeader;
+import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.ProjectionException;
+import edu.caltech.ipac.visualize.plot.ProjectionPt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -15,7 +25,6 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.BufferedDataOutputStream;
 import nom.tam.util.Cursor;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -144,7 +153,7 @@ public class Geom {
         ImageHeader temp_hdr = null;
 
         try {
-            in_fits_header = inFitsRead.getHeader();
+            in_fits_header = FitsReadUtil.cloneHeaderFrom(inFitsRead.getHeader());
             if (in_fits_header == null) {
                 if (SUTDebug.isDebug()) {
                     System.out.println("HDU null! (input image)");
@@ -152,7 +161,7 @@ public class Geom {
                 throw new FitsException("HDU null! (input image)");
             }
 
-            in_header = inFitsRead.getImageHeader();
+            in_header = new ImageHeader(FitsReadUtil.cloneHeaderFrom(inFitsRead.getHeader()));
 
             int pixel_count = in_header.naxis1 * in_header.naxis2;
 
@@ -161,10 +170,10 @@ public class Geom {
             }
 
 
-            if (in_header.getProjectionName() == "UNRECOGNIZED")
+            if (in_header.getProjectionName().equals("UNRECOGNIZED"))
                 throw new FitsException("Projection is not recognized");
 
-            if (in_header.getProjectionName() == "UNSPECIFIED")
+            if (in_header.getProjectionName().equals("UNSPECIFIED"))
                 throw new FitsException("Image contains no projection info");
 
             try {
@@ -370,8 +379,8 @@ public class Geom {
         ref_header.ap_order = in_header.ap_order;
         ref_header.b_order = in_header.b_order;
         ref_header.bp_order = in_header.bp_order;
-        for (int i = 0; i < ProjectionParams.MAX_SIP_LENGTH; i++) {
-            for (int j = 0; j < ProjectionParams.MAX_SIP_LENGTH; j++) {
+        for (int i = 0; i < ImageHeader.MAX_SIP_LENGTH; i++) {
+            for (int j = 0; j < ImageHeader.MAX_SIP_LENGTH; j++) {
                 ref_header.a[i][j] = in_header.a[i][j];
                 ref_header.ap[i][j] = in_header.ap[i][j];
                 ref_header.b[i][j] = in_header.b[i][j];
@@ -1078,7 +1087,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
      */
     Fits do_geom(Fits inFits, Fits refFits)
             throws FitsException, IOException, GeomException {
-        FitsRead[] fitsReadArray = FitsRead.createFitsReadArray(inFits);
+        FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(inFits);
         open_in(fitsReadArray[0]);
         //open_in(inFits);
         return (do_geom(refFits));
@@ -1118,8 +1127,8 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
     Fits do_geom(FitsRead refFitsRead)
             throws FitsException, IOException, GeomException {
 
-        ref_fits_header = refFitsRead.getHeader();
-        ref_header = refFitsRead.getImageHeader();
+        ref_fits_header = FitsReadUtil.cloneHeaderFrom(refFitsRead.getHeader());
+        ref_header = new ImageHeader(ref_fits_header);
         open_ref();
         return (do_geom());
     }

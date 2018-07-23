@@ -5,7 +5,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
+import nom.tam.fits.Header;
 
 import java.util.List;
 /**
@@ -29,14 +29,15 @@ public class WebPlotInitializer {
     private WebFitsData   _fitsData[];
     private String        _desc;
     private String        _dataDesc;
+    private Header headerAry[];
     private transient List<RelatedData> relatedData;
-    private transient Projection _projection;
+//    private transient Projection _projection;
 
 
     public WebPlotInitializer(PlotState plotState,
                              PlotImages images,
                              CoordinateSys imageCoordSys,
-                             Projection projection,
+                             Header headerAry[] ,
                              int dataWidth,
                              int dataHeight,
                              int imageScaleFactor,
@@ -48,13 +49,14 @@ public class WebPlotInitializer {
         _plotState= plotState;
         _initImages= images;
         _imageCoordSys= imageCoordSys;
-        _projection= projection;
+//        _projection= projection;
         _dataWidth= dataWidth;
         _dataHeight= dataHeight;
         _imageScaleFactor= imageScaleFactor;
         _fitsData= fitsData;
         _desc= desc;
         _dataDesc= dataDesc;
+        this.headerAry = headerAry;
         this.relatedData= relatedData;
     }
 
@@ -66,9 +68,9 @@ public class WebPlotInitializer {
     public CoordinateSys getCoordinatesOfPlot() { return _imageCoordSys; }
     public PlotImages getInitImages() { return _initImages; }
 
-    public Projection getProjection() {
-        return _projection;
-    }
+//    public Projection getProjection() {
+//        return _projection;
+//    }
     public List<RelatedData> getRelatedData() { return  relatedData; }
 
     public int getDataWidth() { return _dataWidth; }
@@ -79,6 +81,7 @@ public class WebPlotInitializer {
     public String getPlotDesc() { return _desc; }
     public void setPlotDesc(String d) { _desc= d; }
     public String getDataDesc() { return _dataDesc; }
+    public Header[] getHeaderAry() { return this.headerAry; }
 
 
     private static String getString(String s) { return s.equals("null") ? null : s; }

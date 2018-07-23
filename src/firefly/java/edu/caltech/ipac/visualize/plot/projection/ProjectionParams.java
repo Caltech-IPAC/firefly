@@ -4,9 +4,9 @@
 package edu.caltech.ipac.visualize.plot.projection;
 
 
+import edu.caltech.ipac.visualize.plot.ImageHeader;
+
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -15,7 +15,6 @@ import java.util.Map;
  * classes.  We need to return to passing ImageHeader to the projection classes.
  */
 public class ProjectionParams implements Serializable {
-    public static final int MAX_SIP_LENGTH = 10;
 
 
     // If you modify this class please modify -  edu.caltech.ipac.firefly.visualize.ProjectionSerializer
@@ -50,13 +49,12 @@ public class ProjectionParams implements Serializable {
     /* the following are for SIRTF distortion corrections to the */
     /* GNOMONIC projection (ctype1 ending in -SIP)*/
     public double a_order, ap_order, b_order, bp_order;
-    public double a[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
-    public double ap[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
-    public double b[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
-    public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double a[][] = new double[ImageHeader.MAX_SIP_LENGTH][ImageHeader.MAX_SIP_LENGTH];
+    public double ap[][] = new double[ImageHeader.MAX_SIP_LENGTH][ImageHeader.MAX_SIP_LENGTH];
+    public double b[][] = new double[ImageHeader.MAX_SIP_LENGTH][ImageHeader.MAX_SIP_LENGTH];
+    public double bp[][] = new double[ImageHeader.MAX_SIP_LENGTH][ImageHeader.MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
-    public Map<String,Object> sendToClientHeaders= new HashMap<>();
 
     public ProjectionParams() {}
 }

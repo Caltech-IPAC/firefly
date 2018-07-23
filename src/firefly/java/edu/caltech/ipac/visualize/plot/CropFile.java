@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import nom.tam.fits.*;
 import nom.tam.fits.ImageData;
 import nom.tam.image.ImageTiler;

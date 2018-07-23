@@ -4,6 +4,9 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsGenerator;
 import edu.caltech.ipac.firefly.util.FitsValidation;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.FlipXY;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;
@@ -43,7 +46,7 @@ public class FlipXYTest extends FitsValidation {
 
         //create a simulated FITS object
         inFits = FitsGenerator.getSimulateFits();
-        fitsRead = FitsRead.createFitsReadArray(inFits)[0];
+        fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
     }
 
     @After
@@ -79,7 +82,7 @@ public class FlipXYTest extends FitsValidation {
         };
 
         Fits fits = FitsGenerator.getSimulateFits(fData);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(fits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(fits)[0];
 
 
         FlipXY flipX = new FlipXY(fitsRead, "xAxis");
@@ -118,7 +121,7 @@ public class FlipXYTest extends FitsValidation {
         };
 
         Fits fits = FitsGenerator.getSimulateFits(fData);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(fits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(fits)[0];
 
 
         FlipXY flipY = new FlipXY(fitsRead, "yAxis");
@@ -150,7 +153,7 @@ public class FlipXYTest extends FitsValidation {
                 }
         };
         Fits fits = FitsGenerator.getSimulateFits(fData);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(fits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(fits)[0];
 
         validateFlipX(fitsRead);
         validateFlipY(fitsRead);
@@ -174,7 +177,7 @@ public class FlipXYTest extends FitsValidation {
                 }
         }};
         Fits fits = FitsGenerator.getSimulateFits(fData);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(fits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(fits)[0];
 
         validateFlipX(fitsRead);
         validateFlipY(fitsRead);
@@ -250,7 +253,7 @@ public class FlipXYTest extends FitsValidation {
      */
     public void endToEndTest() throws FitsException {
         Fits inFits = FileLoader.loadFits(FlipXYTest.class, inFileName);
-        FitsRead fitsRead = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
         FlipXY flipX = new FlipXY(fitsRead, "xAxis");
         FitsRead flipedX = flipX.doFlip();
 
@@ -259,7 +262,7 @@ public class FlipXYTest extends FitsValidation {
 
 
         inFits = FileLoader.loadFits(FlipXYTest.class, expectedFlipXYFitsFileName);
-        FitsRead  expectedFlipXY = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead  expectedFlipXY = FitsReadFactory.createFitsReadArray(inFits)[0];
 
         validateSingleHDU(expectedFlipXY.getHDU(),flipedXY.getHDU());
         Assert.assertArrayEquals(expectedFlipXY.getDataFloat(),flipedXY.getDataFloat(), (float) delta);
@@ -276,7 +279,7 @@ public class FlipXYTest extends FitsValidation {
      */
     public static void main (String[] args) throws FitsException, IOException, ClassNotFoundException {
         Fits inFits = FileLoader.loadFits(FlipXYTest.class, "f3.fits");
-        FitsRead fitsRead = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
 
         FlipXY flipX = new FlipXY(fitsRead, "xAxis");
         FitsRead flipedX = flipX .doFlip();
