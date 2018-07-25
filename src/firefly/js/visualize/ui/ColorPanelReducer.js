@@ -7,7 +7,7 @@ import FieldGroupCntlr, {INIT_FIELD_GROUP} from '../../fieldGroup/FieldGroupCntl
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
-import RangeValues, {STRETCH_LINEAR, PERCENTAGE, ABSOLUTE,SIGMA,ZSCALE, STRETCH_ASINH} from './../RangeValues.js';
+import RangeValues, {STRETCH_LINEAR, PERCENTAGE, ABSOLUTE, SIGMA, ZSCALE} from './../RangeValues.js';
 
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
@@ -29,14 +29,14 @@ export const NO_BAND_PANEL= 'nobandPanel';
 export const colorPanelChange= function(band) {
     return (fields,action) => {
         if (!fields || !Object.keys(fields).length) fields= getFieldInit();
-        var plot= primePlot(visRoot());
+        const plot= primePlot(visRoot());
         if (!plot || !plot.plotState.isBandUsed(band)) return fields;
 
         const fitsData= plot.webFitsData[band.value];
         const plottedRV= plot.plotState.getRangeValues(band);
         if (!fitsData || !plottedRV) return fields;
 
-        return computeColorPanelState(fields, plottedRV, fitsData, band, action.type);
+        return computeColorPanelState(fields, plottedRV, fitsData, band, action);
     };
 };
 
@@ -49,12 +49,12 @@ export const colorPanelChange= function(band) {
  * @param plottedRV
  * @param fitsData
  * @param band
- * @param actionType
+ * @param action
  * @return {*}
  */
-const computeColorPanelState= function(fields, plottedRV, fitsData, band, actionType) {
+const computeColorPanelState= function(fields, plottedRV, fitsData, band, action) {
 
-    switch (actionType) {
+    switch (action.type) {
         case FieldGroupCntlr.VALUE_CHANGE:
             var valid= Object.keys(fields).every( (key) => {
                 return !fields[key].mounted ? true :  fields[key].valid;
@@ -179,7 +179,7 @@ const makeRangeValuesFromFields= function(fields) {
             fields.lowerRange.value,
             upperWhich,
             fields.upperRange.value,
-            fields.beta.value,
+            fields.asinhQ.value,
             fields.gamma.value,
             fields.algorithm.value,
             fields.zscaleContrast.value,
@@ -198,7 +198,7 @@ const updateFieldsFromRangeValues= function(fields,rv) {
     fields.lowerRange= cloneWithValue(fields.lowerRange, rv.lowerValue);
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
     fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
-    fields.beta= cloneWithValue(fields.beta, rv.betaValue);
+    fields.asinhQ= cloneWithValue(fields.asinhQ, rv.asinhQValue);
     fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
     fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);
     fields.zscaleContrast= cloneWithValue(fields.zscaleContrast, rv.zscaleContrast);
@@ -211,7 +211,7 @@ const updateFieldsFromRangeValues= function(fields,rv) {
 
 /**
  * defines fields
- * @return {{lowerRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, upperRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleContrast: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamples: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamplesPerLine: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, beta: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, gamma: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, BP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, WP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, algorithm: {tooltip: string, label: string, value}, lowerWhich: {tooltip: string, label: string, value}, upperWhich: {tooltip: string, label: string, value}, zscale: {value: string, tooltip: string, label: string}}}
+ * @return {{lowerRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, upperRange: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleContrast: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamples: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, zscaleSamplesPerLine: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, asinhQ: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, gamma: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, BP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, WP: {fieldKey: string, value: string, validator: (function(this:null)), tooltip: string, label: string}, algorithm: {tooltip: string, label: string, value}, lowerWhich: {tooltip: string, label: string, value}, upperWhich: {tooltip: string, label: string, value}, zscale: {value: string, tooltip: string, label: string}}}
  */
 var getFieldInit= function() {
 
@@ -252,18 +252,17 @@ var getFieldInit= function() {
             label: 'Samples per line:'
         },
 
-        beta: {
-            fieldKey: 'beta',
-            value: NaN,
-            validator: Validate.isPositiveFiniteNumber.bind(null, 'Beta'),
-            tooltip: 'an arbitrary "softness"',
-            label: 'Beta:'
+        asinhQ: {
+            fieldKey: 'asinhQ',
+            validator: Validate.floatRange.bind(null, 0, Number.MAX_VALUE, 4, 'Q'),
+            tooltip: 'The asinh softening parameter. Small Q values result in a linear stretch. Large values make a log stretch.',
+            label: 'Q:'
         },
         gamma: {
             fieldKey: 'gamma',
             value: '2.0',
             validator: Validate.floatRange.bind(null, 0, 100, 4, 'Gamma'),
-            tooltip: ' The Gamma value of the Power Law Gamma Stretch',
+            tooltip: 'The Gamma value of the Power Law Gamma Stretch',
             label: 'Gamma:'
         },
 

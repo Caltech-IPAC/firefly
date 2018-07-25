@@ -119,12 +119,6 @@ export function callChangeColor(state, colorTableId) {
     return doJsonRequest(ServerParams.CHANGE_COLOR, params, true);
 }
 
-export function callGetBeta(state) {
-    const params= [
-        {name:ServerParams.STATE, value: state.toJson(false)},
-    ];
-    return doJsonRequest(ServerParams.GET_BETA, params, true);
-}
 
 export function callRecomputeStretch(state, stretchDataAry) {
     var params= {

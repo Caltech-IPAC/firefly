@@ -265,7 +265,7 @@ function replot3Color(redReq,greenReq,blueReq,activeTab, usedBands) {
 }
 
 
-function makeSerializedRv(request) {
+export function makeSerializedRv(request) {
     const useZ= Boolean(request.zscale);
 
     const rv= RangeValues.makeRV( {
@@ -273,7 +273,7 @@ function makeSerializedRv(request) {
             upperWhich: useZ ? ZSCALE : request.upperWhich,
             lowerValue: request.lowerRange,
             upperValue: request.upperRange,
-            betaValue: request.beta,
+            asinhQValue: request.asinhQ,
             gammaValue: request.gamma,
             algorithm: request.algorithm,
             zscaleContrast: request.zscaleContrast,

@@ -145,30 +145,6 @@ public class VisServerCommands {
     }
 
 
-    public static class GetBetaCmd extends ServCommand {
-
-        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-
-            PlotState state= sp.getState();
-            double resultAry[]= VisServerOps.getBeta(state);
-
-            JSONObject obj= new JSONObject();
-            obj.put("success", true);
-
-            JSONArray data= new JSONArray();
-            for(double r : resultAry) data.add(r);
-
-            JSONArray wrapperAry= new JSONArray();
-            obj.put("data", data);
-            wrapperAry.add(obj);
-
-            return wrapperAry.toJSONString();
-        }
-    }
-
-
-
-
     public static class StretchCmd extends ServCommand {
 
         public String doCommand(SrvParam sp) throws IllegalArgumentException {

@@ -1,9 +1,7 @@
-import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import { has, isNaN} from 'lodash';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
-import {dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
-import {RangeSliderView, adjustMax, checkMarksObject} from './RangeSliderView.jsx'
+import {RangeSliderView, checkMarksObject} from './RangeSliderView.jsx';
 
 function getProps(params, fireValueChange) {
 
@@ -24,9 +22,9 @@ function handleOnChange(value, params, fireValueChange){
          value
      });
 
-    var {min, max} = params;    //displayValue in string, min, max, step: number
-    var {minStop=min, maxStop=max} = params;
-    var val = parseFloat(value);
+    const {min, max} = params;    //displayValue in string, min, max, step: number
+    const {minStop=min, maxStop=max} = params;
+    const val = parseFloat(value);
 
     if (!isNaN(val) && val >= minStop && val <= maxStop) {
         if (has(params, 'onValueChange')) {
@@ -38,8 +36,8 @@ function handleOnChange(value, params, fireValueChange){
 const propTypes={
     associatedKey: PropTypes.string,
     label:       PropTypes.string,             // slider label
-    slideValue:  PropTypes.string.required,    // slider value
-    value:       PropTypes.string,
+    slideValue:  PropTypes.oneOfType([PropTypes.string,PropTypes.number]).required, // slider value
+    value:       PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
     onValueChange: PropTypes.func,                  // callback on slider change
     min:         PropTypes.number,                  // minimum end of slider
     max:         PropTypes.number,                  // maximum end of slider

@@ -2,16 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 package edu.caltech.ipac.visualize.plot.plotdata;
-/**
- * User: roby
- * Date: 7/13/18
- * Time: 11:53 AM
- */
 
 
 import edu.caltech.ipac.util.Assert;
@@ -70,7 +61,7 @@ public class ImageStretch {
          * stretch algorithm
          */
         if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ASINH) {
-            stretchPixelsUsingAsin( startPixel, lastPixel,startLine,lastLine, naxis1, imageHeader,
+            stretchPixelsUsingAsinh( startPixel, lastPixel,startLine,lastLine, naxis1, imageHeader,
                     blank_pixel_value, float1dArray, pixeldata, rangeValues,slow,shigh);
 
 
@@ -185,48 +176,39 @@ public class ImageStretch {
     }
 
     /**
-     * The asinh stretch algorithm is defined in the paper by Robert Lupton et al at "The Astronomical Journal 118: 1406-1410, 1999 Sept"
-     * In the paper:
-     *    magnitude = m_0-2.5log(b) - a* asinh (x/2b)  = mu_0  -a * asinh (x/2b), where mu_0 =m_0 - 2.5 * ln(b), a =2.5ln(e) = 1.08574,
-     *    m_o=2.5log(flux_0), flux_0 is the flux of an object with magnitude 0.0.
-     *    b is an arbitrary "softening" which determines the flux level as which the liner behavior is set in, and x is the flux,
+     * The algorithm accepts positive Q, which should be controlled by a slider.
+     * The mapping from flux to color value is 255 * 0.1 * asinh(Q*(x-xMin)/(xMax-xMin)) / asinh(0.1*Q)
+     * Below xMin, the color will be 0; above xMax, the equation has to be applied and then clipped to 244, (255 is reserved)
      *
+     * The parametrization using Q is explained in the footnote on page 3 of https://arxiv.org/pdf/astro-ph/0312483.pdf
+     * The algorithm is based on asinh stretch algorithm used in
+     *     https://github.com/astropy/astropy/blob/master/astropy/visualization/lupton_rgb.py
      *
-     *   Since  mu_0 and a are constant, we can use just:
-     *     mu =  asinh( flux/(2.0*b)) ) = asin(x/beta); where beta=2*b;
-     * @param beta
+     * Lupton’s formulation assumes that xMax is far below the bright features in the image.
+     * He wants to see the features above xMax.
+     *
+     * If we know the brightest data value and upper and lower range values,
+     * we can get the default Q from the following equation:
+     *    0.1 * asinh(Q*(xDataMax-xMin)/(xMax-xMin)) / asinh(0.1*Q) = 1
+     *
+     * @param flux
+     * @param maxFlux
+     * @param minFlux
+     * @param qvalue
      * @return
      */
-    private static double  getASinhStretchedPixelValue(double flux, double maxFlux, double minFlux, double beta)  {
+    private static double  getASinhStretchedPixelValue(double flux, double maxFlux, double minFlux, double qvalue)  {
+
         if (flux <= minFlux) { return 0d; }
-        if (flux >= maxFlux) { return 254d; }
 
-        /*
-         Since the data range is from minFlux to maxFlux, we can shift the data to  the range [0 - (maxFlux-minFlux)].
-         Thus,
-                   flux_new = flux-minFlux,
-                   minFlux_new = 0
-                   maxFlux_new = maxFlux - minFlux
-         min = asinh( abs(minFlux_new) -square(minFlux_new*minFlux_new+1) ) =0
-         max = (max-min) = asinh( maxFlux_new/beta) = asinh( (maxFlux-minFlux)/beta)
-         diff = max - min = max
-         */
-        double asinhMagnitude =  asinh( (flux-minFlux) / beta); //beta = 2*b
+        double color = 255 * 0.1 * asinh(qvalue*(flux - minFlux) / (maxFlux - minFlux)) / asinh(0.1 * qvalue);
 
-        //normalize to 0 - 255:  (nCorlor-1 )*(x - Min)/(Max - Min), 8 bit nCorlor=256
-        //this formula is referred from IDL function: BYTSCL
-        double diff =   asinh ( (maxFlux-minFlux)/beta );
-        return  255* asinhMagnitude/ diff ;
+        return (color > 254d) ? 254d : color;
 
     }
 
     private static double asinh(double x) {
-
-        double y  = Math.log( Math.abs(x ) + Math.sqrt(x * x + 1));
-        y = x<0? -y:y;
-
-        return y;
-
+        return Math.log(x + Math.sqrt(x * x + 1));
     }
 
     private static int getNoneLinerStretchedPixelValue(double dRunVal, double[] dtbl, int delta) {
@@ -307,23 +289,28 @@ public class ImageStretch {
         return dtbl;
     }
 
+    private static void stretchPixelsUsingAsinh(int startPixel,
+                                                int lastPixel,
+                                                int startLine,
+                                                int lastLine,
+                                                int naxis1,
+                                                ImageHeader imageHeader,
+                                                byte blank_pixel_value,
+                                                float[] float1dArray,
+                                                byte[] pixeldata,
+                                                RangeValues rangeValues,
+                                                double slow,
+                                                double shigh){
 
-    private static void stretchPixelsUsingAsin(int startPixel,
-                                               int lastPixel,
-                                               int startLine,
-                                               int lastLine,
-                                               int naxis1,
-                                               ImageHeader imageHeader,
-                                               byte blank_pixel_value,
-                                               float[] float1dArray,
-                                               byte[] pixeldata,
-                                               RangeValues rangeValues,
-                                               double slow,
-                                               double shigh){
 
-        double beta = rangeValues.getBetaValue();
-        // Here we use flux instead of data since the original paper is using flux. But I don't think it is matter.
-        // flux = raw_dn * imageHeader.bscale + imageHeader.bzero, when bscale=1 and bzero=0, flux=raw_dn
+        double qvalue = rangeValues.getAsinhQValue();
+
+        if (qvalue < 1e-10) {
+            qvalue = 0.1;
+        } else if (qvalue > 1e10) {
+            qvalue = 1e10;
+        }
+
         double maxFlux = getFlux(shigh, imageHeader);
         double minFlux = getFlux(slow, imageHeader);
         if (Double.isNaN(minFlux) || Double.isInfinite((minFlux))){
@@ -335,22 +322,55 @@ public class ImageStretch {
             double[] minMax=getMinMaxData(float1dArray);
             minFlux = getFlux(minMax[1], imageHeader);
         }
+
+        if ( !Double.isFinite(qvalue) ) {
+            double[] minMax=getMinMaxData(float1dArray);
+            double dataMaxFlux = getFlux(minMax[1], imageHeader);
+            qvalue = getDefaultAsinhQ(minFlux, maxFlux, dataMaxFlux);
+            rangeValues.setAsinhQValue(qvalue);
+        }
+
         int pixelCount = 0;
         double flux;
+
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
             int last_index = line * naxis1 + lastPixel;
             for (int index = start_index; index <= last_index; index++) {
                 flux = getFlux(float1dArray[index], imageHeader);
-                if (Double.isNaN(flux)) { //original pixel value is NaN, assign it to blank
+                if (Double.isNaN(flux)) { // if original pixel value is NaN, assign it to blank
                     pixeldata[pixelCount] = blank_pixel_value;
                 } else {
-                    pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(flux, maxFlux, minFlux, beta);
+                    pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(flux, maxFlux, minFlux, qvalue);
                 }
                 pixelCount++;
             }
         }
+    }
 
+    /**
+     * Find default Q from asinh(Q*(xDataMax-xMin)/(xMax-xMin)) = 10 * asinh(0.1*Q)
+     * @param minFlux
+     * @param maxFlux
+     * @param dataMaxFlux
+     * @return
+     */
+    private static double getDefaultAsinhQ(double minFlux, double maxFlux, double dataMaxFlux) {
+        double bestQ = 0.1;
+        double step = 0.1;
+        double minDiff = Double.MAX_VALUE;
+        double fact = (dataMaxFlux-minFlux)/(maxFlux-minFlux);
+        double diff;
+        // max default Q is 12 - which corresponds to fact=1000
+        // (points 1000 times brighter than maxFlux will saturate)
+        for (double q=0.1; q<=12d; q=q+step) {
+            diff = Math.abs(asinh(fact*q)-10*asinh(0.1*q));
+            if ( diff < minDiff) {
+                minDiff = diff;
+                bestQ = q;
+            }
+        }
+        return Math.round(10*bestQ)/10.0; // round to 1 decimal digit
     }
 
     /**

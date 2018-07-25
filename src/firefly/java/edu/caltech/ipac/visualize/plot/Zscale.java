@@ -291,7 +291,7 @@ public class Zscale
 	if (npix <= 0)
 	    return new FitLineRetval(1, 0.0F, 0.0F);
 	else if (npix == 1) {
-		    return new FitLineRetval(1, data[1], 0.0F);
+	    return new FitLineRetval(1, data[1], 0.0F);
 	} else
 	    xscale = 2.0 / (npix - 1);
 
@@ -384,14 +384,14 @@ public class Zscale
 		break;
 	}
 
-	/* Transform the line coefficients back to the X range [1:npix]. */
-	float zstart = (float) (z0 - dz);
-	float  zslope = (float) (dz * xscale);
-        if (Math.abs(zslope) < 0.001)
-            zslope = (float) (o_dz * xscale);
+	  /* Transform the line coefficients back to the X range [1:npix]. */
+	  float zstart = (float) (z0 - dz);
+	  float  zslope = (float) (dz * xscale);
+	  if (Math.abs(zslope) < 1e-10)
+		  zslope = (float) (o_dz * xscale);
 
 
-	return new FitLineRetval(ngoodpix, zstart, zslope);
+	  return new FitLineRetval(ngoodpix, zstart, zslope);
 }
 
 

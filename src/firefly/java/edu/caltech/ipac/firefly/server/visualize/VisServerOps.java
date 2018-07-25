@@ -225,21 +225,6 @@ public class VisServerOps {
         return true;
     }
 
-    public static double[] getBeta(PlotState state) {
-        double[] resultsAry= new double[] {Double.NaN,Double.NaN,Double.NaN};
-        try {
-            ActiveCallCtx ctx = CtxControl.prepare(state);
-            FitsRead frAry[]= ctx.getFitsReadGroup().getFitsReadAry();
-            for(int i= 0; (i<frAry.length);i++) {
-                if (frAry[i]!=null) resultsAry[i]= frAry[i].getDefaultBeta();
-            }
-            return resultsAry;
-
-        } catch (Exception e) {
-            return resultsAry;
-        }
-    }
-
     static final boolean USE_DIRECT_FLUX_IF_POSSIBLE = true;
 
     private static boolean isDirectFluxAccessAvailable(PlotState state) {
