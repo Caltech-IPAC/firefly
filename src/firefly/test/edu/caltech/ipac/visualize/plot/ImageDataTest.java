@@ -150,6 +150,7 @@ public class ImageDataTest {
     @Test
     public void testRecomputeStretch(){
         //Recalculate stretch
+        imageData.getImage(frArray);
         imageData.recomputeStretch(frArray, 0, rangeValues, true);
         BufferedImage  stretchImage  =imageData.getImage(frArray);
         Assert.assertNotEquals(expectedImage, stretchImage);

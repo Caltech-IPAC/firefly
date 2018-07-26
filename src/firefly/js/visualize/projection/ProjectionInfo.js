@@ -215,8 +215,8 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
 	}
 
 	if (p.maptype===TPV) {
-		p.pv1= getPVArray(header,1, altWcs);
-		p.pv2= getPVArray(header,2, altWcs);
+		p.pv1= getPVArray(parse,1, altWcs);
+		p.pv2= getPVArray(parse,2, altWcs);
 	}
 
 
@@ -365,6 +365,10 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
     }
 
 
+    if (p.cdelt2<0) { //todo - this assumed the pixels were flipped, determine if we want to keep doing this
+        p.cdelt2 = -p.cdelt2;
+        p.crpix2 = p.naxis2 - p.crpix2 + 1;
+    }
 
     return p;
 }

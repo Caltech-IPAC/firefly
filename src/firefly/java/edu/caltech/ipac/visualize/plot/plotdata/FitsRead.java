@@ -96,7 +96,7 @@ public class FitsRead implements Serializable {
 
 
         //convert the data to float to do all the calculations
-        float1d = FitsReadUtil.getImageHDUDataInFloatArray(hdu, imageHeader);
+        float1d = FitsReadUtil.getImageHDUDataInFloatArray(hdu);
 
         if (clearHdu) hdu= null;
 

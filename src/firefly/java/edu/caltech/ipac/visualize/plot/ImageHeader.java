@@ -631,6 +631,14 @@ public class ImageHeader implements Serializable
 		cdelt2 = plt_scale * y_pixel_size / 1000 / 3600;
 	    }
 	}
+
+
+	if (cdelt2<0) { //todo - this assumed the pixels were flipped, determine if we want to keep doing this
+		cdelt2 = -cdelt2;
+		crpix2 = naxis2 - crpix2+ 1;
+	}
+
+
     }
 
     public String getProjectionName()

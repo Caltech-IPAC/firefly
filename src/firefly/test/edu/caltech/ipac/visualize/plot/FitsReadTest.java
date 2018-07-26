@@ -59,7 +59,7 @@ public class FitsReadTest extends FitsValidation {
     private static String expectedFitsFileName = "f3_out.fits";
     private double expectedFlux = 3.1980953037272997E7;
     private int expectedProjection=1001;
-    private  double  delta =0.1e-10;
+    private  double  delta =0.1e-7;
     private String expectedRAFromNorthFileName ="f3_rotationFromNorth_out.fits";
     private String expectedRANotFromNorthFileName ="f3_rotationNotFromNorth_out.fits";
 
@@ -89,7 +89,7 @@ public class FitsReadTest extends FitsValidation {
         expectedRAFromNorthup = FileLoader.loadFits(FitsReadTest.class, expectedRAFromNorthFileName);
         expectedRANotFromNorthup = FileLoader.loadFits(FitsReadTest.class, expectedRANotFromNorthFileName);
 
-        /*
+        /*the
         This following two FITS files are used to test ImageCube.
          */
         inCubeFits =  FileLoader.loadFits(FitsReadTest.class, inCubeFitsFileName);

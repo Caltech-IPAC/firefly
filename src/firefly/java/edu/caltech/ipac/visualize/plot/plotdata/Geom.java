@@ -1085,7 +1085,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
      * @param refFits Fits object for reference image containing the desirec projection
      * @return Fits object with the reprojected image
      */
-    Fits do_geom(Fits inFits, Fits refFits)
+    public Fits do_geom(Fits inFits, Fits refFits)
             throws FitsException, IOException, GeomException {
         FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(inFits);
         open_in(fitsReadArray[0]);

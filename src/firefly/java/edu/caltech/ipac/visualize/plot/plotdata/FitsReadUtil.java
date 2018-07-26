@@ -256,9 +256,9 @@ public class FitsReadUtil {
         for (int i = 0; i < naxis3; i++) {
             hduList[i] = makeHDU(hdu,data32[i] );
             hdu.addValue("SPOT_PL", i + 1, "Plane of FITS cube (added by Firefly)");
-            if (hdu.getHeader().getStringValue("CTYPE3").toUpperCase().startsWith("WAVE")||
-                    hdu.getHeader().getStringValue("CTYPE3").toUpperCase().startsWith("AWAV")  ){
-                //the third axis is wavelength, add the z coordinate to the header
+            String ctype3=  header.getStringValue("CTYPE3");
+            ctype3= ctype3!=null ? ctype3.toUpperCase() : "";
+            if (ctype3.startsWith("WAVE")|| ctype3.startsWith("AWAV")  ){ //if third axis is wavelength, add the z coordinate to the header
                 hdu.addValue("zPixel", i, "The coordinate value in the third axis");
             }
 
@@ -422,12 +422,11 @@ public class FitsReadUtil {
         return true;
     }
 
-
-    public static float[] getImageHDUDataInFloatArray(BasicHDU inHDU, ImageHeader imageHeader) throws FitsException {
-
+    public static float[] getImageHDUDataInFloatArrayOLD(BasicHDU inHDU) throws FitsException{
+        
         ImageHDU imageHDU;
         if (inHDU instanceof ImageHDU) {
-             imageHDU = (ImageHDU) inHDU;
+            imageHDU = (ImageHDU) inHDU;
         }
         else if (inHDU instanceof CompressedImageHDU) {
             imageHDU = ((CompressedImageHDU) inHDU).asImageHDU();
@@ -435,54 +434,71 @@ public class FitsReadUtil {
         else {
             throw new FitsException("hdu much be a ImageHDU or a CompressedImageHDU");
         }
-//        float[]  float1d =
-//                (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE, true));
+        Header header= imageHDU.getHeader();
+        double cdelt2 = header.getDoubleValue("CDELT2");
+        int naxis1 = header.getIntValue("NAXIS1");
+        int naxis2 = header.getIntValue("NAXIS2");
+
+         float[]  float1d =
+                         (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE, true));
+
+         /* pixels are upside down - reverse them in y */
+         if (cdelt2 < 0) float1d = reversePixData(naxis1, naxis2, float1d);
+         return float1d;
+     }
+
+    public static float[] getImageHDUDataInFloatArray(BasicHDU inHDU) throws FitsException {
+
+        ImageHDU imageHDU;
+        float[] float1d;
+
+        if (inHDU instanceof ImageHDU) imageHDU = (ImageHDU) inHDU;
+        else if (inHDU instanceof CompressedImageHDU) imageHDU = ((CompressedImageHDU) inHDU).asImageHDU();
+        else throw new FitsException("hdu much be a ImageHDU or a CompressedImageHDU");
+
+        ImageData imageDataObj= imageHDU.getData();
+        if (imageDataObj==null) throw new FitsException("No data in HDU");
+
+
+
+        Header header= imageHDU.getHeader();
+        double cdelt2 = header.getDoubleValue("CDELT2");
+        int naxis1 = header.getIntValue("NAXIS1");
+        int naxis2 = header.getIntValue("NAXIS2");
 
         try {
-            int naxis1 = imageHeader.naxis1;
-            int naxis2 = imageHeader.naxis2;
-            Object data= imageHDU.getData().getTiler().getTile(new int[] {0,0}, new int[] {naxis2,naxis1});
-            float[] float1d = (float[]) ArrayFuncs.convertArray(data, Float.TYPE, true);
-            if (imageHeader.cdelt2 < 0) float1d = reversePixData(imageHeader, float1d);
-            return float1d;
+            if (imageDataObj.getTiler()!=null) {
+                Object unknownArrayOfData= imageDataObj.getTiler().getTile(new int[] {0,0}, new int[] {naxis2,naxis1});
+                float1d = (float[]) ArrayFuncs.convertArray(unknownArrayOfData, Float.TYPE, true);
+            }
+            else {
+                float1d = (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageDataObj.getData(), Float.TYPE, true));
+            }
         } catch (IOException e) {
-            FitsException fe= new FitsException("Could not read data using tiler");
-            fe.initCause(e);
-            throw fe;
+            float1d = (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageDataObj.getData(), Float.TYPE, true));
         }
-//        float[]  float1d =
-//                (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE, true));
 
-        /* pixels are upside down - reverse them in y */
-//        if (imageHeader.cdelt2 < 0) float1d = reversePixData(imageHeader, float1d);
-//
-//
-//        return float1d;
+
+        if (cdelt2 < 0) float1d = reversePixData(naxis1, naxis2, float1d);// pixels are upside down - reverse them in y
+        return float1d;
+
+
     }
 
 
 
-   static float[] reversePixData(ImageHeader imageHeader,float[] float1d) {
+    private static float[] reversePixData(int naxis1, int naxis2,float[] float1d) {
 
-        int naxis1 = imageHeader.naxis1;
-        int naxis2 = imageHeader.naxis2;
-        if (imageHeader.cdelt2 < 0) {
-            /* pixels are upside down - reverse them in y */
-            float[] temp = new float[float1d.length];
-            int index_src = 0;
-            for (int y = 0; y < naxis2; y++) {
-
-                int indexDest = (naxis2 - y - 1) * naxis1;
-                for (int x = 0; x < naxis1; x++) {
-                    temp[indexDest++] = float1d[index_src++];
-                }
+        // pixels are upside down - reverse them in y
+        float[] temp = new float[float1d.length];
+        int index_src = 0;
+        for (int y = 0; y < naxis2; y++) {
+            int indexDest = (naxis2 - y - 1) * naxis1;
+            for (int x = 0; x < naxis1; x++) {
+                temp[indexDest++] = float1d[index_src++];
             }
-            float1d = temp;
-            imageHeader.cdelt2 = -imageHeader.cdelt2;
-            imageHeader.crpix2 =
-                    imageHeader.naxis2 - imageHeader.crpix2 + 1;
-
         }
+        float1d = temp;
         return float1d;
     }
 

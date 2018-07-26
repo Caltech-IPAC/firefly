@@ -46,7 +46,12 @@ public class FlipXYTest extends FitsValidation {
 
         //create a simulated FITS object
         inFits = FitsGenerator.getSimulateFits();
-        fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
+        try {
+            fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @After
@@ -252,20 +257,25 @@ public class FlipXYTest extends FitsValidation {
      * This uses a real Fits Image to run the unit test
      */
     public void endToEndTest() throws FitsException {
-        Fits inFits = FileLoader.loadFits(FlipXYTest.class, inFileName);
-        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
-        FlipXY flipX = new FlipXY(fitsRead, "xAxis");
-        FitsRead flipedX = flipX.doFlip();
+        try {
+            Fits inFits = FileLoader.loadFits(FlipXYTest.class, inFileName);
+            FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
+            FlipXY flipX = new FlipXY(fitsRead, "xAxis");
+            FitsRead flipedX = flipX.doFlip();
 
-        FlipXY flipY = new FlipXY(flipedX, "yAxis");
-        FitsRead flipedXY = flipY.doFlip();
+            FlipXY flipY = new FlipXY(flipedX, "yAxis");
+            FitsRead flipedXY = flipY.doFlip();
 
 
-        inFits = FileLoader.loadFits(FlipXYTest.class, expectedFlipXYFitsFileName);
-        FitsRead  expectedFlipXY = FitsReadFactory.createFitsReadArray(inFits)[0];
+            inFits = FileLoader.loadFits(FlipXYTest.class, expectedFlipXYFitsFileName);
+            FitsRead  expectedFlipXY = FitsReadFactory.createFitsReadArray(inFits)[0];
 
-        validateSingleHDU(expectedFlipXY.getHDU(),flipedXY.getHDU());
-        Assert.assertArrayEquals(expectedFlipXY.getDataFloat(),flipedXY.getDataFloat(), (float) delta);
+            validateSingleHDU(expectedFlipXY.getHDU(),flipedXY.getHDU());
+            Assert.assertArrayEquals(expectedFlipXY.getDataFloat(),flipedXY.getDataFloat(), (float) delta);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
 
     }
 
