@@ -13,11 +13,59 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.Zscale;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Trey Roby
  */
 public class ImageStretch {
+
+    private static boolean isHuePreserving(RangeValues rv) { return false;}
+
+
+    public static void stretchPixels8Bit(RangeValues rangeValues,
+                                         float[] float1d,
+                                         byte[] pixelData,
+                                         ImageHeader imageHeader,
+                                         Histogram hist,
+                                         int startPixel,
+                                         int lastPixel,
+                                         int startLine,
+                                         int lastLine ) {
+        stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, imageHeader, hist,
+                (byte)255, float1d, pixelData, rangeValues);
+    }
+
+    public static void stretchPixels3Color(RangeValues rangeValuesAry[],
+                                           float[][] float1dAry,
+                                           byte[][] pixelDataAry,
+                                           ImageHeader[] imageHeaderAry,
+                                           Histogram[] histAry,
+                                           int startPixel,
+                                           int lastPixel,
+                                           int startLine,
+                                           int lastLine ) {
+
+        if (float1dAry.length!=3 || imageHeaderAry.length!=3 || histAry.length!=3) {
+            throw new IllegalArgumentException("float1dAry, imageHeaderAry, histAry must be exactly 3 elements, some can be null ");
+        }
+
+        if (isHuePreserving(rangeValuesAry[0])) {
+            //todo - lupton stretch
+        }
+        else {
+            for(int i=0; (i<float1dAry.length); i++) {
+                if (float1dAry[i]!=null) {
+                    stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,imageHeaderAry[i].naxis1, imageHeaderAry[i], histAry[i],
+                            (byte)0, float1dAry[i], pixelDataAry[i], rangeValuesAry[i]);
+                }
+                else {
+                    Arrays.fill(pixelDataAry[i], (byte)0);
+                }
+            }
+        }
+
+    }
 
 
 
@@ -38,23 +86,23 @@ public class ImageStretch {
      * @param lastLine
      * @param blank_pixel_value
      */
-    public static void stretchPixels(int startPixel,
-                                     int lastPixel,
-                                     int startLine,
-                                     int lastLine,
-                                     int naxis1,
-                                     ImageHeader imageHeader,
-                                     Histogram hist,
-                                     byte blank_pixel_value,
-                                     float[] float1dArray,
-                                     byte[] pixeldata,
-                                     RangeValues rangeValues,
-                                     double slow,
-                                     double shigh) {
+    public static void stretchPixelsByBand(int startPixel,
+                                           int lastPixel,
+                                           int startLine,
+                                           int lastLine,
+                                           int naxis1,
+                                           ImageHeader imageHeader,
+                                           Histogram hist,
+                                           byte blank_pixel_value,
+                                           float[] float1dArray,
+                                           byte[] pixeldata,
+                                           RangeValues rangeValues) {
 
 
 
 
+        double slow = ImageStretch.getSlow(rangeValues, float1dArray, imageHeader, hist);
+        double shigh = ImageStretch.getShigh(rangeValues, float1dArray, imageHeader, hist);
 
         /*
          * This loop will go through all the pixels and assign them new values based on the
@@ -423,9 +471,6 @@ public class ImageStretch {
             hist_bin_values[i] = (float) hist.getDNfromBin(i);
         }
 
-        double slow = getSlow(rangeValues, float1d, imageHeader,hist);
-        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
-
         int start_pixel = 0;
         int last_pixel = 4095;
         int start_line = 0;
@@ -433,10 +478,10 @@ public class ImageStretch {
         int naxis1 = 1;
         byte blank_pixel_value = 0;
 
-        stretchPixels(start_pixel, last_pixel,
+        stretchPixelsByBand(start_pixel, last_pixel,
                 start_line, last_line, naxis1,imageHeader, hist,
                 blank_pixel_value, hist_bin_values,
-                pixeldata,  rangeValues,slow,shigh);
+                pixeldata,  rangeValues);
 
         return pixeldata;
     }

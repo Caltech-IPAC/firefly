@@ -164,18 +164,10 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-
-//    public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues rangeValues) {
-//        recomputeStretch(fitsReadAry,idx,rangeValues,false);
-//    }
-
-    public void recomputeStretch(FitsRead fitsReadAry[],
-                                 int idx,
-                                 RangeValues rangeValues,
-                                 boolean force) {
+    public void recomputeStretch(int idx, RangeValues rangeValues) {
 
         for(ImageData id : _imageDataAry) {
-            id.recomputeStretch(fitsReadAry,idx,rangeValues, force);
+            id.recomputeStretch(idx,rangeValues);
         }
     }
 
@@ -188,16 +180,5 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-//=======================================================================
-//-------------- Method from LabelSource Interface ----------------------
-//=======================================================================
-
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
-
-// =====================================================================
-// -------------------- Factory Methods --------------------------------
-// =====================================================================
 
 }

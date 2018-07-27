@@ -10,7 +10,6 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -20,12 +19,12 @@ import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import nom.tam.fits.FitsException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
-import java.awt.Shape;
+import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.Ellipse2D;
 import java.text.NumberFormat;
 import java.util.HashMap;
 
@@ -426,12 +425,7 @@ public class AreaStatisticsUtil {
 	// calculate integrated flux
 //	ImageHeader imageHdr = fitsRead.getImageHeader();
 
-        ImageHeader imageHdr = null;
-        try {
-            imageHdr = new ImageHeader(fitsRead.getHeader());
-        } catch (FitsException e) {
-            e.printStackTrace();
-        }
+        ImageHeader imageHdr = new ImageHeader(fitsRead.getHeader());
 
         // pixel area in steradian
 	double pixelArea =  Math.abs(imageHdr.cdelt1*DtoR*imageHdr.cdelt2*DtoR);

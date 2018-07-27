@@ -34,11 +34,7 @@ public class HistogramOps {
 
 
     public void recomputeStretch(RangeValues rangeValues) {
-        recomputeStretch(rangeValues,false);
-    }
-
-    public void recomputeStretch(RangeValues rangeValues, boolean force) {
-        _imageData.recomputeStretch(fitsReadAry, band.getIdx(), rangeValues,force);
+        _imageData.recomputeStretch(band.getIdx(), rangeValues);
     }
 
     public FitsRead getFitsRead() { return fitsReadAry[band.getIdx()]; }

@@ -137,6 +137,7 @@ public class FitsRead implements Serializable {
 
     public BinaryTableHDU getTableHDU() { return tableHDU; } //todo - remove this methdo
 
+    public float[] getRawFloatAry() { return float1d; }
 
     public static RangeValues getDefaultFutureStretch() {
         return DEFAULT_RANGE_VALUE;
@@ -148,29 +149,21 @@ public class FitsRead implements Serializable {
 
 
 
-    public synchronized void doStretch(RangeValues rangeValues,
-                                       byte[] pixelData,
-                                       boolean mapBlankToZero,
-                                       int startPixel,
-                                       int lastPixel,
-                                       int startLine,
-                                       int lastLine){
 
-
-
-
-
-        double slow = ImageStretch.getSlow(rangeValues, float1d, imageHeader, hist);
-        double shigh = ImageStretch.getShigh(rangeValues, float1d, imageHeader, hist);
-
-        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
-
-
-        ImageStretch.stretchPixels(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, imageHeader, hist,
-                blank_pixel_value, float1d, pixelData, rangeValues, slow, shigh);
-
-
-    }
+//    public void doStretch(RangeValues rangeValues,
+//                          byte[] pixelData,
+//                          boolean mapBlankToZero,
+//                          int startPixel,
+//                          int lastPixel,
+//                          int startLine,
+//                          int lastLine){
+//
+//        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
+//        ImageStretch.stretchPixels(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, imageHeader, hist,
+//                blank_pixel_value, float1d, pixelData, rangeValues);
+//
+//
+//    }
 
 
     public short[] getDataAsMask() {

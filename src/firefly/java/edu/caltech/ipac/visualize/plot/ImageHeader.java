@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
-import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 
 import java.io.Serializable;
@@ -81,13 +80,12 @@ public class ImageHeader implements Serializable
     {
     }
 
-    public ImageHeader(Header header) throws FitsException
+    public ImageHeader(Header header)
     {
 	this(header, 0L, 0);
     }
 
     public ImageHeader(Header header, long HDU_offset, int _plane_number)
-	throws FitsException
     {
 	int i, j;
 	boolean got_cd1_1, got_cd1_2, got_cd2_1, got_cd2_2;

@@ -218,7 +218,7 @@ public class ImagePlotCreator {
             rv= FitsRead.getDefaultFutureStretch();
             state.setRangeValues(rv, band);
         }
-        histOps.recomputeStretch(rv, true);
+        histOps.recomputeStretch(rv);
 
     }
 
