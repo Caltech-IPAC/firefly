@@ -269,24 +269,6 @@ function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
             }
         }
     });
-
-    /*
-
-    getHiPSMocTable(mocUrl, ivoid).then((tableModel) => {
-        const {tbl_id} = tableModel;
-        const {data} = get(tableModel, ['tableData']) || {};
-        const moc_nuniq_nums = data.map((row) => row[0]);
-//const t1 = performance.now();
-//console.log('moc fits load took ' + (t1-t0) + ' millisec');
-        if (!isEmpty(data)) {
-            dl =  addNewMocLayer(moc_nuniq_nums, tbl_id, plot.plotId);
-            if (dl && plot.plotId) {
-                dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, false);
-            }
-        }
-
-    });
-    */
 }
 
 function createHiPSGridLayer() {

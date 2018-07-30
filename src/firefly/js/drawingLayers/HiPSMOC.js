@@ -18,6 +18,7 @@ import {getTblById} from '../tables/TableUtil.js';
 import {dispatchTableFetch, TABLE_LOADED} from '../tables/TablesCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
+import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../core/AppDataCntlr.js';
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
@@ -123,14 +124,15 @@ class UpdateStatus {
         this.processedTiles = [];        // keep update in each setInterval execution
         this.updateCanceler = null;      // set when new setInterval starts
         this.storedSidePoints = {};
-    };
+        this.updateTaskId = '';
+    }
 
     startUpdate() {
         this.done = false;
         this.newMocObj = null;
         this.totalTiles = 0;
         this.processedTiles = [];
-        //this.storedSidePoints = {};
+        this.updateTaskId = makeTaskId();
     }
 
     abortUpdate() {
@@ -138,6 +140,7 @@ class UpdateStatus {
             this.updateCanceler();
             this.updateCanceler = null;
         }
+        this.updateTaskId = '';
         this.done = false;
         if (this.newMocObj) {
             this.newMocObj.mocGroup = null;
@@ -267,6 +270,18 @@ function changeMocDrawingStyle(dl, style, plotId) {
     return dObjs.map((oneObj) => Object.assign({}, oneObj, {style}));
 }
 
+function removeTask(plotId, taskId) {
+    if (plotId && taskId) {
+        setTimeout( () => dispatchRemoveTaskCount(plotId, taskId) ,0);
+    }
+}
+
+function addTask(plotId, taskId) {
+    if (plotId && taskId) {
+        setTimeout( () => dispatchAddTaskCount(plotId, taskId, true) ,0);
+    }
+}
+
 
 /**
  * update MOC draw data at specific intervals
@@ -300,9 +315,7 @@ function updateMocData(dl, plotId) {
                  startIdx, endIdx, updateStatus.storedSidePoints);  // handle max chunk
              updateStatus.processedTiles.push(...moreObjs);
              if (updateStatus.processedTiles.length >= updateStatus.totalTiles) {
-                 const {processedTiles} = updateStatus;
-                 updateStatus.abortUpdate();
-                 updateDrawLayer(processedTiles, dl, plotId);
+                 abortUpdate(dl, updateStatusAry, plotId);
              }
          }
      }
@@ -318,6 +331,8 @@ function makeUpdateDeferred(dl, plotId) {
     const {updateStatusAry} = dl;
 
     updateStatusAry[plotId].startUpdate();
+    addTask(plotId, updateStatusAry[plotId].updateTaskId);
+
     const id = window.setInterval( () => {
         updateMocData(dl, plotId);
     }, 0);
@@ -350,7 +365,9 @@ function abortUpdate(dl, updateStatusAry, pId) {
     const {processedTiles} = updateStatusAry[pId];
 
     updateDrawLayer(processedTiles, dl, pId);
+    removeTask(pId, updateStatusAry[pId].updateTaskId);
     updateStatusAry[pId].abortUpdate();
+
 }
 
 /**

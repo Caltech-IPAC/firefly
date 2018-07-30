@@ -6,7 +6,7 @@ import {drawRegions} from '../region/RegionDrawer.js';
 import {distanceToPolygon} from './ShapeDataObj.js';
 import {getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
         isTileVisibleByPosition, initSidePoints, NSIDE4} from '../HiPSMocUtil.js';
-import {getHealpixCornerTool,  getVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
+import {getHealpixCornerTool,  getAllVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
 import DrawOp from './DrawOp.js';
 import CsysConverter from '../CsysConverter.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
@@ -584,10 +584,11 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
 }
 
 
+
 function getVisibleTilesAtOrderPerNpix(plot, order) {
     const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
 
-    return getVisibleHiPSCells(order, centerWp, fov, plot.dataCoordSys)
+    return getAllVisibleHiPSCells(order, centerWp, fov, plot.dataCoordSys)
             .reduce((npix_set, oneTile) => {
                 set(npix_set, [oneTile.ipix], oneTile.wpCorners);
                 return npix_set;
