@@ -335,7 +335,7 @@ public class ImagePlotBuilder {
 
         for (int i = 0; i < frInfo.length; i++) {
             Integer extNo = frInfo[i].getFitsRead().getHduNumber();
-            if (idxsInt.contains(extNo)) {
+            if (idxsInt.contains(extNo) || (idxsInt.contains(-1) && extNo==0)) {
                 infoList.add(i);
             } else if(extNo > maxIdx) {
                 break;
