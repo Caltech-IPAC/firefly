@@ -390,6 +390,35 @@ export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
     }
 }
 
+/**
+ * get any HiPS cells which is fully or partially visible within given fov area
+ * @param norder
+ * @param centerWp
+ * @param fov
+ * @param dataCoordSys
+ * @returns {*}
+ */
+export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
+    const healpixCache= getHealpixCornerTool();
+    const dataCenterWp= convert(centerWp, dataCoordSys);
+
+    if (fov>80 && norder<=3) { // get all the cells and filter them
+        const cells = healpixCache.getFullCellList(norder,dataCoordSys);
+
+        return cells.filter( (cell) =>{
+            const {wpCorners}= cell;
+            const visibleCorner = wpCorners.find((oneCorner) => computeDistance(centerWp, oneCorner) < 90);
+
+            return visibleCorner;
+
+        });
+        return filterAllSky(dataCenterWp, healpixCache.getFullCellList(norder,dataCoordSys));
+    } else { // get only the healpix number for the fov and create the cell list
+        const nside = 2**norder;
+        const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), getSearchRadiusInRadians(fov), true, true);
+        return pixList.map( (ipix) => healpixCache.makeCornersForPix(ipix, nside, dataCoordSys));
+    }
+}
 
 /**
  *
