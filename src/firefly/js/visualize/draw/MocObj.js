@@ -151,7 +151,7 @@ function makeDrawParams(drawObj,def) {
 }
 
 
-const PROD_VISIBLE_TOTAL = 200000*2000;
+const PROD_VISIBLE_TOTAL = 200000*2200;
 /**
  * class MocGroup convert moc nuniq values into a set of norder and npix and store all nuniq per norder
  */
@@ -496,6 +496,7 @@ export class MocGroup {
                         nextOrder = d+1;
                     } else {
                         nextOrder = d;
+                        this.displayOrder = nextOrder;
                         break;
                     }
                 }
