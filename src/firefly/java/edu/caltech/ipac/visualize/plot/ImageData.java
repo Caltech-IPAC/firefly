@@ -8,7 +8,11 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.ImageStretch;
 
+import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
@@ -27,7 +31,7 @@ public class ImageData implements Serializable {
 
 
     public enum ImageType {TYPE_8_BIT, TYPE_24_BIT}
-    private IndexColorModel cm;
+    private ColorModel cm;
     private int colorTableID = 0;   // this is not as flexible as color model and will be set to -1 when color model is set
     private BufferedImage bufferedImage;
     private boolean imageOutOfDate = true;
@@ -66,27 +70,28 @@ public class ImageData implements Serializable {
                      int height) {
         this(imageType,x,y,width,height,rangeValues);
         this.colorTableID = colorTableID;
-        cm = ColorTable.getColorModel(colorTableID);
+        cm = imageType==ImageType.TYPE_24_BIT ?
+                new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), false, false,
+                                                             Transparency.OPAQUE, DataBuffer.TYPE_BYTE) :
+                ColorTable.getColorModel(colorTableID);
+
         raster = imageType==ImageType.TYPE_24_BIT ?
                 Raster.createBandedRaster( DataBuffer.TYPE_BYTE, this.width, this.height,3, null) :
                 Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, this.width, this.height, 1, null);
     }
 
     //LZ 7/20/15 add this to make an ImageData with given IndexColorModel
-    public ImageData(ImageType imageType,
-                     ImageMask[] iMasks,
+    public ImageData(ImageMask[] iMasks,
                      RangeValues rangeValues,
                      int x,
                      int y,
                      int width,
                      int height) {
 
-        this(imageType,x,y,width,height,rangeValues);
+        this(ImageType.TYPE_8_BIT,x,y,width,height,rangeValues);
         imageMasks=iMasks;
         cm =  getIndexColorModelForMask(iMasks);
-        raster = imageType==ImageType.TYPE_24_BIT ?
-                Raster.createBandedRaster( DataBuffer.TYPE_BYTE, width,height,3, null) :
-                Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, null);
+        raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, null);
     }
 
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
@@ -124,7 +129,7 @@ public class ImageData implements Serializable {
     void setColorTableIdOnly(int colorTableID) { this.colorTableID = colorTableID; }
 
 
-    IndexColorModel getColorModel() { return cm; }
+    ColorModel getColorModel() { return cm; }
 
     void markImageOutOfDate() { imageOutOfDate = true; }
 
@@ -178,9 +183,8 @@ public class ImageData implements Serializable {
         DataBufferByte db= (DataBufferByte) raster.getDataBuffer();
         if (imageType ==ImageType.TYPE_8_BIT) {
             if (imageMasks!=null && imageMasks.length!=0){
-               bufferedImage = new BufferedImage(cm, raster, false, null);
-               fitsReadAry[0].doStretchMask( db.getData(0), x, lastPixel, y, lastLine, imageMasks);
-
+                bufferedImage = new BufferedImage(cm, raster, false, null);
+                fitsReadAry[0].doStretchMask( db.getData(0), x, lastPixel, y, lastLine, imageMasks);
             }
             else {
                 bufferedImage = new BufferedImage(cm, raster, false, null);
@@ -193,9 +197,6 @@ public class ImageData implements Serializable {
             }
         }
         else if (imageType ==ImageType.TYPE_24_BIT) {
-            bufferedImage = new BufferedImage(width, height,BufferedImage.TYPE_INT_RGB);
-
-
             float[][] float1dAry= new float[3][];
             byte[][] pixelDataAry= new byte[3][];
             ImageHeader imHeadAry[]= new ImageHeader[3];
@@ -208,7 +209,7 @@ public class ImageData implements Serializable {
             }
             ImageStretch.stretchPixels3Color(rangeValuesAry, float1dAry, pixelDataAry, imHeadAry, histAry,
                                              x, lastPixel, y, lastLine );
-            bufferedImage.setData(raster);
+            bufferedImage = new BufferedImage(cm, raster, false, null);
         }
         else {
             Assert.tst(false, "image type must be TYPE_8_BIT or TYPE_24_BIT");

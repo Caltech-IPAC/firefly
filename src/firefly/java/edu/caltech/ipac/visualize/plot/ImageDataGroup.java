@@ -6,6 +6,7 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
+import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -76,11 +77,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
      * LZ 07/20/15
      * @return
      */
-    public ImageDataGroup(FitsRead fitsReadAry[],
-                          ImageData.ImageType imageType,
-                          ImageMask[] iMasks,
-                          RangeValues rangeValues,
-                          int tileSize) {
+    public ImageDataGroup(FitsRead fitsReadAry[], ImageMask[] iMasks, RangeValues rangeValues, int tileSize) {
         FitsRead fr= null;
         for(FitsRead testFr : fitsReadAry) {
             if (testFr!=null) {
@@ -110,7 +107,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
             for(int j= 0; j<yPanels; j++) {
                 int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
                 int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                _imageDataAry[(i*yPanels) +j]= new ImageData(imageType,
+                _imageDataAry[(i*yPanels) +j]= new ImageData(
                         iMasks,rangeValues,
                         tileSize*i,tileSize*j,
                         width, height);
@@ -148,7 +145,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-    public IndexColorModel getColorModel() {
+    public ColorModel getColorModel() {
         return _imageDataAry[0].getColorModel();
     }
 

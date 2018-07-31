@@ -32,8 +32,10 @@ public class ImageStretch {
                                          int lastPixel,
                                          int startLine,
                                          int lastLine ) {
+        double slow = ImageStretch.getSlow(rangeValues, float1d, imageHeader, hist);
+        double shigh = ImageStretch.getShigh(rangeValues, float1d, imageHeader, hist);
         stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, imageHeader, hist,
-                (byte)255, float1d, pixelData, rangeValues);
+                (byte)255, float1d, pixelData, rangeValues,slow,shigh);
     }
 
     public static void stretchPixels3Color(RangeValues rangeValuesAry[],
@@ -56,8 +58,10 @@ public class ImageStretch {
         else {
             for(int i=0; (i<float1dAry.length); i++) {
                 if (float1dAry[i]!=null) {
+                    double slow = ImageStretch.getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
+                    double shigh = ImageStretch.getShigh(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
                     stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,imageHeaderAry[i].naxis1, imageHeaderAry[i], histAry[i],
-                            (byte)0, float1dAry[i], pixelDataAry[i], rangeValuesAry[i]);
+                            (byte)0, float1dAry[i], pixelDataAry[i], rangeValuesAry[i],slow,shigh);
                 }
                 else {
                     Arrays.fill(pixelDataAry[i], (byte)0);
@@ -96,13 +100,11 @@ public class ImageStretch {
                                            byte blank_pixel_value,
                                            float[] float1dArray,
                                            byte[] pixeldata,
-                                           RangeValues rangeValues) {
+                                           RangeValues rangeValues,
+                                           double slow,
+                                           double shigh) {
 
 
-
-
-        double slow = ImageStretch.getSlow(rangeValues, float1dArray, imageHeader, hist);
-        double shigh = ImageStretch.getShigh(rangeValues, float1dArray, imageHeader, hist);
 
         /*
          * This loop will go through all the pixels and assign them new values based on the
@@ -471,6 +473,9 @@ public class ImageStretch {
             hist_bin_values[i] = (float) hist.getDNfromBin(i);
         }
 
+        double slow = getSlow(rangeValues, float1d, imageHeader,hist);
+        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
+
         int start_pixel = 0;
         int last_pixel = 4095;
         int start_line = 0;
@@ -481,7 +486,7 @@ public class ImageStretch {
         stretchPixelsByBand(start_pixel, last_pixel,
                 start_line, last_line, naxis1,imageHeader, hist,
                 blank_pixel_value, hist_bin_values,
-                pixeldata,  rangeValues);
+                pixeldata,  rangeValues, slow, shigh);
 
         return pixeldata;
     }

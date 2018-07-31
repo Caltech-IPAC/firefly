@@ -8,16 +8,9 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ColorTable;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.image.IndexColorModel;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.ColorModel;
 
 public class HistogramDisplay extends JComponent implements Icon {
 
@@ -26,7 +19,7 @@ public class HistogramDisplay extends JComponent implements Icon {
     private static final int LOWER = 46;
 
     private int             _histogram[] = null;
-    private IndexColorModel _model       = null;
+    private ColorModel _model       = null;
     private boolean         _do2nd= false;
     private boolean         _boundsEnabled= true;
     private byte            _histColorIdx[];
@@ -43,7 +36,7 @@ public class HistogramDisplay extends JComponent implements Icon {
         }
     }
 
-    public void setHistogramArray(int histogram[], byte histColorIdx[], IndexColorModel model) {
+    public void setHistogramArray(int histogram[], byte histColorIdx[], ColorModel model) {
         _histogram= histogram;
         _histColorIdx= histColorIdx;
         _model= model;

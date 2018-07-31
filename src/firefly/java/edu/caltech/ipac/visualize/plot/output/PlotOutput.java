@@ -23,7 +23,6 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,7 +38,7 @@ public class PlotOutput {
     public static final int PNG=  84;
     public static final int BMP=  82;
 
-    public enum Quality {HIGH, MEDIUM, LOW}
+    public enum Quality {HIGH, MEDIUM}
     private static final int _trySizes[]= {512,640,500,630,748,760,494,600,700,420,800,825,650};
     public static final int CREATE_ALL= -1;
     private final ImagePlot _plot;
@@ -381,10 +380,6 @@ public class PlotOutput {
         switch (quality) {
             case HIGH:
                 retval=  new BufferedImage(width,height, BufferedImage.TYPE_INT_ARGB);
-                break;
-            case LOW:
-                IndexColorModel cm= _plot.getImageData().getColorModel();
-                retval= new BufferedImage(width,height, BufferedImage.TYPE_BYTE_INDEXED, cm);
                 break;
             case MEDIUM:
                 retval= new BufferedImage(width,height, BufferedImage.TYPE_USHORT_565_RGB);
