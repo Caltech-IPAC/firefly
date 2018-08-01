@@ -300,10 +300,10 @@ export class MocGroup {
         }
     }
 
-    addToResult(norder, npix, nuniq) {
+    addToResult(norder, npix, nuniq, isParentTile) {
         const uniq = !nuniq ? getMocNuniq(norder, npix) : nuniq;
 
-        this.resultCellsFromMoc.push({nuniq: uniq, norder, npix});
+        this.resultCellsFromMoc.push({nuniq: uniq, norder, npix, isParentTile});
         this.total++;
     }
 
@@ -311,9 +311,9 @@ export class MocGroup {
         return  {invisible: !has(visibleSet, ipix), wpCorners: visibleSet[ipix]} ;
     };
 
-    addingCandidates(ipix, nOrder, wpCorners, nuniq){
+    addingCandidates(ipix, nOrder, wpCorners, nuniq, isParentTile = false){
         getCornerForPix(nOrder, ipix, this.plot.dataCoordSys, this.healpixCache, wpCorners);
-        this.addToResult(nOrder, ipix, nuniq);
+        this.addToResult(nOrder, ipix, nuniq, isParentTile);
         return true;
     }
 
@@ -378,7 +378,7 @@ export class MocGroup {
                 notIncludedNpixs.push(nextNpix);
                 return false;
             }
-            if (this.addingCandidates(nextNpix, toOrder, tileInfo.wpCorners)) {    // add tile to the return list
+            if (this.addingCandidates(nextNpix, toOrder, tileInfo.wpCorners, null, true)) {    // add tile to the return list
                 includedNpixs.push(nextNpix);
             }
             return (this.total >= this.TOTAL);
@@ -544,13 +544,13 @@ function drawMoc(mocObj, ctx, cc, drawParams, vpPtM,onlyAddToPath) {
 
 
 // create one drawObj for one tile
-export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, coordsys, regionOptions, isAllSky) {
+export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, coordsys, regionOptions, isAllSky, isParentTile) {
     const polyPts = getMocSidePointsNuniq(norder, npix, hipsOrder+6, coordsys, isAllSky);
     if (!polyPts)  return null;
 
     const polyRegion = makeRegionPolygon(polyPts, regionOptions);
     const drawObj = drawRegions([polyRegion])[0];
-    const mocInfo = {norder, displayOrder, hipsOrder, npix, nuniq};
+    const mocInfo = {norder, displayOrder, hipsOrder, npix, nuniq, isParentTile};
     Object.assign(drawObj, {color: undefined, mocInfo});
 
     return drawObj;
@@ -569,9 +569,9 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
     }
 
     const drawObjs = allCells.slice(startIdx, endIdx+1).reduce((prev, oneCell) => {
-        const {norder, npix, nuniq} = oneCell;
+        const {norder, npix, nuniq, isParentTile} = oneCell;
         const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, plot.dataCoordSys,
-                                              regionOptions, mocGroup.isAllSky);
+                                              regionOptions, mocGroup.isAllSky, isParentTile);
 
         if (drawObj) {
             //  drawObj.text = ''+ nuniq;

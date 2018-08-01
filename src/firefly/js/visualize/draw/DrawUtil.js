@@ -1,6 +1,6 @@
 
 import numeral from 'numeral';
-import {isNil, set} from 'lodash';
+import {isNil, set, isUndefined} from 'lodash';
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
 import {toRadians} from '../VisUtil.js';
@@ -353,16 +353,21 @@ function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
     ctx.restore();
 }
 
-function fillPath(ctx, color, pts, close, renderOptions) {
+function fillPath(ctx, color, pts, close, renderOptions, strokeColor) {
     ctx.save();
     if (renderOptions) addStyle(ctx,renderOptions);
-    ctx.fillStyle = color;
-    ctx.beginPath();
+    if (!isUndefined(strokeColor)) {
+        ctx.strokeStyle = strokeColor;
+    }
 
+    ctx.beginPath();
     pts.forEach( (pt,idx) => {
         (idx===0) ? ctx.moveTo(pt.x,pt.y) : ctx.lineTo(pt.x,pt.y);
     });
     if (close) ctx.closePath();
+    ctx.stroke();
+
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.restore();
 }

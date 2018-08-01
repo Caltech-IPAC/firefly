@@ -22,6 +22,7 @@ import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../cor
 
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
+const MocPrefix = 'MOC - ';
 const factoryDef= makeFactoryDef(TYPE_ID, creator, null, getLayerChanges, null, getUIComponent, asyncComputeDrawData);
 export default {factoryDef, TYPE_ID};
 
@@ -105,7 +106,7 @@ function creator(initPayload) {
     const mocFitsInfo = get(initPayload, 'mocFitsInfo') || {};
     const {tbl_id} = mocFitsInfo;
     const id =  tbl_id || get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
-    const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'MOC Plot - '+id.replace('_moc', '')),
+    const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', MocPrefix +id.replace('_moc', '')),
                                         options, drawingDef, actionTypes);
 
     dl.mocFitsInfo = mocFitsInfo;
@@ -164,7 +165,7 @@ class UpdateStatus {
 
 function getTitle(dl, pIdAry, isLoading=false) {
     const {drawLayerId, title} = dl;
-    const mTitle = drawLayerId.replace('_moc', '');
+    const mTitle = MocPrefix + drawLayerId.replace('_moc', '');
 
     const tObj = isString(title) ? {} : Object.assign({}, title);
     pIdAry.forEach((pId) => tObj[pId] = mTitle + (isLoading ? ' -- is loading' : ''));

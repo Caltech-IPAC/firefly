@@ -17,6 +17,7 @@ import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 import {toRadians, toDegrees} from '../VisUtil.js';
+import {rateOpacity} from '../../util/Color.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -617,7 +618,6 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 
 
     let screenRadius= 1;
-    let centerPt;
     let cenDevPt;
 
     if (pts.length===1 && !isNil(radius)) {
@@ -652,8 +652,8 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
         }
     }
 
-    if (centerPt && !isNil(text)) {
-        const textPt= makeTextLocationCircle(plot,textLoc, fontSize, centerPt, (screenRadius+lineWidth));
+    if (cenDevPt && !isNil(text)) {
+        const textPt= makeTextLocationCircle(plot,textLoc, fontSize, cenDevPt, (screenRadius+lineWidth));
         drawText(drawObj, ctx, plot,textPt, drawParams);
     }
 }
@@ -1127,7 +1127,7 @@ function getEdgePtOnGreatCircleFromCenterTo(pt, plot) {
 
     return getWorldPtByAngleFromProjectCenter(pt, plot, eastAngle);
 }
-let rm = 0;
+
 /**
  * draw polygon - draw outline of the polygon or fill the polygon
  * @param drawObj
@@ -1206,7 +1206,10 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         if ((style === Style.FILL)) {
             if ((isMocTile && inDisplay > 0) || (inDisplay === devPts.length)) {
                 const devPtAll = devPts.filter((pt) => pt);
-                DrawUtil.fillPath(ctx, color, devPtAll, true, renderOptions);
+                const fillColor = isMocTile && isMocTile.isParentTile ? rateOpacity(color, 0.5) : color;
+                const strokeColor = isMocTile ? rateOpacity(color, 0) : ctx.strokeStyle;     // need more investigation
+
+                DrawUtil.fillPath(ctx, fillColor, devPtAll, true, renderOptions, strokeColor);
             }
         } else {
             if (inDisplay > 0) {
