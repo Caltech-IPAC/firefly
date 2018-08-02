@@ -296,7 +296,7 @@ function updateMocData(dl, plotId) {
 
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first
         const newMocObj = clone(mocObj);
-        newMocObj.mocGroup = new MocGroup(null, mocObj.mocGroup, plot);
+        newMocObj.mocGroup = MocGroup.make(null, mocObj.mocGroup, plot);
         newMocObj.mocGroup.collectVisibleTilesFromMoc(plot, updateStatus.storedSidePoints);
         newMocObj.style = get(dl, ['mocStyle', plotId], Style.STANDARD);
         updateStatus.newMocObj = newMocObj;
@@ -316,7 +316,7 @@ function updateMocData(dl, plotId) {
                  startIdx, endIdx, updateStatus.storedSidePoints);  // handle max chunk
              updateStatus.processedTiles.push(...moreObjs);
              if (updateStatus.processedTiles.length >= updateStatus.totalTiles) {
-                 abortUpdate(dl, updateStatusAry, plotId);
+                 abortUpdate(dl, updateStatusAry, plotId, true);
              }
          }
      }
@@ -361,11 +361,13 @@ function updateDrawLayer(drawObjAry, drawLayer, plotId) {
  * @param dl
  * @param updateStatusAry
  * @param pId
+ * @param updateLayer
  */
-function abortUpdate(dl, updateStatusAry, pId) {
-    const {processedTiles} = updateStatusAry[pId];
-
-    updateDrawLayer(processedTiles, dl, pId);
+function abortUpdate(dl, updateStatusAry, pId, updateLayer=false) {
+    if (updateLayer) {
+        const {processedTiles} = updateStatusAry[pId];
+        updateDrawLayer(processedTiles, dl, pId);
+    }
     removeTask(pId, updateStatusAry[pId].updateTaskId);
     updateStatusAry[pId].abortUpdate();
 

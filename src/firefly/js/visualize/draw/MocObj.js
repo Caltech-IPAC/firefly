@@ -10,6 +10,7 @@ import {getHealpixCornerTool,  getAllVisibleHiPSCells, getPointMaxSide, getHiPSN
 import DrawOp from './DrawOp.js';
 import CsysConverter from '../CsysConverter.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
+import {rateOpacity} from '../../util/Color.js';
 
 const MOC_OBJ= 'MOCObj';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -29,13 +30,13 @@ const DEF_WIDTH = 1;
 function make(cellNums, drawingDef) {
     if (!cellNums && !cellNums.length) return null;
 
-    const {style=DEFAULT_STYLE} = drawingDef || {};
+    const {style=DEFAULT_STYLE, color} = drawingDef || {};
     const obj = DrawObj.makeDrawObj();
     obj.type = MOC_OBJ;
 
-    const mocGroup = new MocGroup(cellNums);
+    const mocGroup = MocGroup.make(cellNums);
     mocGroup.makeGroups();
-    Object.assign(obj, {regionOptions: {message: 'polygon2'}, mocGroup, style});
+    Object.assign(obj, {regionOptions: {message: 'polygon2'}, mocGroup, style, color});
 
     return obj;
 }
@@ -172,6 +173,14 @@ export class MocGroup {
 
         // for each collection of visible tiles
         this.initCollection(plot);
+    }
+
+    static make(cellList, mGroup = null, plot) {
+        if (cellList) {
+            return new MocGroup(cellList, null, plot);
+        } else {
+            return (mGroup ? new MocGroup(null, mGroup, plot) : null);
+        }
     }
 
     initCollection(plot) {
@@ -559,7 +568,7 @@ export function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrd
 // create all drawObjs
 export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePoints) {
     initSidePoints(storedSidePoints);
-    const {displayOrder, regionOptions={}, allCells, hipsOrder, mocGroup, style=Style.STANDARD} = mocObj;
+    const {displayOrder, regionOptions={}, allCells, hipsOrder, mocGroup, style=Style.STANDARD, color} = mocObj;
 
     startIdx = (startIdx >= 0 && startIdx < allCells.length) ? startIdx : 0;
     endIdx = (endIdx && endIdx < allCells.length) ? endIdx : allCells.length-1;
@@ -576,6 +585,9 @@ export function createDrawObjsInMoc(mocObj, plot, startIdx, endIdx, storedSidePo
         if (drawObj) {
             //  drawObj.text = ''+ nuniq;
             drawObj.style = style;
+            if (isParentTile) {       // this fill color is specifically for the round-up tile
+                drawObj.fillColor = rateOpacity(color, 0.5);
+            }
             prev.push(drawObj);
         }
         return prev;

@@ -1138,7 +1138,6 @@ function getEdgePtOnGreatCircleFromCenterTo(pt, plot) {
  */
 function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
     const {style, color, lineWidth=1} = drawParams;
-    const isMocTile = drawObj.mocInfo;
 
     if (style !== Style.FILL && !isEmpty(drawObj.drawObjAry)) {
         drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
@@ -1165,21 +1164,20 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         retPt.y = (y < 0) ? 0 : ((y > height) ? height: y);
 
         return retPt;
+
     };
 
-    const isPolygonInDisplay = (pts, isMocTile, style, plot) => {
+    const isPolygonInDisplay = (pts, style, plot) => {
         const devPts = pts.map((onePt) => plot.getDeviceCoords(onePt));
+        const {width, height} = plot.viewDim;
 
+        // detect if none of the points are visible
         if (style !== Style.FILL) {
-            const {width, height} = plot.viewDim;
-            let   notVisible = 0;
-            devPts.forEach((onePt) => {
-                if (!onePt || (onePt.x < 0) || (onePt.x > width) || (onePt.y < 0) || (onePt.y > height)) {
-                    notVisible++;
-                }
+            const anyVisible = devPts.find((onePt) => {
+                return (onePt && (onePt.x >= 0) && (onePt.x < width) && (onePt.y >= 0) && (onePt.y < height));
             });
 
-            if (notVisible === devPts.length) {
+            if (!anyVisible) {
                 return {devPts, inDisplay: 0};
             }
         }
@@ -1201,13 +1199,16 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
 
     if (pts) {
 
-        const {devPts, inDisplay} = isPolygonInDisplay(pts, isMocTile, style, plot);  // check if polygon is out of display
+        const {devPts, inDisplay} = isPolygonInDisplay(pts, style, plot);  // check if polygon is out of display
 
         if ((style === Style.FILL)) {
-            if ((isMocTile && inDisplay > 0) || (inDisplay === devPts.length)) {
+            if (inDisplay > 0) {
+                if (inDisplay < devPts.length) {
+                    console.log('less visible');     // test if this may happen
+                }
                 const devPtAll = devPts.filter((pt) => pt);
-                const fillColor = isMocTile && isMocTile.isParentTile ? rateOpacity(color, 0.5) : color;
-                const strokeColor = isMocTile ? rateOpacity(color, 0) : ctx.strokeStyle;     // need more investigation
+                const fillColor = drawObj.fillColor || color;
+                const strokeColor = rateOpacity(ctx.strokeStyle, 0);
 
                 DrawUtil.fillPath(ctx, fillColor, devPtAll, true, renderOptions, strokeColor);
             }
