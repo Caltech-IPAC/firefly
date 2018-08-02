@@ -599,7 +599,6 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 
 
     let screenRadius= 1;
-    let centerPt;
     let cenDevPt;
 
     if (pts.length===1 && !isNil(radius)) {
@@ -634,8 +633,8 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
         }
     }
 
-    if (centerPt && !isNil(text)) {
-        const textPt= makeTextLocationCircle(plot,textLoc, fontSize, centerPt, (screenRadius+lineWidth));
+    if (cenDevPt && !isNil(text)) {
+        const textPt= makeTextLocationCircle(plot,textLoc, fontSize, cenDevPt, (screenRadius+lineWidth));
         drawText(drawObj, ctx, plot,textPt, drawParams);
     }
 }
@@ -888,7 +887,7 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
         }
         centerPt = makeDevicePt(x+w/2, y+h/2);
         angle = 0.0;
-        }
+    }
 
     if (!isNil(text) && inView) {
         const textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);

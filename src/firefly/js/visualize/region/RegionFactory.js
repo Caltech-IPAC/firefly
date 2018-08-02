@@ -652,7 +652,7 @@ export class RegionFactory {
      */
     parseXY(coordSys, xStr, yStr) {
 
-        var {rgValX, rgValY} = xStr && yStr && this.convertToRegionValueForPt(xStr, yStr, coordSys);
+        var {rgValX, rgValY} = (xStr && yStr && this.convertToRegionValueForPt(xStr, yStr, coordSys)) || {};
 
         if (!rgValX || !rgValY || rgValX.unit !== rgValY.unit) {
             return null;
@@ -821,7 +821,7 @@ export class RegionFactory {
      * @returns {null}
      */
     convertToRegionValueForAngle(vstr) {
-        var {unit, val} = this.textToValueAndUnit(vstr);
+        var {unit, val} = this.textToValueAndUnit(vstr) || {};
 
 
         // context is for degree unit
@@ -847,10 +847,10 @@ export class RegionFactory {
      * @returns {Array}
      */
     convertToRegionValueForPt(xStr, yStr, coordSys) {
-        var {unit: xUnit, val: xVal, isTransformationChecked} = this.textToValueAndUnit(xStr, coordSys, CoordType.lon);
-        var {unit: yUnit, val: yVal} = this.textToValueAndUnit(yStr, coordSys, CoordType.lat);
+        var {unit: xUnit, val: xVal, isTransformationChecked} = this.textToValueAndUnit(xStr, coordSys, CoordType.lon) || {};
+        var {unit: yUnit, val: yVal} = this.textToValueAndUnit(yStr, coordSys, CoordType.lat) || {};
 
-        if (xUnit !== yUnit) {
+        if (!xUnit || !yUnit || (xUnit !== yUnit)) {
             return null;
         }
 
@@ -893,7 +893,7 @@ export class RegionFactory {
      * @returns RegionValue
      */
     convertToRegionValueForDim(vStr, coordSys) {
-        var {unit, val, isTransformationChecked} = this.textToValueAndUnit(vStr, coordSys);
+        var {unit, val, isTransformationChecked} = this.textToValueAndUnit(vStr, coordSys) || {};
 
         // keep the unit as origianlly indicated if there is
         if (unit === RegionValueUnit.CONTEXT) {
