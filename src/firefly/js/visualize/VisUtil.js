@@ -23,6 +23,7 @@ import {getPixScaleDeg, getFluxUnits} from './WebPlot.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
 
 
+
 /** Constant for conversion Degrees => Radians */
 export const DtoR = Math.PI / 180.0;
 /** Constant for conversion Radians => Degrees */
