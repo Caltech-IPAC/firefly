@@ -458,6 +458,13 @@ function getNewAttributes(plot) {
             if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
         }
     }
+
+    if (req.containsParam(WPConst.INITIAL_CENTER_POSITION)) {
+        attributes[PlotAttribute.INIT_CENTER]= req.getInitialCenterPosition();
+    }
+
+
+
     if (req.getUniqueKey())     attributes[PlotAttribute.UNIQUE_KEY]= req.getUniqueKey();
     if (req.isMinimalReadout()) attributes[PlotAttribute.MINIMAL_READOUT]=true;
 
