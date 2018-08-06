@@ -6,7 +6,7 @@ import Enum from 'enum';
 import validator from 'validator';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
-import VisUtil, {convertAngle, computeScreenDistance} from '../VisUtil.js';
+import VisUtil, {convertAngle, computeScreenDistance, convert} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
@@ -870,15 +870,19 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 centerPt = makeDevicePt(x+w/2, y+h/2);
             }
 
-            if (!onlyAddToPath || style === Style.HANDLED) {
-                DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
-            }
+            if (style === Style.FILL) {
+                DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
+            } else {
+                if (!onlyAddToPath || style === Style.HANDLED) {
+                    DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+                }
 
-            //--------------
+                //--------------
 
-            ctx.rect(x, y, w, h);
-            if (!onlyAddToPath || style === Style.HANDLED) {
-                DrawUtil.stroke(ctx);
+                ctx.rect(x, y, w, h);
+                if (!onlyAddToPath || style === Style.HANDLED) {
+                    DrawUtil.stroke(ctx);
+                }
             }
         }
 
@@ -886,7 +890,7 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     else {  // two corners case
         const devPt0= plot ? plot.getDeviceCoords(pts[0]) : pts[0];
         const devPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
-        if (!pt0 || !pt1) return;
+        if (!devPt0 || !devPt1) return;
         if (plot && (!plot.pointOnDisplay(devPt0) && !plot.pointOnDisplay(devPt1))) return;
 
         inView = true;
@@ -894,14 +898,18 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
 
         x = devPt0.x;
         y = devPt0.y;
-        w = devPt1.x - x;
-        h = devPt1.y - y;
-        if (!onlyAddToPath || style === Style.HANDLED) {
-            DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
-        }
-        ctx.rect(x, y, w, h);
-        if (!onlyAddToPath || style === Style.HANDLED) {
-            DrawUtil.stroke(ctx);
+        w = devPt1.x - x +1;
+        h = devPt1.y - y +1;
+        if (style === Style.FILL) {
+            DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
+        } else {
+            if (!onlyAddToPath || style === Style.HANDLED) {
+                DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+            }
+            ctx.rect(x, y, w, h);
+            if (!onlyAddToPath || style === Style.HANDLED) {
+                DrawUtil.stroke(ctx);
+            }
         }
         centerPt = makeDevicePt(x+w/2, y+h/2);
         angle = 0.0;
@@ -1037,7 +1045,9 @@ function drawCompositeObject(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  */
 function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
     const pt1 = getCenterOfProjection(plot);
-    const pt2 = pt;
+    const from = pt1.getCoordSys();
+    const pt2 = convert(pt, plot.projection.coordSys);
+    const to = pt2.getCoordSys();
     /* world point to Cartesian coordinate */
     const WorldPtToxyz = (wpt) => {
         const sinRA = Math.sin(toRadians(wpt.x));
@@ -1073,7 +1083,7 @@ function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
             if (ra < 0) ra += 360;
         }
 
-        return makeWorldPt(ra, dec);
+        return convert(makeWorldPt(ra, dec, plot.projection.coordSys));
     };
 
     // get norm in cartesian coordinate
@@ -1087,8 +1097,11 @@ function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
     };
 
     /* get the projection oriented boundary on display as moving along the the great circle from pt1 to pt2 */
-    const pt1_c = WorldPtToxyz(plot.getWorldCoords(pt1));
-    const pt2_c = WorldPtToxyz(plot.getWorldCoords(pt2));
+    //const pt1_c = WorldPtToxyz(plot.getWorldCoords(pt1, plot.projection.coordSys));
+    //const pt2_c = WorldPtToxyz(plot.getWorldCoords(pt2, plot.projection.coordSys));
+
+    const pt1_c = WorldPtToxyz(pt1);
+    const pt2_c = WorldPtToxyz(pt2);
     const norm = getNormalFrom(pt1_c, pt2_c);
 
     //angle between pt1 & pt2
@@ -1219,7 +1232,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
                     }
                     DrawUtil.polygonPath(ctx, pts, close, null, null);
                     if (!onlyAddToPath) {
-                        DrawUtil.closePath(ctx);
+                        DrawUtil.stroke(ctx);
                     }
                 };
 

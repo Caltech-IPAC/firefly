@@ -10,6 +10,7 @@ import FootprintObj from './FootprintObj.js';
 import DirectionArrowDrawObj from './DirectionArrowDrawObj.js';
 import MarkerFootprintObj from './MarkerFootprintObj.js';
 import MocObj from './MocObj.js';
+import ImageLineBasedObj from './ImageLineBasedObj.js';
 import {has} from 'lodash';
 
 export var drawTypes= {
@@ -19,7 +20,8 @@ export var drawTypes= {
     [DirectionArrowDrawObj.DIR_ARROW_DRAW_OBJ] : DirectionArrowDrawObj.draw,
     [ShapeDataObj.SHAPE_DATA_OBJ] : ShapeDataObj.draw,
     [MarkerFootprintObj.MARKER_DATA_OBJ] : MarkerFootprintObj.draw,
-    [MocObj.MOC_OBJ] : MocObj.draw
+    [MocObj.MOC_OBJ] : MocObj.draw,
+    [ImageLineBasedObj.IMGFP_OBJ] : ImageLineBasedObj.draw
 };
 
 class DrawOp {

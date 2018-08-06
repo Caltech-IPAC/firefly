@@ -407,12 +407,11 @@ export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
 
         return cells.filter( (cell) =>{
             const {wpCorners}= cell;
-            const visibleCorner = wpCorners.find((oneCorner) => computeDistance(centerWp, oneCorner) < 90);
+            const visibleCorner = wpCorners.find((oneCorner) => computeDistance(dataCenterWp, oneCorner) < 90);
 
             return visibleCorner;
 
         });
-        return filterAllSky(dataCenterWp, healpixCache.getFullCellList(norder,dataCoordSys));
     } else { // get only the healpix number for the fov and create the cell list
         const nside = 2**norder;
         const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), getSearchRadiusInRadians(fov), true, true);

@@ -1,6 +1,6 @@
 
 import numeral from 'numeral';
-import {isNil, set} from 'lodash';
+import {isNil, set, isUndefined} from 'lodash';
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
 import {toRadians} from '../VisUtil.js';
@@ -706,11 +706,16 @@ function drawCircle(ctx, x, y, color,  size,lineWidth, renderOptions= null, only
     if (!onlyAddToPath) stroke(ctx);
 }
 
-function fillRec(ctx, color, x, y, width, height, renderOptions) {
+function fillRec(ctx, color, x, y, width, height, renderOptions, strokeColor) {
     ctx.save();
     ctx.fillStyle=color;
     if (renderOptions) addStyle(ctx,renderOptions);
     ctx.fillRect(x, y, width, height);
+
+    if (strokeColor) {
+        ctx.strokeStyle = strokeColor;
+        ctx.strokeRect(x, y, width, height);
+    }
     ctx.restore();
 }
 
