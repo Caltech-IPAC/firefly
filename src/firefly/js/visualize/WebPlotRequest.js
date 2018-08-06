@@ -140,6 +140,7 @@ const C= {
     HAS_NEW_PLOT_CONTAINER : 'HasNewPlotContainer',
     GRID_ON : 'GridOn',
     OVERLAY_POSITION : 'OverlayPosition',
+    INITIAL_CENTER_POSITION : 'InitialCenterPosition',
     MINIMAL_READOUT: 'MinimalReadout',
     PLOT_GROUP_ID: 'plotGroupId',
     GROUP_LOCKED: 'GroupLocked',
@@ -187,7 +188,7 @@ const clientSideKeys =
          C.MINIMAL_READOUT,
          C.PLOT_GROUP_ID, C.DRAWING_SUB_GROUP_ID,  C.RELATED_TABLE_ROW,
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID, C.GROUP_LOCKED,
-         C.OVERLAY_IDS
+         C.OVERLAY_IDS, C.INITIAL_CENTER_POSITION
         ];
 
 const ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
@@ -611,6 +612,20 @@ export class WebPlotRequest extends ServerRequest {
      * @return {WorldPt}
      */
     getOverlayPosition() { return this.getWorldPtParam(C.OVERLAY_POSITION); }
+
+    /**
+     * @param {WorldPt|String} worldPt - the point object of the position to scroll image to when loaded
+     */
+    setInitialCenterPosition(worldPt) {
+        this.setParam(C.INITIAL_CENTER_POSITION, worldPt ? worldPt.toString() : false);
+    }
+
+    /**
+     *
+     * @return {WorldPt}
+     */
+    getInitialCenterPosition() { return this.getWorldPtParam(C.INITIAL_CENTER_POSITION); }
+
 
 //======================================================================
 //----------------------- Color Settings ------------------------------

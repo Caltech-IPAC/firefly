@@ -57,6 +57,11 @@ export const PlotAttribute= {
     FIXED_TARGET: 'FIXED_TARGET',
 
     /**
+     *
+     */
+    INIT_CENTER: 'INIT_CENTER',
+
+    /**
      * This will probably be a double with the requested size of the plot
      */
     REQUESTED_SIZE: 'REQUESTED_SIZE',

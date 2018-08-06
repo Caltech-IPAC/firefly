@@ -66,6 +66,10 @@ export const CoordinateSys = function () {
             coordSys = ECL_J2000;
         } else if (desc===ECL_B1950.toString() || desc==='ECB') {
             coordSys = ECL_B1950;
+        } else if (desc===SCREEN_PIXEL.toString()) {
+            coordSys = SCREEN_PIXEL;
+        } else if (desc===PIXEL.toString()) {
+            coordSys = PIXEL;
         } else {
             coordSys = null;
         }

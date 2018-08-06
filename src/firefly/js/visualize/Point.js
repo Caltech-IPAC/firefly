@@ -200,34 +200,26 @@ export class WorldPt {
 }
 
 
+/**
+ *
+ * @param {Array.<String>} wpParts
+ * @return {*}
+ */
 function stringAryToWorldPt(wpParts) {
-    let retval= null;
-    let parsedLon;
-    let parseLat;
-    let parsedCoordSys;
-    if (wpParts.length===3) {
-        parsedLon= Number(wpParts[0]);
-        parseLat= Number(wpParts[1]);
-        parsedCoordSys= CoordinateSys.parse(wpParts[2]);
-        if (!isNaN(parsedLon) && !isNaN(parseLat) && parsedCoordSys!==null) {
-            retval= makeWorldPt(parsedLon,parseLat,parsedCoordSys);
-        }
-    }
-    else if (wpParts.length===2) {
-        parsedLon= Number(wpParts[0]);
-        parseLat= Number(wpParts[1]);
-        if (!isNaN(parsedLon) && !isNaN(parseLat)) {
-            retval= makeWorldPt(parsedLon,parseLat);
-        }
-    }
-    else if (wpParts.length===5 || wpParts.length===4) {
-        parsedLon= Number(wpParts[0]);
-        parseLat= Number(wpParts[1]);
-        parsedCoordSys= CoordinateSys.parse(wpParts[2]);
-        const resolver= wpParts.length===5 ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
-        return makeWorldPt(parsedLon,parseLat,parsedCoordSys, wpParts[3],resolver);
-    }
-    return retval;
+    const len= wpParts.length;
+    const x= Number(wpParts[0]);
+    const y= Number(wpParts[1]);
+    if  (isNaN(x) || isNaN(y)) return null;
+
+    const csys= CoordinateSys.parse(wpParts[2]);
+
+    if (csys===CoordinateSys.PIXEL)        return makeImagePt(x, y); // image point
+    if (csys===CoordinateSys.SCREEN_PIXEL) return makeScreenPt(x, y); // screen point
+
+    if (len===2 || len===3) return makeWorldPt(x,y,csys);
+
+    const resolver= wpParts[4] ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
+    return makeWorldPt(x,y,csys, wpParts[3], resolver);
 }
 
 /**
