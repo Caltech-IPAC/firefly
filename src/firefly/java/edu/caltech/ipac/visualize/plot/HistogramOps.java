@@ -34,7 +34,7 @@ public class HistogramOps {
 
 
     public void recomputeStretch(RangeValues rangeValues) {
-        _imageData.recomputeStretch(band.getIdx(), rangeValues);
+        _imageData.recomputeStretch(fitsReadAry, band.getIdx(), rangeValues);
     }
 
     public FitsRead getFitsRead() { return fitsReadAry[band.getIdx()]; }

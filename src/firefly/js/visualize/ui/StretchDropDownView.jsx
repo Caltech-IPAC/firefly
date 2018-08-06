@@ -124,7 +124,7 @@ export function StretchDropDownView({plotView:pv, toolbarElement}) {
                            onClick={() => stretchByZscaleAlgorithm(pv,rv,STRETCH_ASINH)}/>
             <DropDownVerticalSeparator/>
 
-            {enabled && <AlgorithmDependentItems {...{pv,rv}}/>}
+            {enabled && renderAlgorithmDependentItems({pv,rv})}
         </SingleColumnMenu>
         );
 
@@ -135,7 +135,7 @@ StretchDropDownView.propTypes= {
     toolbarElement : PropTypes.object
 };
 
-function AlgorithmDependentItems({pv,rv}) {
+function renderAlgorithmDependentItems({pv,rv}) {
     const enabled = true;
     if (rv.algorithm === STRETCH_ASINH) {
         return (

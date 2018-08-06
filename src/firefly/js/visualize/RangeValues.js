@@ -46,17 +46,20 @@ const boundsStrToConst = {
     sigma: SIGMA
 };
 
+const RGB_PRESERVE_HUE_DEFAULT= 0; // user 0 for false
+
 export class RangeValues {
     constructor( lowerWhich= PERCENTAGE,
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
                  asinhQValue=NaN,
-                 gammaValue=2.0,
+                 gammaOrStretch=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
                  zscaleSamples= 600,
                  zscaleSamplesPerLine= 120,
+                 rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
                  bias= 0.5,
                  contrast= 1.0 ) {
         this.lowerWhich= parseInt(lowerWhich);
@@ -64,20 +67,22 @@ export class RangeValues {
         this.upperWhich= parseInt(upperWhich);
         this.upperValue= parseFloat(upperValue);
         this.asinhQValue = parseFloat(asinhQValue);
-        this.gammaValue=parseFloat(gammaValue);
+        this.gammaOrStretch=parseFloat(gammaOrStretch);
         this.algorithm=  parseInt(algorithm);
         this.zscaleContrast= parseInt(zscaleContrast);
         this.zscaleSamples= parseInt(zscaleSamples); /* desired number of pixels in sample */
         this.zscaleSamplesPerLine= parseInt(zscaleSamplesPerLine); /* optimal number of pixels per line */
+        this.rgbPreserveHue=  parseInt(rgbPreserveHue); /* if 0, stretch by band, otherwise preserve hue*/
+        if (this.rgbPreserveHue > 0) { this.algorithm = STRETCH_ASINH; }
         this.bias= parseFloat(bias);
         this.contrast= parseFloat(contrast);
     }
 
 
     computeBiasAndContrast(data) {
-        var value = data>=0?data:(2*(BYTE_MAX_VALUE+1)+data);
-        var offset = (BYTE_MAX_VALUE*(this.bias-0.5)*-4);
-        var shift = (BYTE_MAX_VALUE*(1-this.contrast));
+        let value = data>=0?data:(2*(BYTE_MAX_VALUE+1)+data);
+        const offset = (BYTE_MAX_VALUE*(this.bias-0.5)*-4);
+        const shift = (BYTE_MAX_VALUE*(1-this.contrast));
 
         value = ( offset+(value*this.contrast)+shift );
         if (value>(BYTE_MAX_VALUE*2)) value = BYTE_MAX_VALUE*2;
@@ -91,36 +96,36 @@ export class RangeValues {
      */
     static clone() {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
-                                this.upperValue, this.asinhQValue,  this.gammaValue, this.algorithm,
-                                this.zscaleContrast, this.zscaleSamples,
-                                this.zscaleSamplesPerLine,
-                                this.bias, this.contrast );
+            this.upperValue, this.asinhQValue,  this.gammaOrStretch, this.algorithm,
+            this.zscaleContrast, this.zscaleSamples, this.zscaleSamplesPerLine,
+            this.rgbPreserveHue,
+            this.bias, this.contrast );
     }
 
     toString() { return this.toJSON(); }
 
 
-    /**
-     * @return {RangeValues}
-     */
-    static makeDefaultSigma() {
-        return new RangeValues(SIGMA,-2,SIGMA,10,STRETCH_LINEAR);
-    }
-
-
-    /**
-     * @return {RangeValues}
-     */
-    static makeDefaultPercent() {
-        return new RangeValues(PERCENTAGE,-2,PERCENTAGE,10,STRETCH_LINEAR);
-    }
-
-    /**
-     * @return {RangeValues}
-     */
-    static makeDefaultZScale() {
-        return new RangeValues(ZSCALE,1,ZSCALE,1,STRETCH_LINEAR,25, 600, 120);
-    }
+    // /**
+    //  * @return {RangeValues}
+    //  */
+    // static makeDefaultSigma() {
+    //     return new RangeValues(SIGMA,-2,SIGMA,10,STRETCH_LINEAR);
+    // }
+    //
+    //
+    // /**
+    //  * @return {RangeValues}
+    //  */
+    // static makeDefaultPercent() {
+    //     return new RangeValues(PERCENTAGE,-2,PERCENTAGE,10,STRETCH_LINEAR);
+    // }
+    //
+    // /**
+    //  * @return {RangeValues}
+    //  */
+    // static makeDefaultZScale() {
+    //     return new RangeValues(ZSCALE,1,ZSCALE,1,STRETCH_LINEAR,25, 600, 120);
+    // }
 
     /**
      *
@@ -131,34 +136,40 @@ export class RangeValues {
      * @param p.upperWhich
      * @param p.upperValue
      * @param p.asinhQValue
-     * @param p.gammaValue
+     * @param p.gammaOrStretch
      * @param p.algorithm
      * @param p.zscaleContrast
      * @param p.zscaleSamples
      * @param p.zscaleSamplesPerLine
+     * @param p.rgbPreserveHue
      * @param p.bias
      * @param p.contrast
      * @return {RangeValues}
      */
     static makeRV({which= PERCENTAGE,
-                   lowerWhich,
-                   lowerValue= 1.0,
-                   upperWhich,
-                   upperValue= 99.0,
-                   asinhQValue= NaN,
-                   gammaValue=2.0,
-                   algorithm= STRETCH_LINEAR,
-                   zscaleContrast= 25,
-                   zscaleSamples= 600,
-                   zscaleSamplesPerLine= 120,
-                   bias= 0.5,
-                   contrast= 1.0} ) {
+                      lowerWhich,
+                      lowerValue= 1.0,
+                      upperWhich,
+                      upperValue= 99.0,
+                      asinhQValue= NaN,
+                      gammaOrStretch=2.0,
+                      algorithm= STRETCH_LINEAR,
+                      zscaleContrast= 25,
+                      zscaleSamples= 600,
+                      zscaleSamplesPerLine= 120,
+                      rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
+                      bias= 0.5,
+                      contrast= 1.0} ) {
 
         lowerWhich= lowerWhich || which;
         upperWhich= upperWhich || which;
+        if (rgbPreserveHue > 0) {
+            algorithm = STRETCH_ASINH;
+            upperWhich = ZSCALE;
+        }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
-            gammaValue, algorithm, zscaleContrast, zscaleSamples,
-            zscaleSamplesPerLine, bias, contrast);
+            gammaOrStretch, algorithm, zscaleContrast, zscaleSamples,
+            zscaleSamplesPerLine, rgbPreserveHue, bias, contrast);
     }
 
     /**
@@ -168,11 +179,12 @@ export class RangeValues {
      * @param upperWhich
      * @param upperValue
      * @param asinhQValue
-     * @param gammaValue
+     * @param gammaOrStretch
      * @param algorithm
      * @param zscaleContrast
      * @param zscaleSamples
      * @param zscaleSamplesPerLine
+     * @param rgbPreserveHue
      * @param bias
      * @param contrast
      * @return {RangeValues}
@@ -182,17 +194,18 @@ export class RangeValues {
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
                 asinhQValue=NaN,
-                gammaValue=2.0,
+                gammaOrStretch=2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,
                 zscaleSamples= 600,
                 zscaleSamplesPerLine= 120,
+                rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
                 bias= 0.5,
                 contrast= 1.0 ) {
-
+        if (rgbPreserveHue > 0) { algorithm = STRETCH_ASINH; }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
-             gammaValue, algorithm, zscaleContrast, zscaleSamples,
-            zscaleSamplesPerLine, bias, contrast);
+             gammaOrStretch, algorithm, zscaleContrast, zscaleSamples,
+            zscaleSamplesPerLine, rgbPreserveHue, bias, contrast);
     }
     
     /**
@@ -208,12 +221,12 @@ export class RangeValues {
                 upperValue= 1.0,
                 algorithm= LINEAR_STR) {
 
-        var btValue= PERCENTAGE;
+        let btValue= PERCENTAGE;
         if (boundsStrToConst[boundsType.toLowerCase()]) {
             btValue= boundsStrToConst[boundsType.toLowerCase()];
         }
 
-        var a= STRETCH_LINEAR;
+        let a= STRETCH_LINEAR;
         if (alStrToConst[algorithm.toLowerCase()]) {
             a= alStrToConst[algorithm.toLowerCase()];
         }
@@ -246,8 +259,8 @@ export class RangeValues {
         if (!sIn) return null;
 
 
-        var params= sIn.split(',').map( (v) => validator.toFloat(v) );
-        var valid= params.every( (v)=> typeof v !== 'undefined');
+        const params= sIn.split(',').map( (v) => validator.toFloat(v) );
+        const valid= params.every( (v)=> typeof v !== 'undefined');
 
         return valid ? new RangeValues(...params) : null;
     }
@@ -258,15 +271,16 @@ export class RangeValues {
 
     static serializeRV(rv) {
         return rv.lowerWhich+','+
-               rv.lowerValue+','+
-               rv.upperWhich+','+
-               rv.upperValue+','+
-               rv.asinhQValue+','+
-               rv.gammaValue+','+
-               rv.algorithm+','+
-               rv.zscaleContrast+','+
-               rv.zscaleSamples+','+
-               rv.zscaleSamplesPerLine;
+            rv.lowerValue+','+
+            rv.upperWhich+','+
+            rv.upperValue+','+
+            rv.asinhQValue+','+
+            rv.gammaOrStretch+','+
+            rv.algorithm+','+
+            rv.zscaleContrast+','+
+            rv.zscaleSamples+','+
+            rv.zscaleSamplesPerLine+','+
+            rv.rgbPreserveHue;
     }
     
 }

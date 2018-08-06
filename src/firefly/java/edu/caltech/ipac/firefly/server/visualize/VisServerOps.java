@@ -385,14 +385,8 @@ public class VisServerOps {
         }
     }
 
-
-    public static WebPlotResult recomputeStretch(PlotState state, StretchData[] stretchData) {
-        return recomputeStretch(state, stretchData, true);
-    }
-
     public static WebPlotResult recomputeStretch(PlotState state,
-                                                 StretchData[] stretchData,
-                                                 boolean recreateImages) {
+                                                 StretchData[] stretchData) {
         try {
             ActiveCallCtx ctx = CtxControl.prepare(state);
             PlotServUtils.statsLog("stretch");
@@ -404,6 +398,8 @@ public class VisServerOps {
                 state.setRangeValues(stretchData[0].getRangeValues(), Band.NO_BAND);
                 retval.putResult(WebPlotResult.PLOT_STATE, state);
                 images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
+                // update range values in state, in case there are computed values (ex. default asinh_q)
+                state.setRangeValues(stretchData[0].getRangeValues(), Band.NO_BAND);
                 retval.putResult(WebPlotResult.PLOT_IMAGES, images);
             } else if (plot.isThreeColor()) {
                 for (StretchData sd : stretchData) {
@@ -415,10 +411,14 @@ public class VisServerOps {
                         state.setBandVisible(sd.getBand(), sd.isBandVisible());
                     }
                 }
-                if (recreateImages) {
-                    images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
-                    retval.putResult(WebPlotResult.PLOT_IMAGES, images);
+                images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
+                // update range values in state, in case there are computed values (ex. default asinh_q)
+                for (StretchData sd : stretchData) {
+                    if (sd.isBandVisible()) {
+                        state.setRangeValues(sd.getRangeValues(), sd.getBand());
+                    }
                 }
+                retval.putResult(WebPlotResult.PLOT_IMAGES, images);
                 retval.putResult(WebPlotResult.PLOT_STATE, state);
 
             } else {

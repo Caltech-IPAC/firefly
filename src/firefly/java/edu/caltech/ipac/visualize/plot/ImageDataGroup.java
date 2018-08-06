@@ -5,12 +5,13 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
 
 import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
 import java.util.Iterator;
-/**
+/*
  * User: roby
  * Date: Aug 21, 2008
  * Time: 1:22:48 PM
@@ -25,7 +26,10 @@ public class ImageDataGroup implements Iterable<ImageData> {
     private       ImageData  _imageDataAry[];
     private final int _width;
     private final int _height;
-    
+
+    RGBIntensity _rgbIntensity; // for 3-color hew-preserving images only
+
+
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -55,7 +59,8 @@ public class ImageDataGroup implements Iterable<ImageData> {
         int yPanels= totHeight / tileSize;
         if (totWidth % tileSize > 0) xPanels++;
         if (totHeight % tileSize > 0) yPanels++;
-
+        
+        _rgbIntensity = null;
 
         _imageDataAry= new ImageData[xPanels * yPanels];
 
@@ -70,8 +75,6 @@ public class ImageDataGroup implements Iterable<ImageData> {
             }
         }
     }
-
-
 
     /**
      * LZ 07/20/15
@@ -161,9 +164,20 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-    public void recomputeStretch(int idx, RangeValues rangeValues) {
+    public void recomputeStretch(FitsRead[] fitsReadAry, int idx, RangeValues rangeValues) {
+        boolean setRGBIntensity = false;
+        if (rangeValues.rgbPreserveHue()) {
+            if (_rgbIntensity == null) {
+                _rgbIntensity = new RGBIntensity();
+            }
+            _rgbIntensity.addRangeValues(fitsReadAry, idx, rangeValues);
+            setRGBIntensity = !Arrays.asList(fitsReadAry).contains(null);
+        }
 
         for(ImageData id : _imageDataAry) {
+            if (setRGBIntensity) {
+                id.setRGBIntensity(_rgbIntensity);
+            }
             id.recomputeStretch(idx,rangeValues);
         }
     }
@@ -175,7 +189,13 @@ public class ImageDataGroup implements Iterable<ImageData> {
             }
             _imageDataAry= null;
         }
+        if (_rgbIntensity !=null) {
+            _rgbIntensity = null;
+        }
     }
+
+
+
 
 
 }

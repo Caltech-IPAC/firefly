@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.ImageStretch;
+import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
 
 import java.awt.*;
 import java.awt.color.ColorSpace;
@@ -47,6 +48,9 @@ public class ImageData implements Serializable {
     private final int lastLine;
 
     private WritableRaster raster;
+
+    // used for hue-preserving RGB only
+    private RGBIntensity rgbIntensity; // stats for intensity
 
 
     private ImageData( ImageType imageType, int x, int y, int width, int height, RangeValues rangeValues) {
@@ -94,6 +98,10 @@ public class ImageData implements Serializable {
         raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, null);
     }
 
+    public void setRGBIntensity(RGBIntensity rgbIntensity) {
+        this.rgbIntensity = rgbIntensity;
+    }
+
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
         if (imageOutOfDate) constructImage(fitsReadAry);
         return bufferedImage;
@@ -105,6 +113,7 @@ public class ImageData implements Serializable {
         bufferedImage = null;
         raster = null;
         imageOutOfDate = true;
+        rgbIntensity = null;
     }
 
     public int getX() { return x;}
@@ -202,13 +211,20 @@ public class ImageData implements Serializable {
             ImageHeader imHeadAry[]= new ImageHeader[3];
             Histogram[] histAry= new Histogram[3];
             for(int i=0;i<3; i++) {
-                float1dAry[i]= fitsReadAry[i].getRawFloatAry();
+                if (fitsReadAry[i] == null) {
+                    float1dAry[i]=null;
+                    imHeadAry[i]=null;
+                    histAry[i]=null;
+                } else {
+                    float1dAry[i] = fitsReadAry[i].getRawFloatAry();
+                    imHeadAry[i]= new ImageHeader(fitsReadAry[i].getHeader());
+                    histAry[i]= fitsReadAry[i].getHistogram();
+                }
                 pixelDataAry[i]= db.getData(i);
-                imHeadAry[i]= new ImageHeader(fitsReadAry[i].getHeader());
-                histAry[i]= fitsReadAry[i].getHistogram();
+
             }
             ImageStretch.stretchPixels3Color(rangeValuesAry, float1dAry, pixelDataAry, imHeadAry, histAry,
-                                             x, lastPixel, y, lastLine );
+                    rgbIntensity, x, lastPixel, y, lastLine );
             bufferedImage = new BufferedImage(cm, raster, false, null);
         }
         else {

@@ -385,7 +385,7 @@ public class PlotOutput {
                 retval= new BufferedImage(width,height, BufferedImage.TYPE_USHORT_565_RGB);
                 break;
             default :
-                Assert.argTst(false, "quality must be HIGH, MEDIUM, or LOW");
+                Assert.argTst(false, "quality must be HIGH or MEDIUM");
                 retval= null;
                 break;
         }
