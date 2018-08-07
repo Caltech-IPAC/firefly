@@ -256,23 +256,22 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
 
+        String rowIdx = "\"" + DataGroup.ROW_IDX + "\"";
+        String rowNum = "\"" + DataGroup.ROW_NUM + "\"";
+
         String resultSetID = getResultSetID(treq);
 
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
 
-
         if (!EmbeddedDbUtil.hasTable(treq, dbFile, resultSetID)) {
             // does not exists.. create table from original 'data' table
-            List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? getColumnNames(dbInstance, "DATA")
-                    : StringUtils.asList(treq.getInclColumns(), ",");
+            List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? dbAdapter.getColumnNames(dbInstance, "DATA", "\"")
+                                : StringUtils.asList(treq.getInclColumns(), ",");
+            cols = cols.stream().filter((s) -> !(s.equals(rowIdx) || s.equals(rowNum))).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
+
             String wherePart = dbAdapter.wherePart(treq);
             String orderBy = dbAdapter.orderByPart(treq);
-
-            cols = cols.stream().filter((s) -> {
-                s = s.replaceFirst("^\"(.+)\"$", "$1");
-                return !(s.equals(DataGroup.ROW_IDX) || s.equals(DataGroup.ROW_NUM));
-            }).collect(Collectors.toList());   // remove this cols because it will be automatically added
 
             // copy data
             String datasetSql = String.format("select %s, %s from data %s %s", StringUtils.toString(cols), DataGroup.ROW_IDX, wherePart, orderBy);
@@ -281,7 +280,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             JdbcFactory.getSimpleTemplate(dbInstance).update(sql);
 
             // copy dd
-            String ddSql = "select * from data_dd";
+            List<String> cnames = dbAdapter.getColumnNames(dbInstance, resultSetID, "'");
+            String ddSql = String.format("select * from data_dd where cname in (%s)", StringUtils.toString(cnames));
             ddSql = dbAdapter.createTableFromSelect(resultSetID + "_dd", ddSql);
             JdbcFactory.getSimpleTemplate(dbInstance).update(ddSql);
 
@@ -291,11 +291,23 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
         }
 
-        // resultSetID is a table created with sort and filter in consideration.  no need to re-apply.
+        // resultSetID is a table created sort and filter in consideration.  no need to re-apply.
         TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
         nreq.setFilters(null);
         nreq.setSortInfo(null);
-        nreq.setInclColumns(new String[0]);
+
+        if (StringUtils.isEmpty(treq.getInclColumns())) {
+            nreq.setInclColumns();
+        } else {
+            List<String> requestedCols = StringUtils.asList(treq.getInclColumns(), ",");
+            List<String> cols = dbAdapter.getColumnNames(dbInstance, resultSetID, "\"");
+
+            // only return these columns if requested
+            if (!requestedCols.contains(rowIdx)) cols.remove(rowIdx);
+            if (!requestedCols.contains(rowNum)) cols.remove(rowNum);
+
+            nreq.setInclColumns(cols.toArray(new String[0]));
+        }
 
         DataGroupPart page = execRequestQuery(nreq, dbFile, resultSetID);
 
@@ -330,11 +342,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 //====================================================================
 //
 //====================================================================
-
-    private static List<String> getColumnNames(DbInstance dbInstance, String forTable) {
-        List<String> cols = JdbcFactory.getSimpleTemplate(dbInstance).query(String.format("select cname from %s_DD", forTable), (rs, i) -> "\"" + rs.getString(1) + "\"");
-        return cols;
-    }
 
     private String ensurePrevResultSetIfExists(TableServerRequest treq, File dbFile) {
 

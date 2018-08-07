@@ -218,6 +218,19 @@ abstract public class BaseDbAdapter implements DbAdapter {
     protected abstract EmbeddedDbInstance createDbInstance(File dbFile);
 
 
+    /**
+     * returns the column names of the given table.
+     * This is hsql specific implementation and may not work with other databases.
+     * @param dbInstance
+     * @param forTable
+     * @return
+     */
+    public List<String> getColumnNames(DbInstance dbInstance, String forTable, String enclosedBy) {
+        String sql = String.format("SELECT column_name FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS where table_name = '%s'", forTable.toUpperCase());
+        return JdbcFactory.getSimpleTemplate(dbInstance).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
+    }
+
+
 //====================================================================
 //  cleanup related functions
 //====================================================================

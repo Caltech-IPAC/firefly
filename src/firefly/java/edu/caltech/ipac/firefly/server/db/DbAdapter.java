@@ -6,6 +6,7 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -93,6 +94,8 @@ public interface DbAdapter {
 
     String createTableFromSelect(String tblName, String selectSql);
     String translateSql(String sql);
+
+    List<String> getColumnNames(DbInstance dbInstance, String tblName, String enclosedBy);
 
     /**
      * perform a cleanup routine which may close inactive database to free up memory
