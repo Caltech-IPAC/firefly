@@ -261,10 +261,9 @@ function makeDrawParams(drawObj,def={}) {
 
 const draw=  {
 
+
     usePathOptimization(drawObj,def) {
-        const dp= makeDrawParams(drawObj,def);
-        return dp===Style.STANDARD &&
-            (drawObj.sType===ShapeType.Line || drawObj.sType===ShapeType.Rectangle);
+        return def.canUseOptimization;
     },
 
     getCenterPt(drawObj) {
