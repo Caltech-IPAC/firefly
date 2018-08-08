@@ -9,20 +9,21 @@ import {SelectInfo} from './SelectInfo.js';
 
 export class TableConnector {
     
-    constructor(tbl_id, tbl_ui_id, tableModel, showUnits=true, showFilters=false, pageSize) {
+    constructor(tbl_id, tbl_ui_id, tableModel, options) {
+
         this.tbl_id = tbl_id || tableModel.tbl_id;
         this.tbl_ui_id = tbl_ui_id;
         this.tableModel = tableModel;
+        this.options = options;
 
-        this.origPageSize = pageSize;
-        this.origShowUnits = showUnits;
-        this.origShowFilters = showFilters;
+        const {pageSize, showUnits=true, showFilters=false, showTypes=false} = options || {};
+        this.orig = {showUnits, showTypes, showFilters, pageSize};
     }
 
     onMount() {
         const {tbl_ui_id, tbl_id, tableModel} = this;
         if (!TblUtil.getTableUiByTblId(tbl_id)) {
-            TblCntlr.dispatchTableUiUpdate({tbl_ui_id, tbl_id});
+            TblCntlr.dispatchTableUiUpdate({tbl_ui_id, tbl_id, ...this.options});
             if (tableModel && !tableModel.origTableModel) {
                 set(tableModel, 'request.tbl_id', tbl_id);
                 const workingTableModel = cloneDeep(tableModel);
@@ -104,14 +105,14 @@ export class TableConnector {
         TblCntlr.dispatchTableUiUpdate(changes);
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showFilters, sortInfo, filterInfo}) {
+    onOptionUpdate({pageSize, columns, showUnits, showTypes, showFilters, sortInfo, filterInfo}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
         }
         if (!isUndefined(filterInfo)) {
             this.onFilter(filterInfo);
         }
-        const changes = omitBy({columns, showUnits, showFilters, optSortInfo:sortInfo}, isUndefined);
+        const changes = omitBy({columns, showUnits, showTypes, showFilters, optSortInfo:sortInfo}, isUndefined);
         if (!isEmpty(changes)) {
             changes.tbl_ui_id = this.tbl_ui_id;
             TblCntlr.dispatchTableUiUpdate(changes);
@@ -122,15 +123,16 @@ export class TableConnector {
         const ctable = TblUtil.getTblById(this.tbl_id);
         var filterInfo = get(ctable, 'request.filters', '').trim();
         filterInfo = filterInfo !== '' ? '' : undefined;
-        const pageSize = get(ctable, 'request.pageSize') !== this.origPageSize ? this.origPageSize : undefined;
+        var {showUnits, showTypes, showFilters, pageSize} = this.orig || {};
+        
+        pageSize = get(ctable, 'request.pageSize') !== pageSize ? pageSize : undefined;
         this.onOptionUpdate({filterInfo, pageSize,
                         columns: cloneDeep(get(ctable, 'tableData.columns', [])),
-                        showUnits: this.origShowUnits,
-                        showFilters: this.origShowFilters});
+                        showUnits, showTypes, showFilters});
     }
 
-    static newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize) {
-        return new TableConnector(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
+    static newInstance(tbl_id, tbl_ui_id, tableModel, options) {
+        return new TableConnector(tbl_id, tbl_ui_id, tableModel, options);
     }
 }
 

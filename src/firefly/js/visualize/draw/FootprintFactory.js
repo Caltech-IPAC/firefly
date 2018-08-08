@@ -44,32 +44,12 @@ export class FootprintFactory {
      * @param mission
      * @returns {string} null for no content
      */
-    static footprintCommand( mission ) {
+    static footprintDesc(mission ) {
         var label = '';
         var enumFP = FOOTPRINT.enums.find( (fp) => fp.key === mission);
 
         if (enumFP) {
-            label = `${enumFP.key}` + (enumFP.value === PRELIM ? ' ' : '') + `${enumFP.value} ${FPCMD}`;
-        }
-        return label;
-    }
-
-    /**
-     * get command string on the dropdown given mission and instrument string
-     * @param mission
-     * @param inst
-     * @returns {string} null for no content
-     */
-    static instrumentCommand( mission, inst) {
-        var label = '';
-        var enumFP = FOOTPRINT.enums.find( (fp) => fp.key === mission);
-
-        if (!enumFP) return label;
-
-        if (has(INSTRUMENTS, mission)) {
-           if (INSTRUMENTS[mission].get(inst)) {
-               label = `${enumFP.key} ${inst}` + (enumFP.value === PRELIM ? ' ' : '') + `${enumFP.value} ${FPCMD}`;
-           }
+            label = enumFP.key + (enumFP.value ? ' ' + enumFP.value : '');
         }
         return label;
     }

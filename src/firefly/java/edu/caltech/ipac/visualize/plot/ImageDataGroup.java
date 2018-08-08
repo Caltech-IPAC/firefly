@@ -4,7 +4,7 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.util.Assert;
-import nom.tam.fits.FitsException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
@@ -22,13 +22,9 @@ import java.util.Iterator;
 public class ImageDataGroup implements Iterable<ImageData> {
 
     private       ImageData  _imageDataAry[];
-    private final ImageData.ImageType _imageType;
-
-
     private final int _width;
     private final int _height;
-    private double betaValue= Double.NaN;
-
+    
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -38,8 +34,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
                           ImageData.ImageType imageType,
                           int colorTableID,
                           RangeValues rangeValues,
-                          int tileSize,
-                          boolean constructNow) throws FitsException {
+                          int tileSize) {
         FitsRead fr= null;
         for(FitsRead testFr : fitsReadAry) {
             if (testFr!=null) {
@@ -48,15 +43,12 @@ public class ImageDataGroup implements Iterable<ImageData> {
             }
         }
         Assert.argTst(fr, "fitsReadAry must have one non-null element.");
-        ImageHeader hdr= fr.getImageHeader();
-        _imageType= imageType;
-        _width = hdr.naxis1;
-        _height = hdr.naxis2;
+        _width = fr.getNaxis1();
+        _height = fr.getNaxis2();
 
-        rangeValues= ensureBetaValues(rangeValues, fitsReadAry);
 
-        int totWidth= hdr.naxis1;
-        int totHeight= hdr.naxis2;
+        int totWidth= _width;
+        int totHeight= _height;
 
         int xPanels= totWidth / tileSize;
         int yPanels= totHeight / tileSize;
@@ -66,16 +58,14 @@ public class ImageDataGroup implements Iterable<ImageData> {
 
         _imageDataAry= new ImageData[xPanels * yPanels];
 
-        int width;
-        int height;
         for(int i= 0; i<xPanels; i++) {
             for(int j= 0; j<yPanels; j++) {
-                width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
-                height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                _imageDataAry[(i*yPanels) +j]= new ImageData(fitsReadAry,imageType,
+                int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
+                int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
+                _imageDataAry[(i*yPanels) +j]= new ImageData(imageType,
                                                   colorTableID,rangeValues,
                                                   tileSize*i,tileSize*j,
-                                                  width, height, constructNow);
+                                                  width, height);
             }
         }
     }
@@ -90,8 +80,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
                           ImageData.ImageType imageType,
                           ImageMask[] iMasks,
                           RangeValues rangeValues,
-                          int tileSize,
-                          boolean constructNow) throws FitsException {
+                          int tileSize) {
         FitsRead fr= null;
         for(FitsRead testFr : fitsReadAry) {
             if (testFr!=null) {
@@ -100,13 +89,11 @@ public class ImageDataGroup implements Iterable<ImageData> {
             }
         }
         Assert.argTst(fr, "fitsReadAry must have one non-null element.");
-        ImageHeader hdr= fr.getImageHeader();
-        _imageType= imageType;
-        _width = hdr.naxis1;
-        _height = hdr.naxis2;
+        _width = fr.getNaxis1();
+        _height = fr.getNaxis2();
 
-        int totWidth= hdr.naxis1;
-        int totHeight= hdr.naxis2;
+        int totWidth= _width;
+        int totHeight= _height;
 
         int xPanels= totWidth / tileSize;
         int yPanels= totHeight / tileSize;
@@ -119,16 +106,14 @@ public class ImageDataGroup implements Iterable<ImageData> {
 
 
 
-        int width;
-        int height;
         for(int i= 0; i<xPanels; i++) {
             for(int j= 0; j<yPanels; j++) {
-                width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
-                height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                _imageDataAry[(i*yPanels) +j]= new ImageData(fitsReadAry,imageType,
+                int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
+                int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
+                _imageDataAry[(i*yPanels) +j]= new ImageData(imageType,
                         iMasks,rangeValues,
                         tileSize*i,tileSize*j,
-                        width, height, constructNow);
+                        width, height);
             }
         }
     }
@@ -136,24 +121,6 @@ public class ImageDataGroup implements Iterable<ImageData> {
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
-
-    private RangeValues ensureBetaValues(RangeValues rv, FitsRead fitsReadAry[]) {
-        if (rv.getStretchAlgorithm()==RangeValues.STRETCH_ASINH && Double.isNaN(rv.getBetaValue())) {
-                               //if asinH and the default beta then compute the beta
-            if (Double.isNaN(this.betaValue)) {
-                for(FitsRead testFr : fitsReadAry) {
-                    if (testFr!=null) {
-                        this.betaValue= testFr.getDefaultBeta();
-                        break;
-                    }
-                }
-            }
-            return new RangeValues(rv.getLowerWhich(), rv.getLowerValue(), rv.getUpperWhich(), rv.getUpperValue(),
-                    this.betaValue, rv.getGammaValue(), rv.getStretchAlgorithm(),
-                    rv.getZscaleContrast(), rv.getZscaleSamples(), rv.getZscaleSamplesPerLine());
-        }
-        return rv;
-    }
 
     public Iterator<ImageData> iterator() {
         return Arrays.asList(_imageDataAry).iterator();
@@ -207,7 +174,6 @@ public class ImageDataGroup implements Iterable<ImageData> {
                                  RangeValues rangeValues,
                                  boolean force) {
 
-        rangeValues= ensureBetaValues(rangeValues, fitsReadAry);
         for(ImageData id : _imageDataAry) {
             id.recomputeStretch(fitsReadAry,idx,rangeValues, force);
         }

@@ -3,6 +3,9 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
+
+import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';
+
 import './DropDownMenu.css';
 
 
@@ -73,4 +76,55 @@ DropDownMenuWrapper.propTypes= {
     y : PropTypes.number.isRequired,
     content : PropTypes.object.isRequired,
     zIndex : PropTypes.number
+};
+
+
+
+export class DropDownSubMenu extends PureComponent {
+
+    constructor(props) {
+        super(props);
+        this.state= {showSubMenu: false};
+        this.show = this.show.bind(this);
+        this.hide = this.hide.bind(this);
+
+    }
+
+    show() {
+        if (this.timer) clearTimeout(this.timer);
+        this.setState({showSubMenu:true});
+    }
+
+    hide() {
+        this.timer = setTimeout(() => this.setState({showSubMenu:false}), 250);
+    }
+
+    render() {
+        const {text, tip, visible=true, children} = this.props;
+        const {showSubMenu} = this.state;
+        if (!visible) return null;
+        return (
+            <div className='ff-MenuItem ff-MenuItem-light' title={tip}>
+                <div className='menuItemText subMenu' onMouseEnter={this.show} onMouseLeave={this.hide}>
+                    <div>{text}</div>
+                    <div style={{position: 'relative', marginLeft: 10}}>
+                        <div className='arrow-right'/>
+                        {showSubMenu &&
+                        <div style={{position: 'absolute', top:-10, left:8}} onMouseEnter={this.show}>
+                            <SingleColumnMenu>
+                                {children}
+                            </SingleColumnMenu>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
+
+DropDownSubMenu.propTypes= {
+    text: PropTypes.string.isRequired,
+    visible: PropTypes.bool,
+    tip: PropTypes.string,
 };

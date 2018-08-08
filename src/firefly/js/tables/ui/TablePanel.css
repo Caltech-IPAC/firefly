@@ -162,17 +162,16 @@
 }
 
 .TablePanelOptionsWrapper {
-    min-width: 365px;
+    min-width: 430px;
     height: 450px;
     min-height: 200px;
     overflow: hidden;
     position: relative;
-    resize:vertical;
+    resize: both;
 }
 
 .TablePanelOptions {
     position: absolute;
-    padding: 5px 7px;
     top: 5px;
     bottom: 5px;
     left: 5px;

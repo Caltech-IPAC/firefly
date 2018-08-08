@@ -1,20 +1,20 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
@@ -93,9 +93,8 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
 
                     toReturn.add(dObjReturn);
                 }
-                toReturn.shrinkToFitData();
                 File inf = createFile(request, ".tbl");
-                DataGroupWriter.write(inf, toReturn);
+                IpacTableWriter.save(inf, toReturn);
                 return inf;
             } else {
                 return null;

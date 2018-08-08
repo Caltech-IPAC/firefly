@@ -8,7 +8,7 @@ package edu.caltech.ipac.firefly.server.persistence;
  *         $Id: $
  */
 
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
@@ -16,17 +16,17 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -98,7 +98,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             if (coldefs == null) {
                 File ofile = File.createTempFile(mission+"-dd", ".tbl", ServerContext.getPermWorkDir());
                 ibe.getMetaData(ofile);
-                coldefs = IpacTableReader.readIpacTable(ofile, "coldefs");
+                coldefs = IpacTableReader.read(ofile);
                 cache.put(cacheKey, coldefs);
             }
 
@@ -106,7 +106,7 @@ public class QueryIBE extends IpacTablePartProcessor {
                 String col = String.valueOf(row.getDataElement("name"));
                 if (exists(columns, col)) {
                     String desc = String.valueOf(row.getDataElement("description"));
-                    meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, col), desc);
+                    meta.setAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, col), desc);
                 }
             }
 
@@ -124,7 +124,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             String [] colsToHide = source.getColsToHide();
 
             for (String c : colsToHide) {
-                meta.setAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, c), IpacTableUtil.VISI_HIDE);
+                meta.setAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, c), DataType.Visibility.hide.name());
             }
 
             // mission specific attributes

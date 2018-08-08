@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.data;
 
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.CacheKey;
 
 import java.io.File;
 import java.io.Serializable;
@@ -12,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FileInfo implements HasAccessInfo, Serializable {
+public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public static final String INTERNAL_NAME= "internalName";
     public static final String EXTERNAL_NAME= "externalName";
@@ -152,6 +153,9 @@ public class FileInfo implements HasAccessInfo, Serializable {
         // external name is unique
         return getInternalFilename().hashCode();
     }
+
+    @Override
+    public String getUniqueString() { return getInternalFilename(); }
 
     public void setHasAccess(boolean hasAccess) {
         putAttribute(HAS_ACCESS, hasAccess+"");

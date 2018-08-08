@@ -18,7 +18,7 @@ import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
@@ -29,7 +29,7 @@ import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
@@ -143,30 +143,6 @@ public class VisServerCommands {
             return WebPlotResultSerializer.createJson(result);
         }
     }
-
-
-    public static class GetBetaCmd extends ServCommand {
-
-        public String doCommand(SrvParam sp) throws IllegalArgumentException {
-
-            PlotState state= sp.getState();
-            double resultAry[]= VisServerOps.getBeta(state);
-
-            JSONObject obj= new JSONObject();
-            obj.put("success", true);
-
-            JSONArray data= new JSONArray();
-            for(double r : resultAry) data.add(r);
-
-            JSONArray wrapperAry= new JSONArray();
-            obj.put("data", data);
-            wrapperAry.add(obj);
-
-            return wrapperAry.toJSONString();
-        }
-    }
-
-
 
 
     public static class StretchCmd extends ServCommand {

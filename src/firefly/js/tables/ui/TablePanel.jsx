@@ -52,7 +52,7 @@ export class TablePanel extends PureComponent {
 
 
     setupInitState(props) {
-        var {tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize} = props;
+        var {tbl_id, tbl_ui_id, tableModel, ...options} = props;
 
         if (!tbl_id && tableModel) {
             if (!tableModel.tbl_id) {
@@ -61,7 +61,7 @@ export class TablePanel extends PureComponent {
             tbl_id = tableModel.tbl_id;
         }
         tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
-        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, showUnits, showFilters, pageSize);
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, tableModel, options);
         const uiState = TblUtil.getTableUiById(tbl_ui_id);
         return Object.assign({}, this.props, uiState);
     }
@@ -120,7 +120,7 @@ export class TablePanel extends PureComponent {
         const {tableConnector} = this;
         const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
             showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton,
-            totalRows, showLoading, columns, showUnits, showFilters, textView,
+            totalRows, showLoading, columns, showUnits, showTypes, showFilters, textView,
             tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
             filterInfo, filterCount, sortInfo, data, backgroundable} = this.state;
         var {leftButtons, rightButtons} =  this.state;
@@ -192,7 +192,7 @@ export class TablePanel extends PureComponent {
                         >
                             <BasicTableView
                                 callbacks={tableConnector}
-                                { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showFilters,
+                                { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, showTypes, showFilters,
                                     selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
                                     tableConnector, renderers, tbl_ui_id} }
                             />
@@ -202,7 +202,7 @@ export class TablePanel extends PureComponent {
                                  title={TT_OPTIONS}
                                  onClick={showOptionsDialog}/>
                             }
-
+    
                         </div>
                     </div>
                 </div>
@@ -245,6 +245,7 @@ TablePanel.propTypes = {
     removable: PropTypes.bool,
     border: PropTypes.bool,
     showUnits: PropTypes.bool,
+    showTypes: PropTypes.bool,
     showFilters: PropTypes.bool,
     showToolbar: PropTypes.bool,
     showTitle: PropTypes.bool,

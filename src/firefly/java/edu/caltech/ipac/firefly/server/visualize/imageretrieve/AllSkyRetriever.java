@@ -13,7 +13,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 
 import java.net.URL;
 import java.util.Collections;

@@ -14,8 +14,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.HistogramOps;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -64,7 +64,7 @@ public class ImagePlotCreator {
              ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
              frGroup.setFitsRead(readInfo.getBand(),readInfo.getFitsRead());
              ImagePlot plot= createImagePlot(stateAry[i], frGroup, readInfo.getBand(),readInfo.getDataDesc(),zoomChoice, readAry.length>1);
-             WebFitsData wfData= makeWebFitsData(plot,frGroup, readInfo.getBand(),readInfo.getOriginalFile());
+             WebFitsData wfData= makeWebFitsData(frGroup, readInfo.getBand(),readInfo.getOriginalFile());
              Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<>();
              wfDataMap.put(Band.NO_BAND,wfData);
              Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<>(1);
@@ -119,7 +119,7 @@ public class ImagePlotCreator {
                 if (mfw!=null)                              fileWriterMap.put(band,mfw);
                 else if (readInfo.getModFileWriter()!=null) fileWriterMap.put(band,readInfo.getModFileWriter());
             }
-            WebFitsData wfData= makeWebFitsData(plot, frGroup, readInfo.getBand(), readInfo.getOriginalFile());
+            WebFitsData wfData= makeWebFitsData(frGroup, readInfo.getBand(), readInfo.getOriginalFile());
             wfDataMap.put(band, wfData);
         }
         String desc= make3ColorDataDesc(readInfoMap);
@@ -207,7 +207,7 @@ public class ImagePlotCreator {
             FitsCacher.addFitsReadToCache(retval.getTargetFile(), new FitsRead[]{tmpFR});
         }
 
-        stretchBand(band,state, plot,frGroup);;
+        stretchBand(band,state, plot,frGroup);
         return retval;
     }
 
@@ -315,19 +315,20 @@ public class ImagePlotCreator {
 
 
     /**
-     * 5/13/16 LZ modified to add the beta in the WebFitsData calling parameter
-     * @param plot the plot
      * @param frGroup group
      * @param band which band
      * @param f file
      * @return the data to pass to the client
      */
-    public static WebFitsData makeWebFitsData(ImagePlot plot, ActiveFitsReadGroup frGroup, Band band, File f) {
+    private static WebFitsData makeWebFitsData(ActiveFitsReadGroup frGroup, Band band, File f) {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;
-        HistogramOps ops= plot.getHistogramOps(band,frGroup);
-        Histogram hist= ops.getDataHistogram();
-        return new WebFitsData( ops.getDataMin(hist), ops.getDataMax(hist),
-                                fileLength, plot.getFluxUnits(band,frGroup));
+        FitsRead fr=  frGroup.getFitsReadAry()[band.getIdx()];
+        if (fr==null) return null;
+        Histogram hist= fr.getHistogram();
+        double dataMin= hist.getDNMin() * fr.getBscale() + fr.getBzero();
+        double dataMmax= hist.getDNMax() * fr.getBscale() + fr.getBzero();
+        return new WebFitsData( dataMin, dataMmax, fileLength, fr.getFluxUnits());
     }
+
 }
 

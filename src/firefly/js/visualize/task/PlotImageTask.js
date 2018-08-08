@@ -4,8 +4,7 @@
 
 import {flatten, isArray, uniqueId, uniqBy, get, isEmpty} from 'lodash';
 import {WebPlotRequest, GridOnStatus} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot, makeUniqueRequestKey,
-    IMAGE_PLOT_KEY, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, makeUniqueRequestKey, IMAGE_PLOT_KEY} from '../ImagePlotCntlr.js';
 import {dlRoot, dispatchCreateDrawLayer, dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {WebPlot,PlotAttribute, RDConst, isImage} from '../WebPlot.js';
@@ -27,6 +26,7 @@ import WebGrid from '../../drawingLayers/WebGrid.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import {dispatchRecenter} from '../ImagePlotCntlr';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -292,7 +292,10 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
 
         pvNewPlotInfoAry
             .forEach((info) => info.plotAry
-                .forEach( (p)  => addDrawLayers(p.plotState.getWebPlotRequest(), p) ));
+                .forEach( (p)  => {
+                    addDrawLayers(p.plotState.getWebPlotRequest(), p);
+                    if (p.attributes[PlotAttribute.INIT_CENTER]) dispatchRecenter({plotId:p.plotId});
+                } ));
 
 
 

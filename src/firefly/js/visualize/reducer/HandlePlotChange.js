@@ -580,7 +580,7 @@ function recenterPv(centerPt,  centerOnImage) {
                 centerImagePt = makeWorldPt(centerPt.x, centerPt.y);
             }
         } else {
-            const wp = plot.attributes[PlotAttribute.FIXED_TARGET];
+            const wp = plot.attributes[PlotAttribute.INIT_CENTER] || plot.attributes[PlotAttribute.FIXED_TARGET] ;
             if (wp && !centerOnImage) {
                 centerImagePt = CCUtil.getImageCoords(plot, wp);
             }

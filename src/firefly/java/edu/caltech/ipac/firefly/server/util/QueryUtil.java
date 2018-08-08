@@ -3,7 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.net.NedParams;
 import edu.caltech.ipac.astro.net.SimbadParams;
 import edu.caltech.ipac.astro.net.TargetNetwork;
@@ -20,10 +21,14 @@ import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableDef;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 import org.apache.commons.httpclient.URIException;
@@ -255,8 +260,8 @@ public class QueryUtil {
 
     public static void doSort(DataGroup dg, SortInfo sortInfo) {
         if (sortInfo != null) {
-            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG) == null ? "" : dg.getAttribute(SortInfo.SORT_INFO_TAG).getValue();
-            if (!infoStr.equals(sortInfo.toString())) {
+            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG);
+            if (!StringUtils.areEqual(infoStr, sortInfo.toString())) {
                 DataGroupQuery.SortDir sortDir = DataGroupQuery.SortDir.valueOf(sortInfo.getDirection().name());
                 DataGroupQuery.sort(dg, sortDir, true, sortInfo.getSortColumnAry());
                 dg.addAttribute(SortInfo.SORT_INFO_TAG, sortInfo.toString());
@@ -289,18 +294,6 @@ public class QueryUtil {
             filterList.add(filter);
         }
         return filterList.toArray(new CollectionUtil.Filter[filterList.size()]);
-    }
-
-
-    public static DataGroupPart convertToDataGroupPart(DataGroup dg, int startIdx, int pageSize) {
-        DataGroup page = dg.subset(startIdx, startIdx+pageSize);
-        page.setRowIdxOffset(startIdx);
-        TableDef tableDef = new TableDef();
-        tableDef.addAttributes(dg.getKeywords().toArray(new DataGroup.Attribute[0]));
-        tableDef.setStatus(DataGroupPart.State.COMPLETED);
-        tableDef.setCols(Arrays.asList(page.getDataDefinitions()));
-
-        return new DataGroupPart(tableDef, dg, startIdx, page.size());
     }
 
     /**
@@ -426,7 +419,7 @@ public class QueryUtil {
         final String DEC= "dec";
         String ra = null, dec = null, name = null;
         try {
-            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            DataGroup dg= TableUtil.readAnyFormat(ufile);
             if (dg != null) {
                 for (DataType dt: dg.getDataDefinitions()) {
                     if (dt.getKeyName().toLowerCase().equals("object") ||
@@ -491,7 +484,7 @@ public class QueryUtil {
         try {
             List<DataType> newCols = new ArrayList<DataType>();
             newCols.add(new DataType(CatalogRequest.UPDLOAD_ROW_ID, Integer.class));
-            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            DataGroup dg= TableUtil.readAnyFormat(ufile);
             if (dg == null) {
                 throw createEndUserException("Unable to read file:" + ufile.getName());
             }
@@ -554,7 +547,6 @@ public class QueryUtil {
                 }
                 newdg.add(nrow);
             }
-            newdg.shrinkToFitData(true);
             return newdg;
         } catch (Exception e) {
             String msg = e.getMessage();
@@ -608,10 +600,10 @@ public class QueryUtil {
         ArrayList<DataGroup.Attribute> colMeta = new ArrayList<>();
 
 
-        columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0);
+        columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).newCopyOf();
         colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getxColumnName()));
 
-        columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1);
+        columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).newCopyOf();
         colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getyColumnName()));
 
 
@@ -624,7 +616,7 @@ public class QueryUtil {
         Class yColClass = columns[1].getDataType();
 
         DataGroup retval = new DataGroup("decimated results", columns);
-        retval.setAttributes(colMeta);
+        retval.setKeywords(colMeta);
 
         // determine min/max values of x and y
         boolean checkDeciLimits = false;
@@ -691,7 +683,7 @@ public class QueryUtil {
 
                 List<DataGroup.Attribute> attributes = retval.getKeywords();
                 retval = new DataGroup("decimated results", new DataType[]{columns[0],columns[1],columns[2]});
-                retval.setAttributes(attributes);
+                retval.setKeywords(attributes);
 
                 for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
                     DataObject row = dg.get(rIdx);
@@ -792,8 +784,6 @@ public class QueryUtil {
                 Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
             }
         }
-
-        retval.shrinkToFitData();
 
         return retval;
     }

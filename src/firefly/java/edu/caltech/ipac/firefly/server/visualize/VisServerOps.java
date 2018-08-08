@@ -23,9 +23,9 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.RegionParser;
@@ -44,7 +44,7 @@ import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CropFile;
-import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.HistogramOps;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -225,24 +225,11 @@ public class VisServerOps {
         return true;
     }
 
-    public static double[] getBeta(PlotState state) {
-        double[] resultsAry= new double[] {Double.NaN,Double.NaN,Double.NaN};
-        try {
-            ActiveCallCtx ctx = CtxControl.prepare(state);
-            FitsRead frAry[]= ctx.getFitsReadGroup().getFitsReadAry();
-            for(int i= 0; (i<frAry.length);i++) {
-                if (frAry[i]!=null) resultsAry[i]= frAry[i].getDefaultBeta();
-            }
-            return resultsAry;
-
-        } catch (Exception e) {
-            return resultsAry;
-        }
-    }
-
+    static final boolean USE_DIRECT_FLUX_IF_POSSIBLE = true;
 
     private static boolean isDirectFluxAccessAvailable(PlotState state) {
         //todo: make this test more sophisticated
+        if (!USE_DIRECT_FLUX_IF_POSSIBLE) return false;
 
         for(Band b : state.getBands()) {
             if (state.getWorkingFitsFileStr(b).endsWith("gz")) {
@@ -502,7 +489,7 @@ public class VisServerOps {
                             (int) c2.getX(), (int) c2.getY());
                 }
 
-                FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile);
+                FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile).getFitReadAry();
 
 
                 if (saveCropFits) {
@@ -562,10 +549,10 @@ public class VisServerOps {
         DataType keyword = new DataType("Keyword", String.class);
         DataType value = new DataType("Value", String.class);
         DataType num = new DataType("#", Integer.class);
-        comment.getFormatInfo().setWidth(30);
-        value.getFormatInfo().setWidth(10);
-        keyword.getFormatInfo().setWidth(10);
-        num.getFormatInfo().setWidth(3);
+        comment.setWidth(30);
+        value.setWidth(10);
+        keyword.setWidth(10);
+        num.setWidth(3);
         DataType[] types = new DataType[]{num, keyword, value, comment};
         DataGroup dg = new DataGroup("Headers - " + name, types);
 

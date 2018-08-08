@@ -7,7 +7,7 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +32,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
-    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
             "  cname    varchar(1023)" +
@@ -42,6 +41,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", units    varchar(255)" +
             ", null_str varchar(255)" +
             ", format   varchar(255)" +
+            ", fmtDisp  varchar(255)" +
             ", width    int" +
             ", visibility varchar(255)" +
             ", sortable boolean" +

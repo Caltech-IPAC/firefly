@@ -3,17 +3,15 @@
  */
 package edu.caltech.ipac.firefly.server.util.tables;
 
-import edu.caltech.ipac.astro.FITSTableReader;
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.io.FITSTableReader;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.TestCategory;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 
 import nom.tam.fits.FitsException;
 import org.junit.Assert;
@@ -42,27 +40,23 @@ public class DataGroupReadTest {
 
     @Test
     public void ipacTable() throws IOException {
-        DataGroup data = DataGroupReader.read(ipacTable);
+        DataGroup data = IpacTableReader.read(ipacTable);
         Assert.assertNotNull(data);
 
         // test col header
         DataType ra = data.getDataDefintion("ra");
         Assert.assertEquals("column name", "ra", ra.getKeyName());
-        Assert.assertEquals("column unit", "deg", ra.getDataUnit());
+        Assert.assertEquals("column unit", "deg", ra.getUnits());
         Assert.assertEquals("column desc", "null", ra.getNullString());
         Assert.assertEquals("column type", "double", ra.getTypeDesc());
 
-        // test col attributes
-        String width = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.WIDTH_TAG, "designation")).getValue();
-        String prefWidth = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.PREF_WIDTH_TAG, "designation")).getValue();
-        String sortable = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.SORTABLE_TAG, "designation")).getValue();
-        String filterable = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.FILTERABLE_TAG, "designation")).getValue();
-        String visibility = data.getAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, "designation")).getValue();
-        Assert.assertEquals("column width", "100", width);
-        Assert.assertEquals("column prefWidth", "10", prefWidth);
-        Assert.assertEquals("column sortable", "false", sortable);
-        Assert.assertEquals("column filterable", "true", filterable);
-        Assert.assertEquals("column visibility", "hidden", visibility);
+        // test col info
+        DataType desig = data.getDataDefintion("designation");
+        Assert.assertEquals("column width", 100, desig.getWidth());
+        Assert.assertEquals("column prefWidth", 10, desig.getPrefWidth());
+        Assert.assertEquals("column sortable", false, desig.isSortable());
+        Assert.assertEquals("column filterable", true, desig.isFilterable());
+        Assert.assertEquals("column visibility", DataType.Visibility.hidden, desig.getVisibility());
 
         // random value test
         Assert.assertEquals("cell (ra, 4)", 10.744471, data.get(4).getDataElement("ra"));           // in the middle
@@ -72,7 +66,7 @@ public class DataGroupReadTest {
 
     @Test
     public void voTable() throws IOException {
-        DataGroup data = VoTableUtil.voToDataGroups(voTable.getPath())[0];
+        DataGroup data = VoTableReader.voToDataGroups(voTable.getPath())[0];
         Assert.assertNotNull(data);
         Assert.assertEquals("Number of rows", 40, data.size());
         Assert.assertEquals("Number of columns", 20, data.getDataDefinitions().length);
@@ -96,15 +90,39 @@ public class DataGroupReadTest {
         Assert.assertEquals("cell (base_GaussianCentroid_x, 764)", 850.043863, getDouble(data.get(764).getDataElement("base_GaussianCentroid_x")), 0.000001);       // last row
     }
 
+    @Test
+    public void cloneWithoutData() throws IOException, FitsException {
+        DataGroup data = IpacTableReader.read(ipacTable);
+        DataGroup newClone = data.cloneWithoutData();
+        Assert.assertEquals("Number of rows", 0, newClone.size());
+
+        // test col header
+        DataType ra = newClone.getDataDefintion("ra");
+        Assert.assertEquals("column name", "ra", ra.getKeyName());
+        Assert.assertEquals("column unit", "deg", ra.getUnits());
+        Assert.assertEquals("column desc", "null", ra.getNullString());
+        Assert.assertEquals("column type", "double", ra.getTypeDesc());
+
+        // test col info
+        DataType desig = newClone.getDataDefintion("designation");
+        Assert.assertEquals("column width", 100, desig.getWidth());
+        Assert.assertEquals("column prefWidth", 10, desig.getPrefWidth());
+        Assert.assertEquals("column sortable", false, desig.isSortable());
+        Assert.assertEquals("column filterable", true, desig.isFilterable());
+        Assert.assertEquals("column visibility", DataType.Visibility.hidden, desig.getVisibility());
+
+    }
+
+
     @Category({TestCategory.Perf.class})
     @Test
-    public void perfTestMidSize() throws IOException, IpacTableException {
+    public void perfTestMidSize() throws IOException {
         tableIoTest(midIpacTable);
     }
 
     @Category({TestCategory.Perf.class})
     @Test
-    public void perfTestLargeSize() throws IOException, IpacTableException {
+    public void perfTestLargeSize() throws IOException {
         tableIoTest(largeIpacTable);
     }
 
@@ -230,19 +248,21 @@ public class DataGroupReadTest {
 
     }
 
-    private static void tableIoTest(File inFile) throws IOException, IpacTableException {
+    private static void tableIoTest(File inFile) throws IOException {
         Runtime.getRuntime().gc();
         long beginMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         long start = System.currentTimeMillis();
 
-        DataGroup data = IpacTableReader.readIpacTable(inFile, "dummy");
+        DataGroup data = IpacTableReader.read(inFile);
         long elapsed = System.currentTimeMillis() - start;
         long usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
         Runtime.getRuntime().gc();
         long usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - beginMem;
         System.out.printf("READ(%,d):  Memory temp=%.2fMB  final:%.2fMB  elapsed:%.2fsecs %n", data.size(), usedB4Gc/1000/1000.0, usedAfGc/1000/1000.0, elapsed/1000.0);
 
-        IpacTableWriter.save(new File("./tmp.tbl"), data);
+        File outf = new File("./tmp.tbl");
+        outf.deleteOnExit();
+        IpacTableWriter.save(outf, data);
         usedB4Gc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - usedAfGc;
         Runtime.getRuntime().gc();
         usedAfGc = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - usedAfGc;

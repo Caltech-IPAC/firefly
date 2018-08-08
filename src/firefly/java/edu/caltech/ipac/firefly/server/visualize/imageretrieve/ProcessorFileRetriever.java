@@ -16,7 +16,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.ResponseMessage;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 
 /**
  * @author tatianag

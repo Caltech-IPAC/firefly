@@ -3,17 +3,17 @@
  */
 package edu.caltech.ipac.firefly.server.query.ibe;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeFileUploader;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.IpacTableUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -64,7 +64,7 @@ public class IbeFileUploaderImpl implements IbeFileUploader {
                 ibe.multipleQueries(results, infile, param);
 
                 // retrieve all data types with cutout options
-                DataGroup data = IpacTableReader.readIpacTable(results, "results");
+                DataGroup data = IpacTableReader.read(results);
                 for (WiseIbeDataSource.DATA_TYPE dtype : WiseIbeDataSource.DATA_TYPE.values()) {
                     for (int idx = 0; idx < data.size(); idx++) {
                         DataObject row = data.get(idx);
@@ -80,8 +80,6 @@ public class IbeFileUploaderImpl implements IbeFileUploader {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (IpacTableException e) {
                 e.printStackTrace();
             }
         }

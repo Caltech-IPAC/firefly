@@ -1,21 +1,13 @@
 package edu.caltech.ipac.firefly.util;
 
 
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.visualize.plot.*;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.Fits;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -32,14 +24,6 @@ public class FileLoader {
     public static final String TEST_DATA_ROOT = "firefly_test_data/";
 
     /**
-     * @return the path to firefly_test_data.
-     */
-    public static String getTestDataRoot() {
-        String rootPath = Paths.get("").toAbsolutePath().getParent().toUri().getPath();
-        return rootPath + TEST_DATA_ROOT;
-    }
-
-    /**
      * This method returns the data path for where the test class is located and where is the data is stored.
      * @param cls
      * @return
@@ -47,12 +31,15 @@ public class FileLoader {
      */
     public static String getDataPath(Class cls) {
 
-        String clsDataPath = cls.getCanonicalName().replaceAll("\\.", "/")
+
+        String rootPath =Paths.get("").toAbsolutePath().getParent().toUri().getPath();//"/hydra/cm/"; when test it in IntelliJ
+        String testDataPath = TEST_DATA_ROOT+cls.getCanonicalName().replaceAll("\\.", "/")
                 .replace(cls.getSimpleName(), "");
 
-        String dataPath = getTestDataRoot() + clsDataPath;
+        String dataPath = rootPath + testDataPath;
         return dataPath;
     }
+
 
     public static FitsRead loadFitsRead(Class cls, String fitsFile)  {
 
@@ -60,7 +47,7 @@ public class FileLoader {
             String inFitsName = getDataPath(cls) + fitsFile;
 
             Fits fits = new Fits(inFitsName);
-            return FitsRead.createFitsReadArray(fits)[0];
+            return FitsReadFactory.createFitsReadArray(fits)[0];
         }
         catch (Exception e){
             e.printStackTrace();
@@ -75,7 +62,7 @@ public class FileLoader {
             String inFitsName = getDataPath(cls) + fitsFile;
 
             Fits fits = new Fits(inFitsName);
-            return FitsRead.createFitsReadArray(fits);
+            return FitsReadFactory.createFitsReadArray(fits);
         }
         catch (Exception e){
             e.printStackTrace();
@@ -98,12 +85,17 @@ public class FileLoader {
         }
 
     }
+
     public static DataGroup loadIpacTable(Class cls, String tblFile) {
+
+        if (!tblFile.endsWith(".tbl")){
+            throw new IllegalArgumentException("Wrong file type, the file has to be a .tbl file");
+        }
 
         try {
             File inFile = new File(getDataPath(cls) + tblFile);
 
-            return IpacTableReader.readIpacTable(inFile, null, "inputTable");
+            return IpacTableReader.read(inFile);
         }
         catch (Exception e){
             e.printStackTrace();

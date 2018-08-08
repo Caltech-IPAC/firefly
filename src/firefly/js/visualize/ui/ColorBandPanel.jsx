@@ -5,12 +5,13 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import numeral from 'numeral';
+import {debounce, get} from 'lodash';
 
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
-import {callGetColorHistogram, callGetBeta} from '../../rpc/PlotServicesJson.js';
-import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {RangeSlider} from '../../ui/RangeSlider.jsx';
+import {callGetColorHistogram} from '../../rpc/PlotServicesJson.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {formatFlux} from '../VisUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
@@ -20,7 +21,10 @@ import {
     STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 
-
+import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
+import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
+import {getActivePlotView} from '../PlotViewUtil.js';
+import {makeSerializedRv} from './ColorDialog.jsx';
 
 
 const LABEL_WIDTH= 105;
@@ -54,26 +58,23 @@ export class ColorBandPanel extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state={exit:true, retrievedBetaValue:NaN};
+        this.state={exit:true};
         this.handleReadout= this.handleReadout.bind(this);
         this.mouseMove= this.mouseMove.bind(this);
         this.mouseLeave= this.mouseLeave.bind(this);
+        this.bandReplot= debounce(getReplotFunc(props.groupKey, props.band), 600);
     }
 
 
     componentWillReceiveProps(nextProps) {
-        const {plot:nPlot, fields:nFields}= nextProps;
-        let {retrievedBetaValue}= this.state;
+        const {plot:nPlot}= nextProps;
         const {plot}= this.props;
         if (nPlot.plotId!==plot.plotId || nPlot.plotState!==plot.plotState) {
             this.initImages(nPlot,nextProps.band);
-            retrievedBetaValue= NaN;
-            this.setState(() => ({retrievedBetaValue}));
         }
-        if (isNaN(retrievedBetaValue) && nFields.algorithm.value===STRETCH_ASINH) {
-            this.retrieveBeta(nPlot,nextProps.band);
+        if (nextProps.groupKey !== this.props.groupKey) {
+            this.bandReplot= debounce(getReplotFunc(this.props.groupKey, this.props.band), 600);
         }
-        
     }
 
     componentWillMount() {
@@ -81,21 +82,8 @@ export class ColorBandPanel extends PureComponent {
         this.initImages(plot,band);
     }
 
-
-    retrieveBeta(plot,band) {
-        if (this.state.doMask) return;
-        this.setState(() => ({doMask:true}));
-        callGetBeta(plot.plotState)
-            .then( (betaAry) => {
-                const beta= !isNaN(betaAry[band.value]) ? betaAry[band.value].toFixed(2) : betaAry[band.value];
-                this.setState(() => ({doMask:false, retrievedBetaValue:beta}));
-                if (isNaN(this.props.fields.beta.value)) {
-                    dispatchValueChange({fieldKey:'beta', groupKey:this.props.groupKey, value:beta,valid:true } );
-                }
-            });
-    }
-
     initImages(plot,band) {
+
         callGetColorHistogram(plot.plotState,band,HIST_WIDTH,HIST_HEIGHT)
             .then(  (result) => {
                 const dataHistUrl= encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload',
@@ -112,7 +100,7 @@ export class ColorBandPanel extends PureComponent {
     mouseMove(ev) {
         const {offsetX:x}= ev;
         const {dataHistogram,dataBinMeanArray}= this.state;
-        var idx= Math.trunc((x *(dataHistogram.length/HIST_WIDTH)));
+        const idx= Math.trunc((x *(dataHistogram.length/HIST_WIDTH)));
         const histValue= dataHistogram[idx];
         const histMean= dataBinMeanArray[idx];
         this.setState({histIdx:idx,histValue,histMean,exit:false});
@@ -129,19 +117,17 @@ export class ColorBandPanel extends PureComponent {
     }
 
     render() {
-        var {fields,plot,band}=this.props;
-        const {dataHistUrl,cbarUrl, histIdx, histValue,histMean,exit, doMask, retrievedBetaValue}=  this.state;
+        const {fields,plot,band}=this.props;
+        const {dataHistUrl,cbarUrl, histIdx, histValue,histMean,exit, doMask}=  this.state;
 
 
 
-        var panel;
-        var showBeta=false;
+        let panel;
         if (fields) {
             const {algorithm, zscale}=fields;
-            var a= Number.parseInt(algorithm.value);
+            const a= Number.parseInt(algorithm.value);
             if (a===STRETCH_ASINH) {
-                panel= renderAsinH(fields);
-                showBeta=true;
+                panel= renderAsinH(fields, this.bandReplot);
             }
             else if (a===STRETCH_POWERLAW_GAMMA) {
                 panel= renderGamma(fields);
@@ -175,10 +161,11 @@ export class ColorBandPanel extends PureComponent {
                     </div>
 
                     {panel}
-                    <div>
-                        {suggestedValuesPanel( plot,band, showBeta && !isNaN(retrievedBetaValue), retrievedBetaValue)}
-                    </div>
+
                     <div style={{position:'absolute', bottom:5, left:5, right:5}}>
+                        <div>
+                            {suggestedValuesPanel( plot,band )}
+                        </div>
                         <div style={{display:'table', margin:'auto auto', paddingBottom:5}}>
                             <CheckboxGroupInputField
                                 options={ [ {label: 'Use ZScale for bounds', value: 'zscale'} ] }
@@ -205,41 +192,27 @@ ColorBandPanel.propTypes= {
 const readTopBaseStyle= { fontSize: '11px', paddingBottom:5, height:16 };
 const dataStyle= { color: 'red' };
 
-function suggestedValuesPanel( plot,band, showBeta, betaValue) {
+function suggestedValuesPanel( plot,band ) {
 
     const precision6Digit = '0.000000';
-   // const precision2Digit = '0.00';
-    const style= { fontSize: '11px', paddingBottom:5, height:16, marginTop:50,  whiteSpace: 'pre'};
+    const style= { fontSize: '11px', paddingBottom:5, height:16, whiteSpace: 'pre'};
 
     const  fitsData= plot.webFitsData[band.value];
     const {dataMin, dataMax} = fitsData;
-    const dataMaxStr = `DataMax: ${numeral(dataMax).format(precision6Digit)} `;
-    const dataMinStr = `DataMin: ${numeral(dataMin).format(precision6Digit)}`;
-    const betaStr =  `Beta: ${numeral(betaValue).format(precision6Digit)}`;
+    const dataMaxStr = `Data Max: ${numeral(dataMax).format(precision6Digit)} `;
+    const dataMinStr = `Data Min: ${numeral(dataMin).format(precision6Digit)}`;
 
-    if (showBeta) {
-       return (
-
-           <div style={style}>
-                <span style={{float:'left', paddingRight:2, opacity:.5 , marginLeft:30}}>
-                    {dataMinStr}   {dataMaxStr}   {betaStr}
-                </span>
-           </div>
-       );
-    }
-    else {
-      return (
+    return (
         <div style={style}>
                 <span style={{float:'left', paddingRight:2, opacity:.5, marginLeft:40 }}>
                   {dataMinStr}            {dataMaxStr}
                 </span>
         </div>
-       );
-    }
+    );
 }
 
 function ReadoutPanel({exit, plot,band,idx,histValue,histMean,width}) {
-    var topStyle= Object.assign({width},readTopBaseStyle);
+    const topStyle= Object.assign({width},readTopBaseStyle);
     if (exit) {
         return (
             <div style={topStyle}>
@@ -359,8 +332,8 @@ function getStretchTypeField() {
 }
 
 function renderGamma(fields) {
-    var {zscale}= fields;
-    var range= (zscale.value==='zscale') ? renderZscale() : getUpperAndLowerFields();
+    const {zscale}= fields;
+    const range= (zscale.value==='zscale') ? renderZscale() : getUpperAndLowerFields();
     return (
         <div>
             {range}
@@ -370,16 +343,50 @@ function renderGamma(fields) {
     );
 }
 
-function renderAsinH(fields) {
-    var {zscale}= fields;
-    var range= (zscale.value==='zscale') ? renderZscale() : getUpperAndLowerFields();
+const asinhSliderMarks = {
+ 0: '0', 5: '5', 10: '10', 15: '15', 20: '20'
+};
+
+const ASINH_Q_MAX_SLIDE_VAL = 20;
+
+function renderAsinH(fields, bandReplot) {
+    const {zscale}= fields;
+    const range= (zscale.value==='zscale') ? renderZscale() : getUpperAndLowerFields();
+    const qvalue = get(fields, ['asinhQ', 'value'], 10.0);
+    const label = `Q: ${Number.parseFloat(qvalue).toFixed(1)} `;
+
     return (
-        <div>
+        <div style={{paddingBottom: 60}}>
             {range}
-            <div style={{paddingTop:10}}/>
-            <ValidationField  wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='beta' />
+            <div style={{paddingTop: 5, paddingRight: 15, opacity: .4, textAlign: 'center'}}>
+                Q=0 for linear stretch;<br/> increase Q to make brighter features visible
+            </div>
+            <RangeSlider fieldKey='asinhQ'
+                         min={0}
+                         minStop={0}
+                         max={ASINH_Q_MAX_SLIDE_VAL}
+                         maxStop={ASINH_Q_MAX_SLIDE_VAL}
+                         marks={asinhSliderMarks}
+                         step={0.1}
+                         slideValue={qvalue}
+                         label={label}
+                         labelWidth={60}
+                         wrapperStyle={{marginTop: 10, marginBottom: 20, marginRight: 15}}
+                         decimalDig={1}
+                         onValueChange={bandReplot}
+            />
         </div>
     );
 }
 
 
+function getReplotFunc(groupKey, band) {
+
+    return (val) => {
+        const request = getFieldGroupResults(groupKey);
+        const serRv = makeSerializedRv(request);
+        const stretchData = [{band: band.key, rv: serRv, bandVisible: true}];
+        const pv = getActivePlotView(visRoot());
+        if (pv) dispatchStretchChange({plotId: pv.plotId, stretchData});
+    };
+}

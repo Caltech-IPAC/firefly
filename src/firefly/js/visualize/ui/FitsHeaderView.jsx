@@ -16,7 +16,7 @@ import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {getPixScaleArcSec} from '../WebPlot.js';
 import {Band} from '../Band.js';
-const popupIdRoot = 'fitsHeader';
+const popupIdRoot = 'directFileAccessData';
 import numeral from 'numeral';
 
 const popupPanelResizableStyle = {

@@ -100,6 +100,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
     public static final String URL_CHECK_FOR_NEWER = "urlCheckForNewer"; // todo: convert, doc, add to allKeys
+    public static final String INITIAL_CENTER_POSITION= "InitialCenterPosition";
 
     public static final String MASK_BITS= "MaskBits";
     public static final String PLOT_AS_MASK= "PlotAsMask";
@@ -155,7 +156,8 @@ public class WebPlotRequest extends ServerRequest {
                                               GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
                                               POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                               TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID,
-                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID, ROTATE_FROM_NORTH
+                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID, ROTATE_FROM_NORTH,
+                                              INITIAL_CENTER_POSITION
 
     };
 
@@ -169,7 +171,8 @@ public class WebPlotRequest extends ServerRequest {
                                                      POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                                      TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT,
                                                      DRAWING_SUB_GROUP_ID, GRID_ID,
-                                                     DOWNLOAD_FILENAME_ROOT, PLOT_ID
+                                                     DOWNLOAD_FILENAME_ROOT, PLOT_ID, INITIAL_CENTER_POSITION
+
     };
 
 

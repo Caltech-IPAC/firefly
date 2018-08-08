@@ -110,6 +110,7 @@ public class ProjectionTest {
 
     }
     @Test
+    @Ignore
     public void testAllProjections() throws IOException, ParseException, FitsException, ProjectionException, IllegalAccessException, URISyntaxException, ClassNotFoundException {
 
 
@@ -121,7 +122,7 @@ public class ProjectionTest {
 
 
          for (int i=0; i<jsonHeaderFileNames.length; i++){
-
+             System.out.println(i+ " , "+ jsonHeaderFileNames[i]);
             Object obj = parser.parse(new FileReader(jsonHeaderFileNames[i]));
 
             JSONObject jsonObject = (JSONObject) obj;

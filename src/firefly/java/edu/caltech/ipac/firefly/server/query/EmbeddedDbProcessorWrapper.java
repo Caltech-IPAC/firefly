@@ -3,19 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +46,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
             TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
             StopWatch.getInstance().start("getBaseData: " + treq.getRequestId());
             File dataFile = processor.loadDataFile(nreq);       // this should fetch the data directly without any caching, sorting, filtering, etc.
-            DataGroup dg = IpacTableReader.readIpacTable(dataFile, "temp");
+            DataGroup dg = IpacTableReader.read(dataFile);
             StopWatch.getInstance().stop("getBaseData: " + treq.getRequestId()).printLog("getBaseData: " + treq.getRequestId());
 
             setupMeta(dg, treq);
@@ -53,7 +55,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
             return finfo;
         } catch (DataAccessException ex) {
             throw ex;
-        } catch (IpacTableException | IOException ex) {
+        } catch (IOException ex) {
             throw new DataAccessException(ex);
         }
     }
@@ -76,6 +78,7 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
                 dg.addAttribute(key, meta.getAttribute(key));
             }
         }
+        IpacTableUtil.consumeColumnInfo(dg);
     }
 
 }

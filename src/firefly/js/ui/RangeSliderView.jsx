@@ -13,7 +13,7 @@ export class RangeSliderView extends PureComponent {
 
         this.state = {value: parseFloat(props.slideValue)};
         this.onSliderChange = this.onSliderChange.bind(this);
-        var d = get(props, 'decimalDig', 3);
+        const d = get(props, 'decimalDig', 3);
         this.decimalDig = (d < 0) ? 0 : (d > 20) ? 20 : d;
     }
 
@@ -23,7 +23,7 @@ export class RangeSliderView extends PureComponent {
 
 
     onSliderChange(v) {
-        var {handleChange, minStop, maxStop} = this.props;
+        const {handleChange, minStop, maxStop} = this.props;
 
         if (minStop && v < minStop ) {
             v = minStop;
@@ -41,10 +41,10 @@ export class RangeSliderView extends PureComponent {
 
 
     render() {
-        var {wrapperStyle={}, sliderStyle={}, className, marks, vertical,
+        const {wrapperStyle={}, sliderStyle={}, className, marks, vertical,
              defaultValue, handle, label, labelWidth, tooltip, minStop, maxStop, min, max, step} = this.props;
-        var {value} = this.state;    //displayValue in string, min, max, step: number
-        var val = parseFloat(value);
+        const {value} = this.state;    //displayValue in string, min, max, step: number
+        let val = parseFloat(value);
 
         if (minStop && val < minStop ) {
             val = minStop;
@@ -55,7 +55,7 @@ export class RangeSliderView extends PureComponent {
 
         return (
             <div style={wrapperStyle}>
-                <div style={sliderStyle} display='flex'>
+                <div style={Object.assign({display: 'flex'}, sliderStyle)}>
                     <div title={tooltip} style={{width: labelWidth, marginBottom: 5}}>{label}</div>
                     <Slider min={min}
                             max={max}
@@ -85,8 +85,8 @@ RangeSliderView.propTypes = {
     step: PropTypes.number,
     vertical: PropTypes.bool,
     defaultValue: PropTypes.number,
-    slideValue: PropTypes.string.isRequired,
-    value: PropTypes.string,
+    slideValue: PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired,
+    value: PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
     handle: PropTypes.element,
     wrapperStyle: PropTypes.object,
     sliderStyle: PropTypes.object,

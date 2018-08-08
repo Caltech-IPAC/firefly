@@ -12,8 +12,9 @@ import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.IOException;
@@ -143,12 +144,12 @@ public class IBEUtils {
         }
 
         for (String sortCol : sortByCols.keySet()) {
-            attribs.put(IpacTableUtil.makeAttribKey(IpacTableUtil.SORT_BY_TAG, sortCol), sortByCols.get(sortCol));
+            attribs.put(TableMeta.makeAttribKey(TableMeta.SORT_BY_TAG, sortCol), sortByCols.get(sortCol));
         }
 
         if (colsToHide != null) {
             for (String c : colsToHide) {
-                attribs.put(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, c), IpacTableUtil.VISI_HIDE);
+                attribs.put(TableMeta.makeAttribKey(TableMeta.VISI_TAG, c), DataType.Visibility.hide.name());
             }
         }
 

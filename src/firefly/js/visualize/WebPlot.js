@@ -8,7 +8,7 @@ import {get,isEmpty} from 'lodash';
 import {RequestType} from './RequestType.js';
 import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
-import {makeProjection} from './projection/Projection.js';
+import {makeProjection, makeProjectionNew} from './projection/Projection.js';
 import PlotState from './PlotState.js';
 import BandState from './BandState.js';
 import {makeWorldPt, makeScreenPt} from './Point.js';
@@ -16,6 +16,8 @@ import {changeProjectionCenter} from './HiPSUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeImagePt} from './Point';
 import {convert} from './VisUtil.js';
+import {parseSpacialHeaderInfo, makeDirectFileAccessData} from './projection/ProjectionInfo.js';
+import {UNSPECIFIED, UNRECOGNIZED } from './projection/Projection.js';
 
 
 export const RDConst= {
@@ -28,6 +30,9 @@ export const RDConst= {
 
 const HIPS_DATA_WIDTH= 100000;
 const HIPS_DATA_HEIGHT= 100000;
+
+const alphabetAry= 'ABCDEFGHIJKLMNOPQRSTUVWZYZ'.split('');
+
 
 
 
@@ -50,6 +55,11 @@ export const PlotAttribute= {
      * Used to overlay a target associated with this image
      */
     FIXED_TARGET: 'FIXED_TARGET',
+
+    /**
+     *
+     */
+    INIT_CENTER: 'INIT_CENTER',
 
     /**
      * This will probably be a double with the requested size of the plot
@@ -311,6 +321,28 @@ function makePlotTemplate(plotId, plotType, asOverlay, imageCoordSys) {
 }
 
 
+function processAllAltWcs(header) {
+
+    const availableAry= alphabetAry.filter( (c) => header['CTYPE1'+c]);
+    if (isEmpty(availableAry)) return {};
+
+    return availableAry.reduce( (obj, altChar) => {
+        const processHeader= parseSpacialHeaderInfo(header, altChar);
+        const {maptype}= processHeader;
+        if (!maptype || maptype===UNSPECIFIED ||  maptype===UNRECOGNIZED) {
+            //todo did not find a spacial, do some other type of wcs computation
+        }
+        if (processHeader.headerType==='spacial') {
+            obj[altChar]= makeProjectionNew(processHeader, processHeader.imageCoordSys);
+        }
+        else {
+            obj[altChar]= undefined;
+        }
+        return obj;
+    }, {});
+}
+
+
 /**
  *
  */
@@ -326,9 +358,18 @@ export const WebPlot= {
      */
     makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false) {
 
-        const projection= makeProjection(wpInit.projectionJson);
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
+        const headerAry= wpInit.headerAry;
+        const header= headerAry[plotState.firstBand().value];
+        const processHeader= parseSpacialHeaderInfo(header);
+        const projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
+        const allWCSMap= processAllAltWcs(header);
+        allWCSMap['']= projection;
         const zf= plotState.getZoomLevel();
+
+        for(let i= 0; (i<3); i++) {
+            if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i]);
+        }
 
         //original plot state come with header information for getting flux.
         // this is only need for one call, so most time we string it out.
@@ -341,8 +382,12 @@ export const WebPlot= {
         const imagePlot= {
             tileData    : wpInit.initImages,
             relatedData     : null,
+            header,
+            headerAry,
+            // processHeader: parseSpacialHeaderInfo(header),
             plotState,
             projection,
+            allWCSMap,
             dataWidth       : wpInit.dataWidth,
             dataHeight      : wpInit.dataHeight,
             imageScaleFactor: wpInit.imageScaleFactor,
@@ -409,6 +454,7 @@ export const WebPlot= {
             /// other
             plotState,
             projection,
+            allWCSMap: {'':projection},
             dataWidth: HIPS_DATA_WIDTH,
             dataHeight: HIPS_DATA_HEIGHT,
             imageScaleFactor: 1,
@@ -447,8 +493,8 @@ export const WebPlot= {
         //todo: i think is could be cached on the server side so we don't need to be send it back and forth
         const {bandStateAry}= plotState;
         for(let i=0; (i<bandStateAry.length);i++) {
-            if (bandStateAry[i] && isEmpty(bandStateAry[i].fitsHeader)) {
-                bandStateAry[i].fitsHeader= plot.clientFitsHeaderAry[i];
+            if (bandStateAry[i] && isEmpty(bandStateAry[i].directFileAccessData)) {
+                bandStateAry[i].directFileAccessData= plot.clientFitsHeaderAry[i];
             }
         }
 
@@ -516,6 +562,7 @@ export function replaceHiPSProjectionUsingProperties(plot, hipsProperties, wp= m
     retPlot.imageCoordSys= projection.coordSys;
     retPlot.dataCoordSys= projection.coordSys;
     retPlot.projection= projection;
+    retPlot.allWCSMap= {'':projection};
     return retPlot;
 }
 
@@ -532,6 +579,7 @@ export function replaceHiPSProjection(plot, coordinateSys, wp= makeWorldPt(0,0))
     retPlot.imageCoordSys= projection.coordSys;
     //note- the dataCoordSys stays the same
     retPlot.projection= projection;
+    retPlot.allWCSMap= {'':projection};
     return retPlot;
 }
 
@@ -546,6 +594,7 @@ export function replaceHeader(plot, header) {
     const retPlot= clone(plot);
     retPlot.conversionCache= new Map();
     retPlot.projection= makeProjection({header:clone(header), coorindateSys:plot.projection.coordSys.toString()});
+    retPlot.allWCSMap= {'':retPlot.projection};
     return retPlot;
 }
 

@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -15,7 +15,7 @@ import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ztf.ZtfSciimsFileRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.table.MappedData;
 import edu.caltech.ipac.firefly.server.query.ztf.ZtfFileRetrieve;
 import edu.caltech.ipac.util.*;
 
@@ -67,7 +67,7 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
         String zipType = request.getParam("zipType");
         boolean doFolders = zipType != null && zipType.equalsIgnoreCase("folder");
 
-        IpacTableParser.MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
+        MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
 
         if (request.getParam("ProductLevel") == null) {
             request.setParam("ProductLevel", "sci");
@@ -84,7 +84,6 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
             String filefracday = String.valueOf(dgData.get(rowIdx, "filefracday"));
             String field = String.valueOf(dgData.get(rowIdx, "field"));
             String filtercode = (String) dgData.get(rowIdx, "filtercode");
-            filtercode = "z" + filtercode;
             String ccdid = String.valueOf(dgData.get(rowIdx, "ccdid"));
             String imgtypcode = "o";
             String qid = String.valueOf(dgData.get(rowIdx, "qid"));

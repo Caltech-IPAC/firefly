@@ -17,7 +17,7 @@ import {RangeValues} from './RangeValues.js';
  * @prop originalImageIdx
  * @prop plotRequestSerialize
  * @prop rangeValuesSerialize
- * @prop fitsHeader
+ * @prop directFileAccessData
  * @prop multiImageFile
  * @prop tileCompress
  * @prop cubeCnt
@@ -33,7 +33,7 @@ export class BandState {
 
         this.plotRequestSerialize = null; // Serialized WebPlotRequest
         this.rangeValuesSerialize = null; // Serialized RangeValues
-        this.fitsHeader= null;
+        this.directFileAccessData= null;
         this.multiImageFile = false;
         this.tileCompress = false;
         this.cubeCnt = 0;
@@ -100,7 +100,7 @@ export class BandState {
      *
      * @return {ClientFitsHeader}
      */
-    getHeader() { return this.fitsHeader; }
+    getHeader() { return this.directFileAccessData; }
 
     /**
      *
@@ -143,7 +143,6 @@ export class BandState {
         bState.originalImageIdx= bsJson.originalImageIdx || 0;
         bState.plotRequestSerialize= bsJson.plotRequestSerialize;
         bState.rangeValuesSerialize= bsJson.rangeValuesSerialize;
-        bState.fitsHeader= bsJson.fitsHeader;
         bState.multiImageFile= Boolean(bsJson.multiImageFile);
         bState.tileCompress = Boolean(bsJson.tileCompress);
         bState.cubeCnt= bsJson.cubeCnt || 0;
@@ -153,9 +152,9 @@ export class BandState {
 
     /**
      * @param {BandState} bs
-     * @param {boolean} includeHeader include the clientFitsHeader object
+     * @param {boolean} includeDirectAccessData include the clientFitsHeader object
      */
-    static convertToJSON(bs, includeHeader= true) {
+    static convertToJSON(bs, includeDirectAccessData= true) {
         if (!bs || !bs.plotRequestSerialize) return null;
         const json= {};
         json.workingFitsFileStr= bs.workingFitsFileStr;
@@ -165,7 +164,7 @@ export class BandState {
         if (bs.originalImageIdx) json.originalImageIdx= bs.originalImageIdx;
         json.plotRequestSerialize= bs.plotRequestSerialize;
         json.rangeValuesSerialize= bs.rangeValuesSerialize;
-        if (includeHeader) json.fitsHeader= bs.fitsHeader;
+        if (includeDirectAccessData) json.directFileAccessData= bs.directFileAccessData;
         if (bs.multiImageFile) json.multiImageFile= bs.multiImageFile;
         if (bs.tileCompress) json.tileCompress = bs.tileCompress;
         if (bs.cubeCnt) json.cubeCnt= bs.cubeCnt;

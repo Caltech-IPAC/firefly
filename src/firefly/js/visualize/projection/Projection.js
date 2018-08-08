@@ -287,6 +287,10 @@ export function makeProjection(projJSON) {
 	return new Projection(projJSON.header, CoordinateSys.parse(projJSON.coorindateSys));
 }
 
+export function makeProjectionNew(header, csys) {
+    return new Projection(header, csys);
+}
+
 
 function fwdAladinSinProject(x, y, header) {
 

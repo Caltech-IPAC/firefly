@@ -905,7 +905,7 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
         }
         centerPt = makeDevicePt(x+w/2, y+h/2);
         angle = 0.0;
-        }
+    }
 
     if (!isNil(text) && inView) {
         const textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);

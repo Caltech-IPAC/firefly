@@ -1,6 +1,8 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import org.junit.After;
@@ -36,9 +38,9 @@ public class ZscaleTest {
     public void setUp() throws FitsException {
 
         Fits fits = FileLoader.loadFits(ZscaleTest.class,filename );
-        FitsRead[] fry = FitsRead.createFitsReadArray(fits);
+        FitsRead[] fry = FitsReadFactory.createFitsReadArray(fits);
         float1d = fry[0].getDataFloat();
-        imageHeader = fry[0].getImageHeader();
+        imageHeader = new ImageHeader(fry[0].getHeader());
 
     }
 

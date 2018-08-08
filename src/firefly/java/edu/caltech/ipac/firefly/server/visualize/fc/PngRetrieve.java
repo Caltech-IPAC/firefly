@@ -7,7 +7,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.fc;
 
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -16,8 +16,8 @@ import edu.caltech.ipac.firefly.server.visualize.PlotPngCreator;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -208,7 +208,7 @@ public class PngRetrieve {
         WorldPt wpt = null;
         double ra,dec;
         try {
-            DataGroup dg=IpacTableReader.readIpacTable(f, "");
+            DataGroup dg=IpacTableReader.read(f);
 
             for (DataObject o: dg) {
                 ra= (Double)o.getDataElement("ra");

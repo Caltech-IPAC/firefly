@@ -3,7 +3,9 @@
  */
 package edu.caltech.ipac.util;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import org.json.simple.JSONObject;
 import nom.tam.fits.Fits;
@@ -106,7 +108,7 @@ public class FitsHDUUtil {
 
         for (MetaInfo meta : MetaInfo.values()) {    // index, name, row, column
             DataType dt = new DataType(meta.getKey(), meta.getTitle(), meta.getMetaClass());
-            dt.setShortDesc(meta.getDescription());
+            dt.setDesc(meta.getDescription());
             cols.add(dt);
         }
 
