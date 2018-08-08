@@ -210,7 +210,7 @@ function getLayerChanges(drawLayer, action) {
             // no region is selected
             if (isEmpty(selectedRegion)) {        // nothing is selected, empty string, empty array or null
                 if (drawLayer.highlightedRegion) {
-                    deHighlight(drawLayer.highlightedRegion); // de-highlight the highlighted region if there is
+                    deHighlight(drawLayer.highlightedRegion); // de-highlight the highlighted region if there was
                     drawLayer.highlightedRegion = null;
                     reDrawData();
                 }
@@ -226,7 +226,7 @@ function getLayerChanges(drawLayer, action) {
                 // selected region is valid
                 if (highlightedRegion) {
                     if (drawLayer.highlightedRegion) {
-                        deHighlight(drawLayer.highlightedRegion); // de-highlight the highlighted region if there is
+                        deHighlight(drawLayer.highlightedRegion); // de-highlight the highlighted region if there was
                     }
 
                     reDrawData(highlightedRegion);

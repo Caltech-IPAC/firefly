@@ -72,15 +72,14 @@ const draw=  {
 
 	getScreenDist(drawObj,plot, pt) {
 		let minDistSq = Number.MAX_VALUE;
-		const cc= CsysConverter.make(plot);
 
 		drawObj.footprintAry.forEach( (footprint) => {
 			let totX = 0;
 			let distSq;
 			let totY = 0;
-			let last = cc.getScreenCoords(footprint[footprint.length - 1]);
+			let last = plot.getScreenCoords(footprint[footprint.length - 1]);
 			footprint.forEach( (wpt) => {
-				const testPt = cc.getScreenCoords(wpt);
+				const testPt = plot.getScreenCoords(wpt);
 				if (testPt) {
 					distSq = ptSegDistSq(testPt.x, testPt.y, last.x, last.y, pt.x, pt.y);
 					totX += testPt.x;

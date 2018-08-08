@@ -18,7 +18,7 @@ import {getCenterOfProjection, findCurrentCenterPoint, getCorners,
         getDrawLayerByType, getDrawLayersByType, getOnePvOrGroup, getFoV} from '../PlotViewUtil.js';
 import {findAllSkyCachedImage, addAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {makeHiPSAllSkyUrl, makeHiPSAllSkyUrlFromPlot,
-         makeHipsUrl, resolveHiPSConstant, getPointMaxSide} from '../HiPSUtil.js';
+         makeHipsUrl, resolveHiPSConstant, getPointMaxSide, getPropertyItem} from '../HiPSUtil.js';
 import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
 import {ensureWPR, determineViewerId, getHipsImageConversion,
@@ -32,7 +32,9 @@ import {dispatchChangeHiPS} from '../ImagePlotCntlr';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
-
+import {addNewMocLayer, makeMocTableId} from '../HiPSMocUtil.js';
+import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import {doUpload} from '../../ui/FileUpload.jsx';
 
 const PROXY= true;
 
@@ -159,7 +161,6 @@ function getOtherLockedHiPS(vr, pv) {
 }
 
 
-
 export function addAllSky(plot) {
     const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
     const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
@@ -196,7 +197,6 @@ export function makePlotHiPSAction(rawAction) {
         newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
         const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
         if (hipsImageConversion) newPayload.pvOptions= clone(pvOptions, {hipsImageConversion});
-        let attemptedFetch= false;
 
 
         if (!getDrawLayerByType(getDlAry(), ActiveTarget.TYPE_ID)) {
@@ -212,7 +212,6 @@ export function makePlotHiPSAction(rawAction) {
                 }
 
                 dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
-
                 return makeHipsUrl(`${url}/properties`, PROXY);
 
             })
@@ -227,6 +226,8 @@ export function makePlotHiPSAction(rawAction) {
             .then( (hipsProperties) => {
                 const plot= WebPlot.makeWebPlotDataHIPS(plotId, wpRequest, hipsProperties, 'a hips plot', .0001, attributes, false);
                 plot.proxyHips= PROXY;
+
+                createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'), wpRequest.getHipsRootUrl(), plot);
                 return plot;
             })
             .then( addAllSky)
@@ -247,13 +248,35 @@ export function makePlotHiPSAction(rawAction) {
     };
 }
 
+function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
+    const mocUrl = hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile;
+    const tblId = makeMocTableId(ivoid);
+    const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
+
+    let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tblId);
+    if (dl) {
+        if (plot.plotId) {
+            dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, false, false);
+        }
+        return;
+    }
+
+    doUpload(mocUrl, {isFromURL: true}).then(({status, cacheKey}) => {
+        if (status === '200') {
+            dl =  addNewMocLayer(tblId, cacheKey, mocUrl);
+            if (dl && plot.plotId) {
+                dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, false);
+            }
+        }
+    });
+}
+
 function createHiPSGridLayer() {
     const dl= getDrawLayerByType(getDlAry(), HiPSGrid.TYPE_ID);
     if (!dl) {
         dispatchCreateDrawLayer(HiPSGrid.TYPE_ID);
     }
 }
-
 
 export function makeChangeHiPSAction(rawAction) {
     return (dispatcher, getState) => {

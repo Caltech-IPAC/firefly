@@ -26,16 +26,12 @@ function makeReducer(factory) {
         switch (action.type) {
             case DrawLayerCntlr.CHANGE_VISIBILITY:
                 return changeVisibility(drawLayer,action,factory);
-                break;
             case DrawLayerCntlr.CHANGE_DRAWING_DEF:
                 return changeDrawingDef(drawLayer,action,factory);
-                break;
             case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
                 return attachLayerToPlot(drawLayer,action,factory);
-                break;
             case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
                 return detachLayerFromPlot(drawLayer,action,factory);
-                break;
 
             case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
             case ImagePlotCntlr.ANY_REPLOT:
@@ -43,11 +39,9 @@ function makeReducer(factory) {
             case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
             case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
                 return updateFromLayer(drawLayer,action,factory);
-                break;
 
             default:
                 return handleOtherAction(drawLayer,action,factory);
-                break;
         }
     };
 }
