@@ -55,7 +55,7 @@ function* loadMocFitsSaga({id, mocFitsInfo}, dispatch, getState) {
                         if (!mocTable && fitsPath) {       // moc fits not loaded yet
                             const tReq = makeTblRequest('userCatalogFromFile', 'Table Upload',
                                 {filePath: fitsPath, sourceFrom: 'isLocal'},
-                                {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW});
+                                {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW, inclCols: 'UNIQ'});
                             dispatchTableFetch(tReq, 0);  // change to dispatchTableFetch later
                         } else {
                             const vPlotIds =getVisiblePlotIdsByDrawlayerId(id, getState);
