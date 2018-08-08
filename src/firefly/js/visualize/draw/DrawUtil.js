@@ -1,6 +1,6 @@
 
 import numeral from 'numeral';
-import {isNil, set, isUndefined} from 'lodash';
+import {isNil, set} from 'lodash';
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
 import {toRadians} from '../VisUtil.js';
@@ -12,7 +12,7 @@ export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, draw
                 drawHandledLine, drawInnerRecWithHandles, drawCircleWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
-                drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize,
+                drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize, polygonPath,
                 getSymbolSize, getSymbolSizeBasedOn, beginFillPath, endFillPath, fillPath};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
@@ -250,12 +250,14 @@ function stroke(ctx) {
 /**
  * start fill path
  * @param {object} ctx
- * @param {string} color
  * @param {object} [renderOptions]
+ * @param {string} color
+ * @param {string} strokeColor
  */
-function beginFillPath(ctx,color,renderOptions) {
+function beginFillPath(ctx, renderOptions, color ='', strokeColor='') {
     ctx.save();
-    ctx.fillStyle=color;
+    if (color) ctx.fillStyle=color;
+    if (strokeColor) ctx.strokeStyle = strokeColor;
     if (renderOptions) addStyle(ctx,renderOptions);
     ctx.beginPath();
 }
@@ -264,10 +266,12 @@ function beginFillPath(ctx,color,renderOptions) {
  * end fill path
  * @param ctx
  * @param close
+ * @param bStroke
  */
-function endFillPath(ctx, close = true) {
+function endFillPath(ctx, close = true, bStroke = true) {
     if (close) ctx.closePath();
     ctx.fill();
+    if (bStroke) ctx.stroke();
     ctx.restore();
 }
 
@@ -353,22 +357,33 @@ function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
     ctx.restore();
 }
 
-function fillPath(ctx, color, pts, close, renderOptions, strokeColor) {
+function polygonPath(ctx, pts, close, fillColor, strokeColor) {
+    if (pts.length < 3) return;
+    const allPts = close ? [...pts, pts[0]] : pts;
+
+    allPts.forEach( (pt,idx) => {
+        (idx===0) ? ctx.moveTo(pt.x,pt.y) : ctx.lineTo(pt.x,pt.y);
+    });
+    if (fillColor) ctx.fillStyle = fillColor;
+    if (strokeColor) ctx.strokeStyle = strokeColor;
+}
+
+function fillPath(ctx, color, pts, close, renderOptions, strokeColor='') {
     ctx.save();
     if (renderOptions) addStyle(ctx,renderOptions);
-    if (!isUndefined(strokeColor)) {
-        ctx.strokeStyle = strokeColor;
-    }
+
+    if (strokeColor) ctx.strokeStyle = strokeColor;
+    ctx.fillStyle = color;
 
     ctx.beginPath();
     pts.forEach( (pt,idx) => {
         (idx===0) ? ctx.moveTo(pt.x,pt.y) : ctx.lineTo(pt.x,pt.y);
     });
     if (close) ctx.closePath();
-    ctx.stroke();
 
-    ctx.fillStyle = color;
     ctx.fill();
+    if (strokeColor) ctx.stroke();
+
     ctx.restore();
 }
 

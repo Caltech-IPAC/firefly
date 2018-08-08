@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {take} from 'redux-saga/effects';
+import Enum from 'enum';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -29,6 +30,7 @@ export default {factoryDef, TYPE_ID};
 let idCnt=0;
 const colorList = ['green', 'cyan', 'magenta', 'orange', 'lime', 'red', 'blue', 'yellow'];
 const colorN = colorList.length;
+const LayerUpdateMethod = new Enum(['byEmptyAry', 'byTrueAry', 'none']);
 
 
 function getVisiblePlotIdsByDrawlayerId(id, getState) {
@@ -90,9 +92,10 @@ function* loadMocFitsSaga({id, mocFitsInfo}, dispatch, getState) {
  */
 function creator(initPayload) {
 
-    const drawingDef= makeDrawingDef(colorList[idCnt%colorN], {style: Style.STANDARD});
-    drawingDef.textLoc = TextLocation.CENTER;
-
+    const drawingDef= makeDrawingDef(colorList[idCnt%colorN],
+                                     {style: Style.STANDARD,
+                                      textLoc: TextLocation.CENTER,
+                                      canUseOptimization: true});
     idCnt++;
     const options= {
         canUseMouse:true,
@@ -316,7 +319,7 @@ function updateMocData(dl, plotId) {
                  startIdx, endIdx, updateStatus.storedSidePoints);  // handle max chunk
              updateStatus.processedTiles.push(...moreObjs);
              if (updateStatus.processedTiles.length >= updateStatus.totalTiles) {
-                 abortUpdate(dl, updateStatusAry, plotId, true);
+                 abortUpdate(dl, updateStatusAry, plotId, LayerUpdateMethod.byTrueAry);
              }
          }
      }
@@ -361,13 +364,17 @@ function updateDrawLayer(drawObjAry, drawLayer, plotId) {
  * @param dl
  * @param updateStatusAry
  * @param pId
- * @param updateLayer
+ * @param updateMethod
  */
-function abortUpdate(dl, updateStatusAry, pId, updateLayer=false) {
-    if (updateLayer) {
+function abortUpdate(dl, updateStatusAry, pId, updateMethod = LayerUpdateMethod.none) {
+    //console.log('update method = ' + updateMethod.key);
+    if (updateMethod === LayerUpdateMethod.byTrueAry) {
         const {processedTiles} = updateStatusAry[pId];
         updateDrawLayer(processedTiles, dl, pId);
+    } else if (updateMethod === LayerUpdateMethod.byEmptyAry) {
+        updateDrawLayer([], dl, pId);
     }
+
     removeTask(pId, updateStatusAry[pId].updateTaskId);
     updateStatusAry[pId].abortUpdate();
 
@@ -383,11 +390,11 @@ function asyncComputeDrawData(drawLayer, action) {
                        DrawLayerCntlr.MODIFY_CUSTOM_FIELD];
     if (!forAction.includes(action.type)) return;
 
+    const {mocStyle} = drawLayer;
     if (action.type === DrawLayerCntlr.MODIFY_CUSTOM_FIELD) {
         const {fillStyle, targetPlotId} = action.payload.changes;
         if (!fillStyle || !targetPlotId) return;
 
-        const {mocStyle} = drawLayer;
         updateDrawLayer(changeMocDrawingStyle(drawLayer, get(mocStyle, [targetPlotId], Style.STANDARD), targetPlotId),
                         drawLayer, targetPlotId);
     } else {
@@ -407,7 +414,10 @@ function asyncComputeDrawData(drawLayer, action) {
 
         pIdAry.forEach((pId) => {
             if (visiblePlotIdAry.includes(pId) && get(updateStatusAry, pId)) {
-                abortUpdate(drawLayer, updateStatusAry, pId);
+                const style = get(mocStyle, [pId], Style.STANDARD);
+                const updateMethod = (action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION && style !== Style.FILL)
+                                      ? LayerUpdateMethod.none : LayerUpdateMethod.byEmptyAry;
+                abortUpdate(drawLayer, updateStatusAry, pId, updateMethod);
                 updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer, pId));
             }
         });

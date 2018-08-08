@@ -1213,26 +1213,33 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
             }
         } else {
             if (inDisplay > 0) {
+                const polyPath = (pts, close) => {
+                    if (!onlyAddToPath) {
+                        DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+                    }
+                    DrawUtil.polygonPath(ctx, pts, close, null, null);
+                    if (!onlyAddToPath) {
+                        DrawUtil.closePath(ctx);
+                    }
+                };
+
                 if (devPts.length === inDisplay) {
-                    DrawUtil.drawPath(ctx, color, lineWidth, devPts, true, renderOptions);
+                    polyPath(devPts, true);
                 } else {
-                    // in case the polygon edge doesn't continue in display area
+                    // in case the polygon border has some discontinuities in display area
                     for (let i = 0; i < devPts.length; ) {
                         if (devPts[i]) {
-                            let   bDraw = true;
-                            let   j = i+1;
+                            for (let j = i+1 ; j < devPts.length; j++) {
+                                // get next if devPts visible or not the last point
+                                if (devPts[j] && (j !== (devPts.length-1))) continue;
 
-                            for ( ; j < devPts.length; j++) {
-                                if (devPts[j]) continue;
-
-                                DrawUtil.drawPath(ctx, color, lineWidth, devPts.slice(i, j), false, renderOptions);
+                                // visible and the last
+                                if (devPts[j] && (j === devPts.length-1)) {
+                                    j++;
+                                }
+                                polyPath(devPts.slice(i,j), false);
                                 i = j+1;
-                                bDraw = false;
                                 break;
-                            }
-                            if (bDraw) {
-                                DrawUtil.drawPath(ctx, color, lineWidth, devPts.slice(i, j), false, renderOptions);
-                                i = j;
                             }
                         } else {
                             i++;
