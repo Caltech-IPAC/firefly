@@ -61,6 +61,10 @@ test {
   // explicitly include or exclude tests
   include 'edu/**'
 
+  environment 'contextPath': "/${project['app-name']}"
+  environment 'contextName': project['app-name']
+  environment 'webappConfigPath': "build/${project['app-name']}/war/WEB-INF/config/"
+
   if (project.hasProperty("category")) {
     if (project.category) {
       logger.lifecycle("Running test for category: " + project.category)
@@ -89,7 +93,7 @@ test {
   doFirst {
     // things needed before test run
     copy {
-      from("$rootDir/config/log4j-test.properties")
+      from("$fireflyPath/config/test/log4j-test.properties")
       into "${gwt.warDir}/WEB-INF/config"
       rename("log4j-test.properties", "log4j.properties")
       filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
