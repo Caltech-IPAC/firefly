@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import CoordinateSys from './CoordSys.js';
-import {isUndefined} from 'lodash';
+import {isUndefined, get} from 'lodash';
 import VisUtil from './VisUtil.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeImagePt,
@@ -290,13 +290,13 @@ export class CysConverter {
     static getLtv(header) {
         const {LTV1,LTV2, CRVAL1A,CRVAL2A}= header;
         let ltv1, ltv2;
-        if (!isNaN(Number(LTV1)) && !isNaN(Number(LTV2))) {
-            ltv1= Number(LTV1);
-            ltv2= Number(LTV2);
+        if (!isNaN(Number(get(LTV1,'value'))) && !isNaN(Number(get(LTV2,'value')))) {
+            ltv1= Number(get(LTV1,'value'));
+            ltv2= Number(get(LTV2,'value'));
         }
-        else if (!isNaN(Number(CRVAL1A)) && !isNaN(Number(CRVAL2A))) {
-            ltv1= -Number(CRVAL1A);
-            ltv2= -Number(CRVAL2A);
+        else if (!isNaN(Number(get(CRVAL1A,'value'))) && !isNaN(Number(get(CRVAL2A,'value')))) {
+            ltv1= -Number(get(CRVAL1A,'value'));
+            ltv2= -Number(get(CRVAL2A,'value'));
         }
         else {
             ltv1= 0;
