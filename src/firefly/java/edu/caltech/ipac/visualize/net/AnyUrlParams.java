@@ -47,8 +47,10 @@ public class AnyUrlParams extends BaseNetParams {
             securCookie= "-"+ cookies.get(_securityCookie);
         }
 
-        String baseKey= loginName+ securCookie +"-"+ fileStr;
-        int originalHashCode = (_url.getHost()+ baseKey).hashCode();
+        // since this string is limited to MAX_LENGTH, having loginName in the baseKey is not ideal
+        // loginName can be long.  it'll be used in hashcode calculation instead.
+        String baseKey = securCookie +"-"+ fileStr;
+        int originalHashCode = (_url.getHost() + loginName + baseKey).hashCode();
         baseKey= baseKey.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?\\+<>]", "");
 
 
