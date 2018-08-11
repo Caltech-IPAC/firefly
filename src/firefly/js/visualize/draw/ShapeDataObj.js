@@ -17,7 +17,7 @@ import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 import {toRadians, toDegrees} from '../VisUtil.js';
-import {rateOpacity} from '../../util/Color.js';
+import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -733,7 +733,8 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
         y = south;
     }
 
-    DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
+    const textColor = maximizeOpacity(color);
+    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, renderOptions,
         {rotationAngle:angle, textBaseline, textAlign},
         {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
     );
