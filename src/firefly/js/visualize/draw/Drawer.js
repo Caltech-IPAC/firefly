@@ -119,8 +119,8 @@ export class Drawer {
             zfact===oldZfact  && testPtStr===oldTestPtStr ) {
             viewUpdated= false;
         }
-        
-        
+
+
         const primaryUpdated= (data && data!==this.data) || viewUpdated;
 
         const selectedUpdated= (selectedIndexes!==this.selectedIndexes) || viewUpdated;
@@ -165,6 +165,9 @@ export class Drawer {
 
 
         if (primaryUpdated || forceUpdate) {
+            if (zfact!==oldZfact) {
+                this.clear();
+            }
             const asyncId= this.dataUpdated(width,height);
             return asyncId;
         }
