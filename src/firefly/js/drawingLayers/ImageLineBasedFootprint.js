@@ -289,6 +289,8 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
     const pointAry =  get(drawLayer, ['imageLineBasedFP', 'peakPointObjs']);
     if (!footprintAry) return [];
     const plot = primePlot(visRoot(), plotId);
+    const {lineWidth = 1} = drawingDef;
+    const lw = lineWidth+1;
 
     const polyHighlight = footprintAry.filter((oneObj) => oneObj.id === highlightedFootprint.id)
                         .reduce((prev, oneFP) => {
@@ -296,7 +298,7 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
                              newhObj.highlight = 1;
                              newhObj.text = newhObj.id;
                              newhObj.style = Style.STANDARD;
-                             newhObj.lineWidth = 2;
+                             newhObj.lineWidth = lw;
 
                              prev.push(newhObj);
                              return prev;
@@ -306,6 +308,7 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
                                     const pointObj = clone(onePoint, {symbol: (drawingDef.symbol || DrawSymbol.X)});
                                     const newhObj = DrawOp.makeHighlight(pointObj, plot, drawingDef);
                                     newhObj.highlight = 1;
+                                    newhObj.lineWidth = lw;
 
                                     prev.push(newhObj);
                                     return prev;
@@ -329,14 +332,6 @@ function plotLayer(dl, plotId) {
     const pointObjs = convertConnectedObjPeaksToPointObjs(imageLineBasedFP, false);
 
     const outputObjs = [...oneObjs,...zeroObjs,...polyObjs,...pointObjs];
-/*
-    const cc = CsysConverter.make(primePlot(visRoot(), plotId));
-    outputObjs.forEach((oneObj) => {
-        const {pts} = oneObj;
-        const wPts = pts.map((onePt) => cc.getWorldCoords(onePt));
 
-        oneObj.pts = wPts;
-    });
-*/
     return outputObjs;
 }

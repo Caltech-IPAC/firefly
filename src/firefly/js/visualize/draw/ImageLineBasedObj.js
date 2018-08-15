@@ -264,6 +264,15 @@ export function convertConnectedObjsToPolygonObjs(imageLineObj, isOriginal = tru
     return isOriginal ? polyDrawObjs : cloneObjs(polyDrawObjs);
 }
 
+/**
+ * create point drawObjs based on the footprint peaks
+ * @param imageLineObj
+ * @param isOriginal
+ * @param symbolType
+ * @param color
+ * @param text
+ * @returns {*}
+ */
 export function convertConnectedObjPeaksToPointObjs(imageLineObj, isOriginal = true,
                                                     symbolType, color, text) {
 
@@ -658,7 +667,7 @@ export class ConnectedObj {
         const pointObjs = this.peaks.map((onePeak) => {
             const pt = makeImgPt(onePeak[0], onePeak[1]);
 
-            const pointObj = makePointDataObj(pt, 6);
+            const pointObj = makePointDataObj(pt);
             pointObj.id = this.id;
             return pointObj;
         });
