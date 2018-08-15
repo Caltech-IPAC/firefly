@@ -34,7 +34,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	public static void setUp() {
 		try {
 			// needed by test testGetSelectedData because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
-			setupServerContext();
+			setupServerContext(null);
 
 			dbFile = File.createTempFile("TestDb_", ".hsql");
 			dbFile.deleteOnExit();

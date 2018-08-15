@@ -26,9 +26,9 @@ import java.util.logging.LogManager;
  */
 public class ConfigTest {
 
-    public static String LOG4J_PROP_FILE = "./config/log4j-test.properties";
-    public static String LOGGING_PROP_FILE = "./config/logging-test.properties";
-    public static String TEST_PROP_FILE = "./config/app-test.prop";
+    public static String LOG4J_PROP_FILE = "./config/test/log4j-test.properties";
+    public static String LOGGING_PROP_FILE = "./config/test/logging-test.properties";
+    public static String TEST_PROP_FILE = "./config/test/app-test.prop";
     public static String WS_USER_ID = AppProperties.getProperty("workspace.user","test@ipac.caltech.edu");
 
     /**
@@ -122,13 +122,20 @@ public class ConfigTest {
         }
     }
 
-    protected static void setupServerContext() {
-        setupServerContext("build/firefly/war/WEB-INF/config/", "/", "localhost:8080/");
-    }
-    protected static void setupServerContext(String webappConfigPath, String reqUrl, String baseUrl) {
+    protected static void setupServerContext(RequestAgent requestAgent) {
+        String contextPath = System.getenv("contextPath");
+        String contextName = System.getenv("contextName");
+        String webappConfigPath = System.getenv("webappConfigPath");
+
+        contextPath = contextPath == null ? "/firefly" : contextPath;
+        contextName = contextName == null ? "firefly" : contextName;
+        webappConfigPath = webappConfigPath == null ? "build/firefly/war/WEB-INF/config" : webappConfigPath;
+
+        requestAgent = requestAgent == null ? new RequestAgent(null, "HTTP", "/", "localhost:8080/", "unknow", UUID.randomUUID().toString(), contextPath): null;
+
         System.setProperty("stats.log.dir", System.getProperty("java.io.tmpdir"));
-        ServerContext.getRequestOwner().setRequestAgent(new RequestAgent(null, "HTTP", reqUrl, baseUrl, "unknow", UUID.randomUUID().toString(), "/firefly"));
-        ServerContext.init("/firefly", "firefly", webappConfigPath);
+        ServerContext.getRequestOwner().setRequestAgent(requestAgent);
+        ServerContext.init(contextPath, contextName, webappConfigPath);
 
     }
 
