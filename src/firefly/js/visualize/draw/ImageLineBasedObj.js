@@ -157,7 +157,7 @@ function toRegion(drawObjAry, plot, drawParams) {
 function convertDataToConnectedObjs(data) {
     return Object.keys(data).reduce((prev, id) => {
         const oneFootData = data[id];
-        const {corners, spans, peaks} = oneFootData;
+        const {corners, spans, peaks=[]} = oneFootData;
         const connectObj = ConnectedObj.make(corners, spans, peaks, id);
         const resultObjs = connectObj.splitOnEmptyLine();
 
