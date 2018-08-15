@@ -2,6 +2,7 @@ import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
 import {isEmpty, get} from 'lodash';
 import ShapeDataObj from './ShapeDataObj.js';
+import {makePointDataObj} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import Point, {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt} from '../Point.js';
@@ -35,6 +36,8 @@ function make(data, style) {
     convertConnectedObjsToRectObjs(obj, true);
     convertConnectedObjsToRectObjs(obj, false);
     convertConnectedObjsToPolygonObjs(obj);
+    convertConnectedObjPeaksToPointObjs(obj);
+
 
     return obj;
 }
@@ -154,8 +157,8 @@ function toRegion(drawObjAry, plot, drawParams) {
 function convertDataToConnectedObjs(data) {
     return Object.keys(data).reduce((prev, id) => {
         const oneFootData = data[id];
-        const {corners, spans} = oneFootData;
-        const connectObj = ConnectedObj.make(corners, spans, id);
+        const {corners, spans, peaks} = oneFootData;
+        const connectObj = ConnectedObj.make(corners, spans, peaks, id);
         const resultObjs = connectObj.splitOnEmptyLine();
 
         prev.push(...resultObjs);
@@ -261,10 +264,43 @@ export function convertConnectedObjsToPolygonObjs(imageLineObj, isOriginal = tru
     return isOriginal ? polyDrawObjs : cloneObjs(polyDrawObjs);
 }
 
+export function convertConnectedObjPeaksToPointObjs(imageLineObj, isOriginal = true,
+                                                    symbolType, color, text) {
+
+    const cloneObjs = (objs) => {
+        return (objs).map((oneObj) => {
+            const newObj = clone(oneObj);
+
+            if (symbolType) newObj.symbol = symbolType;
+            if (color) newObj.color = color;
+            if (text) newObj.text = text;
+            return newObj;
+        });
+    };
+
+    if (imageLineObj.peakPointObjs) {
+        return cloneObjs(imageLineObj.peakPointObjs);
+    }
+
+    const {connectedObjs, pixelSys} = imageLineObj;
+    const makeImageFunc =  getMakeImageFunc(pixelSys);
+
+    const points = connectedObjs.reduce((prev, oneCObj) => {
+        const pointObjs = oneCObj.makePointObjsOnPeaks(makeImageFunc);
+        prev.push(...pointObjs);
+        return prev;
+    }, []);
+
+    imageLineObj.peakPointObjs = points;
+    return isOriginal ? points : cloneObjs(points);
+}
+
+
 export class ConnectedObj {
-    constructor(corners, spans, id) {
+    constructor(corners, spans, peaks, id) {
         this.corners = corners;
         this.spans = spans;
+        this.peaks = peaks;
         this.id = id;
         this.oneSegments = {};
         this.zeroSegments = {};
@@ -274,8 +310,8 @@ export class ConnectedObj {
         this.y2 = Number(Math.max(corners[0][1], corners[2][1]));
     }
 
-    static make(corners, data, id) {
-        return data ? new ConnectedObj(corners, data, id) : null;
+    static make(corners, data, peaks, id) {
+        return data ? new ConnectedObj(corners, data, peaks, id) : null;
     }
 
     splitOnEmptyLine() {
@@ -284,8 +320,9 @@ export class ConnectedObj {
         let firstY = y1;
 
         this.makeOneSegments();
-        const moveSpans = (spans, sy, ey) => {
+        const moveSpans = (spans, peaks, sy, ey) => {
             const newSpans = [], oldSpans = [];
+            const newPeaks = [], oldPeaks = [];
             let n_x1 = x2, n_x2 = x1;
 
             for (let n = 0; n < spans.length; n++) {
@@ -305,19 +342,27 @@ export class ConnectedObj {
                 if (x_1 > n_x2) n_x2 = x_1;
             }
 
-            return {newSpans, oldSpans, new_x1: n_x1, new_x2: n_x2, new_y1: sy, new_y2: ey };
+            for (let n = 0; n < peaks.length; n++) {
+                if (peaks[n][1] < sy || peaks[n][1] > ey) {
+                    newPeaks.push(peaks[n]);
+                } else {
+                    oldPeaks.push(peaks[n]);
+                }
+            }
+            return {newSpans, oldSpans, newPeaks, oldPeaks, new_x1: n_x1, new_x2: n_x2, new_y1: sy, new_y2: ey };
         };
 
 
         for (let y = (y1+1); y < y2; y++) {
             if (this.oneSegments[y].length === 0) {
                 if (y > firstY) {
-                    const {newSpans, oldSpans, new_x1, new_x2, new_y1, new_y2} = moveSpans(this.spans, firstY, y - 1);
+                    const {newSpans, oldSpans, newPeaks, oldPeaks, new_x1, new_x2, new_y1, new_y2} = moveSpans(this.spans, this.peaks, firstY, y - 1);
                     if (newSpans.length > 0) {
                         const newCorners = [[new_x1, new_y1], [new_x2, new_y1], [new_x2, new_y2], [new_x1, new_y2]];
-                        const newCObj = ConnectedObj.make(newCorners, newSpans, this.id);
+                        const newCObj = ConnectedObj.make(newCorners, newSpans, newPeaks, this.id);
                         resultObjs.push(newCObj);
                         this.spans = oldSpans;
+                        this.peaks = oldPeaks;
                     }
                 }
                 firstY = y+1;
@@ -333,7 +378,7 @@ export class ConnectedObj {
                 if (oneSpan[0] > n_y2)  n_y2 = oneSpan[0];
             });
 
-            const newCrtObj = ConnectedObj.make([[n_x1, n_y1], [n_x2, n_y1], [n_x2, n_y2], [n_x1, n_y2]], this.spans,
+            const newCrtObj = ConnectedObj.make([[n_x1, n_y1], [n_x2, n_y1], [n_x2, n_y2], [n_x1, n_y2]], this.spans, this.peaks,
                                                  this.id);
             resultObjs.unshift(newCrtObj);
 
@@ -605,6 +650,20 @@ export class ConnectedObj {
         polygonObj.id = this.id;
 
         return polygonObj;
+    }
+
+    makePointObjsOnPeaks(makeImgPt) {
+        if (!this.peaks) return [];
+
+        const pointObjs = this.peaks.map((onePeak) => {
+            const pt = makeImgPt(onePeak[0], onePeak[1]);
+
+            const pointObj = makePointDataObj(pt, 6);
+            pointObj.id = this.id;
+            return pointObj;
+        });
+
+        return pointObjs;
     }
 
     containPoint(pt) {

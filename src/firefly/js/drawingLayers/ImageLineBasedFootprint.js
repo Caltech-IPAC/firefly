@@ -1,23 +1,24 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {get, set, has, isEmpty, isString} from 'lodash';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import DrawLayerCntlr, {dispatchCreateDrawLayer, getDlAry, dlRoot, dispatchAttachLayerToPlot, RegionSelStyle,
                         RegionSelColor, dispatchSelectRegion} from '../visualize/DrawLayerCntlr.js';
-import {get, set, has, isEmpty, isString} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import ImageLineBasedObj, {convertConnectedObjsToRectObjs, convertConnectedObjsToPolygonObjs}
-                                                                         from '../visualize/draw/ImageLineBasedObj.js';
+import ImageLineBasedObj, {convertConnectedObjsToRectObjs, convertConnectedObjsToPolygonObjs,
+                          convertConnectedObjPeaksToPointObjs} from '../visualize/draw/ImageLineBasedObj.js';
 import {getUIComponent} from './ImageLineFootPrintUI.jsx';
 import {rateOpacity} from '../util/Color.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import {DrawSymbol} from '../visualize/draw/PointDataObj.js';
+
 
 const ID= 'ImageLineBasedFP_PLOT';
 const TYPE_ID= 'ImageLineBasedFP_PLOT_TYPE';
@@ -25,7 +26,7 @@ const factoryDef= makeFactoryDef(TYPE_ID, creator, getDrawData, getLayerChanges,
 export default {factoryDef, TYPE_ID};
 
 let idCnt=0;
-const colorList = [ 'blue', 'cyan', 'green', 'magenta', 'orange', 'lime', 'red',  'yellow'];
+const colorList = ['rgba(74, 144, 226, 1.0)', 'blue', 'cyan', 'green', 'magenta', 'orange', 'lime', 'red',  'yellow'];
 const colorN = colorList.length;
 
 function logError(message) {
@@ -66,7 +67,9 @@ function creator(initPayload) {
                                      {style: get(initPayload, 'style', Style.FILL),
                                       showText: get(initPayload, 'showText', false),
                                       canUseOptimization: true,
-                                      textLoc: TextLocation.CENTER});
+                                      textLoc: TextLocation.CENTER,
+                                      size: 6,
+                                      symbol: DrawSymbol.X});
 
     set(drawingDef, RegionSelStyle, 'SolidReplace');
     set(drawingDef, RegionSelColor, 'orange');
@@ -80,7 +83,8 @@ function creator(initPayload) {
         canHighlight:true,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         hasPerPlotData: true,
-        destroyWhenAllDetached: true
+        destroyWhenAllDetached: true,
+        isPointData:true
     };
 
     const actionTypes = [DrawLayerCntlr.REGION_SELECT];
@@ -282,10 +286,11 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
     }
 
     const footprintAry =  get(drawLayer, ['imageLineBasedFP', 'polygonObjs']);
+    const pointAry =  get(drawLayer, ['imageLineBasedFP', 'peakPointObjs']);
     if (!footprintAry) return [];
     const plot = primePlot(visRoot(), plotId);
 
-    return footprintAry.filter((oneObj) => oneObj.id === highlightedFootprint.id)
+    const polyHighlight = footprintAry.filter((oneObj) => oneObj.id === highlightedFootprint.id)
                         .reduce((prev, oneFP) => {
                              const newhObj = DrawOp.makeHighlight(oneFP, plot, drawingDef);
                              newhObj.highlight = 1;
@@ -296,6 +301,17 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
                              prev.push(newhObj);
                              return prev;
                         }, []);
+    const pointHighlight = pointAry.filter((oneObj) => oneObj.id === highlightedFootprint.id)
+                                    .reduce((prev, onePoint) => {
+                                    const pointObj = clone(onePoint, {symbol: (drawingDef.symbol || DrawSymbol.X)});
+                                    const newhObj = DrawOp.makeHighlight(pointObj, plot, drawingDef);
+                                    newhObj.highlight = 1;
+
+                                    prev.push(newhObj);
+                                    return prev;
+                            }, []);
+    return [...polyHighlight,...pointHighlight];
+
 }
 
 function plotLayer(dl, plotId) {
@@ -308,10 +324,11 @@ function plotLayer(dl, plotId) {
     const zeroObjs = convertConnectedObjsToRectObjs(imageLineBasedFP, false, false, rateOpacity('red', 0.5), Style.FILL);
 
     //for 'outline' mode and 'fill' mode, add polygon outline to 'fill' display
-    const polyColor = (style === Style.FILL) ? 'rgb(74, 144, 226)' : null;
+    const polyColor = (style === Style.FILL) ? color : null;
     const polyObjs = convertConnectedObjsToPolygonObjs(imageLineBasedFP, false, showText, polyColor, Style.STANDARD);
+    const pointObjs = convertConnectedObjPeaksToPointObjs(imageLineBasedFP, false);
 
-    const outputObjs = [...oneObjs,...zeroObjs,...polyObjs];
+    const outputObjs = [...oneObjs,...zeroObjs,...polyObjs,...pointObjs];
 /*
     const cc = CsysConverter.make(primePlot(visRoot(), plotId));
     outputObjs.forEach((oneObj) => {
