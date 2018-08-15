@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -92,7 +93,8 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
     }
 
     public String getUniqueID(ServerRequest request) {
-        return request.getRequestId() + "-" + StringUtils.toString(request.getParams());
+        String id = ServerContext.getRequestOwner().isAuthUser() ? ServerContext.getRequestOwner().getUserInfo().getLoginName() : "";
+        return request.getRequestId() + "-" + id + "-" + StringUtils.toString(request.getParams());
     }
 
     public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
