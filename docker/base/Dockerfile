@@ -17,6 +17,16 @@ RUN apt-get update && apt-get install -y \
         && rm -rf var/lib/apt/lists//*
 
 
+# create catalina_base directory .. so tomcat can run as non-root
+ENV CATALINA_HOME=/usr/local/tomcat
+ENV CATALINA_BASE=/usr/local/tomcat-base
+WORKDIR ${CATALINA_BASE}
+RUN chmod g-s ${CATALINA_BASE} && \
+    mkdir bin conf lib logs temp webapps work && \
+    cp ${CATALINA_HOME}/conf/* ${CATALINA_BASE}/conf/ && \
+    chmod +rw ${CATALINA_BASE}/conf/*
+
+
 # These environment varibles are not really made to be overridden
 # they can be but are mostly for setup
 ENV JPDA_ADDRESS=5050
@@ -24,8 +34,8 @@ ENV CATALINA_PID=${CATALINA_BASE}/bin/catalina.pid
 
 # work dir and config dir might be overridden if they were used in a mounted volume
 # in the case make sure the directories exist
-ENV SERVER_CONFIG_DIR=/usr/local/tomcat/firefly-config
-ENV FIREFLY_WORK_DIR=/usr/local/tomcat/firefly-work
+ENV SERVER_CONFIG_DIR=${CATALINA_BASE}/firefly-config
+ENV FIREFLY_WORK_DIR=${CATALINA_BASE}/firefly-work
 ENV EXTERNAL_MOUNT_POINT=/external
 ENV VISUALIZE_FITS_SEARCH_PATH=${EXTERNAL_MOUNT_POINT}
 
@@ -33,31 +43,30 @@ ENV VISUALIZE_FITS_SEARCH_PATH=${EXTERNAL_MOUNT_POINT}
 ARG IMAGE_NAME=''
 ENV BUILD_TIME_NAME=${IMAGE_NAME}
 
+
+
 # These are the file there are executed at startup, they start tomcat
 COPY launchTomcat.sh \
      start-examples.txt \
-     setupSharedCacheJars.sh /usr/local/tomcat/
-
-# Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
-RUN chmod +x /usr/local/tomcat/launchTomcat.sh /usr/local/tomcat/setupSharedCacheJars.sh; \
-    mv /usr/local/tomcat/conf/context.xml /usr/local/tomcat/conf/context.xml.bak; \
-    mv /usr/local/tomcat/conf/tomcat-users.xml /usr/local/tomcat/conf/tomcat-users.xml.bak; \
-    rm -rf /usr/local/tomcat/webapps/examples \
-           /usr/local/tomcat/webapps/docs \
-           /usr/local/tomcat/webapps/host-manager \
-           /usr/local/tomcat/webapps/ROOT; \
-    mkdir -p ${SERVER_CONFIG_DIR}; \
-    mkdir -p ${FIREFLY_WORK_DIR}; \
-    mkdir -p ${EXTERNAL_MOUNT_POINT}
-
+     setupSharedCacheJars.sh ${CATALINA_BASE}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
 COPY tomcat-users.xml \
-     context.xml  /usr/local/tomcat/conf/
+     context.xml  ${CATALINA_BASE}/conf/
+
+
+# Make directories, make scripts executable, save old tomcat config files, remove unwanted apps
+RUN chmod +x ${CATALINA_BASE}/launchTomcat.sh ${CATALINA_BASE}/setupSharedCacheJars.sh; \
+    mkdir -p ${SERVER_CONFIG_DIR}; \
+    mkdir -p ${FIREFLY_WORK_DIR}; \
+    mkdir -p ${EXTERNAL_MOUNT_POINT}; \
+    chmod 777 bin conf lib logs temp webapps work ${SERVER_CONFIG_DIR} ${FIREFLY_WORK_DIR}; \
+    mv ${CATALINA_BASE}/conf/tomcat-users.xml ${CATALINA_BASE}/conf/tomcat-users.xml.in
+
 
 # setenv.sh is used to defined CATALINA_OPTS and JAVA_OPTS
-COPY setenv.sh /usr/local/tomcat/bin/
+COPY setenv.sh ${CATALINA_BASE}/bin/
 
 # 8080 - http
 # 5050 - debug
@@ -100,9 +109,13 @@ ENV FIREFLY_OPTS=''
 ENV SHARE_CACHE=FALSE
 
 
-
 #copy all wars, typically there should only be one
-COPY *.war /usr/local/tomcat/webapps/
+COPY *.war ${CATALINA_BASE}/webapps/
+
+RUN groupadd -g 91 tomcat && \
+    useradd -r -u 91 -g tomcat tomcat
+
+USER tomcat:tomcat
 
 #CMD ["bin/catalina.sh","jpda", "run"]
 #CMD ["/bin/bash", "./launchTomcat.sh"]
