@@ -159,20 +159,21 @@ export function getImageCoordsOnFootprint(pt, cc, pixelSys) {
     }
 }
 
-export function convertConnectedObjsToDrawObjs(imageLineObj, displayMode, fillColor, holeColor, outlineColor, showText, symbol, hideId) {
+export function convertConnectedObjsToDrawObjs(imageLineObj, displayMode, color,  showText, symbol, hideId) {
 
     // get rect of 'zero' regardless of the style
-    const zeroRectObjs = convertConnectedObjsToRectObjs(imageLineObj, false, holeColor, Style.FILL);
+    const zeroRectObjs = convertConnectedObjsToRectObjs(imageLineObj, false, color.hole, Style.FILL);
     // polygon outline
-    let polygonObjs = convertConnectedObjsToPolygonObjs(imageLineObj, showText, outlineColor, Style.STANDARD, hideId, true);
+    const polygonObjs = (displayMode === Style.FILL)?
+                        convertConnectedObjsToPolygonObjs(imageLineObj, false, color.outline, color.fill, displayMode, '', true) :
+                        convertConnectedObjsToPolygonObjs(imageLineObj, showText, color.outline, null, Style.STANDARD, hideId, true);
     // peak points
-    const pointObjs = convertConnectedObjPeaksToPointObjs(imageLineObj, outlineColor, symbol);
+    const pointObjs = convertConnectedObjPeaksToPointObjs(imageLineObj, color.outline, symbol);
 
     // fill objects
     let oneRectObjs = [];
     if (displayMode === Style.FILL) {
-        //polygonObjs = convertConnectedObjsToPolygonObjs(imageLineObj, false, fillColor, displayMode);
-        oneRectObjs = convertConnectedObjsToRectObjs(imageLineObj, true, fillColor, displayMode);
+        //oneRectObjs = convertConnectedObjsToRectObjs(imageLineObj, true, fillColor, displayMode);
     }
 
     //imageLineObj.drawObjAry = [...oneRectObjs,...polygonObjs,...pointObjs,...zeroRectObjs];
@@ -221,7 +222,7 @@ export function convertConnectedObjsToRectObjs(imageLineObj, bCovered = true, co
  * @param hideId    optional
  * @param bRemoveExist  optional reset the polygon objects
  */
-export function convertConnectedObjsToPolygonObjs(imageLineObj, showText, color, style, hideId='', bRemoveExist = false) {
+export function convertConnectedObjsToPolygonObjs(imageLineObj, showText, color, fillColor, style, hideId='', bRemoveExist = false) {
     const {connectedObjs, pixelSys} = imageLineObj;
     const makeImageFunc = getMakeImageFunc(pixelSys);
 
@@ -234,6 +235,8 @@ export function convertConnectedObjsToPolygonObjs(imageLineObj, showText, color,
                 prev.push(clone(oneObj, {
                     text: ((showText&&idx===0) ? oneObj.id : ''),
                     color,
+                    fillColor,
+                    strokeColor: (style === Style.FILL) ? color: null,
                     style
                 }));
             }

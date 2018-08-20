@@ -296,5 +296,6 @@ function plotLayer(dl) {
     const {imageLineBasedFP, hideFPId} = dl || {};
 
     if (!imageLineBasedFP || !imageLineBasedFP.connectedObjs) return null;
-    return convertConnectedObjsToDrawObjs(imageLineBasedFP, style, rateOpacity(color, 0.5), rateOpacity('red', 0.5), null, showText, null, hideFPId);
+    return convertConnectedObjsToDrawObjs(imageLineBasedFP, style,
+                                          {fill: rateOpacity(color, 0.5), outline: color, hole: rateOpacity('red', 0.5)}, showText, null, hideFPId);
 }

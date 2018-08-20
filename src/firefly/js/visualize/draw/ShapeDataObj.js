@@ -1045,9 +1045,8 @@ function drawCompositeObject(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  */
 function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
     const pt1 = getCenterOfProjection(plot);
-    const from = pt1.getCoordSys();
     const pt2 = convert(pt, plot.projection.coordSys);
-    const to = pt2.getCoordSys();
+
     /* world point to Cartesian coordinate */
     const WorldPtToxyz = (wpt) => {
         const sinRA = Math.sin(toRadians(wpt.x));
@@ -1220,7 +1219,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
                 }
                 const devPtAll = devPts.filter((pt) => pt);
                 const fillColor = drawObj.fillColor || color;
-                const strokeColor = rateOpacity(ctx.strokeStyle, 0);
+                const strokeColor = drawObj.strokeColor||rateOpacity(ctx.strokeStyle, 0);
 
                 DrawUtil.fillPath(ctx, fillColor, devPtAll, true, renderOptions, strokeColor);
             }
