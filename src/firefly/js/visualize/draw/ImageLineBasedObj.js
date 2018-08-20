@@ -1,100 +1,82 @@
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
-import {isEmpty, get} from 'lodash';
+import {get} from 'lodash';
 import ShapeDataObj from './ShapeDataObj.js';
 import {makePointDataObj} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
-import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
-import Point, {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt} from '../Point.js';
+import {Style} from './DrawingDef.js';
+import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt} from '../Point.js';
 import {clone} from '../../util/WebUtil.js';
+import {CoordinateSys} from '../CoordSys.js';
 
 const IMGFP_OBJ = 'ImgBasedFPObj';
-const DEF_WIDTH = 1;
 
 
-/**
- * @param data
- * @param style
- * @returns {null}
- */
-function make(data, style) {
-    //data = footprints256;
-    if (!data) return null;
+export const ImageLineBasedObj = (data) => {
+    if (!data) return {};
+
+    const retval = {};
+    retval.pixelSys = CoordinateSys.parse(get(data, 'pixelsys', 'pixel'));
+    retval.totalFeet = data.feet ? Object.keys(get(data, 'feet', {})).length : 0;
+    retval.connectedObjs = convertDataToConnectedObjs(get(data, 'feet', {}), retval.pixelSys);
+    retval.drawObjAry = {};
+
+    return retval;
+};
+
+function make(id, oneFootData, pixelSys) {
+    if (!oneFootData) return null;
+    const {corners, spans, peaks=[]} = oneFootData;
 
     const obj = DrawObj.makeDrawObj();
-    const pixelSys = get(data, 'pixelsys', Point.IM_PT).toLowerCase();
-
+    obj.pixelSys = pixelSys;
     obj.type = IMGFP_OBJ;
-    obj.totalFeet = data.feet ? Object.keys(data.feet).length : 0;
-    obj.connectedObjs = convertDataToConnectedObjs(data.feet);
-    obj.pixelSys = pixelSys.includes('zero') ? Point.ZERO_BASED_IM_PT
-                                             : (pixelSys.includes('fits') ? Point.FITS_IM_PT : pixelSys);
-    obj.style = style;
-
-    // make basic rect objs containing 'on' cells, or 'off' cells, basic polygon objs based on feet data
-    // those objs has no color, style, or text
-    convertConnectedObjsToRectObjs(obj, true);
-    convertConnectedObjsToRectObjs(obj, false);
-    convertConnectedObjsToPolygonObjs(obj);
-    convertConnectedObjPeaksToPointObjs(obj);
-
-
+    obj.id = id;
+    obj.connectObj = ConnectedObj.make(corners, spans, peaks, id);
     return obj;
 }
 
 const draw= {
 
     usePathOptimization(drawObj) {
-        return drawObj.lineWidth === 1;
+        return false;
     },
 
     getCenterPt(drawObj) {
-        var {drawObjAry}= drawObj;
-        var xSum = 0;
-        var ySum = 0;
-        var xTot = 0;
-        var yTot = 0;
+        const {connectObj}= drawObj;
+        const makeImageFunc = getMakeImageFunc(drawObj.pixelSys);
 
-        if (drawObjAry) {
-            drawObjAry.forEach((obj) => {
-                if (obj && obj.pts) {
-                    obj.pts.forEach((wp) => {
-                        xSum += wp.x;
-                        ySum += wp.y;
-                        xTot++;
-                        yTot++;
-                    });
-                }
-            });
-            return makeWorldPt(xSum / xTot, ySum / yTot);
+        if (connectObj && connectObj.centerPt) {
+            return makeWorldPt(makeImageFunc(connectObj.centerPt[0], connectObj.centerPt[1]));
         } else {
-            return makeWorldPt(xSum, ySum);
+            return makeWorldPt(makeImageFunc(0, 0));
         }
     },
 
     getScreenDist(drawObj, plot, pt) {
         let minDist = Number.MAX_VALUE;
 
-        const {drawObjAry} = drawObj || {};
+        const {connectObj}= drawObj;
+        const makeImageFunc = getMakeImageFunc(drawObj.pixelSys);
 
-        if (drawObjAry) {
-            drawObjAry.forEach((dObj) => {
-                const d = ShapeDataObj.draw.getScreenDist(dObj, plot, pt);
-                if (d < minDist) {
-                    minDist = d;
-                }
-            });
+        if (connectObj && connectObj.centerPt) {
+            const cPt = plot.getScreenCoords(makeImageFunc(connectObj.centerPt[0], connectObj.centerPt[1]));
+            const d = Math.sqrt((cPt.x - pt.x)**2 + (cPt.y - pt.y)**2);
+
+            if (d < minDist) {
+                minDist = d;
+            }
         }
+
         return minDist;
     },
 
     draw(drawObj, ctx, plot, def, vpPtM, onlyAddToPath) {
-        const drawParams = makeDrawParams(drawObj, def);
-        drawFootprintObj(drawObj, ctx, plot, drawParams, vpPtM, onlyAddToPath);
+        drawFootprintObj(ctx, plot, drawObj, def, vpPtM, onlyAddToPath);
     },
 
     toRegion(drawObj, plot, def) {
-        return toRegion(drawObj.drawObjAry, plot, makeDrawParams(drawObj, def), drawObj.renderOptions);
+        return toRegion(drawObj, plot, def);
     },
 
     translateTo(drawObj, plot, apt) {
@@ -108,60 +90,44 @@ const draw= {
 
 export default {make,draw, IMGFP_OBJ};
 
-function makeDrawParams(drawObj,def) {
-    const style= drawObj.style || def.style || Style.STANDARD;
-    const lineWidth= drawObj.lineWidth || def.lineWidth || DEF_WIDTH;
-    const textLoc= drawObj.textLoc || def.textLoc || TextLocation.DEFAULT;
-    const fontName= drawObj.fontName || def.fontName || 'helvetica';
-    const fontSize= drawObj.fontSize || def.fontSize || DEFAULT_FONT_SIZE;
-    const fontWeight= drawObj.fontWeight || def.fontWeight || 'normal';
-    const fontStyle= drawObj.fontStyle || def.fontStyle || 'normal';
-    const rotationAngle = drawObj.rotationAngle||undefined;
-    const color = drawObj.color || def.color || 'green';
 
-    return {
-        color,
-        lineWidth,
-        textLoc,
-        style,
-        fontName,
-        fontSize,
-        fontWeight,
-        fontStyle,
-        rotationAngle
-    };
-}
+function drawFootprintObj(ctx, cc, drawObj, def, vpPtM, onlyAddToPath) {
+    const {connectObj, pixelSys} = drawObj;
+    const makeImageFunc = getMakeImageFunc(pixelSys);
 
-function drawFootprintObj(fpObj, ctx, cc, drawParams, vpPtM,onlyAddToPath) {
-    const {drawObjAry} = fpObj;
+    if (connectObj && cc) {
+        const {x1, x2, y1, y2} = connectObj;
+        const cornerInView = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]].findIndex((c) => {
+            const pt = makeImageFunc(c[0], c[1]);
+            return (pt && cc.pointOnDisplay(pt));
+        });
 
-    drawObjAry && drawObjAry.forEach((dObj) => {
-        DrawOp.draw(dObj, ctx, cc, drawParams, vpPtM, onlyAddToPath);
-    });
-}
-
-
-function toRegion(drawObjAry, plot, drawParams) {
-    return drawObjAry.reduce((prev, dObj) => {
-        const regList = DrawOp.toRegion(dObj, plot, drawParams);
-
-        if (!isEmpty(regList)) {
-            prev.push(...regList);
+        if (cornerInView >= 0) {
+            connectObj.draw(ctx, cc, def, vpPtM, onlyAddToPath);
         }
+    }
+}
+
+function toRegion(drawObj, plot, def) {
+    const {connectObj} = drawObj;
+    const {polygonObjs=[], pointObjs=[]} = connectObj.drawObjs || {};
+
+    return [...polygonObjs,...pointObjs].reduce((prev, obj) => {
+        const regList = DrawOp.toRegion(obj, plot, def);
+        prev.push(...regList);
 
         return prev;
     }, []);
 }
 
 
-function convertDataToConnectedObjs(data) {
+function convertDataToConnectedObjs(data, pixelSys) {
     return Object.keys(data).reduce((prev, id) => {
-        const oneFootData = data[id];
-        const {corners, spans, peaks=[]} = oneFootData;
-        const connectObj = ConnectedObj.make(corners, spans, peaks, id);
-        const resultObjs = connectObj.splitOnEmptyLine();
+        const connectObj = make(id, data[id], pixelSys);
 
-        prev.push(...resultObjs);
+        if (connectObj) {
+            prev.push(connectObj);
+        }
         return prev;
     }, []);
 }
@@ -170,9 +136,9 @@ function convertDataToConnectedObjs(data) {
 const getMakeImageFunc = (imageSys) => {
     let makeImageFunc;
 
-    if (imageSys === Point.ZERO_BASED_IM_PT) {
+    if (imageSys === CoordinateSys.ZEROBASED) {
         makeImageFunc = makeZeroBasedImagePt;
-    } else if (imageSys === Point.FITS_IM_PT) {
+    } else if (imageSys === CoordinateSys.FITSPIXEL) {
         makeImageFunc = makeFitsImagePt;
     } else {
         makeImageFunc = makeImagePt;
@@ -181,129 +147,144 @@ const getMakeImageFunc = (imageSys) => {
     return makeImageFunc;
 };
 
+export function getImageCoordsOnFootprint(pt, cc, pixelSys) {
+    const imgPt = cc.getImageCoords(pt);
+
+    if (pixelSys === CoordinateSys.ZEROBASED) {
+        return cc.getZeroBasedImagePtFromInternal(imgPt);
+    } else if (pixelSys === CoordinateSys.FITSPIXEL) {
+        return cc.getFitsStandardImagePtFromInternal(imgPt);
+    } else {
+        return imgPt;
+    }
+}
+
+export function convertConnectedObjsToDrawObjs(imageLineObj, displayMode, fillColor, holeColor, outlineColor, showText, symbol, hideId) {
+
+    // get rect of 'zero' regardless of the style
+    const zeroRectObjs = convertConnectedObjsToRectObjs(imageLineObj, false, holeColor, Style.FILL);
+    // polygon outline
+    let polygonObjs = convertConnectedObjsToPolygonObjs(imageLineObj, showText, outlineColor, Style.STANDARD, hideId, true);
+    // peak points
+    const pointObjs = convertConnectedObjPeaksToPointObjs(imageLineObj, outlineColor, symbol);
+
+    // fill objects
+    let oneRectObjs = [];
+    if (displayMode === Style.FILL) {
+        //polygonObjs = convertConnectedObjsToPolygonObjs(imageLineObj, false, fillColor, displayMode);
+        oneRectObjs = convertConnectedObjsToRectObjs(imageLineObj, true, fillColor, displayMode);
+    }
+
+    //imageLineObj.drawObjAry = [...oneRectObjs,...polygonObjs,...pointObjs,...zeroRectObjs];
+    return imageLineObj.connectedObjs;
+    //return imageLineObj.drawObjAry;
+}
 
 /**
  * create rectangle drawObjs based on the one or zero segments in the ImageLineBasedObj
  * @param imageLineObj
  * @param bCovered   one segment or zero segment
- * @param isOriginal
  * @param color      optional
  * @param style      optional
+ * @param hideId
  */
-export function convertConnectedObjsToRectObjs(imageLineObj, bCovered = true, isOriginal = true, color, style) {
+export function convertConnectedObjsToRectObjs(imageLineObj, bCovered = true, color, style, hideId) {
 
-    const cloneObjs = (objs) => {
+    const {connectedObjs, pixelSys} = imageLineObj;
+    const makeImageFunc = getMakeImageFunc(pixelSys);
 
-        return objs.map((oneObj) => {
-            const newObj = clone(oneObj);
-
-            if (color) newObj.color = color;
-            if (style) newObj.style = style;
-            return newObj;
-        });
-    };
-
-    if (bCovered && imageLineObj.oneRectObjs) {
-        return cloneObjs(imageLineObj.oneRectObjs);
-    } else if ((!bCovered) && (imageLineObj.zeroRectObjs)) {
-        return cloneObjs(imageLineObj.zeroRectObjs);
-    } else {
-
-        const {connectedObjs, pixelSys} = imageLineObj;
-        const makeImageFunc = getMakeImageFunc(pixelSys);
-
-        const resultObjs = connectedObjs.reduce((prev, oneConnectObj) => {
-            const drawObjs = oneConnectObj.makeRectDrawObjs(makeImageFunc, bCovered);
-
-            prev.push(...drawObjs);
-
-            return prev;
-        }, []);
-        if (bCovered) {
-            imageLineObj.oneRectObjs = resultObjs;
+    return connectedObjs.reduce((prev, oneFootprintObj) => {
+        const oneConnectObj = oneFootprintObj.connectObj;
+        if (style !== Style.FILL && bCovered) {
+            oneConnectObj.drawObjs[ONERECTS] = [];
         } else {
-            imageLineObj.zeroRectObjs = resultObjs;
+            const basicObjs = oneConnectObj.makeRectDrawObjs(makeImageFunc, bCovered);
+            const drawObjs = basicObjs.reduce((prev, oneObj) => {
+                if (!hideId || hideId !== oneObj.id) {
+                    prev.push(clone(oneObj, {style, color}));
+                }
+                return prev;
+            }, []);
+            bCovered ? oneConnectObj.drawObjs[ONERECTS] = drawObjs : oneConnectObj.drawObjs[ZERORECTS] = drawObjs;
         }
-        return isOriginal ? resultObjs : cloneObjs(resultObjs);
-    }
+        bCovered ? prev.push(...oneConnectObj.drawObjs[ONERECTS]): prev.push(...oneConnectObj.drawObjs[ZERORECTS]);
+        return prev;
+    }, []);
 }
 
 /**
  * create polygon drawObjs based on the footprint data
  * @param imageLineObj
- * @param isOriginal
  * @param showText  optional
  * @param color     optional
  * @param style     optional
+ * @param hideId    optional
+ * @param bRemoveExist  optional reset the polygon objects
  */
-export function convertConnectedObjsToPolygonObjs(imageLineObj, isOriginal = true, showText, color, style){
-
-    const cloneObjs = (objs) => {
-        return (objs).map((oneObj) => {
-            const newObj = clone(oneObj);
-
-            if (color) newObj.color = color;
-            if (style) newObj.style = style;
-            newObj.text = (showText) ? newObj.id : '';
-            return newObj;
-        });
-    };
-
-    if (imageLineObj.polygonObjs) {
-        return cloneObjs(imageLineObj.polygonObjs);
-    }
-
+export function convertConnectedObjsToPolygonObjs(imageLineObj, showText, color, style, hideId='', bRemoveExist = false) {
     const {connectedObjs, pixelSys} = imageLineObj;
-    const makeImageFunc =  getMakeImageFunc(pixelSys);
+    const makeImageFunc = getMakeImageFunc(pixelSys);
 
-    const polyDrawObjs = connectedObjs.map((oneCObj) => {
-        return oneCObj.makePolygonDrawObjs(makeImageFunc);
-    });
+    return connectedObjs.reduce((prev, oneFootprintObj) => {
+        const oneCObj = oneFootprintObj.connectObj;
+        const basicPolys = oneCObj.makePolygonDrawObjs(makeImageFunc);
 
-    imageLineObj.polygonObjs = polyDrawObjs;
-    return isOriginal ? polyDrawObjs : cloneObjs(polyDrawObjs);
+        const polyObjs = basicPolys.reduce((prev, oneObj, idx) => {
+            if (!hideId || oneObj.id !== hideId) {
+                prev.push(clone(oneObj, {
+                    text: ((showText&&idx===0) ? oneObj.id : ''),
+                    color,
+                    style
+                }));
+            }
+            return prev;
+        }, []);
+
+        if (oneCObj.drawObjs[POLYOBJS]&&!bRemoveExist) {
+            oneCObj.drawObjs[POLYOBJS].push(...polyObjs);
+        } else {
+            oneCObj.drawObjs[POLYOBJS] = polyObjs;
+        }
+
+        prev.push(...oneCObj.drawObjs[POLYOBJS]);
+        return prev;
+    }, []);
 }
 
 /**
  * create point drawObjs based on the footprint peaks
  * @param imageLineObj
- * @param isOriginal
- * @param symbolType
  * @param color
- * @param text
+ * @param symbol
+ * @param hideId
  * @returns {*}
  */
-export function convertConnectedObjPeaksToPointObjs(imageLineObj, isOriginal = true,
-                                                    symbolType, color, text) {
-
-    const cloneObjs = (objs) => {
-        return (objs).map((oneObj) => {
-            const newObj = clone(oneObj);
-
-            if (symbolType) newObj.symbol = symbolType;
-            if (color) newObj.color = color;
-            if (text) newObj.text = text;
-            return newObj;
-        });
-    };
-
-    if (imageLineObj.peakPointObjs) {
-        return cloneObjs(imageLineObj.peakPointObjs);
-    }
-
+export function convertConnectedObjPeaksToPointObjs(imageLineObj, color, symbol, hideId) {
     const {connectedObjs, pixelSys} = imageLineObj;
     const makeImageFunc =  getMakeImageFunc(pixelSys);
 
-    const points = connectedObjs.reduce((prev, oneCObj) => {
-        const pointObjs = oneCObj.makePointObjsOnPeaks(makeImageFunc);
-        prev.push(...pointObjs);
+    return connectedObjs.reduce((prev, oneFootprintObj) => {
+        const oneCObj = oneFootprintObj.connectObj;
+        const basicPoints = oneCObj.makePointObjsOnPeaks(makeImageFunc);
+
+        oneCObj.drawObjs[POINTOBJS] = basicPoints.reduce((prev, oneObj) => {
+                if (!hideId || hideId !== oneObj.id) {
+                    prev.push(clone(oneObj, {symbol, color}));
+                }
+                return prev;
+        }, []);
+
+        prev.push(... oneCObj.drawObjs[POINTOBJS]);
         return prev;
     }, []);
-
-    imageLineObj.peakPointObjs = points;
-    return isOriginal ? points : cloneObjs(points);
 }
 
+
+export const ONERECTS = 'oneRectObjs';
+export const ZERORECTS = 'zeroRectObjs';
+export const POLYOBJS = 'polygonObjs';
+export const POINTOBJS = 'pointObjs';
+const AllObjTypes = [ONERECTS, POLYOBJS, POINTOBJS, ZERORECTS];
 
 export class ConnectedObj {
     constructor(corners, spans, peaks, id) {
@@ -317,6 +298,16 @@ export class ConnectedObj {
         this.y1 = Number(Math.min(corners[0][1], corners[2][1]));
         this.x2 = Number(Math.max(corners[0][0], corners[2][0]));
         this.y2 = Number(Math.max(corners[0][1], corners[2][1]));
+        this.centerPt = [(this.x1+this.x2)/2, (this.y1+this.y2)/2];
+        this.basicObjs = AllObjTypes.reduce((prev, oneType) => {
+            prev[oneType] = null;
+            return prev;
+        }, {});
+        this.drawObjs = AllObjTypes.reduce((prev, oneType) => {
+            prev[oneType] = null;
+            return prev;
+        }, {});
+
     }
 
     static make(corners, data, peaks, id) {
@@ -450,7 +441,9 @@ export class ConnectedObj {
         //each segment contain [x1, x2, toBeRemoved=0/1]
         for (let y = y1; y <= y2; y++) {
             const segNo = this.oneSegments[y].length;
-            if (segNo === 0) continue;
+            if (segNo === 0) {
+                continue;
+            }
 
             const toBeRemoved = (y === y1) || (y === y2) ? 1 : 0;
             let   oneSeg = this.oneSegments[y][0];
@@ -547,9 +540,15 @@ export class ConnectedObj {
     }
 
     makeRectDrawObjs(makeImgPt, bCovered) {
+        if (bCovered && this.basicObjs[ONERECTS]) {
+            return this.basicObjs[ONERECTS];
+        } else if (!bCovered && this.basicObjs[ZERORECTS]) {
+            return this.basicObjs[ZERORECTS];
+        }
+
         const segs = bCovered ? this.getOneSegments() : this.getZeroSegments();
 
-        return Object.keys(segs).reduce((prev, y) => {
+        const objs = Object.keys(segs).reduce((prev, y) => {
             const rectObjs = segs[y].map((oneSeg) => {
                 const pt1 = makeImgPt(oneSeg[0]-0.5, Number(y)-0.5);
                 const pt2 = makeImgPt(oneSeg[1]+0.5, Number(y)+0.5);
@@ -561,13 +560,21 @@ export class ConnectedObj {
             prev.push(...rectObjs);
             return prev;
         }, []);
+
+        bCovered ? this.basicObjs[ONERECTS] = objs : this.basicObjs[ZERORECTS] = objs;
+
+        return objs;
     }
 
 
     // trace the contour of the footprint outmost pixel counterclockwise
     // direction to trace the contour
     // 0: east, 1: NE, 2: N, 3: NW, 4: West, 5: SW, 6: S, 7: SE
+    // one footprint may contain more than one polygon
     makePolygonDrawObjs(makeImgPt) {
+        if (this.basicObjs[POLYOBJS]) {
+            return this.basicObjs[POLYOBJS];
+        }
         const {x1, x2, y1, y2} = this;
         const w = x2 - x1 + 1;
         const h = y2 - y1 + 1;
@@ -583,7 +590,8 @@ export class ConnectedObj {
                                 6: [1, 2, 3, 4, 5, 6],
                                 7: [1, 2, 3, 4, 5, 6, 7]};
         const [EAST, NE, NORTH, NW, WEST, SW, SOUTH, SE] = [0, 1, 2, 3, 4, 5, 6, 7];
-        const POLYSTART = 2;
+        const POLYTRACED = 2;
+        const POLYSTART = 3;
         const {oneSegments, zeroSegments} = this.getSegments();
 
         // set matrix
@@ -602,66 +610,97 @@ export class ConnectedObj {
                     m[i][x-x1] = 1;
                 }
             }
-
         }
 
-        const polyPts = [];
+        const inSegment = (segments, x, y) => {
+            const segs = segments[y];
 
-        // trace contour from lowest row of the matrix
-        const startX = m[0].findIndex((x) => (x === 1));
-        let   fromDirection = WEST;
-        polyPts.push([startX, 0]);
-        m[0][startX] = POLYSTART;
+            return segs.find((seg) => {
+                return (x >= seg[0] && x <= seg[1]);
+            });
+        };
 
-        let crtX = startX, crtY = 0;
-        let nextX, nextY;
-        let foundPt = null;
+        const collectPolyPts = (startX, startY) => {
+            let crtX = startX;
+            let crtY = startY;
+            let nextX, nextY;
+            let foundPt;
+            let fromDirection = WEST;
 
+            m[startY][startX] = POLYSTART;
+            const polyPts = [[startX, startY]];
 
-        while (true) {
-            foundPt = null;
-            for (let n = 0; n < NextDirection[fromDirection].length; n++) {
-                const next = NextDirection[fromDirection][n];
-                nextX = crtX + Loc[next][0];
-                if (nextX < 0 || nextX >= w) {
-                    continue;
+            while (true) {
+                foundPt = null;
+                for (let n = 0; n < NextDirection[fromDirection].length; n++) {
+                    const next = NextDirection[fromDirection][n];
+                    nextX = crtX + Loc[next][0];
+                    if (nextX < 0 || nextX >= w) {
+                        continue;
+                    }
+                    nextY = crtY + Loc[next][1];
+                    if (nextY < 0 || nextY >= h) {
+                        continue;
+                    }
+
+                    if (m[nextY][nextX] === POLYSTART) {
+                        break;
+                    } else if (m[nextY][nextX] >= 1) {
+                        m[nextY][nextX] = POLYTRACED;
+                        foundPt = [nextX, nextY];
+                        fromDirection = (Number(next) + 4) % 8;
+                        break;
+                    }
                 }
-                nextY = crtY + Loc[next][1];
-                if (nextY < 0 || nextY >= h) {
-                    continue;
-                }
-                if (m[nextY][nextX] === 1) {
-                    //m[nextY][nextX] = 2;        // mark 'traced'
-                    foundPt = [nextX, nextY];
-                    fromDirection = (Number(next)+4)%8;
-                    break;
-                } else if (m[nextY][nextX] === POLYSTART) {
-                    break;
+                if (foundPt) {
+                    crtX = foundPt[0];
+                    crtY = foundPt[1];
+                    polyPts.push([foundPt[0], foundPt[1]]);
+                } else {
+                    break;   // done
                 }
             }
+            if (polyPts.length < 3) {
+                for (let t = 3 - polyPts.length; t >= 1; t--) {
+                    polyPts.push(polyPts[0]);
+                }
+            }
+            return polyPts;
+        };
 
-            if (foundPt) {
-                crtX = foundPt[0];
-                crtY = foundPt[1];
-                polyPts.push([foundPt[0], foundPt[1]]);
-            } else {
-                break;   // done
+
+        for (let scanY = 0; scanY < h; scanY++) {
+            let inLine = false;
+            for (let scanX = 0; scanX < w; scanX++) {
+                if (m[scanY][scanX] === 1 && !inLine) {
+                    const newPolyPts = collectPolyPts(scanX, scanY);
+                    const ptAry = newPolyPts.map((onePt) => makeImgPt(onePt[0]+x1, onePt[1]+y1));
+
+                    const polygonObj = ShapeDataObj.makePolygon(ptAry);
+                    polygonObj.id = this.id;
+
+                    if (this.basicObjs[POLYOBJS]) {
+                        this.basicObjs[POLYOBJS].push(polygonObj);
+                    } else {
+                        this.basicObjs[POLYOBJS] = [polygonObj];
+                    }
+                    inLine = true;
+                } else if (m[scanY][scanX] >= POLYTRACED && !inLine) {
+                    inLine = true;
+                } else if (m[scanY][scanX] === 0 && inLine && !inSegment(zeroSegments, scanX+x1, scanY+y1)) {
+                    inLine = false;
+                }
             }
         }
 
-        const ptAry = polyPts.map((onePt) => makeImgPt(onePt[0]+x1, onePt[1]+y1));
 
-        const polygonObj = ShapeDataObj.makePolygon(ptAry);
-        polygonObj.id = this.id;
-
-        polygonObj.centerPt = makeImgPt((x1+x2)/2, (y1+y2)/2);
-        polygonObj.parentConnectObj = this;
-        polygonObj.id = this.id;
-
-        return polygonObj;
+        return this.basicObjs[POLYOBJS];
     }
 
     makePointObjsOnPeaks(makeImgPt) {
+        if (this.basicObjs[POINTOBJS]) {
+            return this.basicObjs[POINTOBJS];
+        }
         if (!this.peaks) return [];
 
         const pointObjs = this.peaks.map((onePeak) => {
@@ -672,12 +711,32 @@ export class ConnectedObj {
             return pointObj;
         });
 
+        this.basicObjs[POINTOBJS] = pointObjs;
         return pointObjs;
     }
 
     containPoint(pt) {
-        const {x1, x2, y1, y2} = this;
+        const {x1, x2, y1, y2, centerPt} = this;
 
-        return (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2);
+        const inside = (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2);
+        if (inside) {
+            return {inside, dist:  (Math.sqrt((centerPt[0] - pt.x)**2 + (centerPt[1] - pt.y)**2))};
+        } else {
+            return {inside};
+        }
+    }
+
+    draw(ctx, cc, def,  vpPtM, onlyAddToPath) {
+
+        const allObjs = AllObjTypes.reduce((prev, oneObjType) => {
+            if (this.drawObjs[oneObjType]) {
+                prev.push(...this.drawObjs[oneObjType]);
+            }
+            return prev;
+        }, []);
+
+       allObjs.forEach((oneObj) => {
+           DrawOp.draw(oneObj, ctx, cc, def, vpPtM, onlyAddToPath);
+       });
     }
 }

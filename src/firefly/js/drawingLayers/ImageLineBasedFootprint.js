@@ -10,15 +10,13 @@ import DrawLayerCntlr, {dispatchCreateDrawLayer, getDlAry, dlRoot, dispatchAttac
                         RegionSelColor, dispatchSelectRegion} from '../visualize/DrawLayerCntlr.js';
 import {clone} from '../util/WebUtil.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import ImageLineBasedObj, {convertConnectedObjsToRectObjs, convertConnectedObjsToPolygonObjs,
-                          convertConnectedObjPeaksToPointObjs} from '../visualize/draw/ImageLineBasedObj.js';
+import {ImageLineBasedObj, convertConnectedObjsToDrawObjs, getImageCoordsOnFootprint, POLYOBJS, POINTOBJS} from '../visualize/draw/ImageLineBasedObj.js';
 import {getUIComponent} from './ImageLineFootPrintUI.jsx';
 import {rateOpacity} from '../util/Color.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {DrawSymbol} from '../visualize/draw/PointDataObj.js';
-
 
 const ID= 'ImageLineBasedFP_PLOT';
 const TYPE_ID= 'ImageLineBasedFP_PLOT_TYPE';
@@ -40,8 +38,8 @@ export function imageLineBasedfootprintActionCreator(action) {
         if (!drawLayerId) {
             logError('no lsst drawlayer id specified');
         } else {
-            const imageLineBasedFP = ImageLineBasedObj.make(footprintData, style);
-            if (imageLineBasedFP) {
+            const imageLineBasedFP = ImageLineBasedObj(footprintData);
+            if (!isEmpty(imageLineBasedFP)) {
                 const dl = getDrawLayerById(getDlAry(), drawLayerId);
                 if (!dl) {
                     dispatchCreateDrawLayer(TYPE_ID, {
@@ -68,7 +66,7 @@ function creator(initPayload) {
                                       showText: get(initPayload, 'showText', false),
                                       canUseOptimization: true,
                                       textLoc: TextLocation.CENTER,
-                                      size: 6,
+                                      size: 3,
                                       symbol: DrawSymbol.X});
 
     set(drawingDef, RegionSelStyle, 'SolidReplace');
@@ -97,7 +95,6 @@ function creator(initPayload) {
     return dl;
 }
 
-
 /**
  * find the drawObj which is selected for highlight
  * @param mouseStatePayload
@@ -108,40 +105,22 @@ function highlightChange(mouseStatePayload) {
     var done = false;
     var closestInfo = null;
     var closestObj = null;
-    const maxChunk = 500;
+    const maxChunk = 1000;
 
-    const {polygonObjs=[]} = get(drawLayer, ['imageLineBasedFP']);
+    const {connectedObjs, pixelSys} = get(drawLayer, 'imageLineBasedFP') || {};
     const plot = primePlot(visRoot(), plotId);
+    const cc = CsysConverter.make(plot);
+    const tPt = getImageCoordsOnFootprint(screenPt, cc, pixelSys);
 
 
     function* getDrawObj() {
         let index = 0;
 
-        while (index < polygonObjs.length) {
-            yield polygonObjs[index++];
+        while (index < connectedObjs.length) {
+            yield connectedObjs[index++];
         }
     }
     var gen = getDrawObj();
-
-    const isInsidePolygon  = (polyObj) => {
-        if (polyObj.parentConnectObj) {
-            const cc = CsysConverter.make(plot);
-            const tPt = cc.getZeroBasedImagePtFromInternal(cc.getImageCoords(screenPt));
-
-            if (polyObj.parentConnectObj.containPoint(tPt)) {
-
-                const deltaXSq = (polyObj.centerPt.x - tPt.x) ** 2;
-                const  deltaYSq = (polyObj.centerPt.y - tPt.y) ** 2;
-                return {inside: true, dist: Math.sqrt(deltaXSq + deltaYSq)};
-            } else {
-                return {inside: false};
-            }
-        } else {
-            return DrawOp.isScreenPointInside(screenPt, polyObj, plot);
-        }
-    };
-
-
 
     const sId = window.setInterval( () => {
         if (done) {
@@ -163,7 +142,7 @@ function highlightChange(mouseStatePayload) {
             var dObj = gen.next().value;
 
             if (dObj) {
-                const distInfo = isInsidePolygon(dObj);
+                const distInfo = dObj.connectObj.containPoint(tPt);
 
                 if (distInfo.inside) {
                     if (!closestInfo || closestInfo.dist > distInfo.dist) {
@@ -204,8 +183,6 @@ function getLayerChanges(drawLayer, action) {
 
     const dd = Object.assign({}, drawLayer.drawData);
 
-    console.log('action: '+action.type);
-
     switch (action.type) {
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             if (!plotIdAry && !plotId) return null;
@@ -230,20 +207,16 @@ function getLayerChanges(drawLayer, action) {
 
         case DrawLayerCntlr.REGION_SELECT:
             const {selectedRegion} = action.payload;
+            let   hideFPId = '';
 
             Object.keys(dd[DataTypes.HIGHLIGHT_DATA]).forEach((plotId) => {   // reset all highlight
                 set(dd[DataTypes.HIGHLIGHT_DATA], plotId, null);              // deHighlight previous selected one
             });
 
-            if (drawLayer.highlightedFootprint) {
-                if (!selectedRegion || selectedRegion !== drawLayer.highlightedFootprint) {
-                    drawLayer.highlightedFootprint.isRendered = 1;
-                }
-            }
 
             if (selectedRegion) {
                 if (has(drawLayer, 'selectMode.selectStyle') && drawLayer.selectMode.selectStyle.includes('Replace')) {
-                    selectedRegion.isRendered = 0;     // not show, show highlighted one instead
+                    hideFPId = selectedRegion.id;
 
                     Object.keys(dd[DataTypes.DATA]).forEach((plotId) => {
                         set(dd[DataTypes.DATA], plotId, null);               // will update data objs
@@ -251,7 +224,7 @@ function getLayerChanges(drawLayer, action) {
                 }
             }
 
-            return Object.assign({}, {highlightedFootprint: selectedRegion, drawData: dd});
+            return Object.assign({}, {highlightedFootprint: selectedRegion, drawData: dd, hideFPId});
         default:
             return null;
     }
@@ -264,7 +237,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     switch (dataType) {
         case DataTypes.DATA:    // based on the same drawObjAry to draw the region on each plot
-            return isEmpty(lastDataRet) ? plotLayer(drawLayer, plotId) : lastDataRet;
+            return isEmpty(lastDataRet) ? plotLayer(drawLayer) : lastDataRet;
         case DataTypes.HIGHLIGHT_DATA:      // create the region drawObj based on the original region for upright case.
             return isEmpty(lastDataRet) ?
                 plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef) : lastDataRet;
@@ -275,7 +248,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 /**
  * @summary create DrawingObj for highlighted region
  * @param {object} drawLayer
- * @param {Object} highlightedFootprint
+ * @param {Object} highlightedFootprint object for ConnectedObj
  * @param {string} plotId
  * @param {Object} drawingDef
  * @returns {Object[]}
@@ -285,26 +258,27 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
         return [];
     }
 
-    const footprintAry =  get(drawLayer, ['imageLineBasedFP', 'polygonObjs']);
-    const pointAry =  get(drawLayer, ['imageLineBasedFP', 'peakPointObjs']);
-    if (!footprintAry) return [];
+    const footprintObj = highlightedFootprint.connectObj;
+    const polyAry = get(footprintObj.basicObjs, POLYOBJS);
+    const pointAry = get(footprintObj.basicObjs, POINTOBJS);
+
+    if (!polyAry) return [];
     const plot = primePlot(visRoot(), plotId);
     const {lineWidth = 1} = drawingDef;
     const lw = lineWidth+1;
 
-    const polyHighlight = footprintAry.filter((oneObj) => oneObj.id === highlightedFootprint.id)
-                        .reduce((prev, oneFP) => {
-                             const newhObj = DrawOp.makeHighlight(oneFP, plot, drawingDef);
+    const polyHighlight = polyAry.reduce((prev, onePoly, idx) => {
+                             const newhObj = DrawOp.makeHighlight(onePoly, plot, drawingDef);
                              newhObj.highlight = 1;
-                             newhObj.text = newhObj.id;
+                             newhObj.text = (idx === 0) ? newhObj.id : '';
                              newhObj.style = Style.STANDARD;
                              newhObj.lineWidth = lw;
 
                              prev.push(newhObj);
                              return prev;
                         }, []);
-    const pointHighlight = pointAry.filter((oneObj) => oneObj.id === highlightedFootprint.id)
-                                    .reduce((prev, onePoint) => {
+
+    const pointHighlight = pointAry.reduce((prev, onePoint) => {
                                     const pointObj = clone(onePoint, {symbol: (drawingDef.symbol || DrawSymbol.X)});
                                     const newhObj = DrawOp.makeHighlight(pointObj, plot, drawingDef);
                                     newhObj.highlight = 1;
@@ -317,21 +291,10 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
 
 }
 
-function plotLayer(dl, plotId) {
+function plotLayer(dl) {
     const {style=Style.FILL, showText, color} = dl.drawingDef || {};
-    const {imageLineBasedFP} = dl || {};
+    const {imageLineBasedFP, hideFPId} = dl || {};
 
     if (!imageLineBasedFP || !imageLineBasedFP.connectedObjs) return null;
-    const oneObjs = (style === Style.FILL) ?
-                    convertConnectedObjsToRectObjs(imageLineBasedFP, true,  false, rateOpacity(color, 0.5), style) : [];
-    const zeroObjs = convertConnectedObjsToRectObjs(imageLineBasedFP, false, false, rateOpacity('red', 0.5), Style.FILL);
-
-    //for 'outline' mode and 'fill' mode, add polygon outline to 'fill' display
-    const polyColor = (style === Style.FILL) ? color : null;
-    const polyObjs = convertConnectedObjsToPolygonObjs(imageLineBasedFP, false, showText, polyColor, Style.STANDARD);
-    const pointObjs = convertConnectedObjPeaksToPointObjs(imageLineBasedFP, false);
-
-    const outputObjs = [...oneObjs,...zeroObjs,...polyObjs,...pointObjs];
-
-    return outputObjs;
+    return convertConnectedObjsToDrawObjs(imageLineBasedFP, style, rateOpacity(color, 0.5), rateOpacity('red', 0.5), null, showText, null, hideFPId);
 }

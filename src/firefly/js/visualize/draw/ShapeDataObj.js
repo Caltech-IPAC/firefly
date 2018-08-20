@@ -758,7 +758,6 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     let {angle = 0.0}= drawObj;
     let inView = false;
     let centerPt;
-    let pt0, pt1;
     let x, y, w, h;
 
     w = 0; h = 0; x = 0; y = 0;
@@ -889,18 +888,18 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
 
     }
     else {  // two corners case
-        const devPt0= plot ? plot.getDeviceCoords(pts[0]) : pts[0];
-        const devPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
-        if (!devPt0 || !devPt1) return;
-        if (plot && (!plot.pointOnDisplay(devPt0) && !plot.pointOnDisplay(devPt1))) return;
+        const dPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
+        const dPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
+        if (!dPt0 || !dPt1) return;
+        if (plot && (!plot.pointOnDisplay(dPt0) && !plot.pointOnDisplay(dPt1))) return;
 
         inView = true;
         //todo here here here
 
-        x = devPt0.x;
-        y = devPt0.y;
-        w = devPt1.x - x +1;
-        h = devPt1.y - y +1;
+        x = dPt0.x;
+        y = dPt0.y;
+        w = dPt1.x - x;
+        h = dPt1.y - y;
         if (style === Style.FILL) {
             DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
         } else {
