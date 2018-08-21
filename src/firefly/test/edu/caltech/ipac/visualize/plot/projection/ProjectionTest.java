@@ -112,6 +112,7 @@ public class ProjectionTest {
 
     }
     @Test
+    @Ignore
     public void testAllProjections() throws IOException, ParseException, FitsException, ProjectionException, IllegalAccessException, URISyntaxException, ClassNotFoundException {
 
 
