@@ -248,9 +248,10 @@ export function dispatchTableSelect(tbl_id, selectInfo) {
 /**
  * remove the table's data given its id.
  * @param tbl_id  unique table identifier.
+ * @param {boolean} fireActiveTableChanged=true  true to fire TBL_RESULTS_ACTIVE when applicable.
  */
-export function dispatchTableRemove(tbl_id) {
-    flux.process( {type: TABLE_REMOVE, payload: {tbl_id}});
+export function dispatchTableRemove(tbl_id, fireActiveTableChanged=true) {
+    flux.process( {type: TABLE_REMOVE, payload: {tbl_id, fireActiveTableChanged}});
 }
 
 /**
@@ -328,7 +329,7 @@ function tableSearch(action) {
             }
             if (TblUtil.getTblById(tbl_id)) {
                 // table exists... this is a new search.  old data should be removed.
-                dispatchTableRemove(tbl_id);
+                dispatchTableRemove(tbl_id, false);
             }
             if (backgroundable) {
                 request = set(request, 'META_INFO.backgroundable', true);
@@ -384,15 +385,17 @@ function tblResultRemove(action) {
 
 function tblRemove(action) {
     return (dispatch) => {
-        const {tbl_id} = action.payload;
+        const {tbl_id, fireActiveTableChanged} = action.payload;
         const tbl_group= TblUtil.findGroupByTblId(tbl_id);
         dispatch({type:action.type, payload:Object.assign({},action.payload, {tbl_group})});
-        const results = get(flux.getState(), [TABLE_SPACE_PATH, 'results'], {});
-        Object.keys(results).forEach( (tbl_group) => {
-            if (get(results, [tbl_group, 'active']) === tbl_id) {
-                dispatchActiveTableChanged(findKey(results[tbl_group].tables), tbl_group);
-            }
-        });
+        if (fireActiveTableChanged) {
+            const results = get(flux.getState(), [TABLE_SPACE_PATH, 'results'], {});
+            Object.keys(results).forEach( (tbl_group) => {
+                if (get(results, [tbl_group, 'active']) === tbl_id) {
+                    dispatchActiveTableChanged(findKey(results[tbl_group].tables), tbl_group);
+                }
+            });
+        }
     };
 }
 
