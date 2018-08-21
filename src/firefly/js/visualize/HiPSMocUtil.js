@@ -17,8 +17,8 @@ export function ivoStr(ivoid) {
     return ivoid ? ivoid.trim().replace('ivo://', '').replace(/\//g,'_') : 'moc_table_' + (++mocCnt);
 }
 
-export const NSIDE2 = new Array(30).fill(0).map((v, i) => 2**i);
-export const NSIDE4 = new Array(20).fill(0).map((v, i) => 4**i);
+export const NSIDE2 = new Array(64).fill(0).map((v, i) => 2**i);
+export const NSIDE4 = new Array(32).fill(0).map((v, i) => 4**i);
 
 export function getMocNuniq(order, npix) {
     return NSIDE4[order+1] + npix;
