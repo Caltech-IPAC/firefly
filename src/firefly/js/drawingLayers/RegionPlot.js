@@ -8,20 +8,14 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {drawRegions} from '../visualize/region/RegionDrawer.js';
 import {getRegionIndex, addNewRegion, removeRegion} from '../visualize/region/RegionUtil.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById,  getDrawLayersByType} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY,
-                        //defaultRegionSelectColor,
-                        //RegionSelectStyle,
-                        //getRegionSelectStyle,
-                        //dispatchModifyCustomField,
-                        //dispatchAddRegionEntry,
                         dispatchDeleteRegionLayer,
-                        //dispatchRemoveRegionEntry,
                         dispatchSelectRegion,
-                        dlRoot} from '../visualize/DrawLayerCntlr.js';
+                        dlRoot, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import {get, set, has, isEmpty, isString, isArray} from 'lodash';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {flux} from '../Firefly.js';
@@ -30,8 +24,6 @@ const ID= 'REGION_PLOT';
 const TYPE_ID= 'REGION_PLOT_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID, creator, getDrawData, getLayerChanges, null, null);
 export default {factoryDef, TYPE_ID};
-
-var idCnt=0;
 
 function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
         while (true) {
@@ -57,6 +49,42 @@ function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
         }
 }
 
+let idCnt = 0;
+
+export const createNewRegionLayerId = () => {
+    const layerList =  getDrawLayersByType(getDlAry(), TYPE_ID);
+
+    while (true) {
+        const newId = `${ID}-${idCnt++}`;
+        const dl = layerList.find((layer) => {
+             return (layer.drawLayerId && layer.drawLayerId === newId);
+        });
+        if (!dl) {
+           return newId;
+        }
+    }
+};
+
+let titleCnt = 1;
+export const getRegionLayerTitle = (layerTitle) => {
+    if (layerTitle) return layerTitle;
+
+    const defaultRegionTitle = 'ds9 region overlay';
+    const layerList =  getDrawLayersByType(getDlAry(), TYPE_ID);
+
+    while (true) {
+        const newTitle = `${defaultRegionTitle}-${titleCnt++}`;
+        const dl = layerList.find((layer) => {
+            return (layer.title && layer.title === newTitle);
+        });
+
+        if (!dl) {
+            return newTitle;
+        }
+    }
+};
+
+
 /**
  * create region plot layer
  * @param initPayload in region plot layer, attribute regionAry: region description array
@@ -69,13 +97,12 @@ function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
  */
 function creator(initPayload) {
 
-    var drawingDef= makeDrawingDef('green');
-    var pairs = {
+    const drawingDef= makeDrawingDef('green');
+    const pairs = {
         [MouseState.DOWN.key]: highlightChange
     };
 
-    idCnt++;
-    var options= {
+    const options= {
         canUseMouse:true,
         canHighlight:true,
         canUserChangeColor: ColorChangeType.DISABLE,
@@ -84,13 +111,14 @@ function creator(initPayload) {
         destroyWhenAllDetached: true
     };
 
-    var actionTypes = [DrawLayerCntlr.REGION_ADD_ENTRY,
+    const actionTypes = [DrawLayerCntlr.REGION_ADD_ENTRY,
                        DrawLayerCntlr.REGION_REMOVE_ENTRY,
                        DrawLayerCntlr.REGION_SELECT];
 
-    const id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
-    var   dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'Region Plot'),
-                                      options, drawingDef, actionTypes, pairs );
+    const title = get(initPayload, 'title');
+    const id = get(initPayload, 'drawLayerId', createNewRegionLayerId());
+    const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, getRegionLayerTitle(title),
+                                          options, drawingDef, actionTypes, pairs );
 
     dl.regionAry = get(initPayload, 'regionAry', null);
     dl.dataFrom = get(initPayload, 'dataFrom', 'ds9');
@@ -98,7 +126,6 @@ function creator(initPayload) {
     dl.selectMode = get(initPayload, 'selectMode');
 
     dispatchAddSaga(regionsRemoveSaga, {id, plotId: get(initPayload, 'plotId')});
-    idCnt++;
     return dl;
 }
 

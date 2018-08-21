@@ -184,8 +184,8 @@
             var selectMode = {selectStyle: st, selectColor: sc, lineWidth: lw};
 
             window.allRegions[layerId] = regionAry;
-            //firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, 'regiontest', selectMode);
-            firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, null, selectMode, dispatcher = window.ffViewer.dispatch);
+            //firefly.action.dispatchCreateRegionLayer(layerId, null, null, regionAry, 'regiontest', selectMode);
+            firefly.action.dispatchCreateRegionLayer(layerId, null, null, regionAry, null, selectMode, dispatcher = window.ffViewer.dispatch);
         };
 
         updateDataList = function() {

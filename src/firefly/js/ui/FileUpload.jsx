@@ -29,7 +29,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 type={isFromURL ? 'text' : 'file'}
                 label={label}
                 value={value}
-                tooltip={value}
+                tooltip={isFromURL ? 'enter a URL to upload from' : 'click to choose a file'}
                 labelWidth={labelW}
                 inline={true}
                 style={style}
@@ -47,11 +47,12 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 </div>
             );
         } else {
-            let fPos = {marginLeft: -150};
+            let fPos = {marginLeft: -150, width: '12em', overflow:'hidden',
+                        textOverflow: 'ellipsis', whiteSpace: 'nowrap'};
 
             if (!isNil(fileNameStyle)) fPos = Object.assign(fPos, fileNameStyle);
             return (
-                fileName && <div style={{display:'inline-block', ...fPos}}>{fileName}</div>
+                fileName && <div style={{display:'inline-block', ...fPos}} title={fileName}>{fileName}</div>
             );
         }
     };
@@ -153,7 +154,7 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
                 }
             }
 
-            return {isLoading: false, valid, message, value: cacheKey, analysisResult};
+            return {isLoading: false, valid, message, value: cacheKey, analysisResult, filename: get(file, 'name')};
         }).catch((err) => {
             return {isLoading: false, valid: false,
                     message: (isFromURL ? `Unable to upload file from ${file}` : `Unable to upload file: ${get(file, 'name')}`)};
