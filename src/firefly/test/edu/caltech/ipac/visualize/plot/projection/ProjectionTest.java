@@ -2,6 +2,8 @@ package edu.caltech.ipac.visualize.plot.projection;
 import edu.caltech.ipac.firefly.util.FitsHeaderToJson;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import nom.tam.fits.*;
 import org.junit.*;
 import java.io.File;
@@ -110,7 +112,6 @@ public class ProjectionTest {
 
     }
     @Test
-    @Ignore
     public void testAllProjections() throws IOException, ParseException, FitsException, ProjectionException, IllegalAccessException, URISyntaxException, ClassNotFoundException {
 
 
@@ -132,29 +133,35 @@ public class ProjectionTest {
 
     }
 
-//    @Test
-//    public void testTpvProjection() throws ProjectionException, FitsException {
-//
-//        Fits fits = new Fits(new File( FileLoader.getDataPath(ProjectionTest.class)+"ztf-TPV.fits"));
-//        FitsRead[] fitsReadArray = FitsRead.createFitsReadArray(fits);
-//
-//        FitsRead reader = fitsReadArray[0];
-//        CoordinateSys cs = CoordinateSys.EQ_J2000;
-//        ImageHeader imageHeader = reader.getImageHeader();
-//        Projection proj = imageHeader.createProjection(cs);
-//
-//
-//        //WorldPt worldCoords = proj.getWorldCoords(309.218324, 67.723624);
-//
-////        System.out.println(proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
-//
-//        ProjectionPt pix = proj.getImageCoords(10.65804830797796, 41.32089363435967);
-//
-//        Assert.assertTrue(pix.getX()==-80304.01043095533);
-//        Assert.assertTrue(pix.getY()==-18249.626909563052);
-//
-//
-//    }
+    @Test
+    public void testTpvProjection() throws ProjectionException, FitsException {
+
+        Fits fits = new Fits(new File( FileLoader.getDataPath(ProjectionTest.class)+"ztf-TPV.fits"));
+        FitsRead[] fitsReadArray = FitsReadFactory.createFitsReadArray(fits);
+
+        FitsRead reader = fitsReadArray[0];
+        CoordinateSys cs = CoordinateSys.EQ_J2000;
+        ImageHeader imageHeader = new ImageHeader(reader.getHeader());
+        Projection proj = imageHeader.createProjection(cs);
+
+
+        //WorldPt worldCoords = proj.getWorldCoords(309.218324, 67.723624);
+
+//        System.out.println(proj.getProjectionName()+": "+worldCoords.getLon()+", "+worldCoords.getLat());
+
+        ProjectionPt pix = proj.getImageCoords(10.65804830797796, 41.32089363435967);
+
+        Assert.assertTrue(pix.getX()==309.21832404070005);
+        Assert.assertTrue(pix.getY()==67.7236241551891);
+
+        WorldPt pix2 = proj.getWorldCoords(309.21, 67.72);
+
+        Assert.assertEquals(pix2.getLat(),41.32089, 1E-05);
+        Assert.assertEquals(pix2.getLon(),10.65804,1E-04);//5th is wrong
+
+
+
+    }
 
 
     /**
