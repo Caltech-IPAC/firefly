@@ -3,22 +3,22 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.ws.WsResponse;
 import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -140,7 +140,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 fileName = fileName.length() > 255 ? fileName.substring(fileName.length() - 255) : fileName;
                 ext = resolveExt(fileName, fileType);
                 fType = resolveType(fileType, ext, (file != null ? file.getContentType() : null));
-                destDir = resolveDestDir(dest, fType);
+                destDir = resolveDestDir();
                 uf = File.createTempFile("upload_", ext, destDir); // other parts of system depend on file name starting with "upload_"
                 if (file != null) {
                     InputStream inStream = new BufferedInputStream(file.openStream(), IpacTableUtil.FILE_IO_BUFFER_SIZE);
@@ -237,21 +237,9 @@ public class AnyFileUpload extends BaseHttpServlet {
         return analysisResult;
     }
 
-    private static File resolveDestDir(String dest, FileType fType) throws FileNotFoundException {
-        File destDir = ServerContext.getTempWorkDir();
-/*
-        removed.. this writes temp file into the source directory.  may be readonly.  why was it needed before?
-        not sure of its history.  leaving comment as a reminder in case it breaks something else.
-        if (!StringUtils.isEmpty(dest)) {
-            destDir = ServerContext.convertToFile(dest);
-        } else
-*/
-        if (fType == FileType.FITS) {
-            destDir = ServerContext.getVisCacheDir();
-        }
-        if (!destDir.exists()) {
-            throw new FileNotFoundException("Destination path does not exists: " + destDir.getPath());
-        }
+    private static File resolveDestDir() throws FileNotFoundException {
+        File destDir = ServerContext.getUploadDir();
+        if (!destDir.exists()) throw new FileNotFoundException("Destination path does not exists: " + destDir.getPath());
         return destDir;
     }
 

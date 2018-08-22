@@ -14,5 +14,6 @@ CATALINA_OPTS="\
 JAVA_OPTS="-Dnet.sf.ehcache.enableShutdownHook=true \
            -Dserver_config_dir=${SERVER_CONFIG_DIR} \
            -Dwork.directory=${FIREFLY_WORK_DIR} \
+           -Dshared.work.directory=${FIREFLY_SHARED_WORK_DIR} \
            -Dvisualize.fits.search.path=${VISUALIZE_FITS_SEARCH_PATH} \
 	   ${FIREFLY_OPTS}"

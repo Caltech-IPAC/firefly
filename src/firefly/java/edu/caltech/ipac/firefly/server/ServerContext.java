@@ -9,7 +9,9 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import nom.tam.fits.FitsFactory;
 import org.apache.log4j.PropertyConfigurator;
@@ -24,11 +26,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.HandshakeResponse;
 import javax.websocket.server.HandshakeRequest;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,32 +46,33 @@ import java.util.concurrent.TimeUnit;
  */
 public class ServerContext {
 
-    public static final String HIPS_DIR_PREFIX       = "${hips-dir}";
-    public static final String CACHE_DIR_PREFIX       = "${cache-dir}";
-    public static final String UPLOAD_DIR_PREFIX      = "${upload-dir}";
-    public static final String USER_IMAGES_DIR_PREFIX = "${user-images-dir}";
-    public static final String USER_BASE_DIR_PREFIX   = "${user-base-dir}";
-    public static final String SEARCH_PATH_PREFIX     = "${search-path}";
-    public static final String STAGE_PATH_PREFIX      = "${stage}";
-    public static final String PERM_FILES_PATH_PREFIX = "${perm-files}";
-    public static final String IRSA_ROOT_PATH_PREFIX =  "${irsa-root-dir}";
-    public static final String TEMP_FILES_PATH_PREFIX = "${temp-files}";
-    public static final String WEBAPP_ROOT =            "${webapp-root}";
+    private static final String HIPS_DIR_PREFIX        = "${hips-dir}";
+    private static final String CACHE_DIR_PREFIX       = "${cache-dir}";
+    private static final String UPLOAD_DIR_PREFIX      = "${upload-dir}";
+    private static final String USER_IMAGES_DIR_PREFIX = "${user-images-dir}";
+    private static final String USER_BASE_DIR_PREFIX   = "${user-base-dir}";
+    private static final String SEARCH_PATH_PREFIX     = "${search-path}";
+    private static final String STAGE_PATH_PREFIX      = "${stage}";
+    private static final String PERM_FILES_PATH_PREFIX = "${perm-files}";
+    private static final String IRSA_ROOT_PATH_PREFIX  =  "${irsa-root-dir}";
+    private static final String TEMP_FILES_PATH_PREFIX = "${temp-files}";
+    private static final String WEBAPP_ROOT =            "${webapp-root}";
     private static final String VIS_DIR_STR= "visualize";
     private static final String CACHE_DIR_STR= "fits-cache";
-    private static final String UPLOAD_DIR_STR= "fits-upload";
+    private static final String UPLOAD_DIR_STR= "upload";
     private static final String USERS_BASE_DIR_STR= "users";
-    public static final String PFX_START= "${";
+    private static final String PFX_START= "${";
     private static final int PFX_START_LEN= PFX_START.length();
-    public static final String PFX_END= "}";
+    private static final String PFX_END= "}";
     private static final int PFX_TOTAL_CHAR= 3;
-    public static boolean FITS_SECURITY;
-    public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
-    public final static Map<File, Long> _visSessionDirs= new ConcurrentHashMap<File, Long>(617);
-    public static boolean DEBUG_MODE;
-    public static final String CONFIG_DIR = "server_config_dir";
-    public static final String CACHEMANAGER_DISABLED_PROP = "CacheManager.disabled";
+    private static boolean FITS_SECURITY;
+    private static final Map<File, Long> _visSessionDirs= new ConcurrentHashMap<>(617);
+    private static boolean DEBUG_MODE;
+    private static final String CONFIG_DIR = "server_config_dir";
+    private static final String CACHEMANAGER_DISABLED_PROP = "CacheManager.disabled";
     private static final String WORK_DIR_PROP = "work.directory";
+    private static final String SHARED_WORK_DIR_PROP= "shared.work.directory";
+    public static final String VIS_SEARCH_PATH= "visualize.fits.search.path";
 
 
     private static RequestOwnerThreadLocal owner = new RequestOwnerThreadLocal();
@@ -73,6 +80,7 @@ public class ServerContext {
     private static String contextName;      // synonymous to appName.. during build, we set display-name to app_name
     private static String contextPath;
     private static File workingDir;
+    private static File sharedWorkingDir= null;
     private static File appConfigDir;
     private static File webappConfigDir;
     private static File[] visSearchPath = null;
@@ -105,7 +113,7 @@ public class ServerContext {
             PERM_FILE_PATH_STR = getPermWorkDir().getPath();
             TEMP_FILE_PATH_STR = getTempWorkDir().getPath();
             STAGE_FILE_PATH_STR = getStageWorkDir().getPath();
-            VIS_UPLOAD_PATH_STR = getVisUploadDir().getPath();
+            VIS_UPLOAD_PATH_STR = getUploadDir().getPath();
             CACHE_PATH_STR = getVisCacheDir().getPath();
             IRSA_ROOT_PATH_STR = getIrsaRoot().getPath();
             HIPS_FILE_PATH_STR = getHiPSDir().getPath();
@@ -174,23 +182,40 @@ public class ServerContext {
         CacheManager.setCacheProvider(EhcacheProvider.class.getName());
 
         // setup working area
-        File f = null;
+        File workingDirFile = null;
         String workDirRoot = AppProperties.getProperty(WORK_DIR_PROP);
         if (!StringUtils.isEmpty(workDirRoot)) {
-            f = new File(workDirRoot);
-            if (!f.exists()) f.mkdirs();
+            workingDirFile = new File(workDirRoot);
+            initDir(workingDirFile);
         }
-        if (f == null || !f.canWrite()) {
-            f = new File(System.getProperty("java.io.tmpdir"),"workarea");
+        if (workingDirFile == null || !workingDirFile.canWrite()) {
+            workingDirFile = new File(System.getProperty("java.io.tmpdir"),"workarea");
         }
-        setWorkingDir(new File(f, contextName));
+        setWorkingDir(new File(workingDirFile, contextName));
+
+
+        File sharedWorkingDirFile = null;
+        String sharedWorkDirRoot = AppProperties.getProperty(SHARED_WORK_DIR_PROP);
+        if (!StringUtils.isEmpty(workDirRoot)) {
+            sharedWorkingDirFile= initDir(new File(sharedWorkDirRoot));
+            setSharedWorkingDir(new File(sharedWorkingDirFile, contextName));
+        }
+
+
+
+
 
         DEBUG_MODE = AppProperties.getBooleanProperty("debug.mode", false);
 
-        Logger.info("CACHE_PROVIDER : " + EhcacheProvider.class.getName(),
-                "WORK_DIR : " + ServerContext.getWorkingDir(),
-                "DEBUG_MODE : " + DEBUG_MODE,
-                "Available Cores: "+ getAvailableCores() );
+        Logger.info("",
+                "CACHE_PROVIDER : " + EhcacheProvider.class.getName(),
+                "WORK_DIR       : " + getWorkingDir(),
+                "DEBUG_MODE     : " + DEBUG_MODE,
+                "Available Cores: " + getAvailableCores() );
+
+         if (!getWorkingDir().equals(getSharedWorkingDir())) {
+             Logger.info("Using shared working dir: "+ getSharedWorkingDir());
+         }
     }
 
 
@@ -213,7 +238,7 @@ public class ServerContext {
             for(int i=0; (i<pathAry.length); i++) {
                 ServerContext.visSearchPath[i]= new File(pathAry[i]);
             }
-            List<String> logList= new ArrayList<String>(10);
+            List<String> logList= new ArrayList<>(10);
             logList.add(VIS_SEARCH_PATH + " loaded: ");
             logList.addAll(Arrays.asList(pathAry));
             logList.add("All local loaded FITS files must resides in these directories or sub-directories");
@@ -228,7 +253,7 @@ public class ServerContext {
     /**
      * return the configure file from the designated configuration directory.
      * @param fname  a relative path file name from the config directory
-     * @return
+     * @return the config file
      */
     public static File getConfigFile(String fname) {
 
@@ -262,11 +287,7 @@ public class ServerContext {
         boolean hasProps = false;
         File dir = new File(dirName);
         if (dir.canRead()) {
-            File[] props = dir.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(".prop") || name.endsWith(".properties");
-                }
-            });
+            File[] props = dir.listFiles( (theDir, name) -> name.endsWith(".prop") || name.endsWith(".properties") );
             if (props != null) {
                 for (File f : props) {
                     try {
@@ -300,73 +321,67 @@ public class ServerContext {
     }
 
     public static File getWorkingDir() {
-        initDir(workingDir);
-        return workingDir;
+        return initDir(workingDir);
     }
+
+    public static File getSharedWorkingDir() {
+        if (sharedWorkingDir==null) return getWorkingDir();
+        initDir(sharedWorkingDir);
+        if (!sharedWorkingDir.canWrite()) return getWorkingDir();
+        return sharedWorkingDir;
+    }
+
+
 
     public static void setWorkingDir(File workDir) {
         workingDir = workDir;
     }
 
+    public static void setSharedWorkingDir(File sharedWorkDir) {
+        sharedWorkingDir = sharedWorkDir;
+    }
+
     public static File getHiPSDir() {
         File dir = new File(getWorkingDir(), "HiPS");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return initDir(dir);
     }
 
     public static File getPermWorkDir() {
         File dir = new File(getWorkingDir(), "perm_files");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return initDir(dir);
     }
 
     public static File getExternalPermWorkDir() {
         File dir = new File(getPermWorkDir(), "external");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return initDir(dir);
     }
 
     public static File getTempWorkDir() {
         File dir = new File(getWorkingDir(), "temp_files");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return initDir(dir);
     }
 
 
     public static File getExternalTempWorkDir() {
         File dir = new File(getTempWorkDir(), "external");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return initDir(dir);
     }
 
 
     public static File getStageWorkDir() {
-        File dir = new File(getWorkingDir(), "stage");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        File dir = new File(getSharedWorkingDir(), "stage");
+        return initDir(dir);
     }
 
     //====================================================================
     //  Factory methods for RequestAgent
     //====================================================================
-    public static final RequestAgent getHttpRequestAgent(HttpServletRequest request, HttpServletResponse response) {
+    public static RequestAgent getHttpRequestAgent(HttpServletRequest request, HttpServletResponse response) {
         // this is an abstraction point.  this class can be loaded from configuration.
         return new RequestAgent.HTTP(request, response);
     }
 
-    public static final RequestAgent getWsRequestAgent(HandshakeRequest request, HandshakeResponse response) {
+    public static RequestAgent getWsRequestAgent(HandshakeRequest request, HandshakeResponse response) {
         // this is an abstraction point.  this class can be loaded from configuration.
         if (request instanceof HttpServletRequest) {
             return new RequestAgent.HTTP((HttpServletRequest) request, (HttpServletResponse) response);
@@ -380,18 +395,14 @@ public class ServerContext {
     //====================================================================
 
 
-    private static void initDir(File dir) {
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
+    private static File initDir(File dir) {
+        if (!dir.exists()) dir.mkdirs();
+        return dir;
     }
 
     public static File getIrsaRoot() {
         File dir = new File(getWorkingDir(), "irsa-root");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return initDir(dir);
     }
 
     public static File convertToFile(String in) {
@@ -412,7 +423,7 @@ public class ServerContext {
                     retval= new File(getVisCacheDir(), relFile);
                 }
                 else if (prefix.equals(UPLOAD_DIR_PREFIX)) {
-                    retval= new File(getVisUploadDir(), relFile);
+                    retval= new File(getUploadDir(), relFile);
                 }
                 else if (prefix.equals(USER_IMAGES_DIR_PREFIX)) {
                     retval= new File(getVisSessionDir(), relFile);
@@ -450,7 +461,7 @@ public class ServerContext {
                 retval= validateFileInPath(in,!matchOutsideOfPath);
             }
             else {
-                retval= new File(getVisUploadDir(), in);
+                retval= new File(getUploadDir(), in);
             }
         }
         return retval;
@@ -467,7 +478,7 @@ public class ServerContext {
         return coreCnt;
     }
 
-    public static int getAvailableCores() {
+    private static int getAvailableCores() {
         int availableCores= AppProperties.getIntProperty("server.cores", 0);
         if (availableCores==0) availableCores= Runtime.getRuntime().availableProcessors();
         return availableCores;
@@ -555,7 +566,7 @@ public class ServerContext {
             }
             if (foundFile==null) {
                 if (fileStr.startsWith(getVisCacheDir().getPath()) ||
-                    fileStr.startsWith(getVisUploadDir().getPath()) ||
+                    fileStr.startsWith(getUploadDir().getPath()) ||
                     fileStr.startsWith(getVisSessionDir().getPath()) ||
                     fileStr.startsWith(getUsersBaseDir().getPath())   ||
                     fileStr.startsWith(getPermWorkDir().getPath())   ||
@@ -573,7 +584,7 @@ public class ServerContext {
         return foundFile;
     }
 
-    public static File getVisWorkingDir() {
+    private static File getVisWorkingDir() {
         File dir= getWorkingDir();
         Assert.argTst(dir.canWrite(), "can't write to the working dir");
         File visDir= new File(dir,VIS_DIR_STR);
@@ -589,9 +600,9 @@ public class ServerContext {
         return cacheDir;
     }
 
-    public static File getVisUploadDir() {
-        File dir= getVisWorkingDir();
-        Assert.argTst(dir.canWrite(), "can't write to the vis cache dir");
+    public static File getUploadDir() {
+        File dir= getSharedWorkingDir();
+        Assert.argTst(dir.canWrite(), "can't write to cache dir");
         File cacheDir= new File(dir,UPLOAD_DIR_STR);
         if (!cacheDir.exists()) makeDirs(cacheDir);
         return cacheDir;

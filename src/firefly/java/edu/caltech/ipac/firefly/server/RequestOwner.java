@@ -129,9 +129,6 @@ public class RequestOwner implements Cloneable {
         return cmap;
     }
 
-    public File getWorkingDir() {
-        return workingDir == null ? ServerContext.getWorkingDir() : workingDir;
-    }
 
     public Map<String, Object> getAttributes() {
         return attributes;
