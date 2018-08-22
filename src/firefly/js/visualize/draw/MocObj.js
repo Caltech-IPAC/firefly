@@ -5,7 +5,7 @@ import {makeRegionPolygon} from '../region/Region.js';
 import {drawRegions} from '../region/RegionDrawer.js';
 import {distanceToPolygon} from './ShapeDataObj.js';
 import {getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
-        isTileVisibleByPosition, initSidePoints, NSIDE4} from '../HiPSMocUtil.js';
+        isTileVisibleByPosition, initSidePoints, NSIDE4, NSIDE2} from '../HiPSMocUtil.js';
 import {getHealpixCornerTool,  getAllVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
 import DrawOp from './DrawOp.js';
 import CsysConverter from '../CsysConverter.js';
@@ -270,10 +270,10 @@ export class MocGroup {
     }
 
     filterTilesOnOrder(tiles, fromOrder, pOrder, vSet) {
-        const fNum = (fromOrder - pOrder) * 2;
+        const fNum = (fromOrder - pOrder);
 
         return tiles.filter((oneTile) => {
-            const ipix = oneTile.npix >> fNum;
+            const ipix = lowerNpix(oneTile.npix, fNum);
             if (has(vSet, [ipix])) {
                 return oneTile;
             } else {
@@ -371,12 +371,12 @@ export class MocGroup {
 
         const includedNpixs = get(this.incNpixs, [toOrder], []);
         const notIncludedNpixs = get(this.notIncNpixs, [toOrder], []);
-        const pNum = (fromOrder - toOrder) << 1;    // divide by 4 ** (from-to)
+        const pNum = (fromOrder - toOrder);   // divide by 4 ** (from-to)
 
 
         tiles.find((oneTile) => {
             const {npix} = oneTile;
-            const nextNpix = npix >> pNum;           // npix of parent tile at 'toOrder'
+            const nextNpix = lowerNpix(npix, pNum);           // npix of parent tile at 'toOrder'
 
             if (includedNpixs.includes(nextNpix) || notIncludedNpixs.includes(nextNpix)) {    // already tested
                 return false;
@@ -632,3 +632,6 @@ const outputTime = (msg, t0) => {
     console.log(msg + ' took ' + (t1-t0) + ' msec');
 };
 
+const lowerNpix = (npix, level) => {
+    return Math.trunc(npix/NSIDE4[level]);
+};
