@@ -154,7 +154,7 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
                 }
             }
 
-            return {isLoading: false, valid, message, value: cacheKey, analysisResult, filename: get(file, 'name')};
+            return {isLoading: false, valid, message, value: cacheKey, analysisResult};
         }).catch((err) => {
             return {isLoading: false, valid: false,
                     message: (isFromURL ? `Unable to upload file from ${file}` : `Unable to upload file: ${get(file, 'name')}`)};

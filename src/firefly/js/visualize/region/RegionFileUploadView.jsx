@@ -56,7 +56,8 @@ function uploadAndProcessRegion(request, rgComp, drawLayerId) {
                 if (isEmpty(drawLayerId)) {
                     drawLayerId = createNewRegionLayerId();
                 }
-                const fileName = file ? get(FieldGroupUtils.getGroupFields(rgUploadGroupKey), [rgUploadFieldKey, 'filename']) : '';
+                const dispVal = file ? get(FieldGroupUtils.getGroupFields(rgUploadGroupKey), [rgUploadFieldKey, 'displayValue']) : '';
+                const fileName = dispVal ? dispVal.split(/(\\|\/)/g).pop() : '';
 
                 let title = !fileName ? '' : (fileName.includes('.') ? fileName.slice(0, fileName.lastIndexOf('.')) : fileName);
                 title = getRegionLayerTitle(title);
