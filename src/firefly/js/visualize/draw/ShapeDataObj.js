@@ -17,7 +17,7 @@ import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
 import {toRadians, toDegrees} from '../VisUtil.js';
-import {rateOpacity} from '../../util/Color.js';
+import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -733,7 +733,8 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
         y = south;
     }
 
-    DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
+    const textColor = maximizeOpacity(color);
+    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, renderOptions,
         {rotationAngle:angle, textBaseline, textAlign},
         {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
     );
@@ -757,7 +758,6 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     let {angle = 0.0}= drawObj;
     let inView = false;
     let centerPt;
-    let pt0, pt1;
     let x, y, w, h;
 
     w = 0; h = 0; x = 0; y = 0;
@@ -870,38 +870,47 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 centerPt = makeDevicePt(x+w/2, y+h/2);
             }
 
-            if (!onlyAddToPath || style === Style.HANDLED) {
-                DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
-            }
+            if (style === Style.FILL) {
+                DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
+            } else {
+                if (!onlyAddToPath || style === Style.HANDLED) {
+                    DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+                }
 
-            //--------------
+                //--------------
 
-            ctx.rect(x, y, w, h);
-            if (!onlyAddToPath || style === Style.HANDLED) {
-                DrawUtil.stroke(ctx);
+                ctx.rect(x, y, w, h);
+                if (!onlyAddToPath || style === Style.HANDLED) {
+                    DrawUtil.stroke(ctx);
+                }
             }
         }
 
     }
     else {  // two corners case
-        const devPt0= plot ? plot.getDeviceCoords(pts[0]) : pts[0];
-        const devPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
-        if (!devPt0 || !devPt1) return;
-        if (plot && (!plot.pointOnDisplay(devPt0) && !plot.pointOnDisplay(devPt1))) return;
+        const dPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
+        const dPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
+        if (!dPt0 || !dPt1) return;
+        if (plot && (!plot.pointOnDisplay(dPt0) && !plot.pointOnDisplay(dPt1))) return;
+
 
         inView = true;
         //todo here here here
 
-        x = devPt0.x;
-        y = devPt0.y;
-        w = devPt1.x - x;
-        h = devPt1.y - y;
-        if (!onlyAddToPath || style === Style.HANDLED) {
-            DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
-        }
-        ctx.rect(x, y, w, h);
-        if (!onlyAddToPath || style === Style.HANDLED) {
-            DrawUtil.stroke(ctx);
+        x = dPt0.x;
+        y = dPt0.y;
+        w = dPt1.x - x;
+        h = dPt1.y - y;
+        if (style === Style.FILL) {
+            DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
+        } else {
+            if (!onlyAddToPath || style === Style.HANDLED) {
+                DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+            }
+            ctx.rect(x, y, w, h);
+            if (!onlyAddToPath || style === Style.HANDLED) {
+                DrawUtil.stroke(ctx);
+            }
         }
         centerPt = makeDevicePt(x+w/2, y+h/2);
         angle = 0.0;
@@ -1038,6 +1047,7 @@ function drawCompositeObject(drawObj, ctx, plot, drawParams, onlyAddToPath) {
 function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
     const pt1 = getCenterOfProjection(plot);
     const pt2 = convert(pt, plot.projection.coordSys);
+
     /* world point to Cartesian coordinate */
     const WorldPtToxyz = (wpt) => {
         const sinRA = Math.sin(toRadians(wpt.x));
@@ -1210,7 +1220,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
                 }
                 const devPtAll = devPts.filter((pt) => pt);
                 const fillColor = drawObj.fillColor || color;
-                const strokeColor = rateOpacity(ctx.strokeStyle, 0);
+                const strokeColor = drawObj.strokeColor||rateOpacity(ctx.strokeStyle, 0);
 
                 DrawUtil.fillPath(ctx, fillColor, devPtAll, true, renderOptions, strokeColor);
             }

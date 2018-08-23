@@ -9,9 +9,8 @@ import DrawLayerCntrl, {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
 import RegionPlot from '../../drawingLayers/RegionPlot.js';
-import {getPlotViewAry} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
-import {logError} from '../../util/WebUtil.js'
+import {logError} from '../../util/WebUtil.js';
 import {has, isArray, isEmpty, get, isNil} from 'lodash';
 
 const regionDrawLayerId = RegionPlot.TYPE_ID;
@@ -55,7 +54,7 @@ export function regionCreateLayerActionCreator(rawAction) {
         var title;
 
         if (!drawLayerId) {
-            reportError(RegionIdErr)
+            reportError(RegionIdErr);
         } else if (fileOnServer) {   // region file is given, get region description array
             getDS9Region(fileOnServer).then((result) => {
                 if (has(result, 'RegionData')) {
@@ -70,7 +69,7 @@ export function regionCreateLayerActionCreator(rawAction) {
             title = getLayerTitle(layerTitle, drawLayerId);
             createRegionLayer(regionAry, title, drawLayerId, plotId, selectMode);
         } else {
-            reportError(NoRegionErr)
+            reportError(NoRegionErr);
         }
     };
 }

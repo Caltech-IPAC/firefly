@@ -231,7 +231,7 @@ export class CysConverter {
                 break;
             case Point.FITS_IM_PT:
             case Point.ZERO_BASED_IM_PT:
-                const imPt= this.getImagePt(pt);
+                const imPt= this.getImageCoords(pt);
                 retval= makeImageWorkSpacePt(imPt.x, imPt.y);
                 break;
             case Point.IM_PT:
@@ -479,7 +479,7 @@ export class CysConverter {
                 break;
             case Point.FITS_IM_PT:
             case Point.ZERO_BASED_IM_PT:
-                const imPt= this.getImagePt(pt);
+                const imPt= this.getImageCoords(pt);
                 retval= this.makeSPtFromIWPt(this.getImageWorkSpaceCoords(imPt), altZoomLevel);
                 break;
             case Point.IM_PT:

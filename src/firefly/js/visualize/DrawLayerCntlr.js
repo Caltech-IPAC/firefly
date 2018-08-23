@@ -28,8 +28,8 @@ import {footprintCreateLayerActionCreator,
         footprintEndActionCreator
 } from '../drawingLayers/FootprintTool.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {imageLineBasedfootprintActionCreator} from '../drawingLayers/ImageLineBasedFootprint.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
-import {dispatchTableFetch, TABLE_LOADED} from '../tables/TablesCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
 
@@ -83,6 +83,8 @@ const FOOTPRINT_CREATE = `${DRAWLAYER_PREFIX}.FootprintTool.footprintCreate`;
 const FOOTPRINT_START = `${DRAWLAYER_PREFIX}.FootprintTool.footprintStart`;
 const FOOTPRINT_END = `${DRAWLAYER_PREFIX}.FootprintTool.footprintEnd`;
 const FOOTPRINT_MOVE = `${DRAWLAYER_PREFIX}.FootprintTool.footprintMove`;
+
+const IMAGELINEBASEDFP_CREATE = `${DRAWLAYER_PREFIX}.ImageLineBasedFP.imagelineBasedFPCreate`;
 
 export const DRAWING_LAYER_KEY= 'drawLayers';
 export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
@@ -154,11 +156,11 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
                 [FOOTPRINT_START] :  footprintStartActionCreator,
                 [FOOTPRINT_END] :  footprintEndActionCreator,
                 [FOOTPRINT_MOVE] :  footprintMoveActionCreator,
-
                 [REGION_CREATE_LAYER] :  regionCreateLayerActionCreator,
                 [REGION_DELETE_LAYER] :  regionDeleteLayerActionCreator,
                 [REGION_ADD_ENTRY] :  regionUpdateEntryActionCreator,
-                [REGION_REMOVE_ENTRY] :  regionUpdateEntryActionCreator
+                [REGION_REMOVE_ENTRY] :  regionUpdateEntryActionCreator,
+                [IMAGELINEBASEDFP_CREATE] : imageLineBasedfootprintActionCreator
             };
         }
     };
@@ -178,10 +180,12 @@ export default {
     REGION_SELECT,
     MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,
     FOOTPRINT_CREATE, FOOTPRINT_START, FOOTPRINT_END, FOOTPRINT_MOVE,
+    IMAGELINEBASEDFP_CREATE,
     makeReducer,
     dispatchCreateDrawLayer,
     dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
-    dispatchAddRegionEntry, dispatchRemoveRegionEntry
+    dispatchAddRegionEntry, dispatchRemoveRegionEntry,
+    dispatchCreateImageLineBasedFootprintLayer
 };
 
 
@@ -546,6 +550,15 @@ export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint,
     dispatcher({type: FOOTPRINT_CREATE, payload: {plotId, footprintId, layerTitle, footprint, instrument, attachPlotGroup}});
 
 }
+
+export function dispatchCreateImageLineBasedFootprintLayer(drawLayerId, title, fpData, plotId = [],
+                                                                     attachPlotGroup=true, dispatcher = flux.process) {
+    dispatcher({
+        type: IMAGELINEBASEDFP_CREATE,
+        payload: {plotId, drawLayerId, title, footprintData: fpData, attachPlotGroup}
+    });
+}
+
 
 function getDrawLayerId(dlRoot,id) {
     let drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerId);

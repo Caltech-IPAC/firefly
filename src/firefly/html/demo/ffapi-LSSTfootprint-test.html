@@ -1,0 +1,194 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script SRC="footprints256_peaks.js"></script>
+    <title>Demo of LSST Footprint overlay Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 10px 0 10px 0px;">
+    This page demos footprint on image with target at (0;0; J2000)
+    </br>
+    <a href='javascript:loadImage()'>Load sample image</a>
+    <input type='text' placeholder='' id='imageurl'>
+    </br>
+</div>
+
+<div style="width:800px; padding: 10px 0 0 0px;">
+    <p style="margin-top:3px">Add new LSST footprint overlay on above image:  <p/>
+    <ul>
+    <li><span style="color: blue">Create Footprint Layer:</span> enter region ID or use the hint, compose footprint description in the editing area, then click to add the new layer</li>
+    <li><span style="color: blue">Select Footprint Layer:</span> select a layer from the list and click to select the layer, the description of the selected footprint is shown in the editing area and the
+                                  first region in the footprint is highlighted</li>
+    <li><span style="color: blue">Delete Footprint Layer:</span> select a layer from the list and click to delete the layer </li>
+    </ul>
+</div>
+
+<div>
+    <a title="create a new LSST footprint layer" href='javascript:createLSSTFootprintLayer()'>Create Footprint Layer</a>
+    <input type='text' placeholder='' list='footprintCreated' id='createLayerId' name='createFootprintLayer' onChange='updateDatalist()'>
+    <datalist id='footprintCreated'>
+    </datalist>
+    &nbsp;
+    <a title="select a LSST footprint layer" href='javascript:selectLayer()'>Select Footprint Layer:</a>
+    <select id='footprintLayers'><option selected disabled>Footprint Layers:</option></select>
+    &nbsp;
+    <a title="delete a LSST footprint layer" href='javascript:deleteLayer()'>Delete Foorprint Layer</a>
+    <select id='footprint_delete'><option selected disabled>Footprint Layer:</option></select>
+    <div>
+        <textarea id="footprintLayerContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
+    </div>
+</div>
+
+<script type="text/javascript">
+    if (!window.firefly) window.firefly= {};
+    window.firefly.options= {charts: {}};
+</script>
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded= function(firefly) {
+
+            window.ffViewer= firefly.getViewer();
+
+            firefly.setGlobalImageDef({
+                ZoomType  : 'TO_WIDTH'
+            } );
+
+            firefly.debug= true;
+            window.layers = [];
+            window.layerId = window.layers.length;
+            window.layersList = {};
+            document.getElementById('footprintLayerContent').value = footprints256_peaks;
+        };
+
+        loadImage = function() {
+           //var imageurl = document.getElementById('imageurl').value;
+            var imgurl = document.getElementById('imageurl').value ||
+                         'http://web.ipac.caltech.edu/staff/loi/demo/calexp256.fits';
+
+            var webReq = {};
+            if (imgurl) {
+                webReq.Type = 'URL';
+                webReq.URL = imgurl;
+                webReq.Title = 'fits from url: ' + imgurl;
+                webReq.plotId = 'lsstfootprinttest';
+                webReq.plotGroupId = 'myGroup';
+                webReq.AllowImageSelection = true;
+            } else {
+                webReq = {
+                    Type: 'SERVICE',
+                    plotId: 'lsstfootprinttest',
+                    plotGroupId: 'myGroup',
+                    Service: 'WISE',
+                    Title: 'WISE W1 (3.4 microns)',
+                    SurveyKey: '3a',
+                    SurveyKeyBand: '1',
+                    WorldPt: '0.0;0.0;EQ_J2000',
+                    SizeInDeg: '1.5',
+                    AllowImageSelection: true
+                };
+            }
+            firefly.getViewer().showImage(webReq);
+        };
+
+        createLSSTFootprintLayer = function() {
+            var layerId = document.getElementById('createLayerId').value;
+
+            if (!layerId) {
+                window.layerId++;
+                layerId = "LSSTFootprint_Plot_" + window.layerId;
+                document.getElementById('createLayerId').value = layerId;
+            }
+            if (layerId) {
+
+                var layerJson = document.getElementById('footprintLayerContent').value;
+
+                if (window.layers.indexOf(layerId) < 0) {
+                    window.layers.push(layerId);
+                }
+                window.layersList[layerId] = layerJson;  // add new or update existing region layer
+                updateLSSTFootprintLayerList();
+
+                firefly.action.dispatchCreateImageLineBasedFootprintLayer(layerId, layerId, JSON.parse(layerJson), 'lsstfootprinttest',
+                                                                                   true, dispatcher = window.ffViewer.dispatch);
+            }
+        };
+
+        updateDataList = function() {
+            var datalist = document.getElementById('footprintCreated');
+            var options = '';
+
+            window.layers.forEach( function(r) {
+                options += '<option value="'+r+'" />';
+            });
+
+            datalist.innerHTML = options;
+            document.getElementById('createLayerId').value = '';
+            document.getElementById('createLayerId').placeholder = "LSSTFootprint_Plot_" + (window.layerId+1);
+        };
+
+        updateLSSTFootprintLayerList = function() {
+            var selectListIds = ['footprintLayers', 'footprint_delete'];
+
+            selectListIds.forEach( function(selectId) {
+                var selectBox = document.getElementById(selectId);
+
+                for (var i = selectBox.options.length - 1; i > 0; i--) {
+                     selectBox.remove(i);
+                }
+                window.layers.forEach(function (r) {
+                    var option = document.createElement('option');
+                    option.value = r;
+                    option.text = r;
+                    selectBox.appendChild(option);
+                });
+
+                selectBox.getElementsByTagName('option')[0].selected = 'selected';
+            });
+            updateDataList();
+
+        };
+
+        selectLayer = function() {
+            var selectBox=document.getElementById('footprintLayers');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+
+        };
+
+        deleteLayer = function() {
+            var selectBox = document.getElementById('footprint_delete');
+
+            if (selectBox.selectedIndex !== 0) {
+                var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+
+                window.layers.splice(selectBox.selectedIndex - 1, 1);
+                delete window.layersList[selectedLayerId];
+                updateLSSTFootprintLayerList();
+
+                //firefly.action.dispatchDeleteRegionLayer(selectedLayerId, 'regiontest');
+            }
+        };
+
+
+   }
+   
+</script>
+
+<!-- to try a container: <script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>-->
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+
+
