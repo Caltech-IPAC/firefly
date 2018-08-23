@@ -216,10 +216,11 @@ export function convertConnectedObjsToRectObjs(imageLineObj, bCovered = true, co
 /**
  * create polygon drawObjs based on the footprint data
  * @param imageLineObj
- * @param showText  optional
- * @param color     optional
- * @param style     optional
- * @param hideId    optional
+ * @param showText  if showing text
+ * @param color     outline color
+ * @param fillColor fill color
+ * @param style     fill or outline
+ * @param hideId    if hiding the display
  * @param bRemoveExist  optional reset the polygon objects
  */
 export function convertConnectedObjsToPolygonObjs(imageLineObj, showText, color, fillColor, style, hideId='', bRemoveExist = false) {
@@ -690,7 +691,7 @@ export class ConnectedObj {
                     inLine = true;
                 } else if (m[scanY][scanX] >= POLYTRACED && !inLine) {
                     inLine = true;
-                } else if (m[scanY][scanX] === 0 && inLine && !inSegment(zeroSegments, scanX+x1, scanY+y1)) {
+                } else if (m[scanY][scanX] === 0 && inLine && !this.inSegment(zeroSegments, scanX+x1, scanY+y1)) {
                     inLine = false;
                 }
             }
@@ -698,6 +699,14 @@ export class ConnectedObj {
 
 
         return this.basicObjs[POLYOBJS];
+    }
+
+    inSegment(segments, x, y){
+        const segs = segments[y] || [];
+
+        return segs.find((seg) => {
+            return (x >= seg[0] && x <= seg[1]);
+        });
     }
 
     makePointObjsOnPeaks(makeImgPt) {
@@ -722,6 +731,7 @@ export class ConnectedObj {
         const {x1, x2, y1, y2, centerPt} = this;
 
         const inside = (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2);
+        //              && this.inSegment(this.oneSegments, pt.x, Math.trunc(pt.y));
         if (inside) {
             return {inside, dist:  (Math.sqrt((centerPt[0] - pt.x)**2 + (centerPt[1] - pt.y)**2))};
         } else {
