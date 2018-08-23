@@ -142,7 +142,7 @@ export function findGroupByTblId(tbl_id) {
 export function removeTablesFromGroup(tbl_group_id = 'main') {
     const tblAry = getTblIdsByGroup(tbl_group_id);
     tblAry && tblAry.forEach((tbl_id) => {
-        TblCntlr.dispatchTableRemove(tbl_id);
+        TblCntlr.dispatchTableRemove(tbl_id, false);        // all table will be removed.  not need to fireActiveTableChanged
     });
 }
 

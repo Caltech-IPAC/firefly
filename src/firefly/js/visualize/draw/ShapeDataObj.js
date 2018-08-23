@@ -893,6 +893,7 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
         if (!dPt0 || !dPt1) return;
         if (plot && (!plot.pointOnDisplay(dPt0) && !plot.pointOnDisplay(dPt1))) return;
 
+
         inView = true;
         //todo here here here
 

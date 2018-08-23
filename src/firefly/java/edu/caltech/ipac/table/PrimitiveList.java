@@ -6,7 +6,6 @@ package edu.caltech.ipac.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Date: 6/15/18
@@ -56,7 +55,11 @@ public interface PrimitiveList {
         }
 
         public void set(int idx, Object val) {
-            data.add(idx, val);
+            if (idx >= data.size()) {
+                data.add(idx, val);
+            } else {
+                data.set(idx, val);
+            }
         }
 
         public int size() {

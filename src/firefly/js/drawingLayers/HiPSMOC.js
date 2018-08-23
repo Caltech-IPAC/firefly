@@ -312,7 +312,7 @@ function updateMocData(dl, plotId) {
              updateStatus.totalTiles = get(updateStatus.newMocObj, ['allCells'], []).length;
          }
      } else {
-         if (updateStatus.processedTiles.length < updateStatus.totalTiles) {   // form drawObj
+         if (updateStatus.processedTiles.length < updateStatus.totalTiles || (updateStatus.totalTiles === 0)) {   // form drawObj
              const startIdx = updateStatus.processedTiles.length;
              const endIdx = updateStatus.processedTiles.length + updateStatus.maxChunk - 1;
              const moreObjs = createDrawObjsInMoc(updateStatus.newMocObj, plot,
