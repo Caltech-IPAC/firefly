@@ -197,7 +197,6 @@ export class MocGroup {
         this.notIncNpixs = {};  // npix of the tile that is tested as invisible previously in reduceTiles
         this.nextOrderToCollect = this.minOrder;
         this.plot = plot;
-
     }
 
     makeGroups() {

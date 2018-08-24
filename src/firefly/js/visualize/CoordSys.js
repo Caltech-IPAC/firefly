@@ -46,6 +46,8 @@ export const CoordinateSys = function () {
     var PIXEL = init('PIXEL', false,-999, 0);
     var SCREEN_PIXEL = init('SCREEN_PIXEL', false,-999, 0);
     var UNDEFINED = init('UNDEFINED', false,-999, 0);
+    var ZEROBASED = init('ZERO-BASED', false, -999, 0);
+    var FITSPIXEL = init('FITSPIXEL', false, -999, 0);
 
 
     var parse= function(desc) {
@@ -70,6 +72,10 @@ export const CoordinateSys = function () {
             coordSys = SCREEN_PIXEL;
         } else if (desc===PIXEL.toString()) {
             coordSys = PIXEL;
+        } else if (desc===ZEROBASED.toString()) {
+            coordSys = ZEROBASED;
+        } else if (desc===FITSPIXEL.toString()) {
+            coordSys = FITSPIXEL;
         } else {
             coordSys = null;
         }
@@ -87,6 +93,8 @@ export const CoordinateSys = function () {
     retval.ECL_J2000 = ECL_J2000;
     retval.ECL_B1950 = ECL_B1950;
     retval.PIXEL = PIXEL;
+    retval.ZEROBASED = ZEROBASED;
+    retval.FITSPIXEL = FITSPIXEL;
     retval.SCREEN_PIXEL = SCREEN_PIXEL;
     retval.UNDEFINED = UNDEFINED;
 

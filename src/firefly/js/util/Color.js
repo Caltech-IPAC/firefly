@@ -198,6 +198,12 @@ export function rateOpacity(color, ratio) {
     return toRGBAString(newColor);
 }
 
+export function maximizeOpacity(color) {
+    const rgba = getRGBA(color);
+    rgba[A] = 1.0;
+    return toRGBAString(rgba);
+}
+
 /**
  * @summary get contrast color in terms of black or white, based on various algorithms, relative luminance, contrast, or HSP color model.
  * @param {string} color
