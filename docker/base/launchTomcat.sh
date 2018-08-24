@@ -49,7 +49,7 @@ echo "        8080 - http"
 echo "        5050 - debug"
 echo
 echo "Volume Mount Points: "
-echo "        Log directory : /usr/local/tomcat/logs : Directory for logs files"
+echo "        Log directory : ${CATALINA_BASE}/logs : Directory for logs files"
 echo "        Local Images  : /local/data : Root directory for images and tables that firefly can read"
 echo
 echo "Command line options: "
@@ -57,12 +57,10 @@ echo "        --help  : show help message, examples, stop"
 echo "        --debug : start in debug mode"
 
 
-userFile=/usr/local/tomcat/conf/tomcat-users.xml
-sed "s/USER/${ADMIN_USER}/" ${userFile} | sed "s/PASSWORD/${ADMIN_PASSWORD}/" > u.tmp
-mv u.tmp ${userFile}
+sed "s/USER/${ADMIN_USER}/" ${CATALINA_BASE}/conf/tomcat-users.xml.in | sed "s/PASSWORD/${ADMIN_PASSWORD}/" > ${CATALINA_BASE}/conf/tomcat-users.xml
 
 if [ "x$LOG_FILE_TO_CONSOLE" != "x" ]; then
-     logFile=/usr/local/tomcat/logs/${LOG_FILE_TO_CONSOLE}
+     logFile=${CATALINA_BASE}/logs/${LOG_FILE_TO_CONSOLE}
      touch $logFile
      tail -f $logFile &
 fi
@@ -80,16 +78,16 @@ if [ "$SHARE_CACHE" = "true" ] ||[ "$SHARE_CACHE" = "t" ] ||[ "$SHARE_CACHE" = "
    ./setupSharedCacheJars.sh
 fi
 
-if [ "$MANAGER" != "true" ] && [ "$MANAGER" != "t" ] && [ "$MANAGER" != "1" ] &&  \
-   [ "$MANAGER" != "TRUE" ] && [ "$MANAGER" != "True" ] ; then
-   rm -r /usr/local/tomcat/webapps/manager
+if [ "$MANAGER" = "true" ] || [ "$MANAGER" = "t" ] || [ "$MANAGER" = "1" ] ||  \
+   [ "$MANAGER" = "TRUE" ] || [ "$MANAGER" = "True" ] ; then
+   cp -r ${CATALINA_HOME}/webapps/manager ${CATALINA_BASE}/webapps/
 fi
 
 
 
 if [ "$DEBUG" = "true" ] ||[ "$DEBUG" = "t" ] ||[ "$DEBUG" = "1" ] ||  \
    [ "$DEBUG" = "TRUE" ] || [ "$DEBUG" = "True" ] || [ "$1" = "--debug" ]; then
-     exec /usr/local/tomcat/bin/catalina.sh jpda run
+     exec ${CATALINA_HOME}/bin/catalina.sh jpda run
 else
-     exec /usr/local/tomcat/bin/catalina.sh run
+     exec ${CATALINA_HOME}/bin/catalina.sh run
 fi
