@@ -14,13 +14,13 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
-import RegionPlot from '../../drawingLayers/RegionPlot.js';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
+import {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/RegionPlot.js';
 import {get, isEmpty} from 'lodash';
 
 const popupId = 'RegionFilePopup';
 const rgUploadGroupKey = 'RegionUploadGroup';
 const rgUploadFieldKey = 'regionFileUpload';
-const regionDrawLayerId = RegionPlot.TYPE_ID;
 
 export function showRegionFileUploadPanel(divElement, popTitle='Load DS9 Region File') {
     var popup = (<PopupPanel title={popTitle}>
@@ -31,15 +31,7 @@ export function showRegionFileUploadPanel(divElement, popTitle='Load DS9 Region 
     dispatchShowDialog(popupId);
 }
 
-function* createDrawLayerId() {
-    var idCnt = 0;
 
-    while (true) {
-        yield `${regionDrawLayerId}-${idCnt++}`;
-    }
-}
-
-var drawLayerIdGen = createDrawLayerId();
 
 /**
  * get region json from server, convert json into Region objects and make RegionPlot DrawLayer
@@ -50,9 +42,11 @@ var drawLayerIdGen = createDrawLayerId();
 function uploadAndProcessRegion(request, rgComp, drawLayerId) {
     const [FieldKeyErr] = ['no region file uploaded yet'];
 
-    var regionFile = get(request, rgUploadFieldKey);
-    var setStatus = (file, regionAry, message)  => {
-            var s = {upload: (!!file || !!regionAry),  message};
+     const regionFile = get(request, rgUploadFieldKey);
+
+     const setStatus = (file, regionAry, message)  => {
+            const s = {upload: (!!file || !!regionAry),  message};
+
 
             if (rgComp) {
                 rgComp.setState(s);
@@ -60,9 +54,15 @@ function uploadAndProcessRegion(request, rgComp, drawLayerId) {
 
             if (file || regionAry) {
                 if (isEmpty(drawLayerId)) {
-                    drawLayerId = drawLayerIdGen.next().value;
+                    drawLayerId = createNewRegionLayerId();
                 }
-                dispatchCreateRegionLayer(drawLayerId, drawLayerId, file, regionAry);
+                const dispVal = file ? get(FieldGroupUtils.getGroupFields(rgUploadGroupKey), [rgUploadFieldKey, 'displayValue']) : '';
+                const fileName = dispVal ? dispVal.split(/(\\|\/)/g).pop() : '';
+
+                let title = !fileName ? '' : (fileName.includes('.') ? fileName.slice(0, fileName.lastIndexOf('.')) : fileName);
+                title = getRegionLayerTitle(title);
+
+                dispatchCreateRegionLayer(drawLayerId, title, file, regionAry);
                 dispatchHideDialog(popupId);
             }
     };
@@ -120,7 +120,7 @@ class RegionUpload extends PureComponent {
     }
 
     onUpload(request) {
-        uploadAndProcessRegion(request, this, drawLayerIdGen.next().value);
+        uploadAndProcessRegion(request, this, createNewRegionLayerId());  // get a new layer
     }
 
     render() {
