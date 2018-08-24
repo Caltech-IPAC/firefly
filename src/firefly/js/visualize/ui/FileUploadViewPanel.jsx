@@ -3,7 +3,6 @@
  */
 
 import React, {PureComponent} from 'react';
-import PropTypes from 'prop-types';
 import {get, set, isNil, isEqual} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -16,7 +15,7 @@ import {dispatchTableSearch, dispatchTableRemove} from '../../tables/TablesCntlr
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage } from '../ImagePlotCntlr.js';
+import {dispatchPlotImage, visRoot, dispatchPlotHiPS} from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
@@ -24,18 +23,27 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
+import {getAppHiPSForMoc, addNewMocLayer} from '../HiPSMocUtil.js';
+import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
+import {genHiPSPlotId} from './ImageSearchPanelV2.jsx';
+import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot} from '../DrawLayerCntlr.js';
+import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import {isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
+
 
 import './ImageSelectPanel.css';
 
 export const panelKey = 'FileUploadAnalysis';
+const HEADER_KEY_COL = 1;
+const HEADER_VAL_COL = 2;
+
 const  fileId = 'fileUpload';
 const  urlId = 'urlUpload';
 const  wsId = 'wsUpload';
 
 const SUMMARY_INDEX_COL = 0;
 const SUMMARY_TYPE_COL = 2;
-const HEADER_KEY_COL = 1;
-const HEADER_VAL_COL = 2;
 const analysisTblIds = [];
 const headerTblIds = [];
 
@@ -150,6 +158,7 @@ const getSelectionResult = (model, limit) => {
 };
 
 
+
 export class FileUploadViewPanel extends PureComponent {
 
     constructor(props) {
@@ -188,7 +197,8 @@ export class FileUploadViewPanel extends PureComponent {
                 if (!selectInfo) {
                     selectInfo = selectRowFromSummaryTable(analysisModel);
                 }
-                analysisModel = Object.assign(analysisModel, {selectInfo});
+                const isMocFits =  isMOCFitsFromUploadAnalsysis(analysisSummary, analysisModel);
+                analysisModel = Object.assign(analysisModel, {selectInfo, isMocFits});
 
                 highlightedRow = get(tblInfo, 'highlightedRow', 0);
                 hlHeaderTable = (highlightedRow >= 0) ? makeHeaderTable(analysisModel, highlightedRow) : null;
@@ -498,6 +508,7 @@ export class FileUploadViewPanel extends PureComponent {
         const showSummary = () => {
             let summaryLine = analysisSummary ? analysisSummary.split('--', 1): ''; // only get one line summary
             if (summaryLine) {
+                summaryLine = get(analysisModel, ['isMocFits', 'valid']) ? 'MOC ' + summaryLine : summaryLine;
                 summaryLine += (analysisModel&&analysisModel.size ? `: ${getSizeAsString(analysisModel.size)} Bytes` : '');
             }
 
@@ -553,11 +564,12 @@ const errorMsg =  {invalidFile: 'no valid file is uploaded',
     invalidFITSSelection: 'no extension with valid data is selected',
     noTableSelected: 'no table is selected',
     noExtensionSelected: 'no extenstion is selected'};
+const errorTitle = 'search uploaded file error';
+
 
 const returnValidate = (retVal) => {
     if (retVal.message) {
-        console.log(retVal.message);
-        showInfoPopup(retVal.message, 'search uploaded file error');
+        showInfoPopup(retVal.message, get(retVal, 'title', 'search info'));
     }
     return retVal;
 };
@@ -574,7 +586,8 @@ export function validateModelSelection(uploadTabs) {
         if (!valid || !analysisResult || analysisTblIds.length === 0) {    // no file uploaded yet
             return returnValidate({
                 valid: false,
-                message: errorMsg.invalidFile
+                message: errorMsg.invalidFile,
+                title: errorTitle
             });
         }
 
@@ -583,7 +596,8 @@ export function validateModelSelection(uploadTabs) {
         if (analysisSummary.startsWith('invalid') || !analysisModel) {    // no valid file uploaded
             return returnValidate({
                 valid: false,
-                message: errorMsg.invalidFile
+                message: errorMsg.invalidFile,
+                title: errorTitle
             });
         }
 
@@ -606,11 +620,14 @@ export function validateModelSelection(uploadTabs) {
         if (Array.from(selList).length === 0) {
             return returnValidate({
                 valid: false,
-                message: (bFits ? errorMsg.noExtensionSelected : errorMsg.noTableSelected)
+                message: (bFits ? errorMsg.noExtensionSelected : errorMsg.noTableSelected),
+                error: errorTitle
             });
         }
 
-        const resultModel = Object.assign({}, analysisModel, {selectInfo: adjustSelectInfo(tableModel, selectInfo)});
+        const resultModel = Object.assign({}, analysisModel,
+                                    {selectInfo: adjustSelectInfo(tableModel, selectInfo),
+                                     isMocFits: get(tableModel, 'isMocFits', {valid: false})});
         const limit = 20;
         const selectResults = getSelectionResult(resultModel, limit); // a search limit is set
 
@@ -634,7 +651,8 @@ export function validateModelSelection(uploadTabs) {
         } else {
             return returnValidate({
                 valid: false,
-                message: (bFits ? errorMsg.invalidFITSSelection : errorMsg.invalidVTableelection)
+                message: (bFits ? errorMsg.invalidFITSSelection : errorMsg.invalidVTableelection),
+                title: errorTitle
             });
         }
 }
@@ -766,6 +784,73 @@ function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
     }
 }
 
+
+function sendMocRequest(fileName, displayValue, uploadMethod, mocFits) {
+
+    const uniqueTblId = () => {
+        let fileName;
+        if (uploadMethod === fileId) {
+            fileName =  displayValue.split(/[\\|\/]/g).pop().replace('.', '_');
+        } else {
+            if (uploadMethod === urlId) {
+                displayValue = displayValue.replace(/^http[s]?:[\\|\/]{2}/i, '');
+            }
+            fileName = displayValue.replace(/[\\|\/|\.]/g, '_');
+        }
+
+        let idCnt = 0;
+        while (true) {
+            const tableId = idCnt === 0 ? fileName : `${fileName}-${++idCnt}`;
+
+            if (!getTblById(tableId)) return tableId;
+        }
+    };
+    const tblId = uniqueTblId();
+    const pv = primePlot(visRoot());
+
+    const overlayMocOnPlot = (plotId) => {
+        const dl = addNewMocLayer(tblId,fileName, null, get(mocFits, [MOCInfo, UNIQCOL]));
+        if (dl) {
+            dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, true);
+        }
+    };
+
+
+    if (!pv) {
+        const pId = genHiPSPlotId.next().value;
+
+        const watcher = (action, cancelSelf) => {
+                const {plotIdAry, plotId, drawLayerId} = action.payload;
+                const dl = getDrawLayerById(dlRoot(), drawLayerId);
+
+                // after hips moc of default HiPS is attached to the plot
+                if ((dl.drawLayerTypeId === HiPSMOC.TYPE_ID) &&
+                    (drawLayerId !== tblId) && ((plotIdAry && plotIdAry[0] === pId) || (plotId && plotId === pId))) {
+                    overlayMocOnPlot(pId);
+                    cancelSelf();
+                }
+            };
+
+        const hipsUrl = getAppHiPSForMoc();
+        returnValidate({
+            valid: true,
+            message: 'There is no image in the viewer. The MOC will be shown on top of the HiPS image from \''
+                     + hipsUrl +'\'',
+            title: 'MOC fits search info'
+        });
+
+        dispatchAddActionWatcher({actions: [DrawLayerCntlr.ATTACH_LAYER_TO_PLOT], callback: watcher});
+
+        const wpRequest = WebPlotRequest.makeHiPSRequest(hipsUrl);
+        const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
+
+        wpRequest.setPlotGroupId(viewerId);
+        wpRequest.setPlotId(pId);
+        wpRequest && dispatchPlotHiPS({plotId: pId, viewerId, wpRequest});
+    } else {
+        overlayMocOnPlot(pv.plotId);
+    }
+}
 /*
     the map which maps summary table row index to table index and image extension number at the server
  */
@@ -815,10 +900,14 @@ export function resultSuccess() {
                 sendImageRequest(uploadName, displayValue, selectResults.image, extensionMap.imageMap, imageDisplay);
             }
             if (selectResults.table.length !== 0) {
-                selectResults.table.forEach((idx) => {
-                    sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,
-                                     analysisModel.totalRows);
-                });
+                if (get(analysisModel, ['isMocFits', 'valid'])) {
+                    sendMocRequest(uploadName, displayValue, uploadTabs, analysisModel.isMocFits);
+                } else {
+                    selectResults.table.forEach((idx) => {
+                        sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,
+                            analysisModel.totalRows);
+                    });
+                }
             }
         } else {    // csv, tsv, ipac
             sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs));
@@ -833,7 +922,8 @@ export function resultFail() {
     {
         returnValidate({
             valid: false,
-            message: errorMsg.invalidFile
+            message: errorMsg.invalidFile,
+            title: errorTitle
         });
         return false;
     };

@@ -32,7 +32,7 @@ import {dispatchChangeHiPS} from '../ImagePlotCntlr';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import ActiveTarget from '../../drawingLayers/ActiveTarget.js';
 import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
-import {addNewMocLayer, makeMocTableId} from '../HiPSMocUtil.js';
+import {addNewMocLayer, makeMocTableId, isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {doUpload} from '../../ui/FileUpload.jsx';
 
@@ -261,11 +261,16 @@ function createHiPSMocLayer(ivoid, hipsUrl, plot, mocFile = 'Moc.fits') {
         return;
     }
 
-    doUpload(mocUrl, {isFromURL: true}).then(({status, cacheKey}) => {
+    doUpload(mocUrl, {isFromURL: true, fileAnalysis: ()=>{}}).then(({status, cacheKey, analysisResult}) => {
         if (status === '200') {
-            dl =  addNewMocLayer(tblId, cacheKey, mocUrl);
-            if (dl && plot.plotId) {
-                dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, false);
+            const {analysisModel={}, analysisSummary=''} = JSON.parse(analysisResult) || {};
+
+            const isMocFits = isMOCFitsFromUploadAnalsysis(analysisSummary, analysisModel);
+            if (isMocFits.valid) {
+                dl = addNewMocLayer(tblId, cacheKey, mocUrl, get(isMocFits, [MOCInfo, UNIQCOL]));
+                if (dl && plot.plotId) {
+                    dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, false);
+                }
             }
         }
     });

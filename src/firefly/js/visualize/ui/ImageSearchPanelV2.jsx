@@ -64,7 +64,7 @@ function* getHiPSPlotId() {
     }
 }
 
-const genHiPSPlotId = getHiPSPlotId();
+export const genHiPSPlotId = getHiPSPlotId();
 
 /**
  * @typedef {Object} ContextInfo

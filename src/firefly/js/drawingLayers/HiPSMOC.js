@@ -43,11 +43,12 @@ function getVisiblePlotIdsByDrawlayerId(id, getState) {
 
 function* loadMocFitsSaga({id, mocFitsInfo}, dispatch, getState) {
     while (true) {
-        const action = yield take([DrawLayerCntlr.CHANGE_VISIBILITY, TABLE_LOADED]);
+        const action = yield take([DrawLayerCntlr.CHANGE_VISIBILITY, TABLE_LOADED, DrawLayerCntlr.ATTACH_LAYER_TO_PLOT]);
 
         switch (action.type) {
             case DrawLayerCntlr.CHANGE_VISIBILITY:
-                if (action.payload.drawLayerId === id && action.payload.visible) {
+            case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
+                if (action.payload.drawLayerId === id && (action.payload.visible)) {
                     const {fitsPath} = mocFitsInfo || {};
 
                     if (mocFitsInfo.tbl_id) {
@@ -55,7 +56,7 @@ function* loadMocFitsSaga({id, mocFitsInfo}, dispatch, getState) {
                         if (!mocTable && fitsPath) {       // moc fits not loaded yet
                             const tReq = makeTblRequest('userCatalogFromFile', 'Table Upload',
                                 {filePath: fitsPath, sourceFrom: 'isLocal'},
-                                {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW, inclCols: 'UNIQ'});
+                                {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW, inclCols: mocFitsInfo.uniqColName});
                             dispatchTableFetch(tReq, 0);  // change to dispatchTableFetch later
                         } else {
                             const vPlotIds =getVisiblePlotIdsByDrawlayerId(id, getState);
@@ -178,9 +179,7 @@ function getTitle(dl, pIdAry, isLoading=false) {
 
 
 function showMessage(text, bShow = false) {
-    const isShow = bShow;
-
-    if (isShow) {
+    if (bShow) {
         console.log(text);
     }
 }
@@ -200,8 +199,9 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             if (!plotIdAry && !plotId) return null;
 
+            const {visible} = action.payload;
             const pIdAry = plotIdAry ? plotIdAry :[plotId];
-            const tObj = getTitle(drawLayer, pIdAry);
+            const tObj = getTitle(drawLayer, pIdAry, visible);
             const updateStatusAry = pIdAry.reduce((prev, pId) => {
                     if (!prev[pId]) {
                         prev[pId] = new UpdateStatus();
@@ -388,7 +388,7 @@ function abortUpdate(dl, updateStatusAry, pId, updateMethod = LayerUpdateMethod.
 function asyncComputeDrawData(drawLayer, action) {
     const forAction = [ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT,
                        DrawLayerCntlr.MODIFY_CUSTOM_FIELD];
-    if (!forAction.includes(action.type)) return;
+    if (!forAction.includes(action.type) || !drawLayer.mocObj) return;
 
     const {mocStyle} = drawLayer;
     if (action.type === DrawLayerCntlr.MODIFY_CUSTOM_FIELD) {
