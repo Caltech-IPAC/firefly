@@ -47,12 +47,11 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 </div>
             );
         } else {
-            let fPos = {marginLeft: -150, width: '12em', overflow:'hidden',
-                        textOverflow: 'ellipsis', whiteSpace: 'nowrap'};
+            let fPos = {marginLeft: -150, width: '12em'};
 
             if (!isNil(fileNameStyle)) fPos = Object.assign(fPos, fileNameStyle);
             return (
-                fileName && <div style={{display:'inline-block', ...fPos}} title={fileName}>{fileName}</div>
+                fileName && <div style={{...fPos}} className='text-ellipsis' title={fileName}>{fileName}</div>
             );
         }
     };

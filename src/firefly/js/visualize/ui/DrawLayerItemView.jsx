@@ -93,17 +93,13 @@ function getTitleTag(title, maxTitleChars) {
     const maxW = maxTitleChars*.7 > 10 ? Math.min(maxTitleChars*.7, 30) : 10;
 
     const tStyle= {
-        display:'inline-block',
-        whiteSpace: 'nowrap',
         minWidth: minW + 'em',
         maxWidth: maxW + 'em',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
         lineHeight: '1.1em'
     };
 
     return (
-        <div style={tStyle} title={title}>{title}</div>
+        <div style={tStyle} className='text-ellipsis' title={title}>{title}</div>
         );
 }
 
