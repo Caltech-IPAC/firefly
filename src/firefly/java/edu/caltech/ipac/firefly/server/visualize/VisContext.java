@@ -55,7 +55,6 @@ public class VisContext {
             System.setProperty("java.awt.headless", "true");
 
             Logger.LoggerImpl log= Logger.getLogger();
-            log.info("Working dir: "+ServerContext.getWorkingDir().getPath());
 
             File cacheDir= ServerContext.getVisCacheDir();
 

@@ -29,3 +29,7 @@ Debugging:
 
 Production like:
    docker run -p 8055:8080 -p 9050:9050 -e "MAX_JVM_SIZE=30G" -e "ADMIN_PASSWORD=myPassword" -e SHARE_CACHE="TRUE" -e DEBUG="FALSE" -e "jvmRoute=MyHostName" --name productionServer ipac/firefly
+
+Production like, multiple tomcats, using a shared work directory:
+   docker run -p 8055:8080 -p 9050:9050 -e "MAX_JVM_SIZE=30G" -e "ADMIN_PASSWORD=myPassword" \
+    -e "FIREFLY_SHARED_WORK_DIR=/local/shared/work/area" -v /local/shared/work/area --name productionServer ipac/firefly
