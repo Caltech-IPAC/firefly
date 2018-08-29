@@ -414,9 +414,8 @@ function asyncComputeDrawData(drawLayer, action) {
 
         pIdAry.forEach((pId) => {
             if (visiblePlotIdAry.includes(pId) && get(updateStatusAry, pId)) {
-                const style = get(mocStyle, [pId], Style.STANDARD);
-                const updateMethod = (action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION && style !== Style.FILL)
-                                      ? LayerUpdateMethod.none : LayerUpdateMethod.byEmptyAry;
+                const updateMethod = LayerUpdateMethod.none;
+
                 abortUpdate(drawLayer, updateStatusAry, pId, updateMethod);
                 updateStatusAry[pId].setCanceler(makeUpdateDeferred(drawLayer, pId));
             }
