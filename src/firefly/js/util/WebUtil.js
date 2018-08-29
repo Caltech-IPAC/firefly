@@ -339,7 +339,11 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
                 return new Error(`${url} failed with status: ${response}.statusText`);
             }
         }).catch( (error) => {
-            throw new Error(`Request failed: ${url}`, error);
+            if (error.name === 'AbortError') {
+                throw error; // fetch aborted
+            } else {
+                throw new Error(`Request failed: ${url}`, error);
+            }
         });
 }
 

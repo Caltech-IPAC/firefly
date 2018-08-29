@@ -22,23 +22,23 @@ export {formatPosForTextField} from '../data/form/PositionFieldDef.js';
 //     showHelp, boolean
 //     return parse results
 
-var makeResolverPromise= function(objName, resolver) {
-    var ignoreSearchResults= null;
-    var aborted= false;
+function makeResolverPromise(objName, resolver) {
+    let ignoreSearchResults= null;
+    let aborted= false;
 
-    var aborter= function() {
+    const aborter= function() {
         aborted= true;
-        if (ignoreSearchResults!=null) ignoreSearchResults();
+        if (ignoreSearchResults!==null) ignoreSearchResults();
     };
 
-    var workerPromise= new Promise(
+    const workerPromise= new Promise(
         function(resolve, reject) {
             setTimeout( ()=> {
                 if (aborted) {
                     reject();
                 }
                 else {
-                    var {p, rejectFunc}= makeSearchPromise(objName, resolver);
+                    const {p, rejectFunc}= makeSearchPromise(objName, resolver);
                     ignoreSearchResults= rejectFunc;
                     resolve(p);
                 }
@@ -49,25 +49,33 @@ var makeResolverPromise= function(objName, resolver) {
 
 
     return {p:workerPromise, aborter};
-};
+}
 
 
 
 function makeSearchPromise(objName, resolver= 'nedthensimbad') {
-    var rejectFunc= null;
-    var url= `${getRootPath()}sticky/CmdSrv?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
-    var searchPromise= new Promise(
+    let rejectFunc= null;
+    const url= `${getRootPath()}sticky/CmdSrv?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
+    const searchPromise= new Promise(
         function(resolve, reject) {
-            fetchUrl(url).then( (response) => {
-                response.json().then( (value) => {
-                    resolve(value);
-                });
+            // fetch will be aborted after timeout
+            const fetchTimeoutMs = 7000;
+            const controller = new AbortController();
+            const signal = controller.signal;
+            setTimeout(() => {
+                controller.abort();
+            }, fetchTimeoutMs);
+
+            fetchUrl(url, {signal}).then( (response) => {
+                    response.json().then((value) => {
+                        resolve(value);
+                    });
             }).catch( (error) => {
                 return reject(error);
             });
         });
 
-    var abortPromise= new Promise(function(resolve,reject) {
+    const abortPromise= new Promise(function(resolve,reject) {
         rejectFunc= reject;
     });
     return {p:Promise.race([searchPromise,abortPromise]), rejectFunc};
@@ -75,16 +83,16 @@ function makeSearchPromise(objName, resolver= 'nedthensimbad') {
 
 
 
-export var parseTarget= function(inStr, lastResults, resolver) {
-    var wpt= null;
-    var valid= false;
-    var targetInput= inStr;
-    var feedback= 'valid: false';
-    var showHelp= true;
-    var posFieldDef= PositionFieldDef.makePositionFieldDef();
-    var resolveData;
-    var resolvePromise= null;
-    var aborter= null;
+export function parseTarget(inStr, lastResults, resolver) {
+    let wpt= null;
+    let valid= false;
+    const targetInput= inStr;
+    let feedback= 'valid: false';
+    let showHelp= true;
+    const posFieldDef= PositionFieldDef.makePositionFieldDef();
+    let resolveData= null;
+    let resolvePromise= null;
+    let aborter= null;
     let errMsg = null;
 
     if (targetInput) {
@@ -122,16 +130,16 @@ export var parseTarget= function(inStr, lastResults, resolver) {
     return {showHelp, feedback, parseError: errMsg,
             inputType: posFieldDef.getInputType(),
             valid, resolvePromise, wpt, aborter  };
-};
+}
 
 
 export function getFeedback(wpt) {
-    var posFieldDef= PositionFieldDef.makePositionFieldDef();
+    const posFieldDef= PositionFieldDef.makePositionFieldDef();
     return posFieldDef.formatTargetForHelp(wpt);
 }
 
-var resolveObject = function(posFieldDef, resolver) {
-    var objName= encodeURIComponent(posFieldDef.getObjectName());
+function resolveObject(posFieldDef, resolver) {
+    const objName= encodeURIComponent(posFieldDef.getObjectName());
     if (!objName) {
         return {
             showHelp: true,
@@ -145,7 +153,7 @@ var resolveObject = function(posFieldDef, resolver) {
         {
             if (results) {
                 if (results[0].success === 'true') {
-                    var wpt = parseWorldPt(results[0].data);
+                    const wpt = parseWorldPt(results[0].data);
                     return {
                         showHelp: false,
                         feedback: posFieldDef.formatTargetForHelp(wpt),
@@ -171,13 +179,25 @@ var resolveObject = function(posFieldDef, resolver) {
                 };
             }
         }
-    ).catch(function(e) {
+    ).catch((e) => {
+        let feedback = `Could not resolve: ${objName}`;
+        if (e.name === 'AbortError') {
+            feedback += '. Unresponsive service.';
+        } else {
+            feedback += '. Unexpected error.';
             if (e) console.error(e);
-        });
+        }
+        return {
+            showHelp: false,
+            feedback,
+            valid: false,
+            wpt: null
+        };
+    });
 
     return {p,aborter};
 
-};
+}
 
 
 
