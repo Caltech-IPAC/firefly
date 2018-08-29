@@ -196,7 +196,7 @@ public class ServerContext {
 
         File sharedWorkingDirFile = null;
         String sharedWorkDirRoot = AppProperties.getProperty(SHARED_WORK_DIR_PROP);
-        if (!StringUtils.isEmpty(workDirRoot)) {
+        if (!StringUtils.isEmpty(sharedWorkDirRoot)) {
             sharedWorkingDirFile= initDir(new File(sharedWorkDirRoot));
             setSharedWorkingDir(new File(sharedWorkingDirFile, contextName));
         }
