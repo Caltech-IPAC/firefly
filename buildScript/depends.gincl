@@ -45,7 +45,7 @@ ext {
                   ':starlink-table-3.2',
                   ':starlink-util-1.0+2017.03.17',
                   ':starlink-votable-2.0+2016.12.22']
-  xbeanfinder_lib = [':xbean-finder-4.1', ':asm-5.0.3']
+  xbeanfinder_lib = [':xbean-finder-4.1', ':asm-6.2.1']
   spring_lib = [':spring-beans', ':spring-core', ':spring-jdbc', ':spring-tx', ':spring-web']
   fits_io_lib = [':fits_io']
   junit_lib = [':junit-4.12', ':hamcrest-core-1.3']
