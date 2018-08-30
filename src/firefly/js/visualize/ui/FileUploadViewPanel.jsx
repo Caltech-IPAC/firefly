@@ -785,22 +785,23 @@ function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
 }
 
 
-function sendMocRequest(fileName, displayValue, uploadMethod, mocFits) {
+function sendMocRequest(uploadPath, displayValue, uploadMethod, mocFits) {
 
     const uniqueTblId = () => {
-        let fileName;
+        let filePath;
         if (uploadMethod === fileId) {
-            fileName =  displayValue.split(/[\\|\/]/g).pop().replace('.', '_');
+            filePath =  displayValue.split(/[\\|\/]/g).pop().replace('.', '_');
         } else {
             if (uploadMethod === urlId) {
                 displayValue = displayValue.replace(/^http[s]?:[\\|\/]{2}/i, '');
             }
-            fileName = displayValue.replace(/[\\|\/|\.]/g, '_');
+            filePath = displayValue.replace(/[\\|\/|\.]/g, '_');
         }
 
         let idCnt = 0;
         while (true) {
-            const tableId = idCnt === 0 ? fileName : `${fileName}-${++idCnt}`;
+            const tableId = idCnt === 0 ? filePath : `${filePath}-${idCnt}`;
+            idCnt++;
 
             if (!getTblById(tableId)) return tableId;
         }
@@ -809,7 +810,7 @@ function sendMocRequest(fileName, displayValue, uploadMethod, mocFits) {
     const pv = primePlot(visRoot());
 
     const overlayMocOnPlot = (plotId) => {
-        const dl = addNewMocLayer(tblId,fileName, null, get(mocFits, [MOCInfo, UNIQCOL]));
+        const dl = addNewMocLayer(tblId, uploadPath, null, get(mocFits, [MOCInfo, UNIQCOL]));
         if (dl) {
             dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, true);
         }
@@ -890,27 +891,27 @@ export function resultSuccess() {
 
         const {analysisModel, displayValue, selectResults} = retVal;
         const {fileUpload, urlUpload, wsUpload} = request;
-        const uploadName = (uploadTabs === fileId) ? fileUpload
-                                                   : ((uploadTabs === wsId) ? wsUpload : urlUpload);
+        const uploadPath = (uploadTabs === fileId) ? fileUpload
+                                                   : ((uploadTabs === wsId) ? wsUpload : urlUpload); // file at the server
 
         if (selectResults) {    // votable or fits
             const extensionMap = getExtensionMap(analysisModel);
 
             if (selectResults.image.length !== 0) {
-                sendImageRequest(uploadName, displayValue, selectResults.image, extensionMap.imageMap, imageDisplay);
+                sendImageRequest(uploadPath, displayValue, selectResults.image, extensionMap.imageMap, imageDisplay);
             }
             if (selectResults.table.length !== 0) {
                 if (get(analysisModel, ['isMocFits', 'valid'])) {
-                    sendMocRequest(uploadName, displayValue, uploadTabs, analysisModel.isMocFits);
+                    sendMocRequest(uploadPath, displayValue, uploadTabs, analysisModel.isMocFits);
                 } else {
                     selectResults.table.forEach((idx) => {
-                        sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,
+                        sendTableRequest(uploadPath, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,
                             analysisModel.totalRows);
                     });
                 }
             }
         } else {    // csv, tsv, ipac
-            sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs));
+            sendTableRequest(uploadPath, tableTitle(displayValue, uploadTabs));
         }
 
         removeAnalysisTable(analysisTblIds.length-1);   // keep the current analysisModel

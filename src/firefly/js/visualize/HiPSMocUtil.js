@@ -139,7 +139,7 @@ export function getMocOrderIndex(Nuniq) {
 /**
  * add new layer on MOC table
  * @param {string} tbl_id moc table id
- * @param {string} fitsPath moc fits path
+ * @param {string} fitsPath moc fits path at the server after upload
  * @param {string} mocUrl  moc fits url
  * @param {string} uniqColName column name for uniq number
  * @returns {T|SelectInfo|*|{}}
