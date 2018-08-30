@@ -95,39 +95,17 @@ class ColorDialog extends PureComponent {
     }
 
     setHuePreserving(val) {
-        this.setState({isHuePreserving: val==='huePreserving'});
-
+        this.setState({isHuePreserving: val});
     }
 
     render() {
-        const {plot,fields,rFields,gFields,bFields,rgbFields}= this.state;
+        const {plot,fields,rFields,gFields,bFields,rgbFields,isHuePreserving}= this.state;
         if (!plot) return false;
-
 
         if (isImage(plot)) {
             const {plotState} = plot;
             if (plotState.isThreeColor()) {
-                const canBeHuePreserving = plotState.isBandUsed(Band.RED) && plotState.isBandUsed(Band.GREEN) && plotState.isBandUsed(Band.BLUE);
-                const isHuePreservingSelected = this.state.isHuePreserving;
-                const threeColorStretchMode = canBeHuePreserving &&
-                    <RadioGroupInputFieldView
-                        options={[
-                            {label: 'Per-band stretch', value: 'perBand'},
-                            {label: 'Hue preserving stretch', value: 'huePreserving'}
-
-                        ]}
-                        wrapperStyle={{padding: 5}}
-                        value={isHuePreservingSelected ? 'huePreserving' : 'perBand'}
-                        onChange={(ev) => this.setHuePreserving(ev.target.value)}
-                    />;
-
-                return (
-                    <div>
-                        {threeColorStretchMode}
-                        {isHuePreservingSelected && renderHuePreservingThreeColorView(plot, rgbFields)}
-                        {!isHuePreservingSelected && renderThreeColorView(plot, rFields, gFields, bFields)}
-                    </div>
-                );
+                return renderThreeColorView(plot,rFields,gFields,bFields,rgbFields,isHuePreserving,this.setHuePreserving);
             }
             else {
                 return renderStandardView(plot,fields);
@@ -150,6 +128,30 @@ class ColorDialog extends PureComponent {
     }
 }
 
+function renderThreeColorView(plot, rFields, gFields, bFields, rgbFields, isHuePreservingSelected, setHuePreserving) {
+    const {plotState} = plot;
+    const canBeHuePreserving = plotState.isBandUsed(Band.RED) && plotState.isBandUsed(Band.GREEN) && plotState.isBandUsed(Band.BLUE);
+    const threeColorStretchMode = canBeHuePreserving &&
+        <RadioGroupInputFieldView
+            options={[
+                {label: 'Per-band stretch', value: 'perBand'},
+                {label: 'Hue preserving stretch', value: 'huePreserving'}
+
+            ]}
+            wrapperStyle={{padding: 5}}
+            value={isHuePreservingSelected ? 'huePreserving' : 'perBand'}
+            onChange={(ev) => setHuePreserving(ev.target.value==='huePreserving')}
+        />;
+
+    return (
+        <div>
+            {threeColorStretchMode}
+            {isHuePreservingSelected && renderHuePreservingThreeColorView(plot, rgbFields)}
+            {!isHuePreservingSelected && renderStandardThreeColorView(plot, rFields, gFields, bFields)}
+        </div>
+    );
+}
+
 function renderHuePreservingThreeColorView(plot,rgbFields) {
     const groupKey = RGB_HUEPRESERVE_PANEL;
     return (
@@ -170,8 +172,7 @@ function renderHuePreservingThreeColorView(plot,rgbFields) {
     );
 }
 
-
-function renderThreeColorView(plot,rFields,gFields,bFields) {
+function renderStandardThreeColorView(plot,rFields,gFields,bFields) {
     const {plotState}= plot;
     const usedBands = plotState? plotState.usedBands:null;
     return (
@@ -275,7 +276,7 @@ function replotStandard(request) {
 }
 
 export function replot3ColorHuePreserving(request) {
-    console.log(request);
+    // console.log(request);
     const useZ= Boolean(request.zscale);
     const stretchData = [[Band.RED.key, 'lowerWhichRed','lowerRangeRed'],
         [Band.GREEN.key, 'lowerWhichGreen','lowerRangeGreen'],

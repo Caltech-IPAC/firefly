@@ -105,27 +105,27 @@ export class RangeValues {
     toString() { return this.toJSON(); }
 
 
-    // /**
-    //  * @return {RangeValues}
-    //  */
-    // static makeDefaultSigma() {
-    //     return new RangeValues(SIGMA,-2,SIGMA,10,STRETCH_LINEAR);
-    // }
-    //
-    //
-    // /**
-    //  * @return {RangeValues}
-    //  */
-    // static makeDefaultPercent() {
-    //     return new RangeValues(PERCENTAGE,-2,PERCENTAGE,10,STRETCH_LINEAR);
-    // }
-    //
-    // /**
-    //  * @return {RangeValues}
-    //  */
-    // static makeDefaultZScale() {
-    //     return new RangeValues(ZSCALE,1,ZSCALE,1,STRETCH_LINEAR,25, 600, 120);
-    // }
+    /**
+     * @return {RangeValues}
+     */
+    static makeDefaultSigma() {
+        return new RangeValues(SIGMA,-2,SIGMA,10,STRETCH_LINEAR);
+    }
+
+
+    /**
+     * @return {RangeValues}
+     */
+    static makeDefaultPercent() {
+        return new RangeValues(PERCENTAGE,1,PERCENTAGE,99,STRETCH_LINEAR);
+    }
+
+    /**
+     * @return {RangeValues}
+     */
+    static makeDefaultZScale() {
+        return new RangeValues(ZSCALE,1,ZSCALE,1,STRETCH_LINEAR,25, 600, 120);
+    }
 
     /**
      *

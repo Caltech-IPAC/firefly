@@ -21,7 +21,7 @@ import {
     STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 
-import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
@@ -394,10 +394,14 @@ export function renderAsinH(fields, renderRange, replot) {
 function getReplotFunc(groupKey, band) {
 
     return (val) => {
-        const request = getFieldGroupResults(groupKey);
-        const serRv = makeSerializedRv(request);
-        const stretchData = [{band: band.key, rv: serRv, bandVisible: true}];
-        const pv = getActivePlotView(visRoot());
-        if (pv) dispatchStretchChange({plotId: pv.plotId, stretchData});
+        validateFieldGroup(groupKey).then((valid) => {
+            if (valid) {
+                const request = getFieldGroupResults(groupKey);
+                const serRv = makeSerializedRv(request);
+                const stretchData = [{band: band.key, rv: serRv, bandVisible: true}];
+                const pv = getActivePlotView(visRoot());
+                if (pv) dispatchStretchChange({plotId: pv.plotId, stretchData});
+            }
+        });
     };
 }

@@ -27,7 +27,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
     private final int _width;
     private final int _height;
 
-    RGBIntensity _rgbIntensity; // for 3-color hew-preserving images only
+    private RGBIntensity _rgbIntensity; // for 3-color hew-preserving images only
 
 
 
@@ -189,9 +189,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
             }
             _imageDataAry= null;
         }
-        if (_rgbIntensity !=null) {
-            _rgbIntensity = null;
-        }
+        _rgbIntensity = null;
     }
 
 

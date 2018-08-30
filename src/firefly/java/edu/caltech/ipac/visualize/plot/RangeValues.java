@@ -16,29 +16,14 @@ import java.io.Serializable;
 
 public class RangeValues implements Cloneable, Serializable {
 
-
-//    public static final String PERCENTAGE_STR = "Percent";
-//    public static final String ABSOLUTE_STR   = "Absolute";
-//    public static final String SIGMA_STR      = "Sigma";
-
     public static final int PERCENTAGE = 88;
-//    public static final int MAXMIN     = 89;  // obsolete
+    //public static final int MAXMIN     = 89;  // obsolete
     public static final int ABSOLUTE   = 90;
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
 
     private static final double ASINH_Q =  Double.NaN; // if NaN, Q will be estimated based on range;
     private static final double GAMMA=2.0;
-
-//    public static final String LINEAR_STR= "Linear";
-//    public static final String LOG_STR= "Log";
-//    public static final String LOGLOG_STR= "LogLog";
-//    public static final String EQUAL_STR= "Equal";
-//    public static final String SQUARED_STR= "Squared";
-//    public static final String SQRT_STR= "Sqrt";
-//
-//    public static final String ASINH_STR= "Asinh";
-//    public static final String POWERLAW_GAMMA_STR= "powerlaw_gamma";
 
 
     public static final int STRETCH_LINEAR= 44;

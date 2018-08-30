@@ -2,7 +2,7 @@ import React, {PureComponent} from 'react';
 import {debounce} from 'lodash';
 import {replot3ColorHuePreserving} from './ColorDialog.jsx';
 import {getTypeMinField, getZscaleCheckbox, renderAsinH} from './ColorBandPanel.jsx';
-import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils';
+import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 
 
@@ -69,7 +69,11 @@ export class ColorRGBHuePreservingPanel extends PureComponent {
 function getReplotFunc(groupKey) {
 
     return () => {
-        const request = getFieldGroupResults(groupKey);
-        replot3ColorHuePreserving(request);
+        validateFieldGroup(groupKey).then((valid) => {
+            if (valid) {
+                const request = getFieldGroupResults(groupKey);
+                replot3ColorHuePreserving(request);
+            }
+        });
     };
 }

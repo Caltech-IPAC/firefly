@@ -5,10 +5,14 @@
 package edu.caltech.ipac.visualize.plot.plotdata;
 
 
-import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.visualize.plot.Histogram;
+import edu.caltech.ipac.visualize.plot.ImageHeader;
+import edu.caltech.ipac.visualize.plot.ImageMask;
+import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.Arrays;
+
+import static edu.caltech.ipac.visualize.plot.plotdata.ImageStretchUtil.*;
 
 /**
  * @author Trey Roby
@@ -29,8 +33,8 @@ public class ImageStretch {
                                          int lastPixel,
                                          int startLine,
                                          int lastLine ) {
-        double slow = ImageStretch.getSlow(rangeValues, float1d, imageHeader, hist);
-        double shigh = ImageStretch.getShigh(rangeValues, float1d, imageHeader, hist);
+        double slow = getSlow(rangeValues, float1d, imageHeader, hist);
+        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
         stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
                 (byte)255, float1d, pixelData, rangeValues,slow,shigh);
     }
@@ -52,13 +56,13 @@ public class ImageStretch {
 
         if (isHuePreserving(rangeValuesAry[0])) {
             stretchPixelsHuePreserving(startPixel, lastPixel, startLine, lastLine, imageHeaderAry, histAry,
-                    rgbIntensity, (byte)0, float1dAry, pixelDataAry, rangeValuesAry);
+                    rgbIntensity, float1dAry, pixelDataAry, rangeValuesAry);
         }
         else {
             for(int i=0; (i<float1dAry.length); i++) {
                 if (float1dAry[i]!=null) {
-                    double slow = ImageStretch.getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
-                    double shigh = ImageStretch.getShigh(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
+                    double slow = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
+                    double shigh = getShigh(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
                     stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,imageHeaderAry[i].naxis1, histAry[i],
                             (byte)0, float1dAry[i], pixelDataAry[i], rangeValuesAry[i],slow,shigh);
                 }
@@ -77,7 +81,6 @@ public class ImageStretch {
                                                   ImageHeader[] imageHeaderAry,
                                                   Histogram[] histAry,
                                                   RGBIntensity rgbIntensity,
-                                                  byte blank_pixel_value,
                                                   float[][]float1dAry, byte[][] pixelDataAry, RangeValues[] rangeValuesAry) {
 
         for (int i = 0; (i < float1dAry.length); i++) {
@@ -92,7 +95,6 @@ public class ImageStretch {
                     "g: (" + imageHeaderAry[1].naxis1 + "," + imageHeaderAry[1].naxis2 + ") " +
                     "b: (" + imageHeaderAry[2].naxis1 + "," + imageHeaderAry[2].naxis2 + ")");
         }
-        // use zscale to compute lower value for each band and upper value for intensity
         RangeValues rv = rangeValuesAry[0];
 
         double blankPxValAry[] = new double[3];
@@ -100,7 +102,7 @@ public class ImageStretch {
         for(int i=0; i<3; i++) {
             blankPxValAry[i]= imageHeaderAry[i].blank_value;
             slowAry[i] = getSlow(rv, float1dAry[i], imageHeaderAry[i], histAry[i]);
-            slowAry[i] = getFlux(slowAry[i], imageHeaderAry[i]);
+            slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i]);
         }
 
         // recreate an array of intensities (the part that will be used)
@@ -127,14 +129,25 @@ public class ImageStretch {
         boolean useZ = rangeValuesAry[0].getLowerWhich()==RangeValues.ZSCALE;
         double slow = useZ ? rgbIntensity.getIntensityLow() : rgbIntensity.getIntensityDataLow(); // lower range for intensity
         double stretch = useZ ? rgbIntensity.getIntensityHigh()-rgbIntensity.getIntensityLow() : rv.getGammaOrStretch();
+
+        if (!useZ) {
+            double intensityRange = rgbIntensity.getIntensityDataHigh()-slow;
+            if (stretch > intensityRange && intensityRange > 0) {
+                stretch = intensityRange;
+            } else if (stretch < 1e-10) {
+                stretch = 0.1;
+            }
+        }
+
         double shigh = slow + stretch; // upper range for intensity
 
+        // for three color we use 0 as blank pixel value
         stretchPixelsUsingAsinh( startPixel, lastPixel,startLine,lastLine, naxis1,
                 rgbIntensity.getIntensityDataLow(), rgbIntensity.getIntensityDataHigh(),
-                blank_pixel_value, intensity, pixelData, rangeValuesAry[0], slow, shigh);
+                (byte)0, intensity, pixelData, rangeValuesAry[0], slow, shigh);
         for (RangeValues anRV : rangeValuesAry) {
             anRV.setAsinhQValue(rv.getAsinhQValue());
-            if (useZ) anRV.setGammaOrStretch(stretch);
+            anRV.setGammaOrStretch(stretch);
         }
 
         // fill pixel data for each band
@@ -150,8 +163,8 @@ public class ImageStretch {
             for (int index = start_index; index <= last_index; index++) {
                 maxv = 0;
                 for (int c=0; c<3; c++) {
-                    flux = getFlux(float1dAry[c][index], imageHeaderAry[c])-slowAry[c];
-                    if (flux < 0) {
+                    flux = getScaled(float1dAry[c][index], imageHeaderAry[c])-slowAry[c];
+                    if (flux < 0 || Double.isNaN(flux)) {
                         rgb[c] = 0;
                     } else {
                         rgb[c] = (0xFF&pixelData[pixelCount])*((float)flux)/intensity[index];
@@ -190,7 +203,7 @@ public class ImageStretch {
      * @param lastLine (tile info) end line
      * @param blank_pixel_value blank pixel value
      */
-    public static void stretchPixelsByBand(int startPixel,
+    private static void stretchPixelsByBand(int startPixel,
                                            int lastPixel,
                                            int startLine,
                                            int lastLine,
@@ -224,15 +237,15 @@ public class ImageStretch {
 
 
     /**
-     *
-     * @param raw_dn
-     * @return
+     * Displayed flux value
+     * @param raw_dn raw value
+     * @param imageHeader image header
+     * @return flux value to display
      */
     public static double getFlux(double  raw_dn, ImageHeader imageHeader){
         if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn))) {
             //throw new PixelValueException("No flux available");
             return Double.NaN;
-
         }
 
         if (imageHeader.origin.startsWith("Palomar Transient Factory")) {
@@ -325,11 +338,11 @@ public class ImageStretch {
      * we can get the default Q from the following equation:
      *    0.1 * asinh(Q*(xDataMax-xMin)/(xMax-xMin)) / asinh(0.1*Q) = 1
      *
-     * @param flux
-     * @param maxFlux
-     * @param minFlux
-     * @param qvalue
-     * @return
+     * @param flux pixel value
+     * @param maxFlux upper range value
+     * @param minFlux lower range value
+     * @param qvalue Q parameter for asinh stretch algorithm
+     * @return mapped color value from 0 to 244
      */
     private static double  getASinhStretchedPixelValue(double flux, double maxFlux, double minFlux, double qvalue)  {
 
@@ -482,10 +495,10 @@ public class ImageStretch {
 
     /**
      * Find default Q from asinh(Q*(xDataMax-xMin)/(xMax-xMin)) = 10 * asinh(0.1*Q)
-     * @param minFlux
-     * @param maxFlux
-     * @param dataMaxFlux
-     * @return
+     * @param minFlux lower range value
+     * @param maxFlux upper range value
+     * @param dataMaxFlux maximum data value
+     * @return Q value, which would allow to use full color range
      */
     private static double getDefaultAsinhQ(double minFlux, double maxFlux, double dataMaxFlux) {
         double bestQ = 0.1;
@@ -572,150 +585,17 @@ public class ImageStretch {
 
         return pixeldata;
     }
-
-    public static double getShigh(RangeValues rangeValues, float[] float1d, ImageHeader imageHeader, Histogram hist) {
-        double shigh = 0.0;
-        switch (rangeValues.getUpperWhich()) {
-            case RangeValues.ABSOLUTE:
-                shigh = (rangeValues.getUpperValue() - imageHeader.bzero) / imageHeader.bscale;
-                break;
-            case RangeValues.PERCENTAGE:
-                shigh = hist.get_pct(rangeValues.getUpperValue(), true);
-                break;
-            case RangeValues.SIGMA:
-                shigh = hist.get_sigma(rangeValues.getUpperValue(), true);
-                break;
-            case RangeValues.ZSCALE:
-                Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
-                shigh = zscale_retval.getZ2();
-                break;
-            default:
-                Assert.tst(false, "illegal rangeValues.getUpperWhich()");
-        }
-        return shigh;
-    }
-
-    public static Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader, RangeValues rangeValues) {
-
-        double contrast = rangeValues.getZscaleContrast();
-        int optSize = rangeValues.getZscaleSamples();
-
-        int lenStdline = rangeValues.getZscaleSamplesPerLine();
-
-        Zscale.ZscaleRetval zscaleRetval = Zscale.cdl_zscale(float1d,
-                imageHeader.naxis1, imageHeader.naxis2,
-                imageHeader.bitpix, contrast / 100.0, optSize, lenStdline,
-                imageHeader.blank_value );
-
-        return zscaleRetval;
-    }
-
-    public static double getSlow(RangeValues rangeValues, float[] float1d, ImageHeader imageHeader, Histogram hist) {
-        double slow = 0.0;
-        switch (rangeValues.getLowerWhich()) {
-            case RangeValues.ABSOLUTE:
-                slow = (rangeValues.getLowerValue() - imageHeader.bzero) /imageHeader.bscale;
-                break;
-            case RangeValues.PERCENTAGE:
-                slow = hist.get_pct(rangeValues.getLowerValue(), false);
-                break;
-            case RangeValues.SIGMA:
-                slow = hist.get_sigma(rangeValues.getLowerValue(), false);
-                break;
-            case RangeValues.ZSCALE:
-
-                Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
-                slow = zscale_retval.getZ1();
-                break;
-            default:
-                Assert.tst(false, "illegal rangeValues.getLowerWhich()");
-        }
-        return slow;
-    }
     
-//    /**
-//     * This sigma value is calculated using the whole image data.
-//     * sigma = SQRT [  ( sum (xi-x_average)^2 )/n
-//     *   where x_average is the mean value of the x array
-//     *   n is the total number of the element of x array
-//     * @return
-//     */
-//    public static double computeSigma(float[] float1d, ImageHeader imageHeader) {
-//
-//        //get none zero and finite flux values
-//        double [] validData = getNoneZeroValidReadoutArray(float1d, imageHeader);
-//        /*
-//         When the index.length>25, the IDL atv uses sky to computer sigma. However the sky.pro uses many other
-//         numerical receipt methods such as value_local, fitting etc. Here we uses stddev instead.
-//       */
-//        if (validData.length>5 ){
-//            return getStdDev( validData);
-//        }
-//        else {
-//            return  1.0;
-//
-//        }
-//    }
-//
-//    /**
-//     * Process the image fluxes to exclude the 0.0 and NaN and infinity values
-//     * @return
-//     */
-//    private static double[] getNoneZeroValidReadoutArray(float[] float1d, ImageHeader imageHeader){
-//        ArrayList<Double> list= new ArrayList<>();
-//
-//        for (int i=0; i<float1d.length; i++){
-//            if (!Double.isNaN(float1d[i]) && !Double.isInfinite(float1d[i]) && float1d[1]!=0.0){
-//                list.add( getFlux(float1d[i], imageHeader ) );
-//            }
-//        }
-//        double[] arr = new double[list.size()];
-//        for(int i = 0; i < list.size(); i++) {
-//            arr[i] = list.get(i);
-//        }
-//        return arr;
-//    }
-//
-//    /**
-//     * Calculate variance and then standard deviation
-//     * @param data
-//     * @return
-//     */
-//    private static double getStdDev(double[] data) {
-//
-//        int size = data.length;
-//        double mean = getMean(data);
-//        double temp = 0.0f;
-//        for(double a :data)
-//            temp += (mean - a) * (mean - a);
-//
-//        return Math.sqrt(temp/size);
-//    }
-//
-//    /**
-//     * Calculate the mean flux value
-//     * @param data
-//     * @return
-//     */
-//    private static double getMean(double [] data ) {
-//
-//        int size = data.length;
-//        float sum = 0.0f;
-//        for(double a : data)
-//            sum += a;
-//        return sum/size;
-//    }
-
     /**
      * add a new stretch method to do the mask plot
-     * @param startPixel
-     * @param lastPixel
-     * @param startLine
-     * @param lastLine
-     * @param naxis1
-     * @param blank_pixel_value
-     * @param float1dArray
-     * @param pixeldata
+     * @param startPixel (tile info) start pixel in each line
+     * @param lastPixel (tile info) end pixel in each line
+     * @param startLine (tile info) start line
+     * @param lastLine (tile info) end line
+     * @param naxis1 number of pixels in a line
+     * @param blank_pixel_value blank pixel value
+     * @param float1dArray array of raw values
+     * @param pixeldata 
      * @param pixelhist
      */
     public static void stretchPixelsForMask(int startPixel,

@@ -13,11 +13,28 @@ import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableToFITS;
 import edu.caltech.ipac.table.io.FITSTableReader;
-import edu.caltech.ipac.visualize.plot.*;
-import nom.tam.fits.*;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.Histogram;
+import edu.caltech.ipac.visualize.plot.ImageHeader;
+import edu.caltech.ipac.visualize.plot.ImageMask;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.PixelValueException;
+import edu.caltech.ipac.visualize.plot.RangeValues;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.BinaryTableHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
+import nom.tam.fits.HeaderCardException;
+import nom.tam.fits.ImageHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 
-import java.io.*;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
@@ -128,34 +145,7 @@ public class FitsRead implements Serializable {
     public static void setDefaultFutureStretch(RangeValues defaultRangeValues) {
         DEFAULT_RANGE_VALUE = defaultRangeValues;
     }
-
-
-
-
-//    public void doStretch(RangeValues rangeValues,
-//                          byte[] pixelData,
-//                          boolean mapBlankToZero,
-//                          int startPixel,
-//                          int lastPixel,
-//                          int startLine,
-//                          int lastLine){
-//
-//        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
-//        ImageStretch.stretchPixels(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, imageHeader, hist,
-//                blank_pixel_value, float1d, pixelData, rangeValues);
-//
-//
-//    }
-
-
-//    public short[] getDataAsMask() {
-//        float[] fMasks = getDataFloat();
-//        //convert to its original type
-//        short[] maskData= (short[]) ArrayFuncs.convertArray(fMasks, Short.TYPE, true);
-//        return maskData;
-//
-//    }
-
+    
 
     /**
      * Add the mask layer to the existing image

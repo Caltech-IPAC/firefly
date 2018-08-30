@@ -336,7 +336,7 @@ function getHuePreserveFieldInit() {
             label: 'Q:'
         },
         stretch: {
-            validator: Validate.floatRange.bind(null, 0.001, Number.MAX_VALUE, 4, 'Stretch'),
+            validator: Validate.floatRange.bind(null, 0, Number.MAX_VALUE, 1, 'Stretch'),
             tooltip: 'The asinh stretch parameter. (The difference between min and max intensity.)',
             label: 'Stretch:'
         },
@@ -417,7 +417,6 @@ function syncFieldsHuePreserve(fields,rvAry,fitsDataAry) {
         newFields[lowerWhich]=   clone(fields[lowerWhich], {value: rvAry[i].lowerWhich});
         if (newFields[lowerWhich].value===ZSCALE) newFields[lowerWhich].value= PERCENTAGE;
     });
-    newFields.algorithm= clone(fields.algorithm, {value: rvAry[0].algorithm});
     return  newFields;
 }
 

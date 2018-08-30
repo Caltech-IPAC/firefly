@@ -11,7 +11,9 @@ import edu.caltech.ipac.visualize.plot.Zscale;
 
 import java.util.Arrays;
 
-import static edu.caltech.ipac.visualize.plot.plotdata.ImageStretch.getFlux;
+import static edu.caltech.ipac.visualize.plot.plotdata.ImageStretchUtil.getScaled;
+import static edu.caltech.ipac.visualize.plot.plotdata.ImageStretchUtil.getSlow;
+import static edu.caltech.ipac.visualize.plot.plotdata.ImageStretchUtil.getZscaleValue;
 
 /**
  * This class is used to store intensity-related info for RGB hue preserving algorithm.
@@ -95,20 +97,14 @@ public class RGBIntensity {
                     "g: ("+imageHeaderAry[1].naxis1+","+imageHeaderAry[1].naxis2+") "+
                     "b: ("+imageHeaderAry[2].naxis1+","+imageHeaderAry[2].naxis2+")");
         }
-//        if (imageHeaderAry[0].bzero!=imageHeaderAry[1].bzero || imageHeaderAry[1].bzero!=imageHeaderAry[2].bzero ||
-//                imageHeaderAry[0].bscale!=imageHeaderAry[1].bscale || imageHeaderAry[1].bscale!=imageHeaderAry[2].bscale) {
-//            throw new IllegalArgumentException("Hue-preserving stretch: bzero and bscale must match. "+
-//                    "r: ("+imageHeaderAry[0].bzero+","+imageHeaderAry[0].bscale+") "+
-//                    "g: ("+imageHeaderAry[1].bzero+","+imageHeaderAry[1].bscale+") "+
-//                    "b: ("+imageHeaderAry[2].bzero+","+imageHeaderAry[2].bscale+")");
-//        }
 
+        // green and blue images might be reprojected, hence it is important to work with scaled values
 
         double [] slowAry = new double[3];
         for(int i=0; i<3; i++) {
             blankPxValAry[i]= imageHeaderAry[i].blank_value;
-            slowAry[i] = ImageStretch.getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
-            slowAry[i] = getFlux(slowAry[i], imageHeaderAry[i]);
+            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
+            slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i]);
         }
         float [] intensity = new float[float1dAry[0].length];
         Arrays.fill(intensity, Float.NaN);
@@ -137,7 +133,7 @@ public class RGBIntensity {
             // for zscale only: calculate z1 and z2 for intensity
             // use the last image header, because after reprojection, bzero and bscale are removed in green and blue
             // zscale parameters are shared between range values, no matter range values which to use
-            Zscale.ZscaleRetval zscale_retval = ImageStretch.getZscaleValue(intensity, imageHeaderAry[2], rangeValuesAry[0]);
+            Zscale.ZscaleRetval zscale_retval = getZscaleValue(intensity, imageHeaderAry[2], rangeValuesAry[0]);
             _intensityLow = zscale_retval.getZ1();
             _intensityHigh = zscale_retval.getZ2();
         } else {
@@ -153,8 +149,10 @@ public class RGBIntensity {
     float getIntensityHigh() { return (float)_intensityHigh; }
 
     static float computeIntensity(int i, float[][] float1dAry, ImageHeader[] imageHeaderAry, double[] slowAry) {
-        return (float)(getFlux(float1dAry[0][i], imageHeaderAry[0])-slowAry[0]+
-                            getFlux(float1dAry[1][i], imageHeaderAry[1])-slowAry[1]+
-                            getFlux(float1dAry[2][i], imageHeaderAry[2])-slowAry[2])/3f;
+        return (float)(getScaled(float1dAry[0][i], imageHeaderAry[0])-slowAry[0]+
+                            getScaled(float1dAry[1][i], imageHeaderAry[1])-slowAry[1]+
+                            getScaled(float1dAry[2][i], imageHeaderAry[2])-slowAry[2])/3f;
     }
+
+
 }
