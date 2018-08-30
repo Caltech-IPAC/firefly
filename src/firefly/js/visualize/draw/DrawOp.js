@@ -46,11 +46,11 @@ class DrawOp {
     /**
      *
      * @param drawObj
-     * @param plot
+     * @param csysConv
      * @param pt
      */
-    static getScreenDist(drawObj,plot, pt) {
-        return op(drawObj,'getScreenDist')(drawObj,plot, pt);
+    static getScreenDist(drawObj,csysConv, pt) {
+        return op(drawObj,'getScreenDist')(drawObj,csysConv, pt);
     }
 
     /**
