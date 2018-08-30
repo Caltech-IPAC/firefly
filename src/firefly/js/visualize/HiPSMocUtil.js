@@ -2,10 +2,22 @@ import {getDrawLayersByType} from './PlotViewUtil.js';
 import {getDlAry, dispatchCreateDrawLayer} from './DrawLayerCntlr.js';
 import HiPSMOC from '../drawingLayers/HiPSMOC.js';
 import {getHealpixCornerTool} from './HiPSUtil.js';
-import {get, set, isEmpty} from 'lodash';
+import {get, set, isEmpty, flatten, isArray} from 'lodash';
+import {getAppOptions} from '../core/AppDataCntlr.js';
+import {getCellValue} from '../tables/TableUtil.js';
+const HEADER_KEY_COL = 1;
+const HEADER_VAL_COL = 2;
 
 const MOC = '_moc';
 let   mocCnt = 0;
+
+export const MOCInfo = 'mocInfo';
+export const UNIQCOL = 'uniqColName';
+export const MOCOrder = 'mocOrder';
+
+export function getAppHiPSForMoc() {
+    return get(getAppOptions(), ['hips', 'hipsForMoc'], 'https://irsa.ipac.caltech.edu/data/hips/CDS/2MASS/Color');
+}
 
 export function makeMocTableId(ivoid) {
     const id = ivoStr(ivoid);
@@ -16,6 +28,99 @@ export function makeMocTableId(ivoid) {
 export function ivoStr(ivoid) {
     return ivoid ? ivoid.trim().replace('ivo://', '').replace(/\//g,'_') : 'moc_table_' + (++mocCnt);
 }
+
+/**
+ * check if the table from upload analysis is valid with fits header
+ * @param tableModel
+ * @returns {Object} valid and mocInfo including nipxColName and MOCOrder
+ */
+function isAnalysisTableMocFits(tableModel) {
+
+
+    if (tableModel.totalRows !== 2 || getCellValue(tableModel, 1, 'Type') !== 'BINTABLE') {
+        return {valid: false};
+    }
+
+    const mocKeySet = [{PCOUNT: '0'}, {GCOUNT: '1'}, {TFIELDS: '1'},
+        [{TFORM1: '1J',  NAXIS1: '4'}, {TFORM1: '1K', NAXIS1: '8'}],
+        {PIXTYPE: 'HEALPIX'},
+        {ORDERING: 'NUNIQ'},
+        {COORDSYS: 'C'}];
+
+    const {tableData} = tableModel || {};
+    if (!tableData) return false;
+
+    const tblIdx = get(tableModel, ['tableData', 'data', 1, 0]);
+    const mocInfo = tblIdx && get(tableModel, ['tableMeta', tblIdx], '');
+    if (!mocInfo) return false;
+
+    const mocTableHeader = JSON.parse(mocInfo);
+    const {data} = mocTableHeader.tableData || {};
+    if (!data) return false;
+
+    const mocKeys = flatten(mocKeySet).reduce((prev, oneCond) => {
+        Object.keys(oneCond).forEach((aKey) => {
+            !(prev.includes(aKey)) && prev.push(aKey);
+        });
+        return prev;
+    }, []);
+
+    const mocKeyMap = {TTYPE1: UNIQCOL, MOCORDER: MOCOrder};
+    const mocRetVal = {};
+
+    const headerItems = data.reduce((prev, oneHeaderItem) => {
+        if (mocKeys.includes(oneHeaderItem[HEADER_KEY_COL])) {
+            set(prev, oneHeaderItem[HEADER_KEY_COL], oneHeaderItem[HEADER_VAL_COL]);
+        } else if (Object.keys(mocKeyMap).includes(oneHeaderItem[HEADER_KEY_COL])) {
+            set(mocRetVal, mocKeyMap[oneHeaderItem[HEADER_KEY_COL]], oneHeaderItem[HEADER_VAL_COL]);
+        }
+        return prev;
+    }, {});
+
+    if (Object.keys(mocRetVal).length !== 2) {
+        return {valid: false};
+    }
+
+    const validateCond = (oneCond) => {
+        const n = Object.keys(oneCond).findIndex((aKey) => {
+            return get(headerItems, aKey, '').toLowerCase() !== oneCond[aKey].toLowerCase();
+        });
+        return (n < 0);
+    };
+
+    const valid = !mocKeySet.find((oneCond) => {     // find if any cond is not satisfied
+        if (isArray(oneCond)) {      // find if any sub condition is satisfied
+            const anySubValid = oneCond.find((subCond) => {
+                return validateCond(subCond);
+            });
+            return !anySubValid;    // none of sub-cond is satisfied => this cond is not satisfied
+        } else {
+            return !validateCond(oneCond);  // this cond is not satisfied
+        }
+    });
+
+
+    return {valid, [MOCInfo]: valid && mocRetVal};
+}
+
+
+/**
+ * check if the moc fits valid with fits header
+ * @param summary
+ * @param tableModel
+ * @returns {Object} valid and mocInfo including nipxColName and MOCOrder
+ */
+export function isMOCFitsFromUploadAnalsysis(summary, tableModel) {
+    const fileType = summary ? summary.split('--', 1): '';
+
+
+    if (!fileType || !fileType[0] || !(fileType[0].toLowerCase().includes('fits'))) {
+        return {valid: false};
+    }
+
+    return isAnalysisTableMocFits(tableModel);
+}
+
 
 export const NSIDE2 = new Array(64).fill(0).map((v, i) => 2**i);
 export const NSIDE4 = new Array(32).fill(0).map((v, i) => 4**i);
@@ -34,16 +139,17 @@ export function getMocOrderIndex(Nuniq) {
 /**
  * add new layer on MOC table
  * @param {string} tbl_id moc table id
- * @param {string} fitsPath moc fits path
+ * @param {string} fitsPath moc fits path at the server after upload
  * @param {string} mocUrl  moc fits url
+ * @param {string} uniqColName column name for uniq number
  * @returns {T|SelectInfo|*|{}}
  */
-export function addNewMocLayer(tbl_id, fitsPath, mocUrl) {
+export function addNewMocLayer(tbl_id, fitsPath, mocUrl, uniqColName = 'NUNIQ') {
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tbl_id);
 
     if (!dl) {
-        const mocFitsInfo = {fitsPath, mocUrl, tbl_id};
+        const mocFitsInfo = {fitsPath, mocUrl, uniqColName, tbl_id};
         dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID, {mocFitsInfo});
     }
     return dl;

@@ -1097,14 +1097,14 @@ function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
     };
 
     /* get the projection oriented boundary on display as moving along the the great circle from pt1 to pt2 */
-    //const pt1_c = WorldPtToxyz(plot.getWorldCoords(pt1, plot.projection.coordSys));
-    //const pt2_c = WorldPtToxyz(plot.getWorldCoords(pt2, plot.projection.coordSys));
-
     const pt1_c = WorldPtToxyz(pt1);
     const pt2_c = WorldPtToxyz(pt2);
     const norm = getNormalFrom(pt1_c, pt2_c);
 
     //angle between pt1 & pt2
+    //note: the angle should be less than 180 deg along counterclockwise direction. (Math.acos works for angle between 0-180),
+    //      otherwise triple product (a.(bxc)) could be used to detect if the angle between pt1 & pt2
+    //      alogn the counterclockwise direction is greater than 180 or not.
     const deg = toDegrees(Math.acos(pt1_c.x * pt2_c.x + pt1_c.y * pt2_c.y + pt1_c.z * pt2_c.z));
     //angle from vector v to pt2
     const radToPt2 = toRadians(Math.abs(deg - angleFromCenter));
@@ -1184,14 +1184,12 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         const {width, height} = plot.viewDim;
 
         // detect if none of the points are visible
-        if (style !== Style.FILL) {
-            const anyVisible = devPts.find((onePt) => {
-                return (onePt && (onePt.x >= 0) && (onePt.x < width) && (onePt.y >= 0) && (onePt.y < height));
-            });
+        const anyVisible = devPts.find((onePt) => {
+            return (onePt && (onePt.x >= 0) && (onePt.x < width) && (onePt.y >= 0) && (onePt.y < height));
+        });
 
-            if (!anyVisible) {
-                return {devPts, inDisplay: 0};
-            }
+        if (!anyVisible) {
+             return {devPts, inDisplay: 0};
         }
 
         let inDisplay = 0;
@@ -1213,50 +1211,48 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
 
         const {devPts, inDisplay} = isPolygonInDisplay(pts, style, plot);  // check if polygon is out of display
 
+        if (inDisplay <= 0) return;   // not visible
+
         if ((style === Style.FILL)) {
-            if (inDisplay > 0) {
-                if (inDisplay < devPts.length) {
-                    console.log('less visible');     // test if this may happen
-                }
-                const devPtAll = devPts.filter((pt) => pt);
-                const fillColor = drawObj.fillColor || color;
-                const strokeColor = drawObj.strokeColor||rateOpacity(ctx.strokeStyle, 0);
-
-                DrawUtil.fillPath(ctx, fillColor, devPtAll, true, renderOptions, strokeColor);
+            if (inDisplay < devPts.length) {
+                console.log('less visible');     // test if this may happen
             }
+            const devPtAll = devPts.filter((pt) => pt);
+            const fillColor = drawObj.fillColor || color;
+            const strokeColor = drawObj.strokeColor||rateOpacity(ctx.strokeStyle, 0);
+
+            DrawUtil.fillPath(ctx, fillColor, devPtAll, true, renderOptions, strokeColor);
         } else {
-            if (inDisplay > 0) {
-                const polyPath = (pts, close) => {
-                    if (!onlyAddToPath) {
-                        DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
-                    }
-                    DrawUtil.polygonPath(ctx, pts, close, null, null);
-                    if (!onlyAddToPath) {
-                        DrawUtil.stroke(ctx);
-                    }
-                };
+            const polyPath = (pts, close) => {
+                if (!onlyAddToPath) {
+                    DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+                }
+                DrawUtil.polygonPath(ctx, pts, close, null, null);
+                if (!onlyAddToPath) {
+                    DrawUtil.stroke(ctx);
+                }
+            };
 
-                if (devPts.length === inDisplay) {
-                    polyPath(devPts, true);
-                } else {
-                    // in case the polygon border has some discontinuities in display area
-                    for (let i = 0; i < devPts.length; ) {
-                        if (devPts[i]) {
-                            for (let j = i+1 ; j < devPts.length; j++) {
-                                // get next if devPts visible or not the last point
-                                if (devPts[j] && (j !== (devPts.length-1))) continue;
+            if (devPts.length === inDisplay) {
+                polyPath(devPts, true);
+            } else {
+                // in case the polygon border has some discontinuities in display area
+                for (let i = 0; i < devPts.length; ) {
+                    if (devPts[i]) {
+                        for (let j = i+1 ; j < devPts.length; j++) {
+                            // get next if devPts visible or not the last point
+                            if (devPts[j] && (j !== (devPts.length-1))) continue;
 
-                                // visible and the last
-                                if (devPts[j] && (j === devPts.length-1)) {
-                                    j++;
-                                }
-                                polyPath(devPts.slice(i,j), false);
-                                i = j+1;
-                                break;
+                            // visible and the last
+                            if (devPts[j] && (j === devPts.length-1)) {
+                                j++;
                             }
-                        } else {
-                            i++;
+                            polyPath(devPts.slice(i,j), false);
+                            i = j+1;
+                            break;
                         }
+                    } else {
+                        i++;
                     }
                 }
             }

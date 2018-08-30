@@ -5,7 +5,7 @@ import {makeRegionPolygon} from '../region/Region.js';
 import {drawRegions} from '../region/RegionDrawer.js';
 import {distanceToPolygon} from './ShapeDataObj.js';
 import {getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
-        isTileVisibleByPosition, initSidePoints, NSIDE4, NSIDE2} from '../HiPSMocUtil.js';
+        isTileVisibleByPosition, initSidePoints, NSIDE4} from '../HiPSMocUtil.js';
 import {getHealpixCornerTool,  getAllVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
 import DrawOp from './DrawOp.js';
 import CsysConverter from '../CsysConverter.js';
