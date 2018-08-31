@@ -116,7 +116,6 @@ public class RGBIntensity {
             }
 
             val = computeIntensity(i, float1dAry, imageHeaderAry, slowAry);
-            if (val < 0) { val = 0; }
 
             // save min and max
             if (val < minVal) { minVal = val; }
@@ -149,9 +148,10 @@ public class RGBIntensity {
     float getIntensityHigh() { return (float)_intensityHigh; }
 
     static float computeIntensity(int i, float[][] float1dAry, ImageHeader[] imageHeaderAry, double[] slowAry) {
-        return (float)(getScaled(float1dAry[0][i], imageHeaderAry[0])-slowAry[0]+
+        double val = (getScaled(float1dAry[0][i], imageHeaderAry[0])-slowAry[0]+
                             getScaled(float1dAry[1][i], imageHeaderAry[1])-slowAry[1]+
-                            getScaled(float1dAry[2][i], imageHeaderAry[2])-slowAry[2])/3f;
+                            getScaled(float1dAry[2][i], imageHeaderAry[2])-slowAry[2])/3.0;
+        return val > 0 ? (float)val : 0f;
     }
 
 

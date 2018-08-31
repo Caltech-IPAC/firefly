@@ -95,13 +95,12 @@ public class ImageStretch {
                     "g: (" + imageHeaderAry[1].naxis1 + "," + imageHeaderAry[1].naxis2 + ") " +
                     "b: (" + imageHeaderAry[2].naxis1 + "," + imageHeaderAry[2].naxis2 + ")");
         }
-        RangeValues rv = rangeValuesAry[0];
 
         double blankPxValAry[] = new double[3];
         double [] slowAry = new double[3];
         for(int i=0; i<3; i++) {
             blankPxValAry[i]= imageHeaderAry[i].blank_value;
-            slowAry[i] = getSlow(rv, float1dAry[i], imageHeaderAry[i], histAry[i]);
+            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
             slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i]);
         }
 
@@ -122,6 +121,8 @@ public class ImageStretch {
                 pixelCount++;
             }
         }
+
+        RangeValues rv = rangeValuesAry[0];
 
         // stretch an array of intensities
         byte[] pixelData = new byte[pixelCount];
@@ -144,7 +145,7 @@ public class ImageStretch {
         // for three color we use 0 as blank pixel value
         stretchPixelsUsingAsinh( startPixel, lastPixel,startLine,lastLine, naxis1,
                 rgbIntensity.getIntensityDataLow(), rgbIntensity.getIntensityDataHigh(),
-                (byte)0, intensity, pixelData, rangeValuesAry[0], slow, shigh);
+                (byte)0, intensity, pixelData, rv, slow, shigh);
         for (RangeValues anRV : rangeValuesAry) {
             anRV.setAsinhQValue(rv.getAsinhQValue());
             anRV.setGammaOrStretch(stretch);
