@@ -78,7 +78,7 @@ public class BackgroundManager {
     public Toolbar.CmdButton getButton() { return button;  }
 
     public void animateToManager(final int startX, final int startY, final int mills) {
-        WebEventManager.getAppEvManager().fireEvent(new WebEvent(this,Name.BG_MANAGER_PRE_ANIMATE));
+        WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(this,Name.BG_MANAGER_PRE_ANIMATE));
         DeferredCommand.add(new Command() {
             public void execute() {
                 if (BrowserUtil.canSupportAnimation()) {

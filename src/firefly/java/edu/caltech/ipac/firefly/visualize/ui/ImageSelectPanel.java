@@ -656,7 +656,7 @@ public class ImageSelectPanel implements ImageSelectAccess {
                 bandRemoveMap.put(ops.getMPW(),l);
                 ops.getPlotView().addListener(Name.REPLOT, l);
             }
-            ops.getPlotView().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
+            ops.getPlotView().fireEvent(WebEvent.createWebEvent(this,Name.SELECT_DIALOG_BEGIN_PLOT ));
         }
 
         PlotTypeUI ptype= getActivePlotType();
@@ -669,7 +669,7 @@ public class ImageSelectPanel implements ImageSelectAccess {
     }
 
     public void inputCanceled() {
-        AllPlots.getInstance().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
+        AllPlots.getInstance().fireEvent(WebEvent.createWebEvent(this,Name.SELECT_DIALOG_CANCEL));
     }
 
     public boolean validateInput() throws ValidationException {

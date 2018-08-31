@@ -268,7 +268,7 @@ public class CatalogSearchDropDown {
 
                             @Override
                             public void onSuccess(BackgroundStatus bgStat) {
-                                WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
+                                WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
                                 MonitorItem monItem= new MonitorItem(treq, voSearchUI.getSearchTitle(), BackgroundUIHint.CATALOG, false);
                                 monItem.setStatus(bgStat);
                                 monItem.setActivateOnCompletion(true);

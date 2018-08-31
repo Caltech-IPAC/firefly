@@ -4,9 +4,6 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
-import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -74,8 +71,7 @@ import java.util.Map;
  * NOTE - you should never call setWidth, setHeight, or setPixelSize on this widget
  * @author Trey Roby
  */
-@JsExport
-@JsType
+
 public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public enum SelType {AREA, LINE, POINT, NONE}
@@ -159,10 +155,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    @JsNoExport
     public MiniPlotWidget() {  this(null); }
 
-    @JsNoExport
     public MiniPlotWidget(String groupName) {
         this(groupName, choosePopoutType(false));
     }
@@ -258,7 +252,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         return _ops;
     }
 
-    @JsNoExport
     public void getOps(final OpsAsync async) {
         Vis.init(this, new Vis.InitComplete() {
             public void done() {
@@ -479,7 +472,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         _inlineTitleAlwaysOnIfCollapsed= on;
     }
 
-    @JsNoExport
     public void setShowInlineTitle(boolean show, boolean collapseInProgress) {
         _showInlineTitle= show ||
                 (_inlineTitleAlwaysOnIfCollapsed &&
@@ -1254,7 +1246,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
      * @param plot the new plot
      * @param notify the callback class
      */
-    @JsNoExport
     public void postPlotTask(String widgetTitle,
                              WebPlot plot,
                              AsyncCallback<WebPlot> notify) {
@@ -1284,7 +1275,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         saveCorners();
     }
 
-    @JsNoExport
     void saveCorners() {
        saveCorners(getCurrentPlot());
     }
@@ -1321,7 +1311,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         processError(wp, briefDesc, desc, null, e);
     }
 
-    @JsNoExport
     public void processError(WebPlot wp, String briefDesc, String desc, String details, Exception e) {
         if (_plotError!=null) _plotError.onError(wp, briefDesc, desc, details, e);
     }
@@ -1501,7 +1490,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
     //
-//    @JsExport
+//
 //    @JsNamespace("$wnd.ffinterface")
 //    public static class CallbackImpl implements Callback {
 //        @Override

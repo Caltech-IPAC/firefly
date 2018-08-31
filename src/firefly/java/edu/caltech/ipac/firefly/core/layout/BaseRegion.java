@@ -158,12 +158,12 @@ public class BaseRegion implements Region, RequiresResize {
         else {
             mainPanel.setVisible(true);
         }
-        WebEventManager.getAppEvManager().fireEvent( new WebEvent(this, Name.REGION_SHOW) );
+        WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(this, Name.REGION_SHOW));
     }
 
     public void hide() {
         mainPanel.setVisible(false);
-        WebEventManager.getAppEvManager().fireEvent( new WebEvent(this, Name.REGION_HIDE) );
+        WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(this, Name.REGION_HIDE));
     }
 
     public boolean isCollapsible() {

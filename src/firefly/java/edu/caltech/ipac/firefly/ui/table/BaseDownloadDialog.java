@@ -31,7 +31,7 @@ public class BaseDownloadDialog extends BaseDialog implements DownloadSelectionI
 
     public void setDownloadRequest(DownloadRequest downloadRequest) {
         this.downloadRequest = downloadRequest;
-        WebEventManager.getAppEvManager().fireEvent(new WebEvent(downloadRequest, Name.DOWNLOAD_REQUEST_READY));
+        WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(downloadRequest, Name.DOWNLOAD_REQUEST_READY));
     }
 
     public DownloadRequest getDownloadRequest() {

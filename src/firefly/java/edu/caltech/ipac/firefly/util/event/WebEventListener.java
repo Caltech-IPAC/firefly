@@ -3,15 +3,14 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 
 /**
  * User: roby
  * Date: Dec 14, 2007
  * Time: 12:36:29 PM
  */
-@JsExport
+
 @JsType
 public interface WebEventListener<DataType> {
     public void eventNotify(WebEvent<DataType> ev);

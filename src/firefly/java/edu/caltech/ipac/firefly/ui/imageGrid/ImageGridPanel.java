@@ -180,7 +180,7 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
     }
 
     public void fireTablePreviewEventHubEvent(Name eventName) {
-        hub.getEventManager().fireEvent(new WebEvent(this, eventName));
+        hub.getEventManager().fireEvent(WebEvent.createWebEvent(this, eventName));
     }
 
     public void init() {
@@ -366,25 +366,25 @@ public abstract class ImageGridPanel extends Component implements StatefulWidget
         ImageGridPanel.this.basicPagingImageGrid.addPageChangeHandler(new PageChangeHandler(){
             public void onPageChange(PageChangeEvent event) {
                 mask("Loading...", 200);
-                getEventManager().fireEvent(new WebEvent(ImageGridPanel.this, ON_PAGE_CHANGE));
+                getEventManager().fireEvent(WebEvent.createWebEvent(ImageGridPanel.this, ON_PAGE_CHANGE));
             }
         });
         basicPagingImageGrid.addPageCountChangeHandler(new PageCountChangeHandler(){
             public void onPageCountChange(PageCountChangeEvent event) {
                 updateTableStatus();
-                getEventManager().fireEvent(new WebEvent(ImageGridPanel.this, ON_PAGECOUNT_CHANGE));
+                getEventManager().fireEvent(WebEvent.createWebEvent(ImageGridPanel.this, ON_PAGECOUNT_CHANGE));
             }
         });
         basicPagingImageGrid.addPageLoadHandler(new PageLoadHandler(){
             public void onPageLoad(PageLoadEvent event) {
                 unmask();
-                getEventManager().fireEvent(new WebEvent(ImageGridPanel.this, ON_PAGE_LOAD));
+                getEventManager().fireEvent(WebEvent.createWebEvent(ImageGridPanel.this, ON_PAGE_LOAD));
             }
         });
         basicPagingImageGrid.addPagingFailureHandler(new PagingFailureHandler(){
             public void onPagingFailure(PagingFailureEvent event) {
                 unmask();
-                getEventManager().fireEvent(new WebEvent(ImageGridPanel.this, ON_PAGE_ERROR));
+                getEventManager().fireEvent(WebEvent.createWebEvent(ImageGridPanel.this, ON_PAGE_ERROR));
             }
         });
     }

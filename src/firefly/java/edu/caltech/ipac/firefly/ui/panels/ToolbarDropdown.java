@@ -264,7 +264,7 @@ public class ToolbarDropdown extends Composite {
         dpanel.setVisible(true);
         setAnimationEnabled(doAnimate);
         dpanel.expand();
-        WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.DROPDOWN_OPEN));
+        WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(this, Name.DROPDOWN_OPEN));
         setAnimationEnabled(true);
     }
 
@@ -294,7 +294,7 @@ public class ToolbarDropdown extends Composite {
                 toolbar.expandDefault();
             }
         }
-        WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.DROPDOWN_CLOSE));
+        WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(this, Name.DROPDOWN_CLOSE));
         setAnimationEnabled(true);
     }
 

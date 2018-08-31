@@ -915,7 +915,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             public void onPageChange(PageChangeEvent event) {
                 mask("Loading...", maskDelayMillSec);
                 if (!expanded) {
-                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_CHANGE));
+                    getEventManager().fireEvent(WebEvent.createWebEvent(TablePanel.this, ON_PAGE_CHANGE));
                 }
             }
         });
@@ -923,7 +923,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             public void onPageCountChange(PageCountChangeEvent event) {
                 updateTableStatus();
                 if (!expanded) {
-                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGECOUNT_CHANGE));
+                    getEventManager().fireEvent(WebEvent.createWebEvent(TablePanel.this, ON_PAGECOUNT_CHANGE));
                 }
             }
         });
@@ -932,7 +932,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 unmask();
                 updateHasAccessRows();
                 if (!expanded && handleEvent) {
-                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_LOAD));
+                    getEventManager().fireEvent(WebEvent.createWebEvent(TablePanel.this, ON_PAGE_LOAD));
                 }
             }
         });
@@ -940,7 +940,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             public void onPagingFailure(PagingFailureEvent event) {
                 unmask();
                 if (!expanded) {
-                    getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_ERROR));
+                    getEventManager().fireEvent(WebEvent.createWebEvent(TablePanel.this, ON_PAGE_ERROR));
                 }
             }
         });
@@ -950,7 +950,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 if (!expanded && (GwtUtil.isOnDisplay(TablePanel.this) && handleEvent)) {
                     Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
                         public void execute() {
-                            getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
+                            getEventManager().fireEvent(WebEvent.createWebEvent(TablePanel.this, ON_ROWHIGHLIGHT_CHANGE));
                         }
                     });
                 }
@@ -1382,7 +1382,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 fireStaleEvent();
             }
             if (!expanded && handleEvent) {
-                getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_DATA_LOAD));
+                getEventManager().fireEvent(WebEvent.createWebEvent(TablePanel.this, ON_DATA_LOAD));
             }
         }
 

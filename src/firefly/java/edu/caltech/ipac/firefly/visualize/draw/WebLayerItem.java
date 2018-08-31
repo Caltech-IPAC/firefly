@@ -392,7 +392,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     public static void addUICreator(String id, UICreator uiCreator) {
         if (!_additionUIMaker.containsKey(id)) {
             _additionUIMaker.put(id, uiCreator);
-            AllPlots.getInstance().fireEvent(new WebEvent(WebLayerItem.class,Name.LAYER_ITEM_UI_CHANGE));
+            AllPlots.getInstance().fireEvent(WebEvent.createWebEvent(WebLayerItem.class,Name.LAYER_ITEM_UI_CHANGE));
         }
 
     }

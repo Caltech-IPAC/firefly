@@ -1,2 +1,2 @@
-@com.google.gwt.core.client.js.JsNamespace("$wnd.ffgwt.Visualize")
+@jsinterop.annotations.JsPackage(namespace="ffgwt.Visualize")
 package edu.caltech.ipac.firefly.visualize;

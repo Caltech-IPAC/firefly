@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.ui;
 
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 import com.google.gwt.json.client.JSONObject;
 
 /**

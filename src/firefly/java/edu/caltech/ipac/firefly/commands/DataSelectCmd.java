@@ -123,7 +123,7 @@ public class DataSelectCmd extends BaseVisCmd{
                     dMan.select(sel);
                 }
             }
-            pv.getEventManager().fireEvent(new WebEvent(this, Name.DATA_SELECTION_CHANGE));
+            pv.getEventManager().fireEvent(WebEvent.createWebEvent(this, Name.DATA_SELECTION_CHANGE));
         }
     }
 
