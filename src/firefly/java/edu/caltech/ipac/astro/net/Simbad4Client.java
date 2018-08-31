@@ -10,6 +10,7 @@ import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,7 +69,12 @@ public class Simbad4Client {
 
         String url = String.format(SIMBAD_URL, URLEncoder.encode(objectName, "UTF-8"));
         try {
-            String str = URLDownload.getStringFromURL(new URL(url), null);
+            URLConnection conn = URLDownload.makeConnection(new URL(url));
+            // set connect and read timeout in milliseconds
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
+            
+            String str = URLDownload.getStringFromOpenURL(conn, null);
             Map<String, String> results = parseResults(str);
 
 
@@ -111,9 +117,9 @@ public class Simbad4Client {
 
             Logger.info("results: " + sobj);
             return sobj;
-        } catch (java.rmi.RemoteException e) {
-            throw new SimbadException("Simbad did not find the object: " + objectName);
-        } catch (FailedRequestException e) {
+        } catch (java.net.SocketTimeoutException ste) {
+            throw new SimbadException("Simbad name resolver: connection timed out.");
+        } catch (java.rmi.RemoteException | FailedRequestException e) {
             throw new SimbadException("Simbad did not find the object: " + objectName);
         }
     }
