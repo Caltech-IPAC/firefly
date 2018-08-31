@@ -58,15 +58,20 @@ function makeSearchPromise(objName, resolver= 'nedthensimbad') {
     const url= `${getRootPath()}sticky/CmdSrv?objName=${objName}&resolver=${resolver}&cmd=CmdResolveName`;
     const searchPromise= new Promise(
         function(resolve, reject) {
-            // fetch will be aborted after timeout
-            const fetchTimeoutMs = 7000;
-            const controller = new AbortController();
-            const signal = controller.signal;
-            setTimeout(() => {
-                controller.abort();
-            }, fetchTimeoutMs);
+            let fetchOptions = {};
+            // AbortController might not be available in older browsers
+            if (typeof AbortController !== 'undefined') {
+                // fetch will be aborted after timeout
+                const fetchTimeoutMs = 7000;
+                const controller = new AbortController();
+                const signal = controller.signal;
+                setTimeout(() => {
+                    controller.abort();
+                }, fetchTimeoutMs);
+                fetchOptions = {signal};
+            }
 
-            fetchUrl(url, {signal}).then( (response) => {
+            fetchUrl(url, fetchOptions).then( (response) => {
                     response.json().then((value) => {
                         resolve(value);
                     });
