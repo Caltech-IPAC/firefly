@@ -135,10 +135,12 @@ public class VisJsonSerializer {
         if (header==null) return null;
         JSONObject map = new JSONObject();
         Cursor<String, HeaderCard> i= header.iterator();
-        for(HeaderCard card= i.next(); i.hasNext();  card= i.next()) {
+        int pos = 0;
+        for(HeaderCard card= i.next(); i.hasNext();  card= i.next(), pos++) {
             JSONObject mapValue = new JSONObject();
             mapValue.put("value", card.getValue());
             mapValue.put("comment", card.getComment());
+            mapValue.put("idx", pos);
             map.put(card.getKey(), mapValue);
         }
         return map;

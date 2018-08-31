@@ -477,7 +477,7 @@ export function getSizeAsString(size) {
 
     let retval;
     if (size > 0 && size < (MEG)) {
-        retval= ((size / K) + 1) + kStr;
+        retval= ((size / K)) + kStr;
     }
     else if (size >= (MEG) && size <  (2*GIG) ) {
         const megs = Math.round(size / MEG);

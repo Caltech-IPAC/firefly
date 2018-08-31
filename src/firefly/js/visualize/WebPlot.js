@@ -399,7 +399,7 @@ export const WebPlot= {
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,
             attributes,
-            clientFitsHeaderAry,
+            clientFitsHeaderAry
             //=== End Mutable =====================
         };
         plot= clone(plot, imagePlot);
