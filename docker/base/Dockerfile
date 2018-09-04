@@ -25,7 +25,7 @@ RUN chmod g-s ${CATALINA_BASE} && \
     mkdir bin conf lib logs temp webapps work && \
     cp ${CATALINA_HOME}/conf/* ${CATALINA_BASE}/conf/ && \
     chmod +rw ${CATALINA_BASE}/conf/* && \
-    chmod +x ${CATALINA_HOME}/bin/catalina.sh
+    chmod -R +rX ${CATALINA_HOME}
 
 
 # These environment varibles are not really made to be overridden
