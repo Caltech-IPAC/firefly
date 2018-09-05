@@ -5,7 +5,7 @@
 import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {primePlot} from '../PlotViewUtil.js';
+import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
@@ -74,12 +74,19 @@ function popupForm(plot, fitsHeaderInfo, popupId) {
 const FITSHEADER_DIALOGID = popupIdRoot+'_fitsHeader';
 
 function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
-
-    //var popupId = popupIdRoot + '_' + tableId;
-
     const popupId = FITSHEADER_DIALOGID;
     const getTitle =  (p) => {
-         return 'FITS Header : ' + p.title;
+         const EXT = ': - ext.';
+         const idx = p.title ? p.title.indexOf(EXT) : -1;
+         let   title;
+
+         if (idx < 0) {
+             title = p.title;
+         } else {
+             const pv = getPlotViewById(visRoot(), p.plotId);
+             title = p.title.slice(0, idx) + ' - ' + (pv.primeIdx+1);
+         }
+         return 'FITS Header : ' + title;
     };
 
     const getPopup = (aPlot, fitsHeaderTbl) => {
@@ -98,7 +105,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
             const newTableModel = createFitsHeaderTable(null, crtPlot);
 
             DialogRootContainer.defineDialog(popupId, getPopup(crtPlot, newTableModel), element);
-            dispatchShowDialog(popupId, plot.plotId);
+            dispatchShowDialog(popupId, crtPlot.plotId);
         }
     };
 
