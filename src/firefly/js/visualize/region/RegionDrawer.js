@@ -221,6 +221,13 @@ function updateDrawobjProp(rgPropAry, rgOptions, dObj) {
                 dObj.size = get(rgOptions, regionProp, getRegionDefault(regionProp));
                 break;
 
+            case regionPropsList.TEXTANGLE:
+                const a = get(rgOptions, regionProp, getRegionDefault(regionProp));
+                if (a) {
+                    dObj.textAngle = a;
+                }
+                break;
+
             default:
                 break;
         }
@@ -615,8 +622,10 @@ function drawRegionText(regionObj) {
     }
 
     var tObj = ShapeDataObj.makeText(regionObj.wpAry[0], text);
-    updateDrawobjProp([regionPropsList.COLOR, regionPropsList.FONT, regionPropsList.OFFX],
+    updateDrawobjProp([regionPropsList.COLOR, regionPropsList.FONT, regionPropsList.OFFX, regionPropsList.TEXTANGLE],
                        regionObj.options, tObj);
+    tObj.textAlign = 'center';        // the text is aligned to the center for ds9 text region
+    tObj.textBaseline = 'middle';
 
     return [tObj];
 }

@@ -191,6 +191,9 @@ export function getRGBA(color) {
 
 export function rateOpacity(color, ratio) {
     const rgba = getRGBA(color);
+    if (!rgba) {
+        return 'rgba(255, 255, 255,' + (1.0*ratio) + ')';
+    }
     const newAlpha = Math.max(Math.min(rgba[3] * ratio, 1.0), 0.0);
     const newColor = rgba.slice(R, A);
     newColor.push(newAlpha);
@@ -200,6 +203,11 @@ export function rateOpacity(color, ratio) {
 
 export function maximizeOpacity(color) {
     const rgba = getRGBA(color);
+
+    if (!rgba) {
+        return 'rgba(255, 255, 255, 1.0)';
+    }
+
     rgba[A] = 1.0;
     return toRGBAString(rgba);
 }

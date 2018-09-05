@@ -225,6 +225,7 @@ function renderTable(band, fitsHeaderInfo, isPlacedOnTab) {
 /**
  * This function will return the popup component.  As React conversion, the CamelCase is used.
  * @param plotView
+ * @param element
  */
 export function fitsHeaderView(plotView,element) {
 
