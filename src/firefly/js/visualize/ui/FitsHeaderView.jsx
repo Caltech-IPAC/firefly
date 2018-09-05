@@ -104,7 +104,8 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
 
 
     if (!isDialogVisible(popupId)) {
-        dispatchAddActionWatcher({actions: [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW], callback:  watchActivePlotChange});
+        dispatchAddActionWatcher({actions: [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW, ImagePlotCntlr.CHANGE_PRIME_PLOT],
+                                  callback:  watchActivePlotChange});
         DialogRootContainer.defineDialog(popupId, getPopup(plot, fitsHeaderInfo), element);
         dispatchShowDialog(popupId, plot.plotId);
     }
@@ -301,7 +302,7 @@ function createTableIdForFitsHeader(plot) {
 
     }
 
-    const str = plot.title.replace(/\s/g, '');                   //remove the white places
+    const str = plot.plotImageId.replace(/\s/g, '');                   //remove the white places
     return  str.replace(/[^a-zA-Z0-9]/g, '_')  + colors; //replace the no numeric/alphabet character by _
 }
 
