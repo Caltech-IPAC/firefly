@@ -50,10 +50,7 @@
                 null,  // alt_source
                 {filters: '"NED Units" like \'Jy\''} // options
             );
-
-            // while waiting for NED to provide us a numeric column for upper limit and uncertainty
-            // using the db expression to generate upper limit column:
-            tblReq.inclCols = '"No.","Frequency","NED Photometry Measurement","NED Uncertainty",CASEWHEN(IFNULL("NED Photometry Measurement", 0) > 0, NULL, 10) as "NED Limit"'
+            //tblReq.inclCols = '"No.","Frequency","Flux Density","Upper limit of Flux Density","Lower limit of uncertainty","Upper limit of uncertainty"'
 
             var wrapperReq = firefly.util.table.makeTblRequest('IpacTableFromSource', 'SED: ARP-220',
                 {searchRequest: tblReq}, {pageSize: 50});
@@ -66,15 +63,19 @@
                     name: 'sed',
                     tbl_id: tblId,
                     //text: 'tables::"No."', // does not display - probably not needed, if chart and table are connected
-                    x: 'tables::log(Frequency)',
+                    x: 'tables::log("Frequency")',
                     // error_x: {
                     //     // assuming error is a fifth of the Frequency
-                    //     array_minus: 'tables::log("Frequency")-log("Frequency"-"Frequency"/5)', // error bar (minus)
+                    //     arrayminus: 'tables::log("Frequency")-log("Frequency"-"Frequency"/5)', // error bar (minus)
                     //     array: 'tables::log("Frequency"+"Frequency"/5)-log("Frequency")', // error bar (plus)
                     // },
-                    y: 'tables::log("NED Photometry Measurement")',
+                    y: 'tables::log("Flux Density")',
+                    error_y: {
+                         arrayminus: 'tables::log("Flux Density")-log("Flux Density"-"Lower limit of uncertainty")', // error bar (minus)
+                         array: 'tables::log("Flux Density"+"Upper limit of uncertainty")-log("Flux Density")', // error bar (plus)
+                    },
                     firefly: {
-                        yMax: 'tables::log("NED Limit")'
+                        yMax: 'tables::log("Upper limit of Flux Density")'
                     },
                     mode: 'markers'
                 }],

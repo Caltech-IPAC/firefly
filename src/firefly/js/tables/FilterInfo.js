@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {getColumnIdx, getColumn, isNumericType, getTblById} from './TableUtil.js';
+import {getColumnIdx, getColumn, isNumericType, getTblById, stripColumnNameQuotes} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {isUndefined, get, isArray, isEmpty} from 'lodash';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
@@ -33,7 +33,7 @@ function parseInput(input, options={}) {
     cname = op ? cname.trim() : '';
     if (!isEmpty(rest)) val += rest.join(); // value contains operators.  just put it back.
     if (removeQuotes) {
-        cname = cname.replace(/"([A-Za-z\d_]+)"/g, '$1');
+        cname = stripColumnNameQuotes(cname);
     }
     return [cname, op, val];
 }
@@ -63,7 +63,7 @@ export class FilterInfo {
      * @returns {FilterInfo}
      */
     static parse(filterString) {
-        var filterInfo = new FilterInfo();
+        const filterInfo = new FilterInfo();
         filterString && filterString.split(';').forEach( (v) => {
                 const [cname, op, val] = parseInput(v, {removeQuotes: true});
                 if (cname && op) {
@@ -137,7 +137,6 @@ export class FilterInfo {
         const rval = [true, ''];
         const allowCols = columns.concat({name:'ROW_IDX'});
         if (filterInfo && filterInfo.trim().length > 0) {
-            filterInfo = filterInfo.replace(/"(.+?)"/g, '$1'); // remove quotes
             return filterInfo.split(';').reduce( ([isValid, msg], v) => {
                 const [cname] = parseInput(v);
                 if (!cname) {
@@ -457,3 +456,4 @@ function autoCorrectCondition(v, isNumeric=false) {
     }
     return `${op} ${val}`;
 }
+

@@ -911,7 +911,18 @@ export function makeBgKey(tbl_id) {
     return `tables:${tbl_id}`;
 }
 
+/**
+ * If input is '"x"', outputs 'x', but if input is '"x"+"y"' or 'log("x")' output is the same as input
+ * @param s
+ * @returns {*}
+ */
+export function stripColumnNameQuotes(s) {
+    const newS = s.replace(/^"(.+)"$/, '$1');
+    return newS.includes('"') ? s : newS;
+}
+
 /*-------------------------------------private------------------------------------------------*/
+
 /**
  * Action watcher callback for table update, which is invoked when
  * the table given by tbl_id is fully loaded.

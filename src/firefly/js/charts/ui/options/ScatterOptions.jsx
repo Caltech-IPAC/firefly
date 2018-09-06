@@ -15,7 +15,7 @@ import {updateSet} from '../../../util/WebUtil.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
-import {Errors, errorTypeFieldKey, errorFieldKey, errorMinusFieldKey} from './Errors.jsx';
+import {Errors, errorTypeFieldKey, errorFieldKey, errorMinusFieldKey, getDefaultErrorType} from './Errors.jsx';
 import {getAppOptions} from '../../../core/AppDataCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
 
@@ -78,7 +78,8 @@ export function fieldReducer({chartId, activeTrace}) {
     const basicReducer = basicFieldReducer({chartId, activeTrace});
 
     const getFields = () => {
-        const {data, fireflyData, tablesources={}} = getChartData(chartId);
+        const chartData = getChartData(chartId);
+        const {data, fireflyData, tablesources={}} = chartData;
         const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
 
         // when a symbol is substituted with an array,
@@ -109,11 +110,11 @@ export function fieldReducer({chartId, activeTrace}) {
             },
             [errorTypeFieldKey(activeTrace, 'x')]: {
                 fieldKey: errorTypeFieldKey(activeTrace, 'x'),
-                value: get(data, errorTypeFieldKey(activeTrace, 'x').replace(/^data./, ''), 'none')
+                value: get(chartData, errorTypeFieldKey(activeTrace, 'x'), getDefaultErrorType(chartData, activeTrace, 'x'))
             },
             [errorTypeFieldKey(activeTrace, 'y')]: {
                 fieldKey: errorTypeFieldKey(activeTrace, 'y'),
-                value: get(data, errorTypeFieldKey(activeTrace, 'y').replace(/^data./, ''), 'none')
+                value: get(chartData, errorTypeFieldKey(activeTrace, 'y'), getDefaultErrorType(chartData, activeTrace, 'y'))
             },
             ...basicReducer(null)
         };
