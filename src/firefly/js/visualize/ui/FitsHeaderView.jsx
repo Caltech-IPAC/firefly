@@ -75,16 +75,18 @@ const FITSHEADER_DIALOGID = popupIdRoot+'_fitsHeader';
 
 function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
     const popupId = FITSHEADER_DIALOGID;
+
     const getTitle =  (p) => {
-         const EXT = ': - ext.';
-         const idx = p.title ? p.title.indexOf(EXT) : -1;
+         const pv = getPlotViewById(visRoot(), p.plotId);
          let   title;
 
-         if (idx < 0) {
+         if (pv.plots.length === 1) {
              title = p.title;
          } else {
-             const pv = getPlotViewById(visRoot(), p.plotId);
-             title = p.title.slice(0, idx) + ' - ' + (pv.primeIdx+1);
+             const EXT = ': - ext.';
+             const idx = p.title ? p.title.indexOf(EXT) : -1;
+
+             title = (idx >= 0 ?  p.title.slice(0, idx) : p.title) + ' - ' + (pv.primeIdx+1);
          }
          return 'FITS Header : ' + title;
     };
