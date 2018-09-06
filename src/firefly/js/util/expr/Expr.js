@@ -43,6 +43,8 @@
 // NVL2 - If <value expr 1> is not null, returns <value expr 2>, otherwise returns <value expr 3>. (HyperSQL)
 /** Ternary operator: if null         */  export const NVL2  = 200;
 
+export const ANY_FUNC = 500;
+
 /**
  * Make a literal expression.
  * @param {number} v the constant value of the expression
@@ -105,6 +107,19 @@ export function makeApp3(rator, rand0, rand1, rand2) {
             ? new LiteralExpr(app.value())
             : app;
 }
+/**
+ * Make an expression that applies a n-ary operator to n operands.
+ * @param {number} rator - a code for a binary operator
+ * @param {Array.<Expr>} randAry - operands
+ * @return an expression meaning rator(...randAry)
+ */
+export function makeAppN(rator, randAry) {
+    const app = new NaryExpr(rator, randAry);
+    return randAry.every((e) => e instanceof LiteralExpr)
+            ? new LiteralExpr(app.value())
+            : app;
+}
+
 /**
  * Make a conditional expression.
  * @param test (Expr) `if' part
@@ -213,6 +228,19 @@ class TernaryExpr {
         switch (this.rator) {
             case NVL2: Number.isFinite(arg0) ? arg1 : arg2;
             default: throw 'BUG: bad rator: '+this.rator;
+        }
+    }
+}
+
+class NaryExpr {
+
+    constructor(rator, randAry) {
+        this.rator = rator;
+        //this.randAry = randAry;
+    }
+    value() {
+        switch (this.rator) {
+            default: throw 'Unsupported function: '+this.rator;
         }
     }
 }

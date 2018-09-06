@@ -55,6 +55,10 @@ const rators3 = [
     Expr.NVL2
 ];
 
+const procsN = [
+    'decimate_key'
+];
+
 /**
  Parses strings representing mathematical formulas with variables.
  The following operators, in descending order of precedence, are
@@ -193,7 +197,7 @@ const rators3 = [
         let expr = this.parseFactor();
         loop1:
         for (;;) {
-            var l, r, rator;
+            let l, r, rator;
 
             // The operator precedence table.
             // l = left precedence, r = right precedence, rator = operator.
@@ -240,7 +244,7 @@ const rators3 = [
 
 
     parseFactor() {
-        var i;
+        let i;
         switch (this.token.ttype) {
             case Token.TT_NUMBER: {
                 const lit = Expr.makeLiteral(this.token.nval);
@@ -287,6 +291,18 @@ const rators3 = [
                         const rand3 = this.parseExpr(0);
                         this.expect(')');
                         return Expr.makeApp3(rators3[i], rand1, rand2, rand3);
+                    }
+                }
+                for (i = 0; i < procsN.length; ++i) {
+                    if (procsN[i]===this.token.sval) {
+                        this.nextToken();
+                        this.expect('(');
+                        const rand1 = this.parseExpr(0);
+                        const randAry = [rand1];
+                        while (this.expectOneOf([',', ')']) !== ')') {
+                            randAry.push(this.parseExpr(0));
+                        }
+                        return Expr.makeAppN(Expr.ANY_FUNC, randAry);
                     }
                 }
                 if (this.token.sval === 'if') {
@@ -338,6 +354,18 @@ const rators3 = [
                 SyntaxException.EXPECTED, '' + ttype);
         }
         this.nextToken();
+    }
+
+    expectOneOf(ttypeAry) {
+        if (ttypeAry.includes(this.token.ttype)) {
+            const ttypeMatched = this.token.ttype;
+            this.nextToken();
+            return ttypeMatched;
+        } else {
+            const aryAsStr = '"' + ttypeAry.join('" or "') + '"';
+            throw this.error(aryAsStr + ' expected',
+                SyntaxException.EXPECTED, aryAsStr);
+        }
     }
 
 }

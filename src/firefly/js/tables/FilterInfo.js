@@ -77,14 +77,21 @@ export class FilterInfo {
      * given a list of filters separated by semicolon,
      * transform them into valid filters if they are not already so.
      * @param filterInfo
+     * @param columns
      * @returns {string}
      */
-    static autoCorrectFilter(filterInfo) {
+    static autoCorrectFilter(filterInfo, columns) {
         if (filterInfo) {
             const filters = filterInfo.split(';').map( (v) => {
                 const [cname, op, val] = parseInput(v);
                 if (!cname) return v;
-                return `${cname} ${autoCorrectCondition(op + ' ' + val)}`;
+                let isNumeric = false;
+                if (columns) {
+                    const col = columns.find((c) => c.name === cname);
+                    // assume all expressions are numeric
+                    isNumeric = !col || isNumericType(col);
+                }
+                return `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
             });
             return filters.join(';');
         } else {
@@ -161,7 +168,7 @@ export class FilterInfo {
      * @returns {{valid: boolean, value: (string|*), message: string}}
      */
     static validator(columns, filterInfo) {
-        filterInfo = FilterInfo.autoCorrectFilter(filterInfo);
+        filterInfo = FilterInfo.autoCorrectFilter(filterInfo, columns);
         const [valid, message] = FilterInfo.isValid(filterInfo, columns);
         return  {valid, value: filterInfo, message};
     }
@@ -223,7 +230,7 @@ export class FilterInfo {
 
         return (row, idx) => {
             if (!row) return false;
-            var compareTo = noROWID ? idx : row[cidx];
+            let compareTo = noROWID ? idx : row[cidx];
             if (isUndefined(compareTo)) return false;
 
             if (op !== 'like' && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
