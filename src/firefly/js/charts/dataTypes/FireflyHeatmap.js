@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, uniqueId} from 'lodash';
-import {getTblById, getColumn, doFetchTable} from '../../tables/TableUtil.js';
+import {getTblById, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {singleTraceUI, replaceQuotesIfSurrounding} from '../ChartUtil.js';
+import {singleTraceUI} from '../ChartUtil.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
 import {formatColExpr} from '../ChartUtil.js';
@@ -110,8 +110,8 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
     }
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
-    const xLabel = replaceQuotesIfSurrounding(get(mappings, 'x'));
-    const yLabel = replaceQuotesIfSurrounding(get(mappings, 'y'));
+    const xLabel = stripColumnNameQuotes(get(mappings, 'x'));
+    const yLabel = stripColumnNameQuotes(get(mappings, 'y'));
     const xTipLabel = xLabel.length > 20 ? xLabel.substring(0,18)+'...' : xLabel;
     const yTipLabel = yLabel.length > 20 ? yLabel.substring(0,18)+'...' : yLabel;
 

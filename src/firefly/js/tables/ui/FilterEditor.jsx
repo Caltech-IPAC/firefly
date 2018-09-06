@@ -151,7 +151,7 @@ function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
 
     const onFilter = (fieldVal) => {
         if (fieldVal.valid) {
-            const filterInfo = collectFilterInfo(data);
+            const filterInfo = collectFilterInfo(data, orgFilterInfo);
             if (filterInfo !== orgFilterInfo) {
                 onChange && onChange({filterInfo});
             }
@@ -161,11 +161,12 @@ function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
     return {onSelectAll, onRowSelect, onSort, onFilter, onAllFilter};
 }
 
-function collectFilterInfo(data) {
-    const filterCls = FilterInfo.parse('');
-    data.filter( (row) => row[1]).forEach( (row) => {
+function collectFilterInfo(data, orgFilterInfo) {
+    const filterCls = FilterInfo.parse(orgFilterInfo);
+    // filter the cells with a value or previous value
+    data.filter( (row) => row[1]||filterCls.getFilter(row[0])).forEach( (row) => {
         if (row[1] !== NOT_CELL_DATA) {
-            filterCls.addFilter(row[0], row[1]);
+            filterCls.setFilter(row[0], row[1]);
         }
     });
     return filterCls.serialize();
