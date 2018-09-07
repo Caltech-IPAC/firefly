@@ -142,6 +142,7 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
     
 }
 //LZ 3/22/16 DM-4494
+/*
 export  function  callGetFitsHeaderInfo(plotState, tableId) {
 
     var params ={ [ServerParams.STATE]: plotState.toJson(false),
@@ -151,6 +152,7 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
     var result = doJsonRequest(ServerParams.FITS_HEADER, params, true);
     return result;//doJsonRequest(ServerParams.FITS_HEADER, params);
 }
+*/
 
 
 export function callGetFileFlux(stateAry, pt) {
