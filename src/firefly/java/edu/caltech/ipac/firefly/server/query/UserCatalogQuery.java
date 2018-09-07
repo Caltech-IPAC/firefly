@@ -7,11 +7,11 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -19,6 +19,7 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -80,10 +81,14 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
     public static void addCatalogMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
 
-        TableMeta.LonLatColumns llc = findLonLatCols(columns, (TableServerRequest) request);
+        TableServerRequest tsR= (TableServerRequest)request;
+        TableMeta.LonLatColumns llc = findLonLatCols(columns, tsR);
         if (llc != null) {
             meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
-            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "USER");
+            Map<String,String> reqMeta= tsR.getMeta();
+            if (reqMeta == null || !reqMeta.containsKey(MetaConst.CATALOG_OVERLAY_TYPE)) {
+                meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "USER");
+            }
             meta.setAttribute(MetaConst.DATA_PRIMARY, "False");
         }
 
