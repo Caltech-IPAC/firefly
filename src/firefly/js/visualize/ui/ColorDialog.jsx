@@ -285,7 +285,7 @@ export function replot3ColorHuePreserving(request) {
             lowerWhich: useZ ? ZSCALE : request[lowerWhich],
             lowerValue: request[lowerRange],
             asinhQValue: request.asinhQ,
-            gammaOrStretch: request.stretch,
+            asinhStretch: request.stretch,
             algorithm: STRETCH_ASINH,
             rgbPreserveHue: 1
         });
@@ -340,11 +340,12 @@ export function makeSerializedRv(request) {
             lowerValue: request.lowerRange,
             upperValue: request.upperRange,
             asinhQValue: request.asinhQ,
-            gammaOrStretch: request.gamma,
+            gammaValue: request.gamma,
             algorithm: request.algorithm,
             zscaleContrast: request.zscaleContrast,
             zscaleSamples: request.zscaleSamples,
-            zscaleSamplesPerLine: request.zscaleSamplesPerLine
+            zscaleSamplesPerLine: request.zscaleSamplesPerLine,
+            rgbPreserveHue: 0
        });
 
     return RangeValues.serializeRV(rv);

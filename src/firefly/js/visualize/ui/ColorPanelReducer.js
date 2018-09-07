@@ -68,7 +68,7 @@ function computeColorPanelState(fields, plottedRV, fitsData, band, action) {
         case INIT_FIELD_GROUP:
         case ImagePlotCntlr.ANY_REPLOT:
             if (!plottedRV && !fitsData) return fields;
-            // no update if hue-preserving: gammaOrStretch is a reused field
+            // no update if hue-preserving
             if (get(plottedRV, 'rgbPreserveHue', 0) > 0) return fields;
             const newFields = updateFieldsFromRangeValues(fields,plottedRV);
             return syncFields(newFields,plottedRV,fitsData);
@@ -203,7 +203,7 @@ function updateFieldsFromRangeValues(fields,rv) {
     fields.upperWhich= cloneWithValue(fields.upperWhich, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.upperWhich);
     fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
     fields.asinhQ= cloneWithValue(fields.asinhQ, rv.asinhQValue);
-    fields.gamma= cloneWithValue(fields.gamma, rv.gammaOrStretch);
+    fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
     fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);
     fields.zscaleContrast= cloneWithValue(fields.zscaleContrast, rv.zscaleContrast);
     fields.zscaleSamples= cloneWithValue(fields.zscaleSamples, rv.zscaleSamples);
@@ -460,7 +460,7 @@ function updateHuePreserveFieldsFromRangeValues(fields,rvAry) {
         fields[lowerRange]= cloneWithValue(fields[lowerRange], rvAry[i].lowerValue);
     });
     fields.asinhQ= cloneWithValue(fields.asinhQ, rvAry[0].asinhQValue);
-    fields.stretch= cloneWithValue(fields.stretch, Number(rvAry[0].gammaOrStretch).toFixed(1));
+    fields.stretch= cloneWithValue(fields.stretch, Number(rvAry[0].asinhStretch).toFixed(1));
     fields.zscale= cloneWithValue(fields.zscale,  rvAry[0].lowerWhich===ZSCALE ? 'zscale' : '');
     return fields;
 }

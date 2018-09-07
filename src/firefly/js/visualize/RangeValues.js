@@ -54,12 +54,13 @@ export class RangeValues {
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
                  asinhQValue=NaN,
-                 gammaOrStretch=2.0,
+                 gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
                  zscaleSamples= 600,
                  zscaleSamplesPerLine= 120,
                  rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
+                 asinhStretch=1.0,
                  bias= 0.5,
                  contrast= 1.0 ) {
         this.lowerWhich= parseInt(lowerWhich);
@@ -67,12 +68,13 @@ export class RangeValues {
         this.upperWhich= parseInt(upperWhich);
         this.upperValue= parseFloat(upperValue);
         this.asinhQValue = parseFloat(asinhQValue);
-        this.gammaOrStretch=parseFloat(gammaOrStretch);
+        this.gammaValue=parseFloat(gammaValue);
         this.algorithm=  parseInt(algorithm);
         this.zscaleContrast= parseInt(zscaleContrast);
         this.zscaleSamples= parseInt(zscaleSamples); /* desired number of pixels in sample */
         this.zscaleSamplesPerLine= parseInt(zscaleSamplesPerLine); /* optimal number of pixels per line */
         this.rgbPreserveHue=  parseInt(rgbPreserveHue); /* if 0, stretch by band, otherwise preserve hue*/
+        this.asinhStretch=parseFloat(asinhStretch);
         if (this.rgbPreserveHue > 0) { this.algorithm = STRETCH_ASINH; }
         this.bias= parseFloat(bias);
         this.contrast= parseFloat(contrast);
@@ -96,9 +98,9 @@ export class RangeValues {
      */
     static clone() {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
-            this.upperValue, this.asinhQValue,  this.gammaOrStretch, this.algorithm,
+            this.upperValue, this.asinhQValue,  this.gammaValue, this.algorithm,
             this.zscaleContrast, this.zscaleSamples, this.zscaleSamplesPerLine,
-            this.rgbPreserveHue,
+            this.rgbPreserveHue,this.asinhStretch,
             this.bias, this.contrast );
     }
 
@@ -136,12 +138,13 @@ export class RangeValues {
      * @param p.upperWhich
      * @param p.upperValue
      * @param p.asinhQValue
-     * @param p.gammaOrStretch
+     * @param p.gammaValue
      * @param p.algorithm
      * @param p.zscaleContrast
      * @param p.zscaleSamples
      * @param p.zscaleSamplesPerLine
      * @param p.rgbPreserveHue
+     * @param p.asinhStretch
      * @param p.bias
      * @param p.contrast
      * @return {RangeValues}
@@ -152,12 +155,13 @@ export class RangeValues {
                       upperWhich,
                       upperValue= 99.0,
                       asinhQValue= NaN,
-                      gammaOrStretch=2.0,
+                      gammaValue=2.0,
                       algorithm= STRETCH_LINEAR,
                       zscaleContrast= 25,
                       zscaleSamples= 600,
                       zscaleSamplesPerLine= 120,
                       rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
+                      asinhStretch= 1.0,
                       bias= 0.5,
                       contrast= 1.0} ) {
 
@@ -168,8 +172,8 @@ export class RangeValues {
             upperWhich = ZSCALE;
         }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
-            gammaOrStretch, algorithm, zscaleContrast, zscaleSamples,
-            zscaleSamplesPerLine, rgbPreserveHue, bias, contrast);
+            gammaValue, algorithm, zscaleContrast, zscaleSamples,
+            zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, bias, contrast);
     }
 
     /**
@@ -179,12 +183,13 @@ export class RangeValues {
      * @param upperWhich
      * @param upperValue
      * @param asinhQValue
-     * @param gammaOrStretch
+     * @param gammaValue
      * @param algorithm
      * @param zscaleContrast
      * @param zscaleSamples
      * @param zscaleSamplesPerLine
      * @param rgbPreserveHue
+     * @param asinhStretch used for hue preserving rgb
      * @param bias
      * @param contrast
      * @return {RangeValues}
@@ -194,18 +199,19 @@ export class RangeValues {
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
                 asinhQValue=NaN,
-                gammaOrStretch=2.0,
+                gammaValue=2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,
                 zscaleSamples= 600,
                 zscaleSamplesPerLine= 120,
                 rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
+                asinhStretch= 1.0,
                 bias= 0.5,
                 contrast= 1.0 ) {
         if (rgbPreserveHue > 0) { algorithm = STRETCH_ASINH; }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
-             gammaOrStretch, algorithm, zscaleContrast, zscaleSamples,
-            zscaleSamplesPerLine, rgbPreserveHue, bias, contrast);
+             gammaValue, algorithm, zscaleContrast, zscaleSamples,
+            zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, bias, contrast);
     }
     
     /**
@@ -275,12 +281,13 @@ export class RangeValues {
             rv.upperWhich+','+
             rv.upperValue+','+
             rv.asinhQValue+','+
-            rv.gammaOrStretch+','+
+            rv.gammaValue+','+
             rv.algorithm+','+
             rv.zscaleContrast+','+
             rv.zscaleSamples+','+
             rv.zscaleSamplesPerLine+','+
-            rv.rgbPreserveHue;
+            rv.rgbPreserveHue+','+
+            rv.asinhStretch;
     }
     
 }

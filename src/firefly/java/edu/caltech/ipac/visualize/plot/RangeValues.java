@@ -23,6 +23,7 @@ public class RangeValues implements Cloneable, Serializable {
     public static final int SIGMA      = 92;
 
     private static final double ASINH_Q =  Double.NaN; // if NaN, Q will be estimated based on range;
+    private static final double ASINH_STRETCH = 1;
     private static final double GAMMA=2.0;
 
 
@@ -43,9 +44,10 @@ public class RangeValues implements Cloneable, Serializable {
     private int    _upperWhich;
     private double _upperValue;
     private double _asinhQValue;
-    private double _gammaOrStretch; // gamma for Power Law Gamma stretch or stretch value for hue preserving RGB
+    private double _gammaValue;
     private int    _algorithm= STRETCH_LINEAR;
     private short  _rgbPreserveHue;
+    private double _asinhStretch; // used with hue-preserving rgb only
     private int    _zscale_contrast;
     private int    _zscale_samples; /* desired number of pixels in sample */
     private int    _zscale_samples_per_line; /* optimal number of pixels per line */
@@ -53,7 +55,7 @@ public class RangeValues implements Cloneable, Serializable {
     private double _contrast;
 
     public RangeValues() {
-        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120, RGB_PRESERVE_HUE_DEFAULT);
+        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120, RGB_PRESERVE_HUE_DEFAULT, ASINH_STRETCH);
     }
 
     public RangeValues( int    lowerWhich,
@@ -61,14 +63,15 @@ public class RangeValues implements Cloneable, Serializable {
                         int    upperWhich,
                         double upperValue,
                         double asinhQValue,
-                        double gammaOrStretch,
+                        double gammaValue,
                         int    algorithm,
                         int    zscale_contrast,
                         int    zscale_samples,
                         int    zscale_samples_per_line,
-                        short  rgbPreserveHue) {
-        this( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue, gammaOrStretch, algorithm,
-                zscale_contrast, zscale_samples, zscale_samples_per_line, rgbPreserveHue,
+                        short  rgbPreserveHue,
+                        double asinhStretch) {
+        this( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue, gammaValue, algorithm,
+                zscale_contrast, zscale_samples, zscale_samples_per_line, rgbPreserveHue, asinhStretch,
                 0.5, 1.0);
     }
 
@@ -78,12 +81,13 @@ public class RangeValues implements Cloneable, Serializable {
                         int    upperWhich,
                         double upperValue,
                         double asinhQValue,
-                        double gammaOrStretch,
+                        double gammaValue,
                         int    algorithm,
                         int    zscale_contrast,
                         int    zscale_samples,
                         int    zscale_samples_per_line,
                         short  rgbPreserveHue,
+                        double asinhStretch,
                         double bias,
                         double contrast) {
 
@@ -93,19 +97,21 @@ public class RangeValues implements Cloneable, Serializable {
         _upperValue= upperValue;
         _algorithm = (rgbPreserveHue > 0) ? STRETCH_ASINH : algorithm;
         _asinhQValue = asinhQValue;
-        _gammaOrStretch=gammaOrStretch;
+        _gammaValue=gammaValue;
         _zscale_contrast = zscale_contrast;
         _zscale_samples = zscale_samples;
         _zscale_samples_per_line = zscale_samples_per_line;
         _rgbPreserveHue = rgbPreserveHue;
+        _asinhStretch = asinhStretch;
         _bias = bias;
         _contrast = contrast;
     }
 
     public double getAsinhQValue() { return _asinhQValue; }
     public void setAsinhQValue(double val) { _asinhQValue = val; }
-    public double getGammaOrStretch() { return _gammaOrStretch; }
-    public void setGammaOrStretch(double val) { _gammaOrStretch = val; }
+    public double getGammaValue() { return _gammaValue; }
+    public double getAsinhStretch() { return _asinhStretch; }
+    public void setAsinhStretch(double val) { _asinhStretch = val; }
 
     public int    getLowerWhich() { return _lowerWhich; }
     public double getLowerValue() { return _lowerValue; }
@@ -135,8 +141,8 @@ public class RangeValues implements Cloneable, Serializable {
 
     public Object clone() {
         return new RangeValues( _lowerWhich, _lowerValue, _upperWhich,
-		_upperValue, _asinhQValue, _gammaOrStretch, _algorithm,
-		_zscale_contrast, _zscale_samples, _zscale_samples_per_line, _rgbPreserveHue, _bias, _contrast );
+		_upperValue, _asinhQValue, _gammaValue, _algorithm,
+		_zscale_contrast, _zscale_samples, _zscale_samples_per_line, _rgbPreserveHue, _asinhStretch, _bias, _contrast );
     }
 
     public String toString() { return serialize(); }
@@ -152,25 +158,26 @@ public class RangeValues implements Cloneable, Serializable {
             int    upperWhich=              Integer.parseInt(s[i++]);
             double upperValue=              parseDouble(s[i++]);
             double asinhQValue=             parseDouble(s[i++]);
-            double gammaOrStretch=              parseDouble(s[i++]);
+            double gammaValue=              parseDouble(s[i++]);
             int    algorithm=               Integer.parseInt(s[i++]);
             int    zscale_contrast=         Integer.parseInt(s[i++]);
             int    zscale_samples=          Integer.parseInt(s[i++]);
             int    zscale_samples_per_line= Integer.parseInt(s[i++]);
-            short  rgbPreserveHue=          s.length > 10 ? Short.parseShort(s[i]) : RGB_PRESERVE_HUE_DEFAULT;
-
+            short  rgbPreserveHue=          s.length > 10 ? Short.parseShort(s[i++]) : RGB_PRESERVE_HUE_DEFAULT;
+            double asinhStretch=            s.length > 10 ? parseDouble(s[i]) : ASINH_STRETCH;
 
             return new RangeValues(lowerWhich,
                     lowerValue,
                     upperWhich,
                     upperValue,
                     asinhQValue,
-                    gammaOrStretch,
+                    gammaValue,
                     algorithm,
                     zscale_contrast,
                     zscale_samples,
                     zscale_samples_per_line,
-                    rgbPreserveHue);
+                    rgbPreserveHue,
+                    asinhStretch);
 
         } catch (Exception e) {
             return null;
@@ -186,12 +193,13 @@ public class RangeValues implements Cloneable, Serializable {
                 getUpperWhich()+","+
                 getUpperValue()+","+
                 getAsinhQValue()+","+
-                getGammaOrStretch()+","+
+                getGammaValue()+","+
                 getStretchAlgorithm()+","+
                 getZscaleContrast()+","+
                 getZscaleSamples()+","+
                 getZscaleSamplesPerLine()+","+
-                _rgbPreserveHue;
+                _rgbPreserveHue+","+
+                getAsinhStretch();
     }
 
     private static boolean isEmpty(String s) {

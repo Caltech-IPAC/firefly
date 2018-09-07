@@ -129,14 +129,14 @@ public class ImageStretch {
 
         boolean useZ = rangeValuesAry[0].getLowerWhich()==RangeValues.ZSCALE;
         double slow = useZ ? rgbIntensity.getIntensityLow() : rgbIntensity.getIntensityDataLow(); // lower range for intensity
-        double stretch = useZ ? rgbIntensity.getIntensityHigh()-rgbIntensity.getIntensityLow() : rv.getGammaOrStretch();
+        double stretch = useZ ? rgbIntensity.getIntensityHigh()-rgbIntensity.getIntensityLow() : rv.getAsinhStretch();
 
         if (!useZ) {
             double intensityRange = rgbIntensity.getIntensityDataHigh()-slow;
             if (stretch > intensityRange && intensityRange > 0) {
                 stretch = intensityRange;
             } else if (stretch < 1e-10) {
-                stretch = 0.1;
+                stretch = 1e-10;
             }
         }
 
@@ -148,7 +148,7 @@ public class ImageStretch {
                 (byte)0, intensity, pixelData, rv, slow, shigh);
         for (RangeValues anRV : rangeValuesAry) {
             anRV.setAsinhQValue(rv.getAsinhQValue());
-            anRV.setGammaOrStretch(stretch);
+            anRV.setAsinhStretch(stretch);
         }
 
         // fill pixel data for each band
@@ -291,7 +291,7 @@ public class ImageStretch {
         }
         int deltasav = sdiff > 0 ? 64 : -64;
 
-        double gamma=rangeValues.getGammaOrStretch();
+        double gamma=rangeValues.getGammaValue();
         int pixelCount = 0;
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
