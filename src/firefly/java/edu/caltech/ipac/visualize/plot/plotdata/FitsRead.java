@@ -29,7 +29,6 @@ import nom.tam.fits.HeaderCard;
 import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.ImageHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
-import nom.tam.util.ArrayFuncs;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -58,7 +57,7 @@ public class FitsRead implements Serializable {
     private ImageHeader imageHeader;
     private Header header;
     private Histogram hist;
-    private  double defBetaValue= Double.NaN;
+
     private final boolean tileCompress;
 
 
@@ -137,6 +136,7 @@ public class FitsRead implements Serializable {
 
     public BinaryTableHDU getTableHDU() { return tableHDU; } //todo - remove this methdo
 
+    public float[] getRawFloatAry() { return float1d; }
 
     public static RangeValues getDefaultFutureStretch() {
         return DEFAULT_RANGE_VALUE;
@@ -145,42 +145,7 @@ public class FitsRead implements Serializable {
     public static void setDefaultFutureStretch(RangeValues defaultRangeValues) {
         DEFAULT_RANGE_VALUE = defaultRangeValues;
     }
-
-
-
-    public synchronized void doStretch(RangeValues rangeValues,
-                                       byte[] pixelData,
-                                       boolean mapBlankToZero,
-                                       int startPixel,
-                                       int lastPixel,
-                                       int startLine,
-                                       int lastLine){
-
-
-
-
-
-        double slow = ImageStretch.getSlow(rangeValues, float1d, imageHeader, hist);
-        double shigh = ImageStretch.getShigh(rangeValues, float1d, imageHeader, hist);
-
-        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
-
-
-        ImageStretch.stretchPixels(startPixel, lastPixel, startLine, lastLine,imageHeader.naxis1, imageHeader, hist,
-                blank_pixel_value, float1d, pixelData, rangeValues, slow, shigh);
-
-
-    }
-
-
-    public short[] getDataAsMask() {
-        float[] fMasks = getDataFloat();
-        //convert to its original type
-        short[] maskData= (short[]) ArrayFuncs.convertArray(fMasks, Short.TYPE, true);
-        return maskData;
-
-    }
-
+    
 
     /**
      * Add the mask layer to the existing image
@@ -203,10 +168,10 @@ public class FitsRead implements Serializable {
 
         int[] pixelhist = new int[256];
 
-        //covert the raw mask data to real mask : rawMask * imageHeader.bscale + imageHeader.bzero;
-        float[] fMasks = getDataFloat();
-
-        //convert to its original type
+//        //covert the raw mask data to real mask : rawMask * imageHeader.bscale + imageHeader.bzero;
+//        float[] fMasks = getDataFloat();
+//
+//        //convert to its original type
 //        int[] masks= (int[]) ArrayFuncs.convertArray(fMasks, Integer.TYPE, true);
 
 

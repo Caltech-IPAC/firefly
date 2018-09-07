@@ -238,18 +238,10 @@ public class Geom {
 
 
    /* set mapping from input */
-        try {
     /* should really clone in_header, but this may suffice */
-            temp_hdr = new ImageHeader(in_fits_header);
-            temp_hdr.cdelt2 = in_header.cdelt2;
-            temp_hdr.crpix2 = in_header.crpix2;
-        } catch (FitsException e) {
-            if (SUTDebug.isDebug()) {
-                System.out.println("got FitsException: " + e.getMessage());
-                e.printStackTrace();
-            }
-            throw e;
-        }
+        temp_hdr = new ImageHeader(in_fits_header);
+        temp_hdr.cdelt2 = in_header.cdelt2;
+        temp_hdr.crpix2 = in_header.crpix2;
 
         temp_hdr.crpix1 = 0;
         temp_hdr.crpix2 = 0;
@@ -1498,17 +1490,9 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
             }
             throw new FitsException("got HeaderCardException: " + hce.getMessage());
         }
-        try {
-            out_header = new ImageHeader(in_fits_header);
+        out_header = new ImageHeader(in_fits_header);
             //System.out.println("RAA out_header.crpix1 = " + out_header.crpix1);
             //System.out.println("RAA out_header.toString()= " + out_header.toString());
-        } catch (FitsException e) {
-            if (SUTDebug.isDebug()) {
-                System.out.println("got FitsException: " + e.getMessage());
-                e.printStackTrace();
-            }
-            throw e;
-        }
 
         out_coordinate_sys = CoordinateSys.makeCoordinateSys(
                 out_header.getJsys(), out_header.file_equinox);
@@ -1538,15 +1522,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
 
         in_fits_header.resetOriginalSize();  // RBH added 3-25-2010
 
-        try {
-            out_header = new ImageHeader(in_fits_header);
-        } catch (FitsException e) {
-            if (SUTDebug.isDebug()) {
-                System.out.println("got FitsException: " + e.getMessage());
-                e.printStackTrace();
-            }
-            throw e;
-        }
+        out_header = new ImageHeader(in_fits_header);
         out_coordinate_sys = CoordinateSys.makeCoordinateSys(
                 out_header.getJsys(), out_header.file_equinox);
         if (SUTDebug.isDebug()) {

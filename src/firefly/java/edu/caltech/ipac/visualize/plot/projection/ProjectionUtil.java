@@ -10,9 +10,8 @@ package edu.caltech.ipac.visualize.plot.projection;
  */
 
 
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
-import nom.tam.fits.FitsException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 
 /**
  * @author Trey Roby
@@ -23,16 +22,12 @@ public class ProjectionUtil {
         boolean result = false;
 
         if (firstFitsRead.getProjectionType()== secondFitsread.getProjectionType()) {
-            try {
-                ImageHeader H1 = new ImageHeader(firstFitsRead.getHeader());
-                ImageHeader H2 = new ImageHeader(secondFitsread.getHeader());
-                if (H1.maptype == Projection.PLATE) {
-                    result = checkPlate(H1, H2);
-                } else {
-                    result = checkOther(H1, H2);
-                }
-            } catch (FitsException e) {
-                result= false;
+            ImageHeader H1 = new ImageHeader(firstFitsRead.getHeader());
+            ImageHeader H2 = new ImageHeader(secondFitsread.getHeader());
+            if (H1.maptype == Projection.PLATE) {
+                result = checkPlate(H1, H2);
+            } else {
+                result = checkOther(H1, H2);
             }
         }
         return result;

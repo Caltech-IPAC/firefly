@@ -36,7 +36,7 @@ function handleOnChange(value, params, fireValueChange){
 const propTypes={
     associatedKey: PropTypes.string,
     label:       PropTypes.string,             // slider label
-    slideValue:  PropTypes.oneOfType([PropTypes.string,PropTypes.number]).required, // slider value
+    slideValue:  PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired, // slider value
     value:       PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
     onValueChange: PropTypes.func,                  // callback on slider change
     min:         PropTypes.number,                  // minimum end of slider

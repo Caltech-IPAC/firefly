@@ -99,9 +99,9 @@ public class Histogram {
             datamax = histDatamax;
 
 	        /* redo if more than 1% of pixels fell off histogram */
-            if (underflowCount > float1dArray.length / .01)
+            if (underflowCount > float1dArray.length * .01)
                 redo_flag = true;
-            if (overflowCount > float1dArray.length / .01)
+            if (overflowCount > float1dArray.length * .01)
                 redo_flag = true;
 
             /* check if we got a good spread */

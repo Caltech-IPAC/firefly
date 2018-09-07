@@ -83,10 +83,7 @@ public class ImagePlot extends Plot implements Serializable {
         imageScaleFactor= frGroup.getFitsRead(Band.NO_BAND).getImageScaleFactor();
         _threeColor= false;
         useForMask = true;
-
-       _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
-                                       iMasks,stretch,SQUARE);
-
+       _imageData = new ImageDataGroup(frGroup.getFitsReadAry(), iMasks,stretch,SQUARE);
         configureImage(frGroup);
     }
 

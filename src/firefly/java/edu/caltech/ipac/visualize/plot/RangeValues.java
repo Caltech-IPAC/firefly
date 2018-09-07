@@ -16,29 +16,15 @@ import java.io.Serializable;
 
 public class RangeValues implements Cloneable, Serializable {
 
-
-    public static final String PERCENTAGE_STR = "Percent";
-    public static final String ABSOLUTE_STR   = "Absolute";
-    public static final String SIGMA_STR      = "Sigma";
-
     public static final int PERCENTAGE = 88;
-    public static final int MAXMIN     = 89;
+    //public static final int MAXMIN     = 89;  // obsolete
     public static final int ABSOLUTE   = 90;
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
 
-    public static final double ASINH_Q =  Double.NaN; // if NaN, Q will be estimated based on range;
-    public static final double GAMMA=2.0;
-
-    public static final String LINEAR_STR= "Linear";
-    public static final String LOG_STR= "Log";
-    public static final String LOGLOG_STR= "LogLog";
-    public static final String EQUAL_STR= "Equal";
-    public static final String SQUARED_STR= "Squared";
-    public static final String SQRT_STR= "Sqrt";
-
-    public static final String ASINH_STR= "Asinh";
-    public static final String POWERLAW_GAMMA_STR= "powerlaw_gamma";
+    private static final double ASINH_Q =  Double.NaN; // if NaN, Q will be estimated based on range;
+    private static final double ASINH_STRETCH = 1;
+    private static final double GAMMA=2.0;
 
 
     public static final int STRETCH_LINEAR= 44;
@@ -50,6 +36,8 @@ public class RangeValues implements Cloneable, Serializable {
     public static final int STRETCH_ASINH   = 50;
     public static final int STRETCH_POWERLAW_GAMMA   = 51;
 
+    private static final short RGB_PRESERVE_HUE_DEFAULT = 0; // use 0 for false, 1 for true
+
 
     private int    _lowerWhich;
     private double _lowerValue;
@@ -58,6 +46,8 @@ public class RangeValues implements Cloneable, Serializable {
     private double _asinhQValue;
     private double _gammaValue;
     private int    _algorithm= STRETCH_LINEAR;
+    private short  _rgbPreserveHue;
+    private double _asinhStretch; // used with hue-preserving rgb only
     private int    _zscale_contrast;
     private int    _zscale_samples; /* desired number of pixels in sample */
     private int    _zscale_samples_per_line; /* optimal number of pixels per line */
@@ -65,64 +55,9 @@ public class RangeValues implements Cloneable, Serializable {
     private double _contrast;
 
     public RangeValues() {
-        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120);
+        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120, RGB_PRESERVE_HUE_DEFAULT, ASINH_STRETCH);
     }
 
-    public RangeValues(int algorithm ) {
-
-        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, algorithm, 25, 600, 120);
-    }
-    public RangeValues( int    lowerWhich,
-                        double lowerValue,
-                        int    upperWhich,
-                        double upperValue,
-                        int    algorithm) {
-        this( lowerWhich, lowerValue, upperWhich, upperValue, ASINH_Q, GAMMA,algorithm, 25, 600, 120);
-    }
-
-    //added
-    public RangeValues( int    lowerWhich,
-                        double lowerValue,
-                        int    upperWhich,
-                        double upperValue,
-                        double asinhQValue,
-                        double gammaValue,
-                        int    algorithm) {
-        this( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue, gammaValue, algorithm, 25, 600, 120);
-    }
-
-    public RangeValues( int    lowerWhich,
-                        double lowerValue,
-                        int    upperWhich,
-                        double upperValue,
-                        int    algorithm,
-                        int    zscale_contrast,
-                        int    zscale_samples,
-                        int    zscale_samples_per_line) {
-
-        this( lowerWhich, lowerValue, upperWhich, upperValue, ASINH_Q, GAMMA, algorithm,
-                zscale_contrast, zscale_samples, zscale_samples_per_line,
-                0.5, 1.0);
-    }
-   //LZ added
-    public RangeValues( int    lowerWhich,
-                        double lowerValue,
-                        int    upperWhich,
-                        double upperValue,
-                        double asinhQValue,
-                        double gammaValue,
-                        int    algorithm,
-                        int    zscale_contrast,
-                        int    zscale_samples,
-                        int    zscale_samples_per_line) {
-
-        this( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue, gammaValue, algorithm,
-                zscale_contrast, zscale_samples, zscale_samples_per_line,
-                0.5, 1.0);
-    }
-
-
-    //LZ  added
     public RangeValues( int    lowerWhich,
                         double lowerValue,
                         int    upperWhich,
@@ -133,6 +68,26 @@ public class RangeValues implements Cloneable, Serializable {
                         int    zscale_contrast,
                         int    zscale_samples,
                         int    zscale_samples_per_line,
+                        short  rgbPreserveHue,
+                        double asinhStretch) {
+        this( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue, gammaValue, algorithm,
+                zscale_contrast, zscale_samples, zscale_samples_per_line, rgbPreserveHue, asinhStretch,
+                0.5, 1.0);
+    }
+
+
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                        double asinhQValue,
+                        double gammaValue,
+                        int    algorithm,
+                        int    zscale_contrast,
+                        int    zscale_samples,
+                        int    zscale_samples_per_line,
+                        short  rgbPreserveHue,
+                        double asinhStretch,
                         double bias,
                         double contrast) {
 
@@ -140,80 +95,23 @@ public class RangeValues implements Cloneable, Serializable {
         _lowerValue= lowerValue;
         _upperWhich= upperWhich;
         _upperValue= upperValue;
-        _algorithm = algorithm;
+        _algorithm = (rgbPreserveHue > 0) ? STRETCH_ASINH : algorithm;
         _asinhQValue = asinhQValue;
         _gammaValue=gammaValue;
         _zscale_contrast = zscale_contrast;
         _zscale_samples = zscale_samples;
         _zscale_samples_per_line = zscale_samples_per_line;
+        _rgbPreserveHue = rgbPreserveHue;
+        _asinhStretch = asinhStretch;
         _bias = bias;
         _contrast = contrast;
     }
-   
-    /**
-     *
-     * @param stretchType the stretch type, possible values:  "Percent", "Absolute", "Sigma"
-     * @param lowerValue the lower value based on the stretch type
-     * @param upperValue the upper value based on the stretch type
-     * @param algorithm The Stretch algorithm, possible values "Linear", "Log", "LogLog", "Equal", "Squared", "Sqrt"
-     *
-     * @return
-     */
-    public static RangeValues create(String stretchType,
-                                     double lowerValue,
-                                     double upperValue,
-                                     String algorithm) {
-        int s= PERCENTAGE;
-        if (!isEmpty(stretchType)) {
-            if (stretchType.equalsIgnoreCase(PERCENTAGE_STR)) s=PERCENTAGE;
-            else if (stretchType.equalsIgnoreCase(ABSOLUTE_STR)) s=ABSOLUTE;
-            else if (stretchType.equalsIgnoreCase(SIGMA_STR)) s=SIGMA;
-        }
-        int a= STRETCH_LINEAR;
-        if (!isEmpty(algorithm)) {
-            if (algorithm.equalsIgnoreCase(LINEAR_STR)) a= STRETCH_LINEAR;
-            else if (algorithm.equalsIgnoreCase(LOG_STR)) a=STRETCH_LOG;
-            else if (algorithm.equalsIgnoreCase(LOGLOG_STR)) a= STRETCH_LOGLOG;
-            else if (algorithm.equalsIgnoreCase(EQUAL_STR)) a= STRETCH_EQUAL;
-            else if (algorithm.equalsIgnoreCase(SQUARED_STR)) a= STRETCH_SQUARED;
-            else if (algorithm.equalsIgnoreCase(SQRT_STR)) a= STRETCH_SQRT;
-            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ASINH;
-            else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
 
-        }
-        return new RangeValues(s,lowerValue,s,upperValue,a);
-    }
-
-    //LZ 6/11/15 added this method
-    public static RangeValues create(String stretchType,
-                                     double lowerValue,
-                                     double upperValue, double asinhQValue, double gammaValue,
-                                     String algorithm) {
-        int s= PERCENTAGE;
-        if (!isEmpty(stretchType)) {
-            if (stretchType.equalsIgnoreCase(PERCENTAGE_STR)) s=PERCENTAGE;
-            else if (stretchType.equalsIgnoreCase(ABSOLUTE_STR)) s=ABSOLUTE;
-            else if (stretchType.equalsIgnoreCase(SIGMA_STR)) s=SIGMA;
-        }
-        int a= STRETCH_LINEAR;
-        if (!isEmpty(algorithm)) {
-            if (algorithm.equalsIgnoreCase(LINEAR_STR)) a= STRETCH_LINEAR;
-            else if (algorithm.equalsIgnoreCase(LOG_STR)) a=STRETCH_LOG;
-            else if (algorithm.equalsIgnoreCase(LOGLOG_STR)) a= STRETCH_LOGLOG;
-            else if (algorithm.equalsIgnoreCase(EQUAL_STR)) a= STRETCH_EQUAL;
-            else if (algorithm.equalsIgnoreCase(SQUARED_STR)) a= STRETCH_SQUARED;
-            else if (algorithm.equalsIgnoreCase(SQRT_STR)) a= STRETCH_SQRT;
-            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ASINH;
-            else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
-
-        }
-        return new RangeValues(s,lowerValue,s,upperValue,asinhQValue, gammaValue, a);
-    }
-
-   //LZ 05/21/15 add the following two lines
     public double getAsinhQValue() { return _asinhQValue; }
     public void setAsinhQValue(double val) { _asinhQValue = val; }
     public double getGammaValue() { return _gammaValue; }
+    public double getAsinhStretch() { return _asinhStretch; }
+    public void setAsinhStretch(double val) { _asinhStretch = val; }
 
     public int    getLowerWhich() { return _lowerWhich; }
     public double getLowerValue() { return _lowerValue; }
@@ -226,6 +124,8 @@ public class RangeValues implements Cloneable, Serializable {
     public int getZscaleSamplesPerLine() { return _zscale_samples_per_line; }
 
     public int getStretchAlgorithm() { return _algorithm; }
+
+    public boolean rgbPreserveHue() { return _rgbPreserveHue != 0; }
 
     public byte computeBiasAndContrast(byte data) {
         short value = data>=0?data:(short)(2*(Byte.MAX_VALUE+1)+data);
@@ -242,24 +142,10 @@ public class RangeValues implements Cloneable, Serializable {
     public Object clone() {
         return new RangeValues( _lowerWhich, _lowerValue, _upperWhich,
 		_upperValue, _asinhQValue, _gammaValue, _algorithm,
-		_zscale_contrast, _zscale_samples, _zscale_samples_per_line, _bias, _contrast );
+		_zscale_contrast, _zscale_samples, _zscale_samples_per_line, _rgbPreserveHue, _asinhStretch, _bias, _contrast );
     }
 
     public String toString() { return serialize(); }
-
-
-    public static RangeValues makeDefaultSigma() {
-        return new RangeValues(SIGMA,-2F,SIGMA,10F,STRETCH_LINEAR);
-    }
-    public static RangeValues makeDefaultPercent() {
-        return new RangeValues(PERCENTAGE,-2F,PERCENTAGE,10F,STRETCH_LINEAR);
-    }
-
-
-    public static RangeValues makeDefaultZScale() {
-        return new RangeValues(ZSCALE,1F,ZSCALE,1F,STRETCH_LINEAR,25, 600, 120);
-    }
-
 
     public static RangeValues parse(String sIn) {
         if (isEmpty(sIn)) return null;
@@ -276,18 +162,22 @@ public class RangeValues implements Cloneable, Serializable {
             int    algorithm=               Integer.parseInt(s[i++]);
             int    zscale_contrast=         Integer.parseInt(s[i++]);
             int    zscale_samples=          Integer.parseInt(s[i++]);
-            int    zscale_samples_per_line= Integer.parseInt(s[i]);
+            int    zscale_samples_per_line= Integer.parseInt(s[i++]);
+            short  rgbPreserveHue=          s.length > 10 ? Short.parseShort(s[i++]) : RGB_PRESERVE_HUE_DEFAULT;
+            double asinhStretch=            s.length > 10 ? parseDouble(s[i]) : ASINH_STRETCH;
 
             return new RangeValues(lowerWhich,
-                                   lowerValue,
-                                   upperWhich,
-                                   upperValue,
-                                   asinhQValue,
-                                   gammaValue,
-                                   algorithm,
-                                   zscale_contrast,
-                                   zscale_samples,
-                                   zscale_samples_per_line);
+                    lowerValue,
+                    upperWhich,
+                    upperValue,
+                    asinhQValue,
+                    gammaValue,
+                    algorithm,
+                    zscale_contrast,
+                    zscale_samples,
+                    zscale_samples_per_line,
+                    rgbPreserveHue,
+                    asinhStretch);
 
         } catch (Exception e) {
             return null;
@@ -299,15 +189,17 @@ public class RangeValues implements Cloneable, Serializable {
     public String serialize() {
 
         return getLowerWhich()+","+
-               getLowerValue()+","+
-               getUpperWhich()+","+
-               getUpperValue()+","+
-               getAsinhQValue()+","+
-               getGammaValue()+","+
-               getStretchAlgorithm()+","+
-               getZscaleContrast()+","+
-               getZscaleSamples()+","+
-               getZscaleSamplesPerLine();
+                getLowerValue()+","+
+                getUpperWhich()+","+
+                getUpperValue()+","+
+                getAsinhQValue()+","+
+                getGammaValue()+","+
+                getStretchAlgorithm()+","+
+                getZscaleContrast()+","+
+                getZscaleSamples()+","+
+                getZscaleSamplesPerLine()+","+
+                _rgbPreserveHue+","+
+                getAsinhStretch();
     }
 
     private static boolean isEmpty(String s) {

@@ -7,7 +7,7 @@
  */
 
 package edu.caltech.ipac.firefly.server.visualize.fitseval;
-/**
+/*
  * User: roby
  * Date: 7/5/18
  * Time: 9:20 AM
@@ -16,7 +16,6 @@ package edu.caltech.ipac.firefly.server.visualize.fitseval;
 
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import nom.tam.fits.Header;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -29,7 +28,6 @@ public class FitsDataEval implements Serializable {
 
     private final FitsRead frAry[];
     private final List<RelatedData> relatedDataAry[];
-    private final List<Header> headerList= new ArrayList<>();
 
 
     FitsDataEval(FitsRead frAry[]) {

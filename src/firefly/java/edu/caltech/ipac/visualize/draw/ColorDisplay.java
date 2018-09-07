@@ -6,25 +6,19 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.Assert;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 
 public class ColorDisplay extends JComponent implements Icon {
 
-    private IndexColorModel _model       = null;
+    private ColorModel _model       = null;
     private Color           _colorBand   = null;
 
     public ColorDisplay() { };
 
-    public void setColor(IndexColorModel model) {
+    public void setColor(ColorModel model) {
        _model= model;
        _colorBand= null;
        repaint();
@@ -71,8 +65,8 @@ public class ColorDisplay extends JComponent implements Icon {
           int        idx;
           Graphics2D g2     = (Graphics2D)g;
           Insets     insets = getInsets();
-           int        clength= _colorBand==null ?  _model.getMapSize() - 1 :
-                                                   255;
+           int        clength= _colorBand==null  && (_model instanceof IndexColorModel)?
+                                  ((IndexColorModel)_model).getMapSize() - 1 : 255;
           Dimension  dim    = getSize();
           int        width  = getIconWidth()  - (insets.left + insets.right);
           int        height = getIconHeight() - (insets.top + insets.bottom);

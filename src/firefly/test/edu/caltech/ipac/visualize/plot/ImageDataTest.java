@@ -4,7 +4,8 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
-import nom.tam.fits.*;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,6 +14,7 @@ import org.junit.Test;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.io.File;
@@ -139,7 +141,7 @@ public class ImageDataTest {
      */
     @Test
     public void testGetColorModel(){
-        IndexColorModel indexColorModel = imageData.getColorModel();
+        ColorModel indexColorModel = imageData.getColorModel();
         Assert.assertNotNull(indexColorModel );
         Assert.assertEquals(ColorTable.getColorModel(0), indexColorModel);
     }
@@ -151,7 +153,7 @@ public class ImageDataTest {
     public void testRecomputeStretch(){
         //Recalculate stretch
         imageData.getImage(frArray);
-        imageData.recomputeStretch(frArray, 0, rangeValues, true);
+        imageData.recomputeStretch(0, rangeValues);
         BufferedImage  stretchImage  =imageData.getImage(frArray);
         Assert.assertNotEquals(expectedImage, stretchImage);
     }
@@ -175,7 +177,7 @@ public class ImageDataTest {
 
 
         //Test the ImageData withmask
-        ImageData  imageDataWithMask = new ImageData(IMAGE_TYPE,imageMasks, rangeValues, 0,0, 100, 100);
+        ImageData  imageDataWithMask = new ImageData(imageMasks, rangeValues, 0,0, 100, 100);
         BufferedImage calculatedImageWithMask  = imageDataWithMask.getImage(frArray);
         compareImage(expectedImageWithMask,calculatedImageWithMask);
 
@@ -237,7 +239,7 @@ public class ImageDataTest {
 
 
         //test ImageData with mask
-        imageData = new ImageData(IMAGE_TYPE,imageMasks,rangeValues, 0,0, 100, 100);
+        imageData = new ImageData(imageMasks,rangeValues, 0,0, 100, 100);
         bufferedImage = imageData.getImage(frArray);
         outputfile = new File(FileLoader.getDataPath(ImageDataTest.class)+"imageDataWithMaskTest.png");
         ImageIO.write(bufferedImage, "png", outputfile);

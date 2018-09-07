@@ -3,10 +3,17 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.ImageStretch;
+import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
 
+import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
@@ -14,7 +21,6 @@ import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 9/11/15
@@ -26,26 +32,38 @@ public class ImageData implements Serializable {
 
 
     public enum ImageType {TYPE_8_BIT, TYPE_24_BIT}
-    private       ImageType       _imageType;
-    private RangeValues rangeValues;
-    private IndexColorModel _cm;
-    private int             _colorTableID= 0;   // this is not as flexible as color model and will be set to -1 when color model is set
-    private BufferedImage   _bufferedImage;
-    private boolean         _imageOutOfDate= true;
+    private ColorModel cm;
+    private int colorTableID = 0;   // this is not as flexible as color model and will be set to -1 when color model is set
+    private BufferedImage bufferedImage;
+    private boolean imageOutOfDate = true;
     private ImageMask[] imageMasks=null;
-    private final int       _x;
-    private final int       _y;
-    private final int       _width;
-    private final int       _height;
-    private final int       _lastPixel;
-    private final int       _lastLine;
-    private int _idx; //IRSA-572, save the band index so only this band is going to be stretched
 
-    private AtomicInteger inUseCnt= new AtomicInteger(0);
+    private final ImageType imageType;
+    private final RangeValues rangeValuesAry[];
+    private final int x;
+    private final int y;
+    private final int width;
+    private final int height;
+    private final int lastPixel;
+    private final int lastLine;
 
-    private WritableRaster  _raster; // currently only used with 24 bit images
+    private WritableRaster raster;
 
-   
+    // used for hue-preserving RGB only
+    private RGBIntensity rgbIntensity; // stats for intensity
+
+
+    private ImageData( ImageType imageType, int x, int y, int width, int height, RangeValues rangeValues) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.lastPixel = this.x + this.width -1;
+        this.lastLine = this.y + this.height -1;
+        this.rangeValuesAry= new RangeValues[] {rangeValues, rangeValues, rangeValues};
+        this.imageType = imageType;
+    }
+
 
     public ImageData(ImageType imageType,
                      int colorTableID,
@@ -54,144 +72,81 @@ public class ImageData implements Serializable {
                      int y,
                      int width,
                      int height) {
+        this(imageType,x,y,width,height,rangeValues);
+        this.colorTableID = colorTableID;
+        cm = imageType==ImageType.TYPE_24_BIT ?
+                new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), false, false,
+                                                             Transparency.OPAQUE, DataBuffer.TYPE_BYTE) :
+                ColorTable.getColorModel(colorTableID);
 
-        _x= x;
-        _y= y;
-        _width= width;
-        _height= height;
-        _lastPixel= _x+_width-1;
-        _lastLine= _y+_height-1;
-
-        _imageType= imageType;
-        _colorTableID= colorTableID;
-        this.rangeValues= rangeValues;
-
-        _cm = ColorTable.getColorModel(colorTableID);
-        if (imageType==ImageType.TYPE_24_BIT) {
-            _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
-        }
+        raster = imageType==ImageType.TYPE_24_BIT ?
+                Raster.createBandedRaster( DataBuffer.TYPE_BYTE, this.width, this.height,3, null) :
+                Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, this.width, this.height, 1, null);
     }
 
     //LZ 7/20/15 add this to make an ImageData with given IndexColorModel
-    public ImageData(ImageType imageType,
-                     ImageMask[] iMasks,
+    public ImageData(ImageMask[] iMasks,
                      RangeValues rangeValues,
                      int x,
                      int y,
                      int width,
                      int height) {
 
-        _x= x;
-        _y= y;
-        _width= width;
-        _height= height;
-        _lastPixel= _x+_width-1;
-        _lastLine= _y+_height-1;
-
-        _imageType= imageType;
-
-        this.rangeValues= rangeValues;
-
+        this(ImageType.TYPE_8_BIT,x,y,width,height,rangeValues);
         imageMasks=iMasks;
-       _cm=  getIndexColorModel(iMasks);// getIndexColorModelWithAlpha(iMasks); // getIndexColorModel(iMasks); //getIndexColorModel(iMasks); //getColorModelTest(iMasks);//
+        cm =  getIndexColorModelForMask(iMasks);
+        raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, null);
+    }
 
-
-        if (imageType==ImageType.TYPE_24_BIT) {
-            _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
-        }
-
+    public void setRGBIntensity(RGBIntensity rgbIntensity) {
+        this.rgbIntensity = rgbIntensity;
     }
 
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
-        if (_imageOutOfDate) constructImage(fitsReadAry);
-        return _bufferedImage;
+        if (imageOutOfDate) constructImage(fitsReadAry);
+        return bufferedImage;
     }
 
 
     public void freeResources() {
-        _imageType= null;
-        _cm= null;
-        _bufferedImage= null;
-        _raster= null;
-        _imageOutOfDate= true;
+        cm = null;
+        bufferedImage = null;
+        raster = null;
+        imageOutOfDate = true;
+        rgbIntensity = null;
     }
 
-    public int getX() { return _x;}
-    public int getY() { return _y;}
+    public int getX() { return x;}
+    public int getY() { return y;}
 
-    public int getWidth() { return _width;}
-    public int getHeight() { return _height;}
+    public int getWidth() { return width;}
+    public int getHeight() { return height;}
 
-    private byte[] getDataArray(int idx) {
-        DataBufferByte db;
-        if (_raster==null) { // means an 8 bit image
-            db= (DataBufferByte) _bufferedImage.getRaster().getDataBuffer();
-        }
-        else { // 24 bit image
-            db= (DataBufferByte) _raster.getDataBuffer();
-        }
-        return db.getData(idx);
+    void setColorModel(IndexColorModel color_model) {
+        colorTableID = -1;
+        cm =color_model;
+        imageOutOfDate =true;
     }
 
-
-    public void setColorModel(IndexColorModel color_model) {
-        _colorTableID= -1;
-        _cm=color_model;
-        _imageOutOfDate=true;
-    }
-
-    public int getColorTableId() { return _colorTableID; }
+    public int getColorTableId() { return colorTableID; }
 
 
     /**
      * don't compute the color model.  Should only be call from ImageDataGroup
      * @param colorTableID the id
      */
-    void setColorTableIdOnly(int colorTableID) {
-        _colorTableID= colorTableID;
-    }
+    void setColorTableIdOnly(int colorTableID) { this.colorTableID = colorTableID; }
 
 
-    public IndexColorModel getColorModel() { return _cm; }
+    ColorModel getColorModel() { return cm; }
 
-    public void markImageOutOfDate() {
-        _imageOutOfDate= true;
-    }
+    void markImageOutOfDate() { imageOutOfDate = true; }
 
-    public boolean isImageOutOfDate() { return _imageOutOfDate; }
+    boolean isImageOutOfDate() { return imageOutOfDate; }
 
-    public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues updatedRangeValues, boolean force) {
-
-
-        inUseCnt.incrementAndGet();
-        boolean mapBlankPixelToZero= (_imageType == ImageType.TYPE_24_BIT);
-
-        //IRSA-219, IRSA-571
-        // update the range values when the new rangeValues is passed. For 8 bit image, the stretch is done without
-        //recreating the image, for 24 bit images, it needs the new rangeValues to computer the stretch and then to
-        //build the image.
-
-        // if this is an 8 bit image I can recompute the stretch without rebuilding the image
-        // if it is 24 bit, I will have to restretch and rebuild so don't both restretching now,
-        // just mark the image as out of date
-
-
-        if (_raster!=null || _imageOutOfDate) {  // raster!=null means a 24 bit image (3 color)
-            _imageOutOfDate= true;
-            //these two parameters are for color stretch
-            rangeValues = updatedRangeValues;
-            _idx = idx;
-
-            if (force) {
-                fitsReadAry[idx].doStretch(rangeValues, getDataArray(idx),
-                             mapBlankPixelToZero, _x, _lastPixel, _y, _lastLine);
-            }
-        }
-        else {
-            fitsReadAry[idx].doStretch(updatedRangeValues, getDataArray(idx),
-                                       mapBlankPixelToZero, _x, _lastPixel, _y, _lastLine);
-        }
-        inUseCnt.decrementAndGet();
+    void recomputeStretch(int idx, RangeValues updatedRangeValues) {
+        imageOutOfDate = true;
+        rangeValuesAry[idx] = updatedRangeValues;
     }
 
 
@@ -208,12 +163,11 @@ public class ImageData implements Serializable {
      *       3             white color
      *
      *
-     * @param lsstMasks
-     * @return
+     * @param lsstMasks the mask settings
+     * @return the new color model
      */
 
-    private static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
-
+    private static IndexColorModel getIndexColorModelForMask(ImageMask[] lsstMasks){
 
         byte[] cmap=new byte[4*(lsstMasks.length+1) ];
 
@@ -231,57 +185,51 @@ public class ImageData implements Serializable {
         cmap[4*lsstMasks.length+2]= (byte) 255;
         cmap[4*lsstMasks.length+3]= (byte) 0; //alpha=0, transparent
 
-        return  new IndexColorModel(8, lsstMasks.length+1, cmap, 0, true);
+        return new IndexColorModel(8, lsstMasks.length+1, cmap, 0, true);
     }
 
-
-
-
-
     private void constructImage(FitsRead fitsReadAry[])  {
-
-
-        if (_imageType==ImageType.TYPE_8_BIT) {
-            _raster = null;
+        DataBufferByte db= (DataBufferByte) raster.getDataBuffer();
+        if (imageType ==ImageType.TYPE_8_BIT) {
             if (imageMasks!=null && imageMasks.length!=0){
-
-               _bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_BYTE_INDEXED, _cm);
-               fitsReadAry[0].doStretchMask( getDataArray(0),  _x, _lastPixel, _y, _lastLine, imageMasks);
-
+                bufferedImage = new BufferedImage(cm, raster, false, null);
+                fitsReadAry[0].doStretchMask( db.getData(0), x, lastPixel, y, lastLine, imageMasks);
             }
             else {
-
-
-                _bufferedImage = new BufferedImage(_width, _height,
-                BufferedImage.TYPE_BYTE_INDEXED, _cm);
-                fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine);
-
+                bufferedImage = new BufferedImage(cm, raster, false, null);
+                ImageHeader imHead= new ImageHeader(fitsReadAry[0].getHeader());
+                ImageStretch.stretchPixels8Bit(rangeValuesAry[Band.NO_BAND.getIdx()],
+                                               fitsReadAry[0].getRawFloatAry(), db.getData(0),
+                                               imHead,  fitsReadAry[0].getHistogram(),
+                                               x, lastPixel, y, lastLine );
 
             }
         }
-
-        else if (_imageType==ImageType.TYPE_24_BIT) {
-            _bufferedImage= new BufferedImage(_width,_height,BufferedImage.TYPE_INT_RGB);
-
-            for(int i=0; (i<fitsReadAry.length); i++) {
-                if (i!=_idx) continue;
-                byte array[]= getDataArray(i);
-                if(fitsReadAry[i]!=null) {
-                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine);
+        else if (imageType ==ImageType.TYPE_24_BIT) {
+            float[][] float1dAry= new float[3][];
+            byte[][] pixelDataAry= new byte[3][];
+            ImageHeader imHeadAry[]= new ImageHeader[3];
+            Histogram[] histAry= new Histogram[3];
+            for(int i=0;i<3; i++) {
+                if (fitsReadAry[i] == null) {
+                    float1dAry[i]=null;
+                    imHeadAry[i]=null;
+                    histAry[i]=null;
+                } else {
+                    float1dAry[i] = fitsReadAry[i].getRawFloatAry();
+                    imHeadAry[i]= new ImageHeader(fitsReadAry[i].getHeader());
+                    histAry[i]= fitsReadAry[i].getHistogram();
                 }
-                else {
-                    for(int j=0; j<array.length; j++) array[j]= 0;
-                }
+                pixelDataAry[i]= db.getData(i);
+
             }
-            _bufferedImage.setData(_raster);
-
-
+            ImageStretch.stretchPixels3Color(rangeValuesAry, float1dAry, pixelDataAry, imHeadAry, histAry,
+                    rgbIntensity, x, lastPixel, y, lastLine );
+            bufferedImage = new BufferedImage(cm, raster, false, null);
         }
         else {
             Assert.tst(false, "image type must be TYPE_8_BIT or TYPE_24_BIT");
         }
-        _imageOutOfDate=false;
-        inUseCnt.decrementAndGet();
-
+        imageOutOfDate =false;
     }
 }

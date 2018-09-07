@@ -21,7 +21,7 @@ import {
     STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL,
     STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 
-import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldGroupResults, validateFieldGroup} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
 import {makeSerializedRv} from './ColorDialog.jsx';
@@ -100,10 +100,12 @@ export class ColorBandPanel extends PureComponent {
     mouseMove(ev) {
         const {offsetX:x}= ev;
         const {dataHistogram,dataBinMeanArray}= this.state;
-        const idx= Math.trunc((x *(dataHistogram.length/HIST_WIDTH)));
-        const histValue= dataHistogram[idx];
-        const histMean= dataBinMeanArray[idx];
-        this.setState({histIdx:idx,histValue,histMean,exit:false});
+        if (dataHistogram && dataBinMeanArray) {
+            const idx = Math.trunc((x * (dataHistogram.length / HIST_WIDTH)));
+            const histValue = dataHistogram[idx];
+            const histMean = dataBinMeanArray[idx];
+            this.setState({histIdx: idx, histValue, histMean, exit: false});
+        }
 
     }
     mouseLeave() { this.setState({exit:true}); }
@@ -127,7 +129,10 @@ export class ColorBandPanel extends PureComponent {
             const {algorithm, zscale}=fields;
             const a= Number.parseInt(algorithm.value);
             if (a===STRETCH_ASINH) {
-                panel= renderAsinH(fields, this.bandReplot);
+                const renderRange = (isZscale) => {
+                    return isZscale ? renderZscale() : getUpperAndLowerFields();
+                };
+                panel= renderAsinH(fields, renderRange, this.bandReplot);
             }
             else if (a===STRETCH_POWERLAW_GAMMA) {
                 panel= renderGamma(fields);
@@ -166,12 +171,7 @@ export class ColorBandPanel extends PureComponent {
                         <div>
                             {suggestedValuesPanel( plot,band )}
                         </div>
-                        <div style={{display:'table', margin:'auto auto', paddingBottom:5}}>
-                            <CheckboxGroupInputField
-                                options={ [ {label: 'Use ZScale for bounds', value: 'zscale'} ] }
-                                fieldKey='zscale'
-                                labelWidth={0} />
-                        </div>
+                        {getZscaleCheckbox()}
                         <img style={cbarImStyle} src={cbarUrl} key={cbarUrl}/>
                     </div>
                     {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
@@ -255,9 +255,9 @@ ReadoutPanel.propTypes= {
 
 
 
-function getTypeMinField() {
+export function getTypeMinField(lowerWhich='lowerWhich') {
     return (
-        <ListBoxInputField fieldKey={'lowerWhich'} inline={true} labelWidth={0}
+        <ListBoxInputField fieldKey={lowerWhich} inline={true} labelWidth={0}
                            options={ [ {label: '%', value: PERCENTAGE},
                                        {label: 'Data', value: ABSOLUTE},
                                        {label: 'Sigma', value: SIGMA}
@@ -276,6 +276,17 @@ function getTypeMaxField() {
                                                   ]}
                            multiple={false}
         />
+    );
+}
+
+export function getZscaleCheckbox() {
+    return (
+        <div style={{display:'table', margin:'auto auto', paddingBottom:5}}>
+            <CheckboxGroupInputField
+                options={ [ {label: 'Use ZScale for bounds', value: 'zscale'} ] }
+                fieldKey='zscale'
+                labelWidth={0} />
+        </div>
     );
 }
 
@@ -349,10 +360,10 @@ const asinhSliderMarks = {
 
 const ASINH_Q_MAX_SLIDE_VAL = 20;
 
-function renderAsinH(fields, bandReplot) {
+export function renderAsinH(fields, renderRange, replot) {
     const {zscale}= fields;
-    const range= (zscale.value==='zscale') ? renderZscale() : getUpperAndLowerFields();
-    const qvalue = get(fields, ['asinhQ', 'value'], 10.0);
+    const range= renderRange(zscale.value==='zscale');
+    const qvalue = get(fields, ['asinhQ', 'value'], Number.NaN);
     const label = `Q: ${Number.parseFloat(qvalue).toFixed(1)} `;
 
     return (
@@ -373,7 +384,7 @@ function renderAsinH(fields, bandReplot) {
                          labelWidth={60}
                          wrapperStyle={{marginTop: 10, marginBottom: 20, marginRight: 15}}
                          decimalDig={1}
-                         onValueChange={bandReplot}
+                         onValueChange={replot}
             />
         </div>
     );
@@ -383,10 +394,14 @@ function renderAsinH(fields, bandReplot) {
 function getReplotFunc(groupKey, band) {
 
     return (val) => {
-        const request = getFieldGroupResults(groupKey);
-        const serRv = makeSerializedRv(request);
-        const stretchData = [{band: band.key, rv: serRv, bandVisible: true}];
-        const pv = getActivePlotView(visRoot());
-        if (pv) dispatchStretchChange({plotId: pv.plotId, stretchData});
+        validateFieldGroup(groupKey).then((valid) => {
+            if (valid) {
+                const request = getFieldGroupResults(groupKey);
+                const serRv = makeSerializedRv(request);
+                const stretchData = [{band: band.key, rv: serRv, bandVisible: true}];
+                const pv = getActivePlotView(visRoot());
+                if (pv) dispatchStretchChange({plotId: pv.plotId, stretchData});
+            }
+        });
     };
 }

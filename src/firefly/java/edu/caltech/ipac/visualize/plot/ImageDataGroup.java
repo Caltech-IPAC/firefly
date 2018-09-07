@@ -5,11 +5,13 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.RGBIntensity;
 
+import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
 import java.util.Iterator;
-/**
+/*
  * User: roby
  * Date: Aug 21, 2008
  * Time: 1:22:48 PM
@@ -24,7 +26,10 @@ public class ImageDataGroup implements Iterable<ImageData> {
     private       ImageData  _imageDataAry[];
     private final int _width;
     private final int _height;
-    
+
+    private RGBIntensity _rgbIntensity; // for 3-color hew-preserving images only
+
+
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -54,7 +59,8 @@ public class ImageDataGroup implements Iterable<ImageData> {
         int yPanels= totHeight / tileSize;
         if (totWidth % tileSize > 0) xPanels++;
         if (totHeight % tileSize > 0) yPanels++;
-
+        
+        _rgbIntensity = null;
 
         _imageDataAry= new ImageData[xPanels * yPanels];
 
@@ -70,17 +76,11 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-
-
     /**
      * LZ 07/20/15
      * @return
      */
-    public ImageDataGroup(FitsRead fitsReadAry[],
-                          ImageData.ImageType imageType,
-                          ImageMask[] iMasks,
-                          RangeValues rangeValues,
-                          int tileSize) {
+    public ImageDataGroup(FitsRead fitsReadAry[], ImageMask[] iMasks, RangeValues rangeValues, int tileSize) {
         FitsRead fr= null;
         for(FitsRead testFr : fitsReadAry) {
             if (testFr!=null) {
@@ -110,7 +110,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
             for(int j= 0; j<yPanels; j++) {
                 int width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
                 int height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                _imageDataAry[(i*yPanels) +j]= new ImageData(imageType,
+                _imageDataAry[(i*yPanels) +j]= new ImageData(
                         iMasks,rangeValues,
                         tileSize*i,tileSize*j,
                         width, height);
@@ -148,7 +148,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-    public IndexColorModel getColorModel() {
+    public ColorModel getColorModel() {
         return _imageDataAry[0].getColorModel();
     }
 
@@ -164,18 +164,21 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-
-//    public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues rangeValues) {
-//        recomputeStretch(fitsReadAry,idx,rangeValues,false);
-//    }
-
-    public void recomputeStretch(FitsRead fitsReadAry[],
-                                 int idx,
-                                 RangeValues rangeValues,
-                                 boolean force) {
+    public void recomputeStretch(FitsRead[] fitsReadAry, int idx, RangeValues rangeValues) {
+        boolean setRGBIntensity = false;
+        if (rangeValues.rgbPreserveHue()) {
+            if (_rgbIntensity == null) {
+                _rgbIntensity = new RGBIntensity();
+            }
+            _rgbIntensity.addRangeValues(fitsReadAry, idx, rangeValues);
+            setRGBIntensity = !Arrays.asList(fitsReadAry).contains(null);
+        }
 
         for(ImageData id : _imageDataAry) {
-            id.recomputeStretch(fitsReadAry,idx,rangeValues, force);
+            if (setRGBIntensity) {
+                id.setRGBIntensity(_rgbIntensity);
+            }
+            id.recomputeStretch(idx,rangeValues);
         }
     }
 
@@ -186,18 +189,11 @@ public class ImageDataGroup implements Iterable<ImageData> {
             }
             _imageDataAry= null;
         }
+        _rgbIntensity = null;
     }
 
-//=======================================================================
-//-------------- Method from LabelSource Interface ----------------------
-//=======================================================================
 
-//======================================================================
-//------------------ Private / Protected Methods -----------------------
-//======================================================================
 
-// =====================================================================
-// -------------------- Factory Methods --------------------------------
-// =====================================================================
+
 
 }

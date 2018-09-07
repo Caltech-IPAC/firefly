@@ -44,7 +44,6 @@ import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CropFile;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.HistogramOps;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -55,6 +54,7 @@ import edu.caltech.ipac.visualize.plot.PixelValueException;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -66,7 +66,7 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.IndexColorModel;
+import java.awt.image.ColorModel;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -385,14 +385,8 @@ public class VisServerOps {
         }
     }
 
-
-    public static WebPlotResult recomputeStretch(PlotState state, StretchData[] stretchData) {
-        return recomputeStretch(state, stretchData, true);
-    }
-
     public static WebPlotResult recomputeStretch(PlotState state,
-                                                 StretchData[] stretchData,
-                                                 boolean recreateImages) {
+                                                 StretchData[] stretchData) {
         try {
             ActiveCallCtx ctx = CtxControl.prepare(state);
             PlotServUtils.statsLog("stretch");
@@ -404,6 +398,8 @@ public class VisServerOps {
                 state.setRangeValues(stretchData[0].getRangeValues(), Band.NO_BAND);
                 retval.putResult(WebPlotResult.PLOT_STATE, state);
                 images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
+                // update range values in state, in case there are computed values (ex. default asinh_q)
+                state.setRangeValues(stretchData[0].getRangeValues(), Band.NO_BAND);
                 retval.putResult(WebPlotResult.PLOT_IMAGES, images);
             } else if (plot.isThreeColor()) {
                 for (StretchData sd : stretchData) {
@@ -415,10 +411,14 @@ public class VisServerOps {
                         state.setBandVisible(sd.getBand(), sd.isBandVisible());
                     }
                 }
-                if (recreateImages) {
-                    images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
-                    retval.putResult(WebPlotResult.PLOT_IMAGES, images);
+                images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
+                // update range values in state, in case there are computed values (ex. default asinh_q)
+                for (StretchData sd : stretchData) {
+                    if (sd.isBandVisible()) {
+                        state.setRangeValues(sd.getRangeValues(), sd.getBand());
+                    }
                 }
+                retval.putResult(WebPlotResult.PLOT_IMAGES, images);
                 retval.putResult(WebPlotResult.PLOT_STATE, state);
 
             } else {
@@ -914,7 +914,7 @@ public class VisServerOps {
 
 
             boolean three = plot.isThreeColor();
-            IndexColorModel newColorModel = plot.getImageData().getColorModel();
+            ColorModel newColorModel = plot.getImageData().getColorModel();
 
 
             HistogramDisplay dataHD = new HistogramDisplay();
