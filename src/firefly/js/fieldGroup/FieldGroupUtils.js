@@ -173,19 +173,24 @@ const bindToStore= function(groupKey, stateUpdaterFunc) {
 
 
 /**
+ * Revalidate fields. If no change happened in a field state, its reference does not change
  * @param fields
  */
 export function revalidateFields(fields) {
-    const newfields= clone(fields);
+    const newfields= {};   //clone(fields);
+    let hasChanged = false;
     Object.keys(fields).forEach( (key) => {
         const f= fields[key];
         if (f.validator && !isFunction(f.value) && f.value && !f.value.then) {
             // const {valid,message} = f.validator(f.value);
-            newfields[key]= smartMerge(f,f.validator(f.value));
             // newfields[key]= (valid!==f.valid || message!==f.message) ? clone(f,{valid,message}) : f;
+            newfields[key]= smartMerge(f,f.validator(f.value));
+            if (newfields[key] !== f) {hasChanged = true; }
+        } else {
+            newfields[key] = f;
         }
     } );
-    return newfields;
+    return hasChanged ? newfields : fields;
 }
 
 

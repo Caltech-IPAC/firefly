@@ -386,8 +386,7 @@ const updateFieldGroupMount= function(state,action) {
 const fireFieldsReducer= function(fg, action) {
     // return  fg.reducerFunc ? fg.reducerFunc(revalidateFields(fg.fields), action) : fg.fields;
     if (fg.reducerFunc ) {
-        const newFields= fg.reducerFunc(revalidateFields(fg.fields), action);
-        return smartMerge(fg.fields,newFields);
+        return fg.reducerFunc(revalidateFields(fg.fields), action);
     }
     else {
         return fg.fields;
