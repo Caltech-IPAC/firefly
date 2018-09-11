@@ -11,9 +11,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsProperty;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
 
 /**
  * @author Trey Roby
@@ -29,13 +28,13 @@ public class Ext {
 
     @JsType
     public interface Extension {
-        @JsProperty String id();
-        @JsProperty String plotId();
-        @JsProperty String imageUrl();
-        @JsProperty String title();
-        @JsProperty String toolTip();
-        @JsProperty String extType();
-        @JsProperty Object callback();
+        String id();
+        String plotId();
+        String imageUrl();
+        String title();
+        String toolTip();
+        String extType();
+        Object callback();
     }
 
     @JsType
@@ -57,7 +56,7 @@ public class Ext {
 
 
 
-    @JsExport
+
     @JsType
     public interface StoreEvent {
         public void storeChange();

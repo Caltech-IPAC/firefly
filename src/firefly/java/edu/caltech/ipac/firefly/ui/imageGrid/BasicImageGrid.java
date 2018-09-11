@@ -232,7 +232,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
             MiniPlotWidget mpw = (MiniPlotWidget) ev.getData();
             for (int i = 0; i < nextMpw; i++) {
                 if (mpwList.get(i).equals(mpw)) {
-                    eventManager.fireEvent(new WebEvent(this, ON_SELECTED_PLOT_CHANGE));
+                    eventManager.fireEvent(WebEvent.createWebEvent(this, ON_SELECTED_PLOT_CHANGE));
                 }
             }
         } else if (ev.getName().equals(Name.CHECKED_PLOT_CHANGE)) {
@@ -1474,7 +1474,7 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
                 restoreScrollPositions();
                 _mpw.getGroup().setLockRelated(getLockRelated());
                 setupCatalog();
-                eventManager.fireEvent(new WebEvent(this, ON_ALL_PLOTS_DONE));
+                eventManager.fireEvent(WebEvent.createWebEvent(this, ON_ALL_PLOTS_DONE));
                 // the following line causes first plot to be selected, which is not always right
                 // for example, when a row (a plot) is selected from coverage, we want to preserve the selection
                 // AllPlots.getInstance().setSelectedWidget(AllPlots.getInstance().getActiveList().get(0));

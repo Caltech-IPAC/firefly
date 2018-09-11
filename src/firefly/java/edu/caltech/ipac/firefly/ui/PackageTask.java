@@ -94,7 +94,7 @@ public class PackageTask extends ServerTask<BackgroundStatus> {
 
     @Override
     public void doTask(AsyncCallback<BackgroundStatus> passAlong) {
-        WebEventManager.getAppEvManager().fireEvent(new WebEvent(_dataRequest, Name.ON_PACKAGE_SUBMIT));
+        WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(_dataRequest, Name.ON_PACKAGE_SUBMIT));
         SearchServices.App.getInstance().packageRequest(_dataRequest, passAlong);
     }
 

@@ -229,7 +229,7 @@ public class TableGroupPreviewCombo extends ResizeComposite implements StatefulW
             public void execute() {
                 if (getPreview() != null) {
                     if (getTabPane().getSelectedTab().getContent() instanceof TablePanel) {
-                        getPreview().getEventHub().getEventManager().fireEvent(new WebEvent(getTabPane().getSelectedTab().getContent(),
+                        getPreview().getEventHub().getEventManager().fireEvent(WebEvent.createWebEvent(getTabPane().getSelectedTab().getContent(),
                                 EventHub.ON_TABLE_SHOW));
                         getPreview().moveToRequestState(request, acg.newCallback());
                     }

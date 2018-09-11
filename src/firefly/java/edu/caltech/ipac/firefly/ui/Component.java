@@ -91,7 +91,7 @@ public class Component extends Composite implements VisibleListener {
     protected void onAttach() {
         try {
             super.onAttach();
-            getEventManager().fireEvent(new WebEvent(this, ON_ATTACH));
+            getEventManager().fireEvent(WebEvent.createWebEvent(this, ON_ATTACH));
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -101,7 +101,7 @@ public class Component extends Composite implements VisibleListener {
     protected void onDetach() {
         try {
             super.onDetach();
-            getEventManager().fireEvent(new WebEvent(this, ON_DETACH));
+            getEventManager().fireEvent(WebEvent.createWebEvent(this, ON_DETACH));
         } catch(Exception ex) {
             // do nothing...
         }
@@ -110,7 +110,7 @@ public class Component extends Composite implements VisibleListener {
     @Override
     protected void onLoad() {
         super.onLoad();
-        getEventManager().fireEvent(new WebEvent(this, ON_LOAD));
+        getEventManager().fireEvent(WebEvent.createWebEvent(this, ON_LOAD));
         DeferredCommand.addCommand(new Command(){
                 public void execute() {
                     if (GwtUtil.isOnDisplay(Component.this)) {
@@ -134,7 +134,7 @@ public class Component extends Composite implements VisibleListener {
     @Override
     protected void onUnload() {
         super.onUnload();
-        getEventManager().fireEvent(new WebEvent(this, ON_UNLOAD));
+        getEventManager().fireEvent(WebEvent.createWebEvent(this, ON_UNLOAD));
         onHide();
     }
 
@@ -151,15 +151,15 @@ public class Component extends Composite implements VisibleListener {
     }
 
     public void onInit() {
-        getEventManager().fireEvent(new WebEvent(this, ON_INIT));
+        getEventManager().fireEvent(WebEvent.createWebEvent(this, ON_INIT));
     }
 
     public void onShow() {
-        getEventManager().fireEvent(new WebEvent(this, ON_SHOW));
+        getEventManager().fireEvent(WebEvent.createWebEvent(this, ON_SHOW));
     }
 
     public void onHide() {
-        getEventManager().fireEvent(new WebEvent(this, ON_HIDE));
+        getEventManager().fireEvent(WebEvent.createWebEvent(this, ON_HIDE));
     }
 
 }

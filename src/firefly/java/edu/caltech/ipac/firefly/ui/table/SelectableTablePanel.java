@@ -67,7 +67,7 @@ public class SelectableTablePanel extends TablePanel {
         super.addListeners();
         table.addSelectionTableListener(new SelectionTable.SelectListener(){
                 public void onRowSelectChange(SelectionTable table, SelectionInfo selectInfo) {
-                    getEventManager().fireEvent(new WebEvent(SelectableTablePanel.this, ON_ROWSELECT_CHANGE));
+                    getEventManager().fireEvent(WebEvent.createWebEvent(SelectableTablePanel.this, ON_ROWSELECT_CHANGE));
                 }
         });
 

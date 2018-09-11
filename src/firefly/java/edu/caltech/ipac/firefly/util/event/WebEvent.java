@@ -3,8 +3,7 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 import edu.caltech.ipac.firefly.util.WebAssert;
 
 import java.util.EventObject;
@@ -13,7 +12,7 @@ import java.util.EventObject;
  * The event that is passed when ...
  * @author Trey Roby
  */
-@JsExport
+
 @JsType
 public class WebEvent <DataType> extends EventObject {
 
@@ -25,12 +24,11 @@ public class WebEvent <DataType> extends EventObject {
      * Create a client event
      * @param source source of the event, may not be null.
      * @param name the name of the event, may not be null
-     * @throws IllegalArgumentException  if either source or name is null
+     * @return
      */
-    public WebEvent(Object source, Name name) {
-        this(source,name,null);
+    public static <DataType> WebEvent<DataType> createWebEvent(Object source, Name name) {
+        return new WebEvent<DataType>(source, name, null);
     }
-
 
     /**
      * Create a client event

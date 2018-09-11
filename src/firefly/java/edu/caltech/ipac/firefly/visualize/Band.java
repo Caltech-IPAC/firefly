@@ -3,10 +3,9 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 
-@JsExport
+
 @JsType
 public enum Band {
     RED("Red", 0),

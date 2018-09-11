@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
@@ -22,8 +20,7 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-@JsExport
-@JsType
+
 public class ProjectionSerializer {
 
     private final static String SPLIT_TOKEN= "--ProjSer--";

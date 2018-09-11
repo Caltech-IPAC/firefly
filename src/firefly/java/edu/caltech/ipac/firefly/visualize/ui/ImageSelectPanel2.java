@@ -651,7 +651,7 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
     }
 
     public void inputCanceled() {
-        AllPlots.getInstance().fireEvent(new WebEvent(this,Name.SELECT_DIALOG_CANCEL));
+        AllPlots.getInstance().fireEvent(WebEvent.createWebEvent(this,Name.SELECT_DIALOG_CANCEL));
     }
 
     public boolean validateInput() throws ValidationException {

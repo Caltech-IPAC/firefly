@@ -251,7 +251,7 @@ public class EventHub implements StatefulWidget {
     public void setPreviewEnabled(TablePreview preview, boolean isEnable) {
         if (previews.contains(preview)) {
             Name name = (isEnable ? ENABLE_PREVIEW : DISABLE_PREVIEW);
-            getEventManager().fireEvent(new WebEvent(preview, name));
+            getEventManager().fireEvent(WebEvent.createWebEvent(preview, name));
         }
     }
 

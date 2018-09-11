@@ -3,9 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNoExport;
-import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import edu.caltech.ipac.firefly.data.DataEntry;
@@ -42,8 +39,7 @@ import java.util.Map;
  * @author Trey Roby
  * @version $Id: WebPlot.java,v 1.68 2012/12/14 23:59:58 roby Exp $
  */
-@JsExport
-@JsType
+
 public class WebPlot {
 
     public enum ZDir {UP,DOWN,ORIGINAL}
@@ -234,7 +230,6 @@ public class WebPlot {
 
     public void refreshWidget() { _tileDrawer.refreshWidget(); }
 
-    @JsNoExport
     public void refreshWidget(PlotImages images) { _tileDrawer.refreshWidget(images); }
 
     public PlotState getPlotState() { return _plotState; }
@@ -366,7 +361,6 @@ public class WebPlot {
      */
     public int     getImageDataHeight() { return _dataHeight; }
 
-    @JsNoExport
     public boolean isBlankImage() {
         if (isThreeColor()) return false;
         WebPlotRequest req=_plotState.getWebPlotRequest();
@@ -402,7 +396,6 @@ public class WebPlot {
      * @param iwPt the point to test.
      * @return boolean true if it is in the data boundaries, false if not.
      */
-    @JsNoExport
     public boolean pointInData(ImageWorkSpacePt iwPt) {
         boolean retval= false;
         if (iwPt!=null && pointInPlot(iwPt)) {
@@ -467,7 +460,6 @@ public class WebPlot {
      * @param ipt the point to test.
      * @return boolean true if it is in the boundaries, false if not.
      */
-    @JsNoExport
     public boolean pointInPlot( ImageWorkSpacePt ipt) {
         if (ipt==null) return false;
         return _plotGroup.pointInPlot(ipt);
@@ -517,7 +509,6 @@ public class WebPlot {
      * @param vpt
      * @return
      */
-    @JsNoExport
     public boolean pointInViewPort( ViewPortPt vpt) {
         if (vpt==null) return false;
         int x= vpt.getIX();
@@ -623,20 +614,17 @@ public class WebPlot {
 //========================================================================================
 
 
-    @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords(ViewPortPt vpt) {
         if (vpt==null) return null;
         return getImageWorkSpaceCoords(getScreenCoords(vpt));
     }
 
 
-    @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords(ScreenPt pt) {
         if (pt==null) return null;
         return getImageWorkSpaceCoords(pt,getZoomFact());
     }
 
-    @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords(ScreenPt pt, float altZLevel) {
         if (pt==null) return null;
         return new ImageWorkSpacePt(pt.getX() / altZLevel,
@@ -644,13 +632,11 @@ public class WebPlot {
     }
 
 
-    @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords(ImagePt pt) {
         if (pt==null) return null;
         return new ImageWorkSpacePt(pt.getX()+_offsetX, pt.getY()+_offsetY);
     }
 
-    @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords( WorldPt wpt) {
         if (wpt==null) return null;
         ImageWorkSpacePt retval;
@@ -671,7 +657,6 @@ public class WebPlot {
      * @param pt the point to translate
      * @return WorldPt the world coordinates
      */
-    @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords(Pt pt) {
         ImageWorkSpacePt retval= null;
 
@@ -698,13 +683,11 @@ public class WebPlot {
      * @param pt screen coordinates to convert from
      * @return ImagePt the translated coordinates
      */
-    @JsNoExport
     public ImagePt getImageCoords(ScreenPt pt) {
         if (pt==null) return null;
         return getImageCoords(getImageWorkSpaceCoords(pt));
     }
 
-    @JsNoExport
     public ImagePt getImageCoords(ViewPortPt vpt) {
         if (vpt==null) return null;
         return getImageCoords(getScreenCoords(vpt));
@@ -715,7 +698,6 @@ public class WebPlot {
      * @param pt the point to translate
      * @return WorldPt the world coordinates
      */
-    @JsNoExport
     public ImagePt getImageCoords(Pt pt) {
         ImagePt retval= null;
 
@@ -737,7 +719,6 @@ public class WebPlot {
      * @return ImagePt the converted point
      */
 
-    @JsNoExport
    public ImagePt getImageCoords(ImageWorkSpacePt sipt) {
        if (sipt==null) return null;
        return new ImagePt(sipt.getX()-_offsetX, sipt.getY()-_offsetY);
@@ -748,7 +729,6 @@ public class WebPlot {
      * @param wpt the class containing the point in sky coordinates
      * @return ImagePt the translated coordinates
      */
-    @JsNoExport
     public ImagePt getImageCoords( WorldPt wpt) {
         ImagePt retval;
         if (wpt==null) return null;
@@ -843,33 +823,27 @@ public class WebPlot {
     }
 
 
-    @JsNoExport
     public ViewPortPt getViewPortCoords(ScreenPt spt)  {
         if (spt==null) return null;
         return new ViewPortPt( spt.getIX()-_viewPortX, spt.getIY()-_viewPortY);
     }
 
-    @JsNoExport
     public ViewPortPt getViewPortCoords(ImagePt ipt)  {
         if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt));
     }
-    @JsNoExport
     public ViewPortPt getViewPortCoords(ImagePt ipt, float altZLevel)  {
         if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt,altZLevel));
     }
-    @JsNoExport
     public ViewPortPt getViewPortCoords(ImageWorkSpacePt ipt)  {
         if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt));
     }
-    @JsNoExport
     public ViewPortPt getViewPortCoords(ImageWorkSpacePt ipt, float altZLevel)  {
         if (ipt==null) return null;
         return getViewPortCoords(getScreenCoords(ipt,altZLevel));
     }
-    @JsNoExport
     public ViewPortPt getViewPortCoords(WorldPt wpt)  {
         if (wpt==null) return null;
         ViewPortPt retval;
@@ -885,7 +859,6 @@ public class WebPlot {
         return retval;
     }
 
-    @JsNoExport
     public ViewPortPt getViewPortCoords(WorldPt wpt, float altZLevel) {
         if (wpt==null) return null;
         ViewPortPt retval;
@@ -913,7 +886,6 @@ public class WebPlot {
      * @param pt the point to translate
      * @return ScreenPt the screen coordinates
      */
-    @JsNoExport
     public ScreenPt getScreenCoords(Pt pt) {
         ScreenPt retval= null;
 
@@ -935,7 +907,6 @@ public class WebPlot {
      * @param wpt the world point to translate
      * @return ScreenPt the screen coordinates
      */
-    @JsNoExport
     public ScreenPt getScreenCoords(WorldPt wpt) {
         if (wpt==null) return null;
 
@@ -959,7 +930,6 @@ public class WebPlot {
      * @param wpt the world point to translate
      * @return Point2D the screen coordinates
      */
-    @JsNoExport
     public ScreenPt getScreenCoords(WorldPt wpt, float altZLevel) {
         if (wpt==null) return null;
         ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wpt);
@@ -971,7 +941,6 @@ public class WebPlot {
      * @param ipt the image point to translate
      * @return Point2D the screen coordinates
      */
-    @JsNoExport
     public ScreenPt getScreenCoords(ImagePt ipt) {
         if (ipt==null) return null;
         return getScreenCoords(ipt,getZoomFact());
@@ -986,14 +955,12 @@ public class WebPlot {
      * @param altZLevel use the passed zoom level instead of the level of the plot
      * @return Point2D the screen coordinates
      */
-    @JsNoExport
     public ScreenPt getScreenCoords(ImagePt ipt, float altZLevel) {
         if (ipt==null) return null;
         return getScreenCoords(getImageWorkSpaceCoords(ipt), altZLevel);
     }
 
 
-    @JsNoExport
     public ScreenPt getScreenCoords(ViewPortPt vpt) {
         if (vpt==null) return null;
         return new ScreenPt(vpt.getIX()+_viewPortX, vpt.getIY()+_viewPortY);
@@ -1004,7 +971,6 @@ public class WebPlot {
      * @param ipt the ImageWorkSpace point to translate
      * @return Point2D the screen coordinates
      */
-    @JsNoExport
     public ScreenPt getScreenCoords(ImageWorkSpacePt ipt) {
         if (ipt==null) return null;
         return getScreenCoords(ipt,getZoomFact());
@@ -1019,7 +985,6 @@ public class WebPlot {
      * @param altZLevel use the passed zoom level instead of the level of the plot
      * @return Point2D the screen coordinates
      */
-    @JsNoExport
     public ScreenPt getScreenCoords(ImageWorkSpacePt ipt, float altZLevel) {
         if (ipt==null) return null;
         return new ScreenPt(((ipt.getX())*altZLevel),
@@ -1038,7 +1003,6 @@ public class WebPlot {
      *                      translated into
      * @return WorldPt the translated coordinates
      */
-    @JsNoExport
     public WorldPt getWorldCoords(ScreenPt pt, CoordinateSys outputCoordSys) {
         if (pt==null) return null;
         ImageWorkSpacePt iwspt = getImageWorkSpaceCoords(pt);
@@ -1051,21 +1015,18 @@ public class WebPlot {
      * @param pt the screen coordinates to convert to world coordinates
      * @return WorldPt the translated coordinates
      */
-    @JsNoExport
     public WorldPt getWorldCoords(ScreenPt pt) {
         if (pt==null) return null;
         ImageWorkSpacePt iwspt = getImageWorkSpaceCoords(pt);
         return iwspt!=null ? getWorldCoords(iwspt) : null;
     }
 
-    @JsNoExport
     public WorldPt getWorldCoords(ViewPortPt vpt) {
         if (vpt==null) return null;
         ScreenPt spt = getScreenCoords(vpt);
         return spt!=null ? getWorldCoords(spt) : null;
     }
 
-    @JsNoExport
     public WorldPt getWorldCoords(ViewPortPt vpt, CoordinateSys outputCoordSys) {
         if (vpt==null) return null;
         ScreenPt spt = getScreenCoords(vpt);
@@ -1077,7 +1038,6 @@ public class WebPlot {
      * @param pt the point to translate
      * @return WorldPt the world coordinates
      */
-    @JsNoExport
     public WorldPt getWorldCoords(Pt pt) {
         WorldPt retval= null;
 
@@ -1100,7 +1060,6 @@ public class WebPlot {
      * @param pt the ImageWorkSpacePt
      * @return WorldPt the translated coordinates
      */
-    @JsNoExport
     public WorldPt getWorldCoords(ImageWorkSpacePt pt) {
         if (pt==null) return null;
         return getWorldCoords(getImageCoords(pt));
@@ -1112,7 +1071,6 @@ public class WebPlot {
      * @param outputCoordSys The coordinate system to return
      * @return WorldPt the translated coordinates
      */
-    @JsNoExport
     public WorldPt getWorldCoords( ImageWorkSpacePt ipt, CoordinateSys outputCoordSys) {
         if (ipt==null) return null;
         return getWorldCoords(getImageCoords(ipt),outputCoordSys);
@@ -1124,7 +1082,6 @@ public class WebPlot {
      * @param pt the ImageWorkSpacePt
      * @return WorldPt the translated coordinates
      */
-    @JsNoExport
     public WorldPt getWorldCoords(ImagePt pt) {
         if (pt==null) return null;
         return getWorldCoords(pt, CoordinateSys.EQ_J2000);
@@ -1137,7 +1094,6 @@ public class WebPlot {
      * @param outputCoordSys The coordinate system to return
      * @return WorldPt the translated coordinates
      */
-    @JsNoExport
     public WorldPt getWorldCoords( ImagePt ipt, CoordinateSys outputCoordSys) {
         if (ipt==null) return null;
         double x= ipt.getX();

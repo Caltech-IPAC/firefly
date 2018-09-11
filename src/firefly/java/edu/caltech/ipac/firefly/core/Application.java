@@ -218,7 +218,7 @@ public class Application {
                     }
                 }
                 if (SupportedBrowsers.isSupported()) {
-                    WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.APP_ONLOAD));
+                    WebEventManager.getAppEvManager().fireEvent(WebEvent.createWebEvent(this, Name.APP_ONLOAD));
                     initAlerts();
                 }
             }

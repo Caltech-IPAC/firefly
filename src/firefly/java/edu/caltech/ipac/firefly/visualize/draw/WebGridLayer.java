@@ -177,7 +177,7 @@ public class WebGridLayer implements WebEventListener{
                _pv.removeWebLayerItem(_layer);
                _grid.clear();
            }
-           _pv.fireEvent(new WebEvent(this,Name.GRID_ANNOTATION));
+           _pv.fireEvent(WebEvent.createWebEvent(this,Name.GRID_ANNOTATION));
 
        }
 

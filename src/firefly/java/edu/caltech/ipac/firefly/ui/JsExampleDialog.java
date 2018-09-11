@@ -14,7 +14,7 @@ package edu.caltech.ipac.firefly.ui;
  */
 
 
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 
 /**
  * @author Trey Roby

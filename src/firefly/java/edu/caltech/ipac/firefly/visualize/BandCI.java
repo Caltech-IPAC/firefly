@@ -10,8 +10,8 @@ package edu.caltech.ipac.firefly.visualize;
  */
 
 
-import com.google.gwt.core.client.js.JsProperty;
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
 
 /**
  * @author Trey Roby

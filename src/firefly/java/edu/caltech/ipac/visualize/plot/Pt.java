@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
-import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -15,8 +13,7 @@ import java.io.Serializable;
  * Base class for all points
  */
 
-@JsExport
-@JsType
+
 public class Pt implements Serializable, HandSerialize {
    private double _x;
    private double _y;

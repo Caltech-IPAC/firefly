@@ -10,7 +10,7 @@ package edu.caltech.ipac.firefly.visualize;
  */
 
 
-import com.google.gwt.core.client.js.JsType;
+import jsinterop.annotations.JsType;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
