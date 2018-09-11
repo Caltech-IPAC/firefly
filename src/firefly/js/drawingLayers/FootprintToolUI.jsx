@@ -133,14 +133,17 @@ class FootprintToolUI extends PureComponent {
         const tStyle= {
             display:'flex',
             flexDirection:'column',
-            paddingLeft : 10,
+            paddingLeft : 10
         };
 
         const mStyle = {
             marginTop: 5
         };
 
-        var textOnLink = `Add ${get(this.state.fpInfo, 'footprint')} ${get(this.state.fpInfo, 'instrument')}`;
+        var textOnLink = get(this.state.fpInfo, 'fromFile') ? `Add ${get(this.state.fpInfo, 'fromFile')}`
+                         :(get(this.state.fpInfo, 'fromRegionAry')
+                                        ? `Add ${this.props.drawLayer.title}`
+                                        : `Add ${get(this.state.fpInfo, 'footprint')} ${get(this.state.fpInfo, 'instrument')}`);
         var {isValidAngle, angleDeg, fpText, fpTextLoc} = this.state;
 
         return (

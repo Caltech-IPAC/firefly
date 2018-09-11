@@ -8,12 +8,12 @@ import {makeDrawingDef, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getDrawLayersByType} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {ANGLE_UNIT, OutlineType, getWorldOrImage, findClosestIndex, makeFootprint,
         lengthSizeUnit, updateFootprintDrawobjAngle,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
-import {markerInterval, getCC, cancelTimeoutProcess, initMarkerPos, getPlot,
+import {getCC, cancelTimeoutProcess, initMarkerPos, getPlot,
         updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
@@ -28,63 +28,116 @@ import Enum from 'enum';
 
 
 const editHelpText='Click any part of the footprint and drag to move, click rotate handle and drag to rotate';
+const footprintInterval = 3000; // time interval for showing marker with handlers and no handlers
 
-const footprintInterval = markerInterval; // time interval for showing marker with handlers and no handlers
 const ID= 'OVERLAY_FOOTPRINT';
 const TYPE_ID= 'OVERLAY_FOOTPRINT_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null, getFootprintToolUIComponent);
 const FootprintStatus = new Enum(['attached', 'select', 'attached_relocate', 'relocate', 'rotate']);
+export const relocatable = new Enum(['origin', 'center']);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
+const  FPFilePrefix = '${footprintFile}';
+const FPDefPrefix = '${footprintDef}';
 
-var idCnt=0;
+let idCnt=0;
+export const createNewFootprintLayerId = () => {
+    const layerList =  getDrawLayersByType(getDlAry(), TYPE_ID);
+
+    while (true) {
+        const newId = `${ID}-${idCnt++}`;
+        const dl = layerList.find((layer) => {
+            return (layer.drawLayerId && layer.drawLayerId === newId);
+        });
+        if (!dl) {
+            return newId;
+        }
+    }
+};
+
+let titleCnt = 1;
+export const getFootprintLayerTitle = (layerTitle) => {
+    const defaultFootprintTitle = 'footprint tool';
+    const layerList =  getDrawLayersByType(getDlAry(), TYPE_ID);
+    let   cntTitle = 0;
+
+    while (true) {
+        const newTitle = layerTitle ? (!cntTitle ? layerTitle : `${layerTitle}-${cntTitle}`)
+            : `${defaultFootprintTitle}-${titleCnt++}`;
+        const dl = layerList && layerList.find((layer) => {
+            return (layer.title && layer.title === newTitle);
+        });
+
+        if (layerTitle) {
+            cntTitle++;
+        }
+        if (!dl) {
+            return newTitle;
+        }
+    }
+};
+
+const getRotate = (regions) => {
+    return  get(regions, [0, 'options', 'rotatable'], 1)===1;
+};
 
 export function footprintCreateLayerActionCreator(rawAction) {
     return (dispatcher) => {
-        var {plotId,
+        const {plotId,
             footprintId: drawLayerId,
-            layerTitle: Title,
+            layerTitle: title,
             attachPlotGroup,
             footprint,
-            instrument} = rawAction.payload;
+            instrument,
+            relocateBy,
+            fromFile,
+            fromRegionAry} = rawAction.payload;
+
+        const fpInfo = { footprint, instrument, relocateBy, fromFile, fromRegionAry};
+        const isPredefined = (!fromFile&&!fromRegionAry);
+        const isInstrument = isPredefined ? (!!instrument) : (relocateBy&&(relocateBy === relocatable.center.key));
+        const pId = (!plotId || (isArray(plotId) && plotId.length === 0)) ?
+                              get(visRoot(), 'activePlotId') : isArray(plotId) ? plotId[0] : plotId;
+        const plot = primePlot(visRoot(), pId);
+
+        const handleRegions = (regionAry) => {
+            const regions = FootprintFactory.getOriginalRegionsFromStc(regionAry, isInstrument, !isPredefined);
+            const isRotate = getRotate(regions);    // footprint is rotatable in default
+
+            if (regions) {
+                const dl = getDrawLayerById(getDlAry(), drawLayerId);
+
+                if (!dl) {
+                    dispatchCreateDrawLayer(TYPE_ID, {title, drawLayerId, regions, fpInfo});
+                }
+
+                if (pId) {
+                    dispatchAttachLayerToPlot(drawLayerId, pId, attachPlotGroup);
+                    if (plot) {
+                        const wpt = initMarkerPos(plot);
+
+                        showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_CREATE, regions, pId,
+                            FootprintStatus.attached, footprintInterval, drawLayerId,
+                            {isOutline: true, isRotate}, fpInfo, wpt);
+
+                    }
+                }
+            }
+        };
 
         if (footprint)  {
-            var footprintDef = '${footprintDef}' + `${footprint}${instrument? '_'+instrument : ''}`;
-            var isInstrument = !!instrument;
-            var fpInfo = { footprint, instrument};
+            const footprintDef = !isPredefined ? FPFilePrefix+footprint
+                                               : FPDefPrefix + `${footprint}${instrument? '_'+instrument : ''}`;
 
             getDS9Region(footprintDef).then((result) => {
                 if (has(result, 'RegionData') && result.RegionData.length > 0) {
-                    var regions = FootprintFactory.getOriginalRegionsFromStc(result.RegionData, isInstrument);
-
-                    if (regions) {
-                        var dl = getDrawLayerById(getDlAry(), drawLayerId);
-
-                        if (!dl) {
-                            dispatchCreateDrawLayer(TYPE_ID, {Title, drawLayerId, regions, fpInfo});
-                        }
-
-                        // plotId could be an array or single value
-                        var pId = (!plotId || (isArray(plotId) && plotId.length === 0)) ?
-                            get(visRoot(), 'activePlotId') : isArray(plotId) ? plotId[0] : plotId;
-
-                        if (pId) {
-                            dispatchAttachLayerToPlot(drawLayerId, pId, attachPlotGroup);
-
-                            var plot = primePlot(visRoot(), pId);
-                            if (plot) {
-                                var wpt = initMarkerPos(plot);
-
-                                showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_CREATE, regions, pId,
-                                    FootprintStatus.attached, footprintInterval, drawLayerId,
-                                    {isOutline: true, isRotate: true}, fpInfo, wpt);
-
-                            }
-                        }
-                    }
+                    handleRegions(result.RegionData);
                 }
             });
+        } else if (isArray(fromRegionAry) && fromRegionAry.length > 0) {
+            handleRegions(fromRegionAry);
         }
+
     };
 }
 
@@ -97,13 +150,14 @@ export function footprintCreateLayerActionCreator(rawAction) {
 */
 export function footprintStartActionCreator(rawAction) {
     return (dispatcher) => {
-        const {plotId, imagePt, screenPt, drawLayer} = rawAction.payload;
+        const {plotId, imagePt, screenPt, drawLayer} = rawAction.payload; // imagePt/screenPt is the click point
         const cc = getCC(plotId);
         const {drawLayerId, regions, fpInfo} = drawLayer;
         const footprintObj = get(drawLayer, ['drawData', DataTypes.DATA, plotId], {});
         const {footprintStatus, currentPt, timeoutProcess} = get(footprintObj, 'actionInfo', {});
-        var   wpt, idx, refPt;
-        var   nextStatus = null;
+        const isRotate = getRotate(footprintObj.regions);
+        let   wpt, idx, refPt;
+        let   nextStatus = null;
         let   move = {};
 
         cancelTimeoutProcess(timeoutProcess);
@@ -138,7 +192,7 @@ export function footprintStartActionCreator(rawAction) {
 
         if (nextStatus && cc.pointInView(refPt)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_START, regions, plotId,
-                nextStatus, footprintInterval, drawLayerId, {isOutline: true, isRotate:true}, fpInfo, wpt, refPt, move);
+                nextStatus, footprintInterval, drawLayerId, {isOutline: true, isRotate}, fpInfo, wpt, refPt, move);
         }
     };
 }
@@ -155,7 +209,7 @@ export function footprintEndActionCreator(rawAction) {
         const {drawLayerId, regions, fpInfo} = drawLayer;
         const footprintObj = get(drawLayer, ['drawData', DataTypes.DATA, plotId], {});
         const {footprintStatus, currentPt, timeoutProcess} = get(footprintObj, 'actionInfo', {});
-        var   {includeOutline: isOutline, includeRotate: isRotate } = footprintObj;
+        const isRotate = getRotate(footprintObj.regions);
 
         cancelTimeoutProcess(timeoutProcess);
         // marker stays at current position and size
@@ -163,7 +217,7 @@ export function footprintEndActionCreator(rawAction) {
             const wpt = getWorldOrImage(currentPt, cc);
 
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_END, regions, plotId,
-                            FootprintStatus.select, footprintInterval, drawLayerId, {isOutline, isRotate}, fpInfo, wpt);
+                            FootprintStatus.select, footprintInterval, drawLayerId, {isOutline: true, isRotate}, fpInfo, wpt);
         }
     };
 }
@@ -174,14 +228,14 @@ export function footprintEndActionCreator(rawAction) {
  * @returns {Function}
  */
 export function footprintMoveActionCreator(rawAction) {
-    var angleBetween = (origin, v1, v2) => {
-        var [v1_x, v1_y] = [v1.x - origin.x, v1.y - origin.y];
-        var [v2_x, v2_y] = [v2.x - origin.x, v2.y - origin.y];
-        var z = (v1_x * v2_y - v1_y *  v2_x) > 0 ? 1 : -1;
-        var innerProd = (v1_x * v2_x + v1_y * v2_y)/(Math.sqrt(v1_x * v1_x + v1_y * v1_y) *
+    const angleBetween = (origin, v1, v2) => {
+        const [v1_x, v1_y] = [v1.x - origin.x, v1.y - origin.y];
+        const [v2_x, v2_y] = [v2.x - origin.x, v2.y - origin.y];
+        const z = (v1_x * v2_y - v1_y *  v2_x) > 0 ? 1 : -1;
+        const innerProd = (v1_x * v2_x + v1_y * v2_y)/(Math.sqrt(v1_x * v1_x + v1_y * v1_y) *
             Math.sqrt(v2_x * v2_x + v2_y * v2_y));
 
-        var angle = (innerProd > 1.0) ? Math.acos(1.0)
+        const angle = (innerProd > 1.0) ? Math.acos(1.0)
                                       : (innerProd < -1) ? Math.acos(-1.0) : Math.acos(innerProd);
         return z * angle;
     };
@@ -192,10 +246,12 @@ export function footprintMoveActionCreator(rawAction) {
         const cc = getCC(plotId);
         const {drawLayerId, regions, fpInfo} = drawLayer;
         const footprintObj = get(drawLayer, ['drawData', DataTypes.DATA, plotId], {});
-        var   {footprintStatus, currentPt: wpt, timeoutProcess, refPt} = get(footprintObj, 'actionInfo', {});
-        var move = {};
-        var isHandle;
-        var prePt = cc.getImageCoords(refPt);
+        let   {footprintStatus, currentPt: wpt, refPt} = get(footprintObj, 'actionInfo', {});
+        const {timeoutProcess} = get(footprintObj, 'actionInfo', {});
+        const move = {};
+        let isHandle;
+        const prePt = cc.getImageCoords(refPt);
+        const isRotate = getRotate(footprintObj.regions);
 
 
         cancelTimeoutProcess(timeoutProcess);
@@ -207,12 +263,12 @@ export function footprintMoveActionCreator(rawAction) {
             move.angle = -angleBetween(rotateCenter, prePt, imagePt); // angle on screen
             move.angleUnit = ANGLE_UNIT.radian;
             refPt = imagePt;
-            isHandle = {isOutline: true, isRotate: true};
+            isHandle = {isOutline:true, isRotate};
         } else if (footprintStatus === FootprintStatus.relocate || footprintStatus === FootprintStatus.attached_relocate) {
             // marker move to new mouse move position
-            var deltaX = imagePt.x - prePt.x;
-            var deltaY = imagePt.y - prePt.y;
-            var fpCenterImg = cc.getImageCoords(wpt);
+            let deltaX = imagePt.x - prePt.x;
+            let deltaY = imagePt.y - prePt.y;
+            const fpCenterImg = cc.getImageCoords(wpt);
 
             // both footprint center and outline center are tested if being moved out of view
             wpt = getWorldOrImage(makeImagePt(fpCenterImg.x + deltaX, fpCenterImg.y + deltaY), cc);
@@ -234,12 +290,12 @@ export function footprintMoveActionCreator(rawAction) {
             move.apt = {x: deltaX.len, y: deltaY.len, type: deltaX.unit};
 
             footprintStatus = FootprintStatus.relocate;
-            isHandle = {isOutline: true, isRotate: true};
+            isHandle = {isOutline:true, isRotate};
         }
 
         if (!isEmpty(move) && cc.pointInView(refPt)) {
             showFootprintByTimer(dispatcher, DrawLayerCntlr.FOOTPRINT_MOVE, regions, plotId,
-                                 footprintStatus, 0, drawLayerId, isHandle, fpInfo, wpt, refPt, move);
+                                footprintStatus, 0, drawLayerId, isHandle, fpInfo, wpt, refPt, move);
         }
     };
 }
@@ -252,34 +308,33 @@ export function footprintMoveActionCreator(rawAction) {
  */
 function creator(initPayload) {
 
-    var rColor = get(initPayload, ['regions', '0', 'options', 'color'], 'green');
-    var drawingDef= makeDrawingDef(rColor);
-    var pairs= {
+    const rColor = get(initPayload, ['regions', '0', 'options', 'color'], 'green');
+    const drawingDef= makeDrawingDef(rColor);
+    const pairs= {
         [MouseState.DRAG.key]: DrawLayerCntlr.FOOTPRINT_MOVE,
         [MouseState.DOWN.key]: DrawLayerCntlr.FOOTPRINT_START,
         [MouseState.UP.key]: DrawLayerCntlr.FOOTPRINT_END
     };
 
-    var actionTypes= [DrawLayerCntlr.FOOTPRINT_MOVE,
+    const actionTypes= [DrawLayerCntlr.FOOTPRINT_MOVE,
                       DrawLayerCntlr.FOOTPRINT_START,
                       DrawLayerCntlr.FOOTPRINT_END,
                       DrawLayerCntlr.FOOTPRINT_CREATE];
 
-    var exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
+    const exclusiveDef= { exclusiveOnDown: true, type : 'anywhere' };
 
-
-    idCnt++;
-    var options= {
+    const options= {
         canUseMouse:true,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         canUserDelete: true,
         hasPerPlotData: true,
         destroyWhenAllDetached: true
     };
-    var title = get(initPayload, 'Title', 'Footprint Tool');
-    var dl = DrawLayer.makeDrawLayer( get(initPayload, 'drawLayerId', ` ${ID}-${idCnt}`),
-                                    TYPE_ID, title,
-                                    options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
+
+    const title = initPayload.title ? initPayload.title : getFootprintLayerTitle();
+    const id = initPayload.drawLayerId ? initPayload.drawLayerId : createNewFootprintLayerId();
+    const dl = DrawLayer.makeDrawLayer(id, TYPE_ID, title,
+                                       options, drawingDef, actionTypes, pairs, exclusiveDef, getCursor);
     dl.regions = get(initPayload, 'regions', null);
     dl.fpInfo = get(initPayload, 'fpInfo', {});
     dl.defaultTitle = title;
@@ -296,8 +351,6 @@ function creator(initPayload) {
 function getLayerChanges(drawLayer, action) {
     const {drawLayerId, plotId} = action.payload;
 
-    //console.log('action type = ' + action.type);
-
     if (![ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION, ImagePlotCntlr.ANY_REPLOT].includes(action.type) &&
         (!drawLayerId || drawLayerId !== drawLayer.drawLayerId))  {
         return null;
@@ -305,7 +358,7 @@ function getLayerChanges(drawLayer, action) {
 
     const dd = Object.assign({}, drawLayer.drawData);
     const {plotIdAry=[]} = drawLayer;
-    var  retV = null;
+    let  retV = null;
     let  wptObj;
 
     switch (action.type) {
@@ -346,9 +399,10 @@ function getLayerChanges(drawLayer, action) {
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             if (!isEmpty(get(drawLayer, ['drawData', 'data']))) {
-                return attachToNewPlot(drawLayer, get(action.payload, ['plotIdAry', '0']));
+                return attachToNewPlot(drawLayer, get(action.payload, ['plotIdAry']));
             }
             break;
+
         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
         case ImagePlotCntlr.ANY_REPLOT:
             if (plotIdAry) {
@@ -372,8 +426,8 @@ function getLayerChanges(drawLayer, action) {
 }
 
 function getCursor(plotView, screenPt) {
-    var  cursor = '';
-    var dlAry = dlRoot().drawLayerAry.filter( (dl) => {
+    let  cursor = '';
+    const dlAry = dlRoot().drawLayerAry.filter( (dl) => {
         return (dl.drawLayerTypeId === TYPE_ID) && (get(dl, 'visiblePlotIdAry').includes(plotView.plotId));
     });
 
@@ -384,13 +438,13 @@ function getCursor(plotView, screenPt) {
     const  cc= CsysConverter.make(primePlot(plotView));
 
     dlAry.find( (dl) => {
-        var drawObj = get(dl, ['drawData', 'data', plotView.plotId]);
-        var idx = findClosestIndex(screenPt, drawObj, cc).index;
+        const drawObj = get(dl, ['drawData', 'data', plotView.plotId]);
+        const idx = findClosestIndex(screenPt, drawObj, cc).index;
 
         if (idx >= 0 && idx <= drawObj.outlineIndex) {
             cursor = 'pointer';
             return true;
-        } else if (idx === drawObj.rotateIndex) {
+        } else if (has(drawObj, 'rotateIndex') && (idx === drawObj.rotateIndex)) {
             cursor = 'alias';
             return true;
         } else {
@@ -408,8 +462,7 @@ function getCursor(plotView, screenPt) {
  * @returns {*}
  */
 function updateFootprintAngle(angleDegStr, footprintDrawObj, plotIdAry) {
-    var angleDeg;
-    angleDeg = angleDegStr ? parseFloat(angleDegStr) : 0.0;
+    let angleDeg = angleDegStr ? parseFloat(angleDegStr) : 0.0;
     while (angleDeg > 180.0 || angleDeg < -180.0) {
         angleDeg = angleDeg < 0 ? angleDeg + 360 : angleDeg - 360;
     }
@@ -449,12 +502,13 @@ function updateFootprintAngle(angleDegStr, footprintDrawObj, plotIdAry) {
  */
 function showFootprintByTimer(dispatcher, actionType, regions, plotId, doneStatus, timer, drawLayerId, isHandle,
                               fpInfo, wpt, refPt, move) {
-    var setAction = (isHandle) => ({
+    const setAction = (isHandle) => ({
         type: actionType,
         payload: {isHandle, regions, wpt, plotId, footprintStatus: doneStatus, drawLayerId, fpInfo, refPt, move}
     });
-    var timeoutProcess = (timer !== 0) && (setTimeout(() => dispatcher(setAction({})), timer));
-    var crtAction = set(setAction(isHandle), 'payload.timeoutProcess', timeoutProcess);
+
+    const timeoutProcess = (timer !== 0) && (setTimeout(() => dispatcher(setAction({})), timer));
+    const crtAction = set(setAction(isHandle), 'payload.timeoutProcess', timeoutProcess);
     dispatcher(crtAction);
 }
 
@@ -468,12 +522,18 @@ function showFootprintByTimer(dispatcher, actionType, regions, plotId, doneStatu
  * @returns {*}
  */
 function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
-    if (!plotId || !wpt) return null;
+    if (!plotId || !wpt) {
+        if (plotId) {
+            set(dl.drawData, [DataTypes.DATA, plotId],  null);
+            return {drawData: dl.drawData, helpLine: editHelpText};
+        }
+        return prevRet;
+    }
 
     const {isHandle, regions, timeoutProcess, refPt, move} = action.payload;
-    let {footprintStatus} = action.payload;
+    let   {footprintStatus} = action.payload;
     const crtFpObj = get(dl, ['drawData', DataTypes.DATA, plotId], {});
-    var  {text = ''} = crtFpObj;
+    let  {text = ''} = crtFpObj;
     const {textLoc = TextLocation.REGION_SE} = crtFpObj;
 
     if (footprintStatus === FootprintStatus.attached ||
@@ -481,9 +541,8 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
         text = get(dl, 'title', '');    // title is the default text by the footprint
     }
 
-     var cc = getCC(plotId);
-     var footprintObj;
-
+     const cc = getCC(plotId);
+     let footprintObj;
 
      if (footprintStatus === FootprintStatus.attached ||
          footprintStatus === FootprintStatus.attached_relocate) {
@@ -497,7 +556,7 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
 
      } else if (crtFpObj) {
          if ((footprintStatus === FootprintStatus.rotate || footprintStatus === FootprintStatus.relocate) && !isEmpty(move)) {
-             var {apt} = move;    // move to relocate or rotate
+             const {apt} = move;    // move to relocate or rotate
 
              if (apt) {      // translate
                  footprintObj = updateFootprintTranslate(crtFpObj, cc, apt);
@@ -529,10 +588,10 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
                          refPt: refPt ? refPt : null,   // in World coordinate to be consistent in case plot is changed
                          footprintStatus};
      set(dl.drawData, [DataTypes.DATA, plotId],  Object.assign(footprintObj, {actionInfo}));
-     var dlObj = {drawData: dl.drawData, helpLine: editHelpText};
+     const dlObj = {drawData: dl.drawData, helpLine: editHelpText};
 
      if (footprintStatus) {
-         var {exclusiveDef, vertexDef} = updateVertexInfo(footprintObj, plotId, dl, prevRet);
+         const {exclusiveDef, vertexDef} = updateVertexInfo(footprintObj, plotId, dl, prevRet);
 
          if (exclusiveDef && vertexDef) {
              return clone(dlObj, {footprintStatus, vertexDef, exclusiveDef});
@@ -549,8 +608,8 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
  * @returns {*}
  */
 function centerForRotation(drawObj, wpt) {
-    var {outlineIndex, drawObjAry} = drawObj;
-    var outlineBox =  (outlineIndex && drawObjAry && drawObjAry.length > outlineIndex ) ? drawObjAry[outlineIndex] : null;
+    const {outlineIndex, drawObjAry} = drawObj;
+    const outlineBox =  (outlineIndex && drawObjAry && drawObjAry.length > outlineIndex ) ? drawObjAry[outlineIndex] : null;
 
     //return outlineBox.pts[0];
     return (outlineBox && outlineBox.outlineType === OutlineType.plotcenter) ? outlineBox.pts[0] :
@@ -569,18 +628,18 @@ function centerForOutline(drawObj) {
  * @param footprintObj
  */
 function updateHandle(isHandle, footprintObj) {
-    var {isRotate, isOutline} = isHandle || {};
+    const {isRotate, isOutline} = isHandle || {};
 
     footprintObj.includeRotate = isRotate;
     footprintObj.includeOutline = isOutline;
 }
 
 function resetRotateSide(footprintObj) {
-    var {drawObjAry, outlineIndex} = footprintObj;
+    const {drawObjAry, outlineIndex} = footprintObj;
     const rSide = 'rotateSide';
 
     if (outlineIndex && drawObjAry.length > outlineIndex) {
-        var outlineBox = drawObjAry[outlineIndex];
+        const outlineBox = drawObjAry[outlineIndex];
 
         if (has(outlineBox, rSide)) {
             outlineBox[rSide] = 1;
@@ -591,11 +650,13 @@ function resetRotateSide(footprintObj) {
 /**
  * add the footprint drawing objects into the new plot after the drawing layer is created
  * @param drawLayer
- * @param newPlotId new plot
+ * @param plotIdAry ary including new plot and old plot
  * @returns {*}
  */
-function attachToNewPlot(drawLayer, newPlotId) {
+function attachToNewPlot(drawLayer, plotIdAry) {
     const data = get(drawLayer, ['drawData', 'data'], {});
+    if (isEmpty(data)) return null;
+
     const existPlotId = !isEmpty(data) && Object.keys(data).find((pId) => {
             return !isEmpty(drawLayer.drawData.data[pId]);
         });
@@ -604,13 +665,18 @@ function attachToNewPlot(drawLayer, newPlotId) {
 
     const { text, textLoc, renderOptions, actionInfo, translation, angle, angleUnit,
             drawData, regions} = get(drawLayer, ['drawData', 'data', existPlotId]);
+    const newPlotId = plotIdAry.find((pId) => isEmpty(data[pId]));
+    if (!newPlotId) return null;
+
     const plot = primePlot(visRoot(), newPlotId);
     const cc = CsysConverter.make(plot);
     let wpt = initMarkerPos(plot, cc);
     let footprintObj = makeFootprint(regions, wpt,
-                                  {isOutline: drawData? drawData.isOutline : false,
-                                   isRotate: drawData? drawData.isRorate : false},
-                                   cc, text, textLoc);
+        {
+            isOutline: drawData ? drawData.isOutline : false,
+            isRotate: drawData ? drawData.isRorate : false
+        },
+        cc, text, textLoc);
 
     if (!isEmpty(translation)) {
         footprintObj = updateFootprintTranslate(footprintObj, cc, translation);
@@ -625,8 +691,11 @@ function attachToNewPlot(drawLayer, newPlotId) {
     }
 
     const aInfo = Object.assign({}, actionInfo, {currentPt: wpt});
-    set(drawLayer.drawData, [DataTypes.DATA, newPlotId], Object.assign(footprintObj, {actionInfo: aInfo,
-                                                                                      renderOptions, translation}));
+    set(drawLayer.drawData, [DataTypes.DATA, newPlotId], Object.assign(footprintObj, {
+        actionInfo: aInfo,
+        renderOptions, translation
+    }));
+
     const dlObj = {drawData: drawLayer.drawData, helpLine: editHelpText};
 
     if (aInfo.footprintStatus) {

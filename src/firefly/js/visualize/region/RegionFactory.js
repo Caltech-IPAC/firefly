@@ -223,8 +223,7 @@ export class RegionFactory {
         var csys = getRegionCoordSys(tmpAry[0]);  // test the split first string
 
         if (csys !== RegionCsys.UNDEFINED) {
-            if (globalOptions) globalOptions.coordSys = tmpAry[0].toLowerCase();
-
+            if (globalOptions) globalOptions.coordSys = csys;
             if (tmpAry.length <= 1) {    // pure coordinate string
                 return null;
             }
@@ -244,7 +243,7 @@ export class RegionFactory {
         } else {                        // description only
             // default coordinate is PHYSICAL in case not specified
             regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
-                globalOptions[regionPropsList.COORD] : defaultCoord;
+                globalOptions[regionPropsList.COORD].key : defaultCoord;
         }
 
         // separate the region description and property part
@@ -320,8 +319,15 @@ export class RegionFactory {
             return makeRegionMsg(`[${RegionParseError.InvalidParam}] ${rgMsg}`);
         }
 
+        if (rg.options) {
+           Object.keys(globalOptions).forEach((op) => {
+               if (!has(rg.options, op)) {
+                   set(rg.options, op, globalOptions[op]);
+               }
+           });
+        }
         // check region properties
-        rgProps = rf.parseRegionOptions(regionOptions, opInclude,  (has(rg, 'options') ? rg.options : null), regionCsys);
+        rgProps = rf.parseRegionOptions(regionOptions, opInclude,  (has(rg, 'options') ? rg.options : globalOptions), regionCsys);
 
         if (rgProps.message) {
             return makeRegionMsg(`[${RegionParseError.InvalidProp}] ${rgProps.message} at ${rgMsg}`);

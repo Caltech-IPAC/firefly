@@ -10,10 +10,12 @@ import {ToolbarButton,
 import { dispatchCreateMarkerLayer, dispatchCreateFootprintLayer } from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {FootprintFactory, FootprintList} from '../draw/FootprintFactory.js';
+import { createNewFootprintLayerId, getFootprintLayerTitle, relocatable} from '../../drawingLayers/FootprintTool.js';
 import {has, get} from 'lodash';
 
-var idCntM = 0;
-var idCntF = 0;
+let idCntM = 0;
+let idCntF = 0;
+
 
 const markerItem = {
     marker: {label: 'Marker'}     // TODO: add more items for marker
@@ -25,32 +27,39 @@ function displayItemText(itemName) {
     }
 }
 
-var getPlotId = (pv) => ( pv ?  pv.plotId : get(visRoot(), 'activePlotId'));
+const getPlotId = (pv) => ( pv ?  pv.plotId : get(visRoot(), 'activePlotId'));
 
 export function addNewDrawLayer(pv, itemName) {
     if (!has(markerItem, itemName)) return;
-    var drawLayerId = `${markerItem[itemName].label}-${idCntM++}`;
-    var title = `Marker #${idCntM}`;
-    var plotId = getPlotId(pv);        // pv should be true, otherwise marker is disabled.
+    const drawLayerId = `${markerItem[itemName].label}-${idCntM++}`;
+    const title = `Marker #${idCntM}`;
+    const plotId = getPlotId(pv);        // pv should be true, otherwise marker is disabled.
 
     dispatchCreateMarkerLayer(drawLayerId, title, plotId, true);
 }
 
-export function addFootprintDrawLayer(pv, {footprint, instrument}) {
-    var drawLayerId = `${footprint}` + (instrument ? `_${instrument}` :'') + `_${idCntF++}`;
-    var title = `Footprint: ${footprint} ` + (instrument ? `${instrument}` :'');
-    var plotId =  getPlotId(pv);
+export function  addFootprintDrawLayer(pv, {footprint, instrument, relocateBy, fromFile, fromRegionAry}) {
+    let drawLayerId, title;
 
-    dispatchCreateFootprintLayer(drawLayerId, title, footprint, instrument, plotId,  true);
+    if (fromFile || fromRegionAry) {
+        drawLayerId = createNewFootprintLayerId();
+        title = getFootprintLayerTitle(fromFile);
+    } else {
+        drawLayerId = `${footprint}` + (instrument ? `_${instrument}` : '') + `_${idCntF++}`;
+        title = getFootprintLayerTitle(`Footprint: ${footprint} ${instrument ? instrument : ''}`);
+    }
+    const plotId =  getPlotId(pv);
+
+    dispatchCreateFootprintLayer(drawLayerId, title, {footprint, instrument, relocateBy, fromFile, fromRegionAry}, plotId,  true);
 }
 
 export function MarkerDropDownView({plotView:pv}) {
     const enabled = !!pv;
-    var sep = 1;
+    let  sep = 1;
 
     const footprintCmdJSX = (text, footprint, instrument) => {
-        var key = footprint + (instrument ? `_${instrument}`: '');
-        var fpInfo = {footprint, instrument};
+        const key = footprint + (instrument ? `_${instrument}`: '');
+        const fpInfo = {footprint, instrument, relocateBy: relocatable.center.key};
 
         return (<ToolbarButton key={key}
                                text={text}

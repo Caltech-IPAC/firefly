@@ -67,14 +67,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1148,6 +1141,40 @@ public class VisServerOps {
         }
     }
 
+    public static WebPlotResult getRelocatableRegions(String fileKey) {
+        List<String> rAsStrList =  new ArrayList<>();
+        List<String> msgList =  new ArrayList<>();
+        WebPlotResult retval = new WebPlotResult();
+
+        try {
+            Cache sessionCache = UserCache.getInstance();
+            File fpFile = ServerContext.convertToFile(fileKey);
+
+            if (fpFile == null || !fpFile.canRead()) {
+                UploadFileInfo tmp = (UploadFileInfo) (sessionCache.get(new StringKey(fileKey)));
+                fpFile = tmp.getFile();
+            }
+
+
+            InputStream in = new FileInputStream(fpFile);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String tmpLine;
+
+            while ((tmpLine = br.readLine()) != null) {
+                tmpLine = tmpLine.trim();
+                if (!tmpLine.startsWith("#")) rAsStrList.add(tmpLine);
+            }
+            if (rAsStrList.size() == 0) {
+                msgList.add("no region is defined in the footprint file");
+            }
+        } catch (Exception e) {
+                retval = createError("on getRelocatableRegion", null, e);
+        }
+
+        retval.putResult(WebPlotResult.REGION_DATA, StringUtils.combineStringList(rAsStrList));
+        retval.putResult(WebPlotResult.REGION_ERRORS, StringUtils.combineStringList(msgList));
+        return retval;
+    }
 
     public static WebPlotResult getFootprintRegion(String fpInfo) {
 

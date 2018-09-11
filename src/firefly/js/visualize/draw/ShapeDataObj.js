@@ -8,7 +8,7 @@ import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import VisUtil, {convertAngle, computeScreenDistance, convert} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
-import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
+import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt, SimplePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
@@ -268,19 +268,29 @@ const draw=  {
 
     getCenterPt(drawObj) {
         const {pts}= drawObj;
-        let xSum = 0;
-        let ySum = 0;
-        let xTot = 0;
-        let yTot = 0;
 
-        pts.forEach((wp) => {
-           xSum += wp.x;
-           ySum += wp.y;
-           xTot++;
-           yTot++;
-        });
+        if (pts && pts.length > 0) {
+            let xSum = 0;
+            let ySum = 0;
+            let xTot = 0;
+            let yTot = 0;
 
-        return makeWorldPt(xSum / xTot, ySum / yTot);
+            pts.forEach((wp) => {
+                xSum += wp.x;
+                ySum += wp.y;
+                xTot++;
+                yTot++;
+            });
+
+            const type = pts[0].type;
+            const x = xSum/xTot;
+            const y = ySum/yTot;
+
+            return type === Point.W_PT ? makeWorldPt(x, y) : Object.assign(new SimplePt(x, y), {type});
+
+        } else {
+            return makeWorldPt(0, 0);
+        }
     },
 
     getScreenDist(drawObj,plot, pt) {
@@ -1609,6 +1619,11 @@ export function rotateAround(plot, pts, angle, wc) {
         if (!p1) return null;
 
         const pti= plot.getImageCoords(p1);
+
+        if (!pti) {
+            return null;
+        }
+
         const x1 = pti.x - center.x;
         const y1 = pti.y - center.y;
         const sin = Math.sin(-angle);

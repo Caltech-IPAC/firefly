@@ -18,36 +18,31 @@
 
 
 <div style="width: 500px; padding: 10px 0 0 10px;">
-    This page demos footprint on image with target at (0;0; J2000)
+    This page demos footprint on image with target at (10.68;41.26)
     <br>
 </div>
 
-<div id ="imageForRegion" style="border: 1px solid blue;width: 600px; height: 600px; margin: 10px;"></div>
+<div id ="imageForFootprint" style="border: 1px solid blue;width: 600px; height: 600px; margin: 10px;"></div>
 
 <div style="width:800px">
 
     <p style="margin-top:3px">Add new footprint overlay on above image:  <p/>
     <ul>
     <li><span style="color: blue">Create Footprint Layer:</span> enter region ID or use the hint, compose footprint description in the editing area, then click to add the new layer</li>
-    <li><span style="color: blue">Select Footprint Layer:</span> select a layer from the list and click to select the layer, the description of the selected footprint is shown in the editing area and the
-                                  first region in the footprint is highlighted</li>
     <li><span style="color: blue">Delete Footprint Layer:</span> select a layer from the list and click to delete the layer </li>
     </ul>
 </div>
 
 <div>
-    <a title="create a new region layer" href='javascript:createRegionLayer()'>Create Footprint Layer</a>
-    <input type='text' placeholder='' list='regionCreated' id='createRegionId' name='createRegionLayer'>
-    <datalist id='regionCreated'>
+    <a title="create a new region layer" href='javascript:createFootprintLayer()'>Create Footprint Layer</a>
+    <input type='text' placeholder='' list='footprintCreated' id='createFootprintId' name='createFootprintLayer'>
+    <datalist id='footprintCreated'>
     </datalist>
     &nbsp;
-    <a title="select a region layer" href='javascript:selectRegion()'>Select Footprint Layer:</a>
-    <select id='regionLayers'><option selected disabled>Region Layers:</option></select>
-    &nbsp;
-    <a title="delete a region layer" href='javascript:deleteRegionLayer()'>Delete Foorprint Layer</a>
-    <select id='regionList_delete'><option selected disabled>Region Layer:</option></select>
+    <a title="delete a region layer" href='javascript:deleteFootprintLayer()'>Delete Foorprint Layer</a>
+    <select id='footprintList_delete'><option selected disabled>Footprint Layer:</option></select>
     <div>
-        <textarea id="regionLayerContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
+        <textarea id="footprintLayerContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
     </div>
 </div>
 
@@ -72,21 +67,22 @@
             var util= firefly.util;
             var ui= firefly.ui;
 
-            firefly.showImage('imageForRegion', {
+            firefly.showImage('imageForFootprint', {
                 Type      : 'SERVICE',
-                plotId:   'regiontest',
+                plotId:   'footprinttest',
                 plotGroupId : 'myGroup',
                 Service  : 'WISE',
                 Title     : 'WISE W1 (3.4 microns)',
                 SurveyKey  : '3a',
                 SurveyKeyBand  : '1',
-                WorldPt    : '0.0;0.0;EQ_J2000',
-                SizeInDeg  : '1.5',
+                WorldPt    : '10.68;41.26;EQ_J2000',
+                SizeInDeg  : '0.8',
                 AllowImageSelection : true});
 
             window.regionAry = [
+                'global rotate=0',
                 'J2000',
-                'POLYGON -0.2D -0.2D -0.2D 0.2D 0.2D 0.2D 0.2D -0.2D # COLOR=ORANGE',
+                'POLYGON -0.2D -0.2D -0.2D 0.2D 0.2D 0.2D 0.2D -0.2D # COLOR=RED',
                 'POLYGON -0.18D -0.18D -0.18D 0.18D 0.18D 0.18D 0.18D -0.18D # COLOR=RED'
             ];
 
@@ -95,20 +91,21 @@
             window.regionsList = {};
             window.regionId = 0;
 
-            document.getElementById('regionLayerContent').value = window.regionAry.join('\n');
-            document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId+1);
+            document.getElementById('footprintLayerContent').value = window.regionAry.join('\n');
+            document.getElementById('createFootprintId').placeholder = "Region_Plot_" + (window.regionId+1);
         };
 
-        createRegionLayer = function() {
-            var layerId = document.getElementById('createRegionId').value;
+
+        createFootprintLayer = function() {
+            var layerId = document.getElementById('createFootprintId').value;
 
             if (!layerId) {
                 window.regionId++;
-                layerId = "Region_Plot_" + window.regionId;
-                document.getElementById('createRegionId').value = layerId;
+                layerId = "Footprint_Plot_" + window.regionId;
+                document.getElementById('createFootprintId').value = layerId;
             }
             if (layerId) {
-                var regionAry = document.getElementById('regionLayerContent').value.split('\n').filter(function (r) {
+                var regionAry = document.getElementById('footprintLayerContent').value.split('\n').filter(function (r) {
                     return (r.length !== 0);
                 });
 
@@ -116,14 +113,16 @@
                     window.regions.push(layerId);
                 }
                 window.regionsList[layerId] = regionAry;  // add new or update existing region layer
-                updateRegionLayerList();
+                updateFootprintLayerList();
 
-                firefly.action.dispatchCreateRegionLayer(layerId, layerId, null, regionAry, 'regiontest');
+                firefly.action.dispatchCreateFootprintLayer(layerId, null, {relocateBy: 'origin', fromRegionAry: regionAry},
+                                                            'footprinttest', true);
+
             }
         };
 
         updateDataList = function() {
-            var datalist = document.getElementById('regionCreated');
+            var datalist = document.getElementById('footprintCreated');
             var options = '';
 
             window.regions.forEach( function(r) {
@@ -131,12 +130,12 @@
             });
 
             datalist.innerHTML = options;
-            document.getElementById('createRegionId').value = '';
-            document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId+1);
+            document.getElementById('createFootprintId').value = '';
+            document.getElementById('createFootprintId').placeholder = "Region_Plot_" + (window.regionId+1);
         };
 
-        updateRegionLayerList = function() {
-            var selectListIds = ['regionLayers', 'regionList_delete'];
+        updateFootprintLayerList = function() {
+            var selectListIds = ['footprintList_delete'];
 
             selectListIds.forEach( function(selectId) {
                 var selectBox = document.getElementById(selectId);
@@ -157,33 +156,17 @@
 
         };
 
-        selectRegion = function() {
-            var selectBox=document.getElementById('regionLayers');
-            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
-
-            if (window.regions.indexOf(selectedLayerId) >= 0) {
-                var regionAry = window.regionsList[selectedLayerId];
-                var regionArea = document.getElementById('regionLayerContent');
-
-                regionArea.value = regionAry.join('\n');
-
-                if (selectedLayerId) {
-                    firefly.action.dispatchSelectRegion(selectedLayerId, regionAry);
-                }
-            }
-        };
-
-        deleteRegionLayer = function() {
-            var selectBox = document.getElementById('regionList_delete');
+        deleteFootprintLayer = function() {
+            var selectBox = document.getElementById('footprintList_delete');
 
             if (selectBox.selectedIndex !== 0) {
                 var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
 
                 window.regions.splice(selectBox.selectedIndex - 1, 1);
                 delete window.regionsList[selectedLayerId];
-                updateRegionLayerList();
+                updateFootprintLayerList();
 
-                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, 'regiontest');
+                firefly.action.dispatchDetachLayerFromPlot(selectedLayerId, 'footprinttest', true, true);
             }
         };
 
