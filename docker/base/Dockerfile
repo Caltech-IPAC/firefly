@@ -1,5 +1,5 @@
 #FROM tomcat:7.0-jre8
-FROM tomcat:8.0-jre8
+FROM tomcat:9.0.11-jre10
 
 #-----------------------------------------------------------------------------
 # To build: docker build -t ipac/firefly --build-arg IMAGE_NAME=ipac/firefly .
@@ -24,7 +24,8 @@ WORKDIR ${CATALINA_BASE}
 RUN chmod g-s ${CATALINA_BASE} && \
     mkdir bin conf lib logs temp webapps work && \
     cp ${CATALINA_HOME}/conf/* ${CATALINA_BASE}/conf/ && \
-    chmod +rw ${CATALINA_BASE}/conf/*
+    chmod +rw ${CATALINA_BASE}/conf/* && \
+    chmod -R +rX ${CATALINA_HOME}
 
 
 # These environment varibles are not really made to be overridden

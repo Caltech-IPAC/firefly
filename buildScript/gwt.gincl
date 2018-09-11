@@ -77,7 +77,7 @@ task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
     args "-extra", "$gwt.buildDir/extra"
     args "-workDir", "$gwt.buildDir/work"
     args "-logLevel", "INFO"
-    args "-XjsInteropMode", "JS"
+    args "-generateJsInteropExports"
     if (project.hasProperty("gwtDraftCompile") && project.gwtDraftCompile == 'true') {
       args "-draftCompile"
     }

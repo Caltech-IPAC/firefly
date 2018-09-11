@@ -82,6 +82,9 @@ fi
 if [ "$MANAGER" = "true" ] || [ "$MANAGER" = "t" ] || [ "$MANAGER" = "1" ] ||  \
    [ "$MANAGER" = "TRUE" ] || [ "$MANAGER" = "True" ] ; then
    cp -r ${CATALINA_HOME}/webapps/manager ${CATALINA_BASE}/webapps/
+   mkdir -p ${CATALINA_BASE}/conf/Catalina/localhost
+   sed "s/<Context>/<Context privileged='true'>/" ${CATALINA_BASE}/conf/context.xml > ${CATALINA_BASE}/conf/Catalina/localhost/manager.xml
+
 fi
 
 if [ "x$FIREFLY_SHARED_WORK_DIR" != "x" ]; then
