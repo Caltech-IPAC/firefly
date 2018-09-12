@@ -4,10 +4,9 @@
 
 import {flux} from '../Firefly.js';
 import {take} from 'redux-saga/effects';
-import {omit,get} from 'lodash';
+import {omit,get,isEqual} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {revalidateFields} from './FieldGroupUtils.js';
-import {smartMerge} from '../tables/TableUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 /**
@@ -196,7 +195,7 @@ function valueChangeActionCreator(rawAction) {
             }).catch((e) => console.log(e));
         }
     };
-};
+}
 
 
 
@@ -221,7 +220,7 @@ function multiValueChangeActionCreator(rawAction) {
                     .catch((e) => console.log(e));
             });
     };
-};
+}
 
 //======================================== Saga =============================
 //======================================== Saga =============================
@@ -383,17 +382,44 @@ const updateFieldGroupMount= function(state,action) {
  * @return {Object} the fields
  * fire the reducer for field group if it has been defined
  */
-const fireFieldsReducer= function(fg, action) {
+function fireFieldsReducer(fg, action) {
     // return  fg.reducerFunc ? fg.reducerFunc(revalidateFields(fg.fields), action) : fg.fields;
     if (fg.reducerFunc ) {
-        return fg.reducerFunc(revalidateFields(fg.fields), action);
+        const newFields = fg.reducerFunc(revalidateFields(fg.fields), action);
+        return smartReplace(fg.fields,newFields);
     }
     else {
         return fg.fields;
     }
-};
+}
 
-const valueChange= function(state,action) {
+/**
+ * Returns old fields unless some attribute has changed.
+ * @param oldFields
+ * @param newFields
+ * @returns {*}
+ */
+function smartReplace(oldFields, newFields) {
+    if (!oldFields || !newFields || oldFields === newFields) return newFields;
+    const newFieldsOptimized = {};
+    let hasChanged = false;
+    Object.entries(newFields).forEach(([k,nf]) => {
+        const of = oldFields[k];
+        if (!isEqual(of, nf)) {
+            newFieldsOptimized[k] = nf;
+            hasChanged = true;
+        } else {
+            newFieldsOptimized[k] = of;
+        }
+    });
+    if (!hasChanged && (Object.keys(oldFields).length === Object.keys(newFields).length)) {
+        return oldFields;
+    } else {
+        return newFieldsOptimized;
+    }
+}
+
+function valueChange(state,action) {
     var {fieldKey, groupKey,message='', valid=true, fireReducer=true}= action.payload;
 
     if (!getFieldGroup(state,groupKey)) {
@@ -421,7 +447,7 @@ const valueChange= function(state,action) {
     //==============
 
     return clone(state,mods);
-};
+}
 
 function updateWrapperGroup(state, fg, groupKey, action) {
     if (!get(state, [fg.wrapperGroupKey,'mounted'],false)) return {};
