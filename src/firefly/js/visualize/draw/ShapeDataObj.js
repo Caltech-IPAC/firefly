@@ -222,7 +222,7 @@ function makePolygon(ptAry, drawObjAry=null) {
  * @desc make a text
  *  @param   pt
  *  @param  text
- *  @param  rotationAngle - the rotation angle + deg
+ *  @param  rotationAngle - the rotation angle + 'deg'
  * @return {*}
  */
 function makeText(pt, text, rotationAngle=undefined) {
@@ -668,7 +668,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return false;
     
-    const {text, textOffset, renderOptions, rotationAngle, textBaseline= 'top', textAlign='start'}= drawObj;
+    const {text, textOffset, renderOptions, rotationAngle, textBaseline= 'top', textAlign='start', textAngle=0}= drawObj;
     //the angle of the grid line
     var angle=undefined;
     var pvAngle=undefined;
@@ -683,16 +683,24 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
             angle = pvAngle + lineAngle;
         }
         if (angle){
-            angle = angle>360? (angle-360)+'deg' : angle+'deg';
+            //angle = angle>360? (angle-360)+'deg' : angle+'deg';
+            while (angle > 360 || angle < -360) {
+                angle = angle > 360 ? (angle-360) : (angle+360);
+            }
         }
+    }
 
+    if (textAngle) {
+        angle = angle ? angle - textAngle : -textAngle;
     }
 
     const {fontName, fontSize, fontWeight, fontStyle}= drawParams;
     const color = drawParams.color || drawObj.color || 'black';
 
     const devicePt= plot.getDeviceCoords(inPt);
-    if (!plot.pointOnDisplay(devicePt)) {
+
+    //if (!plot.pointOnDisplay(devicePt)) {
+    if (!devicePt) {
         return false;
     }
 

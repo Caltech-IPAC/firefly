@@ -687,6 +687,9 @@ public class RegionFactory {
                 retval.pointType= parsePointType(token);
                 lookForPointSize= true;
             }
+            else if (token.toLowerCase().startsWith("textangle=")) {
+                retval.ops.setTextAngle(parseFloat(token, 0));
+            }
             else if (lookForPointSize) {
                 try {
                     retval.ptSize= Integer.parseInt(token);
@@ -761,6 +764,22 @@ public class RegionFactory {
             }
         }
         return width ;
+    }
+
+    private static float parseFloat(String token, float defVal)
+    {
+        float val = defVal;
+        StringTokenizer st1 = new StringTokenizer(token, "=");
+        if (st1.hasMoreToken()) st1.nextToken();
+        if (st1.hasMoreToken())
+        {
+            try {
+                val= Float.parseFloat(st1.nextToken().trim());
+            } catch (NumberFormatException e) {
+                val= defVal;
+            }
+        }
+        return val;
     }
 
     private static boolean isCoordSys(String s) {
@@ -916,6 +935,8 @@ public class RegionFactory {
 
     private static String makeValue(String k, String v) { return k+"="+v+" "; }
 
+    private static String makeValue(String k, float v) { return makeValue(k, v+""); }
+
     private static String makeValue(String k, boolean v) {
         String vStr= v ? "1" : "0";
         return k+"="+vStr+" ";
@@ -988,6 +1009,11 @@ public class RegionFactory {
             if (!op.getFont().equals(globalOps.getFont())) {
                 sb.append(makeValue("font","\""+op.getFont()+"\""));
             }
+            if (op.getTextAngle() != globalOps.getTextAngle()) {
+                sb.append(makeValue("textangle", op.getTextAngle()));
+
+            }
+
             if (optionElement instanceof RegionPoint) {
                 RegionPoint rp= (RegionPoint)optionElement;
                 sb.append(makeValue("point", rp.getPointType().toString().toLowerCase()));

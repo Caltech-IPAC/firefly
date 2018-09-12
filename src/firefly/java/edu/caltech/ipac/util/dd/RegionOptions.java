@@ -27,6 +27,7 @@ public class RegionOptions implements Serializable {
     private int     offsetX= 0;
     private int     offsetY= 0;
     private String  text= "";
+    private float textAngle=0;
     private RegionFont font= new RegionFont("helvetica", 10, "normal", "roman");
 
     public RegionOptions() {}
@@ -135,6 +136,12 @@ public class RegionOptions implements Serializable {
     public void setInclude(boolean include) {
         this.include = include;
     }
+
+    public void setTextAngle(float textAngle) {
+        this.textAngle = textAngle;
+    }
+
+    public float getTextAngle() { return textAngle; }
 
     public RegionOptions copy() {
         RegionOptions op= new RegionOptions();

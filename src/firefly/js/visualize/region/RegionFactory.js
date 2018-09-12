@@ -952,7 +952,7 @@ export class RegionFactory {
         const [ERR, CONT, STOP] = [0, 1, 2];
         const optionsName = [ 'color', 'dashlist','text', 'width','font','select', 'highlite',
                               'dash', 'fixed',  'edit', 'move', 'delete', 'include', 'rotate',
-                               'source', 'background', 'line', 'ruler', 'point'];
+                              'source', 'background', 'line', 'ruler', 'point', 'textangle'];
 
         if (rgCsys) {
             set(rgOptions, regionPropsList.COORD, rgCsys);
@@ -1178,6 +1178,13 @@ export class RegionFactory {
                     opValRes = getOptionValue(ops, getValueBeforeChar, ' ');
                     if (opValRes.valueStr) {
                         set(rgOptions, regionPropsList.SOURCE, isTrue(opValRes.valueStr));
+                    }
+                    break;
+
+                case 'textangle':
+                    opValRes = getOptionValue(ops, getValueBeforeChar, ' ');
+                    if (opValRes.valueStr) {
+                        set(rgOptions, regionPropsList.TEXTANGLE, parseFloat(opValRes.valueStr));
                     }
                     break;
 
