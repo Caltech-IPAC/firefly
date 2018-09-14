@@ -627,8 +627,8 @@ public final class FITSTableReader
      * Convert a FITS binary table file on disk to a list of DataGroup
      * @param FITS_filename input_filename
      * @param catName data group title (catName is not used).
-     * @deprecated
      */
+    @Deprecated
     public static List<DataGroup> convertFITSToDataGroup(String FITS_filename, String catName)
             throws FitsException, IOException
     {

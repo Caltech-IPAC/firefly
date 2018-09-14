@@ -13,33 +13,20 @@
 *.pyc
 .DS_Store
 *~
-#
+
 # -- ignore IntelliJ project files
-#
 .idea/
-#
+
+
 # -- ignore the build directories
-#
 build/
-.gradle/
-java/classes/
-java/dist/
-#
-# ------- ignore these configuration files
-#
-java/tools/build_override.properties
-#
-#
-#
-# ------- Ignore jar files that we build - these are artifacts 
-#
 jars/build/
-#
-# ------ ignore build number files
-java/tools/build.number
-#
+.gradle/
+
+
 # ignore javascript dependencies
 node_modules/
+package-lock.json
 
 # eclipse environment
 .classpath
