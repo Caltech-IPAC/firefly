@@ -6,20 +6,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {SimpleComponent} from './SimpleComponent.jsx';
 import {getWsInfo} from '../core/AppDataCntlr.js';
-import noInternet from 'html/images/no_internet.png';
 
-
+export const warningDivId = 'fireflyWarn';
 var divElement;
 
 export function initLostConnectionWarning() {
-    if (!divElement) {
-        divElement= document.createElement('div');
-        document.body.appendChild(divElement);
-        divElement.id= 'Lost_Connection';
-        divElement.style.position= 'absolute';
-        divElement.style.left= '0';
-        divElement.style.top= '0';
-
+    divElement = divElement || document.getElementById(warningDivId);
+    if (divElement) {
         ReactDOM.render(<LostConnection/>, divElement);
     }
 }
@@ -36,13 +29,8 @@ class LostConnection extends SimpleComponent {
 
         if (isConnected) return null;
         return (
-            <div className='lost-connection'>
-                <img src={noInternet}/>
-                <div>
-                    You are no longer connected to the server. <br/> 
-                    This message will go away once your connection is restored.
-                </div>
-            </div>
+            <div className ='lost-connection'
+                 title = 'You are no longer connected to the server. This icon will go away once your connection is restored.'/>
         );
     }
 }

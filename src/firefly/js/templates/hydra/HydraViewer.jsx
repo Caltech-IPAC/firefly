@@ -22,6 +22,7 @@ import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {TriViewImageSection, launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
+import {warningDivId} from '../../ui/LostConnection';
 
 
 /**
@@ -75,6 +76,7 @@ export class HydraViewer extends PureComponent {
             <div id='App' className='rootStyle' style={style}>
                 <header>
                     <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                    <div id={warningDivId} className='warning-div'/>
                     <DropDownContainer
                         key='dropdown'
                         footer={footer}

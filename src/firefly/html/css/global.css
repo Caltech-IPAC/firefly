@@ -1,4 +1,5 @@
 /** The are the colors we used.  Currently was are not using a css preprocessor
+/** The are the colors we used.  Currently was are not using a css preprocessor
     so they are just here for reference
 @def bodyColor            #f3f3f3;
 @def borderColor          #a3aeb9;
@@ -319,23 +320,20 @@
 /*------------------- loading mask >---------------------*/
 
 .lost-connection {
-    position: fixed;
-    z-index: 300;
-    top: 2px;
-    left: 50%;
-    height: 85px;
-    width: 485px;
-    margin-left: -200px;
-    background-color: #FFF7C2;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-    display: inline-flex;
-    align-items: center;
-    color: maroon;
-    border: solid 1px #bbb285;
+    width: 24px;
+    height: 24px;
+    background: url('/images/no_internet.png');
 }
 
-.lost-connection > * {
-    margin: 10px;
+.warning-div {
+    position: fixed;
+    right: 0;
+    z-index: 300;
+    background-color: beige;
+    box-shadow: -1px 1px 2px rgba(0,0,0,0.3);
+    border-radius: 5px 0 5px 5px;
+    padding: 1px;
+    margin: 2px;
 }
 
 .banner-background {
