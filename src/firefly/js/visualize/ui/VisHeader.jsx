@@ -48,7 +48,7 @@ export class VisHeader extends PureComponent {
         return (
             <div>
                 {showHeader && <VisHeaderView {...{showPreview, visRoot, currMouseState, readout, showHealpixPixel}}/>}
-                {showPreview && <VisPreview {...{showPreview, visRoot, currMouseState, readout}}/>}
+                {showPreview && <VisPreview {...{visRoot, currMouseState, readout}}/>}
             </div>
         );
     }

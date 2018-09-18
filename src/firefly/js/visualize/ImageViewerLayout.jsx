@@ -104,7 +104,9 @@ export class ImageViewerLayout extends PureComponent {
     componentDidMount() {
         const {width,height, plotView:pv}= this.props;
         this.previousDim= makePrevDim(this.props);
-        dispatchUpdateViewSize(pv.plotId,width,height);
+        if (width && height) {
+            dispatchUpdateViewSize(pv.plotId,width,height);
+        }
         if (primePlot(pv)) {
             const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
             updateZoom(pv.plotId,paging);
@@ -114,7 +116,7 @@ export class ImageViewerLayout extends PureComponent {
     componentWillReceiveProps(nextProps) {
         const {width,height}= nextProps;
         const {viewDim}= nextProps.plotView;
-        if (width!==viewDim.width && height!==viewDim.height) {
+        if (width!==viewDim.width && height!==viewDim.height && width && height) {
             dispatchUpdateViewSize(nextProps.plotView.plotId,width,height);
         }
 
@@ -130,7 +132,7 @@ export class ImageViewerLayout extends PureComponent {
         const {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId}= this.previousDim;
         if (!pv) return;
 
-        if (prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) {
+        if ((prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) && width && height) {
             dispatchUpdateViewSize(pv.plotId,width,height);
             if (primePlot(pv)) {
                 if (prevExternalWidth!==externalWidth || prevExternalHeight!==externalHeight) {

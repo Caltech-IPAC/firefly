@@ -21,7 +21,8 @@ import {uniqueID} from '../util/WebUtil';
 /**
  * @public
  */
-export {getBoolean, toBoolean, isDebug} from '../util/WebUtil.js';
+export {fetchUrl, getBoolean, toBoolean, isDebug} from '../util/WebUtil.js';
+export {ServerParams} from  '../data/ServerParams.js';
 
 export {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 
