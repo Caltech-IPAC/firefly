@@ -95,14 +95,14 @@ export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
  * @param {string} p.selectedRows   a comma-separated string of indices of the rows to get the data from
  * @return {Promise<TableModel>}
  */
-export const selectedValues = function({columnNames, request, selectedRows}) {
+export function selectedValues({columnNames, request, selectedRows}) {
     columnNames = Array.isArray(columnNames) ? columnNames.join() : String(columnNames);
     selectedRows = Array.isArray(selectedRows) ? selectedRows.join() : String(selectedRows);
     return doJsonRequest(ServerParams.SELECTED_VALUES, {columnNames, request: JSON.stringify(request), selectedRows})
             .then((tableModel) => {
                 return tableModel;
             });
-};
+}
 
 
 /**
@@ -141,13 +141,13 @@ export function packageRequest(dlRequest, searchRequest, selectionInfo) {
  * @param {ServerRequest} request
  * @return {Promise}
  */
-export const getJsonData = function(request) {
-    var paramList = [];
+export function getJsonData(request) {
+    const paramList = [];
     paramList.push({name:ServerParams.REQUEST, value: request.toString()});
 
     return doJsonRequest(ServerParams.JSON_DATA, paramList
     ).then((data) => {return data; });
-};
+}
 
 /**
  *
@@ -156,7 +156,7 @@ export const getJsonData = function(request) {
  * @param {number} waitMillis
  * @return {Promise}
  */
-export const submitBackgroundSearch= function(request, clientRequest, waitMillis) {
+export function submitBackgroundSearch(request, clientRequest, waitMillis) {
     if (getBgEmail()) {
         request = set(request, ['META_INFO', ServerParams.EMAIL], getBgEmail());
     }
@@ -171,17 +171,17 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
     clientRequest && (params[ServerParams.CLIENT_REQUEST] = JSON.stringify(clientRequest));
 
     return doJsonRequest(ServerParams.SUB_BACKGROUND_SEARCH, params);
-};
+}
 
 /**
  * add this job to the background
- * @param {string} id background id
+ * @param {string} bgStatus background id
  * @return {Promise}
  */
 export function addBgJob(bgStatus) {
     const params = {bgStatus: JSON.stringify(bgStatus)};
     return doJsonRequest(ServerParams.ADD_JOB, params).then( () => true);
-};
+}
 
 /**
  *
@@ -191,40 +191,40 @@ export function addBgJob(bgStatus) {
 export function removeBgJob(id) {
     const params = {[ServerParams.ID]: id};
     return doJsonRequest(ServerParams.REMOVE_JOB, params).then( () => true);
-};
+}
 
 /**
  *
  * @param {string} id background id
  * @return {Promise}
  */
-export const cancel= function(id) {
-    var paramList = [];
+export function cancel(id) {
+    const paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     return doJsonRequest(ServerParams.CANCEL, paramList
     ).then( () => true);
-};
+}
 
 /**
  *
  * @param {string} fileKey
  * @return {Promise}
  */
-export const getDownloadProgress= function(fileKey) {
-    var paramList = [];
+export function getDownloadProgress(fileKey) {
+    const paramList = [];
     paramList.push({name: ServerParams.FILE, value: fileKey});
     return doJsonRequest(ServerParams.DOWNLOAD_PROGRESS, paramList
     ).then((data) => {return DownloadProgress.get(data); });
-};
+}
 
 
 /**
  * @param {string} email
  * @return {Promise}
  */
-export const setEmail= function(email) {
-    var idList= Object.keys(getBackgroundJobs() || {});
-    var paramList= idList.map( (id) => {
+export function setEmail(email) {
+    const idList= Object.keys(getBackgroundJobs() || {});
+    const paramList= idList.map( (id) => {
         return {name:ServerParams.ID, value: id};
     } );
     if(paramList.length > 0) {
@@ -232,7 +232,7 @@ export const setEmail= function(email) {
         return doJsonRequest(ServerParams.SET_EMAIL, paramList
         ).then( () => true);
     }
-};
+}
 
 /**
  *
@@ -240,25 +240,25 @@ export const setEmail= function(email) {
  * @param {JobAttributes} attribute job attribute
  * @return {Promise}
  */
-export const setAttribute= function(ids, attribute) {
-    var idList=  Array.isArray(ids) ? ids : [ids];
-    var paramList= idList.map( (id) => {
+export function setAttribute(ids, attribute) {
+    const idList=  Array.isArray(ids) ? ids : [ids];
+    const paramList= idList.map( (id) => {
         return {name:ServerParams.ID, value: id};
     } );
     paramList.push({name:ServerParams.ATTRIBUTE, value:attribute.toString()});
     return doJsonRequest(ServerParams.SET_ATTR, paramList
     ).then( () => true);
-};
+}
 
 /**
  * resend email notification to all successfully completed background jobs.
  * @param {string} email
  * @return {Promise}
  */
-export const resendEmail= function(email) {
+export function resendEmail(email) {
     return doJsonRequest(ServerParams.RESEND_EMAIL, {[ServerParams.EMAIL]: email}
     ).then( () => true);
-};
+}
 
 /**
  *
@@ -266,13 +266,13 @@ export const resendEmail= function(email) {
  * @param {number} idx
  * @return {Promise}
  */
-export const clearPushEntry= function(id, idx ) {
-    var paramList = [];
+export function clearPushEntry(id, idx ) {
+    const paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     paramList.push({name: ServerParams.IDX, value: `${idx}`});
     return doJsonRequest(ServerParams.CLEAR_PUSH_ENTRY, paramList
     ).then( () => true);
-};
+}
 
 /**
  *
@@ -281,14 +281,14 @@ export const clearPushEntry= function(id, idx ) {
  * @param {string} data
  * @return {Promise}
  */
-export const reportUserAction= function(channel, desc, data) {
-    var paramList = [];
+export function reportUserAction(channel, desc, data) {
+    const paramList = [];
     paramList.push({name: ServerParams.CHANNEL_ID, value: channel});
     paramList.push({name: ServerParams.DATA, value: data});
     paramList.push({name: ServerParams.DESC, value: desc});
     return doJsonRequest(ServerParams.REPORT_USER_ACTION, paramList
     ).then( () => true);
-};
+}
 
 
 /**
@@ -299,14 +299,14 @@ export const reportUserAction= function(channel, desc, data) {
  * @param {array} attributes and array of ScriptAttributes
  * @return {Promise}
  */
-export const createDownloadScript= function(id, fname, dataSource, attributes) {
-    var attrAry= Array.isArray(attributes) ? attributes : [attributes];
-    var paramList= attrAry.map( (v='') => ({name:ServerParams.ATTRIBUTE, value: v.toString()}) );
+export function createDownloadScript(id, fname, dataSource, attributes) {
+    const attrAry= Array.isArray(attributes) ? attributes : [attributes];
+    const paramList= attrAry.map( (v='') => ({name:ServerParams.ATTRIBUTE, value: v.toString()}) );
     paramList.push({name: ServerParams.ID, value: id});
     paramList.push({name: ServerParams.FILE, value: fname});
     paramList.push({name: ServerParams.SOURCE, value: dataSource});
     return doJsonRequest(ServerParams.CREATE_DOWNLOAD_SCRIPT, paramList);
-};
+}
 
 /**
  * Download the download script to the user's computer.

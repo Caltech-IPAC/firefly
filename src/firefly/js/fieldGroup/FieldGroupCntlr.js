@@ -4,10 +4,9 @@
 
 import {flux} from '../Firefly.js';
 import {take} from 'redux-saga/effects';
-import {omit,get} from 'lodash';
+import {omit,get,isEqual} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {revalidateFields} from './FieldGroupUtils.js';
-import {smartMerge} from '../tables/TableUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 /**
@@ -196,7 +195,7 @@ function valueChangeActionCreator(rawAction) {
             }).catch((e) => console.log(e));
         }
     };
-};
+}
 
 
 
@@ -221,7 +220,7 @@ function multiValueChangeActionCreator(rawAction) {
                     .catch((e) => console.log(e));
             });
     };
-};
+}
 
 //======================================== Saga =============================
 //======================================== Saga =============================
@@ -229,12 +228,12 @@ function multiValueChangeActionCreator(rawAction) {
 
 
 export function* watchForRelatedActions(params, dispatcher, getState ) {
-    var action=  yield take();
-    var state;
+    let action=  yield take();
+    let state;
     while(true) {
         state= getState()[FIELD_GROUP_KEY];
         Object.keys(state).forEach((groupKey)=> {
-            var fg= state[groupKey];
+            const fg= state[groupKey];
             if (fg.mounted && fg.actionTypes.includes(action.type)) {
                 dispatcher({type:RELATED_ACTION, payload:{fieldGroup:fg, originalAction:action}});
             }
@@ -263,7 +262,7 @@ function reducer(state={}, action={}) {
 
     if (!action.payload || !action.type) return state;
 
-    var retState= state;
+    let retState= state;
     switch (action.type) {
         case INIT_FIELD_GROUP  :
             retState= initFieldGroup(state, action);
@@ -326,32 +325,32 @@ function addInitValues(fields,initValues) {
  * @param {Action} action
  */
 function initFieldGroup(state,action) {
-    var {groupKey, reducerFunc, actionTypes=[], keepState, initValues,wrapperGroupKey}= action.payload;
+    const {groupKey, reducerFunc, actionTypes=[], keepState, initValues,wrapperGroupKey}= action.payload;
 
     const mounted= get(state, [groupKey,'mounted'],false);
 
-    var fields= reducerFunc ? reducerFunc(null, action) : {};
+    let fields= reducerFunc ? reducerFunc(null, action) : {};
 
     if (initValues) {
         fields= addInitValues(fields,initValues);
     }
 
 
-    var fg= constructFieldGroup(groupKey,fields,reducerFunc,actionTypes, keepState, wrapperGroupKey);
+    const fg= constructFieldGroup(groupKey,fields,reducerFunc,actionTypes, keepState, wrapperGroupKey);
     fg.mounted= mounted;
     fg.initFields= Object.keys(fg.fields).map( (key) => fg.fields[key]);
     return clone(state,{[groupKey]:fg});
 }
 
-const updateFieldGroupMount= function(state,action) {
-    var {groupKey, mounted, initValues, reducerFunc, wrapperGroupKey, forceUnmount}= action.payload;
+function updateFieldGroupMount(state,action) {
+    const {groupKey, mounted, initValues, reducerFunc, wrapperGroupKey, forceUnmount}= action.payload;
     if (!groupKey) return state;
 
-    var retState= state;
+    let retState= state;
 
     if (mounted) {
         if (isFieldGroupDefined(state,groupKey)) {
-            fg= findAndCloneFieldGroup(state, groupKey, {mounted:true});
+            const fg= findAndCloneFieldGroup(state, groupKey, {mounted:true});
             if (wrapperGroupKey) fg.wrapperGroupKey= wrapperGroupKey;
             if (reducerFunc) fg.reducerFunc= reducerFunc;
 
@@ -369,7 +368,7 @@ const updateFieldGroupMount= function(state,action) {
     }
     else {
         if (isFieldGroupDefined(state,groupKey)) {
-            var fg= findAndCloneFieldGroup(state, groupKey, {mounted:false});
+            const fg= findAndCloneFieldGroup(state, groupKey, {mounted:false});
             if (!fg.keepState || forceUnmount) fg.fields= null;
             retState= clone(state,{[groupKey]:fg});
         }
@@ -383,26 +382,52 @@ const updateFieldGroupMount= function(state,action) {
  * @return {Object} the fields
  * fire the reducer for field group if it has been defined
  */
-const fireFieldsReducer= function(fg, action) {
+function fireFieldsReducer(fg, action) {
     // return  fg.reducerFunc ? fg.reducerFunc(revalidateFields(fg.fields), action) : fg.fields;
     if (fg.reducerFunc ) {
-        const newFields= fg.reducerFunc(revalidateFields(fg.fields), action);
-        return smartMerge(fg.fields,newFields);
+        const newFields = fg.reducerFunc(revalidateFields(fg.fields), action);
+        return smartReplace(fg.fields,newFields);
     }
     else {
         return fg.fields;
     }
-};
+}
 
-const valueChange= function(state,action) {
-    var {fieldKey, groupKey,message='', valid=true, fireReducer=true}= action.payload;
+/**
+ * Returns old fields unless some attribute has changed.
+ * @param oldFields
+ * @param newFields
+ * @returns {*}
+ */
+function smartReplace(oldFields, newFields) {
+    if (!oldFields || !newFields || oldFields === newFields) return newFields;
+    const newFieldsOptimized = {};
+    let hasChanged = false;
+    Object.entries(newFields).forEach(([k,nf]) => {
+        const of = oldFields[k];
+        if (!isEqual(of, nf)) {
+            newFieldsOptimized[k] = nf;
+            hasChanged = true;
+        } else {
+            newFieldsOptimized[k] = of;
+        }
+    });
+    if (!hasChanged && (Object.keys(oldFields).length === Object.keys(newFields).length)) {
+        return oldFields;
+    } else {
+        return newFieldsOptimized;
+    }
+}
+
+function valueChange(state,action) {
+    const {fieldKey, groupKey,message='', valid=true, fireReducer=true}= action.payload;
 
     if (!getFieldGroup(state,groupKey)) {
         state = initFieldGroup(state,action);
         state[groupKey].mounted= true;
     }
 
-    var fg= findAndCloneFieldGroup(state, groupKey);
+    const fg= findAndCloneFieldGroup(state, groupKey);
 
     const addToInit= !fg.fields[fieldKey];
     fg.fields[fieldKey]=  Object.assign({},
@@ -413,7 +438,7 @@ const valueChange= function(state,action) {
     if (fireReducer) fg.fields= fireFieldsReducer(fg, action);
     if (addToInit) fg.initFields= [...fg.initFields,fg.fields[fieldKey]];
 
-    var mods= {[groupKey]:fg};
+    let mods= {[groupKey]:fg};
    //============== Experimental parent group get notified
     if (fireReducer) {
         const modAddition= updateWrapperGroup(state,fg,groupKey,action);
@@ -422,12 +447,12 @@ const valueChange= function(state,action) {
     //==============
 
     return clone(state,mods);
-};
+}
 
 function updateWrapperGroup(state, fg, groupKey, action) {
     if (!get(state, [fg.wrapperGroupKey,'mounted'],false)) return {};
 
-    var wrapperFg= findAndCloneFieldGroup(state, fg.wrapperGroupKey);
+    const wrapperFg= findAndCloneFieldGroup(state, fg.wrapperGroupKey);
     const childGroups= makeChildGroups(fg.wrapperGroupKey, state);
     childGroups[groupKey]= fg.fields;
     const wrapperAction= {
@@ -443,10 +468,10 @@ function multiValueChange(state,action) {
 
     fieldAry.forEach( (f) => state= valueChange(state,{type:VALUE_CHANGE, payload:clone(f,{groupKey,fireReducer:false})}) );
 
-    var fg= findAndCloneFieldGroup(state, groupKey);
+    const fg= findAndCloneFieldGroup(state, groupKey);
     fg.fields= fireFieldsReducer(fg, action);
 
-    var mods= {[groupKey]:fg};
+    let mods= {[groupKey]:fg};
     //============== Experimental parent group get notified
     const modAddition= updateWrapperGroup(state,fg,groupKey,action);
     mods= clone(mods,modAddition);
@@ -480,16 +505,16 @@ function makeChildGroups(wrapperGroupKey, state) {
 
 
 
-const updateMount= function(state, action) {
-    var {fieldKey,mounted,initFieldState={},groupKey}= action.payload;
-    var fg= getFieldGroup(state,groupKey);
+function updateMount(state, action) {
+    const {fieldKey,mounted,initFieldState={},groupKey}= action.payload;
+    let fg= getFieldGroup(state,groupKey);
     if (!fg || (!mounted && !fg.fields)) return state;
 
     fg= findAndCloneFieldGroup(state,groupKey);
 
     if (mounted) {
         const addToInit= !fg.fields[fieldKey];
-        var omitPayload= omit(action.payload, ['initFieldState','groupKey']);
+        const omitPayload= omit(action.payload, ['initFieldState','groupKey']);
         fg.fields[fieldKey]= Object.assign({valid:true,nullAllowed:true},initFieldState, fg.fields[fieldKey],
                                            omitPayload);
         if (addToInit) fg.initFields= [...fg.initFields,fg.fields[fieldKey]];
@@ -499,16 +524,16 @@ const updateMount= function(state, action) {
     }
 
     return clone(state,{[groupKey]:fg});
-};
+}
 
 
 //============ private utilities =================================
 //============ private utilities =================================
 //============ private utilities =================================
 
-const createState= function(oldState,groupKey,fieldGroup) {
+function createState(oldState,groupKey,fieldGroup) {
     return Object.assign({},oldState, {[groupKey]:fieldGroup});
-};
+}
 
 
 // function cloneField(field, newKeys={}) { return Object.assign({},field,newKeys); }
@@ -521,9 +546,9 @@ const createState= function(oldState,groupKey,fieldGroup) {
  * @param {object} newValues any value replacements
  */
 function findAndCloneFieldGroup(state,groupKey, newValues={}) {
-    var fg= getFieldGroup(state,groupKey);
+    const fg= getFieldGroup(state,groupKey);
     if (!fg) return undefined;
-    var retFg= Object.assign({},fg,newValues);
+    const retFg= Object.assign({},fg,newValues);
     retFg.fields= Object.assign({},fg.fields);
     return retFg;
 }

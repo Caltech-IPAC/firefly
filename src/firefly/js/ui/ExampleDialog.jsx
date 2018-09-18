@@ -3,6 +3,7 @@
  */
 
 import React, {PureComponent} from 'react';
+import {get} from 'lodash';
 import PropTypes from 'prop-types';
 import {TargetPanel} from './TargetPanel.jsx';
 import {InputGroup} from './InputGroup.jsx';
@@ -15,11 +16,12 @@ import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
 import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
-import {dispatchMultiValueChange, dispatchRestoreDefaults} from '../fieldGroup/FieldGroupCntlr.js';
+import {dispatchMultiValueChange, dispatchRestoreDefaults, VALUE_CHANGE} from '../fieldGroup/FieldGroupCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {showModal} from './PopupUtil.jsx';
 import FieldGroupUtils, {revalidateFields} from '../fieldGroup/FieldGroupUtils';
+import {updateSet} from '../util/WebUtil.js';
 
 import {CollapsiblePanel} from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
@@ -87,6 +89,28 @@ const defValues= {
         validator: Validate.intRange.bind(null, 1, 100, 'high field'),
         tooltip: 'this is a tip for high field',
         label: 'High Field:'
+    },
+    radioGrpFld: {
+        fieldKey: 'radioGrpFld',
+        alignment: 'vertical',
+        tooltip: 'Please select an option',
+        label: 'Master Radio Group:',
+        options: [
+            {label: 'Option 1', value: 'opt1'},
+            {label: 'Hide A Field', value: 'opt2'}
+        ],
+        value: 'opt1'
+    },
+    radioGrpFld2: {
+        fieldKey: 'radioGrpFld2',
+        alignment: 'vertical',
+        tooltip: 'Please select an dependent option',
+        label: 'Dependent Radio Group:',
+        options: [
+            {label: 'Dependent 1', value: 'dep1'},
+            {label: 'Dependent 2', value: 'dep2'}
+        ],
+        value: 'dep1'
     }
 };
 
@@ -103,7 +127,28 @@ var exDialogReducer= function(inFields, action) {
         return defValues;
     }
     else {
-        var {low,high}= inFields;
+        let {low,high}= inFields;
+        if (get(action, 'type') === VALUE_CHANGE) {
+            // update the options and value in the dependent radio group
+            // based on the value of master radio group
+            const {fieldKey, value} = action.payload;
+            if (fieldKey === 'radioGrpFld') {
+                const newOptions = (value === 'opt2') ?
+                    [
+                        {label: 'Dependent 3', value: 'dep3'},
+                        {label: 'Dependent 4', value: 'dep4'},
+                        {label: 'Dependent 5', value: 'dep5'}
+                    ] :
+                    [
+                        {label: 'Dependent 1', value: 'dep1'},
+                        {label: 'Dependent 2', value: 'dep2'}
+                    ];
+                const newValue = newOptions[0].value;
+                inFields = updateSet(inFields, 'radioGrpFld2.options', newOptions);
+                inFields = updateSet(inFields, 'radioGrpFld2.value', newValue);
+            }
+        }
+
         // inFields= revalidateFields(inFields);
         if (!low.valid || !high.valid) {
             return inFields;
@@ -294,30 +339,10 @@ function FieldGroupTestView ({fields}) {
                 <br/><br/>
                 <RadioGroupInputField
                     inline={true}
-                    alignment='vertical'
-                    initialState= {{
-                        tooltip: 'Please select an option',
-                        label : 'Radio Group:',
-                        value: 'opt1'
-                    }}
-                    options={[
-                        {label: 'Option 1', value: 'opt1'},
-                        {label: 'Hide A Field', value: 'opt2'}
-                    ]}
                     fieldKey='radioGrpFld'
                 />
-                <br/>
                 <RadioGroupInputField
                     inline={true}
-                    alignment='vertical'
-                    initialState= {{
-                        tooltip: 'Please select an option',
-                        label: 'Another Group:'
-                    }}
-                    options={[
-                        {label: 'Option 2', value: 'opt1'},
-                        {label: 'Option 3', value: 'opt2'}
-                    ]}
                     fieldKey='radioGrpFld2'
                 />
 
