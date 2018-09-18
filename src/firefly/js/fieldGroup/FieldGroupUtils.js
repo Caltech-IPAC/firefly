@@ -13,8 +13,8 @@ const includeForValidation= (f,includeUnmounted) => f.valid !== undefined && (f.
 
 
 function validateResolvedSingle(groupKey,includeUnmounted) {
-    var flds= getGroupFields(groupKey);
-    var valid = Object.keys(flds).every( (key) =>
+    const flds= getGroupFields(groupKey);
+    const valid = Object.keys(flds).every( (key) =>
                      includeForValidation(flds[key],includeUnmounted) ? flds[key].valid : true);
     return valid;
 }
@@ -26,14 +26,14 @@ function validateResolvedSingle(groupKey,includeUnmounted) {
  * @param includeUnmounted
  * @return Promise with the valid state true/false --- todo: the return value does not work
  */
-var validateSingle= function(groupKey, includeUnmounted) {
-    var fields= getGroupFields(groupKey);
+function validateSingle(groupKey, includeUnmounted) {
+    let fields= getGroupFields(groupKey);
     if (!fields) return Promise.resolve(true);
 
     //====== clear out all functions
     Object.keys(fields).forEach( (key) => {
         if (isFunction(fields[key].value)) {
-            var newValue= fields[key].value();
+            const newValue= fields[key].value();
             if (typeof newValue=== 'object' && // check to see if return is an object that includes {value: any} and not a promise
                 !newValue.then &&
                 newValue.hasOwnProperty('value') ) {
@@ -74,19 +74,19 @@ var validateSingle= function(groupKey, includeUnmounted) {
         }
     )
         .catch( (e) => logError(e));
-};
+}
 
 /**
  *
  * @param groupKeyAry
  * @param includeUnmounted
  */
-var validateGroup= function(groupKeyAry, includeUnmounted) {
+function validateGroup(groupKeyAry, includeUnmounted) {
     return Promise.all(groupKeyAry.map( (groupKey) => validateSingle(groupKey,includeUnmounted)))
         .then( (validAry) => {
             return validAry.every( (v) => v);
         });
-};
+}
 
 /**
  * 
@@ -111,7 +111,7 @@ export var validateFieldGroup= function(groupKey, includeUnmounted) {
  * @return {*}
  */
 export function getFieldGroupResults(groupKey,includeUnmounted=false) {
-    var fields= getGroupFields(groupKey);
+    const fields= getGroupFields(groupKey);
     if (!fields) return null;
     return Object.keys(fields).
         filter((fieldKey) => (fields[fieldKey].mounted||includeUnmounted)).
@@ -128,14 +128,14 @@ export function getFieldGroupResults(groupKey,includeUnmounted=false) {
  * @param {string} groupKey
  * @return {object}
  */
-export const getFieldGroupState= function(groupKey) {
-    var fieldGroupMap= flux.getState()[FIELD_GROUP_KEY];
+export function getFieldGroupState(groupKey) {
+    const fieldGroupMap= flux.getState()[FIELD_GROUP_KEY];
     return fieldGroupMap[groupKey] ? fieldGroupMap[groupKey] : null;
-};
+}
 
 export function getFieldVal(groupKey, fldName, defval=undefined) {
     return get(getGroupFields(groupKey), [fldName, 'value'], defval);
-};
+}
 
 export function getReducerFunc(groupKey) {
     const groupState= getFieldGroupState(groupKey);
@@ -148,14 +148,14 @@ export function getReducerFunc(groupKey) {
  * @param {string} groupKey
  * @return {object}
  */
-const getGroupFields= function(groupKey) {
-    var groupState= getFieldGroupState(groupKey);
+function getGroupFields(groupKey) {
+    const groupState= getFieldGroupState(groupKey);
     return groupState?groupState.fields:null;
-};
+}
 
-const getFldValue= function(fields, fldName, defval=undefined) {
+function getFldValue(fields, fldName, defval=undefined) {
     return (fields? get(fields, [fldName, 'value'], defval) : defval);
-};
+}
 
 /**
  *
@@ -164,12 +164,12 @@ const getFldValue= function(fields, fldName, defval=undefined) {
  *                   react components state
  * @return {function} a function that will unbind the store, should be called on componentWillUnmount
  */
-const bindToStore= function(groupKey, stateUpdaterFunc) {
-    var storeListenerRemove= flux.addListener( () => {
+function bindToStore(groupKey, stateUpdaterFunc) {
+    const storeListenerRemove= flux.addListener( () => {
         stateUpdaterFunc(getGroupFields(groupKey));
     });
     return storeListenerRemove;
-};
+}
 
 
 /**
@@ -185,7 +185,7 @@ export function revalidateFields(fields) {
             // const {valid,message} = f.validator(f.value);
             // newfields[key]= (valid!==f.valid || message!==f.message) ? clone(f,{valid,message}) : f;
             newfields[key]= smartMerge(f,f.validator(f.value));
-            if (newfields[key] !== f) {hasChanged = true; }
+            if (newfields[key] !== f) hasChanged = true;
         } else {
             newfields[key] = f;
         }
@@ -197,7 +197,7 @@ export function revalidateFields(fields) {
 
 
 
-var FieldGroupUtils= {getGroupFields, getFldValue, bindToStore };
+const FieldGroupUtils= {getGroupFields, getFldValue, bindToStore };
 
 export default FieldGroupUtils;
 
