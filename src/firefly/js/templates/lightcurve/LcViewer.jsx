@@ -133,7 +133,7 @@ export class LcViewer extends PureComponent {
                 <div id='App' className='rootStyle' style={style}>
                     <header>
                         <BannerSection {...{menu, appTitle : title, appIcon, altAppIcon, additionalTitleStyle}}/>
-                        <div id={warningDivId} className='warning-div'/>
+                        <div id={warningDivId} data-decor='full' className='warning-div--center'/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}

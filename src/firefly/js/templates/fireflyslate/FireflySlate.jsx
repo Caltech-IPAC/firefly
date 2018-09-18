@@ -90,7 +90,7 @@ export class FireflySlate extends PureComponent {
                 <div id='App' className='rootStyle' style={style}>
                     <header>
                         <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
-                        <div id={warningDivId} className='warning-div'/>
+                        <div id={warningDivId} data-decor='full' className='warning-div--center'/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}
