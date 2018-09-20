@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.util.multipart;
 
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.StringUtils;
@@ -29,7 +30,9 @@ import java.util.Map;
  *
  * @author loi
  * @version $Id: MultiPartPostBuilder.java,v 1.12 2012/06/21 18:23:53 loi Exp $
+ * @deprecated use HttpServices.postData() instead.  HttpServicesInput takes param as well as files.
  */
+@Deprecated
 public class MultiPartPostBuilder {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
@@ -115,19 +118,16 @@ public class MultiPartPostBuilder {
                             filePost.getParams())
             );
 
-            if (cookies != null)  {
-                HttpServices.executeMethod(filePost,userId,passwd,cookies);
-            } else {
-                HttpServices.executeMethod(filePost, userId, passwd);
+            HttpServiceInput input = new HttpServiceInput().setUserId(userId).setPasswd(passwd);
+            if (cookies != null) {
+                cookies.forEach((k, v) -> input.setCookie(k, v));
             }
 
-            MultiPartRespnse resp = new MultiPartRespnse(filePost.getResponseHeaders(),
+            HttpServices.executeMethod(filePost, input, HttpServices.defaultHandler(responseBody));
+
+            return new MultiPartRespnse(filePost.getResponseHeaders(),
                                                 filePost.getStatusCode(),
                                                 filePost.getStatusText());
-            if (responseBody != null) {
-                HttpServices.handleResults(filePost, responseBody);
-            }
-            return resp;
 
         } catch (Exception ex) {
             LOG.error(ex, "Error while posting multipart request to" + targetURL);

@@ -26,6 +26,14 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
 public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
     public static final String SEARCH_REQUEST = "searchRequest";
 
+    @Override
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        // this method will not be called because ingestDataIntoDb is overridden.
+        // this processor operate on the results(db) of an existing request.
+        // it needs the original dbFile and dbAdapter.  A new abstract method is created for this.  see #fetchData()
+        return null;
+    }
+
     /**
      * results will be saved as a new set of tables(data, dd, meta) with the returned prefix.
      * @return
