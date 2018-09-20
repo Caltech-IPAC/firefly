@@ -335,23 +335,29 @@
 
 .warning-div {
     position: fixed;
-    right: 0;
     z-index: 300;
     background-color: beige;
-    box-shadow: -1px 1px 2px rgba(0,0,0,0.3);
-    border-radius: 5px 0 5px 5px;
     margin: 2px;
 }
 
-.warning-div--center {
-    position: fixed;
-    z-index: 300;
+.warning-div.right {
+    right: 0;
+    box-shadow: -1px 1px 2px rgba(0,0,0,0.3);
+    border-radius: 0 5px 5px 5px;
+}
+
+.warning-div.left {
+    left: 0;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    border-radius: 5px 0 5px 5px;
+}
+
+
+.warning-div.center {
     left: 50%;
     transform: translateX(-50%);
-    background-color: beige;
     box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
     border-radius: 5px;
-    margin: 2px;
 }
 
 .banner-background {
