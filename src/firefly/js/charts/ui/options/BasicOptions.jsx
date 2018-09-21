@@ -22,6 +22,7 @@ import {getColumnType, getTblById} from '../../../tables/TableUtil.js';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {getColValidator} from '../ColumnOrExpression.jsx';
 import {uniqueChartId, TRACE_COLORS, toRGBA, colorsOnTypes} from '../../ChartUtil.js';
+import {colorscaleNameToVal} from '../../Colorscale.js';
 
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
@@ -552,7 +553,13 @@ export function submitChanges({chartId, fields, tbl_id}) {
                     }
                 }
             }
-
+        } else if (k.match(/^fireflyData.+colorscale$/)) {
+            // colorscale name is saved in fireflyData
+            // the corresponding colorscale value must be set in data
+            const colorscale = colorscaleNameToVal(v);
+            if (colorscale) {
+                changes[k.replace(/^fireflyData/, 'data')] = colorscale;
+            }
         }
 
         // move colorbar to the other side of the chart

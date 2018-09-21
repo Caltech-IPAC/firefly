@@ -114,8 +114,7 @@ const defFireflyOptions = {
 
     charts: {
         defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable
-        maxRowsForScatter: undefined, // maximum table rows for scatter chart support, undefined means unlimited
-        maxRowsForDefaultScatter: 5000, // maximum table rows for which the default chart is scatter, heatmap is created for larger tables
+        maxRowsForScatter: 5000, // maximum table rows for scatter chart support, heatmap is created for larger tables
         minScatterGLRows: 1000, // minimum number of points to use WebGL 'scattergl' instead of SVG 'scatter'
         singleTraceUI: false, // by default we support multi-trace in UI
         upperLimitUI: false, // by default user can not set upper limit column in scatter options
