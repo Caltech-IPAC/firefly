@@ -54,7 +54,7 @@ export class FootprintFactory {
     }
 
     static getOriginalRegionsFromStc(defAry, isInstrument, bAllowHeader = false) {
-        var regions = RegionFactory.parseRegionDS9(defAry, bAllowHeader);
+        var regions = RegionFactory.parseRegionDS9(defAry, bAllowHeader, true);
 
         regions.forEach( (oneRegion) => Object.assign(oneRegion, {isInstrument}));
         return regions;

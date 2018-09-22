@@ -752,7 +752,7 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     }
 
     const textColor = maximizeOpacity(color);
-    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, renderOptions,
+    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, Object.assign({}, renderOptions, {rotAngle: 0.0}),
         {rotationAngle:angle, textBaseline, textAlign},
         {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
     );
@@ -861,8 +861,6 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 angle += rectAngle  + get(renderOptions, 'rotAngle', 0.0);
                 angle = getPVRotateAngle(plot, angle);
 
-                //angle = angleAfterFlip(angle);
-
                 if (has(renderOptions, 'translation')) {
                     x += renderOptions.translation.x;
                     y += renderOptions.translation.y;
@@ -952,9 +950,9 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  * @param onlyAddToPath
  */
 function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
-    const {pts, text, radius1, radius2, renderOptions, angleUnit, isOnWorld = true}= drawObj;
+    const {pts, text, radius1, radius2,  angleUnit, isOnWorld = true}= drawObj;
     const {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
-    let {angle= 0}= drawObj;
+    let {angle= 0, renderOptions}= drawObj;
     let inView = false;
     let centerPt= null;
     let pt0;
@@ -1014,8 +1012,13 @@ function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 angle = plot.zoomFactor * angle;
             }
 
-            angle += eAngle;
+            angle += eAngle + get(renderOptions, 'rotAngle', 0.0);
             angle = getPVRotateAngle(plot, angle);
+
+            renderOptions = Object.assign({}, renderOptions,
+                {
+                    rotAngle: 0.0
+                });
 
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
@@ -1461,8 +1464,8 @@ function makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, radius1, rad
 
     let opt;
     const height = fontHeight(fontSize);
-
     const offy = height + lineWidth;
+
     switch (textLoc) {
         case TextLocation.ELLIPSE_NE:
             opt= makeOffsetPt(-1*w, -1*(h + offy));
@@ -1581,7 +1584,6 @@ export function rotateShapeAround(drawObj, plot, angle, worldPt) {
 
     const newPts = rotateAround(plot, drawObj.pts, angle, worldPt);
     const newObj = Object.assign({}, drawObj, {pts: newPts});
-
     const addRotAngle = (obj) => {
         if (obj.sType === ShapeType.Rectangle || obj.sType === ShapeType.Ellipse) {
             let rotAngle = angle;

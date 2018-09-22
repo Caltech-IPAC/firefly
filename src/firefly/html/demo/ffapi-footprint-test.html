@@ -79,13 +79,21 @@
                 SizeInDeg  : '0.8',
                 AllowImageSelection : true});
 
+
             window.regionAry = [
                 'global rotate=0',
                 'J2000',
                 'POLYGON -0.2D -0.2D -0.2D 0.2D 0.2D 0.2D 0.2D -0.2D # COLOR=RED',
                 'POLYGON -0.18D -0.18D -0.18D 0.18D 0.18D 0.18D 0.18D -0.18D # COLOR=RED'
             ];
-
+            /*
+            window.regionAry = [
+                'global rotate=1',
+                'physical;circle(0,0,150) # color=red text={this is a circle}',
+                'ellipse(465, 578, 40, 20, 30) # fixed=1 text={this is an ellipse}',
+                'box(465, 578, 40, 20, 30) # fixed=1 text={this is a box}'
+            ];
+            */
             window.emptyRegion = '';
             window.regions = [];
             window.regionsList = {};
