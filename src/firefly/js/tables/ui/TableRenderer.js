@@ -3,11 +3,12 @@
  */
 
 import React, {Component, PureComponent} from 'react';
+import ReactDOM from 'react-dom';
 import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
-import {getColumns} from '../TableUtil.js';
+import {isNumericType, tblDropDownId} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -16,6 +17,10 @@ import {toBoolean} from '../../util/WebUtil.js';
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
 import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
+import {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
+import {FieldGroup} from '../../ui/FieldGroup';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
 const {Cell} = FixedDataTable;
 const html_regex = /<.+>/;
@@ -36,27 +41,11 @@ export class HeaderCell extends PureComponent {
         const {col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, style, tbl_id} = this.props;
         const {label, name, desc, sortByCols, sortable} = col || {};
         const cdesc = desc || label || name;
-        const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortDir = SortInfo.parse(sortInfo).getDirection(name);
         const sortCol = sortByCols || name;
-        const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, name);
         const typeVal = col.type || '';
         const unitsVal = col.units ? `(${col.units})`: '';
         
-        const filter = get(col, 'filterable', true) ?
-                        (<InputField
-                            validator={validator}
-                            fieldKey={name}
-                            tooltip={FILTER_CONDITION_TTIPS}
-                            value={filterInfoCls.getFilter(name)}
-                            onChange={(v) => onFilter(v)}
-                            actOn={['blur','enter']}
-                            showWarning={false}
-                            style={filterStyle}
-                            wrapperStyle={filterStyle}/>
-                        )
-                        : <div style={{height:19}} />;
-
         const onClick = toBoolean(sortable, true) && (() => onSort(sortCol));
         return (
             <div style={style} title={cdesc} className='TablePanel__header'>
@@ -68,10 +57,75 @@ export class HeaderCell extends PureComponent {
                     {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
                     {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic'}}>{typeVal}</div>}
                 </div>
-                {showFilters && filter}
+                {showFilters && <Filter {...{col, onFilter, filterInfo, tbl_id}}/>}
             </div>
         );
     }
+}
+
+function Filter({col, onFilter, filterInfo, tbl_id}) {
+    const {name, filterable=true, enumVals} = col || {};
+
+    if (!filterable) return <div style={{height:19}} />;      // column is not filterable
+
+    let atElRef;
+    const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, name);
+    const filterInfoCls = FilterInfo.parse(filterInfo);
+    const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
+    const onEnumClicked = () => {
+        showDropDown({id: tblDropDownId(tbl_id), content, atElRef, locDir: 33, style: {marginLeft: -10}});
+    };
+
+    return (
+        <div style={{height:29, display: 'inline-flex', alignItems: 'center', width: '100%'}}>
+            <InputField
+                validator={validator}
+                fieldKey={name}
+                tooltip={FILTER_CONDITION_TTIPS}
+                value={filterInfoCls.getFilter(name)}
+                onChange={(v) => onFilter(v)}
+                actOn={['blur','enter']}
+                showWarning={false}
+                style={filterStyle}
+                wrapperStyle={filterStyle}/>
+            {enumVals && <div ref={(r) => atElRef=r} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 8, borderRadius: 5}}/>}
+        </div>
+    );
+}
+
+
+function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
+    const {name, enumVals} = col || {};
+    const groupKey = 'TableRenderer_enum';
+    const fieldKey = tbl_id + '-' + name;
+    const options = col.enumVals.split(',')
+                        .map( (s) => s.trim())
+                        .map( (s) => ({label: s, value: s}) );
+    let value = (filterInfoCls.getFilter(name) || '').match(/IN \((.+)\)/);
+    value = value ? value[1] : '';      // if it's an IN condition, takes the value between the (?).. else nothing.
+
+    const hideEnumSelect = () => hideDropDown(tblDropDownId(tbl_id));
+    const onApply = () => {
+        let value = getFieldVal(groupKey, fieldKey, '');
+        if (value) {
+            value = isNumericType(col) ? value :
+                    value.split(',')
+                         .map((s) => `'${s.trim()}'`).join(',');
+            value = `IN (${value})`;
+        }
+        onFilter({fieldKey: name, valid: true, value});
+        hideEnumSelect();
+    };
+
+    return (
+        <FieldGroup groupKey='TableRenderer_enum' style={{minWidth: 100}}>
+            <div style={{display: 'inline-flex', marginBottom: 5, width: '100%', justifyContent: 'space-between'}}>
+                <div className='ff-href' style={{fontSize: 13}} onClick={onApply}>Apply</div>
+                <div className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
+            </div>
+            <CheckboxGroupInputField {...{fieldKey, alignment: 'vertical', initialState:{options,value}}}/>
+        </FieldGroup>
+    );
 }
 
 export class SelectableHeader extends Component {

@@ -921,6 +921,10 @@ export function stripColumnNameQuotes(s) {
     return newS.includes('"') ? s : newS;
 }
 
+export function tblDropDownId(tbl_id) {
+    return `table_dropDown-${tbl_id}`;
+}
+
 /*-------------------------------------private------------------------------------------------*/
 
 /**

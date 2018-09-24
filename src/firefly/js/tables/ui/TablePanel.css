@@ -46,6 +46,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    z-index: 0;
 }
 .TablePanel__frame:focus {
     outline: rgb(91, 157, 217) auto 2px;

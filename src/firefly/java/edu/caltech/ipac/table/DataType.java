@@ -36,21 +36,22 @@ public class DataType implements Serializable, Cloneable {
     public static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
 
 
-    private       String keyName;
-    private       String label;
-    private       String typeDesc;
-    private       Class type;
-    private       String units;
-    private       String nullString = "";
-    private       String desc;
-    private       int width;
-    private       int prefWidth;
-    private       boolean sortable = true;
-    private       boolean filterable = true;
-    private       Visibility visibility = Visibility.show;   // show, hide, or hidden
-    private       String format;           // format string used for formating
-    private       String fmtDisp;          // format string for diplay ... this is deprecated
-    private       String sortByCols;       // comma-separated of column names
+    private String keyName;
+    private String label;
+    private String typeDesc;
+    private Class type;
+    private String units;
+    private String nullString = "";
+    private String desc;
+    private int width;
+    private int prefWidth;
+    private boolean sortable = true;
+    private boolean filterable = true;
+    private Visibility visibility = Visibility.show;   // show, hide, or hidden
+    private String format;           // format string used for formating
+    private String fmtDisp;          // format string for diplay ... this is deprecated
+    private String sortByCols;       // comma-separated of column names
+    private String enumVals;         // comma-separated of distinct values
 
 //    private transient PrimitiveList data;       // column-based data
     private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
@@ -205,6 +206,10 @@ public class DataType implements Serializable, Cloneable {
 
     public void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
 
+    public String getEnumVals() { return enumVals; }
+
+    public void setEnumVals(String enumVals) { this.enumVals = enumVals;}
+
     /**
      * returns the formatted header of this column padded to max width
      * @return
@@ -230,7 +235,6 @@ public class DataType implements Serializable, Cloneable {
             }
 
             String formatStr = getFmtDisp();
-            formatStr = formatStr == null ? getFormat() : formatStr;
             formatStr = formatStr == null ? getFormat() : formatStr;
             if (formatStr == null) {
                 formatStr = this.getFormatStr(0);

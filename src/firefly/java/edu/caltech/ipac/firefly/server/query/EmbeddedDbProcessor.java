@@ -4,6 +4,8 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -21,6 +23,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -42,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
 
 /**
@@ -75,6 +79,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 15);
 
 
     /**
@@ -191,9 +196,23 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             }
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 
-            if (doLogging() && dbFileCreated) {
-                // no reliable way of capturing cached searches count
-                SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+            // put all of the meta-info from the request into tablemeta
+            if (treq.getMeta() != null) {
+                for (String key : treq.getMeta().keySet()) {
+                    results.getData().getTableMeta().setAttribute(key, treq.getMeta(key));
+                }
+            }
+
+            if (dbFileCreated) {
+                if (doLogging()) {
+                    SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+                }
+                // check for values that can be enumerated..
+                File finalDbFile = dbFile;
+                DataGroupPart finalResults = results;
+                SHORT_TASK_EXEC.submit(() -> {
+                    enumeratedValuesCheck(finalDbFile, finalResults, treq);
+                });
             }
 
             return results;
@@ -480,7 +499,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return e.getMessage();
     }
 
-    private void setupMeta(DataGroup dg, ServerRequest req) {
+    private void setupMeta(DataGroup dg, TableServerRequest req) {
         // merge meta into datagroup from post-processing
         Map<String, DataGroup.Attribute> cmeta = dg.getAttributes();
         TableMeta meta = new TableMeta();
@@ -490,7 +509,56 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 dg.addAttribute(key, meta.getAttribute(key));
             }
         }
+
         IpacTableUtil.consumeColumnInfo(dg);
+
     }
+
+    private static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
+
+        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+        String cols = Arrays.stream(results.getData().getDataDefinitions())
+                                .filter(dt -> maybeEnums(dt))
+                                .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
+                                .collect(Collectors.joining(", "));
+
+        List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                                            .queryForList(String.format("SELECT %s FROM data", cols));
+        DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
+        updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
+        rs.get(0).forEach( (k,v) -> {
+            Long count = (Long) v;
+            if (count > 0 && count < MAX_COL_ENUM_COUNT) {
+                String vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                        .queryForList(String.format("SELECT distinct \"%s\" FROM data", k))
+                        .stream().map(m -> String.valueOf(m.get(k)))                        // map list of map to list of string(colname)
+                        .collect(Collectors.joining(","));                         // combine the names into comma separated string.
+                updates.getDataDefintion(k).setEnumVals(vals);
+
+                // update dd table
+                JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                        .update(String.format("UPDATE data_dd SET enumVals = '%s' WHERE cname = '%s'", vals, k));
+            }
+        });
+        // update client.. since initial data were sent without this info
+        sendTableUpdates(updates);
+    }
+
+    /**
+     * Send an action event message to the client updating the status of a table read/write.
+     */
+    private static void sendTableUpdates(DataGroup dataGroup) {
+        FluxAction action = new FluxAction("table.update", JsonTableUtil.toJsonTableModel(dataGroup));
+        ServerEventManager.fireAction(action);
+    }
+
+    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class);
+    private static List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
+    private static boolean maybeEnums(DataType dt) {
+        return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
+
+    }
+
+
 }
 

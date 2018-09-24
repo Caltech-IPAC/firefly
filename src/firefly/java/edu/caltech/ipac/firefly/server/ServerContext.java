@@ -34,7 +34,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,6 +47,9 @@ import java.util.concurrent.TimeUnit;
  * @version $Id: ServerContext.java,v 1.26 2012/10/19 23:02:33 tatianag Exp $
  */
 public class ServerContext {
+    public static final ExecutorService SHORT_TASK_EXEC = Executors.newCachedThreadPool();        // an expandable thread pools.. for short tasks.
+    public static final ScheduledExecutorService SCHEDULE_TASK_EXEC = Executors.newSingleThreadScheduledExecutor();
+
 
     private static final String HIPS_DIR_PREFIX        = "${hips-dir}";
     private static final String CACHE_DIR_PREFIX       = "${cache-dir}";
@@ -806,14 +811,25 @@ public class ServerContext {
             ServletContext cntx = servletContextEvent.getServletContext();
             ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
             VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
-            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> DbAdapter.getAdapter().cleanup(false),
-                        DbAdapter.CLEANUP_INTVL, DbAdapter.CLEANUP_INTVL, TimeUnit.MILLISECONDS);
+            SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
+                                () -> DbAdapter.getAdapter().cleanup(false),
+                                DbAdapter.CLEANUP_INTVL,
+                                DbAdapter.CLEANUP_INTVL,
+                                TimeUnit.MILLISECONDS);
         }
 
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
             System.out.println("contextDestroyed...");
             DbAdapter.getAdapter().cleanup(true);
             ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
+            try {
+                SHORT_TASK_EXEC.shutdownNow();
+                SHORT_TASK_EXEC.awaitTermination(5, TimeUnit.SECONDS);
+                SCHEDULE_TASK_EXEC.shutdownNow();
+                SCHEDULE_TASK_EXEC.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

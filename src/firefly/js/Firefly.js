@@ -28,6 +28,8 @@ import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 
 export const flux = reduxFlux;
 
+var initDone = false;
+
 /**
  * A list of available templates
  * @enum {string}
@@ -133,6 +135,9 @@ const defFireflyOptions = {
 
 
 function fireflyInit(props, options={}) {
+
+    if (initDone) return;
+
     props = mergeObjectOnly(defAppProps, props);
     options = mergeObjectOnly(defFireflyOptions, options);
     const {template} = props;
@@ -165,6 +170,8 @@ function fireflyInit(props, options={}) {
     } else {
         initApi();
     }
+
+    initDone = true;
 }
 
 /**

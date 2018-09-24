@@ -6,19 +6,18 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import FixedDataTable from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {debounce, defer, get, isEmpty} from 'lodash';
+import {get, isEmpty} from 'lodash';
 
-import {tableTextView, getTableUiById} from '../TableUtil.js';
+import {tableTextView, getTableUiById, tblDropDownId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
 import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
 
 import './TablePanel.css';
+import {hideDropDown} from '../../ui/DialogRootContainer';
 
 const {Table, Column} = FixedDataTable;
-
-
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 
@@ -42,6 +41,9 @@ class BasicTableViewInternal extends PureComponent {
     }
 
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
+        const {tbl_id} = getTableUiById(this.props.tbl_ui_id) || {};
+        hideDropDown(tblDropDownId(tbl_id));
+
         var columnWidths = Object.assign({}, this.state.columnWidths, {[columnKey]: newColumnWidth});
         this.setState({columnWidths});
     }
@@ -59,6 +61,8 @@ class BasicTableViewInternal extends PureComponent {
 
     componentWillUnmount() {
         this.isUnmounted = true;
+        const {tbl_id} = getTableUiById(this.props.tbl_ui_id) || {};
+        hideDropDown(tblDropDownId(tbl_id));
     }
 
 
@@ -136,11 +140,12 @@ class BasicTableViewInternal extends PureComponent {
         const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
 
         return (
-            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' >
+            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame'>
                 {   error ? <div style={{padding: 10}}>{error}</div> :
                     width === 0 ? <div /> :
                     textView ? <TextView { ...{columns, data, showUnits, width, height} }/> :
                     <Table
+                        onHorizontalScroll={() => {hideDropDown(tblDropDownId(tbl_id)); return true;} }
                         rowHeight={rowHeight}
                         headerHeight={headerHeight}
                         rowsCount={data.length}

@@ -11,6 +11,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.download.URLDownload;
+
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -22,7 +23,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -105,9 +105,11 @@ public class EhcacheProvider implements Cache.Provider {
                 // setup cleanup task
                 int ttiSecs = AppProperties.getIntProperty("vis.shared.tti.secs", DEF_TTI_SEC);  // defaults to expire after 60 mins of inactivity.
                 sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getCacheConfiguration().setTimeToIdleSeconds(ttiSecs);
-                Executors.newSingleThreadScheduledExecutor()
-                        .scheduleAtFixedRate( () -> sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getKeysWithExpiryCheck()        // this forces eviction
-                                              , EVICT_CHECK_INTVL, EVICT_CHECK_INTVL, TimeUnit.MINUTES);      // check every n minutes
+                ServerContext.SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
+                                () -> sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getKeysWithExpiryCheck(),       // forces expiry check
+                                EVICT_CHECK_INTVL,
+                                EVICT_CHECK_INTVL,
+                                TimeUnit.MINUTES);      // check every EVICT_CHECK_INTVL minutes
             }
             _log.info("shared cache manager config file: " + sharedConfig);
         }
