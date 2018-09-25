@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -34,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +78,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
 
     /**
-     * Fetches the data from the given search request, then save it into a database
+     * Fetches the data for the given search request.  This method should perform a fetch for fresh
+     * data.  Caching should not be performed here.
+     * @param req
+     * @return
+     * @throws DataAccessException
+     */
+    abstract public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException;
+
+    /**
+     * Fetches the data for the given search request, then save it into a database
      * The database should contains at least 3 named tables: DATA, DD, and META
      * DATA table contains the data
      * DD table contains definition of the columns, including name, label, format, etc
@@ -85,7 +96,21 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      * @param req  search request
      * @throws DataAccessException
      */
-    abstract public FileInfo ingestDataIntoDb(TableServerRequest req, File dbFile) throws DataAccessException;
+    public FileInfo ingestDataIntoDb(TableServerRequest req, File dbFile) throws DataAccessException {
+
+        DbAdapter dbAdapter = DbAdapter.getAdapter(req);
+
+        StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
+        DataGroup dg = fetchDataGroup(req);
+        StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
+
+        setupMeta(dg, req);
+
+        StopWatch.getInstance().start("ingestDataIntoDb: " + req.getRequestId());
+        FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
+        StopWatch.getInstance().stop("ingestDataIntoDb: " + req.getRequestId()).printLog("ingestDataIntoDb: " + req.getRequestId());
+        return finfo;
+    }
 
     /**
      * returns the database file for the given request.
@@ -453,6 +478,19 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         }
 
         return e.getMessage();
+    }
+
+    private void setupMeta(DataGroup dg, ServerRequest req) {
+        // merge meta into datagroup from post-processing
+        Map<String, DataGroup.Attribute> cmeta = dg.getAttributes();
+        TableMeta meta = new TableMeta();
+        prepareTableMeta(meta, Arrays.asList(dg.getDataDefinitions()), req);
+        for (String key : meta.getAttributes().keySet()) {
+            if (!cmeta.containsKey(key)) {
+                dg.addAttribute(key, meta.getAttribute(key));
+            }
+        }
+        IpacTableUtil.consumeColumnInfo(dg);
     }
 }
 

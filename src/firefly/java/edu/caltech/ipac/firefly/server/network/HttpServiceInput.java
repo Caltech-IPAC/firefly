@@ -51,12 +51,14 @@ public class HttpServiceInput {
     }
 
 
-    public void setUserId(String userId) {
+    public HttpServiceInput setUserId(String userId) {
         this.userId = userId;
+        return this;
     }
 
-    public void setPasswd(String passwd) {
+    public HttpServiceInput setPasswd(String passwd) {
         this.passwd = passwd;
+        return this;
     }
 
     public HttpServiceInput setParam(String key, String value) {

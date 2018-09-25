@@ -19,6 +19,7 @@ import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.http.HttpHeaders;
+import org.apache.xpath.operations.Bool;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -80,20 +81,26 @@ public class HttpServices {
      * @param results  the file to same the results in.
      * @return
      */
-    public static int getData(String url, File results) {
+    public static Status getData(String url, File results) {
         return getData(url, results, null);
     }
 
-    public static int getData(String url, OutputStream results) {
+    public static Status getData(String url, OutputStream results) {
         return getData(url, results, null);
     }
 
-    public static int getData(String url, File results, HttpServiceInput input) {
+    public static Status getData(String url, OutputStream results, HttpServiceInput input) {
+        return getData(url, input, defaultHandler(results));
+    }
+
+    /**
+     * For convenience, this function will return 400-bad-request if url is malformed or any IO related exceptions.
+     */
+    public static Status getData(String url, File results, HttpServiceInput input) {
         try {
-            OutputStream os = results == null ? null : new FileOutputStream(results);
-            return getData(url, os, input);
+            return getData(url, input, defaultHandler(results));
         } catch (FileNotFoundException e) {
-            return 400;
+            return new Status(400, e.getMessage());
         }
     }
 
@@ -103,94 +110,75 @@ public class HttpServices {
      * if params are given as input, it will replace any queryString provided in the url.  So, use one of the other.
      * params given as input will be automatically encoded with UTF-8.
      * @param url
-     * @param results
      * @param input  if params are given, it will replace any queryString provided in the url.  So, use one of the other.
+     * @param handler  how to handle the response/results.  If null, do nothing.
      * @return
      */
-    public static int getData(String url, OutputStream results, HttpServiceInput input) {
+    public static Status getData(String url, HttpServiceInput input, Handler handler) {
         try {
-            return executeMethod(new GetMethod(url), input, results);
+            HttpMethod method = executeMethod(new GetMethod(url), input, handler);
+            return Status.getStatus(method);
         } catch (IOException e) {
             LOG.error(e);
-            try {
-                FileUtil.writeStringToStream(e.getMessage(), results);
-            } catch (Exception ne) {};    // do nothing
-            return 400;
+            return new Status(400, e.getMessage());
         }
     }
 
 //====================================================================
 //  POST convenience functions
 //====================================================================
-    public static int postData(String url, File results, HttpServiceInput input) {
+    public static Status postData(String url, File results, HttpServiceInput input) {
         try {
-            OutputStream os = results == null ? null : new FileOutputStream(results);
-            return postData(url, os, input);
+            return postData(url, input, defaultHandler(results));
         } catch (FileNotFoundException e) {
-            return 400;
+            return new Status(400, e.getMessage());
         }
     }
 
-    public static int postData(String url, OutputStream results, HttpServiceInput input) {
+    public static Status postData(String url, OutputStream results, HttpServiceInput input) {
+        return postData(url, input, defaultHandler(results));
+    }
+
+    public static Status postData(String url, HttpServiceInput input, Handler handler) {
         try {
-            return executeMethod(new PostMethod(url), input, results);
+            HttpMethod method = executeMethod(new PostMethod(url), input, handler);
+            return Status.getStatus(method);
         } catch (IOException e) {
-            try {
-                FileUtil.writeStringToStream(e.getMessage(), results);
-            } catch (Exception ne) {};    // do nothing
-            return 400;
+            return new Status(400, e.getMessage());
         }
     }
+
 
 //====================================================================
 // low level functions
 //====================================================================
 
-    public static boolean executeMethod(HttpMethod method) {
-        return executeMethod(method, (String) null, null);
+    public static Status executeMethod(HttpMethod method) throws IOException {
+        return executeMethod(method, null, (OutputStream) null);
     }
 
-    public static boolean executeMethod(HttpMethod method, String userId, String password) {
-        return executeMethod(method, userId, password, null);
+    public static Status executeMethod(HttpMethod method, HttpServiceInput input) throws IOException {
+        return executeMethod(method, input, (OutputStream) null);
     }
 
-    /**
-     * Execute the given HTTP method with the given parameters.
-     * @param method    the function or method to perform
-     * @param cookies   optional, sent with request if present.
-     * @return  true is the request was successfully received, understood, and accepted (code 2xx).
-     */
-    @Deprecated
-    public static boolean executeMethod(HttpMethod method, String userId, String password, Map<String, String> cookies) {
-        try {
+    public static Status executeMethod(HttpMethod method, HttpServiceInput input, File results) throws IOException {
+        executeMethod(method, input, defaultHandler(results));
+        return Status.getStatus(method);
+    }
 
-            LOG.info("HttpServices URL:" + method.toString());
-
-            handleAuth(httpClient, method, userId, password);
-
-            handleCookies(method, cookies);
-
-            int status = httpClient.executeMethod(method);
-            boolean isSuccess =  status >= 200 && status < 300;
-            if (!isSuccess) {
-                LOG.error("HTTP request failed with status:" + status + "\n" + getDetailDesc(method, null));
-            }
-            return isSuccess;
-        } catch (Exception e) {
-            LOG.error(e, "Unable to connect to:" + method.toString());
-        }
-        return false;
+    public static Status executeMethod(HttpMethod method, HttpServiceInput input, OutputStream results) throws IOException {
+        executeMethod(method, input, defaultHandler(results));
+        return Status.getStatus(method);
     }
 
     /**
      * Executes the given method with the given input.  If results is given,
      * @param method
      * @param input
-     * @param results
+     * @param handler
      * @return
-     * @throws IOException
      */
-    public static int executeMethod(HttpMethod method, HttpServiceInput input, OutputStream results) throws IOException {
+    public static HttpMethod executeMethod(HttpMethod method, HttpServiceInput input, Handler handler) throws IOException {
         try {
             input = input == null ? new HttpServiceInput() : input;
             LOG.info("HttpServices URL:" + method.getURI().toString());
@@ -210,50 +198,88 @@ public class HttpServices {
             handleParams(method, input.getParams(), input.getFiles());
 
             int status = httpClient.executeMethod(method);
-
-            handleResults(method, results);
-
-            boolean isSuccess =  status >= 200 && status < 300;
-            if (!isSuccess) {
+            if (status < 200 || status >= 300) {
+                // logs bad requests
                 LOG.error("HTTP request failed with status:" + status + "\n" + getDetailDesc(method, input));
             }
-            return status;
+
+            if (handler != null) {
+                handler.handleResponse(method);
+            }
+
+            return method;
+
         } finally {
-            if (results != null) {
+            if (handler != null) {
                 method.releaseConnection();
             }
         }
     }
 
 
-
-
-
 //====================================================================
 //  Util helper functions
 //====================================================================
 
-    public static void handleResults(HttpMethod method, OutputStream results) {
-        BufferedInputStream bis = null;
-        BufferedOutputStream bos = null;
-        try {
-            String encoding = getResHeader(method, "Content-Encoding");
-            if (encoding.contains("gzip")) {
-                bis = new BufferedInputStream(new GZIPInputStream(method.getResponseBodyAsStream()));
-            } else {
-                bis = new BufferedInputStream(method.getResponseBodyAsStream());
-            }
+    public static Handler defaultHandler(File source) throws FileNotFoundException {
+        return source == null ? null : new OutputStreamHandler(source);
+    }
 
-            bos = new BufferedOutputStream(results);
-            int b;
-            while ((b = bis.read()) != -1) {
-                bos.write(b);
+    public static Handler defaultHandler(OutputStream source) {
+        return source == null ? null : new OutputStreamHandler(source);
+    }
+
+    public static class Status {
+        private String errMsg;
+        private int statusCode;
+
+        public Status(int statusCode, String errMsg) {
+            this.errMsg = errMsg;
+            this.statusCode = statusCode;
+        }
+
+        public boolean isError() { return statusCode < 200 || statusCode >= 300; }
+        public String getErrMsg() { return errMsg; }
+        public int getStatusCode() { return statusCode;}
+
+        public static Status getStatus(HttpMethod method) {
+            return new Status(method.getStatusCode(), method.getStatusText());
+        }
+    }
+
+    public static class OutputStreamHandler implements Handler {
+        private OutputStream results;
+
+        public OutputStreamHandler(File results) throws FileNotFoundException {
+            this.results = new FileOutputStream(results);
+        }
+
+        public OutputStreamHandler(OutputStream results) {
+            this.results = results;
+        }
+
+        public void handleResponse(HttpMethod method) {
+            BufferedInputStream bis = null;
+            BufferedOutputStream bos = null;
+            try {
+                String encoding = getResHeader(method, "Content-Encoding");
+                if (encoding.contains("gzip")) {
+                    bis = new BufferedInputStream(new GZIPInputStream(method.getResponseBodyAsStream()));
+                } else {
+                    bis = new BufferedInputStream(method.getResponseBodyAsStream());
+                }
+
+                bos = new BufferedOutputStream(results);
+                int b;
+                while ((b = bis.read()) != -1) {
+                    bos.write(b);
+                }
+            } catch (IOException e) {
+                LOG.error(e, "Error while reading response body");
+            } finally {
+                FileUtil.silentClose(bis);
+                FileUtil.silentClose(bos);
             }
-        } catch (IOException e) {
-            LOG.error(e, "Error while reading response body");
-        } finally {
-            FileUtil.silentClose(bis);
-            FileUtil.silentClose(bos);
         }
     }
 
@@ -343,4 +369,8 @@ public class HttpServices {
     }
 
 
+
+    public interface Handler {
+        void handleResponse(HttpMethod method);
+    }
 }

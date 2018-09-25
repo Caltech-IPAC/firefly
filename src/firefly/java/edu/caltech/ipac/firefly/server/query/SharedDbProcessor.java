@@ -26,8 +26,6 @@ import java.util.SortedSet;
  */
 public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
 
-    public abstract DataGroup fetchData(TableServerRequest treq) throws DataAccessException;
-
     @Override
     /**
      * All results from this processor will be saved in the same database.  It's also based on sessionID so that
@@ -57,7 +55,7 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
             JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
         } catch (Exception e) {
             // DD for this catalog does not exists.. fetch data and populate
-            DataGroup data = fetchData(treq);
+            DataGroup data = fetchDataGroup(treq);
             EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, tblName);
         }
         return EmbeddedDbUtil.execRequestQuery(treq, dbFile, tblName);

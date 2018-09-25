@@ -26,7 +26,7 @@ import static edu.caltech.ipac.firefly.server.query.IbeTemplateProcessor.PROC_ID
 public class IbeTemplateProcessor extends SharedDbProcessor {
     public static final String PROC_ID = "IbeTemplate";
 
-    public DataGroup fetchData(TableServerRequest treq) throws DataAccessException {
+    public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
         try {
             String url = treq.getParam("url");
             ByteArrayOutputStream results = new ByteArrayOutputStream();

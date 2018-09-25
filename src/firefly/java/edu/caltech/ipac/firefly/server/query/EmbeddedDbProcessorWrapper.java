@@ -34,51 +34,26 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
 
     private IpacTablePartProcessor processor;
 
-    public EmbeddedDbProcessorWrapper(IpacTablePartProcessor processor) {
+    EmbeddedDbProcessorWrapper(IpacTablePartProcessor processor) {
         this.processor = processor;
     }
 
-
-    public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         try {
-            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-
-            TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
-            StopWatch.getInstance().start("getBaseData: " + treq.getRequestId());
+            TableServerRequest nreq = (TableServerRequest) req.cloneRequest();
             File dataFile = processor.loadDataFile(nreq);       // this should fetch the data directly without any caching, sorting, filtering, etc.
-            DataGroup dg = IpacTableReader.read(dataFile);
-            StopWatch.getInstance().stop("getBaseData: " + treq.getRequestId()).printLog("getBaseData: " + treq.getRequestId());
-
-            setupMeta(dg, treq);
-
-            FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
-            return finfo;
-        } catch (DataAccessException ex) {
-            throw ex;
+            return IpacTableReader.read(dataFile);
         } catch (IOException ex) {
             throw new DataAccessException(ex);
         }
     }
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-        // no need to do it again.. already did it in createDbFile
+        processor.prepareTableMeta(defaults, columns, request);
     }
 
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
         processor.onComplete(request, results);
-    }
-
-    private void setupMeta(DataGroup dg, ServerRequest req) {
-        // merge meta into datagroup from post-processing
-        Map<String, DataGroup.Attribute> cmeta = dg.getAttributes();
-        TableMeta meta = new TableMeta();
-        processor.prepareTableMeta(meta, Arrays.asList(dg.getDataDefinitions()), req);
-        for (String key : meta.getAttributes().keySet()) {
-            if (!cmeta.containsKey(key)) {
-                dg.addAttribute(key, meta.getAttribute(key));
-            }
-        }
-        IpacTableUtil.consumeColumnInfo(dg);
     }
 
 }
