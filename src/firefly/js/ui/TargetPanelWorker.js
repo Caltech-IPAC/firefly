@@ -186,7 +186,7 @@ function resolveObject(posFieldDef, resolver) {
         }
     ).catch((e) => {
         let feedback = `Could not resolve: ${objName}`;
-        if (e.name === 'AbortError') {
+        if (e && e.name === 'AbortError') {
             feedback += '. Unresponsive service.';
         } else {
             feedback += '. Unexpected error.';

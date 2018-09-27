@@ -17,7 +17,7 @@ import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
-import {getMaxDefaultScatterRows} from '../../charts/ChartUtil.js';
+import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 
 
 /**
@@ -82,7 +82,7 @@ function handleCatalogUpdate(tbl_id) {
 
     
     const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo, title}= sourceTable;
-    const maxScatterRows = getMaxDefaultScatterRows();
+    const maxScatterRows = getMaxScatterRows();
 
 
 

@@ -54,13 +54,9 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
 
     @Override
     public File createDbFile(TableServerRequest treq) throws DataAccessException {
-        try {
-            TableServerRequest sreq = getSearchRequest(treq);
-            return getSearchProcessor(sreq).createDbFile(sreq);
-        } catch (DataAccessException e) {
-            // should not happen
-            return super.createDbFile(treq);
-        }
+        // table function processor operates on the original table
+        // we don't want to create a dummy table in db
+        return null;
     }
 
     /**
@@ -71,7 +67,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         TableServerRequest sreq = getSearchRequest(treq);
         sreq.setPageSize(1);  // set to small number it's not used.
         new SearchManager().getDataGroup(sreq).getData();
-        return new FileInfo(dbFile);
+        return new FileInfo(getDbFile(treq));
     }
 
     /**

@@ -114,7 +114,7 @@ function makeSimpleColorMap(baseColor, mapSize, reverse=false) {
         var rgb= toRGB(baseColor);
         var maxCnt= 0;
         var minCnt= 0;
-        rgb.foreach( (idx) => {
+        rgb.forEach( (idx) => {
             if (idx>250) maxCnt++;
             if (idx<5)   minCnt++;
         });

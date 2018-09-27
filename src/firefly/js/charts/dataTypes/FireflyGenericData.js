@@ -6,7 +6,10 @@ import {getTblById, getColumns, getColumn, doFetchTable, stripColumnNameQuotes} 
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
 import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
+import {getTraceTSEntries as heatmapTSGetter} from './FireflyHeatmap.js';
 
+// some chart properties can either come from a table column or be a number
+const numberOrArrayProps = ['marker.size'];
 
 /**
  * This function creates table source entries to get plotly chart data from the server
@@ -46,10 +49,12 @@ function fetchData(chartId, traceNum, tablesource) {
     const originalTableModel = getTblById(tbl_id);
     const {request, highlightedRow, selectInfo, totalRows} = originalTableModel;
 
-    const maxScatterRows = getMaxScatterRows();
-    if (totalRows > maxScatterRows && get(getChartData(chartId), `data.${traceNum}.type`, 'scatter') === 'scatter') {
-        dispatchError(chartId, traceNum, `${totalRows} rows exceed scatter chart best performance limit of ${maxScatterRows}.`);
-        return;
+    // if the number of rows is above a threshhold,
+    // heatmap chart should be produced
+    if (totalRows > getMaxScatterRows()) {
+        const {options:heatmapOptions, fetchData:heatmapFetchData} = heatmapTSGetter({traceTS:tablesource, chartId, traceNum});
+        const heatmapTS = Object.assign({}, tablesource, {options: heatmapOptions});
+        return heatmapFetchData(chartId, traceNum, heatmapTS);
     }
     
     const colNames = getColumns(originalTableModel).map((c) => c.name);
@@ -58,7 +63,9 @@ function fetchData(chartId, traceNum, tablesource) {
     const sreq = cloneRequest(request, {
         startIdx: 0,
         pageSize: MAX_ROW,
-        inclCols: Object.entries(mappings).map(([k,v]) => {
+        inclCols: Object.entries(mappings).
+        filter(([k,v]) => !numberOrArrayProps.includes(k) || Number.isNaN(parseFloat(v))).
+        map(([k,v]) => {
             // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
             //const asStr = (numericCols.includes(v)) ? '' : k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
             const asStr = k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
@@ -97,9 +104,27 @@ function fetchData(chartId, traceNum, tablesource) {
 
 
 function addOtherChanges({changes, chartId, traceNum, tablesource, tableModel}) {
-    const type = get(getChartData(chartId), `data.${traceNum}.type`, 'scatter');
+    const chartData = getChartData(chartId);
+    const type = get(chartData, `data.${traceNum}.type`, 'scatter');
+    let scatter2d = isScatter2d(type);
+    if (!scatter2d) {
+        // scatterOrHeatmap attribute is set when a heatmap trace is used to represent a scatter
+        const scatterOrHeatmap = get(chartData, `fireflyData.${traceNum}.scatterOrHeatmap`);
+        if (scatterOrHeatmap) {
+            // moving from heatmap to scatter representation
+            // if we started as a heatmap, "markers" mode needs to be set, because the default mode is "lines"
+            changes[`data.${traceNum}.mode`] = 'markers';
+            // clean arrays set in heatmap mode
+            changes[`data.${traceNum}.text`] = undefined;
+            changes[`data.${traceNum}.z`] = undefined;
+            // tablesource options have changed
+            const {options} = tablesource;
+            changes[`tablesources.${traceNum}.options`] = options;
+            scatter2d = true;
+        }
+    }
 
-    if (isScatter2d(type)) {
+    if (scatter2d) {
         addScatterChanges({changes, chartId, traceNum, tablesource, tableModel});
     }
 }
