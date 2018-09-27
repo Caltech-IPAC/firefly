@@ -215,7 +215,7 @@ function ChartActionOptions(props) {
     const chartId = chartAction === CHART_ADDNEW ? undefined : chartIdProp;
 
     if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
-        return (<NewTracePanel {...{groupKey, tbl_id, chartId, hideDialog, showMultiTrace}}/>);
+        return (<NewTracePanel key={chartAction} {...{groupKey, tbl_id, chartId, hideDialog, showMultiTrace}}/>);
     }
     if (chartAction === CHART_TRACE_MODIFY) {
         return (
