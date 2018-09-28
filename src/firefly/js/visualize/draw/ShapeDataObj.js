@@ -286,7 +286,7 @@ const draw=  {
             const x = xSum/xTot;
             const y = ySum/yTot;
 
-            return type === Point.W_PT ? makeWorldPt(x, y) : Object.assign(new SimplePt(x, y), {type});
+            return type === Point.W_PT ? makeWorldPt(x, y) : SimplePt.make(x, y, type);
 
         } else {
             return makeWorldPt(0, 0);

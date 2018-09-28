@@ -120,6 +120,15 @@ export class SimplePt {
         }
     }
     toString() { return this.x+';'+this.y; }
+
+    static make(x, y, type) {
+        const pt = new SimplePt(x, y);
+
+        if (type && Object.keys(Point).includes(type)) {
+            pt.type = type;
+        }
+        return pt;
+    }
 }
 
 
