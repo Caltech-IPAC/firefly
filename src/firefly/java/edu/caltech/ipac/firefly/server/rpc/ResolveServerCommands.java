@@ -4,12 +4,15 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
 
+import edu.caltech.ipac.astro.net.HorizonsEphPairs;
 import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
+import org.json.simple.JSONObject;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,6 +37,30 @@ public class ResolveServerCommands {
                 return wp.toString();
             } catch (Exception e) {
                 throw new Exception("Could not resolve " +  name + " using " + resolver.toString());
+            }
+        }
+
+        public boolean getCanCreateJson() { return false; }
+    }
+
+    public static class ResolveNaifidName extends ServCommand {
+
+
+        public String doCommand(SrvParam sp) throws Exception {
+
+            try {
+                HorizonsEphPairs.HorizonsResults[] horizons_results = HorizonsEphPairs.lowlevelGetEphInfo(sp.getRequired(ServerParams.OBJ_NAME));
+
+                Map<String, Integer> values = new HashMap<>();
+                for (HorizonsEphPairs.HorizonsResults element : horizons_results) {
+                    values.put(element.getName(), Integer.parseInt(element.getNaifID()));
+                }
+
+                JSONObject jsonObj = new JSONObject(values);
+                return jsonObj.toJSONString();
+
+            }catch (Exception e){
+                throw new Exception("Could not resolve "+ ServerParams.OBJ_NAME);
             }
         }
 

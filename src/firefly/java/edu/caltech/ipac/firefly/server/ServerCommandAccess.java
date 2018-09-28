@@ -97,7 +97,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.UPLOAD,                 new HttpServCommands.Upload());
 
         _cmdMap.put(ServerParams.RESOLVE_NAME,           new ResolveServerCommands.ResolveName());
-
+        _cmdMap.put(ServerParams.RESOLVE_NAIFID,         new ResolveServerCommands.ResolveNaifidName());
         _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_CHECK,   new PushCommands.PushAliveCheck());
         _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_COUNT,   new PushCommands.PushAliveCount());
         _cmdMap.put(ServerParams.VIS_PUSH_ACTION,        new PushCommands.PushAction());
