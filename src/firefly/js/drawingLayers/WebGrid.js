@@ -86,7 +86,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var cc= CsysConverter.make(plot);
      if (!cc) return null;
 
-     return lastDataRet ||makeGridDrawData(plot, cc, drawLayer.useLabels) ;
+   return lastDataRet ||makeGridDrawData(plot, cc, drawLayer.useLabels) ;
 
  }
 
@@ -100,10 +100,15 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      let drawData;
      switch (action.type){
          case ImagePlotCntlr.ANY_REPLOT:
-             if (drawLayer.drawData.data && action.payload.plotIdAry) {
-                 const data= clone(drawLayer.drawData.data);
-                 action.payload.plotIdAry.forEach( (plotId) => data[plotId]= null);
-                 drawData= clone(drawLayer.drawData, {data});
+             if (drawLayer.drawData.data  ) {
+                 if (action.payload.plotIdAry){
+                    const data= clone(drawLayer.drawData.data);
+                    action.payload.plotIdAry.forEach( (plotId) => data[plotId]= null);
+                    drawData= clone(drawLayer.drawData, {data});
+                 }
+                 else {
+                     drawData= Object.assign({},drawLayer.drawData, {data:null});
+                 }
                  return {drawData};
              }
              break;

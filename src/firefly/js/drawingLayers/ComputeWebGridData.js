@@ -8,24 +8,79 @@
  *   Add the Regrid and LinearInterpolator in the utility
  *   Use the Regrid to adding more gride lines and the number of the points in the line
  *   Rotate the labels based on the angles
- *   Cleaned up the codes 
+ *   Cleaned up the codes
+ *
+ *  02/13/18
+ *  IRSA-1391
+ *  Add the Grid lines for HiPs map
+ *  The HiPs map is very different from the regular image map.  The HiPs map has a huge range in longitude.
+ *  In order to get finer grid calculation, I adjust the algorithm, instead of using 4 for the intervals when finding lines,
+ *  I used interval = range/0.5.
+ *
+ *  For HiPs map, the range is calculated differently.  The range calculation for regular image is using the data width
+ *  data height (which are the naxis1/naxis2).  But for HiPs, there are no data width and height.  Instead of using
+ *  data width and height by walking four corners, I used the field view angles and center point.  If the angle is >=180,
+ *  the image is sphere.  If the fov < 180, the ranges are calculated using four corners and two middle points along the
+ *  center latitude and longitude.  The four corners are calculated using the plot viewDim.
+ *
+ *  For the grid lines calculation, all valid points are in the range, there is no need to check with the screen width.
+ *
+ *
+ *  8/28/18
+ *  Some detailed to be noted here:
+ *  1. If any corner is null, it means the image is a sphere.  Thus, the range is longitude = [0:360] and latitude=[-90,90]
+ *  2. If none corner is null, the image is cover the whole view dimension in the screen.  In this case, there are
+ *  a few situations:
+ *    For Latitude:
+ *     1. If north pole is visible, the latitude will be [lowerLat,90], where the lowerLat is calculated using
+ *        the four corners.
+ *     2. If the south pole is visible, the latitude will be [-90, upperLat], where the upperLat is calculated using
+ *        the four corners.
+ *     3. If both poles are visible, the latitude will be [-90, 90]
+ *     4. If no pole is visible, the latitude will be [lowerLat, upperLat], where lowerLat and upperLat are calculated
+ *        using the four corners.
+ *
+ *    For Longitude:
+ *       1. If either pole is visible, the longitude will be [0, 360]
+ *       2. If prime median is visible, ie, any point on the longitude=0 great circle is visible, there is a
+ *          discontinuity point (0, 360) in the image, the longitude range will be in two separated direction,
+ *          0 increasing to a value_1, and the 360 decreasing to a value_2.  Using four corners can not determine
+ *          value_1 and value_2 precisely.  In this case, we do a loop through to find the points in the range and
+ *          on the plots.
+ *
+ *       3. If no pole and no pm point visible, the longitude range will be [lowerLon, upperLon], where lowerLon
+ *          and upperLan are calculated by the four corners.
+ *
+ *
+ *  In order to see the grid lines, the algorithm calculated fixed number of lines based on the viewable range no matter
+ *  how small the physical range is.  It works different from FITs image.  FITS image uses fixed distance in lon/lat to
+ *  calculate grid lines.  Thus, when the image is zoomed out, the physical size is smaller, the grid lines are out of
+ *  view.
+ *
+ *  Labels:
+ *    When the field view angle is very small, the image is zoomed out a lot, the numerical values in the labels are
+ *    displayed up to 6 digit precision.  Otherwise, the labels are displayed up to 3 digit precision.
+ *
+ *
  */
 
-import {makeDevicePt, makeWorldPt, makeImagePt,makeImageWorkSpacePt} from '../visualize/Point.js';
+import { makeWorldPt, makeImagePt,makeDevicePt,makeImageWorkSpacePt} from '../visualize/Point.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
 import numeral from 'numeral';
 import { getDrawLayerParameters} from './WebGrid.js';
+import {Regrid} from '../util/Interp/Regrid.js';
+import {getPointMaxSide} from  '../visualize/HiPSUtil.js';
+import {convert} from '../visualize/VisUtil.js';
+
 const precision3Digit = '0.000';
+const precision6Digit = '0.000000';
 const RANGE_THRESHOLD = 1.02;
 const minUserDistance= 0.25;   // user defined max dist. (deg)
 const maxUserDistance= 3.00;   // user defined min dist. (deg)
 var userDefinedDistance = false;
-import {Regrid} from '../util/Interp/Regrid.js';
-
-const nPoints=20;
-const allowExtrapolation=true;
+const angleStepForHipsMap=4.0;
 /**
  * This method does the calculation for drawing data array
  * @param plot - primePlot object
@@ -34,56 +89,177 @@ const allowExtrapolation=true;
  * @param numOfGridLines
  * @return a DrawData object
  */
+
+
 export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
 
 
-    const {width, height, screenWidth, csys,labelFormat} = getDrawLayerParameters(plot);
+    const {width,height, screenWidth, csys, labelFormat} = getDrawLayerParameters(plot);
+
+    const wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
+    const aitoff = (!wpt);
+    const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
+    const centerWpt = convert(centerWp,csys);
+
+
     if (width > 0 && height >0) {
         const bounds = new Rectangle(0, 0, width, height);
-        var factor =  plot.zoomFactor;
-        if (factor < 1.0) factor = 1.0;
-        const range = getRange(csys, width, height, cc);
-        //calculate the levels
-        const levelsCalcualted = getLevels(range, factor);
 
-        //regrid the levels if the line counts is less than 11, the default value
-        const levels = adjustLevels(levelsCalcualted, numOfGridLines);
-        const labels = getLabels(levels, csys, labelFormat);
-        const {xLines, yLines} = computeLines(cc, csys, range, levels, screenWidth);
-        const wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
-        const aitoff = (!wpt);
-        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc);
+        const {xLines, yLines, labels} = plot.plotType==='hips'?computeHipGridLines(cc, csys,screenWidth, numOfGridLines, labelFormat,plot,fov, centerWpt)
+        :computeImageGridLines(cc, csys, width,height,screenWidth, numOfGridLines, labelFormat,plot);
 
+        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc, plot);
     }
 }
 
-function adjustLevels(levels,numOfGridLines){
-
-    const nL0 = levels[0].length;
-
-    const nL1 = levels[1].length;
-    var newLevels = levels;
-   
-    if (nL0<numOfGridLines) {
-        newLevels[0] = Regrid(levels[0], numOfGridLines, allowExtrapolation);
+/**
+ * Walk along the four side to get possible min/max values
+ * The finer det is the better result will be gotten.  However, too small det will hurt performance
+ * @param plot
+ * @param csys
+ * @param cc
+ * @returns {Array.<*>}
+ */
+function getRangeFromFourSides(plot, csys,  cc){
+    const {width, height} = plot.viewDim;
+    const det=0.5;
+    //from bottom left to right (0,0) - (width, 0)
+    var points1=[], points2=[], points3=[], points4=[],  x, y;
+    var wLen, hLen;
+    wLen = width/det;
+    hLen = height/det;
+    for (var i=0; i<wLen; i++){
+        x=i*det;
+        y=0;
+        points1[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
+    }
+    //from 0,0 to 0, height: (0, 0) - (0, height)
+    for (var i=0; i<hLen; i++){
+        x=0;
+        y=i*det;
+        points2[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
     }
 
-    //adjust ra's range in 0-360, regrid first and then change the range, this way takes are of the discontinuity
-    for (let i = 0; i < newLevels[0].length; i++) {
-        if (newLevels[0][i] > 360) {
-            newLevels[0][i] -= 360;
+    //from (0, height) - (width, height)
+    for (var i=0; i<wLen; i++){
+        x=i*det;
+        y=height;
+        points3[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
+    }
+
+    //from (width, 0) - (width, height)
+    //from 0,0 to 0, height: (0, 0) - (0, height)
+    for (var i=0; i<hLen; i++){
+        x=width;
+        y=i*det;
+        points4[i]= cc.getWorldCoords(makeDevicePt(x, y), csys);
+    }
+    return points1.concat(points2, points3, points4);
+}
+
+function getForCorners(plot, csys,  cc) {
+    const {width, height} = plot.viewDim;
+
+    const corners = [
+        cc.getWorldCoords(makeDevicePt(0, 0), csys),
+        cc.getWorldCoords(makeDevicePt(0, height), csys),
+        cc.getWorldCoords(makeDevicePt(width, height), csys),
+        cc.getWorldCoords(makeDevicePt(width, 0), csys),
+        cc.getWorldCoords(makeDevicePt(width/2, 0), csys),
+        cc.getWorldCoords(makeDevicePt(width/2, height), csys),
+        cc.getWorldCoords(makeDevicePt(0, height/2), csys),
+        cc.getWorldCoords(makeDevicePt(width, height/2), csys)
+
+    ];
+
+    return corners;
+}
+/**
+ * This method calculates the four corners and for middle points in the view port. If none of them is null,
+ * it means the image cover the whole view area.  Thus, those values can be used to determine the min/max ra/dec ranges
+ *
+ * @param plot
+ * @param csys
+ * @param cc
+ * @param ranges
+ * @returns {*}
+ */
+function getViewPortInfo(plot, csys,  cc,ranges) {
+
+    const corners = getForCorners(plot, csys,  cc);
+    if( corners.indexOf(null)>-1)  return {corners:undefined, ranges};
+
+    const allPoints = corners.concat(getRangeFromFourSides(plot, csys,  cc));
+    var vals = [];
+    var viewBorder = [[1.e20, -1.e20], [1.e20, -1.e20]];
+    for (let i = 0; i < allPoints.length; i++) {
+        if (allPoints[i]) {
+            vals[0] = allPoints[i].getLon();
+            vals[1] =allPoints[i].getLat();
+            //assign the new lower and upper longitude if found
+            if (vals[0] < viewBorder[0][0]) viewBorder[0][0] = vals[0];
+            if (vals[0] > viewBorder[0][1]) viewBorder[0][1] = vals[0];
+
+            //assign the new lower and upper latitude if found
+            if (vals[1] < viewBorder[1][0]) viewBorder[1][0] = vals[1];
+            if (vals[1] > viewBorder[1][1]) viewBorder[1][1] = vals[1];
         }
-        if (newLevels[0][i] < 0) {
-            newLevels[0][i] += 360;
+    }
+
+
+    return {corners, viewBorder};
+}
+
+/**
+ * When we use four corners and the points around four sides, we look for the minimal value at
+ * as the lower range and the maximum value as a upper range.  However, if the prime median point
+ * is seen, the borders need to be adjusted.  The smallest value is 0 that lies in the image.  The
+ * lower border should be the maximum possible value along 0-lower border, this value will be less
+ * than 180.  When the PM is on the left most or right most point, the whole range is 180.  Thus,
+ * we use 180 as a number to determine the real border.  Similarly, we need to look for smallest possible
+ * along 360-upper border.
+ *
+ * should be the real lower border, the upper border is always 360,
+ * @param plot
+ * @param csys
+ * @param cc
+ * @param centerWpt
+ * @param viewBorder
+ * @returns {[null,null]}
+ */
+function getRangeForTruePM(plot, csys,  cc, centerWpt, viewBorder){
+    const corners = getForCorners(plot, csys,  cc);
+    const allPoints = corners.concat(getRangeFromFourSides(plot, csys,  cc));
+    var lower=[], upper=[], lon;
+    var  lowerCount=0, upperCount=0;
+
+    for (var i=0; i<allPoints.length; i++){
+        lon=allPoints[i].x;
+        if (centerWpt.x<180) { // PM point on the left of the centerWpt
+          if (lon<180) {
+            lower[lowerCount] = lon;
+            lowerCount++;
+          }
+          else {
+            upper[upperCount]=lon;
+            upperCount++;
+          }
+
+        }
+        else {
+            if (lon>180){
+              upper[upperCount]=lon;
+              upperCount++;
+            }
+            else {
+              lower[lowerCount] = lon;
+              lowerCount++;
+            }
         }
 
     }
 
-    if (nL1<numOfGridLines){
-        newLevels[1] = Regrid( levels[1], numOfGridLines,allowExtrapolation);
-    }
-
-    return newLevels;
+    return  [ lower && lower.length>0? Math.max(...lower):viewBorder[0], upper && upper.length>0? Math.min(...upper):viewBorder[1]];
 }
 /**
  * Define a rectangle object
@@ -262,6 +438,7 @@ function  testEdge( xrange, trange)
 
     return true;
 }
+
 /**
  * Get the line ranges
  * @param  {object} csys - the coordinate system the grid is drawing with
@@ -378,86 +555,6 @@ function getRange( csys, width, height, cc) {
 
 }
 
-/**
- *
- * @param ranges - two -dimension array of the x and y ranges
- * @param factor - zoom factor
- * @returns  levels {array} number of line intervals
- */
-function getLevels(ranges,factor){
-
-    var levels=[];
-    var  min, max, delta;
-    var val, count;
-    for (let i=0; i<ranges.length; i++){
-        /* Expect max and min for each dimension */
-        if (ranges[i].length!==2){
-            levels[i]=[];
-        }
-        else {
-            min = ranges[i][0];
-            max =ranges[i][1];
-            if (min===max){
-                levels[i]=[];
-            }
-            else if ( Math.abs(min - (-90.0))  < 0.1 && Math.abs(max - 90.0) <0.1){
-                levels[i]= [-75.,-60., -45. -30., -15., 0., 15., 30.,  45., 60.,  75.];
-            }
-            else {
-
-
-
-
-               /* LZ DM-10491: introduced this simple algorithm to calculate the intervals.  The previous one
-               commented below caused line missing. For example, 45,0 wise, 45, 90 wise etc.
-
-               The algorithm previous used (commented ) missed one line. I don't understand the purpose of
-                the algorithm.  The levels can be simply defined as the loop below
-                */
-                levels[i] = [];
-                min=(max<min)?min-360:min;
-                delta =calculateDelta (min, max,factor);
-                var count = Math.ceil ( (max -min)/delta);
-                if (count<=2){
-                    delta=delta/2.0;
-                    count=2*count;
-                }
-                for (let j=0; j<count; j++){
-                    levels[i][j] = j*delta + min;
-                }
-
-                /* We've now got the increment between levels.
-                 * Now find all the levels themselves.
-                 */
-                //LZ comment out the original algorithm to calculate the intervals
-               /* min=(max<min)?min-360:min;
-                val = min<0? min-min%delta : min + delta-min%delta;
-                count=0;
-                while (val + count*delta <= max){
-                    count++;
-                }
-                if (count<=2){
-                    delta=delta/2.0;
-                    count=2*count;
-                }
-                levels[i] = [];
-                for (let j=0; j<count; j++){
-                    levels[i][j] = j*delta + val;
-                    if (!i && levels[i][j] > 360){
-                        levels[i][j] -= 360;
-                    }
-                    else if (!i && levels[i][j] < 0){
-                        levels[i][j] += 360;
-                    }
-
-                }*/
-            }
-        }
-
-    }
-    return levels;
-}
-
 function lookup(val, factor){
 
     const conditions=[val < 1,val > 90,val > 60 ,val > 30,val > 23,val > 18,val > 6, val > 3];
@@ -500,15 +597,16 @@ function calculateDelta(min, max,factor){
 
 }
 
-
 /**
- * Find the labels according to the coordinates.
+ * When the fov is small such as 1 degree, the numerical value shows up to 6 digit precision.
+ * Otherwise, it only shows up to 3 digit.
  * @param {Array.<Array.<number>>} levels
  * @param {CoordinateSys} csys
  * @param {String} labelFormat  pass 'hms' for sexigesimal
- * @returns {Array.<String>}
+ * @param fov
+ * @returns {Array}
  */
-function getLabels(levels,csys, labelFormat) {
+function getLabels(levels,csys, labelFormat, fov=180) {
 
     const labels = [];
     const isHms= labelFormat === 'hms' && (csys===CoordinateSys.EQ_J2000 || csys===CoordinateSys.EQ_B1950);
@@ -517,76 +615,75 @@ function getLabels(levels,csys, labelFormat) {
         const toHms= i===0 ? CoordUtil.convertLonToString : CoordUtil.convertLatToString;
         for (let j=0; j < levels[i].length; j++) {
             const value= levels[i][j];
-            labels.push(isHms ? toHms(value, csys) : numeral(value).format(precision3Digit));
+            labels.push(isHms ? toHms(value, csys) : ( fov && fov>1?numeral(value).format(precision3Digit):numeral(value).format(precision6Digit)) );
         }
     }
     return labels;
 }
-/**
- * @desc calculate lines
- *
- * @param  {object} cc - the CoordinateSys object
- * @param  {object} csys - the coordinate system the grid is drawing with
- * @param {object} direction - an integer,  0 and 1 to indicate which direction the lines are
- * @param {double} value - x or y value in the image
- * @param {object} range
- * @param {double} screenWidth - a screen width
- * @return the points found
- */
-function findLine(cc,csys, direction, value, range, screenWidth){
+
+function findLine(cc,csys, direction, value, range, screenWidth, type='image'){
 
     var intervals;
     var x, dx, y, dy;
 
-    if (!direction )  {// X
+    const dLength=direction===0?range[1][1]-range[1][0]:range[0][1]-range[0][0];
+
+    var nInterval = 4;
+    if (type==='hips'){
+       const n = parseInt(dLength/angleStepForHipsMap);
+       nInterval = n>4?n:4;
+    }
+
+    if (!direction )  {// longitude lines
         x  = value;
         dx = 0;
         y  = range[1][0];
-        dy = (range[1][1]-range[1][0])/4;
+        dy = (range[1][1]-range[1][0])/nInterval;
     }
-    else { // Y
+    else { // latitude lines
 
-        y = value;
-        dy = 0;
-        x = range[0][0];
-        dx = (range[0][1]-range[0][0]);
-        dx = dx < 0?dx+360:dx;
-        dx /= 4;
+            y = value;
+            dy = 0;
+            x = range[0][0];
+            dx = (range[0][1] - range[0][0]);
+            dx = dx < 0 ? dx + 360 : dx;
+            dx /= nInterval;
+
     }
-    var opoints = findPoints(cc, csys,4, x, y, dx, dy, null);
+    var opoints = findPoints(cc, csys,nInterval, x, y, dx, dy, null);
+    if (type==='hips') return fixPoints(opoints);
+
+    //NO need to do this, but left here since it was here originally
     var  straight = isStraight(opoints);
-
     var npoints = opoints;
-    intervals = 8;
+    intervals = 2* nInterval;
     var nstraight;
-    while (intervals < screenWidth) {
+    var count=1;
+    while (intervals < screenWidth  && count<10) { //limit longer loop
         dx /= 2;
         dy /= 2;
         npoints = findPoints(cc, csys, intervals, x, y, dx, dy, opoints);
         nstraight = isStraight(npoints);
         if (straight && nstraight) {
-            return fixPoints(npoints);
+            break;
         }
         straight = nstraight;
         opoints = npoints;
         intervals *= 2;
+        count++;
     }
 
-    const points = fixPoints(npoints);
-    //regrid the points found to 20 points
-    if (points.length<20){
-        return  Regrid(findPoints, nPoints,allowExtrapolation);
-    }
+    return fixPoints(npoints);
 
-    return points;
+
 }
+
 
 function isStraight(points){
 
     /* This function returns a boolean value depending
      * upon whether the points do not bend too rapidly.
      */
-
     const len = points[0].length;
     if (len < 3) return true;
 
@@ -595,6 +692,7 @@ function isStraight(points){
 
     var dx1 = points[0][1]-points[0][0];
     var dy1 = points[1][1]-points[1][0];
+
     var len1 = (dx1*dx1) + (dy1*dy1);
 
     for (let i=1; i < len-1; i += 1)   {
@@ -604,6 +702,8 @@ function isStraight(points){
         len0 = len1;
         dx1 = points[0][i+1]-points[0][i];
         dy1 = points[1][i+1]-points[1][i];
+
+        if (dx1>=1.e20 || dy1>=1.e20) continue;
         len1 = (dx1*dx1) + (dy1*dy1);
         if (!len0  || !len1 ){
             continue;
@@ -621,19 +721,34 @@ function isStraight(points){
     return true;
 }
 
+/**
+ * For image map, the interval is hard coded as 4 in the original version (java).  I think that
+ * since each image only covers a small stripe of the sky, the range of longitude usually less than 1 degree.
+ * Howver for HiPs map, the range is whole sky (0-360).  The hard coded interval 4 is not good enough to find the
+ * good points.
+ *
+ * For HiPs map, I use the interval = longitude-range/0.5, and interval = latitude-range/0.5.  Thus, more points
+ * are checked and found for each line.
+ *
+ * @param cc
+ * @param csys
+ * @param intervals
+ * @param x0
+ * @param y0
+ * @param dx
+ * @param dy
+ * @param opoints
+ * @returns {[null,null]}
+ */
 function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
 
-
-    // NOTE: there are intervals separate intervals so there are
-    //                 intervals+1 separate points,
-    // Hence the <= in the for loops below.
-
     var  xpoints = [[],[]];
+    var lon=[], lat=[];
     var i0, di;
     if (opoints)  {
         i0 = 1;
         di = 2;
-        for (let i=0; i <= intervals; i += 2) {
+        for (var i=0; i <= intervals; i += 2) {
             xpoints[0][i] = opoints[0][Math.trunc(i/2)];
             xpoints[1][i] = opoints[1][Math.trunc(i/2)];
         }
@@ -643,21 +758,28 @@ function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
         di = 1;
     }
 
-    var sharedLon, wpt, ip, xy,sharedLat,tx;
-    for (let i=i0; i <= intervals; i += di) {
+    var sharedLon, wpt, ip, xy,sharedLat,tx, ty;
+    for (var i=i0; i <= intervals; i += di) {
         tx= x0+i*dx;
         tx = tx > 360?tx-360:tx;
         tx=tx<0?tx+360:tx;
+        ty=y0+i*dy;
+        ty=ty>90?ty-180:ty;
+        ty=ty<-90?ty+180:ty;
         sharedLon= tx;
-        sharedLat= y0+i*dy;
+        sharedLat= ty;
         wpt= makeWorldPt(sharedLon, sharedLat, csys);
         ip = cc.getImageWorkSpaceCoords(wpt);
         if (ip) {
+
             xy = makeImagePt(ip.x, ip.y);
         }
         else {
+
             xy=makeImagePt(1.e20,1.e20);
         }
+        lon[i]= sharedLon;
+        lat[i]=sharedLat;
         xpoints[0][i] = xy.x;
         xpoints[1][i] = xy.y;
 
@@ -679,14 +801,17 @@ function fixPoints(points){
     return points;
 }
 
+function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc,plot){
 
-function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc, isRaLine){
 
 
     //add the  draw line data to the drawData
     var ipt0, ipt1;
     var slopAngle;
     var labelPoint;
+    if(!x) return;
+
+    const plotType = plot.plotType;
     for (let i=0; i<x.length-1; i+=1) {
         //check the x[i] and y[i] are inside the image screen
         if (x[i] > -1000 && x[i+1] > -1000 &&
@@ -694,42 +819,46 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
             ((x[i] - bounds.x) < bounds.width) &&
             (y[i] >= bounds.y) &&
             ((y[i]-bounds.y) < bounds.height) ||
-                // bounds check on x[i+1], y[i+1]
+            // bounds check on x[i+1], y[i+1]
             (x[i+1] >= bounds.x) &&
             ((x[i+1] - bounds.x) < bounds.width) &&
             (y[i+1] >= bounds.y) &&
             ((y[i+1]-bounds.y) < bounds.height))) {
             ipt0= makeImageWorkSpacePt(x[i],y[i]);
             ipt1= makeImageWorkSpacePt(x[i+1], y[i+1]);
-            if (!aitoff  ||  ((Math.abs(ipt1.x-ipt0.x) <screenWidth /8 ) && (aitoff))) {
-                drawData.push(ShapeDataObj.makeLine(ipt0, ipt1));
+            //For image, the ra/dec interval is 8, so the points needed to be checked if they are located within the interval
+            //For hips, the range for ra is 360, so no check is needed.
+            if ( plotType==='hips' ||
+                 plotType==='image' && (!aitoff  ||  ((Math.abs(ipt1.x-ipt0.x)<screenWidth /8 ) && (aitoff))) ) {
 
-                //find the middle point of the line, index from 0, so minus 1
-                if (i===Math.round(x.length/2)-1 ) {
-                    var wpt1 = cc.getScreenCoords(ipt0);
-                    var wpt2 = cc.getScreenCoords(ipt1);
-                    const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
-                    slopAngle =  Math.atan(slope) * 180 / Math.PI;
-                    //since atan is multi-value function, the slopAngle is unique, for raLine, I set it is in the range of 0-180
-                    if (isRaLine && slopAngle<0){
-                        slopAngle+=180;
-                    }
+                 drawData.push(ShapeDataObj.makeLine(ipt0, ipt1));
 
-                    //for dec line, I set it to -90 to 90
-                    if (!isRaLine  && slopAngle>90){
-                        slopAngle = 180 - slopAngle;
-                    }
-                    if (!isRaLine  && slopAngle<-90){
-                        slopAngle = 180 + slopAngle;
-                    }
+                 //find the middle point of the line, index from 0, so minus 1
+                if (i===Math.round(x.length/2)-1 ){
+                        var wpt1 = cc.getScreenCoords(ipt0);
+                        var wpt2 = cc.getScreenCoords(ipt1);
+                        const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
+                        slopAngle = Math.atan(slope) * 180 / Math.PI;
+                        //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
+                        if (slopAngle > 90) {
+                            slopAngle = 180 - slopAngle;
+                        }
+                        if (slopAngle < -90) {
+                            slopAngle = 180 + slopAngle;
+                        }
+                        labelPoint =wpt1;
 
-                    labelPoint = wpt1 ; // both screen coordinates or ImageWorkSpacePt are OK.
                 }
-
             }
         } //if
     } // for
 
+   /* if (!isRaLine) {
+        labelPoint = cc.getScreenCoords(makeImageWorkSpacePt(centerImagePt.x, y[Math.round(x.length / 2) - 1]));
+    }
+    else {
+        labelPoint = cc.getScreenCoords(makeImageWorkSpacePt(x[Math.round(x.length / 2) - 1], centerImagePt.y));
+    }*/
 
     // draw the label.
     if (useLabels  ){
@@ -737,7 +866,7 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
     }
 }
 
-function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc) {
+function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc, plot) {
     // Draw the lines previously computed.
     //get the locations where to put the labels
     var drawData=[];
@@ -745,21 +874,31 @@ function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,
     var  lineCount = xLines.length;
 
 
-    for (let i=0; i<lineCount; i++) {
+   for (let i=0; i<lineCount; i++) {
             drawLabeledPolyLine(drawData, bounds, labels[i] ,
-            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc, i<lineCount/2);
+            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc, plot);
     }
     return drawData;
 
 }
 
 
-function computeLines(cc, csys, range, levels,screenWidth) {
+function computeImageGridLines(cc, csys, width,height, screenWidth, numOfGridLines, labelFormat, plot) {
+
+   const range = getRange(csys, width, height, cc);
+
+    const factor = plot.zoomFactor<1?1:plot.zoomFactor;
+
+    //get levels for the whole longitude and latitude range
+    var levels = getLevels(range, factor, numOfGridLines);
+
+
     /* This is where we do all the work. */
     /* range and levels have a first dimension indicating x or y
      * and a second dimension for the different values (2 for range)
      * and a possibly variable number for levels.
      */
+    const labels = getLabels(levels, csys, labelFormat);
 
     var xLines = [];
     var yLines = [];
@@ -767,14 +906,374 @@ function computeLines(cc, csys, range, levels,screenWidth) {
     var points=[];
     for (let i=0; i<2; i++) {
         for (let j=0; j<levels[i].length; j++) {
-            points = findLine(cc, csys,i, levels[i][j], range,screenWidth);
+            points= findLine(cc, csys, i, levels[i][j],range, screenWidth, plot);
             xLines[offset] = points[0];
             yLines[offset] = points[1];
             offset += 1;
+
         }
     }
-    return {xLines, yLines};
+    return {xLines, yLines, labels};
+}
+
+function isEven(value){
+    if (value%2 === 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+
+}
+
+function getLonLevels(viewRange, centerWpt,  cc,csys,poles, isPrimeMeridianVisible, maxLines, plot) {
+    var levels = [], range = [];
+
+    //make odd number of lines so that the center line has symmetric lines count at each side
+    const numLines = isEven(maxLines) ? maxLines + 1 : maxLines;
+
+    var lon, det;
+    if (poles>0){
+        det = 360 / (numLines-1);
+        for (var i=0; i<numLines; i++){
+            levels[i]=i*det;
+        }
+        range = [0, 360];
+        return {levels, range};
+    }
+    else  if (poles===0 && isPrimeMeridianVisible){
+        /*
+         When any point in primer meridian circle is visible, there will be a discontinuity in the longitude, that is
+         the(0, 360) point is visible.  This point can be anywhere in the image.  Thus the range will be two part,
+         one is from 0 increasing to the viewDim border at the left side, the other will be from 360 decreasing to
+         the viewDim border at the right side (here I suppose the north pole is up.  If the south pole is up, it is similar.
+
+
+         The upper range found by four corners is not the correct upper range in this case.   The upper range
+         is 360.  We need to find the border value along the right hand side from 360.  Thus, we will have grid lines
+         along 0-lower range and 360- border.  To find the border, we can start from 360, decrease a det until the point
+         is not in the image, or start from the upper range and decrease a det until the the point
+         is not in the image.  However, doing this way, it requires more calculation since all latitude values have to
+         be evaluated because the point (0, 36) can be at any latitude position.
+
+         Similar the lower range is not the correct lower range, the real lower range is 0.  So we need to iterate to find the
+         real.
+        *
+        */
+         //find the new range
+        const lonRange = getRangeForTruePM(plot, csys,  cc, centerWpt, viewRange);
+
+        //calculate det that will be the interval between lines
+        det = (lonRange[0]+ 360-lonRange[1])/ (numLines-1);
+        var count=0, len;
+        lon=centerWpt.x;
+        if (centerWpt.x<180){
+            //center on the left of PM ---------C----PM------
+            //center toward on the lower border, no PM in between
+           while (lon<lonRange[0]){
+                levels[count]=lon;
+                count++;
+                lon=centerWpt.x+count*det;
+            };
+
+            //center toward upper border, there is PM(0, 360)  in between
+            //lon will be from centerWpt.x - 0, and 360 - longRange[1]
+            count=1;//reset count
+            len=levels.length;
+            lon=centerWpt.x-det;
+
+            while ( lon < centerWpt.x || lon>lonRange[1])  {
+                levels[len+count]=lon;
+                count++;
+                lon=centerWpt.x-count*det;
+                lon=lon<0?360+lon:lon;
+
+            };
+        }
+        else {//center on the right of PM
+              //------PM---center--------
+            lon=centerWpt.x;
+            //center toward upper border, no PM in between
+            while (lon>lonRange[1] ){
+                levels[count]=lon;
+                count++;
+                lon=centerWpt.x-count*det;
+            };
+
+            //go toward lower border, there is PM point in between
+            //lon will be centerWpt.x-360, 0-lonRange[0]
+            count=1;//reset count
+            len=levels.length;
+            lon=centerWpt.x+det;
+            while ( lon>centerWpt.x || lon<lonRange[0]){
+                levels[len+count]=lon;
+                count++;
+                lon=centerWpt.x+count*det;
+                lon = lon>360? lon-360:lon;
+
+            };
+        }
+
+
+        range = [0, 360];
+        return {levels, range};
+
+    }
+    //Is a regular rectangle range
+    else {
+        det = (viewRange[1] - viewRange[0]) / (numLines-1);
+        for (let i = 0; i <numLines; i++) {
+            levels[i] = viewRange[0] + i * det;
+        }
+
+        range = viewRange;
+        return {levels, range};
+    }
+
+}
+
+function getLatLevels(viewRange, poles,  maxLines){
+    var levels =[], range=[];
+    var numLines = isEven(maxLines)?maxLines+1:maxLines;
+
+    if (poles!==0){
+        switch (poles){
+            case 1:
+                range = [viewRange[0], 90];
+
+                break;
+            case 2:
+                range = [-90,viewRange[1]];
+                break;
+            case 3:
+                range=[-90,90];
+                break;
+        }
+
+    }
+    else {
+       range=viewRange;
+    }
+
+    const det = (range[1] - range[0]) / (numLines - 1);
+    for (let i = 0; i < numLines; i++) {
+        levels[i] = range[0] + i * det;
+    }
+
+    return{levels, range};
+
+}
+
+function getLevelsAndRangeForHips(csys,  cc, viewBorder, centerWp, maxLines,plot) {
+
+
+    const {poles, isPrimeMeridianVisible} = getViewableAreaInfo(cc, csys, viewBorder,centerWp);
+
+    const {levels:lonLevels, range:lonRange}= getLonLevels(viewBorder[0],  centerWp, cc,csys,poles, isPrimeMeridianVisible, maxLines,plot);
+    const {levels:latLevels, range:latRange}=getLatLevels(viewBorder[1], poles, maxLines);
+
+    const levels = [lonLevels, latLevels];
+    const range=[lonRange, latRange];
+
+    return {levels, range};
+
+}
+
+function computeHipGridLines(cc, csys,  screenWidth, nGridLines, labelFormat, plot, fov, centerWp) {
+
+    const fullRange = [[0, 360], [-90, 90]];
+
+    const factor = plot.zoomFactor<1?1:plot.zoomFactor;
+    var numOfGridLines=2*nGridLines;
+
+    /*get the view border, NOTE, the border does not mean the maximum and minimum of the range. If there the
+     Prime meridian is in the image, the minimum of border is the value in the range from 0-minBorder, and the
+     maximum border is the range [maximum border - 360]
+   */
+
+    const  {corners, viewBorder} = getViewPortInfo(plot, csys,  cc, fullRange);
+
+    var levels, range;
+
+    if ( corners && corners.indexOf(null)===-1) {
+        numOfGridLines=nGridLines;
+        const {levels:l, range:r} = getLevelsAndRangeForHips( csys,  cc,viewBorder, centerWp,numOfGridLines,plot);
+        levels=l;
+        range=r;
+    }
+    else {
+        levels = getLevels(fullRange, factor, numOfGridLines);
+        range = fullRange;
+
+    }
+
+    /* This is where we do all the work. */
+    /* range and levels have a first dimension indicating x or y
+     * and a second dimension for the different values (2 for range)
+     * and a possibly variable number for levels.
+     */
+    const labels = getLabels(levels, csys, labelFormat, fov);
+
+    var xLines = [];
+    var yLines = [];
+    var offset = 0;
+    var points=[];
+    for (let i=0; i<2; i++) {
+        for (let j=0; j<levels[i].length; j++) {
+            points= findLine(cc, csys, i, levels[i][j], range, screenWidth, plot.plotType);
+            xLines[offset] = points[0];
+            yLines[offset] = points[1];
+            offset += 1;
+
+        }
+    }
+    return {xLines, yLines, labels};
 }
 
 
+function isSorted(arr){
+    var sorted = true;
+
+    for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] > arr[i+1]) {
+            sorted = false;
+            break;
+        }
+    }
+    return sorted;
+}
+function getViewableAreaInfo(cc, csys, viewBorder, centerWp){
+
+    var isPrimeMeridianVisible=false, lon, lat;
+    var poles=0; //north pole: poles=1; south pole: poles = 2; both poles:poles=3
+
+    //check if north pole is visible
+    lon=0;
+    lat=90;
+    if (cc.pointInView(makeWorldPt(lon, lat, csys))){
+        poles +=1;
+    }
+
+    lat=-90;
+    if (cc.pointInView(makeWorldPt(lon, lat, csys))){
+        poles +=2;
+    }
+
+    const arr = [viewBorder[0][0], centerWp.x, viewBorder[0][1]];
+    if (isSorted(arr)) {
+        const det=(viewBorder[1][1]-viewBorder[1][0])/100;
+        for (var i = 0; i <= 100; i++) {
+            lat = viewBorder[1][0] + i * det;
+            if (cc.pointInView(makeWorldPt(0, lat, csys))) {
+                isPrimeMeridianVisible = true;
+                break;
+
+            }
+        }
+    }
+    else {
+        isPrimeMeridianVisible=true;
+    }
+
+
+    return {poles, isPrimeMeridianVisible};
+}
+
+
+/**
+ *
+ * @param ranges
+ * @param factor
+ * @param maxLines
+ * @returns {Array}
+ */
+function getLevels(ranges,factor, maxLines){
+
+    var levels=[];
+    var  min, max, delta;
+    for (let i=0; i<ranges.length; i++){
+        /* Expect max and min for each dimension */
+        if (ranges[i].length!==2){
+            levels[i]=[];
+        }
+        else {
+            min = ranges[i][0];
+            max =ranges[i][1];
+            if (min===max){
+                levels[i]=[];
+            }
+            else if ( Math.abs(min - (-90.0))  < 0.1 && Math.abs(max - 90.0) <0.1){ //include both poles
+                levels[i]= [-75.,-60., -45., -30., -15., 0., 15., 30.,  45., 60.,  75.];
+            }
+            else {
+                /* LZ DM-10491: introduced this simple algorithm to calculate the intervals.  The previous one
+                commented below caused line missing. For example, 45,0 wise, 45, 90 wise etc.
+
+                The algorithm previous used (commented ) missed one line. I don't understand the purpose of
+                 the algorithm.  The levels can be simply defined as the loop below
+                 */
+                levels[i] = [];
+
+                delta =calculateDelta (min, max,factor);
+
+
+                var count = Math.ceil ( (max -min)/delta);
+                if (count<=2){
+                    delta=delta/2.0;
+                    count=2*count;
+                }
+                for (let j=0; j<count; j++){
+                    levels[i][j] = j*delta + min;
+                  if (!i && levels[i][j] > 360){
+                    levels[i][j] -= 360;
+                  }
+                  else if (!i && levels[i][j] < 0){
+                    levels[i][j] += 360;
+                  }
+
+                }
+
+
+                /* We've now got the increment between levels.
+                 * Now find all the levels themselves.
+                 */
+
+                //LZ comment out the original algorithm to calculate the intervals
+                /* min=(max<min)?min-360:min;
+                 val = min<0? min-min%delta : min + delta-min%delta;
+                 count=0;
+                 while (val + count*delta <= max){
+                     count++;
+                 }
+                 if (count<=2){
+                     delta=delta/2.0;
+                     count=2*count;
+                 }
+                 levels[i] = [];
+                 for (let j=0; j<count; j++){
+                     levels[i][j] = j*delta + val;
+                     if (!i && levels[i][j] > 360){
+                         levels[i][j] -= 360;
+                     }
+                     else if (!i && levels[i][j] < 0){
+                         levels[i][j] += 360;
+                     }
+
+                 }*/
+            }
+        }
+
+    }
+
+    return levels.map( (row)=>{
+        if (row.length<maxLines){
+            return Regrid(row,  maxLines, true);
+        }
+        else {
+            return row;
+        }
+
+     });
+
+}
 
