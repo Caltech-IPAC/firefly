@@ -89,8 +89,7 @@ const angleStepForHipsMap=4.0;
  * @param numOfGridLines
  * @return a DrawData object
  */
-var zooms=[];
-var counter=0;
+
 
 export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
 
@@ -101,16 +100,6 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
     const aitoff = (!wpt);
     const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
     const centerWpt = convert(centerWp,csys);
-    if (fov<180){
-        zooms[counter]=plot.zoomFactor;
-        counter++;
-    }
-    else {  //reset zooms
-
-            zooms=[];
-            counter=0;
-
-    }
 
 
     if (width > 0 && height >0) {
@@ -936,28 +925,6 @@ function isEven(value){
     }
 
 }
-function getNumGridLines(maxLines){
-    if (zooms.length===1) return maxLines;
-    if (zooms.length>1) {
-        var lineCount=maxLines;
-        for (let i=0; i<zooms.length-1; i++){
-            if (zooms[i+1]>zooms[i]){
-                lineCount--;
-            }
-            if (zooms[i+1]<zooms[i]){
-                lineCount++;
-            }
-        }
-        if (lineCount<0 ) {
-            return 1;
-        }
-        else if (lineCount>maxLines) {
-            return maxLines;
-        }
-        else return lineCount;
-    }
-
-}
 
 function getLonLevels(viewRange, centerWpt,  cc,csys,poles, isPrimeMeridianVisible, maxLines, plot) {
     var levels = [], range = [];
@@ -1117,7 +1084,7 @@ function computeHipGridLines(cc, csys,  screenWidth, nGridLines, labelFormat, pl
     const fullRange = [[0, 360], [-90, 90]];
 
     const factor = plot.zoomFactor<1?1:plot.zoomFactor;
-
+    var numOfGridLines=2*nGridLines;
 
     /*get the view border, NOTE, the border does not mean the maximum and minimum of the range. If there the
      Prime meridian is in the image, the minimum of border is the value in the range from 0-minBorder, and the
@@ -1128,27 +1095,18 @@ function computeHipGridLines(cc, csys,  screenWidth, nGridLines, labelFormat, pl
 
     var levels, range;
 
-
-    var numOfGridLines=  fov<180 ? getNumGridLines(2*nGridLines):2*nGridLines;
-
-    if (numOfGridLines<=1){
-        //only display center lines.  In center case, the center has the largest value in lon and lat, thus,
-        //the range is not the viewBorder anymore.
-        levels = [ [centerWp.x], [centerWp.y]];
-        range = viewBorder;
+    if ( corners && corners.indexOf(null)===-1) {
+        numOfGridLines=nGridLines;
+        const {levels:l, range:r} = getLevelsAndRangeForHips( csys,  cc,viewBorder, centerWp,numOfGridLines,plot);
+        levels=l;
+        range=r;
     }
     else {
-        if (corners && corners.indexOf(null) === -1) {
-            const {levels: l, range: r} = getLevelsAndRangeForHips(csys, cc, viewBorder, centerWp, numOfGridLines,plot);
-            levels = l;
-            range = r;
-        }
-        else {
-            levels = getLevels(fullRange, factor, numOfGridLines);
-            range = fullRange;
+        levels = getLevels(fullRange, factor, numOfGridLines);
+        range = fullRange;
 
-        }
     }
+
     /* This is where we do all the work. */
     /* range and levels have a first dimension indicating x or y
      * and a second dimension for the different values (2 for range)
