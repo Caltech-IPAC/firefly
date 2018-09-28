@@ -219,7 +219,7 @@ function createCrossCenter(centerPt) {
  */
 export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
     var fpCenter = getWorldOrImage(centerPt, cc);
-    var regionDrawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(regions, fpCenter, regions[0].isInstrument);
+    var regionDrawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(regions, fpCenter, regions[0].isInstrument, cc);
     var centerObj = createCrossCenter(fpCenter);
     var dObj = clone(make(MarkerType.Footprint), {pts: [makeWorldPt(fpCenter.x, fpCenter.y)]});
 
@@ -498,7 +498,9 @@ export function getMarkerImageSize(rDrawAry, cc) {
         return false;
     });
 
-    if (badArea >= 0) return null;    // in case all drawObj is out of plot area
+    if (badArea >= 0) {
+        return null;
+    }    // in case all drawObj is out of plot area
 
     var width = lengthSizeUnit(cc, mArea.max_x - mArea.min_x, ShapeDataObj.UnitType.IMAGE_PIXEL);
     var height = lengthSizeUnit(cc, mArea.max_y - mArea.min_y, ShapeDataObj.UnitType.IMAGE_PIXEL);
@@ -524,8 +526,12 @@ function getObjArea(obj, cc, onlyCheckCenter = false) {
     }
 
     if (!centerPt ||
+        (onlyCheckCenter && !cc.pointInView(centerPt) || (!onlyCheckCenter && !isDrawobjAreaInView(cc, null, area)))) {
+
+    /*
         (!onlyCheckCenter &&
             (!cc.pointInView(centerPt) || !isDrawobjAreaInView(cc, null, area)))) {    // in case the cover area is out of plot area
+    */
         return null;
     }
 
@@ -577,11 +583,12 @@ var rectCornerInView = (drawObj, cc) => {
 /**
  * regenerate the footprint elements in terms of the current footprint center and the original regions
  * @param drawObj
+ * @param cc CysConverter object
  * @returns {*}
  */
-function getOriginalFPDrawObj(drawObj){
+function getOriginalFPDrawObj(drawObj, cc){
     const drawObjAry = FootprintFactory.getDrawObjFromOriginalRegion(drawObj.regions, drawObj.pts[0],
-        drawObj.regions[0].isInstrument);
+        drawObj.regions[0].isInstrument, cc);
 
     drawObjAry.forEach((obj) => obj.isMarker = true);
     return drawObjAry;
@@ -611,7 +618,7 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
                 tryOutline =  ShapeDataObj.makeRectangleByCenter(drawObj.pts[0], radius*2, radius*2, unitType,
                                                                  0.0, ShapeDataObj.UnitType.ARCSEC, false);
             } else if (has(drawObj,'regions')) {        // for footprint case
-                const drawObjAry = getOriginalFPDrawObj(drawObj);
+                const drawObjAry = getOriginalFPDrawObj(drawObj, cc);
 
                 // finding the center of all markers and rotate the center around the center of the footprint object
                 var {width, height, centerPt, unitType:ut} = getMarkerImageSize(drawObjAry, cc) || {};
@@ -945,7 +952,6 @@ function createOutlineBox(centerPt, width, height, unitType, cc, angle = 0.0) {
     }, 0);
 
     var outlineBox = null;
-
     if (totalInView >= 1) {
         var w = lengthSizeUnit(cc, width, unitType);
         var h = lengthSizeUnit(cc, height, unitType);
@@ -1063,6 +1069,7 @@ export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath)
 
         // newObj is made for display
         updateColorFromDef(newObj, def);
+
         newObj.drawObjAry.forEach((oneDrawObj) => {
             if (oneDrawObj) {      // the resize or rotate drawObj could be null
                 DrawOp.draw(oneDrawObj, ctx, plot, def, vpPtM, onlyAddToPath);
@@ -1144,7 +1151,7 @@ export function updateFootprintOutline(drawObj, cc, bForced = false) {
         const centerPt = getWorldOrImage(drawObj.pts[0], cc);
         const {angle} = drawObj;
 
-        drawObj.drawObjAry = getOriginalFPDrawObj(drawObj);
+        drawObj.drawObjAry = getOriginalFPDrawObj(drawObj, cc);
         drawObj.angle = 0;
         drawObj.drawObjAry.push(createCrossCenter(centerPt));
 

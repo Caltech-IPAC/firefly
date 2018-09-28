@@ -348,6 +348,7 @@ public class VisServerCommands {
 
     public static class DS9Region extends ServCommand {
         private static final String footprintKey = "${footprintDef}";
+        private static final String footprintFileKey="${footprintFile}";
 
         public String doCommand(SrvParam sp) throws IllegalArgumentException, IOException {
             String fileKey = sp.getRequired(ServerParams.FILE_KEY);
@@ -355,6 +356,8 @@ public class VisServerCommands {
 
             if (fileKey.contains(footprintKey)) {
                 result = VisServerOps.getFootprintRegion(fileKey.substring(footprintKey.length()));
+            } else if (fileKey.contains(footprintFileKey)) {
+                result = VisServerOps.getRelocatableRegions(fileKey.substring(footprintFileKey.length()));
             } else {
                 result = VisServerOps.getDS9Region(fileKey);
             }

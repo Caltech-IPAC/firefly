@@ -8,7 +8,7 @@ import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import VisUtil, {convertAngle, computeScreenDistance, convert} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
-import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
+import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt, SimplePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
@@ -268,19 +268,29 @@ const draw=  {
 
     getCenterPt(drawObj) {
         const {pts}= drawObj;
-        let xSum = 0;
-        let ySum = 0;
-        let xTot = 0;
-        let yTot = 0;
 
-        pts.forEach((wp) => {
-           xSum += wp.x;
-           ySum += wp.y;
-           xTot++;
-           yTot++;
-        });
+        if (pts && pts.length > 0) {
+            let xSum = 0;
+            let ySum = 0;
+            let xTot = 0;
+            let yTot = 0;
 
-        return makeWorldPt(xSum / xTot, ySum / yTot);
+            pts.forEach((wp) => {
+                xSum += wp.x;
+                ySum += wp.y;
+                xTot++;
+                yTot++;
+            });
+
+            const type = pts[0].type;
+            const x = xSum/xTot;
+            const y = ySum/yTot;
+
+            return type === Point.W_PT ? makeWorldPt(x, y) : SimplePt.make(x, y, type);
+
+        } else {
+            return makeWorldPt(0, 0);
+        }
     },
 
     getScreenDist(drawObj,plot, pt) {
@@ -742,7 +752,7 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     }
 
     const textColor = maximizeOpacity(color);
-    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, renderOptions,
+    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, Object.assign({}, renderOptions, {rotAngle: 0.0}),
         {rotationAngle:angle, textBaseline, textAlign},
         {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
     );
@@ -851,8 +861,6 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 angle += rectAngle  + get(renderOptions, 'rotAngle', 0.0);
                 angle = getPVRotateAngle(plot, angle);
 
-                //angle = angleAfterFlip(angle);
-
                 if (has(renderOptions, 'translation')) {
                     x += renderOptions.translation.x;
                     y += renderOptions.translation.y;
@@ -942,9 +950,9 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  * @param onlyAddToPath
  */
 function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
-    const {pts, text, radius1, radius2, renderOptions, angleUnit, isOnWorld = true}= drawObj;
+    const {pts, text, radius1, radius2,  angleUnit, isOnWorld = true}= drawObj;
     const {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
-    let {angle= 0}= drawObj;
+    let {angle= 0, renderOptions}= drawObj;
     let inView = false;
     let centerPt= null;
     let pt0;
@@ -1004,8 +1012,13 @@ function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 angle = plot.zoomFactor * angle;
             }
 
-            angle += eAngle;
+            angle += eAngle + get(renderOptions, 'rotAngle', 0.0);
             angle = getPVRotateAngle(plot, angle);
+
+            renderOptions = Object.assign({}, renderOptions,
+                {
+                    rotAngle: 0.0
+                });
 
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
@@ -1451,8 +1464,8 @@ function makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, radius1, rad
 
     let opt;
     const height = fontHeight(fontSize);
-
     const offy = height + lineWidth;
+
     switch (textLoc) {
         case TextLocation.ELLIPSE_NE:
             opt= makeOffsetPt(-1*w, -1*(h + offy));
@@ -1571,7 +1584,6 @@ export function rotateShapeAround(drawObj, plot, angle, worldPt) {
 
     const newPts = rotateAround(plot, drawObj.pts, angle, worldPt);
     const newObj = Object.assign({}, drawObj, {pts: newPts});
-
     const addRotAngle = (obj) => {
         if (obj.sType === ShapeType.Rectangle || obj.sType === ShapeType.Ellipse) {
             let rotAngle = angle;
@@ -1609,6 +1621,11 @@ export function rotateAround(plot, pts, angle, wc) {
         if (!p1) return null;
 
         const pti= plot.getImageCoords(p1);
+
+        if (!pti) {
+            return null;
+        }
+
         const x1 = pti.x - center.x;
         const y1 = pti.y - center.y;
         const sin = Math.sin(-angle);
