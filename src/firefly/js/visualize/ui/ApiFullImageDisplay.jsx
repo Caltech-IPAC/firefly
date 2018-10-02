@@ -20,7 +20,7 @@ import {NewPlotMode} from '../MultiViewCntlr.js';
 
 
 
-export class ApiFullDisplay extends PureComponent {
+export class ApiFullImageDisplay extends PureComponent {
     constructor(props) {
         super(props);
         const showHealpixPixel= get(getAppOptions(), 'hips.readoutShowsPixel');
@@ -84,12 +84,12 @@ export class ApiFullDisplay extends PureComponent {
     }
 }
 
-ApiFullDisplay.propTypes= {
+ApiFullImageDisplay.propTypes= {
     forceExpandedMode : PropTypes.bool,
     closeFunc: PropTypes.func,
     viewerId: PropTypes.string
 };
 
-ApiFullDisplay.defaultProps= {
+ApiFullImageDisplay.defaultProps= {
     closeFunc:null
 };

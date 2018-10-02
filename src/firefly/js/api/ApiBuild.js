@@ -36,7 +36,7 @@ import {ImageMetaDataToolbar} from '../visualize/ui/ImageMetaDataToolbar.jsx';
 import {MultiViewStandardToolbar} from '../visualize/ui/MultiViewStandardToolbar.jsx';
 import {ImageExpandedMode} from '../visualize/iv/ImageExpandedMode.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
-import {ApiFullDisplay} from '../visualize/ui/ApiFullDisplay.jsx';
+import {ApiFullImageDisplay} from '../visualize/ui/ApiFullImageDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
@@ -196,7 +196,7 @@ export function buildLowlevelAPI() {
         MultiImageViewer,
         MultiViewStandardToolbar,
         ApiExpandedDisplay,
-        ApiFullDisplay,
+        ApiFullImageDisplay,
         ImageExpandedMode,
         ImageMetaDataToolbar,
         TablesContainer,
