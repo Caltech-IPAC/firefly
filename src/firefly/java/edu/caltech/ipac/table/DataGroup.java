@@ -22,6 +22,14 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private TableMeta meta = new TableMeta();
     private String title;
     private int size;
+    private String ID;
+    private String ref;
+    private String ucd;
+    private String utype;
+    private String desc;
+    private List<GroupInfo> groups = new ArrayList<>();   // for <GROUP> under <TABLE> of VOTable
+    private List<LinkInfo> links = new ArrayList<>();     // for <LINK> under <TABLE> of VOTable
+    private List<DataType> staticColumns = new ArrayList<>();  // for <PARAM> under <TABLE> of VOTABLE
     private transient DataType[] cachedColumnsAry = null;
 
     public DataGroup(String title, DataType[] dataDefs) {
@@ -309,6 +317,149 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
                 }
             }
         }
+    }
+
+    //============================================
+    // description of table
+    //============================================
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    //=============================================
+    // ID for table, ex: ID attribute in votable
+    //=============================================
+    public void setID(String id) {
+        this.ID = id;
+    }
+
+    public String getID() {
+        return this.ID;
+    }
+
+    //==================================================
+    // ref for table, ex: ref attribute in votable
+    //==================================================
+    public void setRef(String value) {
+        this.ref = value;
+    }
+
+    public String getRef() {
+        return this.ref;
+    }
+
+
+    //============================================================
+    // ucd, utype for table, ex: ucd, utype attribute in votable
+    //===========================================================
+    public void setUCD(String ucd) {
+        this.ucd = ucd;
+    }
+
+    public String getUCD() {
+        return this.ucd;
+    }
+
+    public void setUType(String utype) {
+        this.utype = utype;
+    }
+
+    public String getUType() {
+        return this.utype;
+    }
+
+    //==========================================================
+    // group of columns for table, ex: GROUP element in votable
+    //==========================================================
+    public void addGroup(GroupInfo gObj) {
+        groups.add(gObj);
+    }
+
+    public void removeGroup(int i) {
+        if (i >= 0 && i < groups.size()) {
+            groups.remove(i);
+        }
+    }
+
+    public void removeGroup(GroupInfo gObj) {
+        groups.remove(gObj);
+    }
+
+    public GroupInfo getGroup(int i) {
+        if (i >= 0 && i < groups.size()) {
+            return groups.get(i);
+        } else {
+            return null;
+        }
+    }
+
+    public List<GroupInfo> getGroups() {
+        return groups;
+    }
+
+    //==============================================
+    // links for table, ex: LINK element in votable
+    //==============================================
+    public void addLink(LinkInfo linkObj) {
+        links.add(linkObj);
+    }
+
+    public void removeLink(int i) {
+        if (i >= 0 && i < links.size()) {
+            links.remove(i);
+        }
+    }
+
+    public void removeLink(LinkInfo linkObj) {
+        links.remove(linkObj);
+    }
+
+    public LinkInfo getLink(int i) {
+        if (i >= 0 && i < links.size()) {
+            return links.get(i);
+        } else {
+            return null;
+        }
+    }
+
+    public List<LinkInfo> getLinks() {
+        return links;
+    }
+
+    //===============================
+    // columns with static value
+    // ex: PARAM element for votable
+    //================================
+
+    public void addParam(DataType dt) {
+        staticColumns.add(dt);
+    }
+
+    public void removeParam(int i) {
+        if (i >= 0 && i < staticColumns.size()) {
+            staticColumns.remove(i);
+        }
+    }
+
+    public void removeParam(DataType dt) {
+        staticColumns.remove(dt);
+    }
+
+    public DataType getParam(int i) {
+        if (i >= 0 && i < staticColumns.size()) {
+            return staticColumns.get(i);
+        } else {
+            return null;
+        }
+    }
+
+    public List<DataType> getParams() {
+        return staticColumns;
     }
 
     /**

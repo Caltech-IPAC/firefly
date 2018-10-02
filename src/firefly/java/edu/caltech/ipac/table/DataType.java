@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
 
 public class DataType implements Serializable, Cloneable {
 
@@ -51,6 +52,16 @@ public class DataType implements Serializable, Cloneable {
     private       String format;           // format string used for formating
     private       String fmtDisp;          // format string for diplay ... this is deprecated
     private       String sortByCols;       // comma-separated of column names
+    private       String ID;
+    private       String precision;
+    private       String ucd;
+    private       String utype;
+    private       String ref = "";
+    private       List<LinkInfo> links = new ArrayList<>();
+    private       String maxValue = "";
+    private       String minValue = "";
+    private       String[] options = null;
+    private       String staticValue;
 
 //    private transient PrimitiveList data;       // column-based data
     private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
@@ -204,6 +215,89 @@ public class DataType implements Serializable, Cloneable {
     public int getMaxDataWidth() { return maxDataWidth; }
 
     public void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
+
+    public void setID (String id) {
+        this.ID = id;
+    }
+
+    public String getID () {
+        return ID;
+    }
+
+    // for numeric data type,
+    // precision string format: wwEn or wwFn,
+    //                          ww: number of character,
+    //                          En: n means number of significant figures
+    //                          Fn: n means the significant figures after decimal point
+    public void setPrecision(String prec) {
+        this.precision = prec;
+    }
+
+    public String getPrecision() {
+        return precision;
+    }
+
+    public void setUCD(String ucd) {
+        this.ucd = ucd;
+    }
+
+    public String getUCD() {
+        return ucd;
+    }
+
+    public void setUType(String utype) {
+        this.utype = utype;
+    }
+
+    public String getUType() {
+        return utype;
+    }
+
+    public void setMaxValue(String max) {
+        this.maxValue = max;
+    }
+
+    public String getMaxValue() {
+        return maxValue;
+    }
+
+    public void setMinValue(String min) {
+        this.minValue = min;
+    }
+
+    public String getMinValue() {
+        return minValue;
+    }
+
+    public void setValue(String value) {
+        this.staticValue = value;
+    }
+
+    public String getValue() {
+        return staticValue;
+    }
+
+    // options of the data
+    public void setOptions(String[] srcStr) {
+        if (srcStr == null || srcStr.length == 0) {
+            options = null;
+        } else {
+            options = new String[srcStr.length];
+            Arrays.copyOf(srcStr, srcStr.length);
+        }
+    }
+
+    public String[] getOptions() {
+        return options;
+    }
+
+    public void setRef(String value) {
+        this.ref = value;
+    }
+
+    public String getRef() {
+        return ref;
+    }
 
     /**
      * returns the formatted header of this column padded to max width
@@ -394,4 +488,35 @@ public class DataType implements Serializable, Cloneable {
             return null; // should not happen;
         }
     }
+
+
+    //===================================================================
+    // links for Column, ex: LINK element(s) under FIELD element in votable
+    //===================================================================
+    public void addLink(LinkInfo linkObj) {
+        this.links.add(linkObj);
+    }
+
+    public void removeLink(int i) {
+        if (i >= 0 && i < links.size()) {
+            links.remove(i);
+        }
+    }
+
+    public void removeLink(LinkInfo linkObj) {
+        links.remove(linkObj);
+    }
+
+    public LinkInfo getLink(int i) {
+        if (i >= 0 && i < links.size()) {
+            return links.get(i);
+        } else {
+            return null;
+        }
+    }
+
+    public List<LinkInfo> getLinks() {
+        return links;
+    }
+
 }
