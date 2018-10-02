@@ -49,19 +49,24 @@ export class ImageExpandedMode extends PureComponent {
 
 
     render() {
-        const {closeFunc,insideFlex}= this.props;
+        const {closeFunc,insideFlex,viewerId}= this.props;
         const {visRoot:vr,multiViewRoot}= this.state;
         if (vr.expandedMode===ExpandType.COLLAPSE) return false;
 
         const layoutType= vr.expandedMode===ExpandType.GRID ? 'grid' : 'single';
 
-        var viewer= getViewer(getMultiViewRoot(),EXPANDED_MODE_RESERVED);
+
+        let foundViewerId= viewerId;
+        if (!viewerId) {
+            const viewer= getViewer(getMultiViewRoot(),EXPANDED_MODE_RESERVED);
+            foundViewerId= viewer.viewerId
+        }
 
         return (
             <MultiImageViewerView viewerPlotIds={getExpandedViewerItemIds(multiViewRoot)}
                                   layoutType={layoutType}
                                   Toolbar={ExpandedTools}
-                                  viewerId={viewer.viewerId}
+                                  viewerId={foundViewerId}
                                   visRoot={vr}
                                   style={{flex:'1 1 auto'}}
                                   closeFunc={closeFunc}

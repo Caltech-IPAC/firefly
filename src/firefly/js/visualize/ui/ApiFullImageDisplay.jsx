@@ -7,15 +7,20 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
-import {VisHeaderView} from './VisHeaderView.jsx';
-import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
+import {VisHeaderView, VisPreview} from './VisHeaderView.jsx';
+// import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
+import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
+import {VisToolbar} from './VisToolbar.jsx';
 import {addMouseListener, lastMouseCtx} from '../VisMouseSync.js';
 import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {MultiImageViewer} from './MultiImageViewer.jsx';
+import {NewPlotMode} from '../MultiViewCntlr.js';
+// import {ExpandedTools} from '../iv/ExpandedTools.jsx';
 
 
 
-export class ApiExpandedDisplay extends PureComponent {
+export class ApiFullImageDisplay extends PureComponent {
     constructor(props) {
         super(props);
         const showHealpixPixel= get(getAppOptions(), 'hips.readoutShowsPixel');
@@ -51,24 +56,40 @@ export class ApiExpandedDisplay extends PureComponent {
         return (
             <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
                          alignItems:'stretch', flexDirection:'column'}}>
-                <div style={{position: 'relative', marginBottom:'6px'}} className='banner-background'>
-                    <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}
-                                   showHealpixPixel={showHealpixPixel}/>
+                <div style={{position: 'relative', marginBottom:'6px',
+                         display:'flex', flexWrap:'nowrap', flexDirection:'row', justifyContent: 'center'}}
+                     className='banner-background'>
+                    <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end'}}>
+                        <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}
+                                       showHealpixPixel={showHealpixPixel}/>
+                    </div>
+                </div>
+                <div>
+                    <VisToolbar messageUnder={Boolean(closeFunc)}/>
                 </div>
                 <div style={{flex: '1 1 auto', display:'flex'}}>
-                    <ImageExpandedMode   {...{key:'results-plots-expanded', closeFunc, viewerId}}/>
+                    <MultiImageViewer viewerId= {viewerId}
+                                      insideFlex={true}
+                                      canReceiveNewPlots={NewPlotMode.create_replace.key}
+                                      Toolbar={MultiViewStandardToolbar}/>
+                </div>
+                <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end', position: 'absolute',
+                             bottom: 3, right: 4, borderTop: '2px ridge', borderLeft: '2px ridge'
+                           }}
+                >
+                    <VisPreview {...{showPreview:true, visRoot, currMouseState, readout}}/>
                 </div>
             </div>
             );
     }
 }
 
-ApiExpandedDisplay.propTypes= {
+ApiFullImageDisplay.propTypes= {
     forceExpandedMode : PropTypes.bool,
     closeFunc: PropTypes.func,
     viewerId: PropTypes.string
 };
 
-ApiExpandedDisplay.defaultProps= {
+ApiFullImageDisplay.defaultProps= {
     closeFunc:null
 };
