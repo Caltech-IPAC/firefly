@@ -225,7 +225,7 @@ function getViewPortInfo(plot, csys,  cc,ranges) {
  * @param cc
  * @param centerWpt
  * @param viewBorder
- * @returns {[null,null]}
+ * @returns {Array.<number>}
  */
 function getRangeForTruePM(plot, csys,  cc, centerWpt, viewBorder){
     const corners = getForCorners(plot, csys,  cc);
@@ -738,7 +738,7 @@ function isStraight(points){
  * @param dx
  * @param dy
  * @param opoints
- * @returns {[null,null]}
+ * @returns {*}
  */
 function findPoints(cc,csys, intervals, x0, y0,dx, dy,  opoints){
 
