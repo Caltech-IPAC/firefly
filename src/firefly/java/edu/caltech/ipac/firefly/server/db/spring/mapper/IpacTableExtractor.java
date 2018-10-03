@@ -185,10 +185,7 @@ public class IpacTableExtractor {
             DataType dt = headers.get(i);
             try {
                 Object obj = rs.getObject(dt.getKeyName());
-                if (obj instanceof String && ((String)obj).indexOf("\r")>=0) {
-                    obj = ((String)obj).replaceAll("\r", "");
-                }
-                writer.print(" " + dt.formatData(obj));
+                writer.print(" " + dt.formatData(obj, true));
             } catch (SQLException e) {
                 LOG.warn(e, "SQLException at col:" + headers.get(i).getKeyName());
                 writer.print(" " + dt.formatData("#ERROR#"));

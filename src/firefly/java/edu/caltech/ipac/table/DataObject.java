@@ -97,7 +97,7 @@ public class DataObject implements Serializable, Cloneable {
     }
 
     public String getFormatedData(DataType dt) {
-        return dt.formatData(getDataElement(dt));
+        return dt.formatData(getDataElement(dt), true);
     }
 
     public Object getDataElement(DataType fdt) {

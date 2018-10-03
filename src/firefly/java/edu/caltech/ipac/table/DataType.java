@@ -11,6 +11,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static org.apache.commons.lang.StringEscapeUtils.escapeJava;
+import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
+
 public class DataType implements Serializable, Cloneable {
 
     public enum Visibility {show, hide, hidden};
@@ -69,7 +72,8 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public DataType(String keyName, Class type, String label, String units, String nullString, String desc) {
-        this.keyName = keyName;
+        // our db engine does not allow quotes in column names
+        this.keyName = keyName.replace("\"","");
         setDataType(type);
         this.units = units;
         this.label = label;
@@ -220,6 +224,16 @@ public class DataType implements Serializable, Cloneable {
      * @return
      */
     public String formatData(Object value) {
+        return formatData(value, false);
+    }
+
+    /**
+     * returns the formatted string of the given value padded to the column's defined width
+     * @param value
+     * @param useEscape apply Java escaping to all strings to take care of control characters and quotes
+     * @return
+     */
+    public String formatData(Object value, boolean useEscape) {
         String sval;
         if (value == null) {
             sval = getNullString() == null ? "" : getNullString();
@@ -229,6 +243,9 @@ public class DataType implements Serializable, Cloneable {
                 value = String.format("%1$tF %1$tT", value);
             }
 
+            if (useEscape && type == String.class) {
+                value = escapeJava((String)value);
+            }
             String formatStr = getFmtDisp();
             formatStr = formatStr == null ? getFormat() : formatStr;
             formatStr = formatStr == null ? getFormat() : formatStr;
@@ -287,8 +304,22 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public Object convertStringToData(String s) {
+        return convertStringToData(s, false);
+    }
+
+    /**
+     * Convert a string into an object
+     * @param s string representation of an object
+     * @param useUnescape - if true Java unescaping is applied to all strings
+     * @return an object
+     */
+    public Object convertStringToData(String s, boolean useUnescape) {
         if (s == null || s.length() == 0 || s.equalsIgnoreCase("null")) return null;
         if (nullString != null && nullString.equals(s)) return null;
+
+        if (useUnescape && type==String.class) {
+            return unescapeJava(s);
+        }
 
         Object retval= s;
         try {
@@ -296,7 +327,7 @@ public class DataType implements Serializable, Cloneable {
                  retval= Boolean.valueOf(s);
              }
              else if (type ==String.class) {
-                 retval= s;
+                 retval= useUnescape ? unescapeJava(s) : s;
              }
              else if (type ==Double.class) {
                  retval= new Double(s);
