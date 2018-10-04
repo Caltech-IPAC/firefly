@@ -6,6 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {PopupStoreConnection} from './PopupStoreConnection.jsx';
+import {get} from 'lodash';
 
 
 const DIALOG_DIV= 'dialogRootDiv';
@@ -38,49 +39,77 @@ var dropDownEl = createDiv(DROPDOWN_DIV+'-root');
 export function showDropDown({id='',content, style={}, atElRef, locDir}) {
 
     const ddDiv = document.getElementById(DROPDOWN_DIV + '_' + id) || createDiv(DROPDOWN_DIV + '_' + id, dropDownEl);
-
-    const {x:o_x, y:o_y, width:o_width, height:o_height} = document.documentElement.getBoundingClientRect();    // outter box
-    const {x=0, y=0, width=0, height=0} = atElRef ? atElRef.getBoundingClientRect() : {};           // inner box
-    const [loc, dir] = [Math.floor(locDir/10), locDir%10];
-
-    const top    = (y-o_y) + (loc === 3 || loc === 4 ? height : 0);
-    const bottom = ((o_height-o_y) - y) - (loc === 3 || loc === 4 ? height : 0);
-    const left   = (x-o_x) + (loc === 2 || loc === 3 ? width : 0);
-    const right  = ((o_width-o_x) - x) - (loc === 2 || loc === 3 ? width : 0);
-
-    let pos;
-    switch (dir) {
-        case 1:
-            pos = {bottom, right}; break;
-        case 2:
-            pos = {bottom, left}; break;
-        case 3:
-            pos = {top, left}; break;
-        case 4:
-            pos = {top, right}; break;
-    }
-
-    style = Object.assign({ backgroundColor: '#f9f9f9',
-                            ...pos,
-                            padding: 3,
-                            boxShadow: '#c1c1c1 1px 1px 5px 0px',
-                            borderRadius: '0 3px',
-                            border: '1px solid #c1c1c1',
-                            position: 'absolute'},
-                            style);
-    const popup = (
-        <div style={style}>
-            {content}
-        </div>
-    );
-
-    ReactDOM.render(popup, ddDiv);
+    ReactDOM.render( <DropDown {...{id, content, style, atElRef, locDir}}/>, ddDiv);
     return ddDiv;
 }
 
 export function hideDropDown(id='') {
     const ddDiv = document.getElementById(DROPDOWN_DIV + '_' + id);
     if (ddDiv) ReactDOM.unmountComponentAtNode(ddDiv);
+}
+
+class DropDown extends PureComponent {
+
+    constructor(props) {
+        super(props);
+
+        this.getPos = (el) => {
+            if (!get(el, 'isConnected', true)) hideDropDown(props.id);                                                  // referenced element is no longer visible.. hide drop-down.
+            const {x:o_x, y:o_y, width:o_width, height:o_height} = document.documentElement.getBoundingClientRect();    // outter box
+            const {x=0, y=0, width=0, height=0} = el ? el.getBoundingClientRect() : {};                                 // inner box
+            return {x, y, width, height,  o_x, o_y, o_width, o_height};
+        };
+
+        this.state = this.getPos(props.atElRef);
+    }
+
+    componentWillReceiveProps(np) {
+        this.setState(this.getPos(np.atElRef));
+    }
+
+    componentDidMount() {
+        this.monitor = setInterval(() => this.setState(this.getPos(this.props.atElRef)), 1000);
+    }
+
+    componentWillUnmount() {
+        if (this.monitor) clearInterval(this.monitor);
+    }
+    render() {
+        const {content, style={}, locDir} = this.props;
+        const {x, y, width, height,  o_x, o_y, o_width, o_height} = this.state;    // outter box
+        const [loc, dir] = [Math.floor(locDir/10), locDir%10];
+
+        const top    = (y-o_y) + (loc === 3 || loc === 4 ? height : 0);
+        const bottom = ((o_height-o_y) - y) - (loc === 3 || loc === 4 ? height : 0);
+        const left   = (x-o_x) + (loc === 2 || loc === 3 ? width : 0);
+        const right  = ((o_width-o_x) - x) - (loc === 2 || loc === 3 ? width : 0);
+
+        let pos;
+        switch (dir) {
+            case 1:
+                pos = {bottom, right}; break;
+            case 2:
+                pos = {bottom, left}; break;
+            case 3:
+                pos = {top, left}; break;
+            case 4:
+                pos = {top, right}; break;
+        }
+
+        const myStyle = Object.assign({ backgroundColor: '#f5f5f5',
+                                        ...pos,
+                                        padding: 3,
+                                        boxShadow: '#c1c1c1 1px 1px 5px 0px',
+                                        borderRadius: '0 3px',
+                                        border: '1px solid #c1c1c1',
+                                        position: 'absolute'},
+                                    style);
+        return (
+            <div style={myStyle}>
+                {content}
+            </div>
+        );
+    }
 }
 
 

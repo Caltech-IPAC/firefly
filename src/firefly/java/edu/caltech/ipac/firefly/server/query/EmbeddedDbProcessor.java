@@ -211,7 +211,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 File finalDbFile = dbFile;
                 DataGroupPart finalResults = results;
                 SHORT_TASK_EXEC.submit(() -> {
+                    StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
                     enumeratedValuesCheck(finalDbFile, finalResults, treq);
+                    StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
                 });
             }
 
@@ -530,7 +532,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             Long count = (Long) v;
             if (count > 0 && count < MAX_COL_ENUM_COUNT) {
                 String vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                        .queryForList(String.format("SELECT distinct \"%s\" FROM data", k))
+                        .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", k))
                         .stream().map(m -> String.valueOf(m.get(k)))                        // map list of map to list of string(colname)
                         .collect(Collectors.joining(","));                         // combine the names into comma separated string.
                 updates.getDataDefintion(k).setEnumVals(vals);
@@ -552,7 +554,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         ServerEventManager.fireAction(action);
     }
 
-    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class);
+    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class);
     private static List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
     private static boolean maybeEnums(DataType dt) {
         return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
