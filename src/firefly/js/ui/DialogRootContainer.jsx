@@ -96,7 +96,7 @@ class DropDown extends PureComponent {
                 pos = {top, right}; break;
         }
 
-        const myStyle = Object.assign({ backgroundColor: '#f5f5f5',
+        const myStyle = Object.assign({ backgroundColor: '#FBFBFB',
                                         ...pos,
                                         padding: 3,
                                         boxShadow: '#c1c1c1 1px 1px 5px 0px',
@@ -105,7 +105,7 @@ class DropDown extends PureComponent {
                                         position: 'absolute'},
                                     style);
         return (
-            <div style={myStyle}>
+            <div className='rootStyle' style={myStyle}>
                 {content}
             </div>
         );

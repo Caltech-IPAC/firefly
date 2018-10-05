@@ -21,6 +21,8 @@ import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
 import {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
+import {getTblById, getColumn} from '../TableUtil.js';
 
 const {Cell} = FixedDataTable;
 const html_regex = /<.+>/;
@@ -46,7 +48,7 @@ export class HeaderCell extends PureComponent {
         const typeVal = col.type || '';
         const unitsVal = col.units ? `(${col.units})`: '';
         
-        const onClick = toBoolean(sortable, true) && (() => onSort(sortCol));
+        const onClick = toBoolean(sortable, true) ?(() => onSort(sortCol)) : undefined;
         return (
             <div style={style} title={cdesc} className='TablePanel__header'>
                 <div style={{height: '100%'}} className='clickable' onClick={onClick}>
@@ -63,34 +65,44 @@ export class HeaderCell extends PureComponent {
     }
 }
 
-function Filter({col, onFilter, filterInfo, tbl_id}) {
-    const {name, filterable=true, enumVals} = col || {};
+class Filter extends SimpleComponent{
 
-    if (!filterable) return <div style={{height:19}} />;      // column is not filterable
+    getNextState(np) {
+        const {col={}, tbl_id} = np;
+        const ncol = getColumn(getTblById((tbl_id)), col.name);
+        return {col: ncol};
+    }
+    render() {
+        const {onFilter, filterInfo, tbl_id} = this.props;
+        const {col} = this.state;
+        const {name, filterable=true, enumVals} = col || {};
 
-    let atElRef;
-    const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, name);
-    const filterInfoCls = FilterInfo.parse(filterInfo);
-    const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
-    const onEnumClicked = () => {
-        showDropDown({id: tblDropDownId(tbl_id), content, atElRef, locDir: 33, style: {marginLeft: -10}});
-    };
+        if (!filterable) return <div style={{height:19}} />;      // column is not filterable
 
-    return (
-        <div style={{height:29, display: 'inline-flex', alignItems: 'center', width: '100%'}}>
-            <InputField
-                validator={validator}
-                fieldKey={name}
-                tooltip={FILTER_CONDITION_TTIPS}
-                value={filterInfoCls.getFilter(name)}
-                onChange={(v) => onFilter(v)}
-                actOn={['blur','enter']}
-                showWarning={false}
-                style={filterStyle}
-                wrapperStyle={filterStyle}/>
-            {enumVals && <div ref={(r) => atElRef=r} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 8, borderRadius: 5}}/>}
-        </div>
-    );
+        let atElRef;
+        const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, name);
+        const filterInfoCls = FilterInfo.parse(filterInfo);
+        const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
+        const onEnumClicked = () => {
+            showDropDown({id: tblDropDownId(tbl_id), content, atElRef, locDir: 33, style: {marginLeft: -10}});
+        };
+
+        return (
+            <div style={{height:29, display: 'inline-flex', alignItems: 'center', width: '100%'}}>
+                <InputField
+                    validator={validator}
+                    fieldKey={name}
+                    tooltip={FILTER_CONDITION_TTIPS}
+                    value={filterInfoCls.getFilter(name)}
+                    onChange={(v) => onFilter(v)}
+                    actOn={['blur','enter']}
+                    showWarning={false}
+                    style={filterStyle}
+                    wrapperStyle={filterStyle}/>
+                {enumVals && <div ref={(r) => atElRef=r} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 8, borderRadius: 5}}/>}
+            </div>
+        );
+    }
 }
 
 
@@ -101,8 +113,14 @@ function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
     const options = col.enumVals.split(',')
                         .map( (s) => s.trim())
                         .map( (s) => ({label: s, value: s}) );
-    let value = (filterInfoCls.getFilter(name) || '').match(/IN \((.+)\)/);
-    value = value ? value[1] : '';      // if it's an IN condition, takes the value between the (?).. else nothing.
+    let value = '';
+    const filterBy = (filterInfoCls.getFilter(name) || '').match(/IN \((.+)\)/);
+    if (filterBy) {
+        // IN condition is used, set value accordingly.  remove enclosed quote if exists
+        value = filterBy[1].split(',')
+                           .map( (s) => s.trim().replace(/^'(.+)'$/, '$1'))
+                           .join(',');
+    }
 
     const hideEnumSelect = () => hideDropDown(tblDropDownId(tbl_id));
     const onApply = () => {
@@ -120,7 +138,7 @@ function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
     return (
         <FieldGroup groupKey='TableRenderer_enum' style={{minWidth: 100}}>
             <div style={{display: 'inline-flex', marginBottom: 5, width: '100%', justifyContent: 'space-between'}}>
-                <div className='ff-href' style={{fontSize: 13}} onClick={onApply}>Apply</div>
+                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onApply}>Apply</div>
                 <div className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
             </div>
             <CheckboxGroupInputField {...{fieldKey, alignment: 'vertical', initialState:{options,value}}}/>

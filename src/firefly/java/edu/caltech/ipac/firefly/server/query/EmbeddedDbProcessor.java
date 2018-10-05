@@ -208,13 +208,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
                 }
                 // check for values that can be enumerated..
-                File finalDbFile = dbFile;
-                DataGroupPart finalResults = results;
-                SHORT_TASK_EXEC.submit(() -> {
-                    StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
-                    enumeratedValuesCheck(finalDbFile, finalResults, treq);
-                    StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
-                });
+                if (results.getRowCount() < 5000) {
+                    enumeratedValuesCheck(dbFile, results, treq);
+                } else {
+                    enumeratedValuesCheckBG(dbFile, results, treq);        // when it's more than 5000 rows, send it by background so it doesn't slow down response time.
+                }
             }
 
             return results;
@@ -516,42 +514,51 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     }
 
-    private static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
+    private static void enumeratedValuesCheckBG(File dbFile, DataGroupPart results, TableServerRequest treq) {
 
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        String cols = Arrays.stream(results.getData().getDataDefinitions())
-                                .filter(dt -> maybeEnums(dt))
-                                .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
-                                .collect(Collectors.joining(", "));
+        SHORT_TASK_EXEC.submit(() -> {
+            enumeratedValuesCheck(dbFile, results, treq);
+            DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
+            updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
 
-        List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                                            .queryForList(String.format("SELECT %s FROM data", cols));
-        DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
-        updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
-        rs.get(0).forEach( (k,v) -> {
-            Long count = (Long) v;
-            if (count > 0 && count < MAX_COL_ENUM_COUNT) {
-                String vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                        .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", k))
-                        .stream().map(m -> String.valueOf(m.get(k)))                        // map list of map to list of string(colname)
-                        .collect(Collectors.joining(","));                         // combine the names into comma separated string.
-                updates.getDataDefintion(k).setEnumVals(vals);
-
-                // update dd table
-                JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                        .update(String.format("UPDATE data_dd SET enumVals = '%s' WHERE cname = '%s'", vals, k));
-            }
+            FluxAction action = new FluxAction("table.update", JsonTableUtil.toJsonTableModel(updates));
+            ServerEventManager.fireAction(action);
         });
-        // update client.. since initial data were sent without this info
-        sendTableUpdates(updates);
     }
 
-    /**
-     * Send an action event message to the client updating the status of a table read/write.
-     */
-    private static void sendTableUpdates(DataGroup dataGroup) {
-        FluxAction action = new FluxAction("table.update", JsonTableUtil.toJsonTableModel(dataGroup));
-        ServerEventManager.fireAction(action);
+    private static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
+        try {
+            StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
+            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+            String cols = Arrays.stream(results.getData().getDataDefinitions())
+                    .filter(dt -> maybeEnums(dt))
+                    .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
+                    .collect(Collectors.joining(", "));
+
+            List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                    .queryForList(String.format("SELECT %s FROM data where rownum < 500", cols));
+            rs.get(0).forEach( (cname,v) -> {
+                Long count = (Long) v ;
+                if (count > 0 && count <= MAX_COL_ENUM_COUNT) {
+                    List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                            .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
+
+                    if (vals.size() <= MAX_COL_ENUM_COUNT) {
+                        DataType dt = results.getData().getDataDefintion(cname);
+                        String enumVals = vals.stream().map(m -> String.valueOf(m.get(cname)))       // list of map to list of string(colname)
+                                .filter(s -> !( StringUtils.isEmpty(s) ||  dt.getNullString().equalsIgnoreCase(s)))            // remove null or blank values because it's hard to handle at the column filter level
+                                .collect(Collectors.joining(","));                          // combine the names into comma separated string.
+                        results.getData().getDataDefintion(cname).setEnumVals(enumVals);
+                        // update dd table
+                        JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                                .update(String.format("UPDATE data_dd SET enumVals = '%s' WHERE cname = '%s'", enumVals, cname));
+                    }
+                }
+            });
+            StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
+        } catch (Exception ex) {
+            // do nothing.. ignore any errors.
+        }
     }
 
     private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class);
