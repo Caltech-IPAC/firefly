@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
@@ -515,14 +517,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     private static void enumeratedValuesCheckBG(File dbFile, DataGroupPart results, TableServerRequest treq) {
-
+        RequestOwner owner = ServerContext.getRequestOwner();
+        ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, owner.getEventConnID(),
+                                                                        owner.getEventChannel(), owner.getUserKey());
         SHORT_TASK_EXEC.submit(() -> {
             enumeratedValuesCheck(dbFile, results, treq);
             DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
             updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
 
             FluxAction action = new FluxAction("table.update", JsonTableUtil.toJsonTableModel(updates));
-            ServerEventManager.fireAction(action);
+            ServerEventManager.fireAction(action, target);
         });
     }
 
