@@ -86,17 +86,14 @@ export function setViewerConfig(viewerType, htmlFile= '') {
  * @public
  * @memberof firefly
  */
-export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
+export function getViewer(channel= getWsChannel() + VIEWER_ID, file=defaultViewerFile, scriptUrl) {
     if (scriptUrl) {
-        // requesting for a viewer that's different from the currently loadded app.
+        // requesting for a viewer that's different from the currently loaded app
         const getViewer = get(loadRemoteApi(scriptUrl), 'getViewer');
         return getViewer && getViewer(channel, file);
     } else {
-        // returnn currently loaded app's Viewer
-        channel = (channel || getWsChannel()) + VIEWER_ID;
+        // return currently loaded app's Viewer
         const dispatch= (action) => dispatchRemoteAction(channel,action);
-
-
         const reinitViewer= () => dispatch({ type: REINIT_APP, payload: {}});
 
         /**
@@ -107,27 +104,22 @@ export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
         const viewer= Object.assign({dispatch, reinitViewer, channel},
             buildImagePart(channel,file,dispatch),
             buildTablePart(channel,file,dispatch),
-            buildChartPart(channel,file,dispatch)
+            buildChartPart(channel,file,dispatch),
+            buildUtilPart(channel,file),
         );
 
 
-        // add anything else
-        switch (defaultViewerType) {
+        switch (defaultViewerType) { // add any additional API
             case ViewerType.TriView:
                 return viewer;
-                break;
             case ViewerType.Grid:
                 return Object.assign({}, viewer, buildSlateControl(channel,file,dispatch));
-                break;
             default:
                 debug('Unknown viewer type: ${defaultViewerType}, returning TriView');
                 return viewer;
-                break;
-
         }
     }
 }
-
 /**
  * wrapper function to return the API's remote Viewer object.  This allow one firefly app to
  * gain access to another app's API.
@@ -168,7 +160,16 @@ export function loadRemoteApi(scriptUrl) {
     return get(apiFrame, 'contentWindow.firefly');
 }
 
+function buildUtilPart(channel, file, dispatcher) {
+    const openViewer= () => {
+        doViewerOperation(channel,file);
+    }
+
+    return {openViewer};
+}
+
 function buildSlateControl(channel,file,dispatcher) {
+
 
 
     /**

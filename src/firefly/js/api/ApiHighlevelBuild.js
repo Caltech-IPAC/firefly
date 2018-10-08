@@ -31,8 +31,12 @@ export function buildHighLevelApi(llApi) {
     return Object.assign({}, deprecated, current);
 }
 
+const STANDARD= 'standard';
+const ENCAPSULATE= 'encapsulate';
+
 
 var globalImageViewDefParams= {};
+var globalPrefs= {imageDisplayType:STANDARD};
 
 /**
  * Build the deprecated API
@@ -46,6 +50,7 @@ function build(llApi) {
     const imagePart= buildImagePart(llApi);
     const chartPart= buildChartPart(llApi);
     const tablePart= buildTablePart(llApi);
+
     return Object.assign({}, commonPart, imagePart,chartPart,tablePart);
 }
 
@@ -222,7 +227,9 @@ function buildCommon(llApi) {
      */
     const setRootPath= (rootUrlPath) => llApi.action.dispatchRootUrlPath(rootUrlPath);
 
-    return {setRootPath};
+    const setGlobalPref= (pref)=> Object.assign(globalPrefs, pref);
+
+    return {setRootPath,setGlobalPref};
 }
 
 function buildImagePart(llApi) {
@@ -296,6 +303,8 @@ function buildImagePart(llApi) {
      * @param {WebPlotParams|WebPlotRequest} request a request object with the plotting parameters
      * @param {HipsImageConversionSettings} [hipsImageConversion= undefined] if defined, use these parameter to
      *                                                convert between image and HiPS
+     * @param {boolean} userCanDelete User can delete the image
+     *
      * @memberof firefly
      * @public
      * @example firefly.showImage('myPlot',
@@ -312,8 +321,8 @@ function buildImagePart(llApi) {
      *
      *
      */
-    const showImage= (targetDiv, request, hipsImageConversion)  =>
-                   showImageInMultiViewer(llApi, targetDiv, request, false, hipsImageConversion);
+    const showImage= (targetDiv, request, hipsImageConversion, userCanDelete)  =>
+                   showImageInMultiViewer(llApi, targetDiv, request, false, hipsImageConversion, userCanDelete);
 
     /**
      * @summary A convenience plotting function to plot a file on the server or a url.  If first looks for the file then
@@ -361,6 +370,7 @@ function buildImagePart(llApi) {
      * @param {WebPlotParams|WebPlotRequest} request a request object with Type=='HiPS' used to display a HiPS
      * @param {HipsImageConversionSettings} [hipsImageConversion=undefined] if defined, use these parameter to
      *                                                convert between image and HiPS
+     * @param {boolean} userCanDelete User can delete the image
      * @memberof firefly
      * @public
      * @example firefly.showHiPS('hipsDIV1',
@@ -384,8 +394,8 @@ function buildImagePart(llApi) {
      *
      */
 
-    const showHiPS= (targetDiv, request, hipsImageConversion)  =>
-                        showImageInMultiViewer(llApi, targetDiv, request, true, hipsImageConversion);
+    const showHiPS= (targetDiv, request, hipsImageConversion, userCanDelete)  =>
+                        showImageInMultiViewer(llApi, targetDiv, request, true, hipsImageConversion, userCanDelete);
 
 
     /**
@@ -538,38 +548,94 @@ function showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageReques
 }
 
 
+var firstShowImage= false;
+var imageRenderType;
 
-function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion) {
-    const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer}= llApi.action;
+
+function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion, userCanDelete=true) {
+    const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer, dispatchUpdateCustom}= llApi.action;
     const {IMAGE, NewPlotMode}= llApi.util.image;
     const {renderDOM}= llApi.util;
-    const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
-
-    highlevelImageInit(llApi);
-
+    const {MultiImageViewer, ApiFullImageDisplay, MultiViewStandardToolbar}= llApi.ui;
     request = validatePlotRequest(llApi, targetDiv, request);
-
     const plotId= getPlotIdFromRequest(request);
+    const viewerId= targetDiv;
+
+
+    if (!firstShowImage) {
+        firstShowImage= true;
+        imageRenderType= globalPrefs.imageDisplayType;
+        if (imageRenderType===STANDARD) highlevelImageInit(llApi);
+    }
+
+
     dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
+    dispatchUpdateCustom(viewerId, {independentLayout: true});
 
 
-   if (isHiPS) {
+    if (isHiPS) {
         request.Type= 'HiPS';
         if (hipsImageConversion && !hipsImageConversion.hipsRequestRoot) {
             hipsImageConversion.hipsRequestRoot= request;
         }
-        dispatchPlotHiPS({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
+        dispatchPlotHiPS({plotId, wpRequest:request, viewerId,
+            hipsImageConversion, pvOptions: { userCanDeletePlots: userCanDelete}
+        });
     }
     else {
         if (hipsImageConversion && !hipsImageConversion.imageRequestRoot) {
             hipsImageConversion.imageRequestRoot= request;
         }
-        dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
+        dispatchPlotImage({plotId, wpRequest:request, viewerId,
+            hipsImageConversion, pvOptions: { userCanDeletePlots: userCanDelete}
+        });
     }
 
-    renderDOM(targetDiv, MultiImageViewer,
-        {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+    if (imageRenderType===STANDARD) {
+        renderDOM(targetDiv, MultiImageViewer,
+            {viewerId,  canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+    }
+    else {
+        renderDOM(targetDiv, ApiFullImageDisplay,
+            {viewerId, renderTreeId:viewerId, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+    }
+
 }
+
+
+// function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion) {
+//     const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer}= llApi.action;
+//     const {IMAGE, NewPlotMode}= llApi.util.image;
+//     const {renderDOM}= llApi.util;
+//     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
+//
+//     highlevelImageInit(llApi);
+//
+//     request = validatePlotRequest(llApi, targetDiv, request);
+//
+//     const plotId= getPlotIdFromRequest(request);
+//     dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
+//
+//
+//     if (isHiPS) {
+//         request.Type= 'HiPS';
+//         if (hipsImageConversion && !hipsImageConversion.hipsRequestRoot) {
+//             hipsImageConversion.hipsRequestRoot= request;
+//         }
+//         dispatchPlotHiPS({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
+//     }
+//     else {
+//         if (hipsImageConversion && !hipsImageConversion.imageRequestRoot) {
+//             hipsImageConversion.imageRequestRoot= request;
+//         }
+//         dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
+//     }
+//
+//     renderDOM(targetDiv, MultiImageViewer,
+//         {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+// }
+
+
 
 
 function initCoverage(llApi, targetDiv,options= {}) {
@@ -592,7 +658,7 @@ function initCoverage(llApi, targetDiv,options= {}) {
 var imageInit= false;
 function highlevelImageInit(llApi) {
     if (!imageInit) {
-        llApi.util.image.dispatchApiToolsView(true);
+        llApi.action.dispatchApiToolsView(true);
         llApi.util.image.initAutoReadout();
         imageInit= true;
     }

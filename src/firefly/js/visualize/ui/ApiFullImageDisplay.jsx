@@ -32,6 +32,9 @@ export class ApiFullImageDisplay extends PureComponent {
         if (this.removeMouseListener) this.removeMouseListener();
     }
 
+    getChildContext() {
+        return {renderTreeId : this.props.renderTreeId };
+    }
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
@@ -87,9 +90,14 @@ export class ApiFullImageDisplay extends PureComponent {
 ApiFullImageDisplay.propTypes= {
     forceExpandedMode : PropTypes.bool,
     closeFunc: PropTypes.func,
-    viewerId: PropTypes.string
+    viewerId: PropTypes.string,
+    renderTreeId : PropTypes.string
 };
 
 ApiFullImageDisplay.defaultProps= {
     closeFunc:null
+};
+
+ApiFullImageDisplay.childContextTypes= {
+    renderTreeId : PropTypes.string
 };

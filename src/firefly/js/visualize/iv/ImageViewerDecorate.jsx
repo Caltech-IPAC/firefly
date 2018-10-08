@@ -199,9 +199,9 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
             return false;
         }
     }
-    const lVis= BrowserInfo.isTouchInput() || (visRoot.apiToolsView && mousePlotId===pv.plotId);
+    const lVis= BrowserInfo.isTouchInput() || (visRoot.useFloatToolbar && mousePlotId===pv.plotId);
     const exVis= BrowserInfo.isTouchInput() || mousePlotId===pv.plotId;
-    const tb= !isExpanded && visRoot.apiToolsView;
+    const tb= !isExpanded && visRoot.useFloatToolbar;
     const style= (lVis || tb) && handleInlineTools ? bgFFGray : bgSlightGray;
     return (
         <div style={style} className='iv-decorate-inline-toolbar-container'>

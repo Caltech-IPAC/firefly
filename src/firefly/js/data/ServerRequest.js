@@ -5,7 +5,7 @@
 import {has} from 'lodash';
 import validator from 'validator';
 import {parseWorldPt} from '../visualize/Point.js';
-import {replaceAll} from '../util/WebUtil.js';
+import {replaceAll, isDefined} from '../util/WebUtil.js';
 
 
 const REQUEST_CLASS= 'RequestClass';
@@ -184,7 +184,7 @@ export class ServerRequest {
     toString() {
         var idStr= (ID_KEY+KW_VAL_SEP+this.params[ID_KEY]);
         var retStr= Object.keys(this.params).sort().reduce((str,key) => {
-            if (key!==ID_KEY) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
+            if (key!==ID_KEY && isDefined(this.params[key])) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
             return str;
         },idStr);
         return retStr;

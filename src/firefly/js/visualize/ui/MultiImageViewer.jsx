@@ -22,7 +22,8 @@ export class MultiImageViewer extends PureComponent {
 
     componentWillReceiveProps(nextProps) {
         if (this.props.viewerId!==nextProps.viewerId) {
-            dispatchAddViewer(nextProps.viewerId, nextProps.canReceiveNewPlots, IMAGE,true);
+            const {renderTreeId}= this.context;
+            dispatchAddViewer(nextProps.viewerId, nextProps.canReceiveNewPlots, IMAGE,true, renderTreeId);
             dispatchViewerUnmounted(this.props.viewerId);
 
             var viewer = getViewer(getMultiViewRoot(), nextProps.viewerId);
@@ -43,7 +44,8 @@ export class MultiImageViewer extends PureComponent {
         this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
         var {viewerId, canReceiveNewPlots}= this.props;
-        dispatchAddViewer(viewerId,canReceiveNewPlots,IMAGE, true);
+        const {renderTreeId}= this.context;
+        dispatchAddViewer(viewerId,canReceiveNewPlots,IMAGE, true, renderTreeId);
     }
 
     storeUpdate(props) {
@@ -101,6 +103,10 @@ MultiImageViewer.propTypes= {
 
 // if gridDefFunc is defined it overrides the forceRowSize and forceColSize parameters.
 // forceRowSize is defined if overrides forceColSize parameter.
+
+MultiImageViewer.contextTypes= {
+    renderTreeId: PropTypes.string
+};
 
 
 MultiImageViewer.defaultProps= {

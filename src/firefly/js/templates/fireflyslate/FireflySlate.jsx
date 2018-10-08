@@ -8,13 +8,16 @@ import PropTypes from 'prop-types';
 import {get, pickBy, isEmpty} from 'lodash';
 
 import {flux, firefly} from '../../Firefly.js';
+import {isDefined} from '../../util/WebUtil.js';
 import {getMenu, isAppReady, dispatchSetMenu, dispatchOnAppReady} from '../../core/AppDataCntlr.js';
-import {getLayouInfo, dispatchSetLayoutMode, SHOW_DROPDOWN, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
+import {getLayouInfo, dispatchSetLayoutMode, getGridView, getGridViewColumns,
+            SHOW_DROPDOWN, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
-import {layoutManager} from './FireflySlateManager.js';
+import {startLayoutManager} from './FireflySlateManager.js';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
+import {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {GridLayoutPanel} from './GridLayoutPanel.jsx';
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
@@ -28,6 +31,8 @@ import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/Mu
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 import {warningDivId} from '../../ui/LostConnection';
+
+
 
 /**
  * This FireflySlate is a generic layout application with some configurable behaviors.
@@ -49,16 +54,26 @@ export class FireflySlate extends PureComponent {
         super(props);
         this.state = this.getNextState();
         dispatchAddSaga(watchCatalogs);
-        dispatchAddSaga(layoutManager,{});
+        this.stopLayoutManager= startLayoutManager(this.props.renderTreeId, {renderTreeId:this.props.renderTreeId});
+
+    }
+
+    getChildContext() {
+        return {renderTreeId : this.props.renderTreeId};
     }
 
     getNextState() {
+        const {renderTreeId}= this.props;
         const menu = getMenu();
         const layoutInfo = getLayouInfo();
+        const gridView= getGridView(layoutInfo, renderTreeId);
+        const gridColumns= getGridViewColumns(layoutInfo, renderTreeId);
+        // const gridView= getGridView(layoutInfo);
+        // const gridColumns= getGridViewColumns(layoutInfo);
         const isReady = isAppReady();
 
         return Object.assign({gridView:undefined}, this.props,
-            {menu, isReady, ...layoutInfo});
+            {gridColumns, gridView, menu, isReady, ...layoutInfo});
     }
 
     componentDidMount() {
@@ -70,6 +85,7 @@ export class FireflySlate extends PureComponent {
 
     componentWillUnmount() {
         this.removeListener && this.removeListener();
+        this.stopLayoutManager && this.stopLayoutManager();
     }
 
     storeUpdate() {
@@ -82,6 +98,8 @@ export class FireflySlate extends PureComponent {
                 leftButtons, centerButtons, rightButtons} = this.state;
         const {expanded} = mode || {};
         const {visible, view} = dropDown || {};
+        if (isDefined(this.props.showBgMonitor)) menu.showBgMonitor= this.props.showBgMonitor;
+
 
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
@@ -107,6 +125,9 @@ export class FireflySlate extends PureComponent {
     }
 }
 
+FireflySlate.childContextTypes= {
+    renderTreeId : PropTypes.string
+};
 
 
 const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
@@ -123,6 +144,9 @@ const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)
  * @return {*}
  */
 function mainView({expanded,gridView, gridColumns, leftButtons, centerButtons, rightButtons}) {
+    const vr= visRoot();
+
+    if (expanded && expanded!==LO_VIEW.none && vr.apiToolsView) return <div></div>;
 
     switch (expanded) {
         case LO_VIEW.images:

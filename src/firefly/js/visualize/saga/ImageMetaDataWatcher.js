@@ -84,7 +84,7 @@ function watchImageMetadata(action, cancelSelf, params) {
 
         case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
         case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
-            if (!paused) updateImagePlots(tbl_id, viewerId);
+            if (!paused) updateImagePlots(tbl_id, viewerId, true);
             break;
 
 
@@ -106,7 +106,7 @@ function watchImageMetadata(action, cancelSelf, params) {
             break;
 
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-            if (!paused) changeActivePlotView(action.payload.plotId,tbl_id);
+            if (!paused) changeActivePlotView(action.payload.plotId,tbl_id, true);
             break;
 
         case ImagePlotCntlr.ANY_REPLOT:
@@ -131,12 +131,14 @@ const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].co
  * 
  * @param tbl_id
  * @param viewerId
+ * @param layoutChange
  * @return {Array}
  */
-function updateImagePlots(tbl_id, viewerId) {
+function updateImagePlots(tbl_id, viewerId, layoutChange= false) {
 
     var viewer = getViewer(getMultiViewRoot(), viewerId);
 
+    if (!viewer) return;
 
     const table = getTblById(tbl_id);
     // check to see if tableData is available in this range.
@@ -176,7 +178,7 @@ function updateImagePlots(tbl_id, viewerId) {
 
     // keep the plotId array for 'single' layout
 
-    if (viewer.layout===SINGLE && !isEmpty(viewer.itemIdAry)) {
+    if (layoutChange && viewer.layout===SINGLE && !isEmpty(viewer.itemIdAry)) {
         if (viewer.itemIdAry[0].includes(GRID_FULL.toLowerCase())) {   // from full grid images
             const activePid = visRoot().activePlotId;
 
@@ -348,6 +350,7 @@ function resetFullGridActivePlot(tbl_id, plotIdAry) {
 
     plotIdAry.find((pId) => {
         const plot = primePlot(vr, pId);
+        if (!plot) return false;
 
         if (get(plot.attributes, PlotAttribute.TABLE_ROW, -1) !== highlightedRow) return false;
 

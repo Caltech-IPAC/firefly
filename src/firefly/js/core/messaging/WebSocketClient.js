@@ -46,10 +46,13 @@ export function wsConnect(callback, baseUrl=getRootURL()) {
     baseUrl = baseUrl.replace('https:', 'wss:').replace('http:', 'ws:');
 
     const urlInfo = parseUrl(document.location);
-    var wsch = get(urlInfo,['searchObject', WSCH]);
-    wsch = wsch ? `?${CH_ID}=${wsch}` : '';
+    let wsch = get(urlInfo,['searchObject', WSCH], ''); // get channel from url
 
-    const wsUrl = `${baseUrl}/sticky/firefly/events${wsch}`;
+    if (!wsch && get(window,'firefly.wsch')) { // if not defined, try window.firefly
+        wsch= window.firefly.wsch;
+    }
+    const wschParam = wsch ? `?${CH_ID}=${wsch}` : '';
+    const wsUrl = `${baseUrl}/sticky/firefly/events${wschParam}`;
     console.log('Connecting to ' + wsUrl);
     makeConnection(wsUrl);
     pinger = makePinger(callback, wsUrl);

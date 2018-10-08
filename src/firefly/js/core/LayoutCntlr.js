@@ -27,6 +27,7 @@ export const SPECIAL_VIEWER = new Enum(['tableImageMeta', 'coverageImage'], { ig
 /*---------------------------- Actions ----------------------------*/
 
 export const UPDATE_LAYOUT     = `${LAYOUT_PATH}.updateLayout`;
+export const UPDATE_GRID_VIEW  = `${LAYOUT_PATH}.updateGridView`;
 export const SET_LAYOUT         = `${LAYOUT_PATH}.setLayout`;
 export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
@@ -48,6 +49,8 @@ export function reducer(state={}, action={}) {
             }
             return action.type === SET_LAYOUT ? action.payload : smartMerge(state, action.payload);
 
+        case UPDATE_GRID_VIEW :
+            return updateGridView(state, action.payload);
         case SET_LAYOUT_MODE :
             return smartMerge(state, {mode: {[mode]: view}});
 
@@ -79,11 +82,14 @@ function enableSpecialViewer(state,payload) {
 }
 
 function addCell(state,payload) {
-    const {row=0, col=0, width=1, height=1, cellId}= payload;
+    const {row=0, col=0, width=1, height=1, cellId, renderTreeId='DEFAULT' }= payload;
     const type= LO_VIEW.get(payload.type);
     if (!type || !cellId) return state; // row, col, type, cellId must be defined
 
-    let {gridView=[]}=  state;
+
+    let {gridViewsData= {}}= state;
+
+    let {gridView=[], gridColumns:cols= 1}= get(gridViewsData,renderTreeId, {});
 
     const c= gridView.find((entry) => entry.cellId===cellId);
     const newEntry= { cellId, row, col, width, height, type };
@@ -92,20 +98,28 @@ function addCell(state,payload) {
                      // either update or add the new cell
     gridView= c ? gridView.map( (entry) => entry.cellId===cellId ? newEntry : entry) :
                   [...gridView, newEntry];
-
-
     const dim= getGridDim(gridView);
-    const cols= state.gridColumns || 1;
+    gridViewsData= clone(gridViewsData, {[renderTreeId] : {gridView, gridColumns: cols>dim.cols ? cols : dim.cols}});
+    return clone(state, {gridViewsData});
+}
 
 
-    return clone(state, {gridView, gridColumns: cols>dim.cols ? cols : dim.cols});
+function updateGridView(state,payload) {
+    const {gridView=[], renderTreeId='DEFAULT' }= payload;
+    let {gridColumns=1}= get(state.gridViewsData,renderTreeId, {});
+    const gridViewsData= clone(state.gridViewsData, {[renderTreeId]:{gridView, gridColumns}});
+    return clone(state, {gridViewsData});
 }
 
 function removeCell(state,payload) {
-    const {cellId}= payload;
-    const {gridView}=  state;
+    const {cellId, renderTreeId='DEFAULT'}= payload;
+    let {gridViewsData= {}}= state;
+    let {gridView=[], gridColumns=1}= get(gridViewsData,renderTreeId, {});
     if (isEmpty(gridView) || !cellId) return state;
-    return clone(state, {gridView: gridView.filter( (g) => g.cellId!==cellId)});
+
+    gridView= gridView.filter( (g) => g.cellId!==cellId);
+    gridViewsData= clone(gridViewsData, {[renderTreeId]: {gridView, gridColumns}});
+    return clone(state, {gridViewsData});
 }
 
 
@@ -127,6 +141,17 @@ export function dispatchSetLayoutMode(mode=LO_MODE.standard, view) {
 export function dispatchUpdateLayoutInfo(layoutInfo) {
     flux.process({type: UPDATE_LAYOUT, payload: {...layoutInfo}});
 }
+
+
+/**
+ * update the layout info of the application.  data will be merged.
+ * @param {GridViewData} gridView  grid view to update
+ * @param {string} renderTreeId
+ */
+export function dispatchUpdateGridView(gridView, renderTreeId='DEFAULT') {
+    flux.process({type: UPDATE_GRID_VIEW, payload: {gridView,renderTreeId}});
+}
+
 
 /**
  * set the layout info of the application.
@@ -163,8 +188,8 @@ export function dispatchHideDropDown() {
  * @param {string} p.cellId
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchAddCell({row,col,width,height,type, cellId, dispatcher= flux.process}) {
-    dispatcher({type: ADD_CELL,   payload: {row,col,width,height,type, cellId}});
+export function dispatchAddCell({row,col,width,height,type, cellId, renderTreeId='DEFAULT', dispatcher= flux.process}) {
+    dispatcher({type: ADD_CELL,   payload: {row,col,width,height,type, cellId, renderTreeId}});
 }
 
 /**
@@ -174,8 +199,8 @@ export function dispatchAddCell({row,col,width,height,type, cellId, dispatcher= 
  * @param {string} p.cellId
  * @param {Function} p.dispatcher only for special dispatching uses such as remote
  */
-export function dispatchRemoveCell({cellId, dispatcher= flux.process}) {
-    dispatcher({type: REMOVE_CELL,   payload: {cellId}});
+export function dispatchRemoveCell({cellId, renderTreeId='DEFAULT', dispatcher= flux.process}) {
+    dispatcher({type: REMOVE_CELL,   payload: {cellId, renderTreeId}});
 }
 
 /**
@@ -202,8 +227,9 @@ export function getDropDownInfo() {
     return get(flux.getState(), 'layout.dropDown', {visible: false});
 }
 
-export function getGridCell(cellId) {
-    const {gridView=[]}= getLayoutRoot();
+export function getGridCell(cellId, renderTreeId='DEFAULT') {
+    let {gridViewsData= {}}= getLayoutRoot();
+    let {gridView=[], gridColumns}= gridViewsData[renderTreeId];
     return gridView.find( (entry) => entry.cellId===cellId);
 }
 
@@ -344,6 +370,16 @@ export function getNextCell(gridView, w, h) {
 
 }
 
+
+export function getGridView(layoutInfo, renderTreeId='DEFAULT') {
+    let {gridViewsData= {[renderTreeId]:{}}}= layoutInfo;
+    return get(gridViewsData, [renderTreeId,'gridView'],[]);
+}
+
+export function getGridViewColumns(layoutInfo, renderTreeId='DEFAULT') {
+    let {gridViewsData= {[renderTreeId]:{}}}= layoutInfo;
+    return get(gridViewsData, [renderTreeId,'gridColumns'], 1);
+}
 
 
 function getColFitIdx(gridView, row, testIdx, gridColumns, testWidth) {

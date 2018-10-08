@@ -1445,6 +1445,12 @@ export class WebPlotRequest extends ServerRequest {
 
     getPlotDescAppend() { return this.getParam(C.PLOT_DESC_APPEND); }
 
+    toStringServerSideOnly() {
+        const retReq= this.makeCopy();
+        clientSideKeys.forEach( (k) => retReq.params[k]= undefined);
+        return retReq.toString();
+    }
+
     /**
      * @return boolean
      */

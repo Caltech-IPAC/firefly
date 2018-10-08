@@ -74,13 +74,21 @@
  * @prop {boolean}  showTables  show tables panel
  * @prop {boolean}  showXyPlots show charts panel
  * @prop {boolean}  showImages  show images panel
+ * @prop {Object.<string, GridViewData>} gridViewsData used only with the grid view, undefined for other views
+ */
+
+
+/**
+ *
+ * @typedef {Object} GridViewData
  * @prop {Array.<GridViewEntry>} gridView used only with the grid view, undefined for other views
+ * @prop {number} gridColumns number of columns in this grid View
  */
 
 
 /**
  * Entry for grid layout. These entries are stored in an array by LayoutCntlr
- * @typedef GridViewEntry
+ * @typedef {Object} GridViewEntry
  * @prop {LO_VIEW} type
  * @prop {string} cellId
  * @prop {number} row
