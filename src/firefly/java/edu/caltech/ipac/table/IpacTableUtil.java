@@ -235,7 +235,7 @@ public class IpacTableUtil {
             String v = row.getFixedFormatedData(dt);
             // when writing out the IPAC table.. if ROWID is given, and data is not found. use the getRowId() value instead.
             if (v == null && dt.getKeyName().equals(DataGroup.ROW_IDX)) {
-                v = dt.formatData(row.getRowNum());
+                v = dt.formatData(row.getRowNum(), true);
             }
             writer.print(" " + v);
         }
@@ -388,7 +388,7 @@ public class IpacTableUtil {
                         }
                     }
 
-                    row.setDataElement(dt, dt.convertStringToData(val));
+                    row.setDataElement(dt, dt.convertStringToData(val, true));
 
                     offset = endoffset;
                 }
