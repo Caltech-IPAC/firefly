@@ -53,11 +53,11 @@ function getChartActions({chartId, tbl_id}) {
 }
 
 
-function onChartAction({chartAction, tbl_id, chartId, hideDialog}) {
+function onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId}) {
     return (fields) => {
         switch (chartAction) {
             case CHART_ADDNEW:
-                addNewTrace({fields, tbl_id, hideDialog}); // no chart id
+                addNewTrace({fields, tbl_id, hideDialog, renderTreeId}); // no chart id
                 break;
             case CHART_TRACE_ADDNEW:
                 addNewTrace({fields, tbl_id, chartId, hideDialog});
@@ -130,6 +130,7 @@ export class ChartSelectPanel extends SimpleComponent {
     render() {
 
         const {tbl_id, chartId, inputStyle={}, hideDialog, showMultiTrace} = this.props;
+        const {renderTreeId}= this.context;
 
         const chartActions = getChartActions({chartId, tbl_id});
         const {chartAction} = this.state;
@@ -141,7 +142,7 @@ export class ChartSelectPanel extends SimpleComponent {
                 <FormPanel
                     groupKey={groupKey}
                     submitText={chartAction===CHART_TRACE_MODIFY ? 'Apply' : 'OK'}
-                    onSuccess={onChartAction({chartAction, tbl_id, chartId, hideDialog})}
+                    onSuccess={onChartAction({chartAction, tbl_id, chartId, hideDialog, renderTreeId})}
                     cancelText='Close'
                     onError={() => {}}
                     onCancel={hideDialog}
@@ -166,6 +167,9 @@ ChartSelectPanel.propTypes = {
 ChartSelectPanel.defaultProps = {
     showMultiTrace: true,
 
+};
+ChartSelectPanel.contextTypes= {
+    renderTreeId: PropTypes.string
 };
 
 function ChartAction(props) {

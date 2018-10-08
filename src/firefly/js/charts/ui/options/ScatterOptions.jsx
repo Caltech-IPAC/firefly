@@ -261,7 +261,7 @@ TableSourcesOptions.propTypes = {
     showMultiTrace: PropTypes.bool
 };
 
-export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
+export function submitChangesScatter({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
 
     // trace type can switch between scatter and scattergl depending on the number of points
     const changes = {[`data.${activeTrace}.type`] : getTraceType(chartId, tbl_id, activeTrace)};
@@ -280,7 +280,7 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
     }
 
     Object.assign(changes, fields);
-    submitChanges({chartId, fields: changes, tbl_id});
+    submitChanges({chartId, fields: changes, tbl_id, renderTreeId});
 }
 
 /**

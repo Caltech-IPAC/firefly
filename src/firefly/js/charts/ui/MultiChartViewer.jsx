@@ -32,7 +32,8 @@ export class MultiChartViewer extends PureComponent {
 
     componentWillReceiveProps(nextProps) {
         if (this.props.viewerId!==nextProps.viewerId) {
-            dispatchAddViewer(nextProps.viewerId,nextProps.canReceiveNewItems,PLOT2D,true);
+            const {renderTreeId}= this.context;
+            dispatchAddViewer(nextProps.viewerId,nextProps.canReceiveNewItems,PLOT2D,true,renderTreeId);
             dispatchViewerUnmounted(this.props.viewerId);
         } else if (nextProps.expandedMode && this.props.expandedMode!==nextProps.expandedMode) {
             const {chartId} = getExpandedChartProps();
@@ -49,8 +50,9 @@ export class MultiChartViewer extends PureComponent {
     }
 
     componentWillMount() {
-        var {viewerId, canReceiveNewItems, expandedMode}= this.props;
-        dispatchAddViewer(viewerId,canReceiveNewItems,PLOT2D,true);
+        const {viewerId, canReceiveNewItems, expandedMode}= this.props;
+        const {renderTreeId}= this.context;
+        dispatchAddViewer(viewerId,canReceiveNewItems,PLOT2D,true, renderTreeId);
         if (expandedMode) {
             const {chartId} = getExpandedChartProps();
             dispatchUpdateCustom(viewerId, {activeItemId: chartId});
@@ -150,6 +152,9 @@ export class MultiChartViewer extends PureComponent {
 
 const stopPropagation= (ev) => ev.stopPropagation();
 
+MultiChartViewer.contextTypes= {
+    renderTreeId: PropTypes.string
+};
 
 MultiChartViewer.propTypes= {
     viewerId : PropTypes.string,

@@ -66,7 +66,6 @@ export const PLOT2D='plot2d';
 export const DEFAULT_FITS_VIEWER_ID= 'DEFAULT_FITS_VIEWER_ID';
 export const DEFAULT_PLOT2D_VIEWER_ID= 'DEFAULT_PLOT2D_VIEWER_ID';
 export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
-export const ANY_IMAGE_VIEWER_RESERVED= 'ANY_IMAGE_VIEWER_RESERVED';
 
 export const GRID_RELATED='gridRelated';
 export const GRID_FULL='gridFull';
@@ -107,7 +106,8 @@ function initState() {
             mounted: false,
             containerType : IMAGE,
             layoutDetail : 'none',
-            customData: {}
+            customData: {},
+            renderTreeId: undefined
         },
         {
             viewerId:DEFAULT_FITS_VIEWER_ID,
@@ -120,6 +120,7 @@ function initState() {
             containerType : IMAGE,
             layoutDetail : 'none',
             customData: {},
+            renderTreeId: undefined,
             lastActiveItemId: ''
         },
         {
@@ -133,6 +134,7 @@ function initState() {
             containerType : PLOT2D,
             layoutDetail : 'none',
             customData: {},
+            renderTreeId: undefined,
             lastActiveItemId: ''
         }
     ];
@@ -151,9 +153,13 @@ function initState() {
  * @param {string} canReceiveNewPlots   a string representation of one of NewPlotMode.
  * @param {string} containerType a string with container type, IMAGE and PLOT2D are predefined
  * @param {boolean} mounted
+ * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  */
-export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false) {
-    flux.process({type: ADD_VIEWER , payload: {viewerId, canReceiveNewPlots, containerType, mounted, lastActiveItemId:''} });
+export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false, renderTreeId) {
+    flux.process({
+        type: ADD_VIEWER,
+        payload: {viewerId, canReceiveNewPlots, containerType, mounted, renderTreeId, lastActiveItemId:''}
+    });
 }
 
 /**
@@ -169,10 +175,11 @@ export function dispatchRemoveViewer(viewerId) {
  * @param {string} viewerId
  * @param {string[]} itemIdAry  array of itemIds
  * @param {string} containerType a string with container type, IMAGE and PLOT2D are predefined
+ * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  *
  */
-export function dispatchAddViewerItems(viewerId, itemIdAry, containerType) {
-    flux.process({type: ADD_VIEWER_ITEMS , payload: {viewerId, itemIdAry, containerType} });
+export function dispatchAddViewerItems(viewerId, itemIdAry, containerType, renderTreeId) {
+    flux.process({type: ADD_VIEWER_ITEMS , payload: {viewerId, itemIdAry, containerType, renderTreeId} });
 }
 
 
@@ -370,14 +377,28 @@ export function findViewerWithItemId(multiViewRoot, itemId, containerType) {
 
 /**
  *
- * @param {MultiViewRoot} multiViewRoot
+ * @param {MultiViewerRoot} multiViewRoot
  * @param {string} containerType
+ * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @return {Viewer}
  */
-export function getAViewFromMultiView(multiViewRoot, containerType) {
-    return  multiViewRoot.find((entry) => (!entry.viewerId.includes('RESERVED')&&
+export function getAViewFromMultiView(multiViewRoot, containerType, renderTreeId= undefined) {
+    const viewer= multiViewRoot.find((entry) => (!entry.viewerId.includes('RESERVED')&&
+                                            !entry.customData.independentLayout &&
                                             entry.containerType===containerType &&
                                             (get(entry, 'canReceiveNewPlots') === NewPlotMode.create_replace.key)));
+    if (viewer.reservedContainer && renderTreeId) {
+        const newId= `${viewer.viewerId}_${renderTreeId}`;
+        const modViewer= getViewer(multiViewRoot, newId)
+        if (modViewer) return modViewer;
+        dispatchAddViewer(newId, NewPlotMode.create_replace.key,
+                      containerType,false,renderTreeId);
+
+        return getViewer(getMultiViewRoot(), newId)
+    }
+    else {
+        return viewer;
+    }
 }
 
 /**
@@ -430,7 +451,7 @@ function reducer(state=initState(), action={}) {
             retState= removeViewer(state,action);
             break;
         case ADD_VIEWER_ITEMS:
-            retState= addItems(state,payload.viewerId,payload.itemIdAry, payload.containerType);
+            retState= addItems(state,payload.viewerId,payload.itemIdAry, payload.containerType, payload.renderTreeId);
             break;
         case ADD_TO_AUTO_RECEIVER:
             retState= addToAutoReceiver(state,action);
@@ -459,10 +480,10 @@ function reducer(state=initState(), action={}) {
 
         case ImagePlotCntlr.PLOT_HIPS:
         case ImagePlotCntlr.PLOT_IMAGE_START:
-            const {viewerId, plotId} = payload;
+            const {viewerId, plotId, renderTreeId} = payload;
             if (imageViewerCanAdd(state,viewerId, plotId)) {
             //if (payload.viewerId && payload.plotId) {
-                state= addItems(state,payload.viewerId,[payload.plotId], IMAGE);
+                state= addItems(state,payload.viewerId,[payload.plotId], IMAGE, renderTreeId);
                 retState= addItems(state,EXPANDED_MODE_RESERVED,[payload.plotId],IMAGE);
             }
             break;
@@ -494,7 +515,8 @@ function imageViewerCanAdd(state, viewerId, plotId) {
 
 function addViewer(state,payload) {
 
-    const {viewerId,containerType, layout=GRID,canReceiveNewPlots=NewPlotMode.replace_only.key, mounted=false}= payload;
+    const {viewerId,containerType, layout=GRID,canReceiveNewPlots=NewPlotMode.replace_only.key,
+             mounted=false, renderTreeId}= payload;
     var   {lastActiveItemId} = payload;
     var entryInState = hasViewerId(state,viewerId);
 
@@ -510,7 +532,7 @@ function addViewer(state,payload) {
         // set default layout for the viewer with viewerId, META_VIEWER_ID, is full-grid type
         const layoutDetail = viewerId === META_VIEWER_ID ? GRID_FULL : undefined;
         const entry = {viewerId, containerType, canReceiveNewPlots, layout, mounted, itemIdAry: [], customData: {},
-                       lastActiveItemId, layoutDetail};
+                       lastActiveItemId, layoutDetail, renderTreeId};
         return [...state, entry];
     }
 }
@@ -528,19 +550,15 @@ function removeViewer(state,action) {
  * @param {string} viewerId
  * @param {string[]} itemIdAry
  * @param {string} containerType
+ * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab, only used here
+ *                                 if the viewerId does not exist and it needs to make one.
  * @return {MultiViewerRoot}
  */
-function addItems(state,viewerId,itemIdAry, containerType) {
-    var viewer;
-    if (viewerId===ANY_IMAGE_VIEWER_RESERVED) {
-        viewer= getAViewFromMultiView(state, containerType);
-    }
-    else {
+function addItems(state,viewerId,itemIdAry, containerType, renderTreeId) {
+    let viewer= state.find( (entry) => entry.viewerId===viewerId);
+    if (!viewer) {
+        state= addViewer(state,{viewerId,containerType, renderTreeId});
         viewer= state.find( (entry) => entry.viewerId===viewerId);
-        if (!viewer) {
-            state= addViewer(state,{viewerId,containerType});
-            viewer= state.find( (entry) => entry.viewerId===viewerId);
-        }
     }
 
     itemIdAry= union(viewer.itemIdAry,itemIdAry);
@@ -556,20 +574,11 @@ function addItems(state,viewerId,itemIdAry, containerType) {
  * @return {MultiViewerRoot}
  */
 function replaceImages(state,viewerId,itemIdAry,containerType) {
-    var viewer;
-    if (viewerId===ANY_IMAGE_VIEWER_RESERVED) {
-        viewer= getAViewFromMultiView(state, containerType);
-        viewerId= viewer.viewerId;
-        if (!viewerId) return state;
+    let viewer= state.find( (entry) => entry.viewerId===viewerId);
+    if (!viewer) {
+        state= addViewer(state,{viewerId,containerType});
     }
-    else {
-        viewer= state.find( (entry) => entry.viewerId===viewerId);
-        if (!viewer) {
-            state= addViewer(state,{viewerId,containerType});
-        }
-    }
-
-    var updateViewer = (entry) => {
+    const updateViewer = (entry) => {
         if (has(entry, 'lastActiveItemId')) {
             return {itemIdAry, lastActiveItemId: get(itemIdAry, '0', '')};
         } else {

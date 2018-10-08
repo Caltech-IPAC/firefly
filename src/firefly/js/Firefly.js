@@ -23,7 +23,7 @@ import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {init} from './rpc/CoreServices.js';
-import {getPropsWith, mergeObjectOnly} from './util/WebUtil.js';
+import {getPropsWith, mergeObjectOnly, clone} from './util/WebUtil.js';
 import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 
 export const flux = reduxFlux;
@@ -134,11 +134,17 @@ const defFireflyOptions = {
 };
 
 
+/**
+ *
+ * @param props
+ * @param options
+ */
 function fireflyInit(props, options={}) {
 
     if (initDone) return;
 
     props = mergeObjectOnly(defAppProps, props);
+    props.renderTreeId= undefined; // in not API usages, renderTreeId is not used
     options = mergeObjectOnly(defFireflyOptions, options);
     const {template} = props;
 
@@ -172,6 +178,38 @@ function fireflyInit(props, options={}) {
     }
 
     initDone = true;
+}
+
+/*
+ *
+ * @param {string} divId
+ * @param {Object} props
+ * @param {Object} options
+ * @return {function()} function to unrender the app
+ */
+export function startAsAppFromApi(divId, props={}, options={}, ) {
+    const defProps= {...defAppProps};
+    props = mergeObjectOnly(defProps, props);
+    props= {...props, ...{div:divId}};
+    const {template} = props;
+    const viewer = get(Templates, template);
+    dispatchAppOptions(options);
+    if (props.disableDefaultDropDown) {
+        dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
+    }
+    if (props.readoutDefaultPref) {
+        dispatchChangeReadoutPrefs(options.readoutDefaultPref);
+    }
+    if (viewer) {
+        const element= document.getElementById(props.div);
+        const controlObj= {
+             unrender: () => ReactDOM.unmountComponentAtNode(element),
+             render: () => renderRoot(viewer, props)
+        };
+        controlObj.render();
+        return controlObj;
+    }
+
 }
 
 /**
@@ -230,6 +268,7 @@ function renderRoot(viewer, props) {
     const e= document.getElementById(props.div);
     if (e)  {
         ReactDOM.render(React.createElement(viewer, props), e);
+        return e;
     }
     else {
         showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');

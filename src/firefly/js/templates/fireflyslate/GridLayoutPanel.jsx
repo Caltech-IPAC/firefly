@@ -13,7 +13,7 @@ import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from '../../visualize/ui/MultiViewStandardToolbar.jsx';
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
-import {LO_VIEW, getGridDim, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
+import {LO_VIEW, getGridDim, dispatchUpdateGridView} from '../../core/LayoutCntlr.js';
 import {NewPlotMode} from '../../visualize/MultiViewCntlr.js';
 
 import './react-grid-layout_styles.css';
@@ -81,6 +81,7 @@ class SlateView extends Component {
     renderedLayoutUpdated(layout) {
 
         const {gridView}= this.props;
+        const {renderTreeId}= this.context;
 
         const nextGridView= gridView.map( (entry) => {
             const l= layout.find( (le) => le.i===entry.cellId);
@@ -89,7 +90,7 @@ class SlateView extends Component {
 
         //-------
         // todo dispatch the new view
-        dispatchUpdateLayoutInfo({gridView:nextGridView});
+        dispatchUpdateGridView(nextGridView, renderTreeId);
     }
 
     dragStart() {
@@ -100,6 +101,8 @@ class SlateView extends Component {
         const {gridView,size:{width,height}, gridColumns}= this.props;
         this.renderedGridView= gridView;
 
+
+        console.log(`grid view: ${gridView.length},  ${width}x${height}`);
 
         if (isEmpty(gridView) || width<10 || height<10) return <div  style={{flex: '1 1 auto', overflow: 'auto'}}/>;
 
@@ -143,6 +146,10 @@ SlateView.propTypes= {
     size: PropTypes.object.isRequired,
     gridColumns : PropTypes.number.isRequired
 };
+SlateView.contextTypes= {
+    renderTreeId: PropTypes.string
+};
+
 
 const sizeMeHOC = sizeMe(config);
 
@@ -150,8 +157,10 @@ export const GridLayoutPanel= sizeMeHOC(SlateView);
 
 GridLayoutPanel.propTypes= {
     gridView : PropTypes.array.isRequired,
-    gridColumns : PropTypes.number.isRequired
+    gridColumns : PropTypes.number.isRequired,
 };
+
+
 
 
 

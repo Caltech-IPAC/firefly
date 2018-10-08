@@ -220,7 +220,7 @@ export function dispatchChartUnmounted(chartId, dispatcher= flux.process) {
 
 function chartAdd(action) {
     return (dispatch) => {
-        const {chartId, chartType, deletable} = action.payload;
+        const {chartId, chartType, deletable, renderTreeId} = action.payload;
         clearChartConn({chartId});
 
         if (chartType === 'plot.ly') {
@@ -235,7 +235,7 @@ function chartAdd(action) {
             const {viewerId, data, fireflyData} = actionToDispatch.payload;
             if (viewerId) {
                 // viewer will be added if it does not exist already
-                dispatchAddViewerItems(viewerId, [chartId], 'plot2d');
+                dispatchAddViewerItems(viewerId, [chartId], 'plot2d', renderTreeId);
             }
 
             // lazy table connection

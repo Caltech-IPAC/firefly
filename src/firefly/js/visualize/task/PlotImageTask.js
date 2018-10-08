@@ -66,7 +66,8 @@ const getFirstReq= (wpRAry) => isArray(wpRAry) ? wpRAry.find( (r) => Boolean(r))
 function makeSinglePlotPayload(vr, rawPayload, requestKey) {
 
    const {threeColor, attributes, setNewPlotAsActive= true,
-         holdWcsMatch= false, useContextModifications= true, enableRestore= true}= rawPayload;
+         holdWcsMatch= false, useContextModifications= true, enableRestore= true,
+         renderTreeId}= rawPayload;
    let {plotId, wpRequest, pvOptions= {}}= rawPayload;
 
     wpRequest= ensureWPR(wpRequest);
@@ -99,7 +100,7 @@ function makeSinglePlotPayload(vr, rawPayload, requestKey) {
                      viewerId: determineViewerId(rawPayload.viewerId, plotId),
                      hipsImageConversion,
                      requestKey, attributes, pvOptions, enableRestore,
-                     useContextModifications, threeColor, setNewPlotAsActive};
+                     useContextModifications, threeColor, setNewPlotAsActive, renderTreeId};
 
     const existingPv= getPlotViewById(vr,plotId);
     if (existingPv) {
@@ -143,7 +144,8 @@ export function makePlotImageAction(rawAction) {
         else {
             const {viewerId=DEFAULT_FITS_VIEWER_ID, attributes,
                    setNewPlotAsActive= true, pvOptions= {},
-                   useContextModifications= true, enableRestore= true}= rawAction.payload;
+                   useContextModifications= true, enableRestore= true,
+                   renderTreeId}= rawAction.payload;
             payload= {
                 wpRequestAry:ensureWPR(wpRequestAry),
                 viewerId,
@@ -154,7 +156,8 @@ export function makePlotImageAction(rawAction) {
                 useContextModifications,
                 enableRestore,
                 groupLocked:true,
-                requestKey
+                requestKey,
+                renderTreeId
             };
 
             payload.wpRequestAry= payload.wpRequestAry.map( (req) =>

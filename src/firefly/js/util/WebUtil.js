@@ -39,6 +39,10 @@ export function getProp(key, def) {
     return get(GLOBAL_PROPS, [key], def);
 }
 
+
+
+export const isDefined= (x) => x!==undefined;
+
 /**
  * returns an object of key:value where keyPrefix is removed from the keys.  i.e
  * <code>

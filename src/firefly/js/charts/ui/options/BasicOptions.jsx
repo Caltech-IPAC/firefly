@@ -23,6 +23,7 @@ import {getColValStats} from '../../TableStatsCntlr.js';
 import {getColValidator} from '../ColumnOrExpression.jsx';
 import {uniqueChartId, TRACE_COLORS, toRGBA, colorsOnTypes} from '../../ChartUtil.js';
 import {colorscaleNameToVal} from '../../Colorscale.js';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../../visualize/MultiViewCntlr.js';
 
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
@@ -85,6 +86,10 @@ function hasNoXY(type, tablesource) {
     return (!get(tablesource, ['mappings', 'x']) || !get(tablesource, ['mappings', 'y']));
 }
 
+function findViewerId(viewerId= DEFAULT_PLOT2D_VIEWER_ID, renderTreeId= undefined) {
+    if (viewerId===DEFAULT_PLOT2D_VIEWER_ID && renderTreeId) return `${viewerId}_${renderTreeId}`;
+    return viewerId;
+}
 
 function isNonNumColumn(tbl_id, colExp) {
     const numTypes = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
@@ -470,8 +475,9 @@ BasicOptionFields.propTypes = {
  * @param {string} p.chartId
  * @param {object} p.fields
  * @param {string} p.tbl_id
+ * @param {string} p.renderTreeId
  */
-export function submitChanges({chartId, fields, tbl_id}) {
+export function submitChanges({chartId, fields, tbl_id, renderTreeId}) {
     if (!fields) return;                // fields failed validations..  quick/dirty.. may need to separate the logic later.
     if (!chartId) chartId = uniqueChartId();
     const {layout={}, data=[], fireflyData, activeTrace:traceNum=0} = getChartData(chartId, {});
@@ -583,7 +589,9 @@ export function submitChanges({chartId, fields, tbl_id}) {
         // create chart data from changes and add chart
         const newChartData = {chartId, groupId: tbl_id};
         Object.entries(changes).forEach(([k,v]) => set(newChartData, k, v));
-        dispatchChartAdd({chartId, chartType: 'plot.ly', groupId: tbl_id, ...newChartData});
+        dispatchChartAdd({chartId, chartType: 'plot.ly', groupId: tbl_id, renderTreeId,
+            viewerId: findViewerId(DEFAULT_PLOT2D_VIEWER_ID,renderTreeId),
+            ...newChartData});
     } else {
         // update chart from options scenario
         dispatchChartUpdate({chartId, changes});

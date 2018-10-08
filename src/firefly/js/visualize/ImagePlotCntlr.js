@@ -296,10 +296,11 @@ export function makeUniqueRequestKey(prefix= KEY_ROOT) {
 
 /**
  *
- * @param apiToolsView
+ * @param {boolean} apiToolsView
+ * @param {boolean} useFloatToolbar
  */
-export function dispatchApiToolsView(apiToolsView) {
-    flux.process({ type: API_TOOLS_VIEW , payload: { apiToolsView}});
+export function dispatchApiToolsView(apiToolsView, useFloatToolbar= true) {
+    flux.process({ type: API_TOOLS_VIEW , payload: { apiToolsView, useFloatToolbar}});
 }
 /**
  *
@@ -539,10 +540,11 @@ export function dispatchRestoreDefaults({plotId, dispatcher= flux.process}) {
  * @param {boolean} [p.setNewPlotAsActive= true] the new plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
- * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  * @param {string} [p.viewerId] - viewer that this plot should be put into, only optional if
  *                                you have added the plot id manually to a viewer.
  *                                otherwise, you need to specify the viewer.
+ * @param {string} [p.renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
+ * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  * @public
  * @function dispatchPlotImage
  * @memberof firefly.action
@@ -556,11 +558,13 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
                                   setNewPlotAsActive= true,
                                   holdWcsMatch= false,
                                   enableRestore= true,
-                                  viewerId} ) {
+                                  viewerId,
+                                  renderTreeId} ) {
 
     dispatcher({ type: PLOT_IMAGE,
                    payload: {plotId,wpRequest, threeColor, pvOptions, hipsImageConversion, enableRestore,
-                             attributes, holdWcsMatch, setNewPlotAsActive, useContextModifications,viewerId}});
+                             attributes, holdWcsMatch, setNewPlotAsActive,
+                             useContextModifications,viewerId, renderTreeId}});
 }
 
 /**
@@ -574,14 +578,15 @@ export function dispatchPlotImage({plotId,wpRequest, threeColor=isArray(wpReques
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {boolean} [p.holdWcsMatch= false] if wcs match is on, then modify the request to hold the wcs match
  * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
+ * @param {string} [p.renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
 export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
-                                   attributes={}, setNewPlotAsActive= true, holdWcsMatch= false,
+                                   attributes={}, setNewPlotAsActive= true, holdWcsMatch= false, renderTreeId,
                                    enableRestore= true,
                                    dispatcher= flux.process}) {
     dispatcher( { type: PLOT_IMAGE, payload: { wpRequestAry, pvOptions, attributes, setNewPlotAsActive,
-                                               enableRestore, holdWcsMatch, viewerId} });
+                                               enableRestore, holdWcsMatch, viewerId, renderTreeId} });
 }
 
 
@@ -597,6 +602,7 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {boolean} [p.enableRestore= true] if true the original request is saved for restore
+ * @param {string} [p.renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  *
  * @public
@@ -605,7 +611,7 @@ export function dispatchPlotGroup({wpRequestAry, viewerId, pvOptions= {},
  */
 export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, attributes={},
                                    hipsImageConversion= undefined,
-                                     enableRestore= true,
+                                     enableRestore= true, renderTreeId,
                                      setNewPlotAsActive= true, dispatcher= flux.process }) {
     dispatcher( { type: PLOT_HIPS, payload: {wpRequest, plotId, pvOptions, attributes, enableRestore,
                                              hipsImageConversion, setNewPlotAsActive, viewerId} });
@@ -621,12 +627,13 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
  * @param {WebPlotParams|WebPlotRequest} p.hipsRequest
  * @param {WebPlotParams|WebPlotRequest} p.imageRequest - must be a ServiceType request.
  * @param {WebPlotParams|WebPlotRequest} p.allSkyRequest - must be a allsky type request
- * @param {boolean} p.plotAllSkyFirst - if there is an all sky set up then plot that first
- * @param {number} p.fovDegFallOver - the size in degrees that the image will switch between hips and a image cutout
- * @param {number} p.fovMaxFitsSize- the max size the fits image service can support
- * @param {boolean} p.autoConvertOnZoom- convert between images and FITS on zoom
- * @param {string} p.viewerId
- * @param {PVCreateOptions} p.pvOptions PlotView init Options
+ * @param {boolean} [p.plotAllSkyFirst= false] - if there is an all sky set up then plot that first
+ * @param {number} [p.fovDegFallOver] - the size in degrees that the image will switch between hips and a image cutout
+ * @param {number} [p.fovMaxFitsSize]- the max size the fits image service can support
+ * @param {boolean} [p.autoConvertOnZoom]- convert between images and FITS on zoom
+ * @param {string} [p.viewerId]
+ * @param {string} [p.renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
+ * @param {PVCreateOptions} [p.pvOptions] PlotView init Options
  * @param {Object} [p.attributes] meta data that is added the plot
  * @param {boolean} [p.setNewPlotAsActive] the last completed plot will be active
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
@@ -638,10 +645,10 @@ export function dispatchPlotHiPS({plotId,wpRequest, viewerId, pvOptions= {}, att
 export function dispatchPlotImageOrHiPS({plotId,hipsRequest, imageRequest, allSkyRequest, viewerId, fovDegFallOver=.12,
                                             fovMaxFitsSize= .12, autoConvertOnZoom= false,
                                             pvOptions= {}, attributes={}, plotAllSkyFirst= false,
-                                            setNewPlotAsActive= true, dispatcher= flux.process }) {
+                                            setNewPlotAsActive= true, renderTreeId, dispatcher= flux.process }) {
 
     dispatcher( { type: PLOT_HIPS_OR_IMAGE,
-        payload: {hipsRequest, imageRequest, allSkyRequest, plotId, fovDegFallOver, pvOptions,
+        payload: {hipsRequest, imageRequest, allSkyRequest, plotId, fovDegFallOver, pvOptions, renderTreeId,
                  fovMaxFitsSize, autoConvertOnZoom, attributes, setNewPlotAsActive, viewerId, plotAllSkyFirst} });
 }
 

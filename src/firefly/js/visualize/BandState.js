@@ -162,7 +162,9 @@ export class BandState {
         if (bs.uploadFileNameStr) json.uploadFileNameStr= bs.uploadFileNameStr;
         if (bs.imageIdx) json.imageIdx= bs.imageIdx;
         if (bs.originalImageIdx) json.originalImageIdx= bs.originalImageIdx;
-        json.plotRequestSerialize= bs.plotRequestSerialize;
+        json.plotRequestSerialize= bs.getWebPlotRequest().toStringServerSideOnly();
+
+
         json.rangeValuesSerialize= bs.rangeValuesSerialize;
         if (includeDirectAccessData) json.directFileAccessData= bs.directFileAccessData;
         if (bs.multiImageFile) json.multiImageFile= bs.multiImageFile;
