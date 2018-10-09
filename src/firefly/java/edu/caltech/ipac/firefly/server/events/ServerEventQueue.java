@@ -15,7 +15,7 @@ import org.json.simple.JSONValue;
 
 import java.io.Serializable;
 
-import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.BG_STATUS_ACTION;
+import static edu.caltech.ipac.firefly.server.events.FluxAction.BG_STATUS_UPDATE;
 
 /**
  * @author Trey Roby
@@ -46,7 +46,7 @@ public class ServerEventQueue implements Serializable {
             if (ev.getData() instanceof BackgroundStatus) {
                 JSONObject bgStatus = QueryUtil.convertToJsonObject((BackgroundStatus) ev.getData());
                 eventJ.put("name", Name.ACTION.getName());
-                eventJ.put("data", new FluxAction(BG_STATUS_ACTION, bgStatus));
+                eventJ.put("data", new FluxAction(BG_STATUS_UPDATE, bgStatus));
             } else if (ev.getData().toString().trim().startsWith("{") ) {
                 eventJ.put("data", JSONValue.parse(ev.getData().toString()));
             } else {

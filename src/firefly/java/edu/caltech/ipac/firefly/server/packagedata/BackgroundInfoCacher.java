@@ -52,7 +52,7 @@ public class BackgroundInfoCacher {
     public static void fireBackgroundJobAdd(BackgroundStatus bgStat) {
         if (bgStat != null) {
             mergeInfoIntoStatus(getInfo(new StringKey(bgStat.getID())), bgStat);
-            FluxAction addAction = new FluxAction("background.bgJobAdd", QueryUtil.convertToJsonObject(bgStat));
+            FluxAction addAction = new FluxAction(FluxAction.BG_JOB_ADD, QueryUtil.convertToJsonObject(bgStat));
             ServerEventManager.fireAction(addAction, ServerEvent.Scope.USER);
         }
     }

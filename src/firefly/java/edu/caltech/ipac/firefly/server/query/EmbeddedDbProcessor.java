@@ -525,7 +525,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
             updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
 
-            FluxAction action = new FluxAction("table.update", JsonTableUtil.toJsonTableModel(updates));
+            FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, JsonTableUtil.toJsonTableModel(updates));
             ServerEventManager.fireAction(action, target);
         });
     }

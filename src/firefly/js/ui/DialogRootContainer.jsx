@@ -61,6 +61,11 @@ class DropDown extends PureComponent {
         };
 
         this.state = this.getPos(props.atElRef);
+        this.hideDropDown = this.hideDropDown.bind(this);
+    }
+
+    hideDropDown() {
+        hideDropDown(this.props.id);
     }
 
     componentWillReceiveProps(np) {
@@ -68,11 +73,11 @@ class DropDown extends PureComponent {
     }
 
     componentDidMount() {
-        this.monitor = setInterval(() => this.setState(this.getPos(this.props.atElRef)), 1000);
+        document.addEventListener('click', this.hideDropDown);
     }
 
     componentWillUnmount() {
-        if (this.monitor) clearInterval(this.monitor);
+        document.removeEventListener('click', this.hideDropDown);
     }
     render() {
         const {content, style={}, locDir} = this.props;
@@ -104,8 +109,13 @@ class DropDown extends PureComponent {
                                         border: '1px solid #c1c1c1',
                                         position: 'absolute'},
                                     style);
+        const stopEvent = (e) => {
+            e.stopPropagation();
+            e.nativeEvent && e.nativeEvent.stopImmediatePropagation();
+        };
+
         return (
-            <div className='rootStyle' style={myStyle}>
+            <div className='rootStyle' style={myStyle} onClick={stopEvent}>
                 {content}
             </div>
         );

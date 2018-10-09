@@ -99,7 +99,7 @@ class Filter extends SimpleComponent{
                     showWarning={false}
                     style={filterStyle}
                     wrapperStyle={filterStyle}/>
-                {enumVals && <div ref={(r) => atElRef=r} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 8, borderRadius: 5}}/>}
+                {enumVals && <div ref={(r) => atElRef=r} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 6, borderRadius: 2}}/>}
             </div>
         );
     }
@@ -138,7 +138,7 @@ function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
     return (
         <FieldGroup groupKey='TableRenderer_enum' style={{minWidth: 100}}>
             <div style={{display: 'inline-flex', marginBottom: 5, width: '100%', justifyContent: 'space-between'}}>
-                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onApply}>Apply</div>
+                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onApply}>filter</div>
                 <div className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
             </div>
             <CheckboxGroupInputField {...{fieldKey, alignment: 'vertical', initialState:{options,value}}}/>
