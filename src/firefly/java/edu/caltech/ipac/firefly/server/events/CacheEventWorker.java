@@ -23,6 +23,8 @@ import net.sf.ehcache.event.NotificationScope;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
+
 /**
  * @author Trey Roby
  */
@@ -30,7 +32,6 @@ public class CacheEventWorker implements ServerEventManager.EventWorker {
 
     private static final String EVENT_SENDING_CACHE= Cache.TYPE_PERM_SMALL;
     private static final Cache cache= CacheManager.getCache(EVENT_SENDING_CACHE);
-    private static final ExecutorService executor =  Executors.newSingleThreadExecutor();
 
 
     public CacheEventWorker() {
@@ -57,7 +58,7 @@ public class CacheEventWorker implements ServerEventManager.EventWorker {
     }
 
     public void processEvent(final ServerEvent serverEvent) {
-        executor.submit(new Runnable() {
+        SHORT_TASK_EXEC.submit(new Runnable() {
             @Override
             public void run() {
                 ServerEventManager.processEvent(serverEvent);

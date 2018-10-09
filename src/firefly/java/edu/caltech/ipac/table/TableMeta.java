@@ -3,7 +3,9 @@
  */
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -52,6 +54,7 @@ public class TableMeta implements Serializable {
      */
     private Map<String, DataGroup.Attribute> attributes = new HashMap<>();
     private List<DataGroup.Attribute> keywords = new ArrayList<>();
+    private SelectionInfo selectInfo;
 
     public static String makeAttribKey(String tag, String colName) {
         return tag.replaceFirst("@", colName);
@@ -60,6 +63,22 @@ public class TableMeta implements Serializable {
     public void clear() {
         attributes.clear();
         keywords.clear();
+    }
+
+    public SelectionInfo getSelectInfo() {
+        return selectInfo;
+    }
+
+    public void setSelectInfo(SelectionInfo selectInfo) {
+        this.selectInfo = selectInfo;
+    }
+
+    public String getTblId() {
+        return getAttribute(TableServerRequest.TBL_ID);
+    }
+
+    public void setTblId(String tblId) {
+        setAttribute(TableServerRequest.TBL_ID, tblId);
     }
 
     /**
@@ -87,15 +106,13 @@ public class TableMeta implements Serializable {
     public void setKeywords(Collection<DataGroup.Attribute> keywords) {
         clear();
         if (keywords != null) {
-            keywords.stream()
-                    .forEach(att -> setAttribute(att.getKey(), att.getValue()));
+            keywords.forEach(att -> addAttribute(att.getKey(), att.getValue()));
         }
     }
 
     public void setAttributes(Map<String, String> metas) {
         clear();
-        metas.entrySet().stream()
-                .forEach((e -> setAttribute(e.getKey(), e.getValue())));
+        metas.forEach((k,v) -> addAttribute(k, v));
     }
 
     public String getAttribute(String key) {
@@ -112,12 +129,31 @@ public class TableMeta implements Serializable {
      * @param key   if null, meta will be treated as a comment
      * @param value meta value
      */
-    public void setAttribute(String key, String value) {
+    public void addAttribute(String key, String value) {
         DataGroup.Attribute att = new DataGroup.Attribute(key, value);
         if (!StringUtils.isEmpty(key)) {
             attributes.put(key, att);
         }
         keywords.add(att);
+    }
+
+    /**
+     * @param key   if null, meta will be treated as a comment
+     * @param value meta value
+     */
+    public void setAttribute(String key, String value) {
+        DataGroup.Attribute att = new DataGroup.Attribute(key, value);
+        if (StringUtils.isEmpty(key)) {
+            keywords.add(att);
+        } else {
+            attributes.put(key, att);
+            List<DataGroup.Attribute> oldVal = keywords.stream().filter(a -> !StringUtils.isEmpty(a.getKey()) && a.getKey().equals(key)).collect(Collectors.toList());
+            if (oldVal.size() == 0) {
+                keywords.add(att);
+            } else {
+                oldVal.forEach(a -> a.setValue(value));
+            }
+        }
     }
 
     public void removeAttribute(String key) {

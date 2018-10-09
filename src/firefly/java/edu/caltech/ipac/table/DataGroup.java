@@ -24,13 +24,15 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private int size;
     private transient DataType[] cachedColumnsAry = null;
 
+    public DataGroup() {}
+
     public DataGroup(String title, DataType[] dataDefs) {
         this(title, Arrays.asList(dataDefs));
     }
 
     public DataGroup(String title, List<DataType> dataDefs) {
         this.title = title;
-        dataDefs.stream().forEach(this::addDataDefinition);
+        dataDefs.forEach(this::addDataDefinition);
     }
 
     public String getTitle() {
@@ -381,6 +383,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 
         public boolean isComment() {
             return _key == null ;
+        }
+
+        public void setValue(String value) {
+            _value = value;
         }
 
         @Override

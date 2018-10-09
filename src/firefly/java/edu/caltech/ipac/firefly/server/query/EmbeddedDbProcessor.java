@@ -3,7 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -21,6 +25,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -42,6 +47,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
 
 /**
@@ -75,6 +81,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 15);
 
 
     /**
@@ -191,9 +198,23 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             }
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 
-            if (doLogging() && dbFileCreated) {
-                // no reliable way of capturing cached searches count
-                SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+            // put all of the meta-info from the request into tablemeta
+            if (treq.getMeta() != null) {
+                for (String key : treq.getMeta().keySet()) {
+                    results.getData().getTableMeta().setAttribute(key, treq.getMeta(key));
+                }
+            }
+
+            if (dbFileCreated) {
+                if (doLogging()) {
+                    SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+                }
+                // check for values that can be enumerated..
+                if (results.getRowCount() < 5000) {
+                    enumeratedValuesCheck(dbFile, results, treq);
+                } else {
+                    enumeratedValuesCheckBG(dbFile, results, treq);        // when it's more than 5000 rows, send it by background so it doesn't slow down response time.
+                }
             }
 
             return results;
@@ -480,7 +501,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return e.getMessage();
     }
 
-    private void setupMeta(DataGroup dg, ServerRequest req) {
+    private void setupMeta(DataGroup dg, TableServerRequest req) {
         // merge meta into datagroup from post-processing
         Map<String, DataGroup.Attribute> cmeta = dg.getAttributes();
         TableMeta meta = new TableMeta();
@@ -490,7 +511,67 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 dg.addAttribute(key, meta.getAttribute(key));
             }
         }
+
         IpacTableUtil.consumeColumnInfo(dg);
+
     }
+
+    private static void enumeratedValuesCheckBG(File dbFile, DataGroupPart results, TableServerRequest treq) {
+        RequestOwner owner = ServerContext.getRequestOwner();
+        ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, owner.getEventConnID(),
+                                                                        owner.getEventChannel(), owner.getUserKey());
+        SHORT_TASK_EXEC.submit(() -> {
+            enumeratedValuesCheck(dbFile, results, treq);
+            DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
+            updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
+
+            FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, JsonTableUtil.toJsonTableModel(updates));
+            ServerEventManager.fireAction(action, target);
+        });
+    }
+
+    private static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
+        try {
+            StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
+            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+            String cols = Arrays.stream(results.getData().getDataDefinitions())
+                    .filter(dt -> maybeEnums(dt))
+                    .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
+                    .collect(Collectors.joining(", "));
+
+            List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                    .queryForList(String.format("SELECT %s FROM data where rownum < 500", cols));
+            rs.get(0).forEach( (cname,v) -> {
+                Long count = (Long) v ;
+                if (count > 0 && count <= MAX_COL_ENUM_COUNT) {
+                    List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                            .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
+
+                    if (vals.size() <= MAX_COL_ENUM_COUNT) {
+                        DataType dt = results.getData().getDataDefintion(cname);
+                        String enumVals = vals.stream().map(m -> String.valueOf(m.get(cname)))       // list of map to list of string(colname)
+                                .filter(s -> !( StringUtils.isEmpty(s) ||  dt.getNullString().equalsIgnoreCase(s)))            // remove null or blank values because it's hard to handle at the column filter level
+                                .collect(Collectors.joining(","));                          // combine the names into comma separated string.
+                        results.getData().getDataDefintion(cname).setEnumVals(enumVals);
+                        // update dd table
+                        JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                                .update(String.format("UPDATE data_dd SET enumVals = '%s' WHERE cname = '%s'", enumVals, cname));
+                    }
+                }
+            });
+            StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
+        } catch (Exception ex) {
+            // do nothing.. ignore any errors.
+        }
+    }
+
+    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class);
+    private static List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
+    private static boolean maybeEnums(DataType dt) {
+        return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
+
+    }
+
+
 }
 

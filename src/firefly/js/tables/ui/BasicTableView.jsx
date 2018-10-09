@@ -6,7 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import FixedDataTable from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {debounce, defer, get, isEmpty} from 'lodash';
+import {get, isEmpty} from 'lodash';
 
 import {tableTextView, getTableUiById} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
@@ -17,8 +17,6 @@ import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRen
 import './TablePanel.css';
 
 const {Table, Column} = FixedDataTable;
-
-
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 
@@ -136,7 +134,7 @@ class BasicTableViewInternal extends PureComponent {
         const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
 
         return (
-            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame' >
+            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame'>
                 {   error ? <div style={{padding: 10}}>{error}</div> :
                     width === 0 ? <div /> :
                     textView ? <TextView { ...{columns, data, showUnits, width, height} }/> :

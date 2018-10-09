@@ -42,6 +42,7 @@ public class IpacTableUtil {
             ensureKey(attribs, col.getKeyName(), col.getFormat(), TableMeta.FORMAT_TAG);
             ensureKey(attribs, col.getKeyName(), col.getFmtDisp(), TableMeta.FORMAT_DISP_TAG);
             ensureKey(attribs, col.getKeyName(), col.getSortByCols(), TableMeta.SORT_BY_TAG);
+            ensureKey(attribs, col.getKeyName(), col.getEnumVals(), TableMeta.ENUM_VALS_TAG);
 
             if (col.getVisibility() != DataType.Visibility.show) {
                 ensureKey(attribs, col.getKeyName(), col.getVisibility().name(), TableMeta.VISI_TAG);
@@ -147,6 +148,12 @@ public class IpacTableUtil {
         key = TableMeta.makeAttribKey(TableMeta.SORT_BY_TAG, col.getKeyName());
         if (tableMeta.contains(key)) {
             col.setSortByCols(tableMeta.getAttribute(key));
+            tableMeta.removeAttribute(key);
+        }
+
+        key = TableMeta.makeAttribKey(TableMeta.ENUM_VALS_TAG, col.getKeyName());
+        if (tableMeta.contains(key)) {
+            col.setEnumVals(tableMeta.getAttribute(key));
             tableMeta.removeAttribute(key);
         }
 

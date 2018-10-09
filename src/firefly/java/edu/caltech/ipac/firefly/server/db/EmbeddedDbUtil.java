@@ -319,7 +319,8 @@ public class EmbeddedDbUtil {
                             dt.getVisibility().name(),
                             dt.isSortable(),
                             dt.isFilterable(),
-                            dt.getDesc()
+                            dt.getDesc(),
+                            dt.getEnumVals()
                     }
             );
         }
@@ -357,6 +358,7 @@ public class EmbeddedDbUtil {
                 String desc = rs.getString("desc");
                 boolean sortable = rs.getBoolean("sortable");
                 boolean filterable = rs.getBoolean("filterable");
+                String enumVals = rs.getString("enumVals");
 
                 DataType dtype = dg.getDataDefintion(cname, true);
 
@@ -371,6 +373,7 @@ public class EmbeddedDbUtil {
                     if (width > 0) dtype.setWidth(width);
                     if (!sortable) dtype.setSortable(false);
                     if (!filterable) dtype.setFilterable(false);
+                    if (!StringUtils.isEmpty(enumVals)) dtype.setEnumVals(enumVals);
                 }
             } while (rs.next());
         } catch (SQLException e) {
