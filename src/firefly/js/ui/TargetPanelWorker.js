@@ -153,7 +153,7 @@ function resolveObject(posFieldDef, resolver) {
         };
     }
 
-    var {p,aborter}= makeResolverPromise(objName, resolver);
+    let {p,aborter}= makeResolverPromise(objName, resolver);
     p= p.then( (results) =>
         {
             if (results) {
@@ -185,19 +185,22 @@ function resolveObject(posFieldDef, resolver) {
             }
         }
     ).catch((e) => {
-        let feedback = `Could not resolve: ${objName}`;
-        if (e && e.name === 'AbortError') {
-            feedback += '. Unresponsive service.';
-        } else {
-            feedback += '. Unexpected error.';
-            if (e) console.error(e);
+        // e is undefined when a newer request came in, and promise is rejected
+        if (e) {
+            let feedback = `Could not resolve: ${objName}`;
+            if (e.name === 'AbortError') {
+                feedback += '. Unresponsive service.';
+            } else {
+                feedback += '. Unexpected error.';
+                if (e) console.error(e);
+            }
+            return {
+                showHelp: false,
+                feedback,
+                valid: false,
+                wpt: null
+            };
         }
-        return {
-            showHelp: false,
-            feedback,
-            valid: false,
-            wpt: null
-        };
     });
 
     return {p,aborter};
