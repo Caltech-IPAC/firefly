@@ -111,6 +111,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
         if (treq.getFilters() != null && treq.getFilters().size() > 0) {
             where = "";
             for (String cond :treq.getFilters()) {
+                if (cond.matches("(?i).* LIKE .*(\\\\_|\\\\%|\\\\\\\\).*")) {       // search for LIKE w/  \_, \%, or \\ in the condition.
+                    // for LIKE, to search for '%', '\' or '_' itself, an escape character must also be specified using the ESCAPE clause
+                    cond += " ESCAPE '\\'";
+                }
                 if (where.length() > 0) {
                     where += " and ";
                 }
