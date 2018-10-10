@@ -224,11 +224,12 @@ public class DataType implements Serializable, Cloneable {
         return ID;
     }
 
-    // for numeric data type,
-    // precision string format: wwEn or wwFn,
-    //                          ww: number of character,
-    //                          En: n means number of significant figures
-    //                          Fn: n means the significant figures after decimal point
+    /**
+     * set precision for numeric data, En or Fn
+     *          En: n means number of significant figures
+     *          Fn: n means the significant figures after decimal point
+     * @param prec
+     */
     public void setPrecision(String prec) {
         this.precision = prec;
     }
@@ -490,32 +491,11 @@ public class DataType implements Serializable, Cloneable {
     }
 
 
-    //===================================================================
-    // links for Column, ex: LINK element(s) under FIELD element in votable
-    //===================================================================
-    public void addLink(LinkInfo linkObj) {
-        this.links.add(linkObj);
-    }
-
-    public void removeLink(int i) {
-        if (i >= 0 && i < links.size()) {
-            links.remove(i);
-        }
-    }
-
-    public void removeLink(LinkInfo linkObj) {
-        links.remove(linkObj);
-    }
-
-    public LinkInfo getLink(int i) {
-        if (i >= 0 && i < links.size()) {
-            return links.get(i);
-        } else {
-            return null;
-        }
-    }
-
-    public List<LinkInfo> getLinks() {
+    /**
+     * get LinkInfo list
+     * @return a list of LinkInfo
+     */
+    public List<LinkInfo> getLinkInfos() {
         return links;
     }
 

@@ -29,6 +29,7 @@ import java.util.Arrays;
 import org.xml.sax.SAXException;
 import java.net.URL;
 import java.net.MalformedURLException;
+import java.lang.Exception;
 
 /**
  * Date: Dec 5, 2011
@@ -50,7 +51,7 @@ public class VoTableReader {
      * @param location  location of the vo table data source using automatic format detection.  Can be file or url.
      * @return an array of DataGroup objects
      */
-    public static DataGroup[] voToDataGroups(String location) {
+    public static DataGroup[] voToDataGroups(String location) throws IOException {
         return voToDataGroups(location,false);
     }
 
@@ -60,7 +61,7 @@ public class VoTableReader {
      * @param headerOnly  if true, returns only the headers, not the data.
      * @return an array of DataGroup object
      */
-    public static DataGroup[] voToDataGroups(String location, boolean headerOnly) {
+    public static DataGroup[] voToDataGroups(String location, boolean headerOnly) throws IOException {
         //VOTableBuilder votBuilder = new VOTableBuilder();
         List<DataGroup> groups = new ArrayList<>();
 
@@ -78,15 +79,17 @@ public class VoTableReader {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            throw new IOException(e.getMessage());
         }
 
         return groups.toArray(new DataGroup[groups.size()]);
     }
 
-    private static String UCD = "ucd";
-    private static String REF = "ref";
-    private static String UTYPE = "utype";
-    private static String ID = "ID";
+    public static final String ID = "ID";
+    public static final String REF = "ref";
+    public static final String UCD = "ucd";
+    public static final String UTYPE = "utype";
+    public static final String DESC = "desc";
 
     private static String getElementAttribute(VOElement element, String attName) {
         return element.hasAttribute(attName) ? element.getAttribute(attName) : null;
@@ -170,12 +173,18 @@ public class VoTableReader {
                 String refStr = getElementAttribute(fRef, REF);
                 String ucdStr = getElementAttribute(fRef, UCD);
                 String utypeStr = getElementAttribute(fRef, UTYPE);
-                gObj.addFieldRef(refStr, ucdStr, utypeStr);
+                GroupInfo.FieldRef ref = new GroupInfo.FieldRef(refStr, ucdStr, utypeStr);
+
+                gObj.getFieldRefs().add(ref);
             }
 
 
             if (dg != null) {
-                dg.addGroup(gObj);
+                List<GroupInfo> dgGroupInfos = dg.getGroupInfos();
+
+                if (dgGroupInfos != null) {
+                    dgGroupInfos.add(gObj);
+                }
             }
             groupObjAry.add(gObj);
 
@@ -216,7 +225,11 @@ public class VoTableReader {
 
             if (linkObj != null) {
                 if (dg != null) {
-                    dg.addLink(linkObj);
+                    List<LinkInfo> dgLinkInfos = dg.getLinkInfos();
+
+                    if (dgLinkInfos != null) {
+                        dgLinkInfos.add(linkObj);
+                    }
                 }
                 linkObjAry.add(linkObj);
             }
@@ -226,9 +239,9 @@ public class VoTableReader {
     }
 
 
-    // precision: "2" => width+"F2", "F2"=> width+"F2", "E3" => width+"E3"
-    private static String makePrecisionStr(String precisionStr, String width) {
-        return (precisionStr.matches("^[1-9][0-9]*$")) ? (width+"F"+precisionStr) : (width+precisionStr);
+    // precision: "2" => "F2", "F2"=> "F2", "E3" => "E3"
+    private static String makePrecisionStr(String precisionStr) {
+        return (precisionStr.matches("^[1-9][0-9]*$")) ? ("F"+precisionStr) : precisionStr;
     }
 
     // convert <PARAM>s under <TABLE> to a list of <DataType> and add it to the associated table (a DataGroup object)
@@ -252,12 +265,14 @@ public class VoTableReader {
             String widthStr = getElementAttribute(param, "width");
 
             if (precisionStr != null) {
-                if (widthStr == null) widthStr = "";
-                precisionStr = makePrecisionStr(precisionStr, widthStr);
-            } else {
-                precisionStr = "";
+                precisionStr = makePrecisionStr(precisionStr);
+                dt.setPrecision(precisionStr);
             }
-            dt.setPrecision(precisionStr);
+
+            // set width
+            if (widthStr != null) {
+                dt.setWidth(Integer.parseInt(widthStr));
+            }
 
             // set ucd, utype and value to DataType
             dt.setUCD(getElementAttribute(param, "ucd"));
@@ -267,7 +282,10 @@ public class VoTableReader {
             allParams.add(dt);
 
             if (dg != null) {
-                dg.addParam(dt);
+                List<DataType> staticCols = dg.getParams();
+                if (staticCols != null) {
+                    staticCols.add(dt);
+                }
             }
         }
         return allParams;
@@ -311,7 +329,11 @@ public class VoTableReader {
                 LinkInfo linkObj = linkElementToLinkInfo(link);
 
                 if (linkObj != null) {
-                    dt.addLink(linkObj);
+                    List<LinkInfo> dtLinkInfos = dt.getLinkInfos();
+
+                    if (dtLinkInfos != null) {
+                        dtLinkInfos.add(linkObj);
+                    }
                     linkObjs.add(linkObj);
                 }
             }
@@ -592,7 +614,7 @@ public class VoTableReader {
             // attribute name & unit
             DataType dt = new DataType(cinfo.getName(), clz, null, cinfo.getUnitString(), null, null);
 
-            // attribute precision & width
+            // attribute precision
             if(cinfo.getAuxDatum(VOStarTable.PRECISION_INFO)!=null){
                 try{
                     DescribedValue pDV  = cinfo.getAuxDatum(VOStarTable.PRECISION_INFO);
@@ -600,15 +622,18 @@ public class VoTableReader {
                     if (pDV != null) {
                         precisionStr = pDV.toString();
                         precision = Integer.parseInt(precisionStr);
-
-                        DescribedValue wDV = cinfo.getAuxDatum(VOStarTable.WIDTH_INFO);
-                        precisionStr = makePrecisionStr(precisionStr, (wDV != null) ? wDV.toString() : "");
+                        precisionStr = makePrecisionStr(precisionStr);
+                        dt.setPrecision(precisionStr);
                     }
-                }catch (NumberFormatException e){
+                } catch (NumberFormatException e){
                     // problem with VOTable vinfo precision: should be numeric - keep default min precision
                 }
             }
-            dt.setPrecision(precisionStr);
+
+            // attribute width
+            if (cinfo.getAuxDatum(VOStarTable.WIDTH_INFO) != null) {
+                dt.setWidth(Integer.parseInt(cinfo.getAuxDatum(VOStarTable.WIDTH_INFO).toString()));
+            }
 
             // attribute ref
             if (cinfo.getAuxDatum(VOStarTable.REF_INFO) != null) {
@@ -672,10 +697,10 @@ public class VoTableReader {
 
         if (tableEl != null) {
             // attribute ID, ref, ucd, utype from TABLE
-            dg.setID((tableEl != null) ? getElementAttribute(tableEl, ID) : null);
-            dg.setRef((tableEl != null) ? getElementAttribute(tableEl, REF) : null);
-            dg.setUCD((tableEl != null) ? getElementAttribute(tableEl, UCD) : null);
-            dg.setUType((tableEl != null) ? getElementAttribute(tableEl, UTYPE) : null);
+            dg.addAttribute(ID,  getElementAttribute(tableEl, ID));
+            dg.addAttribute(REF, getElementAttribute(tableEl, REF));
+            dg.addAttribute(UCD, getElementAttribute(tableEl, UCD));
+            dg.addAttribute(UTYPE, getElementAttribute(tableEl, UTYPE));
 
             // child element PARAM, GROUP, LINK for TABLE
             makeParamsFromTable(tableEl, table, dg);
@@ -685,7 +710,7 @@ public class VoTableReader {
             // child element DESCRIPTION
             String tDesc = tableEl.getDescription();
             if (tDesc != null) {
-                dg.setDesc(tDesc.replace("\n", " "));
+                dg.addAttribute(DESC, tDesc.replace("\n", " "));
             }
         }
 
@@ -723,16 +748,19 @@ public class VoTableReader {
     public static void main(String args[]) {
 
         File inf = new File(args[0]);
-        DataGroup[] groups = voToDataGroups(inf.getAbsolutePath(), false);
-        if (groups != null) {
-            for (DataGroup dg : groups) {
-                try {
-                    IpacTableWriter.save(new File(inf.getParent(), inf.getName() + "-" + dg.getTitle()), dg);
-                } catch (IOException e) {
-                    e.printStackTrace();
+        try {
+            DataGroup[] groups = voToDataGroups(inf.getAbsolutePath(), false);
+            if (groups != null) {
+                for (DataGroup dg : groups) {
+                    try {
+                        IpacTableWriter.save(new File(inf.getParent(), inf.getName() + "-" + dg.getTitle()), dg);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 }

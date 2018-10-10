@@ -56,40 +56,8 @@ public class LinkInfo  implements Serializable, Cloneable {
         return super.clone();
     }
 
-    // for output optional key/value
-    public static int outKeyValue(int idx, String quote, String key, String value, StringBuffer sb) {
-        if (!StringUtils.isEmpty(value)) {
-            if (idx++ > 0) {
-                sb.append(", ");
-            }
-            sb.append(quote).append(key).append(quote).append(":\"").append(value).append("\"");
-        }
-        return idx;
-    }
-
-    private String outString(boolean isJson) {
-        String q = isJson ? "\"" : "";
-        StringBuffer sb = new StringBuffer("{");
-
-        int idx = 0;
-        idx = outKeyValue(idx, q, "ID", getID(), sb);
-        idx = outKeyValue(idx, q, "href", getHref(), sb);
-        idx = outKeyValue(idx, q, "title", getTitle(), sb);
-        idx = outKeyValue(idx, q, "contnet-role", getRole(), sb);
-        outKeyValue(idx, q, "content-type", getType(), sb);
-
-        sb.append("}");
-
-        return sb.toString();
-    }
-
-    public String toJsonString() {
-        return outString(true);
-    }
-
     public String toString() {
-        return outString(false);
-
+        return StringUtils.isEmpty(this.contentType) ? this.href : (this.contentType+", "+this.href);
     }
 
 }
