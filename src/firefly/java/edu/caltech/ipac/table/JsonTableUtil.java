@@ -297,6 +297,63 @@ public class JsonTableUtil {
 
     //============================= //============================= //============================= //============================= //============================= //=============================
 
+    /**
+     * list of Json Object for list of GroupInfo under table model
+     * @param groupInfos
+     * @return
+     */
+    public List<JSONObject> toJsonTableGroupInfos(List<GroupInfo> groupInfos) {
+        List<JSONObject> groupsJson = new ArrayList<>();
+
+        for (GroupInfo gInfo : groupInfos) {
+            JSONObject groupJson = new JSONObject();
+            List<JSONObject> fRefJsons = new ArrayList<>();
+
+            groupJson.put("name", gInfo.getName());
+            groupJson.put("desc", gInfo.getDescription());
+            groupJson.put("ID", gInfo.getID());
+
+            for (GroupInfo.FieldRef ref : gInfo.getFieldRefs()) {
+                JSONObject fRefJson = new JSONObject();
+
+                fRefJson.put("ref", ref.getRef());
+                fRefJson.put("ucd", ref.getUcd());
+                fRefJson.put("utype", ref.getUtype());
+
+                fRefJsons.add(fRefJson);
+            }
+
+            groupJson.put("refts", fRefJsons);
+            groupsJson.add(groupJson);
+        }
+
+        return groupsJson;
+    }
+
+    /**
+     * list of json object for a list of LinkInfo under table model
+     * @param linkInfos
+     * @return
+     */
+    public List<JSONObject> toJsonTableLinkInfos(List<LinkInfo> linkInfos) {
+        List<JSONObject> linksJson = new ArrayList<>();
+
+        for (LinkInfo linkInfo : linkInfos) {
+            JSONObject linkJson = new JSONObject();
+
+            linkJson.put("title", linkInfo.getTitle());
+            linkJson.put("ID", linkInfo.getID());
+            linkJson.put("href", linkInfo.getHref());
+            linkJson.put("content-role", linkInfo.getRole());
+            linkJson.put("content-type", linkInfo.getType());
+
+            linksJson.add(linkJson);
+
+        }
+
+        return linksJson;
+    }
+
 
     /**
      * Convert the java table object to javascript table model.

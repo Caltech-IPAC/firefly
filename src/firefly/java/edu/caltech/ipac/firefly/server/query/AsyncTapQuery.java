@@ -14,6 +14,7 @@ import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.Header;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
         @ParamDoc(name = "serviceUrl", desc = "base TAP url endpoint excluding '/async'"),
@@ -93,9 +94,14 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         }
 
         public String getErrorMsg() {
-            DataGroup[] results = VoTableReader.voToDataGroups(baseJobUrl + "/error");
-            DataGroup errorTbl = results[0];
-            return errorTbl.getAttribute("QUERY STATUS");
+            try {
+                DataGroup[] results = VoTableReader.voToDataGroups(baseJobUrl + "/error");
+                DataGroup errorTbl = results[0];
+                return errorTbl.getAttribute("QUERY STATUS");
+            } catch (IOException e) {
+                logger.error(e);
+            }
+            return "";
         }
 
         public long getTimeout() {

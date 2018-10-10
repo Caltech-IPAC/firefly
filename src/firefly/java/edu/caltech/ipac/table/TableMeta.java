@@ -48,6 +48,11 @@ public class TableMeta implements Serializable {
 
     public static final String IS_FULLY_LOADED = "isFullyLoaded";     // do not format data
 
+    public static final String ID = "ID";
+    public static final String REF = "ref";
+    public static final String UCD = "ucd";
+    public static final String UTYPE = "utype";
+    public static final String DESC = "desc";
     /*
       attributes is a key/value map of table meta information.
       keywords is a list of all table meta information including comments and duplicate attribute entries.

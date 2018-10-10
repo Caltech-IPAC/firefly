@@ -22,6 +22,9 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private TableMeta meta = new TableMeta();
     private String title;
     private int size;
+    private List<GroupInfo> groups = new ArrayList<>();   // for <GROUP> under <TABLE> of VOTable
+    private List<LinkInfo> links = new ArrayList<>();     // for <LINK> under <TABLE> of VOTable
+    private List<DataType> staticColumns = new ArrayList<>();  // for <PARAM> under <TABLE> of VOTABLE
     private transient DataType[] cachedColumnsAry = null;
 
     public DataGroup() {}
@@ -311,6 +314,30 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
                 }
             }
         }
+    }
+
+    /**
+     * get GroupInfo list
+     * @return list of GroupInfo object
+     */
+    public List<GroupInfo> getGroupInfos() {
+        return groups;
+    }
+
+    /**
+     * get LinkInfo list
+     * @return a list of LinkInfo
+     */
+    public List<LinkInfo> getLinkInfos() {
+        return links;
+    }
+
+    /**
+     * get a list static column (like PARAM in votable)
+     * @return a list of static columns in form of DataType objects
+     */
+    public List<DataType> getParams() {
+        return staticColumns;
     }
 
     /**

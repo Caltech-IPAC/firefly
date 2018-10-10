@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.apache.commons.lang.StringEscapeUtils.escapeJava;
 import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
@@ -39,22 +40,32 @@ public class DataType implements Serializable, Cloneable {
     public static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
 
 
-    private String keyName;
-    private String label;
-    private String typeDesc;
-    private Class type;
-    private String units;
-    private String nullString = "";
-    private String desc;
-    private int width;
-    private int prefWidth;
-    private boolean sortable = true;
-    private boolean filterable = true;
-    private Visibility visibility = Visibility.show;   // show, hide, or hidden
-    private String format;           // format string used for formating
-    private String fmtDisp;          // format string for diplay ... this is deprecated
-    private String sortByCols;       // comma-separated of column names
-    private String enumVals;         // comma-separated of distinct values
+    private       String keyName;
+    private       String label;
+    private       String typeDesc;
+    private       Class type;
+    private       String units;
+    private       String nullString = "";
+    private       String desc;
+    private       int width;
+    private       int prefWidth;
+    private       boolean sortable = true;
+    private       boolean filterable = true;
+    private       Visibility visibility = Visibility.show;   // show, hide, or hidden
+    private       String format;           // format string used for formating
+    private       String fmtDisp;          // format string for diplay ... this is deprecated
+    private       String sortByCols;       // comma-separated of column names
+    private       String enumVals;         // comma-separated of distinct values
+    private       String ID;
+    private       String precision;
+    private       String ucd;
+    private       String utype;
+    private       String ref = "";
+    private       List<LinkInfo> links = new ArrayList<>();
+    private       String maxValue = "";
+    private       String minValue = "";
+    private       String staticValue;
+
 
 //    private transient PrimitiveList data;       // column-based data
     private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
@@ -210,9 +221,81 @@ public class DataType implements Serializable, Cloneable {
 
     public void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
 
+
+    public void setID (String id) {
+        this.ID = id;
+    }
+
+    public String getID () {
+        return ID;
+    }
+
+    /**
+     * set precision for numeric data, En or Fn
+     *          En: n means number of significant figures
+     *          Fn: n means the significant figures after decimal point
+     * @param prec precision string
+     */
+    public void setPrecision(String prec) {
+        this.precision = prec;
+    }
+
+    public String getPrecision() {
+        return precision;
+    }
+
+    public void setUCD(String ucd) {
+        this.ucd = ucd;
+    }
+
+    public String getUCD() {
+        return ucd;
+    }
+
+    public void setUType(String utype) {
+        this.utype = utype;
+    }
+
+    public String getUType() {
+        return utype;
+    }
+
+    public void setMaxValue(String max) {
+        this.maxValue = max;
+    }
+
+    public String getMaxValue() {
+        return maxValue;
+    }
+
+    public void setMinValue(String min) {
+        this.minValue = min;
+    }
+
+    public String getMinValue() {
+        return minValue;
+    }
+
+    public void setValue(String value) {
+        this.staticValue = value;
+    }
+
+    public String getValue() {
+        return staticValue;
+    }
+
+    public void setRef(String value) {
+        this.ref = value;
+    }
+
+    public String getRef() {
+        return ref;
+    }
+
     public String getEnumVals() { return enumVals; }
 
     public void setEnumVals(String enumVals) { this.enumVals = enumVals;}
+
 
     /**
      * returns the formatted header of this column padded to max width
@@ -429,4 +512,14 @@ public class DataType implements Serializable, Cloneable {
             return null; // should not happen;
         }
     }
+
+
+    /**
+     * get LinkInfo list
+     * @return a list of LinkInfo
+     */
+    public List<LinkInfo> getLinkInfos() {
+        return links;
+    }
+
 }
