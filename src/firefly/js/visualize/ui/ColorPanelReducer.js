@@ -340,6 +340,24 @@ function getHuePreserveFieldInit() {
             tooltip: 'The asinh stretch parameter. (The difference between min and max intensity.)',
             label: 'Stretch:'
         },
+        kRed: {
+            value: '1',
+            validator: Validate.floatRange.bind(null, -1, 1, 0, 'Red scaling coefficient'),
+            tooltip: 'Scaling coefficient for the red flux',
+            label: 'Red:'
+        },
+        kGreen: {
+            value: '1',
+            validator: Validate.floatRange.bind(null, -1, 1, 0, 'Green scaling coefficient'),
+            tooltip: 'Scaling coefficient for the green flux',
+            label: 'Green:'
+        },
+        kBlue: {
+            value: '1',
+            validator: Validate.floatRange.bind(null, -1, 1, 0, 'Blue scaling coefficient'),
+            tooltip: 'Scaling coefficient for the blue flux',
+            label: 'Blue:'
+        },
         zscale: {
             value: '',
             tooltip: 'Use ZScale for bounds instead of entering them manually ',
@@ -407,15 +425,17 @@ export function computeHuePreservePanelState(fields, plottedRVAry, fitsDataAry, 
  */
 function syncFieldsHuePreserve(fields,rvAry,fitsDataAry) {
     const newFields= clone(fields);
-    [['lowerWhichRed','lowerRangeRed'],
-        ['lowerWhichGreen','lowerRangeGreen'],
-        ['lowerWhichBlue', 'lowerRangeBlue']].forEach(
-            ([lowerWhich,lowerRange],i) => {
+    [['lowerWhichRed','lowerRangeRed', 'kRed'],
+        ['lowerWhichGreen','lowerRangeGreen', 'kGreen'],
+        ['lowerWhichBlue', 'lowerRangeBlue', 'kBlue']].forEach(
+            ([lowerWhich,lowerRange,scalingK],i) => {
         if (Number.parseInt(rvAry[i].lowerRange)!==ZSCALE) {
             newFields[lowerRange]= clone(fields[lowerRange], computeLowerRangeField(fields,rvAry[i],fitsDataAry[i],lowerWhich,lowerRange));
         }
         newFields[lowerWhich]=   clone(fields[lowerWhich], {value: rvAry[i].lowerWhich});
         if (newFields[lowerWhich].value===ZSCALE) newFields[lowerWhich].value= PERCENTAGE;
+        //scalingK is between 0.1 and 10, while range slider values are from -1 to 1
+        newFields[scalingK].value = scalingKToFieldVal(rvAry[i].scalingK);
     });
     return  newFields;
 }
@@ -428,20 +448,23 @@ function syncFieldsHuePreserve(fields,rvAry,fitsDataAry) {
 function makeHuePreserveRangeValuesFromFields(fields) {
     const useZ = Boolean(fields.zscale.value);
 
-    const rvAry = [['lowerWhichRed','lowerRangeRed'],
-        ['lowerWhichGreen','lowerRangeGreen'],
-        ['lowerWhichBlue', 'lowerRangeBlue']].map(
-        ([lowerWhich,lowerRange]) => {
+    const rvAry = [['lowerWhichRed','lowerRangeRed','kRed'],
+        ['lowerWhichGreen','lowerRangeGreen','kGreen'],
+        ['lowerWhichBlue', 'lowerRangeBlue','kBlue']].map(
+        ([lowerWhich,lowerRange,scalingK]) => {
             // using lower range values to calculate black points for each band
             const lowerWhichVal= useZ ? ZSCALE : fields[lowerWhich].value;
-            return new RangeValues(
-                lowerWhichVal,
-                fields[lowerRange].value,
-                ZSCALE,
-                99,
-                fields.asinhQ.value,
-                fields.stretch.value,
-                STRETCH_ASINH);
+            //scalingK is between 0.1 and 10, while range slider values are from -1 to 1
+            const scalingKVal = scalingKFromFieldVal(fields[scalingK].value);
+            return new RangeValues.makeRV({
+                lowerWhich: lowerWhichVal,
+                lowerValue: fields[lowerRange].value,
+                upperWhich: ZSCALE,
+                upperValue: 99,
+                asinhQValue: fields.asinhQ.value,
+                asinhStretch: fields.stretch.value,
+                scalingK: scalingKVal,
+                STRETCH_ASINH});
         });
     return rvAry;
 }
@@ -453,11 +476,12 @@ function makeHuePreserveRangeValuesFromFields(fields) {
  */
 function updateHuePreserveFieldsFromRangeValues(fields,rvAry) {
     fields= clone(fields);
-    [['lowerWhichRed','lowerRangeRed'],
-        ['lowerWhichGreen','lowerRangeGreen'],
-        ['lowerWhichBlue', 'lowerRangeBlue']].forEach(([lowerWhich, lowerRange], i) => {
+    [['lowerWhichRed','lowerRangeRed','kRed'],
+        ['lowerWhichGreen','lowerRangeGreen','kGreen'],
+        ['lowerWhichBlue', 'lowerRangeBlue','kBlue']].forEach(([lowerWhich, lowerRange, scalingK], i) => {
         fields[lowerWhich]= cloneWithValue(fields[lowerWhich], rvAry[i].lowerWhich===ZSCALE ? PERCENTAGE : rvAry[i].lowerWhich);
         fields[lowerRange]= cloneWithValue(fields[lowerRange], rvAry[i].lowerValue);
+        fields[scalingK]= cloneWithValue(fields[scalingK], scalingKToFieldVal(rvAry[i].scalingK));
     });
     fields.asinhQ= cloneWithValue(fields.asinhQ, rvAry[0].asinhQValue);
     fields.stretch= cloneWithValue(fields.stretch, Number(rvAry[0].asinhStretch).toFixed(1));
@@ -465,4 +489,20 @@ function updateHuePreserveFieldsFromRangeValues(fields,rvAry) {
     return fields;
 }
 
+/**
+ *  scalingK is between 0.1 and 10, while range slider values are from -1 to 1
+ *  @param {string|number} fieldVal - field value (exponent) from -1 to 1
+ *  @return {number}
+ */
+function scalingKFromFieldVal(fieldVal) {
+    return Math.pow(10, parseFloat(fieldVal));
+}
 
+/**
+ *  scalingK is between 0.1 and 10, while range slider values are from -1 to 1
+ *  @param {number} scalingK - from range values from 0.1 to 1
+ *  @return {number} - field value (exponent) from -1 to 1
+ */
+function scalingKToFieldVal(scalingK) {
+    return !scalingK ? 1: Math.log10(scalingK);
+}

@@ -19,6 +19,7 @@ import ImagePlotCntlr, {dispatchStretchChange, visRoot} from '../ImagePlotCntlr.
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import { RangeValues, ZSCALE, STRETCH_ASINH}from '../RangeValues.js';
 import {flux} from '../../Firefly.js';
+import HelpIcon from '../../ui/HelpIcon.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {isHiPS, isImage} from '../WebPlot';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -158,14 +159,19 @@ function renderHuePreservingThreeColorView(plot,rgbFields) {
         <div style={{paddingTop:4}}>
             <FieldGroup groupKey={groupKey} keepState={false}>
                 <ColorRGBHuePreservingPanel {...{plot, rgbFields, groupKey}}/>
-                <CompleteButton
-                    closeOnValid={false}
-                    style={{padding: '2px 0 7px 10px'}}
-                    onSuccess={(request)=>replot3ColorHuePreserving(request)}
-                    onFail={invalidMessage}
-                    text='Refresh'
-                    dialogId='ColorStretchDialog'
-                />
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                    <CompleteButton
+                        closeOnValid={false}
+                        style={{padding: '2px 0 7px 10px'}}
+                        onSuccess={(request)=>replot3ColorHuePreserving(request)}
+                        onFail={invalidMessage}
+                        text='Refresh'
+                        dialogId='ColorStretchDialog'
+                    />
+                    <div style={{ textAlign:'right', padding: '2px 10px'}}>
+                        <HelpIcon helpId={'visualization.imageoptions'}/>
+                    </div>
+                </div>
             </FieldGroup>
         </div>
 
@@ -278,14 +284,16 @@ function replotStandard(request) {
 export function replot3ColorHuePreserving(request) {
     // console.log(request);
     const useZ= Boolean(request.zscale);
-    const stretchData = [[Band.RED.key, 'lowerWhichRed','lowerRangeRed'],
-        [Band.GREEN.key, 'lowerWhichGreen','lowerRangeGreen'],
-        [Band.BLUE.key, 'lowerWhichBlue', 'lowerRangeBlue']].map(([band, lowerWhich, lowerRange]) => {
+    const stretchData = [[Band.RED.key, 'lowerWhichRed','lowerRangeRed','kRed'],
+        [Band.GREEN.key, 'lowerWhichGreen','lowerRangeGreen','kGreen'],
+        [Band.BLUE.key, 'lowerWhichBlue', 'lowerRangeBlue','kBlue']].map(([band, lowerWhich, lowerRange,  scalingK]) => {
+        const scalingKVal = Math.pow(10, parseFloat(request[scalingK]));
         const rv= RangeValues.makeRV( {
             lowerWhich: useZ ? ZSCALE : request[lowerWhich],
             lowerValue: request[lowerRange],
             asinhQValue: request.asinhQ,
             asinhStretch: request.stretch,
+            scalingK: scalingKVal,
             algorithm: STRETCH_ASINH,
             rgbPreserveHue: 1
         });

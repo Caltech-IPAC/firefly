@@ -164,7 +164,7 @@ public class ImageStretch {
             for (int index = start_index; index <= last_index; index++) {
                 maxv = 0;
                 for (int c=0; c<3; c++) {
-                    flux = getScaled(float1dAry[c][index], imageHeaderAry[c])-slowAry[c];
+                    flux = rangeValuesAry[c].getScalingK()*getScaled(float1dAry[c][index], imageHeaderAry[c])-slowAry[c];
                     if (flux < 0 || Double.isNaN(flux)) {
                         rgb[c] = 0;
                     } else {
