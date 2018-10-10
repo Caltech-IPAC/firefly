@@ -24,7 +24,6 @@ import java.util.*;
  * @author Trey Roby
  */
 public class BackgroundStatus implements Serializable {
-    public static final String BG_STATUS_ACTION = "background.bgStatus";
     public static final String PARAM_SEP = "<<BGSEP>>";
     public static final String KW_VAL_SEP = "==>>";
     public final static String NO_ID = "WARNING:_UNKNOWN_PACKAGE_ID";

@@ -270,8 +270,9 @@
 .btn-close:after {
     content: '×'; /* UTF-8 symbol */
     left: 50%;
+    top: 50%;
     position: absolute;
-    transform: translate(-50%, 0);
+    transform: translate(-50%, -50%);
     font-weight: bold;
 }
 

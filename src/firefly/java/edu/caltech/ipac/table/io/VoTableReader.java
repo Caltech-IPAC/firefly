@@ -11,6 +11,7 @@ import edu.caltech.ipac.table.GroupInfo;
 import edu.caltech.ipac.table.LinkInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.FitsHDUUtil;
+import edu.caltech.ipac.util.StringUtils;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.VOStarTable;
 import uk.ac.starlink.votable.VOElement;
@@ -342,6 +343,15 @@ public class VoTableReader {
         return linkObjs;
     }
 
+    private static String optionsToStr(String[] options) {
+        if (options != null) {
+            for (int i = 0; i < options.length; i++) {
+                options[i] = options[i].trim();
+            }
+        }
+        return StringUtils.toString(options, ",");
+    }
+
     // add info of <VALUES> under a <FIELD> to the associated column (a DataType object)
     // the added info includes: minimum/maximum values, options, or null string
     private static void getValuesFromField(TableElement tableEl, DataType dt) {
@@ -353,7 +363,11 @@ public class VoTableReader {
             dt.setNullString(values.getNull());
             dt.setMaxValue(values.getMaximum());
             dt.setMinValue(values.getMinimum());
-            dt.setOptions(values.getOptions());
+
+            String[] options = values.getOptions();
+            if (options != null) {
+                dt.setEnumVals(optionsToStr(options));
+            }
         }
     }
 

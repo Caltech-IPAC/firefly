@@ -12,6 +12,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 
+import static org.apache.commons.lang.StringEscapeUtils.escapeJava;
+import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
+
 public class DataType implements Serializable, Cloneable {
 
     public enum Visibility {show, hide, hidden};
@@ -52,6 +55,7 @@ public class DataType implements Serializable, Cloneable {
     private       String format;           // format string used for formating
     private       String fmtDisp;          // format string for diplay ... this is deprecated
     private       String sortByCols;       // comma-separated of column names
+    private       String enumVals;         // comma-separated of distinct values
     private       String ID;
     private       String precision;
     private       String ucd;
@@ -60,8 +64,8 @@ public class DataType implements Serializable, Cloneable {
     private       List<LinkInfo> links = new ArrayList<>();
     private       String maxValue = "";
     private       String minValue = "";
-    private       String[] options = null;
     private       String staticValue;
+
 
 //    private transient PrimitiveList data;       // column-based data
     private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
@@ -80,7 +84,8 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public DataType(String keyName, Class type, String label, String units, String nullString, String desc) {
-        this.keyName = keyName;
+        // our db engine does not allow quotes in column names
+        this.keyName = keyName.replace("\"","");
         setDataType(type);
         this.units = units;
         this.label = label;
@@ -216,6 +221,7 @@ public class DataType implements Serializable, Cloneable {
 
     public void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
 
+
     public void setID (String id) {
         this.ID = id;
     }
@@ -228,7 +234,7 @@ public class DataType implements Serializable, Cloneable {
      * set precision for numeric data, En or Fn
      *          En: n means number of significant figures
      *          Fn: n means the significant figures after decimal point
-     * @param prec
+     * @param prec precision string
      */
     public void setPrecision(String prec) {
         this.precision = prec;
@@ -278,20 +284,6 @@ public class DataType implements Serializable, Cloneable {
         return staticValue;
     }
 
-    // options of the data
-    public void setOptions(String[] srcStr) {
-        if (srcStr == null || srcStr.length == 0) {
-            options = null;
-        } else {
-            options = new String[srcStr.length];
-            Arrays.copyOf(srcStr, srcStr.length);
-        }
-    }
-
-    public String[] getOptions() {
-        return options;
-    }
-
     public void setRef(String value) {
         this.ref = value;
     }
@@ -299,6 +291,11 @@ public class DataType implements Serializable, Cloneable {
     public String getRef() {
         return ref;
     }
+
+    public String getEnumVals() { return enumVals; }
+
+    public void setEnumVals(String enumVals) { this.enumVals = enumVals;}
+
 
     /**
      * returns the formatted header of this column padded to max width
@@ -315,6 +312,16 @@ public class DataType implements Serializable, Cloneable {
      * @return
      */
     public String formatData(Object value) {
+        return formatData(value, false);
+    }
+
+    /**
+     * returns the formatted string of the given value padded to the column's defined width
+     * @param value
+     * @param useEscape apply Java escaping to all strings to take care of control characters and quotes
+     * @return
+     */
+    public String formatData(Object value, boolean useEscape) {
         String sval;
         if (value == null) {
             sval = getNullString() == null ? "" : getNullString();
@@ -324,8 +331,10 @@ public class DataType implements Serializable, Cloneable {
                 value = String.format("%1$tF %1$tT", value);
             }
 
+            if (useEscape && type == String.class) {
+                value = escapeJava((String)value);
+            }
             String formatStr = getFmtDisp();
-            formatStr = formatStr == null ? getFormat() : formatStr;
             formatStr = formatStr == null ? getFormat() : formatStr;
             if (formatStr == null) {
                 formatStr = this.getFormatStr(0);
@@ -382,8 +391,22 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public Object convertStringToData(String s) {
+        return convertStringToData(s, false);
+    }
+
+    /**
+     * Convert a string into an object
+     * @param s string representation of an object
+     * @param useUnescape - if true Java unescaping is applied to all strings
+     * @return an object
+     */
+    public Object convertStringToData(String s, boolean useUnescape) {
         if (s == null || s.length() == 0 || s.equalsIgnoreCase("null")) return null;
         if (nullString != null && nullString.equals(s)) return null;
+
+        if (useUnescape && type==String.class) {
+            return unescapeJava(s);
+        }
 
         Object retval= s;
         try {
@@ -391,7 +414,7 @@ public class DataType implements Serializable, Cloneable {
                  retval= Boolean.valueOf(s);
              }
              else if (type ==String.class) {
-                 retval= s;
+                 retval= useUnescape ? unescapeJava(s) : s;
              }
              else if (type ==Double.class) {
                  retval= new Double(s);

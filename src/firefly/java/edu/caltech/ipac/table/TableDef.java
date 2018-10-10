@@ -20,7 +20,6 @@ public class TableDef extends TableMeta {
     private int lineWidth;
     private int rowCount;
     private int rowStartOffset;
-    private SelectionInfo selectInfo;
     private transient Pair<Integer, String> extras;     // used by IpacTableUtil to store extras data while parsing an ipac table via input stream
 
     public Pair<Integer, String> getExtras() {
@@ -45,14 +44,6 @@ public class TableDef extends TableMeta {
 
     public void setCols(List<DataType> cols) {
         this.cols = cols;
-    }
-
-    public SelectionInfo getSelectInfo() {
-        return selectInfo;
-    }
-
-    public void setSelectInfo(SelectionInfo selectInfo) {
-        this.selectInfo = selectInfo;
     }
 
     public void ensureStatus() {

@@ -76,7 +76,7 @@ public class BgIpacTableHandler extends IpacTableWriter.IpacTableHandler {
         if (meta == null || StringUtils.isEmpty(meta.get("tbl_id"))) return;
 
         String tblId = String.valueOf( meta.get("tbl_id") );
-        FluxAction action = new FluxAction("table.update");
+        FluxAction action = new FluxAction(FluxAction.TBL_UPDATE);
         action.setValue(tblId, "tbl_id");
         action.setValue(crows, "totalRows");
         action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);

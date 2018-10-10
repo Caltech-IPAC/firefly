@@ -47,14 +47,12 @@ public class GroupInfo implements Serializable, Cloneable{
     public List<DataType> getReferencedColumns(List<DataType> columns) {
         List<DataType> dataTypeAry = new ArrayList<>();
 
-        if (fieldRefs.size() > 0) {
-            for (FieldRef fRef : fieldRefs) {
-                String refName = fRef.getRef();
-                for (DataType col : columns) {
-                    String id = col.getID();
-                    if (id != null && id.equals(refName)) {
-                        dataTypeAry.add(col);
-                    }
+        for (FieldRef fRef : fieldRefs) {
+            String refName = fRef.getRef();
+            for (DataType col : columns) {
+                String id = col.getID();
+                if (id != null && id.equals(refName)) {
+                    dataTypeAry.add(col);
                 }
             }
         }

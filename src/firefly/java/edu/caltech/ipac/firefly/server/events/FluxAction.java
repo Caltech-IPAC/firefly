@@ -14,6 +14,10 @@ public class FluxAction {
     public static final String TYPE = "type";
     public static final String PAYLOAD = "payload";
 
+    public static final String TBL_UPDATE = "table.update";
+
+    public static final String BG_STATUS_UPDATE = "background.bgStatus";
+    public static final String BG_JOB_ADD = "background.bgJobAdd";
 
     private JSONObject root;
 

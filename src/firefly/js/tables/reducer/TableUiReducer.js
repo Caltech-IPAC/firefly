@@ -106,6 +106,6 @@ const ensureColumns = ({tableModel, columns}) => {
     if (isEmpty(columns)) {
         return cloneDeep(get(tableModel, 'tableData.columns', []));
     } else {
-        return columns;
+        return TblUtil.smartMerge(tableModel.tableData.columns, columns);
     }
 };

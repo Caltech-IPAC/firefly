@@ -43,7 +43,7 @@ CheckboxGroupInputFieldView.propTypes= {
     onChange:  PropTypes.func,
     alignment:  PropTypes.string,
     fieldKey:  PropTypes.string,
-    value:  PropTypes.string,
+    value:  PropTypes.string.isRequired,
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
     labelWidth: PropTypes.number,
@@ -87,7 +87,7 @@ function handleOnChange(ev, params, fireValueChange) {
 
 
 const propTypes= {
-    options : PropTypes.array.isRequired,
+    options : PropTypes.array,
     alignment:  PropTypes.string
 };
 
