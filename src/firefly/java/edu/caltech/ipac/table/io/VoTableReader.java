@@ -9,6 +9,7 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.GroupInfo;
 import edu.caltech.ipac.table.LinkInfo;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.VOStarTable;
@@ -697,10 +698,10 @@ public class VoTableReader {
 
         if (tableEl != null) {
             // attribute ID, ref, ucd, utype from TABLE
-            dg.addAttribute(ID,  getElementAttribute(tableEl, ID));
-            dg.addAttribute(REF, getElementAttribute(tableEl, REF));
-            dg.addAttribute(UCD, getElementAttribute(tableEl, UCD));
-            dg.addAttribute(UTYPE, getElementAttribute(tableEl, UTYPE));
+            dg.addAttribute(TableMeta.ID,  getElementAttribute(tableEl, ID));
+            dg.addAttribute(TableMeta.REF, getElementAttribute(tableEl, REF));
+            dg.addAttribute(TableMeta.UCD, getElementAttribute(tableEl, UCD));
+            dg.addAttribute(TableMeta.UTYPE, getElementAttribute(tableEl, UTYPE));
 
             // child element PARAM, GROUP, LINK for TABLE
             makeParamsFromTable(tableEl, table, dg);
@@ -710,7 +711,7 @@ public class VoTableReader {
             // child element DESCRIPTION
             String tDesc = tableEl.getDescription();
             if (tDesc != null) {
-                dg.addAttribute(DESC, tDesc.replace("\n", " "));
+                dg.addAttribute(TableMeta.DESC, tDesc.replace("\n", " "));
             }
         }
 

@@ -99,7 +99,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                 DataGroup errorTbl = results[0];
                 return errorTbl.getAttribute("QUERY STATUS");
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error(e);
             }
             return "";
         }
