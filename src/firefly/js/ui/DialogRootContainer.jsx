@@ -190,6 +190,7 @@ function showTmpPopup(popup) {
 
 function init() {
     divElement= createDiv(DIALOG_DIV);
+    divElement.style.position = 'absolute';
 }
 
 function createDiv(id, appendTo=document.body) {
