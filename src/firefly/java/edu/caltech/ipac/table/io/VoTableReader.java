@@ -635,7 +635,7 @@ public class VoTableReader {
                     DescribedValue pDV  = cinfo.getAuxDatum(VOStarTable.PRECISION_INFO);
 
                     if (pDV != null) {
-                        precisionStr = pDV.toString();
+                        precisionStr = pDV.getValue().toString();
                         precision = Integer.parseInt(precisionStr);
                         precisionStr = makePrecisionStr(precisionStr);
                         dt.setPrecision(precisionStr);
@@ -647,7 +647,7 @@ public class VoTableReader {
 
             // attribute width
             if (cinfo.getAuxDatum(VOStarTable.WIDTH_INFO) != null) {
-                dt.setWidth(Integer.parseInt(cinfo.getAuxDatum(VOStarTable.WIDTH_INFO).toString()));
+                dt.setWidth(Integer.parseInt(cinfo.getAuxDatum(VOStarTable.WIDTH_INFO).getValue().toString()));
             }
 
             // attribute ref
