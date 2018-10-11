@@ -333,6 +333,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
         e.set(ImageMasterDataEntry.PARAMS.MAX_RANGE_DEG,"0.5");
+        e.set(ImageMasterDataEntry.PARAMS.WAVE_TYPE,"optical");
         return e;
     }
 
@@ -346,6 +347,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"galactic");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.01");
         e.set(ImageMasterDataEntry.PARAMS.MAX_RANGE_DEG,"1.5");
+        e.set(ImageMasterDataEntry.PARAMS.WAVE_TYPE,"mid-IR");
 
         return e;
     }
@@ -361,6 +363,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         e.set(ImageMasterDataEntry.PARAMS.PROJECT_TYPE_DESC,"all-sky");
         e.set(ImageMasterDataEntry.PARAMS.MIN_RANGE_DEG,"0.016");
         e.set(ImageMasterDataEntry.PARAMS.MAX_RANGE_DEG,"0.5");
+        e.set(ImageMasterDataEntry.PARAMS.WAVE_TYPE,"optical");
 
         return e;
     }
