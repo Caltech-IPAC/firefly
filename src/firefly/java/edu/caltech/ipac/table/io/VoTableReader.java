@@ -313,7 +313,7 @@ public class VoTableReader {
         FieldElement[] fields = getFieldsFromTable(tableEl);
 
         for (FieldElement f : fields) {
-            if (f.getName().equals(name)) {
+            if ((f.getName() != null) && (f.getName().equals(name))) {
                 return f;
             }
         }
@@ -356,6 +356,7 @@ public class VoTableReader {
     // the added info includes: minimum/maximum values, options, or null string
     private static void getValuesFromField(TableElement tableEl, DataType dt) {
         FieldElement fieldEle = getFieldElementByName(tableEl, dt.getKeyName());
+        if (fieldEle == null) return;
 
         ValuesElement values = fieldEle.getActualValues();
 
