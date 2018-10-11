@@ -852,8 +852,8 @@ const makePt= function(type,  x, y) {
  * @returns {number}
  */
 export function convertAngle(from, to, angle) {
-    const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', 'radian'];
-    const rIdx = angleUnit.indexOf('radian');
+    const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', ['radian', 'rad']];
+    const rIdx = angleUnit.length-1;
     let fromIdx, toIdx;
     let numAngle = (typeof angle === 'string') ? parseFloat(angle) : angle;
     const unitIdx = (unit) => angleUnit.findIndex( (au) => (isArray(au) ? au.includes(unit) : au === unit));

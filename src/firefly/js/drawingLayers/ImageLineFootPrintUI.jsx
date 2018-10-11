@@ -33,7 +33,7 @@ function ImageLineFootPrintUI({drawLayer,pv}) {
 
 function changeFootprintPref(drawLayer,pv,value, preValue) {
     if (preValue !== value) {
-        dispatchModifyCustomField(drawLayer.drawLayerId, {fillStyle: value, targetPlotId: pv.plotId}, pv.plotId);
+        dispatchModifyCustomField(drawLayer.drawLayerId, {fillStyle: value}, pv.plotId);
     }
 }
 

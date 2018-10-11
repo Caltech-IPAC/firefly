@@ -6,8 +6,8 @@
  * Date: 3/5/12
  */
 
-import {get, set, pickBy, cloneDeep} from 'lodash';
 
+import {get, set, pickBy, cloneDeep} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
 import {getBgEmail} from '../core/background/BackgroundUtil.js';

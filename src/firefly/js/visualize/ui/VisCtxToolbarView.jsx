@@ -7,7 +7,7 @@ import numeral from 'numeral';
 import PropTypes from 'prop-types';
 import {isEmpty, get, padEnd} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
-                getDrawLayersByType, isDrawLayerAttached } from '../PlotViewUtil.js';
+                getDrawLayersByType, isDrawLayerAttached, getAllDrawLayersForPlot } from '../PlotViewUtil.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
@@ -24,7 +24,7 @@ import {dispatchCrop, dispatchChangeCenterOfProjection, dispatchChangePrimePlot,
         dispatchChangeHiPS, dispatchChangeHipsImageConversion, visRoot} from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
-import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
+import Catalog, {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {SelectedShape} from '../../drawingLayers/SelectArea.js';
 import {isImageOverlayLayersActive} from '../RelatedDataUtil.js';
@@ -42,6 +42,7 @@ import {isOutlineImageForSelectArea, detachSelectArea, SELECT_AREA_TITLE} from '
 import {convertAngle} from '../VisUtil.js';
 import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
 import {RequestType} from '../RequestType.js';
+import LSSTFootprint, {selectFootprint, unselectFootprint, filterFootprint, clearFilterFootprint} from '../../drawingLayers/ImageLineBasedFootprint';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
@@ -547,19 +548,19 @@ export class VisCtxToolbarView extends PureComponent {
 
                 {showCatSelect &&
                 <ToolbarButton icon={SELECTED} tip='Mark data in area as selected'
-                               horizontal={true} onClick={() => selectCatalog(pv,dlAry)}/>}
+                               horizontal={true} onClick={() => selectDrawingLayer(pv,dlAry)}/>}
 
                 {showCatUnSelect &&
                 <ToolbarButton icon={UNSELECTED} tip='Mark all data unselected'
-                               horizontal={true} onClick={() => unselectCatalog(pv,dlAry)}/>}
+                               horizontal={true} onClick={() => unselectDrawingLayer(pv,dlAry)}/>}
 
                 {showFilter &&
                 <ToolbarButton icon={FILTER} tip='Filter in the selected area'
-                               horizontal={true} onClick={() => filterCatalog(pv,dlAry)}/>}
+                               horizontal={true} onClick={() => filterDrawingLayer(pv,dlAry)}/>}
 
                 {showClearFilter &&
                 <ToolbarButton icon={CLEAR_FILTER} tip='Clear all the Filters'
-                               horizontal={true} onClick={() => clearFilterCatalog(pv,dlAry)}/>}
+                               horizontal={true} onClick={() => clearFilterDrawingLayer(pv,dlAry)}/>}
 
                 {showSelectionTools &&
                 <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
@@ -700,4 +701,52 @@ function getHipsCubeDesc(plot) {
     const bunit3= (data_cube_bunit3!=='null' && data_cube_bunit3!=='nil' && data_cube_bunit3!=='undefined') ?
                                data_cube_bunit3 : '';
     return `${doFormat(value,dp)} ${bunit3}`;
+}
+
+function selectDrawingLayer(pv,dlAry) {
+    const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
+    if (allLayers.length > 0) {
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+            selectCatalog(pv, allLayers);
+        }
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+            selectFootprint(pv, allLayers);
+        }
+    }
+}
+
+function unselectDrawingLayer(pv,dlAry) {
+    const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
+    if (allLayers.length > 0) {
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+            unselectCatalog(pv, allLayers);
+        }
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+            unselectFootprint(pv, allLayers);
+        }
+    }
+}
+
+function filterDrawingLayer(pv,dlAry) {
+    const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
+    if (allLayers.length > 0) {
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+            filterCatalog(pv, allLayers);
+        }
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+            filterFootprint(pv, allLayers);
+        }
+    }
+}
+
+function clearFilterDrawingLayer(pv,dlAry) {
+    const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
+    if (allLayers.length > 0) {
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+            clearFilterCatalog(pv, allLayers);
+        }
+        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+            clearFilterFootprint(pv, allLayers);
+        }
+    }
 }
