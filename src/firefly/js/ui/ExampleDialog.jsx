@@ -92,25 +92,14 @@ const defValues= {
     },
     radioGrpFld: {
         fieldKey: 'radioGrpFld',
-        alignment: 'vertical',
+        alignment: 'horizontal',
         tooltip: 'Please select an option',
-        label: 'Master Radio Group:',
+        label: 'Radio Group:',
         options: [
             {label: 'Option 1', value: 'opt1'},
             {label: 'Hide A Field', value: 'opt2'}
         ],
         value: 'opt1'
-    },
-    radioGrpFld2: {
-        fieldKey: 'radioGrpFld2',
-        alignment: 'vertical',
-        tooltip: 'Please select an dependent option',
-        label: 'Dependent Radio Group:',
-        options: [
-            {label: 'Dependent 1', value: 'dep1'},
-            {label: 'Dependent 2', value: 'dep2'}
-        ],
-        value: 'dep1'
     }
 };
 
@@ -122,33 +111,12 @@ const defValues= {
  * @param {object} action
  * @return {object}
  */
-var exDialogReducer= function(inFields, action) {
+function exDialogReducer(inFields, action) {
     if (!inFields)  {
         return defValues;
     }
     else {
         let {low,high}= inFields;
-        if (get(action, 'type') === VALUE_CHANGE) {
-            // update the options and value in the dependent radio group
-            // based on the value of master radio group
-            const {fieldKey, value} = action.payload;
-            if (fieldKey === 'radioGrpFld') {
-                const newOptions = (value === 'opt2') ?
-                    [
-                        {label: 'Dependent 3', value: 'dep3'},
-                        {label: 'Dependent 4', value: 'dep4'},
-                        {label: 'Dependent 5', value: 'dep5'}
-                    ] :
-                    [
-                        {label: 'Dependent 1', value: 'dep1'},
-                        {label: 'Dependent 2', value: 'dep2'}
-                    ];
-                const newValue = newOptions[0].value;
-                inFields = updateSet(inFields, 'radioGrpFld2.options', newOptions);
-                inFields = updateSet(inFields, 'radioGrpFld2.value', newValue);
-            }
-        }
-
         // inFields= revalidateFields(inFields);
         if (!low.valid || !high.valid) {
             return inFields;
@@ -164,10 +132,73 @@ var exDialogReducer= function(inFields, action) {
             return Object.assign({},inFields,{low,high});
         }
     }
-};
+}
 
 
+const dependentOptions1 =  [
+    {label: 'Dependent 1', value: 'dep1'},
+    {label: 'Dependent 2', value: 'dep2'}
+];
+const dependentOptions2 = [
+    {label: 'Dependent 3', value: 'dep3'},
+    {label: 'Dependent 4', value: 'dep4'},
+    {label: 'Dependent 5', value: 'dep5'}
+];
 
+function masterDependentReducer(inFields, action) {
+    if (!inFields)  {
+        return {
+            master: {
+                fieldKey: 'master',
+                alignment: 'horizontal',
+                tooltip: 'Please select an option',
+                label: 'Master:',
+                labelWidth: 40,
+                options: [
+                    {label: 'Option 1', value: 'opt1'},
+                    {label: 'Option 2', value: 'opt2'}
+                ],
+                value: 'opt1'
+            },
+            dependent: {
+                fieldKey: 'dependent',
+                tooltip: 'Please select a dependent option',
+                label: 'Dependent:',
+                labelWidth: 60,
+                options: dependentOptions1,
+                value: 'dep1'
+            }
+        };
+    }
+    else {
+        if (get(action, 'type') === VALUE_CHANGE) {
+            // update the options and value in the dependent radio group
+            // based on the value of master radio group
+            const {fieldKey, value} = action.payload;
+            if (fieldKey === 'master') {
+                const newOptions = (value === 'opt1') ?  dependentOptions1 : dependentOptions2;
+                const newValue = newOptions[0].value;
+                inFields = updateSet(inFields, 'dependent.options', newOptions);
+                inFields = updateSet(inFields, 'dependent.value', newValue);
+            }
+        }
+        return inFields;
+    }
+}
+
+// Make sure the options are set in one place: either in reducer function or in render, not in both places,
+// In general, field attributes, controlled by a reducer function, should not be set in render.
+function FieldGroupWithMasterDependent() {
+    return (
+        <FieldGroup style= {{padding:5}} groupKey={'MasterDependent'}
+                    reducerFunc={masterDependentReducer} keepState={true}>
+            <h4>Dependent field options are changing with the value of master field</h4>
+            <RadioGroupInputField fieldKey='master'/>
+            <br/>
+            <ListBoxInputField fieldKey='dependent'/>
+        </FieldGroup>
+    );
+}
 
 
 /// test
@@ -194,6 +225,11 @@ export class AllTest extends PureComponent {
                                 </CollapsiblePanel>
                             </div>
                         </Tab>
+                        <Tab name='Third'>
+                            <div style={{minWidth: 300, minHeight: 150}}>
+                                <FieldGroupWithMasterDependent />
+                            </div>
+                        </Tab>
                     </Tabs>
                 </div>
 
@@ -206,29 +242,29 @@ export class AllTest extends PureComponent {
 function createSampleHistogram() {
     const {x=[], y=[], binWidth=[]} = {};
     [[1,-2.5138013781265,-2.0943590644815],
-    [4,-2.0943590644815,-1.8749167508365],
-    [11,-1.8749167508365,-1.6554744371915],
-    [12,-1.6554744371915,-1.4360321235466],
-    [18,-1.4360321235466,-1.2165898099016],
-    [15,-1.2165898099016,-1.1571474962565],
-    [20,-1.1571474962565,-0.85720518261159],
-    [24,-0.85720518261159,-0.77770518261159],
-    [21,-0.77770518261159,-0.55826286896661],
-    [36,-0.55826286896661,-0.33882055532162],
-    [40,-0.33882055532162,-0.11937824167663],
-    [51,-0.11937824167663,0.10006407196835],
-    [59,0.10006407196835,0.21850638561334],
-    [40,0.21850638561334,0.31950638561334],
-    [42,0.31950638561334,0.53894869925832],
-    [36,0.53894869925832,0.75839101290331],
-    [40,0.75839101290331,0.9778333265483],
-    [36,0.9778333265483,1.1972756401933],
-    [23,1.1972756401933,1.4167179538383],
-    [18,1.4167179538383,1.6361602674833],
-    [9,1.6361602674833,1.8556025811282],
-    [12,1.8556025811282,2.0750448947732],
-    [0,2.0750448947732,2.2944872084182],
-    [4,2.2944872084182,2.312472786789]].forEach((row) => {
+        [4,-2.0943590644815,-1.8749167508365],
+        [11,-1.8749167508365,-1.6554744371915],
+        [12,-1.6554744371915,-1.4360321235466],
+        [18,-1.4360321235466,-1.2165898099016],
+        [15,-1.2165898099016,-1.1571474962565],
+        [20,-1.1571474962565,-0.85720518261159],
+        [24,-0.85720518261159,-0.77770518261159],
+        [21,-0.77770518261159,-0.55826286896661],
+        [36,-0.55826286896661,-0.33882055532162],
+        [40,-0.33882055532162,-0.11937824167663],
+        [51,-0.11937824167663,0.10006407196835],
+        [59,0.10006407196835,0.21850638561334],
+        [40,0.21850638561334,0.31950638561334],
+        [42,0.31950638561334,0.53894869925832],
+        [36,0.53894869925832,0.75839101290331],
+        [40,0.75839101290331,0.9778333265483],
+        [36,0.9778333265483,1.1972756401933],
+        [23,1.1972756401933,1.4167179538383],
+        [18,1.4167179538383,1.6361602674833],
+        [9,1.6361602674833,1.8556025811282],
+        [12,1.8556025811282,2.0750448947732],
+        [0,2.0750448947732,2.2944872084182],
+        [4,2.2944872084182,2.312472786789]].forEach((row) => {
         x.push((row[2]+row[1])/2);
         y.push(row[0]);
         binWidth.push(row[2]-row[1]);
@@ -291,8 +327,8 @@ function FieldGroupTestView ({fields}) {
     for (var i=1; i<100; i++) { validSuggestions.push(...[`w${i}mpro`, `w${i}mprosig`, `w${i}snr`]); }
 
     return (
-        <FieldGroup style= {{padding:5}} groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}} 
-                          reducerFunc={exDialogReducer} keepState={true}>
+        <FieldGroup style= {{padding:5}} groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}}
+                    reducerFunc={exDialogReducer} keepState={true}>
             <InputGroup labelWidth={110}>
                 <TargetPanel/>
                 <SuggestBoxInputField
@@ -322,18 +358,17 @@ function FieldGroupTestView ({fields}) {
                 <ValidationField fieldKey='field3'
                                  forceReinit={true}
                                  initialState= {{
-                                          fieldKey: 'field3',
-                                          value: '12.12322',
-                                          validator: Validate.floatRange.bind(null, 1.23333, 1000, 3,'field 3'),
-                                          tooltip: 'more tipping',
-                                          label : 'Another Float:',
-                                          labelWidth : 100
-                                      }} />
+                                     fieldKey: 'field3',
+                                     value: '12.12322',
+                                     validator: Validate.floatRange.bind(null, 1.23333, 1000, 3,'field 3'),
+                                     tooltip: 'more tipping',
+                                     label : 'Another Float:',
+                                     labelWidth : 100
+                                 }} />
                 <ValidationField fieldKey='field4'/>
                 <ValidationField fieldKey='low'/>
                 <ValidationField fieldKey='high'/>
-
-                <br/><br/>
+                
                 <br/>
                 <span>here is some text</span>
                 <br/><br/>
@@ -341,29 +376,24 @@ function FieldGroupTestView ({fields}) {
                     inline={true}
                     fieldKey='radioGrpFld'
                 />
-                <RadioGroupInputField
-                    inline={true}
-                    fieldKey='radioGrpFld2'
-                />
 
                 <br/><br/>
-
                 <ListBoxInputField  initialState= {{
-                                          tooltip: 'Please select an option',
-                                          label : 'ListBox Field:'
-                                      }}
+                    tooltip: 'Please select an option',
+                    label : 'ListBox Field:'
+                }}
                                     options={
-                                          [
-                                              {label: 'Item 1', value: 'i1'},
-                                              {label: 'Another Item 2', value: 'i2'},
-                                              {label: 'Yet Another 3', value: 'i3'},
-                                              {label: 'And one more 4', value: 'i4'}
-                                          ]
-                                          }
+                                        [
+                                            {label: 'Item 1', value: 'i1'},
+                                            {label: 'Another Item 2', value: 'i2'},
+                                            {label: 'Yet Another 3', value: 'i3'},
+                                            {label: 'And one more 4', value: 'i4'}
+                                        ]
+                                    }
                                     multiple={false}
                                     fieldKey='listBoxFld'
                 />
-
+                <br/><br/>
 
 
                 <FieldGroupTabs initialState= {{ value:'x2' }}
@@ -371,16 +401,16 @@ function FieldGroupTestView ({fields}) {
                     <Tab name='X 1' id='x1'>
                         <CheckboxGroupInputField
                             initialState= {{
-                                    value: '_all_',
-                                    tooltip: 'Please select some boxes',
-                                    label : 'Checkbox Group:' }}
+                                value: '_all_',
+                                tooltip: 'Please select some boxes',
+                                label : 'Checkbox Group:' }}
                             options={[
-                                    {label: 'Apple', value: 'A'},
-                                    {label: 'Banana', value: 'B'},
-                                    {label: 'Cranberry', value: 'C'},
-                                    {label: 'Dates', value: 'D'},
-                                    {label: 'Grapes', value: 'G'}
-                                ]}
+                                {label: 'Apple', value: 'A'},
+                                {label: 'Banana', value: 'B'},
+                                {label: 'Cranberry', value: 'C'},
+                                {label: 'Dates', value: 'D'},
+                                {label: 'Grapes', value: 'G'}
+                            ]}
                             fieldKey='checkBoxGrpFld'
                             alignment='vertical'
                         />
@@ -388,25 +418,25 @@ function FieldGroupTestView ({fields}) {
                     <Tab name='X 2' id='x2'>
                         <ValidationField fieldKey='fieldInTabX2'
                                          initialState= {{
-                                          fieldKey: 'fieldInTabX2',
-                                          value: '87',
-                                          validator: Validate.intRange.bind(null, 66, 666, 'Tab Test Field'),
-                                          tooltip: 'more tipping',
-                                          label : 'tab test field:',
-                                          labelWidth : 100
-                                      }} />
+                                             fieldKey: 'fieldInTabX2',
+                                             value: '87',
+                                             validator: Validate.intRange.bind(null, 66, 666, 'Tab Test Field'),
+                                             tooltip: 'more tipping',
+                                             label : 'tab test field:',
+                                             labelWidth : 100
+                                         }} />
                     </Tab>
                     <Tab name='X 3' id='x3'>
                         <div>
                             <ValidationField fieldKey='fieldInTabX3'
                                              initialState= {{
-                                          fieldKey: 'fieldInTabX3',
-                                          value: '25',
-                                          validator: Validate.intRange.bind(null, 22, 33, 'Tab Test Field 22-33'),
-                                          tooltip: 'more tipping',
-                                          label : 'tab test field:',
-                                          labelWidth : 100
-                                      }} />
+                                                 fieldKey: 'fieldInTabX3',
+                                                 value: '25',
+                                                 validator: Validate.intRange.bind(null, 22, 33, 'Tab Test Field 22-33'),
+                                                 tooltip: 'more tipping',
+                                                 label : 'tab test field:',
+                                                 labelWidth : 100
+                                             }} />
                             <div style={{paddingTop: 10}}></div>
                             <CheckboxGroupInputField
                                 initialState= {{
@@ -424,9 +454,9 @@ function FieldGroupTestView ({fields}) {
                         </div>
                     </Tab>
                 </FieldGroupTabs>
-                
-                
-                
+
+
+
 
                 <br/><br/>
 
@@ -527,10 +557,10 @@ function resultsSuccess(request) {
 }
 
 function makeField1(hide) {
-    var f1= (
+    const f1= (
         <ValidationField fieldKey={'field1'} />
     );
-    var hidden= <div style={{paddingLeft:30}}>field is hidden</div>;
+    const hidden= <div style={{paddingLeft:30}}>field is hidden</div>;
     return hide ? hidden : f1;
 }
 
