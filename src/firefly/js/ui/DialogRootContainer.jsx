@@ -20,7 +20,7 @@ var dialogs= [];
 var tmpPopups= [];
 var tmpCount=0;
 var divElement;
-var dropDownEl = createDiv(DROPDOWN_DIV+'-root');
+var dropDownEl;
 
 
 /**
@@ -37,6 +37,7 @@ var dropDownEl = createDiv(DROPDOWN_DIV+'-root');
  * @param p.locDir      location and direction of the drop-down.  see desc for more info
  */
 export function showDropDown({id='',content, style={}, atElRef, locDir}) {
+    if (!dropDownEl) dropDownEl = createDiv(DROPDOWN_DIV+'-root');
 
     const ddDiv = document.getElementById(DROPDOWN_DIV + '_' + id) || createDiv(DROPDOWN_DIV + '_' + id, dropDownEl);
     ReactDOM.render( <DropDown {...{id, content, style, atElRef, locDir}}/>, ddDiv);
@@ -190,7 +191,6 @@ function showTmpPopup(popup) {
 
 function init() {
     divElement= createDiv(DIALOG_DIV);
-    divElement.style.position = 'absolute';
 }
 
 function createDiv(id, appendTo=document.body) {
@@ -199,6 +199,7 @@ function createDiv(id, appendTo=document.body) {
     el.id= id;
     el.style.width= '0';
     el.style.height= '0';
+    el.style.position = 'absolute';
     return el;
 }
 

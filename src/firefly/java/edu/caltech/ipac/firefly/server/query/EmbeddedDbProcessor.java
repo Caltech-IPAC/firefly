@@ -550,7 +550,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     if (vals.size() <= MAX_COL_ENUM_COUNT) {
                         DataType dt = results.getData().getDataDefintion(cname);
                         String enumVals = vals.stream().map(m -> String.valueOf(m.get(cname)))       // list of map to list of string(colname)
-                                .filter(s -> !( StringUtils.isEmpty(s) ||  dt.getNullString().equalsIgnoreCase(s)))            // remove null or blank values because it's hard to handle at the column filter level
+                                .filter(s -> !StringUtils.isEmpty(s) && !StringUtils.areEqual(dt.getNullString(), s))            // remove null or blank values because it's hard to handle at the column filter level
                                 .collect(Collectors.joining(","));                          // combine the names into comma separated string.
                         results.getData().getDataDefintion(cname).setEnumVals(enumVals);
                         // update dd table
@@ -561,6 +561,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             });
             StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
         } catch (Exception ex) {
+            LOGGER.error(ex);
             // do nothing.. ignore any errors.
         }
     }

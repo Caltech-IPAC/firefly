@@ -56,7 +56,7 @@ export function wsConnect(callback, baseUrl=getRootURL()) {
 }
 
 function makeConnection(wsUrl) {
-    wsConn && wsConn.close();
+    get(wsConn, 'readyState') === WebSocket.OPEN && wsConn.close();
 
     wsConn = new WebSocket(wsUrl);
     wsConn.onopen = onOpen;
