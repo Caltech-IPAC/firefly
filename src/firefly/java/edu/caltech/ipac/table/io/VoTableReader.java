@@ -31,7 +31,8 @@ import java.util.Arrays;
 import org.xml.sax.SAXException;
 import java.net.URL;
 import java.net.MalformedURLException;
-import java.lang.Exception;
+
+import static uk.ac.starlink.table.StoragePolicy.PREFER_MEMORY;
 
 /**
  * Date: Dec 5, 2011
@@ -101,10 +102,9 @@ public class VoTableReader {
     // root VOElement for a votable file
     private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) {
         try {
+            policy = policy == null ? PREFER_MEMORY : policy;
             VOElementFactory voFactory =  new VOElementFactory();
-            if (policy != null) {
-                voFactory.setStoragePolicy(policy);
-            }
+            voFactory.setStoragePolicy(policy);
            return voFactory.makeVOElement(location);
         }  catch (SAXException|IOException e) {
             e.printStackTrace();
@@ -261,6 +261,8 @@ public class VoTableReader {
 
             // create Datatype
             DataType dt = new DataType(name, clz, null, vInfo.getUnitString(), null, null);
+
+            if (vInfo.isArray()) dt.setTypeDesc(DataType.LONG_STRING);
 
             // set precision
             String precisionStr = getElementAttribute(param, "precision");
@@ -628,6 +630,8 @@ public class VoTableReader {
 
             // attribute name & unit
             DataType dt = new DataType(cinfo.getName(), clz, null, cinfo.getUnitString(), null, null);
+
+            if (cinfo.isArray()) dt.setTypeDesc(DataType.LONG_STRING);
 
             // attribute precision
             if(cinfo.getAuxDatum(VOStarTable.PRECISION_INFO)!=null){
