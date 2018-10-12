@@ -443,6 +443,7 @@ public final class FITSTableReader
 
         if (Objects.equals(strategy, DEFAULT) && colInfo.isArray()) {
             java_class = String.class;
+            dataType.setTypeDesc(DataType.LONG_STRING);
         }
 
         dataType.setDataType(java_class);

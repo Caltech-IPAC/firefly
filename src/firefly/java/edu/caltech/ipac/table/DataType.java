@@ -35,6 +35,7 @@ public class DataType implements Serializable, Cloneable {
     private static final String S_LONG = "l";
     private static final String S_CHAR = "c";
     private static final String S_BOOL = "b";
+    public static final String LONG_STRING = "long_string";
     public static final List<String> NUMERIC_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, INTEGER, LONG, S_DOUBLE, S_REAL, S_FLOAT, S_INTEGER, S_LONG);
     public static final List<String> REAL_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
     public static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
@@ -126,7 +127,9 @@ public class DataType implements Serializable, Cloneable {
 
     public void setDataType(Class type) {
         this.type = type;
-        typeDesc = resolveTypeDesc();
+        if (typeDesc == null) {
+            typeDesc = resolveTypeDesc();
+        }
     }
 
     public String getUnits() {

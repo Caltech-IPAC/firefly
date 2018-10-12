@@ -78,7 +78,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         tblName = StringUtils.isEmpty(tblName) ? "data" : tblName;
         List<String> coldefs = new ArrayList<>();
         for(DataType dt : dtTypes) {
-            coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), getDataType(dt.getDataType())));       // add quotes to avoid reserved words clashes
+            coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), getDataType(dt)));       // add quotes to avoid reserved words clashes
         }
 
         return String.format("create table %s (%s)", tblName, StringUtils.toString(coldefs, ","));
@@ -152,9 +152,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return false;
     }
 
-    public String getDataType(Class type) {
+    public String getDataType(DataType dataType) {
+        Class type = dataType.getDataType();
         if (String.class.isAssignableFrom(type)) {
-            return "varchar(64000)";
+            return dataType.getTypeDesc().equals(DataType.LONG_STRING) ? "longvarchar" : "varchar(64000)";
         } else if (Integer.class.isAssignableFrom(type)) {
             return "int";
         } else if (Long.class.isAssignableFrom(type)) {

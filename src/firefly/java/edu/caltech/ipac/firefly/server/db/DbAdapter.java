@@ -65,10 +65,10 @@ public interface DbAdapter {
     void close(File dbFile, boolean deleteFile);
 
     /**
-     * @param dataType
+     * @param type
      * @return this database's datatype representation of the given java class.
      */
-    String getDataType(Class dataType);
+    String getDataType(DataType type);
 
     /**
      * @return true if transaction should be used during batch import of the table data.
