@@ -7,6 +7,7 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import {RangeSlider} from '../../ui/RangeSlider.jsx';
 import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 
+const isDebug = () => get(window, 'firefly.debugStretch', false);
 
 export class ColorRGBHuePreservingPanel extends PureComponent {
 
@@ -17,46 +18,54 @@ export class ColorRGBHuePreservingPanel extends PureComponent {
 
     render() {
         const {rgbFields} = this.props;
+        const {zscale} = rgbFields;
+        const zscaleValue = get(zscale, 'value');
         const textPadding = {paddingBottom:3};
-        const LABEL_WIDTH= 105;
+        const LABEL_WIDTH= 90;
         const renderRange = (isZscale) => {
             if (isZscale) {
                 return null;
             } else {
                 return (
                     <div>
-                        <div style={{whiteSpace: 'no-wrap'}}>
-                            <ValidationField wrapperStyle={textPadding} inline={true}
-                                             labelWidth={LABEL_WIDTH}
-                                             fieldKey='lowerRangeRed'
-                            />
-                            {getTypeMinField('lowerWhichRed')}
-                        </div>
-                        <div style={{whiteSpace: 'no-wrap'}}>
-                            <ValidationField wrapperStyle={textPadding} inline={true}
-                                             labelWidth={LABEL_WIDTH}
-                                             fieldKey='lowerRangeGreen'
-                            />
-                            {getTypeMinField('lowerWhichGreen')}
-                        </div>
-                        <div style={{whiteSpace: 'no-wrap'}}>
-                            <ValidationField wrapperStyle={textPadding} inline={true}
-                                             labelWidth={LABEL_WIDTH}
-                                             fieldKey='lowerRangeBlue'
-                            />
-                            {getTypeMinField('lowerWhichBlue')}
-                        </div>
-                        <div style={{whiteSpace: 'no-wrap'}}>
-                            <ValidationField wrapperStyle={textPadding} inline={true}
-                                             labelWidth={LABEL_WIDTH}
-                                             fieldKey='stretch'/>
-                        </div>
+                        <FieldGroupCollapsible  header='Pedestals (black point values)'
+                                                initialState= {{ value:'closed' }}
+                                                fieldKey='rangeParameters'>
+                            <div style={{whiteSpace: 'no-wrap'}}>
+                                <ValidationField wrapperStyle={textPadding} inline={true}
+                                                 labelWidth={LABEL_WIDTH}
+                                                 fieldKey='lowerRangeRed'
+                                />
+                                {getTypeMinField('lowerWhichRed')}
+                            </div>
+                            <div style={{whiteSpace: 'no-wrap'}}>
+                                <ValidationField wrapperStyle={textPadding} inline={true}
+                                                 labelWidth={LABEL_WIDTH}
+                                                 fieldKey='lowerRangeGreen'
+                                />
+                                {getTypeMinField('lowerWhichGreen')}
+                            </div>
+                            <div style={{whiteSpace: 'no-wrap'}}>
+                                <ValidationField wrapperStyle={textPadding} inline={true}
+                                                 labelWidth={LABEL_WIDTH}
+                                                 fieldKey='lowerRangeBlue'
+                                />
+                                {getTypeMinField('lowerWhichBlue')}
+                            </div>
+                            {!zscaleValue && <div style={{paddingTop: 5}}>{getZscaleCheckbox()}</div>}
+                            {isDebug() && <div style={{whiteSpace: 'no-wrap'}}>
+                                <ValidationField wrapperStyle={textPadding} inline={true}
+                                                 labelWidth={LABEL_WIDTH}
+                                                 fieldKey='stretch'/>
+                            </div>}
+                        </FieldGroupCollapsible>
                     </div>
                 );
             }
         };
 
-        const asinH = renderAsinH(rgbFields, renderRange, this.doReplot, {});
+        const wrapperStyle = zscaleValue ? {paddingBottom: 40} : {paddingBottom: 10};
+        const asinH = renderAsinH(rgbFields, renderRange, this.doReplot, wrapperStyle, true);
         const scale = renderScalingCoefficients(rgbFields, this.doReplot);
         return (
             <div style={{minWidth: 360, padding: 5, position: 'relative'}}>
@@ -64,11 +73,11 @@ export class ColorRGBHuePreservingPanel extends PureComponent {
                     Brightness-independent color-preserving asinh stretch;<br/>
                     images must be free of background artifacts
                 </div>
-                {asinH}
                 {scale}
-                <div style={{position:'absolute', bottom:5, left:5, right:5}}>
+                {asinH}
+                {zscaleValue && <div style={{position:'absolute', bottom:5, left:5, right:5}}>
                     {getZscaleCheckbox()}
-                </div>
+                </div>}
             </div>
         );
     }
@@ -81,9 +90,9 @@ const scaleMarks = {
 function renderScalingCoefficients(fields, replot) {
 
     return (
-        <div style={{paddingBottom: 40}}>
-            <FieldGroupCollapsible  header='Band scaling coefficients'
-                                    initialState= {{ value:'closed' }}
+        <div>
+            <FieldGroupCollapsible  header='Scaling coefficients'
+                                    initialState= {{ value:'open' }}
                                     fieldKey='bandScaling'>
                 {['Red', 'Green', 'Blue'].map((c) => {
                     const fieldKey = `k${c}`;

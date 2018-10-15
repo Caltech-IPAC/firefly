@@ -64,7 +64,7 @@ public class RGBIntensity {
         StringBuilder key = new StringBuilder("");
         if (rangeValuesAry==null) { return key.toString(); }
         for (RangeValues rv : rangeValuesAry)  {
-            key.append(rv.getLowerWhich()).append(",").append(rv.getLowerValue()).append(";");
+            key.append(rv.getScalingK()).append(",").append(rv.getLowerWhich()).append(",").append(rv.getLowerValue()).append(";");
         }
         return key.toString();
     }
@@ -104,7 +104,7 @@ public class RGBIntensity {
         for(int i=0; i<3; i++) {
             blankPxValAry[i]= imageHeaderAry[i].blank_value;
             slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
-            slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i]);
+            slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i], rangeValuesAry[i]);
         }
         float [] intensity = new float[float1dAry[0].length];
         Arrays.fill(intensity, Float.NaN);
@@ -115,7 +115,7 @@ public class RGBIntensity {
                 continue;
             }
 
-            val = computeIntensity(i, float1dAry, imageHeaderAry, slowAry);
+            val = computeIntensity(i, float1dAry, imageHeaderAry, slowAry, rangeValuesAry);
 
             // save min and max
             if (val < minVal) { minVal = val; }
@@ -128,7 +128,7 @@ public class RGBIntensity {
 
         // zscale settings are shared between bands
         boolean useZ = rangeValuesAry[0].getLowerWhich()==RangeValues.ZSCALE;
-        if (useZ) {
+        if (useZ || !Double.isFinite(rangeValuesAry[0].getAsinhStretch())) {
             // for zscale only: calculate z1 and z2 for intensity
             // use the last image header, because after reprojection, bzero and bscale are removed in green and blue
             // zscale parameters are shared between range values, no matter range values which to use
@@ -147,10 +147,10 @@ public class RGBIntensity {
     float getIntensityLow() { return (float)_intensityLow; }
     float getIntensityHigh() { return (float)_intensityHigh; }
 
-    static float computeIntensity(int i, float[][] float1dAry, ImageHeader[] imageHeaderAry, double[] slowAry) {
-        double val = (getScaled(float1dAry[0][i], imageHeaderAry[0])-slowAry[0]+
-                            getScaled(float1dAry[1][i], imageHeaderAry[1])-slowAry[1]+
-                            getScaled(float1dAry[2][i], imageHeaderAry[2])-slowAry[2])/3.0;
+    static float computeIntensity(int i, float[][] float1dAry, ImageHeader[] imageHeaderAry, double[] slowAry, RangeValues[] rangeValuesAry) {
+        double val = (getScaled(float1dAry[0][i], imageHeaderAry[0], rangeValuesAry[0])-slowAry[0]+
+                            getScaled(float1dAry[1][i], imageHeaderAry[1], rangeValuesAry[1])-slowAry[1]+
+                            getScaled(float1dAry[2][i], imageHeaderAry[2],rangeValuesAry[2])-slowAry[2])/3.0;
         return val > 0 ? (float)val : 0f;
     }
 

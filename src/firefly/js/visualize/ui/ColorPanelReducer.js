@@ -336,6 +336,8 @@ function getHuePreserveFieldInit() {
             label: 'Q:'
         },
         stretch: {
+            disabled: true,
+            style: {background: '#F0F0F0'},
             validator: Validate.floatRange.bind(null, 0, Number.MAX_VALUE, 1, 'Stretch'),
             tooltip: 'The asinh stretch parameter. (The difference between min and max intensity.)',
             label: 'Stretch:'
@@ -462,7 +464,6 @@ function makeHuePreserveRangeValuesFromFields(fields) {
                 upperWhich: ZSCALE,
                 upperValue: 99,
                 asinhQValue: fields.asinhQ.value,
-                asinhStretch: fields.stretch.value,
                 scalingK: scalingKVal,
                 STRETCH_ASINH});
         });
@@ -484,7 +485,9 @@ function updateHuePreserveFieldsFromRangeValues(fields,rvAry) {
         fields[scalingK]= cloneWithValue(fields[scalingK], scalingKToFieldVal(rvAry[i].scalingK));
     });
     fields.asinhQ= cloneWithValue(fields.asinhQ, rvAry[0].asinhQValue);
-    fields.stretch= cloneWithValue(fields.stretch, Number(rvAry[0].asinhStretch).toFixed(1));
+    let asinhStretchVal = Number(rvAry[0].asinhStretch);
+    asinhStretchVal = Number.isFinite(asinhStretchVal) ? asinhStretchVal.toFixed(1) : undefined;
+    fields.stretch= cloneWithValue(fields.stretch, asinhStretchVal);
     fields.zscale= cloneWithValue(fields.zscale,  rvAry[0].lowerWhich===ZSCALE ? 'zscale' : '');
     return fields;
 }

@@ -53,14 +53,14 @@ export class RangeValues {
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
-                 asinhQValue=NaN,
+                 asinhQValue=Number.NaN,
                  gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
                  zscaleSamples= 600,
                  zscaleSamplesPerLine= 120,
                  rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
-                 asinhStretch=1.0,
+                 asinhStretch=Number.NaN,
                  scalingK=1.0,
                  bias= 0.5,
                  contrast= 1.0 ) {
@@ -77,7 +77,10 @@ export class RangeValues {
         this.rgbPreserveHue=  parseInt(rgbPreserveHue); /* if 0, stretch by band, otherwise preserve hue*/
         this.asinhStretch=parseFloat(asinhStretch);
         this.scalingK=parseFloat(scalingK);
-        if (this.rgbPreserveHue > 0) { this.algorithm = STRETCH_ASINH; }
+        if (this.rgbPreserveHue > 0) {
+            this.algorithm = STRETCH_ASINH;
+            this.upperWhich = ZSCALE;
+        }
         this.bias= parseFloat(bias);
         this.contrast= parseFloat(contrast);
     }
@@ -135,24 +138,20 @@ export class RangeValues {
                       lowerValue= 1.0,
                       upperWhich,
                       upperValue= 99.0,
-                      asinhQValue= NaN,
+                      asinhQValue= Number.NaN,
                       gammaValue=2.0,
                       algorithm= STRETCH_LINEAR,
                       zscaleContrast= 25,
                       zscaleSamples= 600,
                       zscaleSamplesPerLine= 120,
                       rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
-                      asinhStretch= 1.0,
+                      asinhStretch= Number.NaN,
                       scalingK=1.0,
                       bias= 0.5,
                       contrast= 1.0} ) {
 
         lowerWhich= lowerWhich || which;
         upperWhich= upperWhich || which;
-        if (rgbPreserveHue > 0) {
-            algorithm = STRETCH_ASINH;
-            upperWhich = ZSCALE;
-        }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
             gammaValue, algorithm, zscaleContrast, zscaleSamples,
             zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, scalingK, bias, contrast);
@@ -171,7 +170,7 @@ export class RangeValues {
      * @param zscaleSamples
      * @param zscaleSamplesPerLine
      * @param rgbPreserveHue
-     * @param asinhStretch used for hue preserving rgb
+     * @param asinhStretch used for hue preserving rgb, when NaN use zscale to estimate stretch value
      * @param scalingK used for hue preserving rgb
      * @param bias
      * @param contrast
@@ -181,18 +180,17 @@ export class RangeValues {
                 lowerValue= 1.0,
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
-                asinhQValue=NaN,
-                gammaValue=2.0,
+                asinhQValue= Number.NaN,
+                gammaValue= 2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,
                 zscaleSamples= 600,
                 zscaleSamplesPerLine= 120,
                 rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
-                asinhStretch= 1.0,
+                asinhStretch= Number.NaN,
                 scalingK=1.0,
                 bias= 0.5,
                 contrast= 1.0 ) {
-        if (rgbPreserveHue > 0) { algorithm = STRETCH_ASINH; }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
              gammaValue, algorithm, zscaleContrast, zscaleSamples,
             zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, scalingK, bias, contrast);
@@ -221,7 +219,7 @@ export class RangeValues {
             a= alStrToConst[algorithm.toLowerCase()];
         }
 
-        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,NaN,2, a);
+        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,Number.NaN,2, a);
 
     }
 

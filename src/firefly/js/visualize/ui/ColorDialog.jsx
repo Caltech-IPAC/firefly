@@ -292,10 +292,10 @@ export function replot3ColorHuePreserving(request) {
             lowerWhich: useZ ? ZSCALE : request[lowerWhich],
             lowerValue: request[lowerRange],
             asinhQValue: request.asinhQ,
-            asinhStretch: request.stretch,
-            scalingK: scalingKVal,
             algorithm: STRETCH_ASINH,
-            rgbPreserveHue: 1
+            rgbPreserveHue: 1,
+            asinhStretch: Number.NaN, //request.stretch,
+            scalingK: scalingKVal,
         });
         return {band, rv, bandVisible: true};
     });

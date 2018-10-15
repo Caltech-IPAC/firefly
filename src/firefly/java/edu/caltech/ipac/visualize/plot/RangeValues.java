@@ -23,10 +23,11 @@ public final class RangeValues implements Cloneable, Serializable {
     public static final int SIGMA      = 92;
 
     private static final double ASINH_Q =  Double.NaN; // if NaN, Q will be estimated based on range;
-    private static final double ASINH_STRETCH = 1;
-    private static final double SCALING_K = 1;
     private static final double GAMMA=2.0;
 
+    // used for hue-preserving rgb only
+    private static final double ASINH_STRETCH_PARAM = Double.NaN; // if NaN, use zscale
+    private static final double SCALING_K = 1;
 
     public static final int STRETCH_LINEAR= 44;
     public static final int STRETCH_LOG   = 45;
@@ -57,7 +58,7 @@ public final class RangeValues implements Cloneable, Serializable {
     private double _contrast;
 
     public RangeValues() {
-        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120, RGB_PRESERVE_HUE_DEFAULT, ASINH_STRETCH, SCALING_K);
+        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, ASINH_Q, GAMMA, STRETCH_LINEAR, 25, 600, 120, RGB_PRESERVE_HUE_DEFAULT, ASINH_STRETCH_PARAM, SCALING_K);
     }
 
     public RangeValues( int    lowerWhich,
@@ -170,7 +171,7 @@ public final class RangeValues implements Cloneable, Serializable {
             int    zscale_samples=          Integer.parseInt(s[i++]);
             int    zscale_samples_per_line= Integer.parseInt(s[i++]);
             short  rgbPreserveHue=          s.length > 10 ? Short.parseShort(s[i++]) : RGB_PRESERVE_HUE_DEFAULT;
-            double asinhStretch=            s.length > 10 ? parseDouble(s[i++]) : ASINH_STRETCH;
+            double asinhStretch=            s.length > 10 ? parseDouble(s[i++]) : ASINH_STRETCH_PARAM;
             double scalingK=                s.length > 10 ? parseDouble(s[i]) : SCALING_K;
 
             return new RangeValues(lowerWhich,

@@ -101,7 +101,7 @@ public class ImageStretch {
         for(int i=0; i<3; i++) {
             blankPxValAry[i]= imageHeaderAry[i].blank_value;
             slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], imageHeaderAry[i], histAry[i]);
-            slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i]);
+            slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i], rangeValuesAry[i]);
         }
 
         // recreate an array of intensities (the part that will be used)
@@ -116,7 +116,7 @@ public class ImageStretch {
             for (int index = start_index; index <= last_index; index++) {
                 
                 if (float1dAry[0][index] != blankPxValAry[0] && float1dAry[1][index] != blankPxValAry[1] && float1dAry[2][index] != blankPxValAry[1]) {
-                    intensity[index] = RGBIntensity.computeIntensity(index, float1dAry, imageHeaderAry, slowAry);
+                    intensity[index] = RGBIntensity.computeIntensity(index, float1dAry, imageHeaderAry, slowAry, rangeValuesAry);
                 }
                 pixelCount++;
             }
@@ -127,7 +127,8 @@ public class ImageStretch {
         // stretch an array of intensities
         byte[] pixelData = new byte[pixelCount];
 
-        boolean useZ = rangeValuesAry[0].getLowerWhich()==RangeValues.ZSCALE;
+        // should we use z-scale to calculate intensity slow and shigh values
+        boolean useZ = rangeValuesAry[0].getLowerWhich()==RangeValues.ZSCALE || !Double.isFinite(rangeValuesAry[0].getAsinhStretch());
         double slow = useZ ? rgbIntensity.getIntensityLow() : rgbIntensity.getIntensityDataLow(); // lower range for intensity
         double stretch = useZ ? rgbIntensity.getIntensityHigh()-rgbIntensity.getIntensityLow() : rv.getAsinhStretch();
 
@@ -164,7 +165,7 @@ public class ImageStretch {
             for (int index = start_index; index <= last_index; index++) {
                 maxv = 0;
                 for (int c=0; c<3; c++) {
-                    flux = rangeValuesAry[c].getScalingK()*getScaled(float1dAry[c][index], imageHeaderAry[c])-slowAry[c];
+                    flux = getScaled(float1dAry[c][index], imageHeaderAry[c], rangeValuesAry[c])-slowAry[c];
                     if (flux < 0 || Double.isNaN(flux)) {
                         rgb[c] = 0;
                     } else {

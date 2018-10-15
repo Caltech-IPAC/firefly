@@ -20,17 +20,18 @@ class ImageStretchUtil {
      * The transformation equation is as follows:
      * physical_values = BZERO + BSCALE × array_value	(5.3)
      *
-     * This method return the physical data value for the given raw value
+     * This method return the physical data value for the given raw value with scaling coefficient applied 
      *
      * @param raw_dn raw data value
      * @param imageHeader image header
+     * @param rv range values
      * @return physical data value
      */
-    static double getScaled(double  raw_dn, ImageHeader imageHeader) {
+    static double getScaled(double  raw_dn, ImageHeader imageHeader, RangeValues rv) {
         if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn))) {
             return Double.NaN;
         } else {
-            return raw_dn * imageHeader.bscale + imageHeader.bzero;
+            return rv.getScalingK()*(raw_dn * imageHeader.bscale + imageHeader.bzero);
         }
     }
 
