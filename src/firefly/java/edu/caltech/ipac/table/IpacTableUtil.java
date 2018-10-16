@@ -259,7 +259,7 @@ public class IpacTableUtil {
             String cname;
             for (int idx = 0; idx < names.length; idx++) {
                 cname = names[idx];
-                DataType dt = new DataType(cname.trim(), Object.class);
+                DataType dt = new DataType(cname.trim(), null);
                 cols.add(dt);
                 tableDef.setColOffsets(idx, cursor);
                 cursor += cname.length() + 1;
