@@ -111,9 +111,6 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public String getTypeDesc() {
-        if (typeDesc == null) {
-            typeDesc = resolveTypeDesc();
-        }
         return typeDesc;
     }
 
@@ -127,7 +124,7 @@ public class DataType implements Serializable, Cloneable {
 
     public void setDataType(Class type) {
         this.type = type;
-        if (typeDesc == null) {
+        if (type != null && typeDesc == null) {
             typeDesc = resolveTypeDesc();
         }
     }
