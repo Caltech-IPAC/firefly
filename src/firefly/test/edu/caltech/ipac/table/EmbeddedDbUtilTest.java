@@ -1,9 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.server.query;
+package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -12,11 +11,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
-import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import edu.caltech.ipac.table.MappedData;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataType;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,6 +19,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 
 public class EmbeddedDbUtilTest extends ConfigTest {
 
@@ -43,7 +40,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			testFile = FileLoader.resolveFile(EmbeddedDbUtilTest.class, "/embedded_db_test.tbl");
 			DataGroup data = IpacTableReader.read(testFile);
 			EmbeddedDbUtil.createDbFile(dbFile,dbAdapter);
-			EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, "data");
+			EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, MAIN_DB_TBL);
 		} catch (IOException e) {
 			Assert.fail("Unable to ingest data into the database");
 		}
@@ -58,7 +55,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			TableServerRequest req = new TableServerRequest("n/a (id not used)");
 			req.setPageSize(9);
 			req.setInclColumns("\"designation\", \"dec\", \"sigdec\"");
-			DataGroupPart res = EmbeddedDbUtil.execRequestQuery(req, dbFile, "data");
+			DataGroupPart res = EmbeddedDbUtil.execRequestQuery(req, dbFile, MAIN_DB_TBL);
 			DataGroup data = res.getData();
 
 			// test total rows, returned rows, and cols
@@ -76,7 +73,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			// test sort;  reset request object
 			req = new TableServerRequest("n/a (id not used)");
 			req.setSortInfo(new SortInfo(SortInfo.Direction.DESC, "sigra"));
-			res = EmbeddedDbUtil.execRequestQuery(req, dbFile, "data");
+			res = EmbeddedDbUtil.execRequestQuery(req, dbFile, MAIN_DB_TBL);
 			data = res.getData();
 			Assert.assertEquals(0.0744, data.get(0).getDataElement("sigra"));
 			Assert.assertEquals(0.0413, data.get(9).getDataElement("sigra"));
@@ -88,7 +85,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			req = new TableServerRequest("n/a (id not used)");
 			req.setSortInfo(new SortInfo(SortInfo.Direction.DESC, "sigra"));
 			req.setFilters(Arrays.asList(String.format("\"%s\" in (%f, %f, %f)", "sigra", 0.0413, 0.0744, 12345.6)));
-			res = EmbeddedDbUtil.execRequestQuery(req, dbFile, "data");
+			res = EmbeddedDbUtil.execRequestQuery(req, dbFile, MAIN_DB_TBL);
 			data = res.getData();
 			Assert.assertEquals(2, data.size());		// the 3rd values(12345.6) is not in the table
 			Assert.assertEquals(0.0755, data.get(0).getDataElement("sigdec"));
@@ -110,7 +107,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	public void testExecQuery() {
 		HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
 		String sql = "select d.* from (select \"designation\", \"RA(deg)\"+1 as ABC from data where \"sigdec\" > 0.0750) as d order by d.ABC";
-		DataGroup data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, "data");
+		DataGroup data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, MAIN_DB_TBL);
 
 		Assert.assertEquals(203.4851848, data.get(0).getDataElement("ABC"));
 		Assert.assertEquals(203.4874371, data.get(1).getDataElement("ABC"));

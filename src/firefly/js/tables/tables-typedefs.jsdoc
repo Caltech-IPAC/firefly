@@ -27,6 +27,9 @@
  * @prop {object}   selectInfo  selection information.  use SelectInfo.newInstance take advantage of helper's functions.
  * @prop {boolean}  isFetching  true if data is being fetched and not ready for display.
  * @prop {string}   error       error message if the request fail to create a table.
+ * @prop {Group[]} groups    groups is any.
+ * @prop {Link[]}  links     links is any.
+ * @prop {PARAM[]} params    params is any.
  *
  * @global
  * @public
@@ -54,6 +57,60 @@
  * @prop {boolean} filterable   true if undefined
  * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
  * @prop {string} sortByCols    for multi-columns sorting.  column names separated by comma(',').
+ * @prop {string} enumVals   contains only values in this list.  values are seprated by comma(',')
+ * @prop {string} ID        ID used to reference this column.
+ * @prop {string} UCD       UCD of this column.
+ * @prop {string} ref       refer to this column for declarations.
+ * @prop {string} maxValue  maximum value.
+ * @prop {string} minValue  minimum value.
+ * @prop {LINK[]} links     links if any.
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * PARAM may have everything TableColumn has plus 'value'
+ * @typedef {object} PARAM
+ * @prop {string} value  value of this PARAM
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * Table data.  Table data object.
+ * @typedef {object} Group
+ * @prop {string} ID     ID used to reference this group.
+ * @prop {string} name   href of this group.
+ * @prop {string} desc   description
+ * @prop {PARAM[]} params   params if any
+ * @prop {REF[]} paramRefs   reference to params
+ * @prop {REF[]} columnRefs   reference to columns
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * Table data.  Table data object.
+ * @typedef {object} LINK
+ * @prop {string} ID     ID used to reference this LINK.
+ * @prop {string} href   href of this LINK.
+ * @prop {string} title  title/label of this LINK.
+ * @prop {string} role   role,  see VOTable content-role
+ * @prop {string} type   type, see VOTable content-type
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * reference to another object, i.e TableColumn, PARAM, LINK
+ * @typedef {object} REF
+ * @prop {string} ref    ID if the referenced object
+ * @prop {string} UCD    UCD, see VOTable
+ * @prop {string} utype  utype, see VOTable
  *
  * @global
  * @public

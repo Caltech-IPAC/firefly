@@ -19,7 +19,7 @@ import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.query.FilterHanlder;
-import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -95,7 +95,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         int tblIdx = request.getIntParam(TableServerRequest.TBL_INDEX, 0);
         boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
         if (format == TableUtil.Format.IPACTABLE && isFixedLength) {
-            TableDef tableDef = IpacTableUtil.getMetaInfo(tblFile);
+            IpacTableDef tableDef = IpacTableUtil.getMetaInfo(tblFile);
             String fixlen = tableDef.getAttribute("fixlen");
             if (fixlen != null && fixlen.equalsIgnoreCase("T") &&
                 !tableDef.getCols().stream().anyMatch(c -> !c.isKnownType()) ) {
@@ -157,10 +157,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return new QueryDescResolver.DescBySearchResolver(new SearchDescResolver());
     }
 
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return SearchProcessor.inspectRequestDef(request);
-    }
-
     /**
      * Default behavior is to read file, created by getDataGroupFile
      *
@@ -206,9 +202,9 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             DataGroupPart page;
             // get the page requested
             if (dgFile == null || !dgFile.exists() || dgFile.length() == 0) {
-                TableDef def = new TableDef();
-                def.setStatus(DataGroupPart.State.COMPLETED);
-                page = new DataGroupPart(def, new DataGroup("No result found", new DataType[0]), 0, 0);
+                DataGroup dg = new DataGroup("No result found", new DataType[0]);
+                dg.addAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
+                page = new DataGroupPart(dg, 0, 0);
             } else {
                 try {
                     dgFile = postProcessData(dgFile, request);
@@ -234,8 +230,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     private void ensureTableMeta(DataGroupPart page, TableServerRequest request, File dgFile) {
-        page.getTableDef().ensureStatus();      // make sure there's a status line so
-        page.getTableDef().setAttribute(TableServerRequest.TBL_FILE_PATH, ServerContext.replaceWithPrefix(dgFile));  // set table's meta tblFilePath to the file it came from.
+        // make sure there's a status line so
+        TableMeta meta = page.getData().getTableMeta();
+        String status = meta.getAttribute(DataGroupPart.LOADING_STATUS);
+        if (StringUtils.isEmpty(status)) {
+            meta.setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
+        }
+        meta.setAttribute(TableServerRequest.TBL_FILE_PATH, ServerContext.replaceWithPrefix(dgFile));  // set table's meta tblFilePath to the file it came from.
         if (!StringUtils.isEmpty(request.getTblTitle())) {
             page.getData().setTitle(request.getTblTitle());  // set the datagroup's title to the request title.
         }
@@ -540,7 +541,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 long fileSize = 0;
                 if (cfile != null) {
                     try {
-                        TableDef meta = IpacTableUtil.getMetaInfo(cfile);
+                        IpacTableDef meta = IpacTableUtil.getMetaInfo(cfile);
                         if (meta.getStatus() == DataGroupPart.State.INPROGRESS) {
                             fileSize = (meta.getRowCount() * meta.getLineWidth()) + meta.getRowStartOffset();
                         } else {

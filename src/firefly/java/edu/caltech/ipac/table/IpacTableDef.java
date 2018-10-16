@@ -1,6 +1,5 @@
 package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.util.StringUtils;
 import javafx.util.Pair;
 
@@ -9,12 +8,12 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Date: 6/26/15
+ * This class contains information needed to read a portion of an ipac table file into a DataGroup.
  *
  * @author loi
  * @version $Id: $
  */
-public class TableDef extends TableMeta {
+public class IpacTableDef extends TableMeta {
     private List<DataType> cols = new ArrayList<>();
     private List<Integer> colOffsets = new ArrayList<>();
     private int lineWidth;
@@ -104,8 +103,8 @@ public class TableDef extends TableMeta {
         }
     }
 
-    public TableDef clone() {
-        TableDef copy = (TableDef) super.clone();
+    public IpacTableDef clone() {
+        IpacTableDef copy = (IpacTableDef) super.clone();
         copy.cols = new ArrayList<>(cols);
         copy.colOffsets = new ArrayList<>(colOffsets);
         copy.lineWidth = lineWidth;
@@ -114,8 +113,8 @@ public class TableDef extends TableMeta {
         return copy;
     }
 
-    public static TableDef newInstanceOf(DataGroup dataGroup) {
-        TableDef tableDef = new TableDef();
+    public static IpacTableDef newInstanceOf(DataGroup dataGroup) {
+        IpacTableDef tableDef = new IpacTableDef();
         tableDef.setKeywords(dataGroup.getTableMeta().getKeywords());
         tableDef.ensureStatus();
         tableDef.setCols(Arrays.asList(dataGroup.getDataDefinitions()));

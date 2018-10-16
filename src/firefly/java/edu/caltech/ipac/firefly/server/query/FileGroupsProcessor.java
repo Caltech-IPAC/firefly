@@ -87,10 +87,6 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
         return true;
     }
 
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
-    }
-
     public String getUniqueID(ServerRequest request) {
         return request.getRequestId() + "-" + StringUtils.toString(request.getParams());
     }

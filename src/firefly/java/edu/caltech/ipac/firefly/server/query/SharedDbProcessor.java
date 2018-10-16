@@ -19,6 +19,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import java.io.File;
 import java.util.SortedSet;
 
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
+
 
 /**
  * This is a base class for processors in which query results are stored as a table
@@ -48,7 +50,7 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
         DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
         SortedSet<Param> params = treq.getSearchParams();
         params.addAll(treq.getResultSetParam());
-        String tblName = "data_" + DigestUtils.md5Hex(StringUtils.toString(params, "|"));
+        String tblName = MAIN_DB_TBL + "_" + DigestUtils.md5Hex(StringUtils.toString(params, "|"));
 
         String tblExists = String.format("select count(*) from %s", tblName);
         try {

@@ -9,7 +9,7 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.IpacTableWriter;
-import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataObjectUtil;
 import edu.caltech.ipac.util.FileUtil;
@@ -130,7 +130,7 @@ public class DataGroupQuery {
             boolean hasType = false, hasUnit = false, hasNullStr = false;
             DataGroup dg = null;
             List<DataType> selectedCols = null;
-            TableDef tableDef = null;
+            IpacTableDef tableDef = null;
 
             boolean needToWriteHeader = true;
             while (line != null) {

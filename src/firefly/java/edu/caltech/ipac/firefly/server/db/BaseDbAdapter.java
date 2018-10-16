@@ -32,7 +32,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
-    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
             "  cname    varchar(64000)" +
@@ -48,6 +48,14 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", filterable boolean" +
             ", desc     varchar(64000)" +
             ", enumVals varchar(64000)" +
+            ", ID       varchar(64000)" +
+            ", precision varchar(64000)" +
+            ", ucd      varchar(64000)" +
+            ", utype    varchar(64000)" +
+            ", ref      varchar(64000)" +
+            ", maxValue varchar(64000)" +
+            ", minValue varchar(64000)" +
+            ", links    other" +
             ")";
 
     private static final String META_INSERT_SQL = "insert into %s_meta values (?,?)";
@@ -57,11 +65,20 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", value    varchar(64000)" +
             ")";
 
+    private static final String AUX_DATA_INSERT_SQL = "insert into %s_aux values (?,?,?,?,?)";
+    private static final String AUX_DATA_CREATE_SQL = "create table %s_aux "+
+            "(" +
+            "  title     varchar(64000)" +
+            ", size      int" +
+            ", groups    other" +                        // type 'other' is hsqldb specific.. serializable Java Object
+            ", links     other" +
+            ", params    other" +
+            ")";
 
-    public String createMetaSql(String forTable) {
-        return String.format(META_CREATE_SQL, forTable);
-    }
+    public String createAuxDataSql(String forTable) { return String.format(AUX_DATA_CREATE_SQL, forTable);}
+    public String insertAuxDataSql(String forTable) { return String.format(AUX_DATA_INSERT_SQL, forTable);}
 
+    public String createMetaSql(String forTable) { return String.format(META_CREATE_SQL, forTable);}
     public String insertMetaSql(String forTable) {
         return String.format(META_INSERT_SQL, forTable);
     }
@@ -69,13 +86,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
     public String createDDSql(String forTable) {
         return String.format(DD_CREATE_SQL, forTable);
     }
-
     public String insertDDSql(String forTable) {
         return String.format(DD_INSERT_SQL, forTable);
     }
 
     public String createDataSql(DataType[] dtTypes, String tblName) {
-        tblName = StringUtils.isEmpty(tblName) ? "data" : tblName;
+        tblName = StringUtils.isEmpty(tblName) ? MAIN_DB_TBL : tblName;
         List<String> coldefs = new ArrayList<>();
         for(DataType dt : dtTypes) {
             coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), getDataType(dt)));       // add quotes to avoid reserved words clashes
@@ -85,7 +101,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public String insertDataSql(DataType[] dtTypes, String tblName) {
-        tblName = StringUtils.isEmpty(tblName) ? "data" : tblName;
+        tblName = StringUtils.isEmpty(tblName) ? MAIN_DB_TBL : tblName;
 
         String[] var = new String[dtTypes.length];
         Arrays.fill(var , "?");
@@ -94,6 +110,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public String getMetaSql(String forTable) {
         return String.format("select * from %s_meta", forTable);
+    }
+
+    public String getAuxDataSql(String forTable) {
+        return String.format("select * from %s_aux", forTable);
     }
 
     public String getDDSql(String forTable) {

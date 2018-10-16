@@ -9,6 +9,7 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.GroupInfo;
 import edu.caltech.ipac.table.LinkInfo;
+import edu.caltech.ipac.table.ParamInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -32,6 +33,7 @@ import org.xml.sax.SAXException;
 import java.net.URL;
 import java.net.MalformedURLException;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static uk.ac.starlink.table.StoragePolicy.PREFER_MEMORY;
 
 /**
@@ -159,37 +161,30 @@ public class VoTableReader {
     }
 
     // convert <GROUP>s under <TABLE> to a list of GroupInfo and add it to the associatede table (a DataGroup object)
-    private static List<GroupInfo> makeGroupInfosFromTable(TableElement tableEl, DataGroup dg) {
+    private static List<GroupInfo> makeGroupInfosFromTable(TableElement tableEl) {
         VOElement[] groupAry = getGroupsFromTable(tableEl);
         List<GroupInfo> groupObjAry = new ArrayList<>();
 
         for (VOElement group : groupAry) {
             String name = group.getName();
             String desc = group.getDescription();
-            VOElement[] fieldRef = group.getChildrenByName("FIELDref");
 
             GroupInfo gObj = new GroupInfo(name, desc);
             gObj.setID(getElementAttribute(group, ID));
 
-            for (VOElement fRef : fieldRef) {
-                String refStr = getElementAttribute(fRef, REF);
-                String ucdStr = getElementAttribute(fRef, UCD);
-                String utypeStr = getElementAttribute(fRef, UTYPE);
-                GroupInfo.FieldRef ref = new GroupInfo.FieldRef(refStr, ucdStr, utypeStr);
+            // add FIELDref
+            Arrays.stream(group.getChildrenByName("FIELDref"))
+                    .forEach(pEl -> gObj.getColumnRefs().add(refInfoFromEl(pEl)));
 
-                gObj.getFieldRefs().add(ref);
-            }
+            // add PARAMrefs
+            Arrays.stream(group.getChildrenByName("PARAMref"))
+                    .forEach(pEl -> gObj.getParamRefs().add(refInfoFromEl(pEl)));
 
+            // add PARAMs
+            Arrays.stream(group.getChildrenByName("PARAM"))
+                .forEach(pEl -> gObj.getParamInfos().add(paramInfoFromEl(pEl)));
 
-            if (dg != null) {
-                List<GroupInfo> dgGroupInfos = dg.getGroupInfos();
-
-                if (dgGroupInfos != null) {
-                    dgGroupInfos.add(gObj);
-                }
-            }
             groupObjAry.add(gObj);
-
         }
         return groupObjAry;
     }
@@ -218,7 +213,7 @@ public class VoTableReader {
     }
 
     // convert <LINK>s under <TABLE> to a list of LinkInfo and add it to the associated table (a DataGroup object)
-    private static List<LinkInfo> makeLinkInfosFromTable(TableElement tableEl, DataGroup dg) {
+    private static List<LinkInfo> makeLinkInfosFromTable(TableElement tableEl) {
         VOElement[] linkAry = getLinksFromTable(tableEl);
         List<LinkInfo> linkObjAry = new ArrayList<>();
 
@@ -226,13 +221,6 @@ public class VoTableReader {
             LinkInfo linkObj = linkElementToLinkInfo(link);
 
             if (linkObj != null) {
-                if (dg != null) {
-                    List<LinkInfo> dgLinkInfos = dg.getLinkInfos();
-
-                    if (dgLinkInfos != null) {
-                        dgLinkInfos.add(linkObj);
-                    }
-                }
                 linkObjAry.add(linkObj);
             }
         }
@@ -247,9 +235,12 @@ public class VoTableReader {
     }
 
     // convert <PARAM>s under <TABLE> to a list of <DataType> and add it to the associated table (a DataGroup object)
-    private static List<DataType> makeParamsFromTable(TableElement tableEl, StarTable table, DataGroup dg) {
+    private static List<ParamInfo> makeParamsFromTable(TableElement tableEl, StarTable table) {
+
+
+
         VOElement[] paramsEl = getParamsFromTable(tableEl);
-        List<DataType> allParams = new ArrayList<>();
+        List<ParamInfo> allParams = new ArrayList<>();
 
         for (VOElement param : paramsEl) {
             String name = getElementAttribute(param, "name");
@@ -260,9 +251,10 @@ public class VoTableReader {
             Class clz = vInfo.isArray() ? String.class : vInfo.getContentClass();
 
             // create Datatype
-            DataType dt = new DataType(name, clz, null, vInfo.getUnitString(), null, null);
+            ParamInfo params = new ParamInfo(name, clz);
+            params.setUnits(vInfo.getUnitString());
 
-            if (vInfo.isArray()) dt.setTypeDesc(DataType.LONG_STRING);
+            if (vInfo.isArray()) params.setTypeDesc(DataType.LONG_STRING);
 
             // set precision
             String precisionStr = getElementAttribute(param, "precision");
@@ -270,27 +262,20 @@ public class VoTableReader {
 
             if (precisionStr != null) {
                 precisionStr = makePrecisionStr(precisionStr);
-                dt.setPrecision(precisionStr);
+                params.setPrecision(precisionStr);
             }
 
             // set width
             if (widthStr != null) {
-                dt.setWidth(Integer.parseInt(widthStr));
+                params.setWidth(Integer.parseInt(widthStr));
             }
 
             // set ucd, utype and value to DataType
-            dt.setUCD(getElementAttribute(param, "ucd"));
-            dt.setUType(getElementAttribute(param, "utype"));
-            dt.setID(getElementAttribute(param, "ID"));
-            dt.setValue(getElementAttribute(param, "value"));
-            allParams.add(dt);
-
-            if (dg != null) {
-                List<DataType> staticCols = dg.getParams();
-                if (staticCols != null) {
-                    staticCols.add(dt);
-                }
-            }
+            params.setUCD(getElementAttribute(param, "ucd"));
+            params.setUType(getElementAttribute(param, "utype"));
+            params.setID(getElementAttribute(param, "ID"));
+            params.setValue(getElementAttribute(param, "value"));
+            allParams.add(params);
         }
         return allParams;
     }
@@ -531,8 +516,8 @@ public class VoTableReader {
                 }
 
                 // add PARAM name/value/comment to the header
-                List<DataType> tblParams = makeParamsFromTable(tableEl, table, null);
-                for (DataType param : tblParams) {
+                List<ParamInfo> tblParams = makeParamsFromTable(tableEl, table);
+                for (ParamInfo param : tblParams) {
                     rowStats = new ArrayList<>();
 
                     rowStats.add(Integer.toString(rowIdx++));
@@ -543,7 +528,7 @@ public class VoTableReader {
                 }
 
                 // add LINK link/href/comment to the header
-                List<LinkInfo> links = makeLinkInfosFromTable(tableEl, null);
+                List<LinkInfo> links = makeLinkInfosFromTable(tableEl);
                 for (LinkInfo link : links) {
                     rowStats = new ArrayList<>();
 
@@ -555,7 +540,7 @@ public class VoTableReader {
                 }
 
                 // get Group Group/refs/comment to the header
-                List<GroupInfo> groups = makeGroupInfosFromTable(tableEl, null);
+                List<GroupInfo> groups = makeGroupInfosFromTable(tableEl);
                 for (GroupInfo group : groups) {
                     rowStats = new ArrayList<>();
 
@@ -657,7 +642,7 @@ public class VoTableReader {
 
             // attribute ref
             if (cinfo.getAuxDatum(VOStarTable.REF_INFO) != null) {
-                dt.setRef(cinfo.getAuxDatum(VOStarTable.REF_INFO).toString());
+                dt.setRef(cinfo.getAuxDatum(VOStarTable.REF_INFO).getValue().toString());
             }
 
             // attribute ucd
@@ -674,12 +659,12 @@ public class VoTableReader {
 
             // attribute utype
             if (cinfo.getAuxDatum(VOStarTable.UTYPE_INFO) != null) {
-                dt.setRef(cinfo.getAuxDatum(VOStarTable.UTYPE_INFO).toString());
+                dt.setRef(cinfo.getAuxDatum(VOStarTable.UTYPE_INFO).getValue().toString());
             }
 
             // attribute ID
             if (cinfo.getAuxDatum(VOStarTable.ID_INFO) != null) {
-                dt.setID(cinfo.getAuxDatum(VOStarTable.ID_INFO).toString());
+                dt.setID(cinfo.getAuxDatum(VOStarTable.ID_INFO).getValue().toString());
             }
 
             // child element DESCRIPTION
@@ -723,9 +708,9 @@ public class VoTableReader {
             dg.addAttribute(TableMeta.UTYPE, getElementAttribute(tableEl, UTYPE));
 
             // child element PARAM, GROUP, LINK for TABLE
-            makeParamsFromTable(tableEl, table, dg);
-            makeGroupInfosFromTable(tableEl, dg);
-            makeLinkInfosFromTable(tableEl, dg);
+            dg.setParamInfos(makeParamsFromTable(tableEl, table));
+            dg.setGroupInfos(makeGroupInfosFromTable(tableEl));
+            dg.setLinkInfos(makeLinkInfosFromTable(tableEl));
 
             // child element DESCRIPTION
             String tDesc = tableEl.getDescription();
@@ -764,6 +749,53 @@ public class VoTableReader {
         return dg;
     }
 
+
+//====================================================================
+//  DOM based setters
+//====================================================================
+
+    private static ParamInfo paramInfoFromEl(VOElement el) {
+        ParamInfo dt = new ParamInfo(null, null);
+        populateDataType(dt, el);
+        applyIfNotEmpty(el.getAttribute("value"), dt::setValue);
+        return dt;
+    }
+
+    private static DataType dataTypeFromEl(VOElement el) {
+        DataType dt = new DataType(null, null);
+        populateDataType(dt, el);
+        return dt;
+    }
+
+    /**  used by both ParamInfo and DataType  */
+    private static void populateDataType(DataType dt, VOElement el) {
+
+        applyIfNotEmpty(el.getAttribute(ID), dt::setID);
+        applyIfNotEmpty(el.getAttribute("name"), dt::setKeyName);
+        applyIfNotEmpty(el.getAttribute("unit"), dt::setUnits);
+        applyIfNotEmpty(el.getAttribute("precision"), v -> dt.setPrecision(makePrecisionStr(v)));
+        applyIfNotEmpty(el.getAttribute("width"), v -> dt.setWidth(Integer.parseInt(v)));
+        applyIfNotEmpty(el.getAttribute("ref"), dt::setRef);
+        applyIfNotEmpty(el.getAttribute("ucd"), dt::setUCD);
+        applyIfNotEmpty(el.getAttribute("utype"), dt::setUType);
+        applyIfNotEmpty(el.getDescription(), dt::setDesc);
+//        callIfNotEmpty(el.getAttribute("arraysize"), dt::setArraySize);
+        applyIfNotEmpty(el.getAttribute("datatype"), v -> {
+            dt.setDataType(DataType.descToType(v));
+            dt.setTypeDesc(v);
+        });
+
+        // add all links
+        Arrays.stream(el.getChildrenByName("LINK"))
+                .forEach(lel -> dt.getLinkInfos().add(linkElementToLinkInfo(lel)));
+    }
+
+    private static GroupInfo.RefInfo refInfoFromEl(VOElement el) {
+        String refStr = el.getAttribute(REF);
+        String ucdStr = el.getAttribute(UCD);
+        String utypeStr = el.getAttribute(UTYPE);
+        return new GroupInfo.RefInfo(refStr, ucdStr, utypeStr);
+    }
 
     public static void main(String args[]) {
 

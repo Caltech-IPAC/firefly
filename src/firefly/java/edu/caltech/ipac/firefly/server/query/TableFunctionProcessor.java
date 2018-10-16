@@ -86,9 +86,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         } catch (Exception e) {
             // does not exists.. fetch data and populate
             DataGroup data = fetchData(treq, dbFile, dbAdapter);
-            EmbeddedDbUtil.createDataTbl(dbFile, data, dbAdapter, resTblName);
-            EmbeddedDbUtil.createDDTbl(dbFile, data, dbAdapter, resTblName);
-            EmbeddedDbUtil.createMetaTbl(dbFile, data, dbAdapter, resTblName);
+            EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, resTblName);
         }
         return EmbeddedDbUtil.execRequestQuery(treq, dbFile, resTblName);
     }
