@@ -6,7 +6,7 @@
   cursor: pointer;
   border: none;
   background: inherit;
-  display: block;
+  display: flex;
   width: 100%;
   text-align: left;
   margin: 0;
@@ -18,7 +18,7 @@
 }
 
 .CollapsiblePanel__Header:before {
-  display: inline-block;
+  display: flex;
   width: 2em;
   content: '\25B6';
 }

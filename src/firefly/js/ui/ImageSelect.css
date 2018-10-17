@@ -83,7 +83,7 @@
 }
 
 .DataProductList__item--header {
-    display: inline-block;
+    display: flex;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
