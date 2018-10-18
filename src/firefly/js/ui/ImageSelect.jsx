@@ -16,7 +16,8 @@ import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 
 import './ImageSelect.css';
-import infoIcon from 'html/images/info-16x16.png';
+// import infoIcon from 'html/images/info-16x16.png';
+import infoIcon from 'html/images/info-icon.png';
 
 export class ImageSelect extends PureComponent {
 
@@ -327,7 +328,7 @@ function Header({project, hrefInfo='', multiSelect}) {
             <div style={{marginLeft: -5}}>
                 <div>
                     <a onClick={(e) => e.stopPropagation()} target='_blank' href={href}>
-                        <img
+                        <img style={{width:'14px'}}
                             src={infoIcon}/></a>
                 </div>
             </div>
