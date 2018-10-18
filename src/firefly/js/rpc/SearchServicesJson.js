@@ -6,7 +6,7 @@
  * Date: 3/5/12
  */
 
-import {get, set, omitBy, cloneDeep} from 'lodash';
+import {get, set, pickBy, cloneDeep} from 'lodash';
 
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest, DEF_BASE_URL} from '../core/JsonUtils.js';
@@ -80,7 +80,7 @@ export function fetchTable(tableRequest, hlRowIdx) {
  */
 export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
 
-    const params = Object.assign(omitBy({filters, sortInfo, inclCols}), {[ServerParams.REQUEST]: JSON.stringify(tableRequest)});
+    const params = Object.assign(pickBy({filters, sortInfo, inclCols}), {[ServerParams.REQUEST]: JSON.stringify(tableRequest)});
     return doJsonRequest(ServerParams.QUERY_TABLE, params)
         .then( (index) => {
             return index;

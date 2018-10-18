@@ -258,7 +258,7 @@ export function findIndex(tbl_id, filterInfo) {
         return Promise.resolve(idx);
     } else {
         const inclCols = 'ROW_NUM';
-        return queryTable(tableModel.request, {filterInfo, inclCols}).then( (tableModel) => {
+        return queryTable(tableModel.request, {filters: filterInfo, inclCols}).then( (tableModel) => {
             return get(getColumnValues(tableModel, inclCols), '0', -1);
         });
     }

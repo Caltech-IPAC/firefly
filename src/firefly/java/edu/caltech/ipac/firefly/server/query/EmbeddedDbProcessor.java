@@ -300,6 +300,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return StringUtils.isEmpty(id) ? "data" : "data_" + DigestUtils.md5Hex(id);
     }
 
+    private static List<String> ignoreCols = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM, "\"" + DataGroup.ROW_IDX + "\"", "\"" + DataGroup.ROW_NUM + "\"");
     protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
 
         String rowIdx = "\"" + DataGroup.ROW_IDX + "\"";
@@ -314,13 +315,14 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             // does not exists.. create table from original 'data' table
             List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? dbAdapter.getColumnNames(dbInstance, "DATA", "\"")
                                 : StringUtils.asList(treq.getInclColumns(), ",");
-            cols = cols.stream().filter((s) -> !(s.equals(rowIdx) || s.equals(rowNum))).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
+            cols = cols.stream().filter((s) -> !ignoreCols.contains(s)).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
 
+            String selectPart = (cols.size() == 0 ? "" : StringUtils.toString(cols) + ", " )+ DataGroup.ROW_IDX;
             String wherePart = dbAdapter.wherePart(treq);
             String orderBy = dbAdapter.orderByPart(treq);
 
             // copy data
-            String datasetSql = String.format("select %s, %s from data %s %s", StringUtils.toString(cols), DataGroup.ROW_IDX, wherePart, orderBy);
+            String datasetSql = String.format("select %s from data %s %s", selectPart, wherePart, orderBy);
             String datasetSqlWithIdx = String.format("select b.*, (ROWNUM-1) as %s from (%s) as b", DataGroup.ROW_NUM, datasetSql);
             String sql = dbAdapter.createTableFromSelect(resultSetID, datasetSqlWithIdx);
             JdbcFactory.getSimpleTemplate(dbInstance).update(sql);
