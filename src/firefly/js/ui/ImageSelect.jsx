@@ -303,7 +303,7 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
 
 }
 
-function Header({project, hrefInfo, multiSelect}) {
+function Header({project, hrefInfo='', multiSelect}) {
     const fieldKey= `PROJ_ALL_${project}`;
 
     const href = hrefInfo;
@@ -321,14 +321,16 @@ function Header({project, hrefInfo, multiSelect}) {
                 options={[{label:project, value:'_all_'}]}
                 alignment='horizontal'
                 labelWidth={35}
-                wrapperStyle={{whiteSpace: 'normal'}}
+                wrapperStyle={{whiteSpace: 'normal' /*cursor:'pointer'*/}}
             />
             </div>
-            <div style={{marginLeft: -5}}><div>
-                <a target='_blank' href={href}>
-                    <img
-                     src={infoIcon}/></a>
-            </div></div>
+            <div style={{marginLeft: -5}}>
+                <div>
+                    <a onClick={(e) => e.stopPropagation()} target='_blank' href={href}>
+                        <img
+                            src={infoIcon}/></a>
+                </div>
+            </div>
         </div>
     );
 }
