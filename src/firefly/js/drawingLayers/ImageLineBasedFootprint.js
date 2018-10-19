@@ -477,20 +477,19 @@ export function selectFootprint(pv, dlAry) {
         const connectObjs = get(dl.drawData.data, [pv.plotId]);
 
         const tbl = getTblById(dl.tbl_id);
-        const selectInfoCls = SelectInfo.newInstance(tbl.selectInfo);
+        //const selectInfoCls = SelectInfo.newInstance(tbl.selectInfo);
+        const dataRows = get(tbl, ['tableData', 'data', 'length'], 0);
+        const selectInfoCls = SelectInfo.newInstance({rowCount: dataRows});
         const allCObjsIdxs = getSelectedPts(sel, p, connectObjs, selectedShape);
         const row_nums = [];
         const row_idxs = clone(dl.selectRowIdxs);
-        const dataRows = get(tbl, ['tableData', 'data', 'length'], 0);
 
         allCObjsIdxs.reduce((ps, cObjIdx, n) => {
             ps = ps.then(() => {
                     const rowIdx = connectObjs[cObjIdx].tableRowIdx;
                     findIndex(dl.tbl_id, `ROW_IDX = ${rowIdx}`).then((row_num) => {
                         if (row_num >= 0) {
-                            if (row_num < dataRows) {
-                                row_nums.push(row_num);
-                            }
+                            row_nums.push(Number(row_num));
                         }
                         row_idxs[rowIdx] = row_num;
 
