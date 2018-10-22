@@ -39,13 +39,8 @@ public class EmbeddedDbProcessorWrapper extends EmbeddedDbProcessor {
     }
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
-        try {
-            TableServerRequest nreq = (TableServerRequest) req.cloneRequest();
-            File dataFile = processor.loadDataFile(nreq);       // this should fetch the data directly without any caching, sorting, filtering, etc.
-            return IpacTableReader.read(dataFile);
-        } catch (IOException ex) {
-            throw new DataAccessException(ex);
-        }
+        TableServerRequest nreq = (TableServerRequest) req.cloneRequest();
+        return processor.fetchDataGroup(nreq);
     }
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {

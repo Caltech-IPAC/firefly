@@ -368,9 +368,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static List<String> getTempTables(EmbeddedDbInstance db) {
         String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.SYSTEM_TABLESTATS \n" +
                 "where table_schema = 'PUBLIC' \n" +
-                "and TABLE_NAME != 'DATA'\n" +
-                "and TABLE_NAME not like '%_META'\n" +
-                "and TABLE_NAME not like '%_DD'\n";
+                "and TABLE_NAME NOT IN ('DATA', 'DATA_DD', 'DATA_META', 'DATA_AUX')";
 
         return JdbcFactory.getSimpleTemplate(db).query(sql, (rs, i) -> rs.getString(1));
     }

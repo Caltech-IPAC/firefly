@@ -670,7 +670,7 @@ const hasGoodData = (metaInfo) => {
     if (isNil(data)) return false;
 
     const badIndex = data.findIndex((oneKey) => {
-        return (naxisSet.includes(oneKey[HEADER_KEY_COL].toLowerCase()) && (oneKey[HEADER_VAL_COL] === '0'));
+        return (oneKey[HEADER_KEY_COL] && naxisSet.includes(oneKey[HEADER_KEY_COL].toLowerCase()) && (oneKey[HEADER_VAL_COL] === '0'));
     });
 
     return badIndex < 0;

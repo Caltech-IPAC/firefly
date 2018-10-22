@@ -384,9 +384,9 @@ public class JsonTableUtil {
 
         return linkInfos.stream().map(link -> {
             JSONObject json = new JSONObject();
-            applyIfNotEmpty(link.getTitle(),    v -> json.put("ref", v));
             applyIfNotEmpty(link.getID(),       v -> json.put("ID", v));
             applyIfNotEmpty(link.getHref(),     v -> json.put("href", v));
+            applyIfNotEmpty(link.getTitle(),    v -> json.put("title", v));
             applyIfNotEmpty(link.getRole(),     v -> json.put("role", v));
             applyIfNotEmpty(link.getType(),     v -> json.put("type", v));
             return json;

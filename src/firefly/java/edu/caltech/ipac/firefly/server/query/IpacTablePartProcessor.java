@@ -51,7 +51,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.*;
  * @author loi
  * @version $Id: IpacTablePartProcessor.java,v 1.33 2012/10/23 18:37:22 loi Exp $
  */
-abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart>, CanGetDataFile {
+abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile, SearchProcessor.CanFetchDataGroup {
 
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     //public static long logCounter = 0;
@@ -73,11 +73,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         IOException eio = new IOException(reason);
         eio.initCause(e);
         return eio;
-    }
-
-    protected static void writeLine(BufferedWriter writer, String text) throws IOException {
-        writer.write(text);
-        writer.newLine();
     }
 
     /**
@@ -481,6 +476,21 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     /**
+     * NOTE:  Because this method is added afterward, most subclasses are fetching and saving IPAC table in loadDataFile
+     *        Both methods should be overridden when dealing with non-IPAC table format so that data is not lost.
+     * @param req
+     * @return
+     * @throws DataAccessException
+     */
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        try {
+            return IpacTableReader.read(loadDataFile(req));
+        } catch (IOException e) {
+            throw new DataAccessException(e.getMessage(), e);
+        }
+    }
+
+    /**
      * subclass provide how the data are collected
      *
      * @param request table request
@@ -490,6 +500,21 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
      *
      */
     abstract protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException;
+
+
+    /**
+     * This is the proper implementation of loadDataFile if fetchDataGroup were overridden.
+     * @param request
+     * @return
+     * @throws IOException
+     * @throws DataAccessException
+     */
+    protected File loadDataFileImpl(TableServerRequest request) throws IOException, DataAccessException {
+        DataGroup dg = fetchDataGroup(request);
+        File outFile = createFile(request);
+        IpacTableWriter.save(outFile, dg);
+        return outFile;
+    }
 
     private File validateFile(File inf) {
         if (inf != null) {

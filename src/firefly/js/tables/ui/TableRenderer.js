@@ -236,7 +236,7 @@ export class TextCell extends Component {
     // }
     //
     render() {
-        var val = getValue(this.props);
+        var val = getValue(this.props) || '';
         const lineHeight = this.props.height - 6 + 'px';  // 6 is the top/bottom padding.
         val = (val.search && val.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: val}}/> : val;
         return (

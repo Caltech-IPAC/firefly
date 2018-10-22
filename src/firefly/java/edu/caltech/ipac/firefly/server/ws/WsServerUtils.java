@@ -4,6 +4,7 @@ import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -29,6 +30,25 @@ import static edu.caltech.ipac.firefly.server.ws.WsServerCommands.WS_PARAM.*;
  * WS utils class for server commands to Josn and trigger action to workspace
  */
 public class WsServerUtils {
+
+
+    /**
+     *
+     * @param filePath
+     * @return
+     * @throws DataAccessException
+     */
+    public static File getFileFromWorkspace(String filePath) throws DataAccessException {
+        WsServerParams wsParams = new WsServerParams();
+        wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, filePath);
+        WsServerUtils wsUtil= new WsServerUtils();
+        try {
+            String s=  wsUtil.upload(wsParams);
+            return ServerContext.convertToFile(s);
+        } catch (IOException|FailedRequestException e) {
+            throw new DataAccessException("Could now retrieve file from workspace",e);
+        }
+    }
 
 
     /**

@@ -190,26 +190,15 @@ public class VoTableReader {
     }
 
     // convert LinkElement to LinkInfo
-    private static LinkInfo linkElementToLinkInfo(VOElement voEl) {
-        LinkElement lnkEl = (LinkElement) voEl;
-        String ContentRole = "content-role";
-        String ContentType = "content-type";
-
-        try {
-            String title = lnkEl.getHandle();
-            URL href = lnkEl.getHref();
-            String linkRef = (href != null) ? href.toString() : null;
-            LinkInfo linkObj = new LinkInfo(linkRef, title);
-
-            linkObj.setRole(getElementAttribute(voEl, ContentRole));
-            linkObj.setType(getElementAttribute(voEl, ContentType));
-            linkObj.setID(getElementAttribute(voEl, ID));
-            return linkObj;
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
+    private static LinkInfo linkElementToLinkInfo(VOElement el) {
+        if (el == null) return null;
+        LinkInfo li = new LinkInfo();
+        applyIfNotEmpty(el.getAttribute(ID), li::setID);
+        applyIfNotEmpty(el.getAttribute("content-role"), li::setRole);
+        applyIfNotEmpty(el.getAttribute("content-type"), li::setType);
+        applyIfNotEmpty(el.getAttribute("title"), li::setTitle);
+        applyIfNotEmpty(el.getAttribute("href"), li::setHref);
+        return li;
     }
 
     // convert <LINK>s under <TABLE> to a list of LinkInfo and add it to the associated table (a DataGroup object)
@@ -533,7 +522,7 @@ public class VoTableReader {
                     rowStats = new ArrayList<>();
 
                     rowStats.add(Integer.toString(rowIdx++));
-                    rowStats.add(link.getTitle());
+                    rowStats.add("LINK");
                     rowStats.add(link.toString());
                     rowStats.add("LINK in TABLE");
                     headerRows.add(rowStats);
