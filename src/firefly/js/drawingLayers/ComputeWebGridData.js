@@ -89,7 +89,8 @@ const angleStepForHipsMap=4.0;
  * @param numOfGridLines
  * @return a DrawData object
  */
-
+var nearCenterLonValue;
+var middleLatValue=[];
 
 export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
 
@@ -108,7 +109,7 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
         const {xLines, yLines, labels} = plot.plotType==='hips'?computeHipGridLines(cc, csys,screenWidth, numOfGridLines, labelFormat,plot,fov, centerWpt)
         :computeImageGridLines(cc, csys, width,height,screenWidth, numOfGridLines, labelFormat,plot);
 
-        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc, plot);
+        return  drawLines(bounds, labels, xLines, yLines, aitoff, screenWidth, useLabels, cc, plot,csys, centerWpt,labelFormat);
     }
 }
 
@@ -801,7 +802,43 @@ function fixPoints(points){
     return points;
 }
 
-function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc,plot){
+function getSlope(x, y, bounds, val, cc){
+    
+    var dArr = Array(x.length).fill(1.e6);
+    for (let i=0; i<x.length-1; i++) {
+        //check the x[i] and y[i] are inside the image screen
+        if (x[i] > -1000 && x[i + 1] > -1000 &&
+            ((x[i] >= bounds.x) &&
+                ((x[i] - bounds.x) < bounds.width) &&
+                (y[i] >= bounds.y) &&
+                ((y[i] - bounds.y) < bounds.height) ||
+                // bounds check on x[i+1], y[i+1]
+                (x[i + 1] >= bounds.x) &&
+                ((x[i + 1] - bounds.x) < bounds.width) &&
+                (y[i + 1] >= bounds.y) &&
+                ((y[i + 1] - bounds.y) < bounds.height))) {
+            dArr[i] = Math.abs(y[i] - val);
+        }
+    }
+
+    const min=Math.min(...dArr);
+    const i = dArr.indexOf(min);
+    const ipt0= makeImageWorkSpacePt(x[i],y[i]);
+    const ipt1= makeImageWorkSpacePt(x[i+1], y[i+1]);
+    var wpt1 = cc.getScreenCoords(ipt0);
+    var wpt2 = cc.getScreenCoords(ipt1);
+    const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
+    var slopAngle = Math.atan(slope) * 180 / Math.PI;
+    //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
+    if (slopAngle > 90) {
+        slopAngle = 180 - slopAngle;
+    }
+    if (slopAngle < -90) {
+        slopAngle = 180 + slopAngle;
+    }
+    return slopAngle;
+}
+function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidth, useLabels,cc,plot,csys, centerWpt,isLonLine,labelFormat){
 
 
 
@@ -837,7 +874,9 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
                 if (i===Math.round(x.length/2)-1 ){
                         var wpt1 = cc.getScreenCoords(ipt0);
                         var wpt2 = cc.getScreenCoords(ipt1);
+                        
                         const slope = (wpt2.y - wpt1.y) / (wpt2.x - wpt1.x);
+
                         slopAngle = Math.atan(slope) * 180 / Math.PI;
                         //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
                         if (slopAngle > 90) {
@@ -853,30 +892,79 @@ function drawLabeledPolyLine (drawData, bounds,  label,  x, y, aitoff,screenWidt
         } //if
     } // for
 
-   /* if (!isRaLine) {
-        labelPoint = cc.getScreenCoords(makeImageWorkSpacePt(centerImagePt.x, y[Math.round(x.length / 2) - 1]));
-    }
-    else {
-        labelPoint = cc.getScreenCoords(makeImageWorkSpacePt(x[Math.round(x.length / 2) - 1], centerImagePt.y));
-    }*/
-
     // draw the label.
+    var lon, lat, wpt, scpt1, scpt2;
     if (useLabels  ){
-        drawData.push(ShapeDataObj.makeText(labelPoint, label, slopAngle+'deg'));
+        if (plotType==='hips') {
+          if (!isLonLine) {
+            const isHms = labelFormat === 'hms' && (csys === CoordinateSys.EQ_J2000 || csys === CoordinateSys.EQ_B1950);
+            lat = isHms ? CoordUtil.convertStringToLat(label, csys) : parseFloat(label);
+            lon = centerWpt.x;
+            wpt = makeWorldPt(lon, lat, csys);
+            const ip = cc.getImageWorkSpaceCoords(wpt);
+            labelPoint = cc.getScreenCoords(ip);
+            scpt1 = cc.getScreenCoords(wpt);
+            scpt2 = cc.getScreenCoords(makeWorldPt(nearCenterLonValue, lat, csys));
+            if (scpt1 && scpt2) {
+              const slope = (scpt2.y - scpt1.y) / (scpt2.x - scpt1.x);
+              slopAngle = Math.atan(slope) * 180 / Math.PI;
+              //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
+              if (slopAngle > 90) {
+                slopAngle = 180 - slopAngle;
+              }
+              if (slopAngle < -90) {
+                slopAngle = 180 + slopAngle;
+              }
+            }
+
+          }
+          else {
+              if (!labelPoint) {
+                const isHms = labelFormat === 'hms' && (csys === CoordinateSys.EQ_J2000 || csys === CoordinateSys.EQ_B1950);
+                lon = isHms ? CoordUtil.convertStringToLon(label, csys) : parseFloat(label);
+                lat = middleLatValue[0];//centerWpt.y;
+                wpt = makeWorldPt(lon, lat, csys);
+                const ip = cc.getImageWorkSpaceCoords(wpt);
+
+                labelPoint = cc.getScreenCoords(ip);
+
+                scpt1 = cc.getScreenCoords(wpt);
+                scpt2 = cc.getScreenCoords(makeWorldPt(lon,middleLatValue[1], csys));
+                if (scpt1 && scpt2) {
+                  const slope = (scpt2.y - scpt1.y) / (scpt2.x - scpt1.x);
+                  slopAngle = Math.atan(slope) * 180 / Math.PI;
+                  //since atan is multi-value function, we set the slopeAngle to the range of −π/2 < y < π/2
+                  if (slopAngle > 90) {
+                    slopAngle = 180 - slopAngle;
+                  }
+                  if (slopAngle < -90) {
+                    slopAngle = 180 + slopAngle;
+                  }
+                }
+
+            }
+            console.log('label=' + label + ' angle=' + slopAngle);
+          }
+        }
+
+      //if (isLonLine) console.log('label=' + label + ' angle=' + slopAngle);
+
+      drawData.push(ShapeDataObj.makeText(labelPoint, label, slopAngle+'deg'));
     }
 }
 
-function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc, plot) {
+function drawLines(bounds, labels, xLines,yLines, aitoff,screenWidth, useLabels,cc, plot, csys=null, centerWpt=null,labelFormat=null) {
     // Draw the lines previously computed.
     //get the locations where to put the labels
     var drawData=[];
 
     var  lineCount = xLines.length;
 
-
-   for (let i=0; i<lineCount; i++) {
+    var isLonLine=false;
+    for (let i=0; i<lineCount; i++) {
+            isLonLine = i<lineCount/2?true:false;
             drawLabeledPolyLine(drawData, bounds, labels[i] ,
-            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc, plot);
+            xLines[i], yLines[i], aitoff,screenWidth, useLabels,cc, plot,csys, centerWpt,isLonLine,labelFormat);
     }
     return drawData;
 
@@ -1107,6 +1195,39 @@ function computeHipGridLines(cc, csys,  screenWidth, nGridLines, labelFormat, pl
 
     }
 
+    const zeroLatIdx = levels[1].indexOf(0);
+    const midIdx = parseInt(zeroLatIdx / 2);
+    if (zeroLatIdx!=-1  && cc.pointInView(makeWorldPt(0, -90, csys)) ) {
+
+        //if ( )) {
+            middleLatValue[0] = levels[1][midIdx];
+            middleLatValue[1] = levels[1][midIdx + 1];
+
+
+        }
+        else if (zeroLatIdx!=-1  && cc.pointInView(makeWorldPt(0, 90, csys))) {
+            middleLatValue[0] = levels[1][zeroLatIdx + midIdx];
+            middleLatValue[1] = levels[1][zeroLatIdx + midIdx + 1];
+
+
+        }
+       else {
+            middleLatValue[0] = levels[1][parseInt(levels[1].length / 2)];
+            middleLatValue[1] = levels[1][parseInt(levels[1].length / 2) + 1];
+
+     }
+
+
+    var dist=10000, d;
+    for (var i=0; i<levels[0].length; i++){
+        if (!levels[0][i] || levels[0][i].toFixed(4)===centerWp.x.toFixed(4)) continue;
+        d = Math.abs(levels[0][i]-centerWp.x);
+        if (d<dist){
+            dist=d;
+            nearCenterLonValue=levels[0][i];
+        }
+
+    }
     /* This is where we do all the work. */
     /* range and levels have a first dimension indicating x or y
      * and a second dimension for the different values (2 for range)
