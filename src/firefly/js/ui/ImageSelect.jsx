@@ -16,7 +16,8 @@ import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 
 import './ImageSelect.css';
-
+// import infoIcon from 'html/images/info-16x16.png';
+import infoIcon from 'html/images/info-icon.png';
 
 export class ImageSelect extends PureComponent {
 
@@ -283,12 +284,13 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
     // filter projects ... projects is like dataproduct or dataset.. i.e SEIP
     const projectData= filteredImageData.filter((d) => d.project === project);
     const subProjects= uniqBy(projectData, 'subProject').map( (d) => d.subProject);
+    const helpUrl = uniqBy(projectData, 'helpUrl').map( (d) => d.helpUrl);
     const labelMaxWidth = subProjects.filter((s) => s).reduce( (rval, s) => (s.length > rval ? s.length : rval), 0);
     const isOpen = hasImageSelection(groupKey, project);
 
     return (
         <div className='DataProductList__item'>
-            <CollapsiblePanel componentKey={project} header={<Header {...{project, multiSelect}}/>} isOpen={isOpen}>
+            <CollapsiblePanel componentKey={project} header={<Header {...{project, hrefInfo:helpUrl, multiSelect}}/>} isOpen={isOpen}>
                 <div className='DataProductList__item--details'>
                     {
                         subProjects.map((sp) =>
@@ -302,12 +304,14 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
 
 }
 
-function Header({project, multiSelect}) {
+function Header({project, hrefInfo='', multiSelect}) {
     const fieldKey= `PROJ_ALL_${project}`;
 
+    const href = hrefInfo;
     if (!multiSelect) return <div style={{display: 'inline-block'}}>{project}</div>;
     return (
-        <div className='DataProductList__item--header' onClick={(e) => e.stopPropagation()}>
+        <div className='DataProductList__item--header' >
+            <div onClick={(e) => e.stopPropagation()}>
             <CheckboxGroupInputField
                 key={fieldKey}
                 fieldKey={fieldKey}
@@ -318,8 +322,16 @@ function Header({project, multiSelect}) {
                 options={[{label:project, value:'_all_'}]}
                 alignment='horizontal'
                 labelWidth={35}
-                wrapperStyle={{whiteSpace: 'normal'}}
+                wrapperStyle={{whiteSpace: 'normal' /*cursor:'pointer'*/}}
             />
+            </div>
+            <div style={{marginLeft: -5}}>
+                <div>
+                    <a onClick={(e) => e.stopPropagation()} target='_blank' href={href}>
+                        <img style={{width:'14px'}}
+                            src={infoIcon}/></a>
+                </div>
+            </div>
         </div>
     );
 }
