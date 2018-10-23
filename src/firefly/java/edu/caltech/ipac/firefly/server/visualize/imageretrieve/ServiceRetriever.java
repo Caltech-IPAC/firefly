@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
+import edu.caltech.ipac.firefly.server.visualize.imagesources.ImageMasterDataEntry;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -150,6 +151,7 @@ public class ServiceRetriever implements FileRetriever {
         params.setInstrument(r.getParam(AtlasIbeDataSource.INSTRUMENT_KEY));
         params.setXtraFilter(r.getParam(AtlasIbeDataSource.XTRA_KEY));
         params.setSize((float)circle.getRadius());
+        params.setDataType(r.getParam(ImageMasterDataEntry.PARAMS.DATA_TYPE.getKey()));
         FileInfo fi = LockingVisNetwork.retrieve(params, (p,f) -> AtlasImageGetter.get(p));
         fi.setDesc(ServiceDesc.get(r));
         return fi;
