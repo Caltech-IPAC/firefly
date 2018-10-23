@@ -171,9 +171,9 @@ function FilterPanelView({onChange, imageMasterData}) {
             <CollapsiblePanel componentKey='waveTypesFilter' header='BAND:' isOpen={true}>
                 <FilterSelect {...{onChange, type:'waveType', dataList: waveType}}/>
             </CollapsiblePanel>
-            <CollapsiblePanel componentKey='waveBandsFilter' header='WAVEBAND:' isOpen={false}>
+           {/* <CollapsiblePanel componentKey='waveBandsFilter' header='WAVEBAND:' isOpen={false}>
                 <FilterSelect {...{onChange, type:'waveBand', dataList: waveBands}}/>
-            </CollapsiblePanel>
+            </CollapsiblePanel>*/}
 
         </div>
     );

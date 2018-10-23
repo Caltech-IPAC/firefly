@@ -138,7 +138,13 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
              String key= plotParamKeys[i];
              for (int j = 0; j < row.size(); j++) {
                  if(row.containsKey(key)){
-                     params.put(paramMaps.get(key),  String.valueOf(row.getDataElement(key)) );
+                     //Because the checkbox options label are passed from the title, we need an image title label different to distinguish between 2 different same instrument/band
+                     // Build 'intitle' label for UI image display info with plot request title and acronym
+                     if(key.equalsIgnoreCase(PARAMS.TITLE.getKey())){
+                         params.put(paramMaps.get(key) , String.valueOf(row.getDataElement(PARAMS.ACRONYM.getKey())));//+" "+String.valueOf(row.getDataElement(PARAMS.WAVEBAND_ID.getKey())));
+                     }else{
+                         params.put(paramMaps.get(key),  String.valueOf(row.getDataElement(key)) );
+                     }
                      break;
                  }
              }
