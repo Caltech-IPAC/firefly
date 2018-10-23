@@ -771,7 +771,7 @@ function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
                 wpr.setPostTitle(`- ext. ${extList}`);
             }
 
-            plotId = `${fName}-${idx.join('_')}`;
+            plotId = `${fName.replace('.', '_')}-${idx.join('_')}`;
             dispatchPlotImage({plotId, wpRequest: wpr, viewerId});
         } else {
 
@@ -869,7 +869,8 @@ function sendLSSTFootprintRequest(uploadPath, displayValue, uploadMethod, select
     const pv = primePlot(visRoot());
     const pIds = pv ? [pv.plotId]: [];
 
-    dispatchCreateImageLineBasedFootprintLayer(tbl_id, 'lsst footprint: '+ tableTitle(displayValue, uploadMethod), null, pIds,
+    dispatchCreateImageLineBasedFootprintLayer(tbl_id, tableTitle(displayValue, uploadMethod),
+                                              null, pIds,
                                               uploadPath, null, selectedResults ? selectedResults.table[0]: null);
 
 }

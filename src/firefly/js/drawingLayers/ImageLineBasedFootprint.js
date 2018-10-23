@@ -18,7 +18,7 @@ import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import {dispatchTableHighlight,  dispatchTableSelect, dispatchTableFilter} from '../tables/TablesCntlr.js';
-import {findIndex, getTblById, getCellValue} from '../tables/TableUtil.js';
+import {findIndex, getTblById, getCellValue, getColumnIdx} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import {getSelectedShape} from './Catalog.js';
 import {getSelectedPts} from '../visualize/VisUtil.js';
@@ -44,17 +44,20 @@ const colorN = colorList.length;
 function creator(initPayload) {
 
     const {selectInfo, highlightedRow, tbl_id, tableRequest} = initPayload;
-    const drawingDef= makeDrawingDef(get(initPayload, 'color', colorList[idCnt%colorN]),
-                                     {style: get(initPayload, 'style', Style.FILL),
-                                      showText: get(initPayload, 'showText', false),
+    const {color=colorList[idCnt%colorN], style=Style.FILL, selectColor='yellow', highlightColor='orange',
+           showText=false} = initPayload;
+    const drawingDef= makeDrawingDef(color,
+                                     {style,
+                                      showText,
                                       canUseOptimization: true,
                                       textLoc: TextLocation.CENTER,
-                                      selectedColor: 'yellow',
+                                      selectedColor: selectColor,
+                                      selectColor: highlightColor,
                                       size: 3,
                                       symbol: DrawSymbol.X});
 
     set(drawingDef, RegionSelStyle, 'SolidReplace');
-    set(drawingDef, RegionSelColor, 'orange');
+
     const pairs = {
         [MouseState.DOWN.key]: highlightChange
     };
@@ -94,21 +97,13 @@ function highlightChange(mouseStatePayload) {
     var closestInfo = null;
     var closestObj = null;
     const maxChunk = 1000;
+    let  index = 0;
 
     const {connectedObjs, pixelSys} = get(drawLayer, 'imageLineBasedFP') || {};
     const plot = primePlot(visRoot(), plotId);
     const cc = CsysConverter.make(plot);
     const tPt = getImageCoordsOnFootprint(screenPt, cc, pixelSys);
     const {tableRequest} = drawLayer;
-
-    function* getDrawObj() {
-        let index = 0;
-
-        while (index < connectedObjs.length) {
-            yield connectedObjs[index++];
-        }
-    }
-    var gen = getDrawObj();
 
     const sId = window.setInterval( () => {
         if (done) {
@@ -136,24 +131,23 @@ function highlightChange(mouseStatePayload) {
                     }
                 }
             });
-        }
+        } else {
+            for (let i = 0; (index < connectedObjs.length && i < maxChunk); i++) {
+                const dObj = connectedObjs[index++];
 
-        for (let i = 0; i < maxChunk; i++ ) {
-            var dObj = gen.next().value;
+                if (dObj) {
+                    const distInfo = dObj.connectObj.containPoint(tPt);
 
-            if (dObj) {
-                const distInfo = dObj.connectObj.containPoint(tPt);
-
-                if (distInfo.inside) {
-                    if (!closestInfo || closestInfo.dist > distInfo.dist) {
-                        closestInfo = distInfo;
-                        closestObj = dObj;
+                    if (distInfo.inside) {
+                        if (!closestInfo || closestInfo.dist > distInfo.dist) {
+                            closestInfo = distInfo;
+                            closestObj = dObj;
+                            //console.log('one inside = ' + closestObj.id + ' dist: ' + closestInfo.dist);
+                        }
                     }
                 }
-            } else {
-                done = true;
-                break;
             }
+            done = (index === connectedObjs.length);
         }
     }, 0);
 

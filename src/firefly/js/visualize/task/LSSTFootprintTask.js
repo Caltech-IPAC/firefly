@@ -73,7 +73,7 @@ const tblIdxCols = [footprintid, table_rowidx];
 const posCols = [ra_col, dec_col];
 
 function getFileNameFromPath(filePath) {
-    return filePath.split(/(\\|\/)/g).pop();
+    return filePath.split(/(\\|\/)/g).pop().replace('.', '_');
 }
 
 /**
@@ -88,8 +88,8 @@ function getFileNameFromPath(filePath) {
 export function imageLineBasedfootprintActionCreator(action) {
     return (dispatcher) => {
         const {footprintFile, footprintImageFile, footprintData, drawLayerId, tbl_index,
-               title, style='fill', color, showText, plotId} = action.payload;
-        const fpParams = {title, style, color, showText};
+               title, style='fill', color, selectColor, highlightColor, showText, plotId} = action.payload;
+        const fpParams = {title, style, color, selectColor, highlightColor, showText};
         let   imagePlotId = isArray(plotId) ? plotId[0] : plotId;
 
         if (!drawLayerId) {
@@ -112,7 +112,7 @@ export function imageLineBasedfootprintActionCreator(action) {
         }
 
         const getFootprintData = (footprintFile, pId, tbl_index = 0) => {
-            loadFootprintTable(footprintFile, pId, drawLayerId, tbl_index).then((tableModel) => {
+            loadFootprintTable(footprintFile, pId, drawLayerId, tbl_index, title).then((tableModel) => {
                 return getFootprintDataFromTable(tableModel);
             }).then((fpData) => {
                 initFootprint(fpData, drawLayerId, pId, fpParams);
@@ -245,7 +245,7 @@ function getFootprintDataFromTable(tableModel) {
 
 function initFootprint(footprintData, drawLayerId, plotId, footprintParams) {
     const imageLineBasedFP = ImageLineBasedObj(footprintData);
-    const {title, style, color, showText} = footprintParams || {};
+    const {title, style, color, showText, selectColor, highlightColor} = footprintParams || {};
     const sourceTable = getTblById(drawLayerId);
     const {highlightedRow, selectInfo, request, tbl_id, tableData} = sourceTable || {};
 
@@ -253,7 +253,8 @@ function initFootprint(footprintData, drawLayerId, plotId, footprintParams) {
         const dl = getDrawLayerById(getDlAry(), drawLayerId);
         if (!dl) {
             dispatchCreateDrawLayer(LSSTFootprint.TYPE_ID, {
-                drawLayerId, title, imageLineBasedFP, color, showText,
+                drawLayerId, title, imageLineBasedFP,
+                color, showText, selectColor, highlightColor,
                 highlightedRow, selectInfo, tbl_id,
                 tableRequest: request,
                 style: (style&&(style.toLowerCase() === 'fill')) ? Style.FILL : Style.STANDARD
@@ -297,10 +298,10 @@ const footprintTableWatcher = (action, cancelSelf, params) => {
     }
 };
 
-function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_index) {
+function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_index, tableTitle) {
 
     return new Promise((resolve) => {
-        const title = footprintFileOnServer.split(/(\\|\/)/g).pop();
+        const title = tableTitle || footprintFileOnServer.split(/(\\|\/)/g).pop();
         const hiddenColumnMeta = hiddenColumns.concat(['flags', 'footprint']).reduce( (prev, oneCol) => {
             const colKey = `col.${oneCol}.Visibility`;
 

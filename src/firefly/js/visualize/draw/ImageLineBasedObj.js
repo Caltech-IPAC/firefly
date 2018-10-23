@@ -354,80 +354,6 @@ export class ConnectedObj {
         return data ? new ConnectedObj(corners, data, peaks, id, ra, dec) : null;
     }
 
-    splitOnEmptyLine() {
-        const resultObjs = [];
-        const {y1, y2, x1, x2} = this;
-        let firstY = y1;
-
-        this.makeOneSegments();
-        const moveSpans = (spans, peaks, sy, ey) => {
-            const newSpans = [], oldSpans = [];
-            const newPeaks = [], oldPeaks = [];
-            let n_x1 = x2, n_x2 = x1;
-
-            for (let n = 0; n < spans.length; n++) {
-                const [y, x_0, x_1] = [...spans[n]];
-
-                if (y > ey) {
-                    oldSpans.push(...spans.slice(n));
-                    break;
-                }
-                if (y < sy) {
-                    oldSpans.push(spans[n]);
-                    continue;
-                }
-                newSpans.unshift(spans[n]);
-
-                if (x_0 < n_x1) n_x1 = x_0;
-                if (x_1 > n_x2) n_x2 = x_1;
-            }
-
-            for (let n = 0; n < peaks.length; n++) {
-                if (peaks[n][1] < sy || peaks[n][1] > ey) {
-                    newPeaks.push(peaks[n]);
-                } else {
-                    oldPeaks.push(peaks[n]);
-                }
-            }
-            return {newSpans, oldSpans, newPeaks, oldPeaks, new_x1: n_x1, new_x2: n_x2, new_y1: sy, new_y2: ey };
-        };
-
-
-        for (let y = (y1+1); y < y2; y++) {
-            if (this.oneSegments[y].length === 0) {
-                if (y > firstY) {
-                    const {newSpans, oldSpans, newPeaks, oldPeaks, new_x1, new_x2, new_y1, new_y2} = moveSpans(this.spans, this.peaks, firstY, y - 1);
-                    if (newSpans.length > 0) {
-                        const newCorners = [[new_x1, new_y1], [new_x2, new_y1], [new_x2, new_y2], [new_x1, new_y2]];
-                        const newCObj = ConnectedObj.make(newCorners, newSpans, newPeaks, this.id);
-                        resultObjs.push(newCObj);
-                        this.spans = oldSpans;
-                        this.peaks = oldPeaks;
-                    }
-                }
-                firstY = y+1;
-            }
-        }
-
-        if (resultObjs.length > 0) {
-            let n_x1 = x2, n_x2 = x1, n_y1 = y2, n_y2 = y1;
-            this.spans.forEach((oneSpan) => {
-                if (oneSpan[1] < n_x1) n_x1 = oneSpan[1];
-                if (oneSpan[2] > n_x2) n_x2 = oneSpan[2];
-                if (oneSpan[0] < n_y1)  n_y1 = oneSpan[0];
-                if (oneSpan[0] > n_y2)  n_y2 = oneSpan[0];
-            });
-
-            const newCrtObj = ConnectedObj.make([[n_x1, n_y1], [n_x2, n_y1], [n_x2, n_y2], [n_x1, n_y2]], this.spans, this.peaks,
-                                                 this.id);
-            resultObjs.unshift(newCrtObj);
-
-        } else {
-            resultObjs.unshift(this);
-        }
-        return resultObjs;
-    }
-
     getOneSegments() {
         const {oneSegments} = this.makeOneSegments();
         return oneSegments;
@@ -463,6 +389,7 @@ export class ConnectedObj {
             this.oneSegments[y].push([x1, x2]);
         });
 
+        this.spans = [];     // discard original spans data
         return retval;
     }
 
@@ -616,9 +543,6 @@ export class ConnectedObj {
         }, []);
 
         bCovered ? this.basicObjs[ONERECTS] = objs : this.basicObjs[ZERORECTS] = objs;
-        this.oneSegments = {};
-        this.zeroSegments = {};
-
         return objs;
     }
 
@@ -749,8 +673,6 @@ export class ConnectedObj {
             }
         }
 
-        this.oneSegments = {};
-        this.zeroSegments = {};
         return this.basicObjs[POLYOBJS];
     }
 
@@ -777,14 +699,15 @@ export class ConnectedObj {
         });
 
         this.basicObjs[POINTOBJS] = pointObjs;
+        this.peaks = [];      // discard original peaks data
         return pointObjs;
     }
 
     containPoint(pt) {
         const {x1, x2, y1, y2, centerPt} = this;
 
-        const inside = (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2);
-        //              && this.inSegment(this.oneSegments, pt.x, Math.trunc(pt.y));
+        const inside = (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2
+                        && this.inSegment(this.oneSegments, pt.x, Math.trunc(pt.y)));
         if (inside) {
             return {inside, dist:  (Math.sqrt((centerPt[0] - pt.x)**2 + (centerPt[1] - pt.y)**2))};
         } else {
