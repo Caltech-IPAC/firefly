@@ -265,7 +265,7 @@ function initFootprint(footprintData, drawLayerId, plotId, footprintParams) {
         } else {
             dispatchModifyCustomField(tbl_id,
                     {tableData, imageLineBasedFP,
-                     highlightedRow, selectInfo, tableRequest: request, tbl_id}, plotId);
+                     highlightedRow, selectInfo,  tableRequest: request, tbl_id}, plotId);
         }
     }
 }
@@ -276,10 +276,9 @@ const footprintTableWatcher = (action, cancelSelf, params) => {
 
     if (tbl_id !== footprintTableId) return;
 
-
     switch(action.type) {
-        case TABLE_LOADED:
-            handleFootprintUpdate(tbl_id, drawLayerId, plotId);
+        case TABLE_UPDATE:
+             handleFootprintUpdate(tbl_id, drawLayerId, plotId);
             break;
 
         case TABLE_SELECT:
@@ -287,7 +286,6 @@ const footprintTableWatcher = (action, cancelSelf, params) => {
             break;
 
         case TABLE_HIGHLIGHT:
-        case TABLE_UPDATE:
             dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow}, plotId);
             break;
 
@@ -327,7 +325,7 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
 
             const tableModel = getTblById(tbl_id);
             dispatchAddActionWatcher({
-                    actions: [TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE, TABLE_LOADED],
+                    actions: [TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE],
                     callback: footprintTableWatcher,
                     params: {plotId, drawLayerId, footprintTableId}
             });

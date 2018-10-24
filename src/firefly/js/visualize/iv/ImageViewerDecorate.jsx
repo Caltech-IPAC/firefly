@@ -62,7 +62,7 @@ function showFilter(pv,dlAry) {
 
 function showClearFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => (dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters') && dl.catalog) ||
+        .some( (dl) => (dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters') && dl.catalog ) ||
                         (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && get(dl, 'tableRequest.filters')));
 }
 
@@ -373,7 +373,7 @@ ImageViewerDecorate.propTypes= {
     handleInlineTools : PropTypes.bool,
     workingIcon: PropTypes.bool,
     inlineTitle: PropTypes.bool,
-    aboveTitle: PropTypes.bool,
+    aboveTitle: PropTypes.bool
 };
 
 

@@ -49,7 +49,8 @@ export function* watchCatalogs() {
                                   TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]);
         const {tbl_id}= action.payload;
 
-        switch (action.type && (!isLsstFootprintTable(getTblById(tbl_id)))) {
+        if (isLsstFootprintTable(getTblById(tbl_id))) continue;
+        switch (action.type) {
             case TABLE_LOADED:
                 handleCatalogUpdate(tbl_id);
                 break;

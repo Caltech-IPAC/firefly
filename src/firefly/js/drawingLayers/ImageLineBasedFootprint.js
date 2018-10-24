@@ -6,25 +6,25 @@ import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot, getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
-import DrawLayerCntlr, {RegionSelStyle, RegionSelColor, dlRoot, dispatchSelectRegion, dispatchModifyCustomField}
+import DrawLayerCntlr, {RegionSelStyle, dlRoot, dispatchSelectRegion, dispatchModifyCustomField}
                                                                      from '../visualize/DrawLayerCntlr.js';
 import {clone} from '../util/WebUtil.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
-import {convertConnectedObjsToDrawObjs, getImageCoordsOnFootprint, drawHighlightFootprintObj,
-        drawSelectFootprintObj} from '../visualize/draw/ImageLineBasedObj.js';
+import {convertConnectedObjsToDrawObjs, getImageCoordsOnFootprint, drawHighlightFootprintObj} from '../visualize/draw/ImageLineBasedObj.js';
 import {getUIComponent} from './ImageLineFootPrintUI.jsx';
 import {rateOpacity} from '../util/Color.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import {dispatchTableHighlight,  dispatchTableSelect, dispatchTableFilter} from '../tables/TablesCntlr.js';
-import {findIndex, getTblById, getCellValue, getColumnIdx} from '../tables/TableUtil.js';
+import {findIndex, getTblById, getCellValue, doFetchTable, getColumnIdx} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import {getSelectedShape} from './Catalog.js';
 import {getSelectedPts} from '../visualize/VisUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
+import {cloneRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
 
 const ID= 'ImageLineBasedFP_PLOT';
 const TYPE_ID= 'ImageLineBasedFP_PLOT_TYPE';
@@ -81,9 +81,55 @@ function creator(initPayload) {
                                         options, drawingDef, actionTypes, pairs);
 
     dl.imageLineBasedFP = get(initPayload, 'imageLineBasedFP') || {};
-    Object.assign(dl, {selectInfo, highlightedRow, tbl_id, tableRequest});
+    Object.assign(dl, {selectInfo, highlightedRow, tbl_id, tableRequest});  // will be updated by table select, highlight, filter and sort
     dl.selectRowIdxs = {};   // map: row_idx / row_num
     return dl;
+}
+
+
+/**
+ * get row_num based on row_idx. the method depends on if there is filtering done earlier.
+ * @param tbl_id
+ * @param cObj
+ * @param dataList
+ * @returns {*}
+ */
+function getHighlightedRow(tbl_id, cObj, dataList) {
+    const tbl = getTblById(tbl_id);
+    const {request} = tbl || {};
+
+    const getRowNum = (dataRows, col) => {
+        return dataRows.findIndex((oneData) => oneData[col] === cObj.tableRowIdx);
+    };
+
+    if (request.filters) {
+        if (dataList) {
+            const row_num = getRowNum(dataList, 0);
+            return Promise.resolve(row_num);
+        } else {
+            const params = {
+                startIdx: 0,
+                pageSize: MAX_ROW,
+                inclCols: '"ROW_IDX"'
+            };
+            const req = cloneRequest(tbl.request, params);
+
+            return doFetchTable(req).then((filterTable) => {
+                const {data} = get(filterTable, 'tableData') || {};
+
+                if (data) {
+                    const rowidx_col = getColumnIdx(filterTable, 'ROW_IDX');
+
+                    if (rowidx_col >= 0) {
+                        return getRowNum(data, rowidx_col);
+                    }
+                }
+                return -1;
+            });
+        }
+    } else {
+        return findIndex(tbl_id,`ROW_IDX = ${cObj.tableRowIdx}`);
+    }
 }
 
 /**
@@ -116,7 +162,8 @@ function highlightChange(mouseStatePayload) {
                 if (dl.drawLayerId === drawLayer.drawLayerId) {
                     if (drawLayer.tbl_id) {
                         if (closestObj) {
-                            findIndex(drawLayer.tbl_id, `ROW_IDX = ${closestObj.tableRowIdx}`).then((highlightedRow) => {
+                            getHighlightedRow(dl.tbl_id, closestObj).then((highlightedRow) => {
+                            //findIndex(drawLayer.tbl_id, `ROW_IDX = ${closestObj.tableRowIdx}`).then((highlightedRow) => {
                                     if (highlightedRow >= 0) {
                                         dispatchTableHighlight(drawLayer.tbl_id, highlightedRow, tableRequest);
                                     }
@@ -209,27 +256,32 @@ function getLayerChanges(drawLayer, action) {
                 set(dd, [DataTypes.DATA, pId], null);
             }
 
-            set(dd, [DataTypes.HIGHLIGHT_DATA, pId], null);
+            if (tableRequest) {  // from watcher TABLE_LOADED
+                Object.assign(changesUpdate, {tableRequest});
+            }
+
 
             if (imageLineBasedFP) {
                 Object.assign(changesUpdate, {imageLineBasedFP});
             }
 
-            if (selectInfo && !tableData) {   // from dispatch TableSelect, watcher on TABLE_SELECT or TABLE_LOADED
-                if (tableData) {
+
+            if (selectInfo) {   // from dispatch TableSelect, watcher on TABLE_SELECT or TABLE_LOADED
+                const selectInfoCls = SelectInfo.newInstance(selectInfo);
+                const count = selectInfoCls.getSelectedCount();
+                if (tableData && count === 0) {  // from table sort or table filter
                     Object.assign(changesUpdate, {selectRowIdxs: {}});
                 } else {
                     const crtRowIdxs = updateSelectRowIdx(drawLayer, selectInfo);
                     Object.assign(changesUpdate, {selectRowIdxs: crtRowIdxs});
-                }
-                Object.assign(changesUpdate, {selectInfo});
-            }
+               }
+               set(dd, [DataTypes.SELECTED_IDXS], null);    // no plotId involved
 
-            if (tableRequest) {  // from watcher TABLE_LOADED
-                Object.assign(changesUpdate, {tableRequest});
+               Object.assign(changesUpdate, {selectInfo});
             }
 
             if (!isUndefined(highlightedRow)) {  // from watcher TABLE_UPDATE, TABLE_HIGHLIGHT, TABLE_LOADED
+                set(dd, [DataTypes.HIGHLIGHT_DATA, pId], null);
                 Object.assign(changesUpdate, {highlightedRow});
             }
 
@@ -269,18 +321,24 @@ function updateSelectRowIdx(drawLayer, selectInfo) {
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
     const selected = selectInfoCls.getSelected();
     const tbl = getTblById(tbl_id);
-    const dataRows = get(tbl, ['tableData', 'data', 'length'], 0);
+    const rowidxCol = getColumnIdx(tbl, 'ROW_IDX');
+    const rownumCol = getColumnIdx(tbl, 'ROW_NUM');
+    const rowidxMap = get(tbl, ['tableData', 'data']).reduce((prev, oneData) => {
+        prev[oneData[rowidxCol]] = oneData[rownumCol];
+        return prev;
+    }, {});
 
-    // remove de-select row
+    // remove de-select item from de-select
     const newRowIdxs = Object.keys(selectRowIdxs).reduce((prev, rowIdx) => {
-          const row_num = selectRowIdxs[rowIdx];
-          if (Number(row_num) >= dataRows || Number(row_num) < 0 || selected.has(Number(row_num))) {
+          const row_num = has(rowidxMap, rowIdx) ? rowidxMap[rowIdx] : -1;
+
+          if (row_num === -1 || selected.has(Number(row_num))) {
               prev[rowIdx] = row_num;
           }
           return prev;
     }, {});
 
-    // add select row
+    // add select row item from select
     selected.forEach((rownum) => {
         const row_idx = getCellValue(tbl, rownum, 'ROW_IDX');
         if (!has(newRowIdxs, row_idx)) {
@@ -292,32 +350,31 @@ function updateSelectRowIdx(drawLayer, selectInfo) {
 }
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-    const {highlightedFootprint, drawingDef, tbl_id} = drawLayer;
+    const {highlightedFootprint,  tbl_id, highlightedRow, drawingDef} = drawLayer;
 
     switch (dataType) {
         case DataTypes.DATA:    // based on the same drawObjAry to draw the region on each plot
             return isEmpty(lastDataRet) ? plotLayer(drawLayer) : lastDataRet;
+
         case DataTypes.HIGHLIGHT_DATA:      // create the region drawObj based on the original region for upright case.
-            if (!tbl_id) {
-                return isEmpty(lastDataRet) ? plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef) : lastDataRet;
+            if (tbl_id) {
+                return isEmpty(lastDataRet) ? plotHighlightedRow(drawLayer, highlightedRow, plotId, drawingDef) : lastDataRet;
             } else {
-                return isEmpty(lastDataRet) ? plotSelectFootprint(drawLayer, plotId, drawingDef) : lastDataRet;
+                return isEmpty(lastDataRet) ?  plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef) : lastDataRet;
+            }
+        case DataTypes.SELECTED_IDXS:
+            if (tbl_id) {
+                return isEmpty(lastDataRet) ? computeSelectedIdxAry(drawLayer) :lastDataRet;
             }
             break;
-        /*
-        case DataTypes.SELECTED_IDXS:
-            if (!drawLayer.imageLineBasedFP) return null;
-            if (action.type ===  DrawLayerCntlr.MODIFY_CUSTOM_FIELD && changes && changes.selectInfo) {
-                return isEmpty(lastDataRet) ? computeSelectedIdxAry(drawLayer) : lastDataRet;
-            }
-        */
     }
     return null;
 }
 
-/*
+
 function computeSelectedIdxAry(dl) {
-    const {selectInfo, selectRowIdxs} = dl;
+    const {tbl_id, selectRowIdxs} = dl;
+    const {selectInfo} = getTblById(tbl_id) || {};
     if (!selectInfo) return null;
 
     const si = SelectInfo.newInstance(selectInfo);
@@ -326,13 +383,15 @@ function computeSelectedIdxAry(dl) {
     const data = get(dl, ['drawData', 'data']);
     const pId =  data && Object.keys(data).find((pId) => data[pId]);
     const footprintObjs = pId ? data[pId] : null;
+    const selRowIdxsList = Object.keys(selectRowIdxs);
 
-    const isSelected =  (idx) => {
-        return footprintObjs && selectRowIdxs && selectRowIdxs.includes(footprintObjs[idx].tableRowIdx);
+    const isSelected =  (fObjs, selRowIdxs) => {
+        return (idx) => {
+            return fObjs && selRowIdxs && selRowIdxs.includes(fObjs[idx].tableRowIdx);
+        };
     };
-    return isSelected;
+    return isSelected(footprintObjs, selRowIdxsList);
 }
-*/
 
 
 function getTableData(drawLayer) {
@@ -342,6 +401,7 @@ function getTableData(drawLayer) {
     const tbl = getTblById(tbl_id);
     return tbl.tableData;
 }
+
 /**
  * create DrawingObj for highlighted row
  * @param drawLayer
@@ -378,49 +438,6 @@ function plotHighlightedRow(drawLayer, highlightedRow, plotId, drawingDef) {
     }
 }
 
-/**
- *
- * @param drawLayer
- * @param plotId
- * @param drawingDef
- * @returns {*}
- */
-function plotSelectFootprint(drawLayer, plotId, drawingDef) {
-    //const tableData = getTableData(drawLayer);
-
-    const {highlightedRow, selectRowIdxs} = drawLayer;
-
-    const highlightedObjs = isUndefined(highlightedRow) ? null : plotHighlightedRow(drawLayer, highlightedRow, plotId, drawingDef);
-
-    if (isEmpty(selectRowIdxs)) {
-        return highlightedObjs;
-    }
-    const {connectedObjs=[]} = drawLayer.imageLineBasedFP || {};
-    const selRowIdxs = Object.keys(selectRowIdxs);
-    const selectedCObjs = connectedObjs.filter((cobj) => selRowIdxs.includes(cobj.tableRowIdx));
-
-    if (selectedCObjs.length === 0) {
-        return highlightedObjs;
-    }
-
-    //let polySels, pointSels;
-    const plot = primePlot(visRoot(), plotId);
-    const selDrawDef= Object.assign({}, drawingDef, {selectColor:drawingDef.selectedColor});
-
-    const selDrawObjs = selectedCObjs.reduce((prev, cobj) => {
-        const selObjs = drawSelectFootprintObj(cobj, plot, selDrawDef);
-
-        prev.push(...selObjs);
-        return prev;
-    }, []);
-
-    if (highlightedObjs) {
-        selDrawObjs.push(...highlightedObjs);
-    }
-    return selDrawObjs;
-}
-
-
 
 /**
  * @summary create DrawingObj for highlighted region
@@ -437,6 +454,7 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
 
     return drawHighlightFootprintObj(highlightedFootprint, primePlot(visRoot(), plotId), drawingDef);
 }
+
 
 function plotLayer(dl) {
     const {style=Style.FILL, showText, color} = dl.drawingDef || {};
@@ -476,32 +494,55 @@ export function selectFootprint(pv, dlAry) {
         const selectInfoCls = SelectInfo.newInstance({rowCount: dataRows});
         const allCObjsIdxs = getSelectedPts(sel, p, connectObjs, selectedShape);
         const row_nums = [];
-        const row_idxs = clone(dl.selectRowIdxs);
+        const row_idxs = {}; // clone(dl.selectRowIdxs);
 
-        allCObjsIdxs.reduce((ps, cObjIdx, n) => {
-            ps = ps.then(() => {
-                    const rowIdx = connectObjs[cObjIdx].tableRowIdx;
-                    findIndex(dl.tbl_id, `ROW_IDX = ${rowIdx}`).then((row_num) => {
-                        if (row_num >= 0) {
-                            row_nums.push(Number(row_num));
-                        }
-                        row_idxs[rowIdx] = row_num;
+        if (isEmpty(allCObjsIdxs)) {    // none is slected
+            setSelectInfo(row_nums, selectInfoCls);
+            dispatchModifyCustomField(dl.tbl_id, {selectRowIdxs: row_idxs}, p.plotId);
+            dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
+            if (dlIndex === footprintAry.length - 1) {
+                detachSelectArea(pv);
+            }
+        } else {
+            const params = {
+                startIdx: 0,
+                pageSize: MAX_ROW,
+                inclCols: '"ROW_IDX"'
+            };
+            const req = cloneRequest(tbl.request, params);
 
-                        if (n === allCObjsIdxs.length - 1) {
-                            setSelectInfo(row_nums, selectInfoCls);
-                            dispatchModifyCustomField(dl.tbl_id, {selectRowIdxs: row_idxs}, p.plotId);
-                            dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
+            // get the row_idx list first, then get the row_num from the list to form selectInfo
+            doFetchTable(req).then((filterTable) => {
+                const {data} = get(filterTable, 'tableData') || {};
 
-                            if (dlIndex === footprintAry.length - 1) {
-                                detachSelectArea(pv);
+                allCObjsIdxs.reduce((ps, cObjIdx, n) => {
+                    ps = ps.then(() => {
+                        const rowIdx = connectObjs[cObjIdx].tableRowIdx;
+
+                        getHighlightedRow(dl.tbl_id, connectObjs[cObjIdx], data).then((row_num) => {
+                            //findIndex(dl.tbl_id, `ROW_IDX = ${rowIdx}`).then((row_num) => {
+                            if (row_num >= 0) {
+                                row_nums.push(Number(row_num));
                             }
-                        }
+                            row_idxs[rowIdx] = row_num;
 
-                        return row_num;
+                            if (n === allCObjsIdxs.length - 1) {
+                                setSelectInfo(row_nums, selectInfoCls);
+                                dispatchModifyCustomField(dl.tbl_id, {selectRowIdxs: row_idxs}, p.plotId);
+                                dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
+
+                                if (dlIndex === footprintAry.length - 1) {
+                                    detachSelectArea(pv);
+                                }
+                            }
+
+                            return row_num;
+                        });
                     });
-            });
-            return ps;
-        }, Promise.resolve());
+                    return ps;
+                }, Promise.resolve());
+            });   // promise.then(/*for 1st obj*/).then(/* for 2nd obj */)......then(/* for last object & dispatch */)
+        }
     });
 }
 
@@ -537,6 +578,7 @@ export function  filterFootprint(pv, dlAry) {
 
         const filter= `IN (${idxs.length === 0 ? -1 : idxs.toString()})`;     //  ROW_IDX is always positive.. use -1 to force no row selected
         filterInfoCls.setFilter('ROW_IDX', filter);
+
         const newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
         dispatchTableFilter(newRequest);
     });

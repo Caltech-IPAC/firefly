@@ -1,6 +1,7 @@
+import Enum from 'enum';
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 import ShapeDataObj from './ShapeDataObj.js';
 import {makePointDataObj} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
@@ -9,8 +10,12 @@ import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt} from '../Point.js';
 import {clone} from '../../util/WebUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {DrawSymbol} from './PointDataObj.js';
+import {primePlot} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
 
 const IMGFP_OBJ = 'ImgBasedFPObj';
+export const drawMode = new Enum(['data', 'highlight', 'select']);
+
 
 
 /**
@@ -312,11 +317,7 @@ export function convertConnectedObjPeaksToPointObjs(imageLineObj, color, symbol,
 
 export function drawHighlightFootprintObj(highlightedFootprint, plot, drawingDef) {
     const footprintObj = highlightedFootprint.connectObj;
-    return footprintObj.drawHighlight(plot, drawingDef);
-}
-export function drawSelectFootprintObj(selectFootprint, plot, drawingDef) {
-    const footprintObj = selectFootprint.connectObj;
-    return footprintObj.drawSelect(plot, drawingDef);
+    return footprintObj.getDrawObjOnHighlight(plot, drawingDef);
 }
 
 export const ONERECTS = 'oneRectObjs';
@@ -716,20 +717,27 @@ export class ConnectedObj {
     }
 
     draw(ctx, cc, def,  vpPtM, onlyAddToPath) {
+        let allObjs;
 
-        const allObjs = AllObjTypes.reduce((prev, oneObjType) => {
-            if (this.drawObjs[oneObjType]) {
-                prev.push(...this.drawObjs[oneObjType]);
-            }
-            return prev;
-        }, []);
+        if (def.drawMode && def.drawMode === drawMode.highlight.key) {
+            allObjs = this.getDrawObjOnHighlight(cc, def);
+        } else if (def.drawMode && def.drawMode === drawMode.select.key) {
+            allObjs = this.getDrawObjsOnSelect(cc, def);
+        } else {
+            allObjs = AllObjTypes.reduce((prev, oneObjType) => {
+                if (this.drawObjs[oneObjType]) {
+                    prev.push(...this.drawObjs[oneObjType]);
+                }
+                return prev;
+            }, []);
+        }
 
-       allObjs.forEach((oneObj) => {
-           DrawOp.draw(oneObj, ctx, cc, def, vpPtM, onlyAddToPath);
-       });
+        allObjs.forEach((oneObj) => {
+            DrawOp.draw(oneObj, ctx, cc, def, vpPtM, onlyAddToPath);
+        });
     }
 
-    drawHighlight(plot, drawingDef) {
+    getDrawObjOnHighlight(cc, drawingDef) {
 
         const polyAry = this.basicObjs[POLYOBJS];
         const pointAry = this.basicObjs[POINTOBJS];
@@ -738,6 +746,7 @@ export class ConnectedObj {
         const {lineWidth = 1} = drawingDef;
         const lw = lineWidth+1;
 
+        const plot = primePlot(visRoot(), cc.plotId);
         const polyHighlight = polyAry.reduce((prev, onePoly, idx) => {
             const newhObj = DrawOp.makeHighlight(onePoly, plot, drawingDef);
             newhObj.highlight = 1;
@@ -761,12 +770,14 @@ export class ConnectedObj {
         return [...polyHighlight,...pointHighlight];
     }
 
-    drawSelect(plot, drawingDef) {
+    getDrawObjsOnSelect(cc, drawingDef) {
         const polyAry = this.basicObjs[POLYOBJS];
         const pointAry = this.basicObjs[POINTOBJS];
+        const selDrawDef= Object.assign({}, drawingDef, {selectColor:drawingDef.selectedColor});
 
+        const plot = primePlot(visRoot(), cc.plotId);
         const polySels = polyAry && polyAry.reduce((prev, onePoly) => {
-                const newhObj = DrawOp.makeHighlight(onePoly, plot, drawingDef);
+                const newhObj = DrawOp.makeHighlight(onePoly, plot, selDrawDef);
                 newhObj.highlight = 1;
                 newhObj.style = Style.STANDARD;
 
@@ -776,7 +787,7 @@ export class ConnectedObj {
 
         const pointSels = (pointAry) && pointAry.reduce((prev, onePoint) => {
                 const pointObj = clone(onePoint, {symbol: (drawingDef.symbol || DrawSymbol.X)});
-                const newhObj = DrawOp.makeHighlight(pointObj, plot, drawingDef);
+                const newhObj = DrawOp.makeHighlight(pointObj, plot, selDrawDef);
                 newhObj.highlight = 1;
 
                 prev.push(newhObj);
