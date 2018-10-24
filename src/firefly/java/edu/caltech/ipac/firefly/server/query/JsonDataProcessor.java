@@ -24,8 +24,6 @@ abstract public class JsonDataProcessor implements SearchProcessor<String> {
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-    public ServerRequest inspectRequest(ServerRequest request) { return request; };
-
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {}
 
     public QueryDescResolver getDescResolver() { return null;}

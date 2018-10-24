@@ -41,8 +41,6 @@ public class DataGroupUtil {
         DataObject dataObj;
 
         int numColumns = dataGroup.getDataDefinitions().length;
-        int columnWidth [] = new int[numColumns];
-        Arrays.fill(columnWidth, 0);
 
         if (rs.isBeforeFirst()) {
             rs.next();
@@ -88,9 +86,6 @@ public class DataGroupUtil {
                     obj = (nullNum != Integer.MIN_VALUE && obj instanceof Number) ? nullNum : null;
                 }
                 dataObj.setDataElement(dt, obj);
-                if (obj instanceof String) {
-                    columnWidth[i] = Math.max(columnWidth[i], obj.toString().length());
-                }
             }
             dataGroup.add(dataObj);
         } while (rs.next());

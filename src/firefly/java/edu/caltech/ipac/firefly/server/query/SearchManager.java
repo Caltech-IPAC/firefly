@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
@@ -24,6 +25,7 @@ import org.json.simple.parser.ParseException;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,9 +47,8 @@ public class SearchManager {
      */
     public String getJSONData(ServerRequest request) throws DataAccessException {
         SearchProcessor processor = getProcessor(request.getRequestId());
-        ServerRequest req = processor.inspectRequest(request);
-        if (req != null) {
-            String jsonText = (String) processor.getData(req);
+        if (request != null) {
+            String jsonText = (String) processor.getData(request);
             // validate JSON and replace file paths with prefixes
             JSONParser parser = new JSONParser();
             try{
@@ -72,41 +73,21 @@ public class SearchManager {
 
         SearchProcessor processor = getProcessor(request.getRequestId());
         DataGroupPart dgp = null;
-        ServerRequest req = processor.inspectRequest(request);
-        if (req != null) {
-            try {
-                dgp = (DataGroupPart) processor.getData(req);
-                TableMeta meta = new TableMeta();
-                DataGroupPart.State status = dgp.getTableDef().getStatus();
-                meta.setAttribute(IS_FULLY_LOADED, String.valueOf(!status.equals(DataGroupPart.State.INPROGRESS)));
+        dgp = (DataGroupPart) processor.getData(request);
 
-                processor.prepareTableMeta(meta,
-                        Collections.unmodifiableList(dgp.getTableDef().getCols()),
-                        req);
-                // merge meta info with TableDef info
-                dgp.getTableDef().getMetaFrom(meta);
-                return dgp;
-            } catch (Exception ex) {
-                String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : null;
-                if (source != null || !(ex instanceof DataAccessException)) {
-                    String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source;
-                    LOGGER.error(ex, errMsg);
-                    throw new DataAccessException(errMsg, ex);
-                } else {
-                    throw ex;
-                }
-            }
-        } else {
-            throw new DataAccessException("Request fail inspection.  Operation aborted.");
-        }
+        TableMeta meta = dgp.getData().getTableMeta();
+        meta.setAttribute(IS_FULLY_LOADED, "true");
+        processor.prepareTableMeta(meta,
+                Arrays.asList(dgp.getData().getDataDefinitions()),
+                request);
+        return dgp;
     }
 
     public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest) throws DataAccessException {
         try {
             SearchProcessor processor = getProcessor(dataRequest.getRequestId());
-            ServerRequest req = processor.inspectRequest(dataRequest);
-            if (req != null) {
-                return processor.writeData(saveTo, req);
+            if (dataRequest != null) {
+                return processor.writeData(saveTo, dataRequest);
             } else {
                 throw new DataAccessException("Request fail inspection.  Operation aborted.");
             }
@@ -180,6 +161,9 @@ public class SearchManager {
         return BackgroundEnv.backgroundProcess(waitMillis, processor, BackgroundStatus.BgType.SEARCH);
     }
 
+//====================================================================
+//  inner classes
+//====================================================================
     private class SearchWorker implements BackgroundEnv.Worker {
 
         private final TableServerRequest request;
@@ -200,9 +184,9 @@ public class SearchManager {
             if (clientRequest != null) {
                 bgStat.setParam(CLIENT_REQ, JsonTableUtil.toJsonTableRequest(clientRequest).toJSONString());
             }
-            if (data.getRowCount() > 0)  bgStat.setFilePath(data.getTableDef().getSource());
             return bgStat;
         }
     }
+
 
 }

@@ -22,7 +22,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
@@ -70,7 +70,7 @@ public class QueryIBE extends IpacTablePartProcessor {
 
         SortInfo sortInfo = IBEUtils.getSortInfo(ibeDataSource);
         if (sortInfo != null) {
-            TableDef meta = IpacTableUtil.getMetaInfo(ofile);
+            IpacTableDef meta = IpacTableUtil.getMetaInfo(ofile);
             if (meta.getRowCount() < 100000) {
                 doSort(ofile, ofile, sortInfo, request);
             }

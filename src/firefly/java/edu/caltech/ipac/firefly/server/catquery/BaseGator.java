@@ -55,65 +55,6 @@ public abstract class BaseGator extends IpacTablePartProcessor {
     private static final int STAT_IDX = 0;
     private static final int MSG_IDX = 1;
 
-    @Override
-    public ServerRequest inspectRequest(ServerRequest request) {
-        CatalogRequest req = QueryUtil.assureType(CatalogRequest.class,request.cloneRequest());
-        // if hydra, check against additional catalogs
-//        try {
-////            CatalogTag cTag = null;
-//            String projectId = req.getParam("projectId");
-//            if (!StringUtils.isEmpty(projectId)) {
-//                String projectName = req.getParam(CatalogRequest.CATALOG_PROJECT);
-////                ProjectTag pTag = DynConfigManager.getInstance().getCachedProject(projectId);
-////                List<CatalogTag> cList = pTag.getCatalogs();
-//                List<CatalogTag> cList= Collections.emptyList()
-//                for (CatalogTag c : cList) {
-//                    if (projectName.equals(c.getName())) {
-//                        cTag = c;
-//
-//                        // set request params from configured catalog info
-//                        req.setGatorHost(c.getHost());
-//                        req.setDDOnList(false);
-//
-//                        Map<String, String> paramMap = c.getSearchParams();
-//                        if (paramMap.size() > 0) {
-//                            // set additional request params with data obtained from master catalog query
-//                            DataGroup dGrp = null;
-//                                dGrp = CatMasterTableQuery.getBaseGatorData(c.getOriginalFilename());
-//
-//                            DataGroupQuery.DataFilter filter =
-//                                    new DataGroupQuery.DataFilter("catname", DataGroupQuery.OpType.EQUALS, req.getQueryCatName());
-//
-//                            ArrayList<DataObject> dataResults = new ArrayList<DataObject>();
-//                            CollectionUtil.filter(dGrp.values(), dataResults, filter);
-//
-//                            DataObject dObj = dataResults.get(0);
-//
-//                            Iterator iter = paramMap.entrySet().iterator();
-//                            while (iter.hasNext()) {
-//                                Map.Entry<String, String> entry = (Map.Entry) iter.next();
-//                                req.setParam(entry.getKey(), String.valueOf(dObj.getDataElement(entry.getValue())));
-//                            }
-//
-//                            if (StringUtils.isEmpty(req.getXPFFile())) {
-//                                throw new DataAccessException("xpffile does not exist for this catalog!");
-//                            }
-//                        }
-//
-//                        break;
-//                    }
-//                }
-//            }
-////            if (!ServerStringUtil.isEmpty(DEF_GATOR_MISSION) && !request.containsParam(CatalogRequest.GATOR_MISSION))  {
-////                req.setGatorMission(DEF_GATOR_MISSION);
-////            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (DataAccessException e) {
-//            e.printStackTrace();
-//        }
-        return req;
-    }
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
         CatalogRequest req = QueryUtil.assureType(CatalogRequest.class, request);

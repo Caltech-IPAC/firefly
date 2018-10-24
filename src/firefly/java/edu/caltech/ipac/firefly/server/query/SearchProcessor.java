@@ -26,7 +26,6 @@ import java.util.SortedSet;
  */
 public interface SearchProcessor<Type> {
 
-    ServerRequest inspectRequest(ServerRequest request);
     String getUniqueID(ServerRequest request);
     Type getData(ServerRequest request) throws DataAccessException;
     FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException;
@@ -41,23 +40,6 @@ public interface SearchProcessor<Type> {
 //====================================================================
 
     Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
-
-    static ServerRequest inspectRequestDef(ServerRequest request) {
-        TableServerRequest req = (TableServerRequest) request;
-        String doPadding = req.getMeta("padResults");
-        if (Boolean.parseBoolean(doPadding)) {
-            // if we need to pad the results, change the request.
-            req = (TableServerRequest) req.cloneRequest();
-            int start = Math.max(req.getStartIndex() - 50, 0);
-            req.setStartIndex(start);
-            req.setPageSize(req.getPageSize() + 100);
-            ((TableServerRequest)request).setStartIndex(start);   // the original request needs to be modify as well.
-            return req;
-        } else {
-            return request;
-        }
-
-    }
 
     /**
      * return the unique ID for the original data set of this request.  This means parameters related

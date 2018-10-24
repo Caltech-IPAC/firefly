@@ -250,8 +250,8 @@ public class IpacTableUtil {
     }
 
 
-    public static  TableDef createColumnDefs(String line) {
-        TableDef tableDef = new TableDef();
+    public static IpacTableDef createColumnDefs(String line) {
+        IpacTableDef tableDef = new IpacTableDef();
         ArrayList<DataType> cols = new ArrayList<DataType>();
         if (line != null && line.startsWith("|")) {
             String[] names = parseHeadings(line.trim());
@@ -287,7 +287,7 @@ public class IpacTableUtil {
             for (int i = 0; i < types.length; i++) {
                 String typeDesc = types[i].trim();
                 cols.get(i).setTypeDesc(typeDesc);
-                cols.get(i).setDataType(DataType.parseDataType(typeDesc));
+                cols.get(i).setDataType(DataType.descToType(typeDesc));
             }
         }
     }
@@ -352,7 +352,7 @@ public class IpacTableUtil {
      * @param line
      * @return
      */
-    public static DataObject parseRow(DataGroup source, String line, TableDef tableDef) {
+    public static DataObject parseRow(DataGroup source, String line, IpacTableDef tableDef) {
         if (line==null) return null;
         DataType[] headers = source.getDataDefinitions();
         int offset=0, endOfLine=0, endoffset=0;
@@ -427,7 +427,7 @@ public class IpacTableUtil {
         return retval;
     }
 
-    public static TableDef getMetaInfo(File inf) throws IOException {
+    public static IpacTableDef getMetaInfo(File inf) throws IOException {
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(inf), FILE_IO_BUFFER_SIZE);
@@ -437,11 +437,11 @@ public class IpacTableUtil {
         }
     }
 
-    public static TableDef getMetaInfo(BufferedReader reader) throws IOException {
+    public static IpacTableDef getMetaInfo(BufferedReader reader) throws IOException {
         return doGetMetaInfo(reader, null);
     }
 
-    private static TableDef doGetMetaInfo(BufferedReader reader, File src) throws IOException {
+    private static IpacTableDef doGetMetaInfo(BufferedReader reader, File src) throws IOException {
         int nlchar = findLineSepLength(reader);
 
         List<DataGroup.Attribute> attribs = new ArrayList<>();
@@ -449,7 +449,7 @@ public class IpacTableUtil {
 
         int lineNum = 0;
 
-        TableDef tableDef = new TableDef();
+        IpacTableDef tableDef = new IpacTableDef();
         String line = reader.readLine();
         // skip to column desc
         while (line != null) {

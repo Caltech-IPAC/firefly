@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 
 import java.io.Serializable;
@@ -155,6 +156,11 @@ public class DataObject implements Serializable, Cloneable {
     public int getIntData(String name, int def) {
         int v = getIntData(name);
         return v == Integer.MIN_VALUE ? def : v;
+    }
+
+    public float getFloat(String cname, float def) {
+        Object v = getDataElement(cname);
+        return v == null ? def : Float.parseFloat(v.toString());
     }
 
 }

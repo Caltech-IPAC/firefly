@@ -37,7 +37,6 @@ public class TableMeta implements Serializable {
     public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
     public static final String SORTABLE_TAG = "col.@.Sortable";
     public static final String FILTERABLE_TAG = "col.@.Filterable";
-    public static final String ITEMS_TAG = "col.@.Items";
     public static final String SORT_BY_TAG = "col.@.SortByCols";
     public static final String ENUM_VALS_TAG = "col.@.EnumVals";
     public static final String RELATED_COLS_TAG = "col.related";
@@ -59,7 +58,6 @@ public class TableMeta implements Serializable {
      */
     private Map<String, DataGroup.Attribute> attributes = new HashMap<>();
     private List<DataGroup.Attribute> keywords = new ArrayList<>();
-    private SelectionInfo selectInfo;
 
     public static String makeAttribKey(String tag, String colName) {
         return tag.replaceFirst("@", colName);
@@ -68,14 +66,6 @@ public class TableMeta implements Serializable {
     public void clear() {
         attributes.clear();
         keywords.clear();
-    }
-
-    public SelectionInfo getSelectInfo() {
-        return selectInfo;
-    }
-
-    public void setSelectInfo(SelectionInfo selectInfo) {
-        this.selectInfo = selectInfo;
     }
 
     public String getTblId() {

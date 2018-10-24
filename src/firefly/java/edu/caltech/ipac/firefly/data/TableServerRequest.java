@@ -167,6 +167,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
         setFilters(null);
         setPageSize(Integer.MAX_VALUE);
         setSortInfo(null);
+        setSelectInfo(null);
         removeParam(INCL_COLUMNS);
     }
 
@@ -183,21 +184,22 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     public void copyFrom(ServerRequest req) {
         super.copyFrom(req);
         if (req instanceof TableServerRequest) {
-            TableServerRequest sreq = (TableServerRequest) req;
-            pageSize = sreq.pageSize;
-            startIdx = sreq.startIdx;
-            if (sreq.filters == null) {
+            TableServerRequest treq = (TableServerRequest) req;
+            pageSize = treq.pageSize;
+            startIdx = treq.startIdx;
+            if (treq.filters == null) {
                 filters = null;
             } else {
-                filters = new ArrayList<>(sreq.filters.size());
-                filters.addAll(sreq.filters);
+                filters = new ArrayList<>(treq.filters.size());
+                filters.addAll(treq.filters);
             }
-            if (sreq.metaInfo == null) {
+            if (treq.metaInfo == null) {
                 metaInfo = null;
             } else {
-                metaInfo = new HashMap<>(sreq.metaInfo.size());
-                metaInfo.putAll(sreq.metaInfo);
+                metaInfo = new HashMap<>(treq.metaInfo.size());
+                metaInfo.putAll(treq.metaInfo);
             }
+            selectInfo = treq.selectInfo;
         }
     }
 
@@ -293,7 +295,15 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     @Override
     public ServerRequest cloneRequest() {
         TableServerRequest tsr = (TableServerRequest) super.cloneRequest();
-        tsr.setSelectInfo(getSelectInfo());
+        try {
+            tsr.pageSize = pageSize;
+            tsr.startIdx = startIdx;
+            tsr.filters = filters == null ? null : new ArrayList<>(filters);
+            tsr.metaInfo = metaInfo == null ? null : new HashMap<>(metaInfo);
+            tsr.selectInfo = selectInfo == null ? null : (SelectionInfo) selectInfo.clone();
+        } catch (CloneNotSupportedException e) {
+            // ignore.. should not happen
+        }
         return tsr;
     }
 

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Date: Nov 2, 2007
@@ -23,7 +24,6 @@ import java.util.Map;
  * @version $Id: StringUtils.java,v 1.32 2012/11/09 03:01:31 tlau Exp $
  */
 public class StringUtils {
-
 
 
     public static enum Align {LEFT, RIGHT, MIDDLE}
@@ -61,6 +61,15 @@ public class StringUtils {
             DOUBLE_QUOTATION_MARK_3=new String (new byte[]{-30,-128,-99});
             DOUBLE_QUOTATION_MARK_4=new String (new byte[]{-30,-128,-100});
         }
+    }
+
+    /**
+     * applies the consumer's logic if v is not null or is an empty string
+     * @param v a value to check against
+     * @param f the consumer function to apply if v is not empty
+     */
+    public static <T> void applyIfNotEmpty(T v, Consumer<T> f){
+        if (!isEmpty(v)) f.accept(v);
     }
 
     public static String shrink(String s, int size) {

@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DecimationProcessor;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
-import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.IpacTableUtil;
@@ -30,7 +30,6 @@ import java.util.Arrays;
 public class IpacTableTest {
 
     private static final File ipacTable = FileLoader.resolveFile(IpacTableTest.class,  "IpacTableTest.tbl");
-    private static final File jsonResults = FileLoader.resolveFile(IpacTableTest.class,"IpacTableTest.json");
     private static TableServerRequest request;
 
     @BeforeClass
@@ -51,19 +50,14 @@ public class IpacTableTest {
 
     @Test
     public void testGetMetaInfo() throws IOException {
-        TableDef tableDef = IpacTableUtil.getMetaInfo(ipacTable);
+        IpacTableDef tableDef = IpacTableUtil.getMetaInfo(ipacTable);
         Assert.assertNotNull(tableDef);
     }
 
     @Test
     public void testJsonTableUtil() throws IOException {
-        TableDef tableDef = IpacTableUtil.getMetaInfo(ipacTable);
         DataGroup data = IpacTableReader.read(ipacTable);
-        DataGroupPart page = new DataGroupPart(tableDef, data, 0, tableDef.getRowCount());
-
-        // set fields that changes based on env to static values
-        page.getTableDef().setSource("test data");
-        // -- end
+        DataGroupPart page = new DataGroupPart(data, 0, data.size());
 
         JSONObject json = JsonTableUtil.toJsonTableModel(page, request);
         Assert.assertNotNull(json);

@@ -22,7 +22,6 @@ public class DataGroupPart implements HasAccessInfos {
                             }
     }
 
-    private TableDef tableDef;
     private DataGroup data;
     private int startRow;
     private int rowCount;
@@ -32,8 +31,7 @@ public class DataGroupPart implements HasAccessInfos {
     public DataGroupPart() {
     }
 
-    public DataGroupPart(TableDef tableDef, DataGroup data, int startRow, int rowCount) {
-        this.tableDef = tableDef;
+    public DataGroupPart(DataGroup data, int startRow, int rowCount) {
         this.data = data;
         this.startRow = startRow;
         setRowCount(rowCount);
@@ -49,14 +47,6 @@ public class DataGroupPart implements HasAccessInfos {
 
     public int getRowCount() {
         return rowCount;
-    }
-
-    public TableDef getTableDef() {
-        return tableDef;
-    }
-
-    public void setTableDef(TableDef tableDef) {
-        this.tableDef = tableDef;
     }
 
     public void setRowCount(int rowCount) {

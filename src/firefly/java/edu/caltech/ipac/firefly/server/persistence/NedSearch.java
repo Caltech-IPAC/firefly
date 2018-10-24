@@ -13,7 +13,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.IpacTableDef;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +56,7 @@ public class NedSearch extends QueryByConeSearchURL {
 //
 //            DataGroup extra = new DataGroup();
 
-            TableDef tableDef = IpacTableUtil.getMetaInfo(dgFile);
+            IpacTableDef tableDef = IpacTableUtil.getMetaInfo(dgFile);
 
             DataType linkNed = new DataType(linkColName, String.class);
             resDg.addDataDefinition(linkNed);

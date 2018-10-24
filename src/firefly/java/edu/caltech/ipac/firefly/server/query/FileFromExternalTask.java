@@ -24,10 +24,6 @@ public class FileFromExternalTask implements SearchProcessor<FileInfo> {
 
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
-    }
-
     public String getUniqueID(ServerRequest request) {
         String uid = request.getRequestId() + "-";
 
