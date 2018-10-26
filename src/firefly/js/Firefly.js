@@ -6,10 +6,10 @@ import 'babel-polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {set, get} from 'lodash';
+import {set, get, defer} from 'lodash';
 import 'styles/global.css';
 
-import {APP_LOAD, dispatchAppOptions} from './core/AppDataCntlr.js';
+import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
@@ -208,6 +208,9 @@ function bootstrap(props, options) {
 
             resolve && resolve();
         });
+    }).then(() => {
+        // when all is done.. mark app as 'ready'
+        defer(() => dispatchUpdateAppData({isReady: true}));
     });
 }
 
