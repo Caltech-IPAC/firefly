@@ -66,8 +66,8 @@ function creator(initPayload) {
     const options= {
         canUseMouse:true,
         canHighlight:true,
-        canFilter: true,
-        canSelect: true,
+        canFilter: !!tbl_id,
+        canSelect: !!tbl_id,
         canUserChangeColor: ColorChangeType.DYNAMIC,
         hasPerPlotData: true,
         destroyWhenAllDetached: true,
