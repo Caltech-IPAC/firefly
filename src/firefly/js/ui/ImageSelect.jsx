@@ -37,9 +37,11 @@ export class ImageSelect extends PureComponent {
         const filterMission = toFilterSelectAry(groupKey, 'mission');
         const filterProjectType = toFilterSelectAry(groupKey, 'projectType');
         const filterwaveBand = toFilterSelectAry(groupKey, 'waveBand');
+        const filterWaveType = toFilterSelectAry(groupKey, 'waveType');
 
         filteredImageData = filterMission.length > 0 ? filteredImageData.filter( (d) => filterMission.includes(d.missionId)) : filteredImageData;
         filteredImageData = filterProjectType.length > 0 ? filteredImageData.filter( (d) => filterProjectType.includes(d.projectTypeKey)) : filteredImageData;
+        filteredImageData = filterWaveType.length > 0 ? filteredImageData.filter( (d) => filterWaveType.includes(d.waveType)) : filteredImageData;
         if (filterwaveBand.length > 0) {
             // filtering by waveband
             const projWithWB = uniq(filteredImageData.filter( (d) => filterwaveBand.includes(d.wavelength)).map( (d) => d.project));  // may contains duplicates..
@@ -158,6 +160,7 @@ function FilterPanelView({onChange, imageMasterData}) {
     const projectTypes = toFilterSummary(forSummary, 'projectTypeKey', 'projectTypeDesc');
     const sortedImageData = sortBy(imageMasterData, (item) => parseFloat(item.wavelength));
     const waveBands = toFilterSummary(sortedImageData, 'wavelength', 'wavelengthDesc');
+    const waveType = toFilterSummary(forSummary, 'waveType', 'waveType');
     return (
         <div className='FilterPanel__view'>
             <CollapsiblePanel componentKey='missionFilter' header='MISSION:' isOpen={true}>
@@ -166,9 +169,12 @@ function FilterPanelView({onChange, imageMasterData}) {
             <CollapsiblePanel componentKey='projectTypesFilter' header='PROJECT TYPE:' isOpen={true}>
                 <FilterSelect {...{onChange, type:'projectType', dataList: projectTypes}}/>
             </CollapsiblePanel>
-            <CollapsiblePanel componentKey='waveBandsFilter' header='WAVEBAND:' isOpen={true}>
-                <FilterSelect {...{onChange, type:'waveBand', dataList: waveBands}}/>
+            <CollapsiblePanel componentKey='waveTypesFilter' header='BAND:' isOpen={true}>
+                <FilterSelect {...{onChange, type:'waveType', dataList: waveType}}/>
             </CollapsiblePanel>
+           {/* <CollapsiblePanel componentKey='waveBandsFilter' header='WAVEBAND:' isOpen={false}>
+                <FilterSelect {...{onChange, type:'waveBand', dataList: waveBands}}/>
+            </CollapsiblePanel>*/}
 
         </div>
     );
@@ -190,7 +196,7 @@ class FilterSelect extends PureComponent {
     }
 
     render() {
-        const {type, dataList, onChange, maxShown=3} = this.props;
+        const {type, dataList, onChange, maxShown=6} = this.props;
         const {showExpanded} = this.state;
         const fieldKey= `Filter_${type}`;
         const options = toFilterOptions(dataList);
