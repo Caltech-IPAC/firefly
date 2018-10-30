@@ -98,23 +98,34 @@ function getContexInfo() {
 /*-----------------------------------------------------------------------------------------*/
 /* search panel used in drop-down                                                          */
 /*-----------------------------------------------------------------------------------------*/
-export function ImageSearchDropDown({gridSupport}) {
-    const {plotId, viewerId, multiSelect} = getContexInfo();
+
+function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
+    const resize = resizable ? {resize: 'both', overflow: 'hidden', paddingBottom: 5} : {};
+    const dim = {height: 600, width: 725, minHeight: 500, minWidth: 600};
 
     return (
-        <FormPanel  inputStyle = {{width: 780, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
-                    submitBarStyle = {{padding: '0 4px 3px'}}
-                    groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
-                    params = {{hideOnInvalid: false}}
-                    onSubmit = {(request) => onSearchSubmit({request, plotId, viewerId, gridSupport})}
-                    onError = {searchFailed}
-                    onCancel = {dispatchHideDropDown}
-                    help_id = {'basics.searching'}>
-            <ImageSearchPanelV2 {...{multiSelect, archiveName}}/>
-            {gridSupport && <GridSupport/>}
-        </FormPanel>
+        <div style={{...resize, ...dim}}>
+            <FormPanel  inputStyle = {{display: 'flex', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+                        submitBarStyle = {{flexShrink: 0, padding: '0 4px 3px'}}
+                        groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
+                        params = {{hideOnInvalid: false}}
+                        submitText={submitText}
+                        onSubmit = {onSubmit}
+                        onError = {searchFailed}
+                        onCancel = {dispatchHideDropDown}
+                        help_id = {'basics.searching'}>
+                <ImageSearchPanelV2 {...{multiSelect, archiveName}}/>
+                {gridSupport && <GridSupport/>}
+            </FormPanel>
+        </div>
     );
+}
+
+export function ImageSearchDropDown({gridSupport, resizable=true}) {
+    const {plotId, viewerId, multiSelect} = getContexInfo();
+    const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport});
+    return <ImageSearchPanel {...{resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown}}/>;
 }
 function GridSupport() {
     return (
@@ -135,25 +146,15 @@ function GridSupport() {
 const popupId = 'ImageSelectPopup';
 export function showImageSelPanel(popTitle) {
     const {plotId, viewerId, multiSelect} = getContexInfo();
-    const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
 
     const onSubmit = (request) => {
         onSearchSubmit({request, plotId, viewerId}) && dispatchHideDialog(popupId);
     };
+    const onCancel = () => dispatchHideDialog(popupId);
 
     const popup = (
         <PopupPanel title={popTitle}>
-            <FormPanel  inputStyle = {{width: 700, backgroundColor: 'transparent', padding: 'none', border: 'none'}}
-                        submitBarStyle = {{padding: '0 4px 3px'}}
-                        style = {{padding: '0 2px'}}
-                        groupKey = {Object.values(FG_KEYS)}
-                        includeUnmounted={true}
-                        submitText='Load'
-                        onSubmit = {onSubmit}
-                        onError = {searchFailed}
-                        onCancel = {() => dispatchHideDialog(popupId)}>
-                <ImageSearchPanelV2 {...{title:'', multiSelect, archiveName}}/>
-            </FormPanel>
+            <ImageSearchPanel {...{resizable:true, gridSupport:false, submitText: 'Load', onSubmit, onCancel}}/>
         </PopupPanel>
     );
 
@@ -229,7 +230,7 @@ export class ImageSearchPanelV2 extends PureComponent {
             );
         } else if (imageMasterData) {
             return (
-                <div>
+                <div className='flex-full'>
                     <div className='ImageSearch__title'>{title}</div>
                     <ImageType/>
                     {isThreeColor && <ThreeColor {...{imageMasterData, multiSelect, archiveName}}/>}
@@ -252,8 +253,8 @@ ImageSearchPanelV2.propTypes = {
 
 function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName}) {
     return (
-        <div style={{width:'100%'}}>
-            <FieldGroup groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
+        <div className='flex-full'>
+            <FieldGroup className='flex-full' groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
                 <ImageSource {...{groupKey, imageMasterData, multiSelect, archiveName}}/>
             </FieldGroup>
         </div>
@@ -263,7 +264,7 @@ function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName}) {
 function ThreeColor({imageMasterData, multiSelect, archiveName}) {
 
     return (
-        <div style={{marginTop: 5}}>
+        <div className='flex-full' style={{marginTop: 5}}>
             <Tabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true} borderless={true}
                   contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
                   headerStyle={{display:'inline-flex', justifyContent:'center'}}>
@@ -283,8 +284,8 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
 
 function HiPSImage({groupKey, archiveName}) {
     return (
-        <div style={{width:'100%'}}>
-            <FieldGroup groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
+        <div className='flex-full' style={{flexGrow: 1}}>
+            <FieldGroup className='flex-full' groupKey={groupKey} reducerFunc={mainReducer} keepState={true}>
                 <ImageSource {...{groupKey, archiveName}}/>
             </FieldGroup>
         </div>
@@ -335,7 +336,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
     const imageSource = getFieldVal(groupKey, FD_KEYS.source, defaultValue);
 
     return (
-        <div>
+        <div className='flex-full'>
             <div className='ImageSearch__section'>
                 <div className='ImageSearch__section--title'>2. Select Image Source</div>
                 <RadioGroupInputField
@@ -354,7 +355,6 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 
 function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const title = '4. Select Data Set';
-    const style = {width: '100%', height: 350};
     const targetStyle = {height: 40};
     const sizeStyle = {margin: '-5px 0 0 36px'};
     const isHips = isHipsImgType();
@@ -367,10 +367,10 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const initUnit = isHips ? 'deg' : 'arcsec';
 
     return (
-        <div>
+        <div className='flex-full'>
             <div className='ImageSearch__section'>
                 <div className='ImageSearch__section--title'>3. Select Target</div>
-                <div>
+                <div className='flex-full'>
                     <TargetPanel labelWidth={isHips?150:100} feedbackStyle={targetStyle}
                                  label={isHips?'Name or Position (optional):' :'Name or Position:' }
                                  nullAllowed={true} />
@@ -389,12 +389,22 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
                     />
                 </div>
             </div>
-            <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset'}}>
+            <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexShrink: 1, flexGrow: 1}}>
                 <div className='ImageSearch__section--title'>4. Select Data Set</div>
                 {!isHips ?
-                <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, style, addChangeListener, imageMasterData, multiSelect}} /> :
-                <HiPSImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, style}} />
+                <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect}} /> :
+                <HiPSSelect groupKey={groupKey} />
                     }
+            </div>
+        </div>
+    );
+}
+
+function HiPSSelect({groupKey}) {
+    return (
+        <div className='flex-full' style={{width: '100%', position: 'relative'}}>
+            <div style={{position: 'absolute', top: 0, bottom: 0, left: 0, right: 0}}>
+                <HiPSImageSelect style={{height: '100%'}} wrapperStyle={{height: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey}} />
             </div>
         </div>
     );
