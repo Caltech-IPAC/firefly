@@ -730,10 +730,10 @@ function unselectDrawingLayer(pv,dlAry) {
 function filterDrawingLayer(pv,dlAry) {
     const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
     if (allLayers.length > 0) {
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             filterCatalog(pv, allLayers);
         }
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             filterFootprint(pv, allLayers);
         }
     }
@@ -742,10 +742,10 @@ function filterDrawingLayer(pv,dlAry) {
 function clearFilterDrawingLayer(pv,dlAry) {
     const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
     if (allLayers.length > 0) {
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             clearFilterCatalog(pv, allLayers);
         }
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             clearFilterFootprint(pv, allLayers);
         }
     }

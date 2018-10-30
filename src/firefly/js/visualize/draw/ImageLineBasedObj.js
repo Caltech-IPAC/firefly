@@ -1,7 +1,7 @@
 import Enum from 'enum';
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
-import {get, set} from 'lodash';
+import {get} from 'lodash';
 import ShapeDataObj from './ShapeDataObj.js';
 import {makePointDataObj} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
@@ -40,14 +40,15 @@ export const ImageLineBasedObj = (data) => {
 //for one footprint drawobj, one of connectedObjs in ImageLineBaseObj
 function make(id, oneFootData, pixelSys) {
     if (!oneFootData) return null;
-    const {corners, spans, peaks=[], rowIdx, ra, dec} = oneFootData;
+    const {corners, spans, peaks=[], rowIdx, rowNum, ra, dec, worldSys} = oneFootData;
 
     const obj = DrawObj.makeDrawObj();
     obj.pixelSys = pixelSys;
     obj.type = IMGFP_OBJ;
     obj.id = id;
-    obj.connectObj = ConnectedObj.make(corners, spans, peaks, id, ra, dec);
+    obj.connectObj = ConnectedObj.make(corners, spans, peaks, id, ra, dec, worldSys);
     obj.tableRowIdx = rowIdx;
+    obj.tableRowNum = rowNum;
     return obj;
 }
 
@@ -192,7 +193,7 @@ export function getImageCoordsOnFootprint(pt, cc, pixelSys) {
 export function convertConnectedObjsToDrawObjs(imageLineObj, displayMode, color,  showText, symbol, hideId) {
 
     // get rect of 'zero' regardless of the style
-    convertConnectedObjsToRectObjs(imageLineObj, false, color.hole, Style.FILL);
+    //convertConnectedObjsToRectObjs(imageLineObj, false, color.hole, Style.FILL);
     // polygon outline
     (displayMode === Style.FILL)?
         convertConnectedObjsToPolygonObjs(imageLineObj, false, color.outline, color.fill, displayMode, '', true) :
@@ -327,7 +328,7 @@ export const POINTOBJS = 'pointObjs';
 const AllObjTypes = [ONERECTS, POLYOBJS, POINTOBJS, ZERORECTS];
 
 export class ConnectedObj {
-    constructor(corners, spans, peaks, id, ra, dec) {
+    constructor(corners, spans, peaks, id, ra, dec, worldSys) {
         this.corners = corners;
         this.spans = spans;
         this.peaks = peaks;
@@ -339,7 +340,7 @@ export class ConnectedObj {
         this.x2 = Number(Math.max(corners[0][0], corners[2][0]));
         this.y2 = Number(Math.max(corners[0][1], corners[2][1]));
         this.centerPt = [(this.x1+this.x2)/2, (this.y1+this.y2)/2];
-        this.worldPt = (ra&&dec) ? makeWorldPt(ra, dec) : null;
+        this.worldPt = (ra&&dec) ? makeWorldPt(ra, dec, worldSys) : null;
         this.basicObjs = AllObjTypes.reduce((prev, oneType) => {      // all drawobj for entire footporint
             prev[oneType] = null;
             return prev;
@@ -351,8 +352,8 @@ export class ConnectedObj {
 
     }
 
-    static make(corners, data, peaks, id, ra, dec) {
-        return data ? new ConnectedObj(corners, data, peaks, id, ra, dec) : null;
+    static make(corners, data, peaks, id, ra, dec, worldSys) {
+        return data ? new ConnectedObj(corners, data, peaks, id, ra, dec, worldSys) : null;
     }
 
     getOneSegments() {

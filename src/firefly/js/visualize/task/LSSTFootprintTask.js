@@ -18,6 +18,7 @@ import {dispatchTableSearch, dispatchTableRemove, TABLE_LOADED, TABLE_SELECT,TAB
 import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/TableUtil.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {convertAngle} from '../VisUtil.js';
+import {getCenterColumns} from '../../tables/TableInfoUtil.js';
 
 
 export const isLsstFootprintTable = (tableModel, fromAnalysis = false, tbl_idx = 0) => {
@@ -56,21 +57,23 @@ export const isLsstFootprintTable = (tableModel, fromAnalysis = false, tbl_idx =
 };
 
 // columns in footprint table
-const spans = 'spans';
-const peaks = 'peaks';
-const corner1_x = 'footprint_corner1_x';
-const corner1_y = 'footprint_corner1_y';
-const corner2_x = 'footprint_corner2_x';
-const corner2_y = 'footprint_corner2_y';
-const footprintid = 'id';
+const footprintid = 0;
+const spans = 5;
+const peaks = 6;
+const corner1_x = 1;
+const corner1_y = 2;
+const corner2_x = 3;
+const corner2_y = 4;
 const table_rowidx = 'ROW_IDX';
-const ra_col = 'coord_ra';
-const dec_col = 'coord_dec';
+const table_rownum = 'ROW_NUM';
+let   ra_col = '';
+let   dec_col = '';
+const footprintColumnNamesDefault = 'id;footprint_corner1_x;footprint_corner1_y;' +
+                                    'footprint_corner2_x;footprint_corner2_y;spans;peaks';
 
 // column set
 const hiddenColumns =[spans, peaks, corner1_x, corner1_y, corner2_x, corner2_y];
-const tblIdxCols = [footprintid, table_rowidx];
-const posCols = [ra_col, dec_col];
+const tblIdxCols = [table_rowidx, table_rownum];
 
 function getFileNameFromPath(filePath) {
     return filePath.split(/(\\|\/)/g).pop().replace('.', '_');
@@ -159,8 +162,42 @@ function loadFootprintImage(imageFileOnServer, plotId) {
 }
 
 
+function assignLSSTFootprintColumnNames(tableModel) {
+    const {FootPrintColumnNames=footprintColumnNamesDefault} = tableModel.tableMeta || {};
+
+    return FootPrintColumnNames.split(';');
+}
+
+function getPixelSys(tableModel) {
+      const {pixelsys='zero-based'} = tableModel.tableMeta || {};
+      return pixelsys;
+}
+
+
 function getFootprintDataFromTable(tableModel) {
-    const allColumns = hiddenColumns.concat(posCols).concat(tblIdxCols);
+    const {data} = tableModel.tableData || {};
+
+    if (!data)  {
+        return Promise.resolve(null);
+    }
+
+    const centerCols = getCenterColumns(tableModel);
+    const hiddenColumns = assignLSSTFootprintColumnNames(tableModel);
+
+    let worldSys = null;
+    if (centerCols) {
+        if (centerCols.lonCol && centerCols.latCol && centerCols.csys) {
+            ra_col = centerCols.lonCol;
+            dec_col = centerCols.latCol;
+            worldSys = centerCols.csys;
+        }
+    }
+
+    const pixelsys = getPixelSys(tableModel);
+    const allColumns = hiddenColumns.concat(tblIdxCols);
+    if (ra_col && dec_col) {
+        allColumns.push(ra_col, dec_col);
+    }
 
     const inclCols = allColumns.map((col) => (`"${col}"`)).join(',');
 
@@ -196,7 +233,7 @@ function getFootprintDataFromTable(tableModel) {
             };
 
             const {data} = get(footprintTblModel, ['tableData']);
-            const footprintData = {pixelsys: 'zero-based', feet: {}};
+            const footprintData = {pixelsys, feet: {}};
             let   failCol = false;
             const colsIdxMap = allColumns.reduce((prev, colName) => {
                 prev[colName] = getColumnIdx(footprintTblModel, colName);
@@ -206,29 +243,33 @@ function getFootprintDataFromTable(tableModel) {
                 return prev;
             }, {});
 
-            const worldUnit = get(getColumn(footprintTblModel, ra_col), 'units', 'deg');
+            const worldUnit = ra_col&&dec_col ? get(getColumn(footprintTblModel, ra_col), 'units', 'deg') : null;
 
             if (!failCol && data) {
                 data.reduce((prev, oneFootprint) => {
-                    const id = oneFootprint[colsIdxMap[footprintid]];
-                    const c1_x = parseInt(oneFootprint[colsIdxMap[corner1_x]]);
-                    const c1_y = parseInt(oneFootprint[colsIdxMap[corner1_y]]);
-                    const c2_x = parseInt(oneFootprint[colsIdxMap[corner2_x]]);
-                    const c2_y = parseInt(oneFootprint[colsIdxMap[corner2_y]]);
-                    const spansStr = oneFootprint[colsIdxMap[spans]];
-                    const peaksStr = oneFootprint[colsIdxMap[peaks]];
-                    const ra = convertAngle(worldUnit, 'deg', Number(oneFootprint[colsIdxMap[ra_col]]));
-                    const dec = convertAngle(worldUnit, 'deg', Number(oneFootprint[colsIdxMap[dec_col]]));
+                    const id = oneFootprint[colsIdxMap[hiddenColumns[footprintid]]];
+                    const c1_x = parseInt(oneFootprint[colsIdxMap[hiddenColumns[corner1_x]]]);
+                    const c1_y = parseInt(oneFootprint[colsIdxMap[hiddenColumns[corner1_y]]]);
+                    const c2_x = parseInt(oneFootprint[colsIdxMap[hiddenColumns[corner2_x]]]);
+                    const c2_y = parseInt(oneFootprint[colsIdxMap[hiddenColumns[corner2_y]]]);
+                    const spansStr = oneFootprint[colsIdxMap[hiddenColumns[spans]]];
+                    const peaksStr = oneFootprint[colsIdxMap[hiddenColumns[peaks]]];
+                    let   ra, dec;
+                    if (worldUnit) {
+                        ra = convertAngle(worldUnit, 'deg', Number(oneFootprint[colsIdxMap[ra_col]]));
+                        dec = convertAngle(worldUnit, 'deg', Number(oneFootprint[colsIdxMap[dec_col]]));
+                    }
 
 
                     // skip no spans case
-                    if (c1_x >= 0 && c1_y >= 0 && c2_x >= 0 && c2_y >= 0 && spansStr && peaksStr && ra && dec) {
+                    if (c1_x >= 0 && c1_y >= 0 && c2_x >= 0 && c2_y >= 0 && spansStr && peaksStr) {
                         const corners = [[c1_x, c1_y], [c2_x, c1_y], [c2_x, c2_y], [c1_x, c2_y]];
-                        const spans = everyOtherData(spansStr.replace(/\(|\)|,/g, '').split(' '), 3);
-                        const peaks = everyOtherData(peaksStr.replace(/\(|\)|,/g, '').split(' '), 2, 'float');
+                        const spanSet = everyOtherData(spansStr.replace(/\(|\)|,/g, '').split(' '), 3);
+                        const peakSet = everyOtherData(peaksStr.replace(/\(|\)|,/g, '').split(' '), 2, 'float');
 
-                        prev[id] = {corners, spans, peaks, rowIdx: oneFootprint[colsIdxMap[table_rowidx]],
-                                    ra, dec};
+                        prev[id] = {corners, spans: spanSet, peaks: peakSet, rowIdx: oneFootprint[colsIdxMap[table_rowidx]],
+                                    rowNum: oneFootprint[colsIdxMap[table_rownum]],
+                                    ra, dec, worldSys};
                     }
                     return prev;
                 }, footprintData.feet);
@@ -321,6 +362,7 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
         const footprintTableId = getTableId(drawLayerId);   // table Id is uniquely derived from drawLayerId
         const tbl = getTblById(footprintTableId);
 
+        /*
         const tableRemoveWatcher = (action, canself) => {
             const {tbl_id} = action.payload;
             if (tbl_id !== footprintTableId) return;
@@ -331,7 +373,7 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
             }
 
         };
-
+        */
 
         const loadTable = () => {
             const tblReq = makeTblRequest('userCatalogFromFile', title,
@@ -372,15 +414,17 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
         };
 
         if (tbl) {
+            /*
             dispatchAddActionWatcher({
                 actions: [TABLE_REMOVE],
                 callback: tableRemoveWatcher,
                 params: {plotId, drawLayerId, footprintTableId}
             });
+            */
             dispatchTableRemove(footprintTableId);
-        } else {
-            loadTable();
         }
+        loadTable();
+
 
     });
 }
