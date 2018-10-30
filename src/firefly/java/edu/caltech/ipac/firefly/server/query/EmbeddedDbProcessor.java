@@ -78,7 +78,7 @@ import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery
  * - All column names must be enclosed in double-quotes(") to avoid reserved keywords clashes.
  *   This applies to inputs used by the database component, ie.  INCL_COLUMNS, FILTERS, SORT_INFO, etc
  */
-abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, CanGetDataFile {
+abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile, SearchProcessor.CanFetchDataGroup {
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();

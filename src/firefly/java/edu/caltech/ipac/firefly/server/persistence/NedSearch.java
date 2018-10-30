@@ -44,48 +44,32 @@ public class NedSearch extends QueryByConeSearchURL {
 
 
     @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        DataGroup resDg = super.fetchDataGroup(req);
+        String url = "http://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%s&extend=no&list_limit=5&img_stamp=YES";
 
-        File dgFile = super.loadDataFile(request);
-        try {
-            String url = "http://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%s&extend=no&list_limit=5&img_stamp=YES";
-            DataGroup resDg = IpacTableReader.read(dgFile);
-//            DataType[] extraDef = new DataType[resDg.getDataDefinitions().length+1];
-//
-//            for ()
-//
-//            DataGroup extra = new DataGroup();
+        DataType linkNed = new DataType(linkColName, String.class);
+        resDg.addDataDefinition(linkNed);
 
-            IpacTableDef tableDef = IpacTableUtil.getMetaInfo(dgFile);
-
-            DataType linkNed = new DataType(linkColName, String.class);
-            resDg.addDataDefinition(linkNed);
-
-            String colname = NED_OBJECT_NAME;
-            for (int r = 0; r < resDg.size(); r++) {
+        String colname = NED_OBJECT_NAME;
+        for (int r = 0; r < resDg.size(); r++) {
                 DataObject row = resDg.get(r);
                 String oname = String.valueOf(row.getDataElement(colname));
-                String newOname = URLEncoder.encode(oname, "UTF-8");
-                String nedUrl = url.replace("%s", newOname);
+                String encodedOname = oname;
+                try {
+                    encodedOname = URLEncoder.encode(oname, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    // ignore and use value as is.
+                }
+                String nedUrl = url.replace("%s", encodedOname);
                 String descLink = oname + " details";
                 String sval = "<a target=\"_blank\" href=\"" + nedUrl + "\">" + descLink + "</a>";
                 row.setDataElement(linkNed, sval);
-            }
-
-
-            for(DataGroup.Attribute att : tableDef.getAttributeList()) {
-                if (resDg.getAttribute(att.getKey()) == null) {
-                    // add all missing meta
-                    resDg.addAttribute(att.getKey(), att.getValue());
-                }
-            }
-
-            IpacTableWriter.save(dgFile, resDg);
-        } catch (IOException e) {
-            throw new DataAccessException("Can't add extra column to Ned table", e);
         }
-        return dgFile;
+
+        return resDg;
     }
+
 
     /*
     @Override

@@ -133,10 +133,6 @@ public class VotableTest extends ConfigTest {
         Assert.assertEquals("N 6744", getPathValue(tm, "tableData", "data", "1", "2" ));
         Assert.assertEquals("0.7", getPathValue(tm, "tableData", "data", "2", "5" ));
 
-        // test table's meta info
-        Assert.assertEquals("table-info-value", getPathValue(tm, "tableMeta", "table-info"));
-        Assert.assertEquals("table-info-value2", getPathValue(tm, "tableMeta", "table-info2"));
-
         // test column info
         JSONObject col6 = (JSONObject) getPathValue(tm, "tableData", "columns", "5");
         Assert.assertEquals("col6", col6.get("ID"));
@@ -151,7 +147,25 @@ public class VotableTest extends ConfigTest {
         Assert.assertEquals("query", links.get(0).get("role"));
         Assert.assertEquals("http://ivoa.spectr/server?obsno=${Name}", links.get(0).get("href"));
 
-        // test table's aux data info
+        // test table's meta info
+        Assert.assertEquals("table-info-value", getPathValue(tm, "tableMeta", "table-info"));
+        Assert.assertEquals("table-info-value2", getPathValue(tm, "tableMeta", "table-info2"));
+
+        // table params
+        JSONObject param = (JSONObject) getPathValue(tm, "params", "0");
+        Assert.assertEquals("Telescope", param.get("name"));
+        Assert.assertEquals("float", param.get("type"));
+        Assert.assertEquals("phys.size;instr.tel", param.get("UCD"));
+        Assert.assertEquals("m", param.get("units"));
+        Assert.assertEquals("3.6", param.get("value"));
+
+        // table links
+        JSONObject link1 = (JSONObject) getPathValue(tm, "links", "0");
+        Assert.assertEquals("query", link1.get("role"));
+        Assert.assertEquals("myQuery?-source=myGalaxies&", link1.get("href"));      // html characters decoded
+        Assert.assertNull(link1.get("title"));
+
+        // table groups info
         JSONObject group1 = (JSONObject) getPathValue(tm, "groups", "0");
         Assert.assertNotNull(group1);
         Assert.assertEquals("J2000", group1.get("ID"));
@@ -161,11 +175,11 @@ public class VotableTest extends ConfigTest {
         Assert.assertEquals("col2", getPathValue(group1, "columnRefs", "1", "ref"));
 
         // paramRefs
-        Assert.assertEquals("param1", getPathValue(tm, "groups", "0", "paramRefs", "0", "ref"));
-        Assert.assertEquals("made.up.value", getPathValue(tm, "groups", "0", "paramRefs", "0", "UCD"));
+        Assert.assertEquals("param1", getPathValue(group1, "paramRefs", "0", "ref"));
+        Assert.assertEquals("made.up.value", getPathValue(group1, "paramRefs", "0", "UCD"));
 
         // params
-        JSONObject param1 = (JSONObject) getPathValue(tm, "groups", "0", "params", "0");
+        JSONObject param1 = (JSONObject) getPathValue(group1, "params", "0");
         Assert.assertNotNull(param1);
         Assert.assertEquals("cooframe", param1.get("name"));
         Assert.assertEquals("pos.frame", param1.get("UCD"));

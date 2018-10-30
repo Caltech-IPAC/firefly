@@ -7,13 +7,17 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.SortedSet;
@@ -70,4 +74,30 @@ public interface SearchProcessor<Type> {
                 "from", isCached, "params", CollectionUtil.toString(params, ","));
     }
 
+
+//====================================================================
+// public interfaces
+//====================================================================
+
+    interface CanFetchDataGroup {
+
+        /**
+         * Fetches the data for the given search request.  This method should perform a fetch for fresh
+         * data.  Caching should not be performed here.
+         *
+         * @param req Table request object
+         * @return
+         * @throws DataAccessException
+         */
+        public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException;
+    }
+
+
+    /**
+     * Date: 9/13/17
+     *
+     */
+    interface CanGetDataFile {
+        File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException;
+    }
 }

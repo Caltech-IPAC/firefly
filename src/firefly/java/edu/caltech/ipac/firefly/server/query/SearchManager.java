@@ -124,8 +124,8 @@ public class SearchManager {
         SearchProcessor processor = getProcessor(request.getRequestId());
         if (processor != null) {
             try {
-                if (processor instanceof CanGetDataFile) {
-                    File dgFile = ((CanGetDataFile)processor).getDataFile(request);
+                if (processor instanceof SearchProcessor.CanGetDataFile) {
+                    File dgFile = ((SearchProcessor.CanGetDataFile)processor).getDataFile(request);
                     // page size will not be taken into account
                     return new FileInfo(dgFile);
                 } else {
