@@ -236,21 +236,44 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             const {changes} = action.payload;
             const {fillStyle, selectInfo, highlightedRow, selectRowIdxs,
-                   tableRequest, tableData, imageLineBasedFP} = changes;
+                   tableRequest, tableData, imageLineBasedFP, tbl_id} = changes;
             const pId = plotId ? plotId : (plotIdAry ? plotIdAry[0]: null);
 
             if (!pId) return null;
 
+            const drawingDefChanges = clone(drawLayer.drawingDef);
             if (fillStyle) {
                 const style = fillStyle.includes('outline') ? Style.STANDARD : Style.FILL;
                 const showText = fillStyle.includes('text');
-                const drawingDef = clone(drawLayer.drawingDef, {style, showText});
+                Object.assign(drawingDefChanges, {style, showText});
 
                 set(dd, [DataTypes.DATA, pId], null);
-                return Object.assign({}, {drawingDef, drawData: dd});
+                return Object.assign({}, {drawingDef: drawingDefChanges, drawData: dd});
             }
 
+            const {title=drawLayer.title,
+                   style, color, showText, selectColor, highlightColor} = changes;
+
             const changesUpdate = {};
+
+            if (title) {
+                Object.assign(changesUpdate, {title});
+            }
+            if (style) {
+                drawingDefChanges.style = (style.toLowerCase() === 'fill') ? Style.FILL : Style.STANDARD;
+            }
+            if (!isUndefined(showText)) {
+                Object.assign(drawingDefChanges, {showText});
+            }
+            if (!isUndefined(selectColor)) {
+                Object.assign(drawingDefChanges, {selectColor});
+            }
+            if (!isUndefined(highlightColor)) {
+                Object.assign(drawingDefChanges, {highlightColor});
+            }
+            if (!isUndefined(color)) {
+                Object.assign(drawingDefChanges, {color});
+            }
 
             if (tableData) {    // from watcher on TABLE_LOADED
                 set(dd, [DataTypes.DATA, pId], null);
@@ -260,11 +283,13 @@ function getLayerChanges(drawLayer, action) {
                 Object.assign(changesUpdate, {tableRequest});
             }
 
+            if (tbl_id && (tbl_id !== drawLayer.tbl_id)) {
+                Object.assign(changesUpdate, {tbl_id});
+            }
 
             if (imageLineBasedFP) {
                 Object.assign(changesUpdate, {imageLineBasedFP});
             }
-
 
             if (selectInfo) {   // from dispatch TableSelect, watcher on TABLE_SELECT or TABLE_LOADED
                 const selectInfoCls = SelectInfo.newInstance(selectInfo);
@@ -272,7 +297,7 @@ function getLayerChanges(drawLayer, action) {
                 if (tableData && count === 0) {  // from table sort or table filter
                     Object.assign(changesUpdate, {selectRowIdxs: {}});
                 } else {
-                    const crtRowIdxs = updateSelectRowIdx(drawLayer, selectInfo);
+                    const crtRowIdxs = updateSelectRowIdx(drawLayer, selectInfo, tbl_id);
                     Object.assign(changesUpdate, {selectRowIdxs: crtRowIdxs});
                }
                set(dd, [DataTypes.SELECTED_IDXS], null);    // no plotId involved
@@ -289,7 +314,7 @@ function getLayerChanges(drawLayer, action) {
                 Object.assign(changesUpdate, {selectRowIdxs});
             }
 
-            return Object.assign({}, changesUpdate, {drawData: dd});
+            return Object.assign({}, changesUpdate, {drawingDef: drawingDefChanges}, {drawData: dd});
 
         case DrawLayerCntlr.REGION_SELECT:
             const {selectedRegion} = action.payload;
@@ -316,8 +341,9 @@ function getLayerChanges(drawLayer, action) {
     }
 }
 
-function updateSelectRowIdx(drawLayer, selectInfo) {
-    const {tbl_id, selectRowIdxs} = drawLayer;
+function updateSelectRowIdx(drawLayer, selectInfo, tbl_id) {
+    const {selectRowIdxs} = drawLayer;
+    tbl_id = tbl_id ? tbl_id : drawLayer.tbl_id;
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
     const selected = selectInfoCls.getSelected();
     const tbl = getTblById(tbl_id);

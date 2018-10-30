@@ -13,7 +13,7 @@ import {makeTblRequest, cloneRequest, MAX_ROW} from '../../tables/TableRequestUt
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchTableSearch, TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE}
+import {dispatchTableSearch, dispatchTableRemove, TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE}
                 from '../../tables/TablesCntlr.js';
 import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/TableUtil.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
@@ -91,6 +91,7 @@ export function imageLineBasedfootprintActionCreator(action) {
                title, style='fill', color, selectColor, highlightColor, showText, plotId} = action.payload;
         const fpParams = {title, style, color, selectColor, highlightColor, showText};
         let   imagePlotId = isArray(plotId) ? plotId[0] : plotId;
+        let   tbl_id;
 
         if (!drawLayerId) {
             logError('no lsst drawlayer id specified');
@@ -113,9 +114,10 @@ export function imageLineBasedfootprintActionCreator(action) {
 
         const getFootprintData = (footprintFile, pId, tbl_index = 0) => {
             loadFootprintTable(footprintFile, pId, drawLayerId, tbl_index, title).then((tableModel) => {
+                tbl_id = tableModel.tbl_id;
                 return getFootprintDataFromTable(tableModel);
             }).then((fpData) => {
-                initFootprint(fpData, drawLayerId, pId, fpParams);
+                initFootprint(fpData, drawLayerId, tbl_id, pId, fpParams);
             });
         };
 
@@ -126,7 +128,7 @@ export function imageLineBasedfootprintActionCreator(action) {
                 if (footprintFile) {
                     getFootprintData(footprintFile, plotId, tbl_index);
                 } else if (footprintData) {
-                    initFootprint(footprintData, drawLayerId, plotId, fpParams);
+                    initFootprint(footprintData, drawLayerId, tbl_id, plotId, fpParams);
                 }
                 if (cancelSelf) {
                     cancelSelf();
@@ -141,7 +143,7 @@ export function imageLineBasedfootprintActionCreator(action) {
         } else if (footprintFile) {
             getFootprintData(footprintFile, imagePlotId, tbl_index);
         } else if (footprintData) {
-            initFootprint(footprintData, drawLayerId, imagePlotId, fpParams);
+            initFootprint(footprintData, drawLayerId, tbl_id, imagePlotId, fpParams);
         }
     };
 }
@@ -243,11 +245,11 @@ function getFootprintDataFromTable(tableModel) {
 }
 
 
-function initFootprint(footprintData, drawLayerId, plotId, footprintParams) {
+function initFootprint(footprintData, drawLayerId, tbl_id, plotId, footprintParams) {
     const imageLineBasedFP = ImageLineBasedObj(footprintData);
     const {title, style, color, showText, selectColor, highlightColor} = footprintParams || {};
-    const sourceTable = getTblById(drawLayerId);
-    const {highlightedRow, selectInfo, request, tbl_id, tableData} = sourceTable || {};
+    const sourceTable = getTblById(tbl_id);
+    const {highlightedRow, selectInfo, request, tableData} = sourceTable || {};
 
     if (!isEmpty(imageLineBasedFP)) {
         const dl = getDrawLayerById(getDlAry(), drawLayerId);
@@ -263,14 +265,15 @@ function initFootprint(footprintData, drawLayerId, plotId, footprintParams) {
                 dispatchAttachLayerToPlot(drawLayerId, plotId, false);    // only one plot is attached
             }
         } else {
-            dispatchModifyCustomField(tbl_id,
+            dispatchModifyCustomField(drawLayerId,
                     {tableData, imageLineBasedFP,
+                     title, style, color, showText, selectColor, highlightColor,
                      highlightedRow, selectInfo,  tableRequest: request, tbl_id}, plotId);
         }
     }
 }
 
-const footprintTableWatcher = (action, cancelSelf, params) => {
+const footprintTableWatcher = (action, cancelself, params) => {
     const {tbl_id} = action.payload;
     const {plotId, drawLayerId, footprintTableId} = params || {};
 
@@ -278,23 +281,32 @@ const footprintTableWatcher = (action, cancelSelf, params) => {
 
     switch(action.type) {
         case TABLE_UPDATE:
-             handleFootprintUpdate(tbl_id, drawLayerId, plotId);
+             handleFootprintUpdate(tbl_id, drawLayerId, plotId);  // from filter, sort
             break;
 
         case TABLE_SELECT:
-            dispatchModifyCustomField(tbl_id, {selectInfo: action.payload.selectInfo}, plotId);
+            dispatchModifyCustomField(drawLayerId, {selectInfo: action.payload.selectInfo}, plotId);
             break;
 
         case TABLE_HIGHLIGHT:
-            dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow}, plotId);
+            dispatchModifyCustomField(drawLayerId, {highlightedRow:action.payload.highlightedRow}, plotId);
             break;
 
         case TABLE_REMOVE:
             dispatchDestroyDrawLayer(drawLayerId);
+            if (cancelself) {
+                cancelself();
+            }
             break;
 
     }
 };
+
+function getTableId(dlId) {
+    const tbl_id = dlId;
+    return tbl_id;
+}
+
 
 function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_index, tableTitle) {
 
@@ -306,37 +318,70 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
             prev[colKey] = 'hidden';
             return prev;
         }, {});
-        const footprintTableId = drawLayerId;   // table Id is the same as drawLayerId
-        const tblReq = makeTblRequest('userCatalogFromFile', title,
-                                        { filePath: footprintFileOnServer},
-                                        { tbl_id: footprintTableId,
-                                          META_INFO: hiddenColumnMeta,
-                                          removable: true,
-                                          pageSize: 200
-                                        });
+        const footprintTableId = getTableId(drawLayerId);   // table Id is uniquely derived from drawLayerId
+        const tbl = getTblById(footprintTableId);
 
-        if (!isUndefined(tbl_index)) {
-            tblReq.tbl_index = tbl_index;
-        }
-
-        const loadFootprintTableWatcher = (action, canself) => {
+        const tableRemoveWatcher = (action, canself) => {
             const {tbl_id} = action.payload;
             if (tbl_id !== footprintTableId) return;
 
-            const tableModel = getTblById(tbl_id);
-            dispatchAddActionWatcher({
-                    actions: [TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE],
-                    callback: footprintTableWatcher,
-                    params: {plotId, drawLayerId, footprintTableId}
-            });
-            resolve(tableModel);
+            loadTable();
             if (canself) {
                 canself();
             }
+
         };
 
-        dispatchAddActionWatcher({actions: [TABLE_LOADED], callback: loadFootprintTableWatcher});
-        dispatchTableSearch(tblReq);
+
+        const loadTable = () => {
+            const tblReq = makeTblRequest('userCatalogFromFile', title,
+                {filePath: footprintFileOnServer},
+                {
+                    tbl_id: footprintTableId,
+                    META_INFO: hiddenColumnMeta,
+                    removable: true,
+                    pageSize: 200
+                });
+
+            if (!isUndefined(tbl_index)) {
+                tblReq.tbl_index = tbl_index;
+            }
+
+            const loadFootprintTableWatcher = (action, canself) => {
+                const {tbl_id} = action.payload;
+                if (tbl_id !== footprintTableId) return;
+
+                const tableModel = getTblById(tbl_id);
+                dispatchAddActionWatcher({
+                    actions: [TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE],
+                    callback: footprintTableWatcher,
+                    params: {plotId, drawLayerId, footprintTableId}
+                });
+                resolve(tableModel);
+                if (canself) {
+                    canself();
+                }
+            };
+
+            dispatchAddActionWatcher({
+                actions: [TABLE_LOADED],
+                callback: loadFootprintTableWatcher,
+                params: {plotId, drawLayerId, footprintTableId}
+            });
+            dispatchTableSearch(tblReq);
+        };
+
+        if (tbl) {
+            dispatchAddActionWatcher({
+                actions: [TABLE_REMOVE],
+                callback: tableRemoveWatcher,
+                params: {plotId, drawLayerId, footprintTableId}
+            });
+            dispatchTableRemove(footprintTableId);
+        } else {
+            loadTable();
+        }
+
     });
 }
 
@@ -344,7 +389,7 @@ function handleFootprintUpdate(tbl_id, drawLayerId, plotId) {
     const sourceTable = getTblById(tbl_id);
 
     getFootprintDataFromTable(sourceTable).then((fpData) => {
-        initFootprint(fpData, drawLayerId, plotId, null);
+        initFootprint(fpData, drawLayerId, tbl_id, plotId, null);
     }).catch (
         (reason) => {
             logError(reason);

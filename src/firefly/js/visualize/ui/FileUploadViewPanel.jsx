@@ -24,12 +24,13 @@ import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppHiPSForMoc, addNewMocLayer} from '../HiPSMocUtil.js';
-import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getDrawLayersByType} from '../PlotViewUtil.js';
 import {genHiPSPlotId} from './ImageSearchPanelV2.jsx';
-import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot, dispatchCreateImageLineBasedFootprintLayer}
+import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot, getDlAry, dispatchCreateImageLineBasedFootprintLayer}
         from '../DrawLayerCntlr.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint.js';
 import {isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
@@ -864,12 +865,26 @@ export const isMocTable = (tableModel) => {
     return  get(tableModel, ['isMocFits', 'valid']);
 };
 
+function getLSSTFootprintId(uploadMethod, displayValue) {
+    const dlId = getUniqueTblId(uploadMethod, displayValue);
+    let   idx = 1;
+    let   fpLayerId = dlId;
+    const dls = getDrawLayersByType(getDlAry(), LSSTFootprint.TYPE_ID);
+
+    while (true) {
+        const dl = dls.find((oneLayer) => oneLayer.drawLayerId === fpLayerId);
+
+        if (!dl) return dlId;
+        fpLayerId = dlId + `${idx++}`;
+    }
+}
+
 function sendLSSTFootprintRequest(uploadPath, displayValue, uploadMethod, selectedResults) {
-    const tbl_id = 'lsst_footprint_'+getUniqueTblId(uploadMethod, displayValue);
+    const dl_id = getLSSTFootprintId(uploadMethod, displayValue);
     const pv = primePlot(visRoot());
     const pIds = pv ? [pv.plotId]: [];
 
-    dispatchCreateImageLineBasedFootprintLayer(tbl_id, tableTitle(displayValue, uploadMethod),
+    dispatchCreateImageLineBasedFootprintLayer(dl_id, tableTitle(displayValue, uploadMethod),
                                               null, pIds,
                                               uploadPath, null, selectedResults ? selectedResults.table[0]: null);
 
