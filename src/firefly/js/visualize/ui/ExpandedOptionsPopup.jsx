@@ -30,6 +30,7 @@ export function showExpandedOptionsPopup(plotViewAry) {
 
 
 function ExpandedOptionsPanel ({plotViewAry}) {
+    const groupKey = 'WHICH_PLOTS';
     var loadedPv= plotViewAry.filter( (pv) => primePlot(pv)?true:false );
     var options= loadedPv.map( (pv) => ({label: primePlot(pv).title, value:pv.plotId}));
     const expandedIds= getExpandedViewerItemIds(getMultiViewRoot());
@@ -39,25 +40,27 @@ function ExpandedOptionsPanel ({plotViewAry}) {
     },'');
 
     return (
-        <FieldGroup groupKey={'WHICH_PLOTS'} keepState={false}>
-            <div style={{padding:'10px 10px 5px 15px'}}>
-                <CheckboxGroupInputField
-                    alignment={'vertical'}
-                    initialState= {{
-                        value: enabledStr,
-                        tooltip: 'Select which plot to display',
-                        label : ''
-                    }}
-                    options={options}
-                    fieldKey='optionCheckBox'
-                />
-            </div>
+        <div style={{resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column', width: 300, height: 300, minWidth: 250, minHeight: 200}}>
+            <FieldGroup groupKey={groupKey} keepState={false} style={{flexGrow:1, overflow: 'auto'}}>
+                <div style={{padding:'10px 10px 5px 15px'}}>
+                    <CheckboxGroupInputField
+                        alignment={'vertical'}
+                        initialState= {{
+                            value: enabledStr,
+                            tooltip: 'Select which plot to display',
+                            label : ''
+                        }}
+                        options={options}
+                        fieldKey='optionCheckBox'
+                    />
+                </div>
+            </FieldGroup>
             <CompleteButton
-                style={{padding : '12px 0 5px 5px'}}
+                groupKey={groupKey}
+                style={{padding : 5, borderTop: '1px solid rgb(163, 174, 185)', boxShadow: '0 -2px 10px 0 #ffffff'}}
                 onSuccess={updateView}
                 dialogId='ExpandedOptionsPopup' />
-
-        </FieldGroup>
+        </div>
     );
 }
 
