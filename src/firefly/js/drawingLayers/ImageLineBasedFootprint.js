@@ -114,7 +114,7 @@ function highlightChange(mouseStatePayload) {
                 if (dl.drawLayerId === drawLayer.drawLayerId) {
                     if (drawLayer.tbl_id) {
                         if (closestObj) {
-                            const highlightedRow = closestObj.tableRowNum;
+                            const highlightedRow = Number(closestObj.tableRowNum);
 
                             if (!isUndefined(highlightedRow) && highlightedRow >= 0) {
                                 dispatchTableHighlight(drawLayer.tbl_id, highlightedRow, tableRequest);
@@ -140,7 +140,6 @@ function highlightChange(mouseStatePayload) {
                         if (!closestInfo || closestInfo.dist > distInfo.dist) {
                             closestInfo = distInfo;
                             closestObj = dObj;
-                            //console.log('one inside = ' + closestObj.id + ' dist: ' + closestInfo.dist);
                         }
                     }
                 }
