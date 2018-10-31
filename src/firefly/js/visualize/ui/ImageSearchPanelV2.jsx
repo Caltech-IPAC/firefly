@@ -102,7 +102,7 @@ function getContexInfo() {
 function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
     const resize = resizable ? {resize: 'both', overflow: 'hidden', paddingBottom: 5} : {};
-    const dim = {height: 600, width: 725, minHeight: 500, minWidth: 600};
+    const dim = {height: 600, width: 725, minHeight: 600, minWidth: 725};
 
     return (
         <div style={{...resize, ...dim}}>
