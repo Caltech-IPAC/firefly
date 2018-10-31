@@ -14,15 +14,19 @@ public class LinkInfo  implements Serializable, Cloneable {
     private String contentType;   // LINK content-type
     private String ID;            // LINK ID
 
-    public LinkInfo(String href, String title) {
-        this.href = href;
-        this.title = title;
+    public LinkInfo() {}
+
+    public void setHref(String href) { this.href = href; }
+    public String getHref() {
+        return href;
     }
+
+    public void setTitle(String title) { this.title = title; }
+    public String getTitle() { return title; }
 
     public void setRole(String role) {
         this.contentRole = role;
     }
-
     public String getRole() {
         return contentRole;
     }
@@ -30,24 +34,15 @@ public class LinkInfo  implements Serializable, Cloneable {
     public void setType(String type) {
         this.contentType = type;
     }
-
     public String getType() {
         return contentType;
     }
 
-    public String getHref() {
-        return href;
-    }
 
-    public String getTitle() {
-        return title;
-
-    }
 
     public void setID(String id) {
         this.ID = id;
     }
-
     public String getID() {
         return ID;
     }

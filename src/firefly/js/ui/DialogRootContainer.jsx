@@ -200,6 +200,8 @@ function createDiv(id, appendTo=document.body) {
     el.style.width= '0';
     el.style.height= '0';
     el.style.position = 'absolute';
+    el.style.left= 0;
+    el.style.top= 0;
     return el;
 }
 

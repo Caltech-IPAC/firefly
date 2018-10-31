@@ -31,7 +31,6 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
 
     public FileInfo getData(ServerRequest request) throws DataAccessException {
         try {
-            inspectRequest(request);
             FileInfo fi = null;
             Cache cache = getCache(request);
             StringKey key = new StringKey(getClass().getName(), getUniqueID(request));
@@ -59,10 +58,6 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
 
     public QueryDescResolver getDescResolver() {
         return new QueryDescResolver.DescBySearchResolver(new SearchDescResolver());
-    }
-
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
     }
 
     public String getUniqueID(ServerRequest request) {

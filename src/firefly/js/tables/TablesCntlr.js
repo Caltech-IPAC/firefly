@@ -413,7 +413,6 @@ function highlightRow(action) {
             dispatch(action);
         } else {
             const request = cloneDeep(tableModel.request);
-            set(request, 'META_INFO.padResults', true);
             Object.assign(request, {startIdx, pageSize});
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );

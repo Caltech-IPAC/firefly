@@ -36,6 +36,7 @@ public class ImageMasterDataEntry {
         PROJECT_TYPE_DESC("projectTypeDesc"),
         MISSION_ID("missionId"),
         ACRONYM("acronym"),
+        WAVE_TYPE("waveType"),
         DATA_TYPE("dataType");
 
         private String key;

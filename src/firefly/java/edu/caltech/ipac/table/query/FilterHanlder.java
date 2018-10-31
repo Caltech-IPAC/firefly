@@ -9,7 +9,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.io.BgIpacTableHandler;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.CollectionUtil;
@@ -32,7 +32,7 @@ public class FilterHanlder extends BgIpacTableHandler {
     private List<DataGroup.Attribute> attributes;
     private List<DataType> headers;
     private DataGroup dg;
-    private TableDef tableDef;
+    private IpacTableDef tableDef;
 
     public FilterHanlder(File ofile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
         super(ofile, null, null, null, request);

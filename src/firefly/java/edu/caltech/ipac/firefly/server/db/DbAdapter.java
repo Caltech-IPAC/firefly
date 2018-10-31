@@ -23,6 +23,8 @@ public interface DbAdapter {
     String SQLITE = "sqlite";
     String HSQL = "hsql";
 
+    String MAIN_DB_TBL = "DATA";
+
     /*
       CLEAN UP POLICY:
         A rough estimate: A search results of one million rows displayed in the triview(chart + image + table) takes around 500 MB
@@ -78,6 +80,12 @@ public interface DbAdapter {
     String createDataSql(DataType[] dataDefinitions, String tblName);
     String insertDataSql(DataType[] dataDefinitions, String tblName);
 
+    /**
+     * contains auxiliary info in datagroup that's not in meta and column info.
+     */
+    String createAuxDataSql(String forTable);
+    String insertAuxDataSql(String forTable);
+
     String createMetaSql(String forTable);
     String insertMetaSql(String forTable);
 
@@ -86,6 +94,7 @@ public interface DbAdapter {
 
     String getDDSql(String forTable);
     String getMetaSql(String forTable);
+    String getAuxDataSql(String forTable);
 
     String selectPart(TableServerRequest treq);
     String wherePart(TableServerRequest treq);

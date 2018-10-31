@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
+import edu.caltech.ipac.table.DataGroup;
+
 import java.io.File;
 
 /**
@@ -29,7 +31,7 @@ public interface LightCurveHandler {
      *
      * @return periodogram (power vs period) file
      */
-    public File getPeriodogramTable(PeriodogramAPIRequest request);
+    public DataGroup getPeriodogramTable(PeriodogramAPIRequest request);
 
     /**
      * Return the table which contains N peaks, N integer from request object
@@ -37,7 +39,7 @@ public interface LightCurveHandler {
      * @return peaks table
      * @see PeriodogramAPIRequest#getNumberPeaks()
      */
-    public File getPeaksTable(PeriodogramAPIRequest request);
+    public DataGroup getPeaksTable(PeriodogramAPIRequest request);
 
     /**
      * TODO add extra output parameters getter that might be interesting

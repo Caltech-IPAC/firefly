@@ -60,18 +60,11 @@ public class LightCurveProcessorTest extends ConfigTest {
             }
         };
 
-        File p = t.getPeriodogramTable(req);
-
-        try {
-            DataGroup inDataGroup = IpacTableReader.read(p);
-            List<DataObject> dgjList = inDataGroup.values();
-            DataType[] inColumns = inDataGroup.getDataDefinitions();
-            Assert.assertTrue(inColumns.length + " is not 3", inColumns.length > 1);
-            Assert.assertTrue("expected " + dgjList.size(), dgjList.size() > 0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        DataGroup inDataGroup = t.getPeriodogramTable(req);
+        List<DataObject> dgjList = inDataGroup.values();
+        DataType[] inColumns = inDataGroup.getDataDefinitions();
+        Assert.assertTrue(inColumns.length + " is not 3", inColumns.length > 1);
+        Assert.assertTrue("expected " + dgjList.size(), dgjList.size() > 0);
     }
 
     @Test
@@ -99,18 +92,12 @@ public class LightCurveProcessorTest extends ConfigTest {
             }
         };
 
-        File peaks = t.getPeaksTable(req);
-
-        try {
-            DataGroup inPeaksDataGroup = IpacTableReader.read(peaks);
-            DataType[] inColumns = inPeaksDataGroup.getDataDefinitions();
-            Assert.assertTrue(inColumns.length + " is not 5", inColumns.length == 5);
-            List<DataObject> dgjList = inPeaksDataGroup.values();
-            inColumns = inPeaksDataGroup.getDataDefinitions();
-            Assert.assertTrue("expected " + dgjList.size(), dgjList.size() == req.getNumberPeaks());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        DataGroup inPeaksDataGroup = t.getPeaksTable(req);
+        DataType[] inColumns = inPeaksDataGroup.getDataDefinitions();
+        Assert.assertTrue(inColumns.length + " is not 5", inColumns.length == 5);
+        List<DataObject> dgjList = inPeaksDataGroup.values();
+        inColumns = inPeaksDataGroup.getDataDefinitions();
+        Assert.assertTrue("expected " + dgjList.size(), dgjList.size() == req.getNumberPeaks());
 
     }
 

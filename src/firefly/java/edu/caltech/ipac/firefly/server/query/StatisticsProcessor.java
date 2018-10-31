@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
+
 /**
  * Created by zhang on 10/14/15.
  * This class calculates the statistics of a IpacTable Data.
@@ -49,7 +51,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
         try {
             JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
         } catch (Exception e) {
-            origDataTblName = "data";
+            origDataTblName = MAIN_DB_TBL;
         }
 
         // get all cols from dd table

@@ -21,9 +21,9 @@ import java.util.TreeSet;
  * @author loi
  * @version $Id: SelectionInfo.java,v 1.5 2012/02/14 01:32:21 loi Exp $
  */
-public class SelectionInfo implements Serializable {
+public class SelectionInfo implements Serializable, Cloneable {
     private boolean selectAll;
-    private Set<Integer> exceptions = new HashSet<Integer>();
+    private Set<Integer> exceptions = new HashSet<>();
     private int rowCount;
 
     public SelectionInfo() {
@@ -137,6 +137,12 @@ public class SelectionInfo implements Serializable {
             }
             si.rowCount = Integer.parseInt(parts[2]);
         }
+        return si;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        SelectionInfo si = (SelectionInfo) super.clone();
+        si.exceptions = new HashSet<>(exceptions);
         return si;
     }
 }
