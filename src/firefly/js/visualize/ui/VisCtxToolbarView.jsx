@@ -706,10 +706,10 @@ function getHipsCubeDesc(plot) {
 function selectDrawingLayer(pv,dlAry) {
     const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
     if (allLayers.length > 0) {
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             selectCatalog(pv, allLayers);
         }
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             selectFootprint(pv, allLayers);
         }
     }
@@ -718,10 +718,10 @@ function selectDrawingLayer(pv,dlAry) {
 function unselectDrawingLayer(pv,dlAry) {
     const allLayers = getAllDrawLayersForPlot(dlAry, pv.plotId, true);
     if (allLayers.length > 0) {
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === Catalog.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             unselectCatalog(pv, allLayers);
         }
-        if (allLayers.findIndex((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID) >= 0) {
+        if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             unselectFootprint(pv, allLayers);
         }
     }
