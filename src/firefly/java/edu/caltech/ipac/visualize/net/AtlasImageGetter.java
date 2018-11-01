@@ -35,6 +35,7 @@ public class AtlasImageGetter {
 
         try {
             String sizeStr = null;
+            boolean isCube = false; // Default is 'image', see IrsaMasterDataSource.java, if cube, cutout doesn't make sense here! See IRSA-2154
             IbeDataSource ibeSource = null;
             Map<String, String> queryMap = new HashMap<String, String>(11);
             String errorMsg ="";
@@ -60,6 +61,7 @@ public class AtlasImageGetter {
                 }
                 errorMsg = atlasParams.getSchema()+"/"+atlasParams.getTable()+"/"+atlasParams.getBand();
 
+                isCube = atlasParams.getDataType() != null && atlasParams.getDataType().equalsIgnoreCase("cube"); //TODO Can be also from metadata 'hdu' is it's consistent
                 ibeSource.initialize(m);
 
             } else {
@@ -84,7 +86,7 @@ public class AtlasImageGetter {
                 DataObject row = data.get(0);
                 Map<String, String> dataMap = IpacTableUtil.asMap(row);
                 IbeDataParam dataParam = ibeSource.makeDataParam(dataMap);
-                if(sizeStr!=null){
+                if(sizeStr!=null && !isCube){
                     dataParam.setCutout(true, params.getRaJ2000String() + "," + params.getDecJ2000String(), sizeStr);
                 }
                 dataParam.setDoZip(true);

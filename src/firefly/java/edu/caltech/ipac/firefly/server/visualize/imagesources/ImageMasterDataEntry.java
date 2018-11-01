@@ -44,7 +44,7 @@ public class ImageMasterDataEntry {
             this.key=key;
         }
 
-        String getKey(){
+        public String getKey(){
             return this.key;
         }
 

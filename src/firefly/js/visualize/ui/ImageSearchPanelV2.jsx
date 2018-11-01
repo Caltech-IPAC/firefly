@@ -655,7 +655,7 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
             list.forEach( (e) => imageIdList.push(e));
         });
         const paramAry= imageMasterData.filter( (d) => imageIdList.includes(d.imageId));
-        return paramAry.map( (d) => makeWPRequest(wp, radius, d.plotRequestParams, plotId, plotGroupId));
+        return paramAry.map( (d) => makeWPRequest(wp, radius, d.plotRequestParams, d.dataType, plotId, plotGroupId));
     }
 }
 
@@ -680,18 +680,19 @@ const nextPlotId = (() => {
     };
 })();
 
-function makeWPRequest(wp, radius, params, plotId, plotGroupId) {
+function makeWPRequest(wp, radius, params, type, plotId, plotGroupId) {
     const inReq= Object.assign( {
         [WPConst.WORLD_PT] : wp.toString(),
         [WPConst.SIZE_IN_DEG] : radius+''
     }, params);
 
-    return addStdParams(WebPlotRequest.makeFromObj(inReq), plotId, plotGroupId);
+    return addStdParams(WebPlotRequest.makeFromObj(inReq), type, plotId, plotGroupId);
 }
 
-function addStdParams(wpreq, plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
+function addStdParams(wpreq, type='image', plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
     wpreq.setPlotId(plotId);
     wpreq.setPlotGroupId(plotGroupId);
     wpreq.setGroupLocked('true');
+    wpreq.setParam('dataType',type);
     return wpreq;
 }

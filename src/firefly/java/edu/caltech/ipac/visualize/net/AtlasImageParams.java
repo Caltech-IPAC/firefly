@@ -16,6 +16,7 @@ public class AtlasImageParams extends IrsaImageParams {
     private String ds = null; //i.e. "seip" if using hard coded definition, see edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource.DS;
     private String table = "seip_science";
     private String xtraFilter = ""; // i.e fname like '%.mosaic.fits' or file_tye=science
+    private String data_type = "image";
 
     public AtlasImageParams() { super(ImageSourceTypes.ATLAS); }
 
@@ -73,5 +74,13 @@ public class AtlasImageParams extends IrsaImageParams {
 
     public void setFileType(String file_type) {
         this.file_type = file_type;
+    }
+
+    public String getDataType() {
+        return this.data_type;
+    }
+
+    public void setDataType(String dataType) {
+        this.data_type = dataType;
     }
 }
