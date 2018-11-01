@@ -54,7 +54,7 @@ class TabsHeaderInternal extends PureComponent {
                 return React.cloneElement(child, {maxTitleWidth});
             });
         }
-        const style = Object.assign({flexGrow: 0, height: 20}, headerStyle);
+        const style = Object.assign({flexShrink: 0, height: 20}, headerStyle);
         return (
             <div style={style}>
                 {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>

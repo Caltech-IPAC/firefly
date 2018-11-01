@@ -22,7 +22,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.TableDef;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
@@ -362,7 +362,7 @@ public class GatorQuery extends BaseGator {
                 LOG.error("Gator returning more than one lines from a 1-to-1 single target search");
             }
         } else if (req.getMethod() == CatalogRequest.Method.TABLE) {
-            TableDef meta = IpacTableUtil.getMetaInfo(f);
+            IpacTableDef meta = IpacTableUtil.getMetaInfo(f);
             if (meta == null || meta.getCols().size() ==0) return f;
 
             DataType gatorCntCol = meta.getCols().get(0);

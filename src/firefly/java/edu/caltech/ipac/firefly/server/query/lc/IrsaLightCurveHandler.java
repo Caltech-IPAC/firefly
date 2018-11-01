@@ -50,9 +50,9 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         apiKey = AppProperties.getArrayProperties("irsa.gator.service.periodogram.keys", "\\s+", "x y");// At least x,y , rest are optional
     }
 
-    public File getPeriodogramTable(PeriodogramAPIRequest request) {
+    public DataGroup getPeriodogramTable(PeriodogramAPIRequest request) {
 
-        return ipacTableFromAPI(request, RESULT_TABLES_IDX.PERIODOGRAM);
+        return getDataFromAPI(request, RESULT_TABLES_IDX.PERIODOGRAM);
 
     }
 
@@ -60,9 +60,9 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
     /**
      * @return peaks table (default: 50 rows)
      */
-    public File getPeaksTable(PeriodogramAPIRequest request) {
+    public DataGroup getPeaksTable(PeriodogramAPIRequest request) {
 
-        return ipacTableFromAPI(request, RESULT_TABLES_IDX.PEAKS);
+        return getDataFromAPI(request, RESULT_TABLES_IDX.PEAKS);
     }
 
     /**
@@ -97,33 +97,27 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         return File.createTempFile("phase-folded", ".tbl", ServerContext.getTempWorkDir());
     }
 
-    protected File extractTblFrom(File votableResult, RESULT_TABLES_IDX resultTable) {
-        File resultTblFile = null;
+    protected DataGroup extractTblFrom(File votableResult, RESULT_TABLES_IDX resultTable) {
         try {
-            resultTblFile = makeResultTempFile(resultTable);
             DataGroup[] dataGroups = VoTableReader.voToDataGroups(votableResult.getAbsolutePath());
 
-            IpacTableWriter.save(resultTblFile, dataGroups[resultTable.ordinal()]);
-            return resultTblFile;
+            return dataGroups[resultTable.ordinal()];
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return resultTblFile;
+        return null;
     }
 
-    protected File ipacTableFromAPI(PeriodogramAPIRequest request, RESULT_TABLES_IDX resultTable) {
-        File tempFile = null;
+    protected DataGroup getDataFromAPI(PeriodogramAPIRequest request, RESULT_TABLES_IDX resultTable) {
         try {
             File apiResult = apiDownlaod(request);
 
-            tempFile = extractTblFrom(apiResult, resultTable);
+            return extractTblFrom(apiResult, resultTable);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (FailedRequestException e) {
+        } catch (IOException | FailedRequestException e) {
             e.printStackTrace();
         }
-        return tempFile;
+        return null;
     }
 
     protected File apiDownlaod(PeriodogramAPIRequest request) throws IOException, FailedRequestException {

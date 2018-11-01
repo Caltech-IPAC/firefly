@@ -65,10 +65,7 @@ public class DataType implements Serializable, Cloneable {
     private       List<LinkInfo> links = new ArrayList<>();
     private       String maxValue = "";
     private       String minValue = "";
-    private       String staticValue;
 
-
-//    private transient PrimitiveList data;       // column-based data
     private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
     private transient Boolean isNumeric;        // cached to improve formatting performance.
 
@@ -86,7 +83,7 @@ public class DataType implements Serializable, Cloneable {
 
     public DataType(String keyName, Class type, String label, String units, String nullString, String desc) {
         // our db engine does not allow quotes in column names
-        this.keyName = keyName.replace("\"","");
+        this.keyName = keyName == null ? null : keyName.replace("\"","");
         setDataType(type);
         this.units = units;
         this.label = label;
@@ -276,14 +273,6 @@ public class DataType implements Serializable, Cloneable {
         return minValue;
     }
 
-    public void setValue(String value) {
-        this.staticValue = value;
-    }
-
-    public String getValue() {
-        return staticValue;
-    }
-
     public void setRef(String value) {
         this.ref = value;
     }
@@ -466,7 +455,7 @@ public class DataType implements Serializable, Cloneable {
         return typeDesc;
     }
 
-    public static Class parseDataType(String type) {
+    public static Class descToType(String type) {
         switch (type) {
             case DOUBLE:
             case S_DOUBLE:
@@ -520,6 +509,10 @@ public class DataType implements Serializable, Cloneable {
      */
     public List<LinkInfo> getLinkInfos() {
         return links;
+    }
+    public void setLinkInfos(List<LinkInfo> vals) {
+        links.clear();
+        links.addAll(vals);
     }
 
 }

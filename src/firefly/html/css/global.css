@@ -463,3 +463,9 @@
     border-bottom: 5px solid transparent;
     border-right: 5px solid black;
 }
+
+.flex-full {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}

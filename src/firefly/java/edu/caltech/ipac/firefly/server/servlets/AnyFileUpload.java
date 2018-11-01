@@ -289,7 +289,7 @@ public class AnyFileUpload extends BaseHttpServlet {
 
     private static JSONObject toJsonAnalysisTableModel(DataGroup dg, TableUtil.Format ff, long size ) {
         JSONObject tableModel = new JSONObject();
-        JSONObject tableData = JsonTableUtil.toJsonTableData(dg, null);
+        JSONObject tableData = JsonTableUtil.toJsonTableData(dg);
         String tblId =  "UPLOAD_ANALYSIS";
 
         tableModel.put("tableData", tableData);

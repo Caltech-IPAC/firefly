@@ -24,7 +24,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private int size;
     private List<GroupInfo> groups = new ArrayList<>();   // for <GROUP> under <TABLE> of VOTable
     private List<LinkInfo> links = new ArrayList<>();     // for <LINK> under <TABLE> of VOTable
-    private List<DataType> staticColumns = new ArrayList<>();  // for <PARAM> under <TABLE> of VOTABLE
+    private List<ParamInfo> params = new ArrayList<>();  // for <PARAM> under <TABLE> of VOTABLE
     private transient DataType[] cachedColumnsAry = null;
 
     public DataGroup() {}
@@ -323,6 +323,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     public List<GroupInfo> getGroupInfos() {
         return groups;
     }
+    public void setGroupInfos(List<GroupInfo> groupInfos) {
+        groups.clear();
+        groups.addAll(groupInfos);
+    }
 
     /**
      * get LinkInfo list
@@ -331,13 +335,21 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     public List<LinkInfo> getLinkInfos() {
         return links;
     }
+    public void setLinkInfos(List<LinkInfo> linkInfos) {
+        links.clear();
+        links.addAll(linkInfos);
+    }
 
     /**
-     * get a list static column (like PARAM in votable)
-     * @return a list of static columns in form of DataType objects
+     * get a list Params representing static columns (like PARAM in votable)
+     * @return a list of static columns in form of Params objects
      */
-    public List<DataType> getParams() {
-        return staticColumns;
+    public List<ParamInfo> getParamInfos() {
+        return params;
+    }
+    public void setParamInfos(List<ParamInfo> paramInfos) {
+        this.params.clear();
+        this.params.addAll(paramInfos);
     }
 
     /**
