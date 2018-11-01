@@ -19,7 +19,6 @@ import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.http.HttpHeaders;
-import org.apache.xpath.operations.Bool;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -28,7 +27,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,31 +44,16 @@ import static org.apache.commons.httpclient.params.HttpMethodParams.USER_AGENT;
  */
 public class HttpServices {
     public static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;    // 64k
-    private static HttpClient httpClient;
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
-    static {
-        HostConfiguration hostConfig = new HostConfiguration();
-        try {
-            hostConfig.setHost(InetAddress.getLocalHost().getHostName());
-        } catch (UnknownHostException e) {e.printStackTrace();}
-        HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager(){
-            public void releaseConnection(HttpConnection conn) {
-                try {
-                    if (conn != null) conn.close();
-                } catch (Exception ex) {/* do nothing */}
-                super.releaseConnection(conn);
-            }
-        };
-        HttpConnectionManagerParams params = new HttpConnectionManagerParams();
-        params.setMaxConnectionsPerHost(hostConfig, 5);
-        params.setStaleCheckingEnabled(true);
+    private static HttpClient newHttpClient() {
+        HttpClient httpClient = new HttpClient();
+        HttpConnectionManagerParams params = httpClient.getHttpConnectionManager().getParams();
         params.setConnectionTimeout(5000);
-        params.setSoTimeout(0);   // this is the default.. but, setting it explicitly to be sure
-        connectionManager.setParams(params);
-        httpClient = new HttpClient(connectionManager);
-        httpClient.setHostConfiguration(hostConfig);
+        params.setSoTimeout(0);     // this is the default.. but, setting it explicitly to be sure
+        return httpClient;
     }
+
 //====================================================================
 //  GET convenience functions
 //====================================================================
@@ -188,6 +171,7 @@ public class HttpServices {
             if (method instanceof GetMethod) {
                 method.setFollowRedirects(true);    // post are not allowed to follow redirect
             }
+            HttpClient httpClient = newHttpClient();
 
             handleAuth(httpClient, method, input.getUserId(), input.getPasswd());
 
@@ -210,7 +194,7 @@ public class HttpServices {
             return method;
 
         } finally {
-            if (handler != null) {
+            if (method != null) {
                 method.releaseConnection();
             }
         }
