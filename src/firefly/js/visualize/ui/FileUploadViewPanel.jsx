@@ -24,13 +24,15 @@ import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getAppHiPSForMoc, addNewMocLayer} from '../HiPSMocUtil.js';
-import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
+import {primePlot, getDrawLayerById, getDrawLayersByType} from '../PlotViewUtil.js';
 import {genHiPSPlotId} from './ImageSearchPanelV2.jsx';
-import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot} from '../DrawLayerCntlr.js';
+import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot, getDlAry, dispatchCreateImageLineBasedFootprintLayer}
+        from '../DrawLayerCntlr.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint.js';
 import {isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
-
+import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
 import './ImageSelectPanel.css';
 
@@ -706,6 +708,11 @@ function selectRowFromSummaryTable(tblModel) {
     return selectInfoCls.data;
 }
 
+const tableTitle = (displayValue, uploadTabs) => {
+    const n = displayValue.lastIndexOf((uploadTabs === fileId) ? '\\' : '\/');
+    return  displayValue.slice(n+1);   // n = -1 or n >= 0
+};
+
 /**
  * send request to get the data of table unit, for votable and fits, the table index is mapped to be
  * that at the server side
@@ -765,7 +772,7 @@ function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
                 wpr.setPostTitle(`- ext. ${extList}`);
             }
 
-            plotId = `${fName}-${idx.join('_')}`;
+            plotId = `${fName.replace('.', '_')}-${idx.join('_')}`;
             dispatchPlotImage({plotId, wpRequest: wpr, viewerId});
         } else {
 
@@ -784,29 +791,30 @@ function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
     }
 }
 
+const getUniqueTblId = (uploadMethod, displayValue) => {
+    let filePath;
+    if (uploadMethod === fileId) {
+        filePath =  displayValue.split(/[\\|\/]/g).pop().replace('.', '_');
+    } else {
+        if (uploadMethod === urlId) {
+            displayValue = displayValue.replace(/^http[s]?:[\\|\/]{2}/i, '');
+        }
+        filePath = displayValue.replace(/[\\|\/|\.]/g, '_');
+    }
+
+    let idCnt = 0;
+    while (true) {
+        const tableId = idCnt === 0 ? filePath : `${filePath}-${idCnt}`;
+        idCnt++;
+
+        if (!getTblById(tableId)) return tableId;
+    }
+};
+
 
 function sendMocRequest(uploadPath, displayValue, uploadMethod, mocFits) {
 
-    const uniqueTblId = () => {
-        let filePath;
-        if (uploadMethod === fileId) {
-            filePath =  displayValue.split(/[\\|\/]/g).pop().replace('.', '_');
-        } else {
-            if (uploadMethod === urlId) {
-                displayValue = displayValue.replace(/^http[s]?:[\\|\/]{2}/i, '');
-            }
-            filePath = displayValue.replace(/[\\|\/|\.]/g, '_');
-        }
-
-        let idCnt = 0;
-        while (true) {
-            const tableId = idCnt === 0 ? filePath : `${filePath}-${idCnt}`;
-            idCnt++;
-
-            if (!getTblById(tableId)) return tableId;
-        }
-    };
-    const tblId = uniqueTblId();
+    const tblId = getUniqueTblId(uploadMethod, displayValue);
     const pv = primePlot(visRoot());
 
     const overlayMocOnPlot = (plotId) => {
@@ -852,6 +860,35 @@ function sendMocRequest(uploadPath, displayValue, uploadMethod, mocFits) {
         overlayMocOnPlot(pv.plotId);
     }
 }
+
+export const isMocTable = (tableModel) => {
+    return  get(tableModel, ['isMocFits', 'valid']);
+};
+
+function getLSSTFootprintId(uploadMethod, displayValue) {
+    const dlId = getUniqueTblId(uploadMethod, displayValue);
+    let   idx = 1;
+    let   fpLayerId = dlId;
+    const dls = getDrawLayersByType(getDlAry(), LSSTFootprint.TYPE_ID);
+
+    while (true) {
+        const dl = dls.find((oneLayer) => oneLayer.drawLayerId === fpLayerId);
+
+        if (!dl) return dlId;
+        fpLayerId = dlId + `${idx++}`;
+    }
+}
+
+function sendLSSTFootprintRequest(uploadPath, displayValue, uploadMethod, selectedResults) {
+    const dl_id = getLSSTFootprintId(uploadMethod, displayValue);
+    const pv = primePlot(visRoot());
+    const pIds = pv ? [pv.plotId]: [];
+
+    dispatchCreateImageLineBasedFootprintLayer(dl_id, tableTitle(displayValue, uploadMethod),
+                                              null, pIds,
+                                              uploadPath, null, selectedResults ? selectedResults.table[0]: null);
+
+}
 /*
     the map which maps summary table row index to table index and image extension number at the server
  */
@@ -879,10 +916,6 @@ function getExtensionMap(model) {
  * @returns {Function}
  */
 export function resultSuccess() {
-    const tableTitle = (displayValue, uploadTabs) => {
-        const n = displayValue.lastIndexOf((uploadTabs === fileId) ? '\\' : '\/');
-        return  displayValue.slice(n+1);   // n = -1 or n >= 0
-    };
 
     return (request) => {
         const {uploadTabs, imageDisplay} = request;
@@ -901,8 +934,10 @@ export function resultSuccess() {
                 sendImageRequest(uploadPath, displayValue, selectResults.image, extensionMap.imageMap, imageDisplay);
             }
             if (selectResults.table.length !== 0) {
-                if (get(analysisModel, ['isMocFits', 'valid'])) {
+                if (isMocTable(analysisModel)) {
                     sendMocRequest(uploadPath, displayValue, uploadTabs, analysisModel.isMocFits);
+                } else if (isLsstFootprintTable(analysisModel, true, (selectResults.table)[0])) {
+                    sendLSSTFootprintRequest(uploadPath, displayValue, uploadTabs,  selectResults);
                 } else {
                     selectResults.table.forEach((idx) => {
                         sendTableRequest(uploadPath, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,

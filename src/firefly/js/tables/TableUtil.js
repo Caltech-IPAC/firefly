@@ -257,9 +257,9 @@ export function findIndex(tbl_id, filterInfo) {
     if (idx >= 0) {
         return Promise.resolve(idx);
     } else {
-        const inclCols = 'ROW_NUM';
+        const inclCols = 'ROW_NUM as ORG_ROWNUM';
         return queryTable(tableModel.request, {filters: filterInfo, inclCols}).then( (tableModel) => {
-            return get(getColumnValues(tableModel, inclCols), '0', -1);
+            return get(tableModel, ['tableData','data']) ? get(getColumnValues(tableModel, 'ORG_ROWNUM'), '0', -1) : -1;
         });
     }
 }
@@ -371,7 +371,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
  */
 export function getColumnValues(tableModel, colName) {
     const colIdx = getColumnIdx(tableModel, colName);
-    if (colIdx >= 0 && colIdx < get(tableModel, 'tableData.data.length', 0)) {
+    if (colIdx >= 0 && colIdx < get(tableModel, 'tableData.columns.length', 0)) {
         return get(tableModel, 'tableData.data').map( (r) => r[colIdx]);
     } else {
         return [];

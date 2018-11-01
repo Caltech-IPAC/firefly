@@ -844,6 +844,10 @@ const makePt= function(type,  x, y) {
     return retval;
 };
 
+export function isAngleUnit(unit) {
+    return ['deg', 'degree', 'arcmin', 'arcsec', 'radian', 'rad'].includes(unit.toLowerCase());
+}
+
 /**
  * convert angle value of one unit to that of another unit
  * @param {string} from 'degree' or 'deg', 'arcmin', 'arcsec', 'radian' case insensitive
@@ -852,8 +856,8 @@ const makePt= function(type,  x, y) {
  * @returns {number}
  */
 export function convertAngle(from, to, angle) {
-    const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', 'radian'];
-    const rIdx = angleUnit.indexOf('radian');
+    const angleUnit = [['deg', 'degree'], 'arcmin', 'arcsec', ['radian', 'rad']];
+    const rIdx = angleUnit.length-1;
     let fromIdx, toIdx;
     let numAngle = (typeof angle === 'string') ? parseFloat(angle) : angle;
     const unitIdx = (unit) => angleUnit.findIndex( (au) => (isArray(au) ? au.includes(unit) : au === unit));

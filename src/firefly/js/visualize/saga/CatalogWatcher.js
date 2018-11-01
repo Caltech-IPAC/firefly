@@ -18,6 +18,7 @@ import Catalog from '../../drawingLayers/Catalog.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
+import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
 
 /**
@@ -47,6 +48,8 @@ export function* watchCatalogs() {
         const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
                                   TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]);
         const {tbl_id}= action.payload;
+
+        if (isLsstFootprintTable(getTblById(tbl_id))) continue;
         switch (action.type) {
             case TABLE_LOADED:
                 handleCatalogUpdate(tbl_id);
@@ -80,7 +83,7 @@ const isCName = (name) => (c) => c.name===name;
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
 
-    
+
     const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo, title}= sourceTable;
     const maxScatterRows = getMaxScatterRows();
 

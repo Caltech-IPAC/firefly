@@ -712,12 +712,25 @@ public class VoTableReader {
         try {
             if (!headerOnly) {
                 RowSequence rs = table.getRowSequence();
+                int len;
+                int find = 0;
+                String findStr;
+
                 while (rs.next()) {
                     DataObject row = new DataObject(dg);
                     for(int i = 0; i < cols.size(); i++) {
                         DataType dtype = cols.get(i);
                         Object val = rs.getCell(i);
                         String sval = table.getColumnInfo(i).formatValue(val, Integer.MAX_VALUE);
+
+                        if (dtype.getKeyName().equals("spans")) {
+                            len = sval.length();
+
+                            if (len > 65536) {
+                                find = 1;
+                                findStr = val.toString();
+                            }
+                        }
                         if (dtype.getDataType().isAssignableFrom(String.class) && !(val instanceof String)) {
                             row.setDataElement(dtype, sval);   // array value
                         } else {

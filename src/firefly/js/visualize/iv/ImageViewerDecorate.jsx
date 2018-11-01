@@ -20,6 +20,7 @@ import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import './ImageViewerDecorate.css';
 import Catalog from '../../drawingLayers/Catalog.js';
+import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 
@@ -49,17 +50,20 @@ const toolsAnno= [
  */
 function showSelect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canSelect && dl.catalog);
+        .some( (dl) => (dl.drawLayerTypeId === Catalog.TYPE_ID && dl.canSelect && dl.catalog) ||
+                        (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && dl.canSelect) );
 }
 
 function showFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canFilter && dl.catalog);
+        .some( (dl) => (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canFilter && dl.catalog) ||
+                       (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && dl.canFilter) );
 }
 
 function showClearFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters') && dl.catalog );
+        .some( (dl) => (dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters') && dl.catalog ) ||
+                        (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && get(dl, 'tableRequest.filters')));
 }
 
 
@@ -72,8 +76,14 @@ function showClearFilter(pv,dlAry) {
  */
 function showUnselect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
-        .filter( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog)
-        .some( (dl) => Boolean(dl.drawData[DataTypes.SELECTED_IDXS] && dl.canSelect));
+        .filter( (dl) => {
+            return (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog) ||
+                   (dl.drawLayerTypeId===LSSTFootprint.TYPE_ID);
+        })
+        .some( (dl) => {
+                  return (Boolean(dl.drawData[DataTypes.SELECTED_IDXS] && dl.canSelect) ||
+                          Boolean(!isEmpty(dl.selectRowIdxs) && dl.canSelect));
+        });
 }
 
 
@@ -363,7 +373,7 @@ ImageViewerDecorate.propTypes= {
     handleInlineTools : PropTypes.bool,
     workingIcon: PropTypes.bool,
     inlineTitle: PropTypes.bool,
-    aboveTitle: PropTypes.bool,
+    aboveTitle: PropTypes.bool
 };
 
 

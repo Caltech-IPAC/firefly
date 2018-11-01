@@ -1,17 +1,29 @@
+import Enum from 'enum';
 import DrawObj from './DrawObj';
-import {makeWorldPt} from '../Point.js';
 import {get} from 'lodash';
 import ShapeDataObj from './ShapeDataObj.js';
 import {makePointDataObj} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
 import {Style} from './DrawingDef.js';
-import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt} from '../Point.js';
+import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt, makeAnyPt} from '../Point.js';
 import {clone} from '../../util/WebUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
+import {DrawSymbol} from './PointDataObj.js';
+import {primePlot} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
 
 const IMGFP_OBJ = 'ImgBasedFPObj';
+export const drawMode = new Enum(['data', 'highlight', 'select']);
 
 
+
+/**
+ * build an object based on footprint json containing the definition of a set of footprints
+ * the return object includes a array of DrawObj object containing a CoonectObj object.
+ * @param data
+ * @returns {{}}
+ * @constructor
+ */
 export const ImageLineBasedObj = (data) => {
     if (!data) return {};
 
@@ -24,18 +36,22 @@ export const ImageLineBasedObj = (data) => {
     return retval;
 };
 
+//for one footprint drawobj, one of connectedObjs in ImageLineBaseObj
 function make(id, oneFootData, pixelSys) {
     if (!oneFootData) return null;
-    const {corners, spans, peaks=[]} = oneFootData;
+    const {corners, spans, peaks=[], rowIdx, rowNum, ra, dec, centerSys} = oneFootData;
 
     const obj = DrawObj.makeDrawObj();
     obj.pixelSys = pixelSys;
     obj.type = IMGFP_OBJ;
     obj.id = id;
-    obj.connectObj = ConnectedObj.make(corners, spans, peaks, id);
+    obj.connectObj = ConnectedObj.make(corners, spans, peaks, id, ra, dec, centerSys);
+    obj.tableRowIdx = rowIdx;
+    obj.tableRowNum = rowNum;
     return obj;
 }
 
+// for one footprint
 const draw= {
 
     usePathOptimization(drawObj) {
@@ -43,28 +59,30 @@ const draw= {
     },
 
     getCenterPt(drawObj) {
-        const {connectObj}= drawObj;
-        const makeImageFunc = getMakeImageFunc(drawObj.pixelSys);
+        const {connectObj, pixelSys}= drawObj;
 
-        if (connectObj && connectObj.centerPt) {
-            return makeWorldPt(makeImageFunc(connectObj.centerPt[0], connectObj.centerPt[1]));
+        if (connectObj) {
+            return connectObj.getCenterPt(pixelSys);
         } else {
-            return makeWorldPt(makeImageFunc(0, 0));
+            const makeImageFunc = getMakeImageFunc(pixelSys);
+            return makeImageFunc(0, 0);
         }
     },
 
     getScreenDist(drawObj, plot, pt) {
         let minDist = Number.MAX_VALUE;
 
-        const {connectObj}= drawObj;
-        const makeImageFunc = getMakeImageFunc(drawObj.pixelSys);
+        const {connectObj, pixelSys}= drawObj;
 
-        if (connectObj && connectObj.centerPt) {
-            const cPt = plot.getScreenCoords(makeImageFunc(connectObj.centerPt[0], connectObj.centerPt[1]));
-            const d = Math.sqrt((cPt.x - pt.x)**2 + (cPt.y - pt.y)**2);
+        if (connectObj) {
+            const centerPt = connectObj.getCenterPt(pixelSys);
+            if (centerPt) {
+                const cPt = plot.getScreenCoords(centerPt);
+                const d = Math.sqrt((cPt.x - pt.x)**2 + (cPt.y - pt.y)**2);
 
-            if (d < minDist) {
-                minDist = d;
+                if (d < minDist) {
+                    minDist = d;
+                }
             }
         }
 
@@ -90,7 +108,7 @@ const draw= {
 
 export default {make,draw, IMGFP_OBJ};
 
-
+// draw one footprint drawobj
 function drawFootprintObj(ctx, cc, drawObj, def, vpPtM, onlyAddToPath) {
     const {connectObj, pixelSys} = drawObj;
     const makeImageFunc = getMakeImageFunc(pixelSys);
@@ -120,7 +138,7 @@ function toRegion(drawObj, plot, def) {
     }, []);
 }
 
-
+// footprint data to connect object
 function convertDataToConnectedObjs(data, pixelSys) {
     return Object.keys(data).reduce((prev, id) => {
         const connectObj = make(id, data[id], pixelSys);
@@ -159,22 +177,34 @@ export function getImageCoordsOnFootprint(pt, cc, pixelSys) {
     }
 }
 
+/**
+ * convert all connectObjs for the set of footprint unit into a array of drawObjs for display
+ * @param imageLineObj
+ * @param displayMode
+ * @param color
+ * @param showText
+ * @param symbol
+ * @param hideId
+ * @returns {connectedObjs|*}
+ */
 export function convertConnectedObjsToDrawObjs(imageLineObj, displayMode, color,  showText, symbol, hideId) {
 
     // get rect of 'zero' regardless of the style
-    const zeroRectObjs = convertConnectedObjsToRectObjs(imageLineObj, false, color.hole, Style.FILL);
+    //convertConnectedObjsToRectObjs(imageLineObj, false, color.hole, Style.FILL);
     // polygon outline
-    const polygonObjs = (displayMode === Style.FILL)?
-                        convertConnectedObjsToPolygonObjs(imageLineObj, false, color.outline, color.fill, displayMode, '', true) :
-                        convertConnectedObjsToPolygonObjs(imageLineObj, showText, color.outline, null, Style.STANDARD, hideId, true);
+    (displayMode === Style.FILL)?
+        convertConnectedObjsToPolygonObjs(imageLineObj, false, color.outline, color.fill, displayMode, '', true) :
+        convertConnectedObjsToPolygonObjs(imageLineObj, showText, color.outline, null, Style.STANDARD, hideId, true);
     // peak points
-    const pointObjs = convertConnectedObjPeaksToPointObjs(imageLineObj, color.outline, symbol);
+    convertConnectedObjPeaksToPointObjs(imageLineObj, color.outline, symbol);
 
     // fill objects
+    /*
     let oneRectObjs = [];
     if (displayMode === Style.FILL) {
         //oneRectObjs = convertConnectedObjsToRectObjs(imageLineObj, true, fillColor, displayMode);
     }
+    */
 
     //imageLineObj.drawObjAry = [...oneRectObjs,...polygonObjs,...pointObjs,...zeroRectObjs];
     return imageLineObj.connectedObjs;
@@ -196,9 +226,9 @@ export function convertConnectedObjsToRectObjs(imageLineObj, bCovered = true, co
 
     return connectedObjs.reduce((prev, oneFootprintObj) => {
         const oneConnectObj = oneFootprintObj.connectObj;
-        if (style !== Style.FILL && bCovered) {
+        if (style !== Style.FILL && bCovered) {     // no rect for covered area outline
             oneConnectObj.drawObjs[ONERECTS] = [];
-        } else {
+        } else {                                    // uncovered area fill or outline, or covered area outline
             const basicObjs = oneConnectObj.makeRectDrawObjs(makeImageFunc, bCovered);
             const drawObjs = basicObjs.reduce((prev, oneObj) => {
                 if (!hideId || hideId !== oneObj.id) {
@@ -214,7 +244,7 @@ export function convertConnectedObjsToRectObjs(imageLineObj, bCovered = true, co
 }
 
 /**
- * create polygon drawObjs based on the footprint data
+ * create polygon drawObjs based on the footprint data unit
  * @param imageLineObj
  * @param showText  if showing text
  * @param color     outline color
@@ -283,6 +313,10 @@ export function convertConnectedObjPeaksToPointObjs(imageLineObj, color, symbol,
     }, []);
 }
 
+export function drawHighlightFootprintObj(highlightedFootprint, plot, drawingDef) {
+    const footprintObj = highlightedFootprint.connectObj;
+    return footprintObj.getDrawObjOnHighlight(plot, drawingDef);
+}
 
 export const ONERECTS = 'oneRectObjs';
 export const ZERORECTS = 'zeroRectObjs';
@@ -291,7 +325,7 @@ export const POINTOBJS = 'pointObjs';
 const AllObjTypes = [ONERECTS, POLYOBJS, POINTOBJS, ZERORECTS];
 
 export class ConnectedObj {
-    constructor(corners, spans, peaks, id) {
+    constructor(corners, spans, peaks, id, ra, dec, centerSys) {
         this.corners = corners;
         this.spans = spans;
         this.peaks = peaks;
@@ -302,94 +336,27 @@ export class ConnectedObj {
         this.y1 = Number(Math.min(corners[0][1], corners[2][1]));
         this.x2 = Number(Math.max(corners[0][0], corners[2][0]));
         this.y2 = Number(Math.max(corners[0][1], corners[2][1]));
-        this.centerPt = [(this.x1+this.x2)/2, (this.y1+this.y2)/2];
-        this.basicObjs = AllObjTypes.reduce((prev, oneType) => {
+        this.centerPt = (ra&&dec) ? makeAnyPt(ra, dec, centerSys) : null;
+        this.basicObjs = AllObjTypes.reduce((prev, oneType) => {      // all drawobj for entire footporint
             prev[oneType] = null;
             return prev;
         }, {});
-        this.drawObjs = AllObjTypes.reduce((prev, oneType) => {
+        this.drawObjs = AllObjTypes.reduce((prev, oneType) => {       // drawobj for showing, excluding some drawobj from basiObjs
             prev[oneType] = null;
             return prev;
         }, {});
 
     }
 
-    static make(corners, data, peaks, id) {
-        return data ? new ConnectedObj(corners, data, peaks, id) : null;
+    static make(corners, data, peaks, id, ra, dec, centerSys) {
+        return data ? new ConnectedObj(corners, data, peaks, id, ra, dec, centerSys) : null;
     }
 
-    splitOnEmptyLine() {
-        const resultObjs = [];
-        const {y1, y2, x1, x2} = this;
-        let firstY = y1;
+    getCenterPt(pixelsys) {
+        if (this.centerPt) return this.centerPt;
+        const {x1, x2, y1, y2} = this;
 
-        this.makeOneSegments();
-        const moveSpans = (spans, peaks, sy, ey) => {
-            const newSpans = [], oldSpans = [];
-            const newPeaks = [], oldPeaks = [];
-            let n_x1 = x2, n_x2 = x1;
-
-            for (let n = 0; n < spans.length; n++) {
-                const [y, x_0, x_1] = [...spans[n]];
-
-                if (y > ey) {
-                    oldSpans.push(...spans.slice(n));
-                    break;
-                }
-                if (y < sy) {
-                    oldSpans.push(spans[n]);
-                    continue;
-                }
-                newSpans.unshift(spans[n]);
-
-                if (x_0 < n_x1) n_x1 = x_0;
-                if (x_1 > n_x2) n_x2 = x_1;
-            }
-
-            for (let n = 0; n < peaks.length; n++) {
-                if (peaks[n][1] < sy || peaks[n][1] > ey) {
-                    newPeaks.push(peaks[n]);
-                } else {
-                    oldPeaks.push(peaks[n]);
-                }
-            }
-            return {newSpans, oldSpans, newPeaks, oldPeaks, new_x1: n_x1, new_x2: n_x2, new_y1: sy, new_y2: ey };
-        };
-
-
-        for (let y = (y1+1); y < y2; y++) {
-            if (this.oneSegments[y].length === 0) {
-                if (y > firstY) {
-                    const {newSpans, oldSpans, newPeaks, oldPeaks, new_x1, new_x2, new_y1, new_y2} = moveSpans(this.spans, this.peaks, firstY, y - 1);
-                    if (newSpans.length > 0) {
-                        const newCorners = [[new_x1, new_y1], [new_x2, new_y1], [new_x2, new_y2], [new_x1, new_y2]];
-                        const newCObj = ConnectedObj.make(newCorners, newSpans, newPeaks, this.id);
-                        resultObjs.push(newCObj);
-                        this.spans = oldSpans;
-                        this.peaks = oldPeaks;
-                    }
-                }
-                firstY = y+1;
-            }
-        }
-
-        if (resultObjs.length > 0) {
-            let n_x1 = x2, n_x2 = x1, n_y1 = y2, n_y2 = y1;
-            this.spans.forEach((oneSpan) => {
-                if (oneSpan[1] < n_x1) n_x1 = oneSpan[1];
-                if (oneSpan[2] > n_x2) n_x2 = oneSpan[2];
-                if (oneSpan[0] < n_y1)  n_y1 = oneSpan[0];
-                if (oneSpan[0] > n_y2)  n_y2 = oneSpan[0];
-            });
-
-            const newCrtObj = ConnectedObj.make([[n_x1, n_y1], [n_x2, n_y1], [n_x2, n_y2], [n_x1, n_y2]], this.spans, this.peaks,
-                                                 this.id);
-            resultObjs.unshift(newCrtObj);
-
-        } else {
-            resultObjs.unshift(this);
-        }
-        return resultObjs;
+        return (getMakeImageFunc(pixelsys))((x1+x2)/2, (y1+y2)/2);
     }
 
     getOneSegments() {
@@ -406,6 +373,10 @@ export class ConnectedObj {
         return {oneSegments: this.getOneSegments(), zeroSegments: this.getZeroSegments()};
     }
 
+    /**
+     * an object containing array of '1' segments at each row, row is the key and array of '1' segments is the value.
+     * @returns {{zeroSegments: ({}|*)}}
+     */
     makeOneSegments() {
         const {y1, y2} = this;
         const retval = {oneSegments: this.oneSegments};
@@ -423,9 +394,14 @@ export class ConnectedObj {
             this.oneSegments[y].push([x1, x2]);
         });
 
+        this.spans = [];     // discard original spans data
         return retval;
     }
 
+    /**
+     * an object containing array of '0' segments at each row, row is the key and array of '0' segments is the value.
+     * @returns {{zeroSegments: ({}|*)}}
+     */
     makeZeroSegments() {
         const {y1, y2, x1, x2} = this;
         const retval = {zeroSegments: this.zeroSegments};
@@ -543,6 +519,12 @@ export class ConnectedObj {
         return retval;
     }
 
+    /**
+     * make rect drawobj on covered or uncovered area, based on '1' or '0' segments
+     * @param makeImgPt
+     * @param bCovered
+     * @returns {*}
+     */
     makeRectDrawObjs(makeImgPt, bCovered) {
         if (bCovered && this.basicObjs[ONERECTS]) {
             return this.basicObjs[ONERECTS];
@@ -566,7 +548,6 @@ export class ConnectedObj {
         }, []);
 
         bCovered ? this.basicObjs[ONERECTS] = objs : this.basicObjs[ZERORECTS] = objs;
-
         return objs;
     }
 
@@ -615,14 +596,6 @@ export class ConnectedObj {
                 }
             }
         }
-
-        const inSegment = (segments, x, y) => {
-            const segs = segments[y];
-
-            return segs.find((seg) => {
-                return (x >= seg[0] && x <= seg[1]);
-            });
-        };
 
         const collectPolyPts = (startX, startY) => {
             let crtX = startX;
@@ -697,14 +670,13 @@ export class ConnectedObj {
             }
         }
 
-
         return this.basicObjs[POLYOBJS];
     }
 
     inSegment(segments, x, y){
         const segs = segments[y] || [];
 
-        return segs.find((seg) => {
+        return segs.some((seg) => {
             return (x >= seg[0] && x <= seg[1]);
         });
     }
@@ -724,32 +696,101 @@ export class ConnectedObj {
         });
 
         this.basicObjs[POINTOBJS] = pointObjs;
+        this.peaks = [];      // discard original peaks data
         return pointObjs;
     }
 
-    containPoint(pt) {
-        const {x1, x2, y1, y2, centerPt} = this;
+    containPoint(pt, pixelSys, cc) {
+        const {x1, x2, y1, y2} = this;
 
-        const inside = (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2);
-        //              && this.inSegment(this.oneSegments, pt.x, Math.trunc(pt.y));
+        const inside = (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2
+                        && this.inSegment(this.oneSegments, pt.x, Math.trunc(pt.y)));
         if (inside) {
-            return {inside, dist:  (Math.sqrt((centerPt[0] - pt.x)**2 + (centerPt[1] - pt.y)**2))};
+            const cPt = getImageCoordsOnFootprint(this.getCenterPt(pixelSys), cc, pixelSys);
+            return {inside, dist:  (Math.sqrt((cPt.x - pt.x)**2 + (cPt.y - pt.y)**2))};
         } else {
             return {inside};
         }
     }
 
     draw(ctx, cc, def,  vpPtM, onlyAddToPath) {
+        let allObjs;
 
-        const allObjs = AllObjTypes.reduce((prev, oneObjType) => {
-            if (this.drawObjs[oneObjType]) {
-                prev.push(...this.drawObjs[oneObjType]);
-            }
+        if (def.drawMode && def.drawMode === drawMode.highlight.key) {
+            allObjs = this.getDrawObjOnHighlight(cc, def);
+        } else if (def.drawMode && def.drawMode === drawMode.select.key) {
+            allObjs = this.getDrawObjsOnSelect(cc, def);
+        } else {
+            allObjs = AllObjTypes.reduce((prev, oneObjType) => {
+                if (this.drawObjs[oneObjType]) {
+                    prev.push(...this.drawObjs[oneObjType]);
+                }
+                return prev;
+            }, []);
+        }
+
+        allObjs.forEach((oneObj) => {
+            DrawOp.draw(oneObj, ctx, cc, def, vpPtM, onlyAddToPath);
+        });
+    }
+
+    getDrawObjOnHighlight(cc, drawingDef) {
+
+        const polyAry = this.basicObjs[POLYOBJS];
+        const pointAry = this.basicObjs[POINTOBJS];
+
+        if (!polyAry) return [];
+        const {lineWidth = 1} = drawingDef;
+        const lw = lineWidth+1;
+
+        const plot = primePlot(visRoot(), cc.plotId);
+        const polyHighlight = polyAry.reduce((prev, onePoly, idx) => {
+            const newhObj = DrawOp.makeHighlight(onePoly, plot, drawingDef);
+            newhObj.highlight = 1;
+            newhObj.text = (idx === 0) ? newhObj.id : '';
+            newhObj.style = Style.STANDARD;
+            newhObj.lineWidth = lw;
+
+            prev.push(newhObj);
             return prev;
         }, []);
 
-       allObjs.forEach((oneObj) => {
-           DrawOp.draw(oneObj, ctx, cc, def, vpPtM, onlyAddToPath);
-       });
+        const pointHighlight = pointAry.reduce((prev, onePoint) => {
+            const pointObj = clone(onePoint, {symbol: (drawingDef.symbol || DrawSymbol.X)});
+            const newhObj = DrawOp.makeHighlight(pointObj, plot, drawingDef);
+            newhObj.highlight = 1;
+            newhObj.lineWidth = lw;
+
+            prev.push(newhObj);
+            return prev;
+        }, []);
+        return [...polyHighlight,...pointHighlight];
+    }
+
+    getDrawObjsOnSelect(cc, drawingDef) {
+        const polyAry = this.basicObjs[POLYOBJS];
+        const pointAry = this.basicObjs[POINTOBJS];
+        const selDrawDef= Object.assign({}, drawingDef, {selectColor:drawingDef.selectedColor});
+
+        const plot = primePlot(visRoot(), cc.plotId);
+        const polySels = polyAry && polyAry.reduce((prev, onePoly) => {
+                const newhObj = DrawOp.makeHighlight(onePoly, plot, selDrawDef);
+                newhObj.highlight = 1;
+                newhObj.style = Style.STANDARD;
+
+                prev.push(newhObj);
+                return prev;
+            }, []);
+
+        const pointSels = (pointAry) && pointAry.reduce((prev, onePoint) => {
+                const pointObj = clone(onePoint, {symbol: (drawingDef.symbol || DrawSymbol.X)});
+                const newhObj = DrawOp.makeHighlight(pointObj, plot, selDrawDef);
+                newhObj.highlight = 1;
+
+                prev.push(newhObj);
+                return prev;
+            }, []);
+
+        return [...polySels,...pointSels];
     }
 }

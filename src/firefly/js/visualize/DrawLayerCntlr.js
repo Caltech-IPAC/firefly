@@ -28,7 +28,7 @@ import {footprintCreateLayerActionCreator,
         footprintEndActionCreator
 } from '../drawingLayers/FootprintTool.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
-import {imageLineBasedfootprintActionCreator} from '../drawingLayers/ImageLineBasedFootprint.js';
+import {imageLineBasedfootprintActionCreator} from './task/LSSTFootprintTask.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
@@ -565,10 +565,11 @@ export function dispatchCreateFootprintLayer(footprintId, layerTitle,
 }
 
 export function dispatchCreateImageLineBasedFootprintLayer(drawLayerId, title, fpData, plotId = [],
+                                                                     footprintFile, footprintImageFile, tbl_index,
                                                                      attachPlotGroup=true, dispatcher = flux.process) {
     dispatcher({
         type: IMAGELINEBASEDFP_CREATE,
-        payload: {plotId, drawLayerId, title, footprintData: fpData, attachPlotGroup}
+        payload: {plotId, drawLayerId, title, footprintData: fpData, footprintFile, footprintImageFile, tbl_index, attachPlotGroup}
     });
 }
 
