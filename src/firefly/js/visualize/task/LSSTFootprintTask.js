@@ -17,7 +17,7 @@ import {dispatchTableSearch, dispatchTableRemove, TABLE_LOADED, TABLE_SELECT,TAB
                 from '../../tables/TablesCntlr.js';
 import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/TableUtil.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
-import {convertAngle} from '../VisUtil.js';
+import {convertAngle, isAngleUnit} from '../VisUtil.js';
 import {getCenterColumns} from '../../tables/TableInfoUtil.js';
 
 
@@ -184,12 +184,16 @@ function getFootprintDataFromTable(tableModel) {
     const centerCols = getCenterColumns(tableModel);
     const hiddenColumns = assignLSSTFootprintColumnNames(tableModel);
 
-    let worldSys = null;
+    let centerSys = null;
+
+    // valid world system and ra&dec columns will take the priority as the footprint center in world coordinate system
+    // invalid world system and valid ra & dec column will take the priority as the footprint center in pixel system
+    // if no valid ra & dec column, then the footprint center is set based on 4 corners of the footprint
     if (centerCols) {
-        if (centerCols.lonCol && centerCols.latCol && centerCols.csys) {
+        if (centerCols.lonCol && centerCols.latCol) {
             ra_col = centerCols.lonCol;
             dec_col = centerCols.latCol;
-            worldSys = centerCols.csys;
+            centerSys = centerCols.csys;
         }
     }
 
@@ -243,7 +247,7 @@ function getFootprintDataFromTable(tableModel) {
                 return prev;
             }, {});
 
-            const worldUnit = ra_col&&dec_col ? get(getColumn(footprintTblModel, ra_col), 'units', 'deg') : null;
+            const worldUnit = ra_col&&dec_col ? get(getColumn(footprintTblModel, ra_col), 'units', null) : null;
 
             if (!failCol && data) {
                 data.reduce((prev, oneFootprint) => {
@@ -255,11 +259,15 @@ function getFootprintDataFromTable(tableModel) {
                     const spansStr = oneFootprint[colsIdxMap[hiddenColumns[spans]]];
                     const peaksStr = oneFootprint[colsIdxMap[hiddenColumns[peaks]]];
                     let   ra, dec;
-                    if (worldUnit) {
-                        ra = convertAngle(worldUnit, 'deg', Number(oneFootprint[colsIdxMap[ra_col]]));
-                        dec = convertAngle(worldUnit, 'deg', Number(oneFootprint[colsIdxMap[dec_col]]));
-                    }
+                    if (ra_col && dec_col) {
+                        ra = Number(oneFootprint[colsIdxMap[ra_col]]);
+                        dec = Number(oneFootprint[colsIdxMap[dec_col]]);
 
+                        if (worldUnit && isAngleUnit(worldUnit)) {
+                            ra = convertAngle(worldUnit, 'deg', ra);
+                            dec = convertAngle(worldUnit, 'deg', dec);
+                        }
+                    }
 
                     // skip no spans case
                     if (c1_x >= 0 && c1_y >= 0 && c2_x >= 0 && c2_y >= 0 && spansStr && peaksStr) {
@@ -269,7 +277,7 @@ function getFootprintDataFromTable(tableModel) {
 
                         prev[id] = {corners, spans: spanSet, peaks: peakSet, rowIdx: oneFootprint[colsIdxMap[table_rowidx]],
                                     rowNum: oneFootprint[colsIdxMap[table_rownum]],
-                                    ra, dec, worldSys};
+                                    ra, dec, centerSys};
                     }
                     return prev;
                 }, footprintData.feet);

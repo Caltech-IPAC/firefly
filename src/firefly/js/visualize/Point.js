@@ -339,6 +339,28 @@ export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(x,y), {type:OFFSE
 
 
 /**
+ * given an x,y, and a CoordinageSys object or string, make the correct type of point.
+ * @param {number} x
+ * @param {number} y
+ * @param {CoordinateSys|String} coordSys
+ * @return {Point}
+ */
+export function makeAnyPt(x,y,coordSys) {
+    const csys= (coordSys.isEquatorial && coordSys.getJsys && coordSys.getEquinox) ?
+                        coordSys  : CoordinateSys.parse(coordSys);
+
+    switch (csys) {
+        case CoordinateSys.SCREEN_PIXEL:
+        case CoordinateSys.UNDEFINED:    return makeScreenPt(x, y);
+        case CoordinateSys.PIXEL:        return makeImagePt(x, y);
+        case CoordinateSys.ZEROBASED:    return makeZeroBasedImagePt(x, y);
+        case CoordinateSys.FITSPIXEL:    return makeFitsImagePt(x, y);
+        default:                         return makeWorldPt(x,y,coordSys);
+    }
+}
+
+
+/**
  * @summary Test if two points are equals.  They must be the same coordinate system and have the same values to be
  * equal. Two points that are null or undefined are also considered equal.
  * If both points are WorldPt and are equal in values and coordinate system but have a

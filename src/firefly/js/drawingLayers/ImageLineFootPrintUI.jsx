@@ -6,7 +6,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
-import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
+import {dispatchChangeDrawingDef} from '../visualize/DrawLayerCntlr.js';
+import {clone} from '../util/WebUtil.js';
+import {Style} from '../visualize/draw/DrawingDef.js';
 
 const options= [ {label: 'outline', value: 'outline'},
                  {label: 'outline/text', value: 'outline_text'},
@@ -33,7 +35,11 @@ function ImageLineFootPrintUI({drawLayer,pv}) {
 
 function changeFootprintPref(drawLayer,pv,value, preValue) {
     if (preValue !== value) {
-        dispatchModifyCustomField(drawLayer.drawLayerId, {fillStyle: value}, pv.plotId);
+        const style = value.includes('outline') ? Style.STANDARD : Style.FILL;
+        const showText = value.includes('text');
+
+        const drawingDef = clone(drawLayer.drawingDef, {style, showText});
+        dispatchChangeDrawingDef(drawLayer.drawLayerId, drawingDef, pv.plotId);
     }
 }
 

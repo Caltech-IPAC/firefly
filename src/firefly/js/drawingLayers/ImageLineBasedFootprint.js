@@ -72,7 +72,7 @@ function creator(initPayload) {
         isPointData:true
     };
 
-    const actionTypes = [DrawLayerCntlr.REGION_SELECT];
+    const actionTypes = [DrawLayerCntlr.REGION_SELECT, DrawLayerCntlr.CHANGE_DRAWING_DEF];
 
     const id = get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', 'Lsst footprint '+id),
@@ -134,7 +134,7 @@ function highlightChange(mouseStatePayload) {
                 const dObj = connectedObjs[index++];
 
                 if (dObj) {
-                    const distInfo = dObj.connectObj.containPoint(tPt);
+                    const distInfo = dObj.connectObj.containPoint(tPt, pixelSys, cc);
 
                     if (distInfo.inside) {
                         if (!closestInfo || closestInfo.dist > distInfo.dist) {
@@ -184,25 +184,14 @@ function getLayerChanges(drawLayer, action) {
             return {title: tObj};
 
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            const {changes} = action.payload;
-            const {fillStyle, selectInfo, highlightedRow,
-                   tableRequest, tableData, imageLineBasedFP, tbl_id} = changes;
             const pId = plotId ? plotId : (plotIdAry ? plotIdAry[0]: null);
-
             if (!pId) return null;
 
+            const {changes} = action.payload;
+            const {selectInfo, highlightedRow,
+                   tableRequest, tableData, imageLineBasedFP, tbl_id, title} = changes;
+            const {style, color, showText, selectColor, highlightColor} = changes;  // for drawingdef
             const drawingDefChanges = clone(drawLayer.drawingDef);
-            // from UI setting
-            if (fillStyle) {
-                const style = fillStyle.includes('outline') ? Style.STANDARD : Style.FILL;
-                const showText = fillStyle.includes('text');
-                Object.assign(drawingDefChanges, {style, showText});
-
-                set(dd, [DataTypes.DATA, pId], null);
-                return Object.assign({}, {drawingDef: drawingDefChanges, drawData: dd});
-            }
-
-            const {title, style, color, showText, selectColor, highlightColor} = changes;
 
             const changesUpdate = {};
 
@@ -256,6 +245,15 @@ function getLayerChanges(drawLayer, action) {
             }
 
             return Object.assign({}, {highlightedFootprint: selectedRegion, drawData: dd, hideFPId});
+
+        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+            const ptId = plotId ? plotId : (plotIdAry ? plotIdAry[0]: null);
+            if (!ptId) return null;
+
+            set(dd, [DataTypes.DATA, ptId], plotLayer(drawLayer, action.payload.drawingDef));
+            return Object.assign({}, {drawingDef: clone(drawLayer.drawingDef, action.payload.drawingDef),
+                                      drawData: dd});
+
         default:
             return null;
     }
@@ -342,8 +340,8 @@ function plotHighlightRegion(drawLayer, highlightedFootprint, plotId, drawingDef
 }
 
 
-function plotLayer(dl) {
-    const {style=Style.FILL, showText, color} = dl.drawingDef || {};
+function plotLayer(dl, newDrawingDef) {
+    const {style=Style.FILL, showText, color} = newDrawingDef || dl.drawingDef || {};
     const {imageLineBasedFP, hideFPId} = dl || {};
 
     if (!imageLineBasedFP || !imageLineBasedFP.connectedObjs) return null;
@@ -372,7 +370,7 @@ export function selectFootprint(pv, dlAry) {
         const selectInfoCls = SelectInfo.newInstance({rowCount:  connectObjs ? connectObjs.length : 0});
         const allCObjsIdxs = getSelectedPts(sel, p, connectObjs, selectedShape);
 
-        allCObjsIdxs.forEach((cObjIdx) => selectInfoCls.setRowSelect(cObjIdx, true));
+        allCObjsIdxs.forEach((cObjIdx) => selectInfoCls.setRowSelect(Number(connectObjs[cObjIdx].tableRowNum), true));
         dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
     });
     detachSelectArea(pv);

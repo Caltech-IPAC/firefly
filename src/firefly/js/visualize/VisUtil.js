@@ -844,6 +844,10 @@ const makePt= function(type,  x, y) {
     return retval;
 };
 
+export function isAngleUnit(unit) {
+    return ['deg', 'degree', 'arcmin', 'arcsec', 'radian', 'rad'].includes(unit.toLowerCase());
+}
+
 /**
  * convert angle value of one unit to that of another unit
  * @param {string} from 'degree' or 'deg', 'arcmin', 'arcsec', 'radian' case insensitive

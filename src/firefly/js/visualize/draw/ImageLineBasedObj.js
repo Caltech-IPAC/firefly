@@ -1,12 +1,11 @@
 import Enum from 'enum';
 import DrawObj from './DrawObj';
-import {makeWorldPt} from '../Point.js';
 import {get} from 'lodash';
 import ShapeDataObj from './ShapeDataObj.js';
 import {makePointDataObj} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
 import {Style} from './DrawingDef.js';
-import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt} from '../Point.js';
+import {makeZeroBasedImagePt, makeFitsImagePt, makeImagePt, makeAnyPt} from '../Point.js';
 import {clone} from '../../util/WebUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {DrawSymbol} from './PointDataObj.js';
@@ -40,13 +39,13 @@ export const ImageLineBasedObj = (data) => {
 //for one footprint drawobj, one of connectedObjs in ImageLineBaseObj
 function make(id, oneFootData, pixelSys) {
     if (!oneFootData) return null;
-    const {corners, spans, peaks=[], rowIdx, rowNum, ra, dec, worldSys} = oneFootData;
+    const {corners, spans, peaks=[], rowIdx, rowNum, ra, dec, centerSys} = oneFootData;
 
     const obj = DrawObj.makeDrawObj();
     obj.pixelSys = pixelSys;
     obj.type = IMGFP_OBJ;
     obj.id = id;
-    obj.connectObj = ConnectedObj.make(corners, spans, peaks, id, ra, dec, worldSys);
+    obj.connectObj = ConnectedObj.make(corners, spans, peaks, id, ra, dec, centerSys);
     obj.tableRowIdx = rowIdx;
     obj.tableRowNum = rowNum;
     return obj;
@@ -60,16 +59,12 @@ const draw= {
     },
 
     getCenterPt(drawObj) {
-        const {connectObj}= drawObj;
-        const makeImageFunc = getMakeImageFunc(drawObj.pixelSys);
+        const {connectObj, pixelSys}= drawObj;
 
         if (connectObj) {
-            if (connectObj.worldPt) {
-                return connectObj.worldPt;
-            } else if (connectObj.centerPt) {
-                return makeImageFunc(connectObj.centerPt[0], connectObj.centerPt[1]);
-            }
+            return connectObj.getCenterPt(pixelSys);
         } else {
+            const makeImageFunc = getMakeImageFunc(pixelSys);
             return makeImageFunc(0, 0);
         }
     },
@@ -77,15 +72,17 @@ const draw= {
     getScreenDist(drawObj, plot, pt) {
         let minDist = Number.MAX_VALUE;
 
-        const {connectObj}= drawObj;
-        const makeImageFunc = getMakeImageFunc(drawObj.pixelSys);
+        const {connectObj, pixelSys}= drawObj;
 
-        if (connectObj && connectObj.centerPt) {
-            const cPt = plot.getScreenCoords(makeImageFunc(connectObj.centerPt[0], connectObj.centerPt[1]));
-            const d = Math.sqrt((cPt.x - pt.x)**2 + (cPt.y - pt.y)**2);
+        if (connectObj) {
+            const centerPt = connectObj.getCenterPt(pixelSys);
+            if (centerPt) {
+                const cPt = plot.getScreenCoords(centerPt);
+                const d = Math.sqrt((cPt.x - pt.x)**2 + (cPt.y - pt.y)**2);
 
-            if (d < minDist) {
-                minDist = d;
+                if (d < minDist) {
+                    minDist = d;
+                }
             }
         }
 
@@ -328,7 +325,7 @@ export const POINTOBJS = 'pointObjs';
 const AllObjTypes = [ONERECTS, POLYOBJS, POINTOBJS, ZERORECTS];
 
 export class ConnectedObj {
-    constructor(corners, spans, peaks, id, ra, dec, worldSys) {
+    constructor(corners, spans, peaks, id, ra, dec, centerSys) {
         this.corners = corners;
         this.spans = spans;
         this.peaks = peaks;
@@ -339,8 +336,7 @@ export class ConnectedObj {
         this.y1 = Number(Math.min(corners[0][1], corners[2][1]));
         this.x2 = Number(Math.max(corners[0][0], corners[2][0]));
         this.y2 = Number(Math.max(corners[0][1], corners[2][1]));
-        this.centerPt = [(this.x1+this.x2)/2, (this.y1+this.y2)/2];
-        this.worldPt = (ra&&dec) ? makeWorldPt(ra, dec, worldSys) : null;
+        this.centerPt = (ra&&dec) ? makeAnyPt(ra, dec, centerSys) : null;
         this.basicObjs = AllObjTypes.reduce((prev, oneType) => {      // all drawobj for entire footporint
             prev[oneType] = null;
             return prev;
@@ -352,8 +348,15 @@ export class ConnectedObj {
 
     }
 
-    static make(corners, data, peaks, id, ra, dec, worldSys) {
-        return data ? new ConnectedObj(corners, data, peaks, id, ra, dec, worldSys) : null;
+    static make(corners, data, peaks, id, ra, dec, centerSys) {
+        return data ? new ConnectedObj(corners, data, peaks, id, ra, dec, centerSys) : null;
+    }
+
+    getCenterPt(pixelsys) {
+        if (this.centerPt) return this.centerPt;
+        const {x1, x2, y1, y2} = this;
+
+        return (getMakeImageFunc(pixelsys))((x1+x2)/2, (y1+y2)/2);
     }
 
     getOneSegments() {
@@ -594,14 +597,6 @@ export class ConnectedObj {
             }
         }
 
-        const inSegment = (segments, x, y) => {
-            const segs = segments[y];
-
-            return segs.find((seg) => {
-                return (x >= seg[0] && x <= seg[1]);
-            });
-        };
-
         const collectPolyPts = (startX, startY) => {
             let crtX = startX;
             let crtY = startY;
@@ -681,7 +676,7 @@ export class ConnectedObj {
     inSegment(segments, x, y){
         const segs = segments[y] || [];
 
-        return segs.find((seg) => {
+        return segs.some((seg) => {
             return (x >= seg[0] && x <= seg[1]);
         });
     }
@@ -705,13 +700,14 @@ export class ConnectedObj {
         return pointObjs;
     }
 
-    containPoint(pt) {
-        const {x1, x2, y1, y2, centerPt} = this;
+    containPoint(pt, pixelSys, cc) {
+        const {x1, x2, y1, y2} = this;
 
         const inside = (pt.x >= x1 && pt.x <= x2 && pt.y >= y1 && pt.y <= y2
                         && this.inSegment(this.oneSegments, pt.x, Math.trunc(pt.y)));
         if (inside) {
-            return {inside, dist:  (Math.sqrt((centerPt[0] - pt.x)**2 + (centerPt[1] - pt.y)**2))};
+            const cPt = getImageCoordsOnFootprint(this.getCenterPt(pixelSys), cc, pixelSys);
+            return {inside, dist:  (Math.sqrt((cPt.x - pt.x)**2 + (cPt.y - pt.y)**2))};
         } else {
             return {inside};
         }
