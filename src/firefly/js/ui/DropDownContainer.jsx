@@ -12,6 +12,7 @@ import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
+import {TestTapSearchPanel} from '../ui/TestTapSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
 import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
@@ -27,6 +28,7 @@ export const dropDownMap = {
     Search: <SearchPanel />,
     TestSearch: <TestSearchPanel />,
     TestSearches: <TestQueriesPanel />,
+    TestTAPSearch: <TestTapSearchPanel />,
     ImageSearchPanelV2: <ImageSearchDropDown/>,
     ImageSelectDropDownCmd: <ImageSearchDropDown/>,
     ImageSelectDropDownSlateCmd: <ImageSearchDropDown gridSupport={true}/>,

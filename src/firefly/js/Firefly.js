@@ -130,6 +130,9 @@ const defFireflyOptions = {
     },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
+    },
+    tables : {
+        showInfoButton: true // info about table : title, table links, etc.
     }
 };
 

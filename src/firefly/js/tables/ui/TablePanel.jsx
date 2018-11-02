@@ -12,6 +12,7 @@ import * as TblUtil from '../TableUtil.js';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableSearch} from '../TablesCntlr.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
+import {TableInfo} from './TableInfo.jsx';
 import {TableConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
@@ -21,12 +22,15 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showTableDownloadDialog} from './TableSave.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
-
+//import INFO from 'html/images/icons-2014/24x24_Info.png';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
 
+
+const TT_INFO = 'Show additional table info';
 const TT_OPTIONS = 'Edit Table Options';
 const TT_SAVE = 'Save the content as an IPAC table';
 const TT_TEXT_VIEW = 'Text View';
@@ -119,7 +123,8 @@ export class TablePanel extends PureComponent {
     render() {
         const {tableConnector} = this;
         const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
-            showToolbar, showTitle, showOptionButton, showPaging, showSave, showFilterButton,
+            showToolbar, showTitle, showInfoButton=get(getAppOptions(), 'tables.showInfoButton'),
+            showOptionButton, showPaging, showSave, showFilterButton,
             totalRows, showLoading, columns, showUnits, showTypes, showFilters, textView,
             tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
             filterInfo, filterCount, sortInfo, data, backgroundable} = this.state;
@@ -143,6 +148,7 @@ export class TablePanel extends PureComponent {
             .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
 
         const showOptionsDialog = () => showTableOptionDialog(this.onOptionUpdate, this.onOptionReset, tbl_ui_id);
+        const showInfoDialog = () => showTableInfoDialog(tbl_id);
 
         return (
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
@@ -172,6 +178,11 @@ export class TablePanel extends PureComponent {
                                 <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
                                      title={TT_SAVE}
                                      className='PanelToolbar__button save'/> }
+                                {showInfoButton &&
+                                <div style={{marginLeft: '4px'}}
+                                     title={TT_INFO}
+                                     onClick={showInfoDialog}
+                                     className='PanelToolbar__button info'/> }
                                 {showOptionButton &&
                                 <div style={{marginLeft: '4px'}}
                                      title={TT_OPTIONS}
@@ -223,9 +234,18 @@ function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id) {
          </div>
     );
 
-    showOptionsPopup({content, title: 'Table Options', modal: true,show: true});
+    showOptionsPopup({content, title: 'Table Options', modal: true, show: true});
 
 
+}
+
+function showTableInfoDialog(tbl_id)  {
+    const content = (
+        <div className='TablePanelInfoWrapper'>
+            <TableInfo tbl_id={tbl_id}/>
+        </div>
+    );
+    showOptionsPopup({content, title: 'Table Info', modal: true, show: true});
 }
 
 const stopPropagation= (ev) => ev.stopPropagation();
@@ -251,6 +271,7 @@ TablePanel.propTypes = {
     showTitle: PropTypes.bool,
     showPaging: PropTypes.bool,
     showSave: PropTypes.bool,
+    showInfoButton: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
     leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
