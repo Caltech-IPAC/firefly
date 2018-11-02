@@ -8,15 +8,12 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.io.IpacTableReader;
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -62,7 +59,8 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
             userCatFile = ServerContext.convertToFile(filePath);
         }
         try {
-            return TableUtil.readAnyFormat(userCatFile);
+            int tblIdx = req.getIntParam(TableServerRequest.TBL_INDEX, 0);
+            return TableUtil.readAnyFormat(userCatFile, tblIdx);
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }
