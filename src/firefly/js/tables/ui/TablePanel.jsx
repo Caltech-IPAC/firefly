@@ -329,7 +329,7 @@ function TableError({tbl_id, message}) {
             <div style={{textAlign: 'center'}}>
                 <div style={{display: 'flex', flexDirection: 'column', margin: '5px 0'}}>
                     <b>Table Load Error:</b>
-                    <pre style={{margin: '7px 0'}}>{message}</pre>
+                    <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{message}</pre>
                 </div>
                 {prevReq && <button type='button' className='button std' onClick={reloadTable}>Back</button>}
             </div>
