@@ -66,6 +66,10 @@ export function fetchTable(tableRequest, hlRowIdx) {
             const selectInfo = SelectInfo.parse(tableModel.selectInfo);
             tableModel.selectInfo = selectInfo.data;
         }
+        if (tableModel.allMeta) {
+            // creates tableMeta from allMeta.
+            tableModel.allMeta.forEach( (m) => m.key && set(tableModel, ['tableMeta', m.key], m.value));
+        }
 
         tableModel.highlightedRow = hlRowIdx || startIdx;
         return tableModel;

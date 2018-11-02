@@ -332,7 +332,7 @@ public final class FITSTableReader
         // setting DataGroup meta info
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
             DataType dt = dataTypes.get(colIdx);
-            String format = getParam(table, "TDISP" + (colIdx + 1), 20);
+            String format = getParam(table, "TDISP" + (colIdx + 1));
             format = format == null ? null : convertFormat(format);
             if (Double.class.isAssignableFrom(dt.getDataType()) ||
                 Float.class.isAssignableFrom(dt.getDataType())) {
@@ -350,9 +350,9 @@ public final class FITSTableReader
                 if (p instanceof DescribedValue) {
                     DescribedValue dv = (DescribedValue) p;
                     String n = dv.getInfo().getName();
-                    String v = dv.getValueAsString(200);
+                    String v = dv.getValueAsString(Integer.MAX_VALUE);
                     if (hdList == null || hdList.contains(n)) {
-                        dataGroup.addAttribute(n, v);
+                        dataGroup.getTableMeta().addKeyword(n, v);
                     }
                 }
             }
@@ -413,7 +413,7 @@ public final class FITSTableReader
         String unit = colInfo.getUnitString();
         String nullString = null;
         String desc = colInfo.getDescription();
-        desc = desc == null ? getParam(table, "TDOC" + (colIdx+1), 200) : desc; // this is for LSST.. not sure it applies to others.
+        desc = desc == null ? getParam(table, "TDOC" + (colIdx+1)) : desc; // this is for LSST.. not sure it applies to others.
 
         DataType dataType = new DataType(colName, null);
         Class java_class = null;
@@ -454,9 +454,9 @@ public final class FITSTableReader
         return dataType;
     }
 
-    private static String getParam(StarTable table, String key, int maxWidth) {
+    private static String getParam(StarTable table, String key) {
         DescribedValue p = table.getParameterByName(key);
-        return p == null ? null : p.getValueAsString(maxWidth);
+        return p == null ? null : p.getValueAsString(Integer.MAX_VALUE);
     }
 
     /**

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
+import static edu.caltech.ipac.table.JsonTableUtil.getMetaFromAllMeta;
 import static edu.caltech.ipac.table.JsonTableUtil.getPathValue;
 
 public class VotableTest extends ConfigTest {
@@ -148,8 +149,8 @@ public class VotableTest extends ConfigTest {
         Assert.assertEquals("http://ivoa.spectr/server?obsno=${Name}", links.get(0).get("href"));
 
         // test table's meta info
-        Assert.assertEquals("table-info-value", getPathValue(tm, "tableMeta", "table-info"));
-        Assert.assertEquals("table-info-value2", getPathValue(tm, "tableMeta", "table-info2"));
+        Assert.assertEquals("table-info-value", getMetaFromAllMeta(tm, "table-info"));
+        Assert.assertEquals("table-info-value2", getMetaFromAllMeta(tm, "table-info2"));
 
         // table params
         JSONObject param = (JSONObject) getPathValue(tm, "params", "0");

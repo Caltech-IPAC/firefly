@@ -136,6 +136,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		// test meta
 		Assert.assertEquals("'ORIGIN value'", data.getAttribute("ORIGIN"));
 		Assert.assertEquals("'SQL value'", data.getAttribute("SQL"));
+		Assert.assertEquals("'repeated key will get overriden'", data.getTableMeta().getKeywords().get(5).getValue());  // but, it's still in keywords
 
 		// test column meta
 		DataType dt = data.getDataDefintion("dec");

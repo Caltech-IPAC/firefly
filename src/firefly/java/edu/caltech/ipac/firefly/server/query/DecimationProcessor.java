@@ -46,7 +46,6 @@ public class DecimationProcessor extends TableFunctionProcessor {
 
         if (decimateInfo != null) {
             DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
-            retval.mergeAttributes(dg.getKeywords());
             return retval;
         } else {
             return dg;

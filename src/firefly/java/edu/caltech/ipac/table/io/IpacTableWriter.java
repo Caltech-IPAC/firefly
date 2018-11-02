@@ -65,20 +65,20 @@ public class IpacTableWriter {
      *
      * @param stream the output stream to write to
      * @param dataGroup data group
-     * @param ignoreSysMeta ignore meta use by system.
+     * @param forExport only includes original meta and columns that are visible
      * @throws IOException on error
      */
-    public static void save(OutputStream stream, DataGroup dataGroup, boolean ignoreSysMeta)
+    public static void save(OutputStream stream, DataGroup dataGroup, boolean forExport)
             throws IOException {
-        save(new PrintWriter(new BufferedOutputStream(stream, IpacTableUtil.FILE_IO_BUFFER_SIZE)), dataGroup, ignoreSysMeta);
+        save(new PrintWriter(new BufferedOutputStream(stream, IpacTableUtil.FILE_IO_BUFFER_SIZE)), dataGroup, forExport);
     }
 
-    private static void save(PrintWriter out, DataGroup dataGroup, boolean ignoreSysMeta) throws IOException {
+    private static void save(PrintWriter out, DataGroup dataGroup, boolean forExport) throws IOException {
         shrinkToFitData(dataGroup);
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();
 
-        if (ignoreSysMeta) {
+        if (forExport) {
             // this should return only visible columns
             headers = headers.stream()
                             .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt)
@@ -87,9 +87,10 @@ public class IpacTableWriter {
                             .collect(Collectors.toList());
         }
 
-        List<DataGroup.Attribute> attributes = IpacTableUtil.makeAttributes(dataGroup);  // add column info as attributes
+        List<DataGroup.Attribute> attributes = forExport ? dataGroup.getTableMeta().getKeywords()
+                                : IpacTableUtil.makeAttributes(dataGroup);  // add column info as attributes
 
-        IpacTableUtil.writeAttributes(out, attributes, ignoreSysMeta);
+        IpacTableUtil.writeAttributes(out, attributes, forExport);
         IpacTableUtil.writeHeader(out, headers);
 
         for (int i = 0; i < totalRow; i++) {

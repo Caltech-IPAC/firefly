@@ -95,7 +95,7 @@ public final class IpacTableReader {
             outData = inData;
         }
 
-        outData.setKeywords(attributes);
+        outData.getTableMeta().setKeywords(attributes);
 
         String line = null;
         int lineNum = tableDef.getExtras() == null ? 0 : tableDef.getExtras().getKey();

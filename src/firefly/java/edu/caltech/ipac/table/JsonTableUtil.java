@@ -6,6 +6,7 @@ package edu.caltech.ipac.table;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.StringUtils;
+import netscape.javascript.JSObject;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
@@ -70,7 +71,7 @@ public class JsonTableUtil {
         tableModel.put("type", guessType(meta));
         tableModel.put("tableData", toJsonTableData(dataGroup));
 
-        tableModel.put("tableMeta", toJsonTableMeta(meta));
+        tableModel.put("allMeta", toJsonTableMeta(meta));
 
         if (dataGroup.getLinkInfos().size() > 0) {
             tableModel.put("links", toJsonLinkInfos(dataGroup.getLinkInfos()));
@@ -118,22 +119,6 @@ public class JsonTableUtil {
         return treq;
     }
 
-    private static TableMeta mergeAttributes(TableMeta tblDef, DataGroup data) {
-        if (tblDef == null) {
-            tblDef = new TableMeta();
-        }
-
-        List<DataGroup.Attribute> dataAttributes = data.getKeywords();
-        if (dataAttributes != null) {
-            for (DataGroup.Attribute a : dataAttributes) {
-                if (!tblDef.contains(a.getKey())) {
-                    tblDef.setAttribute(a.getKey(), a.getValue());
-                }
-            }
-        }
-        return tblDef;
-    }
-
     /**
      * convert to JSON TableData
      *
@@ -167,18 +152,37 @@ public class JsonTableUtil {
     }
 
     /**
-     * convert to JSON TableMeta
+     * For performance reason, we will send over the list of combined keywords/attributes.
+     * tableMeta will be created on the client side to avoid sending duplicates
      *
-     * @param tableDef
+     * @param tableMeta
      * @return
      */
-    public static JSONObject toJsonTableMeta(TableMeta tableDef) {
-        JSONObject tmeta = new JSONObject();
-        for (DataGroup.Attribute att : tableDef.getAttributeList()) {
-            tmeta.put(att.getKey(), att.getValue());
-        }
-        return tmeta;
+    public static List<JSONObject> toJsonTableMeta(TableMeta tableMeta) {
+        List<JSONObject> allMeta = new ArrayList<>();
+        tableMeta.getKeywords().forEach(kw -> allMeta.add(toJsonMetaEntry(kw.getKey(), kw.getValue(), true)));
+        tableMeta.getAttributeList().stream()
+                .filter(att -> !att.isKeyword())            // only take attributes that is not a keyword.  this will remove all of the keywords we added to attributes.
+                .forEach(att -> allMeta.add(toJsonMetaEntry(att.getKey(), att.getValue(), false)));
+
+        return allMeta;
     }
+
+
+    /**
+     * returns the value of the meta info for the given key
+     * @param jsonTable     tableModel in the form of a JSONObject
+     * @param key
+     * @return
+     */
+    public static String getMetaFromAllMeta(JSONObject jsonTable, String key) {
+        List<JSONObject> allMeta = (List<JSONObject>) jsonTable.get("allMeta");
+        for (JSONObject m : allMeta) {
+            if ( StringUtils.areEqual((String) m.get("key"),key) ) return (String) m.get("value");
+        }
+        return null;
+    }
+
 
 
     /**
@@ -393,7 +397,13 @@ public class JsonTableUtil {
         }).collect(Collectors.toList());
     }
 
-
+    private static JSONObject toJsonMetaEntry(String key, String value, boolean isKeyword) {
+        JSONObject entry = new JSONObject();
+        entry.put("key", key);
+        entry.put("value", value);
+        entry.put("isKeyword", isKeyword);
+        return entry;
+    }
 
 }
 

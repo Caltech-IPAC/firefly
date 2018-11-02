@@ -504,12 +504,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     private void setupMeta(DataGroup dg, TableServerRequest req) {
         // merge meta into datagroup from post-processing
-        Map<String, DataGroup.Attribute> cmeta = dg.getAttributes();
         TableMeta meta = new TableMeta();
         prepareTableMeta(meta, Arrays.asList(dg.getDataDefinitions()), req);
-        for (String key : meta.getAttributes().keySet()) {
-            if (!cmeta.containsKey(key)) {
-                dg.addAttribute(key, meta.getAttribute(key));
+        for (DataGroup.Attribute att : meta.getAttributeList()) {
+            if (!dg.getTableMeta().contains(att.getKey())) {
+                dg.getTableMeta().setAttribute(att.getKey(), att.getValue());
             }
         }
 

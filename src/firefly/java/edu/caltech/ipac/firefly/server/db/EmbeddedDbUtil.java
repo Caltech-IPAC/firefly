@@ -311,17 +311,19 @@ public class EmbeddedDbUtil {
     }
 
     private static void metaToDb(File dbFile, DataGroup dg, DbAdapter dbAdapter, String forTable) {
-        if (dg.getAttributeKeys().size() == 0) return;
+        TableMeta meta = dg.getTableMeta();
+        if (meta.isEmpty()) return;
 
         String createMetaSql = dbAdapter.createMetaSql(forTable);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createMetaSql);
 
         List<Object[]> data = new ArrayList<>();
-        Map<String, DataGroup.Attribute> meta = dg.getAttributes();
-        for (String key : meta.keySet()) {
-            String val = meta.get(key).getValue();
-            data.add(new Object[]{key, val});
-        }
+        // take all keywords
+        meta.getKeywords().forEach(kw -> data.add(new Object[]{kw.getKey(), kw.getValue(), kw.isKeyword()}));
+        // then take only meta that's not keywords
+        meta.getAttributeList().stream()
+                .filter(kw -> !kw.isKeyword())
+                .forEach(kw -> data.add(new Object[]{kw.getKey(), kw.getValue(), kw.isKeyword()}));
         String insertDDSql = dbAdapter.insertMetaSql(forTable);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
@@ -329,7 +331,14 @@ public class EmbeddedDbUtil {
     private static int dbToMeta(DataGroup dg, ResultSet rs) {
         try {
             do {
-                dg.addAttribute(rs.getString("key"), rs.getString("value"));
+                String key = rs.getString("key");
+                String value = rs.getString("value");
+                boolean isKeyword = rs.getBoolean("isKeyword");
+                if (isKeyword) {
+                    dg.getTableMeta().addKeyword(key, value);
+                } else {
+                    dg.getTableMeta().setAttribute(key, value);
+                }
             } while (rs.next());
         } catch (SQLException e) {
             logger.error(e);

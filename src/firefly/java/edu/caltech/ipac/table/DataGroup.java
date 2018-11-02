@@ -42,6 +42,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         return title;
     }
 
+    public void setTableMeta(TableMeta meta) { this.meta = meta; }
     public TableMeta getTableMeta() { return meta; }
 
     public void setTitle(String title) {
@@ -63,10 +64,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      */
     public void removeDataDefinition(String ...names) {
         if (names == null) return;
-        Arrays.stream(names).forEach(cn -> {
+        for(String cn : names) {
             columns.remove(cn);
             data.remove(cn);
-        });
+        };
     }
 
     /**
@@ -74,7 +75,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
      */
     public DataType[] getDataDefinitions() {
         if (cachedColumnsAry == null || cachedColumnsAry.length != columns.size()) {
-            cachedColumnsAry = columns.values().toArray(new DataType[columns.size()]);
+            cachedColumnsAry = columns.values().toArray(new DataType[0]);
         }
         return cachedColumnsAry;
     }
@@ -161,36 +162,11 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     }
 
     /**
-     * returns a set of unique keys
+     * this returns a list of attributes.
      * @return
      */
-    public Set<String> getAttributeKeys() {
-        return meta.getAttributes().keySet();
-    }
-
-    /**
-     * this returns a map of attributes ignoring comments.
-     *
-     * @return
-     */
-    public Map<String, Attribute> getAttributes() {
-        return meta.getAttributes();
-    }
-
-    /**
-     * set the keywords to this new list
-     */
-    public void setKeywords(List<Attribute> attribList) {
-        meta.setKeywords(attribList);
-    }
-
-    /**
-     * Keyword is equivalent to attributes.  However, it mandates order and allow
-     * for comments.
-     * @return
-     */
-    public List<Attribute> getKeywords() {
-        return meta.getKeywords();
+    public List<Attribute> getAttributeList() {
+        return new ArrayList<>(meta.getAttributes().values());
     }
 
     public DataObject get(int rowIdx) {
@@ -360,11 +336,8 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     public void mergeAttributes(List<DataGroup.Attribute> attribList) {
         if (attribList == null) return;
 
-        Set<String> curKeys = getAttributeKeys();
         for (DataGroup.Attribute at : attribList) {
-            if (at.isComment()) {
-                addAttribute(null, at.getValue());
-            } else if (!curKeys.contains(at.getKey())) {
+            if ( !(at.isComment() || getTableMeta().contains(at.getKey())) ) {
                 addAttribute(at.getKey(), at.getValue());
             }
         }
@@ -380,8 +353,9 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 //===================================================================
 
     public static class Attribute implements Serializable, Cloneable {
-        private String _key;
-        private String _value;
+        private String key;
+        private String value;
+        private boolean isKeyword;
 
         /**
          * create a comment attribute.
@@ -392,8 +366,12 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         }
 
         public Attribute(String key, String value) {
-            _key = key;
-            _value = value;
+            this(key, value, false);
+        }
+        public Attribute(String key, String value, boolean isKeyword) {
+            this.key = key;
+            this.value = value;
+            this.isKeyword = isKeyword;
         }
 
         public static Attribute parse(String s) {
@@ -413,25 +391,27 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         }
 
         public String getKey() {
-            return _key;
+            return key;
         }
 
         public String getValue() {
-            return _value;
+            return value;
         }
 
         public boolean isComment() {
-            return _key == null ;
+            return key == null ;
         }
 
         public void setValue(String value) {
-            _value = value;
+            this.value = value;
         }
+
+        public boolean isKeyword() { return isKeyword; }
 
         @Override
         public String toString() {
-            String key = isComment() ? " " : _key + " = ";
-            String value = _value == null ? "" : _value.replaceAll("\\p{Cntrl}", "");
+            String key = isComment() ? " " : this.key + " = ";
+            String value = this.value == null ? "" : this.value.replaceAll("\\p{Cntrl}", "");
             return "\\" + key + value;
         }
     }

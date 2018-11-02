@@ -3,7 +3,9 @@
  */
 package edu.caltech.ipac.firefly.server.util;
 
+import com.google.gwt.xml.client.Attr;
 import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.net.NedParams;
 import edu.caltech.ipac.astro.net.SimbadParams;
@@ -599,10 +601,10 @@ public class QueryUtil {
 
 
         columns[0] = dg.getDataDefintion(decimateInfo.getxColumnName()).newCopyOf();
-        colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getxColumnName()));
+        colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributeList(), decimateInfo.getxColumnName()));
 
         columns[1] = dg.getDataDefintion(decimateInfo.getyColumnName()).newCopyOf();
-        colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributes().values(), decimateInfo.getyColumnName()));
+        colMeta.addAll(IpacTableUtil.getAllColMeta(dg.getAttributeList(), decimateInfo.getyColumnName()));
 
 
         columns[2] = new DataType("rowidx", Integer.class); // need it to tie highlighted and selected to table
@@ -614,7 +616,10 @@ public class QueryUtil {
         Class yColClass = columns[1].getDataType();
 
         DataGroup retval = new DataGroup("decimated results", columns);
-        retval.setKeywords(colMeta);
+        retval.setTableMeta(dg.getTableMeta());
+        for(DataGroup.Attribute att : colMeta) {
+            retval.addAttribute(att.getKey(), att.getValue());
+        }
 
         // determine min/max values of x and y
         boolean checkDeciLimits = false;
@@ -679,9 +684,9 @@ public class QueryUtil {
                 // because the number of rows in the output
                 // is less than decimation limit
 
-                List<DataGroup.Attribute> attributes = retval.getKeywords();
+                TableMeta meta = retval.getTableMeta();
                 retval = new DataGroup("decimated results", new DataType[]{columns[0],columns[1],columns[2]});
-                retval.setKeywords(attributes);
+                retval.setTableMeta(meta);
 
                 for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
                     DataObject row = dg.get(rIdx);

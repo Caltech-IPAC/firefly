@@ -5,10 +5,8 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,7 +15,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Date: Oct 21, 2008
@@ -52,20 +49,12 @@ public class TableMeta implements Serializable {
     public static final String UCD = "ucd";
     public static final String UTYPE = "utype";
     public static final String DESC = "desc";
-    /*
-      attributes is a key/value map of table meta information.
-      keywords is a list of all table meta information including comments and duplicate attribute entries.
-     */
+
     private Map<String, DataGroup.Attribute> attributes = new HashMap<>();
     private List<DataGroup.Attribute> keywords = new ArrayList<>();
 
     public static String makeAttribKey(String tag, String colName) {
         return tag.replaceFirst("@", colName);
-    }
-
-    public void clear() {
-        attributes.clear();
-        keywords.clear();
     }
 
     public String getTblId() {
@@ -75,6 +64,21 @@ public class TableMeta implements Serializable {
     public void setTblId(String tblId) {
         setAttribute(TableServerRequest.TBL_ID, tblId);
     }
+
+    public TableMeta clone() {
+        TableMeta newMeta = new TableMeta();
+        newMeta.attributes.putAll(attributes);
+        newMeta.keywords.addAll(keywords);
+        return newMeta;
+    }
+
+    public boolean isEmpty() {
+        return attributes.size() == 0 && keywords.size() == 0;
+    }
+
+//===============================================================================================================
+//  Attributes:  keywords without comments and duplicates, plus any additional attributes added during processing
+//===============================================================================================================
 
     /**
      * Return only the meta that's not a comment.
@@ -91,23 +95,11 @@ public class TableMeta implements Serializable {
         return new ArrayList<>(attributes.values());
     }
 
-    /**
-     * @return all attributes including comments and duplicated keyed values.
-     */
-    public List<DataGroup.Attribute> getKeywords() {
-        return keywords;
-    }
-
-    public void setKeywords(Collection<DataGroup.Attribute> keywords) {
-        clear();
-        if (keywords != null) {
-            keywords.forEach(att -> addAttribute(att.getKey(), att.getValue()));
-        }
-    }
-
     public void setAttributes(Map<String, String> metas) {
-        clear();
-        metas.forEach((k,v) -> addAttribute(k, v));
+        attributes.clear();
+        if (metas != null) {
+            metas.forEach((k,v) -> setAttribute(k, v));
+        }
     }
 
     public String getAttribute(String key) {
@@ -115,91 +107,54 @@ public class TableMeta implements Serializable {
         return v == null ? null : v.getValue();
     }
 
-    public boolean contains(String key) {
-        return attributes.containsKey(key);
-    }
-
-
-    /**
-     * @param key   if null, meta will be treated as a comment
-     * @param value meta value
-     */
-    public void addAttribute(String key, String value) {
-        DataGroup.Attribute att = new DataGroup.Attribute(key, value);
-        if (!StringUtils.isEmpty(key)) {
-            attributes.put(key, att);
-        }
-        keywords.add(att);
-    }
-
     /**
      * @param key   if null, meta will be treated as a comment
      * @param value meta value
      */
     public void setAttribute(String key, String value) {
-        DataGroup.Attribute att = new DataGroup.Attribute(key, value);
-        if (StringUtils.isEmpty(key)) {
-            keywords.add(att);
-        } else {
+        DataGroup.Attribute att = new DataGroup.Attribute(key, value, false);
+        if (!StringUtils.isEmpty(key)) {
             attributes.put(key, att);
-            List<DataGroup.Attribute> oldVal = keywords.stream().filter(a -> !StringUtils.isEmpty(a.getKey()) && a.getKey().equals(key)).collect(Collectors.toList());
-            if (oldVal.size() == 0) {
-                keywords.add(att);
-            } else {
-                oldVal.forEach(a -> a.setValue(value));
-            }
         }
     }
 
     public void removeAttribute(String key) {
-        DataGroup.Attribute val = attributes.remove(key);
-        if (val != null) {
-            keywords = keywords.stream()
-                        .filter(at -> at.getKey() == null || !at.getKey().equals(key))
-                        .collect(Collectors.toList());
+        attributes.remove(key);
+    }
+
+    public boolean contains(String key) {
+        return attributes.containsKey(key);
+    }
+
+//=============================================================================
+// Keywords:  list of meta info from source, including duplicates and comments
+//=============================================================================
+
+    /**
+     * @return all attributes including comments and duplicated keyed values.
+     */
+    public List<DataGroup.Attribute> getKeywords() {
+        return keywords;
+    }
+
+    public void addKeyword(String key, String value) {
+        DataGroup.Attribute kw = new DataGroup.Attribute(key, value, true);
+        keywords.add(kw);
+        if (!kw.isComment()) {
+            attributes.put(kw.getKey(), kw);
         }
-
     }
 
-    public TableMeta clone() {
-        TableMeta newMeta = new TableMeta();
-        newMeta.attributes.putAll(attributes);
-        return newMeta;
-    }
-
-    /**
-     * @param key  meta key
-     * @return  return a comma-separated values as a list of string
-     */
-    public List<String> getValueAsList(String key) {
-        String cols = getAttribute(key);
-        return StringUtils.isEmpty(cols) ? new ArrayList<>() : StringUtils.asList(cols, ",");
-    }
-
-    /**
-     * @param key meta key
-     * @param values  Set a list of string as a comma-separated value
-     */
-    public void setValueAsList(String key, List<String> values) {
-        String val = StringUtils.toString(values, ",");
-        setAttribute(key, val);
+    public void setKeywords(Collection<DataGroup.Attribute> keywords) {
+        this.keywords.clear();
+        if (keywords != null) {
+            keywords.forEach(att -> addKeyword(att.getKey(), att.getValue()));
+        }
     }
 
 //====================================================================
 //  convenience getter/setter
 //====================================================================
-
-    public void setAttribute(String key, Number value) {
-    setAttribute(key, value.toString());
-}
-
-    public void setWorldPtMeta(String key, WorldPt pt) {
-        if (pt != null) setAttribute(key, pt.toString());
-    }
-
-    public WorldPt getWorldPtMeta(String key) {
-        return WorldPt.parse(getAttribute(key));
-    }
 
     public boolean getBooleanMeta(String key) {
         return StringUtils.getBoolean(getAttribute(key));
@@ -221,13 +176,6 @@ public class TableMeta implements Serializable {
         return StringUtils.getDate(getAttribute(key));
     }
 
-
-    public List<String> getRelatedCols() { return getValueAsList(RELATED_COLS_TAG); }
-    public void setRelatedCols(List<String> relatedCols) {
-        setValueAsList(RELATED_COLS_TAG, relatedCols); }
-
-    public List<String> getGroupByCols() { return getValueAsList(GROUPBY_COLS_TAG); }
-    public void setGroupByCols(List<String> groupByCols) { setValueAsList(GROUPBY_COLS_TAG, groupByCols); }
 
     public void setCenterCoordColumns(LonLatColumns centerColumns) {
         setLonLatColumnAttr(MetaConst.CENTER_COLUMN, centerColumns);
