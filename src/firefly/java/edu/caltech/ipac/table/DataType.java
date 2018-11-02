@@ -374,6 +374,7 @@ public class DataType implements Serializable, Cloneable {
                 type ==Float.class   ||
                 type ==Integer.class ||
                 type ==Short.class ||
+                type ==Byte.class ||
                 type ==Long.class ||
                 type ==HREF.class
         );
@@ -445,7 +446,7 @@ public class DataType implements Serializable, Cloneable {
             typeDesc = useShortType ? S_DOUBLE : DOUBLE;
         else if (type.equals(Float.class))
             typeDesc = useShortType ? S_FLOAT : FLOAT;
-        else if (type.equals(Integer.class) || type.equals(Short.class))
+        else if (type.equals(Integer.class) || type.equals(Short.class) || type.equals(Byte.class))
             typeDesc = useShortType ? S_INTEGER : INTEGER;
         else if (type.equals(Long.class))
             typeDesc = useShortType ? S_LONG : LONG;
