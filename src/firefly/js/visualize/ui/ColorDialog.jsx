@@ -169,7 +169,7 @@ function renderHuePreservingThreeColorView(plot,rgbFields) {
                         dialogId='ColorStretchDialog'
                     />
                     <div style={{ textAlign:'right', padding: '2px 10px'}}>
-                        <HelpIcon helpId={'visualization.imageoptions'}/>
+                        <HelpIcon helpId='visualization.stretches'/>
                     </div>
                 </div>
             </FieldGroup>
