@@ -6,18 +6,20 @@ package edu.caltech.ipac.firefly.server.db;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.table.GroupInfo;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.LinkInfo;
 import edu.caltech.ipac.table.MappedData;
+import edu.caltech.ipac.table.ParamInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
-import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.TableDef;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
@@ -32,11 +34,14 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
+import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,6 +50,7 @@ import static edu.caltech.ipac.firefly.server.db.DbCustomFunctions.createCustomF
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * @author loi
@@ -79,9 +85,12 @@ public class EmbeddedDbUtil {
         dg.removeDataDefinition(DataGroup.ROW_IDX);
         dg.removeDataDefinition(DataGroup.ROW_NUM);
 
+        IpacTableUtil.consumeColumnInfo(dg);
+
         createDataTbl(dbFile, dg, dbAdapter, forTable);
-        createDDTbl(dbFile, dg, dbAdapter, forTable);
-        createMetaTbl(dbFile, dg, dbAdapter, forTable);
+        ddToDb(dbFile, dg, dbAdapter, forTable);
+        metaToDb(dbFile, dg, dbAdapter, forTable);
+        auxDataToDb(dbFile, dg, dbAdapter, forTable);
         FileInfo finfo = new FileInfo(dbFile);
         return finfo;
     }
@@ -104,13 +113,11 @@ public class EmbeddedDbUtil {
 
         String createDataSql = dbAdapter.createDataSql(colsAry, tblName);
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createDataSql);
+
         if (totalRows > 0) {
-            String[] var = new String[colsAry.length];
-            Arrays.fill(var , "?");
+            JdbcTemplate jdbc = JdbcFactory.getTemplate(dbAdapter.getDbInstance(dbFile));
 
             String insertDataSql = dbAdapter.insertDataSql(colsAry, tblName);
-
-            JdbcTemplate jdbc = JdbcFactory.getTemplate(dbAdapter.getDbInstance(dbFile));
             if (dbAdapter.useTxnDuringLoad()) {
                 TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
                 txnJdbc.execute(new TransactionCallbackWithoutResult() {
@@ -145,7 +152,7 @@ public class EmbeddedDbUtil {
         DataGroup data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, forTable);
 
         int rowCnt = data.size();
-        if (!StringUtils.isEmpty(pagingPart)) {
+        if (!isEmpty(pagingPart)) {
             // fetch total row count for the query.. datagroup may contain partial results(paging)
             String cntSql = String.format("select count(*) from %s %s", forTable, wherePart);
             rowCnt = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).queryForInt(cntSql);
@@ -153,7 +160,7 @@ public class EmbeddedDbUtil {
 
         DataGroupPart page = EmbeddedDbUtil.toDataGroupPart(data, treq);
         page.setRowCount(rowCnt);
-        if (!StringUtils.isEmpty(treq.getTblTitle())) {
+        if (!isEmpty(treq.getTblTitle())) {
             page.getData().setTitle(treq.getTblTitle());  // set the datagroup's title to the request title.
         }
 
@@ -175,7 +182,7 @@ public class EmbeddedDbUtil {
         sql = dbAdapter.translateSql(sql);
 
         DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
-            return DataGroupUtil.processResults(rs);
+            return dbToDataGroup(rs);
         });
 
         SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
@@ -184,7 +191,7 @@ public class EmbeddedDbUtil {
             // insert DD info into the results
             try {
                 String ddSql = dbAdapter.getDDSql(refTable);
-                jdbc.query(ddSql, (rs, i) -> EmbeddedDbUtil.insertDD(dg, rs));
+                jdbc.query(ddSql, (rs, i) -> EmbeddedDbUtil.dbToDD(dg, rs));
             } catch (Exception e) {
                 // ignore.. may not have DD table
             }
@@ -192,7 +199,14 @@ public class EmbeddedDbUtil {
             // insert table meta info into the results
             try {
                 String metaSql = dbAdapter.getMetaSql(refTable);
-                jdbc.query(metaSql, (rs, i) -> EmbeddedDbUtil.insertMeta(dg, rs));
+                jdbc.query(metaSql, (rs, i) -> EmbeddedDbUtil.dbToMeta(dg, rs));
+            } catch (Exception e) {
+                // ignore.. may not have meta table
+            }
+            // insert aux data info into the results
+            try {
+                String auxDataSqlSql = dbAdapter.getAuxDataSql(refTable);
+                jdbc.query(auxDataSqlSql, (rs, i) -> EmbeddedDbUtil.dbToAuxData(dg, rs));
             } catch (Exception e) {
                 // ignore.. may not have meta table
             }
@@ -269,14 +283,34 @@ public class EmbeddedDbUtil {
     }
 
     public static DataGroupPart toDataGroupPart(DataGroup data, TableServerRequest treq) {
-        TableDef tm = new TableDef();
-        tm.setStatus(DataGroupPart.State.COMPLETED);
-        tm.setRowCount(data.size());
-        return new DataGroupPart(tm, data, treq.getStartIndex(), data.size());
+        return new DataGroupPart(data, treq.getStartIndex(), data.size());
     }
 
 
-    public static void createMetaTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String forTable) {
+//====================================================================
+//  O-R mapping functions
+//====================================================================
+
+    private static DataGroup dbToDataGroup(ResultSet rs) throws SQLException {
+
+        DataGroup dg = new DataGroup(null, getCols(rs));
+        if (rs.isBeforeFirst()) rs.next();
+        if (!rs.isFirst()) return dg;    // no row found
+
+        do {
+            DataObject row = new DataObject(dg);
+            for (int i = 0; i < dg.getDataDefinitions().length; i++) {
+                DataType dt = dg.getDataDefinitions()[i];
+                int idx = i + 1;
+                Object val = rs.getObject(idx);
+                row.setDataElement(dt, val);
+            }
+            dg.add(row);
+        } while (rs.next()) ;
+        return dg;
+    }
+
+    private static void metaToDb(File dbFile, DataGroup dg, DbAdapter dbAdapter, String forTable) {
         if (dg.getAttributeKeys().size() == 0) return;
 
         String createMetaSql = dbAdapter.createMetaSql(forTable);
@@ -292,13 +326,50 @@ public class EmbeddedDbUtil {
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
 
-    /**
-     * @param dbFile
-     * @param dg
-     * @param dbAdapter
-     * @param tblName
-     */
-    public static void createDDTbl(File dbFile, DataGroup dg, DbAdapter dbAdapter, String tblName) {
+    private static int dbToMeta(DataGroup dg, ResultSet rs) {
+        try {
+            do {
+                dg.addAttribute(rs.getString("key"), rs.getString("value"));
+            } while (rs.next());
+        } catch (SQLException e) {
+            logger.error(e);
+        }
+        return 0;
+    }
+
+    private static void auxDataToDb(File dbFile, DataGroup dg, DbAdapter dbAdapter, String tblName) {
+
+        String createAuxDataSql = dbAdapter.createAuxDataSql(tblName);
+        JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).update(createAuxDataSql);
+
+        List<Object[]> data = new ArrayList<>();
+        data.add( new Object[]
+                {
+                        dg.getTitle(),
+                        dg.size(),
+                        dg.getGroupInfos(),
+                        dg.getLinkInfos(),
+                        dg.getParamInfos()
+                });
+        String insertDDSql = dbAdapter.insertAuxDataSql(tblName);
+        JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
+    }
+
+    private static int dbToAuxData(DataGroup dg, ResultSet rs) {
+        try {
+            do {
+                dg.setTitle(rs.getString("title"));
+                dg.setLinkInfos((List<LinkInfo>) rs.getObject("links"));
+                dg.setGroupInfos((List<GroupInfo>) rs.getObject("groups"));
+                dg.setParamInfos((List<ParamInfo>) rs.getObject("params"));
+            } while (rs.next());
+        } catch (SQLException e) {
+            logger.error(e);
+        }
+        return 0;
+    }
+
+    private static void ddToDb(File dbFile, DataGroup dg, DbAdapter dbAdapter, String tblName) {
 
         DataType[] colsAry = makeDbCols(dg);
         String createDDSql = dbAdapter.createDDSql(tblName);
@@ -319,7 +390,16 @@ public class EmbeddedDbUtil {
                             dt.getVisibility().name(),
                             dt.isSortable(),
                             dt.isFilterable(),
-                            dt.getDesc()
+                            dt.getDesc(),
+                            dt.getEnumVals(),
+                            dt.getID(),
+                            dt.getPrecision(),
+                            dt.getUCD(),
+                            dt.getUType(),
+                            dt.getRef(),
+                            dt.getMaxValue(),
+                            dt.getMinValue(),
+                            dt.getLinkInfos()
                     }
             );
         }
@@ -327,57 +407,98 @@ public class EmbeddedDbUtil {
         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile)).batchUpdate(insertDDSql, data);
     }
 
-
-//====================================================================
-//
-//====================================================================
-
-    private static int insertMeta(DataGroup dg, ResultSet rs) {
-        try {
-            do {
-                dg.addAttribute(rs.getString("key"), rs.getString("value"));
-            } while (rs.next());
-        } catch (SQLException e) {
-            logger.error(e);
-        }
-        return 0;
-    }
-
-    private static int insertDD(DataGroup dg, ResultSet rs) {
+    private static int dbToDD(DataGroup dg, ResultSet rs) {
         try {
             do {
                 String cname = rs.getString("cname");
-                String label = rs.getString("label");
-                String units = rs.getString("units");
-                String nullStr = rs.getString("null_str");
-                String format = rs.getString("format");
-                String fmtDisp = rs.getString("fmtDisp");
-                int width = rs.getInt("width");
-                String visibility = rs.getString("visibility");
-                String desc = rs.getString("desc");
-                boolean sortable = rs.getBoolean("sortable");
-                boolean filterable = rs.getBoolean("filterable");
-
                 DataType dtype = dg.getDataDefintion(cname, true);
 
-                if (dtype != null) {
-                    if (!StringUtils.isEmpty(label)) dtype.setLabel(label);
-                    if (!StringUtils.isEmpty(units)) dtype.setUnits(units);
-                    if (!StringUtils.isEmpty(nullStr)) dtype.setNullString(nullStr);
-                    if (!StringUtils.isEmpty(format)) dtype.setFormat(format);
-                    if (!StringUtils.isEmpty(fmtDisp)) dtype.setFmtDisp(fmtDisp);
-                    if (!StringUtils.isEmpty(visibility)) dtype.setVisibility(DataType.Visibility.valueOf(visibility));
-                    if (!StringUtils.isEmpty(desc)) dtype.setDesc(desc);
-                    if (width > 0) dtype.setWidth(width);
-                    if (!sortable) dtype.setSortable(false);
-                    if (!filterable) dtype.setFilterable(false);
-                }
+                if (dtype == null) return 0;          // this column is not in DataGroup.  no need to update the info
+
+                String typeDesc = rs.getString("type");
+                dtype.setTypeDesc(typeDesc);
+                dtype.setDataType(DataType.descToType(typeDesc));
+
+                applyIfNotEmpty(rs.getString("label"), dtype::setLabel);
+                applyIfNotEmpty(rs.getString("units"), dtype::setUnits);
+                applyIfNotEmpty(rs.getString("null_str"), dtype::setNullString);
+                applyIfNotEmpty(rs.getString("format"), dtype::setFormat);
+                applyIfNotEmpty(rs.getString("fmtDisp"), dtype::setFmtDisp);
+                applyIfNotEmpty(rs.getInt("width"), dtype::setWidth);
+                applyIfNotEmpty(rs.getString("visibility"), v -> dtype.setVisibility(DataType.Visibility.valueOf(v)));
+                applyIfNotEmpty(rs.getString("desc"), dtype::setDesc);
+                applyIfNotEmpty(rs.getBoolean("sortable"), dtype::setSortable);
+                applyIfNotEmpty(rs.getBoolean("filterable"), dtype::setFilterable);
+                applyIfNotEmpty(rs.getString("enumVals"), dtype::setEnumVals);
+                applyIfNotEmpty(rs.getString("ID"), dtype::setID);
+                applyIfNotEmpty(rs.getString("precision"), dtype::setPrecision);
+                applyIfNotEmpty(rs.getString("ucd"), dtype::setUCD);
+                applyIfNotEmpty(rs.getString("utype"), dtype::setUType);
+                applyIfNotEmpty(rs.getString("ref"), dtype::setRef);
+                applyIfNotEmpty(rs.getString("maxValue"), dtype::setMaxValue);
+                applyIfNotEmpty(rs.getString("minValue"), dtype::setMinValue);
+                applyIfNotEmpty(rs.getObject("links"), v -> dtype.setLinkInfos((List<LinkInfo>) v));
+
             } while (rs.next());
         } catch (SQLException e) {
             logger.error(e);
         }
         return 0;
     }
+
+
+    public static List<DataType> getCols(ResultSet rs) throws SQLException {
+        ResultSetMetaData rsmd = rs.getMetaData();
+        List<DataType> cols = new ArrayList<>();
+        for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+            String cname = rsmd.getColumnName(i);
+            Class type = convertToClass(rsmd.getColumnType(i));
+            cols.add(new DataType(cname, type));
+        }
+        return cols;
+    }
+
+
+//====================================================================
+//  privates functions
+//====================================================================
+
+    private static Class convertToClass(int val) {
+        JDBCType type = JDBCType.valueOf(val);
+        switch (type) {
+            case CHAR:
+            case VARCHAR:
+            case LONGVARCHAR:
+                return String.class;
+            case TINYINT:
+            case SMALLINT:
+            case INTEGER:
+                return Integer.class;
+            case FLOAT:
+                return Float.class;
+            case BIGINT:
+                return Long.class;
+            case REAL:
+            case DOUBLE:
+            case NUMERIC:
+            case DECIMAL:
+                return Double.class;
+            case BIT:
+                return Boolean.class;
+            case DATE:
+            case TIME:
+            case TIMESTAMP:
+                return Date.class;
+            case BINARY:
+            case VARBINARY:
+            case LONGVARBINARY:
+                return String.class;        // treat it as string for now.
+            default:
+                return String.class;
+        }
+    }
+
+
 
     private static void doTableLoad(JdbcTemplate jdbc, String insertDataSql, DataGroup data) {
 

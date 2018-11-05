@@ -13,8 +13,9 @@ import CoordUtil from '../CoordUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt, makeImagePt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
-import {logError} from '../../util/WebUtil.js';
+import {logError, clone} from '../../util/WebUtil.js';
 import CysConverter from '../CsysConverter.js';
+
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';
@@ -44,6 +45,8 @@ function outputError(rg, rgStr, bReport = 1) {
     return 1;
 }
 
+let regionRelocatable = false;
+
 export class RegionFactory {
 
     /**
@@ -71,10 +74,11 @@ export class RegionFactory {
      *                               rg.options.coordSys = RegionSys.PHYSICAL | RegionSys.IMAGE | <RegionSys.xx>
      * @param regionData
      * @param bAllowHeader
+     * @param relocatable
      * @param stopAt
      * @returns {array} an array of Region object
      */
-    static parseRegionDS9(regionData, bAllowHeader = true, stopAt) {
+    static parseRegionDS9(regionData, bAllowHeader = true, relocatable=false, stopAt) {
         const sep = ';';
         const dLeft = ['{', '"', '\''];
         const dRight = ['}', '"', '\''];
@@ -151,6 +155,8 @@ export class RegionFactory {
 
         var globalOptions = Object.assign({}, makeRegionOptions({[regionPropsList.COORD]: defaultCoord}));
 
+        regionRelocatable = relocatable;
+
         return regionLines.reduce ( (prev, region, index) => {
             if (!stopAt || stopAt > 0) {
                 const rg = RegionFactory.parsePart(region.trim(), index + 1, globalOptions, bAllowHeader);
@@ -214,6 +220,7 @@ export class RegionFactory {
             } else {
                 Object.keys(rgProps).forEach( (prop) => setRegionPropDefault(prop, rgProps[prop]) );
                 set(rgProps, regionPropsList.COORD, defaultCoord);
+                rg.options = rgProps;
             }
             return rg;
         }
@@ -223,8 +230,7 @@ export class RegionFactory {
         var csys = getRegionCoordSys(tmpAry[0]);  // test the split first string
 
         if (csys !== RegionCsys.UNDEFINED) {
-            if (globalOptions) globalOptions.coordSys = tmpAry[0].toLowerCase();
-
+            if (globalOptions) globalOptions.coordSys = csys;
             if (tmpAry.length <= 1) {    // pure coordinate string
                 return null;
             }
@@ -244,7 +250,7 @@ export class RegionFactory {
         } else {                        // description only
             // default coordinate is PHYSICAL in case not specified
             regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
-                globalOptions[regionPropsList.COORD] : defaultCoord;
+                globalOptions[regionPropsList.COORD].key : defaultCoord;
         }
 
         // separate the region description and property part
@@ -320,8 +326,15 @@ export class RegionFactory {
             return makeRegionMsg(`[${RegionParseError.InvalidParam}] ${rgMsg}`);
         }
 
+        if (rg.options) {
+           Object.keys(globalOptions).forEach((op) => {
+               if (!has(rg.options, op)) {
+                   set(rg.options, op, globalOptions[op]);
+               }
+           });
+        }
         // check region properties
-        rgProps = rf.parseRegionOptions(regionOptions, opInclude,  (has(rg, 'options') ? rg.options : null), regionCsys);
+        rgProps = rf.parseRegionOptions(regionOptions, opInclude,  (has(rg, 'options') ? rg.options : globalOptions), regionCsys);
 
         if (rgProps.message) {
             return makeRegionMsg(`[${RegionParseError.InvalidProp}] ${rgProps.message} at ${rgMsg}`);
@@ -682,7 +695,9 @@ export class RegionFactory {
         var makePt = (vx, vy, cs) => {
             if (vx.unit === RegionValueUnit.IMAGE_PIXEL || vx.unit === RegionValueUnit.SCREEN_PIXEL) {
                 // fits to internal
-                return CysConverter.convertFitsStandardImagePtToInternalImage(makeImagePt(vx.value, vy.value));
+                const imgPt = makeImagePt(vx.value, vy.value);
+
+                return regionRelocatable ? imgPt : CysConverter.convertFitsStandardImagePtToInternalImage(imgPt);
             } else {
                 return makeWorldPt(vx.value, vy.value, this.parse_coordinate(cs));
             }
@@ -946,13 +961,13 @@ export class RegionFactory {
      * @returns {*}
      */
     parseRegionOptions(optionStr, include, rgOps = null, rgCsys = null) {
-        var rgOptions = rgOps ? rgOps : makeRegionOptions({});
+        var rgOptions = rgOps ? clone(rgOps) : makeRegionOptions({});
         var ops;
         var idx;
         const [ERR, CONT, STOP] = [0, 1, 2];
         const optionsName = [ 'color', 'dashlist','text', 'width','font','select', 'highlite',
                               'dash', 'fixed',  'edit', 'move', 'delete', 'include', 'rotate',
-                               'source', 'background', 'line', 'ruler', 'point'];
+                              'source', 'background', 'line', 'ruler', 'point', 'textangle'];
 
         if (rgCsys) {
             set(rgOptions, regionPropsList.COORD, rgCsys);
@@ -1178,6 +1193,13 @@ export class RegionFactory {
                     opValRes = getOptionValue(ops, getValueBeforeChar, ' ');
                     if (opValRes.valueStr) {
                         set(rgOptions, regionPropsList.SOURCE, isTrue(opValRes.valueStr));
+                    }
+                    break;
+
+                case 'textangle':
+                    opValRes = getOptionValue(ops, getValueBeforeChar, ' ');
+                    if (opValRes.valueStr) {
+                        set(rgOptions, regionPropsList.TEXTANGLE, parseFloat(opValRes.valueStr));
                     }
                     break;
 

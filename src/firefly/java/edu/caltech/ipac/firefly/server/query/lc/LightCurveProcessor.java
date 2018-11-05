@@ -10,6 +10,8 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -40,6 +42,21 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
         h = new IrsaLightCurveHandler();
     }
 
+
+    @Override
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
+
+        PeriodogramAPIRequest req = QueryUtil.assureType(PeriodogramAPIRequest.class, request);
+        String tblType = req.getParam(PeriodogramAPIRequest.TABLE_NAME);
+        String tblName = (tblType != null && tblType.equalsIgnoreCase(LightCurveHandler.RESULT_TABLES_IDX.PERIODOGRAM.name()))
+                            ? PERIODOGRAM_TABLE_NAME : PEAKS_TABLE_NAME;
+        try {
+            return computePeriodogram(req, tblName);
+        } catch (FailedRequestException e) {
+            throw new DataAccessException(e.getUserMessage(), e);
+        }
+    }
+
     /**
      * This method is defined as an abstract in the IpacTablePartProcessor and it is implemented here.
      * The TableServerRequest is passed here and processed.  Only when the "searchRequest" is set, the request
@@ -50,26 +67,7 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
      * @throws DataAccessException
      */
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
-        PeriodogramAPIRequest req = QueryUtil.assureType(PeriodogramAPIRequest.class, request);
-        String tblType = req.getParam(PeriodogramAPIRequest.TABLE_NAME);
-        String tblName = (tblType != null && tblType.equalsIgnoreCase(LightCurveHandler.RESULT_TABLES_IDX.PERIODOGRAM.name()))
-                ? PERIODOGRAM_TABLE_NAME : PEAKS_TABLE_NAME;
-
-        //In order to get any of those tables, computing the periodogram need to happen:
-        // Result is a Votable containing 2 tables:periodogram and peaks
-        File resTable = null;
-        try {
-            resTable = computePeriodogram(req, tblName);
-        } catch (FailedRequestException e) {
-            e.printStackTrace();
-        }
-
-//        if (tblType.equalsIgnoreCase(PeriodogramAPIRequest.PEAKS_TABLE)) {
-//
-//        }
-
-        return resTable;
+        return loadDataFileImpl(request);
     }
 
     /**
@@ -80,7 +78,7 @@ public class LightCurveProcessor extends IpacTablePartProcessor {
      * @return table file result either peaks por periodogram
      * @throws FailedRequestException
      */
-    public File computePeriodogram(PeriodogramAPIRequest req, String tblName) throws FailedRequestException {
+    private DataGroup computePeriodogram(PeriodogramAPIRequest req, String tblName) throws FailedRequestException {
 
         if (tblName.equalsIgnoreCase(PERIODOGRAM_TABLE_NAME)) {
             return h.getPeriodogramTable(req);

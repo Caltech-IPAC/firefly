@@ -17,7 +17,14 @@ const fieldProps = {labelWidth: 62, size: 15};
 
 export function getSubmitChangesFunc(traceType, fireflyType) {
     const type = fireflyType || traceType;
+    
     switch(type) {
+        case 'scatterOrHeatmap':
+            if (traceType === 'heatmap') {
+                return submitChangesHeatmap;
+            } else {
+                return submitChangesScatter;
+            }
         case 'scatter':
         case 'scattergl':
             return submitChangesScatter;

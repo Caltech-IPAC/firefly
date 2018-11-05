@@ -40,6 +40,7 @@ public interface WorkspaceManager extends Workspaces {
      * @return File created
      * @deprecated should be using {@link Workspaces#putFile(String, File, String)}
      */
+    @Deprecated
     File createWsLocalFile(String wspaceRelDir, String filePrefix, String fileExt);
 
     /**

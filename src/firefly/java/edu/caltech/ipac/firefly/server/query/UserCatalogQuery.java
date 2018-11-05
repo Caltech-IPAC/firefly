@@ -10,8 +10,10 @@ import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -44,6 +46,25 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
     private static Pattern decP = Pattern.compile("(^|[-_ ])dec($|[^\\p{Alpha}])");
 
 
+    @Override
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        String filePath = req.getParam("filePath");
+
+        if (StringUtils.isEmpty(filePath)) throw new DataAccessException("filePath parameter is not found");
+
+        File userCatFile;
+        if (ServerParams.IS_WS.equals(req.getParam(ServerParams.SOURCE_FROM))) {
+            userCatFile = WsServerUtils.getFileFromWorkspace(filePath);
+        } else {
+            userCatFile = ServerContext.convertToFile(filePath);
+        }
+        try {
+            int tblIdx = req.getIntParam(TableServerRequest.TBL_INDEX, 0);
+            return TableUtil.readAnyFormat(userCatFile, tblIdx);
+        } catch (IOException e) {
+            throw new DataAccessException(e.getMessage(), e);
+        }
+    }
 
     protected File loadDataFile(TableServerRequest req) throws IOException, DataAccessException {
 
@@ -55,7 +76,7 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
                 WsServerUtils wsUtil= new WsServerUtils();
                 try {
                     String s=  wsUtil.upload(wsParams);
-                    return ServerContext.convertToFile(s);
+                    return ServerContext.convertToFile(s);      // this logic is wrong if file is not IPAC format.
                 } catch (IOException|FailedRequestException e) {
                     throw new DataAccessException("Could now retrieve file from workspace",e);
                 }

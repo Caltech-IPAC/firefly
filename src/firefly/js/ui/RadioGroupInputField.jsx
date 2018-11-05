@@ -26,8 +26,8 @@ function getProps(params, fireValueChange) {
 }
 
 function handleOnChange(ev, params, fireValueChange) {
-    var val = get(ev, 'target.value', '');
-    var checked = get(ev, 'target.checked', false);
+    const val = get(ev, 'target.value', '');
+    const checked = get(ev, 'target.checked', false);
 
     if (checked) {
         fireValueChange({ value: val, valid: true});
@@ -37,7 +37,7 @@ function handleOnChange(ev, params, fireValueChange) {
 
 const propTypes= {
     inline : PropTypes.bool,
-    options: PropTypes.array.isRequired,
+    options: PropTypes.array,
     defaultValue: PropTypes.string,
     alignment:  PropTypes.string,
     labelWidth : PropTypes.number,
@@ -46,8 +46,8 @@ const propTypes= {
 };
 
 function checkForUndefined(v,props) {
-    const {options, defaultValue, isGrouped=false} = props;
-    var optionContain = (v) => v && options.find((op) => op.value === v);
+    const {options=[], defaultValue, isGrouped=false} = props;
+    const optionContain = (v) => v && options.find((op) => op.value === v);
     if (isEmpty(options) || optionContain(v) || isGrouped) {
         return v;
     } else {

@@ -24,6 +24,7 @@
     display: inline-flex;
     align-items: baseline;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .ImageSearch__section--title {

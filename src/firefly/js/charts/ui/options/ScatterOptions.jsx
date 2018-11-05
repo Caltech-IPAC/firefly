@@ -18,6 +18,7 @@ import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {Errors, errorTypeFieldKey, errorFieldKey, errorMinusFieldKey, getDefaultErrorType} from './Errors.jsx';
 import {getAppOptions} from '../../../core/AppDataCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
+import {PlotlyCS} from '../../Colorscale.js';
 
 
 const fieldProps = {labelWidth: 62, size: 15};
@@ -245,9 +246,7 @@ export function TableSourcesOptions({chartId, tablesource={}, activeTrace, group
                 <ColumnOrExpression {...sizeMapProps}/>
                 <ColumnOrExpression {...colorMapProps}/>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
-                                   options={[{value: 'Default'}, {value: 'Bluered'}, {value: 'Blues'}, {value: 'Earth'}, {value: 'Electric'}, {value: 'Greens'},
-                                       {value: 'Greys'}, {value: 'Hot'}, {value: 'Jet'}, {value: 'Picnic'}, {value: 'Portland'}, {value: 'Rainbow'},
-                                       {value: 'RdBu'}, {value: 'Reds'}, {value: 'Viridis'}, {value: 'YlGnBu'}, {value: 'YlOrRd'}]}/>
+                                   options={PlotlyCS.map((e)=>({value:e}))}/>
             </div>
             }
         </div>

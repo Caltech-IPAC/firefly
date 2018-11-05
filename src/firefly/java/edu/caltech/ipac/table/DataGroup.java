@@ -22,7 +22,12 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     private TableMeta meta = new TableMeta();
     private String title;
     private int size;
+    private List<GroupInfo> groups = new ArrayList<>();   // for <GROUP> under <TABLE> of VOTable
+    private List<LinkInfo> links = new ArrayList<>();     // for <LINK> under <TABLE> of VOTable
+    private List<ParamInfo> params = new ArrayList<>();  // for <PARAM> under <TABLE> of VOTABLE
     private transient DataType[] cachedColumnsAry = null;
+
+    public DataGroup() {}
 
     public DataGroup(String title, DataType[] dataDefs) {
         this(title, Arrays.asList(dataDefs));
@@ -30,7 +35,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 
     public DataGroup(String title, List<DataType> dataDefs) {
         this.title = title;
-        dataDefs.stream().forEach(this::addDataDefinition);
+        dataDefs.forEach(this::addDataDefinition);
     }
 
     public String getTitle() {
@@ -312,6 +317,42 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     }
 
     /**
+     * get GroupInfo list
+     * @return list of GroupInfo object
+     */
+    public List<GroupInfo> getGroupInfos() {
+        return groups;
+    }
+    public void setGroupInfos(List<GroupInfo> groupInfos) {
+        groups.clear();
+        groups.addAll(groupInfos);
+    }
+
+    /**
+     * get LinkInfo list
+     * @return a list of LinkInfo
+     */
+    public List<LinkInfo> getLinkInfos() {
+        return links;
+    }
+    public void setLinkInfos(List<LinkInfo> linkInfos) {
+        links.clear();
+        links.addAll(linkInfos);
+    }
+
+    /**
+     * get a list Params representing static columns (like PARAM in votable)
+     * @return a list of static columns in form of Params objects
+     */
+    public List<ParamInfo> getParamInfos() {
+        return params;
+    }
+    public void setParamInfos(List<ParamInfo> paramInfos) {
+        this.params.clear();
+        this.params.addAll(paramInfos);
+    }
+
+    /**
      * merge the in coming attribute list with the current one.
      * All comments will be added.
      * Only attribute with new key will be added.
@@ -381,6 +422,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 
         public boolean isComment() {
             return _key == null ;
+        }
+
+        public void setValue(String value) {
+            _value = value;
         }
 
         @Override

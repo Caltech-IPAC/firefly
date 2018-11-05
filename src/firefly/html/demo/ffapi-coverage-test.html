@@ -16,6 +16,7 @@
 
 <body>
 
+<div id="fireflyLostConnWarn" data-decor="small" class="warning-div right"></div>
 
 <div style="width: 500px; padding: 50px 0 0 20px;">
     <br>
@@ -73,6 +74,17 @@
 
             firefly.showTable('tables-1', tblReq1);
             firefly.showTable('tables-1', tblReq2);
+
+
+            var req = firefly.util.table.makeFileRequest('coveragebug',
+                'http://web.ipac.caltech.edu/staff/roby/coverage-bug/emman-not-catalog.tbl',null,
+                { pageSize: 100,
+                });
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+
+
+
+
 
             firefly.showCoverage('coverageHere',
                     {

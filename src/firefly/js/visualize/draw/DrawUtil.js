@@ -179,9 +179,9 @@ function drawTextCanvas(ctx, text, x,y,color= 'red', renderOptions= {}, location
 
 
     const {textBaseline= 'top', textAlign= 'start', rotationAngle=0} = locationOptions;
-    const {fontFamily='helvetica', fontSize='9px', fontWeight='normal', fontStyle='normal'} = fontOptions;
+    const {fontName='helvetica', fontSize='9px', fontWeight='normal', fontStyle='normal'} = fontOptions;
 
-    ctx.font= `${fontStyle} ${fontSize} ${fontFamily}`;
+    ctx.font= `${fontStyle} ${fontWeight} ${fontSize} ${fontName}`;
     // offscreenCtx.fillStyle= 'rgba(0,0,0,.4)';
     // offscreenCtx.strokeStyle='rgba(0,0,0,.2)';
     // ctx.textAlign= 'center';

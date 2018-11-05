@@ -288,7 +288,7 @@ export class Drawer {
         else {
             return;
         }
-        const selDrawDef= Object.assign({}, this.drawingDef, {color:this.drawingDef.selectedColor});
+        const selDrawDef= Object.assign({}, this.drawingDef, {color:this.drawingDef.selectedColor, drawMode: 'select'});
         this.doDrawing(makeDrawingParams(selectCanvas, selDrawDef, cc,selectedData));
     }
 

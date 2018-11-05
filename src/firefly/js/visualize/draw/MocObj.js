@@ -15,6 +15,7 @@ import {rateOpacity} from '../../util/Color.js';
 const MOC_OBJ= 'MOCObj';
 const DEFAULT_STYLE= Style.STANDARD;
 const DEF_WIDTH = 1;
+const MAX_MAPORDER = 25;
 
 /**
  * Draw one or more polygons defined in Multi-Order Coverage Map, MOC.
@@ -247,7 +248,7 @@ export class MocGroup {
         this.visibleMap = {};
         this.highestOrderInMap = 0;
 
-        new Array(this.displayOrder).fill(0).map((i, idx) => idx + 1)
+        new Array(Math.min(this.displayOrder, MAX_MAPORDER)).fill(0).map((i, idx) => idx + 1)
             .find((d) => {
                 if ((d > 1) && Object.keys(this.visibleMap[d - 1]).length > 5000) {
                     return true;
@@ -402,7 +403,7 @@ export class MocGroup {
             return true;
         }
 
-        if (toOrder >this.displayOrder) return false;
+        if (toOrder > Math.min(this.displayOrder, MAX_MAPORDER)) return false;
 
         const lastOrder = this.getHighestOrderFromMap(toOrder);
 

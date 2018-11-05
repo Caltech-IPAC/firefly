@@ -22,6 +22,7 @@ import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
+import {warningDivId} from '../../ui/LostConnection.jsx'
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 
@@ -92,6 +93,7 @@ export class FireflyViewer extends PureComponent {
                 <div id='App' className='rootStyle' style={style}>
                     <header>
                         <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon}}/>
+                        <div id={warningDivId} data-decor='full' className='warning-div center'/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}

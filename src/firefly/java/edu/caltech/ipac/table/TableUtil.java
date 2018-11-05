@@ -157,7 +157,7 @@ public class TableUtil {
     }
 
     public static DataGroupPart getData(File inf, int start, int rows) throws IOException {
-        TableDef tableDef = IpacTableUtil.getMetaInfo(inf);
+        IpacTableDef tableDef = IpacTableUtil.getMetaInfo(inf);
 
         DataGroup dg = new DataGroup(null, tableDef.getCols());
 
@@ -179,16 +179,11 @@ public class TableUtil {
             reader.close();
         }
 
-        // sync attributes in datagroup with tabledef.
-        Map<String, DataGroup.Attribute> attribs = dg.getAttributes();
-        if (attribs.size() > 0) {
-            tableDef.setKeywords(attribs.values());
-        }
         dg.setKeywords(tableDef.getKeywords());
 
         long totalRow = tableDef.getLineWidth() == 0 ? 0 :
                         (inf.length()+1 - tableDef.getRowStartOffset())/tableDef.getLineWidth();
-        return new DataGroupPart(tableDef, dg, start, (int) totalRow);
+        return new DataGroupPart(dg, start, (int) totalRow);
     }
 
 //====================================================================

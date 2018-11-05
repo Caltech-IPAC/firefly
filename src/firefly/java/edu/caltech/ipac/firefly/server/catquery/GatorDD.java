@@ -47,7 +47,7 @@ import java.util.List;
         })
 public class GatorDD extends SharedDbProcessor {
 
-    public DataGroup fetchData(TableServerRequest treq) throws DataAccessException {
+    public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
         TableServerRequest ntreq = (TableServerRequest) treq.cloneRequest();
         ntreq.keepBaseParamOnly();
         try {

@@ -10,6 +10,10 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
+
+import static org.apache.commons.lang.StringEscapeUtils.escapeJava;
+import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
 
 public class DataType implements Serializable, Cloneable {
 
@@ -31,6 +35,7 @@ public class DataType implements Serializable, Cloneable {
     private static final String S_LONG = "l";
     private static final String S_CHAR = "c";
     private static final String S_BOOL = "b";
+    public static final String LONG_STRING = "long_string";
     public static final List<String> NUMERIC_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, INTEGER, LONG, S_DOUBLE, S_REAL, S_FLOAT, S_INTEGER, S_LONG);
     public static final List<String> REAL_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
     public static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
@@ -51,8 +56,16 @@ public class DataType implements Serializable, Cloneable {
     private       String format;           // format string used for formating
     private       String fmtDisp;          // format string for diplay ... this is deprecated
     private       String sortByCols;       // comma-separated of column names
+    private       String enumVals;         // comma-separated of distinct values
+    private       String ID;
+    private       String precision;
+    private       String ucd;
+    private       String utype;
+    private       String ref = "";
+    private       List<LinkInfo> links = new ArrayList<>();
+    private       String maxValue = "";
+    private       String minValue = "";
 
-//    private transient PrimitiveList data;       // column-based data
     private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
     private transient Boolean isNumeric;        // cached to improve formatting performance.
 
@@ -69,7 +82,8 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public DataType(String keyName, Class type, String label, String units, String nullString, String desc) {
-        this.keyName = keyName;
+        // our db engine does not allow quotes in column names
+        this.keyName = keyName == null ? null : keyName.replace("\"","");
         setDataType(type);
         this.units = units;
         this.label = label;
@@ -94,9 +108,6 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public String getTypeDesc() {
-        if (typeDesc == null) {
-            typeDesc = resolveTypeDesc();
-        }
         return typeDesc;
     }
 
@@ -110,7 +121,9 @@ public class DataType implements Serializable, Cloneable {
 
     public void setDataType(Class type) {
         this.type = type;
-        typeDesc = resolveTypeDesc();
+        if (type != null && typeDesc == null) {
+            typeDesc = resolveTypeDesc();
+        }
     }
 
     public String getUnits() {
@@ -205,6 +218,74 @@ public class DataType implements Serializable, Cloneable {
 
     public void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
 
+
+    public void setID (String id) {
+        this.ID = id;
+    }
+
+    public String getID () {
+        return ID;
+    }
+
+    /**
+     * set precision for numeric data, En or Fn
+     *          En: n means number of significant figures
+     *          Fn: n means the significant figures after decimal point
+     * @param prec precision string
+     */
+    public void setPrecision(String prec) {
+        this.precision = prec;
+    }
+
+    public String getPrecision() {
+        return precision;
+    }
+
+    public void setUCD(String ucd) {
+        this.ucd = ucd;
+    }
+
+    public String getUCD() {
+        return ucd;
+    }
+
+    public void setUType(String utype) {
+        this.utype = utype;
+    }
+
+    public String getUType() {
+        return utype;
+    }
+
+    public void setMaxValue(String max) {
+        this.maxValue = max;
+    }
+
+    public String getMaxValue() {
+        return maxValue;
+    }
+
+    public void setMinValue(String min) {
+        this.minValue = min;
+    }
+
+    public String getMinValue() {
+        return minValue;
+    }
+
+    public void setRef(String value) {
+        this.ref = value;
+    }
+
+    public String getRef() {
+        return ref;
+    }
+
+    public String getEnumVals() { return enumVals; }
+
+    public void setEnumVals(String enumVals) { this.enumVals = enumVals;}
+
+
     /**
      * returns the formatted header of this column padded to max width
      * @return
@@ -220,6 +301,16 @@ public class DataType implements Serializable, Cloneable {
      * @return
      */
     public String formatData(Object value) {
+        return formatData(value, false);
+    }
+
+    /**
+     * returns the formatted string of the given value padded to the column's defined width
+     * @param value
+     * @param useEscape apply Java escaping to all strings to take care of control characters and quotes
+     * @return
+     */
+    public String formatData(Object value, boolean useEscape) {
         String sval;
         if (value == null) {
             sval = getNullString() == null ? "" : getNullString();
@@ -229,8 +320,10 @@ public class DataType implements Serializable, Cloneable {
                 value = String.format("%1$tF %1$tT", value);
             }
 
+            if (useEscape && type == String.class) {
+                value = escapeJava((String)value);
+            }
             String formatStr = getFmtDisp();
-            formatStr = formatStr == null ? getFormat() : formatStr;
             formatStr = formatStr == null ? getFormat() : formatStr;
             if (formatStr == null) {
                 formatStr = this.getFormatStr(0);
@@ -281,14 +374,29 @@ public class DataType implements Serializable, Cloneable {
                 type ==Float.class   ||
                 type ==Integer.class ||
                 type ==Short.class ||
+                type ==Byte.class ||
                 type ==Long.class ||
                 type ==HREF.class
         );
     }
 
     public Object convertStringToData(String s) {
+        return convertStringToData(s, false);
+    }
+
+    /**
+     * Convert a string into an object
+     * @param s string representation of an object
+     * @param useUnescape - if true Java unescaping is applied to all strings
+     * @return an object
+     */
+    public Object convertStringToData(String s, boolean useUnescape) {
         if (s == null || s.length() == 0 || s.equalsIgnoreCase("null")) return null;
         if (nullString != null && nullString.equals(s)) return null;
+
+        if (useUnescape && type==String.class) {
+            return unescapeJava(s);
+        }
 
         Object retval= s;
         try {
@@ -296,7 +404,7 @@ public class DataType implements Serializable, Cloneable {
                  retval= Boolean.valueOf(s);
              }
              else if (type ==String.class) {
-                 retval= s;
+                 retval= useUnescape ? unescapeJava(s) : s;
              }
              else if (type ==Double.class) {
                  retval= new Double(s);
@@ -338,7 +446,7 @@ public class DataType implements Serializable, Cloneable {
             typeDesc = useShortType ? S_DOUBLE : DOUBLE;
         else if (type.equals(Float.class))
             typeDesc = useShortType ? S_FLOAT : FLOAT;
-        else if (type.equals(Integer.class) || type.equals(Short.class))
+        else if (type.equals(Integer.class) || type.equals(Short.class) || type.equals(Byte.class))
             typeDesc = useShortType ? S_INTEGER : INTEGER;
         else if (type.equals(Long.class))
             typeDesc = useShortType ? S_LONG : LONG;
@@ -348,7 +456,7 @@ public class DataType implements Serializable, Cloneable {
         return typeDesc;
     }
 
-    public static Class parseDataType(String type) {
+    public static Class descToType(String type) {
         switch (type) {
             case DOUBLE:
             case S_DOUBLE:
@@ -394,4 +502,18 @@ public class DataType implements Serializable, Cloneable {
             return null; // should not happen;
         }
     }
+
+
+    /**
+     * get LinkInfo list
+     * @return a list of LinkInfo
+     */
+    public List<LinkInfo> getLinkInfos() {
+        return links;
+    }
+    public void setLinkInfos(List<LinkInfo> vals) {
+        links.clear();
+        links.addAll(vals);
+    }
+
 }

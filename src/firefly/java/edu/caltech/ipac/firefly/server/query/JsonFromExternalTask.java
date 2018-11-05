@@ -25,11 +25,6 @@ public class JsonFromExternalTask implements SearchProcessor {
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     @Override
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
-    }
-
-    @Override
     public String getUniqueID(ServerRequest request) {
         String uid = request.getRequestId() + "-";
 

@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
+import nom.tam.fits.Data;
 
 import java.io.File;
 import java.util.*;
@@ -51,7 +52,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private static final String errMsg = "HiPS Map search: no HiPS maps found";
 
-    public FileInfo ingestDataIntoDb(TableServerRequest request, File dbFile) throws DataAccessException {
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         String hipsSources = request.getParam(ServerParams.HIPS_SOURCES);
         String hipsDataTypes = request.getParam(ServerParams.HIPS_DATATYPES);
         String hipsMergePriority = request.getParam(ServerParams.HIPS_MERGE_PRIORITY);
@@ -59,9 +60,6 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         String workingTypes[] = (hipsDataTypes != null) ? hipsDataTypes.split(",") : null;
         String prioritySources[] = (hipsMergePriority != null) ? hipsMergePriority.split(",") : null;
         List<HiPSMasterListEntry> allSourceData = new ArrayList<>();
-
-        DbAdapter dbAdapter = DbAdapter.getAdapter(request);
-
 
         if (workingSources == null || workingSources.length == 0 ||
                 (workingSources.length == 1 && workingSources[0].equalsIgnoreCase(ServerParams.ALL))) {
@@ -96,8 +94,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             DataGroup dg = createTableDataFromListEntry(allSourceData);
 
             setupMeta(dg, (workingSources.length > 1));
-
-            return EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
+            return dg;
         } catch (Exception e) {
             _log.warn(e.getMessage());
             throw new DataAccessException(errMsg);

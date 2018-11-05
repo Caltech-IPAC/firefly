@@ -3,6 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.RequestOwner;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -20,6 +25,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -34,12 +40,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
 
 /**
@@ -69,14 +78,24 @@ import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery
  * - All column names must be enclosed in double-quotes(") to avoid reserved keywords clashes.
  *   This applies to inputs used by the database component, ie.  INCL_COLUMNS, FILTERS, SORT_INFO, etc
  */
-abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, CanGetDataFile {
+abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile, SearchProcessor.CanFetchDataGroup {
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
+    private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 15);
 
 
     /**
-     * Fetches the data from the given search request, then save it into a database
+     * Fetches the data for the given search request.  This method should perform a fetch for fresh
+     * data.  Caching should not be performed here.
+     * @param req
+     * @return
+     * @throws DataAccessException
+     */
+    abstract public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException;
+
+    /**
+     * Fetches the data for the given search request, then save it into a database
      * The database should contains at least 3 named tables: DATA, DD, and META
      * DATA table contains the data
      * DD table contains definition of the columns, including name, label, format, etc
@@ -85,7 +104,21 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      * @param req  search request
      * @throws DataAccessException
      */
-    abstract public FileInfo ingestDataIntoDb(TableServerRequest req, File dbFile) throws DataAccessException;
+    public FileInfo ingestDataIntoDb(TableServerRequest req, File dbFile) throws DataAccessException {
+
+        DbAdapter dbAdapter = DbAdapter.getAdapter(req);
+
+        StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
+        DataGroup dg = fetchDataGroup(req);
+        StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
+
+        setupMeta(dg, req);
+
+        StopWatch.getInstance().start("ingestDataIntoDb: " + req.getRequestId());
+        FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, MAIN_DB_TBL);
+        StopWatch.getInstance().stop("ingestDataIntoDb: " + req.getRequestId()).printLog("ingestDataIntoDb: " + req.getRequestId());
+        return finfo;
+    }
 
     /**
      * returns the database file for the given request.
@@ -160,15 +193,29 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 // table data exists.. but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
                 // limit 0 does not work with oracle-like syntax
-                DataGroup dg = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data where ROWNUM < 1", "data");
+                DataGroup dg = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data where ROWNUM < 1", MAIN_DB_TBL);
                 results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
                 results.setErrorMsg(retrieveMsgFromError(e, treq));
             }
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 
-            if (doLogging() && dbFileCreated) {
-                // no reliable way of capturing cached searches count
-                SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+            // put all of the meta-info from the request into tablemeta
+            if (treq.getMeta() != null) {
+                for (String key : treq.getMeta().keySet()) {
+                    results.getData().getTableMeta().setAttribute(key, treq.getMeta(key));
+                }
+            }
+
+            if (dbFileCreated) {
+                if (doLogging()) {
+                    SearchProcessor.logStats(treq.getRequestId(), results.getRowCount(), 0, false, getDescResolver().getDesc(treq));
+                }
+                // check for values that can be enumerated..
+                if (results.getRowCount() < 5000) {
+                    enumeratedValuesCheck(dbFile, results, treq);
+                } else {
+                    enumeratedValuesCheckBG(dbFile, results, treq);        // when it's more than 5000 rows, send it by background so it doesn't slow down response time.
+                }
             }
 
             return results;
@@ -221,10 +268,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         }
     }
 
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return SearchProcessor.inspectRequestDef(request);
-    }
-
     public String getUniqueID(ServerRequest request) {
         return EmbeddedDbUtil.getUniqueID((TableServerRequest) request);
     }
@@ -251,9 +294,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     @NotNull
     public String getResultSetID(TableServerRequest treq) {
         String id = StringUtils.toString(treq.getResultSetParam(), "|");
-        return StringUtils.isEmpty(id) ? "data" : "data_" + DigestUtils.md5Hex(id);
+        return MAIN_DB_TBL + (StringUtils.isEmpty(id) ? "" : "_" + DigestUtils.md5Hex(id));
     }
 
+    private static List<String> ignoreCols = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM, "\"" + DataGroup.ROW_IDX + "\"", "\"" + DataGroup.ROW_NUM + "\"");
     protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
 
         String rowIdx = "\"" + DataGroup.ROW_IDX + "\"";
@@ -266,15 +310,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         if (!EmbeddedDbUtil.hasTable(treq, dbFile, resultSetID)) {
             // does not exists.. create table from original 'data' table
-            List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? dbAdapter.getColumnNames(dbInstance, "DATA", "\"")
+            List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? dbAdapter.getColumnNames(dbInstance, MAIN_DB_TBL, "\"")
                                 : StringUtils.asList(treq.getInclColumns(), ",");
-            cols = cols.stream().filter((s) -> !(s.equals(rowIdx) || s.equals(rowNum))).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
+            cols = cols.stream().filter((s) -> !ignoreCols.contains(s)).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
 
+            String selectPart = (cols.size() == 0 ? "" : StringUtils.toString(cols) + ", " )+ DataGroup.ROW_IDX;
             String wherePart = dbAdapter.wherePart(treq);
             String orderBy = dbAdapter.orderByPart(treq);
 
             // copy data
-            String datasetSql = String.format("select %s, %s from data %s %s", StringUtils.toString(cols), DataGroup.ROW_IDX, wherePart, orderBy);
+            String datasetSql = String.format("select %s from data %s %s", selectPart, wherePart, orderBy);
             String datasetSqlWithIdx = String.format("select b.*, (ROWNUM-1) as %s from (%s) as b", DataGroup.ROW_NUM, datasetSql);
             String sql = dbAdapter.createTableFromSelect(resultSetID, datasetSqlWithIdx);
             JdbcFactory.getSimpleTemplate(dbInstance).update(sql);
@@ -289,6 +334,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             String metaSql = "select * from data_meta";
             metaSql = dbAdapter.createTableFromSelect(resultSetID + "_meta", metaSql);
             JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
+
+            // copy aux
+            String auxSql = "select * from data_aux";
+            auxSql = dbAdapter.createTableFromSelect(resultSetID + "_aux", auxSql);
+            JdbcFactory.getSimpleTemplate(dbInstance).update(auxSql);
         }
 
         // resultSetID is a table created sort and filter in consideration.  no need to re-apply.
@@ -311,16 +361,15 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         DataGroupPart page = execRequestQuery(nreq, dbFile, resultSetID);
 
-        // save information needed to recreated this resultset
-        page.getTableDef().setAttribute(TableMeta.RESULTSET_REQ, makeResultSetReqStr(treq));
-        page.getTableDef().setAttribute(TableMeta.RESULTSET_ID, resultSetID);
-
         // handle selectInfo
         // selectInfo is sent to the server as Request.META_INFO.selectInfo
         // it will be moved into TableModel.selectInfo
         SelectionInfo selectInfo = getSelectInfoForThisResultSet(treq, dbAdapter, dbFile, resultSetID, page.getRowCount());
-        page.getTableDef().setSelectInfo(selectInfo);
-        treq.setSelectInfo(null);
+        treq.setSelectInfo(selectInfo);
+
+        // save information needed to recreated this resultset
+        treq.setMeta(TableMeta.RESULTSET_REQ, makeResultSetReqStr(treq));
+        treq.setMeta(TableMeta.RESULTSET_ID, resultSetID);
 
         return page;
     }
@@ -343,22 +392,19 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 //
 //====================================================================
 
-    private String ensurePrevResultSetIfExists(TableServerRequest treq, File dbFile) {
+    private String ensurePrevResultSetIfExists(TableServerRequest treq, File dbFile, String prevResultSetID) {
 
-        String prevResultSetID = treq.getMeta().get(TableMeta.RESULTSET_ID);
-        if (!StringUtils.isEmpty(prevResultSetID)) {
-            if (!EmbeddedDbUtil.hasTable(treq, dbFile, prevResultSetID)) {
-                // does not exists.. create table from original 'data' table
-                String resultSetRequest = treq.getMeta().get(TableMeta.RESULTSET_REQ);
-                if (!StringUtils.isEmpty(resultSetRequest)) {
-                    try {
-                        TableServerRequest req = QueryUtil.convertToServerRequest(resultSetRequest);
-                        DataGroupPart page = getResultSet(req, dbFile);
-                        prevResultSetID = page.getTableDef().getAttribute(TableMeta.RESULTSET_ID);
-                    } catch (DataAccessException e1) {
-                        // can ignore for now.
-                    }
-                    return prevResultSetID;
+        if (!EmbeddedDbUtil.hasTable(treq, dbFile, prevResultSetID)) {
+            // does not exists.. create table from original 'data' table
+            prevResultSetID = MAIN_DB_TBL;      // if fail to create the previous resultset, use data.
+            String resultSetRequest = treq.getMeta().get(TableMeta.RESULTSET_REQ);
+            if (!StringUtils.isEmpty(resultSetRequest)) {
+                try {
+                    TableServerRequest req = QueryUtil.convertToServerRequest(resultSetRequest);
+                    DataGroupPart page = getResultSet(req, dbFile);
+                    prevResultSetID = page.getData().getAttribute(TableMeta.RESULTSET_ID);
+                } catch (DataAccessException e1) {
+                    // problem recreating previous
                 }
             }
         }
@@ -373,11 +419,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         }
 
         String prevResultSetID = treq.getMeta(TableMeta.RESULTSET_ID);             // the previous resultset ID
-        prevResultSetID = StringUtils.isEmpty(prevResultSetID) ? "data" : prevResultSetID;
+        prevResultSetID = StringUtils.isEmpty(prevResultSetID) ? MAIN_DB_TBL : prevResultSetID;
 
         if ( selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
             // there were row(s) selected from previous resultset.. make sure selectInfo is remapped to new resultset
-            prevResultSetID = ensurePrevResultSetIfExists(treq, dbFile);
+            prevResultSetID = ensurePrevResultSetIfExists(treq, dbFile, prevResultSetID);
 
             String rowNums = StringUtils.toString(selectInfo.getSelected());
             SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
@@ -454,5 +500,77 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         return e.getMessage();
     }
+
+    private void setupMeta(DataGroup dg, TableServerRequest req) {
+        // merge meta into datagroup from post-processing
+        Map<String, DataGroup.Attribute> cmeta = dg.getAttributes();
+        TableMeta meta = new TableMeta();
+        prepareTableMeta(meta, Arrays.asList(dg.getDataDefinitions()), req);
+        for (String key : meta.getAttributes().keySet()) {
+            if (!cmeta.containsKey(key)) {
+                dg.addAttribute(key, meta.getAttribute(key));
+            }
+        }
+
+        IpacTableUtil.consumeColumnInfo(dg);
+    }
+
+    private static void enumeratedValuesCheckBG(File dbFile, DataGroupPart results, TableServerRequest treq) {
+        RequestOwner owner = ServerContext.getRequestOwner();
+        ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, owner.getEventConnID(),
+                                                                        owner.getEventChannel(), owner.getUserKey());
+        SHORT_TASK_EXEC.submit(() -> {
+            enumeratedValuesCheck(dbFile, results, treq);
+            DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
+            updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
+
+            FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, JsonTableUtil.toJsonDataGroup(updates));
+            ServerEventManager.fireAction(action, target);
+        });
+    }
+
+    private static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
+        try {
+            StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
+            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
+            String cols = Arrays.stream(results.getData().getDataDefinitions())
+                    .filter(dt -> maybeEnums(dt))
+                    .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
+                    .collect(Collectors.joining(", "));
+
+            List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                    .queryForList(String.format("SELECT %s FROM data where rownum < 500", cols));
+            rs.get(0).forEach( (cname,v) -> {
+                Long count = (Long) v ;
+                if (count > 0 && count <= MAX_COL_ENUM_COUNT) {
+                    List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                            .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
+
+                    if (vals.size() <= MAX_COL_ENUM_COUNT) {
+                        DataType dt = results.getData().getDataDefintion(cname);
+                        String enumVals = vals.stream().map(m -> String.valueOf(m.get(cname)))       // list of map to list of string(colname)
+                                .filter(s -> !StringUtils.isEmpty(s) && !StringUtils.areEqual(dt.getNullString(), s))            // remove null or blank values because it's hard to handle at the column filter level
+                                .collect(Collectors.joining(","));                          // combine the names into comma separated string.
+                        results.getData().getDataDefintion(cname).setEnumVals(enumVals);
+                        // update dd table
+                        JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                                .update(String.format("UPDATE data_dd SET enumVals = '%s' WHERE cname = '%s'", enumVals, cname));
+                    }
+                }
+            });
+            StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
+        } catch (Exception ex) {
+            // do nothing.. ignore any errors.
+        }
+    }
+
+    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class, Byte.class);
+    private static List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
+    private static boolean maybeEnums(DataType dt) {
+        return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
+
+    }
+
+
 }
 

@@ -6,9 +6,10 @@
  * This Object contains the specifications of the DS9 region
  */
 import React, {PureComponent} from 'react';
+import {get} from 'lodash';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
-import {dispatchCreateRegionLayer} from '../DrawLayerCntlr.js';
+import {dispatchCreateRegionLayer, dispatchCreateFootprintLayer} from '../DrawLayerCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
@@ -16,11 +17,15 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/RegionPlot.js';
-import {get, isEmpty} from 'lodash';
+import {relocatable} from '../../drawingLayers/FootprintTool.js';
+import {createNewFootprintLayerId, getFootprintLayerTitle} from '../../drawingLayers/FootprintTool.js';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 
 const popupId = 'RegionFilePopup';
 const rgUploadGroupKey = 'RegionUploadGroup';
 const rgUploadFieldKey = 'regionFileUpload';
+const relocatableKey = 'relocatableRegion';
+
 
 export function showRegionFileUploadPanel(divElement, popTitle='Load DS9 Region File') {
     var popup = (<PopupPanel title={popTitle}>
@@ -32,14 +37,17 @@ export function showRegionFileUploadPanel(divElement, popTitle='Load DS9 Region 
 }
 
 
+function regionFileNameFromDisplay(file) {
+    const dispVal = file ? get(FieldGroupUtils.getGroupFields(rgUploadGroupKey), [rgUploadFieldKey, 'displayValue']) : '';
+    return dispVal ? dispVal.split(/(\\|\/)/g).pop() : '';
+}
 
 /**
  * get region json from server, convert json into Region objects and make RegionPlot DrawLayer
  * @param request
  * @param rgComp
- * @param drawLayerId
  */
-function uploadAndProcessRegion(request, rgComp, drawLayerId) {
+function uploadAndProcessRegion(request, rgComp) {
     const [FieldKeyErr] = ['no region file uploaded yet'];
 
      const regionFile = get(request, rgUploadFieldKey);
@@ -53,16 +61,23 @@ function uploadAndProcessRegion(request, rgComp, drawLayerId) {
             }
 
             if (file || regionAry) {
-                if (isEmpty(drawLayerId)) {
+                const relocateBy = get(request, relocatableKey);
+                const fileName = regionFileNameFromDisplay(file);
+                const absFileName = !fileName ? '' : (fileName.includes('.') ? fileName.slice(0, fileName.lastIndexOf('.')) : fileName);
+
+                let   drawLayerId, title;
+
+                if (!relocateBy) {   // regular region file, non relocatable
                     drawLayerId = createNewRegionLayerId();
+                    title = getRegionLayerTitle(absFileName);
+
+                    dispatchCreateRegionLayer(drawLayerId, title, file, regionAry);
+                } else {
+                    drawLayerId = createNewFootprintLayerId();
+                    title = getFootprintLayerTitle(absFileName);
+                    dispatchCreateFootprintLayer(drawLayerId, title, {footprint: file, relocateBy, fromFile: absFileName},
+                                                 [], true);
                 }
-                const dispVal = file ? get(FieldGroupUtils.getGroupFields(rgUploadGroupKey), [rgUploadFieldKey, 'displayValue']) : '';
-                const fileName = dispVal ? dispVal.split(/(\\|\/)/g).pop() : '';
-
-                let title = !fileName ? '' : (fileName.includes('.') ? fileName.slice(0, fileName.lastIndexOf('.')) : fileName);
-                title = getRegionLayerTitle(title);
-
-                dispatchCreateRegionLayer(drawLayerId, title, file, regionAry);
                 dispatchHideDialog(popupId);
             }
     };
@@ -120,10 +135,12 @@ class RegionUpload extends PureComponent {
     }
 
     onUpload(request) {
-        uploadAndProcessRegion(request, this, createNewRegionLayerId());  // get a new layer
+        uploadAndProcessRegion(request, this);
     }
 
     render() {
+        const relocateOptions = [{label: 'treat as relocatable', value: relocatable.origin.key}];
+
         return (
             <div style={{padding: 10}}>
                 <FieldGroup groupKey={rgUploadGroupKey}>
@@ -134,6 +151,17 @@ class RegionUpload extends PureComponent {
                             tooltip: 'Select a region file to upload',
                             label: 'Upload File:'}}
                     />
+                    <CheckboxGroupInputField
+                        fieldKey={relocatableKey}
+                        options={relocateOptions}
+                        alignment={'horizontal'}
+                        wrapperStyle={{textAligh: 'left'}}
+                        initialState={{
+                            tooltip: 'treat the regions movable',
+                            value: ''
+                        }}
+                    />
+
                     <div style={{color: 'red', height: 15}}>
                         {!this.state.upload && ( (this.state.message && `*${this.state.message}`) || '*region error')}
                     </div>

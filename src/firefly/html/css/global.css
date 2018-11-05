@@ -1,4 +1,5 @@
 /** The are the colors we used.  Currently was are not using a css preprocessor
+/** The are the colors we used.  Currently was are not using a css preprocessor
     so they are just here for reference
 @def bodyColor            #f3f3f3;
 @def borderColor          #a3aeb9;
@@ -269,8 +270,9 @@
 .btn-close:after {
     content: '×'; /* UTF-8 symbol */
     left: 50%;
+    top: 50%;
     position: absolute;
-    transform: translate(-50%, 0);
+    transform: translate(-50%, -50%);
     font-weight: bold;
 }
 
@@ -318,24 +320,45 @@
 }
 /*------------------- loading mask >---------------------*/
 
-.lost-connection {
-    position: fixed;
-    z-index: 300;
-    top: 2px;
-    left: 50%;
-    height: 85px;
-    width: 485px;
-    margin-left: -200px;
-    background-color: #FFF7C2;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-    display: inline-flex;
-    align-items: center;
-    color: maroon;
-    border: solid 1px #bbb285;
+.lost-connection--small {
+    width: 24px;
+    height: 24px;
+    background: url('/images/no_internet_small.png');
+    margin: 1px;
 }
 
-.lost-connection > * {
-    margin: 10px;
+.lost-connection {
+    width: 48px;
+    height: 48px;
+    background: url('/images/no_internet.png');
+    margin: 1px;
+}
+
+.warning-div {
+    position: fixed;
+    z-index: 300;
+    background-color: beige;
+    margin: 2px;
+}
+
+.warning-div.right {
+    right: 0;
+    box-shadow: -1px 1px 2px rgba(0,0,0,0.3);
+    border-radius: 0 5px 5px 5px;
+}
+
+.warning-div.left {
+    left: 0;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    border-radius: 5px 0 5px 5px;
+}
+
+
+.warning-div.center {
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+    border-radius: 5px;
 }
 
 .banner-background {
@@ -439,4 +462,10 @@
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
     border-right: 5px solid black;
+}
+
+.flex-full {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }

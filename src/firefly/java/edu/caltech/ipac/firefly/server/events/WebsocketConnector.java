@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 @ServerEndpoint(value = "/sticky/firefly/events")
 public class WebsocketConnector implements ServerEventQueue.EventConnector {
@@ -31,6 +32,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
     private String channelID;
     private String userKey;
     private ServerEventQueue eventQueue;
+    private final ReentrantLock lock = new ReentrantLock();
 
     @OnOpen
     public void onOpen(final Session session) {
@@ -45,6 +47,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
             send(ServerEventQueue.convertToJson(connected));
             ServerEventManager.addEventQueue(eventQueue);
             onClientConnect(session.getId(), channelID, userKey);
+System.out.println("ws onpen:" + channelID + "-" + session.getId());
         } catch (Exception e) {
             LOG.error(e, "Unable to open websocket connection:" + session.getId());
         }
@@ -84,7 +87,12 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         if (session == null) {
             throw new IOException("No longer available");
         }
-        session.getBasicRemote().sendText(message);
+        lock.lock();
+        try {
+            session.getBasicRemote().sendText(message);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean isOpen() {

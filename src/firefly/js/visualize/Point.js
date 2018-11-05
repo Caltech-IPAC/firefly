@@ -120,6 +120,15 @@ export class SimplePt {
         }
     }
     toString() { return this.x+';'+this.y; }
+
+    static make(x, y, type) {
+        const pt = new SimplePt(x, y);
+
+        if (type && Object.keys(Point).includes(type)) {
+            pt.type = type;
+        }
+        return pt;
+    }
 }
 
 
@@ -327,6 +336,28 @@ export const makeDevicePt= (x,y) => Object.assign(new SimplePt(x,y), {type:DEV_P
 export const makeProjectionPt= (x,y) => Object.assign(new SimplePt(x,y), {type:PROJ_PT});
 
 export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(x,y), {type:OFFSET_PT});
+
+
+/**
+ * given an x,y, and a CoordinageSys object or string, make the correct type of point.
+ * @param {number} x
+ * @param {number} y
+ * @param {CoordinateSys|String} coordSys
+ * @return {Point}
+ */
+export function makeAnyPt(x,y,coordSys) {
+    const csys= (coordSys.isEquatorial && coordSys.getJsys && coordSys.getEquinox) ?
+                        coordSys  : CoordinateSys.parse(coordSys);
+
+    switch (csys) {
+        case CoordinateSys.SCREEN_PIXEL:
+        case CoordinateSys.UNDEFINED:    return makeScreenPt(x, y);
+        case CoordinateSys.PIXEL:        return makeImagePt(x, y);
+        case CoordinateSys.ZEROBASED:    return makeZeroBasedImagePt(x, y);
+        case CoordinateSys.FITSPIXEL:    return makeFitsImagePt(x, y);
+        default:                         return makeWorldPt(x,y,coordSys);
+    }
+}
 
 
 /**

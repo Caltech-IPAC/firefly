@@ -38,26 +38,13 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
-
     @Override
-    public boolean doCache() {
-        return true;
-    }
-
-    @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-            return queryVOSearchService(request);  // all the work is done here
-    }
-
-    protected abstract String getQueryString(TableServerRequest req) throws DataAccessException;
-
-    private File queryVOSearchService(TableServerRequest req) throws IOException, DataAccessException {
-
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         try {
             File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
             DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), false);
             DataGroup dg;
-            if (groups.length<1) {
+            if (groups.length < 1) {
                 dg = new DataGroup("empty",new DataType[]{new DataType("empty", String.class)});
                 //throw new EndUserException("cone search query failed", "no results");
             } else {
@@ -94,17 +81,9 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
                     }
                 }
             }
-
-
-            File outFile = createFile(req);
-            IpacTableWriter.save(outFile, dg);
-            return outFile;
-        } catch (IOException e) {
-            IOException eio = new IOException("query failed - network Error");
-            eio.initCause(e);
-            throw eio;
-        } catch (EndUserException e) {
-            DataAccessException eio = new DataAccessException("query failed - network error");
+            return dg;
+        } catch (IOException | EndUserException e) {
+            DataAccessException eio = new DataAccessException("query failed - network Error");
             eio.initCause(e);
             throw eio;
         } catch (Exception e) {
@@ -112,8 +91,14 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
             eio.initCause(e);
             throw eio;
         }
-
     }
+
+    @Override
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+        return loadDataFileImpl(request);
+    }
+
+    protected abstract String getQueryString(TableServerRequest req) throws DataAccessException;
 
     private File getSearchResult(String urlQuery, String filePrefix) throws IOException, DataAccessException, EndUserException {
 

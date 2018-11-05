@@ -46,7 +46,7 @@ export class ApiExpandedDisplay extends PureComponent {
      * @return {XML}
      */
     render() {
-        const {closeFunc}= this.props;
+        const {closeFunc, viewerId}= this.props;
         const {visRoot,currMouseState, readout, showHealpixPixel}= this.state;
         return (
             <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
@@ -56,7 +56,7 @@ export class ApiExpandedDisplay extends PureComponent {
                                    showHealpixPixel={showHealpixPixel}/>
                 </div>
                 <div style={{flex: '1 1 auto', display:'flex'}}>
-                    <ImageExpandedMode   {...{key:'results-plots-expanded', closeFunc}}/>
+                    <ImageExpandedMode   {...{key:'results-plots-expanded', closeFunc, viewerId}}/>
                 </div>
             </div>
             );
@@ -65,7 +65,8 @@ export class ApiExpandedDisplay extends PureComponent {
 
 ApiExpandedDisplay.propTypes= {
     forceExpandedMode : PropTypes.bool,
-    closeFunc: PropTypes.func
+    closeFunc: PropTypes.func,
+    viewerId: PropTypes.string
 };
 
 ApiExpandedDisplay.defaultProps= {

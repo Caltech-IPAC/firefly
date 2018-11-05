@@ -360,15 +360,15 @@ const asinhSliderMarks = {
 
 const ASINH_Q_MAX_SLIDE_VAL = 20;
 
-export function renderAsinH(fields, renderRange, replot) {
+export function renderAsinH(fields, renderRange, replot, wrapperStyle={paddingBottom: 60}, qOnTop=false) {
     const {zscale}= fields;
     const range= renderRange(zscale.value==='zscale');
     const qvalue = get(fields, ['asinhQ', 'value'], Number.NaN);
     const label = `Q: ${Number.parseFloat(qvalue).toFixed(1)} `;
 
     return (
-        <div style={{paddingBottom: 60}}>
-            {range}
+        <div style={wrapperStyle}>
+            {!qOnTop && range}
             <div style={{paddingTop: 5, paddingRight: 15, opacity: .4, textAlign: 'center'}}>
                 Q=0 for linear stretch;<br/> increase Q to make brighter features visible
             </div>
@@ -386,6 +386,7 @@ export function renderAsinH(fields, renderRange, replot) {
                          decimalDig={1}
                          onValueChange={replot}
             />
+            {qOnTop && range}
         </div>
     );
 }

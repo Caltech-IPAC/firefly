@@ -28,7 +28,7 @@ import {footprintCreateLayerActionCreator,
         footprintEndActionCreator
 } from '../drawingLayers/FootprintTool.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
-import {imageLineBasedfootprintActionCreator} from '../drawingLayers/ImageLineBasedFootprint.js';
+import {imageLineBasedfootprintActionCreator} from './task/LSSTFootprintTask.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
@@ -532,12 +532,24 @@ export function dispatchSelectRegion(drawLayerId, selectedRegion, dispatcher = f
 export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
     dispatcher({type: MARKER_CREATE, payload: {plotId, markerId, layerTitle, attachPlotGroup}});
 }
+
+/**
+ * Footprint Info.  The data object containing footprint info.
+ * @typedef {object} footprintInfo
+ * @prop {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc. or footprint file at the server
+ * @prop {string} instrument - name of instrument for the footprint
+ * @prop {string} relocateBy - name of instrument for the footprint from the server, method of relocation for the uploaded footprint
+ * @prop {string} fromFile - filename, not including the extension, of the uploaded file
+ * @prop {string[]} fromRegionAry - array or string of region description
+ *
+ * @public
+ */
+
 /**
  * @summary create drawing layer with footprint
  * @param {string} footprintId - id of the drawing layer
  * @param {string} layerTitle - title of the drawing layer
- * @param {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc.
- * @param {string} instrument - name of instrument for the footprint
+ * @param {footprintInfo} footprintData footprint information for footprint layer
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
  * @param {bool} attachPlotGroup - attach all plots of the same plot group
  * @param dispatcher
@@ -545,17 +557,19 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
  * @function dispatchCreateFootprintLayer
  * @memberof firefly.action
  */
-export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint, instrument, plotId = [],
-                                                                      attachPlotGroup=true, dispatcher = flux.process) {
-    dispatcher({type: FOOTPRINT_CREATE, payload: {plotId, footprintId, layerTitle, footprint, instrument, attachPlotGroup}});
+export function dispatchCreateFootprintLayer(footprintId, layerTitle,
+                                             {footprint=null, instrument=null, relocateBy='origin',  fromFile=null, fromRegionAry=null},
+                                             plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
+    dispatcher({type: FOOTPRINT_CREATE, payload: {plotId, footprintId, layerTitle, footprint, instrument, relocateBy, attachPlotGroup, fromFile, fromRegionAry}});
 
 }
 
 export function dispatchCreateImageLineBasedFootprintLayer(drawLayerId, title, fpData, plotId = [],
+                                                                     footprintFile, footprintImageFile, tbl_index,
                                                                      attachPlotGroup=true, dispatcher = flux.process) {
     dispatcher({
         type: IMAGELINEBASEDFP_CREATE,
-        payload: {plotId, drawLayerId, title, footprintData: fpData, attachPlotGroup}
+        payload: {plotId, drawLayerId, title, footprintData: fpData, footprintFile, footprintImageFile, tbl_index, attachPlotGroup}
     });
 }
 

@@ -20,7 +20,7 @@ var [RegionIdErr, RegionErr, NoRegionErr, JSONErr] = [
     'no region is specified',
     'get region json error'];
 
-var getPlotId = (plotId) => {
+export const getPlotId = (plotId) => {
     //return (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') : plotId;
     if (!plotId || (isArray(plotId)&&plotId.length === 0)) {
         const pid = get(visRoot(), 'activePlotId');

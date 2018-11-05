@@ -277,7 +277,7 @@ export class VisToolbarView extends PureComponent {
                                         iconOn={GRID_ON}
                                         iconOff={GRID_OFF}
                                         plotTypeMustMatch={true}
-                                        visible={mi.grid && image}
+                                        visible={mi.grid}
                 />
 
                 <ToolbarButton icon={DS9_REGION}

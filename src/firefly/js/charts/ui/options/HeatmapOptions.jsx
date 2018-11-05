@@ -1,5 +1,5 @@
 import React from 'react';
-import {get, isUndefined} from 'lodash';
+import {get, isArray, isUndefined} from 'lodash';
 
 import {getChartData} from '../../ChartsCntlr.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -13,6 +13,7 @@ import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {BasicOptionFields, basicFieldReducer, helpStyle, submitChanges} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
+import {ALL_COLORSCALE_NAMES, PlotlyCS} from '../../Colorscale.js';
 
 
 
@@ -51,6 +52,13 @@ export function fieldReducer({chartId, activeTrace}) {
     const getFields = () => {
         const {data, fireflyData, tablesources = {}} = getChartData(chartId);
         const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
+        let colorscaleName = get(fireflyData, `${activeTrace}.colorscale`);
+        if (!colorscaleName) {
+            const colorscale = get(data, `${activeTrace}.colorscale`);
+            if (colorscale && PlotlyCS.includes(colorscale)) {
+                colorscaleName = colorscale;
+            }
+        }
 
         const fields = {
 
@@ -72,9 +80,9 @@ export function fieldReducer({chartId, activeTrace}) {
                 labelWidth: 95,
                 size: 5
             },
-            [`data.${activeTrace}.colorscale`]: {
-                fieldKey: `data.${activeTrace}.colorscale`,
-                value: get(data, `${activeTrace}.colorscale`),
+            [`fireflyData.${activeTrace}.colorscale`]: {
+                fieldKey: `fireflyData.${activeTrace}.colorscale`,
+                value: colorscaleName,
                 tooltip: 'Select colorscale for color map',
                 label: 'Color Scale:',
                 ...fieldProps
@@ -135,11 +143,9 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
             {colValStats && <ColumnOrExpression {...xProps}/>}
             {colValStats && <ColumnOrExpression {...yProps}/>}
             <div style={{whiteSpace: 'nowrap'}}>
-                <ListBoxInputField fieldKey={`data.${activeTrace}.colorscale`}
+                <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.colorscale`}
                                    inline={true}
-                                   options={[{value:'Greys'}, {value:'Bluered'}, {value:'Blues'}, {value:'Earth'}, {value:'Electric'}, {value:'Greens'},
-                                         {value:'Hot'}, {value:'Jet'}, {value:'Picnic'}, {value:'Portland'}, {value:'Rainbow'},
-                                         {value:'RdBu'}, {value:'Reds'}, {value:'Viridis'}, {value:'YlGnBu'}, {value:'YlOrRd'}]}/>
+                                   options={[{value:'Default'}].concat(ALL_COLORSCALE_NAMES.map((e)=>({value:e})))}/>
                 <CheckboxGroupInputField
                     fieldKey={`data.${activeTrace}.reversescale`}
                     wrapperStyle={{display: 'inline-block'}}
@@ -157,7 +163,7 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
 export function submitChangesHeatmap({chartId, activeTrace, fields, tbl_id}) {
     const dataType = (!tbl_id) ? 'heatmap' : 'fireflyHeatmap';
     const changes = {
-        [`fireflyData.${activeTrace}.type`] : 'heatmap',
+        [`data.${activeTrace}.type`] : 'heatmap',
         [`fireflyData.${activeTrace}.dataType`] : dataType
     };
 

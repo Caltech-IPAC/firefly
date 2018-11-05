@@ -53,14 +53,15 @@ export class RangeValues {
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
-                 asinhQValue=NaN,
+                 asinhQValue=Number.NaN,
                  gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
                  zscaleSamples= 600,
                  zscaleSamplesPerLine= 120,
                  rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
-                 asinhStretch=1.0,
+                 asinhStretch=Number.NaN,
+                 scalingK=1.0,
                  bias= 0.5,
                  contrast= 1.0 ) {
         this.lowerWhich= parseInt(lowerWhich);
@@ -75,7 +76,11 @@ export class RangeValues {
         this.zscaleSamplesPerLine= parseInt(zscaleSamplesPerLine); /* optimal number of pixels per line */
         this.rgbPreserveHue=  parseInt(rgbPreserveHue); /* if 0, stretch by band, otherwise preserve hue*/
         this.asinhStretch=parseFloat(asinhStretch);
-        if (this.rgbPreserveHue > 0) { this.algorithm = STRETCH_ASINH; }
+        this.scalingK=parseFloat(scalingK);
+        if (this.rgbPreserveHue > 0) {
+            this.algorithm = STRETCH_ASINH;
+            this.upperWhich = ZSCALE;
+        }
         this.bias= parseFloat(bias);
         this.contrast= parseFloat(contrast);
     }
@@ -100,34 +105,12 @@ export class RangeValues {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
             this.upperValue, this.asinhQValue,  this.gammaValue, this.algorithm,
             this.zscaleContrast, this.zscaleSamples, this.zscaleSamplesPerLine,
-            this.rgbPreserveHue,this.asinhStretch,
+            this.rgbPreserveHue,this.asinhStretch,this.scalingK,
             this.bias, this.contrast );
     }
 
     toString() { return this.toJSON(); }
 
-
-    /**
-     * @return {RangeValues}
-     */
-    static makeDefaultSigma() {
-        return new RangeValues(SIGMA,-2,SIGMA,10,STRETCH_LINEAR);
-    }
-
-
-    /**
-     * @return {RangeValues}
-     */
-    static makeDefaultPercent() {
-        return new RangeValues(PERCENTAGE,1,PERCENTAGE,99,STRETCH_LINEAR);
-    }
-
-    /**
-     * @return {RangeValues}
-     */
-    static makeDefaultZScale() {
-        return new RangeValues(ZSCALE,1,ZSCALE,1,STRETCH_LINEAR,25, 600, 120);
-    }
 
     /**
      *
@@ -144,7 +127,8 @@ export class RangeValues {
      * @param p.zscaleSamples
      * @param p.zscaleSamplesPerLine
      * @param p.rgbPreserveHue
-     * @param p.asinhStretch
+     * @param p.asinhStretch - stretch parameter for hue-preserving rgb
+     * @param p.scalingK - flux scaling coefficient for hue-preserving rgb
      * @param p.bias
      * @param p.contrast
      * @return {RangeValues}
@@ -154,26 +138,23 @@ export class RangeValues {
                       lowerValue= 1.0,
                       upperWhich,
                       upperValue= 99.0,
-                      asinhQValue= NaN,
+                      asinhQValue= Number.NaN,
                       gammaValue=2.0,
                       algorithm= STRETCH_LINEAR,
                       zscaleContrast= 25,
                       zscaleSamples= 600,
                       zscaleSamplesPerLine= 120,
                       rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
-                      asinhStretch= 1.0,
+                      asinhStretch= Number.NaN,
+                      scalingK=1.0,
                       bias= 0.5,
                       contrast= 1.0} ) {
 
         lowerWhich= lowerWhich || which;
         upperWhich= upperWhich || which;
-        if (rgbPreserveHue > 0) {
-            algorithm = STRETCH_ASINH;
-            upperWhich = ZSCALE;
-        }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
             gammaValue, algorithm, zscaleContrast, zscaleSamples,
-            zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, bias, contrast);
+            zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, scalingK, bias, contrast);
     }
 
     /**
@@ -189,7 +170,8 @@ export class RangeValues {
      * @param zscaleSamples
      * @param zscaleSamplesPerLine
      * @param rgbPreserveHue
-     * @param asinhStretch used for hue preserving rgb
+     * @param asinhStretch used for hue preserving rgb, when NaN use zscale to estimate stretch value
+     * @param scalingK used for hue preserving rgb
      * @param bias
      * @param contrast
      * @return {RangeValues}
@@ -198,20 +180,20 @@ export class RangeValues {
                 lowerValue= 1.0,
                 upperWhich= PERCENTAGE,
                 upperValue= 99.0,
-                asinhQValue=NaN,
-                gammaValue=2.0,
+                asinhQValue= Number.NaN,
+                gammaValue= 2.0,
                 algorithm= STRETCH_LINEAR,
                 zscaleContrast= 25,
                 zscaleSamples= 600,
                 zscaleSamplesPerLine= 120,
                 rgbPreserveHue= RGB_PRESERVE_HUE_DEFAULT,
-                asinhStretch= 1.0,
+                asinhStretch= Number.NaN,
+                scalingK=1.0,
                 bias= 0.5,
                 contrast= 1.0 ) {
-        if (rgbPreserveHue > 0) { algorithm = STRETCH_ASINH; }
         return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, asinhQValue,
              gammaValue, algorithm, zscaleContrast, zscaleSamples,
-            zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, bias, contrast);
+            zscaleSamplesPerLine, rgbPreserveHue, asinhStretch, scalingK, bias, contrast);
     }
     
     /**
@@ -237,7 +219,7 @@ export class RangeValues {
             a= alStrToConst[algorithm.toLowerCase()];
         }
 
-        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,NaN,2, a);
+        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,Number.NaN,2, a);
 
     }
 
@@ -287,7 +269,8 @@ export class RangeValues {
             rv.zscaleSamples+','+
             rv.zscaleSamplesPerLine+','+
             rv.rgbPreserveHue+','+
-            rv.asinhStretch;
+            rv.asinhStretch+','+
+            rv.scalingK;
     }
     
 }

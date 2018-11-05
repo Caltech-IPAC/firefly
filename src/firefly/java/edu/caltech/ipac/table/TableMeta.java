@@ -3,7 +3,9 @@
  */
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -35,7 +37,6 @@ public class TableMeta implements Serializable {
     public static final String FORMAT_DISP_TAG = "col.@.FmtDisp";
     public static final String SORTABLE_TAG = "col.@.Sortable";
     public static final String FILTERABLE_TAG = "col.@.Filterable";
-    public static final String ITEMS_TAG = "col.@.Items";
     public static final String SORT_BY_TAG = "col.@.SortByCols";
     public static final String ENUM_VALS_TAG = "col.@.EnumVals";
     public static final String RELATED_COLS_TAG = "col.related";
@@ -46,6 +47,11 @@ public class TableMeta implements Serializable {
 
     public static final String IS_FULLY_LOADED = "isFullyLoaded";     // do not format data
 
+    public static final String ID = "ID";
+    public static final String REF = "ref";
+    public static final String UCD = "ucd";
+    public static final String UTYPE = "utype";
+    public static final String DESC = "desc";
     /*
       attributes is a key/value map of table meta information.
       keywords is a list of all table meta information including comments and duplicate attribute entries.
@@ -60,6 +66,14 @@ public class TableMeta implements Serializable {
     public void clear() {
         attributes.clear();
         keywords.clear();
+    }
+
+    public String getTblId() {
+        return getAttribute(TableServerRequest.TBL_ID);
+    }
+
+    public void setTblId(String tblId) {
+        setAttribute(TableServerRequest.TBL_ID, tblId);
     }
 
     /**
@@ -87,15 +101,13 @@ public class TableMeta implements Serializable {
     public void setKeywords(Collection<DataGroup.Attribute> keywords) {
         clear();
         if (keywords != null) {
-            keywords.stream()
-                    .forEach(att -> setAttribute(att.getKey(), att.getValue()));
+            keywords.forEach(att -> addAttribute(att.getKey(), att.getValue()));
         }
     }
 
     public void setAttributes(Map<String, String> metas) {
         clear();
-        metas.entrySet().stream()
-                .forEach((e -> setAttribute(e.getKey(), e.getValue())));
+        metas.forEach((k,v) -> addAttribute(k, v));
     }
 
     public String getAttribute(String key) {
@@ -112,12 +124,31 @@ public class TableMeta implements Serializable {
      * @param key   if null, meta will be treated as a comment
      * @param value meta value
      */
-    public void setAttribute(String key, String value) {
+    public void addAttribute(String key, String value) {
         DataGroup.Attribute att = new DataGroup.Attribute(key, value);
         if (!StringUtils.isEmpty(key)) {
             attributes.put(key, att);
         }
         keywords.add(att);
+    }
+
+    /**
+     * @param key   if null, meta will be treated as a comment
+     * @param value meta value
+     */
+    public void setAttribute(String key, String value) {
+        DataGroup.Attribute att = new DataGroup.Attribute(key, value);
+        if (StringUtils.isEmpty(key)) {
+            keywords.add(att);
+        } else {
+            attributes.put(key, att);
+            List<DataGroup.Attribute> oldVal = keywords.stream().filter(a -> !StringUtils.isEmpty(a.getKey()) && a.getKey().equals(key)).collect(Collectors.toList());
+            if (oldVal.size() == 0) {
+                keywords.add(att);
+            } else {
+                oldVal.forEach(a -> a.setValue(value));
+            }
+        }
     }
 
     public void removeAttribute(String key) {

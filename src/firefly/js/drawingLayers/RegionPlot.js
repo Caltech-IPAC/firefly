@@ -50,7 +50,6 @@ function* regionsRemoveSaga({id, plotId}, dispatch, getState) {
 }
 
 let idCnt = 0;
-
 export const createNewRegionLayerId = () => {
     const layerList =  getDrawLayersByType(getDlAry(), TYPE_ID);
 
@@ -67,20 +66,23 @@ export const createNewRegionLayerId = () => {
 
 let titleCnt = 1;
 export const getRegionLayerTitle = (layerTitle) => {
-    if (layerTitle) return layerTitle;
-
     const defaultRegionTitle = 'ds9 region overlay';
     const layerList =  getDrawLayersByType(getDlAry(), TYPE_ID);
+    let   cntTitle = 0;
 
     while (true) {
-        const newTitle = `${defaultRegionTitle}-${titleCnt++}`;
+        const newTitle = layerTitle ? (!cntTitle ? layerTitle : `${layerTitle}-${cntTitle}`)
+                                    : `${defaultRegionTitle}-${titleCnt++}`;
         const dl = layerList.find((layer) => {
             return (layer.title && layer.title === newTitle);
         });
-
+        if (layerTitle) {
+            cntTitle++;
+        }
         if (!dl) {
             return newTitle;
         }
+
     }
 };
 
@@ -116,7 +118,7 @@ function creator(initPayload) {
                        DrawLayerCntlr.REGION_SELECT];
 
     const title = get(initPayload, 'title');
-    const id = get(initPayload, 'drawLayerId', createNewRegionLayerId());
+    const id = initPayload.drawLayerId ?  initPayload.drawLayerId : createNewRegionLayerId();
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, getRegionLayerTitle(title),
                                           options, drawingDef, actionTypes, pairs );
 

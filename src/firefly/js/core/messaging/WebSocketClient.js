@@ -56,7 +56,7 @@ export function wsConnect(callback, baseUrl=getRootURL()) {
 }
 
 function makeConnection(wsUrl) {
-    wsConn && wsConn.close();
+    get(wsConn, 'readyState') === WebSocket.OPEN && wsConn.close();
 
     wsConn = new WebSocket(wsUrl);
     wsConn.onopen = onOpen;
@@ -89,7 +89,9 @@ function onError(event) {
     pinger && pinger.onError(event);
 }
 
-function onClose() {}
+function onClose(e) {
+    console.log('WebSocket is closed: ' + JSON.stringify(e));
+}
 
 function onMessage(event) {
     const eventData = event.data && JSON.parse(event.data);

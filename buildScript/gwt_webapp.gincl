@@ -9,7 +9,6 @@ jar {
 
   manifest {
     attributes(["properties-dir": "edu/caltech/ipac/${project.projectDir.name}/resources"],"webapp-properties")
-    attributes(["hasSearchProcessors": "true"],"hasSearchProcessors")
   }
 }
 

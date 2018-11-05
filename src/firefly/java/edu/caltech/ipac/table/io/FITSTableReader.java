@@ -443,6 +443,7 @@ public final class FITSTableReader
 
         if (Objects.equals(strategy, DEFAULT) && colInfo.isArray()) {
             java_class = String.class;
+            dataType.setTypeDesc(DataType.LONG_STRING);
         }
 
         dataType.setDataType(java_class);
@@ -627,8 +628,8 @@ public final class FITSTableReader
      * Convert a FITS binary table file on disk to a list of DataGroup
      * @param FITS_filename input_filename
      * @param catName data group title (catName is not used).
-     * @deprecated
      */
+    @Deprecated
     public static List<DataGroup> convertFITSToDataGroup(String FITS_filename, String catName)
             throws FitsException, IOException
     {

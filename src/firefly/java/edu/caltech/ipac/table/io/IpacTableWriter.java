@@ -5,23 +5,9 @@ package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.DataObject;
-import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.table.TableMeta;
-import nom.tam.fits.Data;
+import edu.caltech.ipac.table.*;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -121,7 +107,7 @@ public class IpacTableWriter {
             int maxWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
             for (int i=0; i<dataGroup.size(); i++) {
                 Object val = dataGroup.getData(dt.getKeyName(), i);
-                int dWidth = val == null ? 0 : dt.formatData(val).length();
+                int dWidth = val == null ? 0 : dt.formatData(val, true).length();
                 if (dWidth > maxWidth) maxWidth = dWidth;
             }
             dt.setMaxDataWidth(maxWidth);
