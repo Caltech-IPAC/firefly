@@ -14,7 +14,7 @@ import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchTableSearch, dispatchTableRemove, TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE,
-        TABLE_REMOVE, TABLE_SORT, TABLE_FILTER} from '../../tables/TableCntlr.js';
+        TABLE_REMOVE, TABLE_SORT, TABLE_FILTER} from '../../tables/TablesCntlr.js';
 import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/TableUtil.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {convertAngle, isAngleUnit} from '../VisUtil.js';
@@ -379,7 +379,7 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
                     tbl_id: footprintTableId,
                     META_INFO: hiddenColumnMeta,
                     removable: true,
-                    pageSize: 200
+                    pageSize: 50
                 });
 
             if (!isUndefined(tbl_index)) {
