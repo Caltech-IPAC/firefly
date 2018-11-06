@@ -1,6 +1,10 @@
 # properties are loaded via AppProperties and classes use AppProperties.getProperty()
 # add here the test value you want to overwrite from app.config file (OPS)
 
+catalina.base=./build/
+stats.log.dir=./build/
+
+
 # Property used in Light-curve API periodogram - use a result sample as basis to extract periodogram/peaks
 #irsa.gator.service.periodogram.url=http://web.ipac.caltech.edu/staff/ejoliet/demo/irsa-lc-sample-result-test.xml
 

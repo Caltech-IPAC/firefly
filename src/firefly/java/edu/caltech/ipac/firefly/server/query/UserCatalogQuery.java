@@ -67,28 +67,7 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
     }
 
     protected File loadDataFile(TableServerRequest req) throws IOException, DataAccessException {
-
-        String filePath = req.getParam("filePath");
-        if (!StringUtils.isEmpty(filePath)) {
-            if (ServerParams.IS_WS.equals(req.getParam(ServerParams.SOURCE_FROM))) {
-                WsServerParams wsParams = new WsServerParams();
-                wsParams.set(WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH, filePath);
-                WsServerUtils wsUtil= new WsServerUtils();
-                try {
-                    String s=  wsUtil.upload(wsParams);
-                    return ServerContext.convertToFile(s);      // this logic is wrong if file is not IPAC format.
-                } catch (IOException|FailedRequestException e) {
-                    throw new DataAccessException("Could now retrieve file from workspace",e);
-                }
-
-            }
-            else {
-                File f = ServerContext.convertToFile(filePath);
-                return convertToIpacTable(f, req);
-            }
-        } else {
-            throw new DataAccessException("filePath parameter is not found");
-        }
+        return loadDataFileImpl(req);
     }
 
     @Override

@@ -37,16 +37,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 
 
 @SearchProcessorImpl(id = PROC_ID)
 public class IpacTableFromSource extends IpacTablePartProcessor {
     public static final String PROC_ID = "IpacTableFromSource";
-    public static final String TBL_TYPE = "tblType";
-    public static final String TYPE_CATALOG = "catalog";
-    public static final String URL_CHECK_FOR_NEWER = WebPlotRequest.URL_CHECK_FOR_NEWER;
-    //public static final String TBL_INDEX = TableServerRequest.TBL_INDEX;     // the table to show if it's a multi-table file.
+    private static final String TBL_TYPE = "tblType";
+    private static final String TYPE_CATALOG = "catalog";
+    private static final String URL_CHECK_FOR_NEWER = WebPlotRequest.URL_CHECK_FOR_NEWER;
     private static final String SEARCH_REQUEST = "searchRequest";
 
 
@@ -58,7 +58,6 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
         boolean checkForUpdates = req.getBooleanParam(URL_CHECK_FOR_NEWER, true);
 
-
         // by processor ID
         if (!StringUtils.isEmpty(processor)) {
             return getByProcessor(processor, req);
@@ -69,19 +68,23 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             return getByTableRequest(jsonSearchRequest);
         }
 
-        // by workspace
-        if (isWorkspace(req)) {
-            return getFromWorkspace(source, altSource);
-        }
+        // file based source
+        File inf = null;
 
-        // by source/altSource
-        File inf = getSourceFile(source, req, checkForUpdates);
-        if (inf == null) {
-            inf = getSourceFile(altSource, req, checkForUpdates);
+        if (isWorkspace(req)) {
+            // by workspace
+            inf = getFromWorkspace(source, altSource);
+        } else {
+            // by source/altSource
+            inf = getSourceFile(source, req, checkForUpdates);
+            if (inf == null) {
+                inf = getSourceFile(altSource, req, checkForUpdates);
+            }
         }
 
         try {
-            return TableUtil.readAnyFormat(inf);
+            int tblIdx = req.getIntParam(TBL_INDEX, 0);
+            return TableUtil.readAnyFormat(inf, tblIdx);
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }
@@ -131,7 +134,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
                 if (res == null) {
                     URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
-                    res = convertToIpacTable(nFile, request);
+                    res = nFile;
                     getCache().put(key, res);
                 } else if (checkForUpdates) {
                     FileUtil.writeStringToFile(nFile, "workaround");
@@ -185,7 +188,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         return getByProcessor(req.getRequestId(), req);
     }
 
-    private DataGroup getFromWorkspace(String source, String altSource) throws DataAccessException {
+    private File getFromWorkspace(String source, String altSource) throws DataAccessException {
 
         File file = WsServerUtils.getFileFromWorkspace(source);
         if (file == null) {
@@ -197,12 +200,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             throw new DataAccessException("File not found for workspace path[alt_path]:" + source + altSourceDesc);
         }
 
-        file = ServerContext.convertToFile(file.getPath());
-        try {
-            return TableUtil.readAnyFormat(file);
-        } catch (IOException e) {
-            throw new DataAccessException(e.getMessage(), e);
-        }
+        return ServerContext.convertToFile(file.getPath());
     }
 
     private URL makeUrl(String source) {
