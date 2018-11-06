@@ -106,7 +106,7 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
 
     return (
         <div style={{...resize, ...dim}}>
-            <FormPanel  inputStyle = {{display: 'flex', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+            <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                         submitBarStyle = {{flexShrink: 0, padding: '0 4px 3px'}}
                         groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
                         params = {{hideOnInvalid: false}}
