@@ -35,7 +35,7 @@ const COVERAGE_RADIUS = 'COVERAGE_RADIUS';
 const COVERAGE_TABLE = 'COVERAGE_TABLE';
 const COVERAGE_CREATED = 'COVERAGE_CREATED';
 
-const PLOT_ID= 'CoveragePlot';
+export const PLOT_ID= 'CoveragePlot';
 
 
 
