@@ -46,7 +46,6 @@ export default {actionCreators, reducers};
 
 function actionCreators() {
     return {
-        [APP_LOAD]:     loadAppData,
         [GRAB_WINDOW_FOCUS]:     grabWindowFocus,
         [HELP_LOAD]:  onlineHelpLoad,
         [LOAD_SEARCHES]:  loadSearches
@@ -166,7 +165,7 @@ export function isAppReady() {
 }
 
 export function getSearchInfo() {
-    const {activeSearch} = get(flux.getState(), [APP_DATA_PATH, 'searches']);
+    const {activeSearch} = get(flux.getState(), [APP_DATA_PATH, 'searches'], {});
     return Object.assign({}, searchInfo, {activeSearch});
 }
 
@@ -264,14 +263,6 @@ function reducer(state={}, action={}) {
 
 /*---------------------------- CREATORS ----------------------------*/
 
-function loadAppData() {
-
-    return function (dispatch) {
-        dispatch({ type : APP_LOAD });
-        fetchAppData(dispatch, 'fftools_v1.0.1 Beta', 2);
-    };
-}
-
 function grabWindowFocus() {
     return blinkWindowTitle;
 }
@@ -338,21 +329,9 @@ function updateAppData(appData) {
  */
 function doOnAppReady(action, cancelSelf, params={}, dispatch, getState) {
     if (isAppReady()) {
-        params.callback && params.callback(getState());
         cancelSelf();
+        params.callback && params.callback(getState());
     }
-}
-
-/**
- * fetches all of the necessary data to construct app_data.
- * set isReady to true once done.
- * @param dispatch
- */
-function fetchAppData(dispatch) {
-    dispatch(updateAppData(
-        {
-            isReady: true,
-        }));
 }
 
 const blinkWindowTitle = ( () => {
