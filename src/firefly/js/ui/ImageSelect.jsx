@@ -154,13 +154,52 @@ function FilterPanel({imageMasterData, groupKey, onChange}) {
     );
 }
 
+function getBandList(imageMasterData){
+
+  const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project};${t.waveType}`);
+  const waveInfo = uniqBy(forSummary.map ( (entry)=> {
+      return {name:entry.waveType, label:entry.waveType,wavelength:parseFloat(entry.wavelength), wavelengthDesc:entry.wavelengthDesc };
+
+  }), 'name');
+
+  const waveType = toFilterSummary(forSummary , 'waveType', 'waveType');
+
+  for (let i=0; i<waveInfo.length; i++){
+      switch (waveInfo[i].waveUnit){
+          case 'angstroms':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*0.0001;
+              break;
+          case 'mm':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*1000;
+              break;
+          case 'cm':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*10000;
+              break;
+          case 'GHz':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*299792.458;
+              break;
+
+      }
+      for (let j=0; j<waveType.length; j++){
+
+          if (waveInfo[i].name===waveType[j].name){
+              waveInfo[i]['count'] = waveType[j].count;
+              break;
+          }
+      }
+  }
+  return  sortBy(waveInfo, 'wavelength');
+
+}
 function FilterPanelView({onChange, imageMasterData}) {
+
     const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project}`);
     const missions = toFilterSummary(forSummary, 'missionId', 'missionId');
     const projectTypes = toFilterSummary(forSummary, 'projectTypeKey', 'projectTypeDesc');
-    const sortedImageData = sortBy(imageMasterData, (item) => parseFloat(item.wavelength));
-    const waveBands = toFilterSummary(sortedImageData, 'wavelength', 'wavelengthDesc');
-    const waveType = toFilterSummary(forSummary, 'waveType', 'waveType');
+
+    //order by wavelength
+    const waveType=getBandList(imageMasterData);
+
     return (
         <div className='FilterPanel__view'>
             <CollapsiblePanel componentKey='missionFilter' header='MISSION:' isOpen={true}>
