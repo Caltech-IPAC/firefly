@@ -20,7 +20,8 @@ import {logError} from '../../util/WebUtil.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {dispatchChangeCenterOfProjection} from '../ImagePlotCntlr.js';
-import {parseWorldPt, pointEquals} from '../Point.js';
+import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
+import {computeCentralPointAndRadius} from '../VisUtil.js';
 
 /**
  * this saga does the following:
@@ -97,15 +98,29 @@ function recenterImage(tbl) {
         return;
     }
 
-    const {UserTargetWorldPt} = tbl.request || {};
+    const {UserTargetWorldPt, polygon} = tbl.request || {};
+    const centerPt =  getCenterOfProjection(plot);
+    let   newCenter;
 
-    if (UserTargetWorldPt) {
-        const wp = parseWorldPt(UserTargetWorldPt);
-        const centerPt =  getCenterOfProjection(plot);
+    if (UserTargetWorldPt) {    // search method: cone, elliptical, bo
+        newCenter = parseWorldPt(UserTargetWorldPt);
+    } else if (polygon) {       // search method polygon
+        const allPts = polygon.trim().split(/\s+/);
+        const pts = allPts.reduce((prevPts, pt_x, idx) => {
+            if ((idx % 2 === 0) && ((idx + 1) < allPts.length)) {
+                const wPt = makeWorldPt(parseFloat(pt_x), parseFloat(allPts[idx + 1]));
 
-        if (!pointEquals(wp, centerPt)) {
-            dispatchChangeCenterOfProjection({plotId: plot.plotId, centerProjPt: wp});
-        }
+                prevPts.push(wPt);
+            }
+            return prevPts;
+        }, []);
+
+        const {centralPoint} = computeCentralPointAndRadius(pts);
+        newCenter = centralPoint;
+    }
+
+    if (newCenter && !pointEquals(centerPt, newCenter)) {
+        dispatchChangeCenterOfProjection({plotId: plot.plotId, centerProjPt: newCenter});
     }
 }
 
