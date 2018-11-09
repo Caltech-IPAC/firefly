@@ -96,7 +96,7 @@ export const makeRegion = (
  * @param {number} offsetY default: 0
  * @param {string} message default: '', containing parsing (error) message
  * @param {string} tag default: ''
- * @param {string} coordSys default: 'PHYSICAL'
+ * @param {Object} coordSys default: RegionCsys.PHYSICAL
  * @function makeRegionOptions
  */
 
@@ -182,7 +182,7 @@ export const defaultRegionProperty = {
     source: 1,
     offsetX: 0,
     offsetY: 0,
-    coordSys: 'PHYSICAL',
+    coordSys: RegionCsys.PHYSICAL,
     textLoc: 'DEFAULT',
     textAngle: 0,
     message: ''
