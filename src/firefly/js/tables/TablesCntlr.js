@@ -14,11 +14,9 @@ import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {updateMerge, logError} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
-import {BG_STATUS, BG_JOB_ADD, dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
 import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
-import {getTblById, isTableLoaded} from './TableUtil';
 
 
 export const TABLE_SPACE_PATH = 'table_space';

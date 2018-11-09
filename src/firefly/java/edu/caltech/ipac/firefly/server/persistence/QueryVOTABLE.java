@@ -45,7 +45,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
             File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
             DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), false);
             DataGroup dg;
-            int tblIdx = req.getIntParam(TBL_INDEX);
+            int tblIdx = req.getIntParam(TBL_INDEX, 0);
             if (groups.length <= tblIdx ) {
                 dg = new DataGroup("empty",new DataType[]{new DataType("empty", String.class)});
                 //throw new EndUserException("cone search query failed", "no results");
