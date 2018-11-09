@@ -218,6 +218,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 }
             }
 
+            results.getData().getTableMeta().setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
             return results;
         } finally {
             activeRequests.remove(unigueReqID);

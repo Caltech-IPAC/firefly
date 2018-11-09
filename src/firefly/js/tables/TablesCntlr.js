@@ -5,7 +5,7 @@ import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unse
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
-import {MAX_ROW} from './TableRequestUtil.js'
+import {MAX_ROW} from './TableRequestUtil.js';
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
@@ -14,7 +14,6 @@ import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {updateMerge, logError} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
-import {BG_STATUS, BG_JOB_ADD, dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
 import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
@@ -248,7 +247,7 @@ export function dispatchTableSelect(tbl_id, selectInfo) {
 /**
  * remove the table's data given its id.
  * @param tbl_id  unique table identifier.
- * @param {boolean} fireActiveTableChanged=true  true to fire TBL_RESULTS_ACTIVE when applicable.
+ * @param {boolean} [fireActiveTableChanged=true]  true to fire TBL_RESULTS_ACTIVE when applicable.
  */
 export function dispatchTableRemove(tbl_id, fireActiveTableChanged=true) {
     flux.process( {type: TABLE_REMOVE, payload: {tbl_id, fireActiveTableChanged}});

@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.table.TableMeta.DESC_TAG;
 import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 
@@ -44,11 +45,12 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
             File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
             DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), false);
             DataGroup dg;
-            if (groups.length < 1) {
+            int tblIdx = req.getIntParam(TBL_INDEX, 0);
+            if (groups.length <= tblIdx ) {
                 dg = new DataGroup("empty",new DataType[]{new DataType("empty", String.class)});
                 //throw new EndUserException("cone search query failed", "no results");
             } else {
-                dg = groups[0];
+                dg = groups[tblIdx];
             }
             String raColAttr = dg.getAttribute("POS_EQ_RA_MAIN");
             String decColAttr = dg.getAttribute("POS_EQ_DEC_MAIN");
