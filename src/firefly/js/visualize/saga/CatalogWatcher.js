@@ -4,14 +4,14 @@
 
 import {take} from 'redux-saga/effects';
 import {isEmpty, isNil, get} from 'lodash';
-import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE} from '../../tables/TablesCntlr.js';
+import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, getTableGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {getDrawLayerById, getPlotViewById} from '../PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewById, getActivePlotView, getCenterOfProjection} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
@@ -19,7 +19,9 @@ import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
-
+import {dispatchChangeCenterOfProjection} from '../ImagePlotCntlr.js';
+import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
+import {computeCentralPointAndRadius} from '../VisUtil.js';
 
 /**
  * this saga does the following:
@@ -45,7 +47,7 @@ export function* watchCatalogs() {
 
 
     while (true) {
-        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
+        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,TBL_RESULTS_ACTIVE,
                                   TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]);
         const {tbl_id}= action.payload;
 
@@ -68,6 +70,10 @@ export function* watchCatalogs() {
                 dispatchDestroyDrawLayer(tbl_id);
                 break;
 
+            case TBL_RESULTS_ACTIVE:
+                recenterImage(getTblById(tbl_id));
+                break;
+
             case ImagePlotCntlr.PLOT_HIPS:
             case ImagePlotCntlr.PLOT_IMAGE:
                 attachToAllCatalogs(action.payload.pvNewPlotInfoAry);
@@ -78,6 +84,45 @@ export function* watchCatalogs() {
 
 
 const isCName = (name) => (c) => c.name===name;
+
+/**
+ * update the projection center of hips plor to be aligned with the target of catalog search
+ * @param tbl
+ */
+function recenterImage(tbl) {
+    const pv = getActivePlotView(visRoot());
+    const plot = pv.plots[pv.primeIdx];
+
+    // recenter hips image
+    if (!plot || plot.plotType !== 'hips' || pv.plotGroupId === 'coverageImages') {
+        return;
+    }
+
+    const {UserTargetWorldPt, polygon} = tbl.request || {};
+    const centerPt =  getCenterOfProjection(plot);
+    let   newCenter;
+
+    if (UserTargetWorldPt) {    // search method: cone, elliptical, bo
+        newCenter = parseWorldPt(UserTargetWorldPt);
+    } else if (polygon) {       // search method polygon
+        const allPts = polygon.trim().split(/\s+/);
+        const pts = allPts.reduce((prevPts, pt_x, idx) => {
+            if ((idx % 2 === 0) && ((idx + 1) < allPts.length)) {
+                const wPt = makeWorldPt(parseFloat(pt_x), parseFloat(allPts[idx + 1]));
+
+                prevPts.push(wPt);
+            }
+            return prevPts;
+        }, []);
+
+        const {centralPoint} = computeCentralPointAndRadius(pts);
+        newCenter = centralPoint;
+    }
+
+    if (newCenter && !pointEquals(centerPt, newCenter)) {
+        dispatchChangeCenterOfProjection({plotId: plot.plotId, centerProjPt: newCenter});
+    }
+}
 
 //todo - this fucntion should start using TableInfoUtil.getCenterColumns
 function handleCatalogUpdate(tbl_id) {
@@ -115,6 +160,9 @@ function handleCatalogUpdate(tbl_id) {
     if (!tableData.columns.find( isCName(columns.lonCol)) && !tableData.columns.find(isCName(columns.latCol))) {
         return;
     }
+
+
+    recenterImage(sourceTable);
 
     const params= {
         startIdx : 0,
