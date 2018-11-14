@@ -36,11 +36,13 @@ import java.util.Map;
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    public static final String PORT = AppProperties.getProperty("lsst.dax.port","5001");
-    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","https://lsst-pdac.ncsa.illinois.edu");
 
-    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL","http://lsst-qserv-dax01:8080/api/db/v1/tap/sync/");
-    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL","http://"+ HOST +":"+PORT+"/api/meta/v1/db/");
+    // LSST DAX services are listed in https://confluence.lsstcorp.org/display/DM/DAX+service+URLs
+    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL",HOST+"/api/db/v1/tap/sync/");
+    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL",HOST+"/api/meta/v1/db/");
+
+
 
     //set default timeout to 180 seconds
     private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 180);
@@ -69,7 +71,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-        String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
+        String sql = "QUERY=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
         _log.briefDebug("Executing SQL query: " + sql);
         File file = createFile(request, ".json");
         Map<String, String> requestHeader=new HashMap<>();
