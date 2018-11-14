@@ -24,18 +24,21 @@ var props = {
 var options = {
     MenuItemKeys: {maskOverlay:true},
     catalogSpacialOp: 'polygonWhenPlotExist',
-        workspace : {showOptions: false},
+    workspace : {showOptions: false},
     imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
-        charts: {
-            singleTraceUI: false
+    charts: {
+        singleTraceUI: false
     },
     hips : {
-            useForImageSearch: true,
-            hipsSources: 'irsa,cds',
-            defHipsSources: {source: 'irsa', label: 'IRSA Featured'},
+        useForImageSearch: true,
+        hipsSources: 'irsa,cds',
+        defHipsSources: {source: 'irsa', label: 'IRSA Featured'},
         mergedListPriority: 'Irsa'
     },
     coverage : { // example of using DSS and wise combination for coverage (not that anyone would want to combination)
+    },
+    tables : {
+        showInfoButton: true // info about table : title, table links, etc.
     }
 };
 
