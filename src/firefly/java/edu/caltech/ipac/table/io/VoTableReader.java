@@ -3,35 +3,21 @@
  */
 package edu.caltech.ipac.table.io;
 
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataObject;
-import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.table.GroupInfo;
-import edu.caltech.ipac.table.LinkInfo;
-import edu.caltech.ipac.table.ParamInfo;
-import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.StringUtils;
-import uk.ac.starlink.table.*;
-import uk.ac.starlink.votable.VOStarTable;
-import uk.ac.starlink.votable.VOElement;
-import uk.ac.starlink.votable.VOElementFactory;
-import uk.ac.starlink.votable.TableElement;
-import uk.ac.starlink.votable.LinkElement;
-import uk.ac.starlink.votable.FieldElement;
-import uk.ac.starlink.votable.ValuesElement;
 import org.json.simple.JSONObject;
+import org.xml.sax.SAXException;
+import uk.ac.starlink.table.*;
+import uk.ac.starlink.votable.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.Arrays;
-import org.xml.sax.SAXException;
-import java.net.URL;
-import java.net.MalformedURLException;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static uk.ac.starlink.table.StoragePolicy.PREFER_MEMORY;
@@ -57,7 +43,11 @@ public class VoTableReader {
      * @return an array of DataGroup objects
      */
     public static DataGroup[] voToDataGroups(String location) throws IOException {
-        return voToDataGroups(location,false);
+        try {
+            return voToDataGroups(location, false);
+        } catch (DataAccessException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     /**
@@ -66,7 +56,7 @@ public class VoTableReader {
      * @param headerOnly  if true, returns only the headers, not the data.
      * @return an array of DataGroup object
      */
-    public static DataGroup[] voToDataGroups(String location, boolean headerOnly) throws IOException {
+    public static DataGroup[] voToDataGroups(String location, boolean headerOnly) throws IOException, DataAccessException {
         //VOTableBuilder votBuilder = new VOTableBuilder();
         List<DataGroup> groups = new ArrayList<>();
 
@@ -102,16 +92,17 @@ public class VoTableReader {
 
 
     // root VOElement for a votable file
-    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) {
+    private static VOElement getVOElementFromVOTable(String location, StoragePolicy policy) throws DataAccessException {
         try {
             policy = policy == null ? PREFER_MEMORY : policy;
             VOElementFactory voFactory =  new VOElementFactory();
             voFactory.setStoragePolicy(policy);
-           return voFactory.makeVOElement(location);
-        }  catch (SAXException|IOException e) {
+            return voFactory.makeVOElement(location);
+        }  catch (SAXException |IOException e) {
             e.printStackTrace();
+            throw new DataAccessException("unable to parse "+location+"\n"+
+                    e.getMessage(), e);
         }
-        return null;
     }
 
     // get all <RESOURCE> under VOTable root or <RESOURCE>
@@ -368,12 +359,28 @@ public class VoTableReader {
     }
 
     // get all <TABLE> from one votable file
-    private static List<TableElement> getTableElementsFromFile(String location, StoragePolicy policy) {
+    private static List<TableElement> getTableElementsFromFile(String location, StoragePolicy policy) throws DataAccessException {
         VOElement top = getVOElementFromVOTable(location, policy);
+
         List<TableElement> tableAry = new ArrayList<>();
 
         if (top != null) {
             getTableElements(top, tableAry);
+
+            if (tableAry.size() == 0) {
+                // check for errors: section 4.4 of http://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html
+                VOElement[] resources = getResourceChildren(top);
+                for (VOElement r : resources) {
+                    if ("results".equals(r.getAttribute("type"))) {
+                        VOElement[] infos = r.getChildrenByName("INFO");
+                        for (VOElement info : infos) {
+                            if ("QUERY_STATUS".equals(info.getName()) && "ERROR".equals(info.getAttribute("value"))) {
+                                throw new DataAccessException(info.getTextContent());
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return tableAry;
@@ -430,7 +437,7 @@ public class VoTableReader {
      * @param voTableFile path of votable file
      * @return summary table of votable file
      */
-    public static DataGroup voHeaderToDataGroup(String voTableFile) {
+    public static DataGroup voHeaderToDataGroup(String voTableFile)  {
         List<DataType> cols = new ArrayList<>();
 
         for ( MetaInfo meta : MetaInfo.values()) {    // index, name, row, column
@@ -561,7 +568,7 @@ public class VoTableReader {
                         "the table which is highlighted in the file summary.";
                 dg.setTitle(title);
             }
-        } catch (IOException e) {
+        } catch (IOException | DataAccessException e) {
             dg.setTitle(invalidMsg);
             e.printStackTrace();
         }
@@ -813,7 +820,7 @@ public class VoTableReader {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | DataAccessException e) {
             e.printStackTrace();
         }
     }

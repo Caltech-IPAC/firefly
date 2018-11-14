@@ -712,6 +712,11 @@ public class QueryUtil {
 
                 double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
                 double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
+
+                // case when min and max values are the same
+                if (xUnit == 0) xUnit = Math.abs(xMin) > 0 ? Math.abs(xMin) : 1;
+                if (yUnit == 0) yUnit = Math.abs(yMin) > 0 ? Math.abs(yMin) : 1;
+
                 // increase cell size a bit to include max values into grid
                 xUnit += xUnit/1000.0/nXs;
                 yUnit += yUnit/1000.0/nYs;
