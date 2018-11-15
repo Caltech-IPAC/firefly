@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.query.lsst;
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -15,7 +14,8 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -49,24 +49,23 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
 
     abstract String buildSqlQueryString(TableServerRequest request) throws Exception;
 
-    @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
             DataGroup dg = getDataFromURL(request); //
             //should not happen - metadata should always be returned even if there are no data
             if (dg == null) {
                 throw new DataAccessException("No data.");
             }
-            File outFile = createFile(request, ".tbl");
-            IpacTableWriter.save(outFile, dg);
-            _log.info("table loaded");
-            return outFile;
-        } catch (IOException | DataAccessException ee) {
+            return dg;
+        } catch (DataAccessException ee) {
             throw ee;
         } catch (Exception e) {
             throw new DataAccessException(e.getMessage(), e);
         }
+    }
+
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+        return loadDataFileImpl(request);
     }
 
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
