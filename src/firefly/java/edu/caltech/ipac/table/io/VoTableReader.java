@@ -697,10 +697,10 @@ public class VoTableReader {
 
         if (tableEl != null) {
             // attribute ID, ref, ucd, utype from TABLE
-            dg.getTableMeta().addKeyword(TableMeta.ID,  getElementAttribute(tableEl, ID));
-            dg.getTableMeta().addKeyword(TableMeta.REF, getElementAttribute(tableEl, REF));
-            dg.getTableMeta().addKeyword(TableMeta.UCD, getElementAttribute(tableEl, UCD));
-            dg.getTableMeta().addKeyword(TableMeta.UTYPE, getElementAttribute(tableEl, UTYPE));
+            applyIfNotEmpty(getElementAttribute(tableEl, ID), v -> dg.getTableMeta().addKeyword(TableMeta.ID, v));
+            applyIfNotEmpty(getElementAttribute(tableEl, REF), v -> dg.getTableMeta().addKeyword(TableMeta.REF, v));
+            applyIfNotEmpty(getElementAttribute(tableEl, UCD), v -> dg.getTableMeta().addKeyword(TableMeta.UCD, v));
+            applyIfNotEmpty(getElementAttribute(tableEl, UTYPE), v -> dg.getTableMeta().addKeyword(TableMeta.UTYPE, v));
 
             // child element PARAM, GROUP, LINK for TABLE
             dg.setParamInfos(makeParamsFromTable(tableEl, table));
