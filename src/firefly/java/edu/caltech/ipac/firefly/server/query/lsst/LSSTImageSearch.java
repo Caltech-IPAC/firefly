@@ -28,7 +28,7 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     // image repository (DC_W13_Stripe82) is a part of the URL, but it is not clear where it comes from
     // and how we should get it: via metaserv or image/v1/capabilities
     // I am hardcoding it here for now
-    public static String IMGSERVURL="http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/api/image/v1/DC_W13_Stripe82";
+    public static String IMGSERVURL= LSSTQuery.HOST + "/api/image/v1/DC_W13_Stripe82";
 
     /**
      * Implement the abstract method, "getURL"
