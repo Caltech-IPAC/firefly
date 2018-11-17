@@ -24,6 +24,7 @@ import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {COVERAGE_CREATED} from './CoverageWatcher.js';
+import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 
 /**
  * this saga does the following:
@@ -137,12 +138,9 @@ function handleCatalogUpdate(tbl_id) {
     const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo, title}= sourceTable;
     const maxScatterRows = getMaxScatterRows();
 
-
-
     if (!totalRows ||
-        !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] ||
-        (!tableMeta[MetaConst.CATALOG_COORD_COLS] && !tableMeta[MetaConst.CENTER_COLUMN])) {
-        return; 
+        !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) {
+        return;
     }
 
     const {ignoreTables}=  getDlRoot();
@@ -150,17 +148,9 @@ function handleCatalogUpdate(tbl_id) {
         return;
     }
 
-    const cenData= tableMeta[MetaConst.CATALOG_COORD_COLS] || tableMeta[MetaConst.CENTER_COLUMN];
+    const columns= findTableCenterColumns(sourceTable);
 
-    var s;
-    if (cenData) s= cenData.split(';');
-    if (!s || s.length!== 3) return;
-
-    const columns= {
-        lonCol: s[0],
-        latCol: s[1],
-        csys : CoordinateSys.parse(s[2])
-    };
+    if (!columns) return;
 
     if (!tableData.columns.find( isCName(columns.lonCol)) && !tableData.columns.find(isCName(columns.latCol))) {
         return;
