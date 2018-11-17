@@ -270,7 +270,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             DataObject dob;
             while(i.hasNext()) {
                 dob = (DataObject)i.next();
-                String line = inRowIdType.formatData(dob.getDataElement(inRowIdType))+","+raType.formatData(dob.getDataElement(raType))+","+decType.formatData(dob.getDataElement(decType))+"\n";
+                String line = inRowIdType.format(dob.getDataElement(inRowIdType))+","+raType.format(dob.getDataElement(raType))+","+decType.format(dob.getDataElement(decType))+"\n";
                 writer.write(line);
             }
         } catch (Exception e) {

@@ -20,13 +20,16 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+
 /**
 * Convert an FITS file or FITS binary table(s) to list of DataGroup.
 */
 public final class FITSTableReader
 {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
-    private static Pattern TDISP = Pattern.compile("([ALIBOZFEGD])[NS]?(\\d+)?(\\.\\d+)?");
+    private static final Pattern TDISP = Pattern.compile("(A|I|B|O|Z|F|E|EN|ES|G|D)(\\d+)?(?:\\.(\\d+))?.*");
+    private static final Pattern EXPONENTIAL = Pattern.compile("E|EN|ES|D");                                    // Table 20 from https://fits.gsfc.nasa.gov/standard30/fits_standard30aa.pdf
 
 
     public static boolean debug = true;
@@ -333,14 +336,7 @@ public final class FITSTableReader
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
             DataType dt = dataTypes.get(colIdx);
             String format = getParam(table, "TDISP" + (colIdx + 1));
-            format = format == null ? null : convertFormat(format);
-            if (Double.class.isAssignableFrom(dt.getDataType()) ||
-                Float.class.isAssignableFrom(dt.getDataType())) {
-                format = format == null && Double.class.isAssignableFrom(dt.getDataType()) ? "%.9g" : format;
-            }
-            if (!StringUtils.isEmpty(format)) {
-                dt.setFormat(format);
-            }
+            convertFormat(format, dt);
         }
 
         List<String> hdList = inclHeaders == null ? null : Arrays.asList(inclHeaders);
@@ -460,30 +456,33 @@ public final class FITSTableReader
     }
 
     /**
-     * converts FITS table keyword TDISPn into java format
+     * converts FITS table keyword TDISPn into firefly's precision/width attributes
      * see http://archive.stsci.edu/fits/fits_standard/node69.html#SECTION001232060000000000000
-     * @param format
-     * @return
+     * @param format a format string taken from TDISPn
+     * @param dt     the column this format belongs to
      */
-    private static String convertFormat(String format) {
-        Matcher m = TDISP.matcher(format);
-        if (m.find()) {
-            int count = m.groupCount();
-            String conv = String.valueOf(m.group(1));
-            String width = "";  // count > 1 ? m.group(2) : "";     ignores width for now.
-            String prec = count > 2 ? m.group(3) : "";
-            width = width == null ? "" : width;
-            prec = prec == null ? "" : prec;
-            if (conv.matches("D|E")) {
-                return "%" + width + prec + "e";
-            } else if (conv.equals("G")) {
-                return "%" + width + prec + "g";
-            } else if (conv.equals("F")) {
-                return "%" + width + prec + "f";
+    private static void convertFormat(String format, DataType dt) {
+        if (StringUtils.isEmpty(format)) return;
+
+        String[] parts = StringUtils.groupMatch(TDISP, format);     // 0:conversion code, 1: width, 2:precision
+        if (parts == null) return;
+
+        String code = parts.length > 0 ? parts[0] : "";
+        int width = parts.length > 1 ? StringUtils.getInt(parts[1], 0) : 0;
+        String prec = parts.length > 2 ? parts[2] : "";
+
+        if (width > 0) dt.setWidth(width);
+
+        if (code != null) {
+            if (EXPONENTIAL.matcher(code).matches()) {
+                dt.setPrecision("E" + prec);
+            } else if(code.equals("F")) {
+                dt.setPrecision("F" + prec);
+            } else if(code.equals("G")) {
+                dt.setPrecision("G" + prec);
             }
         }
         // not implemented or supported.. will print
-        return null;
     }
 
     /**

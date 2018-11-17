@@ -143,7 +143,7 @@ public class JsonTableUtil {
         if (data.size() > 0) {
             List<List<String>> tableData = new ArrayList<>();
             for (int i = 0; i < data.size(); i++) {
-                String[] rowData = data.get(i).getFormatedData();
+                String[] rowData = data.get(i).getFormattedData();
                 tableData.add(Arrays.asList(rowData));
             }
             tdata.put("data", tableData);

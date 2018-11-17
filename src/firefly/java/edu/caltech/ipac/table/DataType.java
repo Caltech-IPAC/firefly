@@ -11,7 +11,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringEscapeUtils.escapeJava;
 import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
 
@@ -39,6 +41,7 @@ public class DataType implements Serializable, Cloneable {
     public static final List<String> NUMERIC_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, INTEGER, LONG, S_DOUBLE, S_REAL, S_FLOAT, S_INTEGER, S_LONG);
     public static final List<String> REAL_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
     public static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
+    private static final Pattern precisiontPattern = Pattern.compile("([EFG]?)(\\d*)", Pattern.CASE_INSENSITIVE);
 
 
     private       String keyName;
@@ -66,7 +69,6 @@ public class DataType implements Serializable, Cloneable {
     private       String maxValue = "";
     private       String minValue = "";
 
-    private transient int maxDataWidth = 0;     // this is the max width of the data...from reading the file.  only used by shrinkToFit
     private transient Boolean isNumeric;        // cached to improve formatting performance.
 
 
@@ -214,11 +216,6 @@ public class DataType implements Serializable, Cloneable {
         this.sortByCols = sortByCols;
     }
 
-    public int getMaxDataWidth() { return maxDataWidth; }
-
-    public void setMaxDataWidth(int maxDataWidth) { this.maxDataWidth = maxDataWidth; }
-
-
     public void setID (String id) {
         this.ID = id;
     }
@@ -228,9 +225,7 @@ public class DataType implements Serializable, Cloneable {
     }
 
     /**
-     * set precision for numeric data, En or Fn
-     *          En: n means number of significant figures
-     *          Fn: n means the significant figures after decimal point
+     * see edu.caltech.ipac.table.DataType#format for details
      * @param prec precision string
      */
     public void setPrecision(String prec) {
@@ -287,51 +282,76 @@ public class DataType implements Serializable, Cloneable {
 
 
     /**
+     * Firefly has 3 metas that affect the formatting of the column's data.  They are
+     * listed below in order of highest to lowest precedence.
+     *
+     * fmtDisp		: A Java format string.  It can be used to format any type.  i.e.  "cost $%.2f"
+     * format		: Same as fmtDisp
+     * precision	: This only applies to floating point numbers.
+     *                A string Tn where T is either F, E, or G
+     *                If T is not present, it defaults to F.
+     *                When T is F or E, n is the number of significant figures after the decimal point.
+     *                When T is G, n is the number of significant digits
+     *
+     * @param value         the value to be formatted
+     * @param useEscape     apply Java escaping to all strings to take care of control characters and quotes
+     * @return
+     */
+    public String format(Object value, boolean useEscape) {
+        if (value == null) {
+            return getNullString() == null ? "" : getNullString();
+        }
+        // do escaping if requested
+        if (useEscape && type == String.class) {
+            value = escapeJava((String)value);
+        }
+
+        if (!isEmpty(getFmtDisp())) {
+            return String.format(getFmtDisp(), value);
+
+        } else if (!isEmpty(getFormat())) {
+            return String.format(getFormat(), value);
+
+        } else if (REAL_TYPES.contains(getTypeDesc())) {
+            // use precision
+            String prec = getPrecision();
+            if (isEmpty(prec)) {
+                String pattern = StringUtils.areEqual(getUnits(), "rad") ? "%.8f" : "%.6f";
+                return String.format(pattern, value);
+            }
+            String[] tp = StringUtils.groupMatch(precisiontPattern, prec);    // T in group 0, and precision in group 1.
+            if (tp != null) {
+                String c = isEmpty(tp[0]) || tp[0].equals("F") ? "f" : tp[0];
+                String p = isEmpty(tp[1]) ? "" : "." + tp[1];
+                return String.format("%" + p + c, value);
+            }
+        } else if (Date.class.isAssignableFrom(getDataType())) {
+            // default Date format:  yyyy-mm-dd hh:mm:ss ie. 2018-11-16 14:55:12
+            return String.format("%1$tF %1$tT", value);
+        }
+        return String.valueOf(value);
+    }
+
+    /**
+     * useEscape is true.  This is a common use case, since you don't want control characters to affect formatting
+     * @param value
+     * @return
+     */
+    public String format(Object value) {
+        return format(value, true);
+    }
+
+    public String formatFixedWidth(Object value) {
+        return fitValueInto(format(value), getWidth(), isNumeric());
+    }
+
+    /**
      * returns the formatted header of this column padded to max width
      * @return
      */
     public String formatHeader(String val) {
         val = val == null ? "" : val;
-        return fitValueInto(val, getMaxDataWidth(), false);
-    }
-
-    /**
-     * returns the formatted string of the given value padded to the column's defined width
-     * @param value
-     * @return
-     */
-    public String formatData(Object value) {
-        return formatData(value, false);
-    }
-
-    /**
-     * returns the formatted string of the given value padded to the column's defined width
-     * @param value
-     * @param useEscape apply Java escaping to all strings to take care of control characters and quotes
-     * @return
-     */
-    public String formatData(Object value, boolean useEscape) {
-        String sval;
-        if (value == null) {
-            sval = getNullString() == null ? "" : getNullString();
-        } else {
-            if (Date.class.isAssignableFrom(getDataType())) {
-                // format Date into string first.
-                value = String.format("%1$tF %1$tT", value);
-            }
-
-            if (useEscape && type == String.class) {
-                value = escapeJava((String)value);
-            }
-            String formatStr = getFmtDisp();
-            formatStr = formatStr == null ? getFormat() : formatStr;
-            if (formatStr == null) {
-                formatStr = this.getFormatStr(0);
-                setFormat(formatStr);
-            }
-            sval = formatStr.equals("%s") ? String.valueOf(value) : String.format(formatStr, value);
-        }
-        return sval;
+        return fitValueInto(val, getWidth(), false);
     }
 
     boolean isNumeric() {
@@ -341,6 +361,14 @@ public class DataType implements Serializable, Cloneable {
         return isNumeric;
     }
 
+    /**
+     * returns a string the size of the given width.  If the value is longer then the given width,
+     * it will be truncated.  Values will be left-padded if numeric and right-padded otherwise.
+     * @param value
+     * @param width
+     * @param isNumeric
+     * @return
+     */
     public static String fitValueInto(String value, int width, boolean isNumeric) {
         if (width == 0 || value.length() == width) return value;
         if (value.length() < width) {
@@ -437,7 +465,7 @@ public class DataType implements Serializable, Cloneable {
 
     private String resolveTypeDesc() {
 
-        int w = getWidth() > 0 ? getWidth() : getMaxDataWidth();
+        int w = getWidth();
         boolean useShortType = w > 0 && w < 6;
         if (type == null) type = String.class;
 

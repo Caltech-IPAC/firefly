@@ -516,14 +516,9 @@ public class IpacTableReaderTest extends ConfigTest{
         }
 
         //Check the attributes (key, value):
-        List<DataGroup.Attribute> keywords = dataGroup.getTableMeta().getAttributeList();
-        for (int j = 0; j < keywords.size() -1; j++) {
-            //Not check the input file source:
-            if (j < (keywords.size() - 1)) {
-                Assert.assertEquals("check the key", keywords.get(j).getKey(), attributeKeys[j]);
-                Assert.assertEquals("check the value", keywords.get(j).getValue(), attributeValues[j]);
-            }
-            j++;
+        for (int j=0; j < attributeKeys.length; j++) {
+            Assert.assertTrue("check the key", dataGroup.getTableMeta().contains(attributeKeys[j]));
+            Assert.assertEquals("check the value", dataGroup.getAttribute(attributeKeys[j]), attributeValues[j]);
         }
 
         //Check the data content/values:
