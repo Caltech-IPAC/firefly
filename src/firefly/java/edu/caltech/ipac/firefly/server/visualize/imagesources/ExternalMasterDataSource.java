@@ -325,7 +325,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
     static private ImageMasterDataEntry sdssTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
 
-        e.set(ImageMasterDataEntry.PARAMS.PROJECT,"SDSS");
+        e.set(ImageMasterDataEntry.PARAMS.PROJECT,"SDSS: Sloan Digital Sky Survey");
         e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"SDSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
@@ -339,7 +339,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
     static private ImageMasterDataEntry msxTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
-        e.set(ImageMasterDataEntry.PARAMS.PROJECT,"MSX");
+        e.set(ImageMasterDataEntry.PARAMS.PROJECT,"MSX: Midcourse Space Experiment");
         e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"MSX");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
@@ -355,7 +355,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
 
     static private ImageMasterDataEntry dssTemplate() {
         ImageMasterDataEntry e= new ImageMasterDataEntry();
-        e.set(ImageMasterDataEntry.PARAMS.PROJECT,"DSS");
+        e.set(ImageMasterDataEntry.PARAMS.PROJECT,"DSS: Digitized Sky Survey");
         e.set(ImageMasterDataEntry.PARAMS.MISSION_ID,"DSS");
         e.set(ImageMasterDataEntry.PARAMS.SUB_PROJECT,"");
         e.set(ImageMasterDataEntry.PARAMS.HELP_URL,"http://irsa.ipac.caltech.edu");
