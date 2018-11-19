@@ -17,9 +17,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.query.SearchRequestUtils;
 import edu.caltech.ipac.firefly.server.query.UserCatalogQuery;
-import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.table.DataType;
@@ -69,7 +67,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         }
 
         // file based source
-        File inf = null;
+        File inf;
 
         if (isWorkspace(req)) {
             // by workspace
@@ -127,7 +125,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 StringKey key = new StringKey(getUniqueID(request), url);
                 File res  = (File) getCache().get(key);
 
-                String ext = FileUtil.getExtension(url.getPath());
+                String ext = FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""));
                 ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
                 File nFile = createFile(request, ext);
 
