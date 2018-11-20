@@ -299,6 +299,14 @@ export function dispatchTableUiUpdate(tbl_ui_info) {
 }
 
 /**
+ * request to update table content
+ * @param tableModel
+ */
+export function dispatchTableUpdate(tableModel) {
+    flux.process( {type: TABLE_UPDATE, payload: tableModel});
+}
+
+/**
  *
  * @param tbl_id
  * @param tbl_group

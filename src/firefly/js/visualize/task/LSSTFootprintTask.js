@@ -6,15 +6,15 @@ import {Style} from '../draw/DrawingDef.js';
 import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer, getDlAry, dispatchAttachLayerToPlot, dispatchModifyCustomField,
                         dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
-import {logError} from '../../util/WebUtil.js';
+import {logError, clone} from '../../util/WebUtil.js';
 import {ImageLineBasedObj} from '../draw/ImageLineBasedObj.js';
 import ImagePlotCntlr, {visRoot, dispatchPlotImage} from '../ImagePlotCntlr.js';
 import {makeTblRequest, cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchTableSearch, dispatchTableRemove, TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE}
-                from '../../tables/TablesCntlr.js';
+import {dispatchTableSearch, dispatchTableRemove, dispatchTableUpdate, TABLE_LOADED, TABLE_SELECT,
+        TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE, TABLE_SORT, TABLE_FILTER} from '../../tables/TablesCntlr.js';
 import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/TableUtil.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {convertAngle, isAngleUnit} from '../VisUtil.js';
@@ -72,7 +72,7 @@ const footprintColumnNamesDefault = 'id;footprint_corner1_x;footprint_corner1_y;
                                     'footprint_corner2_x;footprint_corner2_y;spans;peaks';
 
 // column set
-const hiddenColumns =[spans, peaks, corner1_x, corner1_y, corner2_x, corner2_y];
+const hiddenColumnsDisplay =[spans, peaks, corner1_x, corner1_y, corner2_x, corner2_y];
 const tblIdxCols = [table_rowidx, table_rownum];
 
 function getFileNameFromPath(filePath) {
@@ -173,6 +173,32 @@ function getPixelSys(tableModel) {
       return pixelsys;
 }
 
+function hideTableColumns(hiddenColumns, tbl) {
+    const {tbl_id, tableData} = tbl;
+    const {columns} = tableData;
+
+    if (!columns) return;
+
+    const hCols = hiddenColumnsDisplay.reduce((prev, hIdx) => {
+        if (hIdx >= 0 && hIdx < hiddenColumns.length) {
+            prev.push(hiddenColumns[hIdx]);
+        }
+        return prev;
+    }, ['flags', 'footprint']);
+
+    const newColumns = columns.reduce((prev, col) => {
+        const newCol = clone(col);
+        if (hCols.includes(col.name)) {
+            newCol.visibility = 'hidden';
+        }
+        prev.push(newCol);
+        return prev;
+    }, []);
+
+    const newTbl = {tbl_id, tableData: {columns: newColumns}};
+
+    dispatchTableUpdate(newTbl);
+}
 
 function getFootprintDataFromTable(tableModel) {
     const {data} = tableModel.tableData || {};
@@ -183,6 +209,8 @@ function getFootprintDataFromTable(tableModel) {
 
     const centerCols = getCenterColumns(tableModel);
     const hiddenColumns = assignLSSTFootprintColumnNames(tableModel);
+
+    hideTableColumns(hiddenColumns, tableModel);
 
     let centerSys = null;
 
@@ -323,13 +351,15 @@ function initFootprint(footprintData, drawLayerId, tbl_id, plotId, footprintPara
 }
 
 const footprintTableWatcher = (action, cancelself, params) => {
-    const {tbl_id} = action.payload;
+    const {request} = action.payload;
+    const tbl_id = action.payload.tbl_id || request.tbl_id;
     const {plotId, drawLayerId, footprintTableId} = params || {};
 
     if (tbl_id !== footprintTableId) return;
 
     switch(action.type) {
-        case TABLE_UPDATE:
+        case TABLE_SORT:
+        case TABLE_FILTER:
              handleFootprintUpdate(tbl_id, drawLayerId, plotId);  // from filter, sort
             break;
 
@@ -361,12 +391,6 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
 
     return new Promise((resolve) => {
         const title = tableTitle || footprintFileOnServer.split(/(\\|\/)/g).pop();
-        const hiddenColumnMeta = hiddenColumns.concat(['flags', 'footprint']).reduce( (prev, oneCol) => {
-            const colKey = `col.${oneCol}.Visibility`;
-
-            prev[colKey] = 'hidden';
-            return prev;
-        }, {});
         const footprintTableId = getTableId(drawLayerId);   // table Id is uniquely derived from drawLayerId
         const tbl = getTblById(footprintTableId);
 
@@ -375,9 +399,8 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
                 {filePath: footprintFileOnServer},
                 {
                     tbl_id: footprintTableId,
-                    META_INFO: hiddenColumnMeta,
                     removable: true,
-                    pageSize: 200
+                    pageSize: 50
                 });
 
             if (!isUndefined(tbl_index)) {
@@ -389,30 +412,31 @@ function loadFootprintTable(footprintFileOnServer, plotId, drawLayerId, tbl_inde
                 if (tbl_id !== footprintTableId) return;
 
                 const tableModel = getTblById(tbl_id);
-                dispatchAddActionWatcher({
-                    actions: [TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_UPDATE],
-                    callback: footprintTableWatcher,
-                    params: {plotId, drawLayerId, footprintTableId}
-                });
-                resolve(tableModel);
-                if (canself) {
-                    canself();
+                if (get(tableModel, ['tableData', 'data'])) {
+                    dispatchAddActionWatcher({
+                        actions: [TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_SORT, TABLE_FILTER],
+                        callback: footprintTableWatcher,
+                        params: {plotId, drawLayerId, footprintTableId}
+                    });
+                    resolve(tableModel);
+                    if (canself) {
+                        canself();
+                    }
                 }
             };
 
-            dispatchAddActionWatcher({
-                actions: [TABLE_LOADED],
-                callback: loadFootprintTableWatcher,
-                params: {plotId, drawLayerId, footprintTableId}
-            });
             dispatchTableSearch(tblReq);
+            dispatchAddActionWatcher({
+                actions: [TABLE_LOADED, TABLE_UPDATE],
+                callback: loadFootprintTableWatcher,
+                removable: true
+            });
         };
 
         if (tbl) {
             dispatchTableRemove(footprintTableId);
         }
         loadTable();
-
 
     });
 }
