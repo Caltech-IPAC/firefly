@@ -191,7 +191,7 @@ public class ConcurrentSearchUtil {
                 }
                 //add the data from the searching result
                 for (int k=0; k<rowDataObject.size(); k++) {
-                    dataObject.setDataElement(joinedDataTypes[k+index], rowDataObject.getDataElement(joinedDataTypes[k]) );
+                    dataObject.setDataElement(joinedDataTypes[k+index], rowDataObject.getDataElement(joinedDataTypes[k+index]) );
                 }
                 joinedResult.add(dataObject);
 

@@ -12,6 +12,7 @@ import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
+import {TestTapSearchPanel} from '../ui/TestTapSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
 import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
@@ -27,6 +28,7 @@ export const dropDownMap = {
     Search: <SearchPanel />,
     TestSearch: <TestSearchPanel />,
     TestSearches: <TestQueriesPanel />,
+    TestTAPSearch: <TestTapSearchPanel />,
     ImageSearchPanelV2: <ImageSearchDropDown/>,
     ImageSelectDropDownCmd: <ImageSearchDropDown/>,
     ImageSelectDropDownSlateCmd: <ImageSearchDropDown gridSupport={true}/>,
@@ -136,7 +138,8 @@ function VersionInfo({versionInfo={}}) {
     const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = versionInfo;
     const showFullInfo = () => showInfoPopup(versionInfoFull(versionInfo), 'Version Information');
 
-    let version = `v${BuildMajor}.${BuildMinor}.${BuildRev}`;
+    let version = `v${BuildMajor}.${BuildMinor}`;
+    version += BuildRev !== '0' ? `.${BuildRev}` : '';
     version += BuildType === 'Final' ? '' : `_${BuildType}`;
     const builtOn = ` Built On: ${BuildDate}`;
     return (
@@ -146,11 +149,13 @@ function VersionInfo({versionInfo={}}) {
 }
 
 function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildCommitFirefly}) {
+    let version = `v${BuildMajor}.${BuildMinor}`;
+    version += BuildRev !== '0' ? `.${BuildRev}` : '';
     return (
         <div className='DD-Version'>
             <div className='DD-Version__item'>
                 <div className='DD-Version__key'>Version</div>
-                <div className='DD-Version__value'>{`${BuildMajor}.${BuildMinor}.${BuildRev}`}</div>
+                <div className='DD-Version__value'>{version}</div>
             </div>
             <div className='DD-Version__item'>
                 <div className='DD-Version__key'>Type</div>

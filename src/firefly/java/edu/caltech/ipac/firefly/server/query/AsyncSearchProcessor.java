@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  * @version $Id: SearchProcessor.java,v 1.3 2012/06/21 18:23:53 loi Exp $
  */
 public abstract class AsyncSearchProcessor extends EmbeddedDbProcessor  {
-    abstract AsyncJob submitRequest(ServerRequest request);
+    abstract AsyncJob submitRequest(ServerRequest request) throws DataAccessException;
 
 //====================================================================
 //  default implementations
@@ -37,7 +37,6 @@ public abstract class AsyncSearchProcessor extends EmbeddedDbProcessor  {
                     case ABORTED:
                         throw new DataAccessException("Query aborted");
                     case PENDING:
-                    case RUN:
                     case EXECUTING:
                     case QUEUED:
                     default:

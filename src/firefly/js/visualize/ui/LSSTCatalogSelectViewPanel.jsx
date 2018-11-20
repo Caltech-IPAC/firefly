@@ -455,7 +455,7 @@ class LSSTCatalogSelectView extends PureComponent {
             <FieldGroup groupKey={gkey}
                         reducerFunc={userChangeLsstDispatch(tblId, master)}
                         keepState={true}>
-                <FieldGroupTabs initialState={{ value:'catalog' }} fieldKey='Tabs' resizable={true}>
+                <FieldGroupTabs initialState={{ value:'catalogLsst' }} fieldKey='Tabs' resizable={true}>
                     <Tab name='Search' id='catalogLsst'>
                         <div style={tabWrapper}>
                             <LsstCatalogDDList {...this.props}/>

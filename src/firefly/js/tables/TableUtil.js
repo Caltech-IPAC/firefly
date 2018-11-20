@@ -431,9 +431,10 @@ export function getSelectedData(tbl_id, columnNames=[]) {
  * @memberof ffirefly.util.table
  * @func isTableLoaded
  */
-export function isTableLoaded(tableModel) {
-    const status = tableModel && !tableModel.isFetching && get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
-    return status === 'COMPLETED';
+export function isTableLoaded(tableModel={}) {
+    const {isFetching} = tableModel;
+    const status = get(tableModel, 'tableMeta.Loading-Status');
+    return !isFetching && status === 'COMPLETED';
 }
 
 /**

@@ -33,7 +33,8 @@ const RegionPropertyName = {
     [regionPropsList.LNWIDTH]: 'width',
     [regionPropsList.OFFX]: 'offsetx',
     [regionPropsList.OFFY]: 'offsety',
-    [regionPropsList.TEXTLOC]:'textloc'
+    [regionPropsList.TEXTLOC]:'textloc',
+    [regionPropsList.TEXTANGLE]: 'textangle'
 };
 
 const DS9RegionName = {
@@ -233,6 +234,7 @@ export function setRegionPropertyDes(prop, value) {
         case regionPropsList.LNWIDTH:
         case regionPropsList.OFFX:
         case regionPropsList.OFFY:
+        case regionPropsList.TEXTANGLE:
             if (value !== v) {
                 des = `${pname}${value}`;
             }

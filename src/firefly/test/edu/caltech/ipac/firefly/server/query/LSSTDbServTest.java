@@ -81,7 +81,7 @@ public class LSSTDbServTest extends ConfigTest {
 
 	private static boolean getJsonData(String query) {
 		try {
-			String sql = "query=" + URLEncoder.encode(query, "UTF-8");
+			String sql = "QUERY=" + URLEncoder.encode(query, "UTF-8");
 
 			String url = LSSTQuery.DBSERVURL;
 			File file = File.createTempFile("lssttest", "json");
@@ -132,11 +132,13 @@ public class LSSTDbServTest extends ConfigTest {
 	 */
 	public static boolean daxAvailable() {
 		try {
-			URL urlServer = new URL("http://"+ LSSTQuery.HOST +":"+LSSTQuery.PORT+"/api");
+			URL urlServer = new URL(LSSTQuery.HOST);
 			HttpURLConnection urlConn = (HttpURLConnection) urlServer.openConnection();
 			urlConn.setConnectTimeout(3000); // 3 seconds timeout
 			urlConn.connect();
-			return urlConn.getResponseCode() == 200;
+			// the client was able to communicate with the server
+			// but the server could not find what is reque
+			return urlConn.getResponseCode() == 404 || urlConn.getResponseCode() == 200;
 		} catch (IOException e) {
             LOG.info("DAX is not available "+e.getMessage());
 			return false;

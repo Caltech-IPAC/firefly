@@ -23,9 +23,6 @@ jar {
 }
 
 ext.appConfig = {
-  BuildMajor  = "1"
-  BuildMinor  = "0"
-  BuildRev    = "0"
 
   FireflyTools.Advertise = ""
   ehcache.multicast.port = "7011"

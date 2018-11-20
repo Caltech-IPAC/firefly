@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.query.lsst;
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -15,7 +14,8 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -36,40 +36,41 @@ import java.util.Map;
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    public static final String PORT = AppProperties.getProperty("lsst.dax.port","5001");
-    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","https://lsst-pdac.ncsa.illinois.edu");
 
-    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL","http://lsst-qserv-dax01:8080/api/db/v1/tap/sync/");
-    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL","http://"+ HOST +":"+PORT+"/api/meta/v1/db/");
+    // LSST DAX services are listed in https://confluence.lsstcorp.org/display/DM/DAX+service+URLs
+    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL",HOST+"/api/db/v1/tap/sync/");
+    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL",HOST+"/api/meta/v1/db/");
+
+
 
     //set default timeout to 180 seconds
     private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 180);
 
     abstract String buildSqlQueryString(TableServerRequest request) throws Exception;
 
-    @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
             DataGroup dg = getDataFromURL(request); //
             //should not happen - metadata should always be returned even if there are no data
             if (dg == null) {
                 throw new DataAccessException("No data.");
             }
-            File outFile = createFile(request, ".tbl");
-            IpacTableWriter.save(outFile, dg);
-            _log.info("table loaded");
-            return outFile;
-        } catch (IOException | DataAccessException ee) {
+            return dg;
+        } catch (DataAccessException ee) {
             throw ee;
         } catch (Exception e) {
             throw new DataAccessException(e.getMessage(), e);
         }
     }
 
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+        return loadDataFileImpl(request);
+    }
+
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-        String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
+        String sql = "QUERY=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
         _log.briefDebug("Executing SQL query: " + sql);
         File file = createFile(request, ".json");
         Map<String, String> requestHeader=new HashMap<>();

@@ -8,6 +8,13 @@
 <body>
 
 <h3>Browse TAP_SCHEMA tables</h3>
+<pre>
+IRSA https://irsa.ipac.caltech.edu/TAP
+GAIA http://gea.esac.esa.int/tap-server/tap
+CASDA http://atoavo.atnf.csiro.au/tap
+MAST http://vao.stsci.edu/CAOMTAP/TapService.aspx
+LSST TEST http://tap.lsst.rocks/tap
+</pre>
 <div>
     <form name="a">
         <div style="padding-right: 5px">
@@ -19,9 +26,9 @@
     <button style="padding-left: 20px; width: 120px" onclick="showSchemasTable()">Browse</button>
 </div>
 
-<div id="schemas-display" style="padding: 5px; width: 1200px; height: 300px;"></div>
-<div id="schematables-display" style="padding: 5px; width: 1200px; height: 300px;"></div>
-<div id="tablecols-display" style="padding: 5px; width: 1200px; height: 300px;"></div>
+<div id="schemas-display" style="padding: 5px; width: 1200px; height: 250px;"></div>
+<div id="schematables-display" style="padding: 5px; width: 1200px; height: 250px;"></div>
+<div id="tablecols-display" style="padding: 5px; width: 1200px; height: 250px;"></div>
 <div id="fireflyLostConnWarn" data-decor="small" class="warning-div" style="margin-left: 75px; background-color: white"></div>
 
 <script type="text/javascript">

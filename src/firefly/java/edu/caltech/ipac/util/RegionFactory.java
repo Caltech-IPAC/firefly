@@ -138,13 +138,21 @@ public class RegionFactory {
             boolean include= true;
 
 
+
             try
             {
                 if (st.hasMoreToken()) {
                     lineBegin = st.nextToken();
                     if (lineBegin.startsWith("global")) {
-                        globalOps= parseRegionOption(st.getRestOfString(),globalOps,true);
-                        retList.add(new Global(globalOps));
+                        RegOpsParseRet globalSetting = parseRegionGlobal(st.getRestOfString(), globalOps, true);
+                        if (globalSetting.coordsys != null) {
+                            coordSys = getCoordSys(globalSetting.coordsys);
+                            if (allowHeader) {
+                                retList.add(coordSys);
+                            }
+                        } else {
+                            retList.add(new Global(globalSetting.ops));
+                        }
                         continue;
                     }
                     if (isCoordSys(lineBegin)) {
@@ -597,8 +605,13 @@ public class RegionFactory {
         return new RegionValue(pV.getValue(),unit);
     }
 
+    private static RegOpsParseRet parseRegionGlobal(String s, RegionOptions fallback, boolean include) {
+        return parseRegionOptionPlus(s,fallback,include);
+    }
+
     private static RegionOptions parseRegionOption(String s, RegionOptions fallback, boolean include) {
         RegOpsParseRet ret= parseRegionOptionPlus(s,fallback,include);
+
         return ret.ops;
     }
 
@@ -616,6 +629,14 @@ public class RegionFactory {
         while (st.hasMoreToken())
         {
             String token = st.nextToken();
+            if (token.toLowerCase().startsWith("coordsys")) {
+                if (st.hasMoreToken()) {
+                    retval.coordsys = st.nextToken();
+                } else {
+                    retval.coordsys = "";
+                }
+                break;
+            }
             if (token.toLowerCase().startsWith("color=")) {
                 retval.ops.setColor(parseColor(token));
             }
@@ -1105,6 +1126,7 @@ public class RegionFactory {
     private static class RegOpsParseRet {
         RegionPoint.PointType pointType= RegionPoint.PointType.X;
         RegionOptions ops= null;
+        String coordsys = null;
         int ptSize = -1;
     }
 

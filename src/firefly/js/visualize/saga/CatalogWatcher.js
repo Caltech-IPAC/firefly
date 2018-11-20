@@ -100,10 +100,10 @@ function recenterImage(tbl) {
         return;
     }
 
-
     const cc = CsysConverter.make(plot);
     const {UserTargetWorldPt, polygon} = tbl.request || {};
     const centerPt =  cc.getWorldCoords(findCurrentCenterPoint(pv));
+
     let   newCenter;
 
     if (UserTargetWorldPt) {    // search method: cone, elliptical, bo

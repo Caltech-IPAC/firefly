@@ -45,16 +45,15 @@ export class UploadOptionsDialog extends PureComponent {
         if (this.iAmMounted) {
 
             const isLoading = isAccessWorkspace();
-            const loc = this.props.fromGroupKey && getFieldVal(this.props.fromGroupKey, this.fileLocation);
+            const loc = this.workspace && getFieldVal(this.props.fromGroupKey, this.fileLocation, LOCALFILE);
 
             this.setState((state) => {
-                state = Object.assign({}, state);
-                if (loc !== state.where) {
-                    state.where = loc;
+                if (loc && loc !== state.where) {
+                    state = Object.assign({}, state, {where: loc});
                 }
 
                 if (isLoading !== state.isLoading) {
-                    state.isLoading = isLoading;
+                    state = Object.assign({}, state, {isLoading});
                 }
                 return state;
             });

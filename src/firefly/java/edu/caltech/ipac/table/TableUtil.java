@@ -113,7 +113,8 @@ public class TableUtil {
                     //EQUINOX: xxx
                     //NAME-RESOLVER: xxx
                     return Format.FIXEDTARGETS;
-                } else if (line.startsWith("<VOTABLE")) {
+                } else if (line.startsWith("<VOTABLE") ||
+                        (line.contains("<?xml") && line.contains("<VOTABLE "))) {
                     return Format.VO_TABLE;
                 }
 

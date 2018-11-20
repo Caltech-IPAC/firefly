@@ -76,7 +76,6 @@ public class SearchManager {
         dgp = (DataGroupPart) processor.getData(request);
 
         TableMeta meta = dgp.getData().getTableMeta();
-        meta.setAttribute(IS_FULLY_LOADED, "true");
         processor.prepareTableMeta(meta,
                 Arrays.asList(dgp.getData().getDataDefinitions()),
                 request);

@@ -13,12 +13,12 @@ import edu.caltech.ipac.table.DataGroup;
  * @version $Id: $
  */
 public interface AsyncJob {
-    enum Phase {PENDING, RUN, QUEUED, EXECUTING, COMPLETED, ABORTED, ERROR}
+    enum Phase {PENDING, QUEUED, EXECUTING, COMPLETED, ABORTED, ERROR, UNKNOWN}
 
-    DataGroup getDataGroup();
+    DataGroup getDataGroup() throws DataAccessException;
     boolean cancel();
-    Phase getPhase();
-    String getErrorMsg();
+    Phase getPhase() throws DataAccessException;
+    String getErrorMsg() throws DataAccessException;
 
     /**
      * @return how long should the job run before giving up.

@@ -1,6 +1,5 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -10,7 +9,6 @@ import edu.caltech.ipac.firefly.server.util.ConcurrentSearchUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -37,16 +35,9 @@ import java.util.concurrent.TimeoutException;
 public class LSSTMultiObjectSearch extends LSSTCatalogSearch {
 
     @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
-
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
-
-            DataGroup dg =  getSearchResult(request, request.getParam("filename"));
-            File outFile = createFile(request, ".tbl");
-            IpacTableWriter.save(outFile, dg);
-            return  outFile;
-
+            return getSearchResult(request, request.getParam("filename"));
         } catch (Exception e) {
             e.printStackTrace();
             throw new DataAccessException("ERROR:" + e.getMessage(), e);
