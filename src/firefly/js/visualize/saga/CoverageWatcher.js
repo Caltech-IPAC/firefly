@@ -33,7 +33,7 @@ export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
 const COVERAGE_RADIUS = 'COVERAGE_RADIUS';
 const COVERAGE_TABLE = 'COVERAGE_TABLE';
-const COVERAGE_CREATED = 'COVERAGE_CREATED';
+export const COVERAGE_CREATED = 'COVERAGE_CREATED';
 
 export const PLOT_ID= 'CoveragePlot';
 

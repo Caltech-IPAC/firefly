@@ -11,7 +11,7 @@ import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, getTableGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {getDrawLayerById, getPlotViewById, getActivePlotView, getCenterOfProjection} from '../PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewById, getActivePlotView,   findCurrentCenterPoint} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
@@ -19,9 +19,11 @@ import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
-import {dispatchChangeCenterOfProjection} from '../ImagePlotCntlr.js';
+import {dispatchRecenter} from '../ImagePlotCntlr.js';
 import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
+import CsysConverter from '../CsysConverter.js';
+import {COVERAGE_CREATED} from './CoverageWatcher.js';
 
 /**
  * this saga does the following:
@@ -93,13 +95,15 @@ function recenterImage(tbl) {
     const pv = getActivePlotView(visRoot());
     const plot = pv && pv.plots[pv.primeIdx];
 
-    // recenter hips image
-    if (!plot || plot.plotType !== 'hips' || pv.plotGroupId === 'coverageImages') {
+    // exclude coverage image
+    if (!plot || get(plot, ['attributes', COVERAGE_CREATED], false)) {
         return;
     }
 
+
+    const cc = CsysConverter.make(plot);
     const {UserTargetWorldPt, polygon} = tbl.request || {};
-    const centerPt =  getCenterOfProjection(plot);
+    const centerPt =  cc.getWorldCoords(findCurrentCenterPoint(pv));
     let   newCenter;
 
     if (UserTargetWorldPt) {    // search method: cone, elliptical, bo
@@ -119,8 +123,9 @@ function recenterImage(tbl) {
         newCenter = centralPoint;
     }
 
-    if (newCenter && !pointEquals(centerPt, newCenter)) {
-        dispatchChangeCenterOfProjection({plotId: plot.plotId, centerProjPt: newCenter});
+    // recenter image for 'hips' and 'image' type
+    if (newCenter && (plot.plotType === 'hips' || cc.pointInPlot(newCenter)) && !pointEquals(centerPt, newCenter)) {
+        dispatchRecenter({plotId: plot.plotId, centerPt: newCenter});
     }
 }
 
