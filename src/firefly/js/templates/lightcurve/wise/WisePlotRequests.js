@@ -11,6 +11,7 @@ import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
 import {convertAngle} from '../../../visualize/VisUtil.js';
+import {getCenterColumns} from '../../../tables/TableInfoUtil.js';
 
 export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
     const ra = getCellValue(table, rowIdx, 'ra');
@@ -56,9 +57,11 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
     fluxCol: 'w1mpro_ep',
     dataSource: 'frame_id'
 }) {
-
+/*
     const {CENTER_COLUMN} = get(tableModel, ['tableMeta']);
     const ra_dec = ['ra', 'dec'];
+    const centerColumns = getCenterColumns(tableModel);
+
 
     if (CENTER_COLUMN) {
         const s = CENTER_COLUMN.split(';');
@@ -68,6 +71,9 @@ export function getWebPlotRequestViaWISEIbe(tableModel, hlrow, cutoutSize, param
             ra_dec[1] = s[1];
         }
     }
+ */
+    const centerColumns = getCenterColumns(tableModel);
+    const ra_dec = [get(centerColumns, 'lonCol', 'ra'), get(centerColumns, 'latCol', 'dec')];
 
     const ra = Number(getCellValue(tableModel, hlrow, ra_dec[0]));
     const dec = Number(getCellValue(tableModel, hlrow, ra_dec[1]));

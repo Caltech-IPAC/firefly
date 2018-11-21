@@ -252,7 +252,7 @@ class TableRecognizer {
             return this.centerColumnsInfo;
         }
 
-        const cenData= tableMeta[MetaConst.CATALOG_COORD_COLS] || tableMeta[MetaConst.CENTER_COLUMN];
+        const cenData= tableMeta[MetaConst.CENTER_COLUMN] || tableMeta[MetaConst.CATALOG_COORD_COLS];
 
         let s;
         if (cenData) s= cenData.split(';');

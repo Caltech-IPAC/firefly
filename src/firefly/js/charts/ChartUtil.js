@@ -29,6 +29,7 @@ import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericDa
 import Color from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
+import {getCenterColumns} from '../tables/TableInfoUtil.js';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -891,6 +892,7 @@ export function getDefaultChartProps(tbl_id) {
 
     if (!isFullyLoaded(tbl_id)) { return; }
 
+    const tblModel = getTblById(tbl_id);
     const {tableMeta, tableData, totalRows}= getTblById(tbl_id);
 
     if (!totalRows) {
@@ -906,15 +908,20 @@ export function getDefaultChartProps(tbl_id) {
     }
 
     // for catalogs use lon and lat columns
-    let isCatalog = Boolean(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] && tableMeta[MetaConst.CATALOG_COORD_COLS]);
+    //let isCatalog = Boolean(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] && tableMeta[MetaConst.CATALOG_COORD_COLS]);
+    const centerColumns = getCenterColumns(tblModel);
+    let isCatalog = get(tblModel, 'totalRows') && centerColumns;
     let xCol = undefined, yCol = undefined;
 
     if (isCatalog) {
+        /*
         const s = tableMeta[MetaConst.CATALOG_COORD_COLS].split(';');
         if (s.length !== 3) return;
         xCol = colWithName(tableData.columns, s[0]); // longtitude
         yCol = colWithName(tableData.columns, s[1]); // latitude
-
+        */
+        xCol = colWithName(tableData.columns, get(centerColumns, 'lonCol'));
+        yCol = colWithName(tableData.columns, get(centerColumns, 'latCol'));
         if (!xCol || !yCol) {
             isCatalog = false;
         }
@@ -970,7 +977,7 @@ export function getDefaultChartProps(tbl_id) {
                     firefly: {
                         scatterOrHeatmap: true,
                         colorscale: colorscaleName
-                    },
+                    }
                 }],
                 layout: {
                     xaxis: {
