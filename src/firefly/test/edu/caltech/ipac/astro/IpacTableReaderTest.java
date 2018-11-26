@@ -194,10 +194,10 @@ public class IpacTableReaderTest extends ConfigTest{
         DataGroup dataGroup = IpacTableReader.read(new ByteArrayInputStream(input.getBytes()),onlyColumns);
 
 
-        List<DataGroup.Attribute> comments = dataGroup.getKeywords();
+        List<DataGroup.Attribute> comments = dataGroup.getTableMeta().getKeywords();
         Assert.assertEquals("There should be 0 comments", 0, comments.size());
-        Map<String, DataGroup.Attribute> keywordsMap = dataGroup.getAttributes();
-        Assert.assertEquals("There should be 0 keywords", 0, keywordsMap.size());
+        List<DataGroup.Attribute> keywords = dataGroup.getTableMeta().getKeywords();
+        Assert.assertEquals("There should be 0 keywords", 0, keywords.size());
 
         Assert.assertEquals("ra for row 1", 165.466279, (Double) dataGroup.get(0).getDataElement("ra"), 0.000001);
 
@@ -228,7 +228,7 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         //Check the Attributes (comments):
-        List<DataGroup.Attribute> attributes = dataGroup.getKeywords();
+        List<DataGroup.Attribute> attributes = dataGroup.getTableMeta().getKeywords();
         Assert.assertTrue(attributes.get(0).isComment());
         Assert.assertEquals("The first attribute has a space so it is parsed as a comment.",
                 attributes.get(0).toString(), "\\ catalog1 = 'A space makes this line as a comment'");
@@ -498,7 +498,7 @@ public class IpacTableReaderTest extends ConfigTest{
         }
 
         //Check the Attributes (comments):
-        List<DataGroup.Attribute> attributes = dataGroup.getKeywords();
+        List<DataGroup.Attribute> attributes = dataGroup.getTableMeta().getKeywords();
         if (attributes.size() == 0){
             //System.out.println("No attributes detected.");
             //Assert.assertTrue("No attributes", noAttributes);
@@ -516,17 +516,12 @@ public class IpacTableReaderTest extends ConfigTest{
         }
 
         //Check the attributes (key, value):
-        Map<String, DataGroup.Attribute> attributeMap = dataGroup.getAttributes();
-        //attributeMap.size();
-        int j = 0;
-        String value;
-        for (Map.Entry entry : attributeMap.entrySet()) {
+        List<DataGroup.Attribute> keywords = dataGroup.getTableMeta().getAttributeList();
+        for (int j = 0; j < keywords.size() -1; j++) {
             //Not check the input file source:
-            if (j < (attributeMap.size() - 1)) {
-                Assert.assertEquals("check the key", entry.getKey(), attributeKeys[j]);
-                value = ((DataGroup.Attribute) entry.getValue()).getValue().toString();
-                //System.out.println(value + " " + attributeValues[j] + " " + j);
-                Assert.assertEquals("check the value", value, attributeValues[j]);
+            if (j < (keywords.size() - 1)) {
+                Assert.assertEquals("check the key", keywords.get(j).getKey(), attributeKeys[j]);
+                Assert.assertEquals("check the value", keywords.get(j).getValue(), attributeValues[j]);
             }
             j++;
         }

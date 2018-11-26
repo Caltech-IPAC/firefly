@@ -359,13 +359,12 @@ Thread.sleep(1000);
 
 
     protected DataGroup getOrbitalElements(DataGroup inData) {
-        final String [] names = {"object_name", "element_epoch", "eccentricity", "inclination",
-                "argument_perihelion", "ascending_node", "semimajor_axis", "semimajor_axis", "mean_anomaly",
-                "perihelion_distance", "perihelion_time"};
-        final List<String> namesLst = Arrays.asList(names);
+        final List<String> namesLst = Arrays.asList("object_name", "element_epoch", "eccentricity", "inclination",
+                                                    "argument_perihelion", "ascending_node", "semimajor_axis", "semimajor_axis", "mean_anomaly",
+                                                    "perihelion_distance", "perihelion_time");
         try {
             inData.setTitle("Result Table");
-            Map<String, DataGroup.Attribute> attrMap = inData.getAttributes();
+            Map<String, DataGroup.Attribute> attrMap = inData.getTableMeta().getAttributes();
 
             List<DataType> newDT = new ArrayList<DataType>();
             for (String s : attrMap.keySet()) {

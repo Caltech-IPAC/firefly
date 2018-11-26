@@ -58,11 +58,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", links    other" +
             ")";
 
-    private static final String META_INSERT_SQL = "insert into %s_meta values (?,?)";
+    private static final String META_INSERT_SQL = "insert into %s_meta values (?,?,?)";
     private static final String META_CREATE_SQL = "create table %s_meta "+
             "(" +
             "  key      varchar(1024)" +
             ", value    varchar(64000)" +
+            ", isKeyword boolean" +
             ")";
 
     private static final String AUX_DATA_INSERT_SQL = "insert into %s_aux values (?,?,?,?,?)";

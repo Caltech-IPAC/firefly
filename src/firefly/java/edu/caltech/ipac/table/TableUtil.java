@@ -180,7 +180,7 @@ public class TableUtil {
             reader.close();
         }
 
-        dg.setKeywords(tableDef.getKeywords());
+        dg.getTableMeta().setKeywords(tableDef.getKeywords());
 
         long totalRow = tableDef.getLineWidth() == 0 ? 0 :
                         (inf.length()+1 - tableDef.getRowStartOffset())/tableDef.getLineWidth();

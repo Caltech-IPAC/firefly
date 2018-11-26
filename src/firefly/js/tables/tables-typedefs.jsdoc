@@ -20,6 +20,7 @@
  * @prop {string}   tbl_id    unique ID of this table.
  * @prop {string}   title     title, used on label.
  * @prop {TableRequest} request  the request used to create this table
+ * @prop {TableKeywords} allMeta  a list of all meta info for this table, including comments and duplicates
  * @prop {TableMeta} tableMeta   table's meta information stored as key/value pair.
  * @prop {TableData} tableData  table's meta information stored as key/value pair.
  * @prop {number}   totalRows   total number of rows.
@@ -117,6 +118,17 @@
  */
 
 /**
+ * The full list of meta info for this table.  It includes the original meta from source, comments, duplicates, and additional meta inserted
+ * @typedef {object} TableKeywords
+ * @prop {string} key  meta key
+ * @prop {string} value meta value
+ * @prop {boolean} isKeyword  true if this entry is from the original source.
+ *
+ * @global
+ * @public
+ */
+
+/**
  * Table meta information.  Below is only a small set of predefined meta used by table.
  * The meta information in this object are used by many components for many reasons.  ie catalog overlay.
  * @typedef {object} TableMeta
@@ -141,7 +153,7 @@
  * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
  * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
  * @prop {string} use       one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
- * @prop {string} tbl_id    a unique id of a table. auto-create if not given.
+ * @prop {string} tbl_id    unique id of the table. auto-create if not given.
  *
  * @global
  * @public

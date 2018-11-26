@@ -686,8 +686,7 @@ public class VoTableReader {
                                                        : getInfosFromTable(tableEl, table);
         for (Object p : dvAry) {
             DescribedValue dv = (DescribedValue)p;
-            //dg.addAttribute(dv.getInfo().getName(), dv.getValueAsString(50).replace("\n", " "));  // take the original string?
-            dg.addAttribute(dv.getInfo().getName(), dv.getValueAsString(Integer.MAX_VALUE).replace("\n", " "));
+            dg.getTableMeta().addKeyword(dv.getInfo().getName(), dv.getValueAsString(Integer.MAX_VALUE).replace("\n", " "));
         }
 
 
@@ -698,10 +697,10 @@ public class VoTableReader {
 
         if (tableEl != null) {
             // attribute ID, ref, ucd, utype from TABLE
-            dg.addAttribute(TableMeta.ID,  getElementAttribute(tableEl, ID));
-            dg.addAttribute(TableMeta.REF, getElementAttribute(tableEl, REF));
-            dg.addAttribute(TableMeta.UCD, getElementAttribute(tableEl, UCD));
-            dg.addAttribute(TableMeta.UTYPE, getElementAttribute(tableEl, UTYPE));
+            applyIfNotEmpty(getElementAttribute(tableEl, ID), v -> dg.getTableMeta().addKeyword(TableMeta.ID, v));
+            applyIfNotEmpty(getElementAttribute(tableEl, REF), v -> dg.getTableMeta().addKeyword(TableMeta.REF, v));
+            applyIfNotEmpty(getElementAttribute(tableEl, UCD), v -> dg.getTableMeta().addKeyword(TableMeta.UCD, v));
+            applyIfNotEmpty(getElementAttribute(tableEl, UTYPE), v -> dg.getTableMeta().addKeyword(TableMeta.UTYPE, v));
 
             // child element PARAM, GROUP, LINK for TABLE
             dg.setParamInfos(makeParamsFromTable(tableEl, table));

@@ -135,7 +135,7 @@ public class DataGroupQuery {
             boolean needToWriteHeader = true;
             while (line != null) {
                 if (line.startsWith("\\")) {
-                    DataGroup.Attribute attrib = IpacTableUtil.parseAttribute(line);
+                    DataGroup.Attribute attrib = DataGroup.Attribute.parse(line);
                     if (CollectionUtil.matches(lineNum, attrib, getHeaderFilters())) {
                         writer.println(line);
                     }
@@ -219,11 +219,11 @@ public class DataGroupQuery {
 
         // querying for headers
         ArrayList<DataGroup.Attribute> headerResults = new ArrayList<DataGroup.Attribute>();
-        CollectionUtil.filter(src.getAttributes().values(), headerResults, getHeaderFilters());
+        CollectionUtil.filter(src.getAttributeList(), headerResults, getHeaderFilters());
 
         for (Iterator itr = headerResults.iterator(); itr.hasNext(); ) {
             DataGroup.Attribute attrib = (DataGroup.Attribute) itr.next();
-            newDG.addAttribute(attrib.getKey(), attrib.getValue());
+            newDG.getTableMeta().addKeyword(attrib.getKey(), attrib.getValue());
         }
 
         // querying for data
@@ -455,7 +455,7 @@ public class DataGroupQuery {
 
         // merging keywords
         if (includeAttributes) {
-            dgOne.mergeAttributes(dgTwo.getKeywords());
+            dgOne.mergeAttributes(dgTwo.getTableMeta().getKeywords());
         }
 
         // start joining

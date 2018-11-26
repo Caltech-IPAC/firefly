@@ -28,7 +28,7 @@ public class IpacTableUtil {
 
 
     public static List<DataGroup.Attribute> makeAttributes(DataGroup dataGroup) {
-        return makeAttributes(dataGroup.getKeywords(), dataGroup.getDataDefinitions());
+        return makeAttributes(dataGroup.getAttributeList(), dataGroup.getDataDefinitions());
     }
     /**
      * Returns the table's attributes in original sorted order, plus additional
@@ -410,10 +410,6 @@ public class IpacTableUtil {
         return null;
     }
 
-    public static DataGroup.Attribute parseAttribute(String line) {
-        return DataGroup.Attribute.parse(line);
-    }
-
     public static Map<String, String> asMap(DataObject row) {
         HashMap<String, String> retval = new HashMap<String, String>();
         if (row != null) {
@@ -459,7 +455,7 @@ public class IpacTableUtil {
                 dataStartOffset += line.length() + nlchar;
                 line = reader.readLine();
             } else if (line.startsWith("\\")) {
-                DataGroup.Attribute attrib = parseAttribute(line);
+                DataGroup.Attribute attrib = DataGroup.Attribute.parse(line);
                 if (attrib != null) {
                     attribs.add(attrib);
                 }

@@ -94,15 +94,6 @@ public class IpacTableDef extends TableMeta {
         setAttribute("source", sourceFile);
     }
 
-    public void getMetaFrom(TableMeta meta) {
-        if (meta == null) return;
-        for (String key : meta.getAttributes().keySet()) {
-            if (!key.equals("source")) {
-                meta.setAttribute(key, meta.getAttribute(key));
-            }
-        }
-    }
-
     public IpacTableDef clone() {
         IpacTableDef copy = (IpacTableDef) super.clone();
         copy.cols = new ArrayList<>(cols);
@@ -111,14 +102,6 @@ public class IpacTableDef extends TableMeta {
         copy.rowCount = rowCount;
         copy.rowStartOffset = rowStartOffset;
         return copy;
-    }
-
-    public static IpacTableDef newInstanceOf(DataGroup dataGroup) {
-        IpacTableDef tableDef = new IpacTableDef();
-        tableDef.setKeywords(dataGroup.getTableMeta().getKeywords());
-        tableDef.ensureStatus();
-        tableDef.setCols(Arrays.asList(dataGroup.getDataDefinitions()));
-        return tableDef;
     }
 }
 /*

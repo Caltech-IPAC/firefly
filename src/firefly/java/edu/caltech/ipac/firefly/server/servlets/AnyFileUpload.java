@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -301,14 +302,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         tableModel.put("size", size);
 
         JSONObject tableMeta = new JSONObject();
-        Iterator<Entry<String, DataGroup.Attribute>> attributes = dg.getAttributes().entrySet().iterator();
-
-        while( attributes.hasNext() ) {
-            Map.Entry<String, DataGroup.Attribute> entry = attributes.next();
-            DataGroup.Attribute att = entry.getValue();
-
-            tableMeta.put(att.getKey(), att.getValue());
-        }
+        dg.getAttributeList().forEach(att -> tableMeta.put(att.getKey(), att.getValue()));
 
         tableModel.put("tableMeta", tableMeta);
         return tableModel;
