@@ -484,16 +484,17 @@ public class EmbeddedDbUtil {
             case SMALLINT:
             case INTEGER:
                 return Integer.class;
-            case FLOAT:
-                return Float.class;
             case BIGINT:
                 return Long.class;
+            case FLOAT:
+                return Float.class;
             case REAL:
             case DOUBLE:
             case NUMERIC:
             case DECIMAL:
                 return Double.class;
             case BIT:
+            case BOOLEAN:
                 return Boolean.class;
             case DATE:
             case TIME:

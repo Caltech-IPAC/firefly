@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.xpath.operations.Bool;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -190,9 +191,11 @@ abstract public class BaseDbAdapter implements DbAdapter {
         } else if (Long.class.isAssignableFrom(type)) {
             return "bigint";
         } else if (Float.class.isAssignableFrom(type)) {
-            return "real";
+            return "float";
         } else if (Double.class.isAssignableFrom(type)) {
             return "double";
+        } else if (Boolean.class.isAssignableFrom(type)) {
+            return "boolean";
         } else if (Date.class.isAssignableFrom(type)) {
             return "date";
         } else {
