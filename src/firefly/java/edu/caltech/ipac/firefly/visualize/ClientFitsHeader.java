@@ -24,6 +24,7 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     private final static String SPLIT_TOKEN= "--ClientFitHead--";
 
     private static final String PLANE_NUMBER= "planeNumber";
+    private static final String HDU_NUMBER= "hduNumber";
     private static final String BITPIX= "bitpix";
     private static final String NAXIS= "naxis";
     private static final String NAXIS1= "naxis1";
@@ -46,6 +47,7 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     public ClientFitsHeader(Map<String, String> headers) { _headers= headers;}
 
     public ClientFitsHeader(int planeNumber,
+                            int hduNumber,
                             int bitpix,
                             int naxis,
                             int naxis1,
@@ -57,11 +59,14 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
                             double blankValue,
                             long dataOffset) {
         _headers.put(PLANE_NUMBER,planeNumber+"");
+        _headers.put(HDU_NUMBER,hduNumber+"");
+
         _headers.put(BITPIX,      bitpix+"");
         _headers.put(NAXIS,       naxis+"");
         _headers.put(NAXIS1,      naxis1+"");
         _headers.put(NAXIS2,      naxis2+"");
-        _headers.put(NAXIS3,      naxis3+"");
+        //LZ TODO to be tested
+        if (naxis3!=1) _headers.put(NAXIS3,      naxis3+"");
         _headers.put(CDELT2,      cdelt2+"");
         _headers.put(BSCALE,      bscale+"");
         _headers.put(BZERO,       bzero+"");
@@ -80,6 +85,8 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     }
 
     public int getPlaneNumber() { return getIntHeader(PLANE_NUMBER); }
+    public int getHduNumber() { return getIntHeader(HDU_NUMBER); }
+
     public int getBixpix() { return getIntHeader(BITPIX); }
     public int getNaxis() { return getIntHeader(NAXIS); }
     public int getNaxis1() { return getIntHeader(NAXIS1); }

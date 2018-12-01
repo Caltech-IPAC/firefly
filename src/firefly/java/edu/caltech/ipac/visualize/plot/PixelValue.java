@@ -8,13 +8,14 @@ import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class PixelValue {
 
-    public static void main(String[] args) 
+    public static void main(String[] args)
     {
 
 	if (args.length != 3)
@@ -30,6 +31,7 @@ public class PixelValue {
 	int naxis1;
 	int naxis2;
 	int naxis3;
+	int hduNumber;
 	double cdelt2;
 	long HDU_offset;
 	long header_size;
@@ -97,6 +99,7 @@ public class PixelValue {
 	    bscale = header.getDoubleValue("BSCALE",1);
 	    bzero = header.getDoubleValue("BZERO",0);
 	    cdelt2 = header.getDoubleValue("CDELT2",0);
+		hduNumber =  header.getIntValue("SPOT_EXT",0);
 	    blank_value = header.getDoubleValue("BLANK", Double.NaN);
 	    System.out.println("naxis3 = " + naxis3);
 	    RandomAccessFile fits_file = null;
@@ -132,12 +135,12 @@ public class PixelValue {
 	    System.out.println("Fetching value for x = " + x + "  y = " + y);
 	    try
 	    {
-        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,naxis,naxis1,naxis2,naxis3,
+          ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,hduNumber,bitpix,naxis,naxis1,naxis2,naxis3,
                                                  cdelt2,bscale,bzero,blank_value,data_offset);
-		pixel_data = PixelValue.pixelVal(fits_file, x, y, miniHeader);
-		fits_file.close();
+		  pixel_data = PixelValue.pixelVal(new File(args[0]), x, y, miniHeader);
+		  fits_file.close();
 	    } 
-	    catch (IOException e) 
+	    catch (IOException | FitsException e)
 	    {
 		System.out.println("Caught exception e: "+e);
 		e.printStackTrace();
@@ -160,15 +163,24 @@ public class PixelValue {
 
     }
 
-    static public double pixelVal(RandomAccessFile fits_file, int x, int y,
+    private static int getBitPixel(File file, int hduNumber) throws FitsException {
+    	Fits fits = new Fits(file.getAbsolutePath());
+		BasicHDU[] HDUs = fits.read();
+		BasicHDU currentHDU = HDUs[hduNumber];
+		return currentHDU.getBitPix();
+
+	}
+    //static public double pixelVal(RandomAccessFile fits_file, int x, int y,
+	static public double pixelVal(File file, int x, int y,
                                   ClientFitsHeader header)
-            throws IOException, PixelValueException
-    {
+			throws IOException, PixelValueException, FitsException {
 	int plane_offset;
 
-
+	RandomAccessFile	fits_file = new RandomAccessFile(file, "r");
     int plane_number   = header.getPlaneNumber();
-    int bitpix         = header.getBixpix();
+
+    //int bitpix         = header.getBixpix();
+	int bitpix = 	getBitPixel(file, header.getHduNumber());
     int naxis          = header.getNaxis();
     int naxis1         = header.getNaxis1();
     int naxis2         = header.getNaxis2();
@@ -180,26 +192,31 @@ public class PixelValue {
     long data_offset   = header.getDataOffset();
 
 
-	if ((naxis == 2) || (naxis3 == 1))
+	/*if ((naxis == 2) || (naxis3 == 1))
 	{
 	    plane_offset = 0;
 	}
 	else
 	{
-	    plane_offset = plane_number - 1;
-	}
+	    plane_offset = plane_number;
+	}*/
 
 	if (cdelt2 < 0)
 	{
 	    y = naxis2 -1 -y;
 	}
 
-	long pixel_offset = (naxis1 * naxis2 * plane_offset) + (y * naxis1 + x);
+	long pixel_offset = (naxis1 * naxis2 * plane_number) + (y * naxis1 + x);
+
+
+
 	double retval;
 	int bytes_per_pixel;
 	long file_pointer;
 	double file_value= Double.NaN;
 
+
+//========================
 	switch(bitpix)
 	{
 	    case 8:

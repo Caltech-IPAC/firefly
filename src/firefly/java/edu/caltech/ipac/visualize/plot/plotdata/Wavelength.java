@@ -42,6 +42,7 @@ public class Wavelength {
     }
 
     /**
+     * Implemented by L.Z based on the paper https://www.aanda.org/articles/aa/pdf/2006/05/aa3818-05.pdf
      * This method will calculate wavelength at any given image point.  The calculation is based on
      * the paper "Representations of spectral coordinates in FITS", by E. W. Greisen1,M.R.Calabretta2, F.G.Valdes3,
      * and S. L. Allen.

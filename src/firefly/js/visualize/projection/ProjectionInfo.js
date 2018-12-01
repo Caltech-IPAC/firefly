@@ -82,7 +82,24 @@ const startsWithAny= (s,strAry) => Boolean(strAry.find( (sTest) => s.startsWith(
 function getBasicHeaderValues(parse) {
 
     const naxis= parse.getIntValue('NAXIS');
-    return {
+
+    //LZ TODO to be checked  11/30/18
+    var header = {
+        naxis,
+        naxis1: parse.getIntValue('NAXIS1'),
+        naxis2: parse.getIntValue('NAXIS2'),
+        cdelt2: parse.getDoubleValue('CDELT2', 0),
+        bscale: parse.getDoubleValue('BSCALE', 1.0),
+        bzero: parse.getDoubleValue('BZERO', 0.0),
+        blank_value: parse.getDoubleValue('BLANK', NaN),
+        bitpix: parse.getIntValue('BITPIX'),
+    };
+
+    if (naxis > 2) {
+       header['naxis3'] = parse.getIntValue('NAXIS3');
+    }
+    return header;
+    /*return {
         naxis,
         naxis1: parse.getIntValue('NAXIS1'),
         naxis2: parse.getIntValue('NAXIS2'),
@@ -92,7 +109,7 @@ function getBasicHeaderValues(parse) {
         bzero: parse.getDoubleValue('BZERO', 0.0),
         blank_value: parse.getDoubleValue('BLANK', NaN),
         bitpix: parse.getIntValue('BITPIX'),
-    };
+    };*/
 }
 
 
@@ -433,9 +450,11 @@ function getJsys(params) {
 export function makeDirectFileAccessData(header) {
 
     const parse= makeHeaderParse(header);
-    const dataOffset = parse.getIntValue('SPOT_OFF',0)+ parse.getIntValue('SPOT_HS',0);
-    const planeNumber= parse.getIntValue('SPOT_PL',0);
-    const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber};
+    const dataOffset  =  parse.getIntValue('SPOT_OFF',0)+ parse.getIntValue('SPOT_HS',0);
+    const planeNumber =  parse.getIntValue('SPOT_PL',0);
+    const hduNumber   =  parse.getIntValue('SPOT_EXT', 0);
+
+    const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber, hduNumber};
 
     if (parse.getValue(ORIGIN,'').startsWith(PALOMAR_ID)) {
         miniHeader[ORIGIN]= header[ORIGIN];

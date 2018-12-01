@@ -58,7 +58,9 @@ public class FitsEvaluation {
                     if (frAry[i].getPlaneNumber()==0) {
                         for (Eval e : evalList) {
                             List<RelatedData> rdList= e.evaluate(f, frAry, HDUs, i, frAry[i].getHduNumber(), req);
-                            fitsDataEval.addAllRelatedData(i,rdList);
+                           // if (rdList!=null) {
+                                fitsDataEval.addAllRelatedData(i,rdList);
+                           // }
                         }
                     }
                     else { // if cube, then duplicate related data for the other planes, todo: improve this

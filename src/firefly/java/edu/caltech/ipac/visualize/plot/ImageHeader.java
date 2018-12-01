@@ -111,8 +111,10 @@ public class ImageHeader implements Serializable
 	naxis2 = header.getIntValue("NAXIS2");
 	if (naxis > 2)
 	    naxis3 = header.getIntValue("NAXIS3");
-	else
-	    naxis3 = 1;
+	//TODO to be tested, there is no need to add the naxis3-1 if the naxis=2
+
+	//else
+	//    naxis3 = 1;
 	crpix1 = header.getDoubleValue("CRPIX1", Double.NaN);
 	crpix2 = header.getDoubleValue("CRPIX2", Double.NaN);
 	crval1 = header.getDoubleValue("CRVAL1", Double.NaN);

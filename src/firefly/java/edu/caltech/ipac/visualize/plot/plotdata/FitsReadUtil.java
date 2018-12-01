@@ -201,7 +201,9 @@ public class FitsReadUtil {
             //process image HDU or compressed image HDU as ImageHDU
             BasicHDU hdu = HDUs[j];
 
-
+            if (j==5) {
+                System.out.println("debug");
+            }
             Header header = (hdu != null) ? hdu.getHeader() : null;
             if (header == null)
                 throw new FitsException("Missing header in FITS file");
@@ -254,20 +256,23 @@ public class FitsReadUtil {
 
         BasicHDU[] hduList = new BasicHDU[naxis3];
         for (int i = 0; i < naxis3; i++) {
-            hduList[i] = makeHDU(hdu,data32[i] );
-            hdu.addValue("SPOT_PL", i + 1, "Plane of FITS cube (added by Firefly)");
             String ctype3=  header.getStringValue("CTYPE3");
             ctype3= ctype3!=null ? ctype3.toUpperCase() : "";
             if (ctype3.startsWith("WAVE")|| ctype3.startsWith("AWAV")  ){ //if third axis is wavelength, add the z coordinate to the header
                 hdu.addValue("zPixel", i, "The coordinate value in the third axis");
+                hdu.getHeader().resetOriginalSize();
             }
-
+            hdu.addValue("SPOT_PL", i , "Plane of FITS cube (added by Firefly)");
             hdu.getHeader().resetOriginalSize();
+
+            //LZ TODO to be tested move this to the last line after updating the hdu, the SPOT_PL (planNumber) is added i instead of (i+1) previously
+            hduList[i] = makeHDU(hdu,data32[i] );
+
         }
 
         return hduList;
     }
-
+   
     private static boolean isImageGood(Header aHeader) {
 
         int naxis = aHeader.getIntValue("NAXIS", -1);
@@ -275,8 +280,8 @@ public class FitsReadUtil {
         if (naxis == 0) {
             goodImage = false;
         } else {
-            for (int i = 1; i <= naxis; i++) {
-                int naxisValue = aHeader.getIntValue("NAXIS" + i, -1);
+            for (int i = 1; i <= 2; i++) {
+                int naxisValue = aHeader.getIntValue("NAXIS" + i, 0);
 
                 if (naxisValue == 0) {
                     goodImage = false;

@@ -1271,25 +1271,25 @@ public class VisServerOps {
     private static double getFluxFromFitsFile(File f,
                                               ClientFitsHeader clientFitsHeader,
                                               ImagePt ipt) throws IOException {
-        RandomAccessFile fitsFile = null;
+       // RandomAccessFile fitsFile = null;
         double val = 0.0;
 
         try {
             if (f.canRead()) {
-                fitsFile = new RandomAccessFile(f, "r");
+                //fitsFile = new RandomAccessFile(f, "r");
                 if (clientFitsHeader == null) {
                     throw new IOException("Can't read file, ClientFitsHeader is null");
                 }
-                val = PixelValue.pixelVal(fitsFile, (int) ipt.getX(), (int) ipt.getY(), clientFitsHeader);
+                val = PixelValue.pixelVal(f, (int) ipt.getX(), (int) ipt.getY(), clientFitsHeader);
             } else {
                 throw new IOException("Can't read file or it does not exist");
 
             }
-        } catch (PixelValueException e) {
+        } catch (PixelValueException | FitsException e) {
             val = Double.NaN;
-        } finally {
+        } /*finally {
             FileUtil.silentClose(fitsFile);
-        }
+        }*/
         return val;
     }
 
