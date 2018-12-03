@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, has, isEmpty} from 'lodash';
+import {get, has, isEmpty, isArray, isString} from 'lodash';
 import Enum from 'enum';
 import {getColumn, getColumnIdx} from './../tables/TableUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
@@ -10,23 +10,14 @@ import {CoordinateSys} from '../visualize/CoordSys.js';
 
 const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 
-//const pObs = 'obscore:';
-const ObsTapColName = 0;
+//const obsPrefix = 'obscore:';
+const ColNameIdx = 0;
 //const UCD = 1;
-//const Utype = 2;
+const UtypeColIdx = 2;
 const mainMeta = 'meta.main';
-const posCol = {[UCDCoord.eq.key]: {ucd: ['pos.eq.ra', 'pos.eq.dec'],
-                                    coord: CoordinateSys.EQ_J2000},
-                [UCDCoord.ecliptic.key]: {ucd: ['pos.ecliptic.lon', 'pos.ecliptic.lat'],
-                                          coord: CoordinateSys.ECL_J2000},
-                [UCDCoord.galactic.key]: {ucd: ['pos.galactic.lon', 'pos.galactic.lat']},
-                                          coord: CoordinateSys.GALACTIC};
-
-
-
 const obsCorePosColumns = ['s_ra', 's_dec'];
 
-const ObsTapMandColumns = [
+const ObsTapColumns = [
     ['dataproduct_type',  'meta.id',                    'ObsDataset.dataProductType'],
     ['calib_level',       'meta.code;obs.calib',        'ObsDataset.calibLevel'],
     ['obs_collection',    'meta.id',                    'DataID.collection'],
@@ -59,6 +50,14 @@ const ObsTapMandColumns = [
     ['instrument_name',   'meta.id;instr',              'Provenance.ObsConfig.Instrument.name']
 ];
 
+const posCol = {[UCDCoord.eq.key]: {ucd: ['pos.eq.ra', 'pos.eq.dec'],
+                                    coord: CoordinateSys.EQ_J2000},
+    [UCDCoord.ecliptic.key]: {ucd: ['pos.ecliptic.lon', 'pos.ecliptic.lat'],
+                              coord: CoordinateSys.ECL_J2000},
+    [UCDCoord.galactic.key]: {ucd: ['pos.galactic.lon', 'pos.galactic.lat'],
+                              coord: CoordinateSys.GALACTIC}};
+
+
 function getLonLatIdx(tableModel, lonCol, latCol) {
     const lonIdx =  getColumnIdx(tableModel, lonCol);
     const latIdx =  getColumnIdx(tableModel, latCol);
@@ -66,6 +65,41 @@ function getLonLatIdx(tableModel, lonCol, latCol) {
     return (lonIdx >= 0 && latIdx >= 0) ? {lonIdx, latIdx} : null;
 }
 
+function centerColumnUTypesFromObsTap() {
+    const obsTapColNames = ObsTapColumns.map((col) => col[ColNameIdx]);
+
+    const centerUTypes = obsCorePosColumns.map((posColName) => {
+            const idx = obsTapColNames.indexOf(posColName);
+
+            return (idx >= 0) ? ObsTapColumns[idx][UtypeColIdx] : null;
+    });
+
+    return centerUTypes.findIndex((oneUtype) => !oneUtype) >= 0 ? null : centerUTypes;
+}
+
+const UCDSyntax = new Enum(['primary', 'secondary', 'any'], {ignoreCase: true});
+const ucdSyntaxMap = {
+            'pos.eq.ra':  UCDSyntax.any,
+            'pos.eq.dec': UCDSyntax.any,
+            'meta.main':  UCDSyntax.secondary};
+
+
+/**
+ * check if ucd value contains the searched ucd word at the right position
+ * @param ucdValue
+ * @param ucdWord
+ * @param syntaxCode 'P': only first word, 'S': only secondary, 'Q' either first or secondary
+ */
+function isUCDWith(ucdValue, ucdWord, syntaxCode = UCDSyntax.any) {
+    const atoms = ucdValue.split(';');
+    const idx = atoms.findIndex((atom) => {
+        return atom.toLowerCase() === ucdWord.toLowerCase();
+    });
+
+    return (syntaxCode === UCDSyntax.primary && idx === 0) ||
+           (syntaxCode === UCDSyntax.secondary && idx >= 1) ||
+           (syntaxCode === UCDSyntax.any && idx >= 0);
+}
 
 class TableRecognizer {
     constructor(tableModel, posCoord='eq') {
@@ -74,16 +108,18 @@ class TableRecognizer {
         this.obsCoreInfo = {isChecked: false, isObsCoreTable: false};
         this.posCoord = posCoord;
         this.centerColumnsInfo = null;
+        this.centerColumnCandidatePairs = null;
     }
 
     isObsCoreTable() {
         if (this.obsCoreInfo.isChecked) {
             return this.obsCoreInfo.isObsCoreTable;
         }
+
         const allColNames = this.columns.map((oneCol) => oneCol.name);
 
-        const nonExistCol = ObsTapMandColumns
-                            .map((oneColumn) => (oneColumn[ObsTapColName]))
+        const nonExistCol = ObsTapColumns
+                            .map((oneColumn) => (oneColumn[ColNameIdx]))
                             .some((oneName) => {
                                 return !allColNames.includes(oneName);
                             });
@@ -94,18 +130,32 @@ class TableRecognizer {
         return this.obsCoreInfo.isObsCoreTable;
     }
 
-    getCenterColumnsInfo() {
-        return isEmpty(this.centerColumnsInfo) ? null : this.centerColumnsInfo;
-    }
+    /**
+     * find and fill center column info
+     * @param colPair [lonCol, latCol]
+     * @param csys
+     * @returns {{lonCol: *, latCol: *, lonIdx: (number|*|lonIdx), latIdx: (number|*|latIdx), csys: *}|*|null}
+     */
+    setCenterColumnsInfo(colPair, csys = CoordinateSys.EQ_J2000) {
+        this.centerColumnsInfo = null;
 
-    setCenterColumnsInfo(lonCol, latCol, lonIdx, latIdx, csys = CoordinateSys.EQ_J2000) {
-        this.centerColumnsInfo = {
-            lonCol,
-            latCol,
-            lonIdx,
-            latIdx,
-            csys
-        };
+        if (isArray(colPair) && colPair.length >= 2) {
+            const lonCol = isString(colPair[0]) ? colPair[0] : colPair[0].name;
+            const latCol = isString(colPair[1]) ? colPair[1] : colPair[1].name;
+
+            const idxs = getLonLatIdx(this.tableModel, lonCol, latCol);
+
+            if (idxs) {
+                this.centerColumnsInfo = {
+                    lonCol,
+                    latCol,
+                    lonIdx: idxs.lonIdx,
+                    latIdx: idxs.latIdx,
+                    csys
+                };
+            }
+        }
+        return this.centerColumnsInfo;
     }
 
     /**
@@ -114,12 +164,35 @@ class TableRecognizer {
      * @returns {Array}
      */
     getTblColumnsOnUCD(ucd) {
-        return this.columns.reduce((prev, oneCol) => {
-            if (oneCol.UCD && oneCol.UCD.includes(ucd)) {
-                prev.push(oneCol);
-            }
-            return prev;
-        }, []);
+        return this.columns.filter((oneCol) => {
+               return (has(oneCol, 'UCD') && isUCDWith(oneCol.UCD, ucd, get(ucdSyntaxMap, ucd)));
+            });
+    }
+
+
+    /**
+     * get columns containing the utype
+     * @param utype
+     * @returns {array}
+     */
+    getTblColumnsOnUType(utype) {
+        return this.columns.filter((prev, oneCol) => {
+                return has(oneCol, 'utype') && oneCol.utype.includes(utype);
+            });
+    }
+
+    /**
+     * get columns containing ucd word
+     * @param cols
+     * @param ucdWord
+     * @returns {array}
+     */
+    getColumnsWithUCDWord(cols, ucdWord) {
+        if (isEmpty(cols)) return [];
+
+        return cols.filter((oneCol) => {
+            return has(oneCol, 'UCD') && isUCDWith(oneCol.UCD, ucdWord, get(ucdSyntaxMap, ucdWord));
+        });
     }
 
     /**
@@ -136,104 +209,74 @@ class TableRecognizer {
         }
 
         // get 'ra' column list and 'dec' column list
-        let posPairs = centerColUCDs.reduce((prev, eqUcd) => {
+        const posPairs = centerColUCDs.reduce((prev, eqUcd) => {
             const cols = this.getTblColumnsOnUCD(eqUcd);
 
             prev.push(cols);
             return prev;
         }, []);
 
-        // no pair
-        if (posPairs[0].length === 0 || posPairs[1].length === 0) {
-            return pairs;
+
+        const metaMainPair = posPairs.map((posCols) => {
+            return this.getColumnsWithUCDWord(posCols, mainMeta);
+        });
+
+        if (metaMainPair[0].length || metaMainPair[1].length) {
+            if (metaMainPair[0].length === metaMainPair[1].length) {
+                for (let i = 0; i < metaMainPair[0].length; i++) {
+                    pairs.push([metaMainPair[0][i], metaMainPair[1][i]]);    //TODO: need rules to match the rest pair
+                }
+            }
+        } else if (posPairs[0].length === posPairs[1].length) {
+            for (let i = 0; i < posPairs[0].length; i++) {
+                pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the rest pair
+            }
         }
 
-        // only one pair
-        if (posPairs[0].length === 1 && posPairs[1].length === 1) {
-            pairs.push([posPairs[0][0], posPairs[1][0]]);
-        } else {
-            const mainColIdx = [];
+        return pairs;
+    }
 
-            // find the leftmost pair with 'main.meta'
-            for (let n = 0; n < 2; n++) {
-                mainColIdx.push(posPairs[n].findIndex((col) => {
-                    return (col.UCD && col.UCD === `${centerColUCDs[n]};${mainMeta}`);
-                }));
-            }
+    getCenterColumnPairsOnUType(columnPairs) {
+        const centerUTypes = centerColumnUTypesFromObsTap();
 
-            if (mainColIdx[0] >= 0 && mainColIdx[1] >= 0) {
-                pairs.push([posPairs[0][mainColIdx[0]], posPairs[1][mainColIdx[1]]]);
-                posPairs = [posPairs[0].splice(mainColIdx[0], 1), posPairs[1].splice(mainColIdx[1], 1)];
-            }
+        if (isEmpty(centerUTypes)) return columnPairs;
+        let pairs = [];
+
+        /* filter out the column with unequal utype value */
+        if (!isEmpty(columnPairs)) {
+            pairs = columnPairs.filter((oneColPair) => {
+                if ((!has(oneColPair[0], 'utype')) || (!has(oneColPair[1], 'utype')) ||
+                    (oneColPair[0].utype.includes(centerUTypes[0]) && oneColPair[1].utype.includes(centerUTypes[1]))) {
+                    return oneColPair;
+                }
+            });
+        } else {   // check all table columns
+            const posPairs = centerUTypes.map((posUtype) => {
+                return this.getTblColumnsOnUType(posUtype);
+            });
+
             if (posPairs[0].length === posPairs[1].length) {
                 for (let i = 0; i < posPairs[0].length; i++) {
-                    pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the pair
+                    pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the rest pair
                 }
             }
         }
         return pairs;
+
     }
 
-    /**
-     * get center columns pair by checking UCD value
-     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
-     */
-    getCenterColumnsOnUCD() {
-        let   coordsys = null;
-        let   colPair;
-
-        if (this.centerColumnsInfo) {
-            return this.centerColumnsInfo;
-        }
-        const ucdCoords = [UCDCoord.eq];
-        ucdCoords.find((oneCoord) => {
-                const colPairs = this.getCenterColumnPairsOnUCD(oneCoord.key);
-
-                // get the first pair from the found pairs
-                if (!isEmpty(colPairs)) {
-                    colPair = colPairs[0];
-                    coordsys = posCol[oneCoord.key].coord;
-                }
-
-                return colPair;
+    getCenterColumnPairOnName(columnPairs) {
+        if (!isEmpty(columnPairs)) {
+            return columnPairs.find((onePair) => {
+                return (onePair[0].name.toLowerCase() === obsCorePosColumns[0]) &&
+                       (onePair[1].name.toLowerCase() === obsCorePosColumns[1]);
             });
-
-        if (colPair) {
-            const idxs = getLonLatIdx(this.tableModel, colPair[0].name, colPair[1].name);
-
-            if (idxs) {
-                  this.setCenterColumnsInfo(colPair[0].name, colPair[1].name, idxs.lonIdx, idxs.latIdx, coordsys);
-            }
-        }
-
-        return this.centerColumnsInfo;
-
-    }
-
-    /**
-     * get center column pair by checking ObsCore columns
-     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
-     */
-    getCenterColumnsOnObsCore() {
-        if (this.centerColumnsInfo) {
-            return this.centerColumnsInfo;
-        }
-        if (this.isObsCoreTable()) {
+        } else {
             const cols = obsCorePosColumns.map((colName) => {
                 return getColumn(this.tableModel, colName);
             });
-
-            if (cols[0] && cols[1]) {
-                const idxs = getLonLatIdx(this.tableModel, cols[0].name, cols[1].name);
-
-                if (idxs) {
-                    this.setCenterColumnsInfo(cols[0].name, cols[1].name, idxs.lonIdx, idxs.latIdx,
-                                             posCol[UCDCoord.eq.key].coord);
-                }
-            }
+            return (cols[0] && cols[1]) ? cols : [];
         }
-
-        return this.centerColumnsInfo;
     }
 
     /**
@@ -241,9 +284,7 @@ class TableRecognizer {
      * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
      */
     getCenterColumnsOnMeta() {
-        if (this.centerColumnsInfo) {
-            return this.centerColumnsInfo;
-        }
+        this.centerColumnsInfo = null;
 
         const {tableMeta} = this.tableModel || {};
 
@@ -260,52 +301,95 @@ class TableRecognizer {
             return this.centerColumnsInfo;
         }
 
+        return this.setCenterColumnsInfo(s, CoordinateSys.parse(s[2]));
+    }
 
-        const idxs = getLonLatIdx(this.tableModel, s[0], s[1]);
-        if (idxs) {
-            this.setCenterColumnsInfo(s[0], s[1], idxs.lonIdx, idxs.latIdx, CoordinateSys.parse(s[2]));
+
+    /**
+     * search center columns pair by checking UCD value
+     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
+     */
+    getCenterColumnsOnUCD() {
+        this.centerColumnsInfo = null;
+
+        const colPairs = this.getCenterColumnPairsOnUCD(UCDCoord.eq.key);
+
+        if (colPairs && colPairs.length === 1) {
+            return this.setCenterColumnsInfo(colPairs[0], posCol[UCDCoord.eq.key].coord);
+        } else {
+            this.centerColumnCandidatePairs = colPairs;
         }
 
         return this.centerColumnsInfo;
     }
 
     /**
-     * get center columns pair by guessing
+     * search center column pairs based on existing candidate pairs or all table columns
+     * @returns {null|{lonCol: *, latCol: *, lonIdx: (number|*|lonIdx), latIdx: (number|*|latIdx), csys: *}|*}
+     */
+    getCenterColumnsOnObsCoreUType() {
+        this.centerColumnsInfo = null;
+
+        const colPairs = this.getCenterColumnPairsOnUType(this.centerColumnCandidatePairs);
+
+        if (colPairs && colPairs.length === 1) {
+            this.setCenterColumnsInfo(colPairs[0], posCol[UCDCoord.eq.key].coord);
+        }
+        this.centerColumnCandidatePairs = colPairs;
+
+        return this.centerColumnsInfo;
+    }
+
+    /**
+     * search center column pair by checking ObsCore columns on existing candidate pairs or all table columns
      * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
      */
-    guessCenterColumns() {
-        if (this.centerColumnsInfo) {
-            return this.centerColumnsInfo;
+    getCenterColumnsOnObsCoreName() {
+        this.centerColumnsInfo = null;
+
+        const leftMostCol = (isEmpty(this.centerColumnCandidatePairs))
+                            ? null : this.centerColumnCandidatePairs[0];
+
+        const colPair = this.getCenterColumnPairOnName(this.centerColumnCandidatePairs);
+
+        if (isArray(colPair) && colPair.length === 2) {
+            return this.setCenterColumnsInfo(colPair, posCol[UCDCoord.eq.key].coord);
+        } else {
+            if (leftMostCol) {    // not use guess if there is one in the candidatePairs
+                return this.setCenterColumnsInfo(leftMostCol,  posCol[UCDCoord.eq.key].coord);
+            } else {              // use guess
+                return this. guessCenterColumnsByName();
+            }
+
         }
+    }
+
+    /**
+     * search center columns pair by guessing the column name
+     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
+     */
+    guessCenterColumnsByName() {
+        this.centerColumnsInfo = null;
+
         const guess = (lon, lat) => {
             const lonCol = getColumn(this.tableModel, lon);
             const latCol = getColumn(this.tableModel, lat);
-            if (lonCol && latCol) {
-                const idxs = getLonLatIdx(this.tableModel, lonCol.name, latCol.name);
-                if (idxs) {
-                    this.setCenterColumnsInfo(lonCol.name, latCol.name, idxs.lonIdx, idxs.latIdx);
-                }
-            }
-            return this.centerColumnsInfo;
-        };
-        guess('ra','dec') || guess('lon', 'lat') || guess('s_ra', 's_dec');
 
-        return this.centerColumnsInfo;
+            return (lonCol && latCol) ? this.setCenterColumnsInfo([lonCol, latCol]) : this.centerColumnsInfo;
+        };
+        return (guess('ra','dec') || guess('lon', 'lat'));
     }
 
     /**
      * return center position or catalog coordinate columns and the associate*d coordinate system
-     * by checking table meta, UCD values or ObsCore columns, otherwise by guessing if none of previous
-     * methods works.
+     * by checking table meta, UCD values, Utype, ObsCore column name and guessing.
      * @returns {{lonCol, latCol, csys}|*}
      */
     getCenterColumns() {
-
-        return  this.getCenterColumnsInfo() ||
-                this.getCenterColumnsOnMeta() ||
+        return  this.getCenterColumnsOnMeta() ||
                 this.getCenterColumnsOnUCD() ||
-                this.getCenterColumnsOnObsCore() ||
-                this.guessCenterColumns();
+                this.getCenterColumnsOnObsCoreUType() ||
+                this.getCenterColumnsOnObsCoreName();
     }
 
 
@@ -314,24 +398,8 @@ class TableRecognizer {
     }
 }
 
-const tableRecognizerMap = new Map();
-
-function makeTableRecognizer(table) {
-    let tblRecog = table.tbl_id && tableRecognizerMap.get(table.tbl_id);
-
-    if (tblRecog) {
-        return tblRecog;
-    }
-    tblRecog = TableRecognizer.newInstance(table);
-    if (tblRecog && table.tbl_id) {
-        tableRecognizerMap.set(table.tbl_id, tblRecog);
-    }
-    return tblRecog;
-}
-
-
 export function findTableCenterColumns(table) {
-   const tblRecog = makeTableRecognizer(table);
+   const tblRecog = table && get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
 
    return tblRecog && tblRecog.getCenterColumns();
 }
