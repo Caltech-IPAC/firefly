@@ -267,7 +267,7 @@ export function getWorkspaceErrorMsg(){
     var errorMsg;
     switch (statusCode){
         case '401':
-            errorMsg = 'You are not logged in. Please click \'Login\' in the upper right corner of the window';
+            errorMsg = 'You are not logged in. Please click \'Login\' in the upper right corner of the window.';
             break;
         case '403':
             errorMsg = 'You do not have access right';
