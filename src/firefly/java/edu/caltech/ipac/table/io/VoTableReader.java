@@ -598,6 +598,7 @@ public class VoTableReader {
         String title = table.getName();
         List<DataType> cols = new ArrayList<>();
         String raCol=null, decCol=null;
+        int precision = 8;
         String precisionStr = "";
 
         // collect FIELD from TABLE
@@ -742,6 +743,9 @@ public class VoTableReader {
                                 val = null;
                             }
                             row.setDataElement(dtype, val);
+                        }
+                        if (dtype.getPrecision() == null) {
+                            IpacTableUtil.guessFormatInfo(dtype, sval, precision);// precision min 8 can come from VOTable attribute 'precision' later on.
                         }
                     }
                     dg.add(row);

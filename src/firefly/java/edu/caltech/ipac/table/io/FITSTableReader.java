@@ -17,10 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 /**
 * Convert an FITS file or FITS binary table(s) to list of DataGroup.
@@ -462,7 +459,13 @@ public final class FITSTableReader
      * @param dt     the column this format belongs to
      */
     private static void convertFormat(String format, DataType dt) {
-        if (StringUtils.isEmpty(format)) return;
+        if (StringUtils.isEmpty(format)) {
+            if (dt.getDataType() == Double.class) {
+                // if no precision is given double, set it to %.9g
+                dt.setFormat("%.9g");
+            }
+            return;
+        }
 
         String[] parts = StringUtils.groupMatch(TDISP, format);     // 0:conversion code, 1: width, 2:precision
         if (parts == null) return;
@@ -482,7 +485,6 @@ public final class FITSTableReader
                 dt.setPrecision("G" + prec);
             }
         }
-        // not implemented or supported.. will print
     }
 
     /**

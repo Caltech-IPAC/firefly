@@ -315,13 +315,15 @@ public class DataType implements Serializable, Cloneable {
         } else if (REAL_TYPES.contains(getTypeDesc())) {
             // use precision
             String prec = getPrecision();
-            if (!isEmpty(prec)) {
-                String[] tp = StringUtils.groupMatch(precisiontPattern, prec);    // T in group 0, and precision in group 1.
-                if (tp != null) {
-                    String c = isEmpty(tp[0]) || tp[0].equals("F") ? "f" : tp[0];
-                    String p = isEmpty(tp[1]) ? "" : "." + tp[1];
-                    return String.format("%" + p + c, value);
-                }
+            if (isEmpty(prec)) {
+                String pattern = StringUtils.areEqual(getUnits(), "rad") ? "%.8f" : "%.6f";
+                return String.format(pattern, value);
+            }
+            String[] tp = StringUtils.groupMatch(precisiontPattern, prec);    // T in group 0, and precision in group 1.
+            if (tp != null) {
+                String c = isEmpty(tp[0]) || tp[0].equals("F") ? "f" : tp[0];
+                String p = isEmpty(tp[1]) ? "" : "." + tp[1];
+                return String.format("%" + p + c, value);
             }
         } else if (Date.class.isAssignableFrom(getDataType())) {
             // default Date format:  yyyy-mm-dd hh:mm:ss ie. 2018-11-16 14:55:12
