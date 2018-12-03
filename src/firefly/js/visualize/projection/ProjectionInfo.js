@@ -324,6 +324,7 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
 	/* now do Digital Sky Survey plate solution coefficients */
     if  (header['PLTRAH'+altWcs]) {
         p.maptype = PLATE;
+        p.imageCoordSys= findCoordSys( getJsys(p), p.file_equinox);
         p.rah = parse.getDoubleValue('PLTRAH'+altWcs,0);
         p.ram = parse.getDoubleValue('PLTRAM'+altWcs,0);
         p.ras = parse.getDoubleValue('PLTRAS'+altWcs,0);
