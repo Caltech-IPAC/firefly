@@ -226,6 +226,7 @@ function makeDrawing(pv,width,height) {
 
     const sptC = cc.getScreenCoords(wptC);
     const sptN = cc.getScreenCoords(wpt2);
+    if (!sptC || !sptN) return null;
     const [x, y] = [(sptN.y - sptC.y) + sptC.x, (-sptN.x + sptC.x)+sptC.y];
     const wptE2 = cc.getWorldCoords(makeScreenPt(x, y));
 
