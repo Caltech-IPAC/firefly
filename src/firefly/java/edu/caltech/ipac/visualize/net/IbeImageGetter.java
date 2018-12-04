@@ -47,7 +47,7 @@ public class IbeImageGetter {
 
               WiseIbeDataSource.DataProduct product= wiseParams.getProductLevel().equals(WiseImageParams.WISE_3A) ?
                                                      WiseIbeDataSource.DataProduct.ALLWISE_MULTIBAND_3A :
-                                                     WiseIbeDataSource.DataProduct.ALLSKY_4BAND_1B;
+                                                     WiseIbeDataSource.DataProduct.ALLSKY_4BAND_3A;
 
               ibeSource= new WiseIbeDataSource(product);
 
