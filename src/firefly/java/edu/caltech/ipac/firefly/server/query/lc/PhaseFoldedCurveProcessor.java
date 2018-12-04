@@ -19,6 +19,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+
 /**
  * Created by zhang on 10/14/15.
  * This class calculates the statistics of a IpacTable Data.
@@ -77,6 +79,13 @@ public class PhaseFoldedCurveProcessor extends IpacTablePartProcessor {
     }
 
     private File getSourceFile(String source, TableServerRequest request) {
+
+        // handle case when LC_FILE is a JSON TableRequest
+        File srcFile = irsaLcHandler.getSourceFileFromJsonReqest(request);
+        if (srcFile != null) {
+            return  srcFile;
+        }
+
         File inf = null;
         try {
             URL url = makeUrl(source);

@@ -12,7 +12,7 @@ import {getTypeData} from './LcUtil.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
-import {getTblById} from '../../tables/TableUtil.js';
+import {getTblById, getResultSetRequest} from '../../tables/TableUtil.js';
 import {makeTblRequest} from '../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch, dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
@@ -505,7 +505,11 @@ function periodogramSuccess(popupId, hideDropDown = false) {
     return (request) => {
         const tbl = getTblById(LC.RAW_TABLE);
         const layoutInfo = getLayouInfo();
-        const srcFile = get(tbl, ['tableMeta', 'source']);
+        let srcFile = get(tbl, 'request.source');
+        srcFile = srcFile || get(tbl, 'request.alt_source');
+        if (!srcFile) {
+            srcFile = getResultSetRequest(LC.RAW_TABLE);
+        }
 
         const pMin = get(request, [pKeyDef.min.fkey]);
         const pMax = get(request, [pKeyDef.max.fkey]);
