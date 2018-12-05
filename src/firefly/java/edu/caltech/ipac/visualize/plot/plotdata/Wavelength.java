@@ -514,7 +514,7 @@ public class Wavelength {
 
         int p0 = (int) Math.round(ipt.getX() - 0.5); //x
         int p1 = (int) Math.round(ipt.getY() - 0.5); //y
-        int p2 = header.getIntValue("zPixel", 0); //z  default is 0
+        int p2 = header.getIntValue("SPOT_PL", 0); //z  default is 0
 
         int naxis1 = header.getIntValue("NAXIS1");
         int naxis2 = header.getIntValue("NAXIS2");
