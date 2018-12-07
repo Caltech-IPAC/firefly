@@ -50,11 +50,12 @@ const ObsTapColumns = [
     ['instrument_name',   'meta.id;instr',              'Provenance.ObsConfig.Instrument.name']
 ];
 
-const posCol = {[UCDCoord.eq.key]: {ucd: ['pos.eq.ra', 'pos.eq.dec'],
+const alternateMainPos = [['POS_EQ_RA_MAIN', 'POS_EQ_DEC_MAIN']];
+const posCol = {[UCDCoord.eq.key]: {ucd: [['pos.eq.ra', 'pos.eq.dec'],...alternateMainPos],
                                     coord: CoordinateSys.EQ_J2000},
-    [UCDCoord.ecliptic.key]: {ucd: ['pos.ecliptic.lon', 'pos.ecliptic.lat'],
+    [UCDCoord.ecliptic.key]: {ucd: [['pos.ecliptic.lon', 'pos.ecliptic.lat']],
                               coord: CoordinateSys.ECL_J2000},
-    [UCDCoord.galactic.key]: {ucd: ['pos.galactic.lon', 'pos.galactic.lat'],
+    [UCDCoord.galactic.key]: {ucd: [['pos.galactic.lon', 'pos.galactic.lat']],
                               coord: CoordinateSys.GALACTIC}};
 
 
@@ -209,16 +210,29 @@ class TableRecognizer {
         }
 
         // get 'ra' column list and 'dec' column list
-        const posPairs = centerColUCDs.reduce((prev, eqUcd) => {
-            const cols = this.getTblColumnsOnUCD(eqUcd);
+        const posPairs = centerColUCDs.reduce((prev, eqUcdPair) => {
+            if (isArray(eqUcdPair) && eqUcdPair.length >= 2) {
+                const colsRA = this.getTblColumnsOnUCD(eqUcdPair[0]);
+                const colsDec = this.getTblColumnsOnUCD(eqUcdPair[1]);
 
-            prev.push(cols);
+                 prev[0].push(...colsRA);
+                 prev[1].push(...colsDec);
+            }
             return prev;
-        }, []);
+        }, [[], []]);
 
 
-        const metaMainPair = posPairs.map((posCols) => {
-            return this.getColumnsWithUCDWord(posCols, mainMeta);
+        const metaMainPair = posPairs.map((posCols, idx) => {
+            const mainMetaCols = this.getColumnsWithUCDWord(posCols, mainMeta);
+            if (!isEmpty(posCols) && isEmpty(mainMetaCols)) {
+                alternateMainPos.find((oneAlt) => {
+                    const altCols = this.getColumnsWithUCDWord(posCols, oneAlt[idx], ucdSyntaxMap.any);
+
+                    mainMetaCols.push(...altCols);
+                    return !isEmpty(altCols);
+                });
+            }
+            return mainMetaCols;
         });
 
         if (metaMainPair[0].length || metaMainPair[1].length) {
@@ -327,10 +341,10 @@ class TableRecognizer {
      * search center column pairs based on existing candidate pairs or all table columns
      * @returns {null|{lonCol: *, latCol: *, lonIdx: (number|*|lonIdx), latIdx: (number|*|latIdx), csys: *}|*}
      */
-    getCenterColumnsOnObsCoreUType() {
+    getCenterColumnsOnObsCoreUType(candidatePairs) {
         this.centerColumnsInfo = null;
 
-        const colPairs = this.getCenterColumnPairsOnUType(this.centerColumnCandidatePairs);
+        const colPairs = this.getCenterColumnPairsOnUType(candidatePairs);
 
         if (colPairs && colPairs.length === 1) {
             this.setCenterColumnsInfo(colPairs[0], posCol[UCDCoord.eq.key].coord);
@@ -344,23 +358,20 @@ class TableRecognizer {
      * search center column pair by checking ObsCore columns on existing candidate pairs or all table columns
      * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
      */
-    getCenterColumnsOnObsCoreName() {
+    getCenterColumnsOnObsCoreName(candidatePairs) {
         this.centerColumnsInfo = null;
 
-        const leftMostCol = (isEmpty(this.centerColumnCandidatePairs))
-                            ? null : this.centerColumnCandidatePairs[0];
+        const leftMostCol = (isEmpty(candidatePairs))
+                            ? null : candidatePairs[0];
 
-        const colPair = this.getCenterColumnPairOnName(this.centerColumnCandidatePairs);
+        const colPair = this.getCenterColumnPairOnName(candidatePairs);
 
         if (isArray(colPair) && colPair.length === 2) {
             return this.setCenterColumnsInfo(colPair, posCol[UCDCoord.eq.key].coord);
         } else {
-            if (leftMostCol) {    // not use guess if there is one in the candidatePairs
-                return this.setCenterColumnsInfo(leftMostCol,  posCol[UCDCoord.eq.key].coord);
-            } else {              // use guess
-                return this. guessCenterColumnsByName();
-            }
-
+            return leftMostCol?
+                   this.setCenterColumnsInfo(leftMostCol, posCol[UCDCoord.eq.key].coord) :
+                   this.centerColumnsInfo;
         }
     }
 
@@ -388,8 +399,9 @@ class TableRecognizer {
     getCenterColumns() {
         return  this.getCenterColumnsOnMeta() ||
                 this.getCenterColumnsOnUCD() ||
-                this.getCenterColumnsOnObsCoreUType() ||
-                this.getCenterColumnsOnObsCoreName();
+                this.getCenterColumnsOnObsCoreUType(this.centerColumnCandidatePairs) ||
+                this.getCenterColumnsOnObsCoreName(this.centerColumnCandidatePairs) ||
+                (!this.centerColumnCandidatePairs && this.guessCenterColumnsByName());
     }
 
 
