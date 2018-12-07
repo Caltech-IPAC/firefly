@@ -1,11 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset} from 'lodash';
+import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
-import {MAX_ROW} from './TableRequestUtil.js'
+import {MAX_ROW} from './TableRequestUtil.js';
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
@@ -477,7 +477,7 @@ function setupTableOps(tbl_id, nrequest) {
 
     const {request, tableMeta, selectInfo} = tableModel;
     const tableData = pick(tableModel.tableData, 'columns');
-    const nreq = Object.assign({}, request, nrequest);
+    const nreq = merge({}, request, nrequest);
     return {tbl_id, request:nreq, tableMeta, selectInfo, tableData};
 }
 

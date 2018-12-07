@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table;
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.table.io.FITSTableReader;
@@ -191,11 +192,27 @@ public class TableUtil {
         return new DataGroupPart(tableDef, dg, start, (int) totalRow);
     }
 
+    /**
+     * takes all of the TableMeta that is column's related and use it to set column's properties.
+     * remove the TableMeta that was used.
+     * @param dg
+     * @param treq  if not null, merge META-INFO from this request into TableMeta before consuming
+     */
+    public static void consumeColumnMeta(DataGroup dg, TableServerRequest treq) {
+        if (treq != null && treq.getMeta() != null) {
+            treq.getMeta().forEach((k,v) -> {
+                dg.getTableMeta().setAttribute(k, v);
+            });
+        }
+        IpacTableUtil.consumeColumnInfo(dg);
+    }
+
+
 //====================================================================
 //
 //====================================================================
 
-    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON(), VO_TABLE();
+    public enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON(), VO_TABLE();
         CSVFormat type;
         Format() {}
         Format(CSVFormat type) {this.type = type;}
