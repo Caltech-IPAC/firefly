@@ -177,7 +177,7 @@ class TableRecognizer {
      * @returns {array}
      */
     getTblColumnsOnUType(utype) {
-        return this.columns.filter((prev, oneCol) => {
+        return this.columns.filter((oneCol) => {
                 return has(oneCol, 'utype') && oneCol.utype.includes(utype);
             });
     }
@@ -339,6 +339,7 @@ class TableRecognizer {
 
     /**
      * search center column pairs based on existing candidate pairs or all table columns
+     * @param candidatePairs
      * @returns {null|{lonCol: *, latCol: *, lonIdx: (number|*|lonIdx), latIdx: (number|*|latIdx), csys: *}|*}
      */
     getCenterColumnsOnObsCoreUType(candidatePairs) {
@@ -356,6 +357,7 @@ class TableRecognizer {
 
     /**
      * search center column pair by checking ObsCore columns on existing candidate pairs or all table columns
+     * @param candidatePairs
      * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
      */
     getCenterColumnsOnObsCoreName(candidatePairs) {
@@ -401,7 +403,7 @@ class TableRecognizer {
                 this.getCenterColumnsOnUCD() ||
                 this.getCenterColumnsOnObsCoreUType(this.centerColumnCandidatePairs) ||
                 this.getCenterColumnsOnObsCoreName(this.centerColumnCandidatePairs) ||
-                (!this.centerColumnCandidatePairs && this.guessCenterColumnsByName());
+                (isEmpty(this.centerColumnCandidatePairs) && this.guessCenterColumnsByName());
     }
 
 
