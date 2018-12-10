@@ -1,0 +1,190 @@
+
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly API Test</title>
+
+    <style type="text/css">
+        #container {
+            display: flex;
+            padding: 3px;
+            margin: 5px 10px;
+            flex-direction: column;
+        }
+        .iframe-container {
+            overflow: hidden;
+        }
+
+        .iframe-container iframe {
+            border: 0;
+            width: 100%;
+        }
+    </style>
+
+
+    <script type="text/javascript">
+
+        window.onload = function () {
+            var tests = document.getElementsByTagName('template');
+            Object.values(tests).forEach(function(test) {
+                if (test.id !== 'test_template') {
+                    var c = test.content;
+                    var expected = c.querySelector('#expected');
+                    var actual = c.querySelector('#actual');
+                    var scpt = c.querySelector('script');
+
+                    renderTest(expected, actual, scpt, test.title, test.className);
+                }
+            });
+        }
+
+        function resizeIframe(obj) {
+            obj.style.height = obj.contentWindow.document.body.scrollHeight + 20 + 'px';
+        }
+
+        function renderTest(expected, actual, script, title, className) {
+            var iframe = document.createElement('iframe');
+            iframe.src = './template.html';
+            var idiv = document.createElement('div');
+            idiv.className = "iframe-container";
+            idiv.appendChild(iframe)
+            document.getElementById('container').appendChild(idiv);
+
+            iframe.contentWindow.template = {expected, actual, script, title, className};
+            iframe.contentWindow.resizeIframe = function () {resizeIframe(iframe)};
+        }
+
+
+    </script>
+</head>
+
+<body>
+
+<!--
+Each test case is presented as a template.  It consists of 3 parts:
+expected:  the expected results.  This can be a description, an image, or both
+actual:  the rendered results of executing the script
+script:  script to run.  Try to keep it clean and easy to understand.
+
+<template title="Description of this test">
+    <div id="expected" />
+    <div id="actual" />
+    <script />
+</template>
+
+-->
+
+
+<!-- define all of your tests below -->
+
+<template title="IRSA Gator Table">
+    <div id="expected"><img src="./images/gator-expected.jpg"></div>
+    <div id="actual">
+        <div id="gatorTable" class="std-box"></div>
+        <div id="gatorCoverage" class="std-box"></div>
+        <div id="gatorXy" class="std-box"></div>
+    </div>
+    <script>
+        irsaviewer_init();
+
+        onFireflyLoaded = function (firefly) {
+
+            firefly.util.image.initAutoReadout(
+                firefly.ui.DefaultApiReadout,
+                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                  showThumb:false,
+                  showMag:false
+                }
+            );
+            table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 100
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+            firefly.showTable('gatorTable', table1Data,
+                { removable: false,
+                  showTitle:false,
+                  showUnits: true,
+                  showFilters: false,
+                  selectable: false,
+                  expandable: true,
+                  help_id: 'tables'
+                }
+            );
+
+            firefly.showCoverage('gatorCoverage', {gridOn:'FALSE'});
+
+            firefly.addXYPlot('gatorXy', {tbl_id: table1Data.tbl_id,
+                xOptions: 'flip',
+                help_id: 'visualization.xyplotViewer'});
+
+        }
+    </script>
+</template>
+
+
+<template title="NED catalog VOTable" class="size-s">
+    <div id="expected">
+        <img src="./images/ned-table.jpg">
+        <div class="source-code indent-2x">
+            - sortBy column where name contains spaces
+            - using FmtDisp to format text
+        </div>
+    </div>
+    <div id="actual" class="std-box w-2x"></div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+            tblReq = firefly.util.table.makeTblRequest('NedSearch', 'm8 (NED SCS 10)',
+                { use: "catalog_overlay",
+                  UserTargetWorldPt: "270.92194;-24.38017;EQ_J2000;m8;ned",
+                  SearchMethod: "Cone",
+                  radius: "0.00278",
+                  providerName: "NED",
+                  accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&",
+                  DataTag:"firefly-NedSearch"
+                },
+                { sortInfo: "ASC,Object Name",
+                  META_INFO: {"col.Type.FmtDisp": "abc-%s"}
+                }
+            );
+
+            firefly.showTable('actual', tblReq);
+        }
+    </script>
+</template>
+
+<template title="GAIA tap search" class="size-s">
+    <div id="expected" class="source-code">
+        Table successfully loaded
+        - VOTable
+        - first 3 rows of gaia_source
+    </div>
+    <div id="actual" class="std-box w-2x"></div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+            tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',
+                { serviceUrl: "http://gea.esac.esa.int/tap-server/tap",
+                  QUERY: "SELECT TOP 3 * FROM gaiadr2.gaia_source",
+                  META_INFO: {DataTag:"firefly-AsyncTapQuery"},
+                });
+
+            firefly.showTable('actual', tblReq);
+        }
+    </script>
+</template>
+
+
+<!-- this is where test cases will be attached-->
+<div id="container"/>
+
+
+</body>

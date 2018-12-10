@@ -1,0 +1,151 @@
+
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly API Test</title>
+
+    <style type="text/css">
+
+
+        .std-box { width: 300px; margin: 2px;}
+        .w-2x {width:  604px;}
+        .w-3x {width:  908px;}
+        .indent-1x {margin-left: -3em !important;}
+        .indent-2x {margin-left: -7em !important;}
+        .indent-3x {margin-left: -11em !important;}
+        .size-s {height: 200px !important;}
+        .size-m {height: 300px !important;}
+        .size-l {height: 400px !important;}
+        .size-xl {height: 500px !important;}
+
+
+        .rootStyle {
+            padding: 0 !important;
+        }
+
+        #container {
+            overflow: hidden;
+        }
+
+        .test-box {
+            background-color: antiquewhite;
+            border: 1px solid #e6d3bb;
+            display: inline-flex;
+            height: 300px;
+        }
+
+        .item-box {
+            display: flex;
+            padding: 3px;
+            margin: 5px;
+            flex-direction: column;
+        }
+        .expected, .actual, .source {
+            background-color: #e3e3e3;
+            min-width: 300px;
+            box-sizing: border-box;
+            border: 1px solid #d4d4d4;
+            display: flex;
+            flex-grow: 1;
+        }
+
+        .label {
+
+        }
+
+        #actual {
+            display: inline-flex;
+            flex-grow: 1;
+        }
+        #expected {
+            padding: 3px;
+        }
+
+        .source {
+            overflow: auto;
+            max-width: 600px;
+        }
+        .source-code {
+            font-family: monospace;
+            white-space: pre;
+            margin-left: -4em;
+        }
+    </style>
+
+
+    <script  type="text/javascript">
+
+        window.onload = function () {
+            var t = document.getElementById('test_template').content;
+            var t_vars = window.template;
+            t.querySelector('.expected').appendChild(document.importNode(t_vars.expected, true));
+            t.querySelector('.actual').appendChild(document.importNode(t_vars.actual, true));
+            t.querySelector('.source').getElementsByClassName("source-code")[0].innerHTML = t_vars.script.textContent;
+            t.querySelector('.title').innerHTML = t_vars.title;
+            t_vars.className && t.querySelector('.test-box').classList.add(t_vars.className);
+            t.appendChild(document.importNode(t_vars.script, true));
+            document.getElementById('container').appendChild(document.importNode(t, true));
+            resizeIframe();
+        }
+
+        function irsaviewer_init() {
+            firefly = {
+                options: {
+                    imageMasterSourcesOrder: ['Spitzer', 'WISE', 'Herschel', '2MASS', 'IRAS', 'AKARI', 'DSS', 'SDSS', 'MSX'],
+                    workspace: {showOptions: true},
+                    charts: {
+                        singleTraceUI: true,
+                        maxRowsForScatter: 5000,
+                        minScatterGLRows: 5000,
+                        ui: {HistogramOptions: {fixedAlgorithm: true}}
+                    },
+                    hips: {
+                        useForCoverage: true,
+                        defHipsSources: {source: 'irsa', label: 'IRSA Featured'}
+                    },
+                    tables : {
+                        showInfoButton: false // info about table : title, table links, etc.
+                    }
+                }
+            }
+        }
+
+    </script>
+
+</head>
+
+<body>
+
+
+<template id="test_template">
+    <div class="title"></div>
+    <div class="test-box">
+        <div  class="item-box">
+            <div class="label">expected:</div>
+            <div class="expected"></div>
+        </div>
+        <div class="item-box">
+            <div class="label">actual:</div>
+            <div class="actual"></div>
+        </div>
+        <div class="item-box">
+            <div class="label">source:</div>
+            <div class="source">
+                <div class="source-code"/>
+            </div>
+        </div>
+    </div>
+    <script src="../firefly_loader.js"></script>
+</template>
+
+<!-- this is where test cases will be attached-->
+<div id="container"/>
+
+
+</body>
