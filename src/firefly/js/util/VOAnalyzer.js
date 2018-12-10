@@ -17,7 +17,7 @@ const UtypeColIdx = 2;
 const mainMeta = 'meta.main';
 const obsCorePosColumns = ['s_ra', 's_dec'];
 
-const ObsTapColumns = [
+const OBSTAPCOLUMNS = [
     ['dataproduct_type',  'meta.id',                    'ObsDataset.dataProductType'],
     ['calib_level',       'meta.code;obs.calib',        'ObsDataset.calibLevel'],
     ['obs_collection',    'meta.id',                    'DataID.collection'],
@@ -67,12 +67,12 @@ function getLonLatIdx(tableModel, lonCol, latCol) {
 }
 
 function centerColumnUTypesFromObsTap() {
-    const obsTapColNames = ObsTapColumns.map((col) => col[ColNameIdx]);
+    const obsTapColNames = OBSTAPCOLUMNS.map((col) => col[ColNameIdx]);
 
     const centerUTypes = obsCorePosColumns.map((posColName) => {
             const idx = obsTapColNames.indexOf(posColName);
 
-            return (idx >= 0) ? ObsTapColumns[idx][UtypeColIdx] : null;
+            return (idx >= 0) ? OBSTAPCOLUMNS[idx][UtypeColIdx] : null;
     });
 
     return centerUTypes.findIndex((oneUtype) => !oneUtype) >= 0 ? null : centerUTypes;
@@ -119,7 +119,7 @@ class TableRecognizer {
 
         const allColNames = this.columns.map((oneCol) => oneCol.name);
 
-        const nonExistCol = ObsTapColumns
+        const nonExistCol = OBSTAPCOLUMNS
                             .map((oneColumn) => (oneColumn[ColNameIdx]))
                             .some((oneName) => {
                                 return !allColNames.includes(oneName);

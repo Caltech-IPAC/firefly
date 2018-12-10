@@ -9,6 +9,7 @@ import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, getTableGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {getCenterColumns} from '../../tables/TableInfoUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById, getPlotViewById, getActivePlotView,   findCurrentCenterPoint} from '../PlotViewUtil.js';
@@ -24,7 +25,6 @@ import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {COVERAGE_CREATED} from './CoverageWatcher.js';
-import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 
 /**
  * this saga does the following:
@@ -130,7 +130,6 @@ function recenterImage(tbl) {
     }
 }
 
-//todo - this fucntion should start using TableInfoUtil.getCenterColumns
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
 
@@ -148,7 +147,7 @@ function handleCatalogUpdate(tbl_id) {
         return;
     }
 
-    const columns= findTableCenterColumns(sourceTable);
+    const columns= getCenterColumns(sourceTable);
 
     if (!columns) return;
 
