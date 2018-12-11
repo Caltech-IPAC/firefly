@@ -180,22 +180,15 @@ public class EmbeddedDbUtil {
     public static DataGroup execQuery(DbAdapter dbAdapter, File dbFile, String sql, String refTable) {
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
         sql = dbAdapter.translateSql(sql);
+        String ddSql = refTable == null ? null : dbAdapter.getDDSql(refTable);
 
         DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
-            return dbToDataGroup(rs);
+            return dbToDataGroup(rs, dbInstance, ddSql);
         });
 
         SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
 
         if (refTable != null) {
-            // insert DD info into the results
-            try {
-                String ddSql = dbAdapter.getDDSql(refTable);
-                jdbc.query(ddSql, (rs, i) -> EmbeddedDbUtil.dbToDD(dg, rs));
-            } catch (Exception e) {
-                // ignore.. may not have DD table
-            }
-
             // insert table meta info into the results
             try {
                 String metaSql = dbAdapter.getMetaSql(refTable);
@@ -291,18 +284,26 @@ public class EmbeddedDbUtil {
 //  O-R mapping functions
 //====================================================================
 
-    private static DataGroup dbToDataGroup(ResultSet rs) throws SQLException {
+    private static DataGroup dbToDataGroup(ResultSet rs, DbInstance dbInstance, String ddSql) throws SQLException {
 
         DataGroup dg = new DataGroup(null, getCols(rs));
+
+        if (ddSql != null) {
+            try {
+                JdbcFactory.getSimpleTemplate(dbInstance).query(ddSql, (ddrs, i) -> dbToDD(dg, ddrs));
+            } catch (Exception e) {
+                // ignore.. may not have DD table
+            }
+        }
+
         if (rs.isBeforeFirst()) rs.next();
         if (!rs.isFirst()) return dg;    // no row found
-
         do {
             DataObject row = new DataObject(dg);
             for (int i = 0; i < dg.getDataDefinitions().length; i++) {
                 DataType dt = dg.getDataDefinitions()[i];
                 int idx = i + 1;
-                Object val = rs.getObject(idx);
+                Object val = dt.getDataType() == Float.class ? rs.getFloat(idx) : rs.getObject(idx);        // this is needed because hsql store float as double.
                 row.setDataElement(dt, val);
             }
             dg.add(row);
@@ -483,16 +484,17 @@ public class EmbeddedDbUtil {
             case SMALLINT:
             case INTEGER:
                 return Integer.class;
-            case FLOAT:
-                return Float.class;
             case BIGINT:
                 return Long.class;
+            case FLOAT:
+                return Float.class;
             case REAL:
             case DOUBLE:
             case NUMERIC:
             case DECIMAL:
                 return Double.class;
             case BIT:
+            case BOOLEAN:
                 return Boolean.class;
             case DATE:
             case TIME:

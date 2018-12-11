@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Date: Nov 2, 2007
@@ -62,6 +64,38 @@ public class StringUtils {
             DOUBLE_QUOTATION_MARK_4=new String (new byte[]{-30,-128,-100});
         }
     }
+
+    public static String[] groupMatch(String regex, String val) {
+        return groupMatch(regex, val, 0);
+    }
+
+    /**
+     * This is used for capturing groups.  If matches, it'll return all of the matching groups as
+     * an array of strings, otherwise null.
+     * @param regex pattern to match
+     * @param val   string value to match with
+     * @return
+     */
+    public static String[] groupMatch(String regex, String val, int flags) {
+        return groupMatch(Pattern.compile(regex, flags), val);
+    }
+
+    /**
+     * When performance matters, use this to save the time it takes to compile the reqex.
+     */
+    public static String[] groupMatch(Pattern pattern, String val) {
+        Matcher m = pattern.matcher(val);
+        if (m.matches()) {
+            String[] rval = new String[m.groupCount()];
+            for(int i=1; i <= m.groupCount(); i++) {
+                rval[i-1] = m.group(i);
+            }
+            return rval;
+        } else {
+            return null;
+        }
+    }
+
 
     /**
      * applies the consumer's logic if v is not null or is an empty string

@@ -622,7 +622,6 @@ public class VoTableReader {
 
                     if (pDV != null) {
                         precisionStr = pDV.getValue().toString();
-                        precision = Integer.parseInt(precisionStr);
                         precisionStr = makePrecisionStr(precisionStr);
                         dt.setPrecision(precisionStr);
                     }
@@ -745,7 +744,9 @@ public class VoTableReader {
                             }
                             row.setDataElement(dtype, val);
                         }
-                        IpacTableUtil.guessFormatInfo(dtype, sval, precision);// precision min 8 can come from VOTable attribute 'precision' later on.
+                        if (dtype.getPrecision() == null) {
+                            IpacTableUtil.guessFormatInfo(dtype, sval, precision);// precision min 8 can come from VOTable attribute 'precision' later on.
+                        }
                     }
                     dg.add(row);
                 }

@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.table.io;
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
@@ -99,7 +98,7 @@ public class DsvTableIO {
                 printer.println();
 
                 for (DataObject row : data.values()) {
-                    for (String s : row.getFormatedData()) {
+                    for (String s : row.getFormattedData(true)) {
                         printer.print(s.trim());
                     }
                     printer.println();
@@ -126,7 +125,6 @@ public class DsvTableIO {
                     if (!type.isKnownType()) {
                         IpacTableUtil.guessDataType(type,val);
                     }
-                    row.setFixedFormattedData(type,val);
                     row.setDataElement(type, type.convertStringToData(val));
 
                     if (type.getFormat() == null) {

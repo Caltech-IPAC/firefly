@@ -31,7 +31,11 @@ const filterStyle = {width: '100%', boxSizing: 'border-box'};
 /*---------------------------- COLUMN HEADER RENDERERS ----------------------------*/
 
 function SortSymbol({sortDir}) {
-    return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
+    return (
+        <div style={{marginLeft: 2}}>
+            <img style={{verticalAlign: 'middle'}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>
+        </div>
+    );
 };
 
 export class HeaderCell extends PureComponent {
@@ -51,9 +55,11 @@ export class HeaderCell extends PureComponent {
         const onClick = toBoolean(sortable, true) ?(() => onSort(sortCol)) : undefined;
         return (
             <div style={style} title={cdesc} className='TablePanel__header'>
-                <div style={{height: '100%'}} className='clickable' onClick={onClick}>
-                    <div>
-                        {label || name}
+                <div style={{height: '100%', width: '100%'}} className='clickable' onClick={onClick}>
+                    <div style={{display: 'inline-flex', width: '100%', justifyContent: 'center'}}>
+                        <div style={{textOverflow: 'ellipsis', overflow: 'hidden'}}>
+                            {label || name}
+                        </div>
                         { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
                     </div>
                     {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}

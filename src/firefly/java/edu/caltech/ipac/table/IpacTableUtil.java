@@ -242,7 +242,7 @@ public class IpacTableUtil {
             String v = row.getFixedFormatedData(dt);
             // when writing out the IPAC table.. if ROWID is given, and data is not found. use the getRowId() value instead.
             if (v == null && dt.getKeyName().equals(DataGroup.ROW_IDX)) {
-                v = dt.formatData(row.getRowNum(), true);
+                v = dt.formatFixedWidth(row.getRowNum());
             }
             writer.print(" " + v);
         }

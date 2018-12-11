@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.table;
 
-import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 
 import java.io.Serializable;
@@ -61,7 +60,7 @@ public class DataObject implements Serializable, Cloneable {
      */
     public Object[] getData() {
         if (rowData != null) {
-            return rowData.values().toArray(new Object[rowData.size()]);
+            return rowData.values().toArray(new Object[0]);
         } else {
             Object[] rval = new Object[group.getDataDefinitions().length];
             DataType[] cols = group.getDataDefinitions();
@@ -72,33 +71,22 @@ public class DataObject implements Serializable, Cloneable {
         }
     }
 
-    public void setFixedFormattedData(DataType fdt, String val) {
-        //todo
-    }
-
     public String getFixedFormatedData(DataType dt) {
-        String val = getFormatedData(dt);
-        int w = dt.getMaxDataWidth();
-        if (val.length() != w) val = dt.fitValueInto(val, w, dt.isNumeric());
-        return val;
+        return dt.formatFixedWidth(getDataElement(dt));
     }
 
     /**
-     * Returns a view of the data formated according to it format info.
-     *
-     * @return a view of the data.
+     * @param replaceCtrl true to replace control charters.  Use this when writing out into format where multiline row is not supported, like csv and ipac table.
+     * @return this row of data as strings, formatted according to its column's info.
      */
-    public String[] getFormatedData() {
-        DataType[] cols = group.getDataDefinitions();
-        Object[] vals = getData();
-        for (int i=0; i<vals.length; i++) {
-            vals[i] = cols[i].formatData(vals[i]);
-        }
-        return Arrays.stream(vals).toArray(String[]::new);
+    public String[] getFormattedData(boolean replaceCtrl) {
+        return Arrays.stream(group.getDataDefinitions())
+                .map(dt -> dt.format(getDataElement(dt), replaceCtrl))
+                .toArray(String[]::new);
     }
 
-    public String getFormatedData(DataType dt) {
-        return dt.formatData(getDataElement(dt), true);
+    public String[] getFormattedData() {
+        return getFormattedData(false);
     }
 
     public Object getDataElement(DataType fdt) {

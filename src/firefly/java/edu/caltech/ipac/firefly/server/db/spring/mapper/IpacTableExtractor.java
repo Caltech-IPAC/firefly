@@ -185,10 +185,10 @@ public class IpacTableExtractor {
             DataType dt = headers.get(i);
             try {
                 Object obj = rs.getObject(dt.getKeyName());
-                writer.print(" " + dt.formatData(obj, true));
+                writer.print(" " + dt.format(obj, true));
             } catch (SQLException e) {
                 LOG.warn(e, "SQLException at col:" + headers.get(i).getKeyName());
-                writer.print(" " + dt.formatData("#ERROR#"));
+                writer.print(" " + dt.format("#ERROR#"));
             }
         }
         writer.println();
