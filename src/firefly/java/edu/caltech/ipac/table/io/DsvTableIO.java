@@ -98,7 +98,7 @@ public class DsvTableIO {
                 printer.println();
 
                 for (DataObject row : data.values()) {
-                    for (String s : row.getFormattedData()) {
+                    for (String s : row.getFormattedData(true)) {
                         printer.print(s.trim());
                     }
                     printer.println();

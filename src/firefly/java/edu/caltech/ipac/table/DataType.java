@@ -337,11 +337,11 @@ public class DataType implements Serializable, Cloneable {
      * @return
      */
     public String format(Object value) {
-        return format(value, true);
+        return format(value, false);
     }
 
     public String formatFixedWidth(Object value) {
-        return fitValueInto(format(value), getWidth(), isNumeric());
+        return fitValueInto(format(value, true), getWidth(), isNumeric());
     }
 
     /**

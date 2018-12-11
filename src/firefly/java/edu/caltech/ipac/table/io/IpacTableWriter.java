@@ -108,7 +108,7 @@ public class IpacTableWriter {
             int maxWidth = Arrays.stream(headers).mapToInt(s -> s == null ? 0 : s.length()).max().getAsInt();
             for (int i=0; i<dataGroup.size(); i++) {
                 Object val = dataGroup.getData(dt.getKeyName(), i);
-                int dWidth = val == null ? 0 : dt.format(val).length();
+                int dWidth = val == null ? 0 : dt.format(val, true).length();
                 if (dWidth > maxWidth) maxWidth = dWidth;
             }
             dt.setWidth(maxWidth);

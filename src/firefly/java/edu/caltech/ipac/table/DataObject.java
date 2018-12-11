@@ -76,15 +76,17 @@ public class DataObject implements Serializable, Cloneable {
     }
 
     /**
+     * @param replaceCtrl true to replace control charters.  Use this when writing out into format where multiline row is not supported, like csv and ipac table.
      * @return this row of data as strings, formatted according to its column's info.
      */
-    public String[] getFormattedData() {
+    public String[] getFormattedData(boolean replaceCtrl) {
         return Arrays.stream(group.getDataDefinitions())
-                .map(dt -> getFormattedData(dt)).toArray(String[]::new);
+                .map(dt -> dt.format(getDataElement(dt), replaceCtrl))
+                .toArray(String[]::new);
     }
 
-    public String getFormattedData(DataType dt) {
-        return dt.format(getDataElement(dt));
+    public String[] getFormattedData() {
+        return getFormattedData(false);
     }
 
     public Object getDataElement(DataType fdt) {
