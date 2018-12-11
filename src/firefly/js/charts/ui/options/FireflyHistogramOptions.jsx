@@ -37,9 +37,9 @@ export class FireflyHistogramOptions extends SimpleComponent {
     }
 }
 
-export function submitChangesFFHistogram({chartId, activeTrace, fields, tbl_id}) {
+export function submitChangesFFHistogram({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
     const changes = histogramOptionsToChanges(activeTrace, fields, tbl_id);
-    submitChanges({chartId, fields: changes, tbl_id});
+    submitChanges({chartId, fields: changes, tbl_id, renderTreeId});
 }
 
 function histogramOptionsToChanges(activeTrace, fields, tbl_id) {

@@ -12,7 +12,7 @@ export function reducer(state, action) {
 
     switch (action.type) {
         case Cntlr.API_TOOLS_VIEW  :
-            return clone(state,{apiToolsView:action.payload.apiToolsView});
+            return clone(state,{apiToolsView:action.payload.apiToolsView, useFloatToolbar: action.payload.useFloatToolbar});
 
         case Cntlr.CHANGE_ACTIVE_PLOT_VIEW:
             return changeActivePlotView(state,action);

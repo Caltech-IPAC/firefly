@@ -190,10 +190,10 @@ export function makePlotHiPSAction(rawAction) {
     return (dispatcher) => {
 
         const {payload}= rawAction;
-        const {plotId, attributes, pvOptions}= payload;
+        const {plotId, attributes, pvOptions, renderTreeId}= payload;
         const wpRequest= ensureWPR(payload.wpRequest);
 
-        const newPayload= clone(payload, {wpRequest, plotType:'hips', wpRequestAry:[wpRequest]});
+        const newPayload= clone(payload, {wpRequest, plotType:'hips', wpRequestAry:[wpRequest], renderTreeId});
         newPayload.viewerId= determineViewerId(payload.viewerId, plotId);
         const hipsImageConversion= getHipsImageConversion(payload.hipsImageConversion);
         if (hipsImageConversion) newPayload.pvOptions= clone(pvOptions, {hipsImageConversion});
@@ -347,7 +347,7 @@ export function makeImageOrHiPSAction(rawAction) {
         if (!validateHipsAndImage(imageRequest, hipsRequest, payload.fovDegFallOver)) return;
 
 
-        const {plotId, fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom,
+        const {plotId, fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, renderTreeId,
                 pvOptions, attributes, plotAllSkyFirst=false}= payload;
         const viewerId= determineViewerId(payload.viewerId, plotId);
         const size= getSizeInDeg(imageRequest, hipsRequest);
@@ -372,10 +372,10 @@ export function makeImageOrHiPSAction(rawAction) {
         wpRequest.setPlotGroupId(groupId);
 
         if (useImage) {
-            dispatchPlotImage({plotId, wpRequest, viewerId, hipsImageConversion, pvOptions, attributes});
+            dispatchPlotImage({plotId, wpRequest, viewerId, hipsImageConversion, pvOptions, attributes, renderTreeId});
         }
         else {
-            dispatchPlotHiPS({plotId, wpRequest, viewerId, hipsImageConversion, pvOptions, attributes});
+            dispatchPlotHiPS({plotId, wpRequest, viewerId, hipsImageConversion, pvOptions, attributes, renderTreeId});
         }
     };
 }

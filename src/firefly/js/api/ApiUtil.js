@@ -26,7 +26,7 @@ export {ServerParams} from  '../data/ServerParams.js';
 
 export {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 
-export {getVersion} from '../Firefly.js';
+export {startAsAppFromApi, getVersion} from '../Firefly.js';
 
 /**
  * show a debug message if debugging is enabled
@@ -64,7 +64,6 @@ export function renderDOM(div, Component, props) {
 
     ReactDOM.render(renderStuff,divElement);
 }
-
 
 /**
  *

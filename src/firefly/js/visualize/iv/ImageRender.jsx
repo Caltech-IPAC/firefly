@@ -50,6 +50,14 @@ export class ImageRender extends Component {
         };
     }
 
+    componentWillUpdate(np,ns) {
+        this.tileDrawer= null;
+        this.drawInit= (canvas) => {
+            const {plot, opacity,plotView, tileAttributes, shouldProcess=false, processor}= np;
+            this.tileDrawer= initTileDrawer(canvas, plot);
+            this.tileDrawer(plot, opacity,plotView, {tileAttributes, shouldProcess, processor} );
+        };
+    }
 
     shouldComponentUpdate(np,ns) {
         const {props}= this;

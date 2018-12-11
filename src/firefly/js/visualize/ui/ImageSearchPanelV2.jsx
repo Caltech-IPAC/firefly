@@ -76,15 +76,20 @@ export const genHiPSPlotId = getHiPSPlotId();
  * returns the context information
  * @returns {ContextInfo}
  */
-function getContexInfo() {
+function getContexInfo(renderTreeId) {
     const mvroot = getMultiViewRoot();
     let plotId = get(visRoot(), 'activePlotId');
     let viewerId = plotId && findViewerWithItemId(mvroot, plotId, IMAGE);
     let viewer = viewerId && getViewer(mvroot, viewerId);
 
+    if (viewer && renderTreeId && viewer.renderTreeId && renderTreeId!==viewer.renderTreeId) {
+        viewer = getAViewFromMultiView(mvroot, IMAGE, renderTreeId);
+        viewerId= viewer.viewerId;
+    }
+
     if (!viewer || canNotUpdatePlot(viewer)) {
         // viewer does not exists or cannot be updated, find another one that can.
-        viewer = getAViewFromMultiView(mvroot, IMAGE);
+        viewer = getAViewFromMultiView(mvroot, IMAGE, renderTreeId);
         viewerId =  viewer && viewer.viewerId;
     }
     if (canAddNewPlot(viewer)) {
@@ -122,11 +127,15 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
     );
 }
 
-export function ImageSearchDropDown({gridSupport, resizable=true}) {
-    const {plotId, viewerId, multiSelect} = getContexInfo();
-    const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport});
+export function ImageSearchDropDown({gridSupport, resizable=true}, {renderTreeId}) {
+    const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId);
+    const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport, renderTreeId});
     return <ImageSearchPanel {...{resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown}}/>;
 }
+
+ImageSearchDropDown.contextTypes= {renderTreeId: PropTypes.string};
+
+
 function GridSupport() {
     return (
         <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
@@ -144,11 +153,11 @@ function GridSupport() {
 /* search panel used in pop-up                                                             */
 /*-----------------------------------------------------------------------------------------*/
 const popupId = 'ImageSelectPopup';
-export function showImageSelPanel(popTitle) {
-    const {plotId, viewerId, multiSelect} = getContexInfo();
+export function showImageSelPanel(popTitle, renderTreeId) {
+    const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId);
 
     const onSubmit = (request) => {
-        onSearchSubmit({request, plotId, viewerId}) && dispatchHideDialog(popupId);
+        onSearchSubmit({request, plotId, viewerId, renderTreeId}) && dispatchHideDialog(popupId);
     };
     const onCancel = () => dispatchHideDialog(popupId);
 
@@ -462,13 +471,13 @@ function mainReducer(inFields, action) {
     return inFields;
 }
 
-function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId}) {
+function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId, renderTreeId}) {
     const validInfo= validateInput(request);
     if (!validInfo.valid)  {
         showInfoPopup(validInfo.message);
         return false;
     }
-    doImageSearch({imageMasterData, request, gridSupport, plotId, plotGroupId, viewerId});
+    doImageSearch({imageMasterData, request, gridSupport, plotId, plotGroupId, viewerId, renderTreeId});
     return true;
 }
 
@@ -565,7 +574,7 @@ function validateInput(allFields) {
 //------------------------------------------------------------------
 //------ The code below should work in the final product
 //------------------------------------------------------------------
-function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId}) {
+function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId, renderTreeId}) {
 
     if (plotId) {
         plotGroupId = getPlotViewById(visRoot(), plotId).plotGroupId;
@@ -611,11 +620,11 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
                 wpSet.push(wprs[0]);
             } else { wpSet.push(undefined); }
         });
-        dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId});
+        dispatchPlotImage({threeColor:true, wpRequest: wpSet, viewerId, renderTreeId});
 
     } else {                       // single channel
         const wprs = makeWebPlotRequests(get(request, FG_KEYS.single), imageMasterData, plotId, plotGroupId);
-        wprs.forEach( (r) => dispatchPlotImage({wpRequest:r, viewerId}));
+        wprs.forEach( (r) => dispatchPlotImage({wpRequest:r, viewerId,renderTreeId}));
     }
 }
 

@@ -160,7 +160,7 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
     );
 }
 
-export function submitChangesHeatmap({chartId, activeTrace, fields, tbl_id}) {
+export function submitChangesHeatmap({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
     const dataType = (!tbl_id) ? 'heatmap' : 'fireflyHeatmap';
     const changes = {
         [`data.${activeTrace}.type`] : 'heatmap',
@@ -172,6 +172,6 @@ export function submitChangesHeatmap({chartId, activeTrace, fields, tbl_id}) {
     // reversescale is boolean
     changes[`data.${activeTrace}.reversescale`] = toBoolean(get(fields, `data.${activeTrace}.reversescale`));
 
-    submitChanges({chartId, fields: changes, tbl_id});
+    submitChanges({chartId, fields: changes, tbl_id, renderTreeId});
 }
 

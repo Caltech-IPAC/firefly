@@ -62,7 +62,7 @@ export function getNewTraceType() {
     return getFieldVal('new-trace', 'type') || 'scatter';
 }
 
-export function addNewTrace({chartId, tbl_id, fields, hideDialog}) {
+export function addNewTrace({chartId, tbl_id, fields, hideDialog, renderTreeId}) {
     const type = getNewTraceType();
     const submitChangesFunc =  getSubmitChangesFunc(type);
     const data = get(getChartData(chartId), 'data', []);
@@ -78,7 +78,7 @@ export function addNewTrace({chartId, tbl_id, fields, hideDialog}) {
     // need to hide before the changes are submitted to avoid React Internal error:
     //    too much recursion (mounting/unmouting fields)
     hideDialog();
-    submitChangesFunc({chartId, activeTrace, fields, tbl_id});
+    submitChangesFunc({chartId, activeTrace, fields, tbl_id, renderTreeId});
 }
 
 export class NewTracePanel extends SimpleComponent {

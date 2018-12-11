@@ -40,7 +40,8 @@ export function zoomActionCreator(rawAction) {
         actionScope= ActionScope.get(actionScope);
         let visRoot= getState()[IMAGE_PLOT_KEY];
         const pv= getPlotViewById(visRoot,plotId);
-        if (!pv) return;
+        const plot= primePlot(pv);
+        if (!plot) return;
 
 
         const {level, isFullScreen, useDelay, validParams}=
@@ -54,7 +55,6 @@ export function zoomActionCreator(rawAction) {
 
 
 
-        const plot= primePlot(pv);
         let zoomActive= true;
         if (isImage(plot) && Math.floor(plot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
             if (isFitFill(userZoomType)) dispatchRecenter({plotId, centerOnImage:true});
