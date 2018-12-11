@@ -399,9 +399,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return resultsFile;
     }
 
-    public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-        SearchProcessor.prepareTableMetaDef(defaults, columns, request);
-    }
+    public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {}
 
     public void prepareAttributes(int rows, BufferedWriter writer, ServerRequest sr) throws IOException {
     }
