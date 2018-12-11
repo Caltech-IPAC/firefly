@@ -10,7 +10,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getTblInfoById, getTblById, calcColumnWidths, getColumnIdx} from '../../tables/TableUtil.js';
-import {makeTblRequest} from '../../tables/TableRequestUtil.js';
+import {makeTblRequest, makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {dispatchTableSearch, dispatchTableRemove} from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
@@ -724,12 +724,14 @@ const tableTitle = (displayValue, uploadTabs) => {
  */
 function sendTableRequest(fileCacheKey, fName, idx, extMap, totalRows) {
     const title = !isNil(idx)&&!isNil(totalRows)&&(totalRows !== 1) ? `${fName}-${idx}` : `${fName}`;
+    /*
     const tblReq = makeTblRequest('userCatalogFromFile', title, {
         filePath: fileCacheKey
     });
+    */
+    const tblReq = makeFileRequest(title, fileCacheKey, null);
 
     if (!(isNil(idx))) {
-        //set(tblReq, 'tbl_index', extMap[idx]);
         set(tblReq, 'tbl_index', idx);
     }
 

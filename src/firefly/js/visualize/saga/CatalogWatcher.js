@@ -9,6 +9,7 @@ import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, getTableGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {getCenterColumns} from '../../tables/TableInfoUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById, getPlotViewById, getActivePlotView,   findCurrentCenterPoint} from '../PlotViewUtil.js';
@@ -129,7 +130,6 @@ function recenterImage(tbl) {
     }
 }
 
-//todo - this fucntion should start using TableInfoUtil.getCenterColumns
 function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
 
@@ -137,12 +137,9 @@ function handleCatalogUpdate(tbl_id) {
     const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo, title}= sourceTable;
     const maxScatterRows = getMaxScatterRows();
 
-
-
     if (!totalRows ||
-        !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] ||
-        (!tableMeta[MetaConst.CATALOG_COORD_COLS] && !tableMeta[MetaConst.CENTER_COLUMN])) {
-        return; 
+        !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) {
+        return;
     }
 
     const {ignoreTables}=  getDlRoot();
@@ -150,17 +147,9 @@ function handleCatalogUpdate(tbl_id) {
         return;
     }
 
-    const cenData= tableMeta[MetaConst.CATALOG_COORD_COLS] || tableMeta[MetaConst.CENTER_COLUMN];
+    const columns= getCenterColumns(sourceTable);
 
-    var s;
-    if (cenData) s= cenData.split(';');
-    if (!s || s.length!== 3) return;
-
-    const columns= {
-        lonCol: s[0],
-        latCol: s[1],
-        csys : CoordinateSys.parse(s[2])
-    };
+    if (!columns) return;
 
     if (!tableData.columns.find( isCName(columns.lonCol)) && !tableData.columns.find(isCName(columns.latCol))) {
         return;

@@ -116,7 +116,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                 throw new DataAccessException("Error getting phase from "+baseJobUrl+" "+status.getErrMsg());
             }
             try {
-                return Phase.valueOf(phase.toString());
+                return Phase.valueOf(phase.toString().trim());
             } catch (Exception e) {
                 logger.error("Unknown phase \""+phase.toString()+"\" from service "+baseJobUrl);
                 return Phase.UNKNOWN;

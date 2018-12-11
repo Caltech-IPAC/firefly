@@ -70,7 +70,7 @@ const tapServices = [
     },
     {
         label: 'MAST http://vao.stsci.edu/CAOMTAP/TapService.aspx',
-        value: 'http://atoavo.atnf.csiro.au/tap',
+        value: 'http://vao.stsci.edu/CAOMTAP/TapService.aspx',
         query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
     },
     {

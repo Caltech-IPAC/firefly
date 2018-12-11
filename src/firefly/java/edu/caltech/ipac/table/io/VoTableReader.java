@@ -653,8 +653,9 @@ public class VoTableReader {
             }
 
             // attribute utype
-            if (cinfo.getAuxDatum(VOStarTable.UTYPE_INFO) != null) {
-                dt.setRef(cinfo.getAuxDatum(VOStarTable.UTYPE_INFO).getValue().toString());
+            String utype = cinfo.getUtype();
+            if (utype != null) {
+                dt.setUType(utype);
             }
 
             // attribute ID

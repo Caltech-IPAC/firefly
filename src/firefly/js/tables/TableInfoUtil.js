@@ -5,6 +5,7 @@
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import {getColumn, getColumnIdx} from './TableUtil.js';
+import {findTableCenterColumns} from '../util/VOAnalyzer.js';
 
 
 export const DEF_CORNER_COLS= ['ra1;dec1', 'ra2;dec2', 'ra3;dec3', 'ra4;dec4'];
@@ -80,14 +81,20 @@ export function getCornersColumns(table) {
  */
 export function getCenterColumns(table) {
     if (!table) return null;
+
+    return findTableCenterColumns(table);
+
+    /*
     const {tableMeta:meta}= table;
     if (!meta) return null;
 
     if (meta[MetaConst.CENTER_COLUMN]) return makeCoordCol(meta[MetaConst.CENTER_COLUMN],table);
     if (meta[MetaConst.CATALOG_COORD_COLS]) return makeCoordCol(meta[MetaConst.CATALOG_COORD_COLS],table);
+
     const defCol= guessDefColumns(table);
 
     return makeCoordCol(defCol,table);
+    */
 }
 
 
