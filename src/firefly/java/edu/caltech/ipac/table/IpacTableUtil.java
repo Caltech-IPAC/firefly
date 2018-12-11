@@ -395,7 +395,7 @@ public class IpacTableUtil {
                         }
                     }
 
-                    row.setDataElement(dt, dt.convertStringToData(val, true));
+                    row.setDataElement(dt, dt.convertStringToData(val));
 
                     offset = endoffset;
                 }

@@ -234,57 +234,38 @@ public class FitsReadUtil {
     private static void insertPositionIntoHeader(Header header, int pos, long hduOffset) throws FitsException {
         if (hduOffset<0) hduOffset= 0;
         if (pos<0) pos= 0;
+        int bitpix = header.getIntValue("BITPIX", -1);
         header.addLine(new HeaderCard( "SPOT_HS", header.getOriginalSize(), "Header block size on disk (added by Firefly)"));
         header.addLine(new HeaderCard( "SPOT_EXT", pos, "Extension Number (added by Firefly)"));
         header.addLine(new HeaderCard( "SPOT_OFF", hduOffset, "Extension Offset (added by Firefly)"));
+        header.addLine(new HeaderCard( "SPOT_BP", bitpix, "Original Bixpix value (added by Firefly)"));
         header.resetOriginalSize();
     }
 
     
 
-    private static BasicHDU[] splitFitsCube(BasicHDU inHdu)
-            throws FitsException {
+    private static BasicHDU[] splitFitsCube(BasicHDU inHdu) throws FitsException {
 
-        ImageHDU hdu = (inHdu instanceof ImageHDU) ? (ImageHDU) inHdu : ((CompressedImageHDU) inHdu).asImageHDU();
-
-        Header header = hdu.getHeader();
-        int bitpix = header.getIntValue("BITPIX", -1);
-        int naxis3 = header.getIntValue("NAXIS3", 0);
+        ImageHDU hdu = (inHdu instanceof ImageHDU) ? (ImageHDU) inHdu : ((CompressedImageHDU) inHdu).asImageHDU();  // if we have to uncompress a cube it could take a long time
         float[][][] data32 = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
 
-        BasicHDU[] hduList = new BasicHDU[naxis3];
-        for (int i = 0; i < naxis3; i++) {
+        BasicHDU[] hduList = new BasicHDU[hdu.getHeader().getIntValue("NAXIS3", 0)];
+        for (int i = 0; i < hduList.length; i++) {
             hduList[i] = makeHDU(hdu,data32[i] );
-            hdu.addValue("SPOT_PL", i + 1, "Plane of FITS cube (added by Firefly)");
-            String ctype3=  header.getStringValue("CTYPE3");
-            ctype3= ctype3!=null ? ctype3.toUpperCase() : "";
-            if (ctype3.startsWith("WAVE")|| ctype3.startsWith("AWAV")  ){ //if third axis is wavelength, add the z coordinate to the header
-                hdu.addValue("zPixel", i, "The coordinate value in the third axis");
-            }
-
-            hdu.getHeader().resetOriginalSize();
+            hduList[i].addValue("SPOT_PL", i, "Plane of FITS cube (added by Firefly)");
+            hduList[i].getHeader().resetOriginalSize();
         }
-
         return hduList;
     }
 
     private static boolean isImageGood(Header aHeader) {
-
         int naxis = aHeader.getIntValue("NAXIS", -1);
-        boolean goodImage = true;
-        if (naxis == 0) {
-            goodImage = false;
-        } else {
-            for (int i = 1; i <= naxis; i++) {
-                int naxisValue = aHeader.getIntValue("NAXIS" + i, -1);
-
-                if (naxisValue == 0) {
-                    goodImage = false;
-                    break;
-                }
-            }
+        if (naxis == 0) return false;
+        for (int i = 1; i <= Math.max(naxis,2); i++) {
+            int naxisValue = aHeader.getIntValue("NAXIS" + i, 0);
+            if (naxisValue == 0) return false;
         }
-        return goodImage;
+        return true;
     }
 
     /**

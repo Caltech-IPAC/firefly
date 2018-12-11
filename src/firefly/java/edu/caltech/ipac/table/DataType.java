@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringEscapeUtils.escapeJava;
-import static org.apache.commons.lang.StringEscapeUtils.unescapeJava;
+
 
 public class DataType implements Serializable, Cloneable {
 
@@ -294,16 +293,16 @@ public class DataType implements Serializable, Cloneable {
      *                When T is G, n is the number of significant digits
      *
      * @param value         the value to be formatted
-     * @param useEscape     apply Java escaping to all strings to take care of control characters and quotes
+     * @param replaceCtrl     replace control characters in strings with a replacement character
      * @return
      */
-    public String format(Object value, boolean useEscape) {
+    public String format(Object value, boolean replaceCtrl) {
         if (value == null) {
             return getNullString() == null ? "" : getNullString();
         }
         // do escaping if requested
-        if (useEscape && type == String.class) {
-            value = escapeJava((String)value);
+        if (replaceCtrl && type == String.class) {
+            value = replaceCtrl((String)value);
         }
 
         if (!isEmpty(getFmtDisp())) {
@@ -408,23 +407,14 @@ public class DataType implements Serializable, Cloneable {
         );
     }
 
-    public Object convertStringToData(String s) {
-        return convertStringToData(s, false);
-    }
-
     /**
      * Convert a string into an object
      * @param s string representation of an object
-     * @param useUnescape - if true Java unescaping is applied to all strings
      * @return an object
      */
-    public Object convertStringToData(String s, boolean useUnescape) {
+    public Object convertStringToData(String s) {
         if (s == null || s.length() == 0 || s.equalsIgnoreCase("null")) return null;
         if (nullString != null && nullString.equals(s)) return null;
-
-        if (useUnescape && type==String.class) {
-            return unescapeJava(s);
-        }
 
         Object retval= s;
         try {
@@ -432,7 +422,7 @@ public class DataType implements Serializable, Cloneable {
                  retval= Boolean.valueOf(s);
              }
              else if (type ==String.class) {
-                 retval= useUnescape ? unescapeJava(s) : s;
+                 retval= s;
              }
              else if (type ==Double.class) {
                  retval= new Double(s);
@@ -455,8 +445,6 @@ public class DataType implements Serializable, Cloneable {
              else if (type ==HREF.class) {
                  retval = HREF.parseHREF(s);
              }
-        } catch (NumberFormatException e) {
-            retval= null;
         } catch (IllegalArgumentException iae) {
             retval = null;
         }
@@ -544,4 +532,16 @@ public class DataType implements Serializable, Cloneable {
         links.addAll(vals);
     }
 
+    private static final int REPLACEMENT_CODE_POINT = 0xbf; // 191 in LATIN-1
+
+    /**
+     * Faster version of s.replaceAll("\\p{Cntrl}", Character.toChars(REPLACEMENT_CODE_POINT))
+     * @param s input string
+     * @return a string with control characters replaced
+     */
+    private static String replaceCtrl(String s) {
+        if (s == null) { return null; }
+        return s.codePoints().map(c->(c>0x1F&&c!=0x7F?c:REPLACEMENT_CODE_POINT))
+                .collect(StringBuilder::new,StringBuilder::appendCodePoint, StringBuilder::append).toString();
+    }
 }

@@ -29,16 +29,16 @@ Firefly has implemented “Excel-like” tables on the webpage. In an easy, inte
 Firefly provides a first-class FITS visualization on the Web without any plugins. All of the significant components you would expect to see in a basic desktop FITS application are available with data that Firefly displays. The FITS visualizer allows for plotting any table data with Lon(RA) and Lat(Dec). Therefore, users can overlay multiple catalogs over their FITS image and interact with it.
 
 #### 2D Graphs
-Firefly shows 2D graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define expressions from the columns for the XY Plot, such as (col1*col2/tan(col3)). Table based charts share their data model with the table, so both table and chart can trigger or respond to the common events, such as filtering of the data. Firefly also supports histogram and heatmap graph. 
+Firefly shows 2D graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define expressions from the columns for the XY Plot, such as (col1*col2/tan(col3)). Table based charts share their data model with the table, so both table and chart can trigger or respond to the common events, such as filtering of the data. Firefly also supports histogram and heatmap graph.
 
 
 ## Branches
 There are several branches the this repository.  Here are the ones that you should care about.
 
- - rc: the next release canidate branch.  This is the most stable branch. 
- - master: Update once a week.  Used for our relatively stable, weekly build. 
+ - rc: the next release canidate branch.  This is the most stable branch.
+ - master: Update once a week.  Used for our relatively stable, weekly build.
  - dev: this branch could be updated every day. It is the active development branch. It is not stable.
- - DM-xxx, IRSA-xxx : Those branches are temporary for development feature branches. 
+ - DM-xxx, IRSA-xxx : Those branches are temporary for development feature branches.
 
 
 ## Setup
@@ -79,9 +79,9 @@ You may include this jar into your project to build advanced astronomy web appli
 In a terminal, cd into the `firefly` directory, then run:
 
     $ gradle :firefly:war
-    
+
 To include the API documentation and tutorial into the war archive run:
-    
+
     $ gradle :firefly:warAll    
 
 This generates firefly.war located at ./build/dist/.
@@ -114,3 +114,5 @@ See [firefly-environment.md](docs/firefly-environment.md)
 ####Adding external task launcher or Python Launcher to Firefly
 See [firefly-python-launcher.md](docs/firefly-external-task-launcher.md)
 
+####Release branches and tags
+See [tags-and-branches.md](docs/tags-and-branches.md)

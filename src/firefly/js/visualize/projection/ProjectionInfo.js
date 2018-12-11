@@ -324,6 +324,7 @@ export function parseSpacialHeaderInfo(header, altWcs='') {
 	/* now do Digital Sky Survey plate solution coefficients */
     if  (header['PLTRAH'+altWcs]) {
         p.maptype = PLATE;
+        p.imageCoordSys= findCoordSys( getJsys(p), p.file_equinox);
         p.rah = parse.getDoubleValue('PLTRAH'+altWcs,0);
         p.ram = parse.getDoubleValue('PLTRAM'+altWcs,0);
         p.ras = parse.getDoubleValue('PLTRAS'+altWcs,0);
@@ -436,6 +437,7 @@ export function makeDirectFileAccessData(header) {
     const dataOffset = parse.getIntValue('SPOT_OFF',0)+ parse.getIntValue('SPOT_HS',0);
     const planeNumber= parse.getIntValue('SPOT_PL',0);
     const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber};
+    miniHeader.bitpix= parse.getValue('SPOT_BP');
 
     if (parse.getValue(ORIGIN,'').startsWith(PALOMAR_ID)) {
         miniHeader[ORIGIN]= header[ORIGIN];

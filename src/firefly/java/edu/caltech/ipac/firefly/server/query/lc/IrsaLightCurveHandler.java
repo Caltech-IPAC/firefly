@@ -3,6 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -22,6 +28,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+
+import static edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest.LC_FILE;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 
 /**
@@ -52,8 +61,11 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
 
     public DataGroup getPeriodogramTable(PeriodogramAPIRequest request) {
 
-        return getDataFromAPI(request, RESULT_TABLES_IDX.PERIODOGRAM);
+        // handle case when 'getLcSource' is a JSON TableServerRequest
+        applyIfNotEmpty(getSourceFileFromJsonReqest(request), f -> request.setParam(LC_FILE, f.getPath()));
 
+
+        return getDataFromAPI(request, RESULT_TABLES_IDX.PERIODOGRAM);
     }
 
 
@@ -61,6 +73,9 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
      * @return peaks table (default: 50 rows)
      */
     public DataGroup getPeaksTable(PeriodogramAPIRequest request) {
+
+        // handle case when 'getLcSource' is a JSON TableServerRequest
+        applyIfNotEmpty(getSourceFileFromJsonReqest(request), f -> request.setParam(LC_FILE, f.getPath()));
 
         return getDataFromAPI(request, RESULT_TABLES_IDX.PEAKS);
     }
@@ -207,4 +222,18 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         }
         return inf;
     }
+
+    File getSourceFileFromJsonReqest(TableServerRequest request) {
+        TableServerRequest tsr = QueryUtil.convertToServerRequest(request.getParam(LC_FILE));
+        if (!tsr.getRequestId().equals(ServerRequest.ID_NOT_DEFINED)) {
+            try {
+                FileInfo fi = new SearchManager().getFileInfo(tsr);
+                return fi.getFile();
+            } catch (DataAccessException e) {
+                LOG.error(e);
+            }
+        }
+        return null;
+    }
+
 }
