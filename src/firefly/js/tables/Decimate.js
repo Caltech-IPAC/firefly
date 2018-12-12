@@ -8,7 +8,7 @@
  * Decimation allows to reduce the number of the points to be plotted.
  */
 
-const DECIMATE_TAG='decimate';
+export const DECIMATE_TAG='decimate';
 
 
 /*

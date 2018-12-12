@@ -13,6 +13,7 @@ import {colorscaleNameToVal, OneColorSequentialCS, PlotlyCS} from '../Colorscale
 import {cloneRequest} from '../../tables/TableRequestUtil.js';
 import {COL_TYPE, getColumns} from '../../tables/TableUtil.js';
 import {getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
+import {DECIMATE_TAG} from '../../tables/Decimate.js';
 
 /**
  * This function creates table source entries to get firefly scatter and error data from the server
@@ -26,7 +27,7 @@ import {getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     const {mappings} = traceTS;
 
-    if (!mappings) return {}; 
+    if (!mappings) return {};
 
     const {fireflyData, fireflyLayout} = getChartData(chartId) || {};
     // server call parameters
@@ -194,7 +195,7 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
     };
 
     const chartData = getChartData(chartId);
-    const {layout, data} = chartData;
+    const {layout, data, fireflyData} = chartData;
 
     // check for scatter represented by heatmap
     if (isScatter2d(get(data, `${traceNum}.type`, 'scatter'))) {
@@ -265,6 +266,20 @@ function getChanges({tableModel, tablesource, chartId, traceNum}) {
             addColorbarLengthChanges(changes, yOpposite, nbars, traceNum, cnt);
         }
     }
+
+    // update xbins or ybins in fireflyData
+    ['x', 'y'].forEach((axis) => {
+        const metaKey = `${DECIMATE_TAG}.${axis.toUpperCase()}BINS`;
+
+        if (tableMeta[metaKey]) {
+            const binPath = `${traceNum}.nbins.${axis}`;
+
+            if (get(fireflyData, binPath) !== tableMeta[metaKey]) {
+                changes[`fireflyData.${binPath}`] = tableMeta[metaKey];
+            }
+        }
+    });
+
 
     return changes;
 }
