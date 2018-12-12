@@ -24,7 +24,7 @@ import java.util.List;
 class SpectralCubeEval implements FitsEvaluation.Eval {
     @Override
     public List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req) {
-        if (!req.getBooleanParam("SpectralCube")) return null;
+        if (req!=null && !req.getBooleanParam("SpectralCube")) return null;
         // do spectral cube processing here
         // todo Convert FitsCube to work in this environment
         return null;
