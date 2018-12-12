@@ -74,13 +74,13 @@ export class VisInlineToolbarView extends PureComponent {
 
         return (
             <div style={rS}>
-                <LayerButton pv={pv} dlCount={dlAry.length} visible={showLayer && showExpand}/>
+                <LayerButton pv={pv} dlCount={dlAry.length} visible={Boolean(showLayer && showExpand)}/>
 
                 <ToolbarButton icon={WRENCH}
                                tip='Show tools'
                                additionalStyle={{alignSelf:'flex-start'}}
                                horizontal={true}
-                               visible={showToolbarButton && showExpand}
+                               visible={Boolean(showToolbarButton && showExpand)}
                                onClick={showTools}/>
                 {help_id && <div style={{marginRight: 20}}><HelpIcon helpId={help_id}/></div>}
                 <ToolbarButton icon={expandGrid? GRID_EXPAND : OUTLINE_EXPAND}
