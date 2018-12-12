@@ -28,6 +28,7 @@
     min-height: 25px;
     width: 100%;
     position: relative;
+    flex-shrink: 0;
 }
 
 .DD-ToolBar__version {
