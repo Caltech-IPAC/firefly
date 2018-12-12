@@ -214,5 +214,22 @@ public class TableUtil {
         Format(CSVFormat type) {this.type = type;}
     }
 
+    public static class ColCheckInfo {
+        HashMap<String, CheckInfo> colCheckInfos = new HashMap<>();  // keyed by column name
+
+        public CheckInfo getCheckInfo(String cname) {
+            CheckInfo checkInfo = colCheckInfos.get(cname);
+            if (checkInfo == null) {
+                checkInfo = new CheckInfo();
+                colCheckInfos.put(cname, checkInfo);
+            }
+            return checkInfo;
+        }
+    }
+
+    public static class CheckInfo {
+        public boolean formatChecked;              // indicates guess format logic has been performed
+        public boolean htmlChecked;                // indicates html content check has been performed
+    }
 }
 

@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -37,9 +39,9 @@ public class DataType implements Serializable, Cloneable {
     private static final String S_CHAR = "c";
     private static final String S_BOOL = "b";
     public static final String LONG_STRING = "long_string";
-    public static final List<String> NUMERIC_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, INTEGER, LONG, S_DOUBLE, S_REAL, S_FLOAT, S_INTEGER, S_LONG);
-    public static final List<String> REAL_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
-    public static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
+    private static final List<String> FLOATING_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
+    private static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
+    public static final List<String> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
     private static final Pattern precisiontPattern = Pattern.compile("([EFG]?)(\\d*)", Pattern.CASE_INSENSITIVE);
 
 
@@ -68,7 +70,8 @@ public class DataType implements Serializable, Cloneable {
     private       String maxValue = "";
     private       String minValue = "";
 
-    private transient Boolean isNumeric;        // cached to improve formatting performance.
+    private transient Boolean isFloatingPoint;      // cached to improve formatting performance.
+    private transient Boolean isWholeNumber;        // cached to improve formatting performance.
 
 
     public DataType(String keyName,
@@ -311,7 +314,7 @@ public class DataType implements Serializable, Cloneable {
         } else if (!isEmpty(getFormat())) {
             return String.format(getFormat(), value);
 
-        } else if (REAL_TYPES.contains(getTypeDesc())) {
+        } else if (FLOATING_TYPES.contains(getTypeDesc())) {
             // use precision
             String prec = getPrecision();
             if (isEmpty(prec)) {
@@ -353,11 +356,22 @@ public class DataType implements Serializable, Cloneable {
         return fitValueInto(val, getWidth(), false);
     }
 
-    boolean isNumeric() {
-        if (isNumeric == null) {
-            isNumeric = NUMERIC_TYPES.contains(typeDesc);
+    public boolean isNumeric() {
+        return isFloatingPoint() || isWholeNumber();
+    }
+
+    public boolean isFloatingPoint() {
+        if (isFloatingPoint == null) {
+            isFloatingPoint = FLOATING_TYPES.contains(typeDesc);
         }
-        return isNumeric;
+        return isFloatingPoint;
+    }
+
+    public boolean isWholeNumber() {
+        if (isWholeNumber == null) {
+            isWholeNumber = INT_TYPES.contains(typeDesc);
+        }
+        return isWholeNumber;
     }
 
     /**
@@ -379,19 +393,6 @@ public class DataType implements Serializable, Cloneable {
             StringUtils.Align align = isNumeric ? StringUtils.Align.RIGHT : StringUtils.Align.LEFT;
             return StringUtils.pad(width, value, align);
         }
-    }
-
-    public String getFormatStr(int precision) {
-        String fmtStr = "%s";
-        if (REAL_TYPES.contains(getTypeDesc())) {
-            if (precision <= 0) {
-                precision =  (StringUtils.areEqual(getUnits(), "rad")) ? 8 : 6;
-            }
-            fmtStr = "%." + precision + "f";
-        } else if (INT_TYPES.contains(getTypeDesc())) {
-            fmtStr = "%d";
-        }
-        return fmtStr;
     }
 
     public boolean isKnownType() {
@@ -503,7 +504,7 @@ public class DataType implements Serializable, Cloneable {
 
     public Object clone() throws CloneNotSupportedException {
         DataType rval = (DataType) super.clone();
-        rval.isNumeric = null;
+        rval.links = new ArrayList<>(links);
         return rval;
     }
 
