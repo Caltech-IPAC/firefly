@@ -787,6 +787,8 @@ public class QueryUtil {
                 retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit));
                 retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MIN", String.valueOf(minWeight));
                 retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MAX", String.valueOf(maxWeight));
+                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".XBINS", String.valueOf(nXs));
+                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".YBINS", String.valueOf(nYs));
 
                 java.util.Date endTime = new java.util.Date();
                 Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
