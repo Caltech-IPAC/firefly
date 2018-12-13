@@ -15,6 +15,7 @@ import {COL_TYPE, getColumns} from '../../tables/TableUtil.js';
 import {getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 import {DECIMATE_TAG} from '../../tables/Decimate.js';
 
+const DEFBINS = 100;
 /**
  * This function creates table source entries to get firefly scatter and error data from the server
  * (The search processor knows how to handle expressions and eliminates null x or y)
@@ -33,12 +34,11 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
     // server call parameters
     const xbins = get(fireflyData, `${traceNum}.nbins.x`);
     const ybins = get(fireflyData, `${traceNum}.nbins.y`);
-    let maxbins = 10000;
-    let xyratio = get(fireflyLayout, 'xyratio', 1.0);
-    if (xbins && ybins) {
-        maxbins = xbins * ybins;
-        xyratio = xbins/ybins;
-    }
+    const xNum = xbins ? Number(xbins) : DEFBINS;
+    const yNum = ybins ? Number(ybins) : DEFBINS;
+
+    const maxbins = xNum * yNum;
+    const xyratio = xNum/yNum;
 
     //should we take into account zoom?
     const xmin = get(fireflyLayout, 'xaxis.min');
