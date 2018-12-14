@@ -56,7 +56,8 @@
         }
 
         .label {
-
+            display: inline-flex;
+            justify-content: space-between;
         }
 
         #actual {
@@ -69,7 +70,7 @@
 
         .source {
             overflow: auto;
-            min-width: 125px;
+            min-width: 0;
         }
 
         .source-code, #source-code {
@@ -93,14 +94,14 @@
 
             const sourceEl = t.querySelector('.source').querySelector("#source-code");
             sourceEl.innerHTML = t_vars.script.textContent;
-            sourceEl.hidden = true;
 
             document.getElementById('container').appendChild(document.importNode(t, true));
+            document.getElementById("source-code-container").style.display = 'none';
             resizeIframe();
         };
 
         function showSource(flg) {
-            document.getElementById("source-code").hidden = !flg;
+            document.getElementById("source-code-container").style.display = flg ? 'block' : 'none';
         }
 
         function irsaviewer_init() {
@@ -140,12 +141,11 @@
             <div class="expected"></div>
         </div>
         <div class="item-box">
-            <div class="label">actual:</div>
+            <div class="label">actual:  <div>source: <a href="javascript:showSource(true)">show</a> <a href="javascript:showSource(false)">hide</a> </div> </div>
             <div class="actual"></div>
         </div>
         <div class="item-box">
-            <div class="label">source: <a href="javascript:showSource(true)">show</a> <a href="javascript:showSource(false)">hide</a> </div>
-            <div class="source">
+            <div id="source-code-container" class="source">
                 <div id="source-code">
             </div>
         </div>
