@@ -69,9 +69,10 @@
 
         .source {
             overflow: auto;
-            max-width: 600px;
+            min-width: 125px;
         }
-        .source-code {
+
+        .source-code, #source-code {
             font-family: monospace;
             white-space: pre;
             margin-left: -4em;
@@ -82,16 +83,24 @@
     <script  type="text/javascript">
 
         window.onload = function () {
-            var t = document.getElementById('test_template').content;
-            var t_vars = window.template;
+            const t = document.getElementById('test_template').content;
+            const t_vars = window.template;
             t.querySelector('.expected').appendChild(document.importNode(t_vars.expected, true));
             t.querySelector('.actual').appendChild(document.importNode(t_vars.actual, true));
-            t.querySelector('.source').getElementsByClassName("source-code")[0].innerHTML = t_vars.script.textContent;
             t.querySelector('.title').innerHTML = t_vars.title;
             t_vars.className && t.querySelector('.test-box').classList.add(t_vars.className);
             t.appendChild(document.importNode(t_vars.script, true));
+
+            const sourceEl = t.querySelector('.source').querySelector("#source-code");
+            sourceEl.innerHTML = t_vars.script.textContent;
+            sourceEl.hidden = true;
+
             document.getElementById('container').appendChild(document.importNode(t, true));
             resizeIframe();
+        };
+
+        function showSource(flg) {
+            document.getElementById("source-code").hidden = !flg;
         }
 
         function irsaviewer_init() {
@@ -135,9 +144,9 @@
             <div class="actual"></div>
         </div>
         <div class="item-box">
-            <div class="label">source:</div>
+            <div class="label">source: <a href="javascript:showSource(true)">show</a> <a href="javascript:showSource(false)">hide</a> </div>
             <div class="source">
-                <div class="source-code"/>
+                <div id="source-code">
             </div>
         </div>
     </div>

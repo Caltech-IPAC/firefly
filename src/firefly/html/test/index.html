@@ -31,27 +31,27 @@
     <script type="text/javascript">
 
         window.onload = function () {
-            var tests = document.getElementsByTagName('template');
+            const tests = document.getElementsByTagName('template');
             Object.values(tests).forEach(function(test) {
                 if (test.id !== 'test_template') {
-                    var c = test.content;
-                    var expected = c.querySelector('#expected');
-                    var actual = c.querySelector('#actual');
-                    var scpt = c.querySelector('script');
+                    const c = test.content;
+                    const expected = c.querySelector('#expected');
+                    const actual = c.querySelector('#actual');
+                    const scpt = c.querySelector('script');
 
                     renderTest(expected, actual, scpt, test.title, test.className);
                 }
             });
-        }
+        };
 
         function resizeIframe(obj) {
             obj.style.height = obj.contentWindow.document.body.scrollHeight + 20 + 'px';
         }
 
         function renderTest(expected, actual, script, title, className) {
-            var iframe = document.createElement('iframe');
+            const iframe = document.createElement('iframe');
             iframe.src = './template.html';
-            var idiv = document.createElement('div');
+            const idiv = document.createElement('div');
             idiv.className = "iframe-container";
             idiv.appendChild(iframe)
             document.getElementById('container').appendChild(idiv);
@@ -149,8 +149,7 @@ script:  script to run.  Try to keep it clean and easy to understand.
                   SearchMethod: "Cone",
                   radius: "0.00278",
                   providerName: "NED",
-                  accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&",
-                  DataTag:"firefly-NedSearch"
+                  accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
                 },
                 { sortInfo: "ASC,Object Name",
                   META_INFO: {"col.Type.FmtDisp": "abc-%s"}
@@ -174,7 +173,6 @@ script:  script to run.  Try to keep it clean and easy to understand.
             tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',
                 { serviceUrl: "http://gea.esac.esa.int/tap-server/tap",
                   QUERY: "SELECT TOP 3 * FROM gaiadr2.gaia_source",
-                  META_INFO: {DataTag:"firefly-AsyncTapQuery"},
                 });
 
             firefly.showTable('actual', tblReq);
