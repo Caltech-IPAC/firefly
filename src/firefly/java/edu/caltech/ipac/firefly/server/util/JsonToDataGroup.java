@@ -1,9 +1,8 @@
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -111,19 +110,11 @@ public class JsonToDataGroup {
                         for (Object value : (List)row) {
                             DataType type = columns.get(idx);
                             dObj.setDataElement(type,value);
-                            if (value != null && value.toString().length() > type.getMaxDataWidth()) {
-                                type.setMaxDataWidth(value.toString().length());
-                            }
-                            if (type.getFormatInfo().isDefault()) {
-                                IpacTableUtil.guessFormatInfo(type, value.toString());
-                            }
-
                             idx++;
                         }
                         dg.add(dObj);
                     }
                 }
-                dg.shrinkToFitData();
                 return dg;
             }
         }

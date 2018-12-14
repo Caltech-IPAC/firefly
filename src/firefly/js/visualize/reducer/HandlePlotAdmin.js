@@ -68,7 +68,7 @@ function changeActivePlotView(state,action) {
     const {plotId}= action.payload;
     if (plotId===state.activePlotId) return state;
     const prevActivePlotId= state.activePlotId;
-    if (!getPlotViewById(state,plotId)) return state;
+    if (plotId && !getPlotViewById(state,plotId)) return state;
 
     return clone(state, {prevActivePlotId, activePlotId:action.payload.plotId});
 }

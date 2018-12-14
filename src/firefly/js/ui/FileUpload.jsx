@@ -29,7 +29,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 type={isFromURL ? 'text' : 'file'}
                 label={label}
                 value={value}
-                tooltip={value}
+                tooltip={isFromURL ? 'enter a URL to upload from' : 'click to choose a file'}
                 labelWidth={labelW}
                 inline={true}
                 style={style}
@@ -47,11 +47,11 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 </div>
             );
         } else {
-            let fPos = {marginLeft: -150};
+            let fPos = {marginLeft: -150, width: '12em'};
 
             if (!isNil(fileNameStyle)) fPos = Object.assign(fPos, fileNameStyle);
             return (
-                fileName && <div style={{display:'inline-block', ...fPos}}>{fileName}</div>
+                fileName && <div style={{...fPos}} className='text-ellipsis' title={fileName}>{fileName}</div>
             );
         }
     };

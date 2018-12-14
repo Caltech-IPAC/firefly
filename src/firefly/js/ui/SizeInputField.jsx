@@ -86,10 +86,7 @@ function handleOnChange(ev, sizeInfo, params, fireValueChange) {
 const propTypes={
     label:       PropTypes.string,
     labelWidth:  PropTypes.number,
-    value:       PropTypes.string.required,
     unit:        PropTypes.string,
-    min:         PropTypes.number.isRequired,
-    max:         PropTypes.number.isRequired,
     showFeedback:    PropTypes.bool
 };
 

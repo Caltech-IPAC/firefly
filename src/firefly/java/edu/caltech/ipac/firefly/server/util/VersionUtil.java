@@ -8,6 +8,10 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.AppProperties;
 
 import javax.servlet.ServletContext;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 /**
  * User: roby
  * Date: May 15, 2009
@@ -20,17 +24,21 @@ import javax.servlet.ServletContext;
  */
 public class VersionUtil {
 
-    public static final String MAJOR = "BuildMajor";
-    public static final String MINOR = "BuildMinor";
-    public static final String REV = "BuildRev";
-    public static final String TYPE = "BuildType";
-    public static final String BUILD_NUMBER = "BuildNumber";
-    public static final String BUILD_DATE  ="BuildDate";
-    public static final String APP_NAME  ="AppName";
+    private static final String MAJOR = "BuildMajor";
+    private static final String MINOR = "BuildMinor";
+    private static final String REV = "BuildRev";
+    private static final String TYPE = "BuildType";
+    private static final String BUILD_NUMBER = "BuildNumber";
+    private static final String BUILD_DATE  ="BuildDate";
+    private static final String BUILD_TIME  ="BuildTime";
+    private static final String BUILD_TAG  ="BuildTag";
+    private static final String BUILD_COMMIT  ="BuildCommit";
+    private static final String BUILD_COMMIT_FIREFLY  ="BuildCommitFirefly";
+
+    private static final String VERSION_FILE = "version.tag";
 
     private static final Version _version= new Version();
-
-    public static boolean init= false;
+    private static boolean init= false;
 
     /**
      * Can be called multiple times but will only init the version on the first call.  All other
@@ -46,22 +54,26 @@ public class VersionUtil {
 
     public static void ingestVersion(ServletContext context) {
 
-        String appName= context.getInitParameter(APP_NAME);
-        String major = AppProperties.getProperty(MAJOR);
-        String minor = AppProperties.getProperty(MINOR);
-        String rev = AppProperties.getProperty(REV);
-        String type = AppProperties.getProperty(TYPE);
-        String buildNum = AppProperties.getProperty(BUILD_NUMBER);
-        String buildDate= AppProperties.getProperty(BUILD_DATE);
-
-        _version.setAppName(appName);
-        _version.setMajor(getNum(major));
-        _version.setMinor(getNum(minor));
-        _version.setRev(getNum(rev));
-        _version.setVersionType(Version.convertVersionType(type));
-        _version.setBuild(getNum(buildNum));
-        _version.setBuildDate(buildDate);
+        _version.setAppName(context.getServletContextName());
         _version.setConfigLastModTime(ServerContext.getConfigLastModTime());
+
+        File confDir = ServerContext.getWebappConfigDir();
+        Properties props = new Properties();
+        try {
+            props.load(new FileInputStream(new File(confDir, VERSION_FILE)));
+            _version.setMajor(getNum(props.getProperty(MAJOR)));
+            _version.setMinor(getNum(props.getProperty(MINOR)));
+            _version.setRev(getNum(props.getProperty(REV)));
+            _version.setVersionType(Version.convertVersionType(props.getProperty(TYPE)));
+            _version.setBuild(getNum(props.getProperty(BUILD_NUMBER)));
+            _version.setBuildDate(props.getProperty(BUILD_DATE));
+            _version.setBuildTime(props.getProperty(BUILD_TIME));
+            _version.setBuildTag(props.getProperty(BUILD_TAG));
+            _version.setBuildCommit(props.getProperty(BUILD_COMMIT));
+            _version.setBuildCommitFirefly(props.getProperty(BUILD_COMMIT_FIREFLY));
+        } catch (IOException e) {
+            // just ignore
+        }
     }
 
     public static Version getAppVersion() { return _version;  }

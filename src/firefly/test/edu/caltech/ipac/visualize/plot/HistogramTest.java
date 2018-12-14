@@ -2,6 +2,7 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -265,7 +266,7 @@ public class HistogramTest extends ConfigTest {
 
         String inFitsName = FileLoader.getDataPath(HistogramTest.class)+fileName;
         FitsRead fitsRead = FileLoader.loadFitsRead(HistogramTest.class, fileName);
-        ImageHeader imageHeader = fitsRead.getImageHeader();
+        ImageHeader imageHeader = new ImageHeader(fitsRead.getHeader());
         inData = fitsRead.getDataFloat();
 
         float[] float1d = new float[inData.length];
@@ -342,7 +343,7 @@ public class HistogramTest extends ConfigTest {
 
         String inFitsName = FileLoader.getDataPath(HistogramTest.class)+fileName;
         FitsRead fitsRead = FileLoader.loadFitsRead(HistogramTest.class, fileName);
-        ImageHeader imageHeader = fitsRead.getImageHeader();
+        ImageHeader imageHeader = new ImageHeader(fitsRead.getHeader());
         float[] inData = fitsRead.getDataFloat();
 
         float[] float1d = new float[inData.length];

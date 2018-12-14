@@ -1,15 +1,16 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.util.DataObjectUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,8 +48,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     };
     static {
         // set default precision to 14 significant digits
-        columns[1].getFormatInfo().setDataFormat("%.14e");
-        columns[2].getFormatInfo().setDataFormat("%.14e");
+        columns[1].setFormat("%.14e");
+        columns[2].setFormat("%.14e");
     }
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String FIXED_BIN_SIZE_SELECTION="fixedBinSizeSelection";
@@ -91,7 +92,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             if (args.length > 0) {
                 try {
                     File inFile = new File(args[0]);
-                    DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "inputTable");
+                    DataGroup dg = IpacTableReader.read(inFile);
 
                     HistogramProcessor hp = new HistogramProcessor();
                     hp.columnName = "f_y";
@@ -103,7 +104,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                     File outFile = new File(outFileName);
                     IpacTableWriter.save(outFile, outDg);
 
-                } catch (IpacTableException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -142,11 +143,9 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         double[] columnData = getColumnData(sourceDataGroup);
         DataGroup histogramDataGroup = createHistogramTable(columnData);
         histogramDataGroup.addAttribute("searchRequest", sReq.toString());
-        addFormatInfoAtt(histogramDataGroup, columns[1]);
-        addFormatInfoAtt(histogramDataGroup, columns[2]);
 
         File histogramFile = createFile(request);
-        DataGroupWriter.write(histogramFile, histogramDataGroup);
+        IpacTableWriter.save(histogramFile, histogramDataGroup);
         return histogramFile;
     }
 
@@ -200,11 +199,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                algorithm = FIXED_SIZE_ALGORITHM;
            }
         }
-    }
-
-    private void addFormatInfoAtt(DataGroup dg, DataType dt) {
-        String fkey = IpacTableUtil.makeAttribKey(IpacTableUtil.FORMAT_DISP_TAG, dt.getKeyName());
-        dg.addAttribute(fkey, dt.getFormatInfo().getDataFormatStr());
     }
 
     /**
@@ -291,9 +285,15 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             }
 
         }
-        for (int i=0; i<nBins; i++){
-            binMin[i]=min+i*binSize;
-            binMax[i]=binMin[i]+binSize;
+        if  (nBins > 0) {
+            binMin[0] = min;
+            binMax[0] = min+binSize;
+
+            // make sure binMax of a row is binMin of the following row
+            for (int i=1; i<nBins; i++){
+                binMin[i]=binMax[i-1];
+                binMax[i]=binMin[i]+binSize;
+            }
         }
 
 

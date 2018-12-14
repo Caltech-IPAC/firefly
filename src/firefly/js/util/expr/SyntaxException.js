@@ -28,6 +28,9 @@ export const UNKNOWN_VARIABLE = 4;
 
 
 function quotify(s) {
+    if (Array.isArray(s)) {
+        return '"' + s.join('","') + '"';
+    }
     return `"${s}"`;
 }
 
@@ -44,7 +47,7 @@ function theToken(scanner) {
 function isLegalToken(scanner) {
     const t = scanner.getCurrentToken();
     return t.ttype !== Token.TT_EOF
-            && t.ttype != Token.TT_ERROR;
+            && t.ttype !== Token.TT_ERROR;
 }
 
 function explainWhere(scanner) {

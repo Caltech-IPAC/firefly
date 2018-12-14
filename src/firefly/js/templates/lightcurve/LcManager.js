@@ -228,6 +228,7 @@ export function* lcManager(params={}) {
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
 
+
         switch (action.type) {
             case TABLE_SEARCH:
                 newLayoutInfo = handleNewSearch(newLayoutInfo, action);
@@ -582,12 +583,13 @@ function handleTableLoad(layoutInfo, action) {
  * @returns {*}
  */
 function handleTableActive(layoutInfo, action) {
-    const {tbl_id} = action.payload;
+    const {tbl_id, invokedBy=TABLE_FETCH} = action.payload;
+
 
     if (isImageEnabledTable(tbl_id)) {
         layoutInfo = updateSet(layoutInfo, 'images.activeTableId', tbl_id);
         // clearLcImages();
-        layoutInfo = setupImages(layoutInfo);
+        layoutInfo = setupImages(layoutInfo, invokedBy);
     }
 
     //if (tbl_id === LC.PERIODOGRAM_TABLE || tbl_id === LC.PEAK_TABLE) {
@@ -698,7 +700,8 @@ function handleChangeMultiViewLayout(layoutInfo) {
     return layoutInfo;
 }
 
-export function setupImages(layoutInfo) {
+export function setupImages(layoutInfo, invokedBy=TABLE_FETCH){
+
 
     const activeTableId = get(layoutInfo, 'images.activeTableId');
 
@@ -717,8 +720,10 @@ export function setupImages(layoutInfo) {
 
     var vr = visRoot();
 
-    if (plotIdRoot+tableModel.highlightedRow===vr.activePlotId && count===get(viewer,'itemIdAry', []).length) {
-        return layoutInfo;
+    if (plotIdRoot+tableModel.highlightedRow===vr.activePlotId && count===get(viewer,'itemIdAry', []).length &&
+        invokedBy!=='table.sort'  && invokedBy!=='table.filter') {
+            return layoutInfo;
+
     }
 
 

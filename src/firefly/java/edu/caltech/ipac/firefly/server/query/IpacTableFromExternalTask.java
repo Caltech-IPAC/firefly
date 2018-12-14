@@ -3,16 +3,20 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandler;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandlerImpl;
 import edu.caltech.ipac.firefly.server.ExternalTaskLauncher;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 
 /**
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
@@ -21,23 +25,30 @@ import java.util.List;
  */
 @SearchProcessorImpl(id = "TableFromExternalTask")
 public class IpacTableFromExternalTask extends IpacTablePartProcessor {
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);
-        ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
+        try {
+            String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);
+            ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);
+            int tblIdx = request.getIntParam(TBL_INDEX, 0);
 
+            ExternalTaskHandlerImpl handler = new ExternalTaskHandlerImpl(request.getParam(ExternalTaskHandler.TASK), request.getParam(ExternalTaskHandler.TASK_PARAMS));
+            taskLauncher.setHandler(handler);
 
-        ExternalTaskHandlerImpl handler = new ExternalTaskHandlerImpl(request.getParam(ExternalTaskHandler.TASK), request.getParam(ExternalTaskHandler.TASK_PARAMS));
-        taskLauncher.setHandler(handler);
+            taskLauncher.execute();
+            File outFile = handler.getOutfile();
 
-        taskLauncher.execute();
-        File outFile = handler.getOutfile();
-
-        if (!ServerContext.isFileInPath(outFile)) {
-            throw new SecurityException("Access is not permitted.");
+            if (!ServerContext.isFileInPath(outFile)) {
+                throw new SecurityException("Access is not permitted.");
+            }
+            return TableUtil.readAnyFormat(outFile, tblIdx);
+        } catch (IOException e) {
+            throw new DataAccessException(e.getMessage(), e);
         }
+    }
 
-        return convertToIpacTable(outFile, request);
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+        return loadDataFileImpl(request);
     }
 
     @Override

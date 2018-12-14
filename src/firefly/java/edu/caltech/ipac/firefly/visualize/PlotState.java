@@ -248,9 +248,6 @@ public class PlotState {
 
     public RangeValues getRangeValues() { return get(firstBand()).getRangeValues(); }
 
-    public void setFitsHeader(ClientFitsHeader header, Band band) { get(band).setFitsHeader(header); }
-
-
     public FileAndHeaderInfo getFileAndHeaderInfo(Band band) {
         return get(band).getFileAndHeaderInfo();
     }

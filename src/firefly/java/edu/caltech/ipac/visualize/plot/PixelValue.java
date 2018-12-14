@@ -164,7 +164,6 @@ public class PixelValue {
                                   ClientFitsHeader header)
             throws IOException, PixelValueException
     {
-	int plane_offset;
 
 
     int plane_number   = header.getPlaneNumber();
@@ -180,14 +179,7 @@ public class PixelValue {
     long data_offset   = header.getDataOffset();
 
 
-	if ((naxis == 2) || (naxis3 == 1))
-	{
-	    plane_offset = 0;
-	}
-	else
-	{
-	    plane_offset = plane_number - 1;
-	}
+	int plane_offset= plane_number>-1 ? plane_number: 0;
 
 	if (cdelt2 < 0)
 	{

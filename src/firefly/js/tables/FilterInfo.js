@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {getColumnIdx, getColumn, isNumericType, getTblById} from './TableUtil.js';
+import {getColumnIdx, getColumn, isNumericType, getTblById, stripColumnNameQuotes} from './TableUtil.js';
 import {Expression} from '../util/expr/Expression.js';
 import {isUndefined, get, isArray, isEmpty} from 'lodash';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
@@ -33,7 +33,7 @@ function parseInput(input, options={}) {
     cname = op ? cname.trim() : '';
     if (!isEmpty(rest)) val += rest.join(); // value contains operators.  just put it back.
     if (removeQuotes) {
-        cname = cname.replace(/"([A-Za-z\d_]+)"/g, '$1');
+        cname = stripColumnNameQuotes(cname);
     }
     return [cname, op, val];
 }
@@ -63,7 +63,7 @@ export class FilterInfo {
      * @returns {FilterInfo}
      */
     static parse(filterString) {
-        var filterInfo = new FilterInfo();
+        const filterInfo = new FilterInfo();
         filterString && filterString.split(';').forEach( (v) => {
                 const [cname, op, val] = parseInput(v, {removeQuotes: true});
                 if (cname && op) {
@@ -77,14 +77,21 @@ export class FilterInfo {
      * given a list of filters separated by semicolon,
      * transform them into valid filters if they are not already so.
      * @param filterInfo
+     * @param columns
      * @returns {string}
      */
-    static autoCorrectFilter(filterInfo) {
+    static autoCorrectFilter(filterInfo, columns) {
         if (filterInfo) {
             const filters = filterInfo.split(';').map( (v) => {
                 const [cname, op, val] = parseInput(v);
                 if (!cname) return v;
-                return `${cname} ${autoCorrectCondition(op + ' ' + val)}`;
+                let isNumeric = false;
+                if (columns) {
+                    const col = columns.find((c) => c.name === cname);
+                    // assume all expressions are numeric
+                    isNumeric = !col || isNumericType(col);
+                }
+                return `${cname} ${autoCorrectCondition(op + ' ' + val, isNumeric)}`;
             });
             return filters.join(';');
         } else {
@@ -137,7 +144,6 @@ export class FilterInfo {
         const rval = [true, ''];
         const allowCols = columns.concat({name:'ROW_IDX'});
         if (filterInfo && filterInfo.trim().length > 0) {
-            filterInfo = filterInfo.replace(/"(.+?)"/g, '$1'); // remove quotes
             return filterInfo.split(';').reduce( ([isValid, msg], v) => {
                 const [cname] = parseInput(v);
                 if (!cname) {
@@ -162,7 +168,7 @@ export class FilterInfo {
      * @returns {{valid: boolean, value: (string|*), message: string}}
      */
     static validator(columns, filterInfo) {
-        filterInfo = FilterInfo.autoCorrectFilter(filterInfo);
+        filterInfo = FilterInfo.autoCorrectFilter(filterInfo, columns);
         const [valid, message] = FilterInfo.isValid(filterInfo, columns);
         return  {valid, value: filterInfo, message};
     }
@@ -224,7 +230,7 @@ export class FilterInfo {
 
         return (row, idx) => {
             if (!row) return false;
-            var compareTo = noROWID ? idx : row[cidx];
+            let compareTo = noROWID ? idx : row[cidx];
             if (isUndefined(compareTo)) return false;
 
             if (op !== 'like' && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
@@ -457,3 +463,4 @@ function autoCorrectCondition(v, isNumeric=false) {
     }
     return `${op} ${val}`;
 }
+

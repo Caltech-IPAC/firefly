@@ -32,7 +32,7 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     private static final String CDELT2= "cdelt2";
     private static final String BSCALE= "bscale";
     private static final String BZERO= "bzero";
-    private static final String BLANK_VALUE= "blankValue";
+    private static final String BLANK_VALUE= "blank_value";
     private static final String DATA_OFFSET= "dataOffset";
 
     private Map<String,String> _headers= new HashMap<String,String>(20);
@@ -42,8 +42,6 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
-
-    public ClientFitsHeader() {}
 
     public ClientFitsHeader(Map<String, String> headers) { _headers= headers;}
 

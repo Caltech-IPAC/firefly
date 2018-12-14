@@ -49,13 +49,14 @@ import Catalog from '../drawingLayers/Catalog.js';
 import Artifact from '../drawingLayers/Artifact.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 import HiPSGrid from '../drawingLayers/HiPSGrid.js';
+import HiPSMOC from '../drawingLayers/HiPSMOC.js';
 
 import RegionPlot from '../drawingLayers/RegionPlot.js';
 import MarkerTool from '../drawingLayers/MarkerTool.js';
 import FootprintTool from '../drawingLayers/FootprintTool.js';
 import ImageOutline from '../drawingLayers/ImageOutline.js';
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
-
+import ImageLineBasedFootprint from '../drawingLayers/ImageLineBasedFootprint.js';
 
 
 /**
@@ -100,8 +101,9 @@ const actionCreators = new Map();
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
                                                      PointSelection, StatsPoint, NorthUpCompass,
                                                      Catalog, Artifact, WebGrid, RegionPlot,
-                                                     MarkerTool, FootprintTool, HiPSGrid,
-                                                     ImageOutline);
+                                                     MarkerTool, FootprintTool, HiPSGrid, HiPSMOC,
+                                                     ImageOutline, ImageLineBasedFootprint);
+
 
 /**
  * A collection of reducers keyed by the node's name under the root.

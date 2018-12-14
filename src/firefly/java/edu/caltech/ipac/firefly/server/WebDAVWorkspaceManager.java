@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.WspaceMeta;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WsCredentials;
@@ -319,6 +320,13 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 //  for firefly use
 //====================================================================
 
+    private HttpServiceInput convertToHttpInput(WsCredentials creds) {
+        HttpServiceInput input = new HttpServiceInput().setUserId(creds.getWsId()).setPasswd(creds.getPassword());
+        if (creds.getCookies() != null) {
+            creds.getCookies().forEach((k, v) -> input.setCookie(k, v));
+        }
+        return input;
+    }
 
     @Override
     public WsCredentials getCredentials() {
@@ -660,8 +668,11 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
 
     private boolean executeMethod(DavMethod method, boolean releaseConnection) {
         try {
-            return partition.equals(Partition.PUBSPACE) ? HttpServices.executeMethod(method) :
-                    HttpServices.executeMethod(method, getCredentials().getWsId(), getCredentials().getPassword(), getCredentials().getCookies());
+            HttpServices.Status status = partition.equals(Partition.PUBSPACE) ? HttpServices.executeMethod(method) :
+                    HttpServices.executeMethod(method, convertToHttpInput(getCredentials()));
+            return !status.isError();
+        } catch (IOException e) {
+            return false;
         } finally {
             if (releaseConnection && method != null) {
                 method.releaseConnection();

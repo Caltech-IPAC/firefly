@@ -10,9 +10,12 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -33,41 +36,41 @@ import java.util.Map;
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    public static final String PORT = AppProperties.getProperty("lsst.dax.port","5001");
-    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","lsst-qserv-dax01.ncsa.illinois.edu");
+    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","https://lsst-pdac.ncsa.illinois.edu");
 
-    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL","http://lsst-qserv-dax01:8080/api/db/v1/tap/sync/");
-    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL","http://"+ HOST +":"+PORT+"/api/meta/v1/db/");
+    // LSST DAX services are listed in https://confluence.lsstcorp.org/display/DM/DAX+service+URLs
+    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL",HOST+"/api/db/v1/tap/sync/");
+    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL",HOST+"/api/meta/v1/db/");
+
+
 
     //set default timeout to 180 seconds
     private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 180);
 
     abstract String buildSqlQueryString(TableServerRequest request) throws Exception;
 
-    @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
             DataGroup dg = getDataFromURL(request); //
             //should not happen - metadata should always be returned even if there are no data
             if (dg == null) {
                 throw new DataAccessException("No data.");
             }
-            dg.shrinkToFitData();
-            File outFile = createFile(request, ".tbl");
-            DataGroupWriter.write(outFile, dg);
-            _log.info("table loaded");
-            return outFile;
-        } catch (IOException | DataAccessException ee) {
+            return dg;
+        } catch (DataAccessException ee) {
             throw ee;
         } catch (Exception e) {
             throw new DataAccessException(e.getMessage(), e);
         }
     }
 
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+        return loadDataFileImpl(request);
+    }
+
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
-        String sql = "query=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
+        String sql = "QUERY=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
         _log.briefDebug("Executing SQL query: " + sql);
         File file = createFile(request, ".json");
         Map<String, String> requestHeader=new HashMap<>();
@@ -107,7 +110,6 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             for (int j = 0; j < dataType.length; j++) {
                 Object d = rowTblData.get(j);
                 if (d == null) {
-                    dataType[j].setMayBeNull(true);
                     row.setDataElement(dataType[j], null);
                 } else {
                     if (d instanceof Number) {
@@ -166,11 +168,9 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
             dataTypes[i] = new DataType(keyName, cls);
             Object o = col.get("unit");
             if (o != null) dataTypes[i].setUnits((String)o);
-            o = col.get("nullable");
-            if (o != null) dataTypes[i].setMayBeNull((Boolean)o);
             o = col.get("description");
-            if (o != null) dataTypes[i].setShortDesc((String)o);
-            else dataTypes[i].setShortDesc("no description for "+keyName); // TODO: remove after DM-14320
+            if (o != null) dataTypes[i].setDesc((String)o);
+            else dataTypes[i].setDesc("no description for "+keyName); // TODO: remove after DM-14320
         }
         return dataTypes;
     }

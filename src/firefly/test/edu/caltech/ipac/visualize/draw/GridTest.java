@@ -3,13 +3,14 @@ package edu.caltech.ipac.visualize.draw;
 import java.io.File;
 
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import org.junit.*;
 
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -28,7 +29,7 @@ public class GridTest {
 		Assert.assertTrue(file.exists()&&file.canRead());
 		fits = FileLoader.loadFits(GridTest.class, "bad.fits");// new Fits(file);//(resourceAsStream);
 
-		FitsRead[] frAry = FitsRead.createFitsReadArray(fits);
+		FitsRead[] frAry = FitsReadFactory.createFitsReadArray(fits);
 		ActiveFitsReadGroup fg = new ActiveFitsReadGroup();
 		fg.setFitsRead(Band.RED, frAry[0]);
 		plot = new ImagePlot(null, fg, 0, false, Band.RED, 0, new RangeValues());

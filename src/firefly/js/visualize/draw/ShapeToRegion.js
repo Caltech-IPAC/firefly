@@ -89,7 +89,7 @@ var getFontSize = (fontSize) => {
  */
 function makeTextRegion( inPt, cc, drawObj, drawParams) {
     var {color}= drawParams;
-    var {text}= drawObj;
+    var {text, textAngle=0}= drawObj;
     var des;
     var retList = [];
 
@@ -107,6 +107,10 @@ function makeTextRegion( inPt, cc, drawObj, drawParams) {
 
     if (text) {
         des += addTextRelatedProps(drawObj, drawParams);
+    }
+
+    if (textAngle !== 0) {
+        des += setRegionPropertyDes(regionPropsList.TEXTANGLE, textAngle);
     }
     des = endRegionDes(des);
     retList.push(des);

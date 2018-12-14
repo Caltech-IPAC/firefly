@@ -17,7 +17,14 @@ const fieldProps = {labelWidth: 62, size: 15};
 
 export function getSubmitChangesFunc(traceType, fireflyType) {
     const type = fireflyType || traceType;
+    
     switch(type) {
+        case 'scatterOrHeatmap':
+            if (traceType === 'heatmap') {
+                return submitChangesHeatmap;
+            } else {
+                return submitChangesScatter;
+            }
         case 'scatter':
         case 'scattergl':
             return submitChangesScatter;
@@ -62,7 +69,7 @@ export function addNewTrace({chartId, tbl_id, fields, hideDialog}) {
     const activeTrace = data.length;
 
     fields = Object.assign({activeTrace}, fields);  // make the newly added trace active
-    fields[`data.${activeTrace}.type`] = type; // make sure trace type is set
+    //fields[`data.${activeTrace}.type`] = type; // make sure trace type is set
 
     // apply defaults settings
     Object.entries(getNewTraceDefaults(chartId, type, activeTrace))

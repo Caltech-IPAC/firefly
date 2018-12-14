@@ -9,16 +9,16 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.ws.WsResponse;
 import edu.caltech.ipac.firefly.server.ws.WsServerCommands;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -140,7 +141,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 fileName = fileName.length() > 255 ? fileName.substring(fileName.length() - 255) : fileName;
                 ext = resolveExt(fileName, fileType);
                 fType = resolveType(fileType, ext, (file != null ? file.getContentType() : null));
-                destDir = resolveDestDir(dest, fType);
+                destDir = resolveDestDir();
                 uf = File.createTempFile("upload_", ext, destDir); // other parts of system depend on file name starting with "upload_"
                 if (file != null) {
                     InputStream inStream = new BufferedInputStream(file.openStream(), IpacTableUtil.FILE_IO_BUFFER_SIZE);
@@ -175,8 +176,8 @@ public class AnyFileUpload extends BaseHttpServlet {
             if (fType != null && fType == FileType.TABLE) {
                 uf = File.createTempFile("upload_", ".tbl", destDir); // cleaned ipac file.
                 rPathInfo = ServerContext.replaceWithPrefix(uf);
-                DataGroup dg = DataGroupReader.readAnyFormat(fi.getFile(), 0);
-                DataGroupWriter.write(new DataGroupWriter.IpacTableHandler(uf, dg));
+                DataGroup dg = TableUtil.readAnyFormat(fi.getFile(), 0);
+                IpacTableWriter.save(uf, dg);
                 fi = new UploadFileInfo(rPathInfo, uf, fileName, (file != null ? file.getContentType() : null));
             }
 
@@ -210,8 +211,8 @@ public class AnyFileUpload extends BaseHttpServlet {
         File f = fi.getFile();
         long size = f.length();
 
-        DataGroupReader.Format fileFormat = DataGroupReader.guessFormat(f);
-        DataGroup dgAnalysis = DataGroupReader.readAnyFormatHeader(f, fileFormat);
+        TableUtil.Format fileFormat = TableUtil.guessFormat(f);
+        DataGroup dgAnalysis = TableUtil.readAnyFormatHeader(f, fileFormat);
         if (dgAnalysis != null) {
             analysisSummary = dgAnalysis.getTitle();
             if (!analysisSummary.contains("invalid")) {
@@ -237,21 +238,9 @@ public class AnyFileUpload extends BaseHttpServlet {
         return analysisResult;
     }
 
-    private static File resolveDestDir(String dest, FileType fType) throws FileNotFoundException {
-        File destDir = ServerContext.getTempWorkDir();
-/*
-        removed.. this writes temp file into the source directory.  may be readonly.  why was it needed before?
-        not sure of its history.  leaving comment as a reminder in case it breaks something else.
-        if (!StringUtils.isEmpty(dest)) {
-            destDir = ServerContext.convertToFile(dest);
-        } else
-*/
-        if (fType == FileType.FITS) {
-            destDir = ServerContext.getVisCacheDir();
-        }
-        if (!destDir.exists()) {
-            throw new FileNotFoundException("Destination path does not exists: " + destDir.getPath());
-        }
+    private static File resolveDestDir() throws FileNotFoundException {
+        File destDir = ServerContext.getUploadDir();
+        if (!destDir.exists()) throw new FileNotFoundException("Destination path does not exists: " + destDir.getPath());
         return destDir;
     }
 
@@ -299,9 +288,9 @@ public class AnyFileUpload extends BaseHttpServlet {
 //        }
 //    }
 
-    private static JSONObject toJsonAnalysisTableModel(DataGroup dg, DataGroupReader.Format ff, long size ) {
+    private static JSONObject toJsonAnalysisTableModel(DataGroup dg, TableUtil.Format ff, long size ) {
         JSONObject tableModel = new JSONObject();
-        JSONObject tableData = JsonTableUtil.toJsonTableData(dg, null);
+        JSONObject tableData = JsonTableUtil.toJsonTableData(dg);
         String tblId =  "UPLOAD_ANALYSIS";
 
         tableModel.put("tableData", tableData);
@@ -313,14 +302,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         tableModel.put("size", size);
 
         JSONObject tableMeta = new JSONObject();
-        Iterator<Entry<String, DataGroup.Attribute>> attributes = dg.getAttributes().entrySet().iterator();
-
-        while( attributes.hasNext() ) {
-            Map.Entry<String, DataGroup.Attribute> entry = attributes.next();
-            DataGroup.Attribute att = entry.getValue();
-
-            tableMeta.put(att.getKey(), att.getValue());
-        }
+        dg.getAttributeList().forEach(att -> tableMeta.put(att.getKey(), att.getValue()));
 
         tableModel.put("tableMeta", tableMeta);
         return tableModel;

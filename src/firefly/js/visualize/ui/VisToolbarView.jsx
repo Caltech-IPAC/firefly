@@ -277,7 +277,7 @@ export class VisToolbarView extends PureComponent {
                                         iconOn={GRID_ON}
                                         iconOff={GRID_OFF}
                                         plotTypeMustMatch={true}
-                                        visible={mi.grid && image}
+                                        visible={mi.grid}
                 />
 
                 <ToolbarButton icon={DS9_REGION}
@@ -331,7 +331,7 @@ export class VisToolbarView extends PureComponent {
                                tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
                                enabled={enabled}
                                horizontal={true}
-                               visible={mi.fitsHeader}
+                               visible={mi.directFileAccessData}
                                onClick={image ? (element) => fitsHeaderView(pv, element ) : (hips ? (element) => HiPSPropertyView(pv, element) : null)}
                                />
 

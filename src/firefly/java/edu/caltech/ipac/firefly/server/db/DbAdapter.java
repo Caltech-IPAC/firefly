@@ -2,10 +2,11 @@ package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -21,6 +22,8 @@ public interface DbAdapter {
     String H2 = "h2";
     String SQLITE = "sqlite";
     String HSQL = "hsql";
+
+    String MAIN_DB_TBL = "DATA";
 
     /*
       CLEAN UP POLICY:
@@ -64,10 +67,10 @@ public interface DbAdapter {
     void close(File dbFile, boolean deleteFile);
 
     /**
-     * @param dataType
+     * @param type
      * @return this database's datatype representation of the given java class.
      */
-    String getDataType(Class dataType);
+    String getDataType(DataType type);
 
     /**
      * @return true if transaction should be used during batch import of the table data.
@@ -77,6 +80,12 @@ public interface DbAdapter {
     String createDataSql(DataType[] dataDefinitions, String tblName);
     String insertDataSql(DataType[] dataDefinitions, String tblName);
 
+    /**
+     * contains auxiliary info in datagroup that's not in meta and column info.
+     */
+    String createAuxDataSql(String forTable);
+    String insertAuxDataSql(String forTable);
+
     String createMetaSql(String forTable);
     String insertMetaSql(String forTable);
 
@@ -85,6 +94,7 @@ public interface DbAdapter {
 
     String getDDSql(String forTable);
     String getMetaSql(String forTable);
+    String getAuxDataSql(String forTable);
 
     String selectPart(TableServerRequest treq);
     String wherePart(TableServerRequest treq);
@@ -93,6 +103,8 @@ public interface DbAdapter {
 
     String createTableFromSelect(String tblName, String selectSql);
     String translateSql(String sql);
+
+    List<String> getColumnNames(DbInstance dbInstance, String tblName, String enclosedBy);
 
     /**
      * perform a cleanup routine which may close inactive database to free up memory

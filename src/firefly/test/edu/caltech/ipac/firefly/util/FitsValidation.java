@@ -1,14 +1,17 @@
 package edu.caltech.ipac.firefly.util;
 
 import edu.caltech.ipac.firefly.ConfigTest;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import nom.tam.fits.*;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
 import nom.tam.util.Cursor;
 import org.junit.Assert;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Created by zhang on 12/13/16.
@@ -39,8 +42,8 @@ public class FitsValidation extends ConfigTest{
      * @throws FitsException
      */
    public void validateData(Fits expectedFits, Fits calculatedFits) throws FitsException {
-        FitsRead[] fitsReads = FitsRead.createFitsReadArray(calculatedFits);
-        FitsRead[] expectedFitsRead = FitsRead.createFitsReadArray(expectedFits);
+        FitsRead[] fitsReads = FitsReadFactory.createFitsReadArray(calculatedFits);
+        FitsRead[] expectedFitsRead = FitsReadFactory.createFitsReadArray(expectedFits);
         for (int i=0;  i<fitsReads.length; i++){
             Assert.assertArrayEquals(fitsReads[i].getDataFloat(), expectedFitsRead[i].getDataFloat(), (float) delta);
         }
@@ -57,16 +60,24 @@ public class FitsValidation extends ConfigTest{
          Header expectedHeader = expectedHdu.getHeader();
          Header calculatedHeader = outHdu.getHeader();
 
+        //validate expected and calculated headers have the same keys and same values
+        String[] keys = getExpectedKeys(expectedHeader);
+        String[] calcKeys = getExpectedKeys(calculatedHeader);
 
          //validate expected and calculated headers have the same number of card
-         Assert.assertEquals(expectedHeader.getNumberOfCards(), calculatedHeader.getNumberOfCards());
+        int calcHeadCardCnt= calcKeys.length;
+        int expHeadCardCnt= keys.length;
 
 
-        //validate expected and calculated headers have the same keys and same values
-         String[] keys = getExpectedKeys(expectedHeader);
+         Assert.assertEquals(expHeadCardCnt, calcHeadCardCnt);
+
+
          for (int i=0; i<keys.length; i++){
              HeaderCard expectedCard =expectedHeader.findCard(keys[i]);
              HeaderCard calculatedCard =calculatedHeader.findCard(keys[i]);
+//             if (keys[i].startsWith("SPOT")) {
+//                 continue;
+//             }
              if (isBlank(expectedCard.getValue())){
                  LOG.debug("expectedCard.getValue() is null, key = "+keys[i]+", skipping test");
                  continue;
@@ -121,7 +132,8 @@ public class FitsValidation extends ConfigTest{
         int i=0;
         while(expectedIter.hasNext() ){
             HeaderCard expectedCard = (HeaderCard) expectedIter.next();
-            if (expectedCard.getKey().trim().length()!=0) {
+
+            if (!expectedCard.getKey().startsWith("SPOT") && expectedCard.getKey().trim().length()!=0) {
                 keyArrays.add(expectedCard.getKey());
                 i++;
             }

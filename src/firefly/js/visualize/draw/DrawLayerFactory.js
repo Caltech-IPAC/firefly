@@ -81,8 +81,9 @@ export function makeFactoryDef(drawLayerTypeId,
                                getDrawDataFunc= null,
                                getLayerChanges= null,
                                onDetachAction= null,
-                               getUIComponent= null) {
-    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, onDetachAction,getUIComponent};
+                               getUIComponent= null,
+                               asyncComputeDrawData= null) {
+    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, onDetachAction,getUIComponent, asyncComputeDrawData};
 }
 
 class DrawLayerFactory {
@@ -154,6 +155,14 @@ class DrawLayerFactory {
             this.defaults[drawLayerTypeId]= Object.assign(this.defaults[drawLayerTypeId], def);
         }
     }
+
+    asyncComputeDrawData(drawLayer, action) {
+        if (!drawLayer || !this.registry[drawLayer.drawLayerTypeId]) return {};
+        const f= this.registry[drawLayer.drawLayerTypeId].asyncComputeDrawData;
+        if (f) f(drawLayer,action);
+    }
+
+
 
 
     /**

@@ -3,13 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.query.mos;
 
-import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
@@ -18,11 +18,11 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -40,8 +40,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.util.IpacTableUtil.LABEL_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.LABEL_TAG;
+import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 
 
 @SearchProcessorImpl(id = "MOSQuery")
@@ -61,29 +61,29 @@ public class QueryMOS extends IpacTablePartProcessor {
     }
 
     @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        File retFile;
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
             MOSRequest req = QueryUtil.assureType(MOSRequest.class, request);
             String tblType = req.getParam(MOSRequest.TABLE_NAME);
             boolean headerOnly = isHeaderOnlyRequest(req);
 
             String tblName = (tblType != null && tblType.equalsIgnoreCase(MOSRequest.ORBITAL_PATH_TABLE))
-                                ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
+                    ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
 
-            retFile = doSearch(req, tblName, headerOnly);
-            if (headerOnly) {
-                retFile = getOrbitalElements(retFile);
-            }
+            DataGroup dg = doSearch(req, tblName, headerOnly);
+            return headerOnly ? getOrbitalElements(dg) : dg;
 
         } catch (Exception e) {
-            throw makeException(e, "MOS Query Failed.");
+            throw new DataAccessException("MOS Query Failed.", e);
         }
-
-        return retFile;
     }
 
-    private File doSearch(final MOSRequest req, String tblName, boolean headerOnly) throws IOException, DataAccessException, EndUserException {
+    @Override
+    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
+        return loadDataFileImpl(request);
+    }
+
+    private DataGroup doSearch(final MOSRequest req, String tblName, boolean headerOnly) throws IOException, DataAccessException, EndUserException {
 
         URL url;
         try {
@@ -92,78 +92,69 @@ public class QueryMOS extends IpacTablePartProcessor {
             _log.error(e, e.toString());
             throw new EndUserException(e.getEndUserMsg(), e.getMoreDetailMsg());
         }
-        StringKey cacheKey = new StringKey(url).appendToKey(tblName);
-        File outFile = (File) getCache().get(cacheKey);
+        URLConnection conn = null;
+        try {
+            _log.info("querying MOS:" + url);
 
-        if (outFile == null || !outFile.canRead()) {
-            URLConnection conn = null;
-            try {
-                _log.info("querying MOS:" + url);
-
-                final Ref<File> catOverlayFile = new Ref<File>(null);
-                Thread catSearchTread = null;
-                // pre-generate gator upload file for catalog overlay
-                if (req.getBooleanParam(MOSRequest.CAT_OVERLAY)) {
-                    catOverlayFile.setSource(File.createTempFile("mosCatOverlayFile-", ".tbl", ServerContext.getTempWorkDir()));
-                    Runnable r = new Runnable() {
-                        public void run() {
-                            try {
+            final Ref<File> catOverlayFile = new Ref<File>(null);
+            Thread catSearchTread = null;
+            // pre-generate gator upload file for catalog overlay
+            if (req.getBooleanParam(MOSRequest.CAT_OVERLAY)) {
+                catOverlayFile.setSource(File.createTempFile("mosCatOverlayFile-", ".tbl", ServerContext.getTempWorkDir()));
+                Runnable r = new Runnable() {
+                    public void run() {
+                        try {
 //                                    HttpServices.getDataViaUrl(createURL(req, true), catOverlayFile.getSource());
-                                URLConnection aconn = URLDownload.makeConnection(createURL(req, true));
-                                aconn.setRequestProperty("Accept", "*/*");
-                                URLDownload.getDataToFile(aconn, catOverlayFile.getSource());
-                            } catch (Exception e) {
-                                _log.error(e);
-                            }
-                        }
-                    };
-                    catSearchTread = new Thread(r);
-                    catSearchTread.start();
-                }
-// workaround for MOS service bug when launching 2 simultaneously.
-Thread.sleep(1000);
-                File votable = makeFileName(req);
-                conn = URLDownload.makeConnection(url);
-                conn.setRequestProperty("Accept", "*/*");
-
-                URLDownload.getDataToFile(conn, votable);
-
-                if (catSearchTread != null) {
-                    catSearchTread.join();
-                }
-
-                DataGroup[] groups = VoTableUtil.voToDataGroups(votable.getAbsolutePath(), headerOnly);
-                if (groups != null) {
-                    for (DataGroup dg : groups) {
-                        File tempFile = File.createTempFile(dg.getTitle() + "-", ".tbl", ServerContext.getTempWorkDir());
-
-                        if (dg.getTitle().equalsIgnoreCase(RESULT_TABLE_NAME) && catOverlayFile.getSource() != null) {
-                                // save the generated file as ipac table headers
-                                dg.addAttribute(MOSRequest.CAT_OVERLAY_FILE, catOverlayFile.getSource().getPath());
-                        }
-
-                        IpacTableWriter.save(tempFile, dg);
-                        getCache().put(new StringKey(url).appendToKey(dg.getTitle()), tempFile, 60 * 60 * 24);    // 1 day
-                        if (dg.getTitle().equals(tblName)) {
-                            outFile = tempFile;
+                            URLConnection aconn = URLDownload.makeConnection(createURL(req, true));
+                            aconn.setRequestProperty("Accept", "*/*");
+                            URLDownload.getDataToFile(aconn, catOverlayFile.getSource());
+                        } catch (Exception e) {
+                            _log.error(e);
                         }
                     }
-                }
-
-            } catch (MalformedURLException e) {
-                _log.error(e, "Bad URL");
-                throw makeException(e, "MOS Query Failed - bad url.");
-
-            } catch (IOException e) {
-                _log.error(e, e.toString());
-                throw makeException(e, "MOS Query Failed - network error.");
-
-            } catch (Exception e) {
-                throw makeException(e, "MOS Query Failed.");
+                };
+                catSearchTread = new Thread(r);
+                catSearchTread.start();
             }
+// workaround for MOS service bug when launching 2 simultaneously.
+Thread.sleep(1000);
+            File votable = makeFileName(req);
+            conn = URLDownload.makeConnection(url);
+            conn.setRequestProperty("Accept", "*/*");
+
+            URLDownload.getDataToFile(conn, votable);
+
+            if (catSearchTread != null) {
+                catSearchTread.join();
+            }
+
+            DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), headerOnly);
+            if (groups != null) {
+                for (DataGroup dg : groups) {
+                    if (dg.getTitle().equalsIgnoreCase(RESULT_TABLE_NAME) && catOverlayFile.getSource() != null) {
+                            // save the generated file as ipac table headers
+                            dg.addAttribute(MOSRequest.CAT_OVERLAY_FILE, catOverlayFile.getSource().getPath());
+                    }
+
+                    if (dg.getTitle().equals(tblName)) {
+                        return dg;
+                    }
+                }
+            }
+
+        } catch (MalformedURLException e) {
+            _log.error(e, "Bad URL");
+            throw makeException(e, "MOS Query Failed - bad url.");
+
+        } catch (IOException e) {
+            _log.error(e, e.toString());
+            throw makeException(e, "MOS Query Failed - network error.");
+
+        } catch (Exception e) {
+            throw makeException(e, "MOS Query Failed.");
         }
 
-        return outFile;
+        return null;
     }
 
     private String parseMessageFromServer(String response) {
@@ -367,23 +358,18 @@ Thread.sleep(1000);
     }
 
 
-    protected File getOrbitalElements(File inFile) {
-        final String [] names = {"object_name", "element_epoch", "eccentricity", "inclination",
-                "argument_perihelion", "ascending_node", "semimajor_axis", "semimajor_axis", "mean_anomaly",
-                "perihelion_distance", "perihelion_time"};
-        final List<String> namesLst = Arrays.asList(names);
-        File newFile = null;
+    protected DataGroup getOrbitalElements(DataGroup inData) {
+        final List<String> namesLst = Arrays.asList("object_name", "element_epoch", "eccentricity", "inclination",
+                                                    "argument_perihelion", "ascending_node", "semimajor_axis", "semimajor_axis", "mean_anomaly",
+                                                    "perihelion_distance", "perihelion_time");
         try {
-            DataGroup dg = IpacTableReader.readIpacTable(inFile, null, "Result Table");
-            Map<String, DataGroup.Attribute> attrMap = dg.getAttributes();
-
+            inData.setTitle("Result Table");
+            Map<String, DataGroup.Attribute> attrMap = inData.getTableMeta().getAttributes();
 
             List<DataType> newDT = new ArrayList<DataType>();
             for (String s : attrMap.keySet()) {
                 if (namesLst.contains(s)) {
-                    DataGroup.Attribute attr = attrMap.get(s);
                     DataType dt = new DataType(s, String.class);
-                    dt.getFormatInfo().setWidth(Math.max(s.length(), attr.getValue().length()));
                     newDT.add(dt);
                 }
             }
@@ -395,13 +381,12 @@ Thread.sleep(1000);
                 newDG.addAttribute(makeAttribKey(LABEL_TAG, col.toLowerCase()), getOrbitalElementLabel(col));
             }
             newDG.add(obj);
-            newFile = File.createTempFile("orbitalElements" + "-", ".tbl", ServerContext.getTempWorkDir());
-            IpacTableWriter.save(newFile, newDG);
+            return newDG;
 
         } catch (Exception e) {
             _log.error(e);
         }
-        return newFile;
+        return null;
     }
 
     private String getOrbitalElementLabel(String key) {

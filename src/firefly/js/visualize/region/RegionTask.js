@@ -2,31 +2,28 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {RegionFactory} from './RegionFactory.js';
 import {getDS9Region} from '../../rpc/PlotServicesJson.js';
-import {getDlAry, defaultRegionSelectColor, getRegionSelectStyle} from '../DrawLayerCntlr.js';
+import {getDlAry} from '../DrawLayerCntlr.js';
 import DrawLayerCntrl, {dispatchCreateDrawLayer, dispatchDetachLayerFromPlot,
         dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {getDrawLayerById, getPlotViewIdListInGroup} from '../PlotViewUtil.js';
-import RegionPlot from '../../drawingLayers/RegionPlot.js';
-import {getPlotViewAry} from '../PlotViewUtil.js';
+import RegionPlot, {createNewRegionLayerId, getRegionLayerTitle} from '../../drawingLayers/RegionPlot.js';
 import {visRoot} from '../ImagePlotCntlr.js';
-import {logError} from '../../util/WebUtil.js'
+import {logError} from '../../util/WebUtil.js';
 import {has, isArray, isEmpty, get, isNil} from 'lodash';
 
 const regionDrawLayerId = RegionPlot.TYPE_ID;
 
-var cnt = 0;
 var [RegionIdErr, RegionErr, NoRegionErr, JSONErr] = [
     'region id is not specified',
     'invalid description in region file',
     'no region is specified',
     'get region json error'];
 
-var getPlotId = (plotId) => {
+export const getPlotId = (plotId) => {
     //return (!plotId || (isArray(plotId)&&plotId.length === 0)) ? get(visRoot(), 'activePlotId') : plotId;
     if (!plotId || (isArray(plotId)&&plotId.length === 0)) {
-        var pid = get(visRoot(), 'activePlotId');
+        const pid = get(visRoot(), 'activePlotId');
 
         return getPlotViewIdListInGroup(visRoot(), pid, false);
     } else {
@@ -35,13 +32,10 @@ var getPlotId = (plotId) => {
 };
 
 
-var layerId = (drawLayerId, title) => {
-    return isNil(drawLayerId) ? title.slice() : drawLayerId;
+const layerId = (drawLayerId) => {
+    return isNil(drawLayerId) ? createNewRegionLayerId() : drawLayerId;
 };
 
-var getLayerTitle = (layerTitle, titleRef) => {
-    return layerTitle ? layerTitle : (titleRef ? titleRef : `Region Plot - ${cnt++}`);
-};
 
 /**
  * action creator of REGION_CREATE_LAYER, create drawing layer based on region file or array of region description
@@ -50,27 +44,25 @@ var getLayerTitle = (layerTitle, titleRef) => {
  */
 export function regionCreateLayerActionCreator(rawAction) {
     return (dispatcher) => {
-        var {drawLayerId, fileOnServer, layerTitle, regionAry, plotId,
-            selectMode} = rawAction.payload;
-        var title;
+        const {drawLayerId, fileOnServer, layerTitle, regionAry, plotId,
+               selectMode} = rawAction.payload;
 
         if (!drawLayerId) {
-            reportError(RegionIdErr)
+            reportError(RegionIdErr);
         } else if (fileOnServer) {   // region file is given, get region description array
             getDS9Region(fileOnServer).then((result) => {
                 if (has(result, 'RegionData')) {
-                    title = getLayerTitle(layerTitle, (result.Title || drawLayerId));
-                    createRegionLayer(result.RegionData, title, drawLayerId, plotId,
-                                      selectMode, 'json');
+                    createRegionLayer(result.RegionData,  getRegionLayerTitle(layerTitle||result.title),
+                                      drawLayerId, plotId,  selectMode, 'json');
                 } else {
                     reportError(RegionErr);
                 }
             }, () => { reportError(JSONErr); } );
         } else if (!isEmpty(regionAry)) {
-            title = getLayerTitle(layerTitle, drawLayerId);
-            createRegionLayer(regionAry, title, drawLayerId, plotId, selectMode);
+            createRegionLayer(regionAry, getRegionLayerTitle(layerTitle),
+                              drawLayerId, plotId, selectMode);
         } else {
-            reportError(NoRegionErr)
+            reportError(NoRegionErr);
         }
     };
 }
@@ -96,10 +88,10 @@ function createRegionLayer(regionAry, title, drawLayerId, plotId,
         regionAry = [regionAry];
     }
 
-    var pId = getPlotId(plotId);
+    const pId = getPlotId(plotId);
 
-    drawLayerId = layerId(drawLayerId, title);
-    var dl = getDrawLayerById(getDlAry(), drawLayerId);
+    drawLayerId = layerId(drawLayerId);
+    const dl = getDrawLayerById(getDlAry(), drawLayerId);
 
     if (!dl) {
         dispatchCreateDrawLayer(regionDrawLayerId, {title, drawLayerId,
@@ -120,10 +112,10 @@ function createRegionLayer(regionAry, title, drawLayerId, plotId,
  */
 export function regionDeleteLayerActionCreator(rawAction) {
     return (dispatcher) => {
-        var {plotId, drawLayerId} = rawAction.payload;
+        const {plotId, drawLayerId} = rawAction.payload;
 
-        var pId = getPlotId(plotId);
-        var dl = getDrawLayerById(getDlAry(), drawLayerId);
+        const pId = getPlotId(plotId);
+        const dl = getDrawLayerById(getDlAry(), drawLayerId);
 
         if (dl && drawLayerId && pId) {
             dispatchDetachLayerFromPlot(drawLayerId, pId, true, dl.destroyWhenAllDetached);
@@ -140,23 +132,23 @@ export function regionDeleteLayerActionCreator(rawAction) {
  */
 export function regionUpdateEntryActionCreator(rawAction) {
     return (dispatcher) => {
-        var {drawLayerId, regionChanges, layerTitle, plotId,
-             selectMode} = rawAction.payload || {};
+        const {drawLayerId, regionChanges, layerTitle, plotId,
+              selectMode} = rawAction.payload || {};
 
         if (isEmpty(regionChanges)) {
             return;
         }
 
-        var changes = isArray(regionChanges) ? regionChanges : [regionChanges];
-        var dl = drawLayerId ? getDrawLayerById(getDlAry(), drawLayerId) : null;
+        const changes = isArray(regionChanges) ? regionChanges : [regionChanges];
+        const dl = drawLayerId ? getDrawLayerById(getDlAry(), drawLayerId) : null;
 
         // if drawlayer doesn't exist, create a new one
         if (!dl && rawAction.type === DrawLayerCntrl.REGION_ADD_ENTRY) {
-            var title = getLayerTitle(layerTitle, drawLayerId);
+            const title = getRegionLayerTitle(layerTitle);
 
             createRegionLayer(changes, title, drawLayerId, plotId, selectMode);
         } else {
-            var payload = Object.assign(rawAction.payload, {regionChanges: changes});
+            const payload = Object.assign(rawAction.payload, {regionChanges: changes});
 
             if (drawLayerId) {
                 dispatcher(Object.assign(rawAction, {payload})); // add and remove entries

@@ -6,7 +6,7 @@ import {flux} from '../Firefly.js';
 export class SimpleComponent extends PureComponent {
     constructor(props) {
         super(props);
-        this.state = this.getNextState();
+        this.state = this.getNextState(props);
     }
 
     componentWillReceiveProps(np) {
@@ -30,7 +30,7 @@ export class SimpleComponent extends PureComponent {
 
     storeUpdate() {
         if (!this.isUnmounted) {
-            this.setState(this.getNextState());
+            this.setState(this.getNextState(this.props));
         }
     }
 }

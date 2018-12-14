@@ -17,8 +17,8 @@ import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
@@ -49,6 +49,8 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             TableServerRequest treq = (TableServerRequest) params.getTableServerRequest().cloneRequest();
+            treq.setStartIndex(0);
+            treq.setPageSize(Integer.MAX_VALUE);
             treq.setParam(TableServerRequest.INCL_COLUMNS, params.getOptional(TableServerRequest.INCL_COLUMNS));
             treq.setFilters(StringUtils.asList(params.getOptional(TableServerRequest.FILTERS), ","));
             String sortInfo = params.getOptional(TableServerRequest.SORT_INFO);

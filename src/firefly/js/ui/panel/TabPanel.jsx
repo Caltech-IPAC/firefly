@@ -14,17 +14,22 @@ import {dispatchComponentStateChange, getComponentState} from '../../core/Compon
 function tabsStateFromProps(props) {
     const {defaultSelected, componentKey} = props;
     let selectedIdx;
-    // component key should be defined if the state needs to be saved though unmount/mount
-    const savedIdx = componentKey && getComponentState(componentKey).selectedIdx;
-    if (!isNaN(savedIdx)) {
-        selectedIdx = savedIdx;
-    } else if (!isNaN(defaultSelected)) {
-        selectedIdx = defaultSelected;
+    const childrenAry = React.Children.toArray(props.children);         // this returns only valid children excluding undefined and false values.
+
+    if (componentKey) {
+        // component key should be defined if the state needs to be saved though unmount/mount
+        selectedIdx = getComponentState(componentKey).selectedIdx;
+
+        if (selectedIdx >= childrenAry.length) {
+            // selectedIdx is greater than the number of tabs.. update store's state
+            selectedIdx = childrenAry.length-1;
+            dispatchComponentStateChange(componentKey, {selectedIdx});
+        }
+    } else {
+        selectedIdx = childrenAry.findIndex( (c) => c.props.id===defaultSelected );
     }
-    else {
-        const idx= React.Children.toArray(props.children).findIndex( (c) => c.props.id===defaultSelected );
-        selectedIdx= idx>-1 ? idx : 0;
-    }
+
+    selectedIdx = selectedIdx >= 0 ? selectedIdx : defaultSelected;
     return {selectedIdx};
 }
 
@@ -49,7 +54,7 @@ class TabsHeaderInternal extends PureComponent {
                 return React.cloneElement(child, {maxTitleWidth});
             });
         }
-        const style = Object.assign({flexGrow: 0, height: 20}, headerStyle);
+        const style = Object.assign({flexShrink: 0, height: 20}, headerStyle);
         return (
             <div style={style}>
                 {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
@@ -103,12 +108,10 @@ export class Tabs extends PureComponent {
     }
 
     render () {
-        let { selectedIdx}= this.state;
+        const { selectedIdx}= this.state;
         const {children, useFlex, resizable, borderless, headerStyle, contentStyle={}} = this.props;
-        const numTabs = React.Children.count(children);
 
         let  content;
-        selectedIdx = Math.min(selectedIdx, numTabs-1);
         const newChildren = React.Children.toArray(children).filter((el) => !!el).map((child, index) => {
             if (index === selectedIdx) {
                 content = React.Children.only(child.props.children);

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import nom.tam.fits.*;
 import nom.tam.fits.ImageData;
 import nom.tam.image.ImageTiler;
@@ -139,8 +140,8 @@ public class CropFile {
                 ImageHDU h = (ImageHDU) hdu;
                 Header old_header = h.getHeader();
                 int naxis = old_header.getIntValue("NAXIS");
-                if (naxis == 0) {
-            /* it's a null image - probably the primary image */
+                if (naxis < 2 ){ //Image has to have naxis=2 or 3
+              /* it's a null image - probably the primary image */
                     new_hdu = hdu;
                 } else {
                     Fits temp_fits = common_crop(h, old_header,

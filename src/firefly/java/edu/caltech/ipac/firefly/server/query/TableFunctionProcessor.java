@@ -9,9 +9,8 @@ import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -26,6 +25,14 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
  */
 public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
     public static final String SEARCH_REQUEST = "searchRequest";
+
+    @Override
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        // this method will not be called because ingestDataIntoDb is overridden.
+        // this processor operate on the results(db) of an existing request.
+        // it needs the original dbFile and dbAdapter.  A new abstract method is created for this.  see #fetchData()
+        return null;
+    }
 
     /**
      * results will be saved as a new set of tables(data, dd, meta) with the returned prefix.
@@ -47,13 +54,9 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
 
     @Override
     public File createDbFile(TableServerRequest treq) throws DataAccessException {
-        try {
-            TableServerRequest sreq = getSearchRequest(treq);
-            return getSearchProcessor(sreq).createDbFile(sreq);
-        } catch (DataAccessException e) {
-            // should not happen
-            return super.createDbFile(treq);
-        }
+        // table function processor operates on the original table
+        // we don't want to create a dummy table in db
+        return null;
     }
 
     /**
@@ -64,7 +67,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         TableServerRequest sreq = getSearchRequest(treq);
         sreq.setPageSize(1);  // set to small number it's not used.
         new SearchManager().getDataGroup(sreq).getData();
-        return new FileInfo(dbFile);
+        return new FileInfo(getDbFile(treq));
     }
 
     /**
@@ -83,9 +86,7 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         } catch (Exception e) {
             // does not exists.. fetch data and populate
             DataGroup data = fetchData(treq, dbFile, dbAdapter);
-            EmbeddedDbUtil.createDataTbl(dbFile, data, dbAdapter, resTblName);
-            EmbeddedDbUtil.createDDTbl(dbFile, data, dbAdapter, resTblName);
-            EmbeddedDbUtil.createMetaTbl(dbFile, data, dbAdapter, resTblName);
+            EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, resTblName);
         }
         return EmbeddedDbUtil.execRequestQuery(treq, dbFile, resTblName);
     }

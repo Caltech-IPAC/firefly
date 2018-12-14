@@ -190,7 +190,7 @@ public class OidcAdapter implements SsoAdapter {
 
     private Token getToken(String url, HttpServiceInput input) {
         ByteArrayOutputStream results = new ByteArrayOutputStream();
-        if (HttpServices.postData(url, results, input) != 200) return null;
+        if (HttpServices.postData(url, results, input).isError()) return null;
 
         Token token = null;
         try {
@@ -221,7 +221,7 @@ public class OidcAdapter implements SsoAdapter {
         String url = String.format("%s?access_token=%s", USER_INFO_URL, accessToken);
         ByteArrayOutputStream results = new ByteArrayOutputStream();
 
-        if (HttpServices.getData(url, results) != 200) return null;
+        if (HttpServices.getData(url, results).isError()) return null;
         try {
             LOGGER.briefDebug("user_info:" + results);
             JSONParser parser = new JSONParser();

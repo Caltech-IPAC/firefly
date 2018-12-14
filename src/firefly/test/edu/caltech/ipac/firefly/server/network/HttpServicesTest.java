@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 public class HttpServicesTest {
@@ -53,16 +54,16 @@ public class HttpServicesTest {
 	public void testGetData(){
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		int statusCode = HttpServices.getData(GET_URL, results, input);
-		validateResults(statusCode, results);
+		HttpServices.Status status = HttpServices.getData(GET_URL, results, input);
+		validateResults(status, results);
 	}
 
 	@Test
 	public void testPostData(){
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		int statusCode = HttpServices.postData(POST_URL, results, input);
-		validateResults(statusCode, results);
+		HttpServices.Status status = HttpServices.postData(POST_URL, results, input);
+		validateResults(status, results);
 	}
 
 	@Test
@@ -75,9 +76,9 @@ public class HttpServicesTest {
 		input.setFile("samplePng", samplePng);
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		int statusCode = HttpServices.postData(POST_URL, results, input);
+		HttpServices.Status status = HttpServices.postData(POST_URL, results, input);
 
-		validateResults(statusCode, results);
+		validateResults(status, results);
 
 		assertNotNull("samplePng should have been uploaded as well", getProp(results.toString(), "samplePng"));
 	}
@@ -91,8 +92,8 @@ public class HttpServicesTest {
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
 		PutMethod put = new PutMethod(PUT_URL);
 		try {
-			int statusCode = HttpServices.executeMethod(put, input, results);
-			validateResults(statusCode, results);
+			HttpServices.Status status = HttpServices.executeMethod(put, input, results);
+			validateResults(status, results);
 		} catch (IOException e) {
 			fail("Encounter IO exception during a put request");
 		}
@@ -102,9 +103,9 @@ public class HttpServicesTest {
 	public void testGzipData(){
 
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		int statusCode = HttpServices.getData(GZIP_URL, results, input);
+		HttpServices.Status status = HttpServices.getData(GZIP_URL, results, input);
 
-		assertEquals("Returned status code should be 200", 200, statusCode);
+		assertFalse("Has error", status.isError());
 
 		assertEquals("Returned content should be gzipped", "true", getProp(results.toString(), "gzipped"));
 	}
@@ -113,9 +114,9 @@ public class HttpServicesTest {
 	public void testRedirectData(){
 		input.setParam("url", GET_URL);  // redirect back to get
 		ByteArrayOutputStream results = new ByteArrayOutputStream();
-		int statusCode = HttpServices.getData(REDIRECT_URL, results, input);
+		HttpServices.Status status = HttpServices.getData(REDIRECT_URL, results, input);
 
-		assertEquals("Returned status code should be 200", 200, statusCode);
+		assertFalse("Has error", status.isError());
 
 		assertEquals("url should be redirected to /get now", GET_URL, getProp(results.toString(), "url"));
 	}
@@ -124,8 +125,8 @@ public class HttpServicesTest {
 //  private
 //====================================================================
 
-	private static void validateResults(int statusCode, ByteArrayOutputStream results) {
-		assertEquals("Returned status code should be 200", 200, statusCode);
+	private static void validateResults(HttpServices.Status status, ByteArrayOutputStream results) {
+		assertFalse("Has error", status.isError());
 
 		try {
 			JSONObject json = (JSONObject) new JSONParser().parse(results.toString());

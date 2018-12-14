@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.util;
 
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.FileUtil;
 
 import java.io.BufferedWriter;

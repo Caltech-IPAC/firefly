@@ -802,7 +802,7 @@ public class ScalableObject {
         ImageWorkSpacePt p2;
         ImageWorkSpacePt p3;
         ImagePlot ip = (ImagePlot) plot;
-        double cdelt1 = frGroup.getFitsRead(Band.NO_BAND).getImageHeader().cdelt1;
+        double cdelt1 = frGroup.getFitsRead(Band.NO_BAND).getCdelt1();
         double degree= 0;
 
 

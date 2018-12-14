@@ -5,12 +5,11 @@
 package edu.caltech.ipac.firefly.server.visualize.imagesources;
 
 
-import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
+import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import org.apache.commons.csv.CSVFormat;
 
@@ -139,7 +138,13 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
              String key= plotParamKeys[i];
              for (int j = 0; j < row.size(); j++) {
                  if(row.containsKey(key)){
-                     params.put(paramMaps.get(key),  String.valueOf(row.getDataElement(key)) );
+                     //Because the checkbox options label are passed from the title, we need an image title label different to distinguish between 2 different same instrument/band
+                     // Build 'intitle' label for UI image display info with plot request title and acronym
+                     if(key.equalsIgnoreCase(PARAMS.TITLE.getKey())){
+                         params.put(paramMaps.get(key) , String.valueOf(row.getDataElement(PARAMS.ACRONYM.getKey())));//+" "+String.valueOf(row.getDataElement(PARAMS.WAVEBAND_ID.getKey())));
+                     }else{
+                         params.put(paramMaps.get(key),  String.valueOf(row.getDataElement(key)) );
+                     }
                      break;
                  }
              }
@@ -152,7 +157,7 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
      DataGroup getDataFromMasterTable(String masterTableName) throws IOException, FailedRequestException {
 
          InputStream inf= IrsaMasterDataSource.class.getResourceAsStream(masterTableName);
-         DataGroup dg = DsvToDataGroup.parse(inf, CSVFormat.DEFAULT);
+         DataGroup dg = DsvTableIO.parse(inf, CSVFormat.DEFAULT);
          return dg;
      }
 
@@ -161,7 +166,7 @@ public class IrsaMasterDataSource implements ImageMasterDataSourceType {
            @Override
            DataGroup getDataFromMasterTable(String masterTableName) throws IOException, FailedRequestException {
                FileInputStream inf = FileUtils.openInputStream(new File(masterTableName));//
-               DataGroup dg = DsvToDataGroup.parse(inf, CSVFormat.DEFAULT);
+               DataGroup dg = DsvTableIO.parse(inf, CSVFormat.DEFAULT);
                return dg;
            }
        };

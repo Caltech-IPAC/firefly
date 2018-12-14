@@ -26,7 +26,8 @@ import edu.caltech.ipac.visualize.draw.ScalableObjectPosition;
 import edu.caltech.ipac.visualize.draw.VectorObject;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
-import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
@@ -604,7 +605,7 @@ public class PlotServUtils {
                     double degScale= asScale/3600.0;
                     Fits blankFits = BlankFITS.createBlankFITS(c.getCenter(), w, h, degScale);
                     try {
-                        retval = FitsRead.createFitsReadArray(blankFits);
+                        retval = FitsReadFactory.createFitsReadArray(blankFits);
                     } catch (FitsException e) {
                         throw new FailedRequestException("Could not create blank image", "FITS read could not be created",e);
                     } finally {

@@ -41,10 +41,7 @@ public class Projection implements Serializable {
     private CoordinateSys _coordSys;
     private ProjectionParams _params;
 
-    private Projection() {}
-
-    public Projection(ProjectionParams params,
-                      CoordinateSys coordSys)
+    public Projection(ProjectionParams params, CoordinateSys coordSys)
     {
         _params= params;
         _scale1= 1/_params.cdelt1;

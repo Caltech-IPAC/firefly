@@ -12,6 +12,7 @@ import {flux, getVersion} from '../Firefly.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
+import {TestTapSearchPanel} from '../ui/TestTapSearchPanel.jsx';
 import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
 import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
 import {CatalogSelectViewPanel} from '../visualize/ui/CatalogSelectViewPanel.jsx';
@@ -19,6 +20,7 @@ import {LSSTCatalogSelectViewPanel} from '../visualize/ui/LSSTCatalogSelectViewP
 import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
 import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
+import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import './DropDownContainer.css';
 
@@ -26,6 +28,7 @@ export const dropDownMap = {
     Search: <SearchPanel />,
     TestSearch: <TestSearchPanel />,
     TestSearches: <TestQueriesPanel />,
+    TestTAPSearch: <TestTapSearchPanel />,
     ImageSearchPanelV2: <ImageSearchDropDown/>,
     ImageSelectDropDownCmd: <ImageSearchDropDown/>,
     ImageSelectDropDownSlateCmd: <ImageSearchDropDown gridSupport={true}/>,
@@ -96,6 +99,7 @@ export class DropDownContainer extends Component {
         const {footer, alerts} = this.props;
         const { visible, selected }= this.state;
         const view = dropDownMap[selected];
+        const {BuildMajor, BuildMinor, BuildRev, Build, BuildType, BuildDate, BuildCommit, BuildCommitFirefly} = getVersion() || {};
 
         if (!visible) return <div/>;
         return (
@@ -110,7 +114,7 @@ export class DropDownContainer extends Component {
                     <div id='footer' className='DD-ToolBar__footer'>
                         {footer}
                         <div className='DD-ToolBar__version'>
-                            {getVersion()}
+                            <VersionInfo versionInfo={getVersion()}/>
                         </div>
                     </div>
                 </div>
@@ -129,6 +133,56 @@ DropDownContainer.propTypes = {
 DropDownContainer.defaultProps = {
     visible: false
 };
+
+function VersionInfo({versionInfo={}}) {
+    const {BuildMajor, BuildMinor, BuildRev, BuildType, BuildDate} = versionInfo;
+    const showFullInfo = () => showInfoPopup(versionInfoFull(versionInfo), 'Version Information');
+
+    let version = `v${BuildMajor}.${BuildMinor}`;
+    version += BuildRev !== '0' ? `.${BuildRev}` : '';
+    version += BuildType === 'Final' ? '' : `_${BuildType}`;
+    const builtOn = ` Built On: ${BuildDate}`;
+    return (
+        <div onClick={showFullInfo}>{version + builtOn}</div>
+    );
+
+}
+
+function versionInfoFull({BuildMajor, BuildMinor, BuildRev, BuildNumber, BuildType, BuildTime, BuildTag, BuildCommit, BuildCommitFirefly}) {
+    let version = `v${BuildMajor}.${BuildMinor}`;
+    version += BuildRev !== '0' ? `.${BuildRev}` : '';
+    return (
+        <div className='DD-Version'>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Version</div>
+                <div className='DD-Version__value'>{version}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Type</div>
+                <div className='DD-Version__value'>{BuildType}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Build Number</div>
+                <div className='DD-Version__value'>{BuildNumber}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Built On</div>
+                <div className='DD-Version__value'>{BuildTime}</div>
+            </div>
+            <div className='DD-Version__item'>
+                <div className='DD-Version__key'>Git commit</div>
+                <div className='DD-Version__value'>{BuildCommit}</div>
+            </div>
+            { BuildCommitFirefly &&
+                <div className='DD-Version__item'>
+                    <div className='DD-Version__key'>Git commit(Firefly)</div>
+                    <div className='DD-Version__value'>{BuildCommitFirefly}</div>
+                </div>
+            }
+        </div>
+    );
+
+}
 
 export class Alerts extends PureComponent {
 

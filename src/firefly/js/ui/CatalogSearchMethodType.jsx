@@ -20,6 +20,8 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
 import {InputAreaFieldConnected} from './InputAreaField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
+import {UploadOptionsDialog} from './UploadOptionsDialog.jsx';
+import {getWorkspaceConfig,initWorkspace} from '../visualize/WorkspaceCntlr.js';
 import {FieldGroup} from './FieldGroup.jsx';
 
 import CsysConverter from '../visualize/CsysConverter.js';
@@ -38,9 +40,12 @@ export class CatalogSearchMethodType extends PureComponent {
 
     constructor(props) {
         super(props);
+
         this.state = {
             fields: FieldGroupUtils.getGroupFields(this.props.groupKey)
         };
+
+
     }
 
     componentWillUnmount() {
@@ -86,7 +91,7 @@ export class CatalogSearchMethodType extends PureComponent {
                 <div
                     style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
                     {spatialSelection(withPos, polyIsDef, searchOption)}
-                    {sizeArea(searchType, get(fields, 'imageCornerCalc.value', 'image'))}
+                    {sizeArea(groupKey, searchType, get(fields, 'imageCornerCalc.value', 'image'))}
                 </div>
             </FieldGroup>
         );
@@ -259,7 +264,7 @@ radiusInField.propTypes = {
    label: PropTypes.string
 };
 
-function sizeArea(searchType, imageCornerCalc) {
+function sizeArea(groupKey, searchType, imageCornerCalc) {
 
     if (searchType === SpatialMethod.Cone.value) {
         return (
@@ -303,15 +308,20 @@ function sizeArea(searchType, imageCornerCalc) {
 
         );
     } else if (searchType === SpatialMethod.get('Multi-object').value) {
+        const isWs = getWorkspaceConfig();
         return (
+
             <div
                 style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
-                <FileUpload
-                    wrapperStyle={{padding:10, margin: '5px 0'}}
-                    fieldKey='fileUpload'
-                    initialState={{
-                        tooltip: 'Select a  file to upload',
-                        label: 'Filename:'}}
+                <UploadOptionsDialog
+                    fromGroupKey={groupKey}
+                    preloadWsFile={true}
+                    fieldKeys={{local: 'fileUpload',
+                    workspace: 'workspaceUpload',
+                    location: 'fileLocation'}}
+                    workspace={isWs}
+                    tooltips={{local: 'Select a file to upload',
+                        workspace: 'Select a file from workspace to upload'}}
                 />
                 {radiusInField({})}
             </div>

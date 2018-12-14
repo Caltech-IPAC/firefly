@@ -154,6 +154,7 @@ function makeDrawLayer(drawLayerId,
 
            // The following are the options that the drawing layer supports.
            // should be set in the options parameter
+        doAsyncDrawing: false,
         canHighlight: false,
         dataTooBigForSelection : false,
         canUseMouse: false,

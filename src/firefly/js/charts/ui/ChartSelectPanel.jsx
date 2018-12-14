@@ -10,7 +10,7 @@ import {getFieldVal, getReducerFunc} from '../../fieldGroup/FieldGroupUtils.js';
 
 import {RadioGroupInputField} from './../../ui/RadioGroupInputField.jsx';
 import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
-import {CHART_UPDATE, dataLoadedUpdate, getChartData, removeTrace} from '../ChartsCntlr.js';
+import {CHART_UPDATE, dataLoadedUpdate, getChartData, dispatchChartTraceRemove} from '../ChartsCntlr.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 
 import {showOptionsPopup} from './../../ui/PopupUtil.jsx';
@@ -65,7 +65,9 @@ function onChartAction({chartAction, tbl_id, chartId, hideDialog}) {
              case CHART_TRACE_MODIFY:
                 const {activeTrace, data, fireflyData} = getChartData(chartId);
                 const type = get(data, `${activeTrace}.type`, 'scatter');
-                const ftype = get(fireflyData, `${activeTrace}.dataType`);
+                let ftype = get(fireflyData, `${activeTrace}.dataType`);
+                const scatterOrHeatmap = get(fireflyData, [activeTrace, 'scatterOrHeatmap']);
+                if (scatterOrHeatmap) ftype = 'scatterOrHeatmap';
                 const submitChangesFunc = getSubmitChangesFunc(type, ftype);
                 //hideDialog();
                 submitChangesFunc && submitChangesFunc({chartId, activeTrace, fields, tbl_id});
@@ -73,7 +75,7 @@ function onChartAction({chartAction, tbl_id, chartId, hideDialog}) {
             case CHART_TRACE_REMOVE:
                 hideDialog();
                 const {activeTrace:traceNum} = getChartData(chartId);
-                removeTrace({chartId, traceNum});
+                dispatchChartTraceRemove(chartId, traceNum);
                 break;
             default:
                 console.log(`onChartAction - unsupported action ${chartAction}`);
@@ -213,7 +215,7 @@ function ChartActionOptions(props) {
     const chartId = chartAction === CHART_ADDNEW ? undefined : chartIdProp;
 
     if (chartAction === CHART_ADDNEW || chartAction === CHART_TRACE_ADDNEW) {
-        return (<NewTracePanel {...{groupKey, tbl_id, chartId, hideDialog, showMultiTrace}}/>);
+        return (<NewTracePanel key={chartAction} {...{groupKey, tbl_id, chartId, hideDialog, showMultiTrace}}/>);
     }
     if (chartAction === CHART_TRACE_MODIFY) {
         return (
@@ -309,11 +311,19 @@ export function getOptionsUI(chartId) {
     if (dataType === 'fireflyHistogram') {
         return FireflyHistogramOptions;
     } else if (dataType === 'fireflyHeatmap') {
-        return HeatmapOptions;
+        if (get(fireflyData, [activeTrace, 'scatterOrHeatmap']) && isScatter2d(type)) {
+            return ScatterOptions;
+        } else {
+            return HeatmapOptions;
+        }
     } else if (isScatter2d(type)) {
         return ScatterOptions;
     } else {
-        return BasicOptions;
+        if (get(fireflyData, [activeTrace, 'scatterOrHeatmap']) && type === 'heatmap') {
+            return HeatmapOptions;
+        } else {
+            return BasicOptions;
+        }
     }
 }
 

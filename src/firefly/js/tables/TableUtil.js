@@ -142,7 +142,7 @@ export function findGroupByTblId(tbl_id) {
 export function removeTablesFromGroup(tbl_group_id = 'main') {
     const tblAry = getTblIdsByGroup(tbl_group_id);
     tblAry && tblAry.forEach((tbl_id) => {
-        TblCntlr.dispatchTableRemove(tbl_id);
+        TblCntlr.dispatchTableRemove(tbl_id, false);        // all table will be removed.  not need to fireActiveTableChanged
     });
 }
 
@@ -257,9 +257,9 @@ export function findIndex(tbl_id, filterInfo) {
     if (idx >= 0) {
         return Promise.resolve(idx);
     } else {
-        const inclCols = 'ROW_NUM';
-        return queryTable(tableModel.request, {filterInfo, inclCols}).then( (tableModel) => {
-            return get(getColumnValues(tableModel, inclCols), '0', -1);
+        const inclCols = 'ROW_NUM as ORG_ROWNUM';
+        return queryTable(tableModel.request, {filters: filterInfo, inclCols}).then( (tableModel) => {
+            return get(tableModel, ['tableData','data']) ? get(getColumnValues(tableModel, 'ORG_ROWNUM'), '0', -1) : -1;
         });
     }
 }
@@ -371,7 +371,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
  */
 export function getColumnValues(tableModel, colName) {
     const colIdx = getColumnIdx(tableModel, colName);
-    if (colIdx >= 0 && colIdx < get(tableModel, 'tableData.data.length', 0)) {
+    if (colIdx >= 0 && colIdx < get(tableModel, 'tableData.columns.length', 0)) {
         return get(tableModel, 'tableData.data').map( (r) => r[colIdx]);
     } else {
         return [];
@@ -431,9 +431,10 @@ export function getSelectedData(tbl_id, columnNames=[]) {
  * @memberof ffirefly.util.table
  * @func isTableLoaded
  */
-export function isTableLoaded(tableModel) {
-    const status = tableModel && !tableModel.isFetching && get(tableModel, 'tableMeta.Loading-Status', 'COMPLETED');
-    return status === 'COMPLETED';
+export function isTableLoaded(tableModel={}) {
+    const {isFetching} = tableModel;
+    const status = get(tableModel, 'tableMeta.Loading-Status');
+    return !isFetching && status === 'COMPLETED';
 }
 
 /**
@@ -911,7 +912,22 @@ export function makeBgKey(tbl_id) {
     return `tables:${tbl_id}`;
 }
 
+/**
+ * If input is '"x"', outputs 'x', but if input is '"x"+"y"' or 'log("x")' output is the same as input
+ * @param s
+ * @returns {*}
+ */
+export function stripColumnNameQuotes(s) {
+    const newS = s.replace(/^"(.+)"$/, '$1');
+    return newS.includes('"') ? s : newS;
+}
+
+export function tblDropDownId(tbl_id) {
+    return `table_dropDown-${tbl_id}`;
+}
+
 /*-------------------------------------private------------------------------------------------*/
+
 /**
  * Action watcher callback for table update, which is invoked when
  * the table given by tbl_id is fully loaded.

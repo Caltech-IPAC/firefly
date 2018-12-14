@@ -3,18 +3,18 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -80,11 +80,11 @@ public class CatSummaryQuery  extends IpacTablePartProcessor {
             String jsonContent = baos.toString();
             HashMap<String, Integer> keyValues = parse(jsonContent);
             DataType setType = new DataType("set", String.class);
-            setType.getFormatInfo().setWidth(15);
+            setType.setWidth(15);
             DataType catType = new DataType("catalog", String.class);
-            catType.getFormatInfo().setWidth(30);
+            catType.setWidth(30);
             DataType ddlink = new DataType("ddlink", String.class);
-            catType.getFormatInfo().setWidth(30);
+            catType.setWidth(30);
 
             DataType countType = new DataType("count", Integer.class);
             DataType[] dt = new DataType[]{setType, catType, ddlink, countType};
@@ -108,8 +108,7 @@ public class CatSummaryQuery  extends IpacTablePartProcessor {
             }
             File outf = createFile(req);
             //File outf = new File("/tmp/a.txt");
-            dg.shrinkToFitData(true);
-            IpacTableWriter.save(outf, dg);            
+            IpacTableWriter.save(outf, dg);
 
             return outf;
         } catch (FailedRequestException e) {

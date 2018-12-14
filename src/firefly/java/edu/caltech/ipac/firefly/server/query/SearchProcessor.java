@@ -7,17 +7,18 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 
@@ -29,7 +30,6 @@ import java.util.SortedSet;
  */
 public interface SearchProcessor<Type> {
 
-    ServerRequest inspectRequest(ServerRequest request);
     String getUniqueID(ServerRequest request);
     Type getData(ServerRequest request) throws DataAccessException;
     FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException;
@@ -44,23 +44,6 @@ public interface SearchProcessor<Type> {
 //====================================================================
 
     Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
-
-    static ServerRequest inspectRequestDef(ServerRequest request) {
-        TableServerRequest req = (TableServerRequest) request;
-        String doPadding = req.getMeta("padResults");
-        if (Boolean.parseBoolean(doPadding)) {
-            // if we need to pad the results, change the request.
-            req = (TableServerRequest) req.cloneRequest();
-            int start = Math.max(req.getStartIndex() - 50, 0);
-            req.setStartIndex(start);
-            req.setPageSize(req.getPageSize() + 100);
-            ((TableServerRequest)request).setStartIndex(start);   // the original request needs to be modify as well.
-            return req;
-        } else {
-            return request;
-        }
-
-    }
 
     /**
      * return the unique ID for the original data set of this request.  This means parameters related
@@ -91,4 +74,30 @@ public interface SearchProcessor<Type> {
                 "from", isCached, "params", CollectionUtil.toString(params, ","));
     }
 
+
+//====================================================================
+// public interfaces
+//====================================================================
+
+    interface CanFetchDataGroup {
+
+        /**
+         * Fetches the data for the given search request.  This method should perform a fetch for fresh
+         * data.  Caching should not be performed here.
+         *
+         * @param req Table request object
+         * @return
+         * @throws DataAccessException
+         */
+        public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException;
+    }
+
+
+    /**
+     * Date: 9/13/17
+     *
+     */
+    interface CanGetDataFile {
+        File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException;
+    }
 }

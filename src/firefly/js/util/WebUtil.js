@@ -39,6 +39,31 @@ export function getProp(key, def) {
     return get(GLOBAL_PROPS, [key], def);
 }
 
+/**
+ * returns an object of key:value where keyPrefix is removed from the keys.  i.e
+ * <code>
+ *      {
+ *          version_a: a_val,
+ *          version_b: b_val
+ *      }
+ *      getPropsWith('version_')  => {a: a_val, b: b_val}
+ * </code>
+ * @param keyPrefix
+ * @returns {*}
+ */
+export function getPropsWith(keyPrefix) {
+    /*global __PROPS__*/        // this is defined at build-time.
+    GLOBAL_PROPS = GLOBAL_PROPS || __PROPS__;
+    if (!GLOBAL_PROPS) return {};
+    return Object.entries(GLOBAL_PROPS)
+        .filter(([k,]) => k.startsWith(keyPrefix))
+        .reduce((rval, [k,v]) => {
+            const prop = k.substring(keyPrefix.length);
+            rval[prop] = v;
+            return rval;
+        }, {});
+}
+
 export function getModuleName() {
     return getProp('MODULE_NAME');
 }
@@ -314,7 +339,11 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
                 return new Error(`${url} failed with status: ${response}.statusText`);
             }
         }).catch( (error) => {
-            throw new Error(`Request failed: ${url}`, error);
+            if (error.name === 'AbortError') {
+                throw error; // fetch aborted
+            } else {
+                throw new Error(`Request failed: ${url}`, error);
+            }
         });
 }
 
@@ -339,6 +368,30 @@ export function logErrorWithPrefix(prefix, ...message) {
                 console.log(m.stack ? m.stack : m);
             }
         } );
+    }
+}
+
+/**
+ * Copy the content of the string to the clipboard
+ * @param str
+ */
+export function copyToClipboard(str) {
+    const el = document.createElement('textarea');  // Create a <textarea> element
+    el.value = str;                                 // Set its value to the string that you want copied
+    el.setAttribute('readonly', '');                // Make it readonly to be tamper-proof
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';                      // Move outside the screen to make it invisible
+    document.body.appendChild(el);                  // Append the <textarea> element to the HTML document
+    const selected =
+        document.getSelection().rangeCount > 0      // Check if there is any content selected previously
+            ? document.getSelection().getRangeAt(0) // Store selection if found
+            : false;                                // Mark as false to know no selection existed before
+    el.select();                                    // Select the <textarea> content
+    document.execCommand('copy');                   // Copy - only works as a result of a user action (e.g. click events)
+    document.body.removeChild(el);                  // Remove the <textarea> element
+    if (selected) {                                 // If a selection existed before copying
+        document.getSelection().removeAllRanges();  // Unselect everything on the HTML document
+        document.getSelection().addRange(selected); // Restore the original selection
     }
 }
 
@@ -448,7 +501,7 @@ export function getSizeAsString(size) {
 
     let retval;
     if (size > 0 && size < (MEG)) {
-        retval= ((size / K) + 1) + kStr;
+        retval= ((size / K)) + kStr;
     }
     else if (size >= (MEG) && size <  (2*GIG) ) {
         const megs = Math.round(size / MEG);

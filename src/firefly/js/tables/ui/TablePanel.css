@@ -46,6 +46,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    z-index: 0;
 }
 .TablePanel__frame:focus {
     outline: rgb(91, 157, 217) auto 2px;
@@ -126,6 +127,10 @@
     background-image: url("/images/icons-2014/16x16_Backward.png");
 }
 
+.PanelToolbar__button.info {
+    background-image: url("/images/icons-2014/24x24_Info.png");
+}
+
 .PanelToolbar__button.options {
     background-image: url("/images/icons-2014/24x24_GearsNEW.png");
 }
@@ -146,6 +151,14 @@
     background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
 }
 
+.TablePanelInfoWrapper {
+    min-width: 430px;
+    min-height: 200px;
+    overflow: auto;
+    position: relative;
+    resize: both;
+}
+
 .TablePanel__options--small {
     z-index: 1;
     position: absolute;
@@ -162,17 +175,16 @@
 }
 
 .TablePanelOptionsWrapper {
-    min-width: 365px;
+    min-width: 430px;
     height: 450px;
     min-height: 200px;
     overflow: hidden;
     position: relative;
-    resize:vertical;
+    resize: both;
 }
 
 .TablePanelOptions {
     position: absolute;
-    padding: 5px 7px;
     top: 5px;
     bottom: 5px;
     left: 5px;

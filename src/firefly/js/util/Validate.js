@@ -88,6 +88,29 @@ export const validateEmail = function(description,valStr) {
     return retval;
 };
 
+export const validateDate = function(description, valStr){
+    let retval ={
+        valid: true,
+        message: ''
+    };
+    if(valStr){
+        try {
+            let dateObj = new Date(valStr);
+            //Extracting the "date" string from the date object, in yyyy-mm-dd format.
+            let parsedDate = dateObj.toISOString().substr(0, dateObj.toISOString().indexOf('T'));
+            if(parsedDate !== valStr){
+                retval.valid = false;
+                retval.message = description + ': must be a valid date formatted as yyyy-mm-dd';
+            }
+        }
+        catch (e) {
+            retval.valid = false;
+            retval.message = description + ': Unrecognized entry. date should follow the format yyyy-mm-dd';
+        }
+    }
+    return retval;
+};
+
 export const validateUrl = function(description,valStr) {
     var retval = {
         valid: true,
@@ -175,11 +198,16 @@ export const urlValidator = function(description) {
 export const emailValidator = function(description) {
     return (val) => validateEmail(description, val);
 };
+
+export const dateValidator = function(description) {
+    return (val) => validateDate(description, val);
+};
+
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 
 
 var Validate = {
-    validateEmail, validateUrl, intRange, floatRange, isFloat, isInt,isPositiveFiniteNumber
+    validateEmail, validateUrl, intRange, floatRange, isFloat, isInt,isPositiveFiniteNumber, validateDate
 };
 export default Validate;

@@ -4,10 +4,9 @@
 package edu.caltech.ipac.firefly.server.db.spring.mapper;
 
 
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.DataType.FormatInfo;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.sql.ResultSet;
@@ -42,8 +41,6 @@ public class DataGroupUtil {
         DataObject dataObj;
 
         int numColumns = dataGroup.getDataDefinitions().length;
-        int columnWidth [] = new int[numColumns];
-        Arrays.fill(columnWidth, 0);
 
         if (rs.isBeforeFirst()) {
             rs.next();
@@ -89,67 +86,35 @@ public class DataGroupUtil {
                     obj = (nullNum != Integer.MIN_VALUE && obj instanceof Number) ? nullNum : null;
                 }
                 dataObj.setDataElement(dt, obj);
-                if (obj instanceof String) {
-                    columnWidth[i] = Math.max(columnWidth[i], obj.toString().length());
-                }
             }
             dataGroup.add(dataObj);
         } while (rs.next());
 
-        // update column width (for char columns only)
-        DataType dt;
-        FormatInfo fi;
-        int displaySize;
-        for (int i = 0; i < numColumns; i++) {
-            if (columnWidth[i] > 0) {
-                dt = dataGroup.getDataDefinitions()[i];
-                dt.setMaxDataWidth(columnWidth[i]);
-            }
-        }
-
-
         return dataGroup;
     }
 
-    public static List<DataType> getExtraData(ResultSetMetaData rsmd)
-        throws SQLException {
+    public static List<DataType> getExtraData(ResultSetMetaData rsmd) throws SQLException {
         int numCols = rsmd.getColumnCount();
-        List<DataType> extraData= new ArrayList<DataType>(numCols);
+        List<DataType> extraData = new ArrayList<DataType>(numCols);
         DataType dataType = null;
         String columnName = null;
         Class columnClass = null;
-        int displaySize;
-        FormatInfo fi;
-        for (int i=1; i<=numCols; i++) {
+        for (int i = 1; i <= numCols; i++) {
             columnName = rsmd.getColumnName(i);
-            columnClass = convertToClass( rsmd.getColumnType(i));
-            dataType= new DataType(columnName, columnName,
-                                   columnClass,
-                                   DataType.Importance.HIGH,
-                                   "",     // no unit info
-                                   true); // columns may be null
-
-            int cdsize = rsmd.getColumnDisplaySize(i) == Integer.MAX_VALUE ? 0: rsmd.getColumnDisplaySize(i);
-            displaySize = Math.max(columnName.length(), Math.max(6, cdsize));
-            fi = dataType.getFormatInfo();
-            fi.setWidth(displaySize);
+            columnClass = convertToClass(rsmd.getColumnType(i));
+            dataType = new DataType(columnName, columnName, columnClass);
 
             // format info - for numeric types only
-            if (!(columnClass==String.class)) {
+            if (!(columnClass == String.class)) {
                 if (columnClass == Double.class || columnClass == Float.class) {
                     int scale = Math.max(rsmd.getScale(i), columnClass == Double.class ? 10 : 7);
-                    fi.setDataFormat("%." + scale + "e"); // double or float
+                    dataType.setFormat("%." + scale + "e"); // double or float
                 } else if (Date.class.isAssignableFrom(columnClass)) {
-                    fi.setDataFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date
+                    dataType.setFormat("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS"); // date
                 }
-                fi.setDataAlign(FormatInfo.Align.LEFT);
-                dataType.setFormatInfo(fi);
             }
             extraData.add(dataType);
-            }
-
-           // System.out.println("extraData: "+ extraData.toString());
-            
+        }
         return extraData;
     }
 

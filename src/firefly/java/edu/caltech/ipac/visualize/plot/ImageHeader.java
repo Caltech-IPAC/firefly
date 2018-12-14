@@ -4,19 +4,13 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
-import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
-import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
-import nom.tam.fits.HeaderCard;
-import nom.tam.util.Cursor;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 
 public class ImageHeader implements Serializable
@@ -32,6 +26,7 @@ public class ImageHeader implements Serializable
     public static final String EXTINCT=  "EXTINCT";
 
     public static final String PALOMAR_ID=  "Palomar Transient Factory";
+	public static final int MAX_SIP_LENGTH = 10;
 
     public final int EQ = 0;
     public final int EC = 1;
@@ -71,30 +66,26 @@ public class ImageHeader implements Serializable
     /* GNOMONIC projection (ctype1 ending in -SIP)*/
 
 	public double a_order, ap_order, b_order, bp_order;
-    public double a[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
-    public double ap[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
-    public double b[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
-    public double bp[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
+	public double a[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double ap[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double b[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public double pv1[]= null;
 	public double pv2[]= null;
 	public boolean using_tpv= false;
     public String keyword;
-	public Map<String,String> maskHeaders= new HashMap<>(23);
-	public Map<String,Object> sendToClientHeaders = new HashMap<>(23);
-
 
     public ImageHeader()
     {
     }
 
-    public ImageHeader(Header header) throws FitsException
+    public ImageHeader(Header header)
     {
 	this(header, 0L, 0);
     }
 
     public ImageHeader(Header header, long HDU_offset, int _plane_number)
-	throws FitsException
     {
 	int i, j;
 	boolean got_cd1_1, got_cd1_2, got_cd2_1, got_cd2_2;
@@ -110,24 +101,6 @@ public class ImageHeader implements Serializable
 	String ctype1_trim = null;
 
 	long header_size = header.getOriginalSize();
-
-	HeaderCard hc;
-	Cursor extraIter= header.iterator();
-	for(;extraIter.hasNext();) {
-		hc= (HeaderCard)extraIter.next();
-		if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
-			maskHeaders.put(hc.getKey(), hc.getValue());
-			sendToClientHeaders.put(hc.getKey(), hc.getValue());
-		}
-		if (hc.getKey().startsWith("LTV") || hc.getKey().startsWith("CR")) {
-			sendToClientHeaders.put(hc.getKey(), hc.getValue());
-        }
-	}
-	hc= header.findCard("EXTTYPE");
-	if (hc!=null) sendToClientHeaders.put(hc.getKey(), hc.getValue());
-
-
-
 
 	data_offset = HDU_offset + header_size;
 	plane_number = _plane_number;
@@ -448,7 +421,7 @@ public class ImageHeader implements Serializable
 	a_order = header.getIntValue("A_ORDER");
 	if (a_order>= 0)
 	{
-		int len= (int)Math.min(a_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		int len= (int)Math.min(a_order+1, MAX_SIP_LENGTH);
 	    for (i = 0; i < len; i++)
 	    {
 		for (j = 0; j < len; j++)
@@ -469,7 +442,7 @@ public class ImageHeader implements Serializable
 	b_order = header.getIntValue("B_ORDER");
 	if (b_order>= 0)
 	{
-		int len= (int)Math.min(b_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		int len= (int)Math.min(b_order+1, MAX_SIP_LENGTH);
 	    for (i = 0; i < len; i++)
 	    {
 		for (j = 0; j < len; j++)
@@ -489,7 +462,7 @@ public class ImageHeader implements Serializable
 	ap_order = header.getIntValue("AP_ORDER");
 	if (ap_order>= 0)
 	{
-		int len= (int)Math.min(ap_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		int len= (int)Math.min(ap_order+1, MAX_SIP_LENGTH);
 	    for (i = 0; i < len; i++)
 	    {
 		for (j = 0; j < len; j++)
@@ -509,7 +482,7 @@ public class ImageHeader implements Serializable
 	bp_order = header.getIntValue("BP_ORDER");
 	if (bp_order>= 0)
 	{
-		int len= (int)Math.min(bp_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		int len= (int)Math.min(bp_order+1, MAX_SIP_LENGTH);
 	    for (i = 0; i < len; i++)
 	    {
 		for (j = 0; j < len; j++)
@@ -656,6 +629,14 @@ public class ImageHeader implements Serializable
 		cdelt2 = plt_scale * y_pixel_size / 1000 / 3600;
 	    }
 	}
+
+
+	if (cdelt2<0) { //todo - this assumed the pixels were flipped, determine if we want to keep doing this
+		cdelt2 = -cdelt2;
+		crpix2 = naxis2 - crpix2+ 1;
+	}
+
+
     }
 
     public String getProjectionName()
@@ -746,9 +727,30 @@ public class ImageHeader implements Serializable
 	}
 
     public Projection createProjection(CoordinateSys csys) {
-        ProjectionParams params= createProjectionParams(this);
-        return new Projection(params,csys);
+        return new Projection(createProjectionParams(this),csys);
     }
+
+
+	public Projection createProjection() {
+        return createProjection(determineCoordSys());
+    }
+
+
+
+	public CoordinateSys determineCoordSys() {
+		int sys= getJsys();
+		CoordinateSys imageCoordSys= CoordinateSys.makeCoordinateSys( sys, getEquinox() );
+
+		// tmp
+		if ((getEquinox() == 2000.0) && (sys == -1) ) {      // tmp
+			imageCoordSys= CoordinateSys.EQ_J2000;  // tmp
+		}                                           // tmp
+		// tmp
+
+		return imageCoordSys;
+	}
+
+
 
     public static ProjectionParams createProjectionParams(ImageHeader hdr) {
         ProjectionParams params= new ProjectionParams();
@@ -816,86 +818,26 @@ public class ImageHeader implements Serializable
 
 
 
-		params.sendToClientHeaders= hdr.sendToClientHeaders;
-		params.sendToClientHeaders.put("bitpix", hdr.bitpix);
-		params.sendToClientHeaders.put("naxis", hdr.naxis);
-		params.sendToClientHeaders.put("naxis1", hdr.naxis1);
-		params.sendToClientHeaders.put("naxis2", hdr.naxis2);
-		params.sendToClientHeaders.put("naxis3", hdr.naxis3);
-		params.sendToClientHeaders.put("crpix1", hdr.crpix1);
-		params.sendToClientHeaders.put("crpix2", hdr.crpix2);
-		params.sendToClientHeaders.put("crval1", hdr.crval1);
-		params.sendToClientHeaders.put("crval2", hdr.crval2);
-		params.sendToClientHeaders.put("cdelt1", hdr.cdelt1);
-		params.sendToClientHeaders.put("cdelt2", hdr.cdelt2);
-		params.sendToClientHeaders.put("crota2", hdr.crota2);
-		params.sendToClientHeaders.put("crota1", hdr.crota1);
-		params.sendToClientHeaders.put("file_equinox", hdr.file_equinox);
-		params.sendToClientHeaders.put("ctype1", hdr.ctype1);
-		params.sendToClientHeaders.put("ctype2", hdr.ctype2);
-		params.sendToClientHeaders.put("radecsys", hdr.radecsys);
-		params.sendToClientHeaders.put("datamax", hdr.datamax);
-		params.sendToClientHeaders.put("datamin", hdr.datamin);
-
-
-		params.sendToClientHeaders.put("maptype", hdr.maptype);
-		params.sendToClientHeaders.put("cd1_1", hdr.cd1_1);
-		params.sendToClientHeaders.put("cd1_2", hdr.cd1_2);
-		params.sendToClientHeaders.put("cd2_1", hdr.cd2_1);
-		params.sendToClientHeaders.put("cd2_2", hdr.cd2_2);
-		params.sendToClientHeaders.put("dc1_1", hdr.dc1_1);
-		params.sendToClientHeaders.put("dc1_2", hdr.dc1_2);
-		params.sendToClientHeaders.put("dc2_1", hdr.dc2_1);
-		params.sendToClientHeaders.put("dc2_2", hdr.dc2_2);
-		params.sendToClientHeaders.put("using_cd", hdr.using_cd);
-		params.sendToClientHeaders.put("using_tpv", hdr.using_tpv);
-		params.sendToClientHeaders.put("pv1", hdr.pv1);
-		params.sendToClientHeaders.put("pv2", hdr.pv2);
-
-
-		params.sendToClientHeaders.put("plate_ra", hdr.plate_ra);
-		params.sendToClientHeaders.put("plate_dec", hdr.plate_dec);
-		params.sendToClientHeaders.put("x_pixel_offset", hdr.x_pixel_offset);
-		params.sendToClientHeaders.put("y_pixel_offset", hdr.y_pixel_offset);
-		params.sendToClientHeaders.put("x_pixel_size", hdr.x_pixel_size);
-		params.sendToClientHeaders.put("y_pixel_size", hdr.y_pixel_size);
-		params.sendToClientHeaders.put("plt_scale", hdr.plt_scale);
-		params.sendToClientHeaders.put("ppo_coeff", hdr.ppo_coeff);
-		params.sendToClientHeaders.put("amd_x_coeff", hdr.amd_x_coeff);
-		params.sendToClientHeaders.put("amd_y_coeff", hdr.amd_y_coeff);
-
-
-		params.sendToClientHeaders.put("a_order", hdr.a_order);
-		params.sendToClientHeaders.put("ap_order", hdr.ap_order);
-		params.sendToClientHeaders.put("b_order", hdr.b_order);
-		params.sendToClientHeaders.put("bp_order", hdr.bp_order);
-		params.sendToClientHeaders.put("a", hdr.a);
-		params.sendToClientHeaders.put("ap", hdr.ap);
-		params.sendToClientHeaders.put("b", hdr.b);
-		params.sendToClientHeaders.put("bp", hdr.bp);
-		params.sendToClientHeaders.put("map_distortion", hdr.map_distortion);
-		params.sendToClientHeaders.put("keyword", hdr.keyword);
-
 
         return params;
 
     }
 
-    public ClientFitsHeader makeMiniHeader() {
-        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,
-                                                        naxis,naxis1,naxis2,naxis3,
-                                                        cdelt2,bscale,bzero,
-                                                        blank_value,data_offset);
-        if (origin.startsWith(PALOMAR_ID))
-        {
-            miniHeader.setHeader(ORIGIN,origin);
-            miniHeader.setHeader(EXPTIME,exptime);
-            miniHeader.setHeader(IMAGEZPT,imagezpt);
-            miniHeader.setHeader(AIRMASS,airmass);
-            miniHeader.setHeader(EXTINCT,extinct);
-        }
-        return miniHeader;
-    }
+//    public ClientFitsHeader makeMiniHeader() {
+//        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,
+//                                                        naxis,naxis1,naxis2,naxis3,
+//                                                        cdelt2,bscale,bzero,
+//                                                        blank_value,data_offset);
+//        if (origin.startsWith(PALOMAR_ID))
+//        {
+//            miniHeader.setHeader(ORIGIN,origin);
+//            miniHeader.setHeader(EXPTIME,exptime);
+//            miniHeader.setHeader(IMAGEZPT,imagezpt);
+//            miniHeader.setHeader(AIRMASS,airmass);
+//            miniHeader.setHeader(EXTINCT,extinct);
+//        }
+//        return miniHeader;
+//    }
 
     public String toString()
     {
@@ -925,60 +867,6 @@ public class ImageHeader implements Serializable
 	return sb.toString();
     }
 
-
-
-
-    // main is for testing only
-//    public static void main(String[] args)
-//    {
-//	Fits myFits = null;
-//	BasicHDU[] HDUs = null;
-//	ImageHeader rbhtest = null;
-//
-//	if (args.length != 1)
-//	{
-//	    System.out.println("usage:  java ImageHeader <filename>");
-//	    System.exit(1);
-//	}
-//
-//	try
-//	{
-//	    myFits = new Fits(args[0]);
-//	    HDUs = myFits.read();
-//
-//	    if (HDUs == null)
-//	    {
-//		// Error: file doesn't seem to have any HDUs!
-//		throw new FitsException("Bad format in FITS file");
-//	    }
-//	    Header header = HDUs[0].getHeader();
-//	    rbhtest = new ImageHeader(header);
-//	}
-//	catch (FitsException e)
-//	{
-//	    //System.out.println("got FitsException e= " + e);
-//	    System.out.println("got FitsException: " + e.getMessage());
-//	    // e.printStackTrace();
-//	    System.exit(1);
-//	}
-//
-//	System.out.println("bitpix = " + rbhtest.bitpix);
-//	System.out.println("naxis = " + rbhtest.naxis);
-//	System.out.println("naxis1 = " + rbhtest.naxis1);
-//	System.out.println("naxis2 = " + rbhtest.naxis2);
-//	if (rbhtest.naxis > 2)
-//	{
-//	    System.out.println("naxis3 = " + rbhtest.naxis3);
-//	}
-//
-//
-//	System.out.println("getProjectionName() returns " +
-//	    rbhtest.getProjectionName());
-//	System.out.println("getCoordSys() returns " + rbhtest.getCoordSys());
-//	System.out.println("file_equinox = " + rbhtest.file_equinox);
-//	System.out.println("getJsys() returns " + rbhtest.getJsys());
-//
-//    }
 }
 
 

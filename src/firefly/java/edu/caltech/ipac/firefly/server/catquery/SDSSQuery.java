@@ -3,20 +3,26 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.query.DataGroupQuery;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
+import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
@@ -153,7 +159,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             // check for errors in returned file
             evaluateCVS(csv);
 
-            DataGroup dg = DsvToDataGroup.parse(csv, CSVFormat.DEFAULT.withCommentStart('#'));
+            DataGroup dg = DsvTableIO.parse(csv, CSVFormat.DEFAULT.withCommentStart('#'));
             if (dg == null) {
                     _log.briefInfo("no data found for search");
                     return null;
@@ -252,13 +258,10 @@ public class SDSSQuery extends IpacTablePartProcessor {
     }
 
     private File getSDSSUploadFile(File uploadFile) throws IOException {
-        DataGroup uDg = DataGroupReader.readAnyFormat(uploadFile);
+        DataGroup uDg = TableUtil.readAnyFormat(uploadFile);
         DataType inRowIdType = uDg.getDataDefintion(CatalogRequest.UPDLOAD_ROW_ID);
         DataType raType = uDg.getDataDefintion("ra");
         DataType decType = uDg.getDataDefintion("dec");
-        DataType.FormatInfo raFmt = raType.getFormatInfo();
-        DataType.FormatInfo decFmt = decType.getFormatInfo();
-        DataType.FormatInfo inRowIdFmt = inRowIdType.getFormatInfo();
         File sdssUFile = File.createTempFile("sdss_upload", ".csv", ServerContext.getTempWorkDir());
         BufferedWriter writer = new BufferedWriter(new FileWriter(sdssUFile));
         try {
@@ -267,7 +270,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             DataObject dob;
             while(i.hasNext()) {
                 dob = (DataObject)i.next();
-                String line = inRowIdFmt.formatDataOnly(dob.getDataElement(inRowIdType))+","+raFmt.formatDataOnly(dob.getDataElement(raType))+","+decFmt.formatDataOnly(dob.getDataElement(decType))+"\n";
+                String line = inRowIdType.formatData(dob.getDataElement(inRowIdType))+","+raType.formatData(dob.getDataElement(raType))+","+decType.formatData(dob.getDataElement(decType))+"\n";
                 writer.write(line);
             }
         } catch (Exception e) {
@@ -367,9 +370,9 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
         String uploadFname = request.getParam(SDSSRequest.FILE_NAME);
         if (!StringUtils.isEmpty(uploadFname)) {
-            DataGroup upDg = DataGroupReader.read(ServerContext.convertToFile(uploadFname));
+            DataGroup upDg = IpacTableReader.read(ServerContext.convertToFile(uploadFname));
 
-            final DataGroup resDg = DataGroupReader.read(dgFile);
+            final DataGroup resDg = IpacTableReader.read(dgFile);
             if (!StringUtils.isEmpty(resDg.getAttribute("joined"))) {
                 return dgFile;
             } else {
@@ -395,10 +398,9 @@ public class SDSSQuery extends IpacTablePartProcessor {
             boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
 
             DataGroup results = DataGroupQuery.join(upDg, upDefsToSave.toArray(new DataType[upDefsToSave.size()]), resDg, null, comparator, !nearestOnly, true);
-            results.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.VISI_TAG, "up_id"), "hide");
-            results.addAttribute(IpacTableUtil.makeAttribKey(IpacTableUtil.DESC_TAG, "distance"), "distance in arcmin");
+            results.addAttribute(TableMeta.makeAttribKey(TableMeta.VISI_TAG, "up_id"), "hide");
+            results.addAttribute(TableMeta.makeAttribKey(TableMeta.DESC_TAG, "distance"), "distance in arcmin");
             DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, CatalogRequest.UPDLOAD_ROW_ID);
-            results.shrinkToFitData(true);
             IpacTableWriter.save(dgFile, results);
         }
         return dgFile;

@@ -390,6 +390,34 @@ export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
     }
 }
 
+/**
+ * get any HiPS cells which is fully or partially visible within given fov area
+ * @param norder
+ * @param centerWp
+ * @param fov
+ * @param dataCoordSys
+ * @returns {*}
+ */
+export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys) {
+    const healpixCache= getHealpixCornerTool();
+    const dataCenterWp= convert(centerWp, dataCoordSys);
+
+    if (fov>80 && norder<=3) { // get all the cells and filter them
+        const cells = healpixCache.getFullCellList(norder,dataCoordSys);
+
+        return cells.filter( (cell) =>{
+            const {wpCorners}= cell;
+            const visibleCorner = wpCorners.find((oneCorner) => computeDistance(dataCenterWp, oneCorner) < 90);
+
+            return visibleCorner;
+
+        });
+    } else { // get only the healpix number for the fov and create the cell list
+        const nside = 2**norder;
+        const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), getSearchRadiusInRadians(fov), true, true);
+        return pixList.map( (ipix) => healpixCache.makeCornersForPix(ipix, nside, dataCoordSys));
+    }
+}
 
 /**
  *
@@ -441,3 +469,44 @@ export function resolveHiPSConstant(c) {
 
 }
 
+
+/**
+ * get property value, some key may have alternate one to get the value, need more investigation
+ * @param properties
+ * @param pkey
+ * @returns {*}
+ */
+
+export function getPropertyItem(properties, pkey) {
+    if (pkey === 'ivoid') {
+        return properties['creator_did'] || properties['publisher_did'];
+    } else {
+        return properties[pkey];
+    }
+}
+
+/**
+ * check if tile1 (norder1 & npix1) is within tile2 (norder2 & npix2)
+ * @param norder1
+ * @param npix1
+ * @param norder2
+ * @param npix2
+ * @returns {boolean}
+ */
+export function isTileInside(norder1, npix1, norder2, npix2) {
+    // make norder1 as the lower order
+    if (norder1 === norder2) {
+        return npix1 === npix2;
+    }
+
+    if (norder1 < norder2) {
+        return false;
+    }
+
+    // norder1 > norder2
+    const subTotal = 4**(norder1-norder2);
+    const base_npix = npix2*subTotal;
+
+    return (npix1 >= base_npix) && (npix1 < (base_npix+subTotal));
+
+}

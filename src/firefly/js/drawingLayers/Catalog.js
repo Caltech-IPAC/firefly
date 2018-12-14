@@ -29,6 +29,7 @@ import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import SelectArea, {SelectedShape} from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
+import {CysConverter} from '../visualize/CsysConverter.js';
 
 const TYPE_ID= 'CATALOG_TYPE';
 
@@ -146,10 +147,11 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
 
         let dist;
 
+        const cc= CysConverter.make(plot);
         for(let i=0;(idx<data.length && i<maxChunk ); i++) {
             const obj= data[idx];
             if (obj) {
-                dist = DrawOp.getScreenDist(obj, plot, screenPt);
+                dist = DrawOp.getScreenDist(obj, cc, screenPt);
                 if (dist > -1 && dist < minDist) {
                     minDist = dist;
                     closestIdx= idx;

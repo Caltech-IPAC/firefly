@@ -1,14 +1,14 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandler;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandlerImpl;
 import edu.caltech.ipac.firefly.server.ExternalTaskLauncher;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataType;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -23,10 +23,6 @@ import java.util.List;
 public class FileFromExternalTask implements SearchProcessor<FileInfo> {
 
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
-    }
 
     public String getUniqueID(ServerRequest request) {
         String uid = request.getRequestId() + "-";

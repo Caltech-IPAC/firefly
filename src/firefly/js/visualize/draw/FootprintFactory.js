@@ -4,14 +4,13 @@
 
 import Enum from 'enum';
 import {has} from 'lodash';
-import {makeWorldPt} from '../Point.js';
+import Point, {makeWorldPt, makeImagePt} from '../Point.js';
 import {RegionFactory} from '../region/RegionFactory.js';
 import {drawRegions} from '../region/RegionDrawer.js';
 import VisUtil from '../VisUtil.js';
 
 const PRELIM = 'prelim.';
 const NoPRELIM = '';
-const FPCMD = 'footprint';
 
 // SPITZER is not included  06/24/2016
 export const FootprintList = ['HST', 'JWST', 'WFIRST', 'SPITZER'];
@@ -44,57 +43,78 @@ export class FootprintFactory {
      * @param mission
      * @returns {string} null for no content
      */
-    static footprintCommand( mission ) {
+    static footprintDesc(mission ) {
         var label = '';
         var enumFP = FOOTPRINT.enums.find( (fp) => fp.key === mission);
 
         if (enumFP) {
-            label = `${enumFP.key}` + (enumFP.value === PRELIM ? ' ' : '') + `${enumFP.value} ${FPCMD}`;
+            label = enumFP.key + (enumFP.value ? ' ' + enumFP.value : '');
         }
         return label;
     }
 
-    /**
-     * get command string on the dropdown given mission and instrument string
-     * @param mission
-     * @param inst
-     * @returns {string} null for no content
-     */
-    static instrumentCommand( mission, inst) {
-        var label = '';
-        var enumFP = FOOTPRINT.enums.find( (fp) => fp.key === mission);
-
-        if (!enumFP) return label;
-
-        if (has(INSTRUMENTS, mission)) {
-           if (INSTRUMENTS[mission].get(inst)) {
-               label = `${enumFP.key} ${inst}` + (enumFP.value === PRELIM ? ' ' : '') + `${enumFP.value} ${FPCMD}`;
-           }
-        }
-        return label;
-    }
-
-    static getOriginalRegionsFromStc(defAry, isInstrument) {
-        var regions = RegionFactory.parseRegionDS9(defAry, false);
+    static getOriginalRegionsFromStc(defAry, isInstrument, bAllowHeader = false) {
+        var regions = RegionFactory.parseRegionDS9(defAry, bAllowHeader, true);
 
         regions.forEach( (oneRegion) => Object.assign(oneRegion, {isInstrument}));
         return regions;
     }
 
-    static getDrawObjFromOriginalRegion(regions, refCenter, moveToRelativeCenter) {
-        var getCenter = (wpAry) => VisUtil.computeCentralPointAndRadius(wpAry).centralPoint;
-        var moveRegion = (region, refCenter, moveToRelativeCenter, instCenter) => {
-                    var centerWpt = moveToRelativeCenter&&instCenter? instCenter : makeWorldPt(0, 0);
+    /**
+     * get drawObj from region description, move the center from instrument center or worldPt (0, 0) to reference center
+     * @param regions
+     * @param refCenter
+     * @param moveToRelativeCenter
+     * @param cc
+     * @returns {*}
+     */
+    static getDrawObjFromOriginalRegion(regions, refCenter, moveToRelativeCenter, cc) {
+        const getCenter = (wpAry) => {
+            if (wpAry[0].type === Point.W_PT) {
+                return VisUtil.computeCentralPointAndRadius(wpAry).centralPoint;
+            } else {
+                return getImageCenter(wpAry);
+            }
+        };
 
+        const getImageCenter = (wpAry) => {
+            const total = wpAry.reduce((prev, onePt) => {
+                prev.totalX += onePt.x;
+                prev.totalY += onePt.y;
+                return prev;
+            }, {totalX: 0.0, totalY : 0.0} );
+
+            return makeImagePt(total.totalX/wpAry.length, total.totalY/wpAry.length);
+        };
+
+        var moveRegion = (region, refCenter, moveToRelativeCenter, instCenter) => {
+                if (!region.wpAry || region.wpAry.length <= 0 ) return;
+                if (region.wpAry[0].type === Point.W_PT) {
+                    const centerWpt = moveToRelativeCenter && instCenter ? instCenter : makeWorldPt(0, 0);
                     region.wpAry = region.wpAry.map((wp) => VisUtil.getTranslateAndRotatePosition(centerWpt, refCenter, wp));
+                } else {
+                    // move center of footprint or image pt (0,0) to refCenter
+                    const refCenterImg = cc.getImageCoords(refCenter);
+                    const centerImgPt = moveToRelativeCenter && instCenter ? instCenter : makeImagePt(0, 0);
+                    const deltaX = refCenterImg.x - centerImgPt.x;
+                    const deltaY = refCenterImg.y - centerImgPt.y;
+
+                    region.wpAry = region.wpAry.map((wp) => {
+                        const newPt = Object.assign({}, wp);
+                        newPt.x += deltaX;
+                        newPt.y += deltaY;
+
+                        return newPt;
+                    });
+                }
         };
 
         if (regions) {
-            var newRegions = regions.map( (oneRegion) => Object.assign({}, oneRegion));
-            var instCenter = null;
+            const newRegions = regions.map( (oneRegion) => Object.assign({}, oneRegion));
+            let   instCenter = null;
 
             if (moveToRelativeCenter) {
-                var vertices = regions.reduce((prev, oneRegion) => {
+                const vertices = regions.reduce((prev, oneRegion) => {
                     prev = prev.concat(oneRegion.wpAry);
                     return prev;
                 }, []);

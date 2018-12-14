@@ -23,10 +23,12 @@ import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {init} from './rpc/CoreServices.js';
-import {getProp, mergeObjectOnly} from './util/WebUtil.js';
+import {getPropsWith, mergeObjectOnly} from './util/WebUtil.js';
 import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 
 export const flux = reduxFlux;
+
+var initDone = false;
 
 /**
  * A list of available templates
@@ -114,7 +116,8 @@ const defFireflyOptions = {
 
     charts: {
         defaultDeletable: undefined, // by default if there are more than one chart in container, all charts are deletable
-        maxRowsForScatter: 5000, // maximum table rows for scatter chart support
+        maxRowsForScatter: 5000, // maximum table rows for scatter chart support, heatmap is created for larger tables
+        minScatterGLRows: 1000, // minimum number of points to use WebGL 'scattergl' instead of SVG 'scatter'
         singleTraceUI: false, // by default we support multi-trace in UI
         upperLimitUI: false, // by default user can not set upper limit column in scatter options
         ui: {HistogramOptions: {fixedAlgorithm: undefined}} // by default we allow both "uniform binning" and "bayesian blocks"
@@ -132,6 +135,9 @@ const defFireflyOptions = {
 
 
 function fireflyInit(props, options={}) {
+
+    if (initDone) return;
+
     props = mergeObjectOnly(defAppProps, props);
     options = mergeObjectOnly(defFireflyOptions, options);
     const {template} = props;
@@ -164,10 +170,16 @@ function fireflyInit(props, options={}) {
     } else {
         initApi();
     }
+
+    initDone = true;
 }
 
+/**
+ * returns version information in a key/value object.
+ * @returns {VersionInfo}
+ */
 export function getVersion() {
-  return getProp('version_tag', 'unknown');
+  return getPropsWith('version.');
 }
 
 

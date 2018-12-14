@@ -161,7 +161,6 @@ function makeReadout(plot, worldPt, screenPt, imagePt, healpixPixel, norder) {
                 screenPt: makePointReadoutItem('Screen Point', screenPt),
                 imagePt: makePointReadoutItem('Image Point', imagePt),
                 fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
-                zeroBasedImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getZeroBasedImagePtFromInternal(imagePt)),
                 title: makeDescriptionItem(plot.title),
                 pixel: makeHiPSPixelReadoutItem(plot),
                 screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),

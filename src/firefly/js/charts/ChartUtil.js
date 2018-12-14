@@ -28,6 +28,7 @@ import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.j
 import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericData.js';
 import Color from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
+import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -54,12 +55,31 @@ const FSIZE = 12;
 
 export const TBL_SRC_PATTERN = /^tables::(.+)/;
 
+/**
+ * Does the application only support single trace
+ * @returns {*} true, if all charts are single trace
+ */
 export function singleTraceUI() {
     return get(getAppOptions(), 'charts.singleTraceUI');
 }
 
+/**
+ * Maximum table rows for scatter chart support, heatmap is created for larger tables
+ * @returns {*}
+ */
 export function getMaxScatterRows() {
     return get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
+}
+
+
+/**
+ * For scatter charts, the minimum number of points to use 'scattergl' (Web GL);
+ * If the number of points less than this, 'scatter' (SVG) is used.
+ * Web GL and SVG traces can be displayed in the same chart.
+ * @returns {*}
+ */
+export function getMinScatterGLRows() {
+    return get(getAppOptions(), 'charts.minScatterGLRows', 1000);
 }
 
 /**
@@ -356,25 +376,33 @@ export function getDataChangesForMappings({tableModel, mappings, traceNum}) {
             r.map((e, idx) => transposed[idx].push(e));
         });
         // tableModel columns are named as the paths to the trace arrays
-        getDataVal = (v) => {
-            const idx = cols.indexOf(v);
+        getDataVal = (k,v) => {
+            // using plotly attribute path (key in the mappings object) as a column name
+            // this makes it possible to use the same column as x and y, for example
+            let idx = cols.indexOf(v);
+            if (idx < 0) idx = cols.indexOf(k);
             if (idx >= 0) {
-                return transposed[cols.indexOf(v)];
+                return transposed[idx];
+            } else {
+                // if value is a numeric constant,
+                // we might be able to use it instead of array
+                // example: marker.size can be a number or an array
+                const numericConstant = parseFloat(v);
+                if (!Number.isNaN(numericConstant)) {
+                    return numericConstant;
+                }
             }
         };
     } else {
         // no tableModel case is for pre-fetch changes
         changes[`fireflyData.${traceNum}.error`] = undefined;
-        getDataVal = (v) => v;
+        getDataVal = (k,v) => v;
     }
 
     if (mappings) {
         Object.entries(mappings).forEach(([k,v]) => {
             const key = k.startsWith('firefly') ? k : `data.${traceNum}.${k}`;
-
-            // using plotly attribute path (key in the mappings object) as a column name
-            // this makes it possible to use the same column as x and y, for example
-            changes[key] = getDataVal(v) || getDataVal(key);
+            changes[key] = getDataVal(key,v);
         });
     }
 
@@ -439,11 +467,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
                     updateSelected(chartId, selectInfo);
                 }
             }
-            traceTS._cancel = watchTableChanges(traceTS.tbl_id,
-                [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT],
-                (action) => updateChartData(chartId, idx, traceTS, action),
-                uniqueId(`ucd-${traceTS.tbl_id}-trace`)); // watcher id for debugging
-
+            traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
         }
         tablesources[idx] = traceTS;
     });
@@ -460,6 +484,12 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
     dispatchChartUpdate({chartId, changes});
 }
 
+export function setupTableWatcher(chartId, ts, idx) {
+    return watchTableChanges(ts.tbl_id,
+        [TABLE_LOADED, TABLE_HIGHLIGHT, TABLE_SELECT],
+        (action) => updateChartData(chartId, idx, ts, action),
+        uniqueId(`ucd-${ts.tbl_id}-trace`)); // watcher id for debugging
+}
 
 function tablesourcesEqual(newTS, oldTS) {
 
@@ -676,10 +706,6 @@ export function formatColExpr({colOrExpr, quoted, colNames}) {
     return colOrExpr;
 }
 
-export function replaceQuotesIfSurrounding(s) {
-    const newS = s.replace(/^"(.+)"$/, '$1');
-    return newS.includes('"') ? s : newS;
-}
 
 // plotly default color (items 0-7) + color-blind friendly colors
 export const TRACE_COLORS = [  '#1f77b4', '#2ca02c', '#d62728', '#9467bd',
@@ -687,10 +713,8 @@ export const TRACE_COLORS = [  '#1f77b4', '#2ca02c', '#d62728', '#9467bd',
                                '#333333', '#ff3333', '#00ccff', '#336600',
                                '#9900cc', '#ff9933', '#009999', '#66ff33',
                                '#cc9999', '#b22424', '#008fb2', '#244700',
-                               '#6b008f', '#b26b24', '#006b6b', '#47b224', '8F6B6B'];
-export const TRACE_COLORSCALE = [  'Bluered', 'Blues', 'Earth', 'Electric', 'Greens',
-                                'Greys', 'Hot', 'Jet', 'Picnic', 'Portland', 'Rainbow',
-                                'RdBu', 'Reds', 'Viridis', 'YlGnBu', 'YlOrRd' ];
+                               '#6b008f', '#b26b24', '#006b6b', '#47b224', '#8F6B6B'];
+export const TRACE_COLORSCALE = ALL_COLORSCALE_NAMES;
 
 export function toRGBA(c, alpha) {
     if (!alpha) { alpha = DEFAULT_ALPHA; }
@@ -932,11 +956,21 @@ export function getDefaultChartProps(tbl_id) {
             };
             return chartData;
         } else {
+            // scatter that converts into heatmap and back depending on the number of points
+            const colorscaleName = 'GreySeq';
+            const colorscale = colorscaleNameToVal(colorscaleName);
             const chartData = {
                 data: [{
                     tbl_id,
+                    type: totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter',
+                    mode: 'markers',
                     x: xCol && `tables::${xCol.name}`,
-                    y: yCol && `tables::${yCol.name}`
+                    y: yCol && `tables::${yCol.name}`,
+                    colorscale,
+                    firefly: {
+                        scatterOrHeatmap: true,
+                        colorscale: colorscaleName
+                    },
                 }],
                 layout: {
                     xaxis: {
@@ -945,12 +979,6 @@ export function getDefaultChartProps(tbl_id) {
                     yaxis: {showgrid: false}
                 }
             };
-            if (totalRows > getMaxScatterRows()) {
-                Object.assign(chartData.data[0], {type: 'fireflyHeatmap', colorscale: 'Greys', reversescale: true});
-            } else {
-                const DATAPOINTS_COLOR = `rgba(63, 127, 191, ${DEFAULT_ALPHA})`;
-                Object.assign(chartData.data[0], {mode: 'markers', marker: {color: DATAPOINTS_COLOR}});
-            }
             return chartData;
         }
     } else {

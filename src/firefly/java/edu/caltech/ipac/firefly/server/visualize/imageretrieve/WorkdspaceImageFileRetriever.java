@@ -18,7 +18,7 @@ import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 
 import java.io.File;
 import java.io.IOException;

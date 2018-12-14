@@ -20,6 +20,7 @@
  * @prop {string}   tbl_id    unique ID of this table.
  * @prop {string}   title     title, used on label.
  * @prop {TableRequest} request  the request used to create this table
+ * @prop {TableKeywords} allMeta  a list of all meta info for this table, including comments and duplicates
  * @prop {TableMeta} tableMeta   table's meta information stored as key/value pair.
  * @prop {TableData} tableData  table's meta information stored as key/value pair.
  * @prop {number}   totalRows   total number of rows.
@@ -27,6 +28,9 @@
  * @prop {object}   selectInfo  selection information.  use SelectInfo.newInstance take advantage of helper's functions.
  * @prop {boolean}  isFetching  true if data is being fetched and not ready for display.
  * @prop {string}   error       error message if the request fail to create a table.
+ * @prop {Group[]} groups    groups is any.
+ * @prop {Link[]}  links     links is any.
+ * @prop {PARAM[]} params    params is any.
  *
  * @global
  * @public
@@ -48,13 +52,77 @@
  * @prop {string} units     data units
  * @prop {string} nullString string used to represent null value
  * @prop {string} desc      description of the column
- * @prop {number} width     column display width
- * @prop {number} prefWidth     preferred width.  if width is not defined
+ * @prop {number} width     max width needed to display data.
+ * @prop {number} prefWidth     preferred width, regardless of the data.
  * @prop {boolean} sortable     true if undefined
  * @prop {boolean} filterable   true if undefined
  * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
  * @prop {string} sortByCols    for multi-columns sorting.  column names separated by comma(',').
- * @prop {string} related       highlight related rows based on this column's value.
+ * @prop {string} enumVals   contains only values in this list.  values are seprated by comma(',')
+ * @prop {string} ID        ID used to reference this column.
+ * @prop {string} UCD       UCD of this column.
+ * @prop {string} ref       refer to this column for declarations.
+ * @prop {string} maxValue  maximum value.
+ * @prop {string} minValue  minimum value.
+ * @prop {LINK[]} links     links if any.
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * PARAM may have everything TableColumn has plus 'value'
+ * @typedef {object} PARAM
+ * @prop {string} value  value of this PARAM
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * Table data.  Table data object.
+ * @typedef {object} Group
+ * @prop {string} ID     ID used to reference this group.
+ * @prop {string} name   href of this group.
+ * @prop {string} desc   description
+ * @prop {PARAM[]} params   params if any
+ * @prop {REF[]} paramRefs   reference to params
+ * @prop {REF[]} columnRefs   reference to columns
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * Table data.  Table data object.
+ * @typedef {object} LINK
+ * @prop {string} ID     ID used to reference this LINK.
+ * @prop {string} href   href of this LINK.
+ * @prop {string} title  title/label of this LINK.
+ * @prop {string} role   role,  see VOTable content-role
+ * @prop {string} type   type, see VOTable content-type
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * reference to another object, i.e TableColumn, PARAM, LINK
+ * @typedef {object} REF
+ * @prop {string} ref    ID if the referenced object
+ * @prop {string} UCD    UCD, see VOTable
+ * @prop {string} utype  utype, see VOTable
+ *
+ * @global
+ * @public
+ */
+
+/**
+ * The full list of meta info for this table.  It includes the original meta from source, comments, duplicates, and additional meta inserted
+ * @typedef {object} TableKeywords
+ * @prop {string} key  meta key
+ * @prop {string} value meta value
+ * @prop {boolean} isKeyword  true if this entry is from the original source.
  *
  * @global
  * @public
@@ -66,8 +134,8 @@
  * @typedef {object} TableMeta
  * @prop {string} Loading-Status COMPLETED or INPROGRESS
  * @prop {string} resultSetID ID for this table.  If sorted or filtered, a new one will be generated.
- * @prop {string} isFullyLoaded 'true' when table is completely loaded on the server-side.
  * @prop {string} source    path of the original table source before any operations were performed. ie sort, filter, etc.  this may not be fully supported.
+ * @prop {string} relatedCols  highlight related rows based on this column's value.
  *
  * @global
  * @public
@@ -85,7 +153,7 @@
  * @prop {string} inclCols  list of columns to select.  Column names separted by comma(,)
  * @prop {object} META_INFO meta information passed as key/value pair to server then returned as tableMeta.
  * @prop {string} use       one of 'catalog_overlay', 'catalog_primary', 'data_primary'.
- * @prop {string} tbl_id    a unique id of a table. auto-create if not given.
+ * @prop {string} tbl_id    unique id of the table. auto-create if not given.
  *
  * @global
  * @public
@@ -150,14 +218,14 @@
  * @prop {boolean} [expandable=true]
  * @prop {boolean} [removable=true]  true if this table can be removed from view.
  * @prop {boolean} [border=true]
- * @prop {boolean} [showUnits=true]
+ * @prop {boolean} [showToolbar=true]   when false, showFilters, showTitle, showPaging, showSave, and showFilterButton will be false as well.
  * @prop {boolean} [showFilters=false]
- * @prop {boolean} [showToolbar=true]
  * @prop {boolean} [showTitle=true]
- * @prop {boolean} [showPaging=true]
+ * @prop {boolean} [showPaging=true]    enable/disable paging feature.  When false, all data will be displayed.
  * @prop {boolean} [showSave=true]
- * @prop {boolean} [showOptionButton=true]
  * @prop {boolean} [showFilterButton=true]
+ * @prop {boolean} [showOptionButton=true]
+ * @prop {boolean} [showUnits=true]
  * @prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.
  * @prop {function[]}  [rightButtons]  an array of functions that returns a button-like component laid out on the right side of this table header.
  */

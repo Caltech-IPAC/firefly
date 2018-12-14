@@ -1,16 +1,18 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, uniqueId} from 'lodash';
-import {getTblById, getColumn, doFetchTable} from '../../tables/TableUtil.js';
+import {get, isArray} from 'lodash';
+import {getTblById, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {singleTraceUI, replaceQuotesIfSurrounding} from '../ChartUtil.js';
+import {isScatter2d, getMaxScatterRows, singleTraceUI} from '../ChartUtil.js';
 import {serializeDecimateInfo, parseDecimateKey} from '../../tables/Decimate.js';
 import BrowserInfo from  '../../util/BrowserInfo.js';
 import {formatColExpr} from '../ChartUtil.js';
+import {colorscaleNameToVal, OneColorSequentialCS, PlotlyCS} from '../Colorscale.js';
 import {cloneRequest} from '../../tables/TableRequestUtil.js';
 import {COL_TYPE, getColumns} from '../../tables/TableUtil.js';
+import {getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 
 /**
  * This function creates table source entries to get firefly scatter and error data from the server
@@ -54,8 +56,21 @@ export function getTraceTSEntries({traceTS, chartId, traceNum}) {
 
 function fetchData(chartId, traceNum, tablesource) {
 
-    const {tbl_id, options, mappings} = tablesource;
+    const {tbl_id, options} = tablesource;
     const tableModel = getTblById(tbl_id);
+
+    // if heatmap is used to represent scatter
+    // and the number of rows falls below a threshhold,
+    // scatter chart should be produced
+    const {fireflyData} = getChartData(chartId);
+    const scatterOrHeatmap = get(fireflyData, [traceNum, 'scatterOrHeatmap']);
+    const totalRows= get(tableModel, 'totalRows');
+    if (scatterOrHeatmap && totalRows <= getMaxScatterRows()) {
+        const {options:scatterOptions, fetchData:scatterFetchData} = genericTSGetter({traceTS:tablesource, chartId, traceNum});
+        const scatterTS = Object.assign({}, tablesource, {options: scatterOptions});
+        return scatterFetchData(chartId, traceNum, scatterTS);
+    }
+
     const numericCols = getColumns(tableModel, COL_TYPE.NUMBER).map((c) => c.name);
     const {request} = tableModel;
 
@@ -85,7 +100,7 @@ function fetchData(chartId, traceNum, tablesource) {
 
         if (tableModel.tableData && tableModel.tableData.data) {
 
-            const changes = getChanges({tableModel, mappings, chartId, traceNum});
+            const changes = getChanges({tableModel, tablesource, chartId, traceNum});
             changes[`fireflyData.${traceNum}.isLoading`] = false;
             dispatchChartUpdate({chartId, changes});
 
@@ -98,8 +113,8 @@ function fetchData(chartId, traceNum, tablesource) {
     );
 }
 
-function getChanges({tableModel, mappings, chartId, traceNum}) {
-
+function getChanges({tableModel, tablesource, chartId, traceNum}) {
+    const {mappings} = tablesource;
     const {tableMeta} = tableModel;
     const decimateKey = tableMeta['decimate_key'];
 
@@ -110,8 +125,8 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
     }
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
-    const xLabel = replaceQuotesIfSurrounding(get(mappings, 'x'));
-    const yLabel = replaceQuotesIfSurrounding(get(mappings, 'y'));
+    const xLabel = stripColumnNameQuotes(get(mappings, 'x'));
+    const yLabel = stripColumnNameQuotes(get(mappings, 'y'));
     const xTipLabel = xLabel.length > 20 ? xLabel.substring(0,18)+'...' : xLabel;
     const yTipLabel = yLabel.length > 20 ? yLabel.substring(0,18)+'...' : yLabel;
 
@@ -175,11 +190,29 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
         [`data.${traceNum}.y`]: y,
         [`data.${traceNum}.z`]: z,
         [`data.${traceNum}.text`]: text,
-        [`data.${traceNum}.hoverinfo`]: 'text',
-        [`fireflyData.${traceNum}.toRowIdx`]: toRowIdx
+        [`data.${traceNum}.hoverinfo`]: 'text'
     };
 
-    const {layout, data} = getChartData(chartId) || {};
+    const chartData = getChartData(chartId);
+    const {layout, data} = chartData;
+
+    // check for scatter represented by heatmap
+    if (isScatter2d(get(data, `${traceNum}.type`, 'scatter'))) {
+        // moving from scatter to heatmap representation
+        changes[`fireflyData.${traceNum}.scatterOrHeatmap`] = true;
+        // clean arrays set in scatter mode
+        changes[`data.${traceNum}.hoverText`] = undefined;
+        // set colorscale if it was not set before
+        const colorscale = get(data, `${traceNum}.colorscale`);
+        if (!colorscale || (!isArray(colorscale) && !PlotlyCS.includes(colorscale))) {
+            const colorscaleName = OneColorSequentialCS[traceNum % OneColorSequentialCS.length];
+            changes[`data.${traceNum}.colorscale`] = colorscaleNameToVal(colorscaleName);
+            changes[`fireflyData.${traceNum}.colorscale`] = colorscaleName;
+        }
+        // tablesource options have changed
+        const {options} = tablesource;
+        changes[`tablesources.${traceNum}.options`] = options;
+    }
 
     if (data && data.length===1) {
         // set default title if it's the first trace
@@ -236,12 +269,43 @@ function getChanges({tableModel, mappings, chartId, traceNum}) {
     return changes;
 }
 
+export function hasFireflyColorbar(chartId, traceNum) {
+    const {fireflyData=[]} = getChartData(chartId);
+    return Boolean(get(fireflyData, `${traceNum}.fireflyColorbar`));
+}
+
+/**
+ * Returns object with changes
+ * @param p
+ * @param p.data
+ * @param p.fireflyData
+ * @param p.layout
+ * @return changes
+ */
+export function adjustColorbars({data, fireflyData, layout}) {
+    if (data) {
+        const changes = {};
+        const nbars = data.filter((d) => get(d, 'colorbar') && get(d, 'showscale', true)).length;
+        const yside = get(layout, 'yaxis.side');
+        const yOpposite = (yside === 'right');
+        let cnt = 1;
+        data.forEach((d, i) => {
+            if (get(fireflyData, `${i}.fireflyColorbar`) && get(d, 'colorbar') && get(d, 'showscale', true)) {
+                addColorbarLengthChanges(changes, yOpposite, nbars, i, cnt);
+                cnt++;
+            }
+        });
+        return changes;
+    }
+}
+
 function addColorbarLengthChanges(changes, yOpposite, nbars, traceNum, cnt) {
     changes[`data.${traceNum}.colorbar.yanchor`] = 'bottom';
     changes[`data.${traceNum}.colorbar.len`] = 1/nbars;
     changes[`data.${traceNum}.colorbar.y`] = 1-cnt/nbars; // first trace on top
     addColorbarChanges(changes, yOpposite, traceNum);
     changes['layout.legend.orientation'] = 'h'; // horizontal legend at the bottom
+    changes[`fireflyData.${traceNum}.fireflyColorbar`] = true;
 }
 
 // colorbar needs to be on the opposite size of the axis

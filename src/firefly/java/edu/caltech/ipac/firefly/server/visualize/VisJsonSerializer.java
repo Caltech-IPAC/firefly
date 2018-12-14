@@ -11,7 +11,6 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.RelatedData;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
@@ -26,8 +25,9 @@ import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.RangeValues;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
-import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
+import nom.tam.util.Cursor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -50,7 +50,7 @@ public class VisJsonSerializer {
         map.put("JSON", true);
 
         map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
-        map.put("projectionJson", serializeProjection(wpInit));
+        map.put("headerAry", serializeHeaderAry(wpInit.getHeaderAry()));
         map.put("relatedData", serializeRelatedDataArray(wpInit.getRelatedData()));
         map.put("dataWidth", wpInit.getDataWidth());
         map.put("dataHeight", wpInit.getDataHeight());
@@ -71,7 +71,11 @@ public class VisJsonSerializer {
     public static JSONArray serializeRelatedDataArray(List<RelatedData> relatedData) {
         if (relatedData==null || relatedData.size()==0) return null;
         JSONArray relatedArray= new JSONArray();
-        for(RelatedData r : relatedData) relatedArray.add(serializeRelated(r));
+        for(RelatedData r : relatedData) {
+            if (r.isSendToClient()) {
+                relatedArray.add(serializeRelated(r));
+            }
+        }
         return relatedArray;
     }
 
@@ -88,39 +92,59 @@ public class VisJsonSerializer {
         return retObj;
     }
 
-    public static JSONObject serializeProjection(WebPlotInitializer wpInit) {
-        Projection proj= wpInit.getProjection();
-        if (proj==null) return null;
-        JSONObject map = new JSONObject();
-        map.put("coorindateSys", proj.getCoordinateSys().toString());
-        map.put("header", serializeProjectionParams(proj.getProjectionParams()));
-        return map;
+//    public static JSONObject serializeProjection(WebPlotInitializer wpInit) {
+//        Projection proj= wpInit.getProjection();
+//        if (proj==null) return null;
+//        JSONObject map = new JSONObject();
+//        map.put("coorindateSys", proj.getCoordinateSys().toString());
+//        map.put("header", serializeProjectionParams(proj.getProjectionParams()));
+//        return map;
+//    }
+
+//    public static JSONObject serializeProjectionParams(ProjectionParams p) {
+//        JSONObject map = new JSONObject();
+//
+//        for(Map.Entry<String,Object> e : p.sendToClientHeaders.entrySet() ) {
+//            Object v= e.getValue();
+//            String k= e.getKey();
+//            if (v==null || v instanceof String || v instanceof Number || v instanceof Boolean) {
+//                map.put(k,v);
+//            }
+//            else if (v instanceof double[]) {
+//                map.put(k,makeJAry((double[])v));
+//            }
+//            else if (v instanceof double[][]) {
+//                map.put(k,makeJAry2d((double[][])v));
+//            }
+//            else {
+//                Logger.warn("found unexpected type in serializeProjectionParams: key: "+k+", value: "+ v.toString());
+//            }
+//        }
+//
+//        return map;
+//
+//    }
+
+    public static JSONArray serializeHeaderAry(Header headerAry[]) {
+        JSONArray retAry= new JSONArray();
+        for(int i=0; (i<headerAry.length); i++) retAry.add(serializeHeader(headerAry[i]));
+        return retAry;
     }
 
-    public static JSONObject serializeProjectionParams(ProjectionParams p) {
+    public static JSONObject serializeHeader(Header header) {
+        if (header==null) return null;
         JSONObject map = new JSONObject();
-
-        for(Map.Entry<String,Object> e : p.sendToClientHeaders.entrySet() ) {
-            Object v= e.getValue();
-            String k= e.getKey();
-            if (v==null || v instanceof String || v instanceof Number || v instanceof Boolean) {
-                map.put(k,v);
-            }
-            else if (v instanceof double[]) {
-                map.put(k,makeJAry((double[])v));
-            }
-            else if (v instanceof double[][]) {
-                map.put(k,makeJAry2d((double[][])v));
-            }
-            else {
-                Logger.warn("found unexpected type in serializeProjectionParams: key: "+k+", value: "+ v.toString());
-            }
+        Cursor<String, HeaderCard> i= header.iterator();
+        int pos = 0;
+        for(HeaderCard card= i.next(); i.hasNext();  card= i.next(), pos++) {
+            JSONObject mapValue = new JSONObject();
+            mapValue.put("value", card.getValue());
+            mapValue.put("comment", card.getComment());
+            mapValue.put("idx", pos);
+            map.put(card.getKey(), mapValue);
         }
-
         return map;
-
     }
-
 
     public static JSONArray makeJAry(double a[]) {
         if (a==null) return null;
@@ -344,7 +368,6 @@ public class VisJsonSerializer {
         if (b.getOriginalImageIdx()>0) map.put("originalImageIdx", b.getOriginalImageIdx());
         map.put("plotRequestSerialize", b.getWebPlotRequestSerialized());
         map.put("rangeValuesSerialize", b.getRangeValuesSerialized());
-        map.put("fitsHeader", serializeClientFitsHeader(b.getHeader()));
         if (b.isMultiImageFile()) map.put("multiImageFile", b.isMultiImageFile());
         if (b.isTileCompress()) map.put("tileCompress", b.isTileCompress());
         if (b.getCubeCnt()>0) map.put("cubeCnt", b.getCubeCnt());
@@ -367,7 +390,7 @@ public class VisJsonSerializer {
             b.setOriginalImageIdx(getInt(map,"originalImageIdx",0));
             b.setWebPlotRequest(WebPlotRequest.parse(getStr(map, "plotRequestSerialize")));
             b.setRangeValues(RangeValues.parse(getStr(map,"rangeValuesSerialize")));
-            b.setFitsHeader(deserializeClientFitsHeader((JSONObject)map.get("fitsHeader")));
+            b.setDirectFileAccessData(deserializeClientFitsHeader((JSONObject)map.get("directFileAccessData")));
             b.setBandVisible(true);
 //            b.setMultiImageFile((Boolean) map.get("multiImageFile"));
             b.setMultiImageFile(getBoolean(map,"multiImageFile", false));
@@ -380,29 +403,11 @@ public class VisJsonSerializer {
         }
     }
 
-
-
-    public static JSONObject serializeClientFitsHeader(ClientFitsHeader cfH) {
-        if (cfH==null) return null;
-        JSONObject map = new JSONObject();
-        for(String k : cfH) {
-            map.put(k,cfH.getStringHeader(k));
-        }
-        return map;
-    }
-
-    public static ClientFitsHeader deserializeClientFitsHeader(JSONObject map) {
+    static ClientFitsHeader deserializeClientFitsHeader(JSONObject map) {
         if (map==null) return null;
-        try {
-            Map<String,String> tMap= new HashMap<>(30);
-
-            for(Object key : map.keySet()) {
-                tMap.put((String)key, (String)map.get(key));
-            }
-            return new ClientFitsHeader(tMap);
-        } catch (ClassCastException|IllegalArgumentException  e) {
-            return null;
-        }
+        Map<String,String> tMap= new HashMap<>(30);
+        for(Object key : map.keySet()) tMap.put((String)key, map.get(key)+"");
+        return new ClientFitsHeader(tMap);
     }
 
     private static String getStr(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {

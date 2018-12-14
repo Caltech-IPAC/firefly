@@ -4,20 +4,29 @@
 package edu.caltech.ipac.firefly.server.query;
 
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
-import edu.caltech.ipac.astro.InvalidStatementException;
-import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
+import edu.caltech.ipac.table.query.InvalidStatementException;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.query.FilterHanlder;
+import edu.caltech.ipac.table.IpacTableDef;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.PrivateCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.*;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -42,7 +51,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.*;
  * @author loi
  * @version $Id: IpacTablePartProcessor.java,v 1.33 2012/10/23 18:37:22 loi Exp $
  */
-abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart>, CanGetDataFile {
+abstract public class IpacTablePartProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile, SearchProcessor.CanFetchDataGroup {
 
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     //public static long logCounter = 0;
@@ -64,46 +73,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         IOException eio = new IOException(reason);
         eio.initCause(e);
         return eio;
-    }
-
-    protected static void writeLine(BufferedWriter writer, String text) throws IOException {
-        writer.write(text);
-        writer.newLine();
-    }
-
-    /**
-     * Convert the given file to ipac table format if needed.
-     * if conversion is needed, the converted file must be written into the workarea.
-     * @param tblFile
-     * @param request
-     * @return
-     * @throws IOException
-     * @throws DataAccessException
-     */
-    public static File convertToIpacTable(File tblFile, TableServerRequest request) throws IOException, DataAccessException {
-
-        DataGroupReader.Format format = DataGroupReader.guessFormat(tblFile);
-        int tblIdx = request.getIntParam(TableServerRequest.TBL_INDEX, 0);
-        boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
-        if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
-            TableDef tableDef = IpacTableUtil.getMetaInfo(tblFile);
-            DataGroup.Attribute fixlen = tableDef.getAttribute("fixlen");
-            if (fixlen != null && fixlen.getValue().equalsIgnoreCase("T") &&
-                !tableDef.getCols().stream().anyMatch(c -> !c.isKnownType()) ) {
-                // table is in fixed length ipac format.. and pass validation
-                return tblFile;
-            }
-        }
-        // conversion is need;
-        if ( format != DataGroupReader.Format.UNKNOWN) {
-            // read in any format.. then write it back out as ipac table
-            DataGroup dg = DataGroupReader.readAnyFormat(tblFile, tblIdx);
-            File convertedFile = File.createTempFile(request.getRequestId(), ".tbl", ServerContext.getTempWorkDir());
-            DataGroupWriter.write(convertedFile, dg);
-            return convertedFile;
-        } else {
-            throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(tblFile));
-        }
     }
 
     public boolean isSecurityAware() {
@@ -146,10 +115,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
     public QueryDescResolver getDescResolver() {
         return new QueryDescResolver.DescBySearchResolver(new SearchDescResolver());
-    }
-
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return SearchProcessor.inspectRequestDef(request);
     }
 
     /**
@@ -197,13 +162,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             DataGroupPart page;
             // get the page requested
             if (dgFile == null || !dgFile.exists() || dgFile.length() == 0) {
-                TableDef def = new TableDef();
-                def.setStatus(DataGroupPart.State.COMPLETED);
-                page = new DataGroupPart(def, new DataGroup("No result found", new DataType[0]), 0, 0);
+                DataGroup dg = new DataGroup("No result found", new DataType[0]);
+                dg.addAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
+                page = new DataGroupPart(dg, 0, 0);
             } else {
                 try {
                     dgFile = postProcessData(dgFile, request);
-                    page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
+                    page = TableUtil.getData(dgFile, request.getStartIndex(), request.getPageSize());
                     ensureTableMeta(page, request, dgFile);  // inspect/edit meta info needed by client.
                 } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
@@ -225,8 +190,13 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     private void ensureTableMeta(DataGroupPart page, TableServerRequest request, File dgFile) {
-        page.getTableDef().ensureStatus();      // make sure there's a status line so
-        page.getTableDef().setAttribute(TableServerRequest.TBL_FILE_PATH, ServerContext.replaceWithPrefix(dgFile));  // set table's meta tblFilePath to the file it came from.
+        // make sure there's a status line so
+        TableMeta meta = page.getData().getTableMeta();
+        String status = meta.getAttribute(DataGroupPart.LOADING_STATUS);
+        if (StringUtils.isEmpty(status)) {
+            meta.setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
+        }
+        meta.setAttribute(TableServerRequest.TBL_FILE_PATH, ServerContext.replaceWithPrefix(dgFile));  // set table's meta tblFilePath to the file it came from.
         if (!StringUtils.isEmpty(request.getTblTitle())) {
             page.getData().setTitle(request.getTblTitle());  // set the datagroup's title to the request title.
         }
@@ -394,11 +364,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 String yColExpr = decimateInfo.getyColumnName();
                 String [] requestedCols = new String[]{xColExpr, yColExpr};
 
-                DataGroup dg = DataGroupReader.read(resultsFile, requestedCols);
+                DataGroup dg = IpacTableReader.read(resultsFile, requestedCols);
 
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
-                DataGroupWriter.write(deciFile, retval);
+                IpacTableWriter.save(deciFile, retval);
                 cache.put(key, deciFile);
             }
             resultsFile = deciFile;
@@ -446,7 +416,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         StopWatch timer = StopWatch.getInstance();
         timer.start("read");
         int pageSize = request.getPageSize();
-        DataGroup dg = DataGroupReader.read(inFile, true, false, true);
+        DataGroup dg = IpacTableReader.read(inFile);
         // if this file does not contain ROW_IDX, add it.
         if (!dg.containsKey(DataGroup.ROW_IDX)) {
             dg.addDataDefinition(DataGroup.makeRowIdx());
@@ -457,7 +427,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         QueryUtil.doSort(dg, sortInfo);
         timer.printLog("sort");
         timer.start("write");
-        DataGroupWriter.write(new BgIpacTableHandler(outFile, dg, request));
+        IpacTableWriter.save(outFile, dg);
         timer.printLog("write");
     }
 
@@ -471,6 +441,21 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     }
 
     /**
+     * NOTE:  Because this method is added afterward, most subclasses are fetching and saving IPAC table in loadDataFile
+     *        Both methods should be overridden when dealing with non-IPAC table format so that data is not lost.
+     * @param req
+     * @return
+     * @throws DataAccessException
+     */
+    public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+        try {
+            return IpacTableReader.read(loadDataFile(req));
+        } catch (IOException e) {
+            throw new DataAccessException(e.getMessage(), e);
+        }
+    }
+
+    /**
      * subclass provide how the data are collected
      *
      * @param request table request
@@ -480,6 +465,21 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
      *
      */
     abstract protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException;
+
+
+    /**
+     * This is the proper implementation of loadDataFile if fetchDataGroup were overridden.
+     * @param request
+     * @return
+     * @throws IOException
+     * @throws DataAccessException
+     */
+    protected File loadDataFileImpl(TableServerRequest request) throws IOException, DataAccessException {
+        DataGroup dg = fetchDataGroup(request);
+        File outFile = createFile(request);
+        IpacTableWriter.save(outFile, dg);
+        return outFile;
+    }
 
     private File validateFile(File inf) {
         if (inf != null) {
@@ -531,7 +531,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 long fileSize = 0;
                 if (cfile != null) {
                     try {
-                        TableDef meta = IpacTableUtil.getMetaInfo(cfile);
+                        IpacTableDef meta = IpacTableUtil.getMetaInfo(cfile);
                         if (meta.getStatus() == DataGroupPart.State.INPROGRESS) {
                             fileSize = (meta.getRowCount() * meta.getLineWidth()) + meta.getRowStartOffset();
                         } else {
@@ -560,7 +560,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         LOGGER.warn("<< very slow doFilter called." + this.getClass().getSimpleName());
         StopWatch timer = StopWatch.getInstance();
         timer.start("filter");
-        DataGroupWriter.write(new FilterHanlder(outFile, source, filters, request));
+        IpacTableWriter.asyncSave(new FilterHanlder(outFile, source, filters, request));
         timer.printLog("filter");
     }
 

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.visualize.plot.projection;
 
+import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ProjectionPt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
@@ -96,7 +97,7 @@ public class OrthographicProjection{
 	    {
 		/* apply SIRTF distortion corrections */
 		fsamp_correction = 0.0;
-		int len= (int)Math.min(hdr.ap_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		int len= (int)Math.min(hdr.ap_order+1, ImageHeader.MAX_SIP_LENGTH);
 		for (i = 0; i < len; i++)
 		{
 		    for (j = 0; j < len; j++)
@@ -115,7 +116,7 @@ public class OrthographicProjection{
 		*/
 
 		fline_correction = 0.0;
-		len= (int)Math.min(hdr.bp_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		len= (int)Math.min(hdr.bp_order+1, ImageHeader.MAX_SIP_LENGTH);
 		for (i = 0; i < len; i++)
 		{
 		    for (j = 0; j < len; j++)
@@ -192,7 +193,7 @@ public class OrthographicProjection{
 	{
 	    /* apply SIRTF distortion corrections */
 	    fsamp_correction = 0.0;
-		int len= (int)Math.min(hdr.a_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		int len= (int)Math.min(hdr.a_order+1, ImageHeader.MAX_SIP_LENGTH);
 	    for (i = 0; i < len; i++)
 	    {
 		for (j = 0; j < len; j++)
@@ -211,7 +212,7 @@ public class OrthographicProjection{
 	    */
 
 	    fline_correction = 0.0;
-		len= (int)Math.min(hdr.b_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		len= (int)Math.min(hdr.b_order+1, ImageHeader.MAX_SIP_LENGTH);
 	    for (i = 0; i < len; i++)
 	    {
 		for (j = 0; j < len; j++)

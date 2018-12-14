@@ -108,24 +108,24 @@ public class ServerStatus extends BaseHttpServlet {
         DbAdapter.EmbeddedDbStats stats = DbAdapter.getAdapter().getRuntimeStats();
         writer.println("DATABASE INFORMATION");
         writer.println("--------------------");
-        writer.println(String.format("CHECK_INTVL(secs): %,10d  MAX_IDLE(min):       %,10d", DbAdapter.CLEANUP_INTVL/1000, DbAdapter.MAX_IDLE_TIME/1000/60));
-        writer.println(String.format("DB In Memory:      %,10d  Total DB count:      %,10d", stats.memDbs, stats.totalDbs));
-        writer.println(String.format("MAX_MEM_ROWS:      %,10d  PEAK_MAX_MEM_ROWS:   %,10d", stats.maxMemRows, stats.peakMaxMemRows));
-        writer.println(String.format("Rows In Memory:    %,10d  Peak Rows In Memory: %,10d", stats.memRows, stats.peakMemRows));
+        writer.printf("CHECK_INTVL(secs): %,10d  MAX_IDLE(min):       %,10d\n", DbAdapter.CLEANUP_INTVL/1000, DbAdapter.MAX_IDLE_TIME/1000/60);
+        writer.printf("DB In Memory:      %,10d  Total DB count:      %,10d\n", stats.memDbs, stats.totalDbs);
+        writer.printf("MAX_MEM_ROWS:      %,10d  PEAK_MAX_MEM_ROWS:   %,10d\n", stats.maxMemRows, stats.peakMaxMemRows);
+        writer.printf("Rows In Memory:    %,10d  Peak Rows In Memory: %,10d\n", stats.memRows, stats.peakMemRows);
         writer.println(              "Cleanup Last Ran:  " + new SimpleDateFormat("HH:mm:ss").format(stats.lastCleanup));
         writer.println("");
         writer.println("Idled   Age     Tables  Rows        Columns  File Path         (elapsed time are in min:sec)");
         writer.println("------  ------  ------  ----------  -------  ---------");
         Collections.unmodifiableCollection(DbAdapter.getAdapter().getDbInstances().values()).stream()
                     .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
-                    .forEach((db) -> writer.println(String.format("%5$tM:%5$tS   %6$tM:%6$tS   %6d  %,10d  %,7d  %s",
+                    .forEach((db) -> writer.printf("%5$tM:%5$tS   %6$tM:%6$tS   %6d  %,10d  %,7d  %s\n",
                                                         db.getTblCount(),
                                                         db.getRowCount(),
                                                         db.getColCount(),
                                                         db.getDbFile().getPath(),
                                                         System.currentTimeMillis() - db.getLastAccessed(),
                                                         System.currentTimeMillis() - db.getCreated()
-                    )));
+                    ));
     }
 
     private static String getStats(Ehcache c) {

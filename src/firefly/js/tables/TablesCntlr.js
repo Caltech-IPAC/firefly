@@ -5,6 +5,7 @@ import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unse
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
+import {MAX_ROW} from './TableRequestUtil.js';
 import {submitBackgroundSearch} from '../rpc/SearchServicesJson.js';
 import shallowequal from 'shallowequal';
 import {dataReducer} from './reducer/TableDataReducer.js';
@@ -13,7 +14,6 @@ import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {updateMerge, logError} from '../util/WebUtil.js';
 import {FilterInfo} from './FilterInfo.js';
 import {selectedValues} from '../rpc/SearchServicesJson.js';
-import {BG_STATUS, BG_JOB_ADD, dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
 import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
@@ -247,9 +247,10 @@ export function dispatchTableSelect(tbl_id, selectInfo) {
 /**
  * remove the table's data given its id.
  * @param tbl_id  unique table identifier.
+ * @param {boolean} [fireActiveTableChanged=true]  true to fire TBL_RESULTS_ACTIVE when applicable.
  */
-export function dispatchTableRemove(tbl_id) {
-    flux.process( {type: TABLE_REMOVE, payload: {tbl_id}});
+export function dispatchTableRemove(tbl_id, fireActiveTableChanged=true) {
+    flux.process( {type: TABLE_REMOVE, payload: {tbl_id, fireActiveTableChanged}});
 }
 
 /**
@@ -298,6 +299,14 @@ export function dispatchTableUiUpdate(tbl_ui_info) {
 }
 
 /**
+ * request to update table content
+ * @param tableModel
+ */
+export function dispatchTableUpdate(tableModel) {
+    flux.process( {type: TABLE_UPDATE, payload: tableModel});
+}
+
+/**
  *
  * @param tbl_id
  * @param tbl_group
@@ -317,13 +326,17 @@ function tableSearch(action) {
             dispatch(action);
             var {request={}, options={}} = action.payload;
             TblUtil.fixRequest(request);
-            const {tbl_ui_id, backgroundable = false} = options;
+            const {tbl_ui_id, backgroundable = false, showPaging=true} = options;
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
-            request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
+            if (showPaging) {
+                request.pageSize = options.pageSize = options.pageSize || request.pageSize || 100;
+            } else {
+                request.pageSize = MAX_ROW;
+            }
             if (TblUtil.getTblById(tbl_id)) {
                 // table exists... this is a new search.  old data should be removed.
-                dispatchTableRemove(tbl_id);
+                dispatchTableRemove(tbl_id, false);
             }
             if (backgroundable) {
                 request = set(request, 'META_INFO.backgroundable', true);
@@ -379,15 +392,17 @@ function tblResultRemove(action) {
 
 function tblRemove(action) {
     return (dispatch) => {
-        const {tbl_id} = action.payload;
+        const {tbl_id, fireActiveTableChanged} = action.payload;
         const tbl_group= TblUtil.findGroupByTblId(tbl_id);
         dispatch({type:action.type, payload:Object.assign({},action.payload, {tbl_group})});
-        const results = get(flux.getState(), [TABLE_SPACE_PATH, 'results'], {});
-        Object.keys(results).forEach( (tbl_group) => {
-            if (get(results, [tbl_group, 'active']) === tbl_id) {
-                dispatchActiveTableChanged(findKey(results[tbl_group].tables), tbl_group);
-            }
-        });
+        if (fireActiveTableChanged) {
+            const results = get(flux.getState(), [TABLE_SPACE_PATH, 'results'], {});
+            Object.keys(results).forEach( (tbl_group) => {
+                if (get(results, [tbl_group, 'active']) === tbl_id) {
+                    dispatchActiveTableChanged(findKey(results[tbl_group].tables), tbl_group);
+                }
+            });
+        }
     };
 }
 
@@ -405,7 +420,6 @@ function highlightRow(action) {
             dispatch(action);
         } else {
             const request = cloneDeep(tableModel.request);
-            set(request, 'META_INFO.padResults', true);
             Object.assign(request, {startIdx, pageSize});
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_HIGHLIGHT, payload: tableModel} );

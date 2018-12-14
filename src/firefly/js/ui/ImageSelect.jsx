@@ -16,7 +16,8 @@ import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 
 import './ImageSelect.css';
-
+// import infoIcon from 'html/images/info-16x16.png';
+import infoIcon from 'html/images/info-icon.png';
 
 export class ImageSelect extends PureComponent {
 
@@ -36,9 +37,11 @@ export class ImageSelect extends PureComponent {
         const filterMission = toFilterSelectAry(groupKey, 'mission');
         const filterProjectType = toFilterSelectAry(groupKey, 'projectType');
         const filterwaveBand = toFilterSelectAry(groupKey, 'waveBand');
+        const filterWaveType = toFilterSelectAry(groupKey, 'waveType');
 
         filteredImageData = filterMission.length > 0 ? filteredImageData.filter( (d) => filterMission.includes(d.missionId)) : filteredImageData;
         filteredImageData = filterProjectType.length > 0 ? filteredImageData.filter( (d) => filterProjectType.includes(d.projectTypeKey)) : filteredImageData;
+        filteredImageData = filterWaveType.length > 0 ? filteredImageData.filter( (d) => filterWaveType.includes(d.waveType)) : filteredImageData;
         if (filterwaveBand.length > 0) {
             // filtering by waveband
             const projWithWB = uniq(filteredImageData.filter( (d) => filterwaveBand.includes(d.wavelength)).map( (d) => d.project));  // may contains duplicates..
@@ -48,7 +51,7 @@ export class ImageSelect extends PureComponent {
         return (
             <div style={style} className='ImageSelect'>
                 <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
-                <div style={{flexGrow: 1, display: 'flex', minHeight: 1}}>
+                <div style={{flexGrow: 1, display: 'flex', height: 1}}>
                     <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
                         <FilterPanel {...{imageMasterData, groupKey}}/>
                     </div>
@@ -151,12 +154,52 @@ function FilterPanel({imageMasterData, groupKey, onChange}) {
     );
 }
 
+function getBandList(imageMasterData){
+
+  const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project};${t.waveType}`);
+  const waveInfo = uniqBy(forSummary.map ( (entry)=> {
+      return {name:entry.waveType, label:entry.waveType,wavelength:parseFloat(entry.wavelength), wavelengthDesc:entry.wavelengthDesc };
+
+  }), 'name');
+
+  const waveType = toFilterSummary(forSummary , 'waveType', 'waveType');
+
+  for (let i=0; i<waveInfo.length; i++){
+      switch (waveInfo[i].waveUnit){
+          case 'angstroms':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*0.0001;
+              break;
+          case 'mm':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*1000;
+              break;
+          case 'cm':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*10000;
+              break;
+          case 'GHz':
+              waveInfo[i].wavelength = waveInfo[i].wavelength*299792.458;
+              break;
+
+      }
+      for (let j=0; j<waveType.length; j++){
+
+          if (waveInfo[i].name===waveType[j].name){
+              waveInfo[i]['count'] = waveType[j].count;
+              break;
+          }
+      }
+  }
+  return  sortBy(waveInfo, 'wavelength');
+
+}
 function FilterPanelView({onChange, imageMasterData}) {
+
     const forSummary = uniqBy(imageMasterData, (t) => `${t.missionId};${t.project}`);
     const missions = toFilterSummary(forSummary, 'missionId', 'missionId');
     const projectTypes = toFilterSummary(forSummary, 'projectTypeKey', 'projectTypeDesc');
-    const sortedImageData = sortBy(imageMasterData, (item) => parseFloat(item.wavelength));
-    const waveBands = toFilterSummary(sortedImageData, 'wavelength', 'wavelengthDesc');
+
+    //order by wavelength
+    const waveType=getBandList(imageMasterData);
+
     return (
         <div className='FilterPanel__view'>
             <CollapsiblePanel componentKey='missionFilter' header='MISSION:' isOpen={true}>
@@ -165,9 +208,12 @@ function FilterPanelView({onChange, imageMasterData}) {
             <CollapsiblePanel componentKey='projectTypesFilter' header='PROJECT TYPE:' isOpen={true}>
                 <FilterSelect {...{onChange, type:'projectType', dataList: projectTypes}}/>
             </CollapsiblePanel>
-            <CollapsiblePanel componentKey='waveBandsFilter' header='WAVEBAND:' isOpen={true}>
-                <FilterSelect {...{onChange, type:'waveBand', dataList: waveBands}}/>
+            <CollapsiblePanel componentKey='waveTypesFilter' header='BAND:' isOpen={true}>
+                <FilterSelect {...{onChange, type:'waveType', dataList: waveType}}/>
             </CollapsiblePanel>
+           {/* <CollapsiblePanel componentKey='waveBandsFilter' header='WAVEBAND:' isOpen={false}>
+                <FilterSelect {...{onChange, type:'waveBand', dataList: waveBands}}/>
+            </CollapsiblePanel>*/}
 
         </div>
     );
@@ -189,7 +235,7 @@ class FilterSelect extends PureComponent {
     }
 
     render() {
-        const {type, dataList, onChange, maxShown=3} = this.props;
+        const {type, dataList, onChange, maxShown=6} = this.props;
         const {showExpanded} = this.state;
         const fieldKey= `Filter_${type}`;
         const options = toFilterOptions(dataList);
@@ -283,12 +329,13 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
     // filter projects ... projects is like dataproduct or dataset.. i.e SEIP
     const projectData= filteredImageData.filter((d) => d.project === project);
     const subProjects= uniqBy(projectData, 'subProject').map( (d) => d.subProject);
+    const helpUrl = uniqBy(projectData, 'helpUrl').map( (d) => d.helpUrl);
     const labelMaxWidth = subProjects.filter((s) => s).reduce( (rval, s) => (s.length > rval ? s.length : rval), 0);
     const isOpen = hasImageSelection(groupKey, project);
 
     return (
         <div className='DataProductList__item'>
-            <CollapsiblePanel componentKey={project} header={<Header {...{project, multiSelect}}/>} isOpen={isOpen}>
+            <CollapsiblePanel componentKey={project} header={<Header {...{project, hrefInfo:helpUrl, multiSelect}}/>} isOpen={isOpen}>
                 <div className='DataProductList__item--details'>
                     {
                         subProjects.map((sp) =>
@@ -302,12 +349,14 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
 
 }
 
-function Header({project, multiSelect}) {
+function Header({project, hrefInfo='', multiSelect}) {
     const fieldKey= `PROJ_ALL_${project}`;
 
+    const href = hrefInfo;
     if (!multiSelect) return <div style={{display: 'inline-block'}}>{project}</div>;
     return (
-        <div className='DataProductList__item--header' onClick={(e) => e.stopPropagation()}>
+        <div className='DataProductList__item--header' >
+            <div onClick={(e) => e.stopPropagation()}>
             <CheckboxGroupInputField
                 key={fieldKey}
                 fieldKey={fieldKey}
@@ -318,8 +367,16 @@ function Header({project, multiSelect}) {
                 options={[{label:project, value:'_all_'}]}
                 alignment='horizontal'
                 labelWidth={35}
-                wrapperStyle={{whiteSpace: 'normal'}}
+                wrapperStyle={{whiteSpace: 'normal' /*cursor:'pointer'*/}}
             />
+            </div>
+            <div style={{marginLeft: -5}}>
+                <div>
+                    <a onClick={(e) => e.stopPropagation()} target='_blank' href={href}>
+                        <img style={{width:'14px'}}
+                            src={infoIcon}/></a>
+                </div>
+            </div>
         </div>
     );
 }

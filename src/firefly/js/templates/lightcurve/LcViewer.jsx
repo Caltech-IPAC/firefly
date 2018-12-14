@@ -35,6 +35,7 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
+import {warningDivId} from '../../ui/LostConnection';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -132,6 +133,7 @@ export class LcViewer extends PureComponent {
                 <div id='App' className='rootStyle' style={style}>
                     <header>
                         <BannerSection {...{menu, appTitle : title, appIcon, altAppIcon, additionalTitleStyle}}/>
+                        <div id={warningDivId} data-decor='full' className='warning-div center'/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}

@@ -2,15 +2,20 @@ package edu.caltech.ipac.astro;
 
 
 import edu.caltech.ipac.firefly.ConfigTest;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.*;
 
@@ -32,9 +37,7 @@ import java.util.*;
 public class IpacTableReaderTest extends ConfigTest{
 
     //Input parameters:
-    private static final String catName = "catalogName";
     String[] onlyColumns = null;
-    private boolean isHeadersOnlyAllow = false;
     private boolean noAttributes = false;
 
     //Expected parameters in the data group:
@@ -77,7 +80,7 @@ public class IpacTableReaderTest extends ConfigTest{
         attributeValues = new String[]{"\'Sample Catalog1\'", "\'Sample Catalog2\'"};
         attributeComments = new String[]{"\\ Comment1", "\\ Comment2"};
         //The header:
-        colTitles = new String[]{"ra", "dec", "n_obs", "V", "SpType"};
+        colTitles = new String[]{null, null, null, null, null};
         colKeyNames = new String[]{"ra", "dec", "n_obs", "V", "SpType"};
         colDataTypeDesc = new String[]{"double", "double", "int", "float", "char"};
         colDataTypes = new String[]{"class java.lang.Double", "class java.lang.Double", "class java.lang.Integer", "class java.lang.Float", "class java.lang.String"};
@@ -91,11 +94,10 @@ public class IpacTableReaderTest extends ConfigTest{
         //public static DataGroup readIpacTable(Reader fr, String catName)
         //public static DataGroup readIpacTable(Reader fr, String catName, String onlyColumns[], boolean isHeadersOnlyAllow)
 
-        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+        DataGroup dataGroup = IpacTableReader.read(asInputStream(input));
         checkResult(dataGroup);
 
-        isHeadersOnlyAllow = true;
-        dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, isHeadersOnlyAllow);
+        dataGroup = IpacTableReader.read(asInputStream(input), onlyColumns);
         checkResult(dataGroup); //isHeadersOnlyAllow = true is never use.
 
         //Test the following methods:
@@ -106,12 +108,11 @@ public class IpacTableReaderTest extends ConfigTest{
         tempFile.deleteOnExit();
 
         IpacTableWriter.save(tempFile, dataGroup);
-        dataGroup = IpacTableReader.readIpacTable(tempFile, catName);
+        dataGroup = IpacTableReader.read(tempFile);
         checkResult(dataGroup);
-        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, catName);
+        dataGroup = IpacTableReader.read(tempFile, onlyColumns);
         checkResult(dataGroup); //useFloatsForDoubles has never be used!
-        isHeadersOnlyAllow = true;
-        dataGroup = IpacTableReader.readIpacTable(tempFile, onlyColumns, catName, isHeadersOnlyAllow);
+        dataGroup = IpacTableReader.read(tempFile, onlyColumns);
         checkResult(dataGroup); //isHeadersOnlyAllow=true has never be used!
 
         //Test result: This IPAC table is read correctly.
@@ -125,7 +126,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * and verify if the produced dataGroup contains the correct information from the table.
      */
 
-    public void testOnlyColumns() throws IpacTableException {
+    public void testOnlyColumns() throws IpacTableException, IOException {
 
         //Input table:
         String input =
@@ -150,7 +151,7 @@ public class IpacTableReaderTest extends ConfigTest{
         attributeValues = new String[]{"\'Sample Catalog1\'", "\'Sample Catalog2\'"};
         attributeComments = new String[]{"\\ Comment1", "\\ Comment2"};
         //Set the header:
-        colTitles = new String[]{"ra", "dec"};
+        colTitles = new String[]{null, null};
         colKeyNames = new String[]{"ra", "dec"};
         colDataTypeDesc = new String[]{"double", "double"};
         colDataTypes = new String[]{"class java.lang.Double", "class java.lang.Double"};
@@ -160,7 +161,7 @@ public class IpacTableReaderTest extends ConfigTest{
         dataValues = new String[][]{{"165.466279", "-34.70473"}, {"123.4", "5.67"}};
 
         //Read the table and generate the dataGroup:
-        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, isHeadersOnlyAllow);
+        DataGroup dataGroup = IpacTableReader.read(asInputStream(input), onlyColumns);
 
         //Check the result:
         checkResult(dataGroup);
@@ -177,7 +178,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * Verify if the produced dataGroup contains the correct information from the table.
      *
      */
-    public void testNoAttributes() throws IpacTableException {
+    public void testNoAttributes() throws IpacTableException, IOException {
 
 
         String input =
@@ -190,12 +191,13 @@ public class IpacTableReaderTest extends ConfigTest{
 
         noAttributes = true;
 
-        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, onlyColumns, isHeadersOnlyAllow);
+        DataGroup dataGroup = IpacTableReader.read(new ByteArrayInputStream(input.getBytes()),onlyColumns);
 
-        List<DataGroup.Attribute> comments = dataGroup.getKeywords();
+
+        List<DataGroup.Attribute> comments = dataGroup.getTableMeta().getKeywords();
         Assert.assertEquals("There should be 0 comments", 0, comments.size());
-        Map<String, DataGroup.Attribute> keywordsMap = dataGroup.getAttributes();
-        Assert.assertEquals("There should be 0 keywords", 0, keywordsMap.size());
+        List<DataGroup.Attribute> keywords = dataGroup.getTableMeta().getKeywords();
+        Assert.assertEquals("There should be 0 keywords", 0, keywords.size());
 
         Assert.assertEquals("ra for row 1", 165.466279, (Double) dataGroup.get(0).getDataElement("ra"), 0.000001);
 
@@ -209,7 +211,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * Need to see how our table reader handle it.
      *
      */
-    public void testWrongAttributes1() throws IpacTableException {
+    public void testWrongAttributes1() throws IpacTableException, IOException {
 
         String input =
         "\\ catalog1 = 'A space makes this line as a comment'\n" +
@@ -222,10 +224,11 @@ public class IpacTableReaderTest extends ConfigTest{
         "  165.466279  -34.704730      5       11.27       K6Ve      \n" +
         "  123.4       5.67            9       8.9         K6Ve-1    ";
 
-        DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+        DataGroup dataGroup = IpacTableReader.read(asInputStream(input));
+
 
         //Check the Attributes (comments):
-        List<DataGroup.Attribute> attributes = dataGroup.getKeywords();
+        List<DataGroup.Attribute> attributes = dataGroup.getTableMeta().getKeywords();
         Assert.assertTrue(attributes.get(0).isComment());
         Assert.assertEquals("The first attribute has a space so it is parsed as a comment.",
                 attributes.get(0).toString(), "\\ catalog1 = 'A space makes this line as a comment'");
@@ -263,9 +266,9 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         try {
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+            DataGroup dataGroup = IpacTableReader.read(asInputStream(input));
             Assert.fail("No exception thrown.");
-        } catch (IpacTableException e) {
+        } catch (IOException e) {
 
         }
 
@@ -281,7 +284,7 @@ public class IpacTableReaderTest extends ConfigTest{
      * This test calls the method IpacTableReader.readIpacTable to read a table which has duplicate column names.
      * Test if an exception will be thrown out.
      */
-    public void testDuplicateColumn(){
+    public void testDuplicateColumn() {
 
     String input =
             "\\catalog1 = 'Sample Catalog1'\n" +
@@ -298,13 +301,13 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         try{
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+            DataGroup dataGroup = IpacTableReader.read(asInputStream(input));
             //After DM-9332 is implemented uncomment this:
             //Assert.fail("No exception thrown out");
             //After DM-9332, the LOG.WARN should be deleted:
             LOG.warn("This test should trigger IpacTableException but it doesn't. After DM-9332 fixes it, the test needs to be updated.");
 
-        } catch (IpacTableException e){
+        } catch (IOException e){
 
         }
 
@@ -391,10 +394,11 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         try{
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName, null, false);
-            Assert.fail("No exception thrown out.");
-        } catch (IpacTableException e){
-
+            DataGroup dataGroup = IpacTableReader.read(asInputStream(input));
+            Assert.assertNotNull(dataGroup);
+//            Assert.fail("No exception thrown out.");   ... it's okay as long as the headers are good.
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         //Test result: IpacTableException is thrown.
@@ -424,12 +428,11 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         try{
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+            DataGroup dataGroup = IpacTableReader.read(asInputStream(input));
             //After https://jira.lsstcorp.org/browse/DM-9333 is implemented, use this Assert.fail and delete the LOG.warn below:
             //Assert.fail("No exception is thrown out");
             LOG.warn("When some data are under \'|\' in an IPAC table, the reader doesn't throw out IpacTableException. DM-9333 will fix it and then this test needs some mods.");
-        }catch(IpacTableException e){
-
+        } catch (IOException e) {
         }
 
         /* How to find the problem:
@@ -461,11 +464,11 @@ public class IpacTableReaderTest extends ConfigTest{
 
 
         try{
-            DataGroup dataGroup = IpacTableReader.readIpacTable(new StringReader(input), catName);
+            DataGroup dataGroup = IpacTableReader.read(asInputStream(input));
             //After https://jira.lsstcorp.org/browse/DM-9335 is implemented, use the Assert.fail and delete the LOG.warn below:
             //Assert.fail("No exception is thrown out.");
             LOG.warn("IPAC table reader doesn't catch the no header problem. DM-9335 will fix it and then the test needs some mods.");
-        }catch(IpacTableException e) {
+        }catch(IOException e) {
 
         }
 
@@ -486,16 +489,16 @@ public class IpacTableReaderTest extends ConfigTest{
         DataType[] dataTypes = dataGroup.getDataDefinitions();
 
         for (int i = 0; i < dataTypes.length; i++) {
-            Assert.assertEquals("check column title", dataTypes[i].getDefaultTitle().toString(), colTitles[i]);
-            Assert.assertEquals("check column key name", dataTypes[i].getKeyName().toString(), colKeyNames[i]);
-            Assert.assertEquals("check column data type short description", dataTypes[i].getTypeDesc().toString(), colDataTypeDesc[i]);
+            Assert.assertEquals("check column title", dataTypes[i].getLabel(), colTitles[i]);
+            Assert.assertEquals("check column key name", dataTypes[i].getKeyName(), colKeyNames[i]);
+            Assert.assertEquals("check column data type short description", dataTypes[i].getTypeDesc(), colDataTypeDesc[i]);
             Assert.assertEquals("check column data type class", dataTypes[i].getDataType().toString(), colDataTypes[i]);
-            Assert.assertEquals("check the column unit", dataTypes[i].getDataUnit().toString(), colDataUnits[i]);
-            Assert.assertEquals("check column null string", dataTypes[i].getNullString().toString(), colNullStrings[i]);
+            Assert.assertEquals("check the column unit", dataTypes[i].getUnits(), colDataUnits[i]);
+            Assert.assertEquals("check column null string", dataTypes[i].getNullString(), colNullStrings[i]);
         }
 
         //Check the Attributes (comments):
-        List<DataGroup.Attribute> attributes = dataGroup.getKeywords();
+        List<DataGroup.Attribute> attributes = dataGroup.getTableMeta().getKeywords();
         if (attributes.size() == 0){
             //System.out.println("No attributes detected.");
             //Assert.assertTrue("No attributes", noAttributes);
@@ -513,17 +516,12 @@ public class IpacTableReaderTest extends ConfigTest{
         }
 
         //Check the attributes (key, value):
-        Map<String, DataGroup.Attribute> attributeMap = dataGroup.getAttributes();
-        //attributeMap.size();
-        int j = 0;
-        String value;
-        for (Map.Entry entry : attributeMap.entrySet()) {
+        List<DataGroup.Attribute> keywords = dataGroup.getTableMeta().getAttributeList();
+        for (int j = 0; j < keywords.size() -1; j++) {
             //Not check the input file source:
-            if (j < (attributeMap.size() - 1)) {
-                Assert.assertEquals("check the key", entry.getKey(), attributeKeys[j]);
-                value = ((DataGroup.Attribute) entry.getValue()).getValue().toString();
-                //System.out.println(value + " " + attributeValues[j] + " " + j);
-                Assert.assertEquals("check the value", value, attributeValues[j]);
+            if (j < (keywords.size() - 1)) {
+                Assert.assertEquals("check the key", keywords.get(j).getKey(), attributeKeys[j]);
+                Assert.assertEquals("check the value", keywords.get(j).getValue(), attributeValues[j]);
             }
             j++;
         }
@@ -532,10 +530,13 @@ public class IpacTableReaderTest extends ConfigTest{
         List<DataObject> objList = dataGroup.values(); //
         for (int row = 0; row < objList.size(); row++) {
             for (int col = 0; col < dataTypes.length; col++) {
-                String dataExpected = objList.get(row).getDataElement(dataTypes[col]).toString();
+                String dataExpected = String.valueOf(objList.get(row).getDataElement(dataTypes[col]));
                 Assert.assertEquals("check the data value", dataExpected, dataValues[row][col]);
             }
         }
     }
 
+    private static InputStream asInputStream(String input) {
+        return new ByteArrayInputStream(input.getBytes());
+    }
 }

@@ -5,8 +5,8 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
@@ -56,7 +56,7 @@ public class SloanDssImageGetter {
                 f= CacheHelper.makeFile(newfile);
                 URLDownload.getDataToFile(conn, f);
             }
-            DataGroup dgAry[]= VoTableUtil.voToDataGroups(f.getAbsolutePath());
+            DataGroup dgAry[]= VoTableReader.voToDataGroups(f.getAbsolutePath());
             DataGroup dataGroup= dgAry[0];
             if (dataGroup.size() >0) {
                 String urlString= (String)dataGroup.get(0).getDataElement("url");

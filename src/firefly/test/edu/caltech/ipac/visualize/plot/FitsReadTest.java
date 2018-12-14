@@ -1,7 +1,16 @@
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.table.io.FITSTableReader;
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.firefly.util.FitsValidation;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsImageCube;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.Wavelength;
 import nom.tam.fits.*;
 import org.junit.After;
 import org.junit.Assert;
@@ -10,6 +19,9 @@ import org.junit.Test;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.DataFormatException;
 
 /**
  * Created by zhang on 12/9/16.
@@ -22,6 +34,15 @@ import java.io.IOException;
  *   if the flux calculated correctly
  *   if the projection is correct
  *   if the FitsRead rotated correctly
+ *
+ *   5/24/18
+ *   Unit test cases added for wavelength calculation in FitsRead
+ *   The result FITS files are generated using the same input FITS file in the main program of FitsRead.
+ *   The result file's name converstion is "waveLength"+algorthm+".fits", for example, if the algorithm is
+ *   Linear, the name will be waveLengthLinear.fits.  The input FITS will be testLinear.fits.  Both testing
+ *   and result FITS files are located in Firefly_test_data under the same package structures.
+ *
+ *
  */
 public class FitsReadTest extends FitsValidation {
     private Fits threeExtensionFits; //it has more than one extension
@@ -38,11 +59,11 @@ public class FitsReadTest extends FitsValidation {
     private static String expectedFitsFileName = "f3_out.fits";
     private double expectedFlux = 3.1980953037272997E7;
     private int expectedProjection=1001;
-    private  double  delta =0.1e-10;
+    private  double  delta =0.1e-7;
     private String expectedRAFromNorthFileName ="f3_rotationFromNorth_out.fits";
     private String expectedRANotFromNorthFileName ="f3_rotationNotFromNorth_out.fits";
 
-    private  FitsRead  fitsRead0;
+    private FitsRead fitsRead0;
 
     @Before
     /**
@@ -68,14 +89,14 @@ public class FitsReadTest extends FitsValidation {
         expectedRAFromNorthup = FileLoader.loadFits(FitsReadTest.class, expectedRAFromNorthFileName);
         expectedRANotFromNorthup = FileLoader.loadFits(FitsReadTest.class, expectedRANotFromNorthFileName);
 
-        /*
+        /*the
         This following two FITS files are used to test ImageCube.
          */
         inCubeFits =  FileLoader.loadFits(FitsReadTest.class, inCubeFitsFileName);
         expectedOutCubeFits = FileLoader.loadFits(FitsReadTest.class, expectedCubeFitsFileName);
 
         //Create an instance of FitsRead here
-        fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
 
     }
     @After
@@ -88,11 +109,15 @@ public class FitsReadTest extends FitsValidation {
         expectedFits=null;
         expectedRAFromNorthup=null;
         expectedRANotFromNorthup=null;
+
+        ConfigTest.LOG.info("FitsRead test is done, the memory is released now");
+
     }
 
     @Test
     public void testProjection() throws FitsException{
         Assert.assertEquals(fitsRead0.getProjectionType(), expectedProjection);
+        ConfigTest.LOG.info("test projection is pass");
     }
     @Test
     public void testGetFlux() throws PixelValueException,FitsException {
@@ -101,7 +126,7 @@ public class FitsReadTest extends FitsValidation {
     }
     @Test
     public void testFitsReadArrayCount() throws FitsException {
-        FitsRead[]  fitsReadArray= FitsRead.createFitsReadArray(threeExtensionFits);
+        FitsRead[]  fitsReadArray= FitsReadFactory.createFitsReadArray(threeExtensionFits);
         Assert.assertEquals(fitsReadArray.length, 3);
     }
     @Test
@@ -115,22 +140,118 @@ public class FitsReadTest extends FitsValidation {
     @Test
     public void testCreateFitsReadRotatedAngle() throws FitsException, IOException, GeomException {
          double angle = 30;
-         FitsRead raFromNorthUp = FitsRead.createFitsReadRotated(fitsRead0, angle, true);
+         FitsRead raFromNorthUp = FitsReadFactory.createFitsReadRotated(fitsRead0, angle, true);
          validateFits(expectedRAFromNorthup, raFromNorthUp.createNewFits() );
-         FitsRead raNotFromNorthUp = FitsRead.createFitsReadRotated(fitsRead0, angle, false);
+         FitsRead raNotFromNorthUp = FitsReadFactory.createFitsReadRotated(fitsRead0, angle, false);
          validateFits(expectedRANotFromNorthup, raNotFromNorthUp.createNewFits() );
     }
 
     @Test
     public void testCreateFitsImageCube() throws FitsException, IOException {
 
-        FitsImageCube fic = FitsRead.createFitsImageCube(inCubeFits);
+        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
         Object[] keys = fic.getMapKeys();
         FitsRead calFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
         Fits  newFits = calFitsRead0.createNewFits();
         validateFits(expectedOutCubeFits, newFits);
 
     }
+
+    private DataGroup loadResultTable(String algorithm) throws FitsException, IOException {
+        String retFitsName = "waveLength"+algorithm+".fits";
+        String inFitsName = FileLoader.getDataPath(FitsReadTest.class) + retFitsName;
+        String[] dataCols = {"WaveLength"};
+        DataGroup table = FITSTableReader.convertFitsToDataGroup(
+                inFitsName,
+                dataCols,
+                null,
+                FITSTableReader.EXPAND_BEST_FIT, 1);
+        return table;
+    }
+
+    private void validateWaveLengthResult(String algorithm, ArrayList<Double> ret ) throws FitsException, IOException, DataFormatException, PixelValueException {
+
+        double[] cResult = new double[ret.size()];
+        for (int i=0; i<ret.size(); i++){
+            cResult[i]=ret.get(i).doubleValue();
+        }
+
+        //load the expected results (the expected results were generated in FitsRead and saved to the FITS file
+        DataGroup table = loadResultTable(algorithm);
+        List<DataObject> list =  table.values();
+        double[] exResult = new double[list.size()];
+        for (int i=0; i<list.size(); i++){
+            exResult[i]= ( (Double) list.get(i).getDataElement("WaveLength")).doubleValue();
+        }
+        Assert.assertArrayEquals(exResult, cResult, delta);
+
+    }
+
+    private ArrayList<Double> calculateExpectedResult(Fits fits, FitsRead[] frArray)throws FitsException, IOException, DataFormatException, PixelValueException{
+
+        BasicHDU primaryHdu = fits.getHDU(0);
+        int naxis1 = primaryHdu.getHeader().getIntValue("NAXIS1");
+        int naxis2 = primaryHdu.getHeader().getIntValue("NAXIS2");
+        ArrayList<Double> cResult = new ArrayList<>();
+
+        ImagePt imagePt;
+        Wavelength wl= new Wavelength(frArray[0].getHeader(), frArray[0].getTableHDU());
+        for (int i = 0; i < naxis1; i++) {
+            for (int j = 0; j < naxis2; j++) {
+                imagePt = new ImagePt(i, j);
+                cResult.add(wl.getWaveLength(imagePt));
+            }
+
+        }
+        return cResult;
+    }
+
+    /**
+     * This is a unit test to test wavelength calculation using Table Lookup
+     * @throws FitsException
+     * @throws IOException
+     * @throws DataFormatException
+     * @throws PixelValueException
+     */
+    @Test
+    public void testGetWaveLengthTable()throws FitsException, IOException, DataFormatException, PixelValueException {
+
+        String inFitsName = "testTable.fits";
+        Fits fits = FileLoader.loadFits(FitsReadTest.class, inFitsName);
+        FitsRead[] frArray = FitsReadFactory.createFitsReadArray(fits);
+        ArrayList<Double> cResult = calculateExpectedResult(fits,frArray );
+        validateWaveLengthResult("Table", cResult);
+
+    }
+
+    private void testGetWaveLengthWCSKeyWord(String algorithm)throws FitsException, IOException, DataFormatException, PixelValueException {
+
+        String inFitsName = "test"+algorithm+".fits";
+        Fits fits = FileLoader.loadFits(FitsReadTest.class, inFitsName);
+        FitsRead[] frArray = FitsReadFactory.createFitsReadArray(fits);
+        ArrayList<Double> cResult = calculateExpectedResult(fits,frArray );
+        validateWaveLengthResult(algorithm, cResult);
+    }
+
+    /**
+     * This is a unit test to test wavelength calculations using Liner, Log and Non-linear algorithm
+     * @throws DataFormatException
+     * @throws FitsException
+     * @throws PixelValueException
+     * @throws IOException
+     */
+    @Test
+    public void testGetWaveLength() throws DataFormatException, FitsException, PixelValueException, IOException {
+
+        //Test Linear, Log and Nonlinear (F2W, V2W)
+        String[] algorithms = {"Linear", "Log", "F2W", "V2W"};
+        for (int i=0; i<algorithms.length; i++){
+            testGetWaveLengthWCSKeyWord(algorithms[i]);
+        }
+
+    }
+
+
     @Test
     public void testCreateFitsReadRotatedFromNorth(){
        //TODO
@@ -163,7 +284,7 @@ public class FitsReadTest extends FitsValidation {
         String fileName="f3.fits";
         String outFitsName=dataPath+"/f3_out.fits";
         Fits  inFits = FileLoader.loadFits(FitsReadTest.class, fileName);
-        FitsRead fitsRead0 = FitsRead.createFitsReadArray(inFits)[0];
+        FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
         FileOutputStream fo = new java.io.FileOutputStream(outFitsName);
         fitsRead0.writeSimpleFitsFile(fo);
         fo.close();
@@ -174,14 +295,14 @@ public class FitsReadTest extends FitsValidation {
 
         double angle = 30;
         String rotationFitsName=dataPath+"/f3_rotationFromNorth_out.fits";
-        FitsRead frRotaionAnglefromNorth = FitsRead.createFitsReadRotated(fitsRead0,angle, true);
+        FitsRead frRotaionAnglefromNorth = FitsReadFactory.createFitsReadRotated(fitsRead0,angle, true);
 
         fo = new java.io.FileOutputStream(rotationFitsName);
         frRotaionAnglefromNorth.writeSimpleFitsFile(fo);
         fo.close();
 
         String rotation1FitsName=dataPath+"/f3_rotationNotFromNorth_out.fits";
-        FitsRead frRotaionAngleNotfromNorth = FitsRead.createFitsReadRotated(fitsRead0,angle, false);
+        FitsRead frRotaionAngleNotfromNorth = FitsReadFactory.createFitsReadRotated(fitsRead0,angle, false);
         fo = new java.io.FileOutputStream(rotation1FitsName);
         frRotaionAngleNotfromNorth.writeSimpleFitsFile(fo);
         fo.close();
@@ -189,7 +310,7 @@ public class FitsReadTest extends FitsValidation {
         String cubeFitsName="cube1.fits";
         String outCubeFitsName=dataPath+"/cube1_out.fits";
         Fits  inCubeFits = FileLoader.loadFits(FitsReadTest.class, cubeFitsName);
-        FitsImageCube fic = FitsRead.createFitsImageCube(inCubeFits);
+        FitsImageCube fic = FitsReadFactory.createFitsImageCube(inCubeFits);
         Object[] keys = fic.getMapKeys();
         FitsRead cubeFitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
          fo = new java.io.FileOutputStream( outCubeFitsName);

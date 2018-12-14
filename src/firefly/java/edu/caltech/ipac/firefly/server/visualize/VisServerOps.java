@@ -23,9 +23,9 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.RegionParser;
@@ -44,7 +44,6 @@ import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CropFile;
-import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.HistogramOps;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -55,6 +54,7 @@ import edu.caltech.ipac.visualize.plot.PixelValueException;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -66,15 +66,8 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.IndexColorModel;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
+import java.awt.image.ColorModel;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -225,24 +218,11 @@ public class VisServerOps {
         return true;
     }
 
-    public static double[] getBeta(PlotState state) {
-        double[] resultsAry= new double[] {Double.NaN,Double.NaN,Double.NaN};
-        try {
-            ActiveCallCtx ctx = CtxControl.prepare(state);
-            FitsRead frAry[]= ctx.getFitsReadGroup().getFitsReadAry();
-            for(int i= 0; (i<frAry.length);i++) {
-                if (frAry[i]!=null) resultsAry[i]= frAry[i].getDefaultBeta();
-            }
-            return resultsAry;
-
-        } catch (Exception e) {
-            return resultsAry;
-        }
-    }
-
+    static final boolean USE_DIRECT_FLUX_IF_POSSIBLE = true;
 
     private static boolean isDirectFluxAccessAvailable(PlotState state) {
         //todo: make this test more sophisticated
+        if (!USE_DIRECT_FLUX_IF_POSSIBLE) return false;
 
         for(Band b : state.getBands()) {
             if (state.getWorkingFitsFileStr(b).endsWith("gz")) {
@@ -398,14 +378,8 @@ public class VisServerOps {
         }
     }
 
-
-    public static WebPlotResult recomputeStretch(PlotState state, StretchData[] stretchData) {
-        return recomputeStretch(state, stretchData, true);
-    }
-
     public static WebPlotResult recomputeStretch(PlotState state,
-                                                 StretchData[] stretchData,
-                                                 boolean recreateImages) {
+                                                 StretchData[] stretchData) {
         try {
             ActiveCallCtx ctx = CtxControl.prepare(state);
             PlotServUtils.statsLog("stretch");
@@ -417,6 +391,8 @@ public class VisServerOps {
                 state.setRangeValues(stretchData[0].getRangeValues(), Band.NO_BAND);
                 retval.putResult(WebPlotResult.PLOT_STATE, state);
                 images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
+                // update range values in state, in case there are computed values (ex. default asinh_q)
+                state.setRangeValues(stretchData[0].getRangeValues(), Band.NO_BAND);
                 retval.putResult(WebPlotResult.PLOT_IMAGES, images);
             } else if (plot.isThreeColor()) {
                 for (StretchData sd : stretchData) {
@@ -428,10 +404,14 @@ public class VisServerOps {
                         state.setBandVisible(sd.getBand(), sd.isBandVisible());
                     }
                 }
-                if (recreateImages) {
-                    images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
-                    retval.putResult(WebPlotResult.PLOT_IMAGES, images);
+                images = reviseImageFile(state, ctx, plot, ctx.getFitsReadGroup());
+                // update range values in state, in case there are computed values (ex. default asinh_q)
+                for (StretchData sd : stretchData) {
+                    if (sd.isBandVisible()) {
+                        state.setRangeValues(sd.getRangeValues(), sd.getBand());
+                    }
                 }
+                retval.putResult(WebPlotResult.PLOT_IMAGES, images);
                 retval.putResult(WebPlotResult.PLOT_STATE, state);
 
             } else {
@@ -502,7 +482,7 @@ public class VisServerOps {
                             (int) c2.getX(), (int) c2.getY());
                 }
 
-                FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile);
+                FitsRead fr[] = FitsCacher.loadFits(cropFits, cropFile).getFitReadAry();
 
 
                 if (saveCropFits) {
@@ -562,10 +542,10 @@ public class VisServerOps {
         DataType keyword = new DataType("Keyword", String.class);
         DataType value = new DataType("Value", String.class);
         DataType num = new DataType("#", Integer.class);
-        comment.getFormatInfo().setWidth(30);
-        value.getFormatInfo().setWidth(10);
-        keyword.getFormatInfo().setWidth(10);
-        num.getFormatInfo().setWidth(3);
+        comment.setWidth(30);
+        value.setWidth(10);
+        keyword.setWidth(10);
+        num.setWidth(3);
         DataType[] types = new DataType[]{num, keyword, value, comment};
         DataGroup dg = new DataGroup("Headers - " + name, types);
 
@@ -927,7 +907,7 @@ public class VisServerOps {
 
 
             boolean three = plot.isThreeColor();
-            IndexColorModel newColorModel = plot.getImageData().getColorModel();
+            ColorModel newColorModel = plot.getImageData().getColorModel();
 
 
             HistogramDisplay dataHD = new HistogramDisplay();
@@ -1161,6 +1141,40 @@ public class VisServerOps {
         }
     }
 
+    public static WebPlotResult getRelocatableRegions(String fileKey) {
+        List<String> rAsStrList =  new ArrayList<>();
+        List<String> msgList =  new ArrayList<>();
+        WebPlotResult retval = new WebPlotResult();
+
+        try {
+            Cache sessionCache = UserCache.getInstance();
+            File fpFile = ServerContext.convertToFile(fileKey);
+
+            if (fpFile == null || !fpFile.canRead()) {
+                UploadFileInfo tmp = (UploadFileInfo) (sessionCache.get(new StringKey(fileKey)));
+                fpFile = tmp.getFile();
+            }
+
+
+            InputStream in = new FileInputStream(fpFile);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String tmpLine;
+
+            while ((tmpLine = br.readLine()) != null) {
+                tmpLine = tmpLine.trim();
+                if (!tmpLine.startsWith("#")) rAsStrList.add(tmpLine);
+            }
+            if (rAsStrList.size() == 0) {
+                msgList.add("no region is defined in the footprint file");
+            }
+        } catch (Exception e) {
+                retval = createError("on getRelocatableRegion", null, e);
+        }
+
+        retval.putResult(WebPlotResult.REGION_DATA, StringUtils.combineStringList(rAsStrList));
+        retval.putResult(WebPlotResult.REGION_ERRORS, StringUtils.combineStringList(msgList));
+        return retval;
+    }
 
     public static WebPlotResult getFootprintRegion(String fpInfo) {
 

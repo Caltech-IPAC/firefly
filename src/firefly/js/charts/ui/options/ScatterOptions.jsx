@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {isArray, get, isUndefined, omit} from 'lodash';
+import {get, isUndefined, omit} from 'lodash';
 
 import {Expression} from '../../../util/expr/Expression.js';
 import {getChartData, getTraceSymbol, hasLowerLimits, hasUpperLimits} from '../../ChartsCntlr.js';
+import {getMinScatterGLRows} from '../../ChartUtil.js';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
@@ -14,8 +15,11 @@ import {updateSet} from '../../../util/WebUtil.js';
 import {SimpleComponent} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
-import {Errors, errorTypeFieldKey, errorFieldKey, errorMinusFieldKey} from './Errors.jsx';
+import {Errors, errorTypeFieldKey, errorFieldKey, errorMinusFieldKey, getDefaultErrorType} from './Errors.jsx';
 import {getAppOptions} from '../../../core/AppDataCntlr.js';
+import {getTblById} from '../../../tables/TableUtil.js';
+import {PlotlyCS} from '../../Colorscale.js';
+
 
 const fieldProps = {labelWidth: 62, size: 15};
 
@@ -75,7 +79,8 @@ export function fieldReducer({chartId, activeTrace}) {
     const basicReducer = basicFieldReducer({chartId, activeTrace});
 
     const getFields = () => {
-        const {data, fireflyData, tablesources={}} = getChartData(chartId);
+        const chartData = getChartData(chartId);
+        const {data, fireflyData, tablesources={}} = chartData;
         const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
 
         // when a symbol is substituted with an array,
@@ -106,11 +111,11 @@ export function fieldReducer({chartId, activeTrace}) {
             },
             [errorTypeFieldKey(activeTrace, 'x')]: {
                 fieldKey: errorTypeFieldKey(activeTrace, 'x'),
-                value: get(data, errorTypeFieldKey(activeTrace, 'x').replace(/^data./, ''), 'none')
+                value: get(chartData, errorTypeFieldKey(activeTrace, 'x'), getDefaultErrorType(chartData, activeTrace, 'x'))
             },
             [errorTypeFieldKey(activeTrace, 'y')]: {
                 fieldKey: errorTypeFieldKey(activeTrace, 'y'),
-                value: get(data, errorTypeFieldKey(activeTrace, 'y').replace(/^data./, ''), 'none')
+                value: get(chartData, errorTypeFieldKey(activeTrace, 'y'), getDefaultErrorType(chartData, activeTrace, 'y'))
             },
             ...basicReducer(null)
         };
@@ -241,9 +246,7 @@ export function TableSourcesOptions({chartId, tablesource={}, activeTrace, group
                 <ColumnOrExpression {...sizeMapProps}/>
                 <ColumnOrExpression {...colorMapProps}/>
                 <ListBoxInputField fieldKey={`data.${activeTrace}.marker.colorscale`}
-                                   options={[{value: 'Default'}, {value: 'Bluered'}, {value: 'Blues'}, {value: 'Earth'}, {value: 'Electric'}, {value: 'Greens'},
-                                       {value: 'Greys'}, {value: 'Hot'}, {value: 'Jet'}, {value: 'Picnic'}, {value: 'Portland'}, {value: 'Rainbow'},
-                                       {value: 'RdBu'}, {value: 'Reds'}, {value: 'Viridis'}, {value: 'YlGnBu'}, {value: 'YlOrRd'}]}/>
+                                   options={PlotlyCS.map((e)=>({value:e}))}/>
             </div>
             }
         </div>
@@ -251,6 +254,7 @@ export function TableSourcesOptions({chartId, tablesource={}, activeTrace, group
 }
 
 TableSourcesOptions.propTypes = {
+    chartId: PropTypes.string,
     tablesource: PropTypes.object,
     activeTrace: PropTypes.number,
     groupKey: PropTypes.string,
@@ -259,7 +263,8 @@ TableSourcesOptions.propTypes = {
 
 export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
 
-    const changes = {[`data.${activeTrace}.type`] : getTraceType(chartId, activeTrace)};
+    // trace type can switch between scatter and scattergl depending on the number of points
+    const changes = {[`data.${activeTrace}.type`] : getTraceType(chartId, tbl_id, activeTrace)};
 
     // check if size field is a constant
     const sizeMap = fields[`_tables.data.${activeTrace}.marker.size`];
@@ -279,22 +284,18 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id}) {
 }
 
 /**
- * Returns gl or non-gl scatter type based on already used trace type
- * (GL and non-GL traces do not work well together)
+ * Returns gl or non-gl scatter type based on the number of table rows (if unknown)
  * @param chartId
+ * @param tbl_id
  * @param activeTrace
  */
-function getTraceType(chartId, activeTrace) {
+function getTraceType(chartId, tbl_id, activeTrace) {
     const chartData = getChartData(chartId);
     let type = get(chartData, `data.${activeTrace}.type`);
     if (isUndefined(type)) {
-        if (activeTrace > 0) {
-            // check previous trace type
-            const isGL = get(chartData, `data.${activeTrace-1}.type`, 'scatter').endsWith('gl');
-            type = isGL ? 'scattergl' : 'scatter';
-        } else {
-            type = 'scatter';
-        }
+        const {totalRows=0}= getTblById(tbl_id);
+        // use scatter or scattergl depending on the number of rows
+        type = (totalRows > getMinScatterGLRows()) ? 'scattergl' : 'scatter';
     }
     return type;
 }

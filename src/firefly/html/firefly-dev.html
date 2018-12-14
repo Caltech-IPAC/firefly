@@ -20,13 +20,14 @@
                     {label:'Upload', action: 'FileUploadDropDownCmd'},
                     {label:'Workspace', action: 'WorkspaceDropDownCmd'},
                     {label:'Test Searches', action:'TestSearches'},
+                    {label:'TAP Searches', action: 'TestTAPSearch'},
                     {label:'Example Js Dialog', action:'exampleDialog', type:'COMMAND'},
                 ],
             },
             options : {
                 MenuItemKeys: {maskOverlay:true},
                 catalogSpacialOp: 'polygonWhenPlotExist',
-                workspace : {showOptions: false},
+                workspace : {showOptions: true},
                 imageMasterSourcesOrder: ['WISE', '2MASS', 'Spitzer'],
                 charts: {
                     singleTraceUI: false

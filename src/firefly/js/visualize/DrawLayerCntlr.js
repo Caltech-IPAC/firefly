@@ -27,6 +27,8 @@ import {footprintCreateLayerActionCreator,
         footprintMoveActionCreator,
         footprintEndActionCreator
 } from '../drawingLayers/FootprintTool.js';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {imageLineBasedfootprintActionCreator} from './task/LSSTFootprintTask.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 
 export const DRAWLAYER_PREFIX = 'DrawLayerCntlr';
@@ -40,6 +42,7 @@ export const GroupingScope= new Enum(['STANDARD', 'SUBGROUP', 'SINGLE']);
 
 
 const CREATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.createDrawLayer`;
+const UPDATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.updateDrawLayer`;
 const DESTROY_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.destroyDrawLayer`;
 const CHANGE_VISIBILITY= `${DRAWLAYER_PREFIX}.changeVisibility`;
 const CHANGE_DRAWING_DEF= `${DRAWLAYER_PREFIX}.changeDrawingDef`;
@@ -81,13 +84,17 @@ const FOOTPRINT_START = `${DRAWLAYER_PREFIX}.FootprintTool.footprintStart`;
 const FOOTPRINT_END = `${DRAWLAYER_PREFIX}.FootprintTool.footprintEnd`;
 const FOOTPRINT_MOVE = `${DRAWLAYER_PREFIX}.FootprintTool.footprintMove`;
 
+const IMAGELINEBASEDFP_CREATE = `${DRAWLAYER_PREFIX}.ImageLineBasedFP.imagelineBasedFPCreate`;
+
 export const DRAWING_LAYER_KEY= 'drawLayers';
 export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 export const RegionSelectStyle = ['UprightBox', 'DottedOverlay', 'SolidOverlay',
                                   'DottedReplace', 'SolidReplace'];
-export const  defaultRegionSelectColor = '#DAA520';   // golden
-export const  defaultRegionSelectStyle = RegionSelectStyle[0];
+export const defaultRegionSelectColor = '#DAA520';   // golden
+export const defaultRegionSelectStyle = RegionSelectStyle[0];
+export const RegionSelColor = 'selectColor';
+export const RegionSelStyle = 'selectStyle';
 
 
 export function getRegionSelectStyle(style = defaultRegionSelectStyle) {
@@ -120,6 +127,19 @@ export function getDlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 
 export function getDrawLayerCntlrDef(drawLayerFactory) {
+
+    setTimeout( () => {
+        dispatchAddActionWatcher({
+            actions:[CHANGE_VISIBILITY, CHANGE_DRAWING_DEF, ATTACH_LAYER_TO_PLOT,
+                DETACH_LAYER_FROM_PLOT, FORCE_DRAW_LAYER_UPDATE, MODIFY_CUSTOM_FIELD,
+                ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.CHANGE_HIPS,
+                ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION
+            ],
+            callback: asyncDrawDataWatcher,
+            params: {drawLayerFactory}
+        });
+    },10);
+    
     return {
         reducers() {return {[DRAWING_LAYER_KEY]: makeReducer(drawLayerFactory)}; },
 
@@ -136,11 +156,11 @@ export function getDrawLayerCntlrDef(drawLayerFactory) {
                 [FOOTPRINT_START] :  footprintStartActionCreator,
                 [FOOTPRINT_END] :  footprintEndActionCreator,
                 [FOOTPRINT_MOVE] :  footprintMoveActionCreator,
-
                 [REGION_CREATE_LAYER] :  regionCreateLayerActionCreator,
                 [REGION_DELETE_LAYER] :  regionDeleteLayerActionCreator,
                 [REGION_ADD_ENTRY] :  regionUpdateEntryActionCreator,
-                [REGION_REMOVE_ENTRY] :  regionUpdateEntryActionCreator
+                [REGION_REMOVE_ENTRY] :  regionUpdateEntryActionCreator,
+                [IMAGELINEBASEDFP_CREATE] : imageLineBasedfootprintActionCreator
             };
         }
     };
@@ -160,10 +180,12 @@ export default {
     REGION_SELECT,
     MARKER_START, MARKER_MOVE, MARKER_END, MARKER_CREATE,
     FOOTPRINT_CREATE, FOOTPRINT_START, FOOTPRINT_END, FOOTPRINT_MOVE,
+    IMAGELINEBASEDFP_CREATE,
     makeReducer,
     dispatchCreateDrawLayer,
     dispatchCreateRegionLayer, dispatchDeleteRegionLayer,
-    dispatchAddRegionEntry, dispatchRemoveRegionEntry
+    dispatchAddRegionEntry, dispatchRemoveRegionEntry,
+    dispatchCreateImageLineBasedFootprintLayer
 };
 
 
@@ -274,6 +296,14 @@ export function dispatchModifyCustomField(id,changes, plotId) {
         .forEach( (drawLayerId) => {
             flux.process({type: MODIFY_CUSTOM_FIELD, payload: {drawLayerId, changes, plotIdAry}});
         });
+}
+
+/**
+ *
+ * @param {DrawLayer} drawLayer
+ */
+export function dispatchUpdateDrawLayer(drawLayer) {
+    flux.process({type: UPDATE_DRAWING_LAYER, payload: {drawLayer}});
 }
 
 /**
@@ -502,12 +532,24 @@ export function dispatchSelectRegion(drawLayerId, selectedRegion, dispatcher = f
 export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
     dispatcher({type: MARKER_CREATE, payload: {plotId, markerId, layerTitle, attachPlotGroup}});
 }
+
+/**
+ * Footprint Info.  The data object containing footprint info.
+ * @typedef {object} footprintInfo
+ * @prop {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc. or footprint file at the server
+ * @prop {string} instrument - name of instrument for the footprint
+ * @prop {string} relocateBy - name of instrument for the footprint from the server, method of relocation for the uploaded footprint
+ * @prop {string} fromFile - filename, not including the extension, of the uploaded file
+ * @prop {string[]} fromRegionAry - array or string of region description
+ *
+ * @public
+ */
+
 /**
  * @summary create drawing layer with footprint
  * @param {string} footprintId - id of the drawing layer
  * @param {string} layerTitle - title of the drawing layer
- * @param {string} footprint - name of footprint project, such as 'HST', 'WFIRST', etc.
- * @param {string} instrument - name of instrument for the footprint
+ * @param {footprintInfo} footprintData footprint information for footprint layer
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
  * @param {bool} attachPlotGroup - attach all plots of the same plot group
  * @param dispatcher
@@ -515,11 +557,22 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
  * @function dispatchCreateFootprintLayer
  * @memberof firefly.action
  */
-export function dispatchCreateFootprintLayer(footprintId, layerTitle, footprint, instrument, plotId = [],
-                                                                      attachPlotGroup=true, dispatcher = flux.process) {
-    dispatcher({type: FOOTPRINT_CREATE, payload: {plotId, footprintId, layerTitle, footprint, instrument, attachPlotGroup}});
+export function dispatchCreateFootprintLayer(footprintId, layerTitle,
+                                             {footprint=null, instrument=null, relocateBy='origin',  fromFile=null, fromRegionAry=null},
+                                             plotId = [], attachPlotGroup=true, dispatcher = flux.process) {
+    dispatcher({type: FOOTPRINT_CREATE, payload: {plotId, footprintId, layerTitle, footprint, instrument, relocateBy, attachPlotGroup, fromFile, fromRegionAry}});
 
 }
+
+export function dispatchCreateImageLineBasedFootprintLayer(drawLayerId, title, fpData, plotId = [],
+                                                                     footprintFile, footprintImageFile, tbl_index,
+                                                                     attachPlotGroup=true, dispatcher = flux.process) {
+    dispatcher({
+        type: IMAGELINEBASEDFP_CREATE,
+        payload: {plotId, drawLayerId, title, footprintData: fpData, footprintFile, footprintImageFile, tbl_index, attachPlotGroup}
+    });
+}
+
 
 function getDrawLayerId(dlRoot,id) {
     let drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerId);
@@ -572,6 +625,21 @@ function makeDetachLayerActionCreator(factory) {
 }
 
 
+function asyncDrawDataWatcher(action, cancelSelf, params) {
+        const {drawLayerId, plotId}= action.payload;
+        const drawLayerAry= getDlAry();
+        const drawLayer= getDrawLayerById(drawLayerAry, drawLayerId);
+        const {drawLayerFactory}=  params;
+        if (drawLayer) {
+            drawLayerFactory.asyncComputeDrawData(drawLayer,action);
+        }
+        else if (plotId) {
+            drawLayerAry
+                .filter( (dl) => dl.visiblePlotIdAry
+                    .find( (testPlotId) => testPlotId===plotId))
+                .forEach( (dl) => drawLayerFactory.asyncComputeDrawData(dl,action));
+        }
+}
 
 
 //=============================================
@@ -599,6 +667,9 @@ function makeReducer(factory) {
             case FORCE_DRAW_LAYER_UPDATE:
             case MODIFY_CUSTOM_FIELD:
                 retState = deferToLayerReducer(state, action, dlReducer);
+                break;
+            case UPDATE_DRAWING_LAYER:
+                retState = doUpdateDrawLayer(state, action);
                 break;
             case CREATE_DRAWING_LAYER:
                 retState = createDrawLayer(state, action);
@@ -653,6 +724,12 @@ function createDrawLayer(state,action) {
 
     return Object.assign({}, state,
         {allowedActions, drawLayerAry: [...state.drawLayerAry, drawLayer] });
+}
+
+function doUpdateDrawLayer(state,action) {
+    const {drawLayer}= action.payload;
+    const drawLayerAry= state.drawLayerAry.map( (dl) => dl.drawLayerId===drawLayer.drawLayerId ? drawLayer : dl);
+    return Object.assign({}, state, {drawLayerAry} );
 }
 
 /**
@@ -776,7 +853,7 @@ const initState= function() {
                           CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,TABLE_TO_IGNORE,
                           ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW,
                           ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION,
-                          ImagePlotCntlr.CHANGE_HIPS,
+                          ImagePlotCntlr.CHANGE_HIPS, UPDATE_DRAWING_LAYER
                         ],
         drawLayerAry : [],
         ignoreTables : [],

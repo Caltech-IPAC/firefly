@@ -13,8 +13,8 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import nom.tam.fits.FitsException;
@@ -334,8 +334,8 @@ public class ImagePlotBuilder {
         ArrayList<Integer> infoList = new ArrayList<>();
 
         for (int i = 0; i < frInfo.length; i++) {
-            Integer extNo = frInfo[i].getFitsRead().getExtensionNumber();
-            if (idxsInt.contains(extNo)) {
+            Integer extNo = frInfo[i].getFitsRead().getHduNumber();
+            if (idxsInt.contains(extNo) || (idxsInt.contains(-1) && extNo==0)) {
                 infoList.add(i);
             } else if(extNo > maxIdx) {
                 break;
@@ -448,7 +448,7 @@ public class ImagePlotBuilder {
             checkFileNames(state, fi.getOriginalFile(), band);
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
             state.setImageIdx(fi.getOriginalImageIdx(), band);
-            if (WebPlotReader.isRotation(req)) {
+            if (WebPlotPipeline.isRotation(req)) {
                 if (req.getRotateNorth()) {
                     state.setRotateType(PlotState.RotateType.NORTH);
                 } else {

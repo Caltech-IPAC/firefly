@@ -3,30 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.SharedDbProcessor;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,12 +47,12 @@ import java.util.List;
         })
 public class GatorDD extends SharedDbProcessor {
 
-    public DataGroup fetchData(TableServerRequest treq) throws DataAccessException {
+    public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
         TableServerRequest ntreq = (TableServerRequest) treq.cloneRequest();
         ntreq.keepBaseParamOnly();
         try {
             File results = new GatorDDImpl().loadDataFile(treq);
-            return DataGroupReader.read(results);
+            return IpacTableReader.read(results);
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }

@@ -5,33 +5,29 @@ package edu.caltech.ipac.firefly.server.db.spring.mapper;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 import org.springframework.dao.DataAccessException;
 
 import javax.sql.DataSource;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.RandomAccessFile;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
+import static edu.caltech.ipac.table.IpacTableUtil.makeAttributes;
 
 /**
  * This class query the database, and then write results out to the given file as an ipac table.
@@ -51,7 +47,7 @@ import static edu.caltech.ipac.util.IpacTableUtil.makeAttributes;
  *
  */
 public class IpacTableExtractor {
-    private static int minPrefetchSize = DataGroupReader.MIN_PREFETCH_SIZE;
+    private static int minPrefetchSize = AppProperties.getIntProperty("IpacTable.min.prefetch.size", 500);
     private static Logger.LoggerImpl LOG = Logger.getLogger();
     public static final String LINE_SEP = System.getProperty("line.separator");
 
@@ -119,7 +115,7 @@ public class IpacTableExtractor {
             writerRow(headers, resultset);
             if (count == prefetchSize) {
                 processInBackground(headers, resultset);
-                insertCompleteStatus(DataGroupPart.State.INPROGRESS);
+                IpacTableWriter.insertStatus(outf, DataGroupPart.State.INPROGRESS);
                 doclose = false;
                 break;
             }
@@ -153,7 +149,7 @@ public class IpacTableExtractor {
                     conn.close();
                 }
                 if (writer != null) {
-                    insertCompleteStatus(DataGroupPart.State.COMPLETED);
+                    IpacTableWriter.insertStatus(outf, DataGroupPart.State.COMPLETED);
                     writer.flush();
                     writer.close();
                 }
@@ -184,39 +180,15 @@ public class IpacTableExtractor {
         t.start();
     }
 
-    private void insertCompleteStatus(DataGroupPart.State state) {
-        RandomAccessFile rdf = null;
-        try {
-             rdf = new RandomAccessFile(outf, "rw");
-            String status = "\\" + DataGroupPart.LOADING_STATUS + " = " + state;
-            rdf.writeBytes(status);
-        } catch (FileNotFoundException e) {
-            LOG.error(e, "Error openning output file:" + outf);
-        } catch (IOException e) {
-            LOG.error(e, "Error writing status to output file:" + outf);
-        } finally {
-            if (rdf != null) {
-                try {
-                    rdf.close();
-                } catch (IOException e) {
-                    LOG.warn(e, "Exception while closing output file:" + outf);
-                }
-            }
-        }
-    }
-
     public void writerRow(List<DataType> headers, ResultSet rs) {
         for (int i = 0; i < headers.size(); i++) {
             DataType dt = headers.get(i);
             try {
                 Object obj = rs.getObject(dt.getKeyName());
-                if (obj instanceof String && ((String)obj).indexOf("\r")>=0) {
-                    obj = ((String)obj).replaceAll("\r", "");
-                }
-                writer.print(" " + dt.getFormatInfo().formatData(obj));
+                writer.print(" " + dt.formatData(obj, true));
             } catch (SQLException e) {
                 LOG.warn(e, "SQLException at col:" + headers.get(i).getKeyName());
-                writer.print(" " + dt.getFormatInfo().formatData("#ERROR#"));
+                writer.print(" " + dt.formatData("#ERROR#"));
             }
         }
         writer.println();

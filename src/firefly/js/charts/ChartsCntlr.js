@@ -13,17 +13,19 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {logError} from '../util/WebUtil.js';
 import {DEFAULT_PLOT2D_VIEWER_ID, dispatchAddViewerItems, dispatchUpdateCustom, dispatchRemoveViewerItems,
     getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
-import {flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
-        applyDefaults, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
+import {applyDefaults, flattenAnnotations, formatColExpr, getPointIdx, getRowIdx, handleTableSourceConnections, clearChartConn, newTraceFrom,
+        setupTableWatcher, HIGHLIGHTED_PROPS, SELECTED_PROPS, TBL_SRC_PATTERN} from './ChartUtil.js';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {makeHistogramParams, makeXYPlotParams} from './ChartUtil.js';
+import {adjustColorbars, hasFireflyColorbar} from './dataTypes/FireflyHeatmap.js';
 
 export const CHART_SPACE_PATH = 'charts';
 export const UI_PREFIX = `${CHART_SPACE_PATH}.ui`;
 export const DATA_PREFIX = `${CHART_SPACE_PATH}.data`;
 
+export const usePlotlyReact = toBoolean(sessionStorage.getItem('plotlyReact'));   // defaults to false
 export const useScatterGL = toBoolean(sessionStorage.getItem('scatterGL'));       // defaults to false
 export const useChartRedraw = toBoolean(sessionStorage.getItem('chartRedraw'));   // defaults to false
 
@@ -31,6 +33,7 @@ export const useChartRedraw = toBoolean(sessionStorage.getItem('chartRedraw')); 
 export const CHART_ADD = `${DATA_PREFIX}/chartAdd`;
 export const CHART_UPDATE = `${DATA_PREFIX}/chartUpdate`;
 export const CHART_REMOVE = `${DATA_PREFIX}/chartRemove`;
+export const CHART_TRACE_REMOVE = `${DATA_PREFIX}/chartTraceRemove`;
 export const CHART_HIGHLIGHT = `${DATA_PREFIX}/chartHighlight`;
 export const CHART_SELECT = `${DATA_PREFIX}/chartSelectSelection`;
 export const CHART_FILTER_SELECTION = `${DATA_PREFIX}/chartFilterSelection`;
@@ -40,9 +43,8 @@ export const CHART_UI_EXPANDED      = `${UI_PREFIX}.expanded`;
 export const CHART_MOUNTED = `${UI_PREFIX}/mounted`;
 export const CHART_UNMOUNTED = `${UI_PREFIX}/unmounted`;
 
-const FIRST_CDEL_ID = '0'; // first data element id (if missing)
 
-const FIREFLY_TRACE_TYPES = ['scatter', 'fireflyHistogram', 'fireflyHeatmap'];
+const FIREFLY_TRACE_TYPES = ['scatter', 'scattergl', 'fireflyHistogram', 'fireflyHeatmap'];
 
 const EMPTY_ARRAY = [];
 
@@ -57,6 +59,7 @@ function actionCreators() {
     return {
         [CHART_ADD]:     chartAdd,
         [CHART_REMOVE]:  chartRemove,
+        [CHART_TRACE_REMOVE]:  chartTraceRemove,
         [CHART_UPDATE]:  chartUpdate,
         [CHART_HIGHLIGHT]: chartHighlight,
         [CHART_FILTER_SELECTION]: chartFilterSelection,
@@ -102,6 +105,19 @@ export function dispatchChartAdd({chartId, chartType='plot.ly', groupId='main', 
  */
 export function dispatchChartRemove(chartId, dispatcher= flux.process) {
     dispatcher({type: CHART_REMOVE, payload: {chartId}});
+}
+
+/*
+ * Delete chart trace and the related data
+ *  @param {string} chartId - chart id
+ *  @param {number} traceNum - trace index to remove
+ *  @param {Function} [dispatcher=flux.process] - only for special dispatching uses such as remote
+ *  @public
+ *  @function dispatchChartTraceRemove
+ *  @memberof firefly.action
+ */
+export function dispatchChartTraceRemove(chartId, traceNum, dispatcher= flux.process) {
+    dispatcher({type: CHART_TRACE_REMOVE, payload: {chartId, traceNum}});
 }
 
 /**
@@ -275,6 +291,24 @@ function chartRemove(action) {
             }
         }
         dispatch({type: action.type, payload: Object.assign({},action.payload, {viewerId})});
+    };
+}
+
+function chartTraceRemove(action) {
+    return (dispatch) => {
+        const {chartId, traceNum} = action.payload;
+        const {tablesources=[]} = getChartData(chartId);
+        // cancel and replace table watchers, affected by the trace removal
+        tablesources.forEach((ts,i) => {
+            if (i>=traceNum && ts && ts._cancel) {
+                ts._cancel();
+                if (i !== traceNum) {
+                    const newIdx = i-1;
+                    ts._cancel = setupTableWatcher(chartId, ts, newIdx);
+                }
+            }
+        });
+        dispatch(action);
     };
 }
 
@@ -583,6 +617,21 @@ function reduceData(state={}, action={}) {
 
             return updateSet(state, chartId, chartData);
         }
+        case (CHART_TRACE_REMOVE)  :
+        {
+            const {chartId, traceNum} = action.payload;
+            const {changes, moreChanges} = removeTrace({chartId, traceNum});
+            let chartData = getChartData(chartId);
+            if (!isEmpty(changes)) {
+                // changes to array fields: data, fireflyData, etc
+                chartData = updateObject(chartData, changes);
+                if (!isEmpty(moreChanges)) {
+                    // changes to the specific trace attributes
+                    chartData = updateObject(chartData, moreChanges);
+                }
+            }
+            return updateSet(state, chartId, chartData);
+        }
         case (CHART_REMOVE)  :
         {
             const {chartId} = action.payload;
@@ -691,7 +740,7 @@ function cleanupRelatedChartData(action) {
             if (data.length === 1) {
                 dispatchChartRemove(chartId);
             } else {
-                removeTrace({chartId, traceNum});
+                dispatchChartTraceRemove(chartId, traceNum);
             }
             traceNum = getMatchingTSIdx(chartId);
         }
@@ -722,15 +771,22 @@ export function resetChart(chartId) {
     _original && dispatchChartAdd(_original);
 }
 
-export function removeTrace({chartId, traceNum}) {
-    const {activeTrace, data, fireflyData, tablesources, curveNumberMap} = getChartData(chartId);
+function removeTrace({chartId, traceNum}) {
+    const {activeTrace, data, fireflyData, layout, tablesources, curveNumberMap} = getChartData(chartId);
     const changes = {};
+    const moreChanges = {};
+
 
     [[data, 'data'], [fireflyData, 'fireflyData'], [tablesources, 'tablesources']].forEach(([arr,name]) => {
         if (arr && traceNum < arr.length) {
             changes[name] = arr.filter((e,i) => i !== traceNum);
         }
     });
+    
+    // handle colorbars
+    if (hasFireflyColorbar(chartId, traceNum)) {
+        Object.assign(moreChanges, adjustColorbars({data: changes['data'], fireflyData: changes['fireflyData'], layout}));
+    }
 
     if (curveNumberMap && traceNum < curveNumberMap.length) {
         // new curve map has the same order of traces as the old curve map
@@ -753,9 +809,7 @@ export function removeTrace({chartId, traceNum}) {
         }
     }
 
-    if (!isEmpty(changes)) {
-        dispatchChartUpdate({chartId, changes});
-    }
+    return {changes, moreChanges};
 }
 
 export function getChartData(chartId, defaultChartData={}) {
@@ -783,7 +837,7 @@ export function dispatchError(chartId, traceNum, reason) {
 
     const {data=[]} = getChartData(chartId);
     const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
-    let message = `Failed to fetch ${name} data`;
+    let message = `Failed to plot ${name} data`;
     logError(`${message}: ${reason}`);
 
     let reasonStr = `${reason}`.toLowerCase();
@@ -796,8 +850,14 @@ export function dispatchError(chartId, traceNum, reason) {
     } else if (reasonStr.match(/rows exceed/)) {
         message = 'Please filter the table or use different chart type.';
         reasonStr = reason;
+    // } else if (reasonStr.match(/same column/)) {
+    //     message = 'The columns requested are identical or one of them is not numerical.';
+    //     reasonStr = reason;
+    } else if (reasonStr.match(/null/)){
+        message = `No data available: ${name} data`;
+        reasonStr = '';
     } else {
-        reasonStr = 'Please contact Help Desk. Check browser console for more information.';
+        reasonStr = '';
     }
     const changes = {};
     changes[`fireflyData.${traceNum}.error`] = {message, reason: reasonStr};

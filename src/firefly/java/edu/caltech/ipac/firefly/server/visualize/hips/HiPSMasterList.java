@@ -7,9 +7,9 @@ package edu.caltech.ipac.firefly.server.visualize.hips;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -19,12 +19,11 @@ import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
+import nom.tam.fits.Data;
 
 import java.io.File;
 import java.util.*;
 import java.io.IOException;
-
-import static edu.caltech.ipac.util.IpacTableUtil.*;
 
 /**
  * @author Cindy Wang
@@ -53,7 +52,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private static final String errMsg = "HiPS Map search: no HiPS maps found";
 
-    public FileInfo ingestDataIntoDb(TableServerRequest request, File dbFile) throws DataAccessException {
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         String hipsSources = request.getParam(ServerParams.HIPS_SOURCES);
         String hipsDataTypes = request.getParam(ServerParams.HIPS_DATATYPES);
         String hipsMergePriority = request.getParam(ServerParams.HIPS_MERGE_PRIORITY);
@@ -61,9 +60,6 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
         String workingTypes[] = (hipsDataTypes != null) ? hipsDataTypes.split(",") : null;
         String prioritySources[] = (hipsMergePriority != null) ? hipsMergePriority.split(",") : null;
         List<HiPSMasterListEntry> allSourceData = new ArrayList<>();
-
-        DbAdapter dbAdapter = DbAdapter.getAdapter(request);
-
 
         if (workingSources == null || workingSources.length == 0 ||
                 (workingSources.length == 1 && workingSources[0].equalsIgnoreCase(ServerParams.ALL))) {
@@ -96,11 +92,9 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             }
 
             DataGroup dg = createTableDataFromListEntry(allSourceData);
-            dg.shrinkToFitData();
 
             setupMeta(dg, (workingSources.length > 1));
-
-            return EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, "data");
+            return dg;
         } catch (Exception e) {
             _log.warn(e.getMessage());
             throw new DataAccessException(errMsg);
@@ -177,20 +171,14 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
 
 
     private void setupMeta(DataGroup dg, boolean bMulti) {
-        int    sWidth = 30;
 
         for (DataType colDT : dg.getDataDefinitions()) {
             String colName = colDT.getKeyName();
 
             if (colDT.getDataType() != String.class) continue;
 
-            int crtWidth = colDT.getFormatInfo().getWidth();
-            if (crtWidth > sWidth && !colName.equals(PARAMS.PROPERTIES.getKey())) {
-                dg.addAttribute(makeAttribKey(WIDTH_TAG, colName), Integer.toString(sWidth));
-            }
-
             if ((!bMulti && colName.equals(PARAMS.SOURCE.getKey())) || colName.equals(PARAMS.URL.getKey())) {
-                dg.addAttribute(makeAttribKey(VISI_TAG, colName), "hidden");
+                colDT.setVisibility(DataType.Visibility.hidden);
             }
         }
     }

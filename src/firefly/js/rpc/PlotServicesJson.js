@@ -119,12 +119,6 @@ export function callChangeColor(state, colorTableId) {
     return doJsonRequest(ServerParams.CHANGE_COLOR, params, true);
 }
 
-export function callGetBeta(state) {
-    const params= [
-        {name:ServerParams.STATE, value: state.toJson(false)},
-    ];
-    return doJsonRequest(ServerParams.GET_BETA, params, true);
-}
 
 export function callRecomputeStretch(state, stretchDataAry) {
     var params= {
@@ -148,6 +142,7 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
     
 }
 //LZ 3/22/16 DM-4494
+/*
 export  function  callGetFitsHeaderInfo(plotState, tableId) {
 
     var params ={ [ServerParams.STATE]: plotState.toJson(false),
@@ -157,6 +152,7 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
     var result = doJsonRequest(ServerParams.FITS_HEADER, params, true);
     return result;//doJsonRequest(ServerParams.FITS_HEADER, params);
 }
+*/
 
 
 export function callGetFileFlux(stateAry, pt) {
@@ -227,9 +223,9 @@ export function getImagePng(state, regionData, clientIsNorth, clientRotAngle, cl
     return doJsonRequest(ServerParams.IMAGE_PNG_REG, params, true);
 }
 
-function makeParamsWithStateAry(stateAry, includeHeader, otherParams=[]) {
+function makeParamsWithStateAry(stateAry, includeDirectAccessData, otherParams=[]) {
     return [
-        ...makeStateParamAry(stateAry,true),
+        ...makeStateParamAry(stateAry,includeDirectAccessData),
         ...otherParams,
     ];
 
@@ -238,12 +234,12 @@ function makeParamsWithStateAry(stateAry, includeHeader, otherParams=[]) {
 /**
  *
  * @param {Array} startAry
- * @param {boolean} includeHeader
+ * @param {boolean} includeDirectAccessData
  * @return {Array}
  */
-function makeStateParamAry(startAry, includeHeader= true) {
+function makeStateParamAry(startAry, includeDirectAccessData= true) {
     return startAry.map( (s,idx) => {
-        return {name:'state'+idx, value: s.toJson(includeHeader) };
+        return {name:'state'+idx, value: s.toJson(includeDirectAccessData) };
     } );
 }
 

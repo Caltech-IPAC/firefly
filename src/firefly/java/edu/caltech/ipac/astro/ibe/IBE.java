@@ -3,16 +3,16 @@
  */
 package edu.caltech.ipac.astro.ibe;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -219,7 +219,7 @@ public class IBE {
                 ibe.query(results, param);
 
                 // retrieve all data types with cutout options
-                DataGroup data = IpacTableReader.readIpacTable(results, "results");
+                DataGroup data = IpacTableReader.read(results);
                 for (int idx = 0; idx < data.size(); idx++) {
                     DataObject row = data.get(idx);
                     Map<String, String> dinfo = IpacTableUtil.asMap(row);
@@ -233,7 +233,7 @@ public class IBE {
                     }
                 }
 
-            } catch (IOException | IpacTableException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

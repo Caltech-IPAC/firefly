@@ -216,10 +216,6 @@ function updatePathList(action) {
 
             action = updateMerge(action, 'payload', result);
             dispatch(action);
-            const afterUpdateFunc = get(action, ['payload', 'callback']);
-            if (afterUpdateFunc && typeof afterUpdateFunc === 'function') {
-                afterUpdateFunc(result.data);
-            }
         };
 
         if (!get(action, ['payload', 'files'], null)) {

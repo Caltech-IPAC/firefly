@@ -17,8 +17,8 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import nom.tam.fits.FitsException;
@@ -95,12 +95,9 @@ public class CtxControl {
                         if (lenStr.length()>0) lenStr.append(", ");
                         File fitsFile=   PlotStateUtil.getWorkingFitsFile(state, band);
 
-                        boolean blank= PlotServUtils.isBlank(state, band);
-
-                        if (fitsFile.canRead() || blank) {
+                        if (fitsFile.canRead()) {
                             FitsRead fr[];
-                            if (blank) fr= PlotServUtils.createBlankFITS(state.getWebPlotRequest(band));
-                            else       fr= FitsCacher.readFits(fitsFile);
+                            fr= FitsCacher.readFits(fitsFile).getFitReadAry();
                             RangeValues rv= state.getRangeValues(band);
                             int imageIdx= state.getImageIdx(band);
                             frGroup.setFitsRead(band,fr[imageIdx]);
@@ -139,12 +136,10 @@ public class CtxControl {
                     ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
                     FitsRead fr[];
                     for(Band band : state.getBands()) {
-                        boolean blank= PlotServUtils.isBlank(state, band);
                         File fitsFile=   PlotStateUtil.getWorkingFitsFile(state, band);
                         int imageIdx= state.getImageIdx(band);
 
-                        if (blank) fr= PlotServUtils.createBlankFITS(state.getWebPlotRequest(band));
-                        else       fr= FitsCacher.readFits(fitsFile);  //this call should get data from cache if it exist
+                        fr= FitsCacher.readFits(fitsFile).getFitReadAry();  //this call should get data from cache if it exist
                         frGroup.setFitsRead(band, fr[imageIdx]);
                     }
 
@@ -183,7 +178,6 @@ public class CtxControl {
         ctx.setImages(images);
         ctx.setPlotState(state);
         ctx.setPlot(plot);
-        PlotStateUtil.setPixelAccessInfo(plot, state, frGroup);
         putPlotCtx(ctx);
         PlotServUtils.createThumbnail(plot, frGroup, images, true, state.getThumbnailSize());
         state.setNewPlot(false);

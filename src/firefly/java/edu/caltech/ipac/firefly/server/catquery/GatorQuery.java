@@ -4,8 +4,9 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
 
-import edu.caltech.ipac.astro.DataGroupQueryStatement;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import edu.caltech.ipac.table.query.DataGroupQueryStatement;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
@@ -13,22 +14,21 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.IpacTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -39,8 +39,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Locale;
 
-import static edu.caltech.ipac.util.IpacTableUtil.DESC_TAG;
-import static edu.caltech.ipac.util.IpacTableUtil.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.DESC_TAG;
+import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
 /**
  * User: roby
  * Date: Jul 29, 2010
@@ -347,13 +347,13 @@ public class GatorQuery extends BaseGator {
         if ("1".equals(req.getParam(CatalogRequest.ONE_TO_ONE)) &&
                 req.getMethod() != CatalogRequest.Method.TABLE) {
             // for single target, 1-to-1 search..  remove empty row from results
-            DataGroup dg = DataGroupReader.read(f);
+            DataGroup dg = IpacTableReader.read(f);
             if (dg.size() == 1) {
                 DataObject row = dg.get(0);
                 if (dg.containsKey(RA)) {
                     Object val = row.getDataElement(RA);
                     if (StringUtils.isEmpty(val)) {
-                        dg.remove(row);
+                        dg.clearData();
                         IpacTableWriter.save(f, dg);
                     }
                 }
@@ -362,7 +362,7 @@ public class GatorQuery extends BaseGator {
                 LOG.error("Gator returning more than one lines from a 1-to-1 single target search");
             }
         } else if (req.getMethod() == CatalogRequest.Method.TABLE) {
-            TableDef meta = IpacTableUtil.getMetaInfo(f);
+            IpacTableDef meta = IpacTableUtil.getMetaInfo(f);
             if (meta == null || meta.getCols().size() ==0) return f;
 
             DataType gatorCntCol = meta.getCols().get(0);
@@ -382,7 +382,6 @@ public class GatorQuery extends BaseGator {
                 String queryStmt = "select col " + cols + " from " + f.getPath();
                 DataGroup dg = DataGroupQueryStatement.parseStatement(queryStmt).execute();
                 dg.getDataDefintion(uploadedRowId).setKeyName(CatalogRequest.UPDLOAD_ROW_ID);
-                dg.shrinkToFitData(true);
                 IpacTableWriter.save(f, dg);
             }
         }

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
+import React from 'react';
 import {isString} from 'lodash';
 import {dispatchOnAppReady} from '../core/AppDataCntlr.js';
 import {ServerRequest } from '../data/ServerRequest.js';
@@ -16,9 +16,12 @@ import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
 import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
 import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import * as ComponentCntlr from '../core/ComponentCntlr.js';
 import {ApiExpandedView} from './ApiExpandedView.jsx';
 import {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer} from '../core/LayoutCntlr.js';
 import {dispatchAddSaga, dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {showWorkspaceDialog, WorkspacePickerPopup} from '../ui/WorkspaceViewer.jsx';
+import {FieldGroup} from '../ui/FieldGroup.jsx';
 
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
@@ -33,6 +36,7 @@ import {ImageMetaDataToolbar} from '../visualize/ui/ImageMetaDataToolbar.jsx';
 import {MultiViewStandardToolbar} from '../visualize/ui/MultiViewStandardToolbar.jsx';
 import {ImageExpandedMode} from '../visualize/iv/ImageExpandedMode.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
+import {ApiFullImageDisplay} from '../visualize/ui/ApiFullImageDisplay.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {TablePanel} from '../tables/ui/TablePanel.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
@@ -192,6 +196,7 @@ export function buildLowlevelAPI() {
         MultiImageViewer,
         MultiViewStandardToolbar,
         ApiExpandedDisplay,
+        ApiFullImageDisplay,
         ImageExpandedMode,
         ImageMetaDataToolbar,
         TablesContainer,
@@ -201,7 +206,9 @@ export function buildLowlevelAPI() {
         ChartPanel,
         PlotlyWrapper,
         PopupMouseReadoutMinimal,
-        PopupMouseReadoutFull
+        PopupMouseReadoutFull,
+        showWorkspaceDialog,
+        WorkspacePickerPopup: fieldGroupWrap(WorkspacePickerPopup)
     };
 
     const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );
@@ -254,4 +261,16 @@ function initExpandedView(div){
     }
     
     ApiUtil.renderDOM(expandedDivEl, ApiExpandedView);
+}
+
+function fieldGroupWrap(Component, groupKey='firefly-api-fieldgroup') {
+
+    return (props) => {
+        return (
+            <FieldGroup groupKey={groupKey}>
+                <Component {...props}/>
+            </FieldGroup>
+        );
+    };
+
 }

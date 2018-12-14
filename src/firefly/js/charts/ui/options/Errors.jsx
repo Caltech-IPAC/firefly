@@ -15,9 +15,23 @@ export const ERR_TYPE_OPTIONS = [
 
 ];
 
-export function errorTypeFieldKey(activeTrace, axis) { return `data.${activeTrace}.fireflyData.error_${axis}.errorsType`; }
+export function errorTypeFieldKey(activeTrace, axis) { return `fireflyData.${activeTrace}.error_${axis}.errorsType`; }
 export function errorFieldKey(activeTrace, axis) { return `_tables.data.${activeTrace}.error_${axis}.array`; }
 export function errorMinusFieldKey(activeTrace, axis) { return `_tables.data.${activeTrace}.error_${axis}.arrayminus`; }
+
+export function getDefaultErrorType(chartData, activeTrace, axis) {
+    const errorMinus = get(chartData, errorMinusFieldKey(activeTrace, axis).replace(/^_tables./, ''));
+    if (errorMinus) {
+        return 'asym';
+    } else {
+        const error = get(chartData, errorFieldKey(activeTrace, axis).replace(/^_tables./, ''));
+        if (error) {
+            return 'sym';
+        } else {
+            return 'none';
+        }
+    }
+}
 
 export class Errors extends PureComponent {
 

@@ -9,6 +9,8 @@ import ShapeDataObj from './ShapeDataObj.js';
 import FootprintObj from './FootprintObj.js';
 import DirectionArrowDrawObj from './DirectionArrowDrawObj.js';
 import MarkerFootprintObj from './MarkerFootprintObj.js';
+import MocObj from './MocObj.js';
+import ImageLineBasedObj from './ImageLineBasedObj.js';
 import {has} from 'lodash';
 
 export var drawTypes= {
@@ -17,7 +19,9 @@ export var drawTypes= {
     [FootprintObj.FOOTPRINT_OBJ] : FootprintObj.draw,
     [DirectionArrowDrawObj.DIR_ARROW_DRAW_OBJ] : DirectionArrowDrawObj.draw,
     [ShapeDataObj.SHAPE_DATA_OBJ] : ShapeDataObj.draw,
-    [MarkerFootprintObj.MARKER_DATA_OBJ] : MarkerFootprintObj.draw
+    [MarkerFootprintObj.MARKER_DATA_OBJ] : MarkerFootprintObj.draw,
+    [MocObj.MOC_OBJ] : MocObj.draw,
+    [ImageLineBasedObj.IMGFP_OBJ] : ImageLineBasedObj.draw
 };
 
 class DrawOp {
@@ -25,6 +29,7 @@ class DrawOp {
     /**
      *
      * @param {{type:string}} drawObj
+     * @param {Object} drawingDef
      */
     static usePathOptimization(drawObj,drawingDef) {
         return op(drawObj,'usePathOptimization',false)(drawObj,drawingDef);
@@ -41,11 +46,11 @@ class DrawOp {
     /**
      *
      * @param drawObj
-     * @param plot
+     * @param csysConv
      * @param pt
      */
-    static getScreenDist(drawObj,plot, pt) {
-        return op(drawObj,'getScreenDist')(drawObj,plot, pt);
+    static getScreenDist(drawObj,csysConv, pt) {
+        return op(drawObj,'getScreenDist')(drawObj,csysConv, pt);
     }
 
     /**

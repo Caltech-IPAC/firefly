@@ -2,11 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, isArray, isUndefined, truncate, uniqueId} from 'lodash';
-import {getTblById, getColumns, getColumn, doFetchTable} from '../../tables/TableUtil.js';
+import {getTblById, getColumns, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
-import {formatColExpr, getDataChangesForMappings, replaceQuotesIfSurrounding, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows} from '../ChartUtil.js';
+import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
+import {getTraceTSEntries as heatmapTSGetter} from './FireflyHeatmap.js';
 
+// some chart properties can either come from a table column or be a number
+const numberOrArrayProps = ['marker.size'];
 
 /**
  * This function creates table source entries to get plotly chart data from the server
@@ -46,10 +49,12 @@ function fetchData(chartId, traceNum, tablesource) {
     const originalTableModel = getTblById(tbl_id);
     const {request, highlightedRow, selectInfo, totalRows} = originalTableModel;
 
-    const maxScatterRows = getMaxScatterRows();
-    if (totalRows > maxScatterRows && get(getChartData(chartId), `data.${traceNum}.type`, 'scatter') === 'scatter') {
-        dispatchError(chartId, traceNum, `${totalRows} rows exceed scatter chart best performance limit of ${maxScatterRows}.`);
-        return;
+    // if the number of rows is above a threshhold,
+    // heatmap chart should be produced
+    if (totalRows > getMaxScatterRows()) {
+        const {options:heatmapOptions, fetchData:heatmapFetchData} = heatmapTSGetter({traceTS:tablesource, chartId, traceNum});
+        const heatmapTS = Object.assign({}, tablesource, {options: heatmapOptions});
+        return heatmapFetchData(chartId, traceNum, heatmapTS);
     }
     
     const colNames = getColumns(originalTableModel).map((c) => c.name);
@@ -58,7 +63,9 @@ function fetchData(chartId, traceNum, tablesource) {
     const sreq = cloneRequest(request, {
         startIdx: 0,
         pageSize: MAX_ROW,
-        inclCols: Object.entries(mappings).map(([k,v]) => {
+        inclCols: Object.entries(mappings).
+        filter(([k,v]) => !numberOrArrayProps.includes(k) || Number.isNaN(parseFloat(v))).
+        map(([k,v]) => {
             // we'd like expression columns to be named as the paths to trace data arrays, ex. data[0].x
             //const asStr = (numericCols.includes(v)) ? '' : k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
             const asStr = k.startsWith('firefly') ? ` as "${k}"` :` as "data.${traceNum}.${k}"`;
@@ -97,9 +104,27 @@ function fetchData(chartId, traceNum, tablesource) {
 
 
 function addOtherChanges({changes, chartId, traceNum, tablesource, tableModel}) {
-    const type = get(getChartData(chartId), `data.${traceNum}.type`, 'scatter');
+    const chartData = getChartData(chartId);
+    const type = get(chartData, `data.${traceNum}.type`, 'scatter');
+    let scatter2d = isScatter2d(type);
+    if (!scatter2d) {
+        // scatterOrHeatmap attribute is set when a heatmap trace is used to represent a scatter
+        const scatterOrHeatmap = get(chartData, `fireflyData.${traceNum}.scatterOrHeatmap`);
+        if (scatterOrHeatmap) {
+            // moving from heatmap to scatter representation
+            // if we started as a heatmap, "markers" mode needs to be set, because the default mode is "lines"
+            changes[`data.${traceNum}.mode`] = 'markers';
+            // clean arrays set in heatmap mode
+            changes[`data.${traceNum}.text`] = undefined;
+            changes[`data.${traceNum}.z`] = undefined;
+            // tablesource options have changed
+            const {options} = tablesource;
+            changes[`tablesources.${traceNum}.options`] = options;
+            scatter2d = true;
+        }
+    }
 
-    if (isScatter2d(type)) {
+    if (scatter2d) {
         addScatterChanges({changes, chartId, traceNum, tablesource, tableModel});
     }
 }
@@ -122,8 +147,8 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     const yUnit = get(yColumn, 'units', '');
 
     // default axes labels for the first trace (remove surrounding quotes, if any)
-    const xLabel = replaceQuotesIfSurrounding(get(mappings, 'x'));
-    const yLabel = replaceQuotesIfSurrounding(get(mappings, 'y'));
+    const xLabel = stripColumnNameQuotes(get(mappings, 'x'));
+    const yLabel = stripColumnNameQuotes(get(mappings, 'y'));
 
     const colors = get(changes, [`data.${traceNum}.marker.color`]);
     let cTipLabel = isArray(colors) ? get(mappings, 'marker.color') : '';
@@ -138,10 +163,6 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     // highlight and selected traces should have the same legend group as the active scatter
     if (!get(data, `${traceNum}.legendgroup`)) {
         changes[`data.${traceNum}.legendgroup`] = uniqueId('grp');
-    }
-
-    if (!get(data, `${traceNum}.type`)) {
-        changes[`data.${traceNum}.type`] = 'scatter';
     }
 
     // set default title if it's the first trace
@@ -164,6 +185,9 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
 
     const x = get(changes, [`data.${traceNum}.x`]);
     if (!x) return;
+
+    const traceType = (isArray(x) && x.length > getMinScatterGLRows()) ? 'scattergl' : 'scatter';
+    changes[`data.${traceNum}.type`] = traceType;
 
     // point tooltip labels
     let xTipLabel = truncate(xLabel, {length: 20});
@@ -258,29 +282,49 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
     // per trace annotations
     changes[`fireflyData.${traceNum}.annotations`] = annotations;
 
+    // handle errors
+
+    let xErr = get(changes, [`data.${traceNum}.error_x.array`], []);
+    let xErrHigh = xErr;
+    if (xErr.length > 0) {
+        // plotly interprepts empty strings in error arrays as 0 - need to convert them to numbers
+        changes[`data.${traceNum}.error_x.array`] = xErr.map((e)=>parseFloat(e));
+    }
+    const xErrLow = get(changes, [`data.${traceNum}.error_x.arrayminus`], []);
+    if (xErrLow.length > 0) {
+        changes[`data.${traceNum}.error_x.arrayminus`] = xErrLow.map((e)=>parseFloat(e));
+        xErr = []; // asymmetric error
+    } else {
+        xErrHigh = []; // symmetric error
+    }
+    const hasXErrors = xErrLow.length > 0 || xErr.length > 0;
+    changes[`data.${traceNum}.error_x.visible`] = hasXErrors;
+    changes[`data.${traceNum}.error_x.symmetric`] = xErr.length > 0;
+
+    let yErr = get(changes, [`data.${traceNum}.error_y.array`], []);
+    let yErrHigh = yErr;
+    if (yErr.length > 0) {
+        changes[`data.${traceNum}.error_y.array`] = yErr.map((e)=>parseFloat(e));
+    }
+    const yErrLow = get(changes, [`data.${traceNum}.error_y.arrayminus`], []);
+    if (yErrLow.length > 0) {
+        changes[`data.${traceNum}.error_y.arrayminus`] = yErrLow.map((e)=>parseFloat(e));
+        yErr = []; // asymmetric error
+    } else {
+        yErrHigh = []; // symmetric error
+    }
+    const hasYErrors = yErrLow.length > 0 || yErr.length > 0;
+    changes[`data.${traceNum}.error_y.visible`] = hasYErrors;
+    changes[`data.${traceNum}.error_y.symmetric`] = yErr.length > 0;
+
     // set tooltips
 
     // hoverinfo 'skip' disables hover layer - hence we can not highlight clicking on a point or select points in the chart
     // if we support it, we need to exclude select button from the tools appearing on select
     // also, we might want to disable showing highlighted and selected points in the chart
     if (get(data, `${traceNum}.hoverinfo`, 'text') === 'text') {
-        const xErrLow = get(changes, [`data.${traceNum}.error_x.arrayminus`], []);
-        const xErrHigh = xErrLow.length > 0 ? get(changes, [`data.${traceNum}.error_x.array`], []) : [];
-        const xErr = xErrLow.length > 0 ? [] : get(changes, [`data.${traceNum}.error_x.array`], []);
-        const hasXErrors = xErrLow.length > 0 || xErr.length > 0;
-        changes[`data.${traceNum}.error_x.visible`] = hasXErrors;
-        changes[`data.${traceNum}.error_x.symmetric`] = xErr.length > 0;
-
-        const y = get(changes, [`data.${traceNum}.y`]);
-        const yErrLow = get(changes, [`data.${traceNum}.error_y.arrayminus`], []);
-        const yErrHigh = yErrLow.length > 0 ? get(changes, [`data.${traceNum}.error_y.array`], []) : [];
-        const yErr = yErrLow.length > 0 ? [] : get(changes, [`data.${traceNum}.error_y.array`], []);
-        const hasYErrors = yErrLow.length > 0 || yErr.length > 0;
-
-        changes[`data.${traceNum}.error_y.visible`] = hasYErrors;
-        changes[`data.${traceNum}.error_y.symmetric`] = yErr.length > 0;
-
         const text = x.map((xval, idx) => {
+            const y = get(changes, [`data.${traceNum}.y`]);
             const yval = y[idx];
             const xerr = hasXErrors ? formatError(xval, xErr[idx], xErrLow[idx], xErrHigh[idx]) : '';
             const yerr = hasYErrors ? formatError(yval, yErr[idx], yErrLow[idx], yErrHigh[idx]) : '';
@@ -289,7 +333,13 @@ function addScatterChanges({changes, chartId, traceNum, tablesource, tableModel}
             return `<span> ${xTipLabel} = ${parseFloat(xval)}${xerr} ${xUnit} <br>` +
                 ` ${yTipLabel} = ${parseFloat(yval)}${yerr} ${yUnit} ${ul} ${cval}</span>`;
         });
-        changes[`data.${traceNum}.hovertext`] = text;
+
+        if (traceType === 'scatter') {
+            changes[`data.${traceNum}.hovertext`] = text;
+        } else {
+            //scattergl does not support hovertext
+            changes[`data.${traceNum}.text`] = text;
+        }
         changes[`data.${traceNum}.hoverinfo`] = 'text';
     }
 

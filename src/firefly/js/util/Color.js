@@ -114,7 +114,7 @@ function makeSimpleColorMap(baseColor, mapSize, reverse=false) {
         var rgb= toRGB(baseColor);
         var maxCnt= 0;
         var minCnt= 0;
-        rgb.foreach( (idx) => {
+        rgb.forEach( (idx) => {
             if (idx>250) maxCnt++;
             if (idx<5)   minCnt++;
         });
@@ -186,6 +186,30 @@ export function getRGBA(color) {
     }
 
     return rgba;
+}
+
+
+export function rateOpacity(color, ratio) {
+    const rgba = getRGBA(color);
+    if (!rgba) {
+        return 'rgba(255, 255, 255,' + (1.0*ratio) + ')';
+    }
+    const newAlpha = Math.max(Math.min(rgba[3] * ratio, 1.0), 0.0);
+    const newColor = rgba.slice(R, A);
+    newColor.push(newAlpha);
+
+    return toRGBAString(newColor);
+}
+
+export function maximizeOpacity(color) {
+    const rgba = getRGBA(color);
+
+    if (!rgba) {
+        return 'rgba(255, 255, 255, 1.0)';
+    }
+
+    rgba[A] = 1.0;
+    return toRGBAString(rgba);
 }
 
 /**
@@ -369,7 +393,6 @@ function toRGBAString(rgba) {
     return `rgba(${rgba[R]}, ${rgba[G]}, ${rgba[B]}, ${rgba[A]})`;
 }
 
-
 /*
  * @param {String} color - hex color, exactly seven characters log, starting with '#'
  * @param {Number} percentage (0.1 means 10 percent lighter, -0.1 - 10 percent darker)
@@ -381,3 +404,4 @@ function shadeColor(color, percent) {
     const t=percent<0?0:255,p=percent<0?percent*-1:percent;
     return `#${(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1)}`;
 }
+

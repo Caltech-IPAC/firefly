@@ -1,6 +1,12 @@
 package edu.caltech.ipac.visualize.plot;
 
-import nom.tam.fits.*;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
 import nom.tam.util.Cursor;
 import org.junit.Assert;
 
@@ -23,14 +29,24 @@ public class CropTestBase {
         for (int i=0; i<expectedHDUs.length; i++){
             Header expectedHeader = expectedHDUs[i].getHeader();
             Header calculatedHeader = outHDUs[i].getHeader();
-            Assert.assertEquals(expectedHeader.getNumberOfCards(), calculatedHeader.getNumberOfCards());
+
+
+            int calcCardCnt= calculatedHeader.getNumberOfCards();
+            Cursor<String, HeaderCard> j= calculatedHeader.iterator();
+
+            while (j.hasNext()) {
+                HeaderCard c= j.next();
+                if (c.getKey().startsWith("SPOT")) calcCardCnt--;
+            }
+
+
+            Assert.assertEquals(expectedHeader.getNumberOfCards(), calcCardCnt);
             Cursor expectedIter = 	expectedHeader.iterator();
             Cursor  calculatedIter = 	calculatedHeader.iterator();
             while(expectedIter.hasNext() && calculatedIter.hasNext()){
                 HeaderCard expectedCard = (HeaderCard) expectedIter.next();
-                HeaderCard calculatedCard = (HeaderCard) calculatedIter.next();
-                Assert.assertEquals( expectedCard.getKey(), calculatedCard.getKey());
-                Assert.assertEquals( expectedCard.getValue(), calculatedCard.getValue());
+                Assert.assertEquals( expectedHeader.getStringValue(expectedCard.getKey()),
+                                    calculatedHeader.getStringValue(expectedCard.getKey()) );
             }
         }
     }
@@ -42,8 +58,8 @@ public class CropTestBase {
      * @throws FitsException
      */
     void validateData(Fits expectedFits, Fits calculatedFits) throws FitsException {
-        FitsRead[] fitsReads = FitsRead.createFitsReadArray(calculatedFits);
-        FitsRead[] expectedFitsRead = FitsRead.createFitsReadArray(expectedFits);
+        FitsRead[] fitsReads = FitsReadFactory.createFitsReadArray(calculatedFits);
+        FitsRead[] expectedFitsRead = FitsReadFactory.createFitsReadArray(expectedFits);
         for (int i=0;  i<fitsReads.length; i++){
             Assert.assertArrayEquals(fitsReads[i].getDataFloat(), expectedFitsRead[i].getDataFloat(), (float) delta);
         }

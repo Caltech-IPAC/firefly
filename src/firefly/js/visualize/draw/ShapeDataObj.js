@@ -6,16 +6,18 @@ import Enum from 'enum';
 import validator from 'validator';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
-import VisUtil, {convertAngle} from '../VisUtil.js';
+import VisUtil, {convertAngle, computeScreenDistance, convert} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
-import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt} from '../Point.js';
+import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt, SimplePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
 import {getDrawobjArea,  isScreenPtInRegion, makeHighlightShapeDataObj} from './ShapeHighlight.js';
 import CsysConverter from '../CsysConverter.js';
-import {has, isNil, get, set} from 'lodash';
-import {getPlotViewById} from '../PlotViewUtil.js';
+import {has, isNil, get, set, isEmpty} from 'lodash';
+import {getPlotViewById, getCenterOfProjection} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from '../WebPlot.js';
+import {toRadians, toDegrees} from '../VisUtil.js';
+import {rateOpacity, maximizeOpacity} from '../../util/Color.js';
 
 const FONT_FALLBACK= ',sans-serif';
 
@@ -220,7 +222,7 @@ function makePolygon(ptAry, drawObjAry=null) {
  * @desc make a text
  *  @param   pt
  *  @param  text
- *  @param  rotationAngle - the rotation angle + deg
+ *  @param  rotationAngle - the rotation angle + 'deg'
  * @return {*}
  */
 function makeText(pt, text, rotationAngle=undefined) {
@@ -259,27 +261,51 @@ function makeDrawParams(drawObj,def={}) {
 
 const draw=  {
 
+
     usePathOptimization(drawObj,def) {
-        const dp= makeDrawParams(drawObj,def);
-        return dp===Style.STANDARD &&
-            (drawObj.sType===ShapeType.Line || drawObj.sType===ShapeType.Rectangle);
+        return def.canUseOptimization;
     },
 
     getCenterPt(drawObj) {
-        return drawObj.pts[0];
+        const {pts}= drawObj;
+
+        if (pts && pts.length > 0) {
+            let xSum = 0;
+            let ySum = 0;
+            let xTot = 0;
+            let yTot = 0;
+
+            pts.forEach((wp) => {
+                xSum += wp.x;
+                ySum += wp.y;
+                xTot++;
+                yTot++;
+            });
+
+            const type = pts[0].type;
+            const x = xSum/xTot;
+            const y = ySum/yTot;
+
+            return type === Point.W_PT ? makeWorldPt(x, y) : SimplePt.make(x, y, type);
+
+        } else {
+            return makeWorldPt(0, 0);
+        }
     },
 
     getScreenDist(drawObj,plot, pt) {
         let dist = -1;
-        let testPt;
-        if (drawObj.sType===ShapeType.Rectangle) {
-            testPt = getRectangleCenterScreenPt(drawObj,plot);
-        } else {
-            testPt = plot.getScreenCoords(drawObj.pts[0]);
-        }
-        if (testPt) {
-            const dx= pt.x - testPt.x;
-            const dy= pt.y - testPt.y;
+        if (isScreenPtInRegion(drawObj, pt, plot).inside) return 0;
+        if (drawObj.sType === ShapeType.Line ) return distToLine(drawObj.pts, plot, pt);
+        if (drawObj.sType === ShapeType.Polygon) return distanceToPolygon(drawObj, plot, pt);
+
+        const testPt = plot.getScreenCoords(this.getCenterPt(drawObj));
+
+
+        if (testPt) {    // distance to center, it can be updated to be the distance between the pt and the boundary
+            const spt = plot.getScreenCoords(pt);
+            const dx= spt.x - testPt.x;
+            const dy= spt.y - testPt.y;
             dist= Math.sqrt(dx*dx + dy*dy);
         }
         return dist;
@@ -539,10 +565,12 @@ export function drawShape(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         case ShapeType.Ellipse:
             drawEllipse(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;
+        case ShapeType.Polygon:
+            drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath);
+            break;
         case ShapeType.Annulus:
         case ShapeType.BoxAnnulus:
         case ShapeType.EllipseAnnulus:
-        case ShapeType.Polygon:
             drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
             break;}
 }
@@ -599,7 +627,6 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 
 
     let screenRadius= 1;
-    let centerPt;
     let cenDevPt;
 
     if (pts.length===1 && !isNil(radius)) {
@@ -634,8 +661,8 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
         }
     }
 
-    if (centerPt && !isNil(text)) {
-        const textPt= makeTextLocationCircle(plot,textLoc, fontSize, centerPt, (screenRadius+lineWidth));
+    if (cenDevPt && !isNil(text)) {
+        const textPt= makeTextLocationCircle(plot,textLoc, fontSize, cenDevPt, (screenRadius+lineWidth));
         drawText(drawObj, ctx, plot,textPt, drawParams);
     }
 }
@@ -651,7 +678,7 @@ function drawCircle(drawObj, ctx,  plot, drawParams) {
 export function drawText(drawObj, ctx, plot, inPt, drawParams) {
     if (!inPt) return false;
     
-    const {text, textOffset, renderOptions, rotationAngle, textBaseline= 'top', textAlign='start'}= drawObj;
+    const {text, textOffset, renderOptions, rotationAngle, textBaseline= 'top', textAlign='start', textAngle=0}= drawObj;
     //the angle of the grid line
     var angle=undefined;
     var pvAngle=undefined;
@@ -666,16 +693,24 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
             angle = pvAngle + lineAngle;
         }
         if (angle){
-            angle = angle>360? (angle-360)+'deg' : angle+'deg';
+            //angle = angle>360? (angle-360)+'deg' : angle+'deg';
+            while (angle > 360 || angle < -360) {
+                angle = angle > 360 ? (angle-360) : (angle+360);
+            }
         }
+    }
 
+    if (textAngle) {
+        angle = angle ? angle - textAngle : -textAngle;
     }
 
     const {fontName, fontSize, fontWeight, fontStyle}= drawParams;
     const color = drawParams.color || drawObj.color || 'black';
 
     const devicePt= plot.getDeviceCoords(inPt);
-    if (!plot.pointOnDisplay(devicePt)) {
+
+    //if (!plot.pointOnDisplay(devicePt)) {
+    if (!devicePt) {
         return false;
     }
 
@@ -716,7 +751,8 @@ export function drawText(drawObj, ctx, plot, inPt, drawParams) {
         y = south;
     }
 
-    DrawUtil.drawTextCanvas(ctx, text, x, y, color, renderOptions,
+    const textColor = maximizeOpacity(color);
+    DrawUtil.drawTextCanvas(ctx, text, x, y, textColor, Object.assign({}, renderOptions, {rotAngle: 0.0}),
         {rotationAngle:angle, textBaseline, textAlign},
         {fontName:fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle}
     );
@@ -740,7 +776,6 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
     let {angle = 0.0}= drawObj;
     let inView = false;
     let centerPt;
-    let pt0, pt1;
     let x, y, w, h;
 
     w = 0; h = 0; x = 0; y = 0;
@@ -826,8 +861,6 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 angle += rectAngle  + get(renderOptions, 'rotAngle', 0.0);
                 angle = getPVRotateAngle(plot, angle);
 
-                //angle = angleAfterFlip(angle);
-
                 if (has(renderOptions, 'translation')) {
                     x += renderOptions.translation.x;
                     y += renderOptions.translation.y;
@@ -853,42 +886,51 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 centerPt = makeDevicePt(x+w/2, y+h/2);
             }
 
-            if (!onlyAddToPath || style === Style.HANDLED) {
-                DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
-            }
+            if (style === Style.FILL) {
+                DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
+            } else {
+                if (!onlyAddToPath || style === Style.HANDLED) {
+                    DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+                }
 
-            //--------------
+                //--------------
 
-            ctx.rect(x, y, w, h);
-            if (!onlyAddToPath || style === Style.HANDLED) {
-                DrawUtil.stroke(ctx);
+                ctx.rect(x, y, w, h);
+                if (!onlyAddToPath || style === Style.HANDLED) {
+                    DrawUtil.stroke(ctx);
+                }
             }
         }
 
     }
     else {  // two corners case
-        const devPt0= plot ? plot.getDeviceCoords(pts[0]) : pts[0];
-        const devPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
-        if (!pt0 || !pt1) return;
-        if (plot && (!plot.pointOnDisplay(devPt0) && !plot.pointOnDisplay(devPt1))) return;
+        const dPt0 = plot ? plot.getDeviceCoords(pts[0]) : pts[0];
+        const dPt1= plot ? plot.getDeviceCoords(pts[1]) : pts[1];
+        if (!dPt0 || !dPt1) return;
+        if (plot && (!plot.pointOnDisplay(dPt0) && !plot.pointOnDisplay(dPt1))) return;
+
 
         inView = true;
         //todo here here here
 
-        x = devPt0.x;
-        y = devPt0.y;
-        w = devPt1.x - x;
-        h = devPt1.y - y;
-        if (!onlyAddToPath || style === Style.HANDLED) {
-            DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
-        }
-        ctx.rect(x, y, w, h);
-        if (!onlyAddToPath || style === Style.HANDLED) {
-            DrawUtil.stroke(ctx);
+        x = dPt0.x;
+        y = dPt0.y;
+        w = dPt1.x - x;
+        h = dPt1.y - y;
+        if (style === Style.FILL) {
+            DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
+        } else {
+            if (!onlyAddToPath || style === Style.HANDLED) {
+                DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+            }
+            ctx.rect(x, y, w, h);
+            if (!onlyAddToPath || style === Style.HANDLED) {
+                DrawUtil.stroke(ctx);
+            }
         }
         centerPt = makeDevicePt(x+w/2, y+h/2);
         angle = 0.0;
-        }
+    }
 
     if (!isNil(text) && inView) {
         const textPt= makeTextLocationRectangle(plot, textLoc, fontSize, centerPt, w, h, angle, lineWidth);
@@ -908,9 +950,9 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  * @param onlyAddToPath
  */
 function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
-    const {pts, text, radius1, radius2, renderOptions, angleUnit, isOnWorld = true}= drawObj;
+    const {pts, text, radius1, radius2,  angleUnit, isOnWorld = true}= drawObj;
     const {color, lineWidth, style, textLoc, unitType, fontSize}= drawParams;
-    let {angle= 0}= drawObj;
+    let {angle= 0, renderOptions}= drawObj;
     let inView = false;
     let centerPt= null;
     let pt0;
@@ -970,8 +1012,13 @@ function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 angle = plot.zoomFactor * angle;
             }
 
-            angle += eAngle;
+            angle += eAngle + get(renderOptions, 'rotAngle', 0.0);
             angle = getPVRotateAngle(plot, angle);
+
+            renderOptions = Object.assign({}, renderOptions,
+                {
+                    rotAngle: 0.0
+                });
 
             if (!onlyAddToPath || style === Style.HANDLED) {
                 DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
@@ -1002,32 +1049,263 @@ function drawEllipse(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  * @param onlyAddToPath
  */
 function drawCompositeObject(drawObj, ctx, plot, drawParams, onlyAddToPath) {
-    const {drawObjAry, text}= drawObj;
-    const {lineWidth, textLoc, fontSize} = drawParams;
+    const {drawObjAry}= drawObj;
 
     // draw the child drawObj
     if (drawObjAry) {
         drawObjAry.forEach( (oneDrawObj) => drawShape(oneDrawObj, ctx, plot, drawParams, onlyAddToPath));
     }
 
-    // draw the text asscociated with the shape, find the overal covered area first
+    drawCompositeText(drawObj, ctx, plot, drawParams);
+}
+
+/**
+ @summary find world pt between project center & 'pt' and this point falls on the great circle plane built from center and 'pt'
+ @param {Object} pt
+ @param {Object} plot
+ @param {number} angleFromCenter
+ */
+function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
+    const pt1 = getCenterOfProjection(plot);
+    const pt2 = convert(pt, plot.projection.coordSys);
+
+    /* world point to Cartesian coordinate */
+    const WorldPtToxyz = (wpt) => {
+        const sinRA = Math.sin(toRadians(wpt.x));
+        const cosRA = Math.cos(toRadians(wpt.x));
+        const sinDec = Math.sin(toRadians(wpt.y));
+        const cosDec = Math.cos(toRadians(wpt.y));
+
+        return {x: cosDec * cosRA, y: cosDec * sinRA, z: sinDec};
+    };
+
+    /* Cartesian coordinate to world point */
+    const xyzToWorldPt = (x, y, z) => {
+        const pole = 89.9999;
+
+        // make dec -pole ~ pole
+        let dec = toDegrees(Math.asin(z));   // -90~90
+        let ra;
+
+        if (dec > pole) {
+            dec = pole;
+        } else if (dec < -pole) {
+            dec = -pole;
+        }
+
+        // make ra 0~360
+        if (x === 0) {
+            ra = y >= 0 ? 90 : 270;
+        } else {
+            ra = toDegrees(Math.atan(y / x));     // -90~90
+            if (x < 0) {                          // -90~270
+                ra += 180;
+            }
+            if (ra < 0) ra += 360;
+        }
+
+        return convert(makeWorldPt(ra, dec, plot.projection.coordSys));
+    };
+
+    // get norm in cartesian coordinate
+    const getNormalFrom = (v1, v2) => {
+        const nx = v1.y * v2.z - v2.y * v1.z;
+        const ny = v1.z * v2.x - v2.z * v1.x;
+        const nz = v1.x * v2.y - v2.x * v1.y;
+
+        const l = Math.sqrt(nx**2 + ny**2 + nz**2);
+        return {x: nx / l, y: ny / l, z: nz / l};
+    };
+
+    /* get the projection oriented boundary on display as moving along the the great circle from pt1 to pt2 */
+    const pt1_c = WorldPtToxyz(pt1);
+    const pt2_c = WorldPtToxyz(pt2);
+    const norm = getNormalFrom(pt1_c, pt2_c);
+
+    //angle between pt1 & pt2
+    //note: the angle should be less than 180 deg along counterclockwise direction. (Math.acos works for angle between 0-180),
+    //      otherwise triple product (a.(bxc)) could be used to detect if the angle between pt1 & pt2
+    //      alogn the counterclockwise direction is greater than 180 or not.
+    const deg = toDegrees(Math.acos(pt1_c.x * pt2_c.x + pt1_c.y * pt2_c.y + pt1_c.z * pt2_c.z));
+    //angle from vector v to pt2
+    const radToPt2 = toRadians(Math.abs(deg - angleFromCenter));
+
+
+    // find vector v along the greater circle between pt1 & pt2, starting from pt1 with distance angle 'angleFromPt1'
+    // v is solved by mv = y, where dot(v, pt1) = cos(angleFromPt1), dot(v, pt2) = cos(deg-angleFromPt1), dot(n, v) = 0
+    const m = [[pt1_c.x, pt1_c.y, pt1_c.z],
+        [pt2_c.x, pt2_c.y, pt2_c.z],
+        [norm.x, norm.y, norm.z]];
+
+    const y = [Math.cos(toRadians(angleFromCenter)), Math.cos(radToPt2), 0];  // 1: inner product(ret, pt2), 0: inner product(ret, pt1) = 0 (cos(90))
+
+    const det_m = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) +
+        m[0][1] * (m[1][2] * m[2][0] - m[2][2] * m[1][0]) +
+        m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+
+    const adj_m = [[(m[1][1] * m[2][2] - m[2][1] * m[1][2]), -(m[0][1] * m[2][2] - m[2][1] * m[0][2]), (m[0][1] * m[1][2] - m[1][1] * m[0][2])],
+        [-(m[1][0] * m[2][2] - m[2][0] * m[1][2]), (m[0][0] * m[2][2] - m[2][0] * m[0][2]), -(m[0][0] * m[1][2] - m[1][0] * m[0][2])],
+        [(m[1][0] * m[2][1] - m[2][0] * m[1][1]), -(m[0][0] * m[2][1] - m[2][0] * m[0][1]), (m[0][0] * m[1][1] - m[1][0] * m[0][1])]];
+
+
+    const v = adj_m.map((r) => {
+        return (r[0] * y[0] + r[1] * y[1] + r[2] * y[2]) / det_m;
+    });
+
+    return  xyzToWorldPt(v[0], v[1], v[2]);
+}
+
+function getEdgePtOnGreatCircleFromCenterTo(pt, plot) {
+    const eastAngle = 89.99999;
+
+    return getWorldPtByAngleFromProjectCenter(pt, plot, eastAngle);
+}
+
+/**
+ * draw polygon - draw outline of the polygon or fill the polygon
+ * @param drawObj
+ * @param ctx
+ * @param plot
+ * @param drawParams
+ * @param onlyAddToPath
+ */
+function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
+    const {style, color, lineWidth=1} = drawParams;
+
+    if (style !== Style.FILL && !isEmpty(drawObj.drawObjAry)) {
+        drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
+        return;
+    }
+
+    const adjustPointOnDisplay = (pt, devPt, style) => {
+        if (!devPt) {
+            const newPt = getEdgePtOnGreatCircleFromCenterTo(pt, plot);
+            devPt = plot.getDeviceCoords(newPt);
+            if (!devPt) {
+                console.log('null DevPt');
+                return devPt;
+            }
+         }
+
+        if (style !== Style.FILL) return devPt;
+
+        const {x,y}= devPt;
+        const {width,height}= plot.viewDim;
+        const retPt = {};
+
+        retPt.x = (x < 0) ? 0 : ((x > width) ? width : x);
+        retPt.y = (y < 0) ? 0 : ((y > height) ? height: y);
+
+        return retPt;
+
+    };
+
+    const isPolygonInDisplay = (pts, style, plot) => {
+        const devPts = pts.map((onePt) => plot.getDeviceCoords(onePt));
+        const {width, height} = plot.viewDim;
+
+        // detect if none of the points are visible
+        const anyVisible = devPts.find((onePt) => {
+            return (onePt && (onePt.x >= 0) && (onePt.x < width) && (onePt.y >= 0) && (onePt.y < height));
+        });
+
+        if (!anyVisible) {
+             return {devPts, inDisplay: 0};
+        }
+
+        let inDisplay = 0;
+        const newPts = devPts.map((onePt, idx) => {
+            const newPt = adjustPointOnDisplay(pts[idx], onePt);
+            if (newPt) {
+                inDisplay++;
+            }
+            return newPt;
+        });
+
+
+        return {devPts:newPts, inDisplay};
+    };
+
+    const {pts, renderOptions}= drawObj;
+
+    if (pts) {
+
+        const {devPts, inDisplay} = isPolygonInDisplay(pts, style, plot);  // check if polygon is out of display
+
+        if (inDisplay <= 0) return;   // not visible
+
+        if ((style === Style.FILL)) {
+            if (inDisplay < devPts.length) {
+                console.log('less visible');     // test if this may happen
+            }
+            const devPtAll = devPts.filter((pt) => pt);
+            const fillColor = drawObj.fillColor || color;
+            const strokeColor = drawObj.strokeColor||rateOpacity(ctx.strokeStyle, 0);
+
+            DrawUtil.fillPath(ctx, fillColor, devPtAll, true, renderOptions, strokeColor);
+        } else {
+            const polyPath = (pts, close) => {
+                if (!onlyAddToPath) {
+                    DrawUtil.beginPath(ctx, color, lineWidth, renderOptions);
+                }
+                DrawUtil.polygonPath(ctx, pts, close, null, null);
+                if (!onlyAddToPath) {
+                    DrawUtil.stroke(ctx);
+                }
+            };
+
+            if (devPts.length === inDisplay) {
+                polyPath(devPts, true);
+            } else {
+                // in case the polygon border has some discontinuities in display area
+                for (let i = 0; i < devPts.length; ) {
+                    if (devPts[i]) {
+                        for (let j = i+1 ; j < devPts.length; j++) {
+                            // get next if devPts visible or not the last point
+                            if (devPts[j] && (j !== (devPts.length-1))) continue;
+
+                            // visible and the last
+                            if (devPts[j] && (j === devPts.length-1)) {
+                                j++;
+                            }
+                            polyPath(devPts.slice(i,j), false);
+                            i = j+1;
+                            break;
+                        }
+                    } else {
+                        i++;
+                    }
+                }
+            }
+        }
+    }
+
+    if (drawObj.text) {
+        drawCompositeText(drawObj, ctx, plot, drawParams);
+    }
+}
+
+
+function drawCompositeText(drawObj, ctx, plot, drawParams) {
+    const {text} = drawObj;
+    const {textLoc, fontSize, lineWidth} = drawParams;
+
+    // draw the text associated with the shape, find the overall covered area first
     if (!isNil(text)) {
         const objArea = getDrawobjArea(drawObj, plot);
 
         if (objArea && isAreaInView(objArea, plot)) {
             const textPt = makeTextLocationComposite(plot, textLoc, fontSize,
-                            objArea.width * plot.zoomFactor,
-                            objArea.height * plot.zoomFactor,
-                            objArea.center,
-                            lineWidth);
+                objArea.width * plot.zoomFactor,
+                objArea.height * plot.zoomFactor,
+                objArea.center,
+                lineWidth);
             if (textPt) {
                 drawText(drawObj, ctx, plot, textPt, drawParams);
             }
         }
     }
 }
-
-
 
 /**
  * locate text for circle, return the location in screen coordinate
@@ -1186,8 +1464,8 @@ function makeTextLocationEllipse(plot, textLoc, fontSize, centerPt, radius1, rad
 
     let opt;
     const height = fontHeight(fontSize);
-
     const offy = height + lineWidth;
+
     switch (textLoc) {
         case TextLocation.ELLIPSE_NE:
             opt= makeOffsetPt(-1*w, -1*(h + offy));
@@ -1306,7 +1584,6 @@ export function rotateShapeAround(drawObj, plot, angle, worldPt) {
 
     const newPts = rotateAround(plot, drawObj.pts, angle, worldPt);
     const newObj = Object.assign({}, drawObj, {pts: newPts});
-
     const addRotAngle = (obj) => {
         if (obj.sType === ShapeType.Rectangle || obj.sType === ShapeType.Ellipse) {
             let rotAngle = angle;
@@ -1344,6 +1621,11 @@ export function rotateAround(plot, pts, angle, wc) {
         if (!p1) return null;
 
         const pti= plot.getImageCoords(p1);
+
+        if (!pti) {
+            return null;
+        }
+
         const x1 = pti.x - center.x;
         const y1 = pti.y - center.y;
         const sin = Math.sin(-angle);
@@ -1483,4 +1765,57 @@ export function heightAfterRotation(width, height, angle) {
     const hcos = height * Math.cos(angle);
 
     return Math.max(Math.abs(wsin-hcos), Math.abs(wsin+hcos));
+}
+
+
+export function distToLine(pts, cc, pt) {
+    const spt = cc.getScreenCoords(pt);
+    const pt0 = cc.getScreenCoords(pts[0]);
+    const pt1 = cc.getScreenCoords(pts[1]);
+    const e1 = makeScreenPt((pt1.x - pt0.x), (pt1.y - pt0.y));
+    const e2 = makeScreenPt((spt.x - pt0.x), (spt.y - pt0.y));
+    const e3 = makeScreenPt((pt0.x - pt1.x), (pt0.y - pt1.y));
+    const e4 = makeScreenPt((spt.x - pt1.x), (spt.y - pt1.y));
+    // projection spt on pts:
+    // e1 * dotprod(e1, e2)/(|e1|^2) + pts[0]
+
+    const dpe1e2 = e1.x * e2.x + e1.y * e2.y;
+    const dpe3e4 = e3.x * e4.x + e3.y * e4.y;
+    const e1len2 = e1.x * e1.x + e1.y * e1.y;
+    let ppt;
+
+    if (dpe1e2 > 0 && dpe3e4 > 0) { // spt projects between pt1 & pt2
+        ppt = makeScreenPt(dpe1e2 * e1.x / e1len2 + pt0.x, dpe1e2 * e1.y / e1len2 + pt0.y);
+    } else if (dpe1e2 <= 0) {       // spt projects to right side of pt2
+        ppt = pt0;
+    } else {                        // spt projects to left side of pt1
+        ppt = pt1;
+    }
+    return computeScreenDistance(spt.x, spt.y, ppt.x, ppt.y);
+}
+
+export function distanceToPolygon(drawObj, cc, pt) {
+    const spt = cc.getScreenCoords(pt);
+    if (isScreenPtInRegion(drawObj, spt, cc)) return 0;
+
+    const dist = Number.MAX_VALUE;
+    const {pts} = drawObj;
+
+    if (pts.length < 3) return dist;
+
+    const corners = pts.map((pt) => cc.getScreenCoords(pt));
+    const len = corners.length;
+
+    return corners.reduce((prev, pt, idx) => {
+        let d;
+        if (idx < len-1) {
+            d = distToLine([pt[idx], pt[idx+1]], cc, spt);
+        } else {
+            d = distToLine(pt[idx], pt[0],cc, spt);
+        }
+        if (d < prev) {
+            prev = d;
+        }
+        return prev;
+    }, dist);
 }

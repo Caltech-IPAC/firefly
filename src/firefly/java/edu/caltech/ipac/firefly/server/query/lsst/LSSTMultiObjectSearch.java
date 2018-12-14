@@ -6,11 +6,9 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.ConcurrentSearchUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -37,17 +35,9 @@ import java.util.concurrent.TimeoutException;
 public class LSSTMultiObjectSearch extends LSSTCatalogSearch {
 
     @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
-
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
-
-            DataGroup dg =  getSearchResult(request, request.getParam("filename"));
-            dg.shrinkToFitData();
-            File outFile = createFile(request, ".tbl");
-            DataGroupWriter.write(outFile, dg);
-            return  outFile;
-
+            return getSearchResult(request, request.getParam("filename"));
         } catch (Exception e) {
             e.printStackTrace();
             throw new DataAccessException("ERROR:" + e.getMessage(), e);
@@ -149,7 +139,6 @@ public class LSSTMultiObjectSearch extends LSSTCatalogSearch {
 
             DataGroup dg = getDataFromURL(req);
                     //ConcurrentSearchUtil.addInputToOutputDataGroup(getDataFromURL(req), inRow, getRA(tableName), getDEC(tableName));
-            dg.shrinkToFitData();
             return dg;
 
 

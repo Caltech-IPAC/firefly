@@ -120,6 +120,15 @@ export class SimplePt {
         }
     }
     toString() { return this.x+';'+this.y; }
+
+    static make(x, y, type) {
+        const pt = new SimplePt(x, y);
+
+        if (type && Object.keys(Point).includes(type)) {
+            pt.type = type;
+        }
+        return pt;
+    }
 }
 
 
@@ -200,34 +209,26 @@ export class WorldPt {
 }
 
 
+/**
+ *
+ * @param {Array.<String>} wpParts
+ * @return {*}
+ */
 function stringAryToWorldPt(wpParts) {
-    let retval= null;
-    let parsedLon;
-    let parseLat;
-    let parsedCoordSys;
-    if (wpParts.length===3) {
-        parsedLon= Number(wpParts[0]);
-        parseLat= Number(wpParts[1]);
-        parsedCoordSys= CoordinateSys.parse(wpParts[2]);
-        if (!isNaN(parsedLon) && !isNaN(parseLat) && parsedCoordSys!==null) {
-            retval= makeWorldPt(parsedLon,parseLat,parsedCoordSys);
-        }
-    }
-    else if (wpParts.length===2) {
-        parsedLon= Number(wpParts[0]);
-        parseLat= Number(wpParts[1]);
-        if (!isNaN(parsedLon) && !isNaN(parseLat)) {
-            retval= makeWorldPt(parsedLon,parseLat);
-        }
-    }
-    else if (wpParts.length===5 || wpParts.length===4) {
-        parsedLon= Number(wpParts[0]);
-        parseLat= Number(wpParts[1]);
-        parsedCoordSys= CoordinateSys.parse(wpParts[2]);
-        const resolver= wpParts.length===5 ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
-        return makeWorldPt(parsedLon,parseLat,parsedCoordSys, wpParts[3],resolver);
-    }
-    return retval;
+    const len= wpParts.length;
+    const x= Number(wpParts[0]);
+    const y= Number(wpParts[1]);
+    if  (isNaN(x) || isNaN(y)) return null;
+
+    const csys= CoordinateSys.parse(wpParts[2]);
+
+    if (csys===CoordinateSys.PIXEL)        return makeImagePt(x, y); // image point
+    if (csys===CoordinateSys.SCREEN_PIXEL) return makeScreenPt(x, y); // screen point
+
+    if (len===2 || len===3) return makeWorldPt(x,y,csys);
+
+    const resolver= wpParts[4] ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
+    return makeWorldPt(x,y,csys, wpParts[3], resolver);
 }
 
 /**
@@ -335,6 +336,28 @@ export const makeDevicePt= (x,y) => Object.assign(new SimplePt(x,y), {type:DEV_P
 export const makeProjectionPt= (x,y) => Object.assign(new SimplePt(x,y), {type:PROJ_PT});
 
 export const makeOffsetPt= (x,y) => Object.assign(new SimplePt(x,y), {type:OFFSET_PT});
+
+
+/**
+ * given an x,y, and a CoordinageSys object or string, make the correct type of point.
+ * @param {number} x
+ * @param {number} y
+ * @param {CoordinateSys|String} coordSys
+ * @return {Point}
+ */
+export function makeAnyPt(x,y,coordSys) {
+    const csys= (coordSys.isEquatorial && coordSys.getJsys && coordSys.getEquinox) ?
+                        coordSys  : CoordinateSys.parse(coordSys);
+
+    switch (csys) {
+        case CoordinateSys.SCREEN_PIXEL:
+        case CoordinateSys.UNDEFINED:    return makeScreenPt(x, y);
+        case CoordinateSys.PIXEL:        return makeImagePt(x, y);
+        case CoordinateSys.ZEROBASED:    return makeZeroBasedImagePt(x, y);
+        case CoordinateSys.FITSPIXEL:    return makeFitsImagePt(x, y);
+        default:                         return makeWorldPt(x,y,coordSys);
+    }
+}
 
 
 /**

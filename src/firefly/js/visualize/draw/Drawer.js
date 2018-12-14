@@ -3,7 +3,7 @@
  */
 
 
-import {get, isFunction, isEmpty, isArray} from 'lodash';
+import {get, isFunction, isEmpty, isArray, join} from 'lodash';
 import Point, {makeScreenPt,makeImagePt,pointEquals} from '../Point.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
@@ -62,6 +62,7 @@ export class Drawer {
     cancelRedraw() {
         if (this.drawingCanceler) {
             this.drawingCanceler();
+            DrawUtil.clearCanvas(this.primaryCanvas);
             this.drawingCanceler= null;
         }
     }
@@ -118,8 +119,8 @@ export class Drawer {
             zfact===oldZfact  && testPtStr===oldTestPtStr ) {
             viewUpdated= false;
         }
-        
-        
+
+
         const primaryUpdated= (data && data!==this.data) || viewUpdated;
 
         const selectedUpdated= (selectedIndexes!==this.selectedIndexes) || viewUpdated;
@@ -132,13 +133,43 @@ export class Drawer {
         if (!primaryUpdated && !selectedUpdated  && !forceUpdate) return;
 
         this.plot= plot;
-        this.data = data;
+        this.data= data;
         this.selectedIndexes = selectedIndexes;
         this.drawingDef = drawingDef;
-        
+
+
+
+
+
+        // ======== DEBUG =============================
+        // var changes= [this.primaryCanvas ? '' : 'no canvas'];
+        // var changes= [];
+        // if (data!==this.data) changes.push('data');
+        // //if (plot!==this.plot) changes.push('plot');
+        // if (forceUpdate) changes.push('force update');
+        // if (viewUpdated) changes.push('view update');
+        // if (cWidth!==width ) changes.push(`width: ${width}, ${cWidth}`);
+        // if (cHeight!==height ) changes.push(`height: ${height}, ${cHeight}`);
+        // if (dWidth!==oldDWidth ) changes.push(`data width: ${oldDWidth}, ${dWidth}`);
+        // if (dHeight!==oldDHeight ) changes.push(`data height: ${oldDHeight}, ${dHeight}`);
+        // if (zfact!==oldZfact ) changes.push(`zoom factor ${oldZfact}, ${zfact}`);
+        // if (testPtStr!==oldTestPtStr ) changes.push('test pt');
+        // // if (oldvpY!==vpY ) changes.push(`vpY: ${oldvpY}, ${vpY}`);
+        // if (drawingDef!==this.drawingDef ) changes.push('drawingDef');
+        // var changeStr= changes.join();
+        // if (true && primaryUpdated) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
+        // =====================================
+
+
+
+
 
         if (primaryUpdated || forceUpdate) {
-            this.dataUpdated(width,height);
+            if (zfact!==oldZfact) {
+                this.clear();
+            }
+            const asyncId= this.dataUpdated(width,height);
+            return asyncId;
         }
 
         if (selectedUpdated || forceUpdate) {
@@ -148,23 +179,6 @@ export class Drawer {
 
 
 
-        //======== DEBUG =============================
-        //var changes= [this.primaryCanvas ? '' : 'no canvas'];
-        // var changes= [];
-        // if (data!==this.data) changes.push('data');
-        // //if (plot!==this.plot) changes.push('plot');
-        // if (cWidth!==width ) changes.push(`width: ${width}, ${cWidth}`);
-        // if (cHeight!==height ) changes.push(`height: ${height}, ${cHeight}`);
-        // if (dWidth!==oldDWidth ) changes.push(`data width: ${oldDWidth}, ${dWidth}`);
-        // if (dHeight!==oldDHeight ) changes.push(`data height: ${oldDHeight}, ${dHeight}`);
-        // if (zfact!==oldZfact ) changes.push(`zoom factor ${oldZfact}, ${zfact}`);
-        // if (testPtStr!==oldTestPtStr ) changes.push('test pt');
-        // if (oldvpY!==vpY ) changes.push(`vpY: ${oldvpY}, ${vpY}`);
-        // if (drawingDef!==this.drawingDef ) changes.push('drawingDef');
-        // var changeStr= join(', ',...changes);
-        // if (false && primaryUpdated) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
-        //=====================================
-        
     }
 
 
@@ -200,7 +214,8 @@ export class Drawer {
         this.cancelRedraw();
         updateCanvasSize(width,height,this.primaryCanvas,this.selectCanvas,this.highlightCanvas);
         if (this.data && this.data.length>0) {
-            this.redraw();
+            const asyncId= this.redraw();
+            return asyncId;
         }
         else {
             this.clear();
@@ -241,9 +256,10 @@ export class Drawer {
         const {primaryCanvas,selectCanvas,highlightCanvas}= this;
         if (!primaryCanvas) return;
         const cc= CsysConverter.make(this.plot);
-        this.redrawPrimary(primaryCanvas, cc, this.data, this.drawingDef);
+        const asyncId= this.redrawPrimary(primaryCanvas, cc, this.data, this.drawingDef);
         this.redrawHighlight(highlightCanvas, cc, this.highlightData, this.drawingDef);
         this.redrawSelected(selectCanvas, cc, this.data, this.selectedIndexes);
+        return asyncId;
     }
 
 
@@ -272,7 +288,7 @@ export class Drawer {
         else {
             return;
         }
-        const selDrawDef= Object.assign({}, this.drawingDef, {color:this.drawingDef.selectedColor});
+        const selDrawDef= Object.assign({}, this.drawingDef, {color:this.drawingDef.selectedColor, drawMode: 'select'});
         this.doDrawing(makeDrawingParams(selectCanvas, selDrawDef, cc,selectedData));
     }
 
@@ -297,21 +313,23 @@ export class Drawer {
 
     redrawPrimary(canvas, cc, data, drawingDef) {
         if (!canvas) return;
-        this.clear();
         if (!isEmpty(data)) {
             let params;
             this.decimatedData= this.decimateData(this.decimate, data, cc,true,this.decimatedData);
             const drawData= this.decimatedData;
             if (drawData.length>500) {
-                params= makeDrawingParams(canvas, drawingDef,cc,drawData,
+                const offscreenCanvas= initOffScreenCanvas(canvas.width, canvas.height);
+                params= makeDrawingParams(offscreenCanvas, drawingDef,cc,drawData,
                                          this.drawConnect, getMaxChunk(drawData,this.isPointData),
-                                         this.deferredDrawingCompletedCB);
+                                         this.deferredDrawingCompletedCB, canvas);
                 this.cancelRedraw();
                 this.drawingCanceler= makeDrawingDeferred(this,params);
                 this.removeTask();
                 if (drawData.length>15000) this.addTask();
+                return params.id;
             }
             else {
+                this.clear();
                 params= makeDrawingParams(canvas, drawingDef,
                                           cc,drawData,this.drawConnect, Number.MAX_SAFE_INTEGER);
                 this.doDrawing(params);
@@ -369,7 +387,9 @@ export class Drawer {
     doDrawing(params) {
         if (params.begin) {
             params.begin= false;
-            params.canvas.style.visibility= 'hidden';
+            if (!params.copyToCanvas) {
+                params.canvas.style.visibility= 'hidden';
+            }
             params.done= false;
         }
         else {
@@ -394,7 +414,15 @@ export class Drawer {
         }
 
         if (params.done ) {
-            params.canvas.style.visibility= 'visible';
+            this.drawingCanceler= null;
+            if (params.copyToCanvas) {
+                DrawUtil.clearCanvas(params.copyToCanvas);
+                params.copyToCanvas.getContext('2d').drawImage(params.canvas, 0,0);
+                // do the copy
+            }
+            else {
+                params.canvas.style.visibility= 'visible';
+            }
             if (params.drawConnect) {
                 params.drawConnect.endDrawing();
             }
@@ -455,11 +483,13 @@ function nextPt(i,fuzzLevel, max) {
  * @param drawConnect
  * @param {number} maxChunk
  * @param {Function} deferredDrawingCompletedCB - called when drawing has completed
+ * @param copyToCanvas
  * @return {Object}
  */
 function makeDrawingParams(canvas, drawingDef, csysConv, data,
                            drawConnect= null, maxChunk= Number.MAX_SAFE_INTEGER,
-                           deferredDrawingCompletedCB=null) {
+                           deferredDrawingCompletedCB=null, copyToCanvas) {
+
     const params= {
         canvas,    //const
         drawingDef,    //const
@@ -474,11 +504,20 @@ function makeDrawingParams(canvas, drawingDef, csysConv, data,
         begin : true,
         deferCnt: 0,
         vpPtM : makeScreenPt(0,0), //const
-        deferredDrawingCompletedCB //const
+        deferredDrawingCompletedCB, //const
+        copyToCanvas
     };
     params.next= params.iterator.next();
     return params;
 }
+
+function initOffScreenCanvas(width, height) {
+    const offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = width;
+    offscreenCanvas.height =height;
+    return offscreenCanvas;
+}
+
 
 /**
  *
@@ -506,7 +545,9 @@ function makeDrawingDeferred(drawer,params) {
         }
         drawer.doDrawing(params);
     },0);
+    params.id= id;
     return () => window.clearInterval(id);
+
 }
 
 /**
@@ -650,8 +691,8 @@ function getMaxChunk(drawData,isPointData) {
 function updateCanvasSize(w,h,...cAry) {
     cAry.forEach( (c) => {
         if (!c) return;
-        c.width= w;
-        c.height= h;
+        if (c.width!==w) c.width= w;
+        if (c.height!==h) c.height= h;
     });
 }
 

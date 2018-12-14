@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="UTF-8">
+    <title>TAP_SCHEMA browser</title>
+</head>
+<body>
+
+<h3>Browse TAP_SCHEMA tables</h3>
+<pre>
+IRSA https://irsa.ipac.caltech.edu/TAP
+GAIA http://gea.esac.esa.int/tap-server/tap
+CASDA http://atoavo.atnf.csiro.au/tap
+MAST http://vao.stsci.edu/CAOMTAP/TapService.aspx
+LSST TEST http://tap.lsst.rocks/tap
+</pre>
+<div>
+    <form name="a">
+        <div style="padding-right: 5px">
+            <label> TAP Service URL:
+                <input name="url" value="https://irsa.ipac.caltech.edu/TAP" size=50/>
+            </label>
+        </div>
+    </form>
+    <button style="padding-left: 20px; width: 120px" onclick="showSchemasTable()">Browse</button>
+</div>
+
+<div id="schemas-display" style="padding: 5px; width: 1200px; height: 250px;"></div>
+<div id="schematables-display" style="padding: 5px; width: 1200px; height: 250px;"></div>
+<div id="tablecols-display" style="padding: 5px; width: 1200px; height: 250px;"></div>
+<div id="fireflyLostConnWarn" data-decor="small" class="warning-div" style="margin-left: 75px; background-color: white"></div>
+
+<script type="text/javascript">
+
+    const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
+
+    function onTableHighlight(action) {
+        if (action.payload.tbl_id === 'schemas') {
+            const tblmodel = firefly.util.table.getTblById('schemas');
+            if (tblmodel) {
+                const highlightedRow = tblmodel.highlightedRow;
+                const schemaName = firefly.util.table.getCellValue(tblmodel, highlightedRow, 'schema_name');
+                const url = a.url.value + qFragment+
+                    'QUERY=SELECT+*+FROM+TAP_SCHEMA.tables+WHERE+schema_name+like+\'' + schemaName + '\'';
+                console.log('url: ' + url);
+                const request = firefly.util.table.makeFileRequest(schemaName, url, null,
+                    {tbl_id: 'schematables', META_INFO: {}});
+                firefly.showTable('schematables-display', request, {});
+            }
+        } else if (action.payload.tbl_id === 'schematables') {
+            const tblmodel = firefly.util.table.getTblById('schematables');
+            if (tblmodel) {
+                const highlightedRow = tblmodel.highlightedRow;
+                // not all TAP services have schema_name column in columns table
+                // const schemaName = firefly.util.table.getCellValue(tblmodel, highlightedRow, 'schema_name');
+                // all TAP services should have table_name column
+                const tableName = firefly.util.table.getCellValue(tblmodel, highlightedRow, 'table_name');
+                const url = a.url.value + qFragment +
+                    'QUERY=SELECT+*+FROM+TAP_SCHEMA.columns+WHERE' +
+                    '+table_name+like+\'' + tableName + '\'';
+                console.log('url: ' + url);
+                const request = firefly.util.table.makeFileRequest(tableName, url, null,
+                    {tbl_id: 'tablecols', META_INFO: {}});
+                firefly.showTable('tablecols-display', request, {});
+            }
+        }
+    }
+
+    function onFireflyLoaded(firefly) {
+        firefly.util.addActionListener(firefly.action.type.TABLE_HIGHLIGHT, onTableHighlight);
+        firefly.util.addActionListener(firefly.action.type.TABLE_LOADED, onTableHighlight);
+    }
+
+    function showSchemasTable() {
+        if (a.url.value) {
+            const url = a.url.value + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.schemas';
+
+            const request = firefly.util.table.makeFileRequest('schemas', url, null,
+                {tbl_id: 'schemas', META_INFO: {}});
+            firefly.showTable('schemas-display', request, {});
+        }
+    }
+</script>
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>
+
+</body>
+</html>

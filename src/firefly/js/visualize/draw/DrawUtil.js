@@ -1,6 +1,6 @@
 
 import numeral from 'numeral';
-import {isNil, set} from 'lodash';
+import {isNil, set, isUndefined} from 'lodash';
 import {makeScreenPt} from '../Point.js';
 import {DrawSymbol} from './PointDataObj.js';
 import {toRadians} from '../VisUtil.js';
@@ -12,8 +12,8 @@ export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, draw
                 drawHandledLine, drawInnerRecWithHandles, drawCircleWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
-                drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize,
-                getSymbolSize, getSymbolSizeBasedOn};
+                drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize, polygonPath,
+                getSymbolSize, getSymbolSizeBasedOn, beginFillPath, endFillPath, fillPath};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     let slope= NaN;
@@ -179,9 +179,9 @@ function drawTextCanvas(ctx, text, x,y,color= 'red', renderOptions= {}, location
 
 
     const {textBaseline= 'top', textAlign= 'start', rotationAngle=0} = locationOptions;
-    const {fontFamily='helvetica', fontSize='9px', fontWeight='normal', fontStyle='normal'} = fontOptions;
+    const {fontName='helvetica', fontSize='9px', fontWeight='normal', fontStyle='normal'} = fontOptions;
 
-    ctx.font= `${fontStyle} ${fontSize} ${fontFamily}`;
+    ctx.font= `${fontStyle} ${fontWeight} ${fontSize} ${fontName}`;
     // offscreenCtx.fillStyle= 'rgba(0,0,0,.4)';
     // offscreenCtx.strokeStyle='rgba(0,0,0,.2)';
     // ctx.textAlign= 'center';
@@ -244,6 +244,34 @@ function beginPath(ctx,color,lineWidth,renderOptions) {
 
 function stroke(ctx) {
     ctx.stroke();
+    ctx.restore();
+}
+
+/**
+ * start fill path
+ * @param {object} ctx
+ * @param {object} [renderOptions]
+ * @param {string} color
+ * @param {string} strokeColor
+ */
+function beginFillPath(ctx, renderOptions, color ='', strokeColor='') {
+    ctx.save();
+    if (color) ctx.fillStyle=color;
+    if (strokeColor) ctx.strokeStyle = strokeColor;
+    if (renderOptions) addStyle(ctx,renderOptions);
+    ctx.beginPath();
+}
+
+/**
+ * end fill path
+ * @param ctx
+ * @param close
+ * @param bStroke
+ */
+function endFillPath(ctx, close = true, bStroke = true) {
+    if (close) ctx.closePath();
+    ctx.fill();
+    if (bStroke) ctx.stroke();
     ctx.restore();
 }
 
@@ -314,7 +342,6 @@ function drawLine(ctx,color, lineWidth, sx, sy, ex, ey,renderOptions) {
     ctx.restore();
 }
 
-
 function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
     ctx.save();
     if (renderOptions) addStyle(ctx,renderOptions);
@@ -330,6 +357,35 @@ function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
     ctx.restore();
 }
 
+function polygonPath(ctx, pts, close, fillColor, strokeColor) {
+    if (pts.length < 3) return;
+    const allPts = close ? [...pts, pts[0]] : pts;
+
+    allPts.forEach( (pt,idx) => {
+        (idx===0) ? ctx.moveTo(pt.x,pt.y) : ctx.lineTo(pt.x,pt.y);
+    });
+    if (fillColor) ctx.fillStyle = fillColor;
+    if (strokeColor) ctx.strokeStyle = strokeColor;
+}
+
+function fillPath(ctx, color, pts, close, renderOptions, strokeColor='') {
+    ctx.save();
+    if (renderOptions) addStyle(ctx,renderOptions);
+
+    if (strokeColor) ctx.strokeStyle = strokeColor;
+    ctx.fillStyle = color;
+
+    ctx.beginPath();
+    pts.forEach( (pt,idx) => {
+        (idx===0) ? ctx.moveTo(pt.x,pt.y) : ctx.lineTo(pt.x,pt.y);
+    });
+    if (close) ctx.closePath();
+
+    ctx.fill();
+    if (strokeColor) ctx.stroke();
+
+    ctx.restore();
+}
 
 function rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) {
     const pti = plot.getScreenCoords(worldPt);
@@ -436,7 +492,7 @@ function drawDot(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath)
 }
 
 
-function drawBoxcircle(ctx, x, y, color, size,  renderOptions, onlyAddToPath, lineWidth) {
+function drawBoxcircle(ctx, x, y, color, size,  lineWidth, renderOptions, onlyAddToPath) {
     drawSquare(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath);
     drawCircle(ctx, x, y, color, size, lineWidth, renderOptions, onlyAddToPath);
 }
@@ -650,11 +706,16 @@ function drawCircle(ctx, x, y, color,  size,lineWidth, renderOptions= null, only
     if (!onlyAddToPath) stroke(ctx);
 }
 
-function fillRec(ctx, color, x, y, width, height, renderOptions) {
+function fillRec(ctx, color, x, y, width, height, renderOptions, strokeColor) {
     ctx.save();
     ctx.fillStyle=color;
     if (renderOptions) addStyle(ctx,renderOptions);
     ctx.fillRect(x, y, width, height);
+
+    if (strokeColor) {
+        ctx.strokeStyle = strokeColor;
+        ctx.strokeRect(x, y, width, height);
+    }
     ctx.restore();
 }
 

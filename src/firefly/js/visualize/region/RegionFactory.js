@@ -13,14 +13,15 @@ import CoordUtil from '../CoordUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {makeWorldPt, makeImagePt} from '../Point.js';
 import {convertAngle} from '../VisUtil.js';
-import {logError} from '../../util/WebUtil.js';
+import {logError, clone} from '../../util/WebUtil.js';
 import CysConverter from '../CsysConverter.js';
+
 
 import {set, unset, has, get, isEmpty} from 'lodash';
 import Enum from 'enum';
 
 const CoordType = new Enum(['lon', 'lat']);
-const defaultCoord = 'PHYSICAL';
+const defaultCoord = RegionCsys.PHYSICAL;
 
 var RegionParseError = {
     InvalidCoord:   'region coordinate undefined',
@@ -43,6 +44,8 @@ function outputError(rg, rgStr, bReport = 1) {
     }
     return 1;
 }
+
+let regionRelocatable = false;
 
 export class RegionFactory {
 
@@ -67,14 +70,13 @@ export class RegionFactory {
 
     // add global coordinate system, coordSys, into globalOptions.
     /**
-     * parse ds9 region description, globalOptions.coordSys = 'PHYSICAL'|'IMAGE'|<world_sys_string>
-     *                               rg.options.coordSys = RegionSys.PHYSICAL | RegionSys.IMAGE | <RegionSys.xx>
      * @param regionData
      * @param bAllowHeader
+     * @param relocatable
      * @param stopAt
      * @returns {array} an array of Region object
      */
-    static parseRegionDS9(regionData, bAllowHeader = true, stopAt) {
+    static parseRegionDS9(regionData, bAllowHeader = true, relocatable=false, stopAt) {
         const sep = ';';
         const dLeft = ['{', '"', '\''];
         const dRight = ['}', '"', '\''];
@@ -151,16 +153,22 @@ export class RegionFactory {
 
         var globalOptions = Object.assign({}, makeRegionOptions({[regionPropsList.COORD]: defaultCoord}));
 
+        regionRelocatable = relocatable;
+
+        // multiple global lines (for property & coordsys) may be used within a region file
+        // global line for property: global key=val ....
+        // global line for coordsys: global coordsys systemSpecifier
+        //                           where systemSpecifier is FK4, B1950, FK5, J2000, ICRS, GALACTIC, ECLIPTIC
         return regionLines.reduce ( (prev, region, index) => {
             if (!stopAt || stopAt > 0) {
                 const rg = RegionFactory.parsePart(region.trim(), index + 1, globalOptions, bAllowHeader);
 
                 if (rg) {            // skip comment line and no good line
                     if (bAllowHeader && rg.type === RegionType.global) {
-                        if (outputError(rg, region) == 0) {                 // there is no error, update global options
-                            globalOptions = Object.assign({}, rg.options);   // reset global option setting
+                        if (outputError(rg, region) === 0) {                 // there is no error, update global options
+                            Object.assign(globalOptions, rg.options);   // reset global option setting
                         }
-                        bAllowHeader = false;
+                        //bAllowHeader = false;        // multiple global lines may be used
                     } else {
                         if (outputError(rg, region) === 0) {
                             if (stopAt) --stopAt;
@@ -182,10 +190,9 @@ export class RegionFactory {
      * @returns {makeRegion} including makeRegion().message to contain error message if there is
      */
     static parsePart(regionStr, index = -1, globalOptions = null, bAllowHeader = false) {
-
         const rgMsg = (index === -1) ? regionStr : `<${index}>: ${regionStr}`;
         var rf = new RegionFactory();
-        var regionCoord, regionDes, regionOptions;
+        var regionCoordStr, regionDes, regionOptions;
         var regionParams;
         var tmpAry;
         var rg;        // Region
@@ -203,7 +210,7 @@ export class RegionFactory {
         // create Region object with global type,
         // message is set if there is error in global, or options is set
         if (bAllowHeader && regionStr.startsWith(GLOBAL)) {
-            rg = makeRegion({options: makeRegionOptions({}), type: RegionType.global});
+            rg = makeRegion({options: (globalOptions ? clone(globalOptions) : makeRegionOptions({})), type: RegionType.global});
             var gOpStr = regionStr.slice(GLOBAL.length+1).trim();
 
             rgProps = rf.parseRegionOptions(gOpStr, opInclude, rg.options );
@@ -212,8 +219,7 @@ export class RegionFactory {
                 rg.message = `[${RegionParseError.InvalidGlobalProp}] ${rgProps.message} at ${rgMsg}`;
                 return rg;
             } else {
-                Object.keys(rgProps).forEach( (prop) => setRegionPropDefault(prop, rgProps[prop]) );
-                set(rgProps, regionPropsList.COORD, defaultCoord);
+                rg.options = rgProps;
             }
             return rg;
         }
@@ -223,8 +229,7 @@ export class RegionFactory {
         var csys = getRegionCoordSys(tmpAry[0]);  // test the split first string
 
         if (csys !== RegionCsys.UNDEFINED) {
-            if (globalOptions) globalOptions.coordSys = tmpAry[0].toLowerCase();
-
+            if (globalOptions) globalOptions.coordSys = csys;
             if (tmpAry.length <= 1) {    // pure coordinate string
                 return null;
             }
@@ -237,14 +242,14 @@ export class RegionFactory {
 
 
         if (tmpAry.length > 1) {         // coordinate and description
-            regionCoord = tmpAry[0].trim();
+            regionCoordStr = tmpAry[0].trim();
             tmpAry.shift();              // remove the coordinate element
 
             bCoord = true;
         } else {                        // description only
             // default coordinate is PHYSICAL in case not specified
-            regionCoord = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
-                globalOptions[regionPropsList.COORD] : defaultCoord;
+            regionCoordStr = globalOptions && has(globalOptions, regionPropsList.COORD)  ?
+                globalOptions[regionPropsList.COORD].key : defaultCoord.key;
         }
 
         // separate the region description and property part
@@ -272,7 +277,7 @@ export class RegionFactory {
 
 
         // check coordinate system
-        var regionCsys = getRegionCoordSys(regionCoord);
+        var regionCsys = getRegionCoordSys(regionCoordStr);
         if (regionCsys === RegionCsys.UNDEFINED) {
             return makeRegionMsg(`[${RegionParseError.InvalidCoord}] ${rgMsg}`);
         }
@@ -320,15 +325,22 @@ export class RegionFactory {
             return makeRegionMsg(`[${RegionParseError.InvalidParam}] ${rgMsg}`);
         }
 
+        if (rg.options) {
+           Object.keys(globalOptions).forEach((op) => {
+               if (!has(rg.options, op)) {
+                   set(rg.options, op, globalOptions[op]);
+               }
+           });
+        }
         // check region properties
-        rgProps = rf.parseRegionOptions(regionOptions, opInclude,  (has(rg, 'options') ? rg.options : null), regionCsys);
+        rgProps = rf.parseRegionOptions(regionOptions, opInclude,  (has(rg, 'options') ? rg.options : clone(globalOptions)), regionCsys);
 
         if (rgProps.message) {
             return makeRegionMsg(`[${RegionParseError.InvalidProp}] ${rgProps.message} at ${rgMsg}`);
         }
 
         rg.options = rgProps;
-        rg.desc = bCoord ? regionStr : `${regionCoord.toLowerCase()};${regionStr}`;
+        rg.desc = bCoord ? regionStr : `${regionCoordStr.toLowerCase()};${regionStr}`;
         return rg;
     }
 
@@ -652,7 +664,7 @@ export class RegionFactory {
      */
     parseXY(coordSys, xStr, yStr) {
 
-        var {rgValX, rgValY} = xStr && yStr && this.convertToRegionValueForPt(xStr, yStr, coordSys);
+        var {rgValX, rgValY} = (xStr && yStr && this.convertToRegionValueForPt(xStr, yStr, coordSys)) || {};
 
         if (!rgValX || !rgValY || rgValX.unit !== rgValY.unit) {
             return null;
@@ -682,7 +694,9 @@ export class RegionFactory {
         var makePt = (vx, vy, cs) => {
             if (vx.unit === RegionValueUnit.IMAGE_PIXEL || vx.unit === RegionValueUnit.SCREEN_PIXEL) {
                 // fits to internal
-                return CysConverter.convertFitsStandardImagePtToInternalImage(makeImagePt(vx.value, vy.value));
+                const imgPt = makeImagePt(vx.value, vy.value);
+
+                return regionRelocatable ? imgPt : CysConverter.convertFitsStandardImagePtToInternalImage(imgPt);
             } else {
                 return makeWorldPt(vx.value, vy.value, this.parse_coordinate(cs));
             }
@@ -821,7 +835,7 @@ export class RegionFactory {
      * @returns {null}
      */
     convertToRegionValueForAngle(vstr) {
-        var {unit, val} = this.textToValueAndUnit(vstr);
+        var {unit, val} = this.textToValueAndUnit(vstr) || {};
 
 
         // context is for degree unit
@@ -847,10 +861,10 @@ export class RegionFactory {
      * @returns {Array}
      */
     convertToRegionValueForPt(xStr, yStr, coordSys) {
-        var {unit: xUnit, val: xVal, isTransformationChecked} = this.textToValueAndUnit(xStr, coordSys, CoordType.lon);
-        var {unit: yUnit, val: yVal} = this.textToValueAndUnit(yStr, coordSys, CoordType.lat);
+        var {unit: xUnit, val: xVal, isTransformationChecked} = this.textToValueAndUnit(xStr, coordSys, CoordType.lon) || {};
+        var {unit: yUnit, val: yVal} = this.textToValueAndUnit(yStr, coordSys, CoordType.lat) || {};
 
-        if (xUnit !== yUnit) {
+        if (!xUnit || !yUnit || (xUnit !== yUnit)) {
             return null;
         }
 
@@ -893,7 +907,7 @@ export class RegionFactory {
      * @returns RegionValue
      */
     convertToRegionValueForDim(vStr, coordSys) {
-        var {unit, val, isTransformationChecked} = this.textToValueAndUnit(vStr, coordSys);
+        var {unit, val, isTransformationChecked} = this.textToValueAndUnit(vStr, coordSys) || {};
 
         // keep the unit as origianlly indicated if there is
         if (unit === RegionValueUnit.CONTEXT) {
@@ -952,10 +966,21 @@ export class RegionFactory {
         const [ERR, CONT, STOP] = [0, 1, 2];
         const optionsName = [ 'color', 'dashlist','text', 'width','font','select', 'highlite',
                               'dash', 'fixed',  'edit', 'move', 'delete', 'include', 'rotate',
-                               'source', 'background', 'line', 'ruler', 'point'];
+                              'source', 'background', 'line', 'ruler', 'point', 'textangle', 'coordsys'];
 
         if (rgCsys) {
             set(rgOptions, regionPropsList.COORD, rgCsys);
+        }
+
+        // handling 'global coordsys xxx'  (this semantics is not described in current DS9 region documentation)
+        if (optionStr && optionStr.startsWith(regionPropsList.COORD.toLowerCase())) {
+            const coords = optionStr.split(/\s+/);
+            if (coords.length > 1 && (coords[0] === regionPropsList.COORD.toLowerCase())) {
+                const coordSys = getRegionCoordSys(coords[1]);
+
+                set(rgOptions,  regionPropsList.COORD, coordSys);
+                optionStr = '';       // ignore
+            }
         }
 
         if (include === 0) {
@@ -1181,6 +1206,13 @@ export class RegionFactory {
                     }
                     break;
 
+                case 'textangle':
+                    opValRes = getOptionValue(ops, getValueBeforeChar, ' ');
+                    if (opValRes.valueStr) {
+                        set(rgOptions, regionPropsList.TEXTANGLE, parseFloat(opValRes.valueStr));
+                    }
+                    break;
+
                 default:
                     set(rgOptions, regionPropsList.MSG, `invalid region property, ${opName},`);
                     return rgOptions;
@@ -1209,7 +1241,7 @@ export class RegionFactory {
      */
     parsePointProp(ptStr, option = null) {
         var ops = option ? option : makeRegionOptions({});
-        const features = ptStr.split(' ');
+        const features = ptStr.split(/\s+/);
 
         if (has(option, regionPropsList.PTTYPE)) {
             unset(option, regionPropsList.PTTYPE);
@@ -1245,7 +1277,7 @@ export class RegionFactory {
      * @param fontStr
      */
     parseFont(fontStr) {
-        const params = fontStr.split(' ');
+        const params = fontStr.split(/\s+/);
 
         return makeRegionFont(...params);
 

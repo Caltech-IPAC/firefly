@@ -51,7 +51,7 @@ function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                          alignItems: 'center',
                          width:'100%'
                          }} >
-                <div>
+                <div style={{display: 'flex', alignItems: 'center'}}>
                     <input type='checkbox' checked={visible} onChange={() => changeVisible()} />
                     {getTitleTag(title,maxTitleChars)}
                 </div>
@@ -89,15 +89,17 @@ DrawLayerItemView.propTypes= {
 
 
 function getTitleTag(title, maxTitleChars) {
+    const minW = maxTitleChars*.3 < 30 ? Math.max(maxTitleChars*.3, 10) : 30;
+    const maxW = maxTitleChars*.7 > 10 ? Math.min(maxTitleChars*.7, 30) : 10;
+
     const tStyle= {
-        display:'inline-block',
-        whiteSpace: 'nowrap',
-        minWidth: (maxTitleChars*.7)+'em'
-        // paddingLeft : 5
+        minWidth: minW + 'em',
+        maxWidth: maxW + 'em',
+        lineHeight: '1.1em'
     };
 
     return (
-        <div style={tStyle}>{title}</div>
+        <div style={tStyle} className='text-ellipsis' title={title}>{title}</div>
         );
 }
 

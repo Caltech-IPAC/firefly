@@ -1,0 +1,456 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+import {get, isUndefined} from 'lodash';
+import {DtoR, RtoD, computeDistance} from '../VisUtil.js';
+import { GNOMONIC, ORTHOGRAPHIC, NCP, AITOFF, CAR, LINEAR, PLATE,
+    ARC, SFL, CEA, TPV, UNSPECIFIED, UNRECOGNIZED } from './Projection.js';
+import { findCoordSys, EQUATORIAL_J, EQUATORIAL_B, GALACTIC_JSYS,
+           ECLIPTIC_B, SUPERGALACTIC_JSYS, ECLIPTIC_J } from '../CoordSys.js';
+import {MAX_SIP_LENGTH} from './ProjectionUtil.js';
+import {makeProjectionNew} from './Projection.js';
+
+const CD1_1_HEADERS= ['CD1_1','CD001001'];
+const CD1_2_HEADERS= ['CD1_2','CD001002'];
+const CD2_1_HEADERS= ['CD2_1','CD002001'];
+const CD2_2_HEADERS= ['CD2_2','CD002002'];
+
+const isDefined= (x) => x!==undefined;
+
+function makeHeaderParse(header, altWcs='') {
+    return {
+        header,
+        getIntValue: (key, def= 0) => parseInt(get(header, [key, 'value'], def)),
+        getValue: (key, def= '') => get(header, [key, 'value'], def),
+        getDoubleValue(key, def) {
+           const v= get(header, [key, 'value'], def);
+           return (isDefined(v)) ? Number(v) : v;
+        },
+        isDefinedHeaderList(list) {
+            const key= list.find( (i) =>  header[i+altWcs]);
+            return Boolean(key);
+        }
+    };
+}
+
+function getHeaderListD(parse, list, def, altWcs) {
+	const key= list.find( (i) =>  parse.header[i+altWcs]);
+	return key ? parse.getDoubleValue(key+altWcs, def) : def;
+}
+
+
+function getPVArray(parse, idx, altWcs) {
+    const retval= [];
+    for(let i=0; i<40; i++) {
+        retval[i]= parse.getDoubleValue('PV'+idx+'_'+i+altWcs, i===1?1:0);
+    }
+    return retval;
+}
+
+function getSIPArray(parse, rootKey, length, altWcs) {
+    let keyword;
+    const retAry= [];
+    const len= Math.min(length+1, MAX_SIP_LENGTH);
+    for (let i = 0; i < len; i++) {
+        retAry[i]= [];
+        for (let j = 0; j < len; j++) {
+            retAry[i][j] = 0.0;
+            if (i + j <= length) {
+                keyword = rootKey+'_' + i + '_' + j + altWcs;
+                retAry[i][j] = parse.getDoubleValue(keyword, 0.0);
+            }
+        }
+    }
+    return retAry;
+
+}
+
+
+function getKeywordArray(parse, keyRoot, start, end, def, altWcs) {
+    let idx=0;
+    const retval= [];
+    for(let i=start; i<=end; i++ ) {
+        retval[idx++] = parse.getDoubleValue(keyRoot+i+altWcs, def);
+    }
+    return retval;
+}
+
+const startsWithAny= (s,strAry) => Boolean(strAry.find( (sTest) => s.startsWith(sTest) ));
+
+
+function getBasicHeaderValues(parse) {
+
+    const naxis= parse.getIntValue('NAXIS');
+    return {
+        naxis,
+        naxis1: parse.getIntValue('NAXIS1'),
+        naxis2: parse.getIntValue('NAXIS2'),
+        naxis3: (naxis > 2) ? parse.getIntValue('NAXIS3') : 1,
+        cdelt2: parse.getDoubleValue('CDELT2', 0),
+        bscale: parse.getDoubleValue('BSCALE', 1.0),
+        bzero: parse.getDoubleValue('BZERO', 0.0),
+        blank_value: parse.getDoubleValue('BLANK', NaN),
+        bitpix: parse.getIntValue('BITPIX'),
+    };
+}
+
+
+const ORIGIN=   'ORIGIN';
+const EXPTIME=  'EXPTIME';
+const IMAGEZPT= 'IMAGEZPT';
+const AIRMASS=  'AIRMASS';
+const EXTINCT=  'EXTINCT';
+const PALOMAR_ID=  'Palomar Transient Factory';
+
+const EQ = 0;
+const EC = 1;
+const GA = 2;
+const SGAL = 3;
+
+
+
+
+
+
+export function parseSpacialHeaderInfo(header, altWcs='') {
+
+
+    let ctype1_trim = '';
+
+
+    const parse= makeHeaderParse(header, altWcs);
+
+	// HeaderCard hc;
+	// Cursor extraIter= header.iterator();
+	// for(;extraIter.hasNext();) {
+	// 	hc= (HeaderCard)extraIter.next();
+	// 	if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
+	// 		maskHeaders.put(hc.getKey(), hc.getValue());
+	// 		sendToClientHeaders.put(hc.getKey(), hc.getValue());
+	// 	}
+	// 	if (hc.getKey().startsWith("LTV") || hc.getKey().startsWith("CR")) {
+	// 		sendToClientHeaders.put(hc.getKey(), hc.getValue());
+     //    }
+	// }
+
+
+    const p= getBasicHeaderValues(parse);
+    p.headerType= 'spacial';
+    p.axes_reversed = false;
+
+
+	p.crpix1 = parse.getDoubleValue('CRPIX1'+altWcs, undefined);
+	p.crpix2 = parse.getDoubleValue('CRPIX2'+altWcs, undefined);
+	p.crval1 = parse.getDoubleValue('CRVAL1'+altWcs, undefined);
+	p.crval2 = parse.getDoubleValue('CRVAL2'+altWcs, undefined);
+	p.cdelt1 = parse.getDoubleValue('CDELT1'+altWcs, 0);
+    p.cdelt2 = parse.getDoubleValue('CDELT2'+altWcs,0);
+	p.crota1 = parse.getDoubleValue('CROTA1'+altWcs, 0);
+	p.crota2 = parse.getDoubleValue('CROTA2'+altWcs, 0);
+
+	if (header['CTYPE1'+altWcs]) {
+	    p.ctype1 = parse.getValue('CTYPE1'+altWcs, '');
+	    p.ctype2 = parse.getValue('CTYPE2'+altWcs, '');
+	    ctype1_trim = p.ctype1.trim();
+	    const ctype1End= ctype1_trim.substring(ctype1_trim.length-4);
+
+
+	    switch (ctype1End) {
+            case '-TAN': p.maptype = GNOMONIC; break;
+            case '-TPV': p.maptype = TPV; break;
+            case '-SIP':
+            case '-SIN': p.maptype = ORTHOGRAPHIC; break;
+            case '-NCP': p.maptype = NCP; break;
+            case '-ARC': p.maptype = ARC; break;
+            case '-AIT': p.maptype = AITOFF; break;
+            case '-ATF': p.maptype = AITOFF; break;
+            case '-CAR': p.maptype = CAR; break;
+            case '-CEA': p.maptype = CEA; break;
+            case '-SFL': p.maptype = SFL; break;
+            case '-GLS': p.maptype = SFL; break;
+            case '----':
+            case '':     p.maptype = LINEAR; break;
+            default :    p.maptype = UNRECOGNIZED;
+        }
+
+        if (ctype1_trim==='LINEAR') p.maptype = LINEAR;
+
+        p.axes_reversed = startsWithAny(ctype1_trim, ['DEC','MM','GLAT','LAT','ELAT']);
+	}
+	else {
+        p.maptype = UNSPECIFIED;
+    }
+
+	if (header['DSKYGRID']) p.maptype = ORTHOGRAPHIC;
+
+
+	if (p.maptype===CAR) { // wcs projection routines require crpix1 in -180 to 180 hemisphere
+	    const halfway = Math.abs(180.0 / p.cdelt1);
+	    if (p.crpix1 > halfway) p.crpix1 -= 2 * halfway;
+	    if (p.crpix1 < -halfway) p.crpix1 += 2 * halfway;
+	}
+
+
+	p.cd1_1= getHeaderListD(parse, ['CD1_1','CD001001'], 0, altWcs);
+    p.cd1_2= getHeaderListD(parse, ['CD1_2','CD001002'], 0, altWcs);
+    p.cd2_1= getHeaderListD(parse, ['CD2_1','CD002001'], 0, altWcs);
+    p.cd2_2= getHeaderListD(parse, ['CD2_2','CD002002'], 0, altWcs);
+
+    p.pc1_1 = parse.getDoubleValue('PC1_1'+altWcs, undefined);
+    p.pc1_2 = parse.getDoubleValue('PC1_2'+altWcs, undefined);
+    p.pc2_1 = parse.getDoubleValue('PC2_1'+altWcs, undefined);
+    p.pc2_2 = parse.getDoubleValue('PC2_2'+altWcs, undefined);
+
+
+
+
+	if ((!parse.isDefinedHeaderList(CD1_1_HEADERS)) && (!parse.isDefinedHeaderList(CD1_2_HEADERS) ) &&
+	    (!parse.isDefinedHeaderList(CD2_1_HEADERS) ) && (!parse.isDefinedHeaderList(CD2_2_HEADERS) )) {
+	    /* no CD matrix values in header - look for PC matrix values */
+	    if (isDefined(p.pc1_1) ) p.cd1_1 = p.cdelt1 * p.pc1_1;
+	    if (isDefined(p.pc1_2) ) p.cd1_2 = p.cdelt1 * p.pc1_2;
+	    if (isDefined(p.pc2_1) ) p.cd2_1 = p.cdelt2 * p.pc2_1;
+	    if (isDefined(p.pc2_2) ) p.cd2_2 = p.cdelt2 * p.pc2_2;
+	}
+
+	if (p.maptype===TPV) {
+		p.pv1= getPVArray(parse,1, altWcs);
+		p.pv2= getPVArray(parse,2, altWcs);
+	}
+
+
+	p.datamax = parse.getDoubleValue('DATAMAX', NaN);
+	p.datamin = parse.getDoubleValue('DATAMIN', NaN);
+	p.bunit = parse.getValue('BUNIT');
+	if (!p.bunit) p.bunit = 'DN';
+
+
+
+	p.origin = parse.getValue(ORIGIN, '');
+
+	if (p.origin.startsWith(PALOMAR_ID)) {
+	    p.exptime = parse.getDoubleValue(EXPTIME, 0);
+	    p.imagezpt = parse.getDoubleValue(IMAGEZPT, 0);
+	    p.airmass = parse.getDoubleValue(AIRMASS, 0);
+	    p.extinct = parse.getDoubleValue(EXTINCT, 0);
+	}
+
+
+
+	p.file_equinox = parse.getDoubleValue('EQUINOX'+altWcs, 0.0) || parse.getDoubleValue('EPOCH', 2000.0);
+	p.radecsys = parse.getValue('RADECSYS', '') || parse.getValue('RADESYS'+altWcs, '');
+    p.imageCoordSys= findCoordSys( getJsys(p), p.file_equinox);
+
+
+	if ((parse.getValue('TELESCOP','').startsWith('ISO'))) { // ISO images have bad CD matrix - try not to use it
+	    if ( (p.cdelt1) && (p.cdelt2) ) p.cd1_1 = undefined;
+	}
+
+	if (!isNaN(p.crval2) && !isNaN(p.crval1) && !isNaN(p.crpix1) && !isNaN(p.crpix2) && (p.maptype !== UNRECOGNIZED) &&
+		( parse.isDefinedHeaderList(CD1_1_HEADERS) || parse.isDefinedHeaderList(CD1_2_HEADERS) ||
+          parse.isDefinedHeaderList(CD2_1_HEADERS) || parse.isDefinedHeaderList(CD2_2_HEADERS) ) ) {
+	    if (p.axes_reversed) {
+            let temp = p.crval1;
+            p.crval1 = p.crval2;
+            p.crval2 = temp;
+
+            temp = p.cd2_2;
+            p.cd2_2 = p.cd1_2;
+            p.cd1_2 = p.cd1_1;
+            p.cd1_1 = p.cd2_1;
+            p.cd2_1 = temp;
+        }
+	    // save values for Greisen's formulas
+	    p.using_cd = true;
+	    // invert matrix
+	    const determinant = p.cd1_1 * p.cd2_2 - p.cd1_2 * p.cd2_1;
+	    p.dc1_1 = p.cd2_2 / determinant;
+	    p.dc1_2 = - p.cd1_2 / determinant;
+	    p.dc2_1 = - p.cd2_1 / determinant;
+	    p.dc2_2 = p.cd1_1 / determinant;
+
+	    const twist = Math.atan2(-p.cd1_2, p.cd2_2);
+	    p.crota2 = twist * RtoD;
+    }
+    else {
+        if (p.axes_reversed) {
+            let temp = p.crval1;
+            p.crval1 = p.crval2;
+            p.crval2 = temp;
+
+            temp = p.cdelt1;
+            p.cdelt1 = p.cdelt2;
+            p.cdelt2 = temp;
+            /* don't know what to do with twist */
+            /* will have to wait until I have a sample image */
+        }
+    }
+
+    /* now do SIRTF distortion corrections */
+    if (ctype1_trim.endsWith('-SIP')) {
+        p.map_distortion = true;
+
+        p.a_order = parse.getIntValue('A_ORDER'+altWcs);
+        if (p.a_order>= 0) p.a= getSIPArray(parse, 'A', p.a_order,altWcs);
+
+        p.b_order = parse.getIntValue('B_ORDER'+altWcs);
+        if (p.b_order>= 0) p.b= getSIPArray(parse, 'B', p.b_order,altWcs);
+
+        p.ap_order = parse.getIntValue('AP_ORDER');
+        if (p.ap_order>= 0)p.ap= getSIPArray(parse, 'AP', p.ap_order,altWcs);
+
+        p.bp_order = parse.getIntValue('BP_ORDER');
+        if (p.bp_order>= 0) p.bp= getSIPArray(parse, 'BP', p.bp_order,altWcs);
+    }
+
+
+
+    if (p.using_cd) { // need an approximation of cdelt1 and cdelt2
+        const proj= makeProjectionNew(p, p.imageCoordSys);
+        const proj_center = proj.getWorldCoords(p.crpix1 - 1, p.crpix2 - 1);
+        const one_to_right = proj.getWorldCoords(p.crpix1, p.crpix2 - 1);
+        const one_up = proj.getWorldCoords(p.crpix1 - 1, p.crpix2);
+        if (proj_center && one_to_right && one_up) {
+            p.cdelt1 = -computeDistance(proj_center, one_to_right);
+            p.cdelt2 = computeDistance(proj_center, one_up);
+        }
+        else {
+            p.cdelt1 = 0;
+            p.cdelt2 = 0;
+        }
+    }
+
+	/* now do Digital Sky Survey plate solution coefficients */
+    if  (header['PLTRAH'+altWcs]) {
+        p.maptype = PLATE;
+        p.imageCoordSys= findCoordSys( getJsys(p), p.file_equinox);
+        p.rah = parse.getDoubleValue('PLTRAH'+altWcs,0);
+        p.ram = parse.getDoubleValue('PLTRAM'+altWcs,0);
+        p.ras = parse.getDoubleValue('PLTRAS'+altWcs,0);
+        p.ra_hours = p.rah + (p.ram / 60.0) + (p.ras / 3600.0);
+        p.plate_ra = p.ra_hours * 15.0 * DtoR;
+        p.decsign = parse.getValue('PLTDECSN'+altWcs,0);
+        const dsign= (p.decsign[0]==='-') ? -1. : 1;
+
+
+        p.decd = parse.getDoubleValue('PLTDECD'+altWcs,0);
+        p.decm = parse.getDoubleValue('PLTDECM'+altWcs,0);
+        p.decs = parse.getDoubleValue('PLTDECS'+altWcs,0);
+        p.dec_deg = dsign * (p.decd+(p.decm/60.0)+(p.decs/3600.0));
+        p.plate_dec = p.dec_deg * DtoR;
+
+        p.x_pixel_offset = parse.getDoubleValue( 'CNPIX1'+altWcs,0);
+        p.y_pixel_offset = parse.getDoubleValue( 'CNPIX2'+altWcs,0);
+        p.plt_scale = parse.getDoubleValue( 'PLTSCALE'+altWcs,0);
+        p.x_pixel_size = parse.getDoubleValue( 'XPIXELSZ'+altWcs,0);
+        p.y_pixel_size = parse.getDoubleValue( 'YPIXELSZ'+altWcs,0);
+
+        p.ppo_coeff = getKeywordArray(parse, 'PPO',1,6,0,altWcs);
+        p.amd_x_coeff = getKeywordArray(parse, 'AMDX',1,20,0,altWcs);
+        p.amd_y_coeff =  getKeywordArray(parse, 'AMDY',1,20,0,altWcs);
+
+        p.crpix1 = 0.5 - p.x_pixel_offset;
+        p.crpix2 = 0.5 - p.y_pixel_offset;
+
+        if (p.cdelt1===0) {
+            p.cdelt1 = - p.plt_scale * p.x_pixel_size / 1000 / 3600;
+            p.cdelt2 = p.plt_scale * p.y_pixel_size / 1000 / 3600;
+        }
+    }
+
+
+    if (p.maptype===LINEAR && isUndefined(header['CDELT1'+altWcs])) {
+        p.cdelt1 = 1;
+        p.cdelt2 = 1;
+    }
+
+
+    if (p.cdelt2<0) { //todo - this assumed the pixels were flipped, determine if we want to keep doing this
+        p.cdelt2 = -p.cdelt2;
+        p.crpix2 = p.naxis2 - p.crpix2 + 1;
+    }
+
+    return p;
+}
+
+
+
+function getCoordSys(params) {
+    const {maptype, ctype1} = params;
+
+    if (maptype===PLATE) return EQ;
+    if (!ctype1) return -1;
+
+    const s = ctype1.substring(0, 2);
+    switch (s) {
+        case 'RA':
+        case 'DE':
+        case 'LL': return EQ;
+
+        case 'GL':
+        case 'LO': return GA;
+
+        case 'EL': return EC;
+        default: return -1;
+    }
+}
+
+
+
+function getJsys(params) {
+    let jsys;
+    const {radecsys, file_equinox } = params;
+
+    switch (getCoordSys(params)) {
+        case EQ:
+            if (radecsys.startsWith('FK4')) jsys = EQUATORIAL_B;
+            else if (radecsys.startsWith('FK5') || radecsys.startsWith('ICRS')) jsys = EQUATORIAL_J;
+            else if (file_equinox < 2000.0) jsys = EQUATORIAL_B;
+            else jsys = EQUATORIAL_J;
+            break;
+        case EC:
+            if (radecsys.startsWith('FK4')) jsys = ECLIPTIC_B;
+            else if (radecsys.startsWith('FK5')) jsys = ECLIPTIC_J;
+            else if (file_equinox < 2000.0) jsys = ECLIPTIC_B;
+            else jsys = ECLIPTIC_J;
+            break;
+        case GA:
+            jsys = GALACTIC_JSYS;
+            break;
+        case SGAL:
+            jsys = SUPERGALACTIC_JSYS;
+            break;
+        default:
+            jsys = -1;
+    }
+    return jsys;
+}
+
+
+
+
+
+export function makeDirectFileAccessData(header) {
+
+    const parse= makeHeaderParse(header);
+    const dataOffset = parse.getIntValue('SPOT_OFF',0)+ parse.getIntValue('SPOT_HS',0);
+    const planeNumber= parse.getIntValue('SPOT_PL',0);
+    const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber};
+    miniHeader.bitpix= parse.getValue('SPOT_BP');
+
+    if (parse.getValue(ORIGIN,'').startsWith(PALOMAR_ID)) {
+        miniHeader[ORIGIN]= header[ORIGIN];
+        miniHeader[EXPTIME]= header[EXPTIME];
+        miniHeader[IMAGEZPT]= header[IMAGEZPT];
+        miniHeader[AIRMASS]= header[AIRMASS];
+        miniHeader[EXTINCT]= header[EXTINCT];
+    }
+    return miniHeader;
+}
+
+
+
+
+
+

@@ -3,15 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.table.io.IpacTableException;
+import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.VoTableUtil;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 
@@ -22,6 +28,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+
+import static edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest.LC_FILE;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 
 /**
@@ -50,19 +59,25 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         apiKey = AppProperties.getArrayProperties("irsa.gator.service.periodogram.keys", "\\s+", "x y");// At least x,y , rest are optional
     }
 
-    public File getPeriodogramTable(PeriodogramAPIRequest request) {
+    public DataGroup getPeriodogramTable(PeriodogramAPIRequest request) {
 
-        return ipacTableFromAPI(request, RESULT_TABLES_IDX.PERIODOGRAM);
+        // handle case when 'getLcSource' is a JSON TableServerRequest
+        applyIfNotEmpty(getSourceFileFromJsonReqest(request), f -> request.setParam(LC_FILE, f.getPath()));
 
+
+        return getDataFromAPI(request, RESULT_TABLES_IDX.PERIODOGRAM);
     }
 
 
     /**
      * @return peaks table (default: 50 rows)
      */
-    public File getPeaksTable(PeriodogramAPIRequest request) {
+    public DataGroup getPeaksTable(PeriodogramAPIRequest request) {
 
-        return ipacTableFromAPI(request, RESULT_TABLES_IDX.PEAKS);
+        // handle case when 'getLcSource' is a JSON TableServerRequest
+        applyIfNotEmpty(getSourceFileFromJsonReqest(request), f -> request.setParam(LC_FILE, f.getPath()));
+
+        return getDataFromAPI(request, RESULT_TABLES_IDX.PEAKS);
     }
 
     /**
@@ -79,7 +94,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         File tempFile = null;
 
         try {
-            DataGroup dg = DataGroupReader.readAnyFormat(tbl);
+            DataGroup dg = TableUtil.readAnyFormat(tbl);
             PhaseFoldedLightCurve plc = new PhaseFoldedLightCurve();
             plc.addPhaseCol(dg, period, timeColName);
             tempFile = createPhaseFoldedTempFile();
@@ -97,33 +112,27 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         return File.createTempFile("phase-folded", ".tbl", ServerContext.getTempWorkDir());
     }
 
-    protected File extractTblFrom(File votableResult, RESULT_TABLES_IDX resultTable) {
-        File resultTblFile = null;
+    protected DataGroup extractTblFrom(File votableResult, RESULT_TABLES_IDX resultTable) {
         try {
-            resultTblFile = makeResultTempFile(resultTable);
-            DataGroup[] dataGroups = VoTableUtil.voToDataGroups(votableResult.getAbsolutePath());
+            DataGroup[] dataGroups = VoTableReader.voToDataGroups(votableResult.getAbsolutePath());
 
-            IpacTableWriter.save(resultTblFile, dataGroups[resultTable.ordinal()]);
-            return resultTblFile;
+            return dataGroups[resultTable.ordinal()];
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return resultTblFile;
+        return null;
     }
 
-    protected File ipacTableFromAPI(PeriodogramAPIRequest request, RESULT_TABLES_IDX resultTable) {
-        File tempFile = null;
+    protected DataGroup getDataFromAPI(PeriodogramAPIRequest request, RESULT_TABLES_IDX resultTable) {
         try {
             File apiResult = apiDownlaod(request);
 
-            tempFile = extractTblFrom(apiResult, resultTable);
+            return extractTblFrom(apiResult, resultTable);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (FailedRequestException e) {
+        } catch (IOException | FailedRequestException e) {
             e.printStackTrace();
         }
-        return tempFile;
+        return null;
     }
 
     protected File apiDownlaod(PeriodogramAPIRequest request) throws IOException, FailedRequestException {
@@ -213,4 +222,18 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         }
         return inf;
     }
+
+    File getSourceFileFromJsonReqest(TableServerRequest request) {
+        TableServerRequest tsr = QueryUtil.convertToServerRequest(request.getParam(LC_FILE));
+        if (!tsr.getRequestId().equals(ServerRequest.ID_NOT_DEFINED)) {
+            try {
+                FileInfo fi = new SearchManager().getFileInfo(tsr);
+                return fi.getFile();
+            } catch (DataAccessException e) {
+                LOG.error(e);
+            }
+        }
+        return null;
+    }
+
 }

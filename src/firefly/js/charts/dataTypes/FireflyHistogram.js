@@ -3,10 +3,10 @@
  */
 import {get, identity, isArray, isUndefined, uniqueId} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable} from '../../tables/TableUtil.js';
+import {COL_TYPE, getColumn, getColumns, getTblById, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData} from '../ChartsCntlr.js';
-import {formatColExpr, replaceQuotesIfSurrounding} from '../ChartUtil.js';
+import {formatColExpr} from '../ChartUtil.js';
 
 
 import {toMaxFixed, getDecimalPlaces} from '../../util/MathUtil.js';
@@ -123,7 +123,7 @@ function fetchData(chartId, traceNum, tablesource) {
                     const xColumn = getColumn(getTblById(tbl_id), xLabel);
                     const xUnit = get(xColumn, 'units', '');
                     //remove surrounding quotes, if any
-                    if (xLabel.startsWith('"')) { xLabel = replaceQuotesIfSurrounding(xLabel); }
+                    if (xLabel.startsWith('"')) { xLabel = stripColumnNameQuotes(xLabel); }
                     changes['layout.xaxis.title'] = xLabel + (xUnit ? ` (${xUnit})` : '');
                 }
                 const yAxisLabel = get(layout, 'yaxis.title');

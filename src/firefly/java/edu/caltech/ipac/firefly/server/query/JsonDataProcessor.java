@@ -4,11 +4,9 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.*;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.*;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.util.*;
@@ -25,8 +23,6 @@ abstract public class JsonDataProcessor implements SearchProcessor<String> {
 
     public static final Logger.LoggerImpl SEARCH_LOGGER = Logger.getLogger(Logger.SEARCH_LOGGER);
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-
-    public ServerRequest inspectRequest(ServerRequest request) { return request; };
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {}
 

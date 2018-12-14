@@ -3,7 +3,6 @@
  */
 
 import React, {PureComponent} from 'react';
-import PropTypes from 'prop-types';
 import {get, set, isNil, isEqual} from 'lodash';
 import {flux} from '../../Firefly.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -16,7 +15,7 @@ import {dispatchTableSearch, dispatchTableRemove} from '../../tables/TablesCntlr
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage } from '../ImagePlotCntlr.js';
+import {dispatchPlotImage, visRoot, dispatchPlotHiPS} from '../ImagePlotCntlr.js';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
@@ -24,18 +23,29 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {updateMerge, getSizeAsString} from '../../util/WebUtil.js';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isAccessWorkspace, getWorkspaceConfig} from '../WorkspaceCntlr.js';
+import {getAppHiPSForMoc, addNewMocLayer} from '../HiPSMocUtil.js';
+import {primePlot, getDrawLayerById, getDrawLayersByType} from '../PlotViewUtil.js';
+import {genHiPSPlotId} from './ImageSearchPanelV2.jsx';
+import DrawLayerCntlr, {dispatchAttachLayerToPlot, dlRoot, getDlAry, dispatchCreateImageLineBasedFootprintLayer}
+        from '../DrawLayerCntlr.js';
+import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
+import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint.js';
+import {isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
+import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
 import './ImageSelectPanel.css';
 
 export const panelKey = 'FileUploadAnalysis';
+const HEADER_KEY_COL = 1;
+const HEADER_VAL_COL = 2;
+
 const  fileId = 'fileUpload';
 const  urlId = 'urlUpload';
 const  wsId = 'wsUpload';
 
 const SUMMARY_INDEX_COL = 0;
 const SUMMARY_TYPE_COL = 2;
-const HEADER_KEY_COL = 1;
-const HEADER_VAL_COL = 2;
 const analysisTblIds = [];
 const headerTblIds = [];
 
@@ -150,6 +160,7 @@ const getSelectionResult = (model, limit) => {
 };
 
 
+
 export class FileUploadViewPanel extends PureComponent {
 
     constructor(props) {
@@ -188,7 +199,8 @@ export class FileUploadViewPanel extends PureComponent {
                 if (!selectInfo) {
                     selectInfo = selectRowFromSummaryTable(analysisModel);
                 }
-                analysisModel = Object.assign(analysisModel, {selectInfo});
+                const isMocFits =  isMOCFitsFromUploadAnalsysis(analysisSummary, analysisModel);
+                analysisModel = Object.assign(analysisModel, {selectInfo, isMocFits});
 
                 highlightedRow = get(tblInfo, 'highlightedRow', 0);
                 hlHeaderTable = (highlightedRow >= 0) ? makeHeaderTable(analysisModel, highlightedRow) : null;
@@ -498,6 +510,7 @@ export class FileUploadViewPanel extends PureComponent {
         const showSummary = () => {
             let summaryLine = analysisSummary ? analysisSummary.split('--', 1): ''; // only get one line summary
             if (summaryLine) {
+                summaryLine = get(analysisModel, ['isMocFits', 'valid']) ? 'MOC ' + summaryLine : summaryLine;
                 summaryLine += (analysisModel&&analysisModel.size ? `: ${getSizeAsString(analysisModel.size)} Bytes` : '');
             }
 
@@ -553,11 +566,12 @@ const errorMsg =  {invalidFile: 'no valid file is uploaded',
     invalidFITSSelection: 'no extension with valid data is selected',
     noTableSelected: 'no table is selected',
     noExtensionSelected: 'no extenstion is selected'};
+const errorTitle = 'search uploaded file error';
+
 
 const returnValidate = (retVal) => {
     if (retVal.message) {
-        console.log(retVal.message);
-        showInfoPopup(retVal.message, 'search uploaded file error');
+        showInfoPopup(retVal.message, get(retVal, 'title', 'search info'));
     }
     return retVal;
 };
@@ -574,7 +588,8 @@ export function validateModelSelection(uploadTabs) {
         if (!valid || !analysisResult || analysisTblIds.length === 0) {    // no file uploaded yet
             return returnValidate({
                 valid: false,
-                message: errorMsg.invalidFile
+                message: errorMsg.invalidFile,
+                title: errorTitle
             });
         }
 
@@ -583,7 +598,8 @@ export function validateModelSelection(uploadTabs) {
         if (analysisSummary.startsWith('invalid') || !analysisModel) {    // no valid file uploaded
             return returnValidate({
                 valid: false,
-                message: errorMsg.invalidFile
+                message: errorMsg.invalidFile,
+                title: errorTitle
             });
         }
 
@@ -606,11 +622,14 @@ export function validateModelSelection(uploadTabs) {
         if (Array.from(selList).length === 0) {
             return returnValidate({
                 valid: false,
-                message: (bFits ? errorMsg.noExtensionSelected : errorMsg.noTableSelected)
+                message: (bFits ? errorMsg.noExtensionSelected : errorMsg.noTableSelected),
+                error: errorTitle
             });
         }
 
-        const resultModel = Object.assign({}, analysisModel, {selectInfo: adjustSelectInfo(tableModel, selectInfo)});
+        const resultModel = Object.assign({}, analysisModel,
+                                    {selectInfo: adjustSelectInfo(tableModel, selectInfo),
+                                     isMocFits: get(tableModel, 'isMocFits', {valid: false})});
         const limit = 20;
         const selectResults = getSelectionResult(resultModel, limit); // a search limit is set
 
@@ -634,7 +653,8 @@ export function validateModelSelection(uploadTabs) {
         } else {
             return returnValidate({
                 valid: false,
-                message: (bFits ? errorMsg.invalidFITSSelection : errorMsg.invalidVTableelection)
+                message: (bFits ? errorMsg.invalidFITSSelection : errorMsg.invalidVTableelection),
+                title: errorTitle
             });
         }
 }
@@ -652,7 +672,7 @@ const hasGoodData = (metaInfo) => {
     if (isNil(data)) return false;
 
     const badIndex = data.findIndex((oneKey) => {
-        return (naxisSet.includes(oneKey[HEADER_KEY_COL].toLowerCase()) && (oneKey[HEADER_VAL_COL] === '0'));
+        return (oneKey[HEADER_KEY_COL] && naxisSet.includes(oneKey[HEADER_KEY_COL].toLowerCase()) && (oneKey[HEADER_VAL_COL] === '0'));
     });
 
     return badIndex < 0;
@@ -687,6 +707,11 @@ function selectRowFromSummaryTable(tblModel) {
     }
     return selectInfoCls.data;
 }
+
+const tableTitle = (displayValue, uploadTabs) => {
+    const n = displayValue.lastIndexOf((uploadTabs === fileId) ? '\\' : '\/');
+    return  displayValue.slice(n+1);   // n = -1 or n >= 0
+};
 
 /**
  * send request to get the data of table unit, for votable and fits, the table index is mapped to be
@@ -747,7 +772,7 @@ function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
                 wpr.setPostTitle(`- ext. ${extList}`);
             }
 
-            plotId = `${fName}-${idx.join('_')}`;
+            plotId = `${fName.replace('.', '_')}-${idx.join('_')}`;
             dispatchPlotImage({plotId, wpRequest: wpr, viewerId});
         } else {
 
@@ -766,6 +791,104 @@ function sendImageRequest(fileCacheKey, fName, idx, extMap, imageDisplay) {
     }
 }
 
+const getUniqueTblId = (uploadMethod, displayValue) => {
+    let filePath;
+    if (uploadMethod === fileId) {
+        filePath =  displayValue.split(/[\\|\/]/g).pop().replace('.', '_');
+    } else {
+        if (uploadMethod === urlId) {
+            displayValue = displayValue.replace(/^http[s]?:[\\|\/]{2}/i, '');
+        }
+        filePath = displayValue.replace(/[\\|\/|\.]/g, '_');
+    }
+
+    let idCnt = 0;
+    while (true) {
+        const tableId = idCnt === 0 ? filePath : `${filePath}-${idCnt}`;
+        idCnt++;
+
+        if (!getTblById(tableId)) return tableId;
+    }
+};
+
+
+function sendMocRequest(uploadPath, displayValue, uploadMethod, mocFits) {
+
+    const tblId = getUniqueTblId(uploadMethod, displayValue);
+    const pv = primePlot(visRoot());
+
+    const overlayMocOnPlot = (plotId) => {
+        const dl = addNewMocLayer(tblId, uploadPath, null, get(mocFits, [MOCInfo, UNIQCOL]));
+        if (dl) {
+            dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, true);
+        }
+    };
+
+
+    if (!pv) {
+        const pId = genHiPSPlotId.next().value;
+
+        const watcher = (action, cancelSelf) => {
+                const {plotIdAry, plotId, drawLayerId} = action.payload;
+                const dl = getDrawLayerById(dlRoot(), drawLayerId);
+
+                // after hips moc of default HiPS is attached to the plot
+                if ((dl.drawLayerTypeId === HiPSMOC.TYPE_ID) &&
+                    (drawLayerId !== tblId) && ((plotIdAry && plotIdAry[0] === pId) || (plotId && plotId === pId))) {
+                    overlayMocOnPlot(pId);
+                    cancelSelf();
+                }
+            };
+
+        const hipsUrl = getAppHiPSForMoc();
+        returnValidate({
+            valid: true,
+            message: 'There is no image in the viewer. The MOC will be shown on top of the HiPS image from \''
+                     + hipsUrl +'\'',
+            title: 'MOC fits search info'
+        });
+
+        dispatchAddActionWatcher({actions: [DrawLayerCntlr.ATTACH_LAYER_TO_PLOT], callback: watcher});
+
+        const wpRequest = WebPlotRequest.makeHiPSRequest(hipsUrl);
+        const {viewerId=''} = getAViewFromMultiView(getMultiViewRoot(), IMAGE) || {};
+
+        wpRequest.setPlotGroupId(viewerId);
+        wpRequest.setPlotId(pId);
+        wpRequest && dispatchPlotHiPS({plotId: pId, viewerId, wpRequest});
+    } else {
+        overlayMocOnPlot(pv.plotId);
+    }
+}
+
+export const isMocTable = (tableModel) => {
+    return  get(tableModel, ['isMocFits', 'valid']);
+};
+
+function getLSSTFootprintId(uploadMethod, displayValue) {
+    const dlId = getUniqueTblId(uploadMethod, displayValue);
+    let   idx = 1;
+    let   fpLayerId = dlId;
+    const dls = getDrawLayersByType(getDlAry(), LSSTFootprint.TYPE_ID);
+
+    while (true) {
+        const dl = dls.find((oneLayer) => oneLayer.drawLayerId === fpLayerId);
+
+        if (!dl) return dlId;
+        fpLayerId = dlId + `${idx++}`;
+    }
+}
+
+function sendLSSTFootprintRequest(uploadPath, displayValue, uploadMethod, selectedResults) {
+    const dl_id = getLSSTFootprintId(uploadMethod, displayValue);
+    const pv = primePlot(visRoot());
+    const pIds = pv ? [pv.plotId]: [];
+
+    dispatchCreateImageLineBasedFootprintLayer(dl_id, tableTitle(displayValue, uploadMethod),
+                                              null, pIds,
+                                              uploadPath, null, selectedResults ? selectedResults.table[0]: null);
+
+}
 /*
     the map which maps summary table row index to table index and image extension number at the server
  */
@@ -793,10 +916,6 @@ function getExtensionMap(model) {
  * @returns {Function}
  */
 export function resultSuccess() {
-    const tableTitle = (displayValue, uploadTabs) => {
-        const n = displayValue.lastIndexOf((uploadTabs === fileId) ? '\\' : '\/');
-        return  displayValue.slice(n+1);   // n = -1 or n >= 0
-    };
 
     return (request) => {
         const {uploadTabs, imageDisplay} = request;
@@ -805,23 +924,29 @@ export function resultSuccess() {
 
         const {analysisModel, displayValue, selectResults} = retVal;
         const {fileUpload, urlUpload, wsUpload} = request;
-        const uploadName = (uploadTabs === fileId) ? fileUpload
-                                                   : ((uploadTabs === wsId) ? wsUpload : urlUpload);
+        const uploadPath = (uploadTabs === fileId) ? fileUpload
+                                                   : ((uploadTabs === wsId) ? wsUpload : urlUpload); // file at the server
 
         if (selectResults) {    // votable or fits
             const extensionMap = getExtensionMap(analysisModel);
 
             if (selectResults.image.length !== 0) {
-                sendImageRequest(uploadName, displayValue, selectResults.image, extensionMap.imageMap, imageDisplay);
+                sendImageRequest(uploadPath, displayValue, selectResults.image, extensionMap.imageMap, imageDisplay);
             }
             if (selectResults.table.length !== 0) {
-                selectResults.table.forEach((idx) => {
-                    sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,
-                                     analysisModel.totalRows);
-                });
+                if (isMocTable(analysisModel)) {
+                    sendMocRequest(uploadPath, displayValue, uploadTabs, analysisModel.isMocFits);
+                } else if (isLsstFootprintTable(analysisModel, true, (selectResults.table)[0])) {
+                    sendLSSTFootprintRequest(uploadPath, displayValue, uploadTabs,  selectResults);
+                } else {
+                    selectResults.table.forEach((idx) => {
+                        sendTableRequest(uploadPath, tableTitle(displayValue, uploadTabs), idx, extensionMap.tableMap,
+                            analysisModel.totalRows);
+                    });
+                }
             }
         } else {    // csv, tsv, ipac
-            sendTableRequest(uploadName, tableTitle(displayValue, uploadTabs));
+            sendTableRequest(uploadPath, tableTitle(displayValue, uploadTabs));
         }
 
         removeAnalysisTable(analysisTblIds.length-1);   // keep the current analysisModel
@@ -833,7 +958,8 @@ export function resultFail() {
     {
         returnValidate({
             valid: false,
-            message: errorMsg.invalidFile
+            message: errorMsg.invalidFile,
+            title: errorTitle
         });
         return false;
     };

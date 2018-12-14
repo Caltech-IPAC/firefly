@@ -27,6 +27,7 @@ import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
+import {warningDivId} from '../../ui/LostConnection';
 
 /**
  * This FireflySlate is a generic layout application with some configurable behaviors.
@@ -89,6 +90,7 @@ export class FireflySlate extends PureComponent {
                 <div id='App' className='rootStyle' style={style}>
                     <header>
                         <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                        <div id={warningDivId} data-decor='full' className='warning-div center'/>
                         <DropDownContainer
                             key='dropdown'
                             footer={footer}

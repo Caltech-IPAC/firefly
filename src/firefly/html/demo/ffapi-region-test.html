@@ -1,0 +1,318 @@
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Demo of Firefly Tools</title>
+</head>
+
+<body>
+
+
+<div style="width: 500px; padding: 50px 0 0 0px;">
+    This page demos
+    <ul>
+     <li>Creation of region layer </li>
+     <li>Adding, removing or selecting region to or from selected region layer. </li>
+    </ul>
+</div>
+
+<div>
+    </br>
+    <a href='javascript:firefly.getViewer().plotURL(loadImage())'>Load sample image</a>
+    <input type='text' placeholder='' id='imageurl'>
+</div>
+
+<div>
+    </br>
+    <div style="display: flex; width:820px">
+        <p style="color:blue; margin:3px">Region</p> <p style="color:blue; margin:3px"> Test: </p>
+        <p style="margin-top:3px">please enter a region ID or select a region ID first, then click the region operation.
+            If no region ID is entered, a region ID hint is given for "Create Region Layer". </p>
+    </div>
+
+    <a href='javascript:createRegionLayer()'>Create Region Layer</a>
+    <input type='text' placeholder='' list='regionCreated' id='createRegionId' name='createRegionLayer' onChange='updateDatalist()'>
+    <datalist id='regionCreated'>
+    </datalist>
+    color: <input type='text' id='selectColor' value='#DAA520' style="width: 60px">
+    lineWidth: <input type='text' id='lineWidth' value='0' style="width: 30px">
+    <select id='selectStyle'>
+        <option value='UprightBox'>Upright box</option>
+        <option value='DottedOverlay'>Overlay with dotted border</option>
+        <option value='SolidOverlay'>Overlay with differet color</option>
+        <option value='DottedReplace'>Replace with dotted border</option>
+        <option value='SolidReplace'>Replace with differnt color</option>
+    </select>
+    <a href='javascript:deleteRegionLayer()'>Delete Region Layer</a>
+    <select id='regionList_delete'><option selected disabled>Region Layer:</option></select>
+    <div>
+        <textarea id="regionLayerContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
+    </div>
+</div>
+<div>
+    </br>
+    <a href='javascript:addRegionEntry()'>Add Region Entry </a>
+    <select id='regionEntry_add'><option selected disabled>Region Layers:</option></select>
+    <a href='javascript:removeRegionEntry()'>Remove Region Entry</a>
+    <select id='regionEntry_remove'><option selected disabled>Region Layers:</option></select>
+    <div>
+        <textarea id="moreRegionContent" style="width: 800px; height: 300px; margin: 10px;"> </textarea>
+    </div>
+    <a href='javascript:selectRegion()'>Select the following region(s):</a>
+    <select id='regionEntry_select'><option selected disabled>Region Layers:</option></select>
+    <div>
+        <textarea id='selectRegionContent' style='width: 800px; height: 300px; margin: 10px;'></textarea>
+    </div>
+    <a href='javascript:showRegions()'>Show originally composed regions: </a>
+    <select id='allRegionEntry'><option selected disabled>Region Layers:</option></select>
+    <div>
+        <textarea id='allRegionContent' style='width: 800px; height: 300px; margin: 10px;'></textarea>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    if (!window.firefly) window.firefly= {};
+    window.firefly.options= {charts: {}};
+</script>
+
+
+<script type="text/javascript">
+    {
+        onFireflyLoaded = function (firefly) {
+
+            window.ffViewer = firefly.getViewer();
+
+            //firefly.showImage('imageViewHere', {url:'file:///hydra/cm/firefly_test_data/FileUpload-samples/fits/singleimage/calexp256.fits', plotId: 'regiontest'});
+
+            firefly.setGlobalImageDef({
+                ZoomType: 'TO_WIDTH'
+            });
+
+            firefly.debug = true;
+
+
+            // region samples
+            window.emptyRegion = '';
+            window.regionAry = [
+                'box (240, 220, 20, 20, 0) #color=red text={     ph1}',
+                'box (240i, 220i, 60i, 60i, 0) #color=orange text={ph2}',
+                'J2000;point    202.41   47.262 # color=pink text="pt circle 1" point=circle',
+                'IMAGE;box (360, 220, 20, 20, 0) #color=red text={     im1}',
+                'PHYSICAL;box (360, 220, 60, 60, 0) #color=orange text={ph3}'
+            ];
+
+            window.basicRegions = [
+                'global color=yellow',
+                'global coordsys FK5',
+                'circle 202.4244693750341 47.16818060364845 13.9268922364868"  # text={circle 1}',
+                'J2000;box 202.4664693750341 47.20798060364845 0.0069268922364 0.0069268922364  0  # color=red text={box 2}',
+                'image;circle  100.4844693750341 147.23118060364845 10.0239268922364868 # color=#B8E986 text={circle 2}',
+                'image;ellipse 99 88 10 20 -30 # color=orange text={ellipse with good coordinate}',
+                'image:ellipse 80 77 nani nani nan # color=yellow text={ellipse with nan coodinate}',
+                'text 215p 300p # color=magenta text={text test 3 } edit=0 highlite=0  font="BRAGGADOCIO 10 normal italic" textangle=30',
+                'global color=blue',
+                'global coordsys FK5',
+                'box 215p 300p 0.050 0.030 30  # text={box on # J2000 with size w=80 & h=30} width=2'
+            ];
+
+
+            window.regionAry2 = [
+                'J2000',
+                'boxcircle point    202.45    47.262 # color=red text="pt boxcircle 6" delete=0',
+                'physical;circle   80 140  20       # color=red offsetx=25  offsety=2 width=5 edit=0 text="circle 7"',
+                'annulus   13h30m16.41s +47d14m43.9s  30p 40p 50p       # color=green text="hello" include=0 text="annulus 8"',
+                'physical;point 200 140 # color=yellow point=cross 20 text="pt cross 9" offsetx=10',
+                'physical;point 13h29m52.73s, +47d11m40.9s # color=purple point=diamond 15 text="pt diamond 10"',
+                '#circle(202.55556, 47.188286 , 20p)  # color=blue text="text 11"',
+                'box(202.55556, 47.188286 ,20p,40p, 30p, 50p, 0)  # color=red width=5 text="boxann 11"',
+                'box(202.52556,47.226286,0.0240,0.006,0)  # color=green width=5 text="box 11-2"',
+                'image;box(100, 150, 50p, 20p, 2r) # color=magenta width=6 text="slanted box 12"',
+                'image;box(190.564796, 47.281999, 50p, 20p, 0) # color=red width=6 offsety=-15 text="box 12-1"',
+                'j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=blue width=6 text="box 12-3"',
+                'physical;-box point 12 12 # text="pt box 13"',
+                'j2000;polygon(202.564796, 47.281999,202.553758, 47.247072, 202.445347, 47.244296, 202.479687, 47.264027, 202.492153, 47.290841) # color=blue text="polygon" width=10 font="helvetica 16 bold"',
+                'point    202.45   47.2879 # color=cyan text="pt arrow 15" delete=0 point=arrow 20',
+                'image;ellipse 300 370 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}'
+            ];
+
+            window.moreRegionAry = [
+                'image;ellipse 300 370 20p 40p 30p 60p 40p 80p 20 # color=green text={ellipseannulus 2}',
+                'J2000;ellipse 202.55556, 47.2852997 20p 40p 0i # color=#48f text={ellipse 1} width=10',
+                'image;box 304 136 20p 40p 30p 50p 70p 100p 30 # color=red text={slanted box annulus 3}',
+                'j2000;box(47.247072i, 180.445347i, 50p, 20p, 0) # color=cyan width=6 text="box 12-3"',
+                'image;ellipse 300 270 nan nan nan # color=pink text={ellipse with bad coordinate}',
+                'j2000;polygon(202.564796, 47.281999,202.553758, 47.247072, 202.445347, 47.244296, 202.479687, 47.264027, 202.492153, 47.290841) # color=blue text="polygon" width=10 font="helvetica 16 bold"'
+            ];
+
+            window.regions = [];
+            window.regionId = window.regions.length;
+            window.allRegions = {};
+
+            document.getElementById('regionLayerContent').value = window.basicRegions.join('\n');
+            document.getElementById('moreRegionContent').value = window.moreRegionAry.join('\n');
+            document.getElementById('selectRegionContent').value = window.regionAry2[13];
+
+            updateRegionLayerList();
+        };
+
+        loadImage = function() {
+            var imgurl = document.getElementById('imageurl').value || "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits";
+            return imgurl;
+        };
+
+        createRegionLayer = function () {
+            var layerId = document.getElementById('createRegionId').value;
+
+            if (!layerId) {
+                window.regionId++;
+                layerId = "Region_Plot_" + window.regionId;
+                document.getElementById('createRegionId').value = layerId;
+
+            }
+            var regionAry = document.getElementById('regionLayerContent').value.split('\n').filter(function(r) { return (r.length !== 0);})
+                    ;
+            window.regions.push(layerId);
+            updateRegionLayerList();
+
+            var st = document.getElementById('selectStyle').value;
+            var lw = parseInt(document.getElementById('lineWidth').value);
+            var sc = document.getElementById('selectColor').value;
+            var selectMode = {selectStyle: st, selectColor: sc, lineWidth: lw};
+
+            window.allRegions[layerId] = regionAry;
+            //firefly.action.dispatchCreateRegionLayer(layerId, null, null, regionAry, 'regiontest', selectMode);
+            firefly.action.dispatchCreateRegionLayer(layerId, null, null, regionAry, null, selectMode, dispatcher = window.ffViewer.dispatch);
+        };
+
+        updateDataList = function() {
+            var datalist = document.getElementById('regionCreated');
+            var options = '';
+
+            window.regions.forEach(function (r) {
+                options += '<option value="' + r + '" />';
+            });
+
+            datalist.innerHTML = options;
+            document.getElementById('createRegionId').value = '';
+            document.getElementById('createRegionId').placeholder = "Region_Plot_" + (window.regionId + 1);
+        };
+
+        updateRegionLayerList = function () {
+            var selectListIds = ['regionList_delete', 'regionEntry_add', 'regionEntry_remove', 'regionEntry_select', 'allRegionEntry'];
+
+            selectListIds.forEach(function (selectId) {
+                var selectBox = document.getElementById(selectId);
+
+                for (var i = selectBox.options.length - 1; i > 0; i--) {
+                    selectBox.remove(i);
+                }
+                window.regions.forEach(function (r) {
+                    var option = document.createElement('option');
+                    option.value = r;
+                    option.text = r;
+                    selectBox.appendChild(option);
+                });
+
+                selectBox.getElementsByTagName('option')[0].selected = 'selected';
+            });
+
+            updateDataList();
+        };
+
+        deleteRegionLayer = function () {
+            var selectBox = document.getElementById('regionList_delete');
+
+            if (selectBox.selectedIndex !== 0) {
+                var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+
+                window.regions.splice(selectBox.selectedIndex - 1, 1);
+                updateRegionLayerList();
+
+                //firefly.action.dispatchDeleteRegionLayer(selectedLayerId, 'regiontest');
+                firefly.action.dispatchDeleteRegionLayer(selectedLayerId, null, dispatcher = window.ffViewer.dispatch);
+            } else {
+                alert("please select a region layer");
+            }
+        };
+
+        addRegionEntry = function () {
+            var selectBox = document.getElementById('regionEntry_add');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+            var addRegions = document.getElementById('moreRegionContent').value.split('\n').filter(function (r) {
+                return (r.length !== 0);
+            });
+
+            selectBox.getElementsByTagName('option')[0].selected = 'selected';
+
+            //firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, 'regiontest', null, {});
+            if (selectedLayerId === 'Region Layers:') {
+                alert('please select a region layer');
+            } else {
+                var originAry = window.allRegions[selectedLayerId];
+
+                window.allRegions[selectedLayerId] = originAry.concat(addRegions);
+                firefly.action.dispatchAddRegionEntry(selectedLayerId, addRegions, null, null, {}, dispatcher = window.ffViewer.dispatch);
+            }
+        };
+
+        selectRegion = function () {
+            var selectBox = document.getElementById('regionEntry_select');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+            var selRegions = document.getElementById('selectRegionContent').value.split('\n').filter(function (r) {
+                return (r.length !== 0);
+            });
+
+            selectBox.getElementsByTagName('option')[0].selected = 'selected';
+
+            if (selectedLayerId !== 'Region Layers:') {
+                //firefly.action.dispatchSelectRegion(selectedLayerId, selRegions);
+                firefly.action.dispatchSelectRegion(selectedLayerId, selRegions, dispatcher = window.ffViewer.dispatch);
+            } else {
+                alert('please select a region layer');
+            }
+        };
+
+        removeRegionEntry = function () {
+            var selectBox = document.getElementById('regionEntry_remove');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+            var removeRegions = document.getElementById('moreRegionContent').value.split('\n').filter(function (r) {
+                return (r.length !== 0);
+            });
+
+            selectBox.getElementsByTagName('option')[0].selected = 'selected';
+            //firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions);
+            if (selectedLayerId !== 'Region Layers:') {
+                firefly.action.dispatchRemoveRegionEntry(selectedLayerId, removeRegions, window.ffViewer.dispatch);
+            } else {
+                alert('please select a region layer');
+            }
+        };
+
+        showRegions = function () {
+            var selectBox = document.getElementById('allRegionEntry');
+            var selectedLayerId = selectBox.options[selectBox.selectedIndex].value;
+
+            selectBox.getElementsByTagName('option')[0].selected = 'selected';
+
+            if (selectedLayerId !== 'Region Layers:') {
+                document.getElementById('allRegionContent').value = window.allRegions[selectedLayerId].join('\n');
+            } else {
+                alert('please select a region layer');
+            }
+        }
+    }
+</script>
+
+<!-- to try a container: <script  type="text/javascript" src="http://localhost:8090/firefly/firefly_loader.js"></script>-->
+
+<script  type="text/javascript" src="../firefly_loader.js"></script>

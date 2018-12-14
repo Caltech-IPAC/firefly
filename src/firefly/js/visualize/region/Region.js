@@ -96,7 +96,7 @@ export const makeRegion = (
  * @param {number} offsetY default: 0
  * @param {string} message default: '', containing parsing (error) message
  * @param {string} tag default: ''
- * @param {string} coordSys default: 'PHYSICAL'
+ * @param {Object} coordSys default: RegionCsys.PHYSICAL
  * @function makeRegionOptions
  */
 
@@ -122,10 +122,11 @@ export const makeRegionOptions = (
                 offsetY,
                 message,
                 tag,
-                coordSys} )  => (
+                coordSys,
+                textAngle} )  => (
                 cloneArg({color, text, font, pointType, pointSize,
                           editable, movable, rotatable, highlightable, deletable, fixedSize, include,
-                          lineWidth, dashable, dashlist, source, offsetX, offsetY, message, tag, coordSys})
+                          lineWidth, dashable, dashlist, source, offsetX, offsetY, message, tag, coordSys, textAngle})
                 );
 
 
@@ -154,7 +155,8 @@ export const regionPropsList = {
         OFFY:    'offsetY',
         TEXTLOC: 'textloc',
         COORD:   'coordSys',
-        MSG:     'message'
+        MSG:     'message',
+        TEXTANGLE: 'textAngle'
 };
 
 export const defaultRegionProperty = {
@@ -180,9 +182,9 @@ export const defaultRegionProperty = {
     source: 1,
     offsetX: 0,
     offsetY: 0,
-    coordSys: 'PHYSICAL',
+    coordSys: RegionCsys.PHYSICAL,
     textLoc: 'DEFAULT',
-
+    textAngle: 0,
     message: ''
 };
 

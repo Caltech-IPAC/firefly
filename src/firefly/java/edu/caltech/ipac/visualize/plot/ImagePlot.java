@@ -3,26 +3,22 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.visualize.plot.output.PlotOutput;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
-import nom.tam.fits.Fits;
+import edu.caltech.ipac.visualize.plot.projection.ProjectionUtil;
 import nom.tam.fits.FitsException;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.awt.image.IndexColorModel;
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -45,13 +41,11 @@ public class ImagePlot extends Plot implements Serializable {
     private ImagePt        _maxPt;
     private   int            imageScaleFactor;
     private Band             refBand;
-
-//    private ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
     private boolean  _threeColor;
     private boolean _isSharedDataPlot = false;
     private final boolean useForMask;
 
-   public ImagePlot(PlotGroup plotGroup, boolean useForMask) {
+   private ImagePlot(PlotGroup plotGroup, boolean useForMask) {
        super(plotGroup);
        this.useForMask = useForMask;
    }
@@ -70,14 +64,8 @@ public class ImagePlot extends Plot implements Serializable {
         setInitialZoomLevel(initialZoomLevel);
         imageScaleFactor= frGroup.getFitsRead(band).getImageScaleFactor();
         _threeColor= threeColor;
-        if (_threeColor) {
-            _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_24_BIT,
-                                            initColorID,stretch,SQUARE, false);
-        }
-        else {
-            _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
-                                            initColorID,stretch,SQUARE, false);
-        }
+        _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  _threeColor ? ImageData.ImageType.TYPE_24_BIT : ImageData.ImageType.TYPE_8_BIT,
+                                        initColorID,stretch,SQUARE);
         configureImage(frGroup);
     }
 
@@ -95,31 +83,28 @@ public class ImagePlot extends Plot implements Serializable {
         imageScaleFactor= frGroup.getFitsRead(Band.NO_BAND).getImageScaleFactor();
         _threeColor= false;
         useForMask = true;
-
-       _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
-                                       iMasks,stretch,SQUARE, false);
-
+       _imageData = new ImageDataGroup(frGroup.getFitsReadAry(), iMasks,stretch,SQUARE);
         configureImage(frGroup);
     }
 
 
     public boolean isThreeColor() { return _threeColor; }
     public boolean isUseForMask() { return useForMask; }
+//    public Band getRefBand() { return refBand; }
 
 
     public void setThreeColorBand(FitsRead colorBandFitsRead, Band band, ActiveFitsReadGroup frGroup)
-                                   throws GeomException, 
+                                   throws GeomException,
                                           FitsException,
                                           IOException {
         threeColorOK(band);
-//        ImagePlot basePlot= (ImagePlot)getPlotGroup().getBasePlot();
         FitsRead refFitsRead= frGroup.getFitsRead(refBand);
 
-        if (refFitsRead==colorBandFitsRead || refFitsRead.isSameProjection(colorBandFitsRead)) {
+        if (refFitsRead==colorBandFitsRead || ProjectionUtil.isSameProjection(refFitsRead,colorBandFitsRead)) {
             frGroup.setFitsRead(band,colorBandFitsRead);
         }
         else {
-            frGroup.setFitsRead(band,FitsRead.createFitsReadWithGeom( colorBandFitsRead, refFitsRead, false));
+            frGroup.setFitsRead(band, FitsReadFactory.createFitsReadWithGeom( colorBandFitsRead, refFitsRead, false));
         }
         _imageData.markImageOutOfDate();
     }
@@ -142,51 +127,6 @@ public class ImagePlot extends Plot implements Serializable {
 
     public Projection getProjection() { return _projection; }
 
-    public boolean isColorBandInUse(Band band, ActiveFitsReadGroup frGroup) {
-        threeColorOK(band);
-        return frGroup.getFitsRead(band)!=null;
-    }
-
-    public boolean isColorBandVisible(Band band, ActiveFitsReadGroup frGroup) {
-        threeColorOK(band);
-        return frGroup.getFitsRead(band)!=null;
-    }
-
-
-   /**
-    * Writes a FITS file with (possible) FITS extension images 
-    *
-    * @param stream Output File Stream
-    * @param fitsRead of FitsRead objects
-    * @throws FitsException if problem is fits related
-    * @throws IOException  if problem is in writing the file
-    */
-
-//    static public void writeFile(OutputStream stream, FitsRead[] fitsReadAry) throws FitsException, IOException{
-//        Fits output_fits = new Fits();
-//        for(FitsRead fr : fitsReadAry) {
-//            Fits refFits = fr.getFits();
-//            BasicHDU one_image_hdu = refFits.getHDU(0);
-//            Header header = one_image_hdu.getHeader();
-//            Data data = one_image_hdu.getData();
-//            ImageHDU image_hdu = new ImageHDU(header, data);
-//            output_fits.addHDU(image_hdu);
-//        }
-//        output_fits.write(new DataOutputStream(stream));
-//    }
-
-//    static public void writeFile(OutputStream stream, Fits refFits) throws FitsException, IOException{
-//        Fits output_fits = new Fits();
-//        BasicHDU one_image_hdu = refFits.getHDU(0);
-//        Header header = one_image_hdu.getHeader();
-//        Data data = one_image_hdu.getData();
-//        ImageHDU image_hdu = new ImageHDU(header, data);
-//        output_fits.addHDU(image_hdu);
-//        output_fits.write(new DataOutputStream(stream));
-//    }
-
-
-
     /**
      * get the coordinate system of the plot.
      * @return  CoordinateSys  the coordinate system.
@@ -194,24 +134,9 @@ public class ImagePlot extends Plot implements Serializable {
    public CoordinateSys getCoordinatesOfPlot() { return _imageCoordSys; }
 
 
-//    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
-//        Graphics2D g2= ev.getGraphics();
-//        if (shouldPaint()) {
-//            SaveG2Stuff  saveStuff= prePaint(g2,imageScaleFactor, getPercentOpaque());
-//            for(ImageData id : _imageData) {
-//                g2.drawImage(id.getImage(frGroup.getFitsReadAry()),
-//                             Math.round(getOffsetX()/imageScaleFactor) + id.getX(),
-//                             Math.round(getOffsetY()/imageScaleFactor) + id.getY(),
-//                             null);
-//            }
-//
-//            postPaint(saveStuff);
-//        }
-//    }
 
 
-
-    public static SaveG2Stuff prePaint(Graphics2D g2, int imageScaleFactor, float percentOpaque) {
+    private static SaveG2Stuff prePaint(Graphics2D g2, int imageScaleFactor, float percentOpaque) {
         AffineTransform trans= g2.getTransform();
         AffineTransform saveTrans= (AffineTransform)trans.clone();
         trans.scale(imageScaleFactor, imageScaleFactor);
@@ -222,7 +147,7 @@ public class ImagePlot extends Plot implements Serializable {
         return new SaveG2Stuff(g2,savComposite,saveTrans);
     }
 
-    public static void postPaint(SaveG2Stuff saveStuff) {
+    private static void postPaint(SaveG2Stuff saveStuff) {
         Graphics2D g2= saveStuff._g2;
         g2.setComposite(saveStuff._composite);
         g2.setTransform(saveStuff._trans);
@@ -239,13 +164,7 @@ public class ImagePlot extends Plot implements Serializable {
             else {
                 ExecutorService executor = Executors.newFixedThreadPool(coreCnt);
                 for(ImageData id : _imageData)  {
-                    final ImageData idSave= id;
-                    Runnable worker = new Runnable() {
-                        public void run() {
-                            idSave.getImage(frGroup.getFitsReadAry());
-                        }
-                    };
-                    executor.execute(worker);
+                    executor.execute(() -> id.getImage(frGroup.getFitsReadAry()));
                 }
                 executor.shutdown();
                 try {
@@ -488,8 +407,7 @@ public class ImagePlot extends Plot implements Serializable {
      * @return ImagePt the new point
      */
     @Override
-    public ImagePt getDistanceCoords(ImagePt pt, double x, double y)
-                                  throws ProjectionException {
+    public ImagePt getDistanceCoords(ImagePt pt, double x, double y) {
         return _projection.getDistanceCoords(pt,x,y);
     }
 
@@ -502,8 +420,7 @@ public class ImagePlot extends Plot implements Serializable {
      * @return ImagePt the new point
      */
     @Override
-    public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y)
-                                  throws ProjectionException {
+    public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y) {
         return _projection.getDistanceCoords(pt,x,y);
     }
 
@@ -735,7 +652,7 @@ public class ImagePlot extends Plot implements Serializable {
         p._attributes       = _attributes;
         p.imageScaleFactor  = imageScaleFactor;
         p.setZoomTo(        1.0F );
-        if (plotGroup != null) p.computeOffsetXY(frGroup);
+//        if (plotGroup != null) p.computeOffsetXY(frGroup);
         p.getPlotGroup().addToPlotted();
         p.setPlotDesc(      getPlotDesc() );
         p.setShortPlotDesc( getShortPlotDesc() );
@@ -804,93 +721,24 @@ public class ImagePlot extends Plot implements Serializable {
 //======================
 
    private void configureImage(ActiveFitsReadGroup frGroup) throws FitsException {
-      try {
-
-         PlotGroup plotGroup= getPlotGroup();
-         if (!plotGroup.isOverlayEnabled() && !plotGroup.isBasePlot(this)) {
-            throw new FitsException(
-                "You may not overlay this image over an image that does " +
-                "not contain projection information");
-         }
-         ImageHeader imageHeader= frGroup.getFitsRead(refBand).getImageHeader();
-         _isPlotted= true;
-         computeMinMaxPoint();
-         try {
-             determineCoordSys(frGroup);
-             _projection= imageHeader.createProjection(_imageCoordSys );
-             if (plotGroup.isBasePlot(this)) {
-                 setZoomTo(getInitialZoomLevel());
-             }
-             else {
-                 computeOffsetXY(frGroup);
-             }
-             plotGroup.addToPlotted();
-             firePlotStatusNewPlot();
-         } catch (FitsException fe) {
-             if (plotGroup.isBasePlot(this)) {
-                 _projection= imageHeader.createProjection(_imageCoordSys );
-                 plotGroup.setOverlayEnabled(false);
-                 setZoomTo(getInitialZoomLevel());
-                 plotGroup.addToPlotted();
-                 firePlotStatusNewPlot();
-             }
-             else {
-                 FitsException fitsE= new FitsException(
-                    "This image does not contain any projection information, "+
-                    "you cannot show this image as an overlay");
-                  fitsE.initCause(fe);
-                  throw fitsE;
-             }
-         }
-      } catch (OutOfMemoryError e) {
-         freeResources();
-         FitsException fitsE= new FitsException("Out Of Memory");
-         fitsE.initCause(e);
-         throw fitsE;
-      }
-   }
-
-   private void computeOffsetXY(ActiveFitsReadGroup frGroup) { //todo: if we ever do offset again this method must be fix, see spot-common
-         ImageHeader baseHDR= frGroup.getFitsRead(refBand).getImageHeader();
-         ImageHeader thisHDR= frGroup.getFitsRead(refBand).getImageHeader();
-
-
-	 /* subtract 0.5 from crpix to put it in ImagePt coordinates */
-         setOffsetX( (int) Math.round((baseHDR.crpix1-0.5) - 
-	     (thisHDR.crpix1-0.5)*imageScaleFactor ));
-         setOffsetY( (int) Math.round((baseHDR.crpix2-0.5) - 
-	     (thisHDR.crpix2-0.5)*imageScaleFactor ));
-   }
-
-   private void determineCoordSys(ActiveFitsReadGroup frGroup) throws FitsException {
-       ImageHeader   hdr=  frGroup.getFitsRead(refBand).getImageHeader();
-       int sys= hdr.getJsys();
-       _imageCoordSys= CoordinateSys.makeCoordinateSys( sys, hdr.getEquinox() );
-
-       // tmp
-       if ((hdr.getEquinox() == 2000.0) && (sys == -1) ) {      // tmp
-          _imageCoordSys= CoordinateSys.EQ_J2000;  // tmp
-       }                                           // tmp
-       // tmp
-
-             // if we don't know the coordinate system
-             // this next blocks figures out what to say and
-             // then throws an exception
-       if (_imageCoordSys == CoordinateSys.UNDEFINED) {
-            String coordDesc;
-            if      (sys == CoordConv.EQUATORIAL_J) coordDesc= "Equatorial J";
-            else if (sys == CoordConv.EQUATORIAL_B) coordDesc= "Equatorial B";
-            else if (sys == CoordConv.ECLIPTIC_J)   coordDesc= "Ecliptic J";
-            else if (sys == CoordConv.ECLIPTIC_B)   coordDesc= "Ecliptic B";
-            else if (sys == CoordConv.GALACTIC)     coordDesc= "Galactic";
-            else if (sys == CoordConv.SUPERGALACTIC)coordDesc= "SuperGalactic";
-            else                                    coordDesc= "Unknown";
-
-            throw new FitsException(
-                 "Not yet suporting the coordinate system: " + 
-                  coordDesc + " " + hdr.getEquinox());
+       try {
+           PlotGroup plotGroup= getPlotGroup();
+           _isPlotted= true;
+           computeMinMaxPoint();
+           FitsRead fr= frGroup.getFitsRead(refBand);
+           _imageCoordSys= fr.determineCoordSys();
+           _projection= new ImageHeader(fr.getHeader()).createProjection();
+           setZoomTo(getInitialZoomLevel());
+           plotGroup.addToPlotted();
+           firePlotStatusNewPlot();
+       } catch (OutOfMemoryError e) {
+           freeResources();
+           FitsException fitsE= new FitsException("Out Of Memory");
+           fitsE.initCause(e);
+           throw fitsE;
        }
    }
+
 
 
    private void computeMinMaxPoint() {
@@ -901,102 +749,13 @@ public class ImagePlot extends Plot implements Serializable {
 
     public static class SaveG2Stuff {
         public final Graphics2D _g2;
-        public final Composite _composite;
-        public final AffineTransform _trans;
-        public SaveG2Stuff ( Graphics2D g2, Composite composite, AffineTransform trans) {
+        final Composite _composite;
+        final AffineTransform _trans;
+        SaveG2Stuff ( Graphics2D g2, Composite composite, AffineTransform trans) {
             _g2= g2;
             _composite= composite;
             _trans= trans;
         }
     }
 
-    private static String getPath(String inputName) {
-        String[] names = inputName.split("/");
-//        String fileName = names[names.length - 1];
-
-        //return fileName.split("\\.")[0];
-        return (inputName.substring(0, inputName.length()-names[names.length-1].length()));
-
-
-    }
-
-    //************ Test color model
-    public static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
-
-        byte[] cMap=new byte[768]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
-        Arrays.fill( cMap, (byte) 255 ); //file all pixel with black color
-        //Color white = new Color(0, 0, 0);
-
-        for (int i=0; i<lsstMasks.length; i++){
-            int cMapIndex = ( int) (3* lsstMasks[i].getIndex());
-            cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
-            cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
-            cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
-
-        }
-
-        return new IndexColorModel(8, 256, cMap,0, false, 255);
-
-    }
-    /**
-     * 7/14/15 by LZ
-     * Add this main to test mask over lay plot
-     * @throws FitsException
-     */
-    public static void main(String [] args) throws FitsException, IOException {
-
-        if (args.length<1){
-            usage();
-            System.exit(0);
-        }
-
-
-        String inFitsPathName = args[0];
-        Fits fits = new Fits(inFitsPathName );
-        String path = getPath(inFitsPathName);
-
-
-        FitsRead fitsRead =  FitsRead.createFitsReadArray(fits)[0];
-        ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
-        frGroup.setFitsRead(Band.NO_BAND,fitsRead);
-
-
-        //test only the red color
-        ImageMask lsstmaskRed= new ImageMask(0, Color.RED);
-        ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
-        ImageMask lsstmaskBlue = new ImageMask(8, Color.BLUE);
-
-
-        ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
-
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
-
-        PlotOutput po = new PlotOutput(imagePlot, frGroup);
-        List<PlotOutput.TileFileInfo> results;
-
-        File imagefileDir = new File(path);
-        String    root="testMask";
-        int tileCnt=1;
-        results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG,true,tileCnt>0);
-
-        PlotImages images= new PlotImages(root,results.size(), imagePlot.getScreenWidth(), imagePlot.getScreenHeight(), imagePlot.getZoomFactor());
-       /* PlotImages.ImageURL imageURL;
-        String relFile;
-        int idx= 0;
-        for(PlotOutput.TileFileInfo info : results) {
-            relFile= ServerContext.replaceWithUsersBaseDirPrefix(info.getFile());
-            imageURL= new PlotImages.ImageURL(relFile,
-                    info.getX(), info.getY(),
-                    info.getWidth(), info.getHeight(),
-                    idx++,
-                    info.isCreated());
-            images.add(imageURL);
-        }
-*/
-
-    }
-
-    private static void usage(){
-        System.out.println("executableName  fitsFile");
-    }
 }
