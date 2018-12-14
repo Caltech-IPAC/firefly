@@ -331,12 +331,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             // copy meta
             String metaSql = "select * from data_meta";
             metaSql = dbAdapter.createTableFromSelect(resultSetID + "_meta", metaSql);
-            JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
+            try {
+                JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
+            } catch (Exception mx) {/*ignore table may not exists*/}
 
             // copy aux
             String auxSql = "select * from data_aux";
             auxSql = dbAdapter.createTableFromSelect(resultSetID + "_aux", auxSql);
-            JdbcFactory.getSimpleTemplate(dbInstance).update(auxSql);
+            try {
+                JdbcFactory.getSimpleTemplate(dbInstance).update(auxSql);
+            } catch (Exception ax) {/*ignore table may not exists*/}
         }
 
         // resultSetID is a table created sort and filter in consideration.  no need to re-apply.

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
@@ -64,10 +65,11 @@ public class DsvTableIO {
             }
 
             DataGroup dg = new DataGroup(null, columns);
+            TableUtil.ColCheckInfo colCheckInfo = new TableUtil.ColCheckInfo();
 
             // parse the data
             for (int i = 1; i < records.size(); i++) {
-                DataObject row = parseRow(dg, records.get(i));
+                DataObject row = parseRow(dg, records.get(i), colCheckInfo);
                 if (row != null) {
                     dg.add(row);
                 }
@@ -113,7 +115,7 @@ public class DsvTableIO {
         }
     }
 
-    static DataObject parseRow(DataGroup source, CSVRecord line) {
+    static DataObject parseRow(DataGroup source, CSVRecord line, TableUtil.ColCheckInfo colCheckInfo) {
 
         DataType[] headers = source.getDataDefinitions();
         if (line != null && line.size() > 0) {
@@ -127,9 +129,8 @@ public class DsvTableIO {
                     }
                     row.setDataElement(type, type.convertStringToData(val));
 
-                    if (type.getFormat() == null) {
-                        IpacTableUtil.guessFormatInfo(type, val);
-                    }
+                    TableUtil.CheckInfo checkInfo = colCheckInfo.getCheckInfo(type.getKeyName());
+                    IpacTableUtil.applyGuessLogic(type, val, checkInfo);
                 }
             return row;
         }

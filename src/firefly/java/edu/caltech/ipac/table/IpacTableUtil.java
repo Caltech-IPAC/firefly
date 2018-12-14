@@ -14,7 +14,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: Jun 25, 2009
@@ -25,7 +29,8 @@ import java.util.stream.Collectors;
 public class IpacTableUtil {
 
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
-
+    private static final Pattern SCIENTIFIC = Pattern.compile("\\d\\.(\\d+)[Ee].*");    // scientific format
+    private static final Pattern FLOATING = Pattern.compile("\\d*\\.(\\d+)");            // decimal format
 
     public static List<DataGroup.Attribute> makeAttributes(DataGroup dataGroup) {
         return makeAttributes(dataGroup.getAttributeList(), dataGroup.getDataDefinitions());
@@ -64,7 +69,7 @@ public class IpacTableUtil {
     }
 
     private static void ensureKey(List<DataGroup.Attribute> attribs, String name, String value, String tag) {
-        if (!StringUtils.isEmpty(value)) {
+        if (!isEmpty(value)) {
             String key = TableMeta.makeAttribKey(tag, name);
             attribs.add(new DataGroup.Attribute(key, value));
         }
@@ -310,40 +315,72 @@ public class IpacTableUtil {
             }
         }
     }
-    public static void guessFormatInfo(DataType dataType, String value) {
-       guessFormatInfo(dataType, value, 0);
-    }
 
-    public static void guessFormatInfo(DataType dataType, String value, int precision) {
-
-        if (dataType.getFormat() != null ||
-                dataType.getFormat() != null ||
-                StringUtils.isEmpty(value)) {
-            return;     // format exists
+    public static void applyGuessLogic(DataType type, String val, TableUtil.CheckInfo chkInfo) {
+        if (!chkInfo.formatChecked) {
+            chkInfo.formatChecked = guessFormatInfo(type, val);
         }
 
-        String formatStr = guessFormatStr(dataType, value, precision);
-        if (formatStr != null) {
-            dataType.setFormat(formatStr);
+        if (!chkInfo.htmlChecked) {
+            // disable sorting if value is HTML, or unit is 'html'
+            // this block should only be executed once, when formatInfo is not set.
+            if (type.getDataType() == String.class ) {
+                if (String.valueOf(type.getUnits()).equalsIgnoreCase("html") ||
+                        val.matches("<[^>]+>.*")) {
+                    type.setSortable(false);
+                    type.setFilterable(false);
+                }
+            }
+            chkInfo.htmlChecked = true;
         }
     }
 
-    public static void guessDataType(DataType type, String rval) {
-        if (StringUtils.isEmpty(rval)) return;
+    public static boolean guessFormatInfo(DataType type, String val) {
+        return guessFormatInfo(type, val, 0);
+    }
 
-        try {
-            Long.parseLong(rval);
-            type.setDataType(Long.class);
-            return;
-        }catch (Exception e){}
+    /**
+     * Given column info and the value, guess the precision for that column, then set it.
+     * Precision format is documented here: edu.caltech.ipac.table.DataType#setPrecision(java.lang.String)
+     * @param type  column info
+     * @param val   the value to guess on.  This should be be null or empty.
+     * @param minPrecision minimum precision
+     * @return false if logic cannot be applied to the given value, like when val is null or null-string.
+     */
+    public static boolean guessFormatInfo(DataType type, String val, int minPrecision) {
 
+        if (!type.isFloatingPoint()) return true;       // precision only applies to floating-point numbers.
+        if (isEmpty(val) || (StringUtils.areEqual(val, type.getNullString())))  return false;       // null value.. skip
+
+        Matcher matcher = SCIENTIFIC.matcher(val);
+        if (matcher.matches()) {
+            type.setPrecision("E" + Math.max(matcher.group(1).length() + 1, minPrecision));
+        } else {
+            matcher = FLOATING.matcher(val);
+            if (matcher.matches()) {
+                type.setPrecision("F" + Math.max(matcher.group(1).length(), minPrecision));
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Guess the data type of this column based on the given value, and then set it.
+     * Since we cannot determine if a number is int, long, float, or double without scanning the full table,
+     * we'll just say it's double if numeric and string otherwise.
+     * @param type  column definition
+     * @param val   value to
+     */
+    public static void guessDataType(DataType type, String val) {
+
+        if (isEmpty(val)) return;
         try {
-            Double.parseDouble(rval);
+            Double.parseDouble(val);
             type.setDataType(Double.class);
-            return;
-        }catch (Exception e){}
-
-        type.setDataType(String.class);
+        } catch (Exception ex) {
+            type.setDataType(String.class);
+        }
     }
 
     /**
@@ -381,19 +418,8 @@ public class IpacTableUtil {
                         IpacTableUtil.guessDataType(dt, val);
                     }
 
-                    if (dt.getFormat() == null) {
-                        IpacTableUtil.guessFormatInfo(dt, val);
-
-                        // disable sorting if value is HTML, or unit is 'html'
-                        // this block should only be executed once, when formatInfo is not set.
-                        if (dt.getDataType().isAssignableFrom(String.class)) {
-                            if (String.valueOf(dt.getUnits()).equalsIgnoreCase("html") ||
-                                    val.matches("<[^>]+>.*")) {
-                                dt.setSortable(false);
-                                dt.setFilterable(false);
-                            }
-                        }
-                    }
+                    TableUtil.CheckInfo checkInfo = tableDef.getColCheckInfos().getCheckInfo(dt.getKeyName());
+                    applyGuessLogic(dt, val, checkInfo);
 
                     row.setDataElement(dt, dt.convertStringToData(val));
 
@@ -512,43 +538,6 @@ public class IpacTableUtil {
         }
 
         return tableDef;
-    }
-
-    private static String guessFormatStr(DataType type, String val, int precision) {
-        if (String.class.isAssignableFrom(type.getDataType())) {
-            return "%s";
-        }
-
-        String formatStr = null;
-        try {
-            //first check to see if it's numeric
-            double numval = Double.parseDouble(val);
-
-            if (Double.isNaN(numval)) {
-                return null;
-            } else {
-                if (val.matches(".+[e|E].+")) {
-                    // scientific notation
-                    String convStr = val.indexOf("E") >= 0 ? "E" : "e";
-                    String[] ary = val.split("e|E");
-                    if (ary.length == 2) {
-                        int prec = ary[0].length() - ary[0].indexOf(".") - 1;
-                        return "%." + prec + convStr;
-                    }
-                } else  if (val.indexOf(".") >= 0) {
-                    // decimal format
-                    int idx = val.indexOf(".");
-                    int prec = val.length() - idx - 1;
-                    return "%." + Math.max(prec, precision) + "f";
-                } else {
-                    boolean isFloat= (type.getDataType()==Float.class || type.getDataType()==Double.class);
-                    formatStr = isFloat ?  "%.0f" : "%d";
-                }
-            }
-        } catch (NumberFormatException e) {
-            formatStr = "%s";
-        }
-        return formatStr;
     }
 
     //====================================================================
