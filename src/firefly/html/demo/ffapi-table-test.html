@@ -209,15 +209,29 @@ This will be resolved in the near future.
 Use format:  col.[col-name].[col-prop]
 
 [col-prop] : java -> javascript
-Name                * @prop {string} name      name of the column
 Label               * @prop {string} label     display name of the column
 Unit                * @prop {string} units     data units
-ShortDescription    * @prop {string} desc      description of the column
-Width               * @prop {number} width     column display width
-PrefWidth           * @prop {number} prefWidth     preferred width.  if width is not defined
+NullStr             * @prop {string} nullString string used to represent null value
+Desc                * @prop {string} desc      description of the column
+Width               * @prop {number} width     max width needed to display data.
+PrefWidth           * @prop {number} prefWidth     preferred width, regardless of the data.
 Sortable            * @prop {boolean} sortable     true if undefined
 Filterable          * @prop {boolean} filterable   true if undefined
 Visibility          * @prop {string} visibility    show, hide, or hidden.  hidden columns are not viewable by users.
+EnumVals            * @prop {string} enumVals   contains only values in this list.  values are seprated by comma(',')
+Format              * @prop {string} format   a java format to be applied to the value.  This can applies to any data type.
+Precision           * @prop {string} precision applies only to floating point numbers.
+                                               A string Tn where T is either F, E, or G
+                                               If T is not present, it defaults to F.
+                                               When T is F or E, n is the number of significant figures after the decimal point.
+                                               When T is G, n is the number of significant digits
+UCD                 * @prop {string} UCD       UCD of this column.
+UType               * @prop {string} utype     UType of this column.
+Ref                 * @prop {string} ref       refer to this column for declarations.
+Value               * @prop {string} value     static value of this column for all of the rows in this table
+MaxValue            * @prop {string} maxValue  maximum value.
+MinValue            * @prop {string} minValue  minimum value.
+
                 </pre>
             </div>
 

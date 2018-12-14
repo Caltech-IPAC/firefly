@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
-import static edu.caltech.ipac.table.IpacTableUtil.makeAttributes;
+import static edu.caltech.ipac.table.IpacTableUtil.createMetaFromColumns;
 
 /**
  * Date: 11/21/16
@@ -29,7 +29,7 @@ public class BgIpacTableHandler extends IpacTableWriter.IpacTableHandler {
     private Timer timer;
 
     public BgIpacTableHandler(File ofile, DataGroup source, TableServerRequest request) {
-        this(ofile, Arrays.asList(source.getDataDefinitions()), makeAttributes(source), source.iterator(), request);
+        this(ofile, Arrays.asList(source.getDataDefinitions()), createMetaFromColumns(source), source.iterator(), request);
     }
 
     public BgIpacTableHandler(File ofile, List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr, TableServerRequest request) {

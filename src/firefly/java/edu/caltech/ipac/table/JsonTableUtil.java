@@ -276,49 +276,35 @@ public class JsonTableUtil {
             c.put("name", dt.getKeyName());
             if (dt.getWidth() > 0)
                 c.put("width", dt.getWidth());
-            if (!StringUtils.isEmpty(dt.getTypeDesc()))
-                c.put("type", dt.getTypeDesc());
-            if (!StringUtils.isEmpty(dt.getUnits()))
-                c.put("units", dt.getUnits());
-            if (!StringUtils.isEmpty(dt.getNullString()))
-                c.put("nullString", dt.getNullString());
-            if (!StringUtils.isEmpty(dt.getDesc()))
-                c.put("desc", dt.getDesc());
-            if (!StringUtils.isEmpty(dt.getLabel()))
-                c.put("label", dt.getLabel());
-            if (!StringUtils.isEmpty(dt.getDesc()))
-                c.put("desc", dt.getDesc());
+
+            applyIfNotEmpty(dt.getTypeDesc(), v -> c.put("type", v));
+            applyIfNotEmpty(dt.getUnits(), v -> c.put("units", v));
+            applyIfNotEmpty(dt.getNullString(), v -> c.put("nullString", v));
+            applyIfNotEmpty(dt.getDesc(), v -> c.put("desc", v));
+            applyIfNotEmpty(dt.getLabel(), v -> c.put("label", v));
+
             if (dt.getVisibility() != DataType.Visibility.show)
                 c.put("visibility", dt.getVisibility().name());
-            if (dt.getWidth() > 0)
-                c.put("width", dt.getWidth());
             if (dt.getPrefWidth() > 0)
                 c.put("prefWidth", dt.getPrefWidth());
             if (!dt.isSortable())
                 c.put("sortable", false);
             if (!dt.isFilterable())
                 c.put("filterable", false);
-            if (!StringUtils.isEmpty(dt.getUnits()))
-                c.put("units", dt.getUnits());
-            if (!StringUtils.isEmpty(dt.getSortByCols()))
-                c.put("sortByCols", dt.getSortByCols());
-            if (!StringUtils.isEmpty(dt.getEnumVals()))
-                c.put("enumVals", dt.getEnumVals());
-            if (!StringUtils.isEmpty(dt.getEnumVals()))
-                c.put("enumVals", dt.getEnumVals());
 
-            if (!StringUtils.isEmpty(dt.getID()))
-                c.put("ID", dt.getID());
-            if (!StringUtils.isEmpty(dt.getPrecision()))
-                c.put("precision", dt.getPrecision());
-            if (!StringUtils.isEmpty(dt.getUCD()))
-                c.put("UCD", dt.getUCD());
-            if (!StringUtils.isEmpty(dt.getUType()))
-                c.put("utype", dt.getUType());
-            if (!StringUtils.isEmpty(dt.getMaxValue()))
-                c.put("maxValue", dt.getMaxValue());
-            if (!StringUtils.isEmpty(dt.getMinValue()))
-                c.put("minValue", dt.getMinValue());
+            applyIfNotEmpty(dt.getSortByCols(), v -> c.put("sortByCols", v));
+            applyIfNotEmpty(dt.getEnumVals(), v -> c.put("enumVals", v));
+            applyIfNotEmpty(dt.getID(), v -> c.put("ID", v));
+            applyIfNotEmpty(dt.getPrecision(), v -> c.put("precision", v));
+            applyIfNotEmpty(dt.getUCD(), v -> c.put("UCD", v));
+            applyIfNotEmpty(dt.getUType(), v -> c.put("utype", v));
+            applyIfNotEmpty(dt.getRef(), v -> c.put("ref", v));
+            applyIfNotEmpty(dt.getMaxValue(), v -> c.put("maxValue", v));
+            applyIfNotEmpty(dt.getMinValue(), v -> c.put("minValue", v));
+            applyIfNotEmpty(dt.getFormat(), v -> c.put("format", v));
+            applyIfNotEmpty(dt.getFmtDisp(), v -> c.put("fmtDisp", v));
+
+
             if (dt.getLinkInfos().size() > 0)
                 c.put("links", toJsonLinkInfos(dt.getLinkInfos()));
 

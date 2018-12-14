@@ -4,16 +4,39 @@
 package edu.caltech.ipac.firefly.server.util.tables;
 
 import edu.caltech.ipac.TestCategory;
+import edu.caltech.ipac.firefly.ConfigTest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.io.IpacTableReader;
+import org.json.simple.JSONObject;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+
+import static edu.caltech.ipac.table.JsonTableUtil.getPathValue;
 import static org.junit.Assert.assertEquals;
 
 /**
  * General tests for table related functions
  */
-public class TableTest {
+public class TableTest extends ConfigTest {
+
+    @BeforeClass
+    public static void setUp() {
+        // needed by test testGetSelectedData because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
+        setupServerContext(null);
+    }
 
     @Test
     public void testFormat() {
@@ -66,6 +89,90 @@ public class TableTest {
         assertEquals("123", v);
 
     }
+
+
+    /**
+     * Ensure column meta from syntax `col.*.[prop]` are properly preserved during SearchProcessor's
+     * execution cycle.. source -> DataGroup -> db -> DataGroup -> json
+     */
+    @Test
+    public void testColumnMeta() {
+        String testTable = "\\col.ra.Visibility = hidden\n" +
+                "\\col.ra.Label = Label\n" +
+                "\\col.ra.Width = 30\n" +
+                "\\col.ra.PrefWidth = 40\n" +
+                "\\col.ra.Desc = Desc\n" +
+                "\\col.ra.NullStr = NullStr\n" +
+                "\\col.ra.Unit = Unit\n" +
+                "\\col.ra.Format = Format\n" +
+                "\\col.ra.FmtDisp = FmtDisp\n" +
+                "\\col.ra.Sortable = false\n" +
+                "\\col.ra.Filterable = false\n" +
+                "\\col.ra.SortByCols = SortByCols\n" +
+                "\\col.ra.EnumVals = EnumVals\n" +
+                "\\col.ra.Precision = E7\n" +
+                "\\col.ra.UCD = UCD\n" +
+                "\\col.ra.UType = UType\n" +
+                "\\col.ra.Ref = Ref\n" +
+                "\\col.ra.MinValue = MinValue\n" +
+                "\\col.ra.MaxValue = MaxValue\n" +
+                "\\col.dec.ShortDescription = ShortDescription\n" +
+                "\\\n" +
+                "|ra         |dec       |\n" +
+                "|double     |double    |\n" +
+                "|deg        |rad       |\n" +
+                "|-999       |-999      |\n" +
+                " 1.234567890 1.23456789 ";
+
+        EmbeddedDbProcessor proc = new EmbeddedDbProcessor() {
+            public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
+                try {
+                return IpacTableReader.read(new ByteArrayInputStream(testTable.getBytes()));
+                } catch (Exception e) {
+                    throw new DataAccessException(e.getMessage(), e);
+                }
+            }
+        };
+
+        DataGroup dg = null;
+        try {
+            dg = proc.getData(new TableServerRequest("dummyId")).getData();
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+        JSONObject jsonTable = JsonTableUtil.toJsonDataGroup(dg);
+
+        JSONObject ra = (JSONObject) getPathValue(jsonTable, "tableData", "columns", "0");    // 1st col.. ra
+        Assert.assertEquals("ra", ra.get("name"));
+        Assert.assertEquals("Label", ra.get("label"));
+        Assert.assertEquals("double", ra.get("type"));
+        Assert.assertEquals("Unit", ra.get("units"));
+        Assert.assertEquals("NullStr", ra.get("nullString"));
+        Assert.assertEquals("Desc", ra.get("desc"));
+        Assert.assertEquals(30, ra.get("width"));
+        Assert.assertEquals(40, ra.get("prefWidth"));
+        Assert.assertEquals(false, ra.get("sortable"));
+        Assert.assertEquals(false, ra.get("filterable"));
+        Assert.assertEquals("hidden", ra.get("visibility"));
+        Assert.assertEquals("SortByCols", ra.get("sortByCols"));
+        Assert.assertEquals("EnumVals", ra.get("enumVals"));
+        Assert.assertEquals("E7", ra.get("precision"));
+        Assert.assertEquals("UCD", ra.get("UCD"));
+        Assert.assertEquals("UType", ra.get("utype"));
+        Assert.assertEquals("Ref", ra.get("ref"));
+        Assert.assertEquals("MaxValue", ra.get("maxValue"));
+        Assert.assertEquals("MinValue", ra.get("minValue"));
+        Assert.assertEquals("Format", ra.get("format"));
+        Assert.assertEquals("FmtDisp", ra.get("fmtDisp"));
+
+        JSONObject dec = (JSONObject) getPathValue(jsonTable, "tableData", "columns", "1");    // 2nd col.. dec
+        Assert.assertEquals("ShortDescription", dec.get("desc"));        // testing old-meta ShortDescription
+    }
+
+
+//====================================================================
+//  Not part of main test.
+//====================================================================
 
     @Category({TestCategory.Perf.class})
     @Test

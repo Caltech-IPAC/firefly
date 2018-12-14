@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.table.IpacTableUtil.makeAttributes;
+import static edu.caltech.ipac.table.IpacTableUtil.createMetaFromColumns;
 
 /**
  * This class handles an action to save a catalog in IPAC table format to local file.
@@ -88,7 +88,7 @@ public class IpacTableWriter {
         }
 
         List<DataGroup.Attribute> attributes = forExport ? dataGroup.getTableMeta().getKeywords()
-                                : IpacTableUtil.makeAttributes(dataGroup);  // add column info as attributes
+                                : IpacTableUtil.createMetaFromColumns(dataGroup);  // add column info as attributes
 
         IpacTableUtil.writeAttributes(out, attributes, forExport);
         IpacTableUtil.writeHeader(out, headers);
@@ -231,13 +231,13 @@ public class IpacTableWriter {
         private int rowCount = 0;
 
         public IpacTableHandler(File ofile, DataGroup source) {
-            this(ofile, Arrays.asList(source.getDataDefinitions()), makeAttributes(source), source.iterator());
+            this(ofile, Arrays.asList(source.getDataDefinitions()), createMetaFromColumns(source), source.iterator());
         }
 
         public IpacTableHandler(File ofile, List<DataType> headers, List<DataGroup.Attribute> attributes, Iterator<DataObject> itr) {
             this.ofile = ofile;
             this.headers = headers;
-            this.attributes = IpacTableUtil.makeAttributes(attributes, headers.toArray(new DataType[0]));
+            this.attributes = IpacTableUtil.createMetaFromColumns(attributes, headers.toArray(new DataType[0]));
             this.itr = itr;
         }
 
