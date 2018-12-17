@@ -549,7 +549,9 @@ export function dispatchCreateMarkerLayer(markerId, layerTitle, plotId = [], att
  * @summary create drawing layer with footprint
  * @param {string} footprintId - id of the drawing layer
  * @param {string} layerTitle - title of the drawing layer
- * @param {footprintInfo} footprintData footprint information for footprint layer
+ * @param {footprintInfo} footprintData footprint information for footprint layer,
+ *                        relocateBy: 'origin' means relocating footprint origin to the target location
+ *                                    'center' means relocating footprint center to the target location
  * @param {string[]|string} plotId - array or string of plot id. If plotId is empty, all plots of the active group are applied
  * @param {bool} attachPlotGroup - attach all plots of the same plot group
  * @param dispatcher

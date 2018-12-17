@@ -4,7 +4,7 @@
 
 import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {xor,isNil, isEmpty,get, isString, isFunction, throttle} from 'lodash';
+import {xor,isNil, isEmpty,get, isString, isFunction, throttle, isNumber, isArray} from 'lodash';
 import {flux} from '../Firefly.js';
 import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
@@ -453,6 +453,19 @@ function findMouseOwner(dlList, plot, screenPt) {
 
                       // Step 3
     const cc= CysConverter.make(plot);
+
+    const getDist = (vertexDef) => {
+        const {pointDist} = vertexDef || {};
+
+        return isNumber(pointDist) ?  pointDist : get(pointDist, [cc.plotId], 0.0);
+    };
+
+    const getPoints = (vertexDef) => {
+        const {points} = vertexDef || {};
+
+        return isArray(points) ? points : get(points, [cc.plotId], []);
+    };
+
     const vertexDL= exList
         .filter((dl) => {
             const exType= get(dl,'exclusiveDef.type','');
@@ -461,12 +474,14 @@ function findMouseOwner(dlList, plot, screenPt) {
         })
         .find( (dl)  => {
             const {vertexDef}= dl;
-            const dist= vertexDef.pointDist || 5;
+            const pDist = getDist(vertexDef);
+
+            const dist= pDist || 5;
             const x= screenPt.x- dist;
             const y= screenPt.y- dist;
             const w= dist*2;
             const h= dist*2;
-            return vertexDef.points.find( (pt) => {
+            return getPoints(vertexDef).find( (pt) => {
                 const spt= cc.getScreenCoords(pt);
                 return spt && contains(x,y,w,h,spt.x,spt.y);
             } );

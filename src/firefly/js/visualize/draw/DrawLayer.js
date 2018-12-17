@@ -232,7 +232,10 @@ function makeDrawLayer(drawLayerId,
 
         // if defined then Object with:
                   // points: array of points, // if not define or empty the down is exclusive anywhere
-                  // pointDist: 10, // how close to the points in the array to match
+                                              // it could be an object with plotId(key)/points(value) representing array of points for the plot with plotId
+                  // pointDist: 10, // how close to the points in the array to match, measured in screen pixel coordinate
+                                    // it could be an object with plotId(key)/pointDist(value) representing pointDist for the plot with plotId
+
         vertexDef: null, 
         
 

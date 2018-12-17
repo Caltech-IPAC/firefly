@@ -27,13 +27,14 @@ const CENTER_BOX = 60;
 const CROSS_BOX = 12;
 const HANDLE_COLOR = '#DAA520';
 const DEF_WIDTH = 1;
+export const MARKER_SIZE = 40;      // marker original size in image coordinate (radius of a circle)
 export const MARKER_DATA_OBJ= 'MarkerObj';
 
 const DEFAULT_STYLE= Style.STANDARD;
 const textLocSeq = [TextLocation.REGION_SE, TextLocation.REGION_SW, TextLocation.REGION_NW, TextLocation.REGION_NE];
 
 
-export const ROTATE_BOX = 32;
+export const ROTATE_BOX = 32;    // in screen pixel
 export const MARKER_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
 export const MarkerType= new Enum(['Marker', 'Footprint']);
 export const ANGLE_UNIT = new Enum(['arcsec', 'arcmin', 'degree', 'radian']);
@@ -63,7 +64,7 @@ function make(sType, style) {
         //obj.style=Style.STANDARD;
         //obj.sType = MarkerType.Marker
         //obj.unitType = UnitType.PIXEL;
-        //obj.includeRotate = true|false  if (isRotable === true), show outlinebox + rotate handle
+        //obj.includeRotate = true|false  if (isRotatable === true), show outlinebox + rotate handle
         //obj.includeResize = true|false  if (isEditable === true) show outlinebox + resize handle
         //obj.includeOutline = true|false  show outlinebox
         //obj.textLoc= TextLocation.CIRCLE_SE
@@ -72,7 +73,7 @@ function make(sType, style) {
         //obj.drawObjAry= array of ShapeDataObj
         //obj.originalOutlineBox  // the 'original' outlinebox, is only recorded if the outline box around the footprint is in view
         //                        // outlinebox in drawObjAry may not be the original (coult be becomes around 'center' or 'plotcenter')
-        //obj.isRotable    //rotablable
+        //obj.isRotatable  //rotablable
         //obj.isEditable   //resizable
         //obj.isMovable    //movable
         //obj.outlineIndex // handler starting index, outline box pos in drawObjAry
@@ -146,7 +147,7 @@ export var setHandleIndex = (dObj) => {
         dObj.resizeIndex = idx;
         idx += 4;
     }
-    if (has(dObj, 'isRotable')) {
+    if (has(dObj, 'isRotatable')) {
         dObj.rotateIndex = idx;
     }
 };
@@ -192,7 +193,7 @@ export function makeMarker(centerPt, width, height, isHandle, cc, text, textLoc,
 
     dObj.includeOutline = !!(isOutline);
     dObj.includeResize = !!(get(dObj, 'isEditable') && isResize && isOutline);
-    dObj.includeRotate = !!(get(dObj, 'isRotable') && isRotate && isOutline);
+    dObj.includeRotate = !!(get(dObj, 'isRotatable') && isRotate && isOutline);
     setHandleIndex(dObj);
 
     return dObj;
@@ -232,7 +233,7 @@ export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
 
     dObj = Object.assign(dObj, {
         isMovable: true,
-        isRotable: true,
+        isRotatable: isHandle.isRotate,
         drawObjAry: regionDrawObjAry,
         outlineIndex: regionDrawObjAry.length,
         regions
@@ -252,7 +253,7 @@ export function makeFootprint(regions, centerPt, isHandle, cc, text, textLoc) {
 
     dObj.includeOutline = !!(isOutline);
     dObj.includeResize = !!(get(dObj, 'isEditable') && isResize && isOutline);
-    dObj.includeRotate = !!(get(dObj, 'isRotable') && isRotate && isOutline);
+    dObj.includeRotate = !!(get(dObj, 'isRotatable') && isRotate && isOutline);
 
     setHandleIndex(dObj);
     return dObj;
@@ -655,11 +656,12 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
             return tryOutline;
         }
     }
+    const boxSize = getCenterBoxSize(drawObj.sType);
 
     // try center outlinebox
     if (checkOutline.includes(OutlineType.center)) {
 
-        tryOutline = createOutlineBox(drawObj.pts[0], CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
+        tryOutline = createOutlineBox(drawObj.pts[0], boxSize, boxSize, ShapeDataObj.UnitType.PIXEL, cc, angle);
         if (tryOutline) {
             return clone(tryOutline, {outlineType: OutlineType.center});
         }
@@ -668,7 +670,7 @@ function remakeOutlineBox(drawObj, cc, checkOutline = AllOutline) {
     if (checkOutline.includes(OutlineType.plotcenter)) {
         var vCenter = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
 
-        tryOutline = createOutlineBox(vCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
+        tryOutline = createOutlineBox(vCenter, boxSize, boxSize, ShapeDataObj.UnitType.PIXEL, cc, angle);
         if (tryOutline) {
             return Object.assign(tryOutline, {outlineType: OutlineType.plotcenter});
         }
@@ -728,11 +730,11 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
         } else {
             outlineBox = remakeOutlineBox(drawObj, cc);
         }
-    } else {
+    } else {  // do from the scratch
         var {width, height, centerPt, unitType} = getMarkerImageSize(collectDrawobjAry(drawObj), cc) || {};
         var angle = getMarkerAngleInRad(drawObj);
 
-         outlineBox = createOutlineBoxAllSteps(pts[0], centerPt, width, height, unitType, cc, angle);
+         outlineBox = createOutlineBoxAllSteps(pts[0], centerPt, width, height, unitType, cc, drawObj.sType, angle);
     }
 
     if (!outlineBox) return retval;
@@ -740,14 +742,15 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
 
     var rotAngle = getMarkerAngleInRad(drawObj);
 
-    // add resize handles, TODO: test the case with both rotangle and resize handle
-    if (get(drawObj, 'includeResize') && handleList.includes(MARKER_HANDLE.resize) &&
-            (outlineBox.outlineType === OutlineType.original)) {
+    // add resize handles,
+    if ((get(drawObj, 'includeResize') || get(drawObj, 'isEditable')) && handleList.includes(MARKER_HANDLE.resize)) {
+        //&& (outlineBox.outlineType === OutlineType.original)) {
         createResizeHandle(outlineBox, cc, rotAngle).forEach((r) => retval.push(r));
      }
 
-    // add rotate handle
-    if (get(drawObj, 'includeRotate') && handleList.includes(MARKER_HANDLE.rotate)) {
+    // add rotate handle, plotcenter outline has no rotate handle
+    if ((get(drawObj, 'includeRotate') || get(drawObj, 'isRotatable')) &&
+        handleList.includes(MARKER_HANDLE.rotate)) {
         var rotateHandle = createRotateHandle(outlineBox, cc, rotAngle);
 
         if (rotateHandle) {
@@ -768,11 +771,12 @@ function updateHandle(drawObj, cc, handleList = AllHandle, upgradeOutline = fals
  * @param height
  * @param unitType
  * @param cc
+ * @param sType
  * @param angle angle rotate on screen domain. reverse the angle on image domain
  * @param stopAt
  * @returns {*}
  */
-function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitType, cc, angle = 0.0, stopAt) {
+function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitType, cc, sType, angle = 0.0, stopAt) {
 
     if (angle !== 0.0 && outlineCenter) {  // rotate the center around the footprint center
         var oCenter  = simpleRotateAroundPt(cc.getImageCoords(outlineCenter),
@@ -781,17 +785,18 @@ function createOutlineBoxAllSteps(fpCenter, outlineCenter, width, height, unitTy
     }
 
     var outlineBox = outlineCenter ? createOutlineBox(outlineCenter, width, height, unitType, cc, angle) : null;
+    const sBox = getCenterBoxSize(sType);
 
     if (outlineBox) {   // outline box around the footprint is visible
         outlineBox.outlineType = OutlineType.original;
     } else if (!stopAt || stopAt !== OutlineType.center) { // try outline box around center and plot center
-        outlineBox = createOutlineBox(fpCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
+        outlineBox = createOutlineBox(fpCenter, sBox, sBox, ShapeDataObj.UnitType.PIXEL, cc, angle);
         if (outlineBox) {
             outlineBox.outlineType = OutlineType.center;
         } else if (!stopAt || stopAt !== OutlineType.plotcenter) {
             var vCenter = makeDevicePt(cc.viewDim.width / 2, cc.viewDim.height / 2);
 
-            outlineBox = createOutlineBox(vCenter, CENTER_BOX, CENTER_BOX, ShapeDataObj.UnitType.PIXEL, cc, angle);
+            outlineBox = createOutlineBox(vCenter, sBox, sBox, ShapeDataObj.UnitType.PIXEL, cc, angle);
             outlineBox.outlineType = OutlineType.plotcenter;
         }
     }
@@ -984,7 +989,7 @@ export function findClosestIndex(screenPt, drawObj, cc) {
     var dObjAry = drawObjAry.slice(0, outlineIndex);
 
     // consider to add the outline box which is at plot center in case no handles are included
-    if (get(drawObj, 'includeResize', false) || get(drawObj, 'includeRotate', false)) {
+    if ((get(drawObj, 'includeResize', false) || get(drawObj, 'includeRotate', false)) || !isOutlineBoxOriginal(drawObj)) {
         dObjAry = dObjAry.concat(updateHandle(drawObj, cc, [MARKER_HANDLE.rotate, MARKER_HANDLE.resize]));
         if (isEmpty(dObjAry)) {
             return {index: -1};
@@ -1059,10 +1064,10 @@ export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath)
         drawObj.drawObjAry = drawObjP.drawObjAry.map( (obj) => Object.assign({}, obj) );
 
         var newObj = Object.assign({}, drawObj, {drawObjAry: drawObj.drawObjAry.slice(0, drawObj.outlineIndex)});
-        // add outline box, resize and rotate handle if any is included
-        if (get(drawObj, 'includeResize', false) ||
-            get(drawObj, 'includeRotate', false) ||
-            get(drawObj, 'includeOutline', false)) {
+        // add outline box, resize and rotate handle if any is included, or show outline if the outline is not the original
+        if ((get(drawObj, 'includeResize', false) ||
+             get(drawObj, 'includeRotate', false) ||
+             get(drawObj, 'includeOutline', false)) || !isOutlineBoxOriginal(drawObj)) {
             newObj.drawObjAry = newObj.drawObjAry.concat(updateHandle(drawObj, plot,
                                                          [MARKER_HANDLE.resize, MARKER_HANDLE.rotate]));
         }
@@ -1070,6 +1075,10 @@ export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath)
         // newObj is made for display
         updateColorFromDef(newObj, def);
 
+        // change th outline box to be solid line in case of 'plotceneter' type outline
+        if (isOutlineBoxWithType(newObj, OutlineType.plotcenter)) {
+            set(newObj.drawObjAry[newObj.outlineIndex], ['renderOptions', 'lineDash'], null);
+        }
         newObj.drawObjAry.forEach((oneDrawObj) => {
             if (oneDrawObj) {      // the resize or rotate drawObj could be null
                 DrawOp.draw(oneDrawObj, ctx, plot, def, vpPtM, onlyAddToPath);
@@ -1146,7 +1155,10 @@ export function updateFootprintOutline(drawObj, cc, bForced = false) {
 
     if (drawObj.sType === MarkerType.Marker || (!bForced && drawObj.lastZoom === cc.zoomFactor)) {
     //if (drawObj.sType === MarkerType.Marker || drawObj.sType === MarkerType.Footprint) {
-        updateOutlineBox(drawObj, cc, true);
+        if (drawObj.lastZoom !== cc.zoomFactor) {
+            bForced = true;     // if marker and zoom factror changes
+        }
+        updateOutlineBox(drawObj, cc, !bForced, bForced);
     } else {
         const centerPt = getWorldOrImage(drawObj.pts[0], cc);
         const {angle} = drawObj;
@@ -1163,17 +1175,17 @@ export function updateFootprintOutline(drawObj, cc, bForced = false) {
         drawObj.angle = angle;
         const angleRad = getMarkerAngleInRad(drawObj);
 
-
         drawObj.drawObjAry = drawObj.drawObjAry.reduce((prev, oneObj) => {
-            var rObj = DrawOp.rotateAround(oneObj, cc, angleRad, centerPt);
+            const rCenter = has(oneObj, 'outlineType')&&oneObj.outlineType.is(OutlineType.plotcenter) ?
+                             get(oneObj, ['pts', '0']) : centerPt;
+            var rObj = rCenter ? DrawOp.rotateAround(oneObj, cc, angleRad, rCenter) : oneObj;
+
             prev.push(rObj);
             return prev;
         }, []);
 
         if (get(drawObj, 'originalOutlineBox', null)) {
-            const outlineBox = drawObj.drawObjAry.length > drawObj.outlineIndex ? drawObj.drawObjAry[drawObj.outlineIndex] : null;
-
-            drawObj.originalOutlineBox = (outlineBox && (outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
+            drawObj.originalOutlineBox = isOutlineBoxOriginal(drawObj) ? Object.assign({}, drawObj.drawObjAry[drawObj.outlineIndex]) : null;
         }
     }
 
@@ -1185,12 +1197,14 @@ export function updateFootprintOutline(drawObj, cc, bForced = false) {
  * @param drawObj
  * @param cc
  * @param upgradeOutline
+ * @param resetOutline  recompute the outline box from the original regions
  */
-function updateOutlineBox(drawObj, cc, upgradeOutline = false) {
+function updateOutlineBox(drawObj, cc, upgradeOutline = false, resetOutline = false) {
     var {outlineIndex, drawObjAry} = drawObj;
 
     if (outlineIndex && drawObjAry && drawObjAry.length > outlineIndex) {
-        var outlineObj = updateHandle(drawObj, cc, [], upgradeOutline);
+        var outlineObj = resetOutline ? updateHandle(drawObj, cc, [MARKER_HANDLE.outline])
+                                      : updateHandle(drawObj, cc, [], upgradeOutline);
 
         if (!isEmpty(outlineObj)) {
             drawObjAry[outlineIndex] = outlineObj[0];
@@ -1213,11 +1227,13 @@ export function updateFootprintTranslate(drawObj, cc, apt, isSet = false) {
     var ty = lengthSizeUnit(cc, apt.y, apt.type);
     var deltaX, deltaY;
 
-    if (!isSet && has(drawObj, 'translation')) {
+    if (!isSet) {
         deltaX = tx.len;
         deltaY = ty.len;
-        tx.len += drawObj.translation.x;   // add the increment
-        ty.len += drawObj.translation.y;
+        if (!isEmpty(drawObj.translation)) {
+            tx.len += drawObj.translation.x;   // add the increment
+            ty.len += drawObj.translation.y;
+        }
     } else {
         deltaX = tx.len - get(drawObj, 'translation.x', 0.0);  // set absolutely
         deltaY = ty.len - get(drawObj, 'translation.y', 0.0);
@@ -1277,24 +1293,34 @@ export function translateMarker(drawObj, plot, apt) {
     };
 
     const newPti = moveFrom(plot.getImageCoords(drawObj.pts[0]), deltaImgX, deltaImgY);
-    const newObj = clone(drawObj, {pts: [makePoint(newPti, plot, drawObj.pts[0].type)]});
+    let newObj = clone(drawObj, {pts: [makePoint(newPti, plot, drawObj.pts[0].type)]});
 
-    if (isHiPS(plot) && (drawObj.sType !== MarkerType.Marker)) {  // do translation on world instead of on image domain
-        return updateFootprintOutline(newObj, plot, true);
+    // do translation on world instead of on image domain by relocating the center first
+    if (isHiPS(plot) && (drawObj.sType !== MarkerType.Marker)) {
+        newObj = updateFootprintOutline(newObj, plot, true);
+    } else {
+
+        const dObjAry = collectDrawobjAry(drawObj, [MARKER_HANDLE.outline]);
+        newObj.drawObjAry = dObjAry.reduce((prev, oneDrawobj) => {
+            prev.push(DrawOp.translateTo(oneDrawobj, plot, apt));
+            return prev;
+        }, []);
     }
-
-    const dObjAry = collectDrawobjAry(drawObj, [MARKER_HANDLE.outline]);
-    newObj.drawObjAry = dObjAry.reduce((prev, oneDrawobj) => {
-        prev.push(DrawOp.translateTo(oneDrawobj, plot, apt));
-        return prev;
-    }, []);
 
     if (get(newObj, 'originalOutlineBox', null)) {
-        const outlineBox = newObj.drawObjAry.length > newObj.outlineIndex ? newObj.drawObjAry[newObj.outlineIndex] : null;
-        newObj.originalOutlineBox = (outlineBox&&(outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
+        newObj.originalOutlineBox = isOutlineBoxOriginal(newObj) ? Object.assign({}, newObj.drawObjAry[newObj.outlineIndex]) : null;
     }
 
-    updateOutlineBox(newObj, plot);
+    // translate text object
+    if (newObj.textObj && newObj.textWorldLoc) {
+        const newText = DrawOp.translateTo(newObj.textObj, plot, apt);
+        const newTextLoc = plot.getImageCoords(newText.pts[0]);
+
+        Object.assign(newObj, {textObj: newText, textWorldLoc: newTextLoc});
+    }
+
+    //updateOutlineBox(newObj, plot, true);
+
     return newObj;
 }
 
@@ -1319,7 +1345,7 @@ function adjustAngle(angle) {
  * @returns {array} a array of rotated objects contained in drawObj
  */
 export function rotateMarkerAround(drawObj,plot, dAngle, worldPt) {
-    const {pts, outlineIndex} = drawObj;
+    const {pts} = drawObj;
     if (!pts || !pts[0] || !worldPt) return null;
 
     const worldImg = plot.getImageCoords(worldPt);
@@ -1341,10 +1367,11 @@ export function rotateMarkerAround(drawObj,plot, dAngle, worldPt) {
     const dAry = collectDrawobjAry(drawObj, [MARKER_HANDLE.outline]);
     const newAngle =  adjustAngle(getMarkerAngleInRad(newObj) + dAngle);
 
-    const centerPt = (outlineIndex > 0 && get(newObj.drawObjAry[outlineIndex], 'outlineType') === OutlineType.plotcenter) ?
-                      get(newObj.drawObjAry[outlineIndex], ['pts', 0], worldPt) : worldPt;
     newObj.drawObjAry = dAry.reduce((prev, oneObj) => {
-        prev.push(DrawOp.rotateAround(oneObj, plot, dAngle, centerPt));
+        const rCenter = has(oneObj, 'outlineType')&&oneObj.outlineType.is(OutlineType.plotcenter) ?
+                        get(oneObj, ['pts', '0']) : worldPt;
+        rCenter ?  prev.push(DrawOp.rotateAround(oneObj, plot, dAngle, rCenter)) : prev.push(oneObj);
+
         return prev;
     }, []);
 
@@ -1353,8 +1380,13 @@ export function rotateMarkerAround(drawObj,plot, dAngle, worldPt) {
         newObj.originalOutlineBox = (outlineBox&&(outlineBox.outlineType === OutlineType.original)) ? Object.assign({}, outlineBox) : null;
     }
 
-    updateOutlineBox(newObj, plot);
+    if (newObj.textObj && newObj.textWorldLoc) {
+        const newText = DrawOp.rotateAround(newObj.textObj, plot, dAngle, worldPt);
+        const newTextLoc = plot.getImageCoords(newText.pts[0]);
 
+        Object.assign(newObj, {textObj: newText, textWorldLoc: newTextLoc});
+    }
+    //updateOutlineBox(newObj, plot, true);
     return clone(newObj, {angle: newAngle, angleUnit: ANGLE_UNIT.radian});
 }
 
@@ -1368,26 +1400,48 @@ export function updateMarkerSize(markerObj, cc, newSize) {
     var {drawObjAry} = markerObj;
     var newObj = clone(markerObj);
 
-    if (drawObjAry && drawObjAry.length > 0) {
-        var {size} = newSize;
-        var radius = lengthSizeUnit(cc, Math.min(size[0], size[1])/2, newSize.unitType);
+    // scale the marker size proportional to the change of outline box in case the marker is out of the plot area
+    const scaleMarkerSize = (oSize) => {
+        let radius, unit;
 
-        newObj = Object.assign(newObj, {width: radius.len, height: radius.len, unitType: radius.unit });
-        const mObj = clone(drawObjAry[0], {radius: radius.len, unitType: radius.unit});
+        if (!isOutlineBoxOriginal(markerObj)) {
+            const pOutline = drawObjAry[markerObj.outlineIndex];
+            const pOutlineSize = lengthSizeUnit(cc, pOutline.width, pOutline.unitType);
+
+            radius = drawObjAry[0].radius * oSize.len/pOutlineSize.len;
+            unit = drawObjAry[0].unitType;
+        } else {
+            radius = oSize.len/2;
+            unit = oSize.unit;
+        }
+
+        return {len: radius, unit};
+    };
+
+    if (drawObjAry && drawObjAry.length > 0) {
+        const {size, newRadius} = newSize; // if newRadius exists, recompute the marker outline
+
+        const oSize = newRadius ? null : lengthSizeUnit(cc, Math.min(size[0], size[1]), newSize.unitType);  // update outline box size
+        const mRadius = newRadius? {len: newRadius.radius, unit: newRadius.unitType} : scaleMarkerSize(oSize);
+
+        newObj = Object.assign(newObj, {width: mRadius.len*2, height: mRadius.len*2, unitType: mRadius.unit });
+        const mObj = clone(drawObjAry[0], {radius: mRadius.len, unitType: mRadius.unit});    // update marker size
         let   oObj;
 
-        if (drawObjAry.length > 1) {
-            oObj = (drawObjAry[1].outlineType === OutlineType.original) ?
-                   clone(drawObjAry[1], {width: radius.len*2, height: radius.len*2, unitType: radius.unit}) :
-                   clone(drawObjAry[1]);
+        if (drawObjAry.length > 1 && oSize)  {                            // update outline size
+            oObj = clone(drawObjAry[1], {width: oSize.len, height: oSize.len, unitType: oSize.unit});
         } else {
-            oObj = null;
+            oObj = null;    // recompute outline if given newRadius
         }
         newObj.drawObjAry = oObj? [mObj, oObj] : [mObj];
 
-        const outline = updateHandle(newObj, cc, []);
-        if (outline) {
-            newObj.drawObjAry[1] = outline[0];
+        if (!oObj) {
+            const outline = updateHandle(newObj, cc, [MARKER_HANDLE.outline]);
+            if (outline) {
+                newObj.drawObjAry[newObj.outlineIndex] = outline[0];
+            } else {
+                console.log('outline is null');
+            }
         }
     }
 
@@ -1594,4 +1648,17 @@ export function markerToRegion(drawObj, plot, dl, bSeperateText = false) {
         rgDesAry.push(...oneRegionDes);
     }
     return rgDesAry;
+}
+
+export function isOutlineBoxOriginal(drawObj) {
+    return !isOutlineBoxWithType(drawObj, OutlineType.center) && !isOutlineBoxWithType(drawObj, OutlineType.plotcenter);
+}
+
+function isOutlineBoxWithType(drawObj, outlineType) {
+    return (get(drawObj.drawObjAry, 'length', 0) > drawObj.outlineIndex) &&
+            outlineType.is(drawObj.drawObjAry[drawObj.outlineIndex].outlineType);
+}
+
+function getCenterBoxSize(objType) {
+    return  (MarkerType.Marker.is(objType)) ? MARKER_SIZE : CENTER_BOX;
 }
