@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.caltech.ipac.table.IpacTableUtil.makeAttributes;
+import static edu.caltech.ipac.table.IpacTableUtil.createMetaFromColumns;
 
 /**
  * This class query the database, and then write results out to the given file as an ipac table.
@@ -107,7 +107,7 @@ public class IpacTableExtractor {
             template = new DataGroup("", DataGroupUtil.getExtraData(resultset.getMetaData()));
         }
         List<DataType> headers = Arrays.asList(template.getDataDefinitions());
-        IpacTableUtil.writeAttributes(writer, makeAttributes(template));
+        IpacTableUtil.writeAttributes(writer, createMetaFromColumns(template));
         IpacTableUtil.writeHeader(writer,headers);
         int count = 0;
         while(resultset.next()) {

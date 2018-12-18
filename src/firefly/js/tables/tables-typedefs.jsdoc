@@ -60,8 +60,15 @@
  * @prop {string} sortByCols    for multi-columns sorting.  column names separated by comma(',').
  * @prop {string} enumVals   contains only values in this list.  values are seprated by comma(',')
  * @prop {string} ID        ID used to reference this column.
+ * @prop {string} precision applies only to floating point numbers.
+ *                          A string Tn where T is either F, E, or G
+ *                          If T is not present, it defaults to F.
+ *                          When T is F or E, n is the number of significant figures after the decimal point.
+ *                          When T is G, n is the number of significant digits
  * @prop {string} UCD       UCD of this column.
+ * @prop {string} utype     UType of this column.
  * @prop {string} ref       refer to this column for declarations.
+ * @prop {string} value     static value of this column for all of the rows in this table
  * @prop {string} maxValue  maximum value.
  * @prop {string} minValue  minimum value.
  * @prop {LINK[]} links     links if any.

@@ -37,7 +37,7 @@ public class FilterHanlder extends BgIpacTableHandler {
     public FilterHanlder(File ofile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
         super(ofile, null, null, null, request);
         tableDef = IpacTableUtil.getMetaInfo(source);
-        attributes = IpacTableUtil.makeAttributes(tableDef.getKeywords(), tableDef.getCols().toArray(new DataType[0]));
+        attributes = IpacTableUtil.createMetaFromColumns(tableDef.getKeywords(), tableDef.getCols().toArray(new DataType[0]));
         headers = tableDef.getCols();
         reader = new BufferedReader(new FileReader(source), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         this.filters = Arrays.asList(filters);
