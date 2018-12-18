@@ -22,8 +22,6 @@ import java.util.regex.Pattern;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.table.TableMeta.*;
 
-import static edu.caltech.ipac.table.TableMeta.*;
-
 /**
  * Date: Jun 25, 2009
  *
