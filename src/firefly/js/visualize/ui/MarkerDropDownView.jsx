@@ -9,10 +9,9 @@ import {ToolbarButton,
         DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
 import { dispatchCreateMarkerLayer, dispatchCreateFootprintLayer } from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
-import {FootprintFactory, FootprintList} from '../draw/FootprintFactory.js';
+import {FootprintFactory, FootprintList,  SOFIA_INSTRUMENTS} from '../draw/FootprintFactory.js';
 import { createNewFootprintLayerId, getFootprintLayerTitle, relocatable} from '../../drawingLayers/FootprintTool.js';
 import {has, get} from 'lodash';
-
 let idCntM = 0;
 let idCntF = 0;
 
@@ -46,12 +45,14 @@ export function  addFootprintDrawLayer(pv, {footprint, instrument, relocateBy, f
         title = getFootprintLayerTitle(fromFile);
     } else {
         drawLayerId = `${footprint}` + (instrument ? `_${instrument}` : '') + `_${idCntF++}`;
-        title = getFootprintLayerTitle(`Footprint: ${footprint} ${instrument ? instrument : ''}`);
+        const instrumentLabel = instrument ? footprint==='SOFIA'? instrument.replace(/_/g, ' '):instrument : ' ';
+        title = getFootprintLayerTitle(`Footprint: ${footprint} ${instrumentLabel}`);
     }
     const plotId =  getPlotId(pv);
 
     dispatchCreateFootprintLayer(drawLayerId, title, {footprint, instrument, relocateBy, fromFile, fromRegionAry}, plotId,  true);
 }
+
 
 export function MarkerDropDownView({plotView:pv}) {
     const enabled = !!pv;
@@ -67,22 +68,46 @@ export function MarkerDropDownView({plotView:pv}) {
                                onClick={() => addFootprintDrawLayer(pv, fpInfo)}/>);
     };
 
+
     const footprints = FootprintList.map((fp) => {
             const fpDesc = FootprintFactory.footprintDesc(fp);
             const instruments = FootprintFactory.getInstruments(fp);
+            if (fp === 'SOFIA'){
 
-            if (instruments && instruments.length > 0) {
-                const items = instruments.map((inst) => footprintCmdJSX(inst, fp, inst));
 
-                //SPITZER doesn't have any full footprint to overlay, skip
-                if (fpDesc && fp !== 'SPITZER') {
-                    items.splice(0, 0, footprintCmdJSX('All', fp));  // add to the beginning of the array.
+                var innerDropDownMenu=[],sofiaSubMenuItems=[];
+                for (let i=0; i<instruments.length; i++){
+                    sofiaSubMenuItems = SOFIA_INSTRUMENTS[instruments[i]]?SOFIA_INSTRUMENTS[instruments[i]].enums.map((item) => footprintCmdJSX(item.value, fp, item.key)):[];
+
+                    if (sofiaSubMenuItems.length>0){
+                        innerDropDownMenu[i]= <DropDownSubMenu key={instruments[i]} text={instruments[i]}>{sofiaSubMenuItems} </DropDownSubMenu>;
+
+                    }
+                    else {
+                        innerDropDownMenu[i]=instruments[i];
+                    }
                 }
 
-                return <DropDownSubMenu key={fp} text={`Add ${fpDesc} footprint`}> {items} </DropDownSubMenu>;
-            } else {
-                return footprintCmdJSX(`Add ${fpDesc} footprint`, fp);
+
+                return <DropDownSubMenu key={fp} text={`Add ${fpDesc} footprint`}>{innerDropDownMenu}</DropDownSubMenu>;
             }
+            else {
+                 if (instruments && instruments.length > 0) {
+                    const items = instruments.map((inst) => footprintCmdJSX(inst, fp, inst));
+
+                    //SPITZER doesn't have any full footprint to overlay, skip
+                    if (fpDesc && fp !== ('SPITZER' &&  'SOFIA') ){
+                        items.splice(0, 0, footprintCmdJSX('All', fp));  // add to the beginning of the array.
+                    }
+
+
+                    return <DropDownSubMenu key={fp} text={`Add ${fpDesc} footprint`}> {items} </DropDownSubMenu>;
+                }
+                else {
+                    return footprintCmdJSX(`Add ${fpDesc} footprint`, fp);
+                }
+
+          }
         });
 
     return (

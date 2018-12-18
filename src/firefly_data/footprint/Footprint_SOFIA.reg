@@ -1,0 +1,11 @@
+#FORCAST_IMAG
+image;box(0, 0, 3.2', 3.4', 0) # color=green tag={FORCAST_IMAG}
+#FIFI_LS_BL
+image;box(0, 0, 30", 30", 0)   # color=green tag={FIFI-LS_Blue}
+#FIFI_LS_RD
+image;box(0, 0, 60", 60", 0)   # color=green tag={FIFI-LS_Red}
+#FORCAST_GRISMS_A
+image;box(0, 0, 2.4", 191", 0) # color=green tag={FORCAST_GRISMS_A}
+#FORCAST_GRISMS_B
+image;box(0, 0, 4.7", 191", 0) # color=green tag={FORCAST_GRISMS_B}
+
