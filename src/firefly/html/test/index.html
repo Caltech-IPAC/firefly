@@ -8,181 +8,126 @@
 <html>
 
 <head>
-    <title>Firefly API Test</title>
+    <title>Firefly Tests</title>
 
     <style type="text/css">
-        #container {
-            display: flex;
-            padding: 3px;
-            margin: 5px 10px;
-            flex-direction: column;
-        }
-        .iframe-container {
-            overflow: hidden;
+        body {
+            margin: 20px;
+            width: 800px;
         }
 
-        .iframe-container iframe {
-            border: 0;
-            width: 100%;
+        xmp {
+            color: brown;
+        }
+        .test-desc {
+            color: brown;
+        }
+
+        .tutorial {
+            margin-top: 100px;
+        }
+        .tut-item {
+            white-space: pre;
+            background-color: antiquewhite;
+            margin-top: -10px;
         }
     </style>
 
-
-    <script type="text/javascript">
-
-        window.onload = function () {
-            const tests = document.getElementsByTagName('template');
-            Object.values(tests).forEach(function(test) {
-                if (test.id !== 'test_template') {
-                    const c = test.content;
-                    const expected = c.querySelector('#expected');
-                    const actual = c.querySelector('#actual');
-                    const scpt = c.querySelector('script');
-
-                    renderTest(expected, actual, scpt, test.title, test.className);
-                }
-            });
-        };
-
-        function resizeIframe(obj) {
-            obj.style.height = obj.contentWindow.document.body.scrollHeight + 20 + 'px';
-        }
-
-        function renderTest(expected, actual, script, title, className) {
-            const iframe = document.createElement('iframe');
-            iframe.src = './template.html';
-            const idiv = document.createElement('div');
-            idiv.className = "iframe-container";
-            idiv.appendChild(iframe)
-            document.getElementById('container').appendChild(idiv);
-
-            iframe.contentWindow.template = {expected, actual, script, title, className};
-            iframe.contentWindow.resizeIframe = function () {resizeIframe(iframe)};
-        }
-
-
-    </script>
 </head>
 
 <body>
 
-<!--
-Each test case is presented as a template.  It consists of 3 parts:
-expected:  the expected results.  This can be a description, an image, or both
-actual:  the rendered results of executing the script
-script:  script to run.  Try to keep it clean and easy to understand.
-
-<template title="Description of this test">
-    <div id="expected" />
-    <div id="actual" />
-    <script />
-</template>
-
--->
+<h3>Firefly Test</h3>
+<ul class="test-list">
+    <li class="test-item"><a href="tests-main.html">Main Tests</a>
+        <div class="test-desc">This page includes common APIs used in production by other projects.  It also contains tests to ensure that Firefly is able able to load data from external services, like TAP, SIAP, etc.</div>
+    </li>
+</ul>
 
 
-<!-- define all of your tests below -->
-
-<template title="IRSA Gator Table">
-    <div id="expected"><img src="./images/gator-expected.jpg"></div>
-    <div id="actual">
-        <div id="gatorTable" class="std-box"></div>
-        <div id="gatorCoverage" class="std-box"></div>
-        <div id="gatorXy" class="std-box"></div>
-    </div>
-    <script>
-        irsaviewer_init();
-
-        onFireflyLoaded = function (firefly) {
-
-            firefly.util.image.initAutoReadout(
-                firefly.ui.DefaultApiReadout,
-                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
-                  showThumb:false,
-                  showMag:false
-                }
-            );
-            table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
-                { position: '10.68479;41.26906;EQ_J2000',
-                    SearchMethod: 'Cone',
-                    radius: 100
-                },
-                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
-            );
-
-            firefly.showTable('gatorTable', table1Data,
-                { removable: false,
-                  showTitle:false,
-                  showUnits: true,
-                  showFilters: false,
-                  selectable: false,
-                  expandable: true,
-                  help_id: 'tables'
-                }
-            );
-
-            firefly.showCoverage('gatorCoverage', {gridOn:'FALSE'});
-
-            firefly.addXYPlot('gatorXy', {tbl_id: table1Data.tbl_id,
-                xOptions: 'flip',
-                help_id: 'visualization.xyplotViewer'});
-
-        }
-    </script>
-</template>
+<div class="tutorial">
+    <h3>How to write your own tests</h3>
 
 
-<template title="NED catalog VOTable" class="size-s">
-    <div id="expected">
-        <img src="./images/ned-table.jpg">
-        <div class="source-code indent-2x">
-            - sortBy column where name contains spaces
-            - using FmtDisp to format text
+    <h4>To add a test to an existing page</h4>
+    <div class="tut-item">
+        Each test is presented as a template.  It consists of 3 parts:
+        <b>expected</b>:  the expected results.  This can be a description, an image, or both
+        <b>actual</b>:    the rendered results of executing the script
+        <b>script</b>:    script to run.  Try to keep it clean and easy to understand.
+
+        Below is a complete example of an actual test:
+<xmp>
+    <template title="GAIA tap search" class="tpl-size-s">
+        <div id="expected" class="source-code">
+            Table successfully loaded
+            - VOTable
+            - first 3 rows of gaia_source
         </div>
+        <div id="actual" class="box-s w-2x"></div>
+        <script>
+            onFireflyLoaded = function (firefly) {
+                tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',
+                    { serviceUrl: "http://gea.esac.esa.int/tap-server/tap",
+                        QUERY: "SELECT TOP 3 * FROM gaiadr2.gaia_source",
+                    });
+
+                firefly.showTable('actual', tblReq);
+            }
+        </script>
+    </template>
+</xmp>
+
+        You may noticed CSS styles were used.
+        For your convenience, there are predefined styles in the included <code>styles.css</code> file.
+        These styles are designed for composition, meaning they were made to be used together.
+        For instance, to make a vertical flex box two times the size of a small box. <xmp>           <div class="flow-v box-s w-2x" /> </xmp>
+
+        Below is a list of other styles you can use:  ( look in <code>styles.css</code> for a complete listing )
+    <xmp>
+        flow-h          :horizontal flex box
+        flow-v          :vertical flex box
+        tpl-size-s      :small template
+        tpl-size-m      :medium template
+        tpl-size-l      :large template
+        tpl-size-xl     :extra-large template
+        box-s           :small box
+        box-m           :medium box
+        box-l           :large box
+        box-xl          :extra-large box
+        w-2x            :twice the width
+        w-3x            :three times the width
+        indent-1x       :indent once
+        indent-2x       :indent twice
+        indent-3x       :indent three times
+        source-code     :shown as source code
+    </xmp>
     </div>
-    <div id="actual" class="std-box w-2x"></div>
-    <script>
-        onFireflyLoaded = function (firefly) {
-            tblReq = firefly.util.table.makeTblRequest('NedSearch', 'm8 (NED SCS 10)',
-                { use: "catalog_overlay",
-                  UserTargetWorldPt: "270.92194;-24.38017;EQ_J2000;m8;ned",
-                  SearchMethod: "Cone",
-                  radius: "0.00278",
-                  providerName: "NED",
-                  accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
-                },
-                { sortInfo: "ASC,Object Name",
-                  META_INFO: {"col.Type.FmtDisp": "abc-%s"}
-                }
-            );
 
-            firefly.showTable('actual', tblReq);
-        }
-    </script>
-</template>
 
-<template title="GAIA tap search" class="size-s">
-    <div id="expected" class="source-code">
-        Table successfully loaded
-        - VOTable
-        - first 3 rows of gaia_source
+    <h4>To add a new test page</h4>
+    <div class="tut-item">
+        Creating a new test page is pretty easy.  Create a blank html file like below.
+        Make sure you include <code>styles.css</code> and <code>template_loader.js</code> into the head section.
+        After that, start adding test into your page in the form of a template.
+        Make sure to include your new page into this <code>index.html</code> file so it can be easily accessed.
+<xmp>
+    <html>
+    <head>
+        <title>Title of your test page</title>
+        <link rel="stylesheet" href="styles.css">
+        <script type="text/javascript" src="template_loader.js"></script>
+    </head>
+
+    <body>
+    <!-- include your test template(s) here -->
+    </body>
+    </html>
+
+</xmp>
     </div>
-    <div id="actual" class="std-box w-2x"></div>
-    <script>
-        onFireflyLoaded = function (firefly) {
-            tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',
-                { serviceUrl: "http://gea.esac.esa.int/tap-server/tap",
-                  QUERY: "SELECT TOP 3 * FROM gaiadr2.gaia_source",
-                });
+</div>
 
-            firefly.showTable('actual', tblReq);
-        }
-    </script>
-</template>
-
-
-<!-- this is where test cases will be attached-->
-<div id="container"/>
 
 
 </body>

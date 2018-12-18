@@ -11,97 +11,34 @@
     <title>Firefly API Test</title>
 
     <style type="text/css">
-
-
-        .std-box { width: 300px; margin: 2px;}
-        .w-2x {width:  604px;}
-        .w-3x {width:  908px;}
-        .indent-1x {margin-left: -3em !important;}
-        .indent-2x {margin-left: -7em !important;}
-        .indent-3x {margin-left: -11em !important;}
-        .size-s {height: 200px !important;}
-        .size-m {height: 300px !important;}
-        .size-l {height: 400px !important;}
-        .size-xl {height: 500px !important;}
-
-
-        .rootStyle {
-            padding: 0 !important;
-        }
-
-        #container {
+        html {
             overflow: hidden;
-        }
-
-        .test-box {
-            background-color: antiquewhite;
-            border: 1px solid #e6d3bb;
-            display: inline-flex;
-            height: 300px;
-        }
-
-        .item-box {
-            display: flex;
-            padding: 3px;
-            margin: 5px;
-            flex-direction: column;
-        }
-        .expected, .actual, .source {
-            background-color: #e3e3e3;
-            min-width: 300px;
-            box-sizing: border-box;
-            border: 1px solid #d4d4d4;
-            display: flex;
-            flex-grow: 1;
-        }
-
-        .label {
-            display: inline-flex;
-            justify-content: space-between;
-        }
-
-        #actual {
-            display: inline-flex;
-            flex-grow: 1;
-        }
-        #expected {
-            padding: 3px;
-        }
-
-        .source {
-            overflow: auto;
-            min-width: 0;
-        }
-
-        .source-code, #source-code {
-            font-family: monospace;
-            white-space: pre;
-            margin-left: -4em;
         }
     </style>
 
+    <link rel="stylesheet" href="styles.css"/>
 
     <script  type="text/javascript">
 
         window.onload = function () {
             const t = document.getElementById('test_template').content;
             const t_vars = window.template;
-            t.querySelector('.expected').appendChild(document.importNode(t_vars.expected, true));
-            t.querySelector('.actual').appendChild(document.importNode(t_vars.actual, true));
-            t.querySelector('.title').innerHTML = t_vars.title;
-            t_vars.className && t.querySelector('.test-box').classList.add(t_vars.className);
+            t.querySelector('.tpl-expected').appendChild(document.importNode(t_vars.expected, true));
+            t.querySelector('.tpl-actual').appendChild(document.importNode(t_vars.actual, true));
+            t.querySelector('#tpl-title').innerHTML = t_vars.title;
+            t_vars.className && t.querySelector('.tpl-test-container').classList.add(t_vars.className);
             t.appendChild(document.importNode(t_vars.script, true));
 
-            const sourceEl = t.querySelector('.source').querySelector("#source-code");
+            const sourceEl = t.querySelector('#tpl-source-code-container').querySelector("#source-code-div");
             sourceEl.innerHTML = t_vars.script.textContent;
 
-            document.getElementById('container').appendChild(document.importNode(t, true));
-            document.getElementById("source-code-container").style.display = 'none';
+            document.getElementById('tpl-container').appendChild(document.importNode(t, true));
+            document.getElementById("tpl-source-code-container").style.display = 'none';
             resizeIframe();
         };
 
         function showSource(flg) {
-            document.getElementById("source-code-container").style.display = flg ? 'block' : 'none';
+            document.getElementById("tpl-source-code-container").style.display = flg ? 'block' : 'none';
         }
 
         function irsaviewer_init() {
@@ -134,19 +71,19 @@
 
 
 <template id="test_template">
-    <div class="title"></div>
-    <div class="test-box">
-        <div  class="item-box">
-            <div class="label">expected:</div>
-            <div class="expected"></div>
+    <div id="tpl-title"></div>
+    <div class="tpl-test-container">
+        <div  class="tpl-item-box">
+            <div class="tpl-label">expected:</div>
+            <div class="tpl-expected"></div>
         </div>
-        <div class="item-box">
-            <div class="label">actual:  <div>source: <a href="javascript:showSource(true)">show</a> <a href="javascript:showSource(false)">hide</a> </div> </div>
-            <div class="actual"></div>
+        <div class="tpl-item-box">
+            <div class="tpl-label">actual:  <div>source: <a href="javascript:showSource(true)">show</a> <a href="javascript:showSource(false)">hide</a> </div> </div>
+            <div class="tpl-actual"></div>
         </div>
-        <div class="item-box">
-            <div id="source-code-container" class="source">
-                <div id="source-code">
+        <div class="tpl-item-box">
+            <div id="tpl-source-code-container">
+                <div id="source-code-div" class="source-code"/>
             </div>
         </div>
     </div>
@@ -154,7 +91,7 @@
 </template>
 
 <!-- this is where test cases will be attached-->
-<div id="container"/>
+<div id="tpl-container"/>
 
 
 </body>

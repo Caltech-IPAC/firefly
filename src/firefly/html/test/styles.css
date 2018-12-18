@@ -1,0 +1,133 @@
+
+/* convenience styles ... designed for composition */
+
+.flow-h {
+    display: inline-flex;
+    justify-content: space-between;
+}
+
+.flow-v {
+    display: flex;
+    flex-direction: column;
+}
+
+.tpl-size-s { height: 200px; }
+.tpl-size-m { height: 300px; }
+.tpl-size-l { height: 400px; }
+.tpl-size-xl { height: 500px; }
+
+.box-s {
+    --div-width: 200px;
+    width: var(--div-width);
+    flex-grow: 1;
+    margin: 2px;
+}
+
+.box-m {
+    --div-width: 300px;
+    width: var(--div-width);
+    flex-grow: 1;
+    margin: 2px;
+}
+
+.box-l {
+    --div-width: 400px;
+    width: var(--div-width);
+    flex-grow: 1;
+    margin: 2px;
+}
+
+.box-xl {
+    --div-width: 500px;
+    width: var(--div-width);
+    flex-grow: 1;
+    margin: 2px;
+}
+
+.w-2x {
+    width: calc(var(--div-width) * 2);
+}
+
+.w-3x {
+    width: calc(var(--div-width) * 3);
+}
+
+.indent-1x {margin-left: -3em !important;}
+.indent-2x {margin-left: -7em !important;}
+.indent-3x {margin-left: -11em !important;}
+
+
+.source-code {
+    font-family: monospace;
+    white-space: pre;
+    margin-left: -4em;
+}
+
+.rootStyle {
+    padding: 0 !important;
+}
+
+
+
+/******************************************************************************************************/
+/* styles below are used by the framework.  it is not recommended to be used in individual test cases */
+/******************************************************************************************************/
+
+#tst-container {
+    display: flex;
+    padding: 3px;
+    margin: 5px 10px;
+    flex-direction: column;
+}
+.tst-iframe-container {
+    overflow: hidden;
+}
+
+.tst-iframe-container iframe {
+    border: 0;
+    width: 100%;
+}
+
+#tpl-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.tpl-test-container {
+    background-color: antiquewhite;
+    border: 1px solid #e6d3bb;
+    display: inline-flex;
+}
+
+.tpl-item-box {
+    display: flex;
+    padding: 3px;
+    margin: 5px;
+    flex-direction: column;
+}
+.tpl-expected, .tpl-actual, #tpl-source-code-container {
+    background-color: #e3e3e3;
+    min-width: 300px;
+    box-sizing: border-box;
+    border: 1px solid #d4d4d4;
+    display: flex;
+    flex-grow: 1;
+}
+
+#tpl-source-code-container {
+    overflow-y: auto;
+}
+
+.tpl-label {
+    display: inline-flex;
+    justify-content: space-between;
+}
+
+#source-code-container {
+    overflow: auto;
+    min-width: 0;
+}
+
