@@ -1,0 +1,122 @@
+
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly main tests</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="template_loader.js"></script>
+</head>
+
+<body>
+
+<!-- define all of your tests below -->
+
+<template title="IRSA Gator Table" class="tpl-size-m">
+    <div id="expected"><img src="./images/gator-expected.jpg"></div>
+    <div id="actual" class="flow-h">
+        <div id="gatorTable" class="box-m"></div>
+        <div id="gatorCoverage" class="box-m"></div>
+        <div id="gatorXy" class="box-m"></div>
+    </div>
+    <script>
+        irsaviewer_init();
+
+        onFireflyLoaded = function (firefly) {
+
+            firefly.util.image.initAutoReadout(
+                firefly.ui.DefaultApiReadout,
+                { MouseReadoutComponent:firefly.ui.PopupMouseReadoutMinimal,
+                  showThumb:false,
+                  showMag:false
+                }
+            );
+            table1Data = firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                { position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 100
+                },
+                { META_INFO: {CENTER_COLUMN: 'ra;dec;EQJ2000', CatalogOverlayType: 'IRSA'}}
+            );
+
+            firefly.showTable('gatorTable', table1Data,
+                { removable: false,
+                  showTitle:false,
+                  showUnits: true,
+                  showFilters: false,
+                  selectable: false,
+                  expandable: true,
+                  help_id: 'tables'
+                }
+            );
+
+            firefly.showCoverage('gatorCoverage', {gridOn:'FALSE'});
+
+            firefly.addXYPlot('gatorXy', {tbl_id: table1Data.tbl_id,
+                xOptions: 'flip',
+                help_id: 'visualization.xyplotViewer'});
+
+        }
+    </script>
+</template>
+
+
+<template title="NED catalog VOTable" class="tpl-size-m">
+    <div id="expected">
+        <img src="./images/ned-table.jpg">
+        <div class="source-code indent-2x">
+            - sortBy column where name contains spaces
+            - using FmtDisp to format text
+        </div>
+    </div>
+    <div id="actual" class="box-m w-2x"></div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+            tblReq = firefly.util.table.makeTblRequest('NedSearch', 'm8 (NED SCS 10)',
+                { use: "catalog_overlay",
+                  UserTargetWorldPt: "270.92194;-24.38017;EQ_J2000;m8;ned",
+                  SearchMethod: "Cone",
+                  radius: "0.00278",
+                  providerName: "NED",
+                  accessUrl: "http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&"
+                },
+                { sortInfo: "ASC,Object Name",
+                  META_INFO: {"col.Type.FmtDisp": "abc-%s"}
+                }
+            );
+
+            firefly.showTable('actual', tblReq);
+        }
+    </script>
+</template>
+
+<template title="GAIA tap search" class="tpl-size-s">
+    <div id="expected" class="source-code">
+        Table successfully loaded
+        - VOTable
+        - first 3 rows of gaia_source
+    </div>
+    <div id="actual" class="box-s w-2x"></div>
+    <script>
+        onFireflyLoaded = function (firefly) {
+            tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',
+                { serviceUrl: "http://gea.esac.esa.int/tap-server/tap",
+                  QUERY: "SELECT TOP 3 * FROM gaiadr2.gaia_source",
+                });
+
+            firefly.showTable('actual', tblReq);
+        }
+    </script>
+</template>
+
+
+<!-- this is where test cases will be attached-->
+<div id="tst-container"/>
+
+
+</body>

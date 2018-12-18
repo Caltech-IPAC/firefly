@@ -1,0 +1,97 @@
+
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly API Test</title>
+
+    <style type="text/css">
+        html {
+            overflow: hidden;
+        }
+    </style>
+
+    <link rel="stylesheet" href="styles.css"/>
+
+    <script  type="text/javascript">
+
+        window.onload = function () {
+            const t = document.getElementById('test_template').content;
+            const t_vars = window.template;
+            t.querySelector('.tpl-expected').appendChild(document.importNode(t_vars.expected, true));
+            t.querySelector('.tpl-actual').appendChild(document.importNode(t_vars.actual, true));
+            t.querySelector('#tpl-title').innerHTML = t_vars.title;
+            t_vars.className && t.querySelector('.tpl-test-container').classList.add(t_vars.className);
+            t.appendChild(document.importNode(t_vars.script, true));
+
+            const sourceEl = t.querySelector('#tpl-source-code-container').querySelector("#source-code-div");
+            sourceEl.innerHTML = t_vars.script.textContent;
+
+            document.getElementById('tpl-container').appendChild(document.importNode(t, true));
+            document.getElementById("tpl-source-code-container").style.display = 'none';
+            resizeIframe();
+        };
+
+        function showSource(flg) {
+            document.getElementById("tpl-source-code-container").style.display = flg ? 'block' : 'none';
+        }
+
+        function irsaviewer_init() {
+            firefly = {
+                options: {
+                    imageMasterSourcesOrder: ['Spitzer', 'WISE', 'Herschel', '2MASS', 'IRAS', 'AKARI', 'DSS', 'SDSS', 'MSX'],
+                    workspace: {showOptions: true},
+                    charts: {
+                        singleTraceUI: true,
+                        maxRowsForScatter: 5000,
+                        minScatterGLRows: 5000,
+                        ui: {HistogramOptions: {fixedAlgorithm: true}}
+                    },
+                    hips: {
+                        useForCoverage: true,
+                        defHipsSources: {source: 'irsa', label: 'IRSA Featured'}
+                    },
+                    tables : {
+                        showInfoButton: false // info about table : title, table links, etc.
+                    }
+                }
+            }
+        }
+
+    </script>
+
+</head>
+
+<body>
+
+
+<template id="test_template">
+    <div id="tpl-title"></div>
+    <div class="tpl-test-container">
+        <div  class="tpl-item-box">
+            <div class="tpl-label">expected:</div>
+            <div class="tpl-expected"></div>
+        </div>
+        <div class="tpl-item-box">
+            <div class="tpl-label">actual:  <div>source: <a href="javascript:showSource(true)">show</a> <a href="javascript:showSource(false)">hide</a> </div> </div>
+            <div class="tpl-actual"></div>
+        </div>
+        <div class="tpl-item-box">
+            <div id="tpl-source-code-container">
+                <div id="source-code-div" class="source-code"/>
+            </div>
+        </div>
+    </div>
+    <script src="../firefly_loader.js"></script>
+</template>
+
+<!-- this is where test cases will be attached-->
+<div id="tpl-container"/>
+
+
+</body>
