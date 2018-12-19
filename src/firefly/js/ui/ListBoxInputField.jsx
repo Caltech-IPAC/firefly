@@ -72,7 +72,12 @@ function getProps(params, fireValueChange) {
 
     return Object.assign({}, params,
         { value,
-          onChange: (ev) => handleOnChange(ev,params, fireValueChange)
+          onChange: (ev) => {
+            handleOnChange(ev,params, fireValueChange);
+            if (params.onChange) {
+                params.onChange(ev);
+            }
+          }
         });
 }
 

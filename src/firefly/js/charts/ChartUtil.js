@@ -941,10 +941,10 @@ export function getDefaultChartProps(tbl_id) {
 
     if (xCol && yCol)  {
         // non-alphanumeric column names should be quoted in expressions
-        xCol = Object.assign({}, xCol, {name: quoteNonAlphanumeric(xCol.name)});
-        yCol = Object.assign({}, yCol, {name: quoteNonAlphanumeric(yCol.name)});
+        const xColName = quoteNonAlphanumeric(xCol.name);
+        const yColName = quoteNonAlphanumeric(yCol.name);
         
-        if (xCol === yCol) {
+        if (xColName === yColName) {
             // if only one numeric column is available, do histogram
             const chartData = {
                 data: [{
@@ -955,10 +955,10 @@ export function getDefaultChartProps(tbl_id) {
                             algorithm: 'fixedSizeBins',
                             fixedBinSizeSelection: 'numBins',
                             numBins: 20,
-                            columnOrExpr: `${xCol.name}`
+                            columnOrExpr: `${xColName}`
                         }
                     },
-                    name: xCol.name
+                    name: `${xColName}`
                 }]
             };
             return chartData;
@@ -971,8 +971,8 @@ export function getDefaultChartProps(tbl_id) {
                     tbl_id,
                     type: totalRows >= getMinScatterGLRows() ? 'scattergl' : 'scatter',
                     mode: 'markers',
-                    x: xCol && `tables::${xCol.name}`,
-                    y: yCol && `tables::${yCol.name}`,
+                    x: xCol && `tables::${xColName}`,
+                    y: yCol && `tables::${yColName}`,
                     colorscale,
                     firefly: {
                         scatterOrHeatmap: true,
