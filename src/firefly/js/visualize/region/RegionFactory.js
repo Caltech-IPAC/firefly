@@ -127,6 +127,9 @@ export class RegionFactory {
 
         // collect region lines and each line may contain coordinate, region description or both
         var regionLines = regionData.reduce( (rLines, oneLine) => {
+            if (oneLine.startsWith('#')) {
+                return [...rLines];
+            }
             var units = getStringUnits(oneLine);
             var lastIdx = units.length - 1;
             var preCsys = null;                   // coordinate status of previous unit
@@ -387,7 +390,7 @@ export class RegionFactory {
         var {sIdx, eIdx} = this.getValueInPairs(targetStr, delimiterAry);
         var valueStr = null;
 
-        if (sIdx >= 0 && eIdx >= 0) {
+        if (sIdx >= 0 && eIdx >= 0 && targetStr.toLowerCase().startsWith('text ') && eIdx === (targetStr.length-1)) {
             valueStr = targetStr.substring(sIdx, eIdx);
             sIdx--;    // back to delimiter position
         }
@@ -406,31 +409,16 @@ export class RegionFactory {
         var newdes;
 
         var getParams = (des) => {
-            var pAry, tmpAry;
+            var pAry;
             var desWithnoText;
-            var textRes = this.getStringFromDelimiter(des, ['{', '}'], ['"', '"'], ['\'', '\'']);
+            var textRes = this.getStringFromDelimiter(des.trim(), ['{', '}'], ['"', '"'], ['\'', '\'']);
             if (textRes.text) {
                 desWithnoText = des.slice(0, textRes.delimiterIndex);  // exclude text for further split
             } else {
                 desWithnoText = des.slice();
             }
 
-            if (desWithnoText.includes(',')) {
-                tmpAry = desWithnoText.split(',');
-
-                pAry = tmpAry.reduce( (prev, t) => {
-
-                    if (t.length === 0 || !t.trim()) { // count empty or blank between ','
-                        prev = [...prev, t];
-                    } else {
-                        var ary = t.trim().split(/\s+/);
-                        prev = [...prev, ...ary];
-                    }
-                    return prev;
-                }, []);
-            } else {
-                pAry = desWithnoText.trim().split(/\s+/);   // blank string is ignored
-            }
+            pAry = desWithnoText.trim().replace(/,/g, ' ').split(/\s+/);
 
             if (textRes.text) {
                 pAry.push(textRes.text);
