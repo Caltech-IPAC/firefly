@@ -2,13 +2,15 @@
 
     window.onload = function () {
         const tests = document.getElementsByTagName('template');
+        var cnt = 1;
         Object.values(tests).forEach(function(test) {
             const c = test.content;
             const expected = c.querySelector('#expected');
             const actual = c.querySelector('#actual');
             const scpt = c.querySelector('script');
+            const title = cnt++ + ' - ' + test.title;
 
-            renderTest(expected, actual, scpt, test.title, test.className);
+            renderTest(expected, actual, scpt, title, test.className);
         });
     };
 

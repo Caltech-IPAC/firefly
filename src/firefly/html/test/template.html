@@ -26,7 +26,10 @@
             t.querySelector('.tpl-expected').appendChild(document.importNode(t_vars.expected, true));
             t.querySelector('.tpl-actual').appendChild(document.importNode(t_vars.actual, true));
             t.querySelector('#tpl-title').innerHTML = t_vars.title;
-            t_vars.className && t.querySelector('.tpl-test-container').classList.add(t_vars.className);
+            t_vars.className && t_vars.className.split(/\s/g).forEach(function (c) {
+                t.querySelector('.tpl-test-container').classList.add(c);
+            });
+
             t.appendChild(document.importNode(t_vars.script, true));
 
             const sourceEl = t.querySelector('#tpl-source-code-container').querySelector("#source-code-div");

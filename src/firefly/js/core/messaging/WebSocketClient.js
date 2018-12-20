@@ -52,7 +52,7 @@ export function wsConnect(callback, baseUrl=getRootURL()) {
         wsch= window.firefly.wsch;
     }
     const wschParam = wsch ? `?${CH_ID}=${wsch}` : '';
-    const wsUrl = `${baseUrl}/sticky/firefly/events${wschParam}`;
+    const wsUrl = `${baseUrl}sticky/firefly/events${wschParam}`;
     console.log('Connecting to ' + wsUrl);
     makeConnection(wsUrl);
     pinger = makePinger(callback, wsUrl);

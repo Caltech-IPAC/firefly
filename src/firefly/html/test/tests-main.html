@@ -17,12 +17,18 @@
 
 <!-- define all of your tests below -->
 
-<template title="IRSA Gator Table" class="tpl-size-m">
-    <div id="expected"><img src="./images/gator-expected.jpg"></div>
+<template title="IRSA Gator Table" class="tpl">
+    <div id="expected" class="flow-h">
+        <div class="source-code indent-3">
+            - widgets loaded
+            - toolbars match
+        </div>
+        <div><img src="./images/gator-expected.jpg"></div>
+    </div>
     <div id="actual" class="flow-h">
-        <div id="gatorTable" class="box-m"></div>
-        <div id="gatorCoverage" class="box-m"></div>
-        <div id="gatorXy" class="box-m"></div>
+        <div id="gatorTable" class="box"></div>
+        <div id="gatorCoverage" class="box"></div>
+        <div id="gatorXy" class="box"></div>
     </div>
     <script>
         irsaviewer_init();
@@ -66,15 +72,15 @@
 </template>
 
 
-<template title="NED catalog VOTable" class="tpl-size-m">
+<template title="NED catalog VOTable" class="tpl sm">
     <div id="expected">
         <img src="./images/ned-table.jpg">
-        <div class="source-code indent-2x">
+        <div class="source-code indent-3">
             - sortBy column where name contains spaces
             - using FmtDisp to format text
         </div>
     </div>
-    <div id="actual" class="box-m w-2x"></div>
+    <div id="actual" class="box x3"></div>
     <script>
         onFireflyLoaded = function (firefly) {
             tblReq = firefly.util.table.makeTblRequest('NedSearch', 'm8 (NED SCS 10)',
@@ -95,13 +101,13 @@
     </script>
 </template>
 
-<template title="GAIA tap search" class="tpl-size-s">
-    <div id="expected" class="source-code">
+<template title="GAIA tap search" class="tpl sm">
+    <div id="expected" class="source-code indent-2">
         Table successfully loaded
         - VOTable
         - first 3 rows of gaia_source
     </div>
-    <div id="actual" class="box-s w-2x"></div>
+    <div id="actual" class="box x3"></div>
     <script>
         onFireflyLoaded = function (firefly) {
             tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',

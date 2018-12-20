@@ -40,7 +40,7 @@
 <h3>Firefly Test</h3>
 <ul class="test-list">
     <li class="test-item"><a href="tests-main.html">Main Tests</a>
-        <div class="test-desc">This page includes common APIs used in production by other projects.  It also contains tests to ensure that Firefly is able able to load data from external services, like TAP, SIAP, etc.</div>
+        <div class="test-desc">This page includes common APIs used in production by other projects.  It also contains tests to ensure that Firefly is able to load data from external services, like TAP, SIAP, etc.</div>
     </li>
 </ul>
 
@@ -58,13 +58,13 @@
 
         Below is a complete example of an actual test:
 <xmp>
-    <template title="GAIA tap search" class="tpl-size-s">
-        <div id="expected" class="source-code">
+    <template title="GAIA tap search" class="tpl sm">
+        <div id="expected" class="source-code indent-2">
             Table successfully loaded
             - VOTable
             - first 3 rows of gaia_source
         </div>
-        <div id="actual" class="box-s w-2x"></div>
+        <div id="actual" class="box x3"></div>
         <script>
             onFireflyLoaded = function (firefly) {
                 tblReq = firefly.util.table.makeTblRequest('AsyncTapQuery', 'GAIA tap search',
@@ -81,26 +81,30 @@
         You may noticed CSS styles were used.
         For your convenience, there are predefined styles in the included <code>styles.css</code> file.
         These styles are designed for composition, meaning they were made to be used together.
-        For instance, to make a vertical flex box two times the size of a small box. <xmp>           <div class="flow-v box-s w-2x" /> </xmp>
+        For instance, to make a horizontal flex box three times the size of regular box. <xmp>           <div class="flow-h box x3" /> </xmp>
 
         Below is a list of other styles you can use:  ( look in <code>styles.css</code> for a complete listing )
     <xmp>
         flow-h          :horizontal flex box
         flow-v          :vertical flex box
-        tpl-size-s      :small template
-        tpl-size-m      :medium template
-        tpl-size-l      :large template
-        tpl-size-xl     :extra-large template
-        box-s           :small box
-        box-m           :medium box
-        box-l           :large box
-        box-xl          :extra-large box
-        w-2x            :twice the width
-        w-3x            :three times the width
-        indent-1x       :indent once
-        indent-2x       :indent twice
-        indent-3x       :indent three times
-        source-code     :shown as source code
+        tpl             :define a standard template block
+         + xs           :extra small template
+         + sm           :small template
+         + med          :medium template
+         + lg           :large template
+         + xl           :extra-large template
+        box             :a standard square box to display content
+         + xs           :extra small; 1/2 size of a regular box
+         + sm           :small; 2/3 size of a regular box
+         + x2           :2 times the size of a regular box
+         + x3           :3 times the size of a regular box
+         + x4           :4 times the size of a regular box
+        source-code     :format as source code
+         + indent-1     :source need to adjust for 1 indentation
+         + indent-2     :source need to adjust for 2 indentation
+         + indent-3     :source need to adjust for 3 indentation
+         + indent-4     :source need to adjust for 4 indentation
+         + indent-5     :source need to adjust for 5 indentation
     </xmp>
     </div>
 
