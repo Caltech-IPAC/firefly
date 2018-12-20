@@ -44,36 +44,6 @@ export class BandState {
     }
 
     /**
-     *
-     * @return {number}
-     */
-    getImageIdx() { return this.imageIdx; }
-
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isMultiImageFile() { return this.multiImageFile; }
-
-    /**
-     *
-     */
-    getCubePlaneNumber() { return this.cubePlaneNumber; }
-
-    /**
-     *
-     * @return {number}
-     */
-    getCubeCnt() { return this.cubeCnt; }
-
-    /**
-     *
-     * @return {number|*}
-     */
-    getOriginalImageIdx() { return this.originalImageIdx; }
-
-    /**
      * get a copy of the WebPlotRequest for this BandState.  Any changes to the object will not be reflected in
      * BandState you must set it back in
      * @return {WebPlotRequest}
@@ -100,7 +70,7 @@ export class BandState {
      *
      * @return {ClientFitsHeader}
      */
-    getHeader() { return this.directFileAccessData; }
+    getDirectFileAccessData() { return this.directFileAccessData; }
 
     /**
      *
@@ -152,7 +122,7 @@ export class BandState {
 
     /**
      * @param {BandState} bs
-     * @param {boolean} includeDirectAccessData include the clientFitsHeader object
+     * @param {boolean} includeDirectAccessData include the directFileAccessData object
      */
     static convertToJSON(bs, includeDirectAccessData= true) {
         if (!bs || !bs.plotRequestSerialize) return null;

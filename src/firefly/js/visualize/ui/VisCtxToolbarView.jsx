@@ -7,7 +7,8 @@ import numeral from 'numeral';
 import PropTypes from 'prop-types';
 import {isEmpty, get, padEnd} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
-                getDrawLayersByType, isDrawLayerAttached, getAllDrawLayersForPlot } from '../PlotViewUtil.js';
+        getDrawLayersByType, isDrawLayerAttached, getAllDrawLayersForPlot,
+        isMultiHDUFits, getCubePlaneCnt, getHDU } from '../PlotViewUtil.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
@@ -42,6 +43,8 @@ import {isOutlineImageForSelectArea, detachSelectArea, SELECT_AREA_TITLE} from '
 import {convertAngle} from '../VisUtil.js';
 import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
 import {RequestType} from '../RequestType.js';
+import {StateInputField} from '../../ui/StatedInputfield.jsx';
+import Validate from '../../util/Validate.js';
 import LSSTFootprint, {selectFootprint, unselectFootprint, filterFootprint, clearFilterFootprint} from '../../drawingLayers/ImageLineBasedFootprint';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
@@ -225,7 +228,7 @@ function crop(pv, dlAry) {
     const ip1=  cc.getImageCoords(sel.pt1);
 
 
-    const cropMultiAll= pv.plotViewCtx.containsMultiImageFits && isMultiImageFitsWithSameArea(pv);
+    const cropMultiAll= isMultiImageFitsWithSameArea(pv);
 
     dispatchCrop({plotId:pv.plotId, imagePt1:ip0, imagePt2:ip1, cropMultiAll});
     attachImageOutline(pv, dlAry);
@@ -535,7 +538,7 @@ export class VisCtxToolbarView extends PureComponent {
             <div style={rS}>
                 {showMultiImageController && <MultiImageControllerView plotView={pv} />}
                 {showOptions && <div
-                    style={{padding: '0 0 5px 2px', fontStyle: 'italic'}}>
+                    style={{padding: '0 0 2px 2px', fontStyle: 'italic', fontWeight: 'bold'}}>
                     Options:</div>
                 }
                 {showSelectionTools && isImage(plot) &&
@@ -642,6 +645,7 @@ export function MultiImageControllerView({plotView:pv}) {
     let prevIdx;
     let length;
     let desc;
+    let positionStr= '';
 
     if (image) {
         cIdx= plots.findIndex( (p) => p.plotImageId===plot.plotImageId);
@@ -650,6 +654,10 @@ export function MultiImageControllerView({plotView:pv}) {
         prevIdx= cIdx ? cIdx-1 : plots.length-1;
         length= plots.length;
         desc= plots[cIdx].plotDesc;
+        if (isMultiHDUFits(pv)) {
+            if (plot.cubeIdx>-1) positionStr+= `, Cube: ${plot.cubeIdx}/${getCubePlaneCnt(pv,plot)}`;
+            positionStr+= `, HDU: ${getHDU(plot)}`;
+        }
     }
     else {
         cIdx= plot.cubeIdx;
@@ -660,22 +668,25 @@ export function MultiImageControllerView({plotView:pv}) {
         desc= getHipsCubeDesc(plot);
     }
 
-    if (length<3) leftImageStyle.visibility='hidden';
+    // if (length<3) leftImageStyle.visibility='hidden';
     if (cIdx<0) cIdx= 0;
-
+    const useText= length>8;
 
 
 
     return (
         <div style={mulImStyle}>
-            <div style={{fontStyle: 'italic', padding: '0 0 0 5px'}}>Image:</div>
+            <div style={{fontStyle: 'italic', fontWeight: 'bold', padding: '0 0 0 5px'}}>Image:</div>
             <img style={{...leftImageStyle}} src={PAGE_LEFT}
                  onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:prevIdx}) : dispatchChangeHiPS({plotId, cubeIdx:prevIdx})}/>
             <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:3, flex: '0 0 auto'}}
                  src={PAGE_RIGHT}
                  onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:nextIdx}): dispatchChangeHiPS({plotId, cubeIdx:nextIdx})} />
             {desc && <div style={{minWidth: '3em', padding:'0 5px 0 5px', fontWeight:'bold'}}>{desc}</div>}
-            <div style={{minWidth: '3em', padding:'0 10px 0 4px'}}>{`${cIdx+1}/${length}`}</div>
+            <div style={{minWidth: '3em', padding:'0 10px 0 4px'}}>
+                {useText ? makeframeInput(plot,cIdx+1,length) : `${cIdx+1}`}
+                {`${useText?' / ' : '/'}${length}${positionStr}`}
+                </div>
         </div>
     );
 }
@@ -749,4 +760,29 @@ function clearFilterDrawingLayer(pv,dlAry) {
             clearFilterFootprint(pv, allLayers);
         }
     }
+}
+
+function makeframeInput(plot, curr, max) {
+
+    const {plotId}= plot;
+
+    const handleFrameChange= (update) => {
+        const {valid,value}= update;
+        const frameNumber= Number(value);
+        if (valid && frameNumber) {
+            isImage(plot) ? dispatchChangePrimePlot({plotId,primeIdx:frameNumber-1}) :
+                            dispatchChangeHiPS({plotId, cubeIdx:frameNumber-1})
+        }
+    };
+
+    const validator= (value) => Validate.intRange(1, max, 'step range', value, false);
+
+    return (
+        <StateInputField defaultValue={curr+''} valueChange={handleFrameChange}
+                         labelWidth={0} label={''} tooltip={'End a frame to jump to'}
+                         showWarning={false} style={{width:`${max<1000?2:4}em`, textAlign:'right'}}
+             validator={validator}
+
+        />
+    );
 }

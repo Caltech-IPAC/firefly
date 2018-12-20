@@ -69,8 +69,6 @@ export const ServerCallStatus= new Enum(['success', 'working', 'fail'], { ignore
  * @prop {boolean} zoomLockingEnabled the plot will automaticly adjust the zoom when resized
  * @prop {UserZoomTypes} zoomLockingType the type of zoom lockeing
  * @prop {number} lastCollapsedZoomLevel used for returning from expanded mode, keeps recode of the level before expanded
- * @prop {boolean} containsMultiImageFits is a multi image fits file
- * @prop {boolean} containsMultipleCubes  is a multi cube
  * @prop {HipsImageConversionSettings} hipsImageConversion -  if defined, then plotview can convert between hips and image
  * @prop {number} plotCounter index of how many plots, used for making next ID
  */
@@ -151,8 +149,6 @@ function createPlotViewContextData(req, pvOptions={}) {
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(), // currently not used
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
-        containsMultiImageFits : false,
-        containsMultipleCubes : false,
         plotCounter:0 // index of how many plots, used for making next ID
     };
 
@@ -256,10 +252,6 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
     PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.plots[pv.primeIdx].plotState);
 
-    if (pv.plots.length>1) {
-        pv.plotViewCtx.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
-    }
-    pv.plotViewCtx.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
     if (expandedMode===ExpandType.COLLAPSE) {
         pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
     }

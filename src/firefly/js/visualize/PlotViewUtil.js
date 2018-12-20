@@ -542,7 +542,7 @@ export function findPlot(plotView, imagePlotId) {
  * @return {boolean}
  */
 export function isMultiImageFitsWithSameArea(pv) {
-    if (!pv.plotViewCtx.containsMultiImageFits) return false;
+    if (!isMultiImageFits(pv)) return false;
     const plot= primePlot(pv);
     const {dataWidth:w, dataHeight:h} = plot;
 
@@ -725,5 +725,109 @@ export function getFoV(pv, alternateZoomFactor) {
         if (!idist) return false;
         return (pv.viewDim.width/plot.screenSize.width) * idist;
     }
-
 }
+
+
+
+// =============================================================
+// ------------  Cube and Multi Image FITS functions -----------
+// =============================================================
+
+/**
+ * Find if there are cubes or images
+ * @param {PlotView} pv
+ * @return {boolean} true if there are cubes or images
+ */
+export function isMultiImageFits(pv) {
+    return Boolean(isMultiHDUFits(pv) || getNumberOfCubesInPV(pv)>0)
+}
+
+/**
+ * Does the image file have more than one HDU
+ * @param {PlotView} pv
+ * @return {boolean} ture if this file has more than one HDU
+ */
+export function isMultiHDUFits(pv) {
+    if (!pv || !isImage(primePlot(pv))) return false;
+    return pv.plots.some( (p) =>  Number(get(p,'header.SPOT_EXT.value', '0')));
+}
+
+/**
+ * Find if there are image cube this this plotview
+ * @param {PlotView} pv
+ * @return {boolean} true if there are any image cube in the PlotView
+ */
+export function hasImageCubes(pv) {
+    return getNumberOfCubesInPV(pv)>0;
+}
+
+/**
+ * Count the number of cubes
+ * @param {PlotView} pv
+ * @return {number} the number of cubes, 0 if none
+ */
+export function getNumberOfCubesInPV(pv) {
+    if (!pv || !isImage(primePlot(pv)) ) return 0;
+    return pv.plots.reduce( (total, p, idx) => {
+        if (idx===0) return getImageCubeIdx(p)>=1 ? 1 : 0;
+        return (getHDU(p)!==getHDU(pv.plots[idx-1] && getImageCubeIdx(p)>-1)) ? total+1 : total;
+    }, 0);
+}
+
+/**
+ * Get the total number of planes in the cube of the plot
+ * @param {PlotView} pv
+ * @param {WebPlot} [plot] the plot to check, defaults to primaryPlot
+ * @return {number}
+ */
+export function getCubePlaneCnt(pv, plot) {
+    if (!plot) plot= primePlot(pv);
+    if (!isImageCube(plot)) return 0;
+    const hdu= getHDU(plot);
+    return pv.plots.filter( (p) => getHDU(p)===hdu).length;
+}
+
+
+/**
+ * Get the HDU of this primaryPlot in the FITS file
+ * @param {PlotView} pv
+ * @return {number} the HDU number, single images will always return 0
+ */
+export function getPrimaryPlotHdu(pv) {
+    if (!pv) return 0;
+    const p= primePlot(pv);
+    if (!isImage(p)) return 0;
+    return p ? getHDU(plot) : 0;
+}
+
+/**
+ * Get the HDU of this image in the FITS file
+ * @param {WebPlot} plot
+ * @return {number} the HDU number, single images will always return 0
+ */
+export function getHDU(plot) {
+    if (!plot || !isImage(plot) ) return 0;
+    return Number(get(plot,'header.SPOT_EXT.value', '0'));
+}
+
+/**
+ * get the plane index of this plot in cube
+ * @param {WebPlot} plot
+ * @return {number} the plane index, -1 if not in a cube
+ */
+export function getImageCubeIdx(plot) {
+    if (!plot || !isImage(plot) ) return -1;
+    return Number(get(plot,'header.SPOT_PL.value', '-1'));
+}
+
+/**
+ * plot is plane in a image cube
+ * @param {WebPlot} plot
+ * @return {boolean} true if plot is a plane in a cube, otherwise false
+ */
+export function isImageCube(plot) {
+    if (!plot || !isImage(plot) ) return false;
+    return getImageCubeIdx(plot) > -1;
+}
+
+
