@@ -71,14 +71,17 @@ export class CatalogConstraintsPanel extends PureComponent {
     }
 
     componentWillReceiveProps(np) {
-        var ddShort = makeFormType(np.showFormType, np.dd_short);
+        const ddShort = makeFormType(np.showFormType, np.dd_short);
 
         if (np.processId !== this.props.processId) {
             this.fetchDD(np.catname, ddShort, np.createDDRequest, true, this.afterFetchDD);
         } else if (np.catname !== this.props.catname || np.dd_short !== this.props.dd_short) {
+            if (np.catname !== this.props.catname) {
+                resetConstraints(np.groupKey, np.fieldKey);
+            }
             this.fetchDD(np.catname, ddShort, np.createDDRequest, true, this.afterFetchDD);   //column selection or constraint needs update
         } else if (this.state.tableModel) {      // TODO: when will this case happen
-            var tblid = np.tbl_id ? np.tbl_id : getTblId(np.catname, ddShort);
+            const tblid = np.tbl_id ? np.tbl_id : getTblId(np.catname, ddShort);
             if (tblid && tblid !== this.state.tableModel.tbl_id) {
                 this.afterFetchDD({tableModel: getTblById(tblid)});
             }
@@ -96,8 +99,8 @@ export class CatalogConstraintsPanel extends PureComponent {
         const {error} = tableModel || {};
         const {catname, dd_short, fieldKey, showFormType=true, createDDRequest, groupKey} = this.props;
 
-        var resetButton = () => {
-            var ddShort = makeFormType(showFormType, dd_short);
+        const resetButton = () => {
+            const ddShort = makeFormType(showFormType, dd_short);
 
             return (
                 <button style={{padding: '0 5px 0 5px', margin: showFormType ? '0 10px 0 10px' : '0'}}
@@ -106,7 +109,7 @@ export class CatalogConstraintsPanel extends PureComponent {
             );
         };
 
-        var formTypeList = () => {
+        const formTypeList = () => {
                 return (
                    <ListBoxInputField fieldKey={'ddform'} inline={true}
                        initialState={{
@@ -125,7 +128,8 @@ export class CatalogConstraintsPanel extends PureComponent {
         };
 
         if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) {
-            return <div style={{top: 0}} className='loading-mask'></div>;
+            //return <div style={{top: 0}} className='loading-mask'></div>;
+            return <div/>;
         }
 
         return (
@@ -162,11 +166,12 @@ export class CatalogConstraintsPanel extends PureComponent {
      */
     fetchDD(catName, dd_short, createDDRequest, clearSelections = false, afterFetch) {
 
-        var tblid = getTblId(catName, dd_short);
+        const {groupKey, fieldKey} = this.props;
+        const tblid = getTblId(catName, dd_short);
 
         //// Check if it exists already - fieldgroup has a keepState property but
         //// here we are not using the table as a fieldgroup per se so we need to cache the column restrictions changes
-        var tbl = getTblById(tblid);
+        const tbl = getTblById(tblid);
 
         if (tbl && !clearSelections) {
             afterFetch&&afterFetch({tableModel: tbl});
@@ -174,15 +179,15 @@ export class CatalogConstraintsPanel extends PureComponent {
         }
 
         const request = createDDRequest(); //Fetch DD master table
-        const urlDef = get(FieldGroupUtils.getGroupFields(this.props.groupKey), ['cattable', 'coldef'], 'null');
+        const urlDef = get(FieldGroupUtils.getGroupFields(groupKey), ['cattable', 'coldef'], 'null');
 
         fetchTable(request).then((tableModel) => {
             const tableModelFetched = tableModel;
 
             tableModelFetched.tbl_id = tblid;
-            addConstraintColumn(tableModelFetched, this.props.groupKey);
+            addConstraintColumn(tableModelFetched, groupKey);
             addColumnDef(tableModelFetched, urlDef);
-            setRowsChecked(tableModelFetched, this.props.groupKey);
+            setRowsChecked(tableModelFetched, groupKey, fieldKey);
 
             updateColumnWidth(tableModelFetched, ['description', 'Description'], -1);
             updateColumnWidth(tableModelFetched, ['name', 'Name', 'Field', 'field'], -1);
@@ -211,7 +216,7 @@ function updateColumnWidth(anyTableModel, colName, colWidth) {
     }
 
     colName.find((cName) => {
-        var idx = getColumnIdx(anyTableModel, cName);
+        const idx = getColumnIdx(anyTableModel, cName);
 
         if (idx >= 0) {
             if (colWidth < 0) {
@@ -235,12 +240,13 @@ function updateColumnWidth(anyTableModel, colName, colWidth) {
  *                                       set the value of SelectInfo as the column 'sel' value
  * @param {TableModel} anyTableModel
  * @param {string} gkey group key
+ * @param {string} fieldKey field key
  */
-function setRowsChecked(anyTableModel, gkey) {
-    var {selcols = '', errorConstraints} = get(FieldGroupUtils.getGroupFields(gkey), 'tableconstraints.value', {});
-    var filterAry = selcols ? selcols.split(',') : [];
+function setRowsChecked(anyTableModel, gkey, fieldKey) {
+    const {selcols = '', errorConstraints} = get(FieldGroupUtils.getGroupFields(gkey), `${fieldKey}.value`, {});
+    const filterAry = selcols ? selcols.split(',') : [];
     const selectInfoCls = SelectInfo.newInstance({rowCount: anyTableModel.totalRows});
-    var idxColSel = getColumnIdx(anyTableModel, 'sel');
+    let idxColSel = getColumnIdx(anyTableModel, 'sel');
 
     if (idxColSel < 0) {     // no 'sel' column exist
         idxColSel = addSelColumn(anyTableModel, filterAry, errorConstraints);
@@ -304,10 +310,11 @@ function addColumnDef(tableModelFetched, urlDef) {
  * @summary add constraint column to table model
  * @param {Object} tableModelFetched
  * @param {string} gkey group key
+ * @param {string} fieldKey fieldKey
  */
-function addConstraintColumn(tableModelFetched, gkey) {
+function addConstraintColumn(tableModelFetched, gkey, fieldKey) {
     const idxSqlCol = sqlConstraintsCol.idx; // after 'name' column
-    const filterStatus = get(FieldGroupUtils.getGroupFields(gkey), ['tableconstraints', 'value', 'filters'], {});
+    const filterStatus = get(FieldGroupUtils.getGroupFields(gkey), [fieldKey, 'value', 'filters'], {});
 
     tableModelFetched.tableData.columns.splice(idxSqlCol, 0, {...sqlConstraintsCol});
     tableModelFetched.tableData.data.map((e) => {
@@ -332,12 +339,11 @@ function hideColumns(tableModelFetched) {
 
 /*
  * proptype for component CatalogConstraintsPanel
- * @type {{onChange: (func|any), catname: (isRequired|any), constraintskey: (string|any), tbl_id: (string|any), fieldKey: (string|any), groupKey: (string|any)}}
+ * @type {{onChange: (func|any), catname: (isRequired|any), tbl_id: (string|any), fieldKey: (string|any), groupKey: (string|any)}}
  */
 CatalogConstraintsPanel.propTypes = {
     catname: PropTypes.string.isRequired,
     dd_short: PropTypes.string,
-    constraintskey: PropTypes.string,
     fieldKey: PropTypes.string.isRequired,
     groupKey: PropTypes.string.isRequired,
     showFormType: PropTypes.bool,
@@ -352,7 +358,7 @@ CatalogConstraintsPanel.defaultProps = {
 };
 
 /**
- * @summary compoent to display the data restrictions into a tabular format
+ * @summary component to display the data restrictions into a tabular format
  * @returns {Object} constraint table
  */
 class ConstraintPanel extends PureComponent {
@@ -482,12 +488,12 @@ function handleOnTableChanged(params, fireValueChange) {
             const parts = filterStrings && filterStrings.split(';');
 
             parts.forEach((v) => {
-                var {valid, value} = FilterInfo.conditionValidatorNoAutoCorrect(v);  // TODO: need more detail syntax check
+                const {valid, value} = FilterInfo.conditionValidatorNoAutoCorrect(v);  // TODO: need more detail syntax check
 
                 if (!valid) {
                     errors += (errors.length > 0 ? ` ${value}` : `Invalid constraints: ${value}`);
                 } else if (v) {
-                    var oneSql = `${colName} ${v}`;
+                    const oneSql = `${colName} ${v}`;
                     sqlTxt += (sqlTxt.length > 0 ? ` AND ${oneSql}` : oneSql);
                 }
             });
@@ -495,7 +501,7 @@ function handleOnTableChanged(params, fireValueChange) {
     });
 
     // collect the column name of all selected column
-    var allSelected = true;
+    let allSelected = true;
 
     let selCols = tbl_data.reduce((prev, d, idx) => {
             if ((sel_info.selectAll && (!sel_info.exceptions.has(idx))) ||

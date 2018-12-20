@@ -372,7 +372,7 @@ export function getCellValue(tableModel, rowIdx, colName) {
 export function getColumnValues(tableModel, colName) {
     const colIdx = getColumnIdx(tableModel, colName);
     if (colIdx >= 0 && colIdx < get(tableModel, 'tableData.columns.length', 0)) {
-        return get(tableModel, 'tableData.data').map( (r) => r[colIdx]);
+        return get(tableModel, 'tableData.data', []).map( (r) => r[colIdx]);
     } else {
         return [];
     }
