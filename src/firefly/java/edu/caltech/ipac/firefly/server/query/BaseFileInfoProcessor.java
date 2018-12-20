@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
@@ -61,7 +62,8 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
     }
 
     public String getUniqueID(ServerRequest request) {
-        return request.getRequestId() + "-" + StringUtils.toString(request.getParams());
+        String id = ServerContext.getRequestOwner().isAuthUser() ? ServerContext.getRequestOwner().getUserInfo().getLoginName() : "";
+        return request.getRequestId() + "-" + id + "-" + StringUtils.toString(request.getParams());
     }
 
     public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {

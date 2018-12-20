@@ -837,7 +837,7 @@ export function dispatchError(chartId, traceNum, reason) {
 
     const {data=[]} = getChartData(chartId);
     const name = get(data, `${traceNum}.name`, `trace ${traceNum}`);
-    let message = `Failed to fetch ${name} data`;
+    let message = `Failed to plot ${name} data`;
     logError(`${message}: ${reason}`);
 
     let reasonStr = `${reason}`.toLowerCase();
@@ -850,8 +850,14 @@ export function dispatchError(chartId, traceNum, reason) {
     } else if (reasonStr.match(/rows exceed/)) {
         message = 'Please filter the table or use different chart type.';
         reasonStr = reason;
+    // } else if (reasonStr.match(/same column/)) {
+    //     message = 'The columns requested are identical or one of them is not numerical.';
+    //     reasonStr = reason;
+    } else if (reasonStr.match(/null/)){
+        message = `No data available: ${name} data`;
+        reasonStr = '';
     } else {
-        reasonStr = 'Please contact Help Desk. Check browser console for more information.';
+        reasonStr = '';
     }
     const changes = {};
     changes[`fireflyData.${traceNum}.error`] = {message, reason: reasonStr};
