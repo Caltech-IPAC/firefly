@@ -295,7 +295,6 @@ function onSearchSubmit(request,serviceUrl) {
 
     if (request.adqlQuery) {
         const params = {serviceUrl, QUERY: request.adqlQuery};
-        console.log(params.QUERY);
         const options = {};
         const found = serviceUrl.match(/.*:\/\/(.*)\/.*/i);
         const treq = makeTblRequest('AsyncTapQuery', found && found[1], params, options);
