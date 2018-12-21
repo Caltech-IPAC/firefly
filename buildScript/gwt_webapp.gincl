@@ -101,7 +101,6 @@ test {
 }
 
 task onlinehelp (dependsOn: [loadConfig]) {
-  ext.onlinehelp_dir = "$rootDir/../irsa-ife-onlinehelp/"
   doLast {
     exec {
       workingDir onlinehelp_dir
