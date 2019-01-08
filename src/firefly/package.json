@@ -3,6 +3,27 @@
     "build": "../../node_modules/webpack/bin/webpack.js",
     "lint": "DO_LINT=true yarn run build",
     "dev": "DEBUG=true yarn run build -- -w -d --no-color",
-    "test-unit": "node ../../node_modules/mocha/bin/mocha --require ../../config/test/mocha-init.js **/__test__/*test.js"
+    "test-unit": "node ../../node_modules/jest/bin/jest",
+    "test-debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand"
+  },
+
+  "jest": {
+    "moduleFileExtensions": ["js", "jsx"],
+    "moduleDirectories": ["node_modules", "js"],
+
+    "setupFiles": ["<rootDir>/../../__jest__/InitTest.js"],
+    "moduleNameMapper": {
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/../../__jest__/fileMock.js",
+      "\\.(css|less)$": "<rootDir>/../../__jest__/styleMock.js",
+      "^firefly/(.*)$": "<rootDir>/js/$1"
+    },
+
+    "transform": {
+      "^.+\\.jsx?$": "<rootDir>/../../__jest__/jest.transform.js"
+    },
+
+    "globals": {
+      "__PROPS__": {}
+    }
   }
 }

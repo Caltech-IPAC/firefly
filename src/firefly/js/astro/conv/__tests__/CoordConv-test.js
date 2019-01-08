@@ -1,5 +1,5 @@
-/*eslint-env node, mocha */
-import {expect,assert} from 'chai';
+import assert from 'assert';
+
 import {doConv, doConvPM} from '../CoordConv.js';
 const  EQUATORIAL_J = 0;
 const EQUATORIAL_B = 1;
@@ -13,7 +13,7 @@ const precision=10;
 describe('A test suite for CoordConv.js', function () {
 
 
-    it('should be equal when convert from inCoord = EQUATORIAL_J, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_J, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
          const coordianteSys = [
              //EQUATORIAL_J,
              EQUATORIAL_B,
@@ -48,14 +48,14 @@ describe('A test suite for CoordConv.js', function () {
              lats[i]=ret.lat;
          }
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed( precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed( precision));
-            expect(lats[i].toFixed( precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed( precision));
+            assert.equal(lons[i].toFixed( precision), expectedLons[i].toFixed( precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed( precision), expectedLats[i].toFixed( precision), `${i} th lat not equal`);
         }
 
      });
 
 
-    it('should be equal when convert from inCoord = EQUATORIAL_B, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_B, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
         const coordianteSys = [
             EQUATORIAL_J,
             //EQUATORIAL_B,
@@ -82,15 +82,15 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
     });
 
 
 
-    it('should be equal when convert from inCoord = GALACTIC, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
+    test('should be equal when convert from inCoord = GALACTIC, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
         const coordianteSys = [
             EQUATORIAL_J,
             EQUATORIAL_B,
@@ -127,15 +127,15 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
     });
 
 
 
-    it('should be equal when convert from inCoord = ECLIPTIC_B, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
+    test('should be equal when convert from inCoord = ECLIPTIC_B, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
         const coordianteSys = [
             EQUATORIAL_J,
             EQUATORIAL_B,
@@ -172,13 +172,13 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
    });
 
-    it('should convert from inCoord = SUPERGALACTIC, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
+    test('should convert from inCoord = SUPERGALACTIC, to outCoord = coordianteSys where inEquirox=outEquinox=2000', function () {
         // Test implementation goes here
         const coordianteSys = [
             EQUATORIAL_J,
@@ -216,14 +216,14 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
     });
 
 
-    it('should be equal when convert from inCoord = ECLIPTIC_B, to outCoord =ECLIPTIC_J where inEquirox=outEquinox=1950', function () {
+    test('should be equal when convert from inCoord = ECLIPTIC_B, to outCoord =ECLIPTIC_J where inEquirox=outEquinox=1950', function () {
         const expectedLon = 124.5347532192079;
         const expectedLat =-35.95583152511536;
         const  inLon =  124.534666;
@@ -240,13 +240,13 @@ describe('A test suite for CoordConv.js', function () {
         var lat=ret.lat;
 
 
-        expect(lon.toFixed(7), 'lon  not equal').to.equal(expectedLon.toFixed(7));
-        expect(lat.toFixed(7), 'lat not equal' ).to.equal(expectedLat.toFixed(7));
+        expect(lon.toFixed(7)).toEqual(expectedLon.toFixed(7));
+        expect(lat.toFixed(7)).toEqual(expectedLat.toFixed(7));
 
     });
 
 
-    it('should be equal when convert from inCoord = ECLIPTIC_J, to outCoord =ECLIPTIC_B where inEquirox=outEquinox=1950', function () {
+    test('should be equal when convert from inCoord = ECLIPTIC_J, to outCoord =ECLIPTIC_B where inEquirox=outEquinox=1950', function () {
         const expectedLon = 124.53457878080559;
         const expectedLat =-35.9558744748764;
         const  inLon =  124.534666;
@@ -263,14 +263,14 @@ describe('A test suite for CoordConv.js', function () {
         var lat=ret.lat;
 
 
-        expect(lon.toFixed(precision), 'lon  not equal').to.equal(expectedLon.toFixed(precision));
-        expect(lat.toFixed(precision), 'lat not equal' ).to.equal(expectedLat.toFixed(precision));
+        expect(lon.toFixed(precision)).toEqual(expectedLon.toFixed(precision));
+        expect(lat.toFixed(precision)).toEqual(expectedLat.toFixed(precision));
 
     });
 
 
 
-    it('should be equal when convert from inCoord = EQUATORIAL_B,inEquirox=20000 , to outCoord array where outEquinox=1950', function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_B,inEquirox=20000 , to outCoord array where outEquinox=1950', function () {
         const coordianteSys = [
             EQUATORIAL_J,
             // EQUATORIAL_B,
@@ -314,14 +314,14 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
 
     });
 
-    it('should be equal when handle the Proper Motion conversion from Equatorial B1950 to J2000', function () {
+    test('should be equal when handle the Proper Motion conversion from Equatorial B1950 to J2000', function () {
 
         const expected={
             ra:189.37874706190132,
@@ -340,14 +340,14 @@ describe('A test suite for CoordConv.js', function () {
 
 
         Object.keys(result).forEach(function(key) {
-            expect(result[key].toFixed(precision), 'lon  not equal').to.equal(expected[key].toFixed(precision) );
+            assert.equal(result[key].toFixed(precision), expected[key].toFixed(precision), 'lon  not equal');
         });
 
 
     });
 
 
-    it('should be equal when handle the Proper Motion conversion from Equatorial J2000 to B1950', function () {
+    test('should be equal when handle the Proper Motion conversion from Equatorial J2000 to B1950', function () {
 
         const expected={
             ra:188.08745733910888,
@@ -368,7 +368,7 @@ describe('A test suite for CoordConv.js', function () {
 
 
         Object.keys(result).forEach(function(key) {
-            expect(result[key].toFixed(precision), 'lon  not equal').to.equal(expected[key].toFixed(precision) );
+            assert.equal(result[key].toFixed(precision), expected[key].toFixed(precision), 'lon  not equal');
         });
 
 
@@ -376,7 +376,7 @@ describe('A test suite for CoordConv.js', function () {
 
 
 
-    it('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=-90,',  function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=-90,',  function () {
 
         const expectedLons = [
             179.69493905911276,
@@ -471,14 +471,14 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
 
     });
 
-    it('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=0.0',  function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=0.0',  function () {
 
         const expectedLons = [
             359.3592849828098,
@@ -573,15 +573,15 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
 
     });
 
 
-    it('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=ECLIPTIC_B outEquinox=1950 lat=-90.0',  function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=ECLIPTIC_B outEquinox=1950 lat=-90.0',  function () {
 
         const expectedLons = [
             359.68340855555186,
@@ -676,15 +676,15 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
 
     });
 
 
-    it('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=90.0',  function () {
+    test('should be equal when convert from inCoord = EQUATORIAL_J,inEquirox=20000 , to outCoord=EQUATORIAL_B outEquinox=1950 lat=90.0',  function () {
 
         const expectedLons = [
            69.3002173418388,
@@ -764,7 +764,7 @@ describe('A test suite for CoordConv.js', function () {
 
         const inLat =90.0;
 
-        var lons = [];
+        var lons = [];      // TODO: this line causes test to skip over all of the assert below.. no test were performed
         var lats = [];
         var ret;
         const tobs=1983.5;
@@ -779,8 +779,8 @@ describe('A test suite for CoordConv.js', function () {
         }
 
         for (let i=0; i<lons.length; i++){
-            expect(lons[i].toFixed(precision), `${i} th lon  not equal` ).to.equal(expectedLons[i].toFixed(precision));
-            expect(lats[i].toFixed(precision), `${i} th lat not equal`).to.equal(expectedLats[i].toFixed(precision));
+            assert.equal(lons[i].toFixed(precision), expectedLons[i].toFixed(precision), `${i} th lon  not equal` );
+            assert.equal(lats[i].toFixed(precision), expectedLats[i].toFixed(precision), `${i} th lat not equal`);
         }
 
 

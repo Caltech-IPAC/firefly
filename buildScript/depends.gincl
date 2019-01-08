@@ -343,13 +343,13 @@ ext.NODE = { ...cmd ->
     for (String key : project.appConfigProps.keySet()) {
       if (key.startsWith('__$')) {
         environment (key, project.appConfigProps[key])
-        println ">>   " + key + " = " + project.appConfigProps[key]
+//        println ">>   " + key + " = " + project.appConfigProps[key]
       }
     }
     // load version info as JS global
     for (String key : versionInfo.keySet()) {
       environment ('__$version.'+key, versionInfo[key])
-      println ">>   " + '__$version.'+key + " = " + versionInfo[key]
+//      println ">>   " + '__$version.'+key + " = " + versionInfo[key]
     }
   }
   return res;

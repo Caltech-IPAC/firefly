@@ -41,6 +41,18 @@ task jsTest (dependsOn: [loadConfig]) {
   }
 }
 
+task jsTestDebug (dependsOn: [loadConfig]) {
+  doLast {
+    if (file("package.json").exists()) {
+      println ">> running JavaScript test in debug mode..."
+      def res = project.ext.NODE 'yarn', 'run', 'test-debug'
+      if (res.getExitValue() != 0) {
+        throw new GradleException("JavaScript test fail.")
+      }
+    }
+  }
+}
+
 clean {
   description= 'Remove build files from this project'
   group = DEV_GROUP
