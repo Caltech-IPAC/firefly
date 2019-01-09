@@ -770,7 +770,7 @@ export function getNumberOfCubesInPV(pv) {
     if (!pv || !isImage(primePlot(pv)) ) return 0;
     return pv.plots.reduce( (total, p, idx) => {
         if (idx===0) return getImageCubeIdx(p)>=1 ? 1 : 0;
-        return (getHDU(p)!==getHDU(pv.plots[idx-1] && getImageCubeIdx(p)>-1)) ? total+1 : total;
+        return ( getHDU(p)!==getHDU(pv.plots[idx-1]) && getImageCubeIdx(p)>-1) ? total+1 : total;
     }, 0);
 }
 
@@ -797,7 +797,7 @@ export function getPrimaryPlotHdu(pv) {
     if (!pv) return 0;
     const p= primePlot(pv);
     if (!isImage(p)) return 0;
-    return p ? getHDU(plot) : 0;
+    return p ? getHDU(p) : 0;
 }
 
 /**

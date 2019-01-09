@@ -5,6 +5,11 @@ import {has} from 'lodash';
 import {InputFieldView} from './InputFieldView.jsx';
 
 
+
+const ARROW_UP = 38;
+const ARROW_DOWN = 40;
+
+
 export class StateInputField extends PureComponent {
 
     constructor(props) {
@@ -30,7 +35,8 @@ export class StateInputField extends PureComponent {
 
 
     render() {
-        const {visible=true, message, label='', tooltip, labelWidth= 100, showWarning, style='', wrapperStyle=''}= this.props;
+        const {visible=true, message, label='', tooltip, labelWidth= 100, showWarning,
+            style='', wrapperStyle='', onKeyDown, onKeyUp}= this.props;
         const {value, valid}= this.state;
 
         return (
@@ -47,6 +53,8 @@ export class StateInputField extends PureComponent {
             showWarning={showWarning}
             style={style}
             wrapperStyle={wrapperStyle}
+            onKeyDown={onKeyDown}
+            onKeyUp={onKeyUp}
         />
         );
     }
@@ -67,6 +75,8 @@ StateInputField.propTypes= {
     showWarning : PropTypes.bool,
     type: PropTypes.string,
     validator: PropTypes.func,
+    onKeyUp: PropTypes.func,
+    onKeyDown: PropTypes.func,
     valueChange: PropTypes.func.isRequired
 };
 

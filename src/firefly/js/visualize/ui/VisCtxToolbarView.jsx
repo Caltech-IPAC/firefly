@@ -58,6 +58,8 @@ import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 
+const ARROW_LEFT = 37;
+const ARROW_RIGHT = 39;
 
 //todo move the statistics constants to where they are needed
 const Metrics= {MAX:'MAX', MIN:'MIN', CENTROID:'CENTROID', FW_CENTROID:'FW_CENTROID', MEAN:'MEAN',
@@ -655,7 +657,7 @@ export function MultiImageControllerView({plotView:pv}) {
         length= plots.length;
         desc= plots[cIdx].plotDesc;
         if (isMultiHDUFits(pv)) {
-            if (plot.cubeIdx>-1) positionStr+= `, Cube: ${plot.cubeIdx}/${getCubePlaneCnt(pv,plot)}`;
+            if (plot.cubeIdx>-1) positionStr+= `, Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(pv,plot)}`;
             positionStr+= `, HDU: ${getHDU(plot)}`;
         }
     }
@@ -684,7 +686,7 @@ export function MultiImageControllerView({plotView:pv}) {
                  onClick={() => image ? dispatchChangePrimePlot({plotId,primeIdx:nextIdx}): dispatchChangeHiPS({plotId, cubeIdx:nextIdx})} />
             {desc && <div style={{minWidth: '3em', padding:'0 5px 0 5px', fontWeight:'bold'}}>{desc}</div>}
             <div style={{minWidth: '3em', padding:'0 10px 0 4px'}}>
-                {useText ? makeframeInput(plot,cIdx+1,length) : `${cIdx+1}`}
+                {useText ? makeframeInput(pv,cIdx+1,length) : `${cIdx+1}`}
                 {`${useText?' / ' : '/'}${length}${positionStr}`}
                 </div>
         </div>
@@ -762,26 +764,51 @@ function clearFilterDrawingLayer(pv,dlAry) {
     }
 }
 
-function makeframeInput(plot, curr, max) {
-
+function changeFrame(plot,frameNumber) {
     const {plotId}= plot;
+    isImage(plot) ? dispatchChangePrimePlot({plotId,primeIdx:frameNumber-1}) :
+                    dispatchChangeHiPS({plotId, cubeIdx:frameNumber-1})
+}
+
+function handleUpDown(pv,currValue, key) {
+
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return;
+    const frameNumber= Number(currValue);
+    const plot= primePlot(pv);
+    if (!frameNumber) return;
+    let prevIdx;
+    let nextIdx;
+    if (isImage(plot)) {
+        prevIdx= frameNumber>1? frameNumber-1 : pv.plots.length;
+        nextIdx= frameNumber===pv.plots.length ? 1 : frameNumber+1;
+    }
+    else {
+        prevIdx= frameNumber>1? frameNumber-1 : plot.cubeDepth;
+        nextIdx= frameNumber===plot.cubeDepth ? 1 : frameNumber+1;
+    }
+    changeFrame(plot,key==='ArrowLeft' ? prevIdx : nextIdx);
+
+
+}
+
+function makeframeInput(pv, curr, max) {
 
     const handleFrameChange= (update) => {
         const {valid,value}= update;
         const frameNumber= Number(value);
-        if (valid && frameNumber) {
-            isImage(plot) ? dispatchChangePrimePlot({plotId,primeIdx:frameNumber-1}) :
-                            dispatchChangeHiPS({plotId, cubeIdx:frameNumber-1})
-        }
+        if (valid && frameNumber) changeFrame(primePlot(pv),frameNumber);
     };
 
+    const handleKeyDown= (ev,currValue) => handleUpDown(pv,currValue,ev.key);
     const validator= (value) => Validate.intRange(1, max, 'step range', value, false);
 
     return (
         <StateInputField defaultValue={curr+''} valueChange={handleFrameChange}
-                         labelWidth={0} label={''} tooltip={'End a frame to jump to'}
+                         labelWidth={0} label={''}
+                         tooltip={'Enter frame number to jump to, right arrow goes forward, left arrow goes back'}
                          showWarning={false} style={{width:`${max<1000?2:4}em`, textAlign:'right'}}
-             validator={validator}
+                         validator={validator}
+                         onKeyDown={handleKeyDown}
 
         />
     );
