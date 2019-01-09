@@ -18,6 +18,7 @@ import {makeImagePt} from './Point';
 import {convert} from './VisUtil.js';
 import {parseSpacialHeaderInfo, makeDirectFileAccessData} from './projection/ProjectionInfo.js';
 import {UNSPECIFIED, UNRECOGNIZED } from './projection/Projection.js';
+import {getImageCubeIdx} from './PlotViewUtil.js';
 
 
 export const RDConst= {
@@ -183,6 +184,7 @@ export const PlotAttribute= {
  * @prop {Projection} projection - projection routines for this projections
  * @prop {Object} affTrans - the affine transform
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
+ * @prop {Array.<Object>} directFileAccessDataAry - object of parameters to get flux from the FITS file
  *
  * @see PlotView
  */
@@ -372,10 +374,10 @@ export const WebPlot= {
         }
 
         //original plot state come with header information for getting flux.
-        // this is only need for one call, so most time we string it out.
+        // this is only need for one call, so most time we strip it out.
         // keeping clientFitsHeaderAry allows a way to put back the original
         //todo: i think is could be cached on the server side so we don't need to be send it back and forth
-        const clientFitsHeaderAry= plotState.getBands().map( (b) => plotState.getHeader(b));
+        const directFileAccessDataAry= plotState.getBands().map( (b) => plotState.getDirectFileAccessData(b));
 
         let plot= makePlotTemplate(plotId,'image',asOverlay, CoordinateSys.parse(wpInit.imageCoordSys));
 
@@ -399,10 +401,11 @@ export const WebPlot= {
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,
             attributes,
-            clientFitsHeaderAry
+            directFileAccessDataAry
             //=== End Mutable =====================
         };
         plot= clone(plot, imagePlot);
+        plot.cubeIdx= getImageCubeIdx(plot);
 
         if (wpInit.relatedData) {
             plot.relatedData= wpInit.relatedData.map( (d) => clone(d,{relatedDataId: plotId+relatedIdRoot+d.dataKey}));
@@ -494,7 +497,7 @@ export const WebPlot= {
         const {bandStateAry}= plotState;
         for(let i=0; (i<bandStateAry.length);i++) {
             if (bandStateAry[i] && isEmpty(bandStateAry[i].directFileAccessData)) {
-                bandStateAry[i].directFileAccessData= plot.clientFitsHeaderAry[i];
+                bandStateAry[i].directFileAccessData= plot.directFileAccessDataAry[i];
             }
         }
 

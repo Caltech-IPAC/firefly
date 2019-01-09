@@ -644,15 +644,15 @@ function makeWebPlotRequests(request, imageMasterData, plotId, plotGroupId){
 
     } else if (request.imageSource === 'upload') {
         const fileName = get(request, 'fileUpload');
-        return [addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), plotId, plotGroupId)];
+        return [addStdParams(WebPlotRequest.makeFilePlotRequest(fileName), 'image', plotId, plotGroupId)];
 
     } else if (request.imageSource === ServerParams.IS_WS) {
         const fileName = get(request, 'wsFilepath');
-        return [addStdParams(WebPlotRequest.makeWorkspaceRequest(fileName), plotId, plotGroupId)];
+        return [addStdParams(WebPlotRequest.makeWorkspaceRequest(fileName),'image',  plotId, plotGroupId)];
 
     } else if (request.imageSource === 'url') {
         const url = get(request, 'txURL');
-        return [addStdParams(WebPlotRequest.makeURLPlotRequest(url), plotId, plotGroupId)];
+        return [addStdParams(WebPlotRequest.makeURLPlotRequest(url), 'image', plotId, plotGroupId)];
 
     } else {
         const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);

@@ -97,6 +97,8 @@ export class InputFieldView extends PureComponent {
         // if form is not given, it will default to __ignore so that it does not interfere with embedded forms.
         form = form || undefined;
 
+        const currValue= (type==='file') ? undefined : value;
+
         return (
             <div style={wrapperStyle}>
                 {label && <InputFieldLabel labelStyle={labelStyle} label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
@@ -108,10 +110,10 @@ export class InputFieldView extends PureComponent {
                                 onBlur && onBlur(ev);
                                 this.setState({hasFocus:false, infoPopup:false});
                             }}
-                       onKeyPress={(ev) => onKeyPress && onKeyPress(ev)}
-                       onKeyDown={(ev) => onKeyDown && onKeyDown(ev)}
+                       onKeyPress={(ev) => onKeyPress && onKeyPress(ev,currValue)}
+                       onKeyDown={(ev) => onKeyDown && onKeyDown(ev,currValue)}
                        onKeyUp={(ev) => onKeyUp && onKeyUp(ev)}
-                       value={type==='file' ? undefined : value}
+                       value={currValue}
                        title={ (!showWarning && !valid) ? message : tooltip}
                        {...pickBy({size, type, disabled, placeholder, form})}
                 />

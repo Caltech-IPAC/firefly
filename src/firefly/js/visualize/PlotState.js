@@ -136,28 +136,6 @@ export class PlotState {
      */
     getWebPlotRequest(band) { return this.get(band || this.firstBand()).getWebPlotRequest(); }
 
-
-    /**
-     * @summary Check to see it this plot is from a multi image file
-     * @param {Band} [band] the band check for, if not passed the used the primary band
-     * @return {boolean} the WebPlotRequest
-     * @public
-     */
-    isMultiImageFile(band = undefined) { return this.get(band || this.firstBand()).isMultiImageFile(); }
-
-    /**
-     * @summary if a cube, checkout how many images it contains
-     * @param {Band} [band] the band check for, if not passed the used the primary band
-     * @return {number} the WebPlotRequest
-     * @public
-     */
-    getCubeCnt(band) { return this.get(band || this.firstBand()).getCubeCnt(); }
-
-
-    getCubePlaneNumber(band) {
-        return this.get(band || this.firstBand()).getCubePlaneNumber();
-    }
-
     /**
      * Get the range values for the plot.
      * @param {band} [band] the band get range value for, parameter is unnecessary for non-three color plots
@@ -165,13 +143,12 @@ export class PlotState {
      */
     getRangeValues(band) { return this.get(band || this.firstBand()).getRangeValues(); }
 
-
     /**
      *
      * @param band
      * @return {ClientFitsHeader}
      */
-    getHeader(band) { return this.get(band).getHeader(); }
+    getDirectFileAccessData(band) { return this.get(band).getDirectFileAccessData(); }
 
 
     /**
@@ -188,11 +165,6 @@ export class PlotState {
 
 
     getUploadFileName(band) { return band ? this.get(band).getUploadedFileName() : null; }
-
-    getImageIdx(band) { return this.get(band).getImageIdx(); }
-
-
-    getOriginalImageIdx(band) { return this.get(band).getOriginalImageIdx(); }
 
     /**
      *
@@ -272,7 +244,7 @@ export class PlotState {
     /**
      * @summary convert his PlotState to something can be used with JSON.stringify
      * @param {PlotState} s
-     * @param {boolean} includeDirectAccessData include the clientFitsHeader object
+     * @param {boolean} includeDirectAccessData include the includeDirectAccessData object
      */
     static convertToJSON(s, includeDirectAccessData= true) {
         if (!s) return null;
