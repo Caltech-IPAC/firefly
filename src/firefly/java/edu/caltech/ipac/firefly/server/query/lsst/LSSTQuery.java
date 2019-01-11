@@ -43,18 +43,6 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static String METASERVURL;
     private static String IMGSERVURL;
 
-    public static String getHost() {
-        String baseUrl = ServerContext.getRequestOwner().getRequestAgent().getBaseUrl();
-        String contextPath = ServerContext.getRequestOwner().getRequestAgent().getContextPath();
-
-
-        String host = AppProperties.getProperty("lsst.dax.host", baseUrl.replace(contextPath+"/", ""));
-        if (host == null) {
-            throw new IllegalStateException("Data Access host can not be derrived");
-        }
-        return host;
-    }
-
     public static String getDbservURL() {
         if (DBSERVURL == null) {
             String url = AppProperties.getProperty("lsst.dax.dbservURL", "/api/db/v1/tap/sync/");
