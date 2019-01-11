@@ -1,6 +1,22 @@
 import * as jest from 'jest';
 
 jest.mock('firefly/Firefly.js');
+//
+// -- we are going to have to do something like this eventually, I think, right now I can't make it work
+// jest.mock('firefly/Firefly.js', () => {
+//     return {
+//         flux : {
+//             process : () => {},
+//             getState : () => ({
+//                 app_data : {},
+//                 allPlots : {},
+//                 fieldGroup: {}
+//             })
+//         }
+//     }
+// });
+
+
 jest.mock('firefly/util/BrowserInfo.js', () => {
     return {
         getBrowserType: () => '',
@@ -23,3 +39,9 @@ jest.mock('firefly/util/BrowserInfo.js', () => {
     };
 });
 
+
+jest.mock('firefly/core/AppDataCntlr.js', () => {
+    return {
+        getAppOptions : () => ({})
+    }
+});
