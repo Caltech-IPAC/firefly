@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.MathUtil;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -27,8 +28,12 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     // using ImageServ API v1: https://confluence.lsstcorp.org/display/DM/ImageServ+API+-+v1
     // image repository (DC_W13_Stripe82) is a part of the URL, but it is not clear where it comes from
     // and how we should get it: via metaserv or image/v1/capabilities
-    // I am hardcoding it here for now
-    public static String IMGSERVURL= LSSTQuery.HOST + "/api/image/v1/DC_W13_Stripe82";
+    // example: "/api/image/v1/DC_W13_Stripe82";
+    private static final String IMAGE_REPOSITORY = AppProperties.getProperty("lsst.dax.imgserv.repository", "DC_W13_Stripe82");
+
+    public static String getImgBaseUrl() {
+        return LSSTQuery.getImgservURL() + "/" + IMAGE_REPOSITORY;
+    }
 
     /**
      * Implement the abstract method, "getURL"
@@ -89,14 +94,14 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
             String imageId = request.getParam("imageId");
             // width and height in arcseconds
             // ImageServAPI-I11
-            return new URL(IMGSERVURL+"?ds="+imageType+"&sid="+imageId+
+            return new URL(getImgBaseUrl()+"?ds="+imageType+"&sid="+imageId+
                     "&ra="+ra+"&dec="+dec+"&width="+subsizeArcSec+"&height="+subsizeArcSec+"&unit=arcsec");
         } else {
             // coadd
             String filterName = request.getParam("filterName");
             // width and height in arcseconds, for pixels use cutoutPixel instead of cutout
             // ImageServAPI-I9
-            return new URL(IMGSERVURL+"?ds="+imageType+
+            return new URL(getImgBaseUrl()+"?ds="+imageType+
                     "&ra="+ra+"&dec="+dec+"&filter="+filterName+"&width="+subsizeArcSec+"&height="+subsizeArcSec+"&unit=arcsec");
         }
 
@@ -119,10 +124,9 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
      * it will be deleted.
      * @param request - ServerRequest
      * @return URL Object
-     * @throws IOException
-     * @throws DataAccessException
+     * @throws IOException on error
      */
-    private URL getURLForDeepCoadd(ServerRequest request) throws IOException, DataAccessException {
+    private URL getURLForDeepCoadd(ServerRequest request) throws IOException {
         String tract = request.getParam("tract");
         String patch = request.getParam("patch");
         String filterName = request.getParam("filterName");
@@ -132,17 +136,16 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
     }
 
 
-    public static String createURLForDeepCoadd(String tract, String patch, String filterName) throws MalformedURLException {
+    public static String createURLForDeepCoadd(String tract, String patch, String filterName) {
         return  getBaseURL(true)+"tract="+tract+"&patch="+patch+"&filter="+filterName;
     }
     /**
      * This method uses a set of fields to search for image
      * @param request server request
      * @return URL
-     * @throws IOException
-     * @throws DataAccessException
+     * @throws IOException on error
      */
-    private URL  getURLForCCDs(ServerRequest request)throws IOException, DataAccessException {
+    private URL  getURLForCCDs(ServerRequest request)throws IOException {
         logger.info("getting the parameters out from the request");
         String run = request.getParam("run");
         String camcol = request.getParam("camcol");
@@ -153,19 +156,19 @@ public class LSSTImageSearch extends URLFileInfoProcessor {
 
     }
 
-    public static String  createURLForScienceCCD(String run, String camcol, String field, String filterName) throws MalformedURLException {
+    public static String  createURLForScienceCCD(String run, String camcol, String field, String filterName)  {
         return getBaseURL(false)+"run="+run+"&camcol="+camcol+"&field="+field+"&filter="+filterName;
     }
 
     private static  String getBaseURL(boolean isDeepCoadd){
         if (isDeepCoadd) {
             // ImageServAPI-I14
-            return IMGSERVURL+"?ds=deepCoadd&";
+            return getImgBaseUrl()+"?ds=deepCoadd&";
 
         }
         else {
             // ImageServAPI-I7
-            return IMGSERVURL+"?ds=calexp&";
+            return getImgBaseUrl()+"?ds=calexp&";
         }
     }
 

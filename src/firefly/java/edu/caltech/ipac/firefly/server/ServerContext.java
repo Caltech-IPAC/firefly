@@ -770,6 +770,24 @@ public class ServerContext {
 
     }
 
+    /**
+     * If url starts with http, returns it
+     * otherwise prepends request's protocol and host to the "relative" url
+     * @param url - full or "relative" url string
+     * @return full url
+     */
+    public static String resolveUrl(String url) {
+        if (url == null) {
+            throw new IllegalArgumentException("null URL is passed to resolveUrl");
+        }
+        if (url.startsWith("http")) return url;
+        try {
+            return ServerContext.getRequestOwner().getHostUrl() + url;
+        } catch (Exception e) {
+            throw new IllegalStateException("host url can not be derived");
+        }
+    }
+
     public static boolean isInUploadDir(File f) {
         return (f!=null &&f.getPath().startsWith(VIS_UPLOAD_PATH_STR));
     }
