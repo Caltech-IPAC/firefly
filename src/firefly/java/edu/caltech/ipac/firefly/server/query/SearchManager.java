@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.io.PrintWriter;
 
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.CLIENT_REQ;
 import static edu.caltech.ipac.firefly.core.background.BackgroundStatus.SERVER_REQ;
@@ -82,11 +83,11 @@ public class SearchManager {
         return dgp;
     }
 
-    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest) throws DataAccessException {
+    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, String format) throws DataAccessException {
         try {
             SearchProcessor processor = getProcessor(dataRequest.getRequestId());
             if (dataRequest != null) {
-                return processor.writeData(saveTo, dataRequest);
+                return processor.writeData(saveTo, dataRequest, format);
             } else {
                 throw new DataAccessException("Request fail inspection.  Operation aborted.");
             }
@@ -94,6 +95,7 @@ public class SearchManager {
             throw new DataAccessException("Error while writing to Stream", e);
         }
     }
+
 
     public SearchProcessor getProcessor(String requestId) {
         SearchProcessor processor = SearchProcessorFactory.getProcessor(requestId);

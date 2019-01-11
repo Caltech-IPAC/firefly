@@ -59,7 +59,7 @@ public class FileFromExternalTask implements SearchProcessor<FileInfo> {
         }
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, String format) throws DataAccessException {
         /* does not apply.. do nothing */
         return null;
     }

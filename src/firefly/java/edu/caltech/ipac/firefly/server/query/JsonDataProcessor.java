@@ -30,7 +30,7 @@ abstract public class JsonDataProcessor implements SearchProcessor<String> {
 
     public void onComplete(ServerRequest request, String results) throws DataAccessException {}
 
-    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException { return null; }
+    public FileInfo writeData(OutputStream out, ServerRequest request, String format) throws DataAccessException { return null; }
 
     public boolean doCache() { return false; }
 

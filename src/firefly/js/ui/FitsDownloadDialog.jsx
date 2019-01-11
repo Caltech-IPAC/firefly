@@ -13,7 +13,7 @@
  */
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get, set, isEmpty, has} from 'lodash';
+import {get, set, isEmpty} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';

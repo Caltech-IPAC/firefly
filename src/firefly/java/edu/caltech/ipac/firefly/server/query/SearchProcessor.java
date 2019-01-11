@@ -32,7 +32,7 @@ public interface SearchProcessor<Type> {
 
     String getUniqueID(ServerRequest request);
     Type getData(ServerRequest request) throws DataAccessException;
-    FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException;
+    FileInfo writeData(OutputStream out, ServerRequest request, String format) throws DataAccessException;
     boolean doCache();
     void onComplete(ServerRequest request, Type results) throws DataAccessException;
     boolean doLogging();

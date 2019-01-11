@@ -16,6 +16,9 @@ import edu.caltech.ipac.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class HttpServCommands {
 
     static abstract class BaseServletCommand extends ServerCommandAccess.HttpCommand {
@@ -25,17 +28,32 @@ public class HttpServCommands {
 
     public static class TableSave extends BaseServletCommand {
         static final Logger.LoggerImpl DL_LOGGER = Logger.getLogger(Logger.DOWNLOAD_LOGGER);
+        private static Map<String, String> allFormats = new HashMap<>();
+        static {
+            allFormats.put("ipac", ".tbl");
+            allFormats.put("csv", ".csv");
+            allFormats.put("tsv", ".tsv");
+            allFormats.put("votable", ".xml");
+            allFormats.put("fits", ".fit");
+        }
 
         public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
             TableServerRequest request = sp.getTableServerRequest();
             if (request == null) throw new IllegalArgumentException("Invalid request");
 
             String fileName = sp.getOptional("file_name");
+            String fileFormat = sp.getOptional("file_format");
+            if (StringUtils.isEmpty(fileFormat) || !allFormats.containsKey(fileFormat.toLowerCase())) {
+                fileFormat = "ipac";
+            } else {
+                fileFormat = fileFormat.toLowerCase();
+            }
+            String fileNameExt = fileName.endsWith(allFormats.get(fileFormat)) ? "" : allFormats.get(fileFormat);
 
             fileName = StringUtils.isEmpty(fileName) ? request.getRequestId() : fileName;
-            res.setHeader("Content-Disposition", "attachment; filename=" + fileName + (fileName.endsWith(".tbl")?"":".tbl"));
+            res.setHeader("Content-Disposition", "attachment; filename=" + fileName + fileNameExt);
             SearchManager am = new SearchManager();
-            FileInfo fi = am.save(res.getOutputStream(), request);
+            FileInfo fi = am.save(res.getOutputStream(), request, fileFormat);
             if (fi != null) {
                 long length = 0;
                 if (fi != null) {

@@ -69,7 +69,7 @@ public class JsonFromExternalTask implements SearchProcessor {
     }
 
     @Override
-    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, String format) throws DataAccessException {
         /* does not apply.. do nothing */
         return null;
     }
