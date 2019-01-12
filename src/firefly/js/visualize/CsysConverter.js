@@ -198,6 +198,13 @@ export class CysConverter {
 
     };
 
+    /* check it the point is viewable by checking if the point is within range of viewDim for
+        hips image or if the point is within plot range for fits image
+     */
+    isPointViewable(pt) {
+        return isHiPS(this) ? this.pointInView(pt) : this.pointOnDisplay(pt);
+    };
+
 //========================================================================================
 //----------------------------- End pointIn Methods  -------------------------------------
 //========================================================================================

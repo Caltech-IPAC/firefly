@@ -44,42 +44,49 @@ export const OutlineType = new Enum(['original', 'center', 'plotcenter']);
 const AllHandle = [MARKER_HANDLE.outline, MARKER_HANDLE.resize, MARKER_HANDLE.rotate];
 const AllOutline = [OutlineType.original, OutlineType.center, OutlineType.plotcenter];
 
-export var getWorldOrImage = (pt, cc) => (cc.projection.isSpecified() ?
-                             cc.getWorldCoords(pt, CoordinateSys.EQ_J2000) : cc.getImageCoords(pt));
+export var getWorldOrImage = (pt, cc) => ((cc.projection.isSpecified() && cc.projection.isImplemented()) ?
+                                           cc.getWorldCoords(pt, CoordinateSys.EQ_J2000) : cc.getImageCoords(pt));
 
+
+/**
+ * Create a DrawObj for footprint or marker that contains the following:
+ *  obj.text= null;
+ *  obj.fontName
+ *  obj.fontSize
+ *  obj.fontWeight
+ *  obj.fontStyle
+ *  obj.width
+ *  obj.height
+ *  obj.color
+ *  obj.style=Style.STANDARD;
+ *  obj.sType = MarkerType.Marker or MarkerType.Footprint
+ *  obj.unitType
+ *  obj.includeRotate = true|false  if (isRotatable === true), show outlinebox + rotate handle
+ *  obj.includeResize = true|false  if (isEditable === true) show outlinebox + resize handle
+ *  obj.includeOutline = true|false  show outlinebox
+ *  obj.textLoc
+ *  obj.textOffset  // offsetScreenPt
+ *  obj.pts         // center of footprint or marker, rotation center
+ *  obj.drawObjAry   // array of ShapeDataObj it contains
+ *  obj.originalOutlineBox  // the 'original' outlinebox, is only recorded if the outline box around the footprint is in view
+ *                        // the outlinebox object included in drawObjAry may not be the original (coult be becomes around 'center' or 'plotcenter')
+ *  obj.isRotatable  //rotablable
+ *  obj.isEditable   //resizable
+ *  obj.isMovable    //movable
+ *  obj.outlineIndex // handler starting index, outline box object position in drawObjAry
+ *  obj.resizeIndex  //resize handler index in drawObjAry
+ *  obj.rotateIndex  //rotate handler index in drawObjAry
+ *  sequence: outlinebox (handleIndex) => (resizeIndex) => (rotateIndex)
+ * @param sType
+ * @param style
+ * @returns {*}
+ */
 function make(sType, style) {
     const obj= DrawObj.makeDrawObj();
     obj.sType= sType;   // default: MarkerType.Marker
     obj.type= MARKER_DATA_OBJ;
     obj.style = (!style) ? DEFAULT_STYLE: style;
-    // may contain the following:
-        //obj.text= null;
-        //obj.fontName = 'helvetica';
-        //obj.fontSize = DEFAULT_FONT_SIZE;
-        //obj.fontWeight = 'normal';
-        //obj.fontStyle = 'normal';
-        //obj.width= null;
-        //obj.height= null;
-        //obj.color
-        //obj.style=Style.STANDARD;
-        //obj.sType = MarkerType.Marker
-        //obj.unitType = UnitType.PIXEL;
-        //obj.includeRotate = true|false  if (isRotatable === true), show outlinebox + rotate handle
-        //obj.includeResize = true|false  if (isEditable === true) show outlinebox + resize handle
-        //obj.includeOutline = true|false  show outlinebox
-        //obj.textLoc= TextLocation.CIRCLE_SE
-        //obj.textOffset= null;   // offsetScreenPt
-        //obj.pts // center of footprint or marker, rotation center
-        //obj.drawObjAry= array of ShapeDataObj
-        //obj.originalOutlineBox  // the 'original' outlinebox, is only recorded if the outline box around the footprint is in view
-        //                        // outlinebox in drawObjAry may not be the original (coult be becomes around 'center' or 'plotcenter')
-        //obj.isRotatable  //rotablable
-        //obj.isEditable   //resizable
-        //obj.isMovable    //movable
-        //obj.outlineIndex // handler starting index, outline box pos in drawObjAry
-        //obj.resizeIndex  //resize handler index in drawObjAry
-        //obj.rotateIndex  //rotate handler index in drawObjAry
-        // sequence: outlinebox (handleIndex) => (resizeIndex) => (rotateIndex)
+
     return obj;
 }
 
@@ -92,17 +99,21 @@ const screenUnit = ShapeDataObj.UnitType.PIXEL;
  * @param cc
  * @param size
  * @param unitType
+ * @param resUnit output unit
  * @returns {{length: *, unit: *}}
  */
-export function lengthSizeUnit(cc, size, unitType) {
+export function lengthSizeUnit(cc, size, unitType, resUnit=imageUnit) {
     var len, unit;
 
-    if (cc.projection.isSpecified()) {
+    if (cc.projection.isSpecified() && cc.projection.isImplemented()) {
         len = lengthToArcsec(size, cc, unitType);
         unit = worldUnit;
-    } else {
+    } else if (imageUnit.is(resUnit)) {
         len = lengthToImagePixel(size, cc, unitType);
         unit = imageUnit;
+    } else if (screenUnit.is(resUnit)) {
+        len = lengthToImagePixel(size, cc, unitType)*cc.zoomFactor;
+        unit = screenUnit;
     }
     return {len, unit};
 }
@@ -176,7 +187,7 @@ export function makeMarker(centerPt, width, height, isHandle, cc, text, textLoc,
 
     mainCircle.isMarker = true;
     dObj = Object.assign(dObj, textProps);
-    //mainCircle = Object.assign(mainCircle, textProps);
+
     dObj = Object.assign(dObj, {
         isMovable: true,
         isEditable: true,
@@ -1087,7 +1098,7 @@ export function drawMarkerObject(drawObjP, ctx, plot, def, vpPtM, onlyAddToPath)
 
         drawFootprintText(newObj, plot, def, ctx);
         set(drawObjP, 'textWorldLoc', newObj.textWorldLoc);
-        set(drawObjP, 'textObj', ShapeDataObj.makeText(plot.getWorldCoords(newObj.textWorldLoc), newObj.text));
+        set(drawObjP, 'textObj', ShapeDataObj.makeText(getWorldOrImage(newObj.textWorldLoc, plot), newObj.text));
     }
 }
 
