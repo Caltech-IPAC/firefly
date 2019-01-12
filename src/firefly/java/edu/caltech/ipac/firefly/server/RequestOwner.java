@@ -45,8 +45,6 @@ public class RequestOwner implements Cloneable {
     private RequestAgent requestAgent;
     private Date startTime;
     private File workingDir;
-    private String host;
-    private String referrer;
     private HashMap<String, Object> attributes = new HashMap<String, Object>();
     private String eventChannel;
     private String eventConnID;
@@ -70,8 +68,6 @@ public class RequestOwner implements Cloneable {
     public void setRequestAgent(RequestAgent requestAgent) {
         this.requestAgent = requestAgent;
         if (requestAgent != null) {
-            host = requestAgent.getHeader("host");
-            referrer = requestAgent.getHeader("Referer");
             setWsConnInfo(requestAgent.getHeader("FF-connID"), requestAgent.getHeader("FF-channel"));
         }
     }
@@ -189,8 +185,6 @@ public class RequestOwner implements Cloneable {
         ro.workingDir = workingDir;
         ro.attributes = (HashMap<String, Object>) attributes.clone();
         ro.userInfo = userInfo;
-        ro.referrer = referrer;
-        ro.host = host;
         ro.wsManager = wsManager;
         ro.userKey = userKey;
         ro.eventChannel = eventChannel;
@@ -203,10 +197,6 @@ public class RequestOwner implements Cloneable {
         return requestAgent.getProtocol();
     }
 
-    public String getReferrer() {
-        return referrer;
-    }
-
     public String getBaseUrl() {
         return requestAgent.getBaseUrl();
     }
@@ -215,15 +205,11 @@ public class RequestOwner implements Cloneable {
      * return host url including protocol
      */
     public String getHostUrl() {
-        return (getProtocol().startsWith("HTTPS") ? "https" : "http") + "://" + getHost();
-    }
-
-    public boolean isCrossSite() {
-        return (referrer != null && !referrer.startsWith(host));
+        return (getProtocol().toLowerCase().startsWith("https") ? "https" : "http") + "://" + getHost();
     }
 
     public String getHost() {
-        return host;
+        return requestAgent.getHost();
     }
 
 //====================================================================

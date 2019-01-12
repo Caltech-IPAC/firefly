@@ -60,7 +60,7 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
 
         //use fully specified path, which includes logical database, schema, and table name
         //ex. URL http://lsst-qserv-dax01:5000/meta/v1/db/W13_sdss_v2/sdss_stripe82_01/tables/RunDeepForcedSource
-        String url = LSSTQuery.METASERVURL + URLEncoder.encode(parts[0], "UTF-8") + "/" +
+        String url = LSSTQuery.getMetaservURL() + URLEncoder.encode(parts[0], "UTF-8") + "/" +
                 URLEncoder.encode(parts[1], "UTF-8") + "/tables/"  +
                 URLEncoder.encode(parts[2], "UTF-8");
         _log.briefDebug("Getting metadata: " + url);

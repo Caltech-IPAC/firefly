@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.query.lsst;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
@@ -36,13 +37,35 @@ import java.util.Map;
  */
 public abstract class LSSTQuery extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    public static final String HOST = AppProperties.getProperty("lsst.dax.hostname","https://lsst-pdac.ncsa.illinois.edu");
 
     // LSST DAX services are listed in https://confluence.lsstcorp.org/display/DM/DAX+service+URLs
-    public static final String DBSERVURL =  AppProperties.getProperty("lsst.dbservURL",HOST+"/api/db/v1/tap/sync/");
-    public static final String METASERVURL = AppProperties.getProperty("lsst.metaservURL",HOST+"/api/meta/v1/db/");
+    private static String DBSERVURL;
+    private static String METASERVURL;
+    private static String IMGSERVURL;
 
+    public static String getDbservURL() {
+        if (DBSERVURL == null) {
+            String url = AppProperties.getProperty("lsst.dax.dbservURL", "/api/db/v1/tap/sync/");
+            DBSERVURL = ServerContext.resolveUrl(url);
+        }
+        return DBSERVURL;
+    }
 
+    public static String getMetaservURL() {
+        if (METASERVURL == null) {
+            String url = AppProperties.getProperty("lsst.dax.metaservURL", "/api/meta/v1/db/");
+            METASERVURL = ServerContext.resolveUrl(url);
+        }
+        return METASERVURL;
+    }
+
+    public static String getImgservURL() {
+        if (IMGSERVURL == null) {
+            String url = AppProperties.getProperty("lsst.dax.imgservURL", "/api/image/v1/");
+            IMGSERVURL = ServerContext.resolveUrl(url);
+        }
+        return IMGSERVURL;
+    }
 
     //set default timeout to 180 seconds
     private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 180);
@@ -77,7 +100,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         requestHeader.put("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();
-        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(DBSERVURL),  sql,null,  requestHeader, file, null, timeout);
+        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(getDbservURL()),  sql,null,  requestHeader, file, null, timeout);
         _log.briefDebug("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");
 
         if (fileData.getResponseCode() >= 400) {
@@ -156,7 +179,7 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
     }
 
-    private static  DataType[] getTypeDef(JSONArray columns)  throws  DataAccessException {
+    private static  DataType[] getTypeDef(JSONArray columns) {
 
         DataType[] dataTypes = new DataType[columns.size()];
 
@@ -199,20 +222,21 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
      * @return Java class
      */
     private static Class<?> getDataClass(String typeName) {
-        if (typeName.equals("short"))
-            return Short.class;
-        else if (typeName.equals("int"))
-            return Integer.class;
-        else if (typeName.equals("long"))
-            return Long.class;
-        else if (typeName.equals("float"))
-            return Float.class;
-        else if (typeName.equals("double"))
-            return Double.class;
-        else if (typeName.equals("boolean"))
-            return Boolean.class;
-        else {
-            return String.class;
+        switch (typeName) {
+            case "short":
+                return Short.class;
+            case "int":
+                return Integer.class;
+            case "long":
+                return Long.class;
+            case "float":
+                return Float.class;
+            case "double":
+                return Double.class;
+            case "boolean":
+                return Boolean.class;
+            default:
+                return String.class;
         }
     }
 

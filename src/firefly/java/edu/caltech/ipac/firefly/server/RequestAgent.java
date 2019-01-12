@@ -27,6 +27,7 @@ public class RequestAgent {
 
     private Map<String, Cookie> cookies;
     private String protocol;
+    private String host;
     private String requestUrl;
     private String baseUrl;
     private String remoteIP;
@@ -74,6 +75,10 @@ public class RequestAgent {
     void setProtocol(String protocol) {
         this.protocol = protocol;
     }
+
+    public String getHost() { return host;}
+
+    public void setHost(String host) { this.host = host;}
 
     public String getRequestUrl() {
         return requestUrl;
@@ -150,19 +155,26 @@ public class RequestAgent {
             this.request = request;
             this.response = response;
 
-            String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
-            String scheme = getHeader("X-Forwarded-Proto", request.getScheme());
-            String serverName = request.getServerName();
-            int serverPort = request.getServerPort();
-            String serverPortDesc = serverPort == 80 || serverPort == 443 ? "" : ":" + serverPort;
-            String contextPath = getPath(request);
+            // getting the correct info behind a reverse proxy or load balancer that terminates the SSL is a bit tricky
+            // because the requests are forwarded to the servlet container as plain http with some of the header modified
+            // attempt to reconstruct what the original request url component should be
+            // proto://host:port/uri?queryString
 
-            String baseUrl = String.format("%s://%s%s%s/", scheme, serverName, serverPortDesc, contextPath);
-            String requestUrl = String.format("%s://%s%s%s", scheme, serverName, serverPortDesc, request.getRequestURI());
+            String remoteIP = getHeader("X-Forwarded-For", request.getRemoteAddr());
+            String proto = getHeader("X-Forwarded-Proto", request.getScheme());
+            String host = request.getServerName();
+            String serverPort = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
+            serverPort = serverPort.equals("80") || serverPort.equals("443") ? "" : ":" + serverPort;
+            String contextPath = getPath(request);
+            String uri =  getHeader("X-Original-URI", request.getRequestURI());
+
+            String baseUrl = String.format("%s://%s%s%s/", proto, host, serverPort, contextPath);
+            String requestUrl = String.format("%s://%s%s%s", proto, host, serverPort, uri);
 
             setContextPath(contextPath);
             setRemoteIP(remoteIP);
-            setProtocol(scheme);
+            setProtocol(proto);
+            setHost(host);
             setRequestUrl(requestUrl);
             setBaseUrl(baseUrl);
             setSessId(request.getSession(true).getId());
@@ -204,10 +216,17 @@ public class RequestAgent {
             }
         }
 
+        /**
+         * Finding the "context" path behind a reverse proxy is very tricky.
+         * For that reason, if it's proxied to a path that does not end with the same context as the app server,
+         * then the header X-Forwarded-Path has to define what that value is.
+         * Otherwise, it will try to resolve is using the header X-Original-URI.
+         * If both are missing, it will assume the context is the same as what's deployed on the app server
+         */
         private String getPath(HttpServletRequest request) {
             String path = request.getHeader("X-Forwarded-Path");
             if (path == null) {
-                path = request.getHeader("x-original-uri");
+                path = request.getHeader("X-Original-URI");
                 if (path != null) {
                     path = path.substring(0, path.indexOf(request.getContextPath()) + request.getContextPath().length());
                 }

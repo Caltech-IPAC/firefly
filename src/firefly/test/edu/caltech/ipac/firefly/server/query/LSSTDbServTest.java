@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.server.query.lsst.LSSTQuery;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -29,7 +30,7 @@ public class LSSTDbServTest extends ConfigTest {
 			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_circle(9.469,-1.152,0.01)",
 			"SELECT * FROM DS_wise.wise_00.allwise_p3as_mep WHERE qserv_areaspec_circle(9.469,-1.152,0.01)",
 			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_box(9.5,-1.23,9.6,-1.22)",
-			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_ellipse(9.469,-1.152,58,36,0)",
+			//"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepSource WHERE qserv_areaspec_ellipse(9.469,-1.152,58,36,0)",
 			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.RunDeepForcedSource WHERE qserv_areaspec_poly(9.4,-1.2,9.5,-1.2,9.4,-1.1)",
 			// image metadata searches
 			"SELECT * FROM W13_sdss_v2.sdss_stripe82_01.DeepCoadd WHERE scisql_s2PtInCPoly(9.462, -1.152, corner1Ra, corner1Decl, corner2Ra, corner2Decl, corner3Ra, corner3Decl, corner4Ra, corner4Decl)=1",
@@ -44,20 +45,25 @@ public class LSSTDbServTest extends ConfigTest {
 					"(scisql_s2PtInCPoly(9.5, -1.22, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1) AND " +
 					"(scisql_s2PtInCPoly(9.6, -1.23, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1) AND " +
 					"(scisql_s2PtInCPoly(9.6, -1.22, ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4)=1)",
-            "SELECT * FROM W13_sdss_v2.sdss_stripe82_01.Science_Ccd_Exposure WHERE " +
-                    "(scisql_s2PtInBox(corner1Ra, corner1Decl, 0, -1, 5, 1)=1) AND " +
-                    "(scisql_s2PtInBox(corner2Ra, corner2Decl,0, -1, 5, 1) =1) AND " +
-                    "(scisql_s2PtInBox(corner3Ra, corner3Decl, 0, -1, 5, 1)=1) AND " +
-                    "(scisql_s2PtInBox(corner4Ra, corner4Decl, 0, -1, 5, 1)=1)",
-			"SELECT * FROM DS_wise.wise_00.allwise_p3am_cdd WHERE " +
-                    "(scisql_s2PtInBox(ra1, dec1, 0, -1, 5, 1)=1) AND " +
-                    "(scisql_s2PtInBox(ra2, dec2,0, -1, 5, 1) =1) AND " +
-                    "(scisql_s2PtInBox(ra3, dec3, 0, -1, 5, 1)=1) AND " +
-                    "(scisql_s2PtInBox(ra4, dec4, 0, -1, 5, 1)=1)",
+//            "SELECT * FROM W13_sdss_v2.sdss_stripe82_01.Science_Ccd_Exposure WHERE " +
+//                    "(scisql_s2PtInBox(corner1Ra, corner1Decl, 0, -1, 5, 1)=1) AND " +
+//                    "(scisql_s2PtInBox(corner2Ra, corner2Decl,0, -1, 5, 1) =1) AND " +
+//                    "(scisql_s2PtInBox(corner3Ra, corner3Decl, 0, -1, 5, 1)=1) AND " +
+//                    "(scisql_s2PtInBox(corner4Ra, corner4Decl, 0, -1, 5, 1)=1)",
+//			"SELECT * FROM DS_wise.wise_00.allwise_p3am_cdd WHERE " +
+//                    "(scisql_s2PtInBox(ra1, dec1, 0, -1, 5, 1)=1) AND " +
+//                    "(scisql_s2PtInBox(ra2, dec2,0, -1, 5, 1) =1) AND " +
+//                    "(scisql_s2PtInBox(ra3, dec3, 0, -1, 5, 1)=1) AND " +
+//                    "(scisql_s2PtInBox(ra4, dec4, 0, -1, 5, 1)=1)",
             "SELECT count(*) FROM W13_sdss_v2.sdss_stripe82_01.RunDeepForcedSource WHERE objectId=3448068867358968"
             
 	};
 	
+
+	@BeforeClass
+	public static void setUp() {
+		setupServerContext(null);
+	}
 
 	/**
 	 * test that we can obtain the data for all catalog queries
@@ -66,7 +72,7 @@ public class LSSTDbServTest extends ConfigTest {
 	public void testCatalogQueries() {
 		try {
 
-		    if (daxAvailable() && dbservAvailable()) {
+		    if (dbservAvailable()) {
                 boolean passed;
                 for (String query : queries) {
                     passed = getJsonData(query);
@@ -83,7 +89,7 @@ public class LSSTDbServTest extends ConfigTest {
 		try {
 			String sql = "QUERY=" + URLEncoder.encode(query, "UTF-8");
 
-			String url = LSSTQuery.DBSERVURL;
+			String url = LSSTQuery.getDbservURL();
 			File file = File.createTempFile("lssttest", "json");
 			file.deleteOnExit();
 			Map<String, String> requestHeader = new HashMap<>();
@@ -115,7 +121,7 @@ public class LSSTDbServTest extends ConfigTest {
 	 */
 	private static boolean dbservAvailable() {
 		try {
-			URL urlServer = new URL(LSSTQuery.DBSERVURL);
+			URL urlServer = new URL(LSSTQuery.getDbservURL());
 			HttpURLConnection urlConn = (HttpURLConnection) urlServer.openConnection();
 			urlConn.setConnectTimeout(3000); // 3 seconds timeout
 			urlConn.connect();
@@ -125,23 +131,5 @@ public class LSSTDbServTest extends ConfigTest {
 			return false;
 		}
 	}
-
-	/**
-	 * Is DAX running?
-	 * @return true if DAX is accessible and running
-	 */
-	public static boolean daxAvailable() {
-		try {
-			URL urlServer = new URL(LSSTQuery.HOST);
-			HttpURLConnection urlConn = (HttpURLConnection) urlServer.openConnection();
-			urlConn.setConnectTimeout(3000); // 3 seconds timeout
-			urlConn.connect();
-			// the client was able to communicate with the server
-			// but the server could not find what is reque
-			return urlConn.getResponseCode() == 404 || urlConn.getResponseCode() == 200;
-		} catch (IOException e) {
-            LOG.info("DAX is not available "+e.getMessage());
-			return false;
-		}
-	}
+	
 }
