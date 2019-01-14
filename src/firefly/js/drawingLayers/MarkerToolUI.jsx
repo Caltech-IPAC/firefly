@@ -20,7 +20,7 @@ class MarkerToolUI extends PureComponent {
         super(props);
 
         var markerObj = get(this.props.drawLayer, ['drawData', 'data', this.props.pv.plotId], {});
-        var {text = '', textLoc = defaultMarkerTextLoc} = markerObj;
+        var {text = '', textLoc = defaultMarkerTextLoc} = markerObj||{};
         var markerType = get(this.props.drawLayer, ['markerType'], 'marker');
 
         this.state = {markerText: text,  markerTextLoc: textLoc.key, markerType};

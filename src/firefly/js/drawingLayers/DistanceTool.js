@@ -321,7 +321,7 @@ function makeSelectObj(firstPt,currentPt, posAngle,cc) {
     var anyPt1;
     var anyPt2;
     var dist;
-    var world= cc.projection.isSpecified();
+    var world= cc.projection.isSpecified() && cc.projection.isImplemented();
 
     if (world) {
         anyPt1 = cc.getWorldCoords(ptAry[0]);
