@@ -125,7 +125,6 @@ describe('Center columns tests', () => {
         expect(actual.latCol).toEqual('s_dec');
     });
 
-
     test('precedence', () => {
         const table = {
             tableMeta: {
@@ -204,6 +203,47 @@ describe('Center columns tests', () => {
         table.tableData.columns = reject(table.tableData.columns, (c) => ['lon', 'lat'].includes(c.name));
 
     });
+
+    /**
+     * check that left-most columns pair of the same UTypes is chosen
+     */
+    test('left most columns (UTypes)', () => {
+        const table = {
+            tableData: {
+                columns: [
+                    {name: 'tra1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'},
+                    {name: 'tdec1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'},
+                    {name: 'tra', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'},
+                    {name: 'tdec', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'}
+                ]
+            }
+        };
+
+        const actual = findTableCenterColumns(table);
+        expect(actual.lonCol).toEqual('tra1');
+        expect(actual.latCol).toEqual('tdec1');
+    });
+
+    /**
+     * check that left-most columns pair of the same UCDs is chosen
+     */
+    test('left most columns (UCDs)', () => {
+        const table = {
+            tableData: {
+                columns: [
+                    {name: 'ura1', UCD: 'pos.eq.ra'},
+                    {name: 'udec1', UCD: 'pos.eq.dec'},
+                    {name: 'ura', UCD: 'pos.eq.ra'},
+                    {name: 'udec', UCD: 'pos.eq.dec'}
+                ]
+            }
+        };
+
+        const actual = findTableCenterColumns(table);
+        expect(actual.lonCol).toEqual('ura1');
+        expect(actual.latCol).toEqual('udec1');
+    });
+
 
 });
 
