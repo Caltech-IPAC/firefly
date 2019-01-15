@@ -24,6 +24,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import nom.tam.fits.Data;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -462,7 +463,17 @@ public class EmbeddedDbUtil {
         for (int i = 1; i <= rsmd.getColumnCount(); i++) {
             String cname = rsmd.getColumnName(i);
             Class type = convertToClass(rsmd.getColumnType(i));
-            cols.add(new DataType(cname, type));
+            DataType dt = new DataType(cname, type);
+
+            // apply defaults to decimal numbers...
+            // TODO: this need to be revisited..  it's a workaround to the %.6f default later down in the code if format is not given.
+            if (!(type == String.class)) {
+                if (type == Double.class || type == Float.class) {
+                    int scale = Math.max(rsmd.getScale(i), type == Double.class ? 10 : 7);
+                    dt.setFormat("%." + scale + "e"); // double or float
+                }
+            }
+            cols.add(dt);
         }
         return cols;
     }
