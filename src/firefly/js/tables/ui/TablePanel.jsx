@@ -32,7 +32,7 @@ import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
 
 const TT_INFO = 'Show additional table info';
 const TT_OPTIONS = 'Edit Table Options';
-const TT_SAVE = 'Save the content as an IPAC table';
+const TT_SAVE = 'Save the content as an IPAC, CSV, or TSV table';
 const TT_TEXT_VIEW = 'Text View';
 const TT_TABLE_VIEW = 'Table View';
 const TT_CLEAR_FILTER = 'Remove all filters';
