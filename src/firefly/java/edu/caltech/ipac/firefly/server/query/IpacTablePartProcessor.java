@@ -268,7 +268,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return uid;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest sr, String format) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest sr, TableUtil.Format format) throws DataAccessException {
         try {
             TableServerRequest request = (TableServerRequest) sr;
 

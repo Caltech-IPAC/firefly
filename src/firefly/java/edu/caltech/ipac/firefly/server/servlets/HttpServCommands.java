@@ -12,9 +12,11 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.table.TableUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.json.simple.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,13 +30,14 @@ public class HttpServCommands {
 
     public static class TableSave extends BaseServletCommand {
         static final Logger.LoggerImpl DL_LOGGER = Logger.getLogger(Logger.DOWNLOAD_LOGGER);
-        private static Map<String, String> allFormats = new HashMap<>();
+
+        private static Map<String, TableUtil.Format> allFormats = new HashMap<>();
         static {
-            allFormats.put("ipac", ".tbl");
-            allFormats.put("csv", ".csv");
-            allFormats.put("tsv", ".tsv");
-            allFormats.put("votable", ".xml");
-            allFormats.put("fits", ".fit");
+            allFormats.put("ipac", TableUtil.Format.IPACTABLE);
+            allFormats.put("csv", TableUtil.Format.CSV);
+            allFormats.put("tsv", TableUtil.Format.TSV);
+            allFormats.put("votable", TableUtil.Format.VO_TABLE);
+            allFormats.put("fits", TableUtil.Format.FITS);
         }
 
         public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam sp) throws Exception {
@@ -43,17 +46,24 @@ public class HttpServCommands {
 
             String fileName = sp.getOptional("file_name");
             String fileFormat = sp.getOptional("file_format");
-            if (StringUtils.isEmpty(fileFormat) || !allFormats.containsKey(fileFormat.toLowerCase())) {
-                fileFormat = "ipac";
-            } else {
-                fileFormat = fileFormat.toLowerCase();
-            }
-            String fileNameExt = fileName.endsWith(allFormats.get(fileFormat)) ? "" : allFormats.get(fileFormat);
+            TableUtil.Format tblFormat;
 
-            fileName = StringUtils.isEmpty(fileName) ? request.getRequestId() : fileName;
+            fileFormat = (StringUtils.isEmpty(fileFormat) || !allFormats.containsKey(fileFormat.toLowerCase()))
+                         ? "ipac" : fileFormat.toLowerCase();
+
+            tblFormat = allFormats.get(fileFormat);
+            String fileNameExt = tblFormat.getFileNameExt();
+
+            if (StringUtils.isEmpty(fileName)) {
+                fileName = request.getRequestId();
+            }
+            if (fileName.toLowerCase().endsWith(fileNameExt)) {
+                fileNameExt = "";
+            }
+
             res.setHeader("Content-Disposition", "attachment; filename=" + fileName + fileNameExt);
             SearchManager am = new SearchManager();
-            FileInfo fi = am.save(res.getOutputStream(), request, fileFormat);
+            FileInfo fi = am.save(res.getOutputStream(), request, tblFormat);
             if (fi != null) {
                 long length = 0;
                 if (fi != null) {

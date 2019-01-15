@@ -26,6 +26,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
@@ -252,24 +253,22 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return ipacTable;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request, String format) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format) throws DataAccessException {
         try {
             TableServerRequest treq = (TableServerRequest) request;
             DataGroupPart page = getData(request);
 
             switch(format) {
-                case "csv":
+                case CSV:
                     DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.DEFAULT);
                     break;
-                case "tsv":
+                case TSV:
                     DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.TDF);
                     break;
                 default:
                     IpacTableWriter.save(out, page.getData(), true);
-                    break;
             }
-
-            // this is not accurate information if used to determine exactly what was written to output stream.
+                       // this is not accurate information if used to determine exactly what was written to output stream.
             // dbFile is the database file which contains the whole search results.  What get written to the output
             // stream is based on the given request.
             File dbFile = getDbFile(treq);

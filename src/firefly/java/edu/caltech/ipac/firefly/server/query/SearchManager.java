@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -83,7 +84,7 @@ public class SearchManager {
         return dgp;
     }
 
-    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, String format) throws DataAccessException {
+    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, TableUtil.Format format) throws DataAccessException {
         try {
             SearchProcessor processor = getProcessor(dataRequest.getRequestId());
             if (dataRequest != null) {

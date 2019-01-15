@@ -208,10 +208,17 @@ public class TableUtil {
 //
 //====================================================================
 
-    public enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON(), VO_TABLE();
+    public enum Format { TSV(CSVFormat.TDF, ".tsv"), CSV(CSVFormat.DEFAULT, ".csv"), IPACTABLE(".tbl"), UNKNOWN(null), FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"), VO_TABLE(".xml");
         CSVFormat type;
-        Format() {}
-        Format(CSVFormat type) {this.type = type;}
+        String fileNameExt;
+        Format(String ext) {this.fileNameExt = ext;}
+        Format(CSVFormat type, String ext) {
+            this.type = type;
+            this.fileNameExt = ext;
+        }
+        public String getFileNameExt() {
+            return fileNameExt;
+        }
     }
 
     public static class ColCheckInfo {

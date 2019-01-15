@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -64,11 +65,6 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
     public String getUniqueID(ServerRequest request) {
         String id = ServerContext.getRequestOwner().isAuthUser() ? ServerContext.getRequestOwner().getUserInfo().getLoginName() : "";
         return request.getRequestId() + "-" + id + "-" + StringUtils.toString(request.getParams());
-    }
-
-    public FileInfo writeData(OutputStream out, ServerRequest request, String format) throws DataAccessException {
-        /* does not apply.. do nothing */
-        return null;
     }
 
     public boolean doCache() {
