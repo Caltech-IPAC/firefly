@@ -71,6 +71,7 @@ export class VisInlineToolbarView extends PureComponent {
 
     render() {
         const {pv, dlAry, showLayer, expandGrid, showExpand, showDelete, showToolbarButton, help_id}= this.props;
+        const shouldShowTools= Boolean((showToolbarButton && showExpand) || (showToolbarButton && !pv.plots.length));
 
         return (
             <div style={rS}>
@@ -80,7 +81,7 @@ export class VisInlineToolbarView extends PureComponent {
                                tip='Show tools'
                                additionalStyle={{alignSelf:'flex-start'}}
                                horizontal={true}
-                               visible={Boolean(showToolbarButton && showExpand)}
+                               visible={shouldShowTools}
                                onClick={showTools}/>
                 {help_id && <div style={{marginRight: 20}}><HelpIcon helpId={help_id}/></div>}
                 <ToolbarButton icon={expandGrid? GRID_EXPAND : OUTLINE_EXPAND}

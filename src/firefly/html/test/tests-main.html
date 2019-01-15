@@ -17,7 +17,7 @@
 
 <!-- define all of your tests below -->
 
-<template title="IRSA Gator Table" class="tpl">
+<template title="IRSA Gator Table" class="tpl" >
     <div id="expected" class="flow-h">
         <div class="source-code indent-3">
             - widgets loaded
@@ -31,6 +31,7 @@
         <div id="gatorXy" class="box"></div>
     </div>
     <script>
+        resizeIframeToHeight('300px');
         irsaviewer_init();
 
         onFireflyLoaded = function (firefly) {
@@ -82,6 +83,7 @@
     </div>
     <div id="actual" class="box x3"></div>
     <script>
+        resizeIframeToHeight('240px');
         onFireflyLoaded = function (firefly) {
             tblReq = firefly.util.table.makeTblRequest('NedSearch', 'm8 (NED SCS 10)',
                 { use: "catalog_overlay",
@@ -102,10 +104,12 @@
 </template>
 
 <template title="GAIA tap search" class="tpl sm">
-    <div id="expected" class="source-code indent-2">
+    <div id="expected">
         Table successfully loaded
-        - VOTable
-        - first 3 rows of gaia_source
+        <ul class='expected-list'>
+            <li>VOTable</li>
+            <li>first 3 rows of gaia_source</li>
+        </ul>
     </div>
     <div id="actual" class="box x3"></div>
     <script>
@@ -119,6 +123,34 @@
         }
     </script>
 </template>
+
+<template title="Failed API Image Load" class="tpl sm">
+    <div id="expected" style="width: 400px; white-space: normal; padding-top: 2px">
+        <div>Image load fails. The following should happen:
+            <ul class='expected-list'>
+                <li>No Image</li>
+                <li><i>Centered Message</i>: Failed- SDSS: Area not covered</li>
+                <li>Toolbar button active, when toolbar popup shown, toolbar should have "select image" button active</li>
+            </ul>
+        </div>
+        <div><img src="./images/fail-plot-expected.jpg"></div>
+    </div>
+    <div id="actual" class="box x3"></div>
+    <script>
+        resizeIframeToHeight('260px');
+        function onFireflyLoaded(firefly) {
+            const req= {
+                plotGroupId : 'myGroup',
+                Service  : 'SDSS',
+                SurveyKey  : 'u',
+                WorldPt    : '10.68479;41.26906;EQ_J2000',
+                SizeInDeg  : '.12'
+            };
+            firefly.showImage('actual', req);
+        }
+    </script>
+</template>
+
 
 
 <!-- this is where test cases will be attached-->

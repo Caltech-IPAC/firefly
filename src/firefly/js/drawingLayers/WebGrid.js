@@ -121,12 +121,14 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
                  drawData= Object.assign({},drawLayer.drawData, {data});
                  return {drawData};
              }
+             break;
          case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
              const {coordinate}= action.payload.changes;
              if (coordinate !== drawLayer.coordinate ) {
                  const drawData= Object.assign({},drawLayer.drawData, {data:null});
                  return { coordinate, drawData};
              }
+             break;
      }
      return null;
      

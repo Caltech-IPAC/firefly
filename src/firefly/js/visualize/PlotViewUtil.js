@@ -527,12 +527,12 @@ export function clonePvAryWithPv(ref, plotView) {
 /**
  * Find a plot by id in a PlotView
  * @param {PlotView} plotView
- * @param {string} imagePlotId
+ * @param {string} plotImageId
  * @return {WebPlot}
  */
-export function findPlot(plotView, imagePlotId) {
-    if (!plotView) return null;
-    return plotView.plots.find( (p) => imagePlotId===p.imagePlotId);
+export function findPlot(plotView, plotImageId) {
+    if (!plotView) return undefined;
+    return plotView.plots.find( (p) => plotImageId===p.plotImageId);
 }
 
 
@@ -739,7 +739,7 @@ export function getFoV(pv, alternateZoomFactor) {
  * @return {boolean} true if there are cubes or images
  */
 export function isMultiImageFits(pv) {
-    return Boolean(isMultiHDUFits(pv) || getNumberOfCubesInPV(pv)>0)
+    return Boolean(isMultiHDUFits(pv) || getNumberOfCubesInPV(pv)>0);
 }
 
 /**

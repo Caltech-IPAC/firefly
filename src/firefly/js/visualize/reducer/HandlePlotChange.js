@@ -551,7 +551,7 @@ function recenter(state,action) {
         } );
     }
     else {
-        plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup,true, recenterPv(centerPt, centerOnImage));
+        plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup,false, recenterPv(centerPt, centerOnImage));
     }
 
 

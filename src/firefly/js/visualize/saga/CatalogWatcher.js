@@ -25,6 +25,7 @@ import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {COVERAGE_CREATED} from './CoverageWatcher.js';
+import {isImage,isHiPS} from '../WebPlot';
 
 /**
  * this saga does the following:
@@ -124,8 +125,9 @@ function recenterImage(tbl) {
         newCenter = centralPoint;
     }
 
-    // recenter image for 'hips' and 'image' type
-    if (newCenter && (plot.plotType === 'hips' || cc.pointInPlot(newCenter)) && !pointEquals(centerPt, newCenter)) {
+    const allSky= Boolean( (isImage(plot) && plot.projection.isWrappingProjection()) || isHiPS(plot));
+    // recenter image for 'hips' and allsky 'image' type
+    if (newCenter && allSky && !pointEquals(centerPt, newCenter)) {
         dispatchRecenter({plotId: plot.plotId, centerPt: newCenter});
     }
 }

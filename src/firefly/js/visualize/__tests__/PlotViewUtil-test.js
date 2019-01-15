@@ -1,6 +1,7 @@
 import {primePlot, getPlotViewById, isActivePlotView, getActivePlotView} from '../PlotViewUtil.js';
 import {makePlotView} from '../reducer/PlotView.js';
 import {WebPlotRequest} from '../WebPlotRequest.js'
+import {findPlot, primePlotType} from '../PlotViewUtil';
 
 
 
@@ -105,4 +106,20 @@ describe('Test PlotViewUtil active PlotView functions', () => {
         expect(pv).toBeDefined();
         expect(pv.plotId).toEqual(ACTIVE_ID);
     });
+});
+
+describe('Less used PlotViewUtil functions', () => {
+    test('primePlotType)', () => {
+        const pv= getPlotViewById(pvAry, 'testId-xxxx');
+        expect(primePlotType(pv)).toEqual('image');
+    });
+
+    test('findPlot)', () => {
+        debugger;
+        const pv= getPlotViewById(pvAry, 'testId1');
+        const plot= findPlot(pv, 'testId1-image1');
+        expect(plot).toBeDefined();
+        expect(plot.plotImageId).toEqual('testId1-image1');
+    });
+
 });
