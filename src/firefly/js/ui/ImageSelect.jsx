@@ -352,33 +352,44 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect}) {
 function Header({project, hrefInfo='', multiSelect}) {
     const fieldKey= `PROJ_ALL_${project}`;
 
-    const href = hrefInfo;
-    if (!multiSelect) return <div style={{display: 'inline-block'}}>{project}</div>;
-    return (
-        <div className='DataProductList__item--header' >
-            <div onClick={(e) => e.stopPropagation()}>
-            <CheckboxGroupInputField
-                key={fieldKey}
-                fieldKey={fieldKey}
-                initialState={{
-                        value: '',   // workaround for _all_ for now
-                        tooltip: 'Please select some boxes',
-                        label : '' }}
-                options={[{label:project, value:'_all_'}]}
-                alignment='horizontal'
-                labelWidth={35}
-                wrapperStyle={{whiteSpace: 'normal' /*cursor:'pointer'*/}}
-            />
-            </div>
-            <div style={{marginLeft: -5}}>
-                <div>
-                    <a onClick={(e) => e.stopPropagation()} target='_blank' href={href}>
-                        <img style={{width:'14px'}}
-                            src={infoIcon}/></a>
-                </div>
-            </div>
+    const InfoIcon = () => hrefInfo && (
+        <div>
+            <a onClick={(e) => e.stopPropagation()} target='_blank' href={hrefInfo}>
+                <img style={{width:'14px'}} src={infoIcon} alt='info'/></a>
         </div>
     );
+
+    if (multiSelect) {
+        return (
+            <div className='DataProductList__item--header' >
+                <div onClick={(e) => e.stopPropagation()}>
+                    <CheckboxGroupInputField
+                        key={fieldKey}
+                        fieldKey={fieldKey}
+                        initialState={{
+                            value: '',   // workaround for _all_ for now
+                            tooltip: 'Please select some boxes',
+                            label : '' }}
+                        options={[{label:project, value:'_all_'}]}
+                        alignment='horizontal'
+                        labelWidth={35}
+                        wrapperStyle={{whiteSpace: 'normal' /*cursor:'pointer'*/}}
+                    />
+                </div>
+                <div style={{marginLeft: -5}}>
+                    <InfoIcon/>
+                </div>
+            </div>
+        );
+    } else {
+        return (
+            <div style={{display: 'inline-flex', alignItems: 'center'}}>
+                <div style={{marginRight:5}}>{project}</div>
+                <InfoIcon/>
+            </div>
+        );
+    }
+
 }
 
 const hasImageSelection = (groupKey, proj) => {
