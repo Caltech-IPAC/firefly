@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.io.IpacTableException;
@@ -32,7 +33,9 @@ public interface SearchProcessor<Type> {
 
     String getUniqueID(ServerRequest request);
     Type getData(ServerRequest request) throws DataAccessException;
-    FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException;
+    default FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format) throws DataAccessException {
+        return null;
+    };
     boolean doCache();
     void onComplete(ServerRequest request, Type results) throws DataAccessException;
     boolean doLogging();

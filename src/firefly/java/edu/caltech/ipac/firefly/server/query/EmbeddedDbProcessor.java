@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -25,6 +26,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
@@ -34,11 +36,13 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import org.apache.commons.csv.CSVFormat;
 
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -83,7 +87,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 15);
-
 
     /**
      * Fetches the data for the given search request.  This method should perform a fetch for fresh
@@ -250,13 +253,22 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return ipacTable;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format) throws DataAccessException {
         try {
             TableServerRequest treq = (TableServerRequest) request;
             DataGroupPart page = getData(request);
-            IpacTableWriter.save(out, page.getData(), true);
 
-            // this is not accurate information if used to determine exactly what was written to output stream.
+            switch(format) {
+                case CSV:
+                    DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.DEFAULT);
+                    break;
+                case TSV:
+                    DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.TDF);
+                    break;
+                default:
+                    IpacTableWriter.save(out, page.getData(), true);
+            }
+                       // this is not accurate information if used to determine exactly what was written to output stream.
             // dbFile is the database file which contains the whole search results.  What get written to the output
             // stream is based on the given request.
             File dbFile = getDbFile(treq);

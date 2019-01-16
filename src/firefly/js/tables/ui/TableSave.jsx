@@ -4,7 +4,7 @@
 
 import React from 'react';
 import {get, set} from 'lodash';
-
+import Enum from 'enum';
 import {download, updateSet} from '../../util/WebUtil.js';
 import {getTblById, getAsyncTableSourceUrl, getTableSourceUrl} from '../TableUtil.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
@@ -24,19 +24,23 @@ import {INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
-
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'Save as:'},
+    fileFormat: {fKey: 'fileFormat', label: 'File format:'},
     location: {fKey: 'fileLocation', label: 'File Location:'},
     wsSelect: {fKey: 'wsSelect', label: ''},
     overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
 };
 
+const tableFormats = new Enum(['IPAC', 'CSV', 'TSV', 'VOTABLE', 'FITS']);
 const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
         'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
+    [fKeyDef.fileFormat.fKey]: Object.assign(getTypeData(fKeyDef.fileFormat.fKey, tableFormats.IPAC.key,
+        'Please select a format option, the default is IPAC', fKeyDef.fileFormat.label, labelWidth), {validator: null}),
     [fKeyDef.location.fKey]: Object.assign(getTypeData(fKeyDef.location.fKey, 'isLocal',
         'select the location where the file is downloaded to', fKeyDef.location.label, labelWidth), {validator: null}),
     [fKeyDef.wsSelect.fKey]: Object.assign(getTypeData(fKeyDef.wsSelect.fKey, '',
@@ -50,6 +54,7 @@ const tblDownloadGroupKey = 'TABLE_DOWNLOAD_FORM';
 const dialogWidth = 500;
 const dialogHeightWS = 500;
 const dialogHeightLOCAL = 400;
+const mTop = 10;
 
 const popupPanelResizableStyle = {
     width: dialogWidth,
@@ -71,6 +76,24 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
                                                              : (isWs ? dialogHeightLOCAL : dialogHeightLOCAL/2);
         const minHeight = (currentFileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL/2 : dialogHeightLOCAL;
 
+        const fileFormatOptions = () => {
+            const fileOptions = [
+                {label: tableFormats.IPAC.key, value: tableFormats.IPAC.key},
+                {label: tableFormats.CSV.key, value: tableFormats.CSV.key},
+                {label: tableFormats.TSV.key, value: tableFormats.TSV.key}
+            ];
+
+            return (
+                <div style={{display: 'flex', marginTop: mTop}}>
+                    <div>
+                        <RadioGroupInputField
+                            options={ fileOptions}
+                            fieldKey = {fKeyDef.fileFormat.fKey}
+                        />
+                    </div>
+                </div>
+            );
+        };
         const startTableDownloadPopup = () => {
             const popup = (
                 <PopupPanel title={'Save table'}>
@@ -80,6 +103,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
                                     groupKey={tblDownloadGroupKey} keepState={true}
                                     reducerFunc={TableDLReducer(tbl_id)}>
                             <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
+                                                   children={fileFormatOptions()}
                                                    workspace={isWs}
                                                    dialogWidth={'100%'}
                                                    dialogHeight={'calc(100% - 60pt)'}/>
@@ -178,7 +202,7 @@ function resultFail() {
 
 function resultSuccess(tbl_id, tbl_ui_id, popupId) {
     return (request) => {
-        const {fileName, fileLocation, wsSelect} = request || {};
+        const {fileName, fileLocation, wsSelect, fileFormat} = request || {};
         const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
 
         if (isWorkspace()) {
@@ -186,12 +210,12 @@ function resultSuccess(tbl_id, tbl_ui_id, popupId) {
         }
 
         const getOtherParams = (fName) => {
-            return (!isWorkspace()) ? {file_name: fName}
+            const params =  (!isWorkspace()) ? {file_name: fName}
                                     : {wsCmd: ServerParams.WS_PUT_TABLE_FILE,
                                       [WS_SERVER_PARAM.currentrelpath.key]: getWorkspacePath(wsSelect, fName),
                                       [WS_SERVER_PARAM.newpath.key] : fName,
                                       [WS_SERVER_PARAM.should_overwrite.key]: true};
-
+            return Object.assign(params, {file_format : fileFormat});
         };
 
         const downloadFile = (urlOrOp) => {
