@@ -86,13 +86,14 @@ export function setViewerConfig(viewerType, htmlFile= '') {
  * @public
  * @memberof firefly
  */
-export function getViewer(channel= getWsChannel() + VIEWER_ID, file=defaultViewerFile, scriptUrl) {
+export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
     if (scriptUrl) {
         // requesting for a viewer that's different from the currently loaded app
         const getViewer = get(loadRemoteApi(scriptUrl), 'getViewer');
         return getViewer && getViewer(channel, file);
     } else {
         // return currently loaded app's Viewer
+        channel = (channel || getWsChannel()) + VIEWER_ID;
         const dispatch= (action) => dispatchRemoteAction(channel,action);
         const reinitViewer= () => dispatch({ type: REINIT_APP, payload: {}});
 
