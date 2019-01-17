@@ -51,7 +51,6 @@ const PRE_ATTACH_LAYER_TO_PLOT= `${DRAWLAYER_PREFIX}.attachLayerToPlot`;
 const DETACH_LAYER_FROM_PLOT= `${DRAWLAYER_PREFIX}.detachLayerFromPlot`;
 const MODIFY_CUSTOM_FIELD= `${DRAWLAYER_PREFIX}.modifyCustomField`;
 const FORCE_DRAW_LAYER_UPDATE= `${DRAWLAYER_PREFIX}.forceDrawLayerUpdate`;
-const TABLE_TO_IGNORE= `${DRAWLAYER_PREFIX}.tableToIgnore`;
 
 // _- select
 const SELECT_AREA_START= `${DRAWLAYER_PREFIX}.SelectArea.selectAreaStart`;
@@ -191,17 +190,6 @@ export default {
 
 
 
-/**
- *
- * @param {string} drawLayerTypeId
- * @param {string} tableId
- * @public
- * @memberof firefly.action
- * @function dispatchTableToIgnore
- */
-export function dispatchTableToIgnore(drawLayerTypeId, tableId) {
-    flux.process({type: TABLE_TO_IGNORE , payload: {drawLayerTypeId,tableId} });
-}
 
 /**
  * @summary create drawing layer
@@ -693,9 +681,6 @@ function makeReducer(factory) {
             case PRE_ATTACH_LAYER_TO_PLOT:
                 retState = preattachLayerToPlot(state,action);
                 break;
-            case TABLE_TO_IGNORE:
-                retState = addTableToIgnore(state,action);
-                break;
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 retState = deletePlotView(state, action, dlReducer);
                 break;
@@ -821,17 +806,6 @@ function deletePlotView(state,action, dlReducer) {
     return clone(state, {drawLayerAry});
 }
 
-
-function addTableToIgnore(state,action) {
-    const {drawLayerTypeId,tableId}= action.payload;
-    const {ignoreTables}= state;
-    if (!ignoreTables.some( ( obj) => obj.tableId===tableId && obj.drawLayerTypeId===drawLayerTypeId)) {
-       return clone(state, {ignoreTables: [...ignoreTables, {drawLayerTypeId,tableId}]} );
-    }
-    return state;
-}
-
-
 /**
  *
  * @return {DrawLayerRoot}
@@ -846,19 +820,16 @@ const initState= function() {
      * @summary The state of the Drawing layers store.
      * @prop {DrawLayer[]} drawLayerAry the array of all the drawing layers
      * @prop {string[]} allowedActions the actions the go to the drawing layers by default
-     * @prop {Array.<{tableId:string, drawLayerTypeId:string}>} ignoreTables -  an array of object that
-     *                              are tableId and a draw layer
      */
     return {
         allowedActions: [ CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
                           ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT, MODIFY_CUSTOM_FIELD,
-                          CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,TABLE_TO_IGNORE,
+                          CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,
                           ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW,
                           ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION,
                           ImagePlotCntlr.CHANGE_HIPS, UPDATE_DRAWING_LAYER
                         ],
         drawLayerAry : [],
-        ignoreTables : [],
         preAttachedTypes : {}  // {futureDrawLayerTypeId : [string] }
                                //  i.e. an object: keys are futureDrawLayerTypeId, values: array of plot id
 

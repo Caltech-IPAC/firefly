@@ -19,13 +19,15 @@ import {DrawSymbol} from '../draw/PointDataObj.js';
 import {computeCentralPtRadiusAverage, toDegrees} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {logError} from '../../util/WebUtil.js';
-import {getCornersColumns, getCenterColumns} from '../../tables/TableInfoUtil.js';
+import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
+import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
+import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 
 export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -70,13 +72,13 @@ const defOptions= {
     overlayPosition: null,
     color : null,
     highlightedColor : 'blue',
-    multiCoverage : true,
+    multiCoverage : true, // this is not longer supported, we now always do multi coverage
     gridOn : false,
     useBlankPlot : false,
     fitType : FitType.WIDTH_HEIGHT,
     ignoreCatalogs:false,
 
-    useHiPS: true, // useHiPS it initialized in the startCoverageWatcher
+    useHiPS: true,
     hipsSourceURL : 'ivo://CDS/P/2MASS/color', // url
     imageSourceParams: {
         Service : 'TWOMASS',
@@ -89,11 +91,12 @@ const defOptions= {
     fovMaxFitsSize: .2,
     autoConvertOnZoom: false,
     fovDegMinSize: 100/3600, //defaults to 100 arcsec
+    viewerId:'DefCoverageId',
+    paused: true,
 
 
     hasCoverageData,
     getCornersColumns,
-    getCenterColumns,
 };
 
 
@@ -101,38 +104,34 @@ const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
 
 export function startCoverageWatcher(options) {
-
-    const {viewerId='DefCoverageId'}= options;
-    let {paused=true}= options;
-    const decimatedTables=  {};
-
-    if (paused) {
-        paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
-    }
-    options= Object.assign({}, defOptions, cleanUpOptions(options));
-    let displayedTableId= null;
-
-    if (paused) {
-        const firstId= getActiveTableId();
-        if (firstId) displayedTableId = updateCoverage(firstId, viewerId, decimatedTables, options);
-    }
-
-    const params = {options, decimatedTables, paused, displayedTableId};
-
-    const actions = [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
-        TBL_RESULTS_ACTIVE,
-        DrawLayerCntlr.ATTACH_LAYER_TO_PLOT,
-        ImagePlotCntlr.PLOT_IMAGE,
-        ImagePlotCntlr.PLOT_HIPS,
-        MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
-        MultiViewCntlr.VIEWER_UNMOUNTED];
-    
-    dispatchAddActionWatcher({id: `cw-${viewerId}`, actions, callback: watchCoverage, params});
+    dispatchAddTableTypeWatcherDef( { ...coverageWatcherDef, options });
 }
+
+
+/** @type {TableWatcherDef} */
+export const coverageWatcherDef = {
+    id : 'CoverageWatcher',
+    testTable : testTableForCoverage,
+    sharedData: { decimatedTables: {}},
+    watcher : watchCoverage,
+    actions: [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE, TBL_RESULTS_ACTIVE,
+        ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
+        MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED, MultiViewCntlr.VIEWER_UNMOUNTED]
+};
+
+const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
+
+function testTableForCoverage(table, action, options) {
+    options= getOptions(options);
+    return options.hasCoverageData(options, table);
+}
+
+
 
 /**
  * Action watcher callback: watch the tables and update coverage display
  * @callback actionWatcherCallback
+ * @param tbl_id
  * @param action
  * @param cancelSelf
  * @param params
@@ -142,56 +141,56 @@ export function startCoverageWatcher(options) {
  * @param params.tbl_id
  * @param params.displayedTableId
  */
-function watchCoverage(action, cancelSelf, params) {
+function watchCoverage(tbl_id, action, cancelSelf, params) {
 
 
-    let {paused, tbl_id, displayedTableId} = params;
+
+    const {sharedData} = params;
+    const options= getOptions(params.options);
+    const {viewerId}= options;
+    let paused = isUndefined(params.paused) ? options.paused : params.paused;
+
+    if (paused) {
+        paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
+    }
+    if (!action) {
+        if (!paused) updateCoverage(tbl_id, viewerId, sharedData.decimatedTables, options);
+        return params;
+    }
+
+    const {payload}= action;
+    if (payload.tbl_id && payload.tbl_id!==tbl_id) return params;
+    
+    const {decimatedTables}= sharedData;
+
 
     if (action.type===REINIT_APP) {
+        sharedData.decimatedTables= {};
         cancelSelf();
         return;
     }
 
     if (paused && (action.type!==MultiViewCntlr.VIEWER_MOUNTED && action.type!==MultiViewCntlr.ADD_VIEWER) )  {
-        return;
+        return params;
     }
-
-    const {payload}= action;
-
-    if (action.type===TABLE_REMOVE) {
-        tbl_id= getActiveTableId();
-    }
-    else if (payload.tbl_id) {
-        tbl_id= payload.tbl_id; // otherwise use the last one
-    }
-
-    const {options, decimatedTables} = params;
-    const {viewerId='DefCoverageId'}= options;
-
-    let previousDisplayedTableId= displayedTableId;
 
     switch (action.type) {
 
         case TABLE_LOADED:
             if (!getTableInGroup(tbl_id)) return;
-            decimatedTables[tbl_id]= null;
-            displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+            decimatedTables[tbl_id]= undefined;
+            updateCoverage(tbl_id, viewerId, decimatedTables, options);
             break;
 
         case TBL_RESULTS_ACTIVE:
             if (!getTableInGroup(tbl_id)) return;
-            displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
+            updateCoverage(tbl_id, viewerId, decimatedTables, options);
             break;
 
         case TABLE_REMOVE:
             removeCoverage(payload.tbl_id, decimatedTables);
-            if (!getTableInGroup(payload.tbl_id)) return;
-            displayedTableId = null;
-            previousDisplayedTableId = null;
-            tbl_id = getActiveTableId();
-            if (!isEmpty(decimatedTables)) {
-                displayedTableId = updateCoverage(tbl_id, viewerId, decimatedTables, options);
-            }
+            if (!isEmpty(decimatedTables)) updateCoverage(getActiveTableId(), viewerId, decimatedTables, options);
+            cancelSelf();
             break;
 
         case MultiViewCntlr.ADD_VIEWER:
@@ -222,9 +221,7 @@ function watchCoverage(action, cancelSelf, params) {
             break;
             
     }
-    if (!displayedTableId) displayedTableId= previousDisplayedTableId;
-
-    return {paused, decimatedTables, tbl_id, options, displayedTableId};
+    return {paused};
 }
 
 
@@ -241,16 +238,13 @@ function removeCoverage(tbl_id, decimatedTables) {
  * @param {string} viewerId
  * @param decimatedTables
  * @param {CoverageOptions} options
- * @return {Array}
  */
 function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 
-    if (!tbl_id) return null;
     try {
         const table = getTblById(tbl_id);
-        if (!table) return null;
-        if (!options.hasCoverageData(options, table)) return null;
-        if (decimatedTables[tbl_id] === 'WORKING') return tbl_id;
+        if (!table) return;
+        if (decimatedTables[tbl_id] === 'WORKING') return;
 
 
         const params = {
@@ -261,8 +255,8 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
 
         let req = cloneRequest(table.request, params);
         if (table.totalRows > 10000) {
-            const cenCol = options.getCenterColumns(table);
-            if (!cenCol) return null;
+            const cenCol = findTableCenterColumns(table);
+            if (!cenCol) return;
             const sreq = cloneRequest(table.request, {inclCols: `"${cenCol.lonCol}","${cenCol.latCol}"`});
             req = makeTableFunctionRequest(sreq, 'DecimateTable', 'coverage',
                 {decimate: serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000), pageSize: MAX_ROW});
@@ -284,17 +278,15 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
                 }
             ).catch(
                 (reason) => {
-                    decimatedTables[tbl_id] = null;
+                    decimatedTables[tbl_id] = undefined;
                     logError(`Failed to catalog plot data: ${reason}`, reason);
                 }
             );
 
         }
-        return tbl_id;
     } catch (e) {
         logError('Error updating coverage');
-        e.stack;
-
+        console.log(e);
     }
 }
 
@@ -310,7 +302,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
  * @param usesRadians
  */
 function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
-    const {maxRadius, avgOfCenters}= computeSize(options, decimatedTables, allRowsTable, usesRadians);
+    const {maxRadius, avgOfCenters}= computeSize(options, decimatedTables, usesRadians);
     if (!avgOfCenters || maxRadius<=0) return;
 
     const plot= primePlot(visRoot(), PLOT_ID);
@@ -378,12 +370,11 @@ function initRequest(r,viewerId,plotId, overlayPos, wp) {
  *
  * @param {CoverageOptions} options
  * @param decimatedTables
- * @param allRowsTable
  * @param usesRadians
  * @return {*}
  */
-function computeSize(options, decimatedTables,allRowsTable, usesRadians) {
-    const ary= options.multiCoverage ? values(decimatedTables) : [allRowsTable];
+function computeSize(options, decimatedTables, usesRadians) {
+    const ary= values(decimatedTables);
     const testAry= ary
         .filter( (t) => t && t!=='WORKING')
         .map( (t) => {
@@ -420,18 +411,15 @@ function makeOverlayCoverageDrawing() {
 
         if (table.tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] && options.ignoreCatalogs) return; // let the catalog just handle the drawing overlays
 
-        const allRowsTable= decimatedTables[tbl_id];
-
         const layer= getDrawLayerById(getDlAry(), tbl_id);
         if (layer) {
             drawingOptions[tbl_id]= layer.drawingDef;
             dispatchDestroyDrawLayer(tbl_id);
         }
 
-        const overlayAry=  options.multiCoverage ? Object.keys(decimatedTables) : [allRowsTable.tbl_id];
+        const overlayAry=  Object.keys(decimatedTables);
 
         overlayAry.forEach( (id) => {
-            // if (id!==tbl_id) return;
             if (!drawingOptions[id]) drawingOptions[id]= {};
             if (!drawingOptions[id].color) drawingOptions[id].color= lookupOption(options,'color',id) || getNextColor();
             const oriTable= getTblById(id);
@@ -459,7 +447,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
     const boxData= covType===CoverageType.BOTH || covType===CoverageType.BOX;
     const {tbl_id}= table;
     const {tableMeta, tableData}= allRowsTable;
-    const columns = boxData ? options.getCornersColumns(table) : options.getCenterColumns(table);
+    const columns = boxData ? options.getCornersColumns(table) : findTableCenterColumns(table);
     if (isEmpty(columns)) { return; }
     const angleInRadian= isTableUsingRadians(tableMeta);
     const dl= getDlAry().find( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogId===table.tbl_id);
@@ -527,7 +515,7 @@ function makePt(lonStr,latStr, csys, radianToDegree) {
 }
 
 function getPtAryFromTable(options,table, usesRadians){
-    const cDef= options.getCenterColumns(table);
+    const cDef= findTableCenterColumns(table);
     if (isEmpty(cDef)) return [];
     const {lonIdx,latIdx,csys}= cDef;
     return table.tableData.data
@@ -553,13 +541,17 @@ function getBoxAryFromTable(options,table, usesRadians){
  */
 function hasCoverageData(options, table) {
     if (!get(table, 'totalRows')) return false;
-    if (!options.multiCoverage && table.tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) return false;
-    return !isEmpty(options.getCenterColumns(table)) || !isEmpty(options.getCornersColumns(table));
+    return !isEmpty(findTableCenterColumns(table)) || !isEmpty(options.getCornersColumns(table));
 }
 
 function getCovColumnsForQuery(options, table) {
-    const cAry= [...options.getCornersColumns(table), options.getCenterColumns(table)];
-    const base = cAry.filter((c)=>!isEmpty(c)).map( (c)=> `"${c.lonCol}","${c.latCol}"`).join();     // column names should be in quotes
+    const cAry= [...options.getCornersColumns(table), findTableCenterColumns(table)];
+    // column names should be in quotes
+    // there should be no duplicates
+    const base = cAry.filter((c)=>!isEmpty(c))
+            .map( (c)=> `"${c.lonCol}","${c.latCol}"`)
+            .filter((v,i,a) => a.indexOf(v) === i)
+            .join();
     return base+',"ROW_IDX"';
 }
 

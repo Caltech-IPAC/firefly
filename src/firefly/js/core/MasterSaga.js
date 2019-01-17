@@ -3,15 +3,20 @@
  */
 
 import {flux} from '../Firefly.js';
-import {take, fork, spawn, cancel} from 'redux-saga/effects';
-import {get, isFunction, isUndefined} from 'lodash';
+import {take, fork, spawn, cancel, put} from 'redux-saga/effects';
+import {isEmpty, get, isFunction, isUndefined, union, isArray, pick} from 'lodash';
 
 import {uniqueID} from '../util/WebUtil.js';
+import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
+import {getTblIdsByGroup, onTableLoaded} from '../tables/TableUtil';
+import {isDebug} from '../util/WebUtil';
 
 export const ADD_SAGA= 'MasterSaga.addSaga';
 export const ADD_ACTION_WATCHER= 'MasterSaga.addActionWatcher';
 export const CANCEL_ACTION_WATCHER= 'MasterSaga.cancelActionWatcher';
 export const CANCEL_ALL_ACTION_WATCHER= 'MasterSaga.cancelAllActionWatcher';
+export const ADD_TABLE_TYPE_WATCHER= 'MasterSaga.addTableTypeWatcher';
+export const EDIT_TABLE_TYPE_WATCHER= 'MasterSaga.editTableTypeWatcher';
 
 
 /**
@@ -55,6 +60,98 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
 }
 
 /**
+ * @global
+ * @public
+ * @name TableWatchFunc
+ * @function
+ * @desc Like a normal watch with following exceptions:
+ *         - one started per table
+ *         - tbl_id is first parameter.
+ *         - The params object with always include a options and a sharedData property. They may be undefined.
+ *         - The options object should be thought of as read only. It should not be modified.
+ *         - It is call the first time with the action undefined.  This can be for initialization.  The table will beloaded
+ * @param {String} tbl_id the table id
+ * @param {Action} action - the action
+ * @param {Function} cancelSelf - function to cancel, should be call when table is removed
+ * @param {Object} params - params contents are created by the watcher with two exceptions, params will always contain:
+ *          <ul>
+ *          <li> options - The options object is the same as passed to dispatchAddTableTypeWatcherDef
+ *          <li> sharedData - if the definition contains a shared data object it will be passed. sharedData provides a way
+ *           for all the watcher with the same definition to share some state. This should only be used if absolutely necessary
+ *          </ul>
+ */
+
+/**
+ * @global
+ * @public
+ * @name TestWatchFunc
+ * @function
+ * @desc Test to see if we should watch this table
+ * @param {TableModel} table
+ * @param {Action} action
+ * @param {Object} options
+ * @return {boolean} true if we should watch
+ *
+ */
+
+
+
+
+/**
+ * @summary Add a table type watcher definition. Test every table (existing or new) and if the test is passed then create
+ * a table type watcher for that table.
+ *
+ * @global
+ * @public
+ *
+ *
+ * A table type watcher, by using the payload definition will start a single watch for ever table that is newly loaded
+ * or previously loaded that passes the 'testTable' function test.
+ * These watchers will have the same life time of the table they are watching.
+ * A  TableType watcher is like a normal watcher with following exceptions:
+ *         - tbl_id is first parameter.
+ *         - The params object with always include a options and a sharedData property. They may be undefined.
+ *         - The options object should be thought of as read only. It should not be modified.
+ *         - It is call the first time with the action undefined.  This can be for initialization.  The table will beloaded
+ *
+ * @param {object}   p
+ * @param {String} p.id a unique identifier for this watcher
+ * @param {TestWatchFunc} p.testTable - function: testTable(table,action,options), return true, if we should watch this table type
+ * @param {TableWatchFunc} p.watcher - function watcher(tbl_id,action,cancelSelf,params), note- TableWatchFunc is called
+ *                        when the first time for initialization for the first call action is null
+ * @param {Object} [p.sharedData]
+ * @param {Object} [p.options]
+ * @param {Array.<String>} p.actions - array of string action id's
+ * @param {Array.<String>} p.excludes- excluded id list. if testTable return true then this
+ *                                       list will force any watcher def with an id in the list to not watch
+ * @param {boolean} p.stopPropagation - like excludes but if true not only watcher will be added
+ * @param {boolean} p.enabled - if true this TableTypeWatcher will test and add, if false it will be skipped
+ *
+ * @see TableWatchFunc
+ * @see TestWatchFunc
+ *
+ */
+export function dispatchAddTableTypeWatcherDef({id, actions, excludes= [], testTable= ()=>true,
+                                             watcher, options={}, enabled= true, stopPropagation= false,
+                                             sharedData}) {
+    flux.process({
+        type: ADD_TABLE_TYPE_WATCHER,
+        payload: {id, actions, excludes, testTable, watcher, options, enabled, stopPropagation, sharedData}
+    });
+}
+
+/**
+ * Change any key (but id) defined in dispatchAddTableTypeWatcherDef
+ * @param {object} p
+ * @param p.id
+ * @param p.changes any key that you want to change
+ */
+export function dispatchEditTableTypeWatcherDef({id, ...changes}) {
+    flux.process({ type: EDIT_TABLE_TYPE_WATCHER, payload:{id, changes}});
+}
+
+
+/**
  * cancel the watcher with the given id.
  * @param {string} id  a unique identifier of the watcher to cancel
  */
@@ -62,12 +159,14 @@ export function dispatchCancelActionWatcher(id) {
     flux.process({ type: CANCEL_ACTION_WATCHER, payload: {id}});
 }
 
+
 /**
  * Cancel all watchers.  Should only be called during re-init scenarios. 
  */
 export function dispatchCancelAllActionWatchers() {
     flux.process({ type: CANCEL_ALL_ACTION_WATCHER});
 }
+
 
 
 /**
@@ -78,7 +177,8 @@ export function* masterSaga() {
 
     // Start a saga from any action
     while (true) {
-        const action= yield take([ADD_SAGA, ADD_ACTION_WATCHER, CANCEL_ACTION_WATCHER, CANCEL_ALL_ACTION_WATCHER]);
+        const action= yield take([ADD_SAGA, ADD_ACTION_WATCHER, ADD_TABLE_TYPE_WATCHER, EDIT_TABLE_TYPE_WATCHER,
+                                  CANCEL_ACTION_WATCHER, CANCEL_ALL_ACTION_WATCHER]);
 
         switch (action.type) {
             case ADD_SAGA: {
@@ -129,6 +229,16 @@ export function* masterSaga() {
                     yield cancel(task);
                 }
                 watchers = {};
+                setTimeout(initTTWatcher, 1);
+                break;
+            }
+            case ADD_TABLE_TYPE_WATCHER: {
+                addTableTypeWatcherDef(action.payload);
+                break;
+            }
+            case EDIT_TABLE_TYPE_WATCHER: {
+                const {changes,id}= action.payload;
+                editTTWatcherDef(id,changes, Object.keys(watchers));
                 break;
             }
         }
@@ -162,4 +272,89 @@ function createWatcherSaga({id, actions=[], callback, params, dispatch, getState
     return saga;
 }
 
-const isDebug = () => get(window, 'firefly.debug', false);
+
+const TTW_PREFIX= 'tableWatch-';
+let ttWatcherDefList= [];
+const getTTWatcherDefList= () => ttWatcherDefList;
+const insertTTWatcherDef= (def) => def && ttWatcherDefList.push(def);
+
+function editTTWatcherDef(id, changes, watchersIdList) {
+    if (!id) return;
+    ttWatcherDefList= ttWatcherDefList.map( (def) => {
+        if (def.id!==id) return def;
+        const obj= pick(changes, ['testTable', 'watcher', 'sharedData', 'options',
+                                  'actions', 'excludes', 'stopPropagation', 'enabled']);
+        return {...def, ...obj};
+    });
+    watchersIdList
+        .filter( (wId) => wId.indexOf(`${TTW_PREFIX}${id}`)===0)
+        .forEach( (wId) => dispatchCancelActionWatcher(wId));
+
+    retroactiveTTStart(ttWatcherDefList.find( (def) => def.id===id ));
+}
+
+function addTableTypeWatcherDef(def) {
+    setTimeout(() => {
+        if (isEmpty(getTTWatcherDefList())) initTTWatcher();
+        // validate and start
+        if (isFunction(def.watcher) && isArray(def.actions) && def.id) insertTTWatcherDef(def);
+        else console.error('TableTypeWatcher: watcher, actions, and id are required.');
+        retroactiveTTStart(def);
+    }, 1);
+}
+
+function retroactiveTTStart(def) {
+    const idAry= getTblIdsByGroup();
+    idAry.forEach( (tbl_id) => startTableTypeWatchersForTable(tbl_id,null, () => [def]));
+}
+
+const initTTWatcher= () =>
+    dispatchAddActionWatcher(
+        {
+            actions: [TABLE_SEARCH],
+            id: 'masterTableTypeWatcher',
+            callback: masterTableTypeWatcher,
+            params: {getTTWatcherDefList}
+        });
+
+
+/**
+ * watcher - for TABLE_SEARCH
+ * @param action
+ * @param cancelSelf
+ * @param params
+ */
+function masterTableTypeWatcher(action, cancelSelf, params) {
+    const tbl_id = get(action, 'payload.request.tbl_id');
+    if (!tbl_id || action.type!==TABLE_SEARCH) return;
+    startTableTypeWatchersForTable(tbl_id,action,params.getTTWatcherDefList);
+}
+
+function startTableTypeWatchersForTable(tbl_id, action, getDefList) {
+    onTableLoaded(tbl_id).then( (table) => {
+        table= get(table,'tableModel',table);
+        if (!table || table.error ||  !table.totalRows) return;
+        if (isDebug()) console.log(`new loaded table: ${tbl_id}`);
+        const defList= getDefList();
+        let excludeList=  [];
+        let stopProp= false;
+        defList.forEach( (d) => {
+            const {id, sharedData, options, stopPropagation, enabled= true, excludes=[], actions}= d;
+            if (stopProp || !enabled || excludeList.includes(id)) return;
+            if (d.testTable(table, action, options)) {
+                stopProp= stopPropagation;
+                excludeList= union(excludeList, excludes);
+                let abort= false;
+                d.watcher(tbl_id, undefined, ()=> (abort=true), {sharedData, options});
+                if (abort) return;
+                dispatchAddActionWatcher({
+                    id:`${TTW_PREFIX}${id}-${tbl_id}`,
+                    actions,
+                    callback: (action,cancelSelf,params) => {
+                        return d.watcher(tbl_id, action, cancelSelf, {...params, sharedData, options});
+                    } } );
+            }
+        });
+    });
+}
+

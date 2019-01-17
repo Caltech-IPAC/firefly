@@ -138,7 +138,7 @@ class TableRecognizer {
      * find and fill center column info
      * @param colPair [lonCol, latCol]
      * @param csys
-     * @returns {{lonCol: *, latCol: *, lonIdx: (number|*|lonIdx), latIdx: (number|*|latIdx), csys: *}|*|null}
+     * @returns {null|CoordColsDescription}
      */
     setCenterColumnsInfo(colPair, csys = CoordinateSys.EQ_J2000) {
         this.centerColumnsInfo = null;
@@ -298,7 +298,7 @@ class TableRecognizer {
 
     /**
      * get center columns pair by checking the table meta
-     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
+     * @returns {null|CoordColsDescription}
      */
     getCenterColumnsOnMeta() {
         this.centerColumnsInfo = null;
@@ -324,7 +324,7 @@ class TableRecognizer {
 
     /**
      * search center columns pair by checking UCD value
-     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
+     * @returns {null|CoordColsDescription}
      */
     getCenterColumnsOnUCD() {
         this.centerColumnsInfo = null;
@@ -343,7 +343,7 @@ class TableRecognizer {
     /**
      * search center column pairs based on existing candidate pairs or all table columns
      * @param candidatePairs
-     * @returns {null|{lonCol: *, latCol: *, lonIdx: (number|*|lonIdx), latIdx: (number|*|latIdx), csys: *}|*}
+     * @returns {null|CoordColsDescription}
      */
     getCenterColumnsOnObsCoreUType(candidatePairs) {
         this.centerColumnsInfo = null;
@@ -361,7 +361,7 @@ class TableRecognizer {
     /**
      * search center column pair by checking ObsCore columns on existing candidate pairs or all table columns
      * @param candidatePairs
-     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
+     * @returns {null|CoordColsDescription}
      */
     getCenterColumnsOnObsCoreName(candidatePairs) {
         this.centerColumnsInfo = null;
@@ -382,7 +382,7 @@ class TableRecognizer {
 
     /**
      * search center columns pair by guessing the column name
-     * @returns {null|{lonCol: *, latCol: *, lonIdx: *, latIdx: *, csys: *}|*}
+     * @returns {null|CoordColsDescription}
      */
     guessCenterColumnsByName() {
         this.centerColumnsInfo = null;
@@ -399,7 +399,7 @@ class TableRecognizer {
     /**
      * return center position or catalog coordinate columns and the associate*d coordinate system
      * by checking table meta, UCD values, Utype, ObsCore column name and guessing.
-     * @returns {{lonCol, latCol, csys}|*}
+     * @returns {null|CoordColsDescription}
      */
     getCenterColumns() {
         return  this.getCenterColumnsOnMeta() ||
@@ -417,11 +417,12 @@ class TableRecognizer {
 
 /**
  * find the center column base on the table model of catalog or image metadata
+ * Investigate table meta data a return a CoordColsDescription for two columns that represent and object in the row
  * @param table
- * @returns {*|{lonCol, latCol, lonIdx, latIdx, csys}|*}
+ * @return {CoordColsDescription|null}
  */
 export function findTableCenterColumns(table) {
-   const tblRecog = table && get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
+   const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
 
    return tblRecog && tblRecog.getCenterColumns();
 }

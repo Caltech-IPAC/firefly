@@ -23,14 +23,13 @@ import {GridLayoutPanel} from './GridLayoutPanel.jsx';
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
-import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {VisToolbar} from '../../visualize/ui/VisToolbar.jsx';
 import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 import {warningDivId} from '../../ui/LostConnection';
+import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 
 
 
@@ -53,7 +52,7 @@ export class FireflySlate extends PureComponent {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
-        dispatchAddSaga(watchCatalogs);
+        startTTFeatureWatchers();
         this.stopLayoutManager= startLayoutManager(this.props.renderTreeId, {renderTreeId:this.props.renderTreeId});
 
     }

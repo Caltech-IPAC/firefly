@@ -151,6 +151,39 @@
     </script>
 </template>
 
+<template title="Two table coverage" class="tpl sm">
+    <div id="expected" style="width: 400px; white-space: normal; padding-top: 2px">
+        <div>Both tables cover similar area, HiPS coverage
+            <ul class='expected-list'>
+                <li>one from url, one from service</li>
+                <li>one with points, one with corners</li>
+            </ul>
+        </div>
+        <div><img style="width: 230px;" src="./images/2-tab-coverage.png"></div>
+    </div>
+    <div id="actual" class="flow-h" style="width: 600px">
+        <div id='tables-1' class="box"></div>
+        <div id='coverageHere' class="box"></div>
+    </div>
+    <script>
+        resizeIframeToHeight('260px');
+        function onFireflyLoaded(firefly) {
+            firefly.showCoverage('coverageHere', {gridOn:true});
+            tblReq1 = firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
+                {   position: '148.9;68.8;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 300
+                });
+            tblReq3 = firefly.util.table.makeFileRequest(null, 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
+                { pageSize: 15,
+                    META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}
+                });
+            firefly.showTable('tables-1', tblReq1);
+            firefly.showTable('tables-1', tblReq3);
+        }
+    </script>
+</template>
+
 
 
 <!-- this is where test cases will be attached-->

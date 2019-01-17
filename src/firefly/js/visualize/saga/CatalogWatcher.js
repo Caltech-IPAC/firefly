@@ -2,21 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
-import {isEmpty, isNil, get} from 'lodash';
+import {isNil, get, isEmpty} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import {getDlRoot, SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
+import {SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
         dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
-import {getTblById, doFetchTable, getTableGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
-import {getCenterColumns} from '../../tables/TableInfoUtil.js';
+import {getTblById, doFetchTable, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById, getPlotViewById, getActivePlotView,   findCurrentCenterPoint} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import Catalog from '../../drawingLayers/Catalog.js';
-import {CoordinateSys} from '../CoordSys.js';
 import {logError} from '../../util/WebUtil.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
@@ -25,9 +22,41 @@ import {parseWorldPt, pointEquals, makeWorldPt} from '../Point.js';
 import {computeCentralPointAndRadius} from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {COVERAGE_CREATED} from './CoverageWatcher.js';
-import {isImage,isHiPS} from '../WebPlot';
+import {isImage,isHiPS} from '../WebPlot.js';
+import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
+
+
+
+
+
+/** type {TableWatcherDef} */
+export const catalogWatcherDef = {
+    id : 'CatalogWatcher',
+    watcher : watchCatalogs,
+    testTable : testTableForCatalogs,
+    actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE,
+              TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
+};
+
+
+function testTableForCatalogs(table) {
+
+    const {tableMeta, tableData}= table;
+    if ( !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) return false;
+    if (isLsstFootprintTable(table)) return false;
+    const columns= findTableCenterColumns(table);
+
+    if (!columns) return false;
+    if (!tableData.columns.find( isCName(columns.lonCol)) && !tableData.columns.find(isCName(columns.latCol))) {
+        return false;
+    }
+    return true;
+
+}
+
 
 /**
+ * type {TableWatchFunc}
  * this saga does the following:
  * <ul>
  *     <li>Waits until first fits image is plotted
@@ -38,59 +67,68 @@ import {isImage,isHiPS} from '../WebPlot';
  *         <li>waits for a new plot and adds any catalog
  *     </ul>
  * </ul>
+ * @param tbl_id
+ * @param action
+ * @param cancelSelf
+ * @param params
+ * @return {*}
  */
-export function* watchCatalogs() {
+export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 
 
-    yield take([ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]);
-
-    const tableGroup= get(getTableGroup(), 'tables', {});  // get the main table group.
-    if (!isEmpty(tableGroup)) {
-        Object.keys(tableGroup).forEach( (tbl_id) => handleCatalogUpdate(tbl_id) );
+    if (isEmpty(visRoot().plotViewAry) && !tableManaged) {
+        return {tableManaged: false, ...params}; // no plots? , don't start until there are plots
     }
 
-
-    while (true) {
-        const action= yield take([TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,TBL_RESULTS_ACTIVE,
-                                  TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]);
-        const {tbl_id}= action.payload;
-
-        if (isLsstFootprintTable(getTblById(tbl_id))) continue;
-        switch (action.type) {
-            case TABLE_LOADED:
-                handleCatalogUpdate(tbl_id);
-                break;
-            
-            case TABLE_SELECT:
-                dispatchModifyCustomField(tbl_id, {selectInfo:action.payload.selectInfo});
-                break;
-            
-            case TABLE_HIGHLIGHT:
-            case TABLE_UPDATE:
-                dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
-                break;
-                
-            case TABLE_REMOVE:
-                dispatchDestroyDrawLayer(tbl_id);
-                break;
-
-            case TBL_RESULTS_ACTIVE:
-                recenterImage(getTblById(tbl_id));
-                break;
-
-            case ImagePlotCntlr.PLOT_HIPS:
-            case ImagePlotCntlr.PLOT_IMAGE:
-                attachToAllCatalogs(action.payload.pvNewPlotInfoAry);
-                break;
-        }
+    if (!action) {
+        handleCatalogUpdate(tbl_id);
+        return {tableManaged:true};
     }
+
+    const {payload}= action;
+    const {tableManaged}= params;
+    if (payload.tbl_id && payload.tbl_id!==tbl_id) return params;
+
+    if (!tableManaged && action.type!==TABLE_LOADED) {
+        handleCatalogUpdate(tbl_id);
+    }
+
+    switch (action.type) {
+        case TABLE_LOADED:
+            handleCatalogUpdate(tbl_id);
+            break;
+
+        case TABLE_SELECT:
+            dispatchModifyCustomField(tbl_id, {selectInfo:payload.selectInfo});
+            break;
+
+        case TABLE_HIGHLIGHT:
+        case TABLE_UPDATE:
+            dispatchModifyCustomField(tbl_id, {highlightedRow:payload.highlightedRow});
+            break;
+
+        case TABLE_REMOVE:
+            dispatchDestroyDrawLayer(tbl_id);
+            cancelSelf();
+            break;
+
+        case TBL_RESULTS_ACTIVE:
+            recenterImage(getTblById(tbl_id));
+            break;
+
+        case ImagePlotCntlr.PLOT_HIPS:
+        case ImagePlotCntlr.PLOT_IMAGE:
+            attachToCatalog(tbl_id, payload.pvNewPlotInfoAry);
+            break;
+    }
+    return {tableManaged:true};
 }
 
 
 const isCName = (name) => (c) => c.name===name;
 
 /**
- * update the projection center of hips plor to be aligned with the target of catalog search
+ * update the projection center of hips plot to be aligned with the target of catalog search
  * @param tbl
  */
 function recenterImage(tbl) {
@@ -136,27 +174,9 @@ function handleCatalogUpdate(tbl_id) {
     const sourceTable= getTblById(tbl_id);
 
 
-    const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo, title}= sourceTable;
+    const {totalRows, request, highlightedRow,selectInfo, title}= sourceTable;
     const maxScatterRows = getMaxScatterRows();
-
-    if (!totalRows ||
-        !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) {
-        return;
-    }
-
-    const {ignoreTables}=  getDlRoot();
-    if (ignoreTables.some( (obj) => obj.tableId===tbl_id && obj.drawLayerTypeId===Catalog.TYPE_ID)) {
-        return;
-    }
-
-    const columns= getCenterColumns(sourceTable);
-
-    if (!columns) return;
-
-    if (!tableData.columns.find( isCName(columns.lonCol)) && !tableData.columns.find(isCName(columns.latCol))) {
-        return;
-    }
-
+    const columns= findTableCenterColumns(sourceTable);
 
     recenterImage(sourceTable);
 
@@ -167,7 +187,7 @@ function handleCatalogUpdate(tbl_id) {
     };
 
     let req = cloneRequest(sourceTable.request, params);
-    var dataTooBigForSelection= false;
+    let dataTooBigForSelection= false;
     if (totalRows > maxScatterRows) {
         const sreq = cloneRequest(sourceTable.request, {inclCols: `"${columns.lonCol}","${columns.latCol}"`});
         req = makeTableFunctionRequest(sreq, 'DecimateTable', title,
@@ -220,21 +240,20 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
     }
 }
 
-
-function attachToAllCatalogs(pvNewPlotInfoAry=[]) {
-    dlRoot().drawLayerAry.forEach( (dl) => {
-        if (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog) {
-            pvNewPlotInfoAry.forEach( (info) => {
-                dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
-                const pv= getPlotViewById(visRoot(), info.plotId);
-                const pvSubGroup= get(pv, 'drawingSubGroupId');
-                const tableSubGroup= dl.tableMeta[SUBGROUP];
-                if (!isNil(pvSubGroup) && !isNil(tableSubGroup)  && pvSubGroup!==tableSubGroup) {
-                    pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false, plotId:pv.plotId, useGroup:false});
-                }
-            });
+function attachToCatalog(tbl_id, pvNewPlotInfoAry=[]) {
+    const dl= getDrawLayerById(dlRoot(), tbl_id);
+    if (!dl) return;
+    pvNewPlotInfoAry.forEach( (info) => {
+        dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
+        const pv= getPlotViewById(visRoot(), info.plotId);
+        const pvSubGroup= get(pv, 'drawingSubGroupId');
+        const tableSubGroup= dl.tableMeta[SUBGROUP];
+        if (!isNil(pvSubGroup) && !isNil(tableSubGroup)  && pvSubGroup!==tableSubGroup) {
+            pv && dispatchChangeVisibility({id:dl.drawLayerId, visible:false, plotId:pv.plotId, useGroup:false});
         }
     });
 }
+
+
 
 

@@ -19,7 +19,7 @@ import {makeWorldPt} from '../visualize/Point.js';
 import {doFetchTable} from '../tables/TableUtil.js';
 import {getUIComponent} from './CatalogUI.jsx';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
-import {getCenterColumns} from '../tables/TableInfoUtil.js';
+import {findTableCenterColumns} from '../util/VOAnalyzer.js';
 
 const TYPE_ID= 'ARTIFACT_TYPE';
 
@@ -185,7 +185,7 @@ function createDrawData(drawLayer, tableModel) {
     const {tableData}= tableModel;
     if (!tableData.data.length) return;
 
-    const columns= getCenterColumns(tableModel);
+    const columns= findTableCenterColumns(tableModel);
     if (isEmpty(columns) || columns.lonIdx<0 || columns.latIdx<0) return null;
 
     const {angleInRadian:rad}= drawLayer;

@@ -19,7 +19,7 @@ import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import * as ComponentCntlr from '../core/ComponentCntlr.js';
 import {ApiExpandedView} from './ApiExpandedView.jsx';
 import {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer} from '../core/LayoutCntlr.js';
-import {dispatchAddSaga, dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {dispatchAddSaga, dispatchAddActionWatcher, dispatchAddTableTypeWatcherDef} from '../core/MasterSaga.js';
 import {showWorkspaceDialog, WorkspacePickerPopup} from '../ui/WorkspaceViewer.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
 
@@ -188,7 +188,7 @@ export function buildLowlevelAPI() {
         findDispatch(AppDataCntlr),
         findDispatch(DrawLayerCntlr),
         {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer},
-        {dispatchAddSaga, dispatchAddActionWatcher, }
+        {dispatchAddSaga, dispatchAddActionWatcher, dispatchAddTableTypeWatcherDef}
     );
 
     const ui= {

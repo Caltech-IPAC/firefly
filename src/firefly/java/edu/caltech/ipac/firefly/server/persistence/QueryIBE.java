@@ -8,9 +8,6 @@ package edu.caltech.ipac.firefly.server.persistence;
  *         $Id: $
  */
 
-import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
-import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
@@ -18,17 +15,17 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.table.IpacTableDef;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.IpacTableUtil;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -133,7 +130,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
             }
 
             // mission specific attributes
-            meta.setAttributes(IBEUtils.getMissionSpecificTableMeta(source));
+            IBEUtils.getMissionSpecificTableMeta(source).forEach( (k,v) -> meta.setAttribute(k,v));
 
         }
         catch (Exception ignored) {
