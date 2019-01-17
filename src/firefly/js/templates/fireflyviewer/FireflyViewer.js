@@ -25,7 +25,6 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 import {warningDivId} from '../../ui/LostConnection.jsx'
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
-import {startMasterTableWatcher} from '../../visualize/saga/MasterTableWatch';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -49,7 +48,6 @@ export class FireflyViewer extends PureComponent {
         getImageMasterData();
         const views = LO_VIEW.get(props.views) || LO_VIEW.none;
         this.state = this.getNextState();
-        startMasterTableWatcher([{}]);
         dispatchAddSaga(watchCatalogs);
         if (views.has(LO_VIEW.images) ) launchImageMetaDataSega();
         dispatchAddSaga(layoutManager,{views: props.views});
