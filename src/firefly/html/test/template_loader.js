@@ -14,21 +14,18 @@
         });
     };
 
-    function resizeIframe(obj) {
-        obj.style.height = obj.contentWindow.document.body.scrollHeight + 20 + 'px';
-    }
-
     function renderTest(expected, actual, script, title, className) {
         const iframe = document.createElement('iframe');
         iframe.src = './template.html';
+        iframe.style.minHeight= '200px';
         const idiv = document.createElement('div');
         idiv.className = 'tst-iframe-container';
         idiv.appendChild(iframe);
         document.getElementById('tst-container').appendChild(idiv);
 
         iframe.contentWindow.template = {expected, actual, script, title, className};
-        iframe.contentWindow.resizeIframe = function () {
-            resizeIframe(iframe);
+        iframe.contentWindow.resizeIframeToHeight= function (size) {
+            iframe.style.minHeight= size;
         };
     }
 

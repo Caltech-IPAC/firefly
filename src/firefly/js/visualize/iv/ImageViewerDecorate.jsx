@@ -179,7 +179,20 @@ const bgSlightGray= {background: 'rgba(255,255,255,.2)'};
 const bgFFGray= {background: '#e3e3e3'};
 
 function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools, showDelete) {
+    const tb= !isExpanded && visRoot.useFloatToolbar;
+    const lVis= BrowserInfo.isTouchInput() || (visRoot.useFloatToolbar && pv && mousePlotId===pv.plotId);
+    const style= (lVis || tb) && handleInlineTools ? bgFFGray : bgSlightGray;
+    if (!pv && tb && handleInlineTools) {
+        return (
+            <div style={style} className='iv-decorate-inline-toolbar-container'>
+                <VisInlineToolbarView pv={pv} dlAry={undefined} showLayer={false}
+                                      showExpand={false} showToolbarButton={true} showDelete ={false} />
+            </div>
+        );
+
+    }
     if (!pv) return false;
+
     const useInlineToolbar = toolsAnno.includes(pv.plotViewCtx.annotationOps);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
 
@@ -199,10 +212,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
             return false;
         }
     }
-    const lVis= BrowserInfo.isTouchInput() || (visRoot.useFloatToolbar && mousePlotId===pv.plotId);
     const exVis= BrowserInfo.isTouchInput() || mousePlotId===pv.plotId;
-    const tb= !isExpanded && visRoot.useFloatToolbar;
-    const style= (lVis || tb) && handleInlineTools ? bgFFGray : bgSlightGray;
     return (
         <div style={style} className='iv-decorate-inline-toolbar-container'>
             <VisInlineToolbarView

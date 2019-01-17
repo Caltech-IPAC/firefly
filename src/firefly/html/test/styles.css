@@ -54,6 +54,10 @@
     padding: 0 5px;
 }
 
+ul.expected-list li{
+    list-style-type: circle;
+}
+
 .source-code.indent-2 {margin-left: -4ch;}
 .source-code.indent-2 {margin-left: -8ch;}
 .source-code.indent-3 {margin-left: -12ch;}
@@ -84,6 +88,10 @@
 .tst-iframe-container iframe {
     border: 0;
     width: 100%;
+    resize : both;
+    display: flex;
+    background-color: rgba(0,0,0, .04);
+    margin-bottom: 5px;
 }
 
 #tpl-container {
@@ -98,6 +106,7 @@
     display: inline-flex;
     overflow-x: auto;
     overflow-y: hidden;
+    flex-grow: 1;
 }
 
 .tpl-item-box {

@@ -182,7 +182,7 @@ export class VisToolbarView extends PureComponent {
 
                 {apiToolsView && <ToolbarButton icon={NEW_IMAGE}
                                              tip='Select a new image'
-                                             enabled={enabled}
+                                             enabled={true}
                                              horizontal={true}
                                              visible={mi.imageSelect}
                                              onClick={showImagePopup}/>}
