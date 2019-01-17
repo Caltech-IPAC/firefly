@@ -13,10 +13,11 @@ export function createContentWrapper(content) {
 
 /**
  * decorate the content with DockLayoutPanel's look and feel.
+ * @param children  content of this panel
  */
-export function SplitContent({children}) {
+export function SplitContent({style, children}) {
     return ( <div className='wrapper'>
-                <div className='content'>{children}</div>
+                <div style={style} className='content'>{children}</div>
              </div>
             );
 }

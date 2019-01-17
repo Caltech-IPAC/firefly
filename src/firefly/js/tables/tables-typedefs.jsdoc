@@ -87,7 +87,7 @@
  */
 
 /**
- * Table data.  Table data object.
+ * Table group info
  * @typedef {object} Group
  * @prop {string} ID     ID used to reference this group.
  * @prop {string} name   href of this group.
@@ -101,7 +101,7 @@
  */
 
 /**
- * Table data.  Table data object.
+ * Table link info
  * @typedef {object} LINK
  * @prop {string} ID     ID used to reference this LINK.
  * @prop {string} href   href of this LINK.

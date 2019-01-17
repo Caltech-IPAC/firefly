@@ -2,7 +2,6 @@ import React, {PureComponent} from 'react';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/lib/Creatable';
 import {get, pick, truncate} from 'lodash';
-import {logError} from '../../util/WebUtil.js';
 import {FormPanel} from '../FormPanel.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
@@ -10,19 +9,21 @@ import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/Fi
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
-import {ListBoxInputField, ListBoxInputFieldView} from '../ListBoxInputField.jsx';
-import {ValidationField} from '../ValidationField.jsx';
+import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest, makeFileRequest} from '../../tables/TableRequestUtil.js';
-import {doFetchTable, getColumnIdx, getColumnValues, sortTableData, onTableLoaded, getTblById} from '../../tables/TableUtil.js';
-import {sortInfoString} from '../../tables/SortInfo.js';
+import {makeTblRequest} from '../../tables/TableRequestUtil.js';
+import {getColumnValues, onTableLoaded, getTblById} from '../../tables/TableUtil.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
 import {CatalogConstraintsPanel, getTblId} from '../../visualize/ui/CatalogConstraintsPanel.jsx';
 import {validateSql} from '../../visualize/ui/CatalogSelectViewPanel.jsx';
 import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
+import {AdvancedADQL} from './AdvancedADQL.jsx';
+import {loadTapTables, loadTapSchemas} from './TapUtil.js';
+import {showYesNoPopup} from '../PopupUtil.jsx';
 
 import './TableSelectViewPanel.css';
+import {dispatchHideDialog} from '../../core/ComponentCntlr';
 
 /**
  * group key for fieldgroup comp
@@ -77,6 +78,7 @@ export class TapSearchPanel extends PureComponent {
                 </div>
                 <FormPanel
                     groupKey={gkey}
+                    params={{hideOnInvalid: false}}
                     onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
                     extraButtons={rightBtns}>
 
@@ -92,12 +94,7 @@ export class TapSearchPanel extends PureComponent {
                             </Tab>
                             <Tab name='ADQL' id='adql'>
                                 <div style={tabWrapper}>
-                                    <ValidationField style={{width: 950, height: 20}}
-                                                     fieldKey='adqlQuery'
-                                                     tooltip='ADQL to submit to the selected TAP service'
-                                                     label='ADQL Query:'
-                                                     labelWidth={80}
-                                    />
+                                    <AdvancedADQL fieldKey='adqlQuery' groupKey={gkey} serviceUrl={serviceUrl}/>
                                 </div>
                             </Tab>
                         </FieldGroupTabs>
@@ -266,88 +263,53 @@ class TapSchemaBrowser extends PureComponent {
     loadSchemas(serviceUrl, schemaName=undefined, tableName=undefined) {
         this.setState({error: undefined, schemaOptions: undefined, schemaName: undefined, tableOptions: undefined, tableName: undefined});
 
-        const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.schemas';
-        const request = makeFileRequest('schemas', url, null,
-            {tbl_id: 'schemas', META_INFO: {}});
-
-        doFetchTable(request).then((tableModel) => {
+        loadTapSchemas(serviceUrl).then((tableModel) => {
             if (tableModel.error) {
-                logError(`Failed to get schemas for ${serviceUrl}`, `${tableModel.error}`);
+                this.setState({error: tableModel.error});
             } else {
-                if (tableModel.tableData) {
-                    // check if schema_index column is present
-                    // if it is, sort tabledata by schema_index
-                    if (getColumnIdx(tableModel, 'schema_index') >= 0) {
-                        sortTableData(tableModel.tableData.data, tableModel.tableData.columns, sortInfoString('schema_index'));
-                    }
-                    const schemas = getColumnValues(tableModel, 'schema_name');
-                    const schemaDescriptions = getColumnValues(tableModel, 'description');
+                const schemas = getColumnValues(tableModel, 'schema_name');
+                const schemaDescriptions = getColumnValues(tableModel, 'description');
 
-                    if (schemas.length > 0) {
-                        if (!schemaName || !schemas.includes(schemaName)) { schemaName = schemas[0]; }
-                        this.loadTables(serviceUrl, schemaName, tableName);
-                    }
-
-                    const schemaOptions = schemas.map((e, i) => {
-                        let label = schemaDescriptions[i] ? `[${e}] ${schemaDescriptions[i]}` : `[${e}]`;
-                        label = truncate(label, {length: 50});
-                        return {label, value: e};
-                    });
-                    this.setState({schemaOptions, schemaName});
-                    return;
+                if (schemas.length > 0) {
+                    if (!schemaName || !schemas.includes(schemaName)) { schemaName = schemas[0]; }
+                    this.loadTables(serviceUrl, schemaName, tableName);
                 }
+
+                const schemaOptions = schemas.map((e, i) => {
+                    let label = schemaDescriptions[i] ? `[${e}] ${schemaDescriptions[i]}` : `[${e}]`;
+                    label = truncate(label, {length: 50});
+                    return {label, value: e};
+                });
+                this.setState({schemaOptions, schemaName});
             }
-            this.setState({error: 'No schemas available'});
-        }).catch(
-            (reason) => {
-                this.setState({error: `Failed to get schemas for ${serviceUrl}: ${reason}`});
-            }
-        );
+        });
     }
 
     loadTables(serviceUrl, schemaName, tableName) {
         this.setState({schemaName, tableOptions: undefined, tableName: undefined});
 
-        const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.tables+WHERE+schema_name+like+\'' + schemaName + '\'';
-        const request = makeFileRequest('tables', url, null,
-            {tbl_id: 'tables', META_INFO: {}});
+        loadTapTables(serviceUrl, schemaName).then((tableModel) => {
+            if (!tableModel.error) {
+                const tables = getColumnValues(tableModel, 'table_name');
+                const tableDescriptions = getColumnValues(tableModel, 'description');
 
-        doFetchTable(request).then((tableModel) => {
-            if (tableModel.error) {
-                logError(`Failed to get tables for ${serviceUrl} schema ${schemaName}`, `${tableModel.error}`);
-            } else {
-                if (tableModel.tableData) {
-                    // check if schema_index column is present
-                    // if it is, sort tabledata by schema_index
-                    if (getColumnIdx(tableModel, 'table_index') >= 0) {
-                        sortTableData(tableModel.tableData.data, tableModel.tableData.columns, sortInfoString('table_index'));
-                    }
-                    const tables = getColumnValues(tableModel, 'table_name');
-                    const tableDescriptions = getColumnValues(tableModel, 'description');
-
-                    if (tables.length > 0) {
-                        if (!tableName || !tables.includes(tableName)) { tableName = tables[0]; }
-                    }
-
-                    const tableOptions = tables.map((e, i) => {
-                        let label = tableDescriptions[i] ? `[${e}] ${tableDescriptions[i]}` : `[${e}]`;
-                        label = truncate(label, {length: 50});
-                        return {label, value: e};
-                    });
-                    const columnsTblId = getTblId(tableName);
-                    onTableLoaded(columnsTblId).then( () => {
-                         this.setState({columnsModel: getTblById(columnsTblId)});
-                    });
-                    this.setState({tableOptions, tableName, columnsModel: undefined});
-                    return;
+                if (tables.length > 0) {
+                    if (!tableName || !tables.includes(tableName)) { tableName = tables[0]; }
                 }
+
+                const tableOptions = tables.map((e, i) => {
+                    let label = tableDescriptions[i] ? `[${e}] ${tableDescriptions[i]}` : `[${e}]`;
+                    label = truncate(label, {length: 50});
+                    return {label, value: e};
+                });
+                const columnsTblId = getTblId(tableName);
+                onTableLoaded(columnsTblId).then( () => {
+                    this.setState({columnsModel: getTblById(columnsTblId)});
+                });
+                this.setState({tableOptions, tableName, columnsModel: undefined});
             }
-            logError(`No tables available for ${serviceUrl} schema ${schemaName}`);
-        }).catch(
-            (reason) => {
-                logError({error: `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${reason}`});
-            }
-        );
+
+        });
     }
 
 }
@@ -373,12 +335,35 @@ function onSearchSubmit(request,serviceUrl) {
         title = request.tableName;
     }
     if (adql) {
-        const params = {serviceUrl, QUERY: adql};
-        const options = {};
+        const doSubmit = () => {
+            const params = {serviceUrl, QUERY: adql};
+            const options = {};
 
-        const treq = makeTblRequest('AsyncTapQuery', title, params, options);
-        dispatchTableSearch(treq, {backgroundable: true});
+            const treq = makeTblRequest('AsyncTapQuery', title, params, options);
+            dispatchTableSearch(treq, {backgroundable: true});
+
+        };
+        if (!adql.toUpperCase().match(/ TOP | WHERE /)) {
+            const msg = (
+                <div style={{width: 260}}>
+                    You are about to submit a query without a TOP or WHERE constraint. <br/>
+                    This may results in a HUGE amount of data. <br/><br/>
+                    Are you sure you want to continue?
+                </div>
+            );
+            showYesNoPopup(msg,(id, yes) => {
+                if (yes) {
+                    doSubmit();
+                    hideSearchPanel();
+                }
+                dispatchHideDialog(id);
+            });
+        } else {
+            doSubmit();
+            return true;
+        }
     }
+    return false;
 }
 
 function getAdqlQuery() {

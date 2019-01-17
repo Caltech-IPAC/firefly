@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take, fork, cancel} from 'redux-saga/effects';
 import {get, set, has, isEmpty, isUndefined, uniqueId, cloneDeep, omitBy, isNil, isPlainObject, isArray, padEnd} from 'lodash';
 import Enum from 'enum';
 
@@ -925,6 +924,7 @@ export function stripColumnNameQuotes(s) {
 export function tblDropDownId(tbl_id) {
     return `table_dropDown-${tbl_id}`;
 }
+
 
 /*-------------------------------------private------------------------------------------------*/
 
