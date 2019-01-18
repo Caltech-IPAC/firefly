@@ -20,6 +20,7 @@ import org.json.simple.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 
 public class HttpServCommands {
 
@@ -45,13 +46,19 @@ public class HttpServCommands {
             if (request == null) throw new IllegalArgumentException("Invalid request");
 
             String fileName = sp.getOptional("file_name");
-            String fileFormat = sp.getOptional("file_format");
-            TableUtil.Format tblFormat;
+            final String fileFormat = sp.getOptional("file_format").toLowerCase();
 
-            fileFormat = (StringUtils.isEmpty(fileFormat) || !allFormats.containsKey(fileFormat.toLowerCase()))
-                         ? "ipac" : fileFormat.toLowerCase();
+            String formatInMap;
+            if (StringUtils.isEmpty(fileFormat)) {
+                formatInMap = "ipac";
+            } else {
+                Object[] formats = allFormats.keySet().stream()
+                        .filter((t) -> fileFormat.startsWith(t))
+                        .toArray();
+                formatInMap = (formats.length != 1) ? "ipac" : (String)formats[0];
+            }
 
-            tblFormat = allFormats.get(fileFormat);
+            TableUtil.Format tblFormat = allFormats.get(formatInMap);
             String fileNameExt = tblFormat.getFileNameExt();
 
             if (StringUtils.isEmpty(fileName)) {
@@ -63,7 +70,8 @@ public class HttpServCommands {
 
             res.setHeader("Content-Disposition", "attachment; filename=" + fileName + fileNameExt);
             SearchManager am = new SearchManager();
-            FileInfo fi = am.save(res.getOutputStream(), request, tblFormat);
+
+            FileInfo fi = am.save(res.getOutputStream(), request, tblFormat, fileFormat);
             if (fi != null) {
                 long length = 0;
                 if (fi != null) {

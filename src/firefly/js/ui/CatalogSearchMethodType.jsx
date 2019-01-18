@@ -424,7 +424,7 @@ CatalogSearchMethodType.propTypes = {
 // Enumerate spatial methods - see SearchMethod values in edu.caltech.ipac.firefly.server.catquery.GatorQuery
 export const SpatialMethod = new Enum({
         'Cone': 'Cone',
-        'Elliptical': 'Eliptical',
+        'Elliptical': 'Ellipse',
         'Box': 'Box',
         'Polygon': 'Polygon',
         'Multi-Object': 'Table',

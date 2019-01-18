@@ -24,23 +24,34 @@ import {INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
-import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 
 const fKeyDef = {
-    fileName: {fKey: 'fileName', label: 'Save as:'},
+    fileName: {fKey: 'fileName', label: 'File name:'},
     fileFormat: {fKey: 'fileFormat', label: 'File format:'},
-    location: {fKey: 'fileLocation', label: 'File Location:'},
+    location: {fKey: 'fileLocation', label: 'File location:'},
     wsSelect: {fKey: 'wsSelect', label: ''},
     overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
 };
 
-const tableFormats = new Enum(['IPAC', 'CSV', 'TSV', 'VOTABLE', 'FITS']);
+const tableFormats = new Enum({ipac: 'ipac',
+                               csv: 'csv: Comma-Seperated values',
+                               tsv: 'tsv: Tab-Seperated values',
+                               'votable-tabledata': 'votable-tablemeta: TABLEDATA-format VOTable',
+                               'votable-binary-inline': 'votable-binary: inline BINARY-format VOTable',
+                               //'votable-binary-href': 'votable-binary-href: External BINARY-format VOTable',
+                               'votable-binary2-inline': 'votable-binary2: inline BINARY2-format VOTable',
+                               //'votable-binary2-href': 'votable-binary2-href: External BINAR2Y-format VOTable',
+                               'votable-fits-inline': 'votable-fits: Inline FITS-format VOTable',
+                               //'votable-fits-href': 'votable-fits-href: External FITS-format VOTable',
+                               //'fits': 'fits: FITS table'
+                             });
 const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
         'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
-    [fKeyDef.fileFormat.fKey]: Object.assign(getTypeData(fKeyDef.fileFormat.fKey, tableFormats.IPAC.key,
-        'Please select a format option, the default is IPAC', fKeyDef.fileFormat.label, labelWidth), {validator: null}),
+    [fKeyDef.fileFormat.fKey]: Object.assign(getTypeData(fKeyDef.fileFormat.fKey, tableFormats.ipac.key,
+        'Please select a format option, the default is ipac', fKeyDef.fileFormat.label, labelWidth)),
     [fKeyDef.location.fKey]: Object.assign(getTypeData(fKeyDef.location.fKey, 'isLocal',
         'select the location where the file is downloaded to', fKeyDef.location.label, labelWidth), {validator: null}),
     [fKeyDef.wsSelect.fKey]: Object.assign(getTypeData(fKeyDef.wsSelect.fKey, '',
@@ -77,18 +88,18 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
         const minHeight = (currentFileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL/2 : dialogHeightLOCAL;
 
         const fileFormatOptions = () => {
-            const fileOptions = [
-                {label: tableFormats.IPAC.key, value: tableFormats.IPAC.key},
-                {label: tableFormats.CSV.key, value: tableFormats.CSV.key},
-                {label: tableFormats.TSV.key, value: tableFormats.TSV.key}
-            ];
+            const fileOptions = tableFormats.enums.reduce((options, eItem) => {
+                options.push({label: eItem.value, value: eItem.key});
+                return options;
+            }, []);
 
             return (
                 <div style={{display: 'flex', marginTop: mTop}}>
                     <div>
-                        <RadioGroupInputField
+                        <ListBoxInputField
                             options={ fileOptions}
                             fieldKey = {fKeyDef.fileFormat.fKey}
+                            multiple={false}
                         />
                     </div>
                 </div>
@@ -125,7 +136,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
                                 </div>
                             </div>
                             <div style={{ textAlign:'right', marginRight: 10}}>
-                                <HelpIcon helpId={'visualization.imageoptions'}/>
+                                <HelpIcon helpId={'tablesCST.header'}/>
                             </div>
                         </div>
                     </div>
@@ -143,6 +154,26 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
 function TableDLReducer(tbl_id) {
     return (inFields, action) => {
         const {request} = getTblById(tbl_id) || {};
+        const fixFileName = (fName) => {
+
+            const tableFormat = inFields ? get(inFields, [fKeyDef.fileFormat.fKey, 'value'], 'ipac') : 'ipac';
+
+            fName = fName.replace(/\s/g, '')            // remove space
+                .replace(/\)$/, '')            // remove trailing )
+                .replace(/[\(|\)]/g, '-')      // replace ( & ) to be '-'
+                .replace(/:/g, '_')            // replace ':' to be '_'
+                .replace(/\'{2}/, 'asec')      // replace '' to be 'asec'
+                .replace(/\.([0-9]+)/g, 'p$1') // replace decimal point before number to be 'p'
+                .replace(/\./g, '_');          // replace decimal point to be '_'
+
+
+            if (fName && tableFormat && tableFormat.includes('votable')) {
+                const prefix = ['binary2', 'binary', 'fits'].find((f) => tableFormat.includes(f));
+                fName += (prefix ? '-'+prefix : '');
+            }
+
+            return fName;
+        };
 
         if (!inFields) {
             const defV = Object.assign({}, defValues);
@@ -150,12 +181,14 @@ function TableDLReducer(tbl_id) {
             set(defV, [fKeyDef.wsSelect.fKey, 'value'], '');
             set(defV, [fKeyDef.wsSelect.fKey, 'validator'], isWsFolder());
             set(defV, [fKeyDef.fileName.fKey, 'validator'], fileNameValidator(tblDownloadGroupKey));
-            set(defV, [fKeyDef.fileName.fKey, 'value'], get(request, 'META_INFO.title'));
+            set(defV, [fKeyDef.fileName.fKey, 'value'], fixFileName(get(request, 'META_INFO.title'), ''));
             return defV;
         } else {
             switch (action.type) {
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
-                    inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], get(request, 'META_INFO.title'));
+                    const fName = fixFileName(get(request, 'META_INFO.title', ''));
+
+                    inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                     break;
                 case FieldGroupCntlr.VALUE_CHANGE:
                     if (action.payload.fieldKey === fKeyDef.wsSelect.fKey) {
@@ -167,6 +200,10 @@ function TableDLReducer(tbl_id) {
 
                             inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                         }
+                    } else if (action.payload.fieldKey === fKeyDef.fileFormat.fKey) {
+                        const fName = fixFileName(get(request, 'META_INFO.title', ''));
+
+                        inFields = updateSet(inFields, [fKeyDef.fileName.fKey, 'value'], fName);
                     }
                     break;
             }

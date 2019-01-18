@@ -57,6 +57,7 @@ public class TableMeta implements Serializable {
     public static final String UCD = "ucd";
     public static final String UTYPE = "utype";
     public static final String DESC = "desc";
+    public static final String NAME = "name";
 
     private Map<String, DataGroup.Attribute> attributes = new HashMap<>();
     private List<DataGroup.Attribute> keywords = new ArrayList<>();

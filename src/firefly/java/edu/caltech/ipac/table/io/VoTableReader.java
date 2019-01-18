@@ -11,6 +11,7 @@ import org.json.simple.JSONObject;
 import org.xml.sax.SAXException;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.*;
+import uk.ac.starlink.util.DOMUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,6 +100,7 @@ public class VoTableReader {
     public static final String UCD = "ucd";
     public static final String UTYPE = "utype";
     public static final String DESC = "desc";
+    public static final String NAME = "name";
 
     private static String getElementAttribute(VOElement element, String attName) {
         return element.hasAttribute(attName) ? element.getAttribute(attName) : null;
@@ -145,7 +147,7 @@ public class VoTableReader {
     }
 
     // get all <INFO> under <TABLE>
-    private static VOElement[] getInfosFromTable(TableElement tableEl) {
+    private static VOElement[] getInfoElementsFromTable(TableElement tableEl) {
         return tableEl.getChildrenByName("INFO");
 
     }
@@ -231,8 +233,6 @@ public class VoTableReader {
     // convert <PARAM>s under <TABLE> to a list of <DataType> and add it to the associated table (a DataGroup object)
     private static List<ParamInfo> makeParamsFromTable(TableElement tableEl, StarTable table) {
 
-
-
         VOElement[] paramsEl = getParamsFromTable(tableEl);
         List<ParamInfo> allParams = new ArrayList<>();
 
@@ -269,21 +269,27 @@ public class VoTableReader {
             params.setUType(getElementAttribute(param, "utype"));
             params.setID(getElementAttribute(param, "ID"));
             params.setValue(getElementAttribute(param, "value"));
+            VOElement desElement = param.getChildByName("DESCRIPTION");
+            if (desElement != null) {
+                params.setDesc(DOMUtils.getTextContent(desElement));
+            }
+
             allParams.add(params);
         }
         return allParams;
     }
 
     // get <INFO>s under <TABLE> as a list of DescribeValue
-    private static List<DescribedValue> getInfosFromTable(TableElement tableEl, StarTable table) {
+    private static List<DescribedValue> getInfosFromTable(TableElement tableEl) {
 
-        VOElement[] infoEl = getInfosFromTable(tableEl);
+        VOElement[] infoEl = getInfoElementsFromTable(tableEl);
         List<DescribedValue> infosAry = new ArrayList<>();
 
         for (VOElement param : infoEl) {
             String name = getElementAttribute(param, "name");
-            if (name != null) {
-                infosAry.add(table.getParameterByName(name));
+            String val = getElementAttribute(param, "value");
+            if (name != null && val != null) {
+                infosAry.add(new DescribedValue(new DefaultValueInfo(name), val));
             }
         }
         return infosAry;
@@ -348,7 +354,7 @@ public class VoTableReader {
 
             String[] options = values.getOptions();
             if (options != null) {
-                dt.setEnumVals(optionsToStr(options));
+                dt.setDataOptions(optionsToStr(options));
             }
         }
     }
@@ -527,7 +533,7 @@ public class VoTableReader {
                 }
 
                 // add INFO name/value/comment to the header
-                List<DescribedValue> tblInfos = getInfosFromTable(tableEl, table);
+                List<DescribedValue> tblInfos = getInfosFromTable(tableEl);
                 for (DescribedValue dv : tblInfos) {
                     ValueInfo vInfo = dv.getInfo();
 
@@ -716,8 +722,8 @@ public class VoTableReader {
         DataGroup dg = new DataGroup(title, cols);
 
         // metadata for TABLE
-        List<DescribedValue> dvAry = (tableEl == null) ? table.getParameters()
-                                                       : getInfosFromTable(tableEl, table);
+        List<DescribedValue> dvAry = (tableEl == null) ? new ArrayList<>()
+                                                       : getInfosFromTable(tableEl);
         for (Object p : dvAry) {
             DescribedValue dv = (DescribedValue)p;
             dg.getTableMeta().addKeyword(dv.getInfo().getName(), dv.getValueAsString(Integer.MAX_VALUE).replace("\n", " "));
@@ -735,6 +741,7 @@ public class VoTableReader {
             applyIfNotEmpty(getElementAttribute(tableEl, REF), v -> dg.getTableMeta().addKeyword(TableMeta.REF, v));
             applyIfNotEmpty(getElementAttribute(tableEl, UCD), v -> dg.getTableMeta().addKeyword(TableMeta.UCD, v));
             applyIfNotEmpty(getElementAttribute(tableEl, UTYPE), v -> dg.getTableMeta().addKeyword(TableMeta.UTYPE, v));
+            applyIfNotEmpty(getElementAttribute(tableEl, NAME), v -> dg.getTableMeta().addKeyword(TableMeta.NAME, v));
 
             // child element PARAM, GROUP, LINK for TABLE
             dg.setParamInfos(makeParamsFromTable(tableEl, table));
@@ -744,7 +751,7 @@ public class VoTableReader {
             // child element DESCRIPTION
             String tDesc = tableEl.getDescription();
             if (tDesc != null) {
-                dg.addAttribute(TableMeta.DESC, tDesc.replace("\n", " "));
+                dg.getTableMeta().addKeyword(TableMeta.DESC, tDesc.replace("\n", " "));
             }
         }
 

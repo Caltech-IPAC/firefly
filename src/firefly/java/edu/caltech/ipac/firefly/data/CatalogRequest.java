@@ -73,7 +73,7 @@ public class CatalogRequest extends TableServerRequest {
 
     public enum Method {
         CONE("Cone", 0),
-        ELIPTICAL("Eliptical", 1),
+        ELIPTICAL("Ellipse", 1),
         BOX("Box", 2),
         POLYGON("Polygon", 3),
         TABLE("Table", 4),

@@ -69,6 +69,7 @@ public class DataType implements Serializable, Cloneable {
     private       List<LinkInfo> links = new ArrayList<>();
     private       String maxValue = "";
     private       String minValue = "";
+    private       String dataOptions;
 
     private transient Boolean isFloatingPoint;      // cached to improve formatting performance.
     private transient Boolean isWholeNumber;        // cached to improve formatting performance.
@@ -282,7 +283,9 @@ public class DataType implements Serializable, Cloneable {
 
     public void setEnumVals(String enumVals) { this.enumVals = enumVals;}
 
+    public String getDataOptions() { return dataOptions; }
 
+    public void setDataOptions(String options) {this.dataOptions = options;}
     /**
      * Firefly has 3 metas that affect the formatting of the column's data.  They are
      * listed below in order of highest to lowest precedence.

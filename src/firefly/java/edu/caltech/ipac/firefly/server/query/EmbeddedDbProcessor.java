@@ -11,6 +11,7 @@ import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -254,7 +255,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return ipacTable;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format, String formatDetails) throws DataAccessException {
         try {
             TableServerRequest treq = (TableServerRequest) request;
             DataGroupPart page = getData(request);
@@ -265,6 +266,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     break;
                 case TSV:
                     DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.TDF);
+                    break;
+                case VO_TABLE:
+                    VoTableWriter.save(out, page.getData(), formatDetails, true, false);
                     break;
                 default:
                     IpacTableWriter.save(out, page.getData(), true);

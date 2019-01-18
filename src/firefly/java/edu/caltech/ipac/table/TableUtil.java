@@ -212,7 +212,9 @@ public class TableUtil {
 //
 //====================================================================
 
-    public enum Format { TSV(CSVFormat.TDF, ".tsv"), CSV(CSVFormat.DEFAULT, ".csv"), IPACTABLE(".tbl"), UNKNOWN(null), FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"), VO_TABLE(".xml");
+    public enum Format { TSV(CSVFormat.TDF, ".tsv"), CSV(CSVFormat.DEFAULT, ".csv"), IPACTABLE(".tbl"), UNKNOWN(null),
+                         FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"),
+                         VO_TABLE(".xml");
         CSVFormat type;
         String fileNameExt;
         Format(String ext) {this.fileNameExt = ext;}

@@ -162,7 +162,7 @@ export class DownloadOptionsDialog extends PureComponent {
                 </div>
                 <ValidationField
                     wrapperStyle={{marginTop: 10}}
-                    size={40}
+                    size={50}
                     fieldKey={'fileName'}
                 />
 
