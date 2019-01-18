@@ -36,18 +36,18 @@ export class ImageSelect extends PureComponent {
         var {filteredImageData=imageMasterData} = this.state;
         const filterMission = toFilterSelectAry(groupKey, 'mission');
         const filterProjectType = toFilterSelectAry(groupKey, 'projectType');
-        const filterwaveBand = toFilterSelectAry(groupKey, 'waveBand');
+       // const filterwaveBand = toFilterSelectAry(groupKey, 'waveBand');
         const filterWaveType = toFilterSelectAry(groupKey, 'waveType');
 
         filteredImageData = filterMission.length > 0 ? filteredImageData.filter( (d) => filterMission.includes(d.missionId)) : filteredImageData;
         filteredImageData = filterProjectType.length > 0 ? filteredImageData.filter( (d) => filterProjectType.includes(d.projectTypeKey)) : filteredImageData;
         filteredImageData = filterWaveType.length > 0 ? filteredImageData.filter( (d) => filterWaveType.includes(d.waveType)) : filteredImageData;
-        if (filterwaveBand.length > 0) {
+       /* if (filterwaveBand.length > 0) {
             // filtering by waveband
             const projWithWB = uniq(filteredImageData.filter( (d) => filterwaveBand.includes(d.wavelength)).map( (d) => d.project));  // may contains duplicates..
             filteredImageData = filteredImageData.filter( (d) => projWithWB.includes(d.project));
         }
-
+*/
         return (
             <div style={style} className='ImageSelect'>
                 <ToolBar className='ImageSelect__toolbar' {...{filteredImageData, groupKey, onChange: () => this.setState({lastMod:new Date().getTime()})}}/>
