@@ -32,6 +32,7 @@
     "react-color": "^2.13",
     "react-dom": "^16.2",
     "react-grid-layout": "^0.16",
+    "react-select": "^2.2.0",
     "react-sizeme": "^2.3.6",
     "react-split-pane": "^0.1.74",
     "redux": "^3.7",
