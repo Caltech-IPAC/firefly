@@ -62,7 +62,7 @@ export const FormPanel = function (props) {
     const mStyle = Object.assign({height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}, style);
     const barStyle = Object.assign({flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', boxSizing: 'border-box',
                                   width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}, submitBarStyle);
-    
+
     return (
         <div style={mStyle}>
             <div style={childrenStyle}>
@@ -82,11 +82,13 @@ export const FormPanel = function (props) {
                 </div>
                 <div>
                     {extraButtons && extraButtons.map((e,i,arr)=>{
-                        const marginRight = help_id || i < arr.length-1 ? 10 : 0;
+                        const marginRight = i < arr.length-1 || help_id ? 10 : 0;
                         return (
                             <button style={{display: 'inline-block', marginRight}}
                                     type='button' className='button std'
-                                    onClick={e.onClick}>{e.text}</button>
+                                    onClick={e.onClick} key={'extraBtn'+i}>
+                                {e.text}
+                            </button>
                         );
                     })}
                     {help_id && <HelpIcon helpId={help_id} />}
