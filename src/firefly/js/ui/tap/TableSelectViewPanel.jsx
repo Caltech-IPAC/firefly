@@ -1,23 +1,28 @@
 import React, {PureComponent} from 'react';
+import Select from 'react-select';
+import CreatableSelect from 'react-select/lib/Creatable';
 import {get, pick, truncate} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import {FormPanel} from '../../ui/FormPanel.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {FormPanel} from '../FormPanel.jsx';
+import {FieldGroup} from '../FieldGroup.jsx';
+import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
+import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
-import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
-import {validateSql} from './CatalogSelectViewPanel.jsx';
-import {ListBoxInputField, ListBoxInputFieldView} from '../../ui/ListBoxInputField.jsx';
-import {ValidationField} from '../../ui/ValidationField.jsx';
+import {ListBoxInputField, ListBoxInputFieldView} from '../ListBoxInputField.jsx';
+import {ValidationField} from '../ValidationField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest, makeFileRequest} from '../../tables/TableRequestUtil.js';
-import {doFetchTable, getColumnIdx, getColumnValues, sortTableData} from '../../tables/TableUtil.js';
+import {doFetchTable, getColumnIdx, getColumnValues, sortTableData, onTableLoaded, getTblById} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
+import {CatalogConstraintsPanel, getTblId} from '../../visualize/ui/CatalogConstraintsPanel.jsx';
+import {validateSql} from '../../visualize/ui/CatalogSelectViewPanel.jsx';
+import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
 
+import './TableSelectViewPanel.css';
 
 /**
  * group key for fieldgroup comp
@@ -36,7 +41,11 @@ export class TapSearchPanel extends PureComponent {
     constructor(props) {
         super(props);
         const serviceUrl = get(getComponentState(componentKey), 'serviceUrl', TAP_SERVICE_OPTIONS[0].value);
-        this.state = {serviceUrl};
+        this.state = {serviceUrl, freeForm: getFieldVal(gkey, 'tabs') === 'adql'};
+
+        this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
+        this.onTapServiceOptionSelect = this.onTapServiceOptionSelect.bind(this);
+        this.onTabSelect = this.onTabSelect.bind(this);
     }
 
     componentDidMount() {
@@ -47,57 +56,94 @@ export class TapSearchPanel extends PureComponent {
     }
 
     render() {
-        const {serviceUrl} = this.state;
+        const {serviceUrl, freeForm} = this.state;
+
+        // keep all tabs the same size
+        const tabWrapper = {padding:5, minWidth:1100, minHeight:100};
+
+        const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
+
+        const rightBtns = freeForm ? [] : [{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql}];
 
         return (
-            <div style={{padding: 10}}>
-                <ListBoxInputFieldView
-                    options={TAP_SERVICE_OPTIONS}
-                    value={serviceUrl}
-                    onChange={(ev) => {
-                        const selectedTapService = ev.target.value;
-                        const sampleQuery = getSampleQuery(selectedTapService);
-                        dispatchValueChange({groupKey: gkey, fieldKey: 'adqlQuery', placeholder: sampleQuery, value: sampleQuery});
-                        this.setState({serviceUrl: selectedTapService});
-                    }}
-                    multiple={false}
-                    tooltip='TAP Service and URL'
-                    label='TAP Service:'
-                    labelWidth={80}
-                    wrapperStyle={{padding: 5}}
-                />
+            <div style={{position: 'relative', padding: 10}}>
+                <div style={{paddingBottom:5}}>
+                    <CreatableSelect
+                        options={TAP_SERVICE_OPTIONS}
+                        isClearable={true}
+                        onChange={this.onTapServiceOptionSelect}
+                        placeholder={placeholder}
+                    />
+                </div>
                 <FormPanel
                     groupKey={gkey}
                     onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
-                    onCancel={hideSearchPanel}>
+                    extraButtons={rightBtns}>
+
                     <FieldGroup groupKey={gkey} keepState={true}>
-
-                        <ValidationField style={{width: 650, height: 20}}
-                                         fieldKey='adqlQuery'
-                                         tooltip='ADQL to submit to the selected TAP service'
-                                         label='ADQL Query:'
-                                         labelWidth={80}
-                        />
-                        <div style={{width: '100%', textAlign: 'right'}}>
-                            <button style={{padding: 3, margin: '5px 20px'}}
-                                    onClick={ () => {
-                                        const adql = getAdqlQuery();
-                                        if (adql) {
-                                            // todo: validate adql
-                                            dispatchValueChange({groupKey: gkey, fieldKey: 'adqlQuery', value: adql});
-                                        }
-                                    }}>Set ADQL from Constraints
-                            </button>
-                        </div>
-                        <TapSchemaBrowser serviceUrl={serviceUrl}/>
+                        <FieldGroupTabs initialState={{ value:'ui' }}
+                                        fieldKey='tabs'
+                                        resizable={true}
+                                        onTabSelect={this.onTabSelect}>
+                            <Tab name='Set Parameters' id='ui'>
+                                <div style={Object.assign({position: 'relative'}, tabWrapper)}>
+                                    <TapSchemaBrowser serviceUrl={serviceUrl}/>
+                                </div>
+                            </Tab>
+                            <Tab name='ADQL' id='adql'>
+                                <div style={tabWrapper}>
+                                    <ValidationField style={{width: 950, height: 20}}
+                                                     fieldKey='adqlQuery'
+                                                     tooltip='ADQL to submit to the selected TAP service'
+                                                     label='ADQL Query:'
+                                                     labelWidth={80}
+                                    />
+                                </div>
+                            </Tab>
+                        </FieldGroupTabs>
                     </FieldGroup>
+                    
                 </FormPanel>
-
-
             </div>
         );
     }
+
+    onTapServiceOptionSelect(selectedOption) {
+        if (selectedOption) {
+            const selectedTapService = selectedOption.value;
+            const sampleQuery = getSampleQuery(selectedTapService);
+            dispatchValueChange({
+                groupKey: gkey,
+                fieldKey: 'adqlQuery',
+                placeholder: sampleQuery,
+                value: sampleQuery
+            });
+            this.setState({serviceUrl: selectedTapService});
+        }
+    }
+
+    onTabSelect(index,id) {
+        this.setState({freeForm: id === 'adql'});
+    }
+
+    populateAndEditAdql() {
+        const adql = getAdqlQuery();
+        if (adql) {
+            //set adql and switch tab to ADQL
+            dispatchMultiValueChange(gkey,
+                [
+                    {fieldKey: 'adqlQuery', value: adql},
+                    {fieldKey: 'tabs', value: 'adql'},
+                ]
+            );
+            this.setState({freeForm: true});
+        }
+    }
 }
+
+
+
+
 
 function getTapBrowserState() {
     const tapBrowserState = getComponentState(componentKey);
@@ -115,8 +161,8 @@ class TapSchemaBrowser extends PureComponent {
     }
 
     componentDidMount() {
-        const {schemaOptions, schemaName, tableName} = this.state;
-        if (!schemaOptions) {
+        const {serviceUrl, schemaOptions, schemaName, tableName} = this.state;
+        if (!schemaOptions || (serviceUrl !== this.props.serviceUrl)) {
             this.loadSchemas(this.props.serviceUrl, schemaName, tableName);
         }
         this.iAmMounted = true;
@@ -137,7 +183,7 @@ class TapSchemaBrowser extends PureComponent {
     
     render() {
         const {serviceUrl} = this.props;
-        const {error, schemaOptions, tableOptions, schemaName, tableName}= this.state;
+        const {error, schemaOptions, tableOptions, schemaName, tableName, columnsModel}= this.state;
 
         if (error) {
             return (<div>{error}</div>);
@@ -152,38 +198,55 @@ class TapSchemaBrowser extends PureComponent {
         // need to set initialState on list fields so that the initial value that is not the first index
         // is set correctly after unmount and mount
         return (
-            <div style={{padding: 5}}>
-                {schemaOptions && <ListBoxInputField key='schemaList'
-                    fieldKey='schemaName'
-                    options={schemaOptions}
-                    value={schemaName}
-                    initialState={{value: schemaName}}
-                    onChange={(ev) => {
-                        const selectedTapSchema = ev.target.value;
-                        this.loadTables(serviceUrl, selectedTapSchema);
-                    }}
-                    multiple={false}
-                    tooltip='TAP Schema'
-                    label='TAP Schema:'
-                    labelWidth={80}
-                    wrapperStyle={{paddingBottom: 2}}
-                />}
-                {tableOptions && <ListBoxInputField  key='tableList'
-                    fieldKey='tableName'
-                    options={tableOptions}
-                    value={tableName}
-                    initialState={{value: tableName}}
-                    onChange={(ev) => {
-                        const selectedTapTable = ev.target.value;
-                        this.setState({tableName: selectedTapTable});
-                    }}
-                    multiple={false}
-                    tooltip='TAP Table'
-                    label='TAP Table:'
-                    labelWidth={80}
-                    wrapperStyle={{paddingBottom: 2}}
-                />}
-                <div style={{width: '100%, padding: 5'}}>
+            <div>
+                <div className={'taptablepanel'}>
+                    <div className='tableselectors'>
+                        {schemaOptions &&
+                        <ListBoxInputField key='schemaList'
+                                           fieldKey='schemaName'
+                                           options={schemaOptions}
+                                           value={schemaName}
+                                           initialState={{value: schemaName}}
+                                           onChange={(ev) => {
+                                               const selectedTapSchema = ev.target.value;
+                                               this.loadTables(serviceUrl, selectedTapSchema);
+                                           }}
+                                           multiple={false}
+                                           tooltip='TAP Schema'
+                                           label='TAP Schema:'
+                                           labelWidth={80}
+                                           wrapperStyle={{paddingBottom: 2}}
+                        />}
+                        {tableOptions &&
+                        <ListBoxInputField  key='tableList'
+                                            fieldKey='tableName'
+                                            options={tableOptions}
+                                            value={tableName}
+                                            initialState={{value: tableName}}
+                                            onChange={(ev) => {
+                                                const selectedTapTable = ev.target.value;
+                                                const columnsTblId = getTblId(selectedTapTable);
+                                                onTableLoaded(getTblId(selectedTapTable)).then( () => {
+                                                     this.setState({columnsModel: getTblById(columnsTblId)});
+                                                });
+                                                this.setState({tableOptions, tableName: selectedTapTable, columnsModel: undefined});
+                                            }}
+                                            multiple={false}
+                                            tooltip='TAP Table'
+                                            label='TAP Table:'
+                                            labelWidth={80}
+                                            wrapperStyle={{paddingBottom: 2}}
+                        />}
+                    </div>
+                    <div className='searchmethods'>
+                        Spatial/Time/Wavelength constraints
+                        {columnsModel &&
+                        <div style={{paddingTop: 20}}>
+                            <TableSearchMethods columnsModel={columnsModel}/>
+                        </div>}
+                    </div>
+                </div>
+                <div className='columnconstraints'>
                     {!tableName ? false :
                             <CatalogConstraintsPanel fieldKey={'tableconstraints'}
                                                      catname={tableName}
@@ -227,7 +290,7 @@ class TapSchemaBrowser extends PureComponent {
 
                     const schemaOptions = schemas.map((e, i) => {
                         let label = schemaDescriptions[i] ? `[${e}] ${schemaDescriptions[i]}` : `[${e}]`;
-                        label = truncate(label, {length: 110});
+                        label = truncate(label, {length: 50});
                         return {label, value: e};
                     });
                     this.setState({schemaOptions, schemaName});
@@ -268,11 +331,14 @@ class TapSchemaBrowser extends PureComponent {
 
                     const tableOptions = tables.map((e, i) => {
                         let label = tableDescriptions[i] ? `[${e}] ${tableDescriptions[i]}` : `[${e}]`;
-                        label = truncate(label, {length: 110});
+                        label = truncate(label, {length: 50});
                         return {label, value: e};
                     });
-
-                    this.setState({tableOptions, tableName});
+                    const columnsTblId = getTblId(tableName);
+                    onTableLoaded(columnsTblId).then( () => {
+                         this.setState({columnsModel: getTblById(columnsTblId)});
+                    });
+                    this.setState({tableOptions, tableName, columnsModel: undefined});
                     return;
                 }
             }
@@ -287,18 +353,30 @@ class TapSchemaBrowser extends PureComponent {
 }
 
 
+
 function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
 function onSearchSubmit(request,serviceUrl) {
-
-    if (request.adqlQuery) {
-        const params = {serviceUrl, QUERY: request.adqlQuery};
-        const options = {};
+    console.log(request);
+    const isADQL = (request.tabs === 'adql');
+    let adql = undefined;
+    let title = undefined;
+    if (isADQL) {
+        adql = request.adqlQuery;
+        // use service name for title
         const found = serviceUrl.match(/.*:\/\/(.*)\/.*/i);
-        const treq = makeTblRequest('AsyncTapQuery', found && found[1], params, options);
+        title = found && found[1];
+    } else {
+        adql = getAdqlQuery();
+        title = request.tableName;
+    }
+    if (adql) {
+        const params = {serviceUrl, QUERY: adql};
+        const options = {};
 
+        const treq = makeTblRequest('AsyncTapQuery', title, params, options);
         dispatchTableSearch(treq, {backgroundable: true});
     }
 }
@@ -310,13 +388,13 @@ function getAdqlQuery() {
 
     if (!tableName) return;
 
-    let constraints = '';
+    let constraints = tableSearchMethodsConstraints() || '';
     let selcols = '*';
-    let addAnd = false;
+    let addAnd = Boolean(constraints);
 
     if (tableconstraints) {
         if (tableconstraints.constraints.length > 0) {
-            constraints += tableconstraints.constraints;
+            constraints += (addAnd ? ' AND ' : '') + tableconstraints.constraints;
             addAnd = true;
         }
         const colsSearched = tableconstraints.selcols.lastIndexOf(',') > 0 ? tableconstraints.selcols.substring(0, tableconstraints.selcols.lastIndexOf(',')) : tableconstraints.selcols;
@@ -332,6 +410,7 @@ function getAdqlQuery() {
     if (constraints) {
         constraints = `WHERE ${constraints}`;
     }
+
 
     return `SELECT TOP 10000 ${selcols} FROM ${tableName} ${constraints}`;
 }
