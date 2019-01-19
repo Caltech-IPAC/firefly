@@ -3,23 +3,23 @@ import Select from 'react-select';
 import CreatableSelect from 'react-select/lib/Creatable';
 import {get, pick, truncate} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
-import {FormPanel} from '../../ui/FormPanel.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {FormPanel} from '../FormPanel.jsx';
+import {FieldGroup} from '../FieldGroup.jsx';
+import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
 import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
-import {ListBoxInputField, ListBoxInputFieldView} from '../../ui/ListBoxInputField.jsx';
-import {ValidationField} from '../../ui/ValidationField.jsx';
+import {ListBoxInputField, ListBoxInputFieldView} from '../ListBoxInputField.jsx';
+import {ValidationField} from '../ValidationField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest, makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, getColumnValues, sortTableData, onTableLoaded, getTblById} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
-import {CatalogConstraintsPanel, getTblId} from './CatalogConstraintsPanel.jsx';
-import {validateSql} from './CatalogSelectViewPanel.jsx';
+import {CatalogConstraintsPanel, getTblId} from '../../visualize/ui/CatalogConstraintsPanel.jsx';
+import {validateSql} from '../../visualize/ui/CatalogSelectViewPanel.jsx';
 import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
 
 import './TableSelectViewPanel.css';
@@ -41,7 +41,11 @@ export class TapSearchPanel extends PureComponent {
     constructor(props) {
         super(props);
         const serviceUrl = get(getComponentState(componentKey), 'serviceUrl', TAP_SERVICE_OPTIONS[0].value);
-        this.state = {serviceUrl};
+        this.state = {serviceUrl, freeForm: getFieldVal(gkey, 'tabs') === 'adql'};
+
+        this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
+        this.onTapServiceOptionSelect = this.onTapServiceOptionSelect.bind(this);
+        this.onTabSelect = this.onTabSelect.bind(this);
     }
 
     componentDidMount() {
@@ -52,76 +56,38 @@ export class TapSearchPanel extends PureComponent {
     }
 
     render() {
-        const {serviceUrl} = this.state;
+        const {serviceUrl, freeForm} = this.state;
 
         // keep all tabs the same size
         const tabWrapper = {padding:5, minWidth:1100, minHeight:100};
 
         const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
 
+        const rightBtns = freeForm ? [] : [{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql}];
+
         return (
-            <div style={{padding: 10}}>
+            <div style={{position: 'relative', padding: 10}}>
                 <div style={{paddingBottom:5}}>
                     <CreatableSelect
                         options={TAP_SERVICE_OPTIONS}
                         isClearable={true}
-                        onChange={(selectedOption) => {
-                            if (selectedOption) {
-                                const selectedTapService = selectedOption.value;
-                                const sampleQuery = getSampleQuery(selectedTapService);
-                                dispatchValueChange({
-                                    groupKey: gkey,
-                                    fieldKey: 'adqlQuery',
-                                    placeholder: sampleQuery,
-                                    value: sampleQuery
-                                });
-                                this.setState({serviceUrl: selectedTapService});
-                            } 
-                        }}
+                        onChange={this.onTapServiceOptionSelect}
                         placeholder={placeholder}
                     />
                 </div>
-                {false && <ListBoxInputFieldView
-                    options={TAP_SERVICE_OPTIONS}
-                    value={serviceUrl}
-                    onChange={(ev) => {
-                        const selectedTapService = ev.target.value;
-                        const sampleQuery = getSampleQuery(selectedTapService);
-                        dispatchValueChange({groupKey: gkey, fieldKey: 'adqlQuery', placeholder: sampleQuery, value: sampleQuery});
-                        this.setState({serviceUrl: selectedTapService});
-                    }}
-                    multiple={false}
-                    tooltip='TAP Service and URL'
-                    label='TAP Service:'
-                    labelWidth={80}
-                    wrapperStyle={{padding: 5}}
-                />}
-
                 <FormPanel
                     groupKey={gkey}
                     onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
-                    onCancel={hideSearchPanel}>
+                    extraButtons={rightBtns}>
+
                     <FieldGroup groupKey={gkey} keepState={true}>
-                        <FieldGroupTabs initialState={{ value:'ui' }} fieldKey='tabs' resizable={true}>
+                        <FieldGroupTabs initialState={{ value:'ui' }}
+                                        fieldKey='tabs'
+                                        resizable={true}
+                                        onTabSelect={this.onTabSelect}>
                             <Tab name='Set Parameters' id='ui'>
-                                <div style={tabWrapper}>
+                                <div style={Object.assign({position: 'relative'}, tabWrapper)}>
                                     <TapSchemaBrowser serviceUrl={serviceUrl}/>
-                                    <div style={{position: 'absolute', top: 20, right: 20}}>
-                                        <button style={{padding: 3}}
-                                                onClick={ () => {
-                                                    const adql = getAdqlQuery();
-                                                    if (adql) {
-                                                        //set adql and switch tab to ADQL
-                                                        dispatchMultiValueChange(gkey,
-                                                            [
-                                                                {fieldKey: 'adqlQuery', value: adql},
-                                                                {fieldKey: 'tabs', value: 'adql'},
-                                                            ]
-                                                        );
-                                                    }
-                                                }}>Populate and edit ADQL
-                                        </button>
-                                    </div>
                                 </div>
                             </Tab>
                             <Tab name='ADQL' id='adql'>
@@ -136,11 +102,48 @@ export class TapSearchPanel extends PureComponent {
                             </Tab>
                         </FieldGroupTabs>
                     </FieldGroup>
+                    
                 </FormPanel>
             </div>
         );
     }
+
+    onTapServiceOptionSelect(selectedOption) {
+        if (selectedOption) {
+            const selectedTapService = selectedOption.value;
+            const sampleQuery = getSampleQuery(selectedTapService);
+            dispatchValueChange({
+                groupKey: gkey,
+                fieldKey: 'adqlQuery',
+                placeholder: sampleQuery,
+                value: sampleQuery
+            });
+            this.setState({serviceUrl: selectedTapService});
+        }
+    }
+
+    onTabSelect(index,id) {
+        this.setState({freeForm: id === 'adql'});
+    }
+
+    populateAndEditAdql() {
+        const adql = getAdqlQuery();
+        if (adql) {
+            //set adql and switch tab to ADQL
+            dispatchMultiValueChange(gkey,
+                [
+                    {fieldKey: 'adqlQuery', value: adql},
+                    {fieldKey: 'tabs', value: 'adql'},
+                ]
+            );
+            this.setState({freeForm: true});
+        }
+    }
 }
+
+
+
+
 
 function getTapBrowserState() {
     const tapBrowserState = getComponentState(componentKey);

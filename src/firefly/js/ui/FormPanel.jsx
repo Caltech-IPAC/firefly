@@ -47,8 +47,9 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 
 export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey,
-            action, params, title, style, inputStyle, submitBarStyle,
-            submitText='Search',cancelText='Cancel', help_id, changeMasking, includeUnmounted=false} = props;
+        action, params, title, style, inputStyle, submitBarStyle,
+        submitText='Search',cancelText='Cancel', help_id, changeMasking,
+        includeUnmounted=false, extraButtons=[]} = props;
 
     const childrenStyle = Object.assign({
         backgroundColor: 'white',
@@ -61,6 +62,7 @@ export const FormPanel = function (props) {
     const mStyle = Object.assign({height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}, style);
     const barStyle = Object.assign({flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', boxSizing: 'border-box',
                                   width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}, submitBarStyle);
+    
     return (
         <div style={mStyle}>
             <div style={childrenStyle}>
@@ -79,7 +81,16 @@ export const FormPanel = function (props) {
 
                 </div>
                 <div>
+                    {extraButtons && extraButtons.map((e,i,arr)=>{
+                        const marginRight = help_id || i < arr.length-1 ? 10 : 0;
+                        return (
+                            <button style={{display: 'inline-block', marginRight}}
+                                    type='button' className='button std'
+                                    onClick={e.onClick}>{e.text}</button>
+                        );
+                    })}
                     {help_id && <HelpIcon helpId={help_id} />}
+
                 </div>
             </div>
         </div>
@@ -106,5 +117,10 @@ FormPanel.propTypes = {
     params: PropTypes.object,
     help_id: PropTypes.string,
     changeMasking: PropTypes.func,
-    includeUnmounted: PropTypes.bool
+    includeUnmounted: PropTypes.bool,
+    extraButtons: PropTypes.arrayOf(
+        PropTypes.shape({
+            text: PropTypes.string,
+            onClick: PropTypes.func
+        }))
 };

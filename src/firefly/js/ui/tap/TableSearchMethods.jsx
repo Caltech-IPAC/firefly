@@ -1,8 +1,8 @@
 import React from 'react';
 import {get} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {ListBoxInputField} from '../ListBoxInputField.jsx';
+import {FieldGroup} from '../FieldGroup.jsx';
 import {getColumnValues} from '../../tables/TableUtil.js';
 
 
