@@ -156,7 +156,7 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
 
 const maxHipsRadiusSearch = 5; //degrees
 
-function calcCornerString(pv, method) {
+export function calcCornerString(pv, method) {
     if (method==='clear' || !pv) return '';
     const f5 = (v) => v.toFixed(5);
 
@@ -327,65 +327,7 @@ function sizeArea(groupKey, searchType, imageCornerCalc) {
             </div>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
-        let cornerTypeOps=
-            [
-                {label: 'Image', value: 'image'},
-                {label: 'Visible', value: 'viewport'},
-                {label: 'Custom', value: 'user'}
-            ];
-
-        const pv= getActivePlotView(visRoot());
-        var plot = primePlot(pv);
-        if(isHiPS(plot)){
-            cornerTypeOps =
-                [
-                    {label: 'Visible (limit 5 deg)', value: 'image'},
-                    {label: 'Custom', value: 'user'}
-                ];
-        }
-        if (imageCornerCalc!=='clear' && plot) {
-            const sel= plot.attributes[PlotAttribute.SELECTION];
-            if (sel) {
-                cornerTypeOps.splice(cornerTypeOps.length-1, 0, {label: 'Selection', value: 'area-selection'});
-            }
-        }
-        return (
-            <div
-                style={{padding:5, border:'solid #a3aeb9 1px' }}>
-                <div style={{paddingTop: 10, paddingLeft: 5}}>
-                    {pv && <RadioGroupInputField
-                        inline={false}
-                        labelWidth={60}
-                        alignment='horizontal'
-                        initialState= {{
-                        tooltip: 'Choose how to init corners',
-                        label : 'Search area: ',
-                        value: 'image'
-                    }}
-                        options={cornerTypeOps}
-                        fieldKey='imageCornerCalc'
-                    />
-                    }
-                </div>
-                <InputAreaFieldConnected fieldKey='polygoncoords'
-                                         wrapperStyle={{padding:5}}
-                                         style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
-                                         initialState={{
-                                               tooltip:'Enter polygon coordinates search',
-                                               labelWidth:70
-                                            }}
-                                         label='Coordinates:'
-                                         tooltip='Enter polygon coordinates search'
-                />
-                <ul>
-                    <li>- Each vertex is defined by a J2000 RA and Dec position pair</li>
-                    <li>- A max of 15 and min of 3 vertices is allowed</li>
-                    <li>- Vertices must be separated by a comma (,)</li>
-                    <li>- Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5</li>
-                </ul>
-            </div>
-        );
-
+        return renderPolygonDataArea(imageCornerCalc);
     } else {
         return (
 
@@ -394,6 +336,67 @@ function sizeArea(groupKey, searchType, imageCornerCalc) {
             </div>
         );
     }
+}
+
+export function renderPolygonDataArea(imageCornerCalc) {
+    let cornerTypeOps=
+        [
+            {label: 'Image', value: 'image'},
+            {label: 'Visible', value: 'viewport'},
+            {label: 'Custom', value: 'user'}
+        ];
+
+    const pv= getActivePlotView(visRoot());
+    var plot = primePlot(pv);
+    if(isHiPS(plot)){
+        cornerTypeOps =
+            [
+                {label: 'Visible (limit 5 deg)', value: 'image'},
+                {label: 'Custom', value: 'user'}
+            ];
+    }
+    if (imageCornerCalc!=='clear' && plot) {
+        const sel= plot.attributes[PlotAttribute.SELECTION];
+        if (sel) {
+            cornerTypeOps.splice(cornerTypeOps.length-1, 0, {label: 'Selection', value: 'area-selection'});
+        }
+    }
+    return (
+        <div
+            style={{padding:5, border:'solid #a3aeb9 1px' }}>
+            <div style={{paddingTop: 10, paddingLeft: 5}}>
+                {pv && <RadioGroupInputField
+                    inline={false}
+                    labelWidth={60}
+                    alignment='horizontal'
+                    initialState= {{
+                        tooltip: 'Choose how to init corners',
+                        label : 'Search area: ',
+                        value: 'image'
+                    }}
+                    options={cornerTypeOps}
+                    fieldKey='imageCornerCalc'
+                />
+                }
+            </div>
+            <InputAreaFieldConnected fieldKey='polygoncoords'
+                                     wrapperStyle={{padding:5}}
+                                     style={{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'}}
+                                     initialState={{
+                                               tooltip:'Enter polygon coordinates search',
+                                               labelWidth:70
+                                            }}
+                                     label='Coordinates:'
+                                     tooltip='Enter polygon coordinates search'
+            />
+            <ul>
+                <li>- Each vertex is defined by a J2000 RA and Dec position pair</li>
+                <li>- A max of 15 and min of 3 vertices is allowed</li>
+                <li>- Vertices must be separated by a comma (,)</li>
+                <li>- Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5</li>
+            </ul>
+        </div>
+    );
 }
 
 function renderTargetPanel(groupKey, searchType) {
@@ -434,7 +437,7 @@ export const SpatialMethod = new Enum({
     {ignoreCase: true}
 );
 
-var initRadiusArcSec = (max) => {
+export const initRadiusArcSec = (max) => {
     if (max >= 10 / 3600) {
         return parseFloat(10 / 3600).toString();
     } else {

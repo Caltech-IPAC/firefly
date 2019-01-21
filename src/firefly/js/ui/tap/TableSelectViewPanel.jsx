@@ -241,7 +241,7 @@ class TapSchemaBrowser extends PureComponent {
                     <div className='searchmethods'>
                         Spatial/Time/Wavelength constraints
                         {columnsModel &&
-                        <div style={{paddingTop: 20}}>
+                        <div style={{paddingTop: 10}}>
                             <TableSearchMethods columnsModel={columnsModel}/>
                         </div>}
                     </div>
@@ -388,7 +388,7 @@ function getAdqlQuery() {
 
     if (!tableName) return;
 
-    let constraints = tableSearchMethodsConstraints() || '';
+    let constraints = tableSearchMethodsConstraints(getTblById(getTblId(tableName))) || '';
     let selcols = '*';
     let addAnd = Boolean(constraints);
 
