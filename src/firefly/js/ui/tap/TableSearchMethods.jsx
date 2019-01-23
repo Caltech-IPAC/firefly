@@ -235,7 +235,7 @@ function SpatialSearch({groupKey, fields}) {
      */
 
     return (
-        <FieldGroupCollapsible header='Spatial Search'
+        <FieldGroupCollapsible header='Spatial'
                                initialState={{ value: 'open' }}
                                fieldKey='spatialSearchPanel' >
             <div style={{marginTop: 5}}>
@@ -257,8 +257,8 @@ function TemporalSearch({groupKey}) {
         return (
             <div style={{marginLeft: 8}}>
                 <ValidationField fieldKey={TemporalColumns}
-                                 initialState={{ label: 'Temporal Columns',
-                                                 labelWidth: 90,
+                                 initialState={{ label: 'Temporal Columns:',
+                                                 labelWidth: 100,
                                                  tooltip: 'Columns for temporal search'
                                            }}
                                  style={{overflow:'auto', height:12, width: 200}}
@@ -269,7 +269,7 @@ function TemporalSearch({groupKey}) {
 
 
     return (
-        <FieldGroupCollapsible header='Temporal Search'
+        <FieldGroupCollapsible header='Temporal'
                                initialState={{ value: 'closed' }}
                                fieldKey='temporalSearchPanel' >
             <div style={{width: 100, height: 50}}>
@@ -287,8 +287,8 @@ function WavelengthSearch({groupKey}) {
         return (
             <div style={{marginLeft: 8}}>
                 <ValidationField fieldKey={WavelengthColumns}
-                                 initialState={{ label: 'Wavelength Columns',
-                                                 labelWidth: 90,
+                                 initialState={{ label: 'Wavelength Columns:',
+                                                 labelWidth: 106,
                                                  tooltip: 'Columns for wavelength search'
                                            }}
                                  style={{overflow:'auto', height:12, width: 200}}
@@ -299,7 +299,7 @@ function WavelengthSearch({groupKey}) {
 
 
     return (
-        <FieldGroupCollapsible header='Wavelength Search'
+        <FieldGroupCollapsible header='Wavelength'
                                initialState={{ value: 'closed' }}
                                fieldKey='wavelengthSearchPanel' >
             <div style={{width: 100, height: 50}}>
@@ -604,8 +604,8 @@ function fieldInit(columnsTable) {
                fieldKey: CenterColumns,
                value: centerColStr,
                tooltip:"Center columns for spatial search, the format is like '<column name 1>,<column name 2>'",
-               label: 'Center Columns',
-               labelWidth: 80,
+               label: 'Position Columns:',
+               labelWidth: 100,
                validator: centerColumnValidator(columnsTable)
             },
             [SpatialMethod]: {

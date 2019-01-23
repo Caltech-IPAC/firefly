@@ -239,7 +239,6 @@ class TapSchemaBrowser extends PureComponent {
                         />}
                     </div>
                     <div className='searchmethods'>
-                        Spatial/Time/Wavelength constraints
                         {columnsModel &&
                         <div style={{paddingTop: 10}}>
                             <TableSearchMethods columnsModel={columnsModel}/>
