@@ -767,14 +767,18 @@ export function getNewTraceDefaults(chartId, type='', traceNum=0) {
             ['layout.xaxis.range']: undefined, //clear out fixed range
             ['layout.yaxis.range']: undefined //clear out fixed range
         };
-        const traceColorscale = TRACE_COLORSCALE[traceNum % TRACE_COLORSCALE.length];
-        const colorscaleVal = colorscaleNameToVal(traceColorscale);
-        if (colorscaleVal) {
-            retV[`data.${traceNum}.colorscale`] = colorscaleVal;
-        }
-        if (colorscaleVal !== traceColorscale) {
-            retV[`fireflyData.${traceNum}.colorscale`] = traceColorscale;
-        }
+        /*
+            There are two approaches regarding unset color scale: pick a new one for every trace or
+            keep it unset to let Plotly choose the best one for the data.
+         */
+        // const traceColorscale = TRACE_COLORSCALE[traceNum % TRACE_COLORSCALE.length];
+        // const colorscaleVal = colorscaleNameToVal(traceColorscale);
+        // if (colorscaleVal) {
+        //     retV[`data.${traceNum}.colorscale`] = colorscaleVal;
+        // }
+        // if (colorscaleVal !== traceColorscale) {
+        //     retV[`fireflyData.${traceNum}.colorscale`] = traceColorscale;
+        // }
     } else {
         retV = {
             [`data.${traceNum}.marker.color`]: defaultTraceColor({}, traceNum, chartId),
@@ -860,23 +864,27 @@ function getDefaultColorAttributes(traceData, type, idx) {
 
     const colorAttributes = Object.keys(colorsOnTypes).includes(type) ? colorsOnTypes[type] : colorsOnTypes.others;
     const color = getNextTraceColor();
-    const colorscaleName = getNextTraceColorscale();
-    const colorscaleVal =  colorscaleNameToVal(colorscaleName);
     colorAttributes[0].filter((att) => att.endsWith('color')).forEach((att) => {
         if (!get(traceData, att)) {
             colorSettingObj[`data.${idx}.${att}`] = color;
         }
     });
-    colorAttributes[0].filter((att) => att.endsWith('colorscale')).forEach((att) => {
-        if (!get(traceData, att)) {
-            if (colorscaleVal) {
-                colorSettingObj[`data.${idx}.${att}`] = colorscaleVal;
-            }
-            if (colorscaleName !== colorscaleVal) {
-                colorSettingObj[`fireflyData.${idx}.${att}`] = colorscaleName;
-            }
-        }
-    });
+    /*
+        There are two approaches regarding unset color scale: pick a new one for every trace or
+        keep it unset to let Plotly choose the best one for the data.
+     */
+    // const colorscaleName = getNextTraceColorscale();
+    // const colorscaleVal =  colorscaleNameToVal(colorscaleName);
+    // colorAttributes[0].filter((att) => att.endsWith('colorscale')).forEach((att) => {
+    //     if (!get(traceData, att)) {
+    //         if (colorscaleVal) {
+    //             colorSettingObj[`data.${idx}.${att}`] = colorscaleVal;
+    //         }
+    //         if (colorscaleName !== colorscaleVal) {
+    //             colorSettingObj[`fireflyData.${idx}.${att}`] = colorscaleName;
+    //         }
+    //     }
+    // });
     return colorSettingObj;
 }
 
