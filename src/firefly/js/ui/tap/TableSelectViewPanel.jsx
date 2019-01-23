@@ -10,7 +10,7 @@ import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/Fi
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
-import {ListBoxInputField, ListBoxInputFieldView} from '../ListBoxInputField.jsx';
+import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {ValidationField} from '../ValidationField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest, makeFileRequest} from '../../tables/TableRequestUtil.js';

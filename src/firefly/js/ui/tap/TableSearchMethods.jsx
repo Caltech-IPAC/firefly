@@ -14,7 +14,7 @@ import {SizeInputFields} from '../SizeInputField.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
-import {convert, convertAngle} from '../../visualize/VisUtil.js';
+import {convert} from '../../visualize/VisUtil.js';
 import {primePlot, getActivePlotView} from '../../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../../visualize/WebPlot.js';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
@@ -34,6 +34,7 @@ const PolygonCorners = 'polygoncoords';
 const ImageCornerCalc = 'imageCornerCalc';
 const TemporalColumns = 'temporalColumns';
 const WavelengthColumns = 'wavelengthColumns';
+const CrtColumnsModel = 'crtColumnsModel';
 
 const TapSpatialSearchMethod = new Enum({
     'Cone': 'Cone',
@@ -441,9 +442,8 @@ function makeSpatialConstraints(fields, columnsModel) {
         }
 
         const ucdVal = targetRow[ucdIdx];
-        return UCDCoord.enums.find((enumItem) => {
-            return ucdVal.includes(enumItem.key);
-        });
+        return UCDCoord.enums.find((enumItem) => (ucdVal.includes(enumItem.key))) || UCDCoord.eq;
+
     };
 
     const pairs = makeColPairs();
@@ -459,7 +459,7 @@ function makeSpatialConstraints(fields, columnsModel) {
     if (spatialMethod.value === TapSpatialSearchMethod.Cone.value) {
         const {coneSize} = fields;
         const worldPt = parseWorldPt(get(fields, [ServerParams.USER_TARGET_WORLD_PT, 'value']));
-        const size = convertAngle( coneSize.unit, 'deg', coneSize.value);
+        const size = coneSize.value;
 
         if (!worldPt || !size) return NOConstraint;
 
@@ -549,9 +549,12 @@ function tapSearchMethodReducer(columnsModel) {
                     }
                     break;
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
-                    const centerColStr = formCenterColumnStr(columnsModel);
-                    set(rFields, [CenterColumns, 'validator'], centerColumnValidator(columnsModel));
-                    set(rFields, [CenterColumns, 'value'], centerColStr);
+                    if (columnsModel.tbl_id !== get(inFields, [CrtColumnsModel, 'value'])) {
+                        const centerColStr = formCenterColumnStr(columnsModel);
+                        set(rFields, [CenterColumns, 'validator'], centerColumnValidator(columnsModel));
+                        set(rFields, [CenterColumns, 'value'], centerColStr);
+                        set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
+                    }
                     break;
             }
 
@@ -618,6 +621,10 @@ function fieldInit(columnsTable) {
             [ImageCornerCalc]: {
                 fieldKey: ImageCornerCalc,
                 value: 'image'
+            },
+            [CrtColumnsModel]: {
+                fieldKey: CrtColumnsModel,
+                value: columnsTable.tbl_id
             }
         }
     );
