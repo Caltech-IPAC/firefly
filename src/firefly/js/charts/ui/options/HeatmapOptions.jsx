@@ -145,7 +145,7 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey}) {
             <div style={{whiteSpace: 'nowrap'}}>
                 <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.colorscale`}
                                    inline={true}
-                                   options={[{value:'Default'}].concat(ALL_COLORSCALE_NAMES.map((e)=>({value:e})))}/>
+                                   options={[{label:'Default',value:undefined}].concat(ALL_COLORSCALE_NAMES.map((e)=>({value:e})))}/>
                 <CheckboxGroupInputField
                     fieldKey={`data.${activeTrace}.reversescale`}
                     wrapperStyle={{display: 'inline-block'}}

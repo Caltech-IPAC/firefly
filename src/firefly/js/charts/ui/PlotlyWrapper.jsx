@@ -196,7 +196,7 @@ export class PlotlyWrapper extends Component {
                     dataUpdateTraces = Object.keys(dataDelta).map((k) => parseInt(k));
                     renderType = RenderType.RESTYLE;
                 }
-                if (hasLayout) {
+                if (hasLayout || !hasData) {
                     layoutUpdate = layoutDelta;
                     renderType = RenderType.RELAYOUT;
                 }
