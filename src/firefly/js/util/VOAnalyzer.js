@@ -4,11 +4,11 @@
 
 import {get, has, isEmpty, isArray, isString} from 'lodash';
 import Enum from 'enum';
-import {getColumn, getColumnIdx} from './../tables/TableUtil.js';
+import {getColumn, getColumnIdx, getColumnValues} from './../tables/TableUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 
-const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
+export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 
 //const obsPrefix = 'obscore:';
 const ColNameIdx = 0;
@@ -51,12 +51,12 @@ const OBSTAPCOLUMNS = [
 ];
 
 const alternateMainPos = [['POS_EQ_RA_MAIN', 'POS_EQ_DEC_MAIN']];
-const posCol = {[UCDCoord.eq.key]: {ucd: [['pos.eq.ra', 'pos.eq.dec'],...alternateMainPos],
-                                    coord: CoordinateSys.EQ_J2000},
+export const posCol = {[UCDCoord.eq.key]: {ucd: [['pos.eq.ra', 'pos.eq.dec'],...alternateMainPos],
+                                    coord: CoordinateSys.EQ_J2000, adqlCoord: 'ICRS'},
     [UCDCoord.ecliptic.key]: {ucd: [['pos.ecliptic.lon', 'pos.ecliptic.lat']],
-                              coord: CoordinateSys.ECL_J2000},
+                              coord: CoordinateSys.ECL_J2000, adqlCoord: 'ECLIPTIC'},
     [UCDCoord.galactic.key]: {ucd: [['pos.galactic.lon', 'pos.galactic.lat']],
-                              coord: CoordinateSys.GALACTIC}};
+                              coord: CoordinateSys.GALACTIC, adqlCoord: 'GALATIC'}};
 
 
 function getLonLatIdx(tableModel, lonCol, latCol) {
@@ -102,6 +102,9 @@ function isUCDWith(ucdValue, ucdWord, syntaxCode = UCDSyntax.any) {
            (syntaxCode === UCDSyntax.any && idx >= 0);
 }
 
+/**
+ * table analyzer based on table model for catalog or image metadata
+ */
 class TableRecognizer {
     constructor(tableModel, posCoord='eq') {
         this.tableModel = tableModel;
@@ -412,8 +415,168 @@ class TableRecognizer {
     }
 }
 
+/**
+ * find the center column base on the table model of catalog or image metadata
+ * @param table
+ * @returns {*|{lonCol, latCol, lonIdx, latIdx, csys}|*}
+ */
 export function findTableCenterColumns(table) {
    const tblRecog = table && get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
 
    return tblRecog && tblRecog.getCenterColumns();
+}
+
+/**
+ * table analyzer based on the table model for columns which contains column_name & ucd columns
+ */
+class ColumnRecognizer {
+    constructor(columnsModel, posCoord = 'eq') {
+        this.columnsModel = columnsModel;
+        this.ucds = getColumnValues(columnsModel, 'ucd');
+        this.column_names = getColumnValues(columnsModel, 'column_name');
+        this.centerColumnsInfo = null;
+        this.posCoord = posCoord;
+    }
+
+
+    setCenterColumnsInfo(colPair, csys = CoordinateSys.EQ_J2000) {
+        this.centerColumnsInfo = {
+            lonCol: colPair[0],
+            latCol: colPair[1],
+            csys
+        };
+
+        return this.centerColumnsInfo;
+    }
+
+    getColumnsWithUCDWord(cols, ucdWord) {
+        if (isEmpty(cols)) return [];
+
+        return cols.filter((oneCol) => {
+            return has(oneCol, 'ucd') && isUCDWith(oneCol.ucd, ucdWord, get(ucdSyntaxMap, ucdWord));
+        });
+    }
+
+    getCenterColumnPairsOnUCD(coord) {
+        const centerColUCDs = has(posCol, coord ) ? posCol[coord].ucd : null;
+        const pairs = [];
+
+        if (!centerColUCDs) {
+            return pairs;
+        }
+
+        // get 'ra' column list and 'dec' column list
+        // output in form of [ <ra column array>, <dec column array> ] and each column is like {ucd: column_name: }
+        const posPairs = centerColUCDs.reduce((prev, eqUcdPair) => {
+            if (isArray(eqUcdPair) && eqUcdPair.length >= 2) {
+                const colsRA = this.ucds.reduce((p, ucd, i) => {
+                    if (ucd.includes(eqUcdPair[0])) {
+                        p.push({ucd, column_name: this.column_names[i]});
+                    }
+                    return p;
+                }, []);
+                const colsDec = this.ucds.reduce((p, ucd, i) => {
+                    if (ucd.includes(eqUcdPair[1])) {
+                        p.push({ucd, column_name: this.column_names[i]});
+                    }
+                    return p;
+                }, []);
+
+                prev[0].push(...colsRA);
+                prev[1].push(...colsDec);
+            }
+            return prev;
+        }, [[], []]);
+
+
+        const metaMainPair = posPairs.map((posCols, idx) => {
+            const mainMetaCols = this.getColumnsWithUCDWord(posCols, mainMeta);
+            if (!isEmpty(posCols) && isEmpty(mainMetaCols)) {
+                alternateMainPos.find((oneAlt) => {
+                    const altCols = this.getColumnsWithUCDWord(posCols, oneAlt[idx], ucdSyntaxMap.any);
+
+                    mainMetaCols.push(...altCols);
+                    return !isEmpty(altCols);
+                });
+            }
+            return mainMetaCols;
+        });
+
+        if (metaMainPair[0].length || metaMainPair[1].length) {  // get the column with ucd containing meta.main
+            if (metaMainPair[0].length === metaMainPair[1].length) {
+                for (let i = 0; i < metaMainPair[0].length; i++) {
+                    pairs.push([metaMainPair[0][i], metaMainPair[1][i]]);    //TODO: need rules to match the rest pair
+                }
+            }
+        } else if (posPairs[0].length === posPairs[1].length) {
+            for (let i = 0; i < posPairs[0].length; i++) {
+                pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the rest pair
+            }
+        }
+
+        return pairs;
+    }
+
+    getCenterColumnsOnUCD() {
+        let colPairs;
+        const coordSet = this.posCoord ? [UCDCoord[this.posCoord].key] :
+                         [UCDCoord.eq.key, UCDCoord.galactic.key, UCDCoord.ecliptic.key];
+
+        coordSet.find((oneCoord) => {
+            colPairs = this.getCenterColumnPairsOnUCD(oneCoord);
+            if (colPairs && colPairs.length >= 1) {
+                this.setCenterColumnsInfo(colPairs[0], posCol[oneCoord].coord);  // get the first pair
+                return true;
+            } else {
+                return false;
+            }
+        });
+        return this.centerColumnsInfo;
+    }
+
+    guessCenterColumnsByName() {
+        this.centerColumnsInfo = null;
+        const findColumn = (colName) => {
+            let col;
+            this.column_names.find((name, i) => {
+                if (name === colName) {
+                    col = {column_names: name, ucd: this.ucds[i]};
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+            return col;
+        };
+
+        const guess = (lon, lat) => {
+
+            const lonCol = findColumn(lon);
+            const latCol = findColumn(lat);
+
+            return (lonCol && latCol) ? this.setCenterColumnsInfo([lonCol, latCol]) : this.centerColumnsInfo;
+        };
+        return (guess('ra','dec') || guess('lon', 'lat'));
+    }
+
+
+    getCenterColumns() {
+        return this.getCenterColumnsOnUCD()||
+               this.getCenterColumnsOnObsCoreName();
+    }
+
+    static newInstance(tableModel) {
+        return new ColumnRecognizer(tableModel);
+    }
+}
+
+/**
+ * find the center columns based on the columns table model
+ * @param columnsModel
+ * @returns {*|{lonCol: {ucd, column_name}, latCol: {ucd, column_name}, csys}|*}
+ */
+export function findCenterColumnsByColumnsModel(columnsModel) {
+    const colRecog = columnsModel && get(columnsModel, ['tableData', 'columns']) && ColumnRecognizer.newInstance(columnsModel);
+
+    return colRecog && colRecog.getCenterColumns();
 }
