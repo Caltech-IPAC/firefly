@@ -240,7 +240,7 @@ class TapSchemaBrowser extends PureComponent {
                     </div>
                     <div className='searchmethods'>
                         {columnsModel &&
-                        <div style={{paddingTop: 10}}>
+                        <div>
                             <TableSearchMethods columnsModel={columnsModel}/>
                         </div>}
                     </div>

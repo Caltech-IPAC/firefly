@@ -486,7 +486,7 @@ function makeSpatialConstraints(fields, columnsModel) {
         if (!newCorners || newCorners.length < 3 || newCorners.length > 15) return '';
 
         const cornerStr = newCorners.reduce((p, oneCorner, idx) => {
-            p += oneCorner.x + ', ' + oneCorner.x;
+            p += oneCorner.x + ', ' + oneCorner.y;
             if (idx < (newCorners.length -1)) {
                 p += ', ';
             }
