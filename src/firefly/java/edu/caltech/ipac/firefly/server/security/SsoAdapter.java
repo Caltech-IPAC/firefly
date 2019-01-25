@@ -25,16 +25,18 @@ import java.util.Map;
 public interface SsoAdapter {
 
     String SSO_FRAMEWORK_NAME = "sso.framework.name";
+    String SSO_FRAMEWORK_ADAPTER = "sso.framework.adapter";
     String JOSSO = "josso";
     String OPENID_CONNECT = "oidc";
     String MOD_AUTH_OPENIDC = "mod_auth_openidc";
 
     /**
      * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
+     * Defaults to expired.
      * @param token
      * @return
      */
-    long checkSession(String token);
+    default long checkSession(String token) { return 0; }
 
     /**
      * return all of the roles for a user authenticated with this token.
@@ -43,17 +45,30 @@ public interface SsoAdapter {
      */
     RoleList getRoles(String token);
 
-    Token resolveAuthToken(String assertionKey);
+    /**
+     * This is SAML based.. should eventually remove from interface
+     * @param assertionKey
+     */
+    default Token resolveAuthToken(String assertionKey) {return null;}
 
-    Token refreshAuthToken(Token old);
+    /**
+     * Using the old token, return a refreshed token
+     * @param old the old token
+     */
+    default Token refreshAuthToken(Token old) {return null;};
 
     boolean logout(String token);
 
-    UserInfo login(String name, String passwd);
+    /* this may not be needed .. consider removing */
+    default UserInfo login(String name, String passwd) {return null;};
 
-    String createSession(String name, String passwd);
+    /* this may not be needed .. consider removing */
+    default String createSession(String name, String passwd) {return null;};
 
-    String getAssertKey();
+    /**
+     * This is SAML based.. should eventually remove from interface
+     */
+    default String getAssertKey() {return null;};
 
     Token getAuthToken();
 
@@ -73,17 +88,31 @@ public interface SsoAdapter {
 // convenience factory methods
 //====================================================================
 
+
+
     static SsoAdapter getAdapter() {
-        String ssoFrameworkName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
-        switch (ssoFrameworkName) {
-            case JOSSO:
+
+        String ssoFrameworkAdapter = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");
+        if (!StringUtils.isEmpty(ssoFrameworkAdapter)) {
+            try {
+                System.out.println("SSO_FRAMEWORK_ADAPTER = " + ssoFrameworkAdapter);
+                Class aClass = SsoAdapter.class.getClassLoader().loadClass(ssoFrameworkAdapter);
+                return (SsoAdapter) aClass.newInstance();
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 return new JOSSOAdapter();
-            case OPENID_CONNECT:
-                return new OidcAdapter();
-            case MOD_AUTH_OPENIDC:
-                return new AuthOpenidcMod();
-            default:
-                return new JOSSOAdapter();
+            }
+        } else {
+            String ssoFrameworkName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
+            switch (ssoFrameworkName) {
+                case JOSSO:
+                    return new JOSSOAdapter();
+                case OPENID_CONNECT:
+                    return new OidcAdapter();
+                case MOD_AUTH_OPENIDC:
+                    return new AuthOpenidcMod();
+                default:
+                    return new JOSSOAdapter();
+            }
         }
     }
 
