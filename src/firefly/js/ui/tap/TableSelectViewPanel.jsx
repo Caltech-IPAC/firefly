@@ -335,6 +335,7 @@ function onSearchSubmit(request,serviceUrl) {
         title = request.tableName;
     }
     if (adql) {
+        adql = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
         const doSubmit = () => {
             const params = {serviceUrl, QUERY: adql};
             const options = {};

@@ -28,4 +28,3 @@ const propTypes= {
 };
 
 export const ValidationField= fieldGroupConnector(InputFieldView,getProps,propTypes);
-export const ValidationTextArea= fieldGroupConnector(InputAreaFieldView,getProps,propTypes);

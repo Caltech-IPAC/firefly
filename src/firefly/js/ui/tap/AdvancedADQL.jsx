@@ -10,7 +10,7 @@ import Tree, { TreeNode } from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import {get, cloneDeep, defer} from 'lodash';
 
-import {ValidationTextArea} from '../ValidationField.jsx';
+import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {loadTapSchemas, loadTapTables, loadTapColumns} from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
@@ -27,10 +27,20 @@ export class AdvancedADQL extends PureComponent {
 
         this.onLoadData = this.onLoadData.bind(this);
         this.onSelect = this.onSelect.bind(this);
+        this.reloadSchemas = this.reloadSchemas.bind(this);
+    }
+
+    componentWillReceiveProps(np) {
+        if (this.props.serviceUrl !== np.serviceUrl) {
+            this.reloadSchemas(np.serviceUrl);
+        }
     }
 
     componentDidMount() {
-        const {serviceUrl} = this.props;
+        this.reloadSchemas(this.props.serviceUrl);
+    }
+
+    reloadSchemas(serviceUrl) {
         loadTapSchemas(serviceUrl).then((tm) => {
 
             const tableData = get(tm, 'tableData.data', []);
@@ -49,11 +59,10 @@ export class AdvancedADQL extends PureComponent {
         const [key=''] = p;
         const [type, value] = key.split('--');
         if (type === 'table') {
-            insertAtCursor(textArea, `SELECT TOP 1000 * FROM ${value}`, fieldKey, groupKey);
+            insertNewLine(textArea, `SELECT TOP 1000 * FROM ${value}`, fieldKey, groupKey);
         } else if (type === 'column') {
-            insertAtCursor(textArea, `${value}, `, fieldKey, groupKey);
+            insertAtCursor(textArea, `${value}`, fieldKey, groupKey);
         }
-        console.log(type + ':' + value);
     }
 
     onLoadData(treeNode) {
@@ -91,7 +100,7 @@ export class AdvancedADQL extends PureComponent {
     }
 
     render() {
-        const {style={}, fieldKey} = this.props;
+        const {style={}, fieldKey, groupKey} = this.props;
 
         const treeNodes = convertToTreeNode(this.state.treeData);
         const code = {style: {color: 'green'}};
@@ -107,13 +116,23 @@ export class AdvancedADQL extends PureComponent {
                     </SplitContent>
                     <SplitContent style={{overflow: 'auto'}}>
                         <div className='flex-full'>
-                            <h3>ADQL Query:</h3>
-                            <ValidationTextArea ref='adql'
-                                                style={{flexGrow: 1, resize: 'none'}} rows={15} cols={100}
-                                                fieldKey={fieldKey}
-                                                tooltip='ADQL to submit to the selected TAP service'
+                            <div style={{display: 'inline-flex', marginRight: 25, justifyContent: 'space-between', alignItems: 'center'}}>
+                                <h3>ADQL Query:</h3>
+                                <button style={{height: 24}} onClick={() => dispatchValueChange({fieldKey, groupKey, value: '', valid: true})}>clear</button>
+                            </div>
+                            <InputAreaFieldConnected
+                                ref='adql'
+                                style={{width: 'calc(100% - 30px)', resize: 'none'}} rows={10}
+                                fieldKey={fieldKey}
+                                tooltip='ADQL to submit to the selected TAP service'
                             />
                             <div style={{color: '#4c4c4c'}}>
+                                <h3>Schema Browser Hints</h3>
+                                <pre style={{marginLeft: 5}}>
+{`Click on a Table node to insert a default SELECT statement of that table into the Query input box.
+Click on a Column node to insert the column's name at the Query input box's cursor.
+`}
+                                </pre>
                                 <h3>Popular Functions</h3>
                                 <pre style={{marginLeft: 5}}>
                                     <div><span {...code}>{'TOP n                   '}</span>{': Limit the results to n number of records'}</div>
@@ -190,6 +209,14 @@ function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
     dispatchValueChange({fieldKey, groupKey, value, valid: true});
 
     // update cursor to be at the end of insertion.. need to defer because react lifecycle.
-    defer( () => {input.selectionStart = input.selectionEnd = start + textToInsert.length;});
+    defer( () => {
+        input.selectionStart = input.selectionEnd = start + textToInsert.length;
+        input.focus();
+    });
 
+}
+
+function insertNewLine (input, textToInsert, fieldKey, groupKey) {
+    const value = (input.value ? input.value + '\n' : '') + textToInsert;
+    dispatchValueChange({fieldKey, groupKey, value, valid: true});
 }
