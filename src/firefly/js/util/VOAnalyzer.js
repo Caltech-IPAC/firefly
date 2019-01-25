@@ -562,7 +562,7 @@ class ColumnRecognizer {
 
     getCenterColumns() {
         return this.getCenterColumnsOnUCD()||
-               this.getCenterColumnsOnObsCoreName();
+               this.guessCenterColumnsByName();
     }
 
     static newInstance(tableModel) {
