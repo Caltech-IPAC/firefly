@@ -99,6 +99,15 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         Map<String, String> requestHeader=new HashMap<>();
         requestHeader.put("Accept", "application/json");
 
+        // temporary changes for now until it's more clear what to do.
+        Map<String, String> idHeaders = ServerContext.getRequestOwner().getIdentityCookies();
+        if (idHeaders != null && idHeaders.size() > 0) {
+            idHeaders.forEach((key, value) -> {
+                requestHeader.put(key, value);
+                _log.debug("Is logged in with: " + key + ": " + value.substring(0, 20) + "...");
+            });
+        }
+
         long cTime = System.currentTimeMillis();
         FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(getDbservURL()),  sql,null,  requestHeader, file, null, timeout);
         _log.briefDebug("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");

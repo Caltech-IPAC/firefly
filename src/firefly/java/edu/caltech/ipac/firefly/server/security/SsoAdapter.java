@@ -4,15 +4,9 @@ import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import org.josso.gateway.ws._1_2.protocol.*;
-import org.josso.gateway.ws._1_2.wsdl.SSOIdentityManager;
-import org.josso.gateway.ws._1_2.wsdl.SSOIdentityProvider;
-import org.josso.gateway.ws._1_2.wsdl.SSOSessionManager;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.rpc.ServiceException;
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,16 +19,18 @@ import java.util.Map;
 public interface SsoAdapter {
 
     String SSO_FRAMEWORK_NAME = "sso.framework.name";
+    String SSO_FRAMEWORK_ADAPTER = "sso.framework.adapter";
     String JOSSO = "josso";
     String OPENID_CONNECT = "oidc";
     String MOD_AUTH_OPENIDC = "mod_auth_openidc";
 
     /**
      * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
+     * Defaults to expired.
      * @param token
      * @return
      */
-    long checkSession(String token);
+    default long checkSession(String token) { return 0; }
 
     /**
      * return all of the roles for a user authenticated with this token.
@@ -43,17 +39,30 @@ public interface SsoAdapter {
      */
     RoleList getRoles(String token);
 
-    Token resolveAuthToken(String assertionKey);
+    /**
+     * This is SAML based.. should eventually remove from interface
+     * @param assertionKey
+     */
+    default Token resolveAuthToken(String assertionKey) {return null;}
 
-    Token refreshAuthToken(Token old);
+    /**
+     * Using the old token, return a refreshed token
+     * @param old the old token
+     */
+    default Token refreshAuthToken(Token old) {return null;};
 
     boolean logout(String token);
 
-    UserInfo login(String name, String passwd);
+    /* this may not be needed .. consider removing */
+    default UserInfo login(String name, String passwd) {return null;};
 
-    String createSession(String name, String passwd);
+    /* this may not be needed .. consider removing */
+    default String createSession(String name, String passwd) {return null;};
 
-    String getAssertKey();
+    /**
+     * This is SAML based.. should eventually remove from interface
+     */
+    default String getAssertKey() {return null;};
 
     Token getAuthToken();
 
@@ -73,17 +82,44 @@ public interface SsoAdapter {
 // convenience factory methods
 //====================================================================
 
+
     static SsoAdapter getAdapter() {
-        String ssoFrameworkName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
-        switch (ssoFrameworkName) {
-            case JOSSO:
+        String ssoFrameworkAdapter = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");
+        if (!StringUtils.isEmpty(ssoFrameworkAdapter)) {
+            return AdapterGetter.getAdapter(ssoFrameworkAdapter);
+        } else {
+            String ssoFrameworkName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
+            switch (ssoFrameworkName) {
+                case JOSSO:
+                    return new JOSSOAdapter();
+                case OPENID_CONNECT:
+                    return new OidcAdapter();
+                case MOD_AUTH_OPENIDC:
+                    return new AuthOpenidcMod();
+                default:
+                    return new JOSSOAdapter();
+            }
+        }
+    }
+
+    class AdapterGetter {
+        private static Map<String, Class> LOADED_ADAPTERS;      // to avoid repeatedly loading the same class
+
+        static SsoAdapter getAdapter(String className) {
+            try {
+                System.out.println("SSO_FRAMEWORK_ADAPTER = " + className);
+                if (LOADED_ADAPTERS == null) {
+                    LOADED_ADAPTERS = new HashMap<>();
+                }
+                Class aClass = LOADED_ADAPTERS.get(className);
+                if (aClass == null) {
+                    aClass = SsoAdapter.class.getClassLoader().loadClass(className);
+                    LOADED_ADAPTERS.put(className, aClass);
+                }
+                return (SsoAdapter) aClass.newInstance();
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 return new JOSSOAdapter();
-            case OPENID_CONNECT:
-                return new OidcAdapter();
-            case MOD_AUTH_OPENIDC:
-                return new AuthOpenidcMod();
-            default:
-                return new JOSSOAdapter();
+            }
         }
     }
 

@@ -562,6 +562,9 @@ public class StringUtils {
         return getInt(str, Integer.MIN_VALUE);
     }
 
+    public static int getInt(Object val, int def) {
+        return getInt(String.valueOf(val), def);
+    }
 
     public static int getInt(String s, int def) {
         int retval= def;
