@@ -15,6 +15,7 @@ import {SplitContent} from '../panel/DockLayoutPanel';
 import {loadTapSchemas, loadTapTables, loadTapColumns} from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
 
 export class AdvancedADQL extends PureComponent {
@@ -28,6 +29,8 @@ export class AdvancedADQL extends PureComponent {
         this.onLoadData = this.onLoadData.bind(this);
         this.onSelect = this.onSelect.bind(this);
         this.reloadSchemas = this.reloadSchemas.bind(this);
+        this.onReset = this.onReset.bind(this);
+        this.onClear = this.onClear.bind(this);
     }
 
     componentWillReceiveProps(np) {
@@ -37,7 +40,8 @@ export class AdvancedADQL extends PureComponent {
     }
 
     componentDidMount() {
-        this.reloadSchemas(this.props.serviceUrl);
+        const {serviceUrl} = this.props;
+        this.reloadSchemas(serviceUrl);
     }
 
     reloadSchemas(serviceUrl) {
@@ -99,11 +103,22 @@ export class AdvancedADQL extends PureComponent {
         });
     }
 
+    onClear() {
+        const {fieldKey, groupKey} = this.props;
+        dispatchValueChange({fieldKey, groupKey, value: '', valid: true});
+    }
+
+    onReset() {
+        const {fieldKey, groupKey, origFieldKey} = this.props;
+        const value = getFieldVal(groupKey, origFieldKey, '');
+        dispatchValueChange({fieldKey, groupKey, value, valid: true});
+    }
+
     render() {
-        const {style={}, fieldKey, groupKey} = this.props;
+        const {style={}, fieldKey, groupKey, adqlString=''} = this.props;
 
         const treeNodes = convertToTreeNode(this.state.treeData);
-        const code = {style: {color: 'green'}};
+        const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace'}};
 
         return (
                 <SplitPane split='vertical' defaultSize={300} style={{position: 'relative', height: 600, ...style}}>
@@ -118,7 +133,10 @@ export class AdvancedADQL extends PureComponent {
                         <div className='flex-full'>
                             <div style={{display: 'inline-flex', marginRight: 25, justifyContent: 'space-between', alignItems: 'center'}}>
                                 <h3>ADQL Query:</h3>
-                                <button style={{height: 24}} onClick={() => dispatchValueChange({fieldKey, groupKey, value: '', valid: true})}>clear</button>
+                                <div style={{display: 'inline-flux'}}>
+                                    <button className='button std' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={this.onReset}>Reset</button>
+                                    <button className='button std' title='Clear the query' style={{height: 24}} onClick={this.onClear}>Clear</button>
+                                </div>
                             </div>
                             <InputAreaFieldConnected
                                 ref='adql'
@@ -128,13 +146,12 @@ export class AdvancedADQL extends PureComponent {
                             />
                             <div style={{color: '#4c4c4c'}}>
                                 <h3>Schema Browser Hints</h3>
-                                <pre style={{marginLeft: 5}}>
-{`Click on a Table node to insert a default SELECT statement of that table into the Query input box.
-Click on a Column node to insert the column's name at the Query input box's cursor.
-`}
-                                </pre>
+                                <div style={{marginLeft: 5}}>
+                                    <div>Click on a Table node to insert a default SELECT statement of that table into the Query input box.</div>
+                                    <div>Click on a Column node to insert the column's name at the Query input box's cursor.</div>
+                                </div>
                                 <h3>Popular Functions</h3>
-                                <pre style={{marginLeft: 5}}>
+                                <div style={{marginLeft: 5}}>
                                     <div><span {...code}>{'TOP n                   '}</span>{': Limit the results to n number of records'}</div>
                                     <div><span {...code}>{'ORDER BY [ASC/DESC]     '}</span>{': Used for sorting'}</div>
                                     <br/>
@@ -145,10 +162,10 @@ Click on a Column node to insert the column's name at the Query input box's curs
                                     <div {...code}>{'DISTANCE(point1, point2)'}</div>
                                     <div {...code}>{'CONTAINS(region1, region2)'}</div>
                                     <div {...code}>{'INTERSECTS(region1, region2)'}</div>
-                                </pre>
+                                </div>
 
                                 <h3>Sample Queries</h3>
-                                <pre style={{marginLeft: 5}}>
+                                <div style={{marginLeft: 5}}>
                                     <div          >{'A 1 degree cone search around M101 would be:'}</div>
                                     <div {...code}>{"SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1"}</div>
                                     <br/>
@@ -158,7 +175,7 @@ Click on a Column node to insert the column's name at the Query input box's curs
                                     <div          >{'A triangle search around M101 would be:'}</div>
                                     <div {...code}>{`SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),
                       POLYGON('J2000',209.80225,53.34894,209.80225,55.34894,211.80225,54.34894))=1`}</div>
-                                </pre>
+                                </div>
                             </div>
                         </div>
                     </SplitContent>
@@ -169,6 +186,7 @@ Click on a Column node to insert the column's name at the Query input box's curs
 
 AdvancedADQL.propTypes= {
     fieldKey:       PropTypes.string,
+    origFieldKey:   PropTypes.string,               // used for reset
     groupKey:       PropTypes.string,
     serviceUrl:     PropTypes.string,
     style:          PropTypes.object,

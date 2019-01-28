@@ -94,7 +94,7 @@ export class TapSearchPanel extends PureComponent {
                             </Tab>
                             <Tab name='ADQL' id='adql'>
                                 <div style={tabWrapper}>
-                                    <AdvancedADQL fieldKey='adqlQuery' groupKey={gkey} serviceUrl={serviceUrl}/>
+                                    <AdvancedADQL fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>
                                 </div>
                             </Tab>
                         </FieldGroupTabs>
@@ -109,12 +109,12 @@ export class TapSearchPanel extends PureComponent {
         if (selectedOption) {
             const selectedTapService = selectedOption.value;
             const sampleQuery = getSampleQuery(selectedTapService);
-            dispatchValueChange({
-                groupKey: gkey,
-                fieldKey: 'adqlQuery',
-                placeholder: sampleQuery,
-                value: sampleQuery
-            });
+            dispatchMultiValueChange(gkey,
+                [
+                    {fieldKey: 'adqlQueryOriginal', value: sampleQuery},
+                    {fieldKey: 'adqlQuery', placeholder: sampleQuery, value: sampleQuery}
+                ]
+            );
             this.setState({serviceUrl: selectedTapService});
         }
     }
@@ -129,6 +129,7 @@ export class TapSearchPanel extends PureComponent {
             //set adql and switch tab to ADQL
             dispatchMultiValueChange(gkey,
                 [
+                    {fieldKey: 'adqlQueryOriginal', value: adql},
                     {fieldKey: 'adqlQuery', value: adql},
                     {fieldKey: 'tabs', value: 'adql'},
                 ]
