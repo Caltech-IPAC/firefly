@@ -17,9 +17,6 @@ import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
 import net.sf.ehcache.statistics.StatisticsGateway;
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,7 +28,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -193,21 +189,20 @@ public class ServerStatus extends BaseHttpServlet {
             w.println("  Expanding JWT tokens: " + jwt);
             Arrays.stream(jwt.split(","))
                 .forEach((header) -> {
-                    w.println("  " + jwt + "---->");
+                    w.println("  " + header + "---->");
                     String idTokenBase64 = req.getHeader(header);
-                    w.println("      JWT:" + idTokenBase64);
                     if (!StringUtils.isEmpty(idTokenBase64)) {
                         try {
-                            String jwtString = new String(Base64.getDecoder().decode(idTokenBase64));
-                            Map idToken = (Map) new JSONParser().parse(jwtString);
-                            idToken.keySet().stream().forEach( key -> {
-                                Object val = idToken.get(key);
-                                if (val instanceof List) {
-                                    val = ((List)val).stream().collect(Collectors.joining(", "));
-                                }
-                                w.println(String.format("    %s: %s", key, val));
-                            });
+                            String[] parts = idTokenBase64.split("\\.");        // 3-part: [how_signed:claims:signature]
+                            if (parts.length == 3) {
+                                w.println("      JWT:" + parts[1]);
+                                String jwtString = new String(Base64.getDecoder().decode(parts[1]));
+                                w.println(jwtString);
+                            } else {
+                                w.println("      not valid JWT:" + idTokenBase64);
+                            }
                         } catch (Exception e) {
+                            w.println("      not valid JWT:" + idTokenBase64);
                             w.println(e.getMessage());
                         }
                     }

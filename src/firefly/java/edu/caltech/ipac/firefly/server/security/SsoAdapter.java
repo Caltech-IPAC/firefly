@@ -4,15 +4,9 @@ import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
-import org.josso.gateway.ws._1_2.protocol.*;
-import org.josso.gateway.ws._1_2.wsdl.SSOIdentityManager;
-import org.josso.gateway.ws._1_2.wsdl.SSOIdentityProvider;
-import org.josso.gateway.ws._1_2.wsdl.SSOSessionManager;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.rpc.ServiceException;
 import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -89,18 +83,10 @@ public interface SsoAdapter {
 //====================================================================
 
 
-
     static SsoAdapter getAdapter() {
-
         String ssoFrameworkAdapter = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");
         if (!StringUtils.isEmpty(ssoFrameworkAdapter)) {
-            try {
-                System.out.println("SSO_FRAMEWORK_ADAPTER = " + ssoFrameworkAdapter);
-                Class aClass = SsoAdapter.class.getClassLoader().loadClass(ssoFrameworkAdapter);
-                return (SsoAdapter) aClass.newInstance();
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                return new JOSSOAdapter();
-            }
+            return AdapterGetter.getAdapter(ssoFrameworkAdapter);
         } else {
             String ssoFrameworkName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
             switch (ssoFrameworkName) {
@@ -112,6 +98,27 @@ public interface SsoAdapter {
                     return new AuthOpenidcMod();
                 default:
                     return new JOSSOAdapter();
+            }
+        }
+    }
+
+    class AdapterGetter {
+        private static Map<String, Class> LOADED_ADAPTERS;      // to avoid repeatedly loading the same class
+
+        static SsoAdapter getAdapter(String className) {
+            try {
+                System.out.println("SSO_FRAMEWORK_ADAPTER = " + className);
+                if (LOADED_ADAPTERS == null) {
+                    LOADED_ADAPTERS = new HashMap<>();
+                }
+                Class aClass = LOADED_ADAPTERS.get(className);
+                if (aClass == null) {
+                    aClass = SsoAdapter.class.getClassLoader().loadClass(className);
+                    LOADED_ADAPTERS.put(className, aClass);
+                }
+                return (SsoAdapter) aClass.newInstance();
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                return new JOSSOAdapter();
             }
         }
     }
