@@ -4,6 +4,7 @@ import {has} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {InputAreaFieldView} from './InputAreaFieldView';
 
 
 function onChange(ev, store, fireValueChange) {

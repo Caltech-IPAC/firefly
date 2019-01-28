@@ -115,13 +115,13 @@ function makeYesNoContent(content, clickSelection) {
             </div>
             <div style={{display: 'flex'}}>
                 <div style={{padding:'0 0 5px 10px'}}>
-                    <button type='button' className='button std hl'
-                            onClick={clickSelection(INFO_POPUP, true)}>Yes
+                    <button type='button' className='button std hl' style={{width: 50}}
+                            onClick={() => clickSelection(INFO_POPUP, true)}>Yes
                     </button>
                 </div>
                 <div style={{padding:'0 0 5px 10px'}}>
-                    <button type='button' className='button std hl'
-                            onClick={clickSelection(INFO_POPUP, false)}>No
+                    <button type='button' className='button std hl' style={{width: 50}}
+                            onClick={() => clickSelection(INFO_POPUP, false)}>No
                     </button>
                 </div>
             </div>

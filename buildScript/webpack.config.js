@@ -171,7 +171,6 @@ export default function makeWebpackConfig(config) {
             }
         },
         {   test    : /\.css$/,
-            exclude: exclude_dirs,
             use: [
                 {
                     loader: 'style-loader'

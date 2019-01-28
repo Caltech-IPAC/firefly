@@ -39,6 +39,7 @@
     "redux-logger": "^3.0",
     "redux-saga": "^0.16",
     "redux-thunk": "^2.2",
+    "rc-tree": "^1.14.9",
     "shallowequal": "^1.0.2",
     "transformation-matrix-js": "^2.7.1",
     "validator": "^9.4",
