@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -78,8 +79,6 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
         String baseUrl = getBaseURL(request);
 
 
-        Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
-
         for (int rowIdx : selectedRows) {
             String filefracday = String.valueOf(dgData.get(rowIdx, "filefracday"));
             String field = String.valueOf(dgData.get(rowIdx, "field"));
@@ -134,7 +133,8 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
                 fi = new FileInfo(url, extName,0);
             }
             if (fi != null) {
-                fi.setCookies(cookies);
+                HttpServiceInput requestInfo = HttpServiceInput.createWithCredential();
+                fi.setRequestInfo(requestInfo);
                 fiArr.add(fi);
                 fgSize += fi.getSizeInBytes();
             }

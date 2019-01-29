@@ -25,6 +25,7 @@ import java.net.URLConnection;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -116,7 +117,9 @@ public class ZipHandler {
         if (filename.contains("://")) {
             try {
                 URL url = new URL(filename);
-                URLConnection uc = URLDownload.makeConnection(url, fi.getCookies());
+                Map<String, String> cookies = fi.getRequestInfo() != null ? fi.getRequestInfo().getCookies() : null;
+                Map<String, String> headers = fi.getRequestInfo() != null ? fi.getRequestInfo().getHeaders() : null;
+                URLConnection uc = URLDownload.makeConnection(url, cookies, headers, false);
                 uc.setRequestProperty("Accept", "text/plain");
 
                 if (fi.hasFileNameResolver()) {

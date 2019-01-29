@@ -26,6 +26,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: roby
@@ -167,7 +168,9 @@ public class Packager {
             File targetFile; // target file should be created after the external name is set
             //------------
             if (filename.contains("://")) {
-                URLConnection uc = URLDownload.makeConnection(new URL(filename), fileInfo.getCookies());
+                Map<String, String> cookies = fileInfo.getRequestInfo() != null ? fileInfo.getRequestInfo().getCookies() : null;
+                Map<String, String> headers = fileInfo.getRequestInfo() != null ? fileInfo.getRequestInfo().getHeaders() : null;
+                URLConnection uc = URLDownload.makeConnection(new URL(filename), cookies, headers, false);
                 uc.setRequestProperty("Accept", "text/plain");
                 if (fileInfo.hasFileNameResolver()) {
                     String suggestedFilename = URLDownload.getSugestedFileName(uc);

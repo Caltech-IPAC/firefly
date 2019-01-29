@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.query.ptf;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
@@ -61,7 +62,7 @@ public class PtfIbeResolver {
     public String[] getValuesFromColumn(long pid[], String colName) throws IOException {
         File tempFile = getTempFile();
         try {
-            URLConnection aconn = URLDownload.makeConnection(createURL(pid), getCookies());
+            URLConnection aconn = URLDownload.makeConnection(createURL(pid), getAddtlInputs().getCookies(), getAddtlInputs().getHeaders(), false);
             aconn.setRequestProperty("Accept", "*/*");
             URLDownload.getDataToFile(aconn, tempFile);
         } catch (Exception e) {
@@ -108,8 +109,8 @@ public class PtfIbeResolver {
         return f;
     }
 
-    public Map<String,String> getCookies() {
-        if(isTestMode) return null;//or overwrite in test unit
-        return ServerContext.getRequestOwner().getIdentityCookies();
+    private HttpServiceInput getAddtlInputs() {
+        if(isTestMode) return new HttpServiceInput();//or overwrite in test unit
+        return HttpServiceInput.createWithCredential();
     }
 }

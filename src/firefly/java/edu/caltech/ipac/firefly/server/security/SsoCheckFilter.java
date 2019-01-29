@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.security;
 import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.filters.CommonFilter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
@@ -74,12 +73,15 @@ public class SsoCheckFilter implements Filter {
                 System.out.println("PARAM " + k + ":" + v);
             }
 
-            if (!isExcluded(req)) {
-                SsoAdapter.Token authToken = SsoAdapter.getAdapter().getAuthToken();
+            SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
+
+            if (!isExcluded(req) && ssoAdapter != null) {
+
+                SsoAdapter.Token authToken = ssoAdapter.getAuthToken();
 
                 if (authToken != null && authToken.getExpiresOn() < System.currentTimeMillis()) {
                     // token has expires on our end's.. should refresh it.
-                    authToken = SsoAdapter.getAdapter().refreshAuthToken(authToken);
+                    authToken = ssoAdapter.refreshAuthToken(authToken);
                 }
                 if (authRequired) {
                     if (authToken == null) {
@@ -92,7 +94,7 @@ public class SsoCheckFilter implements Filter {
                         } else {
                             // check user auth..
                             String qstr = req.getQueryString() == null ? "" : "?" + req.getQueryString();
-                            res.sendRedirect(SsoAdapter.getAdapter().makeAuthCheckUrl(
+                            res.sendRedirect(ssoAdapter.getLoginUrl(
                                     ServerContext.getRequestOwner().getRequestAgent().getRequestUrl() + qstr));
                             // after auth check, request will resume at SsoVerifyServlet.  no need to process this request.
                             return;
@@ -100,7 +102,7 @@ public class SsoCheckFilter implements Filter {
                     }
                     // is authenticated.. now check to see if user is allowed access
                     if (authRequired && allowAccess != null && allowAccess.size() > 0) {
-                        UserInfo userInfo = SsoAdapter.getAdapter().getUserInfo();
+                        UserInfo userInfo = ssoAdapter.getUserInfo();
                         RoleList roles = userInfo.getRoles();
                         boolean hasAccess = false;
                         for(RoleList.RoleEntry re : roles) {

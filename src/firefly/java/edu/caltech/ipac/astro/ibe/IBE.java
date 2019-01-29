@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.astro.ibe;
 
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
@@ -162,9 +163,10 @@ public class IBE {
                 progressKey = sourceParams.get("ProgressKey");
                 plotId = sourceParams.get("plotId");
             }
-            Map<String, String> identityCookies = ServerContext.getRequestOwner().getIdentityCookies();
 
-            return URLFileInfoProcessor.retrieveViaURL(url, dir, progressKey, plotId, null, identityCookies);
+            HttpServiceInput addtlInfo = HttpServiceInput.createWithCredential();
+
+            return URLFileInfoProcessor.retrieveViaURL(url, dir, progressKey, plotId, null, addtlInfo);
         } catch (DataAccessException e) {
             throw new IOException(e.getMessage(), e);
         }

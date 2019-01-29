@@ -34,9 +34,9 @@ public class AppServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             // should handle logout request.
-            String authToken = SsoAdapter.getAdapter().getAuthTokenId();
-            if (authToken != null) {
-                SsoAdapter.getAdapter().logout(authToken);
+            SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
+            if (ssoAdapter != null) {
+                ssoAdapter.logout();
             }
             // update login status
             UserInfo userInfo = ServerContext.getRequestOwner().getUserInfo();

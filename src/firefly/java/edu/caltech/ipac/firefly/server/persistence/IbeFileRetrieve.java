@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.BaseFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -51,8 +52,8 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
             if (ofile == null ||  ofile.getSizeInBytes() == 0) {
                 return null;
             } else {
-                Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
-                ofile.setCookies(cookies);
+                HttpServiceInput requestInfo = HttpServiceInput.createWithCredential();
+                ofile.setRequestInfo(requestInfo);
                 ofile.addRelatedDataList( findRelatedDataList(request));
                 return ofile;
             }

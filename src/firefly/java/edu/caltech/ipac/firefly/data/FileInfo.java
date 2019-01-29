@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.data;
 
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheKey;
 
@@ -26,9 +27,9 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     public static final String HAS_ACCESS="hasAccess";
 
     private final Map<String,String> attributes= new HashMap<>(9);
-    private Map<String, String> cookies= null;
     private transient FileNameResolver resolver= null;
     private List<RelatedData> relatedData= null;
+    private HttpServiceInput requestInfo= null;
 
 
 //======================================================================
@@ -115,12 +116,12 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public List<RelatedData> getRelatedData() { return relatedData; }
 
-    public Map<String, String> getCookies() {
-        return cookies;
+    public HttpServiceInput getRequestInfo() {
+        return requestInfo;
     }
 
-    public void setCookies(Map<String, String> cookies) {
-        this.cookies = cookies;
+    public void setRequestInfo(HttpServiceInput requestInfo) {
+        this.requestInfo = requestInfo;
     }
 
     public String getInternalFilename() { return getAttribute(INTERNAL_NAME); }
@@ -175,8 +176,8 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     public FileInfo copy() {
         FileInfo fi= new FileInfo();
         fi.attributes.putAll(this.attributes);
-        if (cookies!=null) {
-            fi.cookies= new HashMap<>(cookies);
+        if (requestInfo!=null) {
+            fi.requestInfo= requestInfo.copy();
         }
         if (resolver!=null) fi.resolver= resolver;
         if (relatedData!=null) {

@@ -23,31 +23,24 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class SsoVerifyServlet extends BaseHttpServlet {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
-    private SsoAdapter ssoAdapter;
-
-    public void init(ServletConfig config) throws ServletException {
-        try {
-            ssoAdapter = SsoAdapter.getAdapter();
-        } catch (Exception e) {
-            logger.error(e);
-        }
-    }
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
-        String id = req.getParameter(ssoAdapter.getAssertKey());
-        SsoAdapter.Token token = id == null ? null : ssoAdapter.resolveAuthToken(id);
-        if (token != null) {
-            logger.debug("Verifying user with verId=" + id + "  ==> returned auth token:" + token);
+        SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
+        if (ssoAdapter != null) {
+            SsoAdapter.Token token = ssoAdapter.resolveAuthToken(req);
+            if (token != null) {
+                logger.debug("Verifying user with verId=" + token.getId() + "  ==> returned auth token:" + token);
 
-            String backTo = ssoAdapter.getRequestedUrl(req);
-            if (StringUtils.isEmpty(backTo)) {
-                backTo = ServerContext.getRequestOwner().getRequestAgent().getBaseUrl();
+                String backTo = ssoAdapter.getRequestedUrl(req);
+                if (StringUtils.isEmpty(backTo)) {
+                    backTo = ServerContext.getRequestOwner().getRequestAgent().getBaseUrl();
+                }
+                res.sendRedirect(backTo);
             }
-            res.sendRedirect(backTo);
-        } else {
-            res.sendError(401);
         }
+        logger.debug("Unable to resolve AuthToken");
+        res.sendError(401);
     }
 }
 

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -74,7 +75,6 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
         double sizeD = StringUtils.isEmpty(subSize) ? 0 : Double.parseDouble(subSize);
         String sizeAsecStr = String.valueOf((int) (sizeD * 3600));
 
-        Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
         for (int rowIdx : selectedRows) {
             FileInfo fi = null;
             String pidstr = dgData.get(rowIdx, "pid").toString();
@@ -136,7 +136,8 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
                 fi = new FileInfo(url, extName, 0);
             }
             if (fi != null) {
-                fi.setCookies(cookies);
+                HttpServiceInput requestInfo = HttpServiceInput.createWithCredential();
+                fi.setRequestInfo(requestInfo);
                 fiArr.add(fi);
                 fgSize += fi.getSizeInBytes();
             }

@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 /**
  * Date: May 15, 2017
  *
@@ -43,7 +45,7 @@ import java.util.stream.Collectors;
  */
 public class OidcAdapter implements SsoAdapter {
 
-    private static final String ASSERT_KEY = "code";
+    private static final String ACCESS_CODE = "code";
     private static final String ACCESS_TOKEN = "access_token";
     private static final String REFRESH_TOKEN = "refresh_token";
     private static final String ID_TOKEN = "id_token";
@@ -75,31 +77,16 @@ public class OidcAdapter implements SsoAdapter {
     private static final String ROLE_CLAIM = "isMemberOf";
 
 
-    /**
-     * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
-     * @param tokenId
-     * @return
-     */
-    public long checkSession(String tokenId) {
-        return 0;
-    }
+    public Token resolveAuthToken(HttpServletRequest req) {
 
-    /**
-     * return all of the roles for a user authenticated with this token.
-     * @param token
-     * @return
-     */
-    public RoleList getRoles(String token) {
-        return null;
-    }
-
-    public Token resolveAuthToken(String assertionKey) {
+        String accessCode = req.getParameter(ACCESS_CODE);
+        if (isEmpty(accessCode)) return null;
 
         HttpServiceInput input = new HttpServiceInput()
                 .setParam("client_id", oidcClientId)
                 .setParam("client_secret", oidcClientSecret)
                 .setParam("grant_type", "authorization_code")
-                .setParam("code", assertionKey)
+                .setParam("code", accessCode)
                 .setParam("redirect_uri", makeVerifyUrl())
                 .setParam("scope", SCOPE);
 
@@ -129,30 +116,13 @@ public class OidcAdapter implements SsoAdapter {
         return token;
     }
 
-    public boolean logout(String token) {
+    public boolean logout() {
         clearAuthInfo();
         return true;
     }
 
-    public UserInfo login(String name, String passwd) {
-        return null;
-    }
-
-    public String createSession(String name, String passwd) {
-        return null;
-    }
-
-    public String getAssertKey() {
-        return ASSERT_KEY;
-    }
-
     public Token getAuthToken() {
         return (Token) CacheManager.getSessionCache().get(new StringKey(AUTH_TOKEN_KEY));
-    }
-
-    public String getAuthTokenId() {
-        Token token = getAuthToken();
-        return token == null ? null : token.getId();
     }
 
     public UserInfo getUserInfo() {
@@ -167,7 +137,9 @@ public class OidcAdapter implements SsoAdapter {
 
     public Map<String, String> getIdentities() {
         HashMap<String, String> identities = new HashMap<>();
-        identities.put(ACCESS_TOKEN, getAuthTokenId());
+        if (getAuthToken() != null) {
+            identities.put(ACCESS_TOKEN, getAuthToken().getId());
+        }
         return identities;
     }
 
@@ -177,7 +149,7 @@ public class OidcAdapter implements SsoAdapter {
         return requestedUrl;
     }
 
-    public String makeAuthCheckUrl(String requestedUrl) {
+    public String getLoginUrl(String requestedUrl) {
         CacheManager.getSessionCache().put(new StringKey(REQUEST_URL), requestedUrl);
         return String.format("%s?response_type=code&client_id=%s&redirect_uri=%s&scope=%s&skin=LSST",
                 LOGIN_URL, oidcClientId, encode(makeVerifyUrl()), encode(SCOPE));
@@ -208,7 +180,7 @@ public class OidcAdapter implements SsoAdapter {
             token.set(REFRESH_TOKEN, refreshToken);
             token.set(EXPIRES_IN, String.valueOf(expiresIn));
             token.setExpiresOn(getNextCheckTime());
-            if (!StringUtils.isEmpty(idToken)) {
+            if (!isEmpty(idToken)) {
                 token.setClaims(getClaims(idToken));
             }
         } catch (Exception e) {
@@ -271,7 +243,7 @@ public class OidcAdapter implements SsoAdapter {
     private static String getString(JSONObject obj, String key, String def) {
         Object val = obj.get(key);
         String str = (val == null) ? null : String.valueOf(val);
-        return StringUtils.isEmpty(str) ? def : str;
+        return isEmpty(str) ? def : str;
     }
 
     private static int getInt(JSONObject obj, String key, int def) {

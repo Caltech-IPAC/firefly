@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.RequestAgent;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -14,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * This class support authentication in which mod_auth_openidc is used
@@ -40,56 +43,26 @@ public class AuthOpenidcMod implements SsoAdapter {
     private static final String ROLE_CLAIM = "oidc_claim_ismemberof";
 
 
-    /**
-     * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
-     * @param tokenId
-     * @return
-     */
-    public long checkSession(String tokenId) {
-        return 0;
-    }
-
-    /**
-     * return all of the roles for a user authenticated with this token.
-     * @param token
-     * @return
-     */
-    public RoleList getRoles(String token) {
-        return getRoleList();
-    }
-
-    public Token resolveAuthToken(String assertionKey) {
-        return null;
-    }
-
-    public Token refreshAuthToken(Token old) {
-        return null;
-    }
-
-    public boolean logout(String token) {
+    public boolean logout() {
         clearAuthInfo();
         return true;
     }
 
-    public UserInfo login(String name, String passwd) {
-        return null;
-    }
-
-    public String createSession(String name, String passwd) {
-        return null;
-    }
-
-    public String getAssertKey() {
-        return null;
-    }
-
     public Token getAuthToken() {
-        return getToken();
-    }
-
-    public String getAuthTokenId() {
-        Token token = getAuthToken();
-        return token == null ? null : token.getId();
+        Token token = null;
+        try {
+            RequestAgent ra = ServerContext.getRequestOwner().getRequestAgent();
+            String remoteUser = getString(ra, REMOTE_USER, "");
+            if (!isEmpty(remoteUser)) {
+                int expiresIn = getInt(ra, EXPIRES_IN, 0);
+                token = new Token(remoteUser);
+                token.set(EXPIRES_IN, String.valueOf(expiresIn));
+                token.setExpiresOn(expiresIn);
+            }
+        } catch (Exception e) {
+            LOGGER.error(e);
+        }
+        return token;
     }
 
     public UserInfo getUserInfo() {
@@ -112,46 +85,16 @@ public class AuthOpenidcMod implements SsoAdapter {
         }
     }
 
-    public void clearAuthInfo() {
-    }
-
-    @NotNull
-    public Map<String, String> getIdentities() {
-        HashMap<String, String> identities = new HashMap<>();
-        String remoteUser = ServerContext.getRequestOwner().getRequestAgent().getHeader(REMOTE_USER);
-        if (!StringUtils.isEmpty(remoteUser)) {
-            identities.put(REMOTE_USER, remoteUser);
+    public void setAuthCredential(HttpServiceInput inputs) {
+        Token token = getAuthToken();
+        if (token != null && token.getId() != null) {
+            inputs.setHeader("Authorization", "Bearer " + token.getId());
         }
-        return identities;
     }
 
-    public String getRequestedUrl(HttpServletRequest req) {
-        return null;
-    }
-
-    public String makeAuthCheckUrl(String requestedUrl) {
-        return null;
-    }
-
-
-//====================================================================
+    //====================================================================
 //  private methods
 //====================================================================
-
-    private Token getToken() {
-        Token token = null;
-        try {
-            RequestAgent ra = ServerContext.getRequestOwner().getRequestAgent();
-            String remoteUser = getString(ra, REMOTE_USER, "");
-            int expiresIn = getInt(ra, EXPIRES_IN, 0);
-            token = new Token(remoteUser);
-            token.set(EXPIRES_IN, String.valueOf(expiresIn));
-            token.setExpiresOn(expiresIn);
-        } catch (Exception e) {
-            LOGGER.error(e);
-        }
-        return token;
-    }
 
     private static String getString(RequestAgent ra, String key, String def) {
         return ra.getHeader(key, def);
@@ -191,7 +134,7 @@ public class AuthOpenidcMod implements SsoAdapter {
             } else if (keyval[0].equals("dc")) {
                 dc = keyval.length > 1 ? keyval[1] : "";
             }
-            if (!StringUtils.isEmpty(cn) && !cn.equals(cuser)) {
+            if (!isEmpty(cn) && !cn.equals(cuser)) {
                 cuser = cn;
                 roleList.add(new RoleList.RoleEntry(dc, dc.hashCode(), cn, cn.hashCode(), ""));
             }
