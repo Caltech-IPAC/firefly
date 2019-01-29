@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.Map;
 
 import static edu.caltech.ipac.astro.ibe.BaseIbeDataSource.addUrlParam;
@@ -147,7 +148,8 @@ public class IBE {
             qstr = addUrlParam(qstr, "gzip", param.isDoZip());
         }
 
-        url += (qstr.length() > 0 ? "?" + qstr : "");
+        //url += (qstr.length() > 0 ? "?" + qstr : "");
+        url += (qstr.length() > 0 ? "?" + URLEncoder.encode(qstr, "UTF-8") : "");
 
         return new URL(url);
     }

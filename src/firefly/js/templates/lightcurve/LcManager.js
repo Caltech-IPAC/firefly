@@ -738,6 +738,7 @@ export function setupImages(layoutInfo, invokedBy=TABLE_FETCH){
             const rowNum = Number(plotId.substring(plotIdRoot.length));
             const webPlotReq = converterData.webplotRequestCreator(tableModel, rowNum, cutoutSize,
                 getImagePlotParams(layoutInfo));
+            webPlotReq.setRotateNorth(true);
 
             if (webPlotReq && (!pv || get(pv, ['request', 'params', 'Title']) !== webPlotReq.getTitle() ||
                 get(pv, ['request', 'params', 'UserDesc']) !== webPlotReq.getUserDesc())) {
