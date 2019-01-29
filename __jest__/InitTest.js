@@ -43,5 +43,5 @@ jest.mock('firefly/util/BrowserInfo.js', () => {
 jest.mock('firefly/core/AppDataCntlr.js', () => {
     return {
         getAppOptions : () => ({})
-    }
+    };
 });
