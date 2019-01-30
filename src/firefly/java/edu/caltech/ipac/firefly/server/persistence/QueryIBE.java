@@ -8,6 +8,8 @@ package edu.caltech.ipac.firefly.server.persistence;
  *         $Id: $
  */
 
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
@@ -34,6 +36,7 @@ import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +46,7 @@ import java.util.Map;
          @ParamDoc(name="radius", desc="radius in degrees"),
          @ParamDoc(name="mcenter", desc="Specifies whether to return only the most centered (in pixel space) image-set for the given input position.")
         })
-public class QueryIBE extends IpacTablePartProcessor {
+public class QueryIBE extends EmbeddedDbProcessor {
     public static final String PROC_ID = QueryIBE.class.getAnnotation(SearchProcessorImpl.class).id();
     public static final String MISSION = "mission";
     public static final String POS_WORLDPT = "UserTargetWorldPt";
@@ -51,40 +54,42 @@ public class QueryIBE extends IpacTablePartProcessor {
     public static final String MOST_CENTER = "mcenter";
 
 
-    @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        String mission = request.getParam(MISSION);
-        Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
-
-        IBE ibe = IBEUtils.getIBE(mission, paramMap);
-        IbeDataSource ibeDataSource = ibe.getIbeDataSource();
-        IbeQueryParam queryParam= ibeDataSource.makeQueryParam(paramMap);
-        File ofile = createFile(request); //File.createTempFile(mission+"-", ".tbl", ServerContext.getPermWorkDir());
-        ibe.query(ofile, queryParam);
-
-        // no search results situation
-        if (ofile == null || !ofile.exists() || ofile.length() == 0) {
-            return ofile;
-        }
-
-        SortInfo sortInfo = IBEUtils.getSortInfo(ibeDataSource);
-        if (sortInfo != null) {
-            IpacTableDef meta = IpacTableUtil.getMetaInfo(ofile);
-            if (meta.getRowCount() < 100000) {
-                doSort(ofile, ofile, sortInfo, request);
-            }
-        }
-        return ofile;
-    }
-
-    @Override
     protected String getFilePrefix(TableServerRequest request) {
         return request.getParam(MISSION);
     }
 
     @Override
-    public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
+    public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
+        try {
+            String mission = request.getParam(MISSION);
+            Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
+
+            IBE ibe = null;
+                ibe = IBEUtils.getIBE(mission, paramMap);
+            IbeDataSource ibeDataSource = ibe.getIbeDataSource();
+            IbeQueryParam queryParam= ibeDataSource.makeQueryParam(paramMap);
+            File ofile = createTempFile(request, ".tbl"); //File.createTempFile(mission+"-", ".tbl", ServerContext.getPermWorkDir());
+            ibe.query(ofile, queryParam);
+
+            // no search results situation
+            if (ofile == null || !ofile.exists() || ofile.length() == 0) {
+                throw new DataAccessException("Fail during QueryIBE: no data returned");
+            }
+
+            if (request.getSortInfo() == null) {
+                SortInfo sortInfo = IBEUtils.getSortInfo(ibeDataSource);
+                request.setSortInfo(sortInfo);
+            }
+            DataGroup dg = IpacTableReader.read(ofile);
+            addAddtlMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), request);
+            return dg;
+        } catch (IOException e) {
+            throw new DataAccessException("Fail during QueryIBE:" + e.getMessage(), e);
+        }
+    }
+
+    private void addAddtlMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
         try {
             String mission = request.getParam(MISSION);
@@ -132,7 +137,7 @@ public class QueryIBE extends IpacTablePartProcessor {
 
         }
         catch (Exception ignored) {
-            LOGGER.error(ignored,"Error ignored");
+            Logger.getLogger().error(ignored,"Error ignored");
         }
     }
 
