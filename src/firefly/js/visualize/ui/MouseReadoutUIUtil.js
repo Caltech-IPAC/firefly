@@ -140,7 +140,7 @@ export function getFluxInfo(sndReadout){
     }
 
     const fluxArray= fluxObj.map( ({value,unit,title,precision}) => {
-        let fluxValue= '';
+        let fluxValue= value;
         if (!isNaN(value )) {
             const min = Number('0.'+'0'.repeat(precision-1)+'1');
             fluxValue = (Math.abs(value) < 1000  &&Math.abs(value)>min ) ?
@@ -148,6 +148,7 @@ export function getFluxInfo(sndReadout){
                 value.toExponential(6).replace('e+', 'E');
             if (unit && !isNaN(value)) fluxValue+= ` ${unit}`;
         }
+
         return {value: fluxValue, label: title};
     });
 

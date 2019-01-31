@@ -227,8 +227,8 @@ public class PixelValue {
 		fits_file.seek(file_pointer);
         file_value = fits_file.readFloat();
 		retval = file_value * bscale + bzero;
-		if (Double.isNaN(retval))
-		    throw new PixelValueException("No flux available");
+		/*if (Double.isNaN(retval))
+		    throw new PixelValueException("No flux available");*/
 		break;
 	    case -64:
 		bytes_per_pixel = 8;
@@ -242,8 +242,8 @@ public class PixelValue {
 		    "  bscale = " + bscale + "  bzero = " + bzero +
 		    "  retval = " + retval);
 		*/
-		if (Double.isNaN(retval))
-		    throw new PixelValueException("No flux available");
+		/*if (Double.isNaN(retval))
+		    throw new PixelValueException("No flux available");*/
 		break;
 	    default:
 		retval = Double.NaN;
@@ -252,8 +252,8 @@ public class PixelValue {
 
 
        // if we are a palomar fits file then to special things to it.
-    if (header.getStringHeader(ImageHeader.ORIGIN).startsWith(ImageHeader.PALOMAR_ID) &&
-                            !Double.isNaN(file_value)) {
+    if (header.getStringHeader(ImageHeader.ORIGIN).startsWith(ImageHeader.PALOMAR_ID)  ) {
+
         if (header.containsKey(ImageHeader.AIRMASS) &&
             header.containsKey(ImageHeader.EXTINCT) &&
             header.containsKey(ImageHeader.IMAGEZPT) &&
@@ -263,8 +263,8 @@ public class PixelValue {
             double extinct= header.getDoubleHeader(ImageHeader.EXTINCT);
             double imagezpt= header.getDoubleHeader(ImageHeader.IMAGEZPT);
             double exptime= header.getDoubleHeader(ImageHeader.EXPTIME);
-            retval = -2.5 * .43429 * Math.log(file_value / exptime) +
-                    imagezpt + extinct * airmass;
+            retval = !Double.isNaN(file_value)?  -2.5 * .43429 * Math.log(file_value / exptime) +
+                    imagezpt + extinct * airmass:Double.NaN;
 
         }
 
