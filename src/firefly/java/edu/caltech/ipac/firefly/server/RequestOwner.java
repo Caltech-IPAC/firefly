@@ -250,6 +250,7 @@ public class RequestOwner implements Cloneable {
         action.setValue(userInfo.getInstitute(), "institute");
         if (getSsoAdapter() != null) {
             action.setValue(getSsoAdapter().getLoginUrl(""), "login_url");
+            action.setValue(getSsoAdapter().getLogoutUrl(""), "logout_url");
         }
         ServerEventManager.fireAction(action);
     }

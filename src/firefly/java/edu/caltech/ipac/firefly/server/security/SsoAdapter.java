@@ -69,6 +69,7 @@ public interface SsoAdapter {
 
     default String getLoginUrl(String backTo) {return null;}
 
+    default String getLogoutUrl(String backTo) {return null;}
     /**
      * set the require info to identify the current logged in user
      * when making an http request to external services.
