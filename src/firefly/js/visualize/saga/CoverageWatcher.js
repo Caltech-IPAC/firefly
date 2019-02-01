@@ -512,7 +512,7 @@ function hasCorners(options, table) {
     const cornerColumns= options.getCornersColumns(table);
     if (isEmpty(cornerColumns)) return false;
     const dataCnt= table.tableData.data.reduce( (tot, row) =>
-        cornerColumns.every( (cDef) => row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? 1 : 0
+        cornerColumns.every( (cDef) => row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? tot+1 : tot
     ,0);
     return dataCnt/table.tableData.data.length > .1;
 }
