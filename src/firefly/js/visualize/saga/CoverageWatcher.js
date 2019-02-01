@@ -508,7 +508,14 @@ function getCoverageType(options,table) {
     return options.coverageType;
 }
 
-const hasCorners= (options, table) =>!isEmpty(options.getCornersColumns(table));
+function hasCorners(options, table) {
+    const cornerColumns= options.getCornersColumns(table);
+    if (isEmpty(cornerColumns)) return false;
+    const dataCnt= table.tableData.data.reduce( (tot, row) =>
+        cornerColumns.every( (cDef) => row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? tot+1 : tot
+    ,0);
+    return dataCnt/table.tableData.data.length > .1;
+}
 
 function toAngle(d, radianToDegree)  {
     const v= Number(d);
@@ -523,14 +530,19 @@ function getPtAryFromTable(options,table, usesRadians){
     const cDef= options.getCenterColumns(table);
     if (isEmpty(cDef)) return [];
     const {lonIdx,latIdx,csys}= cDef;
-    return table.tableData.data.map( (row) => makePt(row[lonIdx], row[latIdx], csys, usesRadians) );
+    return table.tableData.data
+        .map( (row) =>
+            (row[lonIdx]!=='' && row[latIdx]!=='') ? makePt(row[lonIdx], row[latIdx], csys, usesRadians) : undefined )
+        .filter( (v) => v);
 }
 
 function getBoxAryFromTable(options,table, usesRadians){
     const cDefAry= options.getCornersColumns(table);
     return table.tableData.data
         .map( (row) => cDefAry
-            .map( (cDef) => makeWorldPt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys)) );
+            .map( (cDef) =>
+                (row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? makePt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, usesRadians) : undefined))
+        .filter( (row) => row.every( (v) => v));
 }
 
 /**

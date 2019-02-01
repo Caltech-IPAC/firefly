@@ -15,24 +15,26 @@ const titleStyle= {
     display : 'inline-block',
     verticalAlign: 'top'
 };
+const makeSpan= (w) => <span style={{paddingLeft: `${w}px`}}/>;
+const defaultExamples = <div style={exDivStyle}>
+    {makeSpan(5)} 'm81' {makeSpan(15)} 'ngc 18' {makeSpan(15)}  '12.34 34.89'  {makeSpan(15)} '46.53 -0.251 gal'
+    <br />
+    {makeSpan(5)}'19h17m32s 11d58m02s equ j2000' {makeSpan(5)}  '12.3 8.5 b1950'
+</div>;
 
-
-export function TargetFeedback ({showHelp, feedback, style={}}) {
+export function TargetFeedback ({showHelp, feedback, style={}, examples={}}) {
     let retval;
+    examples =  Object.assign({},defaultExamples, examples);
     style = Object.assign({}, topDivStyle, style);
     if (showHelp) {
-        const makeSpan= (w) => <span style={{paddingLeft: `${w}px`}}/>;
+
         retval= (
             <div  style={style}>
                 <div >
                     <div style={titleStyle}>
                         <i>Examples: </i>
                     </div>
-                    <div style={exDivStyle}>
-                        {makeSpan(5)} 'm81' {makeSpan(15)} 'ngc 13' {makeSpan(15)}  '12.34 34.89'  {makeSpan(15)} '46.53 -0.251 gal'
-                        <br />
-                        {makeSpan(5)}'19h17m32s 11d58m02s equ j2000' {makeSpan(5)}  '12.3 8.5 b1950'
-                    </div>
+                    {examples}
                 </div>
             </div>
         );
