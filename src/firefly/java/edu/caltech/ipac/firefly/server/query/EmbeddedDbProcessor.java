@@ -521,7 +521,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                                                                         owner.getEventChannel(), owner.getUserKey());
         SHORT_TASK_EXEC.submit(() -> {
             enumeratedValuesCheck(dbFile, results, treq);
-            DataGroup updates = new DataGroup("updates", results.getData().getDataDefinitions());
+            DataGroup updates = new DataGroup(null, results.getData().getDataDefinitions());
             updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
 
             FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, JsonTableUtil.toJsonDataGroup(updates));
