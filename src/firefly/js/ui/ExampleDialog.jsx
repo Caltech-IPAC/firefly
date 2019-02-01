@@ -312,7 +312,18 @@ class FieldGroupTest extends PureComponent {
 
 // initValues={{extraData:'asdf'}}
 
+const makeSpan= (w) => <span style={{paddingLeft: `${w}px`}}/>;
 
+/*
+    If you want to see the examples back to default, just replace this with ={}
+ */
+const defaultExamples = <div style={{display : 'inline-block'}}>
+    {makeSpan(5)} 'M17' {makeSpan(15)} 'NGC6946' {makeSpan(15)}  '141.607 -47.347 gal'
+    <br />
+    {makeSpan(15)} '46.53 -0.251 gal' {makeSpan(5)}'12h34m27.0504s +2d11m17.304s Equ J2000'
+    <br />
+    {makeSpan(5)}  '20h27m36.3467s +40d01m21.649s Equ B1950'
+</div>;
 
 function FieldGroupTestView ({fields}) {
 
@@ -330,7 +341,7 @@ function FieldGroupTestView ({fields}) {
         <FieldGroup style= {{padding:5}} groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}}
                     reducerFunc={exDialogReducer} keepState={true}>
             <InputGroup labelWidth={110}>
-                <TargetPanel/>
+                <TargetPanel examples={defaultExamples} />
                 <SuggestBoxInputField
                     fieldKey='suggestion1'
                     initialState= {{
