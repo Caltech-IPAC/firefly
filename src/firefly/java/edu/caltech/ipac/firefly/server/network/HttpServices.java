@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static org.apache.commons.httpclient.params.HttpMethodParams.USER_AGENT;
 
 
@@ -99,6 +100,7 @@ public class HttpServices {
      */
     public static Status getData(String url, HttpServiceInput input, Handler handler) {
         try {
+            url = isEmpty(url) && input != null ? input.getRequestUrl() : url;
             HttpMethod method = executeMethod(new GetMethod(url), input, handler);
             return Status.getStatus(method);
         } catch (IOException e) {
@@ -124,6 +126,7 @@ public class HttpServices {
 
     public static Status postData(String url, HttpServiceInput input, Handler handler) {
         try {
+            url = isEmpty(url) && input != null ? input.getRequestUrl() : url;
             HttpMethod method = executeMethod(new PostMethod(url), input, handler);
             return Status.getStatus(method);
         } catch (IOException e) {
@@ -272,7 +275,7 @@ public class HttpServices {
 //====================================================================
 
     private static void handleAuth(HttpClient client, HttpMethod method, String userId, String password) {
-        if (!StringUtils.isEmpty(userId)) {
+        if (!isEmpty(userId)) {
             UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(userId, password);
             client.getState().setCredentials(AuthScope.ANY, credentials);
         } else {
@@ -326,7 +329,7 @@ public class HttpServices {
                 }
             }
         } else {
-            if (StringUtils.isEmpty(method.getQueryString())) {
+            if (isEmpty(method.getQueryString())) {
                 if (params != null && params.size() > 0) {
                     List<NameValuePair> args = new ArrayList<>();
                     params.entrySet().stream()

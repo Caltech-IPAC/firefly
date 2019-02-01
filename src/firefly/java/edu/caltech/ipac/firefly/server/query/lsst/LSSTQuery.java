@@ -92,7 +92,7 @@ public abstract class LSSTQuery extends EmbeddedDbProcessor {
         _log.briefDebug("Executing SQL query: " + sql);
         File file = createTempFile(request, ".json");
 
-        HttpServiceInput inputs = HttpServiceInput.createWithCredential();
+        HttpServiceInput inputs = HttpServiceInput.createWithCredential(getDbservURL());
         inputs.setHeader("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();

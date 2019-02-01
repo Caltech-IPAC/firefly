@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.security;
 
 import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -11,7 +12,10 @@ import org.apache.http.HttpResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -81,6 +85,26 @@ public interface SsoAdapter {
 // convenience factory methods
 //====================================================================
 
+    static boolean requireAuthCredential(String reqUrl, String... reqAuthHosts) {
+        if (!isEmpty(reqUrl)) {
+            try {
+                String reqHost = new URL(ServerContext.resolveUrl(reqUrl)).getHost().toLowerCase();
+                String host = ServerContext.getRequestOwner().getHostUrl();
+                if (reqHost.equals(host.toLowerCase())) {
+                    return true;
+                } else if(reqAuthHosts != null) {
+                    for (String domain : reqAuthHosts) {
+                        if (domain != null && reqHost.endsWith(domain.trim().toLowerCase())) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (MalformedURLException e) {
+                // ignore..
+            }
+        }
+        return false;
+    }
 
     static SsoAdapter getAdapter() {
         String byClz = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");

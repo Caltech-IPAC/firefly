@@ -62,7 +62,8 @@ public class PtfIbeResolver {
     public String[] getValuesFromColumn(long pid[], String colName) throws IOException {
         File tempFile = getTempFile();
         try {
-            URLConnection aconn = URLDownload.makeConnection(createURL(pid), getAddtlInputs().getCookies(), getAddtlInputs().getHeaders(), false);
+            URL url = createURL(pid);
+            URLConnection aconn = URLDownload.makeConnection(url, getAddtlInputs(url.toString()).getCookies(), getAddtlInputs(url.toString()).getHeaders(), false);
             aconn.setRequestProperty("Accept", "*/*");
             URLDownload.getDataToFile(aconn, tempFile);
         } catch (Exception e) {
@@ -109,8 +110,8 @@ public class PtfIbeResolver {
         return f;
     }
 
-    private HttpServiceInput getAddtlInputs() {
+    private HttpServiceInput getAddtlInputs(String url) {
         if(isTestMode) return new HttpServiceInput();//or overwrite in test unit
-        return HttpServiceInput.createWithCredential();
+        return HttpServiceInput.createWithCredential(url);
     }
 }

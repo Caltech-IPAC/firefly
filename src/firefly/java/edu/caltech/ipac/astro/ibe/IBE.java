@@ -164,7 +164,7 @@ public class IBE {
                 plotId = sourceParams.get("plotId");
             }
 
-            HttpServiceInput addtlInfo = HttpServiceInput.createWithCredential();
+            HttpServiceInput addtlInfo = HttpServiceInput.createWithCredential(url.toString());
 
             return URLFileInfoProcessor.retrieveViaURL(url, dir, progressKey, plotId, null, addtlInfo);
         } catch (DataAccessException e) {

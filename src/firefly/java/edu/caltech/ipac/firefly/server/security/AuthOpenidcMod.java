@@ -88,7 +88,9 @@ public class AuthOpenidcMod implements SsoAdapter {
     public void setAuthCredential(HttpServiceInput inputs) {
         Token token = getAuthToken();
         if (token != null && token.getId() != null) {
-            inputs.setHeader("Authorization", "Bearer " + token.getId());
+            if (SsoAdapter.requireAuthCredential(inputs.getRequestUrl(), null)) {
+                inputs.setHeader("Authorization", "Bearer " + token.getId());
+            }
         }
     }
 

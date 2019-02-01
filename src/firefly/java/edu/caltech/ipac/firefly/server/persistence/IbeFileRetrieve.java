@@ -52,8 +52,6 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
             if (ofile == null ||  ofile.getSizeInBytes() == 0) {
                 return null;
             } else {
-                HttpServiceInput requestInfo = HttpServiceInput.createWithCredential();
-                ofile.setRequestInfo(requestInfo);
                 ofile.addRelatedDataList( findRelatedDataList(request));
                 return ofile;
             }

@@ -83,7 +83,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void downloadFile(URL url, File outFile) throws IOException, EndUserException {
         URLConnection conn = null;
         try {
-            HttpServiceInput inputs = HttpServiceInput.createWithCredential();
+            HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
             conn = URLDownload.makeConnection(url, inputs.getCookies(), inputs.getHeaders(), false);
             conn.setRequestProperty("Accept", "*/*");
             URLDownload.getDataToFile(conn, outFile);

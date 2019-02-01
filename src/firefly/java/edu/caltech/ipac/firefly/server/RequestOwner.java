@@ -90,7 +90,7 @@ public class RequestOwner implements Cloneable {
             if (userInfo.isGuestUser()) {
                 wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(getUserKey()));
             } else {
-                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userInfo.getLoginName(), HttpServiceInput.createWithCredential().getCookies()));
+                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userInfo.getLoginName()));
             }
         }
         return wsManager;

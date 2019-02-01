@@ -21,12 +21,21 @@ import java.util.stream.Collectors;
  * @version $Id: $
  */
 public class HttpServiceInput implements Cloneable{
+    private String requestUrl;
     private Map<String, String> params;
     private Map<String, String> headers;
     private Map<String, String> cookies;
     private Map<String, File> files;
     private String userId;
     private String passwd;
+
+    public String getRequestUrl() {
+        return requestUrl;
+    }
+
+    public void setRequestUrl(String requestUrl) {
+        this.requestUrl = requestUrl;
+    }
 
     public String getUserId() {
         return userId;
@@ -141,7 +150,12 @@ public class HttpServiceInput implements Cloneable{
 //====================================================================
 
     public static HttpServiceInput createWithCredential() {
+        return createWithCredential(null);
+    }
+
+    public static HttpServiceInput createWithCredential(String requestUrl) {
         HttpServiceInput input = new HttpServiceInput();
+        input.setRequestUrl(requestUrl);
         SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
         if (ssoAdapter != null) {
             ssoAdapter.setAuthCredential(input);

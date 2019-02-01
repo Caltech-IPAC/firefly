@@ -241,10 +241,12 @@ public class JOSSOAdapter implements SsoAdapter {
     public void setAuthCredential(HttpServiceInput inputs) {
         RequestAgent http = ServerContext.getRequestOwner().getRequestAgent();
         if(http!=null){
-            for (String name : ID_COOKIE_NAMES) {
-                String value = http.getCookieVal(name);
-                if (!isEmpty(value)) {
-                    inputs.setCookie(name, value);
+            if (SsoAdapter.requireAuthCredential(inputs.getRequestUrl(), "ipac.caltech.edu")) {
+                for (String name : ID_COOKIE_NAMES) {
+                    String value = http.getCookieVal(name);
+                    if (!isEmpty(value)) {
+                        inputs.setCookie(name, value);
+                    }
                 }
             }
         }

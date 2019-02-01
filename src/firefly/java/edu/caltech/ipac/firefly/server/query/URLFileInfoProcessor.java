@@ -38,7 +38,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
         HttpServiceInput addtlInfo = null;
 
         if (identityAware()) {
-            addtlInfo = HttpServiceInput.createWithCredential();
+            addtlInfo = HttpServiceInput.createWithCredential(url.toString());
         }
 
 

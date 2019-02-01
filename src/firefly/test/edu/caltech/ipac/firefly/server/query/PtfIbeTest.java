@@ -38,11 +38,6 @@ public class PtfIbeTest extends ConfigTest {
             protected File getTempFile() throws IOException {
                 return f;
             }
-
-            @Override
-            public Map<String, String> getCookies() {
-                return null;
-            }
         };
         String[] fs = res.getValuesFromColumn(pids, "pfilename");
 

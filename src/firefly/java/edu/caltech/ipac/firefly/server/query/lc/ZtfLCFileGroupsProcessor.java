@@ -128,13 +128,13 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
                 logger.briefInfo("cutout url: " + url);
                 // strip out filename when using file resolver
                 fi = new FileInfo(url, extName, 0);
+                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
             } else {
                 String url = baseUrl + fName;
                 fi = new FileInfo(url, extName,0);
+                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
             }
             if (fi != null) {
-                HttpServiceInput requestInfo = HttpServiceInput.createWithCredential();
-                fi.setRequestInfo(requestInfo);
                 fiArr.add(fi);
                 fgSize += fi.getSizeInBytes();
             }

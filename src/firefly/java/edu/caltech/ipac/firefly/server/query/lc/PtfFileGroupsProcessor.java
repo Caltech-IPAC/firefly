@@ -131,13 +131,13 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
 //                }
 
                 fi = new FileInfo(url, extName, 0);
+                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
             } else {
                 String url = baseUrl + fileName;
                 fi = new FileInfo(url, extName, 0);
+                fi.setRequestInfo(HttpServiceInput.createWithCredential(url));
             }
             if (fi != null) {
-                HttpServiceInput requestInfo = HttpServiceInput.createWithCredential();
-                fi.setRequestInfo(requestInfo);
                 fiArr.add(fi);
                 fgSize += fi.getSizeInBytes();
             }
