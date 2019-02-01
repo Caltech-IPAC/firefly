@@ -31,7 +31,7 @@ class TargetPanelView extends PureComponent {
 
     render() {
         const {showHelp, feedback, valid, message, onChange, value,
-            labelWidth, children, resolver, feedbackStyle, label= LABEL_DEFAULT}= this.props;
+            labelWidth, children, resolver, feedbackStyle, examples, label= LABEL_DEFAULT}= this.props;
         let positionField = (<InputFieldView
                                 valid={valid}
                                 visible= {true}
@@ -61,7 +61,7 @@ class TargetPanelView extends PureComponent {
                         wrapperStyle={{}}
                     />
                 </div>
-                <TargetFeedback {...{showHelp, feedback, style:feedbackStyle}}/>
+                <TargetFeedback {...{showHelp, feedback, style:feedbackStyle, examples}}/>
             </div>
         );
     }
@@ -75,6 +75,7 @@ TargetPanelView.propTypes = {
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
     feedback: PropTypes.string.isRequired,
+    examples: PropTypes.object,
     resolver: PropTypes.string.isRequired,
     message: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
