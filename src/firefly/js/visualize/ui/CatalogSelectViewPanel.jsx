@@ -224,8 +224,13 @@ export function validateSql(sqlTxt) {
     //const filterInfoCls = FilterInfo.parse(sql);
     //return filterInfoCls.serialize();//sql.replace(';',' AND ');
     // Check that text area sql doesn't starts with 'AND', if needed, update the value without
-    if (sqlTxt.toLowerCase().indexOf('and') === 0) { // text sql starts with and, but and will be added if constraints is added to any column already, so remove here if found
+    if (sqlTxt.toLowerCase().indexOf('and') === 0) {
+        // text sql starts with AND, but AND will be added if constraints is added to any column already, so remove here if found
         sqlTxt = sqlTxt.substring(3, sqlTxt.length).trim();
+    }
+    if (sqlTxt.toLowerCase().indexOf('where') === 0) {
+        // text sql starts with WHERE, but WHERE will be added automatically
+        sqlTxt = sqlTxt.substring(5, sqlTxt.length).trim();
     }
     if (sqlTxt.toLowerCase().lastIndexOf('and') === sqlTxt.length - 3) {
         sqlTxt = sqlTxt.substring(0, sqlTxt.length - 3).trim();
