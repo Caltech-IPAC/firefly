@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Select, {components} from 'react-select';
 import {truncate} from 'lodash';
 import LOADING from 'html/images/gxt/loading.gif';
-import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 
 import {fieldGroupConnector} from '../FieldGroupConnector';
 
@@ -68,15 +67,12 @@ const groupStyles = {
 
 
 function formatGroupLabel(data) {
+    // display group label with the number of items
+    // alternatively, we can use custom menu component or menu list header instead of group
     return (
         <div style={groupStyles}>
-            <span>{data.label}: {data.options.length}</span>
-            <span style={{cursor:'pointer'}}
-                 title={'TODO: Browse as a table'}
-                 onClick={() => {
-                 }}>
-                <img src={MAGNIFYING_GLASS}/>
-            </span>
+            <span>{data.options.length} {data.label} </span>
+            <span>(todo: browser)</span>
         </div>
     );
 }
