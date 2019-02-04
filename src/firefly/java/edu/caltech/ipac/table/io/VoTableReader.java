@@ -368,22 +368,37 @@ public class VoTableReader {
             getTableElements(top, tableAry);
 
             if (tableAry.size() == 0) {
-                // check for errors: section 4.4 of http://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html
-                VOElement[] resources = getResourceChildren(top);
-                for (VOElement r : resources) {
-                    if ("results".equals(r.getAttribute("type"))) {
-                        VOElement[] infos = r.getChildrenByName("INFO");
-                        for (VOElement info : infos) {
-                            if ("QUERY_STATUS".equals(info.getName()) && "ERROR".equals(info.getAttribute("value"))) {
-                                throw new DataAccessException(info.getTextContent());
-                            }
-                        }
-                    }
-                }
+                checkForErrors(top);
             }
         }
 
         return tableAry;
+    }
+
+    private static void checkForErrors(VOElement top) throws DataAccessException {
+        // check for errors: section 4.4 of http://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html
+        VOElement[] resources = getResourceChildren(top);
+        for (VOElement r : resources) {
+            if ("results".equals(r.getAttribute("type"))) {
+                VOElement[] infos = r.getChildrenByName("INFO");
+                for (VOElement info : infos) {
+                    if ("QUERY_STATUS".equals(info.getName()) &&
+                            "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
+                        throw new DataAccessException(info.getTextContent());
+                    }
+                }
+            }
+        }
+        // workaround for misplaced INFO attributes with errors
+        VOElement[] infos = top.getChildrenByName( "INFO" );
+        String [] namesWithMisspelling = {"QUERY_STATUS","QUERY STATUS"};
+        for (VOElement info : infos) {
+            String name = info.getName();
+            if (Arrays.asList(namesWithMisspelling).contains(name)
+                    && "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
+                throw new DataAccessException(info.getTextContent());
+            }
+        }
     }
 
     private enum MetaInfo {

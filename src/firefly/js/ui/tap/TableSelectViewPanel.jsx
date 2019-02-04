@@ -1,7 +1,7 @@
 import React, {PureComponent} from 'react';
-import Select from 'react-select';
+
 import CreatableSelect from 'react-select/lib/Creatable';
-import {get, pick, truncate} from 'lodash';
+import {get, pick} from 'lodash';
 import {FormPanel} from '../FormPanel.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
@@ -9,7 +9,6 @@ import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/Fi
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
-import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest} from '../../tables/TableRequestUtil.js';
 import {getColumnValues, onTableLoaded, getTblById} from '../../tables/TableUtil.js';
@@ -20,6 +19,7 @@ import {validateSql} from '../../visualize/ui/CatalogSelectViewPanel.jsx';
 import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
 import {loadTapTables, loadTapSchemas} from './TapUtil.js';
+import {NameSelect, NameSelectField, selectTheme} from './Select.jsx';
 import {showYesNoPopup} from '../PopupUtil.jsx';
 
 import './TableSelectViewPanel.css';
@@ -60,7 +60,7 @@ export class TapSearchPanel extends PureComponent {
         const {serviceUrl, freeForm} = this.state;
 
         // keep all tabs the same size
-        const tabWrapper = {padding:5, minWidth:1100, minHeight:100};
+        const tabWrapper = {padding:5, width:1100, minHeight:100};
 
         const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
 
@@ -74,6 +74,7 @@ export class TapSearchPanel extends PureComponent {
                         isClearable={true}
                         onChange={this.onTapServiceOptionSelect}
                         placeholder={placeholder}
+                        theme={selectTheme}
                     />
                 </div>
                 <FormPanel
@@ -140,14 +141,13 @@ export class TapSearchPanel extends PureComponent {
 }
 
 
-
-
-
 function getTapBrowserState() {
     const tapBrowserState = getComponentState(componentKey);
     const {schemaOptions, schemaName, tableOptions, tableName} = tapBrowserState || {};
     return {error: undefined, schemaOptions, schemaName, tableOptions, tableName};
 }
+
+
 
 class TapSchemaBrowser extends PureComponent {
     constructor(props) {
@@ -178,6 +178,7 @@ class TapSchemaBrowser extends PureComponent {
         dispatchComponentStateChange(componentKey,
             {serviceUrl: this.props.serviceUrl, schemaOptions, schemaName, tableOptions, tableName});
     }
+
     
     render() {
         const {serviceUrl} = this.props;
@@ -193,48 +194,36 @@ class TapSchemaBrowser extends PureComponent {
                 'QUERY=SELECT+column_name,description,unit,datatype,ucd,utype,principal+' +
                 'FROM+TAP_SCHEMA.columns+WHERE+table_name+like+\'' + tableName + '\'';
         }
+
         // need to set initialState on list fields so that the initial value that is not the first index
         // is set correctly after unmount and mount
         return (
             <div>
                 <div className={'taptablepanel'}>
                     <div className='tableselectors'>
-                        {schemaOptions &&
-                        <ListBoxInputField key='schemaList'
-                                           fieldKey='schemaName'
-                                           options={schemaOptions}
-                                           value={schemaName}
-                                           initialState={{value: schemaName}}
-                                           onChange={(ev) => {
-                                               const selectedTapSchema = ev.target.value;
-                                               this.loadTables(serviceUrl, selectedTapSchema);
-                                           }}
-                                           multiple={false}
-                                           tooltip='TAP Schema'
-                                           label='TAP Schema:'
-                                           labelWidth={80}
-                                           wrapperStyle={{paddingBottom: 2}}
-                        />}
-                        {tableOptions &&
-                        <ListBoxInputField  key='tableList'
-                                            fieldKey='tableName'
-                                            options={tableOptions}
-                                            value={tableName}
-                                            initialState={{value: tableName}}
-                                            onChange={(ev) => {
-                                                const selectedTapTable = ev.target.value;
-                                                const columnsTblId = getTblId(selectedTapTable);
-                                                onTableLoaded(getTblId(selectedTapTable)).then( () => {
-                                                     this.setState({columnsModel: getTblById(columnsTblId)});
-                                                });
-                                                this.setState({tableOptions, tableName: selectedTapTable, columnsModel: undefined});
-                                            }}
-                                            multiple={false}
-                                            tooltip='TAP Table'
-                                            label='TAP Table:'
-                                            labelWidth={80}
-                                            wrapperStyle={{paddingBottom: 2}}
-                        />}
+                        <div style={{width: 400}}>
+                            <NameSelect type='Schema'
+                                        options={schemaOptions}
+                                        value={schemaName}
+                                        onSelect = {(selectedTapSchema) => {
+                                            this.loadTables(serviceUrl, selectedTapSchema);
+                                        }}
+                            />
+                            <div style={{height: 5}}/>
+                            <NameSelectField
+                                fieldKey='tableName'
+                                type='Table'
+                                options={tableOptions}
+                                value={tableName}
+                                onSelect = {(selectedTapTable) => {
+                                    const columnsTblId = getTblId(selectedTapTable);
+                                    onTableLoaded(getTblId(selectedTapTable)).then( () => {
+                                        this.setState({columnsModel: getTblById(columnsTblId)});
+                                    });
+                                    this.setState({tableOptions, tableName: selectedTapTable, columnsModel: undefined});
+                                }}
+                            />
+                        </div>
                     </div>
                     <div className='searchmethods'>
                         {columnsModel &&
@@ -262,8 +251,13 @@ class TapSchemaBrowser extends PureComponent {
 
     loadSchemas(serviceUrl, schemaName=undefined, tableName=undefined) {
         this.setState({error: undefined, schemaOptions: undefined, schemaName: undefined, tableOptions: undefined, tableName: undefined});
+        dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapSchemas(serviceUrl).then((tableModel) => {
+            if (this.props.serviceUrl !== serviceUrl) {
+                // no action if another TAP service is now used
+                return;
+            }
             if (tableModel.error) {
                 this.setState({error: tableModel.error});
             } else {
@@ -273,22 +267,29 @@ class TapSchemaBrowser extends PureComponent {
                 if (schemas.length > 0) {
                     if (!schemaName || !schemas.includes(schemaName)) { schemaName = schemas[0]; }
                     this.loadTables(serviceUrl, schemaName, tableName);
+                } else {
+                    schemaName = undefined;
                 }
 
                 const schemaOptions = schemas.map((e, i) => {
-                    let label = schemaDescriptions[i] ? `[${e}] ${schemaDescriptions[i]}` : `[${e}]`;
-                    label = truncate(label, {length: 50});
+                    const label = schemaDescriptions[i] ? schemaDescriptions[i] : `[${e}]`;
                     return {label, value: e};
                 });
-                this.setState({schemaOptions, schemaName});
+
+                if (this.iAmMounted) this.setState({schemaOptions, schemaName});
             }
         });
     }
 
     loadTables(serviceUrl, schemaName, tableName) {
         this.setState({schemaName, tableOptions: undefined, tableName: undefined});
+        dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapTables(serviceUrl, schemaName).then((tableModel) => {
+            if (this.props.serviceUrl !== serviceUrl || this.state.schemaName !== schemaName) {
+                // no action if another TAP service or schema are now used
+                return;
+            }
             if (!tableModel.error) {
                 const tables = getColumnValues(tableModel, 'table_name');
                 const tableDescriptions = getColumnValues(tableModel, 'description');
@@ -298,15 +299,15 @@ class TapSchemaBrowser extends PureComponent {
                 }
 
                 const tableOptions = tables.map((e, i) => {
-                    let label = tableDescriptions[i] ? `[${e}] ${tableDescriptions[i]}` : `[${e}]`;
-                    label = truncate(label, {length: 50});
+                    const label = tableDescriptions[i] ? tableDescriptions[i] : `[${e}]`;
                     return {label, value: e};
                 });
                 const columnsTblId = getTblId(tableName);
                 onTableLoaded(columnsTblId).then( () => {
-                    this.setState({columnsModel: getTblById(columnsTblId)});
+                    if (this.iAmMounted) this.setState({columnsModel: getTblById(columnsTblId)});
                 });
-                this.setState({tableOptions, tableName, columnsModel: undefined});
+                if (this.iAmMounted) this.setState({serviceUrl, tableOptions, tableName, columnsModel: undefined});
+                dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: tableName});
             }
 
         });
@@ -315,13 +316,11 @@ class TapSchemaBrowser extends PureComponent {
 }
 
 
-
 function hideSearchPanel() {
     dispatchHideDropDown();
 }
 
 function onSearchSubmit(request,serviceUrl) {
-    console.log(request);
     const isADQL = (request.tabs === 'adql');
     let adql = undefined;
     let title = undefined;
@@ -380,7 +379,7 @@ function getAdqlQuery() {
 
     if (tableconstraints) {
         if (tableconstraints.constraints.length > 0) {
-            constraints += (addAnd ? ' AND ' : '') + tableconstraints.constraints;
+            constraints += (addAnd ? ' AND ' : '') + addParens(tableconstraints.constraints);
             addAnd = true;
         }
         const colsSearched = tableconstraints.selcols.lastIndexOf(',') > 0 ? tableconstraints.selcols.substring(0, tableconstraints.selcols.lastIndexOf(',')) : tableconstraints.selcols;
@@ -391,7 +390,7 @@ function getAdqlQuery() {
 
     const sqlTxt = get(FieldGroupUtils.getGroupFields(gkey), ['txtareasql', 'value'], '').trim();
     if (sqlTxt && sqlTxt.length > 0) {
-        constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
+        constraints += (addAnd ? ' AND ' : '') + addParens(validateSql(sqlTxt));
     }
     if (constraints) {
         constraints = `WHERE ${constraints}`;
@@ -401,11 +400,24 @@ function getAdqlQuery() {
     return `SELECT TOP 10000 ${selcols} FROM ${tableName} ${constraints}`;
 }
 
+/**
+ * Some TAP services require conditions to be surrounded by parens
+ * @param condition
+ */
+function addParens(condition) {
+    return '(' + condition + ')';
+}
+
 const TAP_SERVICES = [
     {
         label: 'IRSA https://irsa.ipac.caltech.edu/TAP',
         value: 'https://irsa.ipac.caltech.edu/TAP',
         query: 'SELECT * FROM fp_psc WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,1.0))=1'
+    },
+    {
+        label: 'LSST PDAC https://lsst-lspdev.ncsa.illinois.edu/tap',
+        value: 'https://lsst-lspdev.ncsa.illinois.edu/tap',
+        query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
     },
     {
         label: 'GAIA http://gea.esac.esa.int/tap-server/tap',
