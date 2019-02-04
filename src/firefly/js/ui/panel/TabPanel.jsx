@@ -123,17 +123,19 @@ export class Tabs extends PureComponent {
                 key: 'tab-' + (index)
             });
         });
-        const contentDiv = useFlex ? content :
-            (   <div style={{display: 'block', position: 'absolute', top:0, bottom:0, left:0, right:0}}>
-                    {content}
-                </div>
-            );
+
+        if (content) {
+            content = useFlex ? content : <div style={{display: 'block', position: 'absolute', top:0, bottom:0, left:0, right:0}}>{content}</div>;
+            content = borderless ? content : <div className='TabPanel__Content--inside'>{content}</div>;
+        }
+
         const contentClsName = borderless ? 'TabPanel__Content borderless' : 'TabPanel__Content';
+
         return (
             <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
                 <TabsHeader {...{resizable, headerStyle}}>{newChildren}</TabsHeader>
                 <div ref='contentRef' style={contentStyle} className={contentClsName}>
-                    {(content)?contentDiv:''}
+                    {(content) ? content : ''}
                 </div>
             </div>
 
