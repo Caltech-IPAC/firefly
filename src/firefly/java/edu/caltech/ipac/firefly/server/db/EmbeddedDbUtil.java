@@ -468,11 +468,9 @@ public class EmbeddedDbUtil {
 
             // apply defaults to decimal numbers...
             // TODO: this need to be revisited..  it's a workaround to the %.6f default later down in the code if format is not given.
-            if (!(type == String.class)) {
-                if (type == Double.class || type == Float.class) {
-                    int scale = Math.max(rsmd.getScale(i), type == Double.class ? 10 : 7);
-                    dt.setFormat("%." + scale + "e"); // double or float
-                }
+            if (type == Double.class || type == Float.class) {
+                int scale = Math.max(rsmd.getScale(i), type == Double.class ? 10 : 7);
+                dt.setPrecision("e" + scale); // double or float
             }
             cols.add(dt);
         }
