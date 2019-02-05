@@ -30,7 +30,7 @@ public class IbeTemplateProcessor extends SharedDbProcessor {
         try {
             String url = treq.getParam("url");
             ByteArrayOutputStream results = new ByteArrayOutputStream();
-            HttpServices.getData(url, results, HttpServiceInput.createWithCredential());
+            HttpServices.getData(url, results, HttpServiceInput.createWithCredential(url));
             return IpacTableReader.read(new StringInputStream(results.toString()));
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);

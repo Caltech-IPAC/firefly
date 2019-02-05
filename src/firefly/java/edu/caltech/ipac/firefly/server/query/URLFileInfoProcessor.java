@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
@@ -34,14 +35,14 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
         URL url= getURL(sr);
         String progressKey= sr.getParam(WebPlotRequest.PROGRESS_KEY);
         String plotId= sr.getParam(WebPlotRequest.PLOT_ID);
-        Map<String, String> identityCookies= null;
+        HttpServiceInput addtlInfo = null;
 
         if (identityAware()) {
-            identityCookies = ServerContext.getRequestOwner().getIdentityCookies();
+            addtlInfo = HttpServiceInput.createWithCredential(url.toString());
         }
 
 
-        return retrieveViaURL(url,null,progressKey,plotId,getFileExtension(),identityCookies );
+        return retrieveViaURL(url,null,progressKey,plotId,getFileExtension(),addtlInfo );
 
     }
 
@@ -62,7 +63,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
                                           String progressKey,
                                           String plotId,
                                           String fileExtension,
-                                          Map<String, String> identityCookies)
+                                          HttpServiceInput addtlInfo)
                                                  throws IOException, DataAccessException {
         FileInfo retval= null;
         try {
@@ -73,10 +74,9 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
             if (!StringUtils.isEmpty(fileExtension)) {
                 params.setLocalFileExtensions(Arrays.asList(fileExtension));
             }
-            if (identityCookies != null && identityCookies.size() > 0) {
-                for (String key : identityCookies.keySet()) {
-                    params.addCookie(key, identityCookies.get(key));
-                }
+
+            if (addtlInfo != null) {
+                params.setAddtlInfo(addtlInfo);
             }
             if (ServerContext.getRequestOwner().isAuthUser()) {
                 params.setLoginName(ServerContext.getRequestOwner().getUserInfo().getLoginName());

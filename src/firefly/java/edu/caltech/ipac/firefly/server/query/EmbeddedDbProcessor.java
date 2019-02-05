@@ -291,7 +291,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     protected File createTempFile(TableServerRequest request, String fileExt) throws IOException {
-        return File.createTempFile(request.getRequestId(), fileExt, ServerContext.getTempWorkDir());
+        return File.createTempFile(request.getRequestId(), fileExt, getTempDir());
     }
 
     public boolean doCache() {return false;}

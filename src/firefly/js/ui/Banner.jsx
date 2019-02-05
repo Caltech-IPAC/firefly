@@ -7,8 +7,6 @@ import PropTypes from 'prop-types';
 import {SimpleComponent} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
-import {getRootURL} from '../util/BrowserUtil.js';
-import {getProp} from '../util/WebUtil.js';
 import './Banner.css';
 
 
@@ -63,22 +61,21 @@ export class UserInfo extends SimpleComponent {
     }
 
     render() {
-        const logoutUri = getProp('sso_redirect_uri', '');
-
-        const {loginName='Guest', firstName, lastName, login_url} = this.state || {};
+        const {loginName='Guest', firstName, lastName, login_url, logout_url} = this.state || {};
         const isGuest = loginName === 'Guest';
         const onLogin = () => login_url && (window.location = login_url);
         const onLogout = () => {
-            if (logoutUri) {
-                window.location = `${getRootURL()}${logoutUri}?logout=${getRootURL()}`;
-            } else {
-                logout();
+            if (logout_url) {
+                window.location = logout_url;
             }
+            logout();
         };
+
+        const displayName = firstName || lastName ? `${firstName} ${lastName}` : loginName;
 
         return (
             <div className='banner__user-info'>
-                <span>{loginName}</span>
+                <span>{displayName}</span>
                 {!isGuest && <div className='banner__user-info--links' onClick={onLogout}>Logout</div>}
                 {isGuest && <div className='banner__user-info--links' onClick={onLogin}>Login</div>}
             </div>

@@ -7,8 +7,9 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
@@ -29,13 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Base class for LSSTCatalogSearch and LSSTLightCurveQuery
  */
-public abstract class LSSTQuery extends IpacTablePartProcessor {
+public abstract class LSSTQuery extends EmbeddedDbProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     // LSST DAX services are listed in https://confluence.lsstcorp.org/display/DM/DAX+service+URLs
@@ -87,29 +86,17 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
         }
     }
 
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        return loadDataFileImpl(request);
-    }
-
     DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
         String sql = "QUERY=" + URLEncoder.encode(buildSqlQueryString(request),"UTF-8");
         _log.briefDebug("Executing SQL query: " + sql);
-        File file = createFile(request, ".json");
-        Map<String, String> requestHeader=new HashMap<>();
-        requestHeader.put("Accept", "application/json");
+        File file = createTempFile(request, ".json");
 
-        // temporary changes for now until it's more clear what to do.
-        Map<String, String> idHeaders = ServerContext.getRequestOwner().getIdentityCookies();
-        if (idHeaders != null && idHeaders.size() > 0) {
-            idHeaders.forEach((key, value) -> {
-                requestHeader.put(key, value);
-                _log.debug("Is logged in with: " + key + ": " + value.substring(0, 20) + "...");
-            });
-        }
+        HttpServiceInput inputs = HttpServiceInput.createWithCredential(getDbservURL());
+        inputs.setHeader("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();
-        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(getDbservURL()),  sql,null,  requestHeader, file, null, timeout);
+        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(getDbservURL()),  sql, inputs.getCookies(), inputs.getHeaders(), file, null, timeout);
         _log.briefDebug("SQL query took " + (System.currentTimeMillis() - cTime) + "ms");
 
         if (fileData.getResponseCode() >= 400) {
@@ -260,8 +247,8 @@ public abstract class LSSTQuery extends IpacTablePartProcessor {
                 jsonMetaInfo = (JSONObject) new JSONParser().parse(lsstMetaStr);
             } catch (Exception e) {
                 jsonMetaInfo = new JSONObject();
-                LOGGER.error("Failed retrieving info from " + resource);
-                LOGGER.error(e);
+                _log.error("Failed retrieving info from " + resource);
+                _log.error(e);
             }
         }
         return jsonMetaInfo;

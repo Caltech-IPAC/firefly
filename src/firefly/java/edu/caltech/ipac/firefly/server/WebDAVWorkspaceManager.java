@@ -51,8 +51,8 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
      */
     private static final Namespace IRSA_NS = Namespace.getNamespace("irsa", "https://irsa.ipac.caltech.edu/namespace/");
     //TODO We might need to change those properties if we need to deal with 2 or more workspaces at the same time
-    private String WS_ROOT_DIR = AppProperties.getProperty("workspace.root.dir", "/work");
-    private String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
+    private static String WS_ROOT_DIR = AppProperties.getProperty("workspace.root.dir", "/work");
+    private static String WS_HOST_URL = AppProperties.getProperty("workspace.host.url", "https://irsa.ipac.caltech.edu");
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private WsCredentials creds;
@@ -97,7 +97,7 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
      * @param cred {@link WsCredentials}
      */
     public WebDAVWorkspaceManager(WsCredentials cred) {
-        this(((cred.getPassword()!=null) || (cred.getCookies() != null))?Partition.SSOSPACE:Partition.PUBSPACE, cred, true);
+        this(ServerContext.getRequestOwner().isAuthUser() ? Partition.SSOSPACE : Partition.PUBSPACE, cred, true);
     }
 
     public WebDAVWorkspaceManager(String pubspaceId) {
@@ -119,6 +119,9 @@ public class WebDAVWorkspaceManager implements WorkspaceManager {
     }
 
     public WebDAVWorkspaceManager(Partition partition, String wsId, Map<String, String> cookies, boolean initialize) {
+
+        cookies = HttpServiceInput.createWithCredential(WS_HOST_URL).getCookies();          // should look at this again.
+
         this.creds = new WsCredentials(wsId, cookies);
         this.partition = partition;
         this.userHome = WspaceMeta.ensureWsHomePath(wsId);

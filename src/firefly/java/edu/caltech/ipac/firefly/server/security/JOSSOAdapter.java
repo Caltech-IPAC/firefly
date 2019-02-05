@@ -8,10 +8,12 @@ import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.RequestAgent;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.http.HttpResponse;
 import org.josso.gateway.ws._1_2.protocol.AssertIdentityWithSimpleAuthenticationRequestType;
 import org.josso.gateway.ws._1_2.protocol.AssertIdentityWithSimpleAuthenticationResponseType;
 import org.josso.gateway.ws._1_2.protocol.AssertionNotValidErrorType;
@@ -46,6 +48,8 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 /**
  * Date: Mar 30, 2010
  *
@@ -72,7 +76,7 @@ public class JOSSOAdapter implements SsoAdapter {
      * @param token
      * @return
      */
-    public long checkSession(String token) {
+    private long checkSession(String token) {
 
         try {
             SSOSessionManager man = getIdSessLoc().getSSOSessionManagerSoap();
@@ -94,7 +98,7 @@ public class JOSSOAdapter implements SsoAdapter {
      * @param token
      * @return
      */
-    public RoleList getRoles(String token) {
+    private RoleList getRoles(String token) {
 
         RoleList roles = new RoleList();
         try {
@@ -154,7 +158,12 @@ public class JOSSOAdapter implements SsoAdapter {
         return old;
     }
 
-    public Token resolveAuthToken(String assertionKey) {
+    public Token resolveAuthToken(HttpServletRequest req) {
+        return resolveAuthToken(req.getParameter(JOSSO_ASSERT_ID));
+    }
+
+    private Token resolveAuthToken(String assertionKey) {
+
         if (assertionKey == null) return null;
         
         try {
@@ -172,9 +181,13 @@ public class JOSSOAdapter implements SsoAdapter {
         return null;
     }
 
-    public boolean logout(String token) {
+    public boolean logout() {
+        return logout(getAuthTokenId());
+    }
+
+    private boolean logout(String token) {
         try {
-            if (!StringUtils.isEmpty(token)) {
+            if (!isEmpty(token)) {
                 SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
                 idProv.globalSignoff(new GlobalSignoffRequestType(REQUESTER, token));
                 return true;
@@ -193,7 +206,7 @@ public class JOSSOAdapter implements SsoAdapter {
         return user;
     }
 
-    public String createSession(String name, String passwd) {
+    private String createSession(String name, String passwd) {
         try {
             SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
             AssertIdentityWithSimpleAuthenticationResponseType rval = idProv.assertIdentityWithSimpleAuthentication(
@@ -207,13 +220,9 @@ public class JOSSOAdapter implements SsoAdapter {
         return null;
     }
 
-    public String getAssertKey() {
-        return JOSSO_ASSERT_ID;
-    }
-
     public String getRequestedUrl(HttpServletRequest req) {
         String backTo = req.getParameter(JossoUtil.VERIFIER_BACK_TO);
-        if (StringUtils.isEmpty(backTo)) {
+        if (isEmpty(backTo)) {
             String path = req.getRequestURL().toString();
             backTo = path.substring(0, path.indexOf(req.getContextPath()));
             String qstr = req.getQueryString() == null ? "" : "?" + req.getQueryString();
@@ -225,37 +234,41 @@ public class JOSSOAdapter implements SsoAdapter {
         return backTo;
     }
 
-    public String makeAuthCheckUrl(String backTo) {
+    public String getLoginUrl(String backTo) {
         return JossoUtil.makeAuthCheckUrl(backTo);
     }
 
-    public Map<String, String> getIdentities() {
-        HashMap<String, String> idCookies = new HashMap<String, String>();
+    public void setAuthCredential(HttpServiceInput inputs) {
         RequestAgent http = ServerContext.getRequestOwner().getRequestAgent();
         if(http!=null){
-            for (String name : ID_COOKIE_NAMES) {
-                String value = http.getCookieVal(name);
-                if (!StringUtils.isEmpty(value)) {
-                    idCookies.put(name, value);
+            if (SsoAdapter.requireAuthCredential(inputs.getRequestUrl(), "ipac.caltech.edu")) {
+                for (String name : ID_COOKIE_NAMES) {
+                    String value = http.getCookieVal(name);
+                    if (!isEmpty(value)) {
+                        inputs.setCookie(name, value);
+                    }
                 }
             }
         }
-        return idCookies.size() == 0 ? null : idCookies;
     }
 
     public UserInfo getUserInfo() {
         String authToken = getAuthTokenId();
-        return StringUtils.isEmpty(authToken) ? null : getUserInfo(authToken);
+        return isEmpty(authToken) ? null : getUserInfo(authToken);
     }
 
     public Token getAuthToken() {
         Cookie authCookie = ServerContext.getRequestOwner().getRequestAgent().getCookie(AUTH_KEY);
-        Token token = new Token(getAuthTokenId());
-        token.setExpiresOn(System.currentTimeMillis() + authCookie.getMaxAge() * 1000);
-        return token;
+        if (!isEmpty(authCookie)) {
+            Token token = new Token(getAuthTokenId());
+            token.setExpiresOn(System.currentTimeMillis() + authCookie.getMaxAge() * 1000);
+            return token;
+        } else {
+            return null;
+        }
     }
 
-    public String getAuthTokenId() {
+    private String getAuthTokenId() {
         return ServerContext.getRequestOwner().getRequestAgent().getCookieVal(AUTH_KEY);
     }
 
@@ -276,12 +289,15 @@ public class JOSSOAdapter implements SsoAdapter {
 //====================================================================
 
     private void updateAuthInfo(Token authToken) {
-        String authTokenId = authToken == null ? null : authToken.getId();
-        Cookie c = new Cookie(AUTH_KEY, authTokenId);
-        c.setMaxAge(authToken == null ? 0 : 60 * 60 * 24 * 14);
-        c.setValue(authTokenId);
-        c.setPath("/");
-        ServerContext.getRequestOwner().getRequestAgent().sendCookie(c);
+        RequestAgent agent = ServerContext.getRequestOwner().getRequestAgent();
+        if (agent != null) {
+            String authTokenId = authToken == null ? null : authToken.getId();
+            Cookie c = new Cookie(AUTH_KEY, authTokenId);
+            c.setMaxAge(authToken == null ? 0 : 60 * 60 * 24 * 14);
+            c.setValue(authTokenId);
+            c.setPath("/");
+            agent.sendCookie(c);
+        }
     }
 
     private static SSOIdentityManagerWSLocator getIdManLoc() {

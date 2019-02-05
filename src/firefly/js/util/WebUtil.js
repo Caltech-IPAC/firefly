@@ -273,20 +273,6 @@ export function fetchUrl(url, options, doValidation= true, enableDefOptions= tru
 
     if (!url) return;
 
-
-    // ?info=json&access_token_refresh_interval=<seconds>
-    const ssoRedirect = getProp('sso_redirect_uri');
-    if (ssoRedirect) {
-        const refreshUrl =  `${getRootURL()}${ssoRedirect}?info=json&access_token_refresh_interval=0`;
-        fetch(refreshUrl).then( (resp) =>  {
-            resp.text().then( (text) => {
-                //console.log( text );
-            });
-        });
-    }
-
-
-
     // define defaults request options
     options = options || {};
 

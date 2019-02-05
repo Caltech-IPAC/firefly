@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.query.DataGroupQueryStatement;
@@ -82,8 +83,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public void downloadFile(URL url, File outFile) throws IOException, EndUserException {
         URLConnection conn = null;
         try {
-            Map<String, String> cookies = isSecurityAware() ? ServerContext.getRequestOwner().getIdentityCookies() : null;
-            conn = URLDownload.makeConnection(url, cookies);
+            HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
+            conn = URLDownload.makeConnection(url, inputs.getCookies(), inputs.getHeaders(), false);
             conn.setRequestProperty("Accept", "*/*");
             URLDownload.getDataToFile(conn, outFile);
 

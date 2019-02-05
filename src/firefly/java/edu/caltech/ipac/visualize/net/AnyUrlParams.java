@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.BaseNetParams;
 
@@ -24,6 +25,7 @@ public class AnyUrlParams extends BaseNetParams {
     private String _desc = null;
     private File _dir = null; // if null, the use the default dir
     private static long _maxSizeToDownload= 0L;
+    private HttpServiceInput addtlInfo;
 
 
     public AnyUrlParams(URL url) { this(url,null,null); }
@@ -35,6 +37,14 @@ public class AnyUrlParams extends BaseNetParams {
 
     public URL getURL() { return _url; }
 
+    public HttpServiceInput getAddtlInfo() {
+        return addtlInfo;
+    }
+
+    public void setAddtlInfo(HttpServiceInput addtlInfo) {
+        this.addtlInfo = addtlInfo;
+    }
+
     public String getUniqueString() {
         String fileStr= _url.getFile();
         fileStr= fileStr.replace('&','-');
@@ -43,6 +53,7 @@ public class AnyUrlParams extends BaseNetParams {
         if (_loginName!=null)  {
             loginName= "-"+ _loginName;
         }
+
         if (_securityCookie!=null && cookies!=null && cookies.containsKey(_securityCookie))  {
             securCookie= "-"+ cookies.get(_securityCookie);
         }
@@ -50,7 +61,8 @@ public class AnyUrlParams extends BaseNetParams {
         // since this string is limited to MAX_LENGTH, having loginName in the baseKey is not ideal
         // loginName can be long.  it'll be used in hashcode calculation instead.
         String baseKey = securCookie +"-"+ fileStr;
-        int originalHashCode = (_url.getHost() + loginName + baseKey).hashCode();
+        String addtlKeys = addtlInfo == null ? "" : addtlInfo.getDesc();
+        int originalHashCode = (_url.getHost() + loginName + baseKey + addtlKeys).hashCode();
         baseKey= baseKey.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?\\+<>]", "");
 
 
@@ -102,12 +114,12 @@ public class AnyUrlParams extends BaseNetParams {
     }
 
     public Map<String,String> getCookies() {
-        Map<String,String> retval;
-        if (cookies==null) {
-            retval= Collections.emptyMap();
+        Map<String,String> retval = new HashMap<>();
+        if (cookies != null ) {
+            retval.putAll(cookies);
         }
-        else {
-            retval= cookies;
+        if (addtlInfo != null && addtlInfo.getCookies() != null) {
+            retval.putAll(addtlInfo.getCookies());
         }
         return retval;
     }

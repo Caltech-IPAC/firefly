@@ -5,7 +5,9 @@
 package edu.caltech.ipac.firefly.server.network;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.util.HashMap;
@@ -18,13 +20,22 @@ import java.util.stream.Collectors;
  *
  * @version $Id: $
  */
-public class HttpServiceInput {
+public class HttpServiceInput implements Cloneable{
+    private String requestUrl;
     private Map<String, String> params;
     private Map<String, String> headers;
     private Map<String, String> cookies;
     private Map<String, File> files;
     private String userId;
     private String passwd;
+
+    public String getRequestUrl() {
+        return requestUrl;
+    }
+
+    public void setRequestUrl(String requestUrl) {
+        this.requestUrl = requestUrl;
+    }
 
     public String getUserId() {
         return userId;
@@ -112,11 +123,43 @@ public class HttpServiceInput {
         return sb.toString();
     }
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        HttpServiceInput input = (HttpServiceInput) super.clone();
+        input.params = params == null ? null : new HashMap<>(params);
+        input.headers = headers == null ? null : new HashMap<>(headers);
+        input.cookies = cookies == null ? null : new HashMap<>(cookies);
+        input.files = files == null ? null : new HashMap<>(files);
+
+        return input;
+    }
+
+    /**
+     * @return a clone of this input.. like clone except it'll return the right type without thrown exceptions.
+     */
+    public HttpServiceInput copy() {
+        try {
+            return (HttpServiceInput) clone();
+        } catch (CloneNotSupportedException e) {
+            return null;
+        }
+    }
+
+//====================================================================
+//  convenience functions
+//====================================================================
 
     public static HttpServiceInput createWithCredential() {
+        return createWithCredential(null);
+    }
+
+    public static HttpServiceInput createWithCredential(String requestUrl) {
         HttpServiceInput input = new HttpServiceInput();
-        Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
-        cookies.entrySet().stream().forEach( entry -> input.setCookie(entry.getKey(), entry.getValue()));
+        input.setRequestUrl(requestUrl);
+        SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
+        if (ssoAdapter != null) {
+            ssoAdapter.setAuthCredential(input);
+        }
         return input;
     }
 

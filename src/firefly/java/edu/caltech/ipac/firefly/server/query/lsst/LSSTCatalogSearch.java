@@ -294,18 +294,6 @@ public class LSSTCatalogSearch extends LSSTQuery {
     }
 
     @Override
-    protected String getFilePrefix(TableServerRequest request) {
-        String catTable = request.getParam(CatalogRequest.CATALOG);
-        if (catTable == null) {
-            return request.getRequestId();
-        } else {
-            return catTable+"-dd-";
-        }
-
-    }
-
-
-    @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
         super.prepareTableMeta(meta, columns, request);

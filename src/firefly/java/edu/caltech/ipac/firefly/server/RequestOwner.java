@@ -7,12 +7,12 @@ import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WorkspaceFactory;
 import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -40,7 +40,6 @@ public class RequestOwner implements Cloneable {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     public static String USER_KEY = "usrkey";
     public static final String SET_USERINFO_ACTION = "app_data.setUserInfo";
-//    private static final String[] ID_COOKIE_NAMES = new String[]{WebAuthModule.AUTH_KEY, "ISIS"};
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private RequestAgent requestAgent;
     private Date startTime;
@@ -54,6 +53,7 @@ public class RequestOwner implements Cloneable {
 
     //------------------------------------------------------------------------------------
     private transient UserInfo userInfo;
+    private transient SsoAdapter ssoAdapter;
 
 
     public RequestOwner(String userKey, Date startTime) {
@@ -63,6 +63,13 @@ public class RequestOwner implements Cloneable {
 
     public RequestAgent getRequestAgent() {
         return requestAgent;
+    }
+
+    public SsoAdapter getSsoAdapter() {
+        if (ssoAdapter == null) {
+            ssoAdapter = SsoAdapter.getAdapter();
+        }
+        return ssoAdapter;
     }
 
     public void setRequestAgent(RequestAgent requestAgent) {
@@ -83,7 +90,7 @@ public class RequestOwner implements Cloneable {
             if (userInfo.isGuestUser()) {
                 wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(getUserKey()));
             } else {
-                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userInfo.getLoginName(), getIdentityCookies()));
+                wsManager = WorkspaceFactory.getWorkspaceHandler().withCredentials(new WsCredentials(userInfo.getLoginName()));
             }
         }
         return wsManager;
@@ -142,21 +149,16 @@ public class RequestOwner implements Cloneable {
         requestAgent.sendRedirect(url);
     }
 
-    public Map<String, String> getIdentityCookies() {
-        return SsoAdapter.getAdapter().getIdentities();
-    }
-
     public boolean isAuthUser() {
-        return !StringUtils.isEmpty(SsoAdapter.getAdapter().getAuthTokenId());
+        return getSsoAdapter() != null && getSsoAdapter().getAuthToken() != null;
     }
 
     public UserInfo getUserInfo() {
         if (userInfo == null) {
             if (isAuthUser() && !ignoreAuth) {
-                SsoAdapter sso = SsoAdapter.getAdapter();
-                userInfo = sso.getUserInfo();
+                userInfo = ssoAdapter.getUserInfo();
                 if (userInfo == null) {
-                    sso.clearAuthInfo();
+                    ssoAdapter.clearAuthInfo();
                 }
             }
 
@@ -246,7 +248,10 @@ public class RequestOwner implements Cloneable {
         action.setValue(userInfo.getFirstName(), "firstName");
         action.setValue(userInfo.getLastName(), "lastName");
         action.setValue(userInfo.getInstitute(), "institute");
-        action.setValue(SsoAdapter.getAdapter().makeAuthCheckUrl(""), "login_url");
+        if (getSsoAdapter() != null) {
+            action.setValue(getSsoAdapter().getLoginUrl(""), "login_url");
+            action.setValue(getSsoAdapter().getLogoutUrl(""), "logout_url");
+        }
         ServerEventManager.fireAction(action);
     }
 

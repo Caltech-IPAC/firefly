@@ -126,7 +126,8 @@ public class LockingVisNetwork {
 
         try {
             File fileName= (fileInfo==null) ? CacheHelper.makeFile(params.getFileDir(), params.getUniqueString()) : fileInfo.getFile();
-            fileInfo= URLDownload.getDataToFile(params.getURL(), fileName, params.getCookies(), null,
+            Map<String, String> headers = params.getAddtlInfo() == null ? null : params.getAddtlInfo().getHeaders();
+            fileInfo= URLDownload.getDataToFile(params.getURL(), fileName, params.getCookies(), headers,
                                                 dl, false,true, params.getMaxSizeToDownload());
             if (fileInfo.getResponseCode()==200) CacheHelper.putFile(params,fileInfo);
             return fileInfo;

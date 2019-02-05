@@ -2,13 +2,23 @@ package edu.caltech.ipac.firefly.server.security;
 
 import edu.caltech.ipac.firefly.data.userdata.RoleList;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.http.HttpResponse;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: 5/16/17
@@ -20,106 +30,111 @@ public interface SsoAdapter {
 
     String SSO_FRAMEWORK_NAME = "sso.framework.name";
     String SSO_FRAMEWORK_ADAPTER = "sso.framework.adapter";
-    String JOSSO = "josso";
-    String OPENID_CONNECT = "oidc";
-    String MOD_AUTH_OPENIDC = "mod_auth_openidc";
+
+    enum SsoFramework {
+        josso(JOSSOAdapter.class),
+        oidc(OidcAdapter.class),
+        mod_auth_openidc(AuthOpenidcMod.class);
+
+        Class clz;
+        SsoFramework(Class clz) { this.clz= clz;}
+        SsoAdapter newAdapter() {
+            try {
+                return (SsoAdapter)clz.newInstance();
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
 
     /**
-     * returns the number of seconds before this session expires.  0 if session is not valid, or it's already expires.
-     * Defaults to expired.
-     * @param token
-     * @return
+     * If your framework uses flow that redirect a user to an identity provider to authenticate,
+     * this method will be used to accept the callback and create an auth token from the response.
      */
-    default long checkSession(String token) { return 0; }
-
-    /**
-     * return all of the roles for a user authenticated with this token.
-     * @param token
-     * @return
-     */
-    RoleList getRoles(String token);
-
-    /**
-     * This is SAML based.. should eventually remove from interface
-     * @param assertionKey
-     */
-    default Token resolveAuthToken(String assertionKey) {return null;}
+    default Token resolveAuthToken(HttpServletRequest req) {return null;}
 
     /**
      * Using the old token, return a refreshed token
      * @param old the old token
      */
-    default Token refreshAuthToken(Token old) {return null;};
+    default Token refreshAuthToken(Token old) {return null;}
 
-    boolean logout(String token);
+    default boolean logout() {return false; }
 
-    /* this may not be needed .. consider removing */
-    default UserInfo login(String name, String passwd) {return null;};
-
-    /* this may not be needed .. consider removing */
-    default String createSession(String name, String passwd) {return null;};
-
-    /**
-     * This is SAML based.. should eventually remove from interface
-     */
-    default String getAssertKey() {return null;};
+    default UserInfo login(String name, String passwd) {return null;}
 
     Token getAuthToken();
 
-    String getAuthTokenId();
-
     UserInfo getUserInfo();
 
-    void clearAuthInfo();
+    default void clearAuthInfo() {};
 
-    Map<String, String> getIdentities();
+    default String getRequestedUrl(HttpServletRequest req) {return null;}
 
-    String getRequestedUrl(HttpServletRequest req);
+    default String getLoginUrl(String backTo) {return null;}
 
-    String makeAuthCheckUrl(String backTo);
+    default String getLogoutUrl(String backTo) {return null;}
+    /**
+     * set the require info to identify the current logged in user
+     * when making an http request to external services.
+     * @param inputs
+     */
+    default void setAuthCredential(HttpServiceInput inputs) {};
 
 //====================================================================
 // convenience factory methods
 //====================================================================
 
-
-    static SsoAdapter getAdapter() {
-        String ssoFrameworkAdapter = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");
-        if (!StringUtils.isEmpty(ssoFrameworkAdapter)) {
-            return AdapterGetter.getAdapter(ssoFrameworkAdapter);
-        } else {
-            String ssoFrameworkName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
-            switch (ssoFrameworkName) {
-                case JOSSO:
-                    return new JOSSOAdapter();
-                case OPENID_CONNECT:
-                    return new OidcAdapter();
-                case MOD_AUTH_OPENIDC:
-                    return new AuthOpenidcMod();
-                default:
-                    return new JOSSOAdapter();
+    static boolean requireAuthCredential(String reqUrl, String... reqAuthHosts) {
+        if (!isEmpty(reqUrl)) {
+            try {
+                String reqHost = new URL(ServerContext.resolveUrl(reqUrl)).getHost().toLowerCase();
+                String host = ServerContext.getRequestOwner().getHostUrl();
+                if (reqHost.equals(host.toLowerCase())) {
+                    return true;
+                } else if(reqAuthHosts != null) {
+                    for (String domain : reqAuthHosts) {
+                        if (domain != null && reqHost.endsWith(domain.trim().toLowerCase())) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (MalformedURLException e) {
+                // ignore..
             }
         }
+        return false;
     }
 
-    class AdapterGetter {
+    static SsoAdapter getAdapter() {
+        String byClz = AppProperties.getProperty(SSO_FRAMEWORK_ADAPTER, "");
+        String byName = AppProperties.getProperty(SSO_FRAMEWORK_NAME, "");
+        try {
+            if (!isEmpty(byClz)) {
+                return AdapterClassResovler.getAdapter(byClz);
+            } else if (!isEmpty(byName)) {
+                return SsoFramework.valueOf(byName).newAdapter();
+            }
+        } catch (Exception e) {
+            Logger.getLogger().error(e, String.format("Cannot resolve adapter for: byClz: %s  byName: %s", byClz, byName));
+        }
+        return null;
+    }
+
+    class AdapterClassResovler {
         private static Map<String, Class> LOADED_ADAPTERS;      // to avoid repeatedly loading the same class
 
-        static SsoAdapter getAdapter(String className) {
-            try {
-                System.out.println("SSO_FRAMEWORK_ADAPTER = " + className);
-                if (LOADED_ADAPTERS == null) {
-                    LOADED_ADAPTERS = new HashMap<>();
-                }
-                Class aClass = LOADED_ADAPTERS.get(className);
-                if (aClass == null) {
-                    aClass = SsoAdapter.class.getClassLoader().loadClass(className);
-                    LOADED_ADAPTERS.put(className, aClass);
-                }
-                return (SsoAdapter) aClass.newInstance();
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                return new JOSSOAdapter();
+        static SsoAdapter getAdapter(String className) throws Exception {
+            if (LOADED_ADAPTERS == null) {
+                LOADED_ADAPTERS = new HashMap<>();
             }
+            Class aClass = LOADED_ADAPTERS.get(className);
+            if (aClass == null) {
+                Logger.getLogger().debug("Loading new SSO_FRAMEWORK_ADAPTER = " + className);
+                aClass = SsoAdapter.class.getClassLoader().loadClass(className);
+                LOADED_ADAPTERS.put(className, aClass);
+            }
+            return (SsoAdapter) aClass.newInstance();
         }
     }
 
