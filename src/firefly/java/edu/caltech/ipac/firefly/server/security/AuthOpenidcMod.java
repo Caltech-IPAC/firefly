@@ -9,18 +9,16 @@ import edu.caltech.ipac.firefly.server.RequestAgent;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
-import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * This class support authentication in which mod_auth_openidc is used
  * at the proxy level.
+ *
+ * DISCLAIMER: This class is currently unused and untested.
  *
  * @author loi
  * @version $Id: JOSSOAdapter.java,v 1.14 2012/10/10 21:54:45 loi Exp $
