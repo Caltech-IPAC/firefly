@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * NOTE: We're using spring jdbc v2.x.  API changes dramatically in later versions.
@@ -295,7 +296,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     @NotNull
     public String getResultSetID(TableServerRequest treq) {
         String id = StringUtils.toString(treq.getResultSetParam(), "|");
-        return MAIN_DB_TBL + (StringUtils.isEmpty(id) ? "" : "_" + DigestUtils.md5Hex(id));
+        return MAIN_DB_TBL + (isEmpty(id) ? "" : "_" + DigestUtils.md5Hex(id));
     }
 
     private static List<String> ignoreCols = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM, "\"" + DataGroup.ROW_IDX + "\"", "\"" + DataGroup.ROW_NUM + "\"");
@@ -311,7 +312,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         if (!EmbeddedDbUtil.hasTable(treq, dbFile, resultSetID)) {
             // does not exists.. create table from original 'data' table
-            List<String> cols = StringUtils.isEmpty(treq.getInclColumns()) ? dbAdapter.getColumnNames(dbInstance, MAIN_DB_TBL, "\"")
+            List<String> cols = isEmpty(treq.getInclColumns()) ? dbAdapter.getColumnNames(dbInstance, MAIN_DB_TBL, "\"")
                                 : StringUtils.asList(treq.getInclColumns(), ",");
             cols = cols.stream().filter((s) -> !ignoreCols.contains(s)).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
 
@@ -347,7 +348,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         nreq.setFilters(null);
         nreq.setSortInfo(null);
 
-        if (StringUtils.isEmpty(treq.getInclColumns())) {
+        if (isEmpty(treq.getInclColumns())) {
             nreq.setInclColumns();
         } else {
             List<String> requestedCols = StringUtils.asList(treq.getInclColumns(), ",");
@@ -399,7 +400,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             // does not exists.. create table from original 'data' table
             prevResultSetID = MAIN_DB_TBL;      // if fail to create the previous resultset, use data.
             String resultSetRequest = treq.getMeta().get(TableMeta.RESULTSET_REQ);
-            if (!StringUtils.isEmpty(resultSetRequest)) {
+            if (!isEmpty(resultSetRequest)) {
                 try {
                     TableServerRequest req = QueryUtil.convertToServerRequest(resultSetRequest);
                     DataGroupPart page = getResultSet(req, dbFile);
@@ -420,7 +421,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         }
 
         String prevResultSetID = treq.getMeta(TableMeta.RESULTSET_ID);             // the previous resultset ID
-        prevResultSetID = StringUtils.isEmpty(prevResultSetID) ? MAIN_DB_TBL : prevResultSetID;
+        prevResultSetID = isEmpty(prevResultSetID) ? MAIN_DB_TBL : prevResultSetID;
 
         if ( selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
             // there were row(s) selected from previous resultset.. make sure selectInfo is remapped to new resultset
@@ -503,6 +504,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     private void setupMeta(DataGroup dg, TableServerRequest req) {
+
+        if (!isEmpty(req.getTblTitle())) {
+            dg.setTitle(req.getTblTitle());
+        }
+
         // merge meta into datagroup from post-processing
         TableMeta meta = new TableMeta();
         prepareTableMeta(meta, Arrays.asList(dg.getDataDefinitions()), req);
@@ -549,7 +555,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     if (vals.size() <= MAX_COL_ENUM_COUNT) {
                         DataType dt = results.getData().getDataDefintion(cname);
                         String enumVals = vals.stream().map(m -> String.valueOf(m.get(cname)))       // list of map to list of string(colname)
-                                .filter(s -> !StringUtils.isEmpty(s) && !StringUtils.areEqual(dt.getNullString(), s))            // remove null or blank values because it's hard to handle at the column filter level
+                                .filter(s -> !isEmpty(s) && !StringUtils.areEqual(dt.getNullString(), s))            // remove null or blank values because it's hard to handle at the column filter level
                                 .collect(Collectors.joining(","));                          // combine the names into comma separated string.
                         results.getData().getDataDefintion(cname).setEnumVals(enumVals);
                         // update dd table
