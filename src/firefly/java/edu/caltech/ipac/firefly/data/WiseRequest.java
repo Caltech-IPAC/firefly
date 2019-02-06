@@ -152,7 +152,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND, new Integer[]{712, 7101});
             put(CRYO_3BAND, new Integer[]{7101, 8744});
             put(POSTCRYO, new Integer[]{8745, 12514});
-            put(NEOWISER, new Integer[]{44212, 88733});  //public data to end of the yr4
+            put(NEOWISER, new Integer[]{44212, 99799});  //public data to end of the yr5
 
             put(PASS1, new Integer[]{712, 12514});
             put(PASS2_4BAND, new Integer[]{712, 7101});
@@ -164,7 +164,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR3, new Integer[]{66418, 77590});  // 66418b is the first scan for yr3 and 77509a is the last scan
             put(NEOWISER_YR4, new Integer[]{77590, 88733}); // 77590b is the first scan for yr4 and 88733a is the last scan
             put(NEOWISER_YR5, new Integer[]{88734, 99799}); // 88734a is the first scan for yr5
-            put(NEOWISER_YR6, new Integer[]{88734, 99999}); // 88734a is the first scan for yr6
+            put(NEOWISER_YR6, new Integer[]{1090, 99999}); // 01090r is the first scan for yr6
 
         }
     };
@@ -499,7 +499,10 @@ public class WiseRequest extends TableServerRequest {
 
         int scanNum = Integer.parseInt(scanID.substring(0,5));
         if (publicRelease) {
-            if (scanNum < SCANID_MAP.get(PRELIM)[1]) {
+            if (scanID.contains("r,s,t,u,v,w")) {
+                return new String[]{NEOWISER};
+            }
+            else if (scanNum < SCANID_MAP.get(PRELIM)[1]) {
                 return new String[]{PRELIM,ALLSKY_4BAND};
             } else if (scanNum < SCANID_MAP.get(ALLSKY_4BAND)[1] ||
                     (scanNum==SCANID_MAP.get(ALLSKY_4BAND)[1] && scanID.trim().endsWith("a")) ) {
@@ -516,6 +519,11 @@ public class WiseRequest extends TableServerRequest {
             }
 
         } else {
+            if (scanID.contains("r,s,t,u,v,w") && scanNum <= 1089) {
+                return new String[]{NEOWISER_YR5};
+            } else if (scanID.contains("r,s,t,u,v,w") && scanNum >= 1090) {
+                return new String[]{NEOWISER_YR6};
+            }
             if (scanNum < SCANID_MAP.get(PASS2_4BAND)[1] ||
                     (scanNum == SCANID_MAP.get(PASS2_4BAND)[1] && scanID.trim().endsWith("a"))) {
                 return new String[]{PASS1, PASS2_4BAND, ALLSKY_4BAND};
@@ -532,7 +540,9 @@ public class WiseRequest extends TableServerRequest {
             } else if (scanNum > SCANID_MAP.get(NEOWISER_YR4)[0] ||
                     (scanNum==SCANID_MAP.get(NEOWISER_YR4)[0] && scanID.trim().endsWith("b")) ) {
                 return new String[]{NEOWISER_YR4};
-                //modify when add year5
+            } else if (scanNum > SCANID_MAP.get(NEOWISER_YR5)[0] ||
+                    (scanNum==SCANID_MAP.get(NEOWISER_YR5)[0] && scanID.trim().endsWith("a")) ) {
+                return new String[]{NEOWISER_YR5};
             }else {
                 // these 2 have the same range..
                 // getImageSetFromSourceId() will determine which one to select
