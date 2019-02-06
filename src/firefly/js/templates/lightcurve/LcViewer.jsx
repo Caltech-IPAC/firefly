@@ -24,7 +24,6 @@ import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName, DL_DATA_TAG} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
@@ -36,6 +35,7 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 import {ServerParams} from '../../data/ServerParams.js';
 import {SimpleComponent} from '../../ui/SimpleComponent.jsx';
 import {warningDivId} from '../../ui/LostConnection';
+import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -48,7 +48,7 @@ export class LcViewer extends PureComponent {
     constructor(props) {
         super(props);
         this.state = this.getNextState();
-        dispatchAddSaga(watchCatalogs);
+        startTTFeatureWatchers();
         dispatchAddSaga(lcManager);
         if (getWorkspaceConfig()) { initWorkspace();}
     }

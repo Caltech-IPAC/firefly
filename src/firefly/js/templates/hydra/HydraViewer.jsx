@@ -17,12 +17,12 @@ import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 
-import {TriViewImageSection, launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
+import {TriViewImageSection, launchTableTypeWatchers} from '../../visualize/ui/TriViewImageSection.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {warningDivId} from '../../ui/LostConnection';
+import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 
 
 /**
@@ -34,8 +34,8 @@ export class HydraViewer extends PureComponent {
         super(props);
         this.state = this.getNextState();
         dispatchAddSaga(hydraManager);
-        dispatchAddSaga(watchCatalogs);
-        launchImageMetaDataSega();
+        startTTFeatureWatchers();
+        launchTableTypeWatchers();
     }
 
     getNextState() {

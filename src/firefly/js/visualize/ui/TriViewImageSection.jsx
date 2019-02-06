@@ -11,8 +11,6 @@ import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {startImageMetadataWatcher} from '../saga/ImageMetaDataWatcher.js';
-import {startCoverageWatcher} from '../saga/CoverageWatcher.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot,
         META_VIEWER_ID} from '../MultiViewCntlr.js';
@@ -22,6 +20,8 @@ import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {getAppOptions, REINIT_APP} from '../../core/AppDataCntlr.js';
+import {startCoverageWatcher} from '../saga/CoverageWatcher.js';
+import {startImageMetadataWatcher} from '../saga/ImageMetaDataWatcher.js';
 
 
 /**
@@ -101,11 +101,10 @@ TriViewImageSection.propTypes= {
     selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage'])
 };
 
-export function launchImageMetaDataSega() {
-    let coverageOps= get(getAppOptions(), 'coverage',{});
-    coverageOps= {...coverageOps, ...{viewerId:'coverageImages', ignoreCatalogs:true}};
+export function launchTableTypeWatchers() {
+    const coverageOps= get(getAppOptions(), 'coverage',{});
     startImageMetadataWatcher({viewerId: META_VIEWER_ID});
-    startCoverageWatcher(coverageOps);
+    startCoverageWatcher({...coverageOps, viewerId:'coverageImages', ignoreCatalogs:true});
     startLayoutWatcher();
 }
 

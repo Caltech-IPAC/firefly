@@ -19,59 +19,63 @@ import {converterFactory, converters} from '../../metaConvert/ConverterFactory.j
 import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {isImageDataRequeestedEqual} from '../WebPlotRequest.js';
-import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
 
 const MAX_GRID_SIZE= 50;
 
 
-export function startImageMetadataWatcher({viewerId, paused=true}) {
-    let tbl_id = null;
+export const imageMetaDataWatcherDef = {
+    id : 'ImageMetaDataWatcher',
+    watcher : watchImageMetadata,
+    testTable : (t) => isMetaDataTable(t.tbl_id),
+    actions: [TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
+              TBL_RESULTS_ACTIVE, REINIT_APP,
+              MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
+              MultiViewCntlr.VIEWER_UNMOUNTED,
+              MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
+              ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
+              ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT]
+};
 
-    if (!paused) {
-        tbl_id= getActiveTableId();
-        if (tbl_id) updateImagePlots(tbl_id, viewerId);
-    }
-
-    const actions = [TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE, TABLE_REMOVE,
-        TBL_RESULTS_ACTIVE, REINIT_APP,
-        MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
-        MultiViewCntlr.VIEWER_UNMOUNTED,
-        MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
-        ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
-        ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT];
-
-    dispatchAddActionWatcher({id: `imw-${viewerId}`, actions, callback: watchImageMetadata, params: {viewerId, paused, tbl_id}});
+export function startImageMetadataWatcher({viewerId= 'ViewImageMetaData', paused=true}) {
+    dispatchAddTableTypeWatcherDef( { ...imageMetaDataWatcherDef, options:{viewerId, paused} });
 }
+
+
 
 /**
  * Action watcher callback:
  * loads images on table change (only acts on image metadata tables),
  * pauses when the viewer is unmounted, resumes when it is mounted again
  * @callback actionWatcherCallback
+ * @param tbl_id
  * @param action
  * @param cancelSelf
  * @param params
- * @param params.viewerId
+ * @param params.options.viewerId
  * @param params.paused
- * @param params.tbl_id
  */
-function watchImageMetadata(action, cancelSelf, params) {
-    const {viewerId} = params;
-    let {paused, tbl_id} = params;
+function watchImageMetadata(tbl_id, action, cancelSelf, params) {
+    const {options:{viewerId='ImageMetaData'}} = params;
+    let {paused= true} = params;
+
+    if (!action) {
+        if (paused) paused= !Boolean(getViewer(getMultiViewRoot(), viewerId));
+        if (!paused) updateImagePlots(tbl_id, viewerId);
+        return {paused};
+    }
 
     const {payload}= action;
 
-    if (payload.viewerId && payload.viewerId!==viewerId) return;
+    if (payload.tbl_id && payload.tbl_id!==tbl_id) return params;
+
+    if (payload.viewerId && payload.viewerId!==viewerId) return params;
 
     if (action.type===TABLE_REMOVE) {
-        tbl_id= getActiveTableId();
-        if (!tbl_id) removeAllPlotsInViewer(viewerId);
+        if (!getActiveTableId()) removeAllPlotsInViewer(viewerId);
+        cancelSelf();
+        return;
     }
-    else if (payload.tbl_id) {
-        if (!isMetaDataTable(payload.tbl_id)) return;
-        tbl_id= payload.tbl_id; // otherwise use the last one
-    }
-
 
     switch (action.type) {
 
@@ -121,7 +125,7 @@ function watchImageMetadata(action, cancelSelf, params) {
             cancelSelf();
             break;
     }
-    return {viewerId, paused, tbl_id};
+    return {paused};
 }
 
 

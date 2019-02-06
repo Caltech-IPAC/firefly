@@ -17,14 +17,14 @@ import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
 import {VisHeader} from '../../visualize/ui/VisHeader.jsx';
 import {getActionFromUrl} from '../../core/History.js';
-import {launchImageMetaDataSega} from '../../visualize/ui/TriViewImageSection.jsx';
+import {launchTableTypeWatchers} from '../../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
-import {watchCatalogs} from '../../visualize/saga/CatalogWatcher.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
-import {warningDivId} from '../../ui/LostConnection.jsx'
+import {warningDivId} from '../../ui/LostConnection.jsx';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
+import {startTTFeatureWatchers} from '../common/ttFeatureWatchers';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -48,8 +48,8 @@ export class FireflyViewer extends PureComponent {
         getImageMasterData();
         const views = LO_VIEW.get(props.views) || LO_VIEW.none;
         this.state = this.getNextState();
-        dispatchAddSaga(watchCatalogs);
-        if (views.has(LO_VIEW.images) ) launchImageMetaDataSega();
+        startTTFeatureWatchers();
+        if (views.has(LO_VIEW.images) ) launchTableTypeWatchers();
         dispatchAddSaga(layoutManager,{views: props.views});
         if (getWorkspaceConfig()) { initWorkspace(); }
     }

@@ -346,7 +346,7 @@ export function logErrorWithPrefix(prefix, ...message) {
     if (message) {
         message.forEach( (m,idx) => {
             if (idx===0) {
-                if (m.stack) {
+                if (!isObject(m)) {
                     console.log(prefix);
                     console.log(m);
                 }

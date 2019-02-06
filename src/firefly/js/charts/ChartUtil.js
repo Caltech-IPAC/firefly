@@ -29,7 +29,7 @@ import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericDa
 import Color from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
-import {getCenterColumns} from '../tables/TableInfoUtil.js';
+import {findTableCenterColumns} from '../util/VOAnalyzer.js';
 
 export const DEFAULT_ALPHA = 0.5;
 
@@ -910,7 +910,7 @@ export function getDefaultChartProps(tbl_id) {
 
     // for catalogs use lon and lat columns
     //let isCatalog = Boolean(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] && tableMeta[MetaConst.CATALOG_COORD_COLS]);
-    const centerColumns = getCenterColumns(tblModel);
+    const centerColumns = findTableCenterColumns(tblModel);
     let isCatalog = get(tblModel, 'totalRows') && centerColumns;
     let xCol = undefined, yCol = undefined;
 

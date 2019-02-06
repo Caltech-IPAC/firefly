@@ -1,0 +1,371 @@
+
+<!doctype html>
+
+<!--
+  ~ License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+  -->
+
+<html>
+
+<head>
+    <title>Firefly main tests</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="template_loader.js"></script>
+</head>
+
+<body>
+
+<!-- define all of your tests below -->
+
+<template title="Slate Test" class="tpl sm">
+    <div id="expected" style="width: 400px; white-space: normal; padding-top: 2px">
+        <div>Click on each link in order
+            <ul class='expected-list'>
+                <li>new tab should start</li>
+                <li>should show layout like below</li>
+                <li>after clicking on reinit- the app should clear</li>
+            </ul>
+        </div>
+        <div><img style="width: 230px;" src="./images/slate-layout.png"></div>
+    </div>
+    <div id="actual" style="width: 600px; display: flex; flex-direction: column">
+        <div>
+            serialized target: <input type="text" name="fname" id="sTarget" style="width: 300px; margin: 2px;">
+        </div>
+        <div>Load Tables for charts to use</div>
+        <ul style='margin: 1px'>
+            <li>
+                <a href="javascript:showATable(getSTarget(),0, 4,2,2)">Load the Table</a> <span class='smallCoords'>at row: 0, col: 4, w:2 h: 2</span>
+            </li>
+        </ul>
+        Add Some plotly Charts
+        <ul style='margin: 1px'>
+            <li>
+                <a href='javascript:loadNewCharts(0,0,2,2)'>Show Scatter </a> <span class='smallCoords'>at row: 0, col: 0, w:2 h: 2</span>
+            </li>
+            <li>
+                <a href='javascript:loadNewHeatmapCharts(2,0,2,3)'>Show Heatmap </a> <span class='smallCoords'>at row: 2, col: 0, w:2 h: 3</span>
+            </li>
+            <li>
+                <a href='javascript:loadHistogramCharts(2,2,2,3)'>Show Histogram</a> <span class='smallCoords'>at row: 2, col: 2, w:2 h: 3</span>
+            </li>
+            <li>
+                <a href='javascript:load3DChart(2,4,2,3)'>Show 3d Scatter</a> <span class='smallCoords'>at row: 2, col: 4, w:2 h: 3</span>
+            </li>
+        </ul>
+        Images
+        <ul style='margin: 1px'>
+            <li>
+                <a href="javascript:load3C(getSTarget(),0,2,2,2)">3 Color</a> in cell <span class='smallCoords'>at row: 0, col: 2, w:2 h: 2</span>
+            </li>
+            <li>
+                <a href="javascript:loadHiPS(getSTarget(),3,0,6,2)">hips</a> in cell <span class='smallCoords'>at row: 3, col: 0, w:4 h: 2</span>
+            </li>
+        </ul>
+        <div style='margin-bottom: 2px'>
+            <a href='javascript:firefly.getViewer().reinitViewer()'>Reinit App</a>
+        </div>
+    </div>
+    <script>
+        resizeIframeToHeight('330px');
+        function onFireflyLoaded(firefly) {
+            document.getElementById('sTarget').value=  '10.68479;41.26906;EQ_J2000';
+            firefly.setViewerConfig(firefly.ViewerType.Grid);
+            window.ffViewer= firefly.getViewer();
+        }
+        const getSTarget= () => document.getElementById('sTarget').value
+
+        function load3C(sTarget,r,c,w,h) {
+
+            var threeC= [
+                {
+                    type      : 'SERVICE',
+                    Service   : 'WISE',
+                    Title     : '3 color',
+                    SurveyKey  : 'Atlas',
+                    SurveyKeyBand: '1',
+                    WorldPt    : sTarget,
+                    RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                    SizeInDeg  : '1'
+                },
+                {
+                    Type      : 'SERVICE',
+                    Service   : 'WISE',
+                    Title     : '3 color',
+                    SurveyKey  : 'Atlas',
+                    SurveyKeyBand: '2',
+                    WorldPt    : sTarget,
+                    RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                    SizeInDeg  : '1'
+                },
+                {
+                    Type      : 'SERVICE',
+                    Service   : 'WISE',
+                    title     : '3 color',
+                    SurveyKey  : 'Atlas',
+                    SurveyKeyBand: '3',
+                    WorldPt    : sTarget,
+                    RangeValues : firefly.util.image.RangeValues.serializeSimple('Sigma',-2,8,'Linear'),
+                    SizeInDeg  : '1'
+                }
+            ];
+
+            firefly.getViewer().addCell(r,c,w,h, 'images', '3C');
+            firefly.getViewer().showImage(threeC, '3C');
+        }
+
+        function loadHiPS(sTarget,r,c,w,h) {
+            const request= { plotId: 'aHipsID', WorldPt    : sTarget, title     : 'A HiPS',
+                hipsRootUrl: 'http://alasky.u-strasbg.fr/DSS/DSSColor'
+            };
+            firefly.getViewer().addCell(r,c,w,h, 'images', 'Hips');
+            firefly.getViewer().showHiPS(request, 'Hips');
+        }
+
+
+        function loadNewCharts(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'newChartContainer');
+
+            var trace1 = {
+                tbl_id: "wiseCatTbl",
+                x: "tables::w1mpro-w2mpro",
+                y: "tables::w2mpro-w3mpro",
+                mode: 'markers',
+                marker: {size: 4, opacity: 0.5}
+            };
+
+            var layoutS = {
+                title: 'Color-Color',
+                xaxis: {title: 'w1mpro-w2mpro (mag)'},
+                yaxis: {title: 'w2mpro-w3mpro (mag)'}
+            };
+
+            firefly.getViewer().showChart(
+                {chartId: 'newChart1', layout: layoutS, data: [trace1]},
+                'newChartContainer');
+        }
+
+        function loadNewHeatmapCharts(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'heatMapContainer');
+            var dataHM = [
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro",
+                    y: "tables::w2mpro",
+                    name: 'w1-w2',
+                    colorscale: 'Blues'
+                },
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro",
+                    y: "tables::w3mpro",
+                    name: 'w1-w3',
+                    colorscale: 'Reds',
+                    reversescale: true
+                },
+                {
+                    type: 'fireflyHeatmap',
+                    tbl_id: "wiseCatTbl",
+                    x: "tables::w1mpro",
+                    y: "tables::w4mpro",
+                    name: 'w1-w4',
+                    colorscale: 'Greens'
+                }
+            ];
+            var layoutHM = {
+                title: 'Magnitude-magnitude densities',
+                xaxis: {title: 'w1 photometry (mag)'},
+                yaxis: {title: ''},
+                firefly: { // user boundaries - so that heatmaps will be calculated in the same XY space
+                    xaxis: {
+                        min: 5,
+                        max: 20
+                    },
+                    yaxis: {
+                        min: 4,
+                        max: 18
+                    }
+                }
+            };
+
+            firefly.getViewer().showChart( {chartId: 'newChart2', layout: layoutHM,  data: dataHM}, 'heatMapContainer');
+        }
+
+        function loadHistogramCharts(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', 'histContainer');
+
+            var dataH = [
+                {
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'wiseCatTbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 30,
+                            columnOrExpr: 'w1mpro'
+                        }
+                    },
+                    name: 'w1mpro',
+                    marker: {color: 'rgba(153, 51, 153, 0.8)'}
+                },
+                {
+                    type: 'fireflyHistogram',
+                    firefly: {
+                        tbl_id: 'wiseCatTbl',
+                        options: {
+                            algorithm: 'fixedSizeBins',
+                            fixedBinSizeSelection: 'numBins',
+                            numBins: 40,
+                            columnOrExpr: 'w2mpro'
+                        }
+                    },
+                    name: 'w2mpro',
+                    marker: {color: 'rgba(102,153,0, 0.7)'}
+                }
+            ];
+
+            var layoutHist = {
+                title: 'Photometry histogram',
+                xaxis: {title: 'photometry (mag)'},
+                yaxis: {title: ''}
+            };
+
+            firefly.getViewer().showChart(
+                {chartId: 'firefly-hist-tbl', layout: layoutHist, data: dataH},
+                'histContainer');
+        }
+
+        function load3DChart(r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'xyPlots', '3dChartContainer');
+
+
+            var data3d = [
+                {
+                    tbl_id: "wiseCatTbl",
+                    type: 'scatter3d',
+                    name: 'w1-w2-w3',
+                    x: "tables::w1mpro",
+                    y: "tables::w2mpro",
+                    z: "tables::w3mpro",
+                    mode : 'markers',
+                    marker : {
+                        size: 3,
+                        line: {
+                            color: 'rgb(127, 127, 127, 0.14)',
+                            width: 1
+                        }
+                    },
+                    hoverinfo: 'x+y+z'
+                }
+            ];
+
+            var tfont = {size: 11};
+            var layout3d = {
+                title: 'Photometry in band 1, 2, 3',
+                scene:{
+                    xaxis: {
+                        title: 'w1 (mag)',
+                        titlefont: tfont
+                    },
+                    yaxis: {
+                        title: 'w2 (mag)',
+                        titlefont: tfont
+                    },
+                    zaxis: {
+                        title: 'w3 (mag)',
+                        titlefont: tfont
+                    }
+                }
+            };
+
+            firefly.getViewer().showChart( {chartId: 'newChart3', layout: layout3d, data: data3d }, '3dChartContainer');
+        }
+
+
+        function showATable(sTarget,r,c,w,h) {
+            firefly.getViewer().addCell(r,c,w,h, 'tables');
+            var req=  firefly.util.table.makeIrsaCatalogRequest('WISE catalog', 'WISE', 'allwise_p3as_psd',
+                {   position: sTarget,
+                    SearchMethod: 'Cone',
+                    radius: 1200,
+                },
+                {
+                    tbl_id: "wiseCatTbl"
+                }
+            );
+            firefly.getViewer().showTable( req, {removable: true, showUnits: false, showFilters: true});
+        }
+    </script>
+</template>
+
+
+<template title="Send to HiPS Viewer Test" class="tpl sm">
+    <div id="expected" style="width: 400px; white-space: normal; padding-top: 2px">
+        <div>Click on load six link...
+            <ul class='expected-list'>
+                <li>start a new viewer window</li>
+                <li>shows six HiPS Images</li>
+                <li>show center on target</li>
+            </ul>
+        </div>
+        <div><img style="width: 230px;" src="./images/six-hips.png"></div>
+    </div>
+    <div id="actual" style="width: 600px; display: flex; flex-direction: column">
+        <div style='margin: 0 0 0 5px;'>
+            serialized target: <input type="text" name="fname" id="sTarget" style="width: 300px; margin: 10px;">
+        </div>
+        <pre>
+ try:
+    0;0;GAL # Galaxy M81
+    148.88822;69.06529;EQ_J2000 # Galaxy M81
+    202.48417;47.23056;EQ_J2000 # Galaxy M51
+    136.9316774;+1.1195886;galactic # W5 star-forming region
+    10.68479;41.26906;EQ_J2000 # Galaxy M31
+       </pre>
+        <div style='margin: 0 0 0 5px;'>
+            <a href="javascript:load(getSTarget())">Load Six HiPS Maps</a>
+        </div>
+
+    </div>
+    <script>
+        resizeIframeToHeight('280px');
+
+        const getSTarget= () => document.getElementById('sTarget').value;
+
+        function onFireflyLoaded(firefly) {
+            document.getElementById('sTarget').value=  '0;0;GAL';
+            const loadLink= document.getElementById('loadLink');
+            loadLink && (loadLink.style.visibility= 'visible');
+        }
+
+        function load(sTarget= '0;0;GAL') {
+            const {showHiPS}= firefly.getViewer();
+            const hipsIds= [
+                'ivo://CDS/P/IRIS/color',
+                'ivo://CDS/P/SPITZER/color',
+                'ivo://CDS/P/2MASS/color',
+                'ivo://CDS/P/allWISE/color',
+                'ivo://CDS/P/PLANCK/R2/HFI/color',
+                'ivo://CDS/P/AKARI/FIS/Color'
+            ];
+            hipsIds.forEach( hId =>
+                showHiPS( {
+                    plotId: hId,
+                    WorldPt    : sTarget,
+                    hipsRootUrl: hId,
+                    plotGroupId: 'hipsGroup',
+                    GroupLocked: true,
+                    SizeInDeg: 120
+                } ));
+        }
+    </script>
+</template>
+
+<!-- this is where test cases will be attached-->
+<div id="tst-container"/>
+
+
+</body>

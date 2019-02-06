@@ -18,7 +18,7 @@ import {dispatchTableSearch, dispatchTableRemove, dispatchTableUpdate, TABLE_LOA
 import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/TableUtil.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {convertAngle, isAngleUnit} from '../VisUtil.js';
-import {getCenterColumns} from '../../tables/TableInfoUtil.js';
+import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 
 
 export const isLsstFootprintTable = (tableModel, fromAnalysis = false, tbl_idx = 0) => {
@@ -207,7 +207,7 @@ function getFootprintDataFromTable(tableModel) {
         return Promise.resolve(null);
     }
 
-    const centerCols = getCenterColumns(tableModel);
+    const centerCols = findTableCenterColumns(tableModel);
     const hiddenColumns = assignLSSTFootprintColumnNames(tableModel);
 
     hideTableColumns(hiddenColumns, tableModel);

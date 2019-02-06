@@ -75,6 +75,7 @@ export function getCornersColumns(table) {
 }
 
 /**
+ * @deprecated use VOAnalyzer.findTableCenterColumns
  * Investigate table meta data a return a CoordColsDescription for two columns that represent and object in the row
  * @param {TableModel} table
  * @return {CoordColsDescription|null}

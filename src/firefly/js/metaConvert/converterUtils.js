@@ -7,9 +7,8 @@ import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {getTblById,getTblInfo, getCellValue} from '../tables/TableUtil.js';
-import {getCenterColumns} from '../tables/TableInfoUtil.js';
-import {converterFactory} from './ConverterFactory.js';
 import {MetaConst} from '../data/MetaConst.js';
+import {findTableCenterColumns} from '../util/VOAnalyzer.js';
 
 const dataSourceUpper= 'DATASOURCE';
 
@@ -126,6 +125,6 @@ export function isMetaDataTable(tbl_id) {
  */
 export function isCatalogTable(tbl_id) {
     const table= getTblById(tbl_id);
-    return get(table, 'totalRows') && !isEmpty(getCenterColumns(table));
+    return get(table, 'totalRows') && !isEmpty(findTableCenterColumns(table));
 }
 
