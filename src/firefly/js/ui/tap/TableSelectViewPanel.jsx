@@ -373,7 +373,12 @@ function getAdqlQuery() {
 
     if (!tableName) return;
 
-    let constraints = tableSearchMethodsConstraints(getTblById(getTblId(tableName))) || '';
+    const whereClause = tableSearchMethodsConstraints(getTblById(getTblId(tableName)));
+    if (!whereClause.valid) {
+        return null;
+    }
+    let constraints = whereClause.where || '';
+    //let constraints = tableSearchMethodsConstraints(getTblById(getTblId(tableName))) || '';
     let selcols = '*';
     let addAnd = Boolean(constraints);
 

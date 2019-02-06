@@ -89,7 +89,7 @@ export class InputFieldView extends PureComponent {
     render() {
         var {hasFocus}= this.state;
         var {visible,disabled, label,tooltip,labelWidth,value,style,wrapperStyle,labelStyle,
-             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning, message, type, placeholder, form='__ignore'}= this.props;
+             valid,size,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, onFocus, showWarning, message, type, placeholder, form='__ignore'}= this.props;
         if (!visible) return null;
         wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         // form to relate this input field to.
@@ -98,6 +98,12 @@ export class InputFieldView extends PureComponent {
         form = form || undefined;
 
         const currValue= (type==='file') ? undefined : value;
+        const onFocusCB = () => {
+            if (onFocus) {
+                onFocus();
+            }
+            return !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : '';
+        };
 
         return (
             <div style={wrapperStyle}>
@@ -105,7 +111,7 @@ export class InputFieldView extends PureComponent {
                 <input style={Object.assign({display:'inline-block'}, style)}
                        className={computeStyle(valid,hasFocus)}
                        onChange={(ev) => onChange ? onChange(ev) : null}
-                       onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
+                       onFocus={ onFocusCB }
                        onBlur={ (ev) => {
                                 onBlur && onBlur(ev);
                                 this.setState({hasFocus:false, infoPopup:false});
@@ -142,6 +148,7 @@ InputFieldView.propTypes= {
     onKeyPress : PropTypes.func,
     onKeyDown: PropTypes.func,
     onKeyUp: PropTypes.func,
+    onFocus: PropTypes.func,
     showWarning : PropTypes.bool,
     type: PropTypes.string,
     placeholder: PropTypes.string,

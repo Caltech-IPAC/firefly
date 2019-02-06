@@ -47,7 +47,8 @@
     "redux-thunk": "^2.2",
     "shallowequal": "^1.0.2",
     "transformation-matrix-js": "^2.7.1",
-    "validator": "^9.4"
+    "validator": "^9.4",
+    "react-datetime": "^2.16.0"
   },
   "devDependencies": {
     "babel-jest": "^23.6.0",

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import Select, {components} from 'react-select';
 import {truncate} from 'lodash';
 import LOADING from 'html/images/gxt/loading.gif';
+import {HeaderFont} from './TapUtil.js';
 
 import {fieldGroupConnector} from '../FieldGroupConnector';
 
@@ -40,7 +41,7 @@ function getSelectSingleValueComponent(type) {
     return ({children, ...props}) => {
         const {data, options} = props;
         if (options && options.length > 0) {
-            const html = `<b>${type}: ${data.value}</b><br/>${truncate(data.label, {length: 140})}`;
+            const html = `<b style="font-size: 9pt">${type}: ${data.value}</b><br/>${truncate(data.label, {length: 140})}`;
             const v = {__html: html};
             // use whiteSpace attribute to wrap the text and collapse the whitespace
             // without it the text does not wrap
