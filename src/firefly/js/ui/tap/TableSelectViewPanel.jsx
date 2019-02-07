@@ -415,14 +415,14 @@ const TAP_SERVICES = [
         query: 'SELECT * FROM fp_psc WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,1.0))=1'
     },
     {
-        label: 'LSST PDAC https://lsst-lspdev.ncsa.illinois.edu/tap',
-        value: 'https://lsst-lspdev.ncsa.illinois.edu/tap',
-        query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
-    },
-    {
         label: 'GAIA http://gea.esac.esa.int/tap-server/tap',
         value: 'http://gea.esac.esa.int/tap-server/tap',
         query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
+    },
+    {
+        label: 'MAST http://vao.stsci.edu/CAOMTAP/TapService.aspx',
+        value: 'http://vao.stsci.edu/CAOMTAP/TapService.aspx',
+        query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
     },
     {
         label: 'CASDA http://atoavo.atnf.csiro.au/tap',
@@ -430,9 +430,18 @@ const TAP_SERVICES = [
         query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
     },
     {
-        label: 'MAST http://vao.stsci.edu/CAOMTAP/TapService.aspx',
-        value: 'http://vao.stsci.edu/CAOMTAP/TapService.aspx',
-        query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
+        label: 'LSST lsp-stable https://lsst-lsp-stable.ncsa.illinois.edu/api/tap',
+        value: 'https://lsst-lsp-stable.ncsa.illinois.edu/api/tap',
+        query: 'SELECT * FROM wise_00.allwise_p3as_psd '+
+            'WHERE CONTAINS(POINT(\'ICRS\', ra, decl),'+
+            'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
+    },
+    {
+        label: 'LSST lsp-int https://lsst-lsp-int.ncsa.illinois.edu/api/tap',
+        value: 'https://lsst-lsp-int.ncsa.illinois.edu/api/tap',
+        query: 'SELECT * FROM wise_00.allwise_p3as_psd '+
+            'WHERE CONTAINS(POINT(\'ICRS\', ra, decl),'+
+            'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
     },
     {
         label: 'LSST TEST http://tap.lsst.rocks/tap',

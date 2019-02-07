@@ -12,14 +12,11 @@ import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.LinkInfo;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.download.URLDownload;
 import org.apache.commons.httpclient.Header;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
+import java.io.*;
 
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
         @ParamDoc(name = "serviceUrl", desc = "base TAP url endpoint excluding '/async'"),
@@ -34,7 +31,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         String lang = request.getParam("LANG");
         String queryStr = createQueryString(request);
 
-        HttpServiceInput inputs = new HttpServiceInput();
+        HttpServiceInput inputs = HttpServiceInput.createWithCredential();
         if (!StringUtils.isEmpty(queryStr)) inputs.setParam("QUERY", queryStr);
         if (StringUtils.isEmpty(lang)) { lang = "ADQL"; }
         inputs.setParam("LANG", lang); // in tap 1.0, lang param is required
@@ -54,7 +51,8 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
 
         AsyncTapJob asyncTap = new AsyncTapJob(location.getSource());
         if (asyncTap.getPhase() == AsyncJob.Phase.PENDING) {
-            HttpServices.postData(asyncTap.baseJobUrl + "/phase", new HttpServiceInput().setParam("PHASE", "RUN"), null);
+            HttpServices.postData(asyncTap.baseJobUrl + "/phase",
+                    HttpServiceInput.createWithCredential().setParam("PHASE", "RUN"), null);
         }
         return asyncTap;
     }
@@ -62,10 +60,10 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
 
     /**
      * override this function to convert a request into an ADQL QUERY string
-     * @param request
+     * @param request server request
      * @return an ADQL QUERY string
      */
-    protected String createQueryString(ServerRequest request) {
+    private String createQueryString(ServerRequest request) {
         return request.getParam("QUERY");
     }
 
@@ -74,16 +72,16 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         private Logger.LoggerImpl logger = Logger.getLogger();
         private String baseJobUrl;
 
-        public AsyncTapJob(String baseJobUrl) {
+        AsyncTapJob(String baseJobUrl) {
             this.baseJobUrl = baseJobUrl;
         }
 
         public DataGroup getDataGroup() throws DataAccessException {
             try {
                 //download file first: failing to parse gaia results with topcat SAX parser from url
-                String filename = baseJobUrl.replace("(http:|https:)", "").replace("/", "");
+                String filename = getFilename(baseJobUrl);
                 File outFile = File.createTempFile(filename, ".vot", ServerContext.getTempWorkDir());
-                URLDownload.getDataToFile(new URL(baseJobUrl + "/results/result"), outFile);
+                HttpServices.getData(baseJobUrl + "/results/result", outFile, HttpServiceInput.createWithCredential());
                 DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
                 if (results.length > 0) {
                     DataGroup dg = results[0];
@@ -96,7 +94,7 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
                 }  else {
                     return null;
                 }
-                return results.length > 0 ? results[0] : null;
+                return results[0];
             } catch (Exception e) {
                 throw new DataAccessException("Failure when retrieving results from "+baseJobUrl+"/results/result\n"+
                         e.getMessage());
@@ -105,13 +103,13 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
 
         public boolean cancel() {
             return ! HttpServices.postData(baseJobUrl + "/phase", new ByteArrayOutputStream(),
-                                            new HttpServiceInput().setParam("PHASE", Phase.ABORTED.name()))
+                    HttpServiceInput.createWithCredential().setParam("PHASE", Phase.ABORTED.name()))
                                 .isError();
         }
 
         public Phase getPhase() throws DataAccessException {
             ByteArrayOutputStream phase = new ByteArrayOutputStream();
-            HttpServices.Status status = HttpServices.getData(baseJobUrl + "/phase", phase, null);
+            HttpServices.Status status = HttpServices.getData(baseJobUrl + "/phase", phase, HttpServiceInput.createWithCredential());
             if (status.isError()) {
                 throw new DataAccessException("Error getting phase from "+baseJobUrl+" "+status.getErrMsg());
             }
@@ -124,31 +122,62 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
         }
 
         public String getErrorMsg()  {
-            try {
-                DataGroup[] results = VoTableReader.voToDataGroups(baseJobUrl + "/error", false);
-                DataGroup errorTbl = results[0];
-                return errorTbl.getAttribute("QUERY_STATUS");
-            } catch (IOException e) {
-                logger.error(e);
-            } catch (DataAccessException e) {
-                return e.getMessage();
+            String errorUrl = baseJobUrl + "/error";
+
+            Ref<String> err = new Ref<>();
+            HttpServices.Status status = HttpServices.getData(errorUrl, HttpServiceInput.createWithCredential(),
+                    (method -> {
+                        boolean isText = false;
+                        Header contentType = method.getResponseHeader("Content-Type");
+                        if (contentType != null && contentType.getValue().startsWith("text/plain")) {
+                            isText = true;
+                        }
+                        try {
+                            if (isText) {
+                                // error is text doc
+                                err.setSource(HttpServices.getResponseBodyAsString(method));
+                            } else {
+                                // error is VOTable doc
+                                InputStream is = HttpServices.getResponseBodyAsStream(method);
+                                try {
+                                    String voError = VoTableReader.getError(is, errorUrl);
+                                    if (voError == null) {
+                                        voError = "Non-compliant error doc " + errorUrl;
+                                    }
+                                    err.setSource(voError);
+                                } finally {
+                                    FileUtil.silentClose(is);
+                                }
+                            }
+                        } catch (DataAccessException e) {
+                            err.setSource(e.getMessage());
+                        } catch (Exception e) {
+                            err.setSource("Unable to get error from " + errorUrl);
+                        }
+                    }));
+            if (status.isError()) {
+                return "Unable to get error from "+baseJobUrl+" "+status.getErrMsg();
             }
-            return "";
+            return err.getSource();
         }
 
         public long getTimeout() {
             ByteArrayOutputStream duration = new ByteArrayOutputStream();
-            HttpServices.postData(baseJobUrl + "/executionduration", duration, null);
+            HttpServices.postData(baseJobUrl + "/executionduration", duration, HttpServiceInput.createWithCredential());
             return Long.valueOf(duration.toString());
         }
 
         public void setTimeout(long duration) {
             HttpServices.postData(baseJobUrl + "/executionduration", new ByteArrayOutputStream(),
-                    new HttpServiceInput().setParam("EXECUTIONDURATION", String.valueOf(duration)));
+                    HttpServiceInput.createWithCredential().setParam("EXECUTIONDURATION", String.valueOf(duration)));
         }
 
         protected String getBaseJobUrl() {
             return baseJobUrl;
+        }
+
+        private String getFilename(String urlStr) {
+            return urlStr.replace("(http:|https:)", "").replace("/", "");
         }
     }
 }

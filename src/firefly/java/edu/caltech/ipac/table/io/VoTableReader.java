@@ -14,6 +14,7 @@ import uk.ac.starlink.votable.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -78,6 +79,19 @@ public class VoTableReader {
         }
 
         return groups.toArray(new DataGroup[groups.size()]);
+    }
+
+    public static String getError(InputStream inputStream, String location) throws DataAccessException {
+        try {
+            VOElementFactory voFactory =  new VOElementFactory();
+            voFactory.setStoragePolicy(PREFER_MEMORY);
+            VOElement top = voFactory.makeVOElement(inputStream, null);
+            return getQueryStatusError(top);
+        }  catch (SAXException |IOException e) {
+            e.printStackTrace();
+            throw new DataAccessException("unable to parse " + location + "\n"+
+                    e.getMessage(), e);
+        }
     }
 
     public static final String ID = "ID";
@@ -368,14 +382,18 @@ public class VoTableReader {
             getTableElements(top, tableAry);
 
             if (tableAry.size() == 0) {
-                checkForErrors(top);
+                String error = getQueryStatusError(top);
+                if (error != null) {
+                    throw new DataAccessException(error);
+                }
             }
         }
 
         return tableAry;
     }
 
-    private static void checkForErrors(VOElement top) throws DataAccessException {
+    private static String getQueryStatusError(VOElement top) {
+        String error = null;
         // check for errors: section 4.4 of http://www.ivoa.net/documents/DALI/20170517/REC-DALI-1.1.html
         VOElement[] resources = getResourceChildren(top);
         for (VOElement r : resources) {
@@ -384,7 +402,7 @@ public class VoTableReader {
                 for (VOElement info : infos) {
                     if ("QUERY_STATUS".equals(info.getName()) &&
                             "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
-                        throw new DataAccessException(info.getTextContent());
+                        error = info.getTextContent();
                     }
                 }
             }
@@ -396,9 +414,10 @@ public class VoTableReader {
             String name = info.getName();
             if (Arrays.asList(namesWithMisspelling).contains(name)
                     && "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
-                throw new DataAccessException(info.getTextContent());
+                error = info.getTextContent();
             }
         }
+        return error;
     }
 
     private enum MetaInfo {
