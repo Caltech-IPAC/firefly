@@ -213,7 +213,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR2,"neowiser_p1bs_psd");
             put(NEOWISER_YR3,"neowiser_p1bs_psd");
             put(NEOWISER_YR4,"neowiser_p1bs_psd");
-            put(NEOWISER_YR5,"neowiser_q1bs_psd");
+            put(NEOWISER_YR5,"neowiser_p1bs_psd");
             put(NEOWISER_YR6,"neowiser_i1bs_psd");
 
         }
