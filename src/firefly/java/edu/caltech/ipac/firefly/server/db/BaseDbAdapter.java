@@ -198,6 +198,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
             return "boolean";
         } else if (Date.class.isAssignableFrom(type)) {
             return "date";
+        } else if (Character.class.isAssignableFrom(type)) {
+            return "char";
         } else {
             return "varchar(64000)";
         }
