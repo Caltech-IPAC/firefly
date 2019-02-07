@@ -7,8 +7,12 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.StringUtils;
-import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -22,10 +26,13 @@ import org.apache.http.HttpHeaders;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +70,7 @@ public class HttpServices {
      * For convenience, this function will return 400-bad-request if url is malformed or results is a bad File.
      * @param url  the resource url to call
      * @param results  the file to same the results in.
-     * @return
+     * @return Status
      */
     public static Status getData(String url, File results) {
         return getData(url, results, null);
@@ -93,10 +100,10 @@ public class HttpServices {
      * Exceptions will be written into the results stream when possible.
      * if params are given as input, it will replace any queryString provided in the url.  So, use one of the other.
      * params given as input will be automatically encoded with UTF-8.
-     * @param url
+     * @param url string representation of URL
      * @param input  if params are given, it will replace any queryString provided in the url.  So, use one of the other.
      * @param handler  how to handle the response/results.  If null, do nothing.
-     * @return
+     * @return Status
      */
     public static Status getData(String url, HttpServiceInput input, Handler handler) {
         try {
@@ -159,10 +166,10 @@ public class HttpServices {
 
     /**
      * Executes the given method with the given input.  If results is given,
-     * @param method
-     * @param input
-     * @param handler
-     * @return
+     * @param method HTTPMethod
+     * @param input object holding request headers and cookies
+     * @param handler response handler
+     * @return HttpMethod
      */
     public static HttpMethod executeMethod(HttpMethod method, HttpServiceInput input, Handler handler) throws IOException {
         try {
@@ -200,6 +207,40 @@ public class HttpServices {
             if (method != null) {
                 method.releaseConnection();
             }
+        }
+    }
+
+    /**
+     * Convenience method to be used by custom handlers to get the response body
+     * of the HTTP method as an InputStream. Handles content encoding.
+     * @param method HttpMethod
+     * @return InputStream representation of the response body
+     * @throws IOException on error
+     */
+    public static InputStream getResponseBodyAsStream(HttpMethod method) throws IOException {
+        Header encoding = method.getResponseHeader("Content-Encoding");
+        InputStream is = method.getResponseBodyAsStream();
+        if (is != null && encoding != null && encoding.getValue().contains("gzip")) {
+            return new GZIPInputStream(is);
+        } else {
+            return is;
+        }
+    }
+
+    /**
+     * Convenience method to be used by custom handlers to get the response body
+     * of the HTTP method as a String. Handles content encoding.
+     * @param method HttpMethod
+     * @return String representation of the response body
+     * @throws IOException on error
+     */
+    public static String getResponseBodyAsString(HttpMethod method) throws IOException {
+        InputStream is = getResponseBodyAsStream(method);
+        if (is != null) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            return br.lines().collect(Collectors.joining(System.lineSeparator()));
+        } else {
+            return method.getResponseBodyAsString();
         }
     }
 
@@ -249,13 +290,7 @@ public class HttpServices {
             BufferedInputStream bis = null;
             BufferedOutputStream bos = null;
             try {
-                String encoding = getResHeader(method, "Content-Encoding");
-                if (encoding.contains("gzip")) {
-                    bis = new BufferedInputStream(new GZIPInputStream(method.getResponseBodyAsStream()));
-                } else {
-                    bis = new BufferedInputStream(method.getResponseBodyAsStream());
-                }
-
+                bis = new BufferedInputStream(getResponseBodyAsStream(method));
                 bos = new BufferedOutputStream(results);
                 int b;
                 while ((b = bis.read()) != -1) {

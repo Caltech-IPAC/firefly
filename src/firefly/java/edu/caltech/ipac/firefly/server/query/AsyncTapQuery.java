@@ -12,13 +12,11 @@ import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.LinkInfo;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.Header;
 
 import java.io.*;
-import java.net.URL;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
         @ParamDoc(name = "serviceUrl", desc = "base TAP url endpoint excluding '/async'"),
@@ -129,29 +127,27 @@ public class AsyncTapQuery extends AsyncSearchProcessor {
             Ref<String> err = new Ref<>();
             HttpServices.Status status = HttpServices.getData(errorUrl, HttpServiceInput.createWithCredential(),
                     (method -> {
-                        boolean decompress = false, isText = false;
-                        Header encoding = method.getResponseHeader("Content-Encoding");
-                        if (encoding != null && encoding.getValue().contains("gzip")) {
-                            decompress = true;
-                        }
+                        boolean isText = false;
                         Header contentType = method.getResponseHeader("Content-Type");
                         if (contentType != null && contentType.getValue().startsWith("text/plain")) {
                             isText = true;
                         }
                         try {
-                            InputStream is = method.getResponseBodyAsStream();
-                            if (decompress) { is = new GZIPInputStream(is); }
                             if (isText) {
                                 // error is text doc
-                                BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                                err.setSource(br.lines().collect(Collectors.joining(System.lineSeparator())));
+                                err.setSource(HttpServices.getResponseBodyAsString(method));
                             } else {
                                 // error is VOTable doc
-                                String voError = VoTableReader.getError(is, errorUrl);
-                                if (voError == null) {
-                                    voError = "Non-compliant error doc " + errorUrl;
+                                InputStream is = HttpServices.getResponseBodyAsStream(method);
+                                try {
+                                    String voError = VoTableReader.getError(is, errorUrl);
+                                    if (voError == null) {
+                                        voError = "Non-compliant error doc " + errorUrl;
+                                    }
+                                    err.setSource(voError);
+                                } finally {
+                                    FileUtil.silentClose(is);
                                 }
-                                err.setSource(voError);
                             }
                         } catch (DataAccessException e) {
                             err.setSource(e.getMessage());
