@@ -3,8 +3,8 @@
     "build": "../../node_modules/webpack/bin/webpack.js",
     "lint": "DO_LINT=true yarn run build",
     "dev": "DEBUG=true yarn run build -- -w -d --no-color",
-    "test-unit": "node ../../node_modules/jest/bin/jest",
-    "test-debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand"
+    "test-unit": "node ../../node_modules/jest/bin/jest --passWithNoTests",
+    "test-debug": "node --inspect-brk ../../node_modules/jest/bin/jest --runInBand --passWithNoTests"
   },
   "jest": {
     "moduleFileExtensions": [
