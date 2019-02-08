@@ -24,7 +24,7 @@ public class ExternalMasterDataSource implements ImageMasterDataSourceType {
         List<ImageMasterDataEntry> retval= new ArrayList<>();
 
         retval.addAll(sdss());
-        retval.addAll(msx());
+        //retval.addAll(msx());
         retval.addAll(dss());
 
         return retval;
