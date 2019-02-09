@@ -149,9 +149,9 @@ public class FinderChartRequestUtil {
     private static WebPlotRequest getWebPlotRequest(WebPlotRequest.ServiceType service, String key, WorldPt pt, Float radius) {
         WebPlotRequest wpReq=null;
         switch (service) {
-            case DSS:
-                wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(key),radius);
-                break;
+//            case DSS:
+//                wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(key),radius);
+//                break;
             case IRIS:
                 wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(key), radius);
                 break;
@@ -168,6 +168,7 @@ public class FinderChartRequestUtil {
                 wpReq= WebPlotRequest.make2MASSRequest(pt, "asky", getComboValue(key),radius);
                 break;
             case AKARI:
+            case DSS:
             case SEIP:
             case ATLAS:
                 String surveyKey = extractSurveyKey(getComboValue(key));

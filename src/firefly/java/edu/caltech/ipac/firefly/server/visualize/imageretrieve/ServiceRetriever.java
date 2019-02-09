@@ -34,11 +34,12 @@ public class ServiceRetriever implements FileRetriever {
             case IRIS: return getIrsaPlot(r, ImageSourceTypes.IRIS, ServiceDesc.get(r));
             case TWOMASS: return get2MassPlot(r);
             case MSX: return getIrsaPlot(r, ImageSourceTypes.MSX, ServiceDesc.get(r));
-            case DSS: return getDssPlot(r);
+//            case DSS: return getDssPlot(r);
             case SDSS: return getSloanDSSPlot(r);
             case WISE: return getWisePlot(r);
             case AKARI:
             case SEIP:
+            case DSS:
             case ATLAS: return getAtlasPlot(r);
             case DSS_OR_IRIS: return getDSSorIris(r);
             default: throw new FailedRequestException("Unsupported Service");

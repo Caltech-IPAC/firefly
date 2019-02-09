@@ -59,7 +59,9 @@ public class AtlasImageGetter {
                     queryMap.put(AtlasIbeDataSource.BAND_KEY, atlasParams.getBand());
                     queryMap.put(AtlasIbeDataSource.INSTRUMENT_KEY, atlasParams.getInstrument());
                 }
-                errorMsg = atlasParams.getSchema()+"/"+atlasParams.getTable()+"/"+atlasParams.getBand();
+                String b = atlasParams.getBand();
+                String info = (b!=null && b.length()>0)? b:atlasParams.getXtraFilter();
+                errorMsg = atlasParams.getSchema()+"/"+atlasParams.getTable()+"/"+info;
 
                 isCube = atlasParams.getDataType() != null && atlasParams.getDataType().equalsIgnoreCase("cube"); //TODO Can be also from metadata 'hdu' is it's consistent
                 ibeSource.initialize(m);

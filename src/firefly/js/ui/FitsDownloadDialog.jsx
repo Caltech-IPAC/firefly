@@ -42,7 +42,7 @@ import {INFO_POPUP, showInfoPopup} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
-import {fetchUrl} from '../util/WebUtil';
+import {fetchUrl, replaceAll} from '../util/WebUtil';
 
 const STRING_SPLIT_TOKEN= '--STR--';
 const dialogWidth = 500;
@@ -716,7 +716,8 @@ function  makeServiceFileName(req,plot, band) {
             retval= 'wise-'+req.getSurveyKey()+'-'+req.getSurveyBand()+'.fits';
             break;
         case ServiceType.ATLAS:
-            retval= 'atlas-'+req.getSurveyKey()+'-'+req.getSurveyBand()+'.fits';
+            const title = replaceAll(replaceAll(replaceAll(replaceAll(req.getTitle(),'\\(','_'),'\\)','_'), '\\:','_'),'\\s','_');
+            retval= title+'.fits';
             break;
         case ServiceType.NONE:
             retval= makeTitleFileName(plot, band);
