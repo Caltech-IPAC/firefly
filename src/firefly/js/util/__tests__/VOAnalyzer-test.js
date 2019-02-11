@@ -1,10 +1,10 @@
 // import initTest from '../InitTest.js';
 
 import {reject} from 'lodash';
-import {findTableCenterColumns} from '../VOAnalyzer.js';
+import {findTableCenterColumns, isCatalog} from '../VOAnalyzer.js';
 
 
-describe('Center columns tests', () => {
+describe('Center columns tests, isCatalog test', () => {
 
     /**
      * guessing column name; ra/dec or lon/lat
@@ -19,6 +19,7 @@ describe('Center columns tests', () => {
             {name: 'dec'},
         ];
         actual = findTableCenterColumns(table);
+        expect(actual).toBeTruthy();
         expect(actual.lonCol).toEqual('ra');
         expect(actual.latCol).toEqual('dec');
 
@@ -28,8 +29,21 @@ describe('Center columns tests', () => {
             {name: 'lat'},
         ];
         actual = findTableCenterColumns(table);
+        expect(actual).toBeTruthy();
         expect(actual.lonCol).toEqual('lon');
         expect(actual.latCol).toEqual('lat');
+
+
+        // test ra1/dec1
+        table.tableData.columns = [
+            {name: 'ra1'},
+            {name: 'dec1'},
+        ];
+        actual = findTableCenterColumns(table);
+        expect(actual).toBeTruthy();
+        expect(actual.lonCol).toEqual('ra1');
+        expect(actual.latCol).toEqual('dec1');
+
 
         // test fail
         table.tableData.columns = [
@@ -79,6 +93,24 @@ describe('Center columns tests', () => {
         };
         actual = findTableCenterColumns(table);
         expect(actual).toBeFalsy();
+
+        table.tableData.columns=[
+            {name: 'ra'},
+            {name: 'dec'},
+            ];
+        table.tableMeta = {
+            CatalogCoordColumns: 'ra3;dec3;EQ_J2000'
+        };
+        actual = findTableCenterColumns(table);
+        expect(actual).toBeFalsy();
+
+        table.tableMeta = { };
+        actual = findTableCenterColumns(table);
+        expect(actual).toBeTruthy();
+        expect(actual.lonCol).toEqual('ra');
+        expect(actual.latCol).toEqual('dec');
+
+
     });
 
     test('by UCD', () => {
@@ -244,6 +276,75 @@ describe('Center columns tests', () => {
         expect(actual.latCol).toEqual('udec1');
     });
 
+    /**
+     * check the isCatalog works as expected
+     */
+    test('test isCatalog', () => {
+        const table = {
+            tableData: {
+                columns: [
+                    {name: 'ra'},
+                    {name: 'dec'},
+                    {name: 'ra1'},
+                    {name: 'dec1'},
+                    {name: 'uuuura', UCD: 'pos.eq.ra'},
+                    {name: 'uuuudec', UCD: 'pos.eq.dec'}
+                ]
+            },
+            tableMeta : {
+                CENTER_COLUMN: 'ra1;dec1;EQ_J2000',
+                CatalogOverlayType: ''
+            }
+        };
+        let result;
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+        table.tableMeta.CatalogOverlayType= 'FalsE';
+        result = isCatalog(table);
+        expect(result).toBeFalsy();
+
+        table.tableMeta.CatalogOverlayType= 'true';
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+
+        table.tableMeta= {};
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+
+        table.tableData.columns= [ {name: 'x'}, {name: 'y'} ];
+        table.tableMeta.CatalogOverlayType= 'true';
+        table.tableMeta.CENTER_COLUMN= 'x;y;EQ_J2000';
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+
+        table.tableMeta= {};
+        table.tableData.columns= [
+            {name: 'uuuura', UCD: 'pos.eq.ra'},
+            {name: 'uuuudec', UCD: 'pos.eq.dec'}
+        ];
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+        table.tableData.columns= [
+            {name: 'ttttttra1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'},
+            {name: 'tttttdec1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'},
+        ];
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+
+        table.tableData.columns= [
+            {name: 'ra'},
+            {name: 'dec'},
+        ];
+        result = isCatalog(table);
+        expect(result).toBeFalsy();
+
+    });
 
 });
 

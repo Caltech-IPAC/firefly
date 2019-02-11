@@ -27,7 +27,7 @@ import {getNextColor} from '../draw/DrawingDef.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
-import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
+import {findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
 
 export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -149,19 +149,23 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
     const options= getOptions(params.options);
     const {viewerId}= options;
     let paused = isUndefined(params.paused) ? options.paused : params.paused;
+    const {decimatedTables}= sharedData;
 
     if (paused) {
         paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
     }
     if (!action) {
-        if (!paused) updateCoverage(tbl_id, viewerId, sharedData.decimatedTables, options);
+        if (!paused) {
+            decimatedTables[tbl_id]= undefined;
+            updateCoverage(tbl_id, viewerId, sharedData.decimatedTables, options);
+        }
         return params;
     }
 
     const {payload}= action;
     if (payload.tbl_id && payload.tbl_id!==tbl_id) return params;
-    
-    const {decimatedTables}= sharedData;
+    if (payload.viewerId && payload.viewerId!==viewerId) return params;
+
 
 
     if (action.type===REINIT_APP) {
@@ -170,20 +174,21 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
         return;
     }
 
-    if (paused && (action.type!==MultiViewCntlr.VIEWER_MOUNTED && action.type!==MultiViewCntlr.ADD_VIEWER) )  {
-        return params;
+    if (paused && (action.type===MultiViewCntlr.VIEWER_MOUNTED && action.type===MultiViewCntlr.ADD_VIEWER) )  {
+        updateCoverage(tbl_id, viewerId, decimatedTables, options);
+        return {paused:false};
     }
 
     switch (action.type) {
 
         case TABLE_LOADED:
-            if (!getTableInGroup(tbl_id)) return;
+            if (!getTableInGroup(tbl_id)) return {paused};
             decimatedTables[tbl_id]= undefined;
             updateCoverage(tbl_id, viewerId, decimatedTables, options);
             break;
 
         case TBL_RESULTS_ACTIVE:
-            if (!getTableInGroup(tbl_id)) return;
+            if (!getTableInGroup(tbl_id)) return {paused};
             updateCoverage(tbl_id, viewerId, decimatedTables, options);
             break;
 
@@ -191,15 +196,6 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             removeCoverage(payload.tbl_id, decimatedTables);
             if (!isEmpty(decimatedTables)) updateCoverage(getActiveTableId(), viewerId, decimatedTables, options);
             cancelSelf();
-            break;
-
-        case MultiViewCntlr.ADD_VIEWER:
-        case MultiViewCntlr.VIEWER_MOUNTED:
-            if (action.payload.viewerId === viewerId) {
-                paused = false;
-                const tblIdAry = getTblIdsByGroup();
-                tblIdAry.forEach((tbl_id)=>updateCoverage(tbl_id, viewerId, decimatedTables, options));
-            }
             break;
 
         case TABLE_SELECT:
@@ -212,7 +208,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             break;
 
         case MultiViewCntlr.VIEWER_UNMOUNTED:
-            if (action.payload.viewerId === viewerId) paused = true;
+            paused = true;
             break;
 
         case ImagePlotCntlr.PLOT_IMAGE:
@@ -409,7 +405,7 @@ function makeOverlayCoverageDrawing() {
         if (!tbl_id || !decimatedTables[tbl_id] || !getTblById(tbl_id)) return;
         const table= getTblById(tbl_id);
 
-        if (table.tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] && options.ignoreCatalogs) return; // let the catalog just handle the drawing overlays
+        if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
 
         const layer= getDrawLayerById(getDlAry(), tbl_id);
         if (layer) {

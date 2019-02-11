@@ -45,7 +45,6 @@ import java.util.Map;
         })
 public class QueryIBE extends EmbeddedDbProcessor {
     public static final String PROC_ID = QueryIBE.class.getAnnotation(SearchProcessorImpl.class).id();
-    public static final String MISSION = "mission";
     public static final String POS_WORLDPT = "UserTargetWorldPt";
     public static final String RADIUS = "radius";
     public static final String MOST_CENTER = "mcenter";
@@ -53,13 +52,13 @@ public class QueryIBE extends EmbeddedDbProcessor {
 
 
     protected String getFilePrefix(TableServerRequest request) {
-        return request.getParam(MISSION);
+        return request.getParam(MetaConst.MISSION);
     }
 
     @Override
     public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
-            String mission = request.getParam(MISSION);
+            String mission = request.getParam(MetaConst.MISSION);
             Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
 
             IBE ibe = null;
@@ -89,7 +88,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
     private void addAddtlMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
         try {
-            String mission = request.getParam(MISSION);
+            String mission = request.getParam(MetaConst.MISSION);
             Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
 
             IBE ibe = IBEUtils.getIBE(mission, paramMap);
@@ -113,11 +112,11 @@ public class QueryIBE extends EmbeddedDbProcessor {
             }
 
             meta.setAttribute("host", source.getIbeHost());
-            meta.setAttribute(MISSION, source.getMission());
+            meta.setAttribute(MetaConst.MISSION, source.getMission());
             meta.setAttribute("dataset", source.getDataset());
             meta.setAttribute("table", source.getTableName());
             meta.setAttribute("subsize", request.getParam("subsize"));
-            meta.setAttribute(MetaConst.DATASET_CONVERTER, source.getMission());
+            meta.setAttribute(MetaConst.IMAGE_SOURCE_ID, source.getMission());
             meta.setAttribute("ALL_CORNERS", source.getCorners());
             meta.setAttribute("CENTER_COLUMN", source.getCenterCols());
             meta.setAttribute("PREVIEW_COLUMN", "download");

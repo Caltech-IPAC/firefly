@@ -115,7 +115,7 @@ export function isMetaDataTable(tbl_id) {
 
     const hasDsCol= Boolean(Object.keys(tableMeta).find( (key) => key.toUpperCase()===dataSourceUpper));
 
-    return Boolean(tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol);
+    return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol);
 }
 
 /**

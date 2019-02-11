@@ -7,6 +7,7 @@ import Enum from 'enum';
 import {getColumn, getColumnIdx, getColumnValues} from './../tables/TableUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
+import {getColumns} from '../tables/TableUtil';
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 
@@ -296,24 +297,40 @@ class TableRecognizer {
         }
     }
 
+
     /**
-     * get center columns pair by checking the table meta
-     * @returns {null|CoordColsDescription}
+     *
+     * @return {String}
      */
-    getCenterColumnsOnMeta() {
+    getCenterColumnMetaEntry() {
         this.centerColumnsInfo = null;
 
         const {tableMeta} = this.tableModel || {};
 
         if (!tableMeta ||
             (!tableMeta[MetaConst.CATALOG_COORD_COLS] && !tableMeta[MetaConst.CENTER_COLUMN])) {
-            return this.centerColumnsInfo;
+            return undefined;
         }
+        return tableMeta[MetaConst.CENTER_COLUMN] || tableMeta[MetaConst.CATALOG_COORD_COLS];
+    }
 
-        const cenData= tableMeta[MetaConst.CENTER_COLUMN] || tableMeta[MetaConst.CATALOG_COORD_COLS];
+    /**
+     * @returns {Boolean}
+     */
+    isCenterColumnMetaDefined() {
+        return Boolean(this.getCenterColumnMetaEntry());
+    }
 
-        let s;
-        if (cenData) s= cenData.split(';');
+
+    /**
+     * get center columns pair by checking the table meta
+     * @returns {null|CoordColsDescription}
+     */
+    getCenterColumnsOnMeta() {
+        const cenData= this.getCenterColumnMetaEntry();
+        if (!cenData) return undefined;
+
+        const s= cenData.split(';');
         if (!s || s.length !== 3) {
             return this.centerColumnsInfo;
         }
@@ -385,16 +402,48 @@ class TableRecognizer {
      * @returns {null|CoordColsDescription}
      */
     guessCenterColumnsByName() {
-        this.centerColumnsInfo = null;
+        this.centerColumnsInfo = undefined;
 
-        const guess = (lon, lat) => {
-            const lonCol = getColumn(this.tableModel, lon);
-            const latCol = getColumn(this.tableModel, lat);
+        const columns= getColumns(this.tableModel);
 
-            return (lonCol && latCol) ? this.setCenterColumnsInfo([lonCol, latCol]) : this.centerColumnsInfo;
+        const findColumn = (colName, regExp) => {
+            return columns.find((c) => (c.name === colName || (regExp && regExp.test(c.name))) );
         };
-        return (guess('ra','dec') || guess('lon', 'lat'));
+
+        const guess = (lon, lat, useReg=false) => {
+
+            let lonCol;
+            let latCol;
+            if (useReg) {
+                const reLon= new RegExp(`^[A-z]?[-_]?(${lon})[1-9]*$`);
+                const reLat= new RegExp(`^[A-z]?[-_]?(${lat})[1-9]*$`);
+                lonCol = findColumn(lon,reLon);
+                latCol = findColumn(lat,reLat);
+            }
+            else {
+                lonCol = findColumn(lon);
+                latCol = findColumn(lat);
+            }
+
+            return (lonCol && latCol) ? this.setCenterColumnsInfo([lonCol, latCol]) : undefined;
+        };
+
+        return (guess('ra','dec') || guess('lon', 'lat') || guess('ra','dec',true) || guess('lon', 'lat',true));
     }
+
+
+    /**
+     * find center columns as defined in some vo standard
+     * @returns {null|CoordColsDescription}
+     */
+    getVODefinedCenterColumns() {
+        return  this.getCenterColumnsOnUCD() ||
+            this.getCenterColumnsOnObsCoreUType(this.centerColumnCandidatePairs) ||
+            this.getCenterColumnsOnObsCoreName(this.centerColumnCandidatePairs);
+    }
+
+
+
 
     /**
      * return center position or catalog coordinate columns and the associate*d coordinate system
@@ -402,12 +451,14 @@ class TableRecognizer {
      * @returns {null|CoordColsDescription}
      */
     getCenterColumns() {
-        return  this.getCenterColumnsOnMeta() ||
-                this.getCenterColumnsOnUCD() ||
-                this.getCenterColumnsOnObsCoreUType(this.centerColumnCandidatePairs) ||
-                this.getCenterColumnsOnObsCoreName(this.centerColumnCandidatePairs) ||
+
+        if (this.isCenterColumnMetaDefined()) return this.getCenterColumnsOnMeta();
+        
+        return  this.getVODefinedCenterColumns() ||
                 (isEmpty(this.centerColumnCandidatePairs) && this.guessCenterColumnsByName());
     }
+
+
 
 
     static newInstance(tableModel) {
@@ -423,8 +474,33 @@ class TableRecognizer {
  */
 export function findTableCenterColumns(table) {
    const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
-
    return tblRecog && tblRecog.getCenterColumns();
+}
+
+/**
+ * Test to see it this is a catalog. A catalog must have one of the following:
+ *  - CatalogOverlayType meta data entry defined and not equal to 'FALSE' and we must be able to find the columns
+ *                            either by meta data or by guessing
+ *  - We find the columns by some vo standard
+ *
+ *  Note- if the CatalogOverlayType meta toUpperCase === 'FALSE' then we will treat it as not a catalog no matter how the
+ *  vo columns might be defined.
+ *
+ * @param table
+ * @return {*}
+ */
+export function isCatalog(table) {
+    if (!table) return false;
+    const {tableMeta, tableData}= table;
+    if (!get(tableData, 'columns') || !tableMeta) return false;
+
+    if (isString(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE])) {
+        if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE].toUpperCase()==='FALSE') return false;
+        return Boolean(TableRecognizer.newInstance(table).getCenterColumns());
+    }
+    else {
+        return Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
+    }
 }
 
 /**
@@ -537,10 +613,11 @@ class ColumnRecognizer {
 
     guessCenterColumnsByName() {
         this.centerColumnsInfo = null;
-        const findColumn = (colName) => {
+
+        const findColumn = (colName, regExp) => {
             let col;
             this.column_names.find((name, i) => {
-                if (name === colName) {
+                if (name === colName || (regExp && regExp.test(colName))) {
                     col = {column_names: name, ucd: this.ucds[i]};
                     return true;
                 } else {
@@ -550,14 +627,25 @@ class ColumnRecognizer {
             return col;
         };
 
-        const guess = (lon, lat) => {
 
-            const lonCol = findColumn(lon);
-            const latCol = findColumn(lat);
+        const guess = (lon, lat, useReg=false) => {
+
+            let lonCol;
+            let latCol;
+            if (useReg) {
+                const reLon= new RegExp(`^[A-z]?[-_]?(${lon})[1-9]*$`);
+                const reLat= new RegExp(`^[A-z]?[-_]?(${lat})[1-9]*$`);
+                lonCol = findColumn(lon,reLon);
+                latCol = findColumn(lat,reLat);
+            }
+            else {
+                lonCol = findColumn(lon);
+                latCol = findColumn(lat);
+            }
 
             return (lonCol && latCol) ? this.setCenterColumnsInfo([lonCol, latCol]) : this.centerColumnsInfo;
         };
-        return (guess('ra','dec') || guess('lon', 'lat'));
+        return (guess('ra','dec') || guess('lon', 'lat') || guess('ra','dec',true) || guess('lon', 'lat',true));
     }
 
 
@@ -581,3 +669,18 @@ export function findCenterColumnsByColumnsModel(columnsModel) {
 
     return colRecog && colRecog.getCenterColumns();
 }
+
+
+
+
+const DEFAULT_TNAME_OPTIONS = [
+    'name',         // generic
+    'pscname',      // IRAS
+    'target',       //  our own table output
+    'designation',  // 2MASS
+    'starid'        // PCRS
+];
+
+// moved from java, if we decide to use it this is what we had before
+export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OPTIONS.includes(c));
+

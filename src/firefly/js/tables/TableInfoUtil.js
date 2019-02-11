@@ -74,30 +74,6 @@ export function getCornersColumns(table) {
     return makeCoordColAry(DEF_CORNER_COLS,table);
 }
 
-/**
- * @deprecated use VOAnalyzer.findTableCenterColumns
- * Investigate table meta data a return a CoordColsDescription for two columns that represent and object in the row
- * @param {TableModel} table
- * @return {CoordColsDescription|null}
- */
-export function getCenterColumns(table) {
-    if (!table) return null;
-
-    return findTableCenterColumns(table);
-
-    /*
-    const {tableMeta:meta}= table;
-    if (!meta) return null;
-
-    if (meta[MetaConst.CENTER_COLUMN]) return makeCoordCol(meta[MetaConst.CENTER_COLUMN],table);
-    if (meta[MetaConst.CATALOG_COORD_COLS]) return makeCoordCol(meta[MetaConst.CATALOG_COORD_COLS],table);
-
-    const defCol= guessDefColumns(table);
-
-    return makeCoordCol(defCol,table);
-    */
-}
-
 
 /**
  * if there are no default columns then try to guess.  try ra,dec or lon, lat.  More guesses could be added later.

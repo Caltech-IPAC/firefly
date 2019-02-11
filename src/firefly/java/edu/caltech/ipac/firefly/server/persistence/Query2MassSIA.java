@@ -103,7 +103,7 @@ public class Query2MassSIA extends QueryVOTABLE  {
         }
 
         // set related columns
-        meta.setAttribute(MetaConst.DATASET_CONVERTER, "2MASS");
+        meta.setAttribute(MetaConst.IMAGE_SOURCE_ID, "2MASS");
         meta.setAttribute("col.related", relatedCols);
 
     }

@@ -107,7 +107,7 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
     private File getWiseArtifact(final TableServerRequest req) throws IOException, DataAccessException {
 
         WiseRequest sreq= new WiseRequest();
-        sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
+        sreq.setParam(MetaConst.MISSION, WiseIbeDataSource.WISE);
         sreq.setParam(ServerParams.USER_TARGET_WORLD_PT, req.getParam("UserTargetWorldPt"));
         sreq.setParam("optLevel", "1b4,3a4");// todo, what is this?
         sreq.setParam("band", req.getParam("band"));
@@ -134,7 +134,7 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
 
         try {
             TableServerRequest sreq = new TableServerRequest();
-            sreq.setParam(QueryIBE.MISSION, TwoMassIbeDataSource.TWOMASS);
+            sreq.setParam(MetaConst.MISSION, TwoMassIbeDataSource.TWOMASS);
             sreq.setParam(TwoMassIbeDataSource.DS_KEY, TwoMassIbeDataSource.DS.ASKY.getName());
             sreq.setParam(QueryIBE.POS_WORLDPT, req.getParam("UserTargetWorldPt"));
             sreq.setParam(QueryIBE.RADIUS, get2MassImageSize(req.getParam("subsize")));

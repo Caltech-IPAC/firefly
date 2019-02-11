@@ -6,8 +6,6 @@ package edu.caltech.ipac.firefly.server.persistence;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WspaceMeta;
-import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -25,7 +23,6 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
          @ParamDoc(name="radius", desc="radius in degrees"),
          @ParamDoc(name="accessUrl", desc="access URL"),
          @ParamDoc(name="title", desc="catalog title"),
-         @ParamDoc(name="use", desc="catalog_overlay, catalog_primary, or data_primary")
         })
 
 public class QueryByConeSearchURL extends QueryVOTABLE {

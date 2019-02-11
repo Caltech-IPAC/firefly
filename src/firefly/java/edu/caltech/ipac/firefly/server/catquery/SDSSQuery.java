@@ -353,14 +353,13 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
             if (!StringUtils.isEmpty(lonCol) && !StringUtils.isEmpty(latCol)) {
                 llc = new TableMeta.LonLatColumns(lonCol, latCol, CoordinateSys.EQ_J2000);
-                meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
+                meta.setLonLatColumnAttr(MetaConst.CENTER_COLUMN, llc);
                 break;
             }
         }
         boolean catalogDataFound= (lonCol!=null && latCol!=null);
         if (catalogDataFound) {
-            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "SDSS");
-            meta.setAttribute(MetaConst.DATA_PRIMARY, "False");
+            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
         }
     }
 

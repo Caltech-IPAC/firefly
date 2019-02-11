@@ -127,7 +127,7 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
                 "ra1", "dec1", "ra2", "dec2", "ra3", "dec3", "ra4", "dec4"
         };
         String dataset = request.getParam("RequestedDataSet");
-        meta.setAttribute(MetaConst.DATASET_CONVERTER, dataset);
+        meta.setAttribute(MetaConst.MISSION, dataset);
 
         // set columns to hide
         for (String c : colsToHide) {

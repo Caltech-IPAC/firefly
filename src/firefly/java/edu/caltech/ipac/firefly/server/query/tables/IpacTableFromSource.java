@@ -7,20 +7,21 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.query.SearchProcessor;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.UserCatalogQuery;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.util.FileUtil;
@@ -155,7 +156,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
         String type = request.getParam(TBL_TYPE);
         if (type == null || type.equals(TYPE_CATALOG)) {
-            UserCatalogQuery.addCatalogMeta(defaults,columns,request);
+            defaults.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
         }
     }
 
