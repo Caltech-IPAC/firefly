@@ -1,7 +1,7 @@
 // import initTest from '../InitTest.js';
 
 import {reject} from 'lodash';
-import {findTableCenterColumns, isCatalog} from '../VOAnalyzer.js';
+import {findTableCenterColumns, isCatalog, hasCoverageData, isMetaDataTable} from '../VOAnalyzer';
 
 
 describe('Center columns tests, isCatalog test', () => {
@@ -300,20 +300,24 @@ describe('Center columns tests, isCatalog test', () => {
         result = isCatalog(table);
         expect(result).toBeTruthy();
 
+        // check case insensitivity
         table.tableMeta.CatalogOverlayType= 'FalsE';
         result = isCatalog(table);
         expect(result).toBeFalsy();
 
+        // check case any value in CatalogOverlayType
         table.tableMeta.CatalogOverlayType= 'true';
         result = isCatalog(table);
         expect(result).toBeTruthy();
 
 
+        // check finding ucd
         table.tableMeta= {};
         result = isCatalog(table);
         expect(result).toBeTruthy();
 
 
+        // check finding other columns
         table.tableData.columns= [ {name: 'x'}, {name: 'y'} ];
         table.tableMeta.CatalogOverlayType= 'true';
         table.tableMeta.CENTER_COLUMN= 'x;y;EQ_J2000';
@@ -321,6 +325,7 @@ describe('Center columns tests, isCatalog test', () => {
         expect(result).toBeTruthy();
 
 
+        // check ucd
         table.tableMeta= {};
         table.tableData.columns= [
             {name: 'uuuura', UCD: 'pos.eq.ra'},
@@ -329,6 +334,7 @@ describe('Center columns tests, isCatalog test', () => {
         result = isCatalog(table);
         expect(result).toBeTruthy();
 
+        // check utype
         table.tableData.columns= [
             {name: 'ttttttra1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'},
             {name: 'tttttdec1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'},
@@ -337,12 +343,162 @@ describe('Center columns tests, isCatalog test', () => {
         expect(result).toBeTruthy();
 
 
+        // check CatalogOverlayType not defined
         table.tableData.columns= [
             {name: 'ra'},
             {name: 'dec'},
         ];
         result = isCatalog(table);
         expect(result).toBeFalsy();
+
+    });
+
+    /**
+     * check the hasCoverageData works as expected
+     */
+    test('test hasCoverageData', () => {
+        const table = {
+            totalRows: 2,
+            tableData: {
+                columns: [
+                    {name: 'ra'},
+                    {name: 'dec'},
+                    {name: 'ra1'},
+                    {name: 'dec1'},
+                    {name: 'uuuura', UCD: 'pos.eq.ra'},
+                    {name: 'uuuudec', UCD: 'pos.eq.dec'}
+                ]
+            },
+            tableMeta : {
+                CENTER_COLUMN: 'ra1;dec1;EQ_J2000',
+                CatalogOverlayType: ''
+            }
+        };
+        let result;
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+
+        // check guessing
+        table.tableMeta= {};
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+        // check unrecognized columns
+        table.tableData.columns= [ {name: 'x'}, {name: 'y'}, ];
+        result = hasCoverageData(table);
+        expect(result).toBeFalsy();
+
+        // check meta data defining  columns
+        table.tableMeta= {CENTER_COLUMN: 'x;y;GAL'};
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+
+        // check recognizing columns by utype
+        table.tableMeta= {};
+        table.tableData.columns= [
+            {name: 'ttttttra1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'},
+            {name: 'tttttdec1', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'},
+        ];
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+        // check recognizing columns by utype
+        table.tableData.columns= [
+            {name: 'x', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'},
+            {name: 'y', utype: 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'},
+        ];
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+
+        // check recognizing columns by meta data
+        table.tableData.columns= [
+            {name: 'x1'},
+            {name: 'y1'},
+            {name: 'x2'},
+            {name: 'y2'},
+            {name: 'x3'},
+            {name: 'y3'},
+            {name: 'x4'},
+            {name: 'y4'},
+        ];
+        table.tableMeta= {ALL_CORNERS: 'x1;y1;J2000,x2;y2;J2000,x3;y3;J2000,x4;y4;J2000'};
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+        // check recognizing columns mismatching metadata
+        table.tableMeta= {ALL_CORNERS: 'a1;b1;J2000,a2;b2;J2000,a3;b3;J2000,a4;b4;J2000'};
+        result = hasCoverageData(table);
+        expect(result).toBeFalsy();
+
+        // check guessing
+        table.tableMeta= {};
+        table.tableData.columns= [
+            {name: 'ra1'},
+            {name: 'dec1'},
+            {name: 'ra2'},
+            {name: 'dec2'},
+            {name: 'ra3'},
+            {name: 'dec3'},
+            {name: 'ra4'},
+            {name: 'dec4'},
+        ];
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+        // check guessing
+        table.tableMeta= {};
+        table.tableData.columns= [
+            {name: 'xra1'},
+            {name: 'xdec1'},
+            {name: 'xra2'},
+            {name: 'xdec2'},
+            {name: 'xra3'},
+            {name: 'xdec3'},
+            {name: 'xra4'},
+            {name: 'xdec4'},
+        ];
+        result = hasCoverageData(table);
+        expect(result).toBeTruthy();
+
+    });
+
+    /**
+     * check the isMetaDataTable works as expected
+     */
+    test('test isMetaDataTable', () => {
+        const table = {
+            totalRows: 2,
+            tableData: {
+                columns: [
+                    {name: 'url'},
+                    {name: 'desc'},
+                ]
+            },
+            tableMeta: {
+                DataSource: 'url'
+            }
+        };
+        let result;
+        result= isMetaDataTable(table);
+        expect(result).toBeTruthy();
+
+
+        table.tableMeta= {dAtASouRCE:'url'};
+        result= isMetaDataTable(table);
+        expect(result).toBeTruthy();
+
+
+
+        table.tableMeta= {};
+        result= isMetaDataTable(table);
+        expect(result).toBeFalsy();
+
+        table.tableMeta= {ImageSourceId:'wise'};
+        result= isMetaDataTable(table);
+        expect(result).toBeTruthy();
 
     });
 

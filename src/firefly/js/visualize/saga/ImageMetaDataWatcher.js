@@ -16,10 +16,11 @@ import MultiViewCntlr, {dispatchReplaceViewerItems, dispatchUpdateCustom, getVie
                         dispatchChangeViewerLayout, isImageViewerSingleLayout,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
-import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
+import {findGridTableRows} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {isImageDataRequeestedEqual} from '../WebPlotRequest.js';
-import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
+import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
+import {isMetaDataTable} from '../../util/VOAnalyzer.js';
 
 const MAX_GRID_SIZE= 50;
 

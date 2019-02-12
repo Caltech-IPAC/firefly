@@ -26,7 +26,11 @@ export const MetaConst = {
      */
     ALL_CORNERS   : 'ALL_CORNERS',
 
-    /** if defined to any value the the table is a catalog */
+    /**
+     * If defined to any value (but 'false') the the table is a catalog
+     * CatalogOverlayType is required to even guess if there is no VO information.
+     * @see isCatalog
+     */
     CATALOG_OVERLAY_TYPE : 'CatalogOverlayType',
 
     /**

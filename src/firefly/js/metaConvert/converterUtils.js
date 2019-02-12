@@ -2,15 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty, get} from 'lodash';
+import {isEmpty} from 'lodash';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
-import {getTblById,getTblInfo, getCellValue} from '../tables/TableUtil.js';
-import {MetaConst} from '../data/MetaConst.js';
-import {findTableCenterColumns} from '../util/VOAnalyzer.js';
-
-const dataSourceUpper= 'DATASOURCE';
+import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 
 const getSetInSrByRow= (table,sr,rowNum) => (col) => {
     sr.setSafeParam(col.name, getCellValue(table,rowNum,col.name));
@@ -101,30 +97,4 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
     return retval;
 }
 
-
-/**
- * Guess if this table contains image meta data
- * @param tbl_id
- * @return {boolean} true if there is image meta data
- */
-export function isMetaDataTable(tbl_id) {
-    const table= getTblById(tbl_id);
-    if (isEmpty(table)) return false;
-    const {tableMeta, totalRows} = table;
-    if (!tableMeta || !totalRows) return false;
-
-    const hasDsCol= Boolean(Object.keys(tableMeta).find( (key) => key.toUpperCase()===dataSourceUpper));
-
-    return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol);
-}
-
-/**
- * Guess if this table contains catalog data
- * @param tbl_id
- * @return {boolean} true if this is catalog data
- */
-export function isCatalogTable(tbl_id) {
-    const table= getTblById(tbl_id);
-    return get(table, 'totalRows') && !isEmpty(findTableCenterColumns(table));
-}
 

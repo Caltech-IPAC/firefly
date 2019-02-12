@@ -32,7 +32,11 @@ public class MetaConst {
      */
     public static final String ALL_CORNERS   = "ALL_CORNERS";
 
-    /** if defined to any value the the table is a catalog */
+    /**
+     * If defined to any value (but 'false') the the table is a catalog
+     * CatalogOverlayType is required to even guess if there is no VO information.
+     * Also it can be defined to FALSE to disable it being a catalog altogether even with VO information.
+     */
     public static final String CATALOG_OVERLAY_TYPE = "CatalogOverlayType";
 
     /** @deprecated replaced by IMAGE_SOURCE_ID */
@@ -41,8 +45,5 @@ public class MetaConst {
     
     /** id string for types of image */
     public final static String IMAGE_SOURCE_ID = "ImageSourceId";
-    /** id string for types of mission */
-    public static final String MISSION = "mission";
-
 }
 

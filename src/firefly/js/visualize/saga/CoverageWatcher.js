@@ -4,14 +4,13 @@
 
 import Enum from 'enum';
 import {get,isEmpty,isObject, flattenDeep, values, isUndefined} from 'lodash';
-import {MetaConst} from '../../data/MetaConst.js';
 import {WebPlotRequest, TitleOptions} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, dispatchPlotImageOrHiPS} from '../ImagePlotCntlr.js';
 import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {doFetchTable, getTblById, getTblIdsByGroup, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
+import {doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
@@ -20,14 +19,12 @@ import {computeCentralPtRadiusAverage, toDegrees} from '../VisUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {logError} from '../../util/WebUtil.js';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
-import DrawLayerCntlr, {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
+import {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
 import {getNextColor} from '../draw/DrawingDef.js';
-import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
-import {findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
+import {findTableCenterColumns, isCatalog, hasCoverageData} from '../../util/VOAnalyzer.js';
 
 export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
@@ -93,10 +90,6 @@ const defOptions= {
     fovDegMinSize: 100/3600, //defaults to 100 arcsec
     viewerId:'DefCoverageId',
     paused: true,
-
-
-    hasCoverageData,
-    getCornersColumns,
 };
 
 
@@ -111,7 +104,7 @@ export function startCoverageWatcher(options) {
 /** @type {TableWatcherDef} */
 export const coverageWatcherDef = {
     id : 'CoverageWatcher',
-    testTable : testTableForCoverage,
+    testTable : (table) => hasCoverageData(table),
     sharedData: { decimatedTables: {}},
     watcher : watchCoverage,
     actions: [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE, TBL_RESULTS_ACTIVE,
@@ -120,12 +113,6 @@ export const coverageWatcherDef = {
 };
 
 const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
-
-function testTableForCoverage(table, action, options) {
-    options= getOptions(options);
-    return options.hasCoverageData(options, table);
-}
-
 
 
 /**
@@ -443,7 +430,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
     const boxData= covType===CoverageType.BOTH || covType===CoverageType.BOX;
     const {tbl_id}= table;
     const {tableMeta, tableData}= allRowsTable;
-    const columns = boxData ? options.getCornersColumns(table) : findTableCenterColumns(table);
+    const columns = boxData ? getCornersColumns(table) : findTableCenterColumns(table);
     if (isEmpty(columns)) { return; }
     const angleInRadian= isTableUsingRadians(tableMeta);
     const dl= getDlAry().find( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogId===table.tbl_id);
@@ -493,7 +480,7 @@ function getCoverageType(options,table) {
 }
 
 function hasCorners(options, table) {
-    const cornerColumns= options.getCornersColumns(table);
+    const cornerColumns= getCornersColumns(table);
     if (isEmpty(cornerColumns)) return false;
     const dataCnt= table.tableData.data.reduce( (tot, row) =>
         cornerColumns.every( (cDef) => row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? tot+1 : tot
@@ -521,7 +508,7 @@ function getPtAryFromTable(options,table, usesRadians){
 }
 
 function getBoxAryFromTable(options,table, usesRadians){
-    const cDefAry= options.getCornersColumns(table);
+    const cDefAry= getCornersColumns(table);
     return table.tableData.data
         .map( (row) => cDefAry
             .map( (cDef) =>
@@ -529,19 +516,9 @@ function getBoxAryFromTable(options,table, usesRadians){
         .filter( (row) => row.every( (v) => v));
 }
 
-/**
- * @summary check if there is center column or corner columns defined
- * @param options
- * @param table
- * @returns {boolean}
- */
-function hasCoverageData(options, table) {
-    if (!get(table, 'totalRows')) return false;
-    return !isEmpty(findTableCenterColumns(table)) || !isEmpty(options.getCornersColumns(table));
-}
 
 function getCovColumnsForQuery(options, table) {
-    const cAry= [...options.getCornersColumns(table), findTableCenterColumns(table)];
+    const cAry= [...getCornersColumns(table), findTableCenterColumns(table)];
     // column names should be in quotes
     // there should be no duplicates
     const base = cAry.filter((c)=>!isEmpty(c))

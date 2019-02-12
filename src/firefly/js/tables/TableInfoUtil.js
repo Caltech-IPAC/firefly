@@ -4,29 +4,10 @@
 
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
-import {getColumn, getColumnIdx} from './TableUtil.js';
-import {findTableCenterColumns} from '../util/VOAnalyzer.js';
+import {getColumnIdx} from './TableUtil.js';
 
 
 export const DEF_CORNER_COLS= ['ra1;dec1', 'ra2;dec2', 'ra3;dec3', 'ra4;dec4'];
-
-
-
-/**
- * @global
- * @public
- * @typedef {Object} CoordColsDescription
- *
- * @summary And object that describes a pairs of columns in a table that makes up a coordinate
- *
- * @prop {string} lonCol - name of the longitudinal column
- * @prop {string} latCol - name of the latitudinal column
- * @prop {number} lonIdx - column index for the longitudinal column
- * @prop {number} latIdx - column index for the latitudinal column
- * @prop {CoordinateSys} csys - the coordinate system to use
- */
-
-
 
 
 const makeCoordColAry= (cAry, table) => cAry.map( (c) => makeCoordCol(c,table)).filter( (cCol) => cCol);
@@ -57,7 +38,6 @@ function makeCoordCol(def, table) {
 
 }
 
-
 /**
  * Investigate table meta data a return a CoordColsDescription array for 4 pairs columns that represent
  * the 4 corners of an object in the table
@@ -73,21 +53,3 @@ export function getCornersColumns(table) {
     }
     return makeCoordColAry(DEF_CORNER_COLS,table);
 }
-
-
-/**
- * if there are no default columns then try to guess.  try ra,dec or lon, lat.  More guesses could be added later.
- * @param {TableModel} table
- * @return {string}
- *
- */
-function guessDefColumns(table) {
-    // ex. return 'ra;dec;EQ_J2000' or 'lon;lat;EQ_J2000'
-    const guess = (lon, lat) => {
-        const lonCol = getColumn(table, lon, true);
-        const latCol = getColumn(table, lat, true);
-        if (lonCol && latCol) return `${lonCol.name};${latCol.name};EQ_J2000`;
-    };
-    return guess('ra','dec') || guess('lon', 'lat');
-}
-

@@ -2,12 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, has, isEmpty, isArray, isString} from 'lodash';
+import {get, has, isArray, isEmpty, isObject, isString} from 'lodash';
 import Enum from 'enum';
-import {getColumn, getColumnIdx, getColumnValues} from './../tables/TableUtil.js';
+import {getColumn, getColumnIdx, getColumnValues, getColumns, getTblById} from '../tables/TableUtil.js';
+import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
-import {getColumns} from '../tables/TableUtil';
+
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 
@@ -478,29 +479,14 @@ export function findTableCenterColumns(table) {
 }
 
 /**
- * Test to see it this is a catalog. A catalog must have one of the following:
- *  - CatalogOverlayType meta data entry defined and not equal to 'FALSE' and we must be able to find the columns
- *                            either by meta data or by guessing
- *  - We find the columns by some vo standard
- *
- *  Note- if the CatalogOverlayType meta toUpperCase === 'FALSE' then we will treat it as not a catalog no matter how the
- *  vo columns might be defined.
- *
- * @param table
- * @return {*}
+ * Given a TableModel or a table id return a table model
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @return {TableModel}
  */
-export function isCatalog(table) {
-    if (!table) return false;
-    const {tableMeta, tableData}= table;
-    if (!get(tableData, 'columns') || !tableMeta) return false;
-
-    if (isString(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE])) {
-        if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE].toUpperCase()==='FALSE') return false;
-        return Boolean(TableRecognizer.newInstance(table).getCenterColumns());
-    }
-    else {
-        return Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
-    }
+function getTableModel(tableOrId) {
+    if (isString(tableOrId)) return getTblById(tableOrId);  // was passed a table Id
+    if (isObject(tableOrId)) return tableOrId;
+    return undefined;
 }
 
 /**
@@ -671,6 +657,69 @@ export function findCenterColumnsByColumnsModel(columnsModel) {
 }
 
 
+/**
+ * Test to see it this is a catalog. A catalog must have one of the following:
+ *  - CatalogOverlayType meta data entry defined and not equal to 'FALSE' and we must be able to find the columns
+ *                            either by meta data or by guessing
+ *  - We find the columns by some vo standard
+ *
+ *  Note- if the CatalogOverlayType meta toUpperCase === 'FALSE' then we will treat it as not a catalog no matter how the
+ *  vo columns might be defined.
+ *
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @return {boolean} True if the table is a catalog
+ * @see MetaConst.CATALOG_OVERLAY_TYPE
+ */
+export function isCatalog(tableOrId) {
+
+    const table= getTableModel(tableOrId);
+
+    if (!table) return false;
+    const {tableMeta, tableData}= table;
+    if (!get(tableData, 'columns') || !tableMeta) return false;
+
+    if (isString(tableMeta[MetaConst.CATALOG_OVERLAY_TYPE])) {
+        if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE].toUpperCase()==='FALSE') return false;
+        return Boolean(TableRecognizer.newInstance(table).getCenterColumns());
+    }
+    else {
+        return Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
+    }
+}
+
+/**
+ * @summary check if there is center column or corner columns defined, if so this table has coverage information
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @returns {boolean} True if there  is coverage data in this table
+ */
+export function hasCoverageData(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table) return false;
+    if (!table.totalRows) return false;
+    return !isEmpty(findTableCenterColumns(table)) || !isEmpty(getCornersColumns(table));
+}
+
+
+/**
+ * Guess if this table contains image meta data. It contains image meta data if IMAGE_SOURCE_ID is defined
+ * or a DATA_SOURCE column name is defined
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @return {boolean} true if there is image meta data
+ * @see MetaConst.DATA_SOURCE
+ * @see MetaConst.IMAGE_SOURCE_ID
+ */
+export function isMetaDataTable(tableOrId) {
+    const table= getTableModel(tableOrId);
+    const dataSourceUpper = MetaConst.DATA_SOURCE.toUpperCase();
+    if (isEmpty(table)) return false;
+    const {tableMeta, totalRows} = table;
+    if (!tableMeta || !totalRows) return false;
+
+    const hasDsCol = Boolean(Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceUpper));
+
+    return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol);
+}
+
 
 
 const DEFAULT_TNAME_OPTIONS = [
@@ -683,4 +732,19 @@ const DEFAULT_TNAME_OPTIONS = [
 
 // moved from java, if we decide to use it this is what we had before
 export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OPTIONS.includes(c));
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} CoordColsDescription
+ *
+ * @summary And object that describes a pairs of columns in a table that makes up a coordinate
+ *
+ * @prop {string} lonCol - name of the longitudinal column
+ * @prop {string} latCol - name of the latitudinal column
+ * @prop {number} lonIdx - column index for the longitudinal column
+ * @prop {number} latIdx - column index for the latitudinal column
+ * @prop {CoordinateSys} csys - the coordinate system to use
+ */
+
 

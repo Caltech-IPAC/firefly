@@ -9,8 +9,7 @@ import {flux} from '../../Firefly.js';
 import shallowequal from 'shallowequal';
 import {ImageMetaDataToolbarView} from './ImageMetaDataToolbarView.jsx';
 import {converterFactory} from '../../metaConvert/ConverterFactory.js';
-import {getTblById, getActiveTableId} from '../../tables/TableUtil.js';
-import {isMetaDataTable} from '../../metaConvert/converterUtils.js';
+import {getTblById} from '../../tables/TableUtil.js';
 import {SINGLE} from '../MultiViewCntlr.js';
 
 export class ImageMetaDataToolbar extends Component {

@@ -16,12 +16,12 @@ import {DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItem
         META_VIEWER_ID} from '../MultiViewCntlr.js';
 import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../tables/TableUtil.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo} from '../../core/LayoutCntlr.js';
-import {isMetaDataTable, isCatalogTable} from '../../metaConvert/converterUtils.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {getAppOptions, REINIT_APP} from '../../core/AppDataCntlr.js';
 import {startCoverageWatcher} from '../saga/CoverageWatcher.js';
 import {startImageMetadataWatcher} from '../saga/ImageMetaDataWatcher.js';
+import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
 
 
 /**
@@ -177,7 +177,7 @@ function layoutHandler(action, cancelSelf) {
 function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
-const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalogTable(id) );
+const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalog(id) );
 const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
 const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
 const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
@@ -189,7 +189,7 @@ function handleNewTable(layoutInfo, action) {
     let {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
     const isMeta = isMetaDataTable(tbl_id);
     
-    if ((isMeta || isCatalogTable(tbl_id)) && showTables ) {
+    if ((isMeta || isCatalog(tbl_id)) && showTables ) {
         if (!showFits) {
             // only show coverage if there are not images or coverage is showing
             showFits= shouldShowFits();
