@@ -124,7 +124,6 @@ export function makeIrsaWorkspaceRequest(source, title, options={}) {
 export function makeIrsaCatalogRequest(title, project, catalog, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
     title = title || catalog;
-    options.use = options.use || 'catalog_overlay';
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = 'GatorQuery';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
@@ -152,7 +151,6 @@ export function makeLsstCatalogRequest(title, project, catalog, params={}, optio
     const req = {startIdx: 0, pageSize: 100};
 
     title = title || catalog;
-    options.use = options.use || 'lsst_catalog_overlay';
     const tbl_id = options.tbl_id || uniqueTblId();
     const id = get(params, 'SearchMethod')==='Table'?'LSSTMultiObjectSearch':'LSSTCatalogSearch';
     const UserTargetWorldPt = params.UserTargetWorldPt || params.position;  // may need to convert to worldpt.
@@ -179,7 +177,6 @@ export function makeLsstCatalogRequest(title, project, catalog, params={}, optio
  */
 export function makeVOCatalogRequest(title, params={}, options={}) {
     var req = {startIdx: 0, pageSize: 100};
-    options.use = options.use || 'catalog_overlay';
     const tbl_id = options.tbl_id || uniqueTblId();
     const providerid = voProviders[params.providerName];
 

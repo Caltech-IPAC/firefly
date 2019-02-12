@@ -23,7 +23,7 @@ import {computeCentralPointAndRadius} from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {COVERAGE_CREATED} from './CoverageWatcher.js';
 import {isImage,isHiPS} from '../WebPlot.js';
-import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
+import {findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
 
 
 
@@ -33,26 +33,10 @@ import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 export const catalogWatcherDef = {
     id : 'CatalogWatcher',
     watcher : watchCatalogs,
-    testTable : testTableForCatalogs,
+    testTable : (table) => isCatalog(table),
     actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE,
               TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
 };
-
-
-function testTableForCatalogs(table) {
-
-    const {tableMeta, tableData}= table;
-    if ( !tableMeta[MetaConst.CATALOG_OVERLAY_TYPE]) return false;
-    if (isLsstFootprintTable(table)) return false;
-    const columns= findTableCenterColumns(table);
-
-    if (!columns) return false;
-    if (!tableData.columns.find( isCName(columns.lonCol)) && !tableData.columns.find(isCName(columns.latCol))) {
-        return false;
-    }
-    return true;
-
-}
 
 
 /**

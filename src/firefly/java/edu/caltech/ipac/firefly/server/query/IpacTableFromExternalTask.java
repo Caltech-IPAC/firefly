@@ -3,13 +3,14 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandler;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandlerImpl;
 import edu.caltech.ipac.firefly.server.ExternalTaskLauncher;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 
 import java.io.File;
@@ -58,7 +59,7 @@ public class IpacTableFromExternalTask extends IpacTablePartProcessor {
                 defaults.setAttribute(p.getName(), p.getValue());
             }
         }
-        UserCatalogQuery.addCatalogMeta(defaults,columns,request);
+        defaults.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
     }
 
 

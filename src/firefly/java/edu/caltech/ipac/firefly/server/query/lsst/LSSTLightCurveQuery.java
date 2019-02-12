@@ -11,6 +11,7 @@ import edu.caltech.ipac.table.DataType;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.DATASET_CONVERTER;
+import static edu.caltech.ipac.firefly.data.table.MetaConst.IMAGE_SOURCE_ID;
 
 /**
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
@@ -104,7 +105,7 @@ public class LSSTLightCurveQuery extends LSSTQuery {
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
-        meta.setAttribute(DATASET_CONVERTER, "lsst_sdss");
+        meta.setAttribute(IMAGE_SOURCE_ID, "lsst_sdss");
         
         String tableName = request.getParam("table_name");
 

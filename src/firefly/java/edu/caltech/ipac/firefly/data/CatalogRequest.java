@@ -224,20 +224,6 @@ public class CatalogRequest extends TableServerRequest {
         setParam(USE, use.getDesc());
     }
 
-    public Use getUse() {
-        Use retval = Use.DATA_PRIMARY;
-        String s = getParam(USE);
-        if (s != null) {
-            try {
-                retval = Enum.valueOf(Use.class, s.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                retval = Use.DATA_PRIMARY;
-            }
-        }
-        return retval;
-    }
-
-
     public void setQueryCatName(String catName) {
         setParam(CATALOG, catName);
     }

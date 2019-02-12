@@ -117,7 +117,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
             meta.setAttribute("dataset", source.getDataset());
             meta.setAttribute("table", source.getTableName());
             meta.setAttribute("subsize", request.getParam("subsize"));
-            meta.setAttribute(MetaConst.DATASET_CONVERTER, source.getMission());
+            meta.setAttribute(MetaConst.IMAGE_SOURCE_ID, source.getMission());
             meta.setAttribute("ALL_CORNERS", source.getCorners());
             meta.setAttribute("CENTER_COLUMN", source.getCenterCols());
             meta.setAttribute("PREVIEW_COLUMN", "download");
