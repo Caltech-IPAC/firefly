@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.data;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.download.ResponseMessage;
 
 import java.io.File;
 import java.io.Serializable;
@@ -61,6 +62,11 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public FileInfo(File file, String externalName, int responseCode, String responseCodeMsg) {
         this(file, externalName, externalName, responseCode, responseCodeMsg);
+    }
+
+
+    public FileInfo(File file, int responseCode) {
+        this(file, file!=null?file.getName():"", responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
     }
 
     private FileInfo(File file, String externalName, String desc, int responseCode, String responseCodeMsg) {

@@ -193,6 +193,7 @@ export function startAsAppFromApi(divId, props={}, options={}, ) {
     props= {...props, ...{div:divId}};
     const {template} = props;
     const viewer = get(Templates, template);
+    options = mergeObjectOnly(defFireflyOptions, options);
     dispatchAppOptions(options);
     if (props.disableDefaultDropDown) {
         dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
