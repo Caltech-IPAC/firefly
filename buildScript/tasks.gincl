@@ -302,7 +302,20 @@ task jsTest (dependsOn: [loadConfig]) {
 }
 
 test {
-    description= 'Run Java and JavaScript unit test'
+    description= ''' Run Java and JavaScript unit test
+        Only JS test:
+          gradle :firefly:jsTest
+          
+        Only java test:      
+          gradle :firefly:test -x jsTest
+          
+        Specific test(s):    
+          gradle :firefly:test -x jsTest --tests <class-name-pattern>
+            Example:  gradle :firefly:test -x jsTest --tests *HttpServicesTest
+          
+        Specific category:   
+            gradle -Pcategory=edu.caltech.ipac.TestCategory\\$Perf :firefly:test -x jsTest '''
+
     group = DEV_GROUP
 
     dependsOn prepareWebapp, jsTest
@@ -507,7 +520,15 @@ task dockerImage (dependsOn: loadConfig) {
 }
 
 task dockerPublish (dependsOn: dockerImage) {
-    description = 'Create a docker image'
+    description = ''' Create a docker image.  Build war file(s) first before running this task
+            Example:  gradle -Pdocker_tag=<tag name> :firefly:dockerPublish 
+        
+            Options:
+              docker_repo             : defaults to "ipac/firefly”
+              docker_registry         : defaults to dockerhub
+              docker_tag              : defaults to "latest"
+              docker_user             : picked up from ~/.gradle/build.config or passed in
+              docker_passwd           : picked up from ~/.gradle/build.config or passed in '''
     group = DOCKER_GROUP
 
     doLast {
