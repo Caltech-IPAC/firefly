@@ -1,0 +1,60 @@
+task preselect(dependsOn: war)
+
+jar {
+    baseName = "${project['app-name']}"
+    include "edu/caltech/ipac/${project.projectDir.name}/**/*"
+    from sourceSets.main.allJava
+    enabled = true
+
+    manifest {
+        attributes(["properties-dir": "edu/caltech/ipac/${project.projectDir.name}/resources"],"webapp-properties")
+    }
+}
+
+sourceSets {
+    main.java.srcDir  "java/"
+    main.resources {
+        srcDir "java/"
+        include "edu/caltech/ipac/${project.projectDir.name}/**/resources/*"
+        include "edu/caltech/ipac/${project.projectDir.name}/*.xml"
+        exclude "**/*.gradle"
+    }
+    test.java.srcDir  "test/"
+}
+
+configurations {
+    webappLib {
+        description = 'web app runtime dependencies.'
+    }
+    tests
+}
+
+artifacts {
+    tests testJar
+}
+
+war {
+    description= 'Build application. Creates a war file.'
+    group = MAIN_GROUP
+
+    dependsOn jar, webapp
+    outputs.dir warDir
+    classpath = configurations.webappLib
+    from warDir
+    destinationDir = file(project.distDir)
+
+    doFirst {
+        archiveName = "${webapp.baseWarName}.war"
+    }
+}
+
+clean {
+    doFirst {
+
+        delete "${project.distDir}/${webapp.baseWarName}.war"
+        delete "${jar.destinationDir}/${jar.baseName}.jar"
+        delete "${project.buildDir}"
+    }
+}
+
+

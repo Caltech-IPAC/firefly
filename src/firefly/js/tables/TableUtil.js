@@ -19,6 +19,18 @@ import {doUpload} from '../ui/FileUpload.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {getWsConnId} from '../core/messaging/WebSocketClient.js';
 
+
+// this is so test can mock the function when used within it's module
+const local = {
+    isTableLoaded,
+    getTblById,
+    getTblInfoById,
+    getColumn,
+    getCellValue,
+    getSelectedData
+};
+export default local;
+
 export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT']);
 const char_types = ['char', 'c', 's', 'str'];
 const num_types = ['double', 'd', 'long', 'l', 'int', 'i', 'float', 'f'];
@@ -400,23 +412,22 @@ export function getRowValues(tableModel, rowIdx) {
  * @memberof firefly.util.table
  */
 export function getSelectedData(tbl_id, columnNames=[]) {
-    const {tableModel, tableMeta, totalRows, selectInfo, request} = getTblInfoById(tbl_id);
+    const {tableModel, tableMeta, totalRows, selectInfo, request} = local.getTblInfoById(tbl_id);
     const selectedRows = [...SelectInfo.newInstance(selectInfo).getSelected()];  // get selected row idx as an array
     if (columnNames.length === 0) {
-        columnNames = getColumns(tableModel).map( (c) => c.name);       // return all columns
+        columnNames = local.getColumns(tableModel).map( (c) => c.name);       // return all columns
     }
 
     if (selectedRows.length === 0 || isTblDataAvail(0, totalRows -1, tableModel)) {
         const meta = cloneDeep(tableMeta);
-        const columns = tableModel.tableData.columns
-                            .filter((c) => columnNames.includes(c.name))
-                            .map( (c) => cloneDeep(c));
+
+        const columns = columnNames.map((cname) => local.getColumn(tableModel, cname))
+                                   .filter((c) => c)
+                                   .map((c) => cloneDeep(c));
 
         const data = selectedRows.sort()
-                            .map( (rIdx) => columnNames.reduce( (rval, c) => {
-                                    rval.push(getCellValue(tableModel, rIdx, c));
-                                    return rval;
-                                }, []));
+                            .map( (rIdx) => columns.map((c) => local.getCellValue(tableModel, rIdx, c.name)));
+
         return Promise.resolve({tableMeta: meta, totalRows: data.length, tableData: {columns, data}});
     } else {
         return selectedValues({columnNames, request, selectedRows});

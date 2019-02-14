@@ -1,3 +1,6 @@
+
+task preselect(dependsOn: jar)
+
 task wsdl {
 
   outputs.dir "$buildDir/wsdl"
@@ -28,3 +31,8 @@ sourceSets {
   main.java.srcDir "$buildDir/wsdl"
 }
 
+clean {
+  doFirst {
+    delete "${jar.destinationDir}/${jar.baseName}.jar"
+  }
+}

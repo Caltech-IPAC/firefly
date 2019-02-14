@@ -13,3 +13,8 @@ jar {
   from sourceSets.main.allJava
 }
 
+clean {
+  doFirst {
+    delete "${jar.destinationDir}/${jar.baseName}.jar"
+  }
+}

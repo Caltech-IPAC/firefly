@@ -1,23 +1,22 @@
 ext.fireflyPath = rootDir.path
 
 allprojects {
-  defaultTasks 'build'
-  apply from: "$fireflyPath/buildScript/init.gincl"
+  defaultTasks 'preselect'
 }
 
 subprojects {
   apply plugin: "java"
-  apply from: "$fireflyPath/buildScript/depends.gincl"
+  apply from: "$fireflyPath/buildScript/global.gincl"
+  apply from: "$fireflyPath/buildScript/tasks.gincl"
 }
-
-apply from: "$fireflyPath/buildScript/utils.gincl"
 
 task purge {
   description= 'Remove all build files from this project, including node_module.'
-  group = DEV_GROUP
 
   doLast {
     println('Removes all firefly build directories.')
     delete "${fireflyPath}/build", "${fireflyPath}/jars/build", "${fireflyPath}/node_modules"
   }
 }
+
+task preselect

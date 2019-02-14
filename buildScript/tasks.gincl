@@ -1,0 +1,730 @@
+apply plugin: 'war'
+
+/**---------------------------    util classes   ---------------------------------**/
+
+/**
+ * this is used by loadConfig to extract the information from a script into a properties object.
+ */
+class ClosureScript extends groovy.lang.Script {
+    Closure closure
+    def run() {
+        closure.resolveStrategy = Closure.DELEGATE_FIRST
+        closure.delegate = this
+        closure.call()
+    }
+}
+
+class ConfigRepo {
+    def baseConf
+    def envConf
+
+    ConfigRepo() {
+        baseConf = new Properties()
+        envConf = new Properties()
+    }
+
+    ConfigRepo(baseConf, envConf) {
+        this.baseConf = baseConf
+        this.envConf = envConf
+    }
+
+    static final ConfigRepo parse(env, source) {
+        source = source instanceof File ? source.toURL() : source instanceof Closure ? new ClosureScript(closure: source) : source
+        def baseConf = new ConfigSlurper().parse(source).toProperties()
+        def envConf =  new ConfigSlurper(env).parse(source).toProperties()
+
+        baseConf.each{ k, v ->
+            if (envConf.get(k).equals(v)) {
+                envConf.remove(k)
+            }
+        }
+        return new ConfigRepo(baseConf, envConf)
+    }
+
+    Properties flatten() {
+        def props = new Properties()
+        props.putAll(baseConf)
+        props.putAll(envConf)
+        return props
+    }
+
+    void merge(configRepo) {
+        baseConf.putAll(configRepo.baseConf)
+        envConf.putAll(configRepo.envConf)
+    }
+
+}
+
+
+/**---------------------------    utils   ---------------------------------**/
+
+task loadConfig {
+    description= 'Load build and app config files.  Also, setup common properties like build_date, build_time, etc.'
+    group = MISC_GROUP
+
+    project.ext.build_time = new Date().toString()
+    project.ext.build_date = new Date().format("yyyy-MM-dd")
+
+    doLast {
+        project.ext["env"] = project.hasProperty("env") ? project.env : "local"
+        println ">> Environment is set to $project.env"
+
+        ConfigRepo configRepo = new ConfigRepo();
+
+        if (file("$rootDir/config/app.config").exists()) {
+            configRepo.merge(ConfigRepo.parse(project.env, file("$rootDir/config/app.config")))
+        }
+
+        if (project.hasProperty("appConfig")) {
+            configRepo.merge(ConfigRepo.parse(project.env, project.appConfig))
+        }
+
+        project.ext.appConfigProps = configRepo.flatten();
+//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
+
+        if (file("$rootDir/buildScript/build.config").exists()) {
+            def buildProps = ConfigRepo.parse(project.env, file("$rootDir/buildScript/build.config")).flatten()
+            buildProps.each { k, v -> project.ext.set(k,v)}
+        }
+
+        if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
+            logger.info ">> loading user's build.config for env: $project.env"
+            def overrides = ConfigRepo.parse(project.env, file("$gradle.gradleUserHomeDir/build.config")).flatten()
+            overrides.each { k, v -> project.ext.set(k,v)}
+        }
+        appConfigProps.putAll(project.ext.properties)
+        appConfigProps.putAll(System.properties)
+//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
+
+    }
+}
+
+task createVersionTag  {
+    description = 'Creates version info used for tagging as well as build label.'
+    group = MISC_GROUP
+
+    dependsOn loadConfig
+
+    doLast {
+        // generate version tag
+        def major = appConfigProps.get('BuildMajor')
+        def minor = appConfigProps.get('BuildMinor')
+        def rev = appConfigProps.get('BuildRev')
+        def type = appConfigProps.get('BuildType')
+        def buildNum = appConfigProps.get('BuildNumber')
+        def tag = "${project['app-name']}_$major.$minor.${rev}_${type}-$buildNum"
+
+        def props = new Properties()
+        file(project.buildDir).mkdirs()
+        props.setProperty('BuildMajor', major)
+        props.setProperty('BuildMinor', minor)
+        props.setProperty('BuildRev', rev)
+        props.setProperty('BuildType', type)
+        props.setProperty('BuildNumber', buildNum)
+        props.setProperty('BuildDate', build_date)
+        props.setProperty('BuildTime', build_time)
+        props.setProperty('BuildTag', tag)
+        props.setProperty('BuildCommit', getCommitHash())
+
+        if (fireflyPath != rootDir.getPath()) {
+            props.setProperty('BuildCommitFirefly', getCommitHash(fireflyPath))
+        }
+
+        props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
+    }
+}
+
+
+task prepareWebapp (type:Copy, dependsOn: [loadConfig, createVersionTag]) {
+    description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
+    group = MISC_GROUP
+
+    dependsOn jar
+
+    // should rerun this everytime.  properties could be modified from external files.
+    outputs.upToDateWhen { false }
+
+    from("${project.buildDir}/version.tag") {
+        into 'WEB-INF/config'
+    }
+    from("$rootDir/config/") {
+        include '*.prop', '*.xml', 'ignore_sizeof.txt', '*.properties'
+        into 'WEB-INF/config'
+    }
+    from("$rootDir/config/") {
+        include 'logging.properties'
+        into 'WEB-INF/classes'
+    }
+    from("$rootDir/config/web.xml") {
+        into "WEB-INF"
+    }
+    from("$rootDir/config") {
+        include "context.xml"
+        into 'META-INF'
+    }
+    // override context.xml if present
+    from("config/") {
+        include "context.xml"
+        into 'META-INF'
+    }
+    from("config/web.xml") {
+        into "WEB-INF"
+    }
+    from("config/") {
+        exclude "web.xml"
+        into 'WEB-INF/config'
+    }
+
+    // translate the *.html files.
+    from("html/") {
+        include "*.html"
+    }
+    into warDir
+
+    doFirst {
+        // copy the content of html to war
+        copy {
+            from ("html/") { include '**/*' }
+            into warDir
+        }
+
+        // to avoid storing multiple copies of plotly library under project html
+        // copy minimized plotly from firefly
+        copy {
+            from ("$fireflyPath/src/firefly/html/") { include 'plotly*min.js' }
+            into warDir
+        }
+
+        copy {
+            from { // use of closure defers evaluation until execution time
+                configurations.webappLib
+            }
+            into "${warDir}/WEB-INF/lib"
+        }
+
+        // temporary solution to extract fits_io.jar into WEB-INF/classes directory
+        // this fix the multiple nom.tam.fits issue
+        copy {
+            from zipTree(file("$fireflyPath/jars/fits-io/fits_io.jar"))
+            into "${warDir}/WEB-INF/classes"
+        }
+
+        if (project.appConfigProps["ehcache.replicate"] && !project.appConfigProps["ehcache.replicate"].toBoolean()) {
+            exclude "ehcache.xml"
+        }
+
+        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
+    }
+    doLast {
+        // plotly script load fails if loaded from amd environment
+        // with a script tag (as firefly loads it)
+        // see DM-11341 for details
+        println ">> updating plotly script"
+        ant.replaceregexp(match:'\\&\\&define\\.amd', replace:'\\&\\&false', flags:'g', byline:true) {
+            fileset(dir: warDir, includes: 'plotly*min.js')
+        }
+    }
+}
+
+task createTag(dependsOn: loadConfig) {
+    description = 'Create and push a tag to remote repo. Optional properties: ${tag_name}, ${tag_file} if ${tag_name} is missing. defaults to build/version.tag, ${tag_remote} defaults to origin, ${tag_message}.'
+    group = MISC_GROUP
+
+    doLast {
+        def tag = project.getVersionInfo('BuildTag');
+        println "tag: $tag"
+
+        exec {
+            executable 'git'
+            args 'tag'
+            args '-a'
+            args tag
+            args '-m'
+            if (project.hasProperty("tag_message")) {
+                args tag_message
+            } else {
+                args 'not given'
+            }
+        }
+
+        exec {
+            executable 'git'
+            args 'push'
+            if (project.hasProperty("tag_remote")) {
+                args tag_remote
+            } else {
+                args 'origin'
+            }
+            args tag
+        }
+    }
+}
+
+
+task deploy (dependsOn: [loadConfig]) {
+    description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
+    group = MAIN_GROUP
+
+    doLast {
+        if (!project.hasProperty("tomcat_home")) {
+            throw ProjectConfigurationException("tomcat_home property is not found.")
+        }
+        if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {
+            println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
+            throw new StopExecutionException("${webapp.baseWarName}.war not found.  Skipping deploy.")
+        }
+
+        copy {
+            println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
+            delete("$tomcat_home/webapps/${webapp.baseWarName}")
+            from("$war.destinationDir/${webapp.baseWarName}.war")
+            into "$tomcat_home/webapps/"
+        }
+    }
+}
+
+
+
+/**----------------------------    test   ---------------------------------**/
+
+task jsTest (dependsOn: [loadConfig]) {
+    group = DEV_GROUP
+
+    doLast {
+        if (file("package.json").exists()) {
+            println ">> running JavaScript test..."
+            def res = project.NODE 'yarn', 'run', 'test-unit'
+            if (res.getExitValue() != 0) {
+                throw new GradleException("JavaScript test fail.")
+            }
+        }
+    }
+}
+
+test {
+    description= 'Run Java and JavaScript unit test'
+    group = DEV_GROUP
+
+    dependsOn prepareWebapp, jsTest
+    // should rerun this everytime.  properties could be modified from external files.
+    outputs.upToDateWhen { false }
+
+    workingDir = rootDir
+
+    // explicitly include or exclude tests
+    include 'edu/**'
+
+    environment 'contextPath': "/${project['app-name']}"
+    environment 'contextName': project['app-name']
+    environment 'webappConfigPath': "${project.warDir}/WEB-INF/config/"
+
+    if (project.hasProperty("category")) {
+        if (project.category) {
+            logger.lifecycle("Running test for category: " + project.category)
+            useJUnit {
+                includeCategories project.category
+            }
+        }
+    } else {
+        useJUnit {
+            excludeCategories 'edu.caltech.ipac.TestCategory$Perf', 'edu.caltech.ipac.TestCategory$Integration'
+        }
+    }
+
+    // show standard out and standard error of the test JVM(s) on the console
+    testLogging.showStandardStreams = true
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "128m"
+    maxHeapSize = "2g"
+
+    // listen to events in the test execution lifecycle
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+
+    doFirst {
+        // things needed before test run
+        copy {
+            from("$fireflyPath/config/test/log4j-test.properties")
+            into "${warDir}/WEB-INF/config"
+            rename("log4j-test.properties", "log4j.properties")
+            filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
+        }
+    }
+}
+
+task jsTestDebug (dependsOn: [loadConfig]) {
+    group = DEV_GROUP
+
+    doLast {
+        if (file("package.json").exists()) {
+            println ">> running JavaScript test in debug mode..."
+            def res = project.NODE 'yarn', 'run', 'test-debug'
+            if (res.getExitValue() != 0) {
+                throw new GradleException("JavaScript test fail.")
+            }
+        }
+    }
+}
+
+/**-----------------------------    docs   ---------------------------------**/
+
+task buildJsDoc (dependsOn: loadConfig) {
+    description= 'Build JSDoc.'
+    group = SUB_GROUP
+
+    def outdir = warDir
+
+    outputs.dir outdir
+    inputs.dir "${projectDir}"
+    inputs.dir "${fireflyPath}/docs"
+    inputs.dir "${fireflyPath}/src/firefly"
+
+    doLast {
+        // copy sources to jsdocs build directory
+        copy {
+            from ("${fireflyPath}/src/firefly") {include "js/**"}
+            from ("${fireflyPath}/src/firefly/jsdoc_config.json")
+            into "${project.buildDir}/jsdocs/"
+        }
+        // copy md files to jsdocs build directory replacing .md links to tutorial
+        copy {
+            from ("${fireflyPath}") {include "docs/*"}
+            into "${project.buildDir}/jsdocs/"
+            filter{
+                    // replace md's link to point to docstrap's tutorial.  ie   [a link](a_file.md) -> [a link](tutorial-a_file.html)
+                String line -> line.replaceAll("(\\[.+\\])\\s*\\((.*)\\.md\\)", "\$1(tutorial-\$2.html)")
+            }
+        }
+        // setup tutorials
+        copy {
+            from ("${fireflyPath}/docs") {
+                include 'firefly-api-code-examples.md', 'firefly-external-task-launcher.md', 'fits-plotting-parameters.md'
+            }
+            into "${project.buildDir}/jsdocs/tutorial"
+            filter{
+                    // replace md's link to point to docstrap's tutorial.  ie   [a link](a_file.md) -> [a link](tutorial-a_file.html)
+                String line -> line.replaceAll("(\\[.+\\])\\s*\\((.*)\\.md\\)", "\$1(tutorial-\$2.html)")
+            }
+        }
+        // copy files referenced by files in ./docs
+        copy {
+            from ("${fireflyPath}/docs") {
+                include 'firefly-api-code-examples.md', 'fits-plotting-parameters.md'
+            }
+            into "${outdir}/docs/js"
+        }
+
+        if (!file("jsdoc_config.json").exists()) {
+            println ">> jsdoc_config.json not found.  Skipping buildJsDoc."
+            throw new StopExecutionException("jsdoc_config.json not found.  Skipping buildJsDoc.")
+        }
+        def res = exec {
+            workingDir = "${project.buildDir}/jsdocs/"
+            commandLine "${fireflyPath}/node_modules/.bin/jsdoc", '-c', "${project.buildDir}/jsdocs/jsdoc_config.json", '-d', "${outdir}/docs/js"
+        }
+        if (res.getExitValue() != 0) {
+            throw new GradleException("Fail to build Client")
+        }
+    }
+}
+
+task publishJsDocs (dependsOn: loadConfig) {
+    description = 'Publish js docs to firefly.lsst.io'
+    group = SUB_GROUP
+
+    def docsDir = "${warDir}/war/docs/js"
+    doLast {
+        def res = project.publishDocs docsDir, 'firefly'
+        if (res.getExitValue() != 0) {
+            throw new GradleException("Fail to publishJsDoc")
+        }
+    }
+}
+
+task publishPythonDocs (dependsOn: loadConfig) {
+    description = 'Publish python docs to firefly_client.lsst.io'
+    group = SUB_GROUP
+
+    def docsDir = "${warDir}/docs/python"
+    doLast {
+        def res = project.publishDocs docsDir, 'firefly_client'
+        if (res.getExitValue() != 0) {
+            throw new GradleException("Fail to publishJsDoc")
+        }
+    }
+}
+
+
+/**---------------------------    docker   ---------------------------------**/
+
+task dockerImage (dependsOn: loadConfig) {
+    description = 'Create a docker image'
+    group = DOCKER_GROUP
+
+    ext.docker_repo = "ipac/firefly"
+    ext.docker_registry = ''
+    ext.docker_tag = 'latest'
+    ext.copy_res = true
+
+    doLast {
+        // copy artifacts to staging directory
+        if (copy_res) {
+            copy {
+                from ("${project.distDir}") { include '*.war' }
+                from ("${fireflyPath}/docker/base") { include '*' }
+                into "${project.buildDir}/docker"
+            }
+        }
+
+        try {
+            "docker --version".execute()
+        } catch (Exception e) {
+            println ">> docker is not installed.  This task required docker"
+            throw new GradleException("docker is not installed.  This task required docker", e)
+        }
+
+        if (!file("${project.buildDir}/docker/Dockerfile").exists()) {
+            println ">> Dockerfile not found. Fail to create docker image"
+            throw new GradleException("Dockerfile not found. Fail to create docker image")
+        }
+
+        docker_repo = project.appConfigProps.docker_repo ?: docker_repo
+        docker_tag = project.appConfigProps.docker_tag ?: docker_tag
+        docker_registry = project.appConfigProps.docker_registry ?: docker_registry
+        docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
+
+        def res = exec {
+            workingDir "${project.buildDir}/docker"
+            commandLine "docker build --pull -t ${docker_registry}${docker_repo}:${docker_tag} --build-arg IMAGE_NAME=${docker_registry}${docker_repo} .".split(' ')
+        }
+        if (res.getExitValue() != 0) {
+            throw new GradleException("Fail to create docker image")
+        }
+        return res;
+    }
+}
+
+task dockerPublish (dependsOn: dockerImage) {
+    description = 'Create a docker image'
+    group = DOCKER_GROUP
+
+    doLast {
+
+        try {
+            "docker --version".execute()
+        } catch (Exception e) {
+            println ">> docker is not installed.  This task required docker"
+            throw new GradleException("docker is not installed.  This task required docker", e)
+        }
+
+        if (project.appConfigProps.docker_user != '') {
+            def proc = "docker login --username ${project.appConfigProps.docker_user} --password ${project.appConfigProps.docker_passwd}".execute()
+            proc.waitForOrKill(10000)
+            println ">> docker login as ${project.appConfigProps.docker_user} with exit status ${proc.exitValue()}"
+        }
+
+        def docker_repo = project.appConfigProps.docker_repo ?: dockerImage.docker_repo
+        def docker_tag = project.appConfigProps.docker_tag ?: dockerImage.docker_tag
+        def docker_registry = project.appConfigProps.docker_registry ?: dockerImage.docker_registry
+        docker_registry = docker_registry == '' || docker_registry.endsWith('/') ? docker_registry : docker_registry + '/'
+
+        def res = exec {
+            workingDir "${project.buildDir}/docker"
+            commandLine "docker push ${docker_registry}${docker_repo}:${docker_tag}".split(' ')
+        }
+        if (res.getExitValue() != 0) {
+            throw new GradleException("Fail to push docker image")
+        }
+        return res;
+    }
+}
+
+
+task onlinehelp (dependsOn: [loadConfig]) {
+    group = SUB_GROUP
+
+    doLast {
+        exec {
+            workingDir onlinehelp_dir
+            commandLine 'gradle', ":${project['app-name']}:build"
+        }
+
+        new File("${warDir}/onlinehelp").mkdirs()
+        copy {
+            from zipTree("$onlinehelp_dir/build/dist/${project['app-name']}_help.zip")
+            into "${warDir}/onlinehelp"
+        }
+    }
+}
+
+
+/**--------------------------------------  misc ----------------------------------**/
+
+task testJar(type: Jar, dependsOn: testClasses) {
+    baseName = "test-${project.archivesBaseName}"
+    from sourceSets.test.output
+    destinationDir = file ("$rootDir/jars/build")
+
+}
+
+
+def getReleaseTitle() {
+    def major = appConfigProps.get('BuildMajor')
+    def minor = appConfigProps.get('BuildMinor')
+    def rev = appConfigProps.get('BuildRev')
+    def type = appConfigProps.get('BuildType')
+
+    def prefix = project.hasProperty("rel_prefix") ? "${rel_prefix} " : ""
+    def label = prefix + "v${major}.${minor}.${rev} ${type}"
+    return label;
+}
+
+task publishToGithub (dependsOn: loadConfig) {
+    description = 'Publish the built artifacts as a GitHub release.'
+    group = SUB_GROUP
+
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def tag = project.getVersionInfo('BuildTag');
+        def rel_title = getReleaseTitle();
+
+        try {
+            def process = "node -v".execute()
+        } catch (Exception e) {
+            println ">> Task failed due to missing node.js"
+            throw new GradleException(">> Task failed due to missing node.js", e)
+        }
+
+
+        def relConfig = sprintf("""
+                    |{ "tag": "%s",
+                    |  "token": "%s",
+                    |  "name": "%s",
+                    |  "assets": ["%s", "%s"]
+                    |}
+                    """.stripMargin(),
+                tag,
+                project.property("github.auth.token"),
+                rel_title,
+                "${project.buildDir}/exec/${webapp.baseWarName}-exec.war", "${project.buildDir}/exec/${webapp.baseWarName}.war")
+        def res = exec {
+            environment 'NODE_PATH': "${fireflyPath}/node_modules"
+            executable "node"
+            args "${fireflyPath}/buildScript/publish-to-github.js", relConfig
+        }
+        if (res.getExitValue() != 0) {
+            throw new GradleException("Fail to build publish to Github.")
+        }
+    }
+}
+
+
+
+task buildClient (dependsOn: loadConfig) {
+    description= 'Build JavaScript portion of the application.'
+    group = SUB_GROUP
+
+    outputs.dir warDir
+    inputs.dir "${projectDir}/js"
+    inputs.dir "${fireflyPath}/src/firefly/js"
+
+    doLast {
+        if (!file("webpack.config.js").exists()) {
+            println ">> webpack.config.js not found.  Skipping buildClient."
+            throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
+        }
+        def res = project.NODE 'yarn', 'run', 'build', "--", "--env.baseWarName=${webapp.baseWarName}", "--env.app-name=${project["app-name"]}"
+        if (res.getExitValue() != 0) {
+            throw new GradleException("Fail to build Client")
+        }
+    }
+}
+
+
+
+
+task warAll( dependsOn:[war, buildJsDoc] ) {
+    description= 'Build the war file with JSDoc generated.'
+    group = MAIN_GROUP
+}
+task buildAndDeploy( dependsOn:[war, deploy] ) {
+    description= 'Build the war file and then deploy it to a local tomcat server if successful. Property ${tomcat_home} is required'
+    group = MAIN_GROUP
+}
+task buildAllAndDeploy( dependsOn:[warAll, deploy] ) {
+    description= 'Run test and docs first, then build the war file.  Deploy it to a local tomcat server if successful. Property ${tomcat_home} is required'
+    group = MAIN_GROUP
+}
+
+task webapp {
+    dependsOn buildClient, prepareWebapp
+
+    outputs.upToDateWhen { false }
+    ext.baseWarName = jar.baseName
+}
+
+task buildAndPublish( dependsOn: war ) {
+    description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required.'
+    group = MAIN_GROUP
+
+    doLast {
+        if (!file(war.archivePath).exists()) {
+            throw new StopExecutionException("$war.archivePath not found.  Skipping sendArtifacts.")
+        }
+        if (!project.hasProperty("publish_host")) {
+            throw new StopExecutionException("publish_host not found.  Skipping sendArtifacts.")
+        }
+
+        def rhost = project.property("publish_host")
+        def reposRoot = "/hydra/repos/${project['app-name']}"
+        def major = appConfigProps.get('BuildMajor')
+        def minor = appConfigProps.get('BuildMinor')
+        def rev = appConfigProps.get('BuildRev')
+        def buildNum = appConfigProps.get('BuildNumber')
+        def dirName = "v$major.$minor.$rev.$buildNum"
+
+        exec {
+            commandLine "ssh", "$rhost", "mkdir -p $reposRoot/$dirName/"
+        }
+        exec {
+            commandLine "scp", "$war.archivePath", "$rhost:$reposRoot/$dirName/"
+        }
+        exec {
+            commandLine "ssh", "$rhost", "cd $reposRoot; rm current; ln -s $dirName current"
+        }
+    }
+}
+
+
+task devMode (dependsOn: loadConfig) {
+    description= 'JavaScript Dev Mode'
+    group = DEV_GROUP
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def res = project.NODE 'yarn', 'run', 'dev', "--", "--env.baseWarName=${webapp.baseWarName}", "--env.app-name=${project["app-name"]}"
+        if (res.getExitValue() == 0) {
+            throw new GradleException("Fail to run dev mode")
+        }
+    }
+}
+
+
+
+//-------------------------
+// define task order
+//-------------------------
+prepareWebapp.mustRunAfter loadConfig
+buildClient.mustRunAfter  prepareWebapp
+buildJsDoc.mustRunAfter   buildClient
+war.mustRunAfter          buildJsDoc
+deploy.mustRunAfter       war
+
+
+
+
+
+
