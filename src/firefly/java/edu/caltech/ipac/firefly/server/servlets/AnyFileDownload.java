@@ -40,6 +40,7 @@ public class AnyFileDownload extends BaseHttpServlet {
 
     public static final String USE_SERVER_NAME = "USE_SERVER_NAME";
     private static final String HIPS_CACHE_CONTROL= "must-revalidate, max-age=1800";
+    private static final String HIPS_SHORT_CACHE_CONTROL= "must-revalidate, max-age=300";
     private static final String STATIC_CACHE_CONTROL= "max-age=86400";
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -95,6 +96,10 @@ public class AnyFileDownload extends BaseHttpServlet {
         FileInfo fi= HiPSRetrieve.retrieveHiPSData(hips, null);
 
         if (fi.getFile()==null) {
+            if (fi.getResponseCode()==204) {
+                res.addHeader("Cache-Control", HIPS_SHORT_CACHE_CONTROL);
+                res.addDateHeader("Last-Modified", System.currentTimeMillis());
+            }
             res.sendError(fi.getResponseCode(), fi.getResponseCodeMsg());
             return;
         }

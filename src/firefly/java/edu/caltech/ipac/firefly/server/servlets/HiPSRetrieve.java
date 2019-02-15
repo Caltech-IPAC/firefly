@@ -51,24 +51,28 @@ public class HiPSRetrieve {
                     return fi;
                 default:
                     if (retFile!=null)  retFile.delete();
-                    return new FileInfo(null, rCode);
+                    if (rCode==404 && imageRequest(retFile)) return new FileInfo(null, 204);
+                    else return new FileInfo(null, rCode);
             }
         } catch (MalformedURLException | FailedRequestException e) {
             return new FileInfo(null, null, 404, e.toString());
         }
     }
 
-    private static boolean isValid(File f) {
+    private static boolean imageRequest(File f) {
         String fLowStr= f.getAbsolutePath().toLowerCase();
+        return fLowStr.endsWith("jpg") || fLowStr.endsWith("jpeg") || fLowStr.endsWith("png");
+    }
+
+    private static boolean isValid(File f) {
         try {
+            String fLowStr= f.getAbsolutePath().toLowerCase();
             if (fLowStr.equals("properties") || fLowStr.equals("list")) {
                 Properties p = new Properties();
                 p.load(new FileReader(f));
                 if (p.size()<2) return false;
             }
-            else if (f.getAbsolutePath().toLowerCase().endsWith("jpg") ||
-                    f.getAbsolutePath().toLowerCase().endsWith("jpeg") ||
-                    f.getAbsolutePath().toLowerCase().endsWith("png")) {
+            else if (imageRequest(f)) {
                 BufferedImage i = ImageIO.read(f);
                 if (i==null) return false;
             }

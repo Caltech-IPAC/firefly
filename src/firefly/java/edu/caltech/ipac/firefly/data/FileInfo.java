@@ -100,7 +100,9 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     public void putAttribute(String key, String value) { attributes.put(key,value); }
     public String getAttribute(String key) {return attributes.get(key); }
 
-    public File getFile() {  return new File(attributes.get(INTERNAL_NAME)); }
+    public File getFile() {
+        return attributes.containsKey(INTERNAL_NAME) ? new File(attributes.get(INTERNAL_NAME)) : null;
+    }
     public String getDesc() { return attributes.get(DESC); }
     public boolean isBlank() { return StringUtils.getBoolean(attributes.get(BLANK), false); }
     public int getResponseCode() { return StringUtils.getInt(attributes.get(RESPONSE_CODE), 200); }
@@ -134,7 +136,9 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public String getExternalName() { return getAttribute(EXTERNAL_NAME); }
 
-    public void setInternalName(String filename) { putAttribute(INTERNAL_NAME,filename); }
+    public void setInternalName(String filename) {
+        if (filename!=null) putAttribute(INTERNAL_NAME,filename);
+    }
     public void setExternalName(String filename) { putAttribute(EXTERNAL_NAME,filename); }
 
     public long getSizeInBytes() { return StringUtils.getInt(getAttribute(SIZE_IN_BYTES),0); }
