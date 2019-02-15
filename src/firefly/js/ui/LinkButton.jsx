@@ -41,11 +41,6 @@ export function LinkButton({text, tip='$text',style={}, onClick}) {
     );
 }
 
-
-//CloseButton.contextTypes= {
-//};
-
-
 LinkButton.propTypes= {
     text : PropTypes.string,
     style : PropTypes.object,

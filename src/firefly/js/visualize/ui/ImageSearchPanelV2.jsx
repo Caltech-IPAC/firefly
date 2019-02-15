@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {get, includes, isNil} from 'lodash';
 import {FormPanel} from '../../ui/FormPanel.jsx';
@@ -36,6 +36,7 @@ import {HiPSImageSelect, makeHiPSWebPlotRequest} from '../../ui/HiPSImageSelect.
 import {sourcesPerChecked} from '../../ui/HiPSSurveyListDisplay.jsx';
 
 import './ImageSearchPanelV2.css';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 
 const FG_KEYS = {
@@ -127,14 +128,12 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
     );
 }
 
-export function ImageSearchDropDown({gridSupport, resizable=true}, {renderTreeId}) {
+export function ImageSearchDropDown({gridSupport, resizable=true}) {
+    const {renderTreeId} = useContext(RenderTreeIdCtx);
     const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId);
     const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport, renderTreeId});
     return <ImageSearchPanel {...{resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown}}/>;
 }
-
-ImageSearchDropDown.contextTypes= {renderTreeId: PropTypes.string};
-
 
 function GridSupport() {
     return (

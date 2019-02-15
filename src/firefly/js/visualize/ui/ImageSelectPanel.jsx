@@ -248,7 +248,7 @@ export class ImageSelection extends PureComponent {
          };
      }
 
-    componentWillReceiveProps (nextProps) {
+    UNSAFE_componentWillReceiveProps (nextProps) {
         this.allfields = getAllGroupFields(panelKey,...rgbFieldGroup);
 
         this.setState({
@@ -373,7 +373,7 @@ class ImageSelectionView extends PureComponent {
         this.changeMasking= (doMask) => this.setState(() => ({doMask}));
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
 
         this.setState ({
             crtCatalogId: computeCurrentCatalogId(nextProps.fields,

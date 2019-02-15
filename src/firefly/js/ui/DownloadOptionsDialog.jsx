@@ -43,12 +43,10 @@ export class DownloadOptionsDialog extends PureComponent {
         this.state = {where, fileName: props.fileName, wsSelect, fileOverwritable, wsList, isUpdating};
     }
 
-    componentWillReceiveProps(nextProps) {
-        const {fileName} = nextProps;
 
-        if (fileName !== this.state.fileName) {
-            this.setState({fileName});
-        }
+    static getDerivedStateFromProps(props,state) {
+        const {fileName} = props;
+        return (fileName !== state.fileName) ? {fileName} : null;
     }
 
     componentWillUnmount() {

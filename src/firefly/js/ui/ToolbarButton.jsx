@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import './ToolbarButton.css';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
-
+import {ToolTipCtx} from '../visualize/ui/VisToolbar.jsx';
 
 
 export function makeBadge(cnt) {
@@ -173,11 +173,7 @@ export class ToolbarButton extends PureComponent {
     }
 }
 
-ToolbarButton.contextTypes= {
-    tipOnCB : PropTypes.func,
-    tipOffCB : PropTypes.func
-};
-
+ToolbarButton.contextType = ToolTipCtx;
 
 ToolbarButton.propTypes= {
     icon : PropTypes.string,

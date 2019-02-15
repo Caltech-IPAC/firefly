@@ -49,19 +49,22 @@ export function hideDropDown(id='') {
     if (ddDiv) ReactDOM.unmountComponentAtNode(ddDiv);
 }
 
+
+const getPos = (props) => {
+    const {atElRef:el} = props;
+    if (!get(el, 'isConnected', true)) hideDropDown(props.id);                                                  // referenced element is no longer visible.. hide drop-down.
+    const {x:o_x, y:o_y, width:o_width, height:o_height} = document.documentElement.getBoundingClientRect();    // outer box
+    const {x=0, y=0, width=0, height=0} = el ? el.getBoundingClientRect() : {};                                 // inner box
+    return {x, y, width, height,  o_x, o_y, o_width, o_height};
+};
+
+
 class DropDown extends PureComponent {
 
     constructor(props) {
         super(props);
 
-        this.getPos = (el) => {
-            if (!get(el, 'isConnected', true)) hideDropDown(props.id);                                                  // referenced element is no longer visible.. hide drop-down.
-            const {x:o_x, y:o_y, width:o_width, height:o_height} = document.documentElement.getBoundingClientRect();    // outter box
-            const {x=0, y=0, width=0, height=0} = el ? el.getBoundingClientRect() : {};                                 // inner box
-            return {x, y, width, height,  o_x, o_y, o_width, o_height};
-        };
-
-        this.state = this.getPos(props.atElRef);
+        this.state = getPos(props);
         this.hideDropDown = this.hideDropDown.bind(this);
     }
 
@@ -69,8 +72,8 @@ class DropDown extends PureComponent {
         hideDropDown(this.props.id);
     }
 
-    componentWillReceiveProps(np) {
-        this.setState(this.getPos(np.atElRef));
+    static getDerivedStateFromProps(props) {
+        return getPos(props);
     }
 
     componentDidMount() {

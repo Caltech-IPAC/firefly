@@ -83,10 +83,10 @@ export class Tabs extends PureComponent {
         this.state= tabsStateFromProps(props);
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState( () => tabsStateFromProps(nextProps));
+    static getDerivedStateFromProps(props) {
+        return tabsStateFromProps(props);
     }
-    
+
     componentWillUnmount() {
         this.isUnmounted = true;
     }
@@ -168,7 +168,7 @@ export class Tab extends PureComponent {
         super(props);
     }
 
-    componentWillMount() {
+    componentDidMount() {
         const {selected, onSelect, id, name} = this.props;
         if (selected) {
             onSelect(id, name);

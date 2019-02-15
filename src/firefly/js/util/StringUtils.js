@@ -1,6 +1,3 @@
-import validator from 'validator';
-
-
 /**
  * This File is Deprecated.  It is only used by 3 other modules and that will be cleaned up eventually
  */
@@ -116,8 +113,4 @@ export function convertExtendedAscii(sbOriginal) {
         }
     }
     return sbOriginal;
-}
-
-export function parseInt(s,failValue= 0) {
-    return (validator.isInt(s+'')) ? validator.toInt(s+'') : failValue;
 }

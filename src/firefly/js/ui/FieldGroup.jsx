@@ -4,8 +4,9 @@
 
 
 
-import React, {PureComponent} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import shallowequal from 'shallowequal';
 import {dispatchMountFieldGroup, MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr.js';
 import {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
@@ -20,53 +21,57 @@ import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 function remountWatcher(action, cancelSelf, params) {
     const {payload}= action;
     if (action.type===MOUNT_COMPONENT && !payload.mounted && payload.groupKey===params.props.groupKey) {
-        doMountDispatch(params.props, params.context);
+        doMountDispatch(params.props, params.wrapperGroupKey);
         cancelSelf();
     }
 }
 
 
-function doMountDispatch(props,context) {
-    const {groupKey:wrapperGroupKey}= context;
+function doMountDispatch(props,wrapperGroupKey) {
     const {groupKey, reducerFunc, keepState, initValues, actionTypes}= props;
     dispatchMountFieldGroup(groupKey, true, keepState, initValues, reducerFunc, actionTypes, wrapperGroupKey);
 }
 
 
+export const GroupKeyCtx = React.createContext('');
 
-
-export class FieldGroup extends PureComponent {
+export class FieldGroup extends Component {
 
     constructor(props, context) {
-        super(props, context);
+        super(props);
+        const wrapperGroupKey= context;
+        doMountDispatch(props, wrapperGroupKey);
+        this.firstMount= true;
     }
 
-    getChildContext() {
-            return {groupKey: this.props.groupKey};
-    }
-
-    componentWillReceiveProps(nextProps,context) {
-        const {groupKey:wrapperGroupKey}= context;
+    shouldComponentUpdate(nextProps,nextState, nextContext) {// using this function to do a remount side effect
+        if (shallowequal(this.props, nextProps)) return false;
+        const wrapperGroupKey= nextContext;
         const {groupKey, reducerFunc, keepState, actionTypes}= nextProps;
-                       // support change the groupKey property on the form with out unmounting
-        if (this.props.groupKey!==groupKey) {
+        if (this.props.groupKey!==groupKey) {// support change the groupKey property on the form without unmounting
             dispatchMountFieldGroup(groupKey, false);
             dispatchMountFieldGroup(groupKey, true, keepState, null, reducerFunc, actionTypes, wrapperGroupKey);
         }
+        return true;
     }
 
-    componentWillMount() {
+    componentDidMount() {
+        if (this.firstMount) {
+            this.firstMount= false;
+            return;
+        }
         const {groupKey}= this.props;
+        const wrapperGroupKey= this.context;
         const groupState= getFieldGroupState(groupKey);
         if (groupState && groupState.mounted) {
             // as of react 16 mount happens before unmount:
             // if a mounted group is unmounted, I will delay the remount until the componentWillUnmount is called
             dispatchAddActionWatcher({
-                actions:[MOUNT_COMPONENT], callback:remountWatcher, params:{props:this.props, context:this.context}}
+                actions:[MOUNT_COMPONENT], callback:remountWatcher, params:{props:this.props, wrapperGroupKey}}
             );
         }
         else {
-            doMountDispatch(this.props, this.context);
+            doMountDispatch(this.props, wrapperGroupKey);
         }
     }
 
@@ -77,15 +82,18 @@ export class FieldGroup extends PureComponent {
     }
 
     render() {
-        const {style, className} = this.props;
+        const {style, className, groupKey} = this.props;
         return (
-            <div className={className} style={style}>
-                {this.props.children}
-            </div>
-
+            <GroupKeyCtx.Provider value={groupKey}>
+                <div className={className} style={style}>
+                    {this.props.children}
+                </div>
+            </GroupKeyCtx.Provider>
         );
     }
 }
+
+FieldGroup.contextType = GroupKeyCtx;
 
 FieldGroup.propTypes= {
     groupKey : PropTypes.string.isRequired,
@@ -98,11 +106,6 @@ FieldGroup.propTypes= {
     className: PropTypes.string
 };
 
-FieldGroup.childContextTypes= {
-    groupKey: PropTypes.string
-};
-
-FieldGroup.contextTypes = { groupKey: PropTypes.string };
 
 FieldGroup.defaultProps=  {
     reducerFunc: null,

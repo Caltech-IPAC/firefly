@@ -12,6 +12,20 @@ import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+
+
+function nextState(props, state) {
+    const viewer= getViewer(getMultiViewRoot(),props.viewerId);
+    if (viewer!==state.viewer || visRoot()!==state.visRoot || getDlAry() !== state.dlAry) {
+        return {viewer,visRoot:visRoot(),dlAry:getDlAry()};
+    }
+    return null;
+}
+
+
+
+
 
 export class MultiImageViewer extends PureComponent {
 
@@ -20,18 +34,24 @@ export class MultiImageViewer extends PureComponent {
         this.state= {viewer : null};
     }
 
-    componentWillReceiveProps(nextProps) {
-        if (this.props.viewerId!==nextProps.viewerId) {
-            const {renderTreeId}= this.context;
-            dispatchAddViewer(nextProps.viewerId, nextProps.canReceiveNewPlots, IMAGE,true, renderTreeId);
-            dispatchViewerUnmounted(this.props.viewerId);
 
-            var viewer = getViewer(getMultiViewRoot(), nextProps.viewerId);
+    static getDerivedStateFromProps(props,state) {
+        return nextState(props,state);
+    }
+
+    componentDidUpdate(prevProps) {
+        const {props}= this;
+        if (this.props.viewerId!==prevProps.viewerId) {
+            const {renderTreeId}= this.context;
+            dispatchAddViewer(props.viewerId, props.canReceiveNewPlots, IMAGE,true, renderTreeId);
+            dispatchViewerUnmounted(prevProps.viewerId);
+
+            const viewer = getViewer(getMultiViewRoot(), props.viewerId);
             if (viewer && viewer.lastActiveItemId) {
                 dispatchChangeActivePlotView(viewer.lastActiveItemId);
             }
         }
-        this.storeUpdate(nextProps);
+
     }
 
     componentWillUnmount() {
@@ -40,21 +60,17 @@ export class MultiImageViewer extends PureComponent {
         dispatchViewerUnmounted(this.props.viewerId);
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.iAmMounted= true;
-        this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
-        var {viewerId, canReceiveNewPlots}= this.props;
+        this.removeListener= flux.addListener(() => this.storeUpdate());
+        const {viewerId, canReceiveNewPlots}= this.props;
         const {renderTreeId}= this.context;
         dispatchAddViewer(viewerId,canReceiveNewPlots,IMAGE, true, renderTreeId);
     }
 
-    storeUpdate(props) {
-        const {state}= this;
-        const {viewerId}= props;
-        const viewer= getViewer(getMultiViewRoot(),viewerId);
-        if (viewer!==state.viewer || visRoot()!==state.visRoot || getDlAry() !== state.dlAry) {
-            if (this.iAmMounted) this.setState({viewer,visRoot:visRoot(),dlAry:getDlAry()});
-        }
+    storeUpdate() {
+        const ns= nextState(this.props,this.state);
+        if (this.iAmMounted && ns) this.setState(ns);
     }
 
     render() {
@@ -104,9 +120,7 @@ MultiImageViewer.propTypes= {
 // if gridDefFunc is defined it overrides the forceRowSize and forceColSize parameters.
 // forceRowSize is defined if overrides forceColSize parameter.
 
-MultiImageViewer.contextTypes= {
-    renderTreeId: PropTypes.string
-};
+MultiImageViewer.contextType= RenderTreeIdCtx;
 
 
 MultiImageViewer.defaultProps= {

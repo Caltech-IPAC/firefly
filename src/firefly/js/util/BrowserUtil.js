@@ -10,7 +10,7 @@ import {getProp} from './WebUtil.js';
 
 const SCRIPT_NAME = getProp('SCRIPT_NAME');
 
-var getScriptURL = (function() {
+const getScriptURL = (() => {
     
     var scripts = document.getElementsByTagName('script');
     var myScript;
@@ -22,14 +22,14 @@ var getScriptURL = (function() {
             }
         }
     }
-    return function() { return myScript; };
+    return () => myScript;
 })();
 
 
-export var getRootURL = (function() {
-    var rootURL = '//localhost:8080/';
+export const getRootURL = (() => {
+    let rootURL = '//localhost:8080/';
     if (SCRIPT_NAME !== undefined) {
-        var workingURL= getScriptURL() || window.location.href;
+        const workingURL= getScriptURL() || window.location.href;
         rootURL= workingURL.substring(0,workingURL.lastIndexOf('/')) + '/';
     }
     return () => rootURL;
@@ -37,20 +37,20 @@ export var getRootURL = (function() {
 
 
 
-export var getRootPath = (function() {
-    var url= getRootURL();
-    var rootPath= url;
-    if (url.startsWith('http')) {
-        var part1= url.substring(url.indexOf('://')+3);
-        rootPath= part1.substring(part1.indexOf('/'));
-    }
-    return () =>rootPath;
-})();
+// export var getRootPath = (function() {
+//     var url= getRootURL();
+//     var rootPath= url;
+//     if (url.startsWith('http')) {
+//         var part1= url.substring(url.indexOf('://')+3);
+//         rootPath= part1.substring(part1.indexOf('/'));
+//     }
+//     return () =>rootPath;
+// })();
 
 
-export var getHost = (function() {
-    var url= getRootURL();
-    var host= url.substring(url.indexOf('//')+2);
+export var getHost = (() => {
+    const url= getRootURL();
+    let host= url.substring(url.indexOf('//')+2);
     if (host.indexOf('/')>-1){
         host= host.substr(0,host.indexOf('/'));
     }
@@ -60,9 +60,9 @@ export var getHost = (function() {
     return () =>host;
 })();
 
-export var getPort = (function() {
-    var port= -1;
-    var url= getRootURL();
+export const getPort = (function() {
+    let port= -1;
+    const url= getRootURL();
     if (url.startsWith('http')) {
         port= url.startsWith('https') ? 144 : 80;
     }
@@ -78,8 +78,8 @@ export var getPort = (function() {
 
 
 export const getAbsoluteLeft= function(elem) {
-    var left = 0;
-    var curr = elem;
+    let left = 0;
+    let curr = elem;
     // This intentionally excludes body which has a null offsetParent.
     while (curr.offsetParent) {
         left -= curr.scrollLeft;
@@ -93,8 +93,8 @@ export const getAbsoluteLeft= function(elem) {
 };
 
 export const getAbsoluteTop= function(elem) {
-    var top = 0;
-    var curr = elem;
+    let top = 0;
+    let curr = elem;
     // This intentionally excludes body which has a null offsetParent.
     while (curr.offsetParent) {
         top -= curr.scrollTop;
@@ -115,14 +115,14 @@ export const getAbsoluteTop= function(elem) {
  * @return {string}
  */
 export const modifyURLToFull= function(url, rootPath) {
-    var retURL = url;
+    let retURL = url;
     if (url) {
         if (!isFull(url)) {
             if (!rootPath) {
-                var docUrl = document.URL;
-                var lastSlash = docUrl.lastIndexOf('/');
+                const docUrl = document.URL;
+                const lastSlash = docUrl.lastIndexOf('/');
                 if (lastSlash > -1) {
-                    var rootURL = docUrl.substring(0, lastSlash + 1);
+                    const rootURL = docUrl.substring(0, lastSlash + 1);
                     retURL = rootURL + url;
                 } else {
                     retURL = docUrl + '/' + url;

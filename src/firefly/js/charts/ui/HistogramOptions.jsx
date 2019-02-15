@@ -185,7 +185,7 @@ export class HistogramOptions extends Component {
 
     }
 
-    componentWillReceiveProps(np) {
+    UNSAFE_componentWillReceiveProps(np) {
         if (this.props.histogramParams !== np.histogramParams) {
             setOptions(np.groupKey, np.histogramParams);
         }

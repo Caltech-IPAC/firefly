@@ -113,33 +113,28 @@ export class ImageViewerLayout extends PureComponent {
         }
     }
 
-    componentWillReceiveProps(nextProps) {
-        const {width,height}= nextProps;
-        const {viewDim}= nextProps.plotView;
-        if (width!==viewDim.width && height!==viewDim.height && width && height) {
-            dispatchUpdateViewSize(nextProps.plotView.plotId,width,height);
-        }
-
-        // case: a new plot force other plot to zoom match
-        if (!primePlot(this.props.plotView) &&  primePlot(nextProps.plotView)) {
-            const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), nextProps.plotView.plotId);
-            updateZoom(nextProps.plotView.plotId,paging);
-        }
-    }
-
-    componentDidUpdate() {
+    componentDidUpdate(prevProp) {
         const {width,height,externalWidth,externalHeight, plotView:pv}= this.props;
-        const {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId}= this.previousDim;
-        if (!pv) return;
+        const {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight}= this.previousDim;
+        if (!pv || !width || !height) return;
 
-        if ((prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) && width && height) {
-            dispatchUpdateViewSize(pv.plotId,width,height);
+        const {viewDim}= pv;
+        if (width!==viewDim.width || height!==viewDim.height || prevWidth!==width || prevHeight!==height ) {
+            dispatchUpdateViewSize(pv.plotId,width,height); // case: any resizing
+
             if (primePlot(pv)) {
+                                 // case: resizing, todo: document how this is different than normal resizing
                 if (prevExternalWidth!==externalWidth || prevExternalHeight!==externalHeight) {
                     updateZoom(pv.plotId,false);
                 }
             }
             this.previousDim= makePrevDim(this.props);
+        }
+
+        // case: a new plot force other plot to zoom match
+        if (!primePlot(prevProp.plotView) &&  primePlot(pv)) {
+            const paging= isImageViewerSingleLayout(getMultiViewRoot(), visRoot(), pv.plotId);
+            updateZoom(pv.plotId,paging);
         }
     }
 
@@ -534,9 +529,9 @@ class DrawingLayers extends Component {
         let drawingAry= null;
         const {width,height}= pv.viewDim;
         if (dlIdAry) {
-            drawingAry= dlIdAry.map( (dlId, idx) => <DrawerComponent plot={plot} drawLayerId={dlId}
+            drawingAry= dlIdAry.map( (dlId, idx) => (<DrawerComponent plot={plot} drawLayerId={dlId}
                                                                      width={width} height={height}
-                                                                     idx={idx} key={dlId}/> );
+                                                                     idx={idx} key={dlId}/>) );
         }
         return (
             <div className='drawingArea'

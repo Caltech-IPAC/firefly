@@ -53,7 +53,7 @@ export class PlotlyChartArea extends Component {
         return !(propsEqual && stateEqual);
     }
 
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         const {chartId} = this.props;
         const {data, fireflyData, mounted} = getChartData(chartId);
         if (mounted === 1) {

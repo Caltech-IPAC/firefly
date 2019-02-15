@@ -99,7 +99,7 @@ export class ChartsContainer extends PureComponent {
 
     }
 
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart, chartId} = this.props;
         if (tbl_group) {
             if (addDefaultChart) {

@@ -225,16 +225,14 @@ export function HiPSPopupMsg(msg, title) {
 export class HiPSSurveyListSelection extends PureComponent {
     constructor(props) {
         super(props);
-
-        this.state = {[fKeyHiPSSources]: initHiPSCheckboxStatus()};
-    }
-
-    componentWillMount() {
         const sources = sourcesPerChecked();
-        const {dataType, surveysId, hipsUrl} = this.props;
+        const {dataType, surveysId, hipsUrl} = props;
 
         loadHiPSSurverysWithHighlight({dataTypes: dataType, id: surveysId, sources, ivoOrUrl: hipsUrl, columnName: URL_COL});
-        this.setState({isUpdatingHips: isLoadingHiPSSurverys(makeHiPSSurveysTableName(surveysId, sources))});
+
+        this.state = {[fKeyHiPSSources]: initHiPSCheckboxStatus(),
+                       isUpdatingHips: isLoadingHiPSSurverys(makeHiPSSurveysTableName(surveysId, sources))
+        };
     }
 
     componentWillUnmount() {

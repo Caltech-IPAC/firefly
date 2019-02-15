@@ -40,11 +40,6 @@ export function CloseButton({text='Close', tip='Close',style={}, onClick}) {
     );
 }
 
-
-//CloseButton.contextTypes= {
-//};
-
-
 CloseButton.propTypes= {
     text : PropTypes.string,
     style : PropTypes.object,

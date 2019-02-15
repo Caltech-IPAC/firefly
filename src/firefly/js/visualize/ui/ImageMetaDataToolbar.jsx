@@ -35,7 +35,7 @@ export class ImageMetaDataToolbar extends Component {
         if (this.removeListener) this.removeListener();
     }
     
-    componentWillMount() {
+    componentDidMount() {
         this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
     }

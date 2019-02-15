@@ -25,17 +25,20 @@ const omList= ['plotViewAry'];
 const pvPickList= ['plotViewCtx','primeIdx', 'flipY'];
 const hipsUrl = 'hipsUrlRoot';
 
+
+
+export const ToolTipCtx = React.createContext( {
+    tipOnCB : undefined,
+    tipOffCB : undefined,
+});
+
+
 export class VisToolbar extends PureComponent {
     constructor(props) {
         super(props);
         this.state= {visRoot:visRoot(), dlCount:0, tip:''};
         this.tipOn= (tip) => this.setState({tip});
         this.tipOff= () => this.setState({tip:null});
-    }
-
-
-    getChildContext() {
-        return {tipOnCB: this.tipOn, tipOffCB: this.tipOff};
     }
 
     componentWillUnmount() {
@@ -98,18 +101,16 @@ export class VisToolbar extends PureComponent {
         const {messageUnder, style}= this.props;
         const {visRoot,tip,dlCount}= this.state;
         return (
-            <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount} 
-                                      messageUnder={messageUnder} style={style}/>
+
+            <ToolTipCtx.Provider value={{tipOnCB: this.tipOn, tipOffCB: this.tipOff}}>
+                <VisToolbarViewWrapper visRoot={visRoot} toolTip={tip} dlCount={dlCount}
+                                       messageUnder={messageUnder} style={style}/>
+            </ToolTipCtx.Provider>
         );
     }
 
 
 }
-
-VisToolbar.childContextTypes= {
-    tipOnCB : PropTypes.func,
-    tipOffCB : PropTypes.func
-};
 
 VisToolbar.propTypes= {
     messageUnder : PropTypes.bool,

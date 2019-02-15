@@ -29,8 +29,8 @@ export class StateInputField extends PureComponent {
         this.setState(() => ({valid, value}));
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState(() => ({valid:true, value:nextProps.defaultValue}));
+    static getDerivedStateFromProps(props) {
+        return {valid: true, value: props.defaultValue};
     }
 
 

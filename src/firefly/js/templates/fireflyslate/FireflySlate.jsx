@@ -30,6 +30,7 @@ import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/Mu
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 
 
@@ -55,10 +56,6 @@ export class FireflySlate extends PureComponent {
         startTTFeatureWatchers();
         this.stopLayoutManager= startLayoutManager(this.props.renderTreeId, {renderTreeId:this.props.renderTreeId});
 
-    }
-
-    getChildContext() {
-        return {renderTreeId : this.props.renderTreeId};
     }
 
     getNextState() {
@@ -104,29 +101,29 @@ export class FireflySlate extends PureComponent {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
             return (
-                <div id='App' className='rootStyle' style={style}>
-                    <header>
-                        <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
-                        <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                        <DropDownContainer
-                            key='dropdown'
-                            footer={footer}
-                            visible={!!visible}
-                            selected={view}
-                            {...{dropdownPanels} } />
-                    </header>
-                    <main style={{height:'100%'}}>
-                        {mainView({expanded, gridView, gridColumns})}
-                    </main>
-                </div>
+                    <div id='App' className='rootStyle' style={style}>
+                        <header>
+                            <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
+                            <div id={warningDivId} data-decor='full' className='warning-div center'/>
+                            <RenderTreeIdCtx.Provider value={{renderTreeId : this.props.renderTreeId}}>
+                                <DropDownContainer
+                                    key='dropdown'
+                                    footer={footer}
+                                    visible={!!visible}
+                                    selected={view}
+                                    {...{dropdownPanels} } />
+                            </RenderTreeIdCtx.Provider>
+                        </header>
+                        <main style={{height:'100%'}}>
+                            <RenderTreeIdCtx.Provider value={{renderTreeId : this.props.renderTreeId}}>
+                                {mainView({expanded, gridView, gridColumns})}
+                            </RenderTreeIdCtx.Provider>
+                        </main>
+                    </div>
             );
         }
     }
 }
-
-FireflySlate.childContextTypes= {
-    renderTreeId : PropTypes.string
-};
 
 
 const closeExpanded= () => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
@@ -222,7 +219,8 @@ FireflySlate.propTypes = {
     showViewsSwitch: PropTypes.bool,
     leftButtons: PropTypes.arrayOf( PropTypes.func ),
     centerButtons: PropTypes.arrayOf( PropTypes.func ),
-    rightButtons: PropTypes.arrayOf( PropTypes.func )
+    rightButtons: PropTypes.arrayOf( PropTypes.func ),
+    renderTreeId: PropTypes.string,
 };
 
 FireflySlate.defaultProps = {

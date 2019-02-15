@@ -108,10 +108,9 @@ class SizeInputFieldView extends PureComponent {
         this.state = updateSizeInfo(props);
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState( updateSizeInfo(nextProps) );
+    static getDerivedStateFromProps(props) {
+        return updateSizeInfo(props);
     }
-
 
 
     onSizeChange(ev) {

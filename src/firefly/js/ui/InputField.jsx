@@ -48,9 +48,10 @@ export class InputField extends PureComponent {
         this.setState(nState);
     }
 
-    componentWillReceiveProps(nProps) {
-        //this.setState(newState({value: nProps.value}));
-        this.setState({value: nProps.value});
+
+
+    static getDerivedStateFromProps(props) {
+        return {value: props.value};
     }
 
     render() {

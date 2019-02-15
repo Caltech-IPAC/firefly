@@ -41,8 +41,8 @@ export class InputAreaField extends PureComponent {
         this.setState(nState);
     }
 
-    componentWillReceiveProps(nProps) {
-        this.setState(newState({value: nProps.value}));
+    static getDerivedStateFromProps(props) {
+        return newState({value: props.value});
     }
 
     render() {

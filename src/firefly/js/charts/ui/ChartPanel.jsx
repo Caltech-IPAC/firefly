@@ -26,7 +26,7 @@ class ChartPanelView extends PureComponent {
         this.iAmMounted = true;
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         const {chartId, showChart} = nextProps;
         if (!chartId) { return; }
 

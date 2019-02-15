@@ -17,10 +17,9 @@ export class RangeSliderView extends PureComponent {
         this.decimalDig = (d < 0) ? 0 : (d > 20) ? 20 : d;
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState( {value: parseFloat(nextProps.slideValue)} );
+    static getDerivedStateFromProps(props,state) {
+        return {value: parseFloat(props.slideValue)};
     }
-
 
     onSliderChange(v) {
         const {handleChange, minStop, maxStop} = this.props;

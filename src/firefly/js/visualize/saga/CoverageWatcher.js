@@ -161,7 +161,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
         return;
     }
 
-    if (paused && (action.type===MultiViewCntlr.VIEWER_MOUNTED && action.type===MultiViewCntlr.ADD_VIEWER) )  {
+    if (action.type===MultiViewCntlr.VIEWER_MOUNTED || action.type===MultiViewCntlr.ADD_VIEWER)  {
         updateCoverage(tbl_id, viewerId, decimatedTables, options);
         return {paused:false};
     }
