@@ -53,9 +53,10 @@ class NaifidPanelView extends PureComponent {
     getSuggestions(val) {
         //let getSugg = new Promise((resolve, reject)=>{
             const rval = resolveNaifidObj(val);
-            rval.p && rval.p.then((response)=>{
+            if (!rval.p) return undefined;
+            return rval.p.then((response)=>{
                 if(response.valid) {
-                    let suggestionsList = JSON.parse(response.data);
+                    let suggestionsList = response.data;
                     console.log(suggestionsList);
                     //resolve(JSON.parse(response.data));
 
@@ -65,7 +66,7 @@ class NaifidPanelView extends PureComponent {
                         this.setState({suggestions:''});
                     }
 
-                    return suggestionsList;
+                    return Object.keys(suggestionsList).map( (k) => `${k}, id: ${suggestionsList[k]}`);
 
                 }else {
                     //reject('Error: ' + response.feedback);

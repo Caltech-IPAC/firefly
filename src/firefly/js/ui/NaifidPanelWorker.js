@@ -161,7 +161,7 @@ function resolveObject(objName/*posFieldDef, resolver*/) {
     p= p.then( (results) =>
         {
             if (results) {
-                if (results[0].success === 'true') {
+                if (results[0].success) {
                     return{
                         data: results[0].data,
                         showHelp: false,

@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.HashMap;
@@ -40,7 +41,7 @@ public class ResolveServerCommands {
             }
         }
 
-        public boolean getCanCreateJson() { return false; }
+        public boolean getCanCreateJson() { return true; }
     }
 
     public static class ResolveNaifidName extends ServCommand {
@@ -57,14 +58,23 @@ public class ResolveServerCommands {
                 }
 
                 JSONObject jsonObj = new JSONObject(values);
-                return jsonObj.toJSONString();
+
+
+                JSONArray wrapperAry= new JSONArray();
+                JSONObject result = new JSONObject();
+                result.put("data", jsonObj);
+                result.put("success", true);
+                wrapperAry.add(result);
+
+
+                return wrapperAry.toJSONString();
 
             }catch (Exception e){
                 throw new Exception("Could not resolve "+ ServerParams.OBJ_NAME);
             }
         }
 
-        public boolean getCanCreateJson() { return false; }
+        public boolean getCanCreateJson() { return true; }
     }
 }
 
