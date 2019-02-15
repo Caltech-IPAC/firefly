@@ -1,30 +1,30 @@
 package edu.caltech.ipac.firefly.server.visualize.hips;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.server.servlets.HiPSRetrieve;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.io.DsvTableIO;
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
+import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import org.apache.commons.csv.CSVFormat;
 
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.File;
-import java.io.BufferedReader;
-import java.io.StringReader;
-import java.lang.StringBuilder;
-import java.io.FileReader;
 
 
 /**
@@ -85,7 +85,9 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
 
             long cTime = System.currentTimeMillis();
 
-            File listFile = AnyFileDownload.retrieveHiPSData(url, childExt);
+            FileInfo listFileInfo = HiPSRetrieve.retrieveHiPSData(url, childExt);
+            File listFile= listFileInfo.getFile();
+            if (listFile==null) throw new IOException("Could not retrieve file: "+ listFileInfo.getResponseCode());
 
             _log.briefDebug("get " + source + " HiPS took " + (System.currentTimeMillis() - cTime) + "ms");
 
@@ -195,7 +197,10 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
         if (propUrl == null || listEntry == null) return;
 
         try {
-            File propFile = AnyFileDownload.retrieveHiPSData(propUrl, null);
+            FileInfo propFileInfo = HiPSRetrieve.retrieveHiPSData(propUrl, null);
+            File propFile= propFileInfo.getFile();
+            if (propFile==null) throw new IOException("Could not retrieve file: "+ propFileInfo.getResponseCode());
+
             BufferedReader br = new BufferedReader(new FileReader(propFile));
             String strLine;
             StringBuilder sb = new StringBuilder();

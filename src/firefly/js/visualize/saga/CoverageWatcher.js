@@ -166,6 +166,8 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
         return {paused:false};
     }
 
+    if (paused) return {paused};
+
     switch (action.type) {
 
         case TABLE_LOADED:
