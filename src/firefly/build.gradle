@@ -1,7 +1,7 @@
 
 ext["app-name"] = 'firefly'
 
-apply from: "$fireflyPath/buildScript/gwt_webapp.gincl"
+apply from: "$fireflyPath/buildScript/app.gincl"
 
 dependencies {
   compile project(':simbad'), project(':firefly_data')

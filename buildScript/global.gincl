@@ -1,0 +1,217 @@
+
+ext["app-name"] =  name
+ext.buildRoot = "${rootDir}/build"
+project.buildDir = "${buildRoot}/${project['app-name']}"            // buildDir is a gradle's prop.  cannot use ext, must set it to project
+ext.distDir = "${buildRoot}/dist"
+ext.warDir = "${buildDir}/war"
+ext.onlinehelp_dir = "${rootDir}/../irsa-ife-onlinehelp/"
+ext['launch.page'] = ext['app-name'] + ".html"
+
+jar.destinationDir = file ("$rootDir/jars/build")
+
+ext {
+
+    MAIN_GROUP = "~ Main"
+    SUB_GROUP = "~ Sub"
+    DEV_GROUP = "~ Development"
+    MISC_GROUP = "~ Misc"
+    DOCKER_GROUP = "~ Docker"
+
+    apache_lib = [':commons-fileupload',
+                  ':commons-io-2.4',
+                  ':commons-httpclient',
+                  ':commons-codec',
+                  ':commons-lang',
+                  ':commons-logging',
+                  ':jackrabbit-webdav-2.8.0',
+                  ':commons-discovery',
+                  ':commons-csv-1.0-201209']
+
+    webservices_lib = [':archive_dto_irsa',
+                       ':axis',
+                       ':archive_dto_votable',
+                       ':xbean']
+
+    ehcache_lib = [':ehcache-2.7.4',
+                   ':slf4j-api-1.6.6',
+                   ':ehcache-web-2.0.4']
+
+    j2ee_rt_lib = [':wsdl4j-1.5.1',
+                   ':jaxrpc',
+                   ':saaj',
+                   ':activation',
+                   ':mail']
+
+    j2ee_lib = [j2ee_rt_lib,
+                ':servlet-api',
+                ':websocket-api']
+
+    db_lib = [':h2-1.4.194', ':sqlite-jdbc-3.20.0', ':hsqldb-2.4.0']
+    mysql_lib = ':mysql-connector-java-5.1.6-bin'
+    starlink_lib = [':rayreg',
+                    ':starlink-registry-1.2+2016.05.03',
+                    ':jcdf-1.2.2',
+                    ':eag-healpix-2017.02.26',
+                    ':ndx', ':mirage', ':gbin',
+                    ':vecmath-1.5.2',
+                    ':commons-compress-1.13',
+                    ':starlink-pal-1.0.1+2016.08.11',
+                    ':starlink-cdf-1.0+2017.01.04',
+                    ':starlink-connect-0.1+2016.05.03',
+                    ':starlink-fits-0.1+2017.03.29',
+                    ':starlink-table-3.2',
+                    ':starlink-util-1.0+2017.03.17',
+                    ':starlink-votable-2.0+2016.12.22']
+    reflections_lib = [':reflections-0.9.11', ':javassist-3.21.0-GA', ':guava-20.0']
+    spring_lib = [':spring-beans', ':spring-core', ':spring-jdbc', ':spring-tx', ':spring-web']
+    fits_io_lib = [':fits_io']
+    junit_lib = [':junit-4.12', ':hamcrest-core-1.3']
+    log4j_lib = ':log4j-1.2.14'
+    josso_lib = ':josso-ws-1.8.5'
+    oidc_lib = [':nimbus-jose-jwt-4.37.1', ':json-smart-2.3', ':accessors-smart-1.2' ]
+    json_lib = ':json-simple-1.1.1'
+    xstream_lib = [':xstream-1.3.1', ':xpp3_min-1.1.4c']
+    gwt_lib_rt = [':gwt-servlet', ':gwt-servlet-deps']
+    gwt_lib = [ gwt_lib_rt,
+                ':gwt-dev',
+    ]
+
+    firefly_ext_lib = [ ':simbad_ws' ]
+
+    firefly_lib = [ firefly_ext_lib, ':firefly' ]
+
+
+    FIREFLY_RUNTIME = [':firefly_data'] + fits_io_lib + apache_lib + spring_lib + webservices_lib + oidc_lib +
+            log4j_lib + josso_lib + xstream_lib + reflections_lib +
+            gwt_lib_rt + ehcache_lib + starlink_lib + j2ee_rt_lib + json_lib + db_lib
+
+    FIREFLY_COMPILE = j2ee_lib + gwt_lib + FIREFLY_RUNTIME
+}
+
+
+dependencies {
+    compile fits_io_lib, junit_lib
+    compile FIREFLY_COMPILE
+}
+
+def libPath = "$fireflyPath/jars"
+
+//project.ext.properties.each{ k, v -> println "${k}:${v}\n" }
+
+repositories {
+    flatDir {
+        name 'firefly_repo'
+        dirs  "$libPath/build",
+                "$libPath/data",
+                "$libPath/ehcache",
+                "$libPath/fits-io",
+                "$libPath/j2ee",
+                "$libPath/jakarta-commons",
+                "$libPath/josso",
+                "$libPath/gwt",
+                "$libPath/oidc",
+                "$libPath/json",
+                "$libPath/log4j",
+                "$libPath/db",
+                "$libPath/mysql",
+                "$libPath/reflections",
+                "$libPath/sdss",
+                "$libPath/spring",
+                "$libPath/starlink",
+                "$libPath/test",
+                "$libPath/webservices",
+                "$libPath/xstream"
+    }
+}
+
+/**---------------------------    util functions   ---------------------------------**/
+
+
+ext.getCommitHash = { workDir="." ->
+    try {
+        def hashOut = new ByteArrayOutputStream()
+        exec {
+            commandLine "git", "rev-parse", "--short", "HEAD"
+            workingDir = workDir
+            standardOutput = hashOut
+        }
+        return hashOut.toString().trim();
+    } catch (Exception e) {
+        return 'n/a'
+    }
+}
+
+
+ext.getVersionInfo = { key ->
+    if (!project.hasProperty("tag_file")) {
+        project.ext.tag_file = "${project.buildDir}/version.tag"
+    }
+    Properties props = new Properties()
+    props.load(new File(tag_file).newDataInputStream())
+    def val = props.getProperty(key)
+    return val;
+}
+
+ext.mergeDevIntoMaster = {  ->
+
+    try {
+        "git checkout dev".execute()
+        "git pull".execute()
+        "git checkout master".execute()
+        "git pull master".execute()
+        "git merge dev".execute()
+    } catch (Exception e) {
+        println ">> Unable to merge dev into master"
+        throw new GradleException("Unable to merge dev into master", e)
+    }
+}
+
+/**
+ * this function setup node.js environment then run the given command.
+ */
+ext.NODE = { ...cmd ->
+    def wpBuildDir = warDir
+
+    try {
+        def process = "yarn version".execute()
+    } catch (Exception e) {
+        println ">> Task failed due to missing yarn package manager which comes bundled with node.js"
+        throw new GradleException("Task failed due to missing yarn package manager which comes bundled with node.js", e)
+    }
+
+    if (file("${rootDir}/package.json").exists()) {
+        exec {
+            workingDir = rootDir
+            executable "yarn"
+            args "install", "--frozen-lockfile"
+        }
+    }
+
+    def versionInfo = new Properties()
+    def versionFile = file("${project.buildDir}/version.tag")
+    if (versionFile.exists()) {
+        versionFile.withInputStream { versionInfo.load(it) }
+    }
+
+    // any environment starting with '__$' will be defined as global.
+    // this is a way send config info to JS code.
+    def res = exec {
+        environment 'WP_BUILD_DIR': wpBuildDir
+        environment 'NODE_ENV': (project.env == 'local' ? 'development' : 'production')
+        environment 'BUILD_ENV': project.env
+        commandLine cmd
+        for (String key : project.appConfigProps.keySet()) {
+            if (key.startsWith('__$')) {
+                environment (key, project.appConfigProps[key])
+//        println ">>   " + key + " = " + project.appConfigProps[key]
+            }
+        }
+        // load version info as JS global
+        for (String key : versionInfo.keySet()) {
+            environment ('__$version.'+key, versionInfo[key])
+//      println ">>   " + '__$version.'+key + " = " + versionInfo[key]
+        }
+    }
+    return res;
+}
+

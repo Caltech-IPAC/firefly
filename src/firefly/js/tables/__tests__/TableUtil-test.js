@@ -1,8 +1,10 @@
-import * as TblUtil from '../TableUtil.js';
+import * as TblUtil from '../TableUtil.js';         // used for named import
+import TableUtil from '../TableUtil.js';            // using default import
 import {FilterInfo} from '../FilterInfo.js';
+import {SelectInfo} from '../SelectInfo';
 
 
-describe('Table Utils', () => {
+describe('TableUtil:', () => {
 
     test('isTableLoaded', () => {
         // a simple test to ensure when a table is loaded.
@@ -22,6 +24,69 @@ describe('Table Utils', () => {
         actual = TblUtil.isTableLoaded(table);
         expect(actual).toBe(false);                                     // not loaded because status is not COMPLETED
 
+    });
+
+    test('getSelectedData', () => {
+        // this case is a bit more complicated.  it needs to test getSelectedData and
+        // mock getTblInfoById, but both are in TableUtil.js module.
+        // you cannot mock a function referenced internally by the tested function
+        // so, we have to use 'default' import instead of 'named' import to mock
+        // the referenced function.
+        // this also demonstrate testing a function returning a promise.
+
+        const tableInfo = {
+            totalRows: 3,
+            selectInfo: SelectInfo.newInstance({selectAll:true, rowCount: 3}).data,
+            tableModel: {
+                totalRows: 3,
+                tableData: {
+                    columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
+                    data: [
+                        ['a-1', 'b-1', 'b-1'],
+                        ['a-2', 'b-2', 'c-2'],
+                        ['a-3', 'b-3', 'c-3'],
+                    ],
+                }
+            }
+        };
+
+        TableUtil.getTblInfoById = jest.fn().mockReturnValue(tableInfo);
+
+        // test all selected from column 'a' and 'b' in reversed ordered
+        TableUtil.getSelectedData('mocked', ['b', 'a'])
+            .then(({totalRows, tableData}) => {
+
+                expect(totalRows).toBe(3);
+
+                const {columns, data} = tableData;
+                expect(columns).toHaveLength(2);
+                expect(data).toEqual(
+                    [
+                        ['b-1', 'a-1'],
+                        ['b-2', 'a-2'],
+                        ['b-3', 'a-3'],
+                    ]
+                );
+            });
+
+        // test row 2-3 selected from column 'a', 'b', and 'd' where 'd' does not exists
+        const sInfoCls = SelectInfo.newInstance({rowCount: 3});
+        sInfoCls.setRowSelect(1, true);
+        sInfoCls.setRowSelect(2, true);
+        TableUtil.getSelectedData('mocked', ['a', 'b', 'd'])
+            .then(({totalRows, tableData}) => {
+
+                expect(totalRows).toBe(2);
+
+                const {columns, data} = tableData;
+                expect(columns).toHaveLength(2);
+                expect(data).toEqual(
+                    [
+                        ['a-2', 'b-2'],
+                        ['a-3', 'b-3'],
+                    ]
+                );
+            });
     });
 
 });
@@ -65,7 +130,7 @@ describe('FilterInfo', () => {
 
         const {valid, value} = FilterInfo.conditionValidator('>1.23', 'a_fake_tbl_id', 'ra');
         expect(valid).toBe(true);
-        expect(value).toBe('> 1.23');      // the validator correctly insert space and quote around a value of a string column.
+        expect(value).toBe('> 1.23');      // the validator correctly insert space and no quotes on numeric columns.
     });
 
 
