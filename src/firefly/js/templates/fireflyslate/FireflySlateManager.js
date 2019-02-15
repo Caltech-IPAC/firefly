@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {take} from 'redux-saga/effects';
-import {filter, isEmpty, get, isArray, uniq} from 'lodash';
+import {filter, isEmpty, isArray, uniq} from 'lodash';
 
 import {startImageMetadataWatcher} from '../../visualize/saga/ImageMetaDataWatcher.js';
 import {startCoverageWatcher} from '../../visualize/saga/CoverageWatcher.js';
@@ -20,7 +19,6 @@ import {clone} from '../../util/WebUtil.js';
 
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {REPLACE_VIEWER_ITEMS, IMAGE, getViewerItemIds, getMultiViewRoot, getViewer, findViewerWithItemId} from '../../visualize/MultiViewCntlr.js';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
 
 

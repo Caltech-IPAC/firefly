@@ -389,12 +389,12 @@ export function getAViewFromMultiView(multiViewRoot, containerType, renderTreeId
                                             (get(entry, 'canReceiveNewPlots') === NewPlotMode.create_replace.key)));
     if (viewer.reservedContainer && renderTreeId) {
         const newId= `${viewer.viewerId}_${renderTreeId}`;
-        const modViewer= getViewer(multiViewRoot, newId)
+        const modViewer= getViewer(multiViewRoot, newId);
         if (modViewer) return modViewer;
         dispatchAddViewer(newId, NewPlotMode.create_replace.key,
                       containerType,false,renderTreeId);
 
-        return getViewer(getMultiViewRoot(), newId)
+        return getViewer(getMultiViewRoot(), newId);
     }
     else {
         return viewer;
@@ -555,7 +555,15 @@ function removeViewer(state,action) {
  * @return {MultiViewerRoot}
  */
 function addItems(state,viewerId,itemIdAry, containerType, renderTreeId) {
+
+    if (renderTreeId) {
+        itemIdAry.forEach( (id) => {
+            const v= findViewerWithItemId(state, id, containerType);
+            if (v && v.renderTreeId!==renderTreeId) state= deleteSingleItem(state,id,containerType);
+        });
+    }
     let viewer= state.find( (entry) => entry.viewerId===viewerId);
+
     if (!viewer) {
         state= addViewer(state,{viewerId,containerType, renderTreeId});
         viewer= state.find( (entry) => entry.viewerId===viewerId);
@@ -616,7 +624,6 @@ function removeItems(state,action) {
 
     return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, updateViewer(entry)) : entry);
 }
-
 
 /**
  * Delete an item with only knowing the itemId and containerType but not the viewerId

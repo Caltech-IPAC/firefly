@@ -254,9 +254,11 @@ export class FitsDownloadDialogForm extends PureComponent {
 
                 const baseName = this.getDefaultFileName(hasOperation, Band.NO_BAND);
 
-                fileNames[Band.NO_BAND.key] = baseName;
-                fileNames['png'] = baseName.replace('.fits', '.png');
-                fileNames['reg'] = baseName.replace('.fits', '.reg');
+                const cleanName= baseName.replace(/[()&^@,;.]/g, '_');
+
+                fileNames[Band.NO_BAND.key] = cleanName.replace('_fits', '.fits');
+                fileNames['png'] = cleanName.replace('_fits', '.png');
+                fileNames['reg'] = cleanName.replace('_fits', '.reg');
             }
             return fileNames;
         };

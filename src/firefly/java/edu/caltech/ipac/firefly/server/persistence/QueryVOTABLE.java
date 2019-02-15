@@ -3,17 +3,16 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
-import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -60,16 +59,9 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
                 dg.addAttribute(MetaConst.CENTER_COLUMN, llc.toString());
 
                 if (use != null && use.startsWith("catalog")) {
-                    dg.addAttribute(MetaConst.CATALOG_COORD_COLS, llc.toString());
+                    dg.addAttribute(MetaConst.CENTER_COLUMN, llc.toString());
                     String title = req.getParam(TITLE_KEY);
-                    dg.addAttribute(MetaConst.CATALOG_OVERLAY_TYPE, title == null ? "VO Catalog" : title);
-                }
-            }
-            if (use != null) {
-                if (use.equals("catalog_overlay")) {
-                    dg.addAttribute(MetaConst.DATA_PRIMARY, "False");
-                } else if (use.equals("data_primary") || use.equals("catalog_primary")) {
-                    dg.addAttribute(MetaConst.DATA_PRIMARY, "True");
+                    dg.addAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
                 }
             }
 

@@ -4,11 +4,9 @@
 package edu.caltech.ipac.astro.ibe;
 
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
-import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.astro.ibe.datasource.AtlasIbeDataSource;
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.table.DataGroup;
@@ -24,7 +22,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.util.Map;
 
 import static edu.caltech.ipac.astro.ibe.BaseIbeDataSource.addUrlParam;
@@ -149,8 +146,7 @@ public class IBE {
             qstr = addUrlParam(qstr, "gzip", param.isDoZip());
         }
 
-        //url += (qstr.length() > 0 ? "?" + qstr : "");
-        url += (qstr.length() > 0 ? "?" + URLEncoder.encode(qstr, "UTF-8") : "");
+        url += (qstr.length() > 0 ? "?" + qstr : "");
 
         return new URL(url);
     }

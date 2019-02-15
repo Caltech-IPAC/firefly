@@ -6,6 +6,7 @@ JavaScript Unit Testing
 - Testing structure (Mocha, Jasmine, Jest, Cucumber)
 - Assertions functions (Chai, Jasmine, Jest, Unexpected)
     - https://jestjs.io/docs/en/using-matchers
+    - https://jestjs.io/docs/en/expect
 - Provide mocks, spies, and stubs (Sinon, Jasmine, enzyme, Jest, testdouble)
 - Generate, display, and watch test results (Mocha, Jasmine, Jest, Karma)
 - Generate code coverage reports (Istanbul, Jest, Blanket)

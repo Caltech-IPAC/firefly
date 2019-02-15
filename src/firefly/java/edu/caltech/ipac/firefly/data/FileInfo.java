@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.data;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.download.ResponseMessage;
 
 import java.io.File;
 import java.io.Serializable;
@@ -63,6 +64,11 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
         this(file, externalName, externalName, responseCode, responseCodeMsg);
     }
 
+
+    public FileInfo(File file, int responseCode) {
+        this(file, file!=null?file.getName():"", responseCode, ResponseMessage.getHttpResponseMessage(responseCode));
+    }
+
     private FileInfo(File file, String externalName, String desc, int responseCode, String responseCodeMsg) {
         setInternalName( file != null ? file.getAbsolutePath() : null);
         putAttribute(RESPONSE_CODE, responseCode + "");
@@ -94,7 +100,9 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     public void putAttribute(String key, String value) { attributes.put(key,value); }
     public String getAttribute(String key) {return attributes.get(key); }
 
-    public File getFile() {  return new File(attributes.get(INTERNAL_NAME)); }
+    public File getFile() {
+        return attributes.containsKey(INTERNAL_NAME) ? new File(attributes.get(INTERNAL_NAME)) : null;
+    }
     public String getDesc() { return attributes.get(DESC); }
     public boolean isBlank() { return StringUtils.getBoolean(attributes.get(BLANK), false); }
     public int getResponseCode() { return StringUtils.getInt(attributes.get(RESPONSE_CODE), 200); }
@@ -128,7 +136,9 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public String getExternalName() { return getAttribute(EXTERNAL_NAME); }
 
-    public void setInternalName(String filename) { putAttribute(INTERNAL_NAME,filename); }
+    public void setInternalName(String filename) {
+        if (filename!=null) putAttribute(INTERNAL_NAME,filename);
+    }
     public void setExternalName(String filename) { putAttribute(EXTERNAL_NAME,filename); }
 
     public long getSizeInBytes() { return StringUtils.getInt(getAttribute(SIZE_IN_BYTES),0); }

@@ -99,13 +99,6 @@ public class GatorQuery extends BaseGator {
     public final static String URADIUS = "uradius";
     public final static String URAD_UNITS = "uradunits";
 
-    private final static String DEFAULT_TNAME_OPTIONS[] = {
-            "name",         // generic
-            "pscname",      // IRAS
-            "target",       //  our own table output
-            "designation",  // 2MASS
-            "starid"        // PCRS
-    };
     private static final String DEF_QUERY_SERVICE = AppProperties.getProperty("irsa.gator.service.query",
             "/cgi-bin/Gator/nph-query");
 
@@ -267,28 +260,13 @@ public class GatorQuery extends BaseGator {
             llc = new TableMeta.LonLatColumns(RA, DEC, CoordinateSys.EQ_J2000);
             meta.setCenterCoordColumns(llc);
         }
-        String name = findTargetName(columns);
-        if (name != null) meta.setAttribute(MetaConst.CATALOG_TARGET_COL_NAME, name);
 
+        meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+        if (llc != null) meta.setLonLatColumnAttr(MetaConst.CENTER_COLUMN, llc);
 
-        if (req.getUse() == CatalogRequest.Use.CATALOG_OVERLAY ||
-            req.getUse() == CatalogRequest.Use.CATALOG_PRIMARY) {
-            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "IRSA");
-
-            if (llc != null) {
-                meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
-            }
-
-        }
-
-        if (req.getUse() == CatalogRequest.Use.DATA_PRIMARY ||
-            req.getUse() == CatalogRequest.Use.CATALOG_PRIMARY) {
-            meta.setAttribute(MetaConst.DATA_PRIMARY, "True");
-        }
 
         setColumnTips(meta, req);
 
-//        meta.setAttribute(MetaConst.DATASET_CONVERTER, "FINDER_CHART"); //todo: TEST ONLY, remove or comment out this line, makes IRSA viewer simulate finderchart
         super.prepareTableMeta(meta, columns, request);
     }
 
@@ -403,23 +381,6 @@ public class GatorQuery extends BaseGator {
             constraints = constraints.replace(CatalogRequest.CONSTRAINTS_SEPARATOR, " and ");
         }
         return constraints;
-    }
-
-    private static String findTargetName(List<DataType> columns) {
-        String cname;
-        String finalName = null;
-        for (DataType col : columns) {
-            cname = col.getKeyName().toLowerCase();
-            for (String testName : DEFAULT_TNAME_OPTIONS) {
-                if (cname.contains(testName)) {
-                    finalName = col.getKeyName();
-                    break;
-                }
-
-            }
-            if (finalName != null) break;
-        }
-        return finalName;
     }
 
     private static boolean verifyCoordsInTable(List<DataType> columns, String lonStr, String latStr) {

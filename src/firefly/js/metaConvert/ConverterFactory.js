@@ -19,10 +19,8 @@ import {CoordinateSys} from '../visualize/CoordSys.js';
 
 //const URL= 'URL';
 const FILE= 'FILE';
-const dataSourceUpper= 'DATASOURCE';
 
 
-const defGuesses= [ 'FILE', 'FITS', 'DATA', 'SOURCE' ];
 
 
 export const converters = {
@@ -104,7 +102,8 @@ export const converters = {
 
 
 export function converterFactory(table) {
-    var dataId= get(table, ['tableMeta', MetaConst.DATASET_CONVERTER]);
+    const dataId= get(table, ['tableMeta', MetaConst.IMAGE_SOURCE_ID]) ||
+                  get(table, ['tableMeta', MetaConst.DATASET_CONVERTER]);
     const converter= dataId ? converters[dataId] : converters['UNKNOWN'];
     return converter && {converter,dataId};
 }
@@ -122,19 +121,20 @@ function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
 
     const {tableMeta:meta}= table;
 
-    const dataSource= findAColumn(meta,table.tableData.columns);
+    const dataSource= findADataSourceColumn(meta,table.tableData.columns);
     if (!dataSource) return {};
 
 
     var positionWP= null;
-    if (meta[MetaConst.POSITION_COORD_COLS]) {
-        const sAry= meta[MetaConst.POSITION_COORD_COLS].split(';');
-        if (!isEmpty(sAry)) {
-            const lon= Number(getCellValue(table,row,sAry[0]));
-            const lat= Number(getCellValue(table,row,sAry[1]));
-            const csys= CoordinateSys.parse(sAry[2]);
-            positionWP= makeWorldPt(lon,lat,csys);
-        }
+
+    let sAry= meta[MetaConst.POSITION_COORD_COLS] && meta[MetaConst.POSITION_COORD_COLS].split(';');
+    if (!sAry) sAry= meta[MetaConst.CENTER_COLUMN] && meta[MetaConst.CENTER_COLUMN].split(';');
+
+    if (!isEmpty(sAry)) {
+        const lon= Number(getCellValue(table,row,sAry[0]));
+        const lat= Number(getCellValue(table,row,sAry[1]));
+        const csys= CoordinateSys.parse(sAry[2]);
+        positionWP= makeWorldPt(lon,lat,csys);
     }
     else if (meta[MetaConst.POSITION_COORD]) {
         positionWP= parseWorldPt(meta[MetaConst.POSITION_COORD]);
@@ -160,7 +160,7 @@ function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
     const {tableMeta:meta, tableData}= table;
 
 
-    const dataSource= findAColumn(meta, tableData.columns);
+    const dataSource= findADataSourceColumn(meta, tableData.columns);
 
     if (!dataSource) return {};
 
@@ -191,9 +191,12 @@ function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
 }
 
 
-function findAColumn(meta,columns) {
+const defDataSourceGuesses= [ 'FILE', 'FITS', 'DATA', 'SOURCE', 'URL' ];
+const dataSourceUpper= MetaConst.DATA_SOURCE.toUpperCase();
+
+function findADataSourceColumn(meta,columns) {
     const dsCol= Object.keys(meta).find( (key) => key.toUpperCase()===dataSourceUpper);
-    var guesses= meta[dsCol] ? [meta[dsCol],...defGuesses] : defGuesses;
+    let guesses= meta[dsCol] ? [meta[dsCol],...defDataSourceGuesses] : defDataSourceGuesses;
     guesses= guesses.map( (g) => g.toUpperCase());
     return columns.find( (c) => guesses.includes(c.name.toUpperCase()));
 }

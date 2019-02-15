@@ -306,9 +306,9 @@ public class LSSTCatalogSearch extends LSSTQuery {
             if (lon != null && lat != null) {
                 TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String) lon, (String) lat, CoordinateSys.EQ_J2000);
                 meta.setCenterCoordColumns(llc);
-                meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
+                meta.setLonLatColumnAttr(MetaConst.CENTER_COLUMN, llc);
             }
-            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "LSST");
+            meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
             String col = LSSTQuery.getTableColumn(catTable, "objectColumn");
             if (col != null) {
                 meta.setAttribute("objectIdColumn", col);
@@ -331,7 +331,7 @@ public class LSSTCatalogSearch extends LSSTQuery {
             }
 
             // only set for image meta table
-            meta.setAttribute(MetaConst.DATASET_CONVERTER,
+            meta.setAttribute(MetaConst.IMAGE_SOURCE_ID,
                     (String)LSSTQuery.getDatasetInfo(catTable, new String[]{MetaConst.DATASET_CONVERTER}));
             Object schemaParams = LSSTQuery.getImageMetaSchema(catTable);
             if (schemaParams instanceof JSONObject) {
