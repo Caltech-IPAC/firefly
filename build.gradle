@@ -19,4 +19,6 @@ task purge {
   }
 }
 
-task preselect
+task preselect {
+  description= 'A placeholder task to designate the task to run for each project.  Similar to defaultTasks.'
+}

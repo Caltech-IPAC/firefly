@@ -314,7 +314,10 @@ test {
             Example:  gradle :firefly:test -x jsTest --tests *HttpServicesTest
           
         Specific category:   
-            gradle -Pcategory=edu.caltech.ipac.TestCategory\\$Perf :firefly:test -x jsTest '''
+            gradle -Pcategory=edu.caltech.ipac.TestCategory\\$Perf :firefly:test -x jsTest 
+    
+        Debug a specific test:
+            gradle :firefly:test --debug-jvm --tests <class-name-pattern>     '''
 
     group = DEV_GROUP
 
@@ -564,6 +567,7 @@ task dockerPublish (dependsOn: dockerImage) {
 
 
 task onlinehelp (dependsOn: [loadConfig]) {
+    description = 'Bundled onlinehelp with the webapp'
     group = SUB_GROUP
 
     doLast {
@@ -681,6 +685,7 @@ task buildAllAndDeploy( dependsOn:[warAll, deploy] ) {
 }
 
 task webapp {
+    description= 'Used to define or override a webapp specific attributes, for example name of the war file.'
     dependsOn buildClient, prepareWebapp
 
     outputs.upToDateWhen { false }
