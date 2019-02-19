@@ -10,19 +10,32 @@ Installation: https://kubernetes.io/docs/setup/independent/install-kubeadm/
     irsawebdev9 -> master
     others -> nodes (workers)
 
-issues specific to these machines:
+### Issues specific to these machines:
 
-1. CGROUPS_MEMORY: missing
-Resolved by enable cgroup memory subsystem in debian, it is disabled defaultly in debian.
+- CGROUPS_MEMORY: missing
+      
+    Resolved by enable cgroup memory subsystem in debian, it is disabled defaultly in debian.
 
         $ vi /etc/default/grub
             GRUB_CMDLINE_LINUX="cgroup_enable=memory”
         $ update-grub 
         $ reboot
     
-2. need to turn off swap
+- Need to turn off swap
 
         $ swapoff -a
+
+- syslog and daemon.log showing: unknown container "/system.slice/kubelet.service"
+
+    Known Kubernetes issue #56850.
+    Workaround: Create cgroups config, then restart kubelet.
+        
+        $ cat /etc/systemd/system/kubelet.service.d/11-cgroups.conf
+        [Service]
+        CPUAccounting=true
+        MemoryAccounting=true
+        $ systemctl daemon-reload
+        $ systemctl restart kubelet    
 
 
 ### Install Docker  
