@@ -24,7 +24,7 @@ import static org.junit.Assert.fail;
 
 public class HttpServicesTest {
 
-	private static String TEST_HOST_URL = "http://httpbin.org/";
+	private static String TEST_HOST_URL = "https://httpbin.org/";
 	private static String GET_URL = TEST_HOST_URL + "get";
 	private static String POST_URL = TEST_HOST_URL + "post";
 	private static String GZIP_URL = TEST_HOST_URL + "gzip";
