@@ -8,10 +8,10 @@ import PropTypes from 'prop-types';
 import {isEmpty, get, padEnd} from 'lodash';
 import {primePlot,isMultiImageFitsWithSameArea, getPlotViewById,
         getDrawLayersByType, isDrawLayerAttached, getAllDrawLayersForPlot,
-        isMultiHDUFits, getCubePlaneCnt, getHDU } from '../PlotViewUtil.js';
+        isMultiHDUFits, getCubePlaneCnt, getHDU, getHeader } from '../PlotViewUtil.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
 import {CysConverter} from '../CsysConverter.js';
-import {PlotAttribute,isHiPS, isImage} from '../WebPlot.js';
+import {PlotAttribute,FitsHdr, isHiPS, isImage} from '../WebPlot.js';
 import {makeDevicePt, makeScreenPt, makeImagePt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -58,8 +58,6 @@ import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 
-const ARROW_LEFT = 37;
-const ARROW_RIGHT = 39;
 
 //todo move the statistics constants to where they are needed
 const Metrics= {MAX:'MAX', MIN:'MIN', CENTROID:'CENTROID', FW_CENTROID:'FW_CENTROID', MEAN:'MEAN',
@@ -655,8 +653,9 @@ export function MultiImageControllerView({plotView:pv}) {
         nextIdx= cIdx===plots.length-1 ? 0 : cIdx+1;
         prevIdx= cIdx ? cIdx-1 : plots.length-1;
         length= plots.length;
-        desc= plots[cIdx].plotDesc;
+        desc= plot.plotDesc;
         if (isMultiHDUFits(pv)) {
+            if (!desc) desc= getHeader(plot,FitsHdr.EXTNAME,'');
             if (plot.cubeIdx>-1) positionStr+= `, Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(pv,plot)}`;
             positionStr+= `, HDU: ${getHDU(plot)}`;
         }
@@ -666,11 +665,8 @@ export function MultiImageControllerView({plotView:pv}) {
         nextIdx= cIdx===plot.cubeDepth-1 ? 0 : cIdx+1;
         prevIdx= cIdx ? cIdx-1 : plot.cubeDepth-1;
         length= plot.cubeDepth;
-        // desc= '';
         desc= getHipsCubeDesc(plot);
     }
-
-    // if (length<3) leftImageStyle.visibility='hidden';
     if (cIdx<0) cIdx= 0;
     const useText= length>8;
 
@@ -767,7 +763,7 @@ function clearFilterDrawingLayer(pv,dlAry) {
 function changeFrame(plot,frameNumber) {
     const {plotId}= plot;
     isImage(plot) ? dispatchChangePrimePlot({plotId,primeIdx:frameNumber-1}) :
-                    dispatchChangeHiPS({plotId, cubeIdx:frameNumber-1})
+                    dispatchChangeHiPS({plotId, cubeIdx:frameNumber-1});
 }
 
 function handleUpDown(pv,currValue, key) {

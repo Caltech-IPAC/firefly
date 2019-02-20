@@ -39,6 +39,35 @@ const alphabetAry= 'ABCDEFGHIJKLMNOPQRSTUVWZYZ'.split('');
 
 export const getHiPsTitleFromProperties= (hipsProperties) => hipsProperties.obs_title || hipsProperties.label || 'HiPS';
 
+/**
+ * FITS headers keys
+ * todo: add more headers
+ */
+export const FitsHdr= {
+
+    // Common FITS Headers that are added by firefly
+    BITPIX   : 'BITPIX',
+    CRPIX1   : 'CRPIX1',
+    CRPIX2   : 'CRPIX2',
+    CRVAL1   : 'CRVAL1',
+    CRVAL2   : 'CRVAL2',
+    CDELT1   : 'CDELT1',
+    CDELT2   : 'CDELT2',
+    CROTA1   : 'CROTA1',
+    CROTA2   : 'CROTA2',
+    DATAMAX  : 'DATAMAX',
+    DATAMIN  : 'DATAMIN',
+    EXTNAME  : 'EXTNAME',
+
+    // FITS Headers that are added by firefly
+    SPOT_OFF : 'SPOT_OFF', // Extension Offset (added by Firefly)
+    SPOT_EXT : 'SPOT_EXT', // Extension Number (added by Firefly)
+    SPOT_HS  : 'SPOT_HS',  // Header block size on disk (added by Firefly)
+    SPOT_BP  : 'SPOT_BP',  // Original Bitpix value (added by Firefly)
+    SPOT_PL  : 'SPOT_PL',  // Plane of FITS cube (added by Firefly)
+};
+
+
 export const PlotAttribute= {
 
     MOVING_TARGET_CTX_ATTR:   'MOVING_TARGET_CTX_ATTR',

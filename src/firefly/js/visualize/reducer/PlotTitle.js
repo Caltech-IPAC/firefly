@@ -9,13 +9,12 @@ import {RequestType} from '../RequestType.js';
  *
  * @param plot
  * @param r the request
- * @param title starting title
- * @return {*}
+ * @return {String} the title
  */
 export function makePostPlotTitle(plot,r) {
-    var title= r.getTitle();
-    var titleOps= r.getTitleOptions();
-    var preTitle= r.getPreTitle() ? r.getPreTitle()+': ': '';
+    let title= r.getTitle();
+    const titleOps= r.getTitleOptions();
+    const preTitle= r.getPreTitle() ? r.getPreTitle()+': ': '';
 
     if (titleOps===TitleOptions.FILE_NAME) {
         title= computeFileNameBaseTitle(r,plot.plotState, plot.plotState.firstBand(),preTitle);
@@ -27,7 +26,7 @@ export function makePostPlotTitle(plot,r) {
         title = preTitle + plot.plotDesc;
     }
 
-    var postTitle= r.getPostTitle() ? ': '+r.getPostTitle() : '';
+    const postTitle= r.getPostTitle() ? ': '+r.getPostTitle() : '';
     title= title + postTitle;
 
     return title;
@@ -99,13 +98,13 @@ function computeTitleFromFile(fileStr) {
 
 function stripFilePath(path) {
     if (!path) return '';
-    var i = path.lastIndexOf('/');
-    return (i<0)  ? path : path.substring(i+1, path.length);
+    const i = path.lastIndexOf('/');
+    return (i<0) ? path : path.substring(i+1, path.length);
 }
 
 function getFileBase(s) {
     if (!s) return '';
-    var i = s.lastIndexOf('.');
-    return (i==-1 || i==0) ? s : s.substring(0, i);
+    const i = s.lastIndexOf('.');
+    return (i===-1 || i===0) ? s : s.substring(0, i);
 }
 
