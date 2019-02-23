@@ -420,6 +420,11 @@ const TAP_SERVICES = [
         query: 'SELECT * FROM fp_psc WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,1.0))=1'
     },
     {
+        label: 'CADC http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
+        value: 'http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
+        query: 'SELECT TOP 10000 * FROM ivoa.ObsCore WHERE CONTAINS(POINT(\'ICRS\', s_ra, s_dec),CIRCLE(\'ICRS\', 10.68479, 41.26906, 0.028))=1'
+    },
+    {
         label: 'GAIA http://gea.esac.esa.int/tap-server/tap',
         value: 'http://gea.esac.esa.int/tap-server/tap',
         query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'

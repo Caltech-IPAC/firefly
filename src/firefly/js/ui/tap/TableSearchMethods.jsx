@@ -12,7 +12,7 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
-import {getColumnIdx} from '../../tables/TableUtil.js';
+import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {convert} from '../../visualize/VisUtil.js';
 import {primePlot, getActivePlotView} from '../../visualize/PlotViewUtil.js';
@@ -114,47 +114,44 @@ export class TableSearchMethods extends PureComponent {
 
     storeUpdate() {
         if (this.iAmMounted) {
-            this.setState(this.nextState(this.props));
+            this.setState(this.nextState());
         }
     }
 
-    nextState(props) {
-        const {columnsModel} = props;
-        const ucds = getColumnValues(columnsModel, 'ucd');
-        const column_names = getColumnValues(columnsModel, 'column_name');
-        const options = ucds.reduce((p,c,i) => {
-            if (c) { p.push({value: column_names[i], label: `[${column_names[i]}] ${c}`}); }
-            return p;
-        }, []);
-        const posCols = ucds.reduce((p,c,i) => {
-            if (c && c.includes('pos.')) { p.push({name: column_names[i], ucd: c}); }
-            return p;
-        }, []);
-        const fields = FieldGroupUtils.getGroupFields(skey);
+    updateUCDOptions(columnsModel) {
+        if (!columnsModel) return [];
 
-        return {ucds, column_names, options, posCols,fields};
+        const column_names = getColumnValues(columnsModel, 'column_name');
+        const ucds = getColumnValues(columnsModel, 'ucd');
+        return ucds.reduce((p, c, i) => {
+            if (c) {
+                p.push({value: column_names[i], label: `[${column_names[i]}] ${c}`});
+            }
+            return p;
+        }, []);
+    }
+
+    nextState(props) {
+        const fields = FieldGroupUtils.getGroupFields(skey);
+        const columnsModel =  props ? props.columnsModel : getTblById(get(fields, [CrtColumnsModel, 'value']));
+        const options =  this.updateUCDOptions(columnsModel);
+
+        return {options, fields, columnsModel};
     }
 
     render() {
         const groupKey = skey;
-        const {fields, options} = this.state;
-        const {columnsModel} = this.props;
+        const {fields, options, columnsModel} = this.state;
 
         return (
-            <FieldGroup groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel,  this.onChangeDatePicker)}>
+            <FieldGroup groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
                 <div>
                     <UCDColumnList {...{options}} />
                 </div>
-                <div style={{height: 280, width: 700, overflow: 'auto'}}>
-                    <div>
-                        <SpatialSearch {...{groupKey, fields}} />
-                    </div>
-                    <div>
-                        <TemporalSearch {...{groupKey, fields}} />
-                    </div>
-                    <div>
-                        <WavelengthSearch {...{groupKey, fields}} />
-                    </div>
+                <div style={{height: 280, width: 650, overflow: 'auto'}}>
+                    <SpatialSearch {...{groupKey, fields}} />
+                    <TemporalSearch {...{groupKey, fields}} />
+                    <WavelengthSearch {...{groupKey, fields}} />
                 </div>
             </FieldGroup>
         );
@@ -245,7 +242,6 @@ function SpatialSearch({groupKey, fields}) {
 
 SpatialSearch.propTypes = {
     groupKey: PropTypes.string,
-    posCols: PropTypes.array,
     fields: PropTypes.object
 };
 
@@ -774,11 +770,15 @@ function tapSearchMethodReducer(columnsModel) {
                     }
                     break;
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
-                    if (columnsModel.tbl_id !== get(inFields, [CrtColumnsModel, 'value'])) {
+                        if (columnsModel.tbl_id !== get(inFields, [CrtColumnsModel, 'value'])) {
+                        //columnsModel = getTblById(columnsTableId);
+                        set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
                         const centerColStr = formCenterColumnStr(columnsModel);
                         set(rFields, [CenterColumns, 'validator'], centerColumnValidator(columnsModel));
+                        set(rFields, [TemporalColumns, 'validator'], temporalColumnValidator(columnsModel));
                         set(rFields, [CenterColumns, 'value'], centerColStr);
-                        set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
+                        set(rFields, [TemporalColumns, 'value'], '');
+
                     }
                     break;
             }

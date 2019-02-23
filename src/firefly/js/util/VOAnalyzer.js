@@ -603,8 +603,8 @@ class ColumnRecognizer {
         const findColumn = (colName, regExp) => {
             let col;
             this.column_names.find((name, i) => {
-                if (name === colName || (regExp && regExp.test(colName))) {
-                    col = {column_names: name, ucd: this.ucds[i]};
+                if (name === colName || (regExp && regExp.test(name))) {
+                    col = {column_name: name, ucd: this.ucds[i]};
                     return true;
                 } else {
                     return false;
