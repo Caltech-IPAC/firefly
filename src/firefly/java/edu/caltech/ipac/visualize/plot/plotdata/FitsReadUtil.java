@@ -238,7 +238,7 @@ public class FitsReadUtil {
         header.addLine(new HeaderCard( "SPOT_HS", header.getOriginalSize(), "Header block size on disk (added by Firefly)"));
         header.addLine(new HeaderCard( "SPOT_EXT", pos, "Extension Number (added by Firefly)"));
         header.addLine(new HeaderCard( "SPOT_OFF", hduOffset, "Extension Offset (added by Firefly)"));
-        header.addLine(new HeaderCard( "SPOT_BP", bitpix, "Original Bixpix value (added by Firefly)"));
+        header.addLine(new HeaderCard( "SPOT_BP", bitpix, "Original Bitpix value (added by Firefly)"));
         header.resetOriginalSize();
     }
 

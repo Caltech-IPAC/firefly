@@ -10,6 +10,7 @@ import { findCoordSys, EQUATORIAL_J, EQUATORIAL_B, GALACTIC_JSYS,
            ECLIPTIC_B, SUPERGALACTIC_JSYS, ECLIPTIC_J } from '../CoordSys.js';
 import {MAX_SIP_LENGTH} from './ProjectionUtil.js';
 import {makeProjectionNew} from './Projection.js';
+import {FitsHdr} from '../WebPlot';
 
 const CD1_1_HEADERS= ['CD1_1','CD001001'];
 const CD1_2_HEADERS= ['CD1_2','CD001002'];
@@ -434,10 +435,10 @@ function getJsys(params) {
 export function makeDirectFileAccessData(header) {
 
     const parse= makeHeaderParse(header);
-    const dataOffset = parse.getIntValue('SPOT_OFF',0)+ parse.getIntValue('SPOT_HS',0);
-    const planeNumber= parse.getIntValue('SPOT_PL',0);
+    const dataOffset = parse.getIntValue(FitsHdr.SPOT_OFF,0)+ parse.getIntValue(FitsHdr.SPOT_HS,0);
+    const planeNumber= parse.getIntValue(FitsHdr.SPOT_PL,0);
     const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber};
-    miniHeader.bitpix= parse.getValue('SPOT_BP');
+    miniHeader.bitpix= parse.getValue(FitsHdr.SPOT_BP);
 
     if (parse.getValue(ORIGIN,'').startsWith(PALOMAR_ID)) {
         miniHeader[ORIGIN]= header[ORIGIN];

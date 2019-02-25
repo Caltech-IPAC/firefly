@@ -10,6 +10,7 @@ import {makeTransform} from './PlotTransformUtils.js';
 import CysConverter from './CsysConverter';
 import {computeDistance} from './VisUtil.js';
 import {isHiPS, isImage} from './WebPlot.js';
+import {FitsHdr} from './WebPlot';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
@@ -745,11 +746,11 @@ export function isMultiImageFits(pv) {
 /**
  * Does the image file have more than one HDU
  * @param {PlotView} pv
- * @return {boolean} ture if this file has more than one HDU
+ * @return {boolean} true if this file has more than one HDU
  */
 export function isMultiHDUFits(pv) {
-    if (!pv || !isImage(primePlot(pv))) return false;
-    return pv.plots.some( (p) =>  Number(get(p,'header.SPOT_EXT.value', '0')));
+    if (!pv) return false;
+    return pv.plots.some( (p) =>  Boolean(getNumberHeader(p,FitsHdr.SPOT_EXT,0)));
 }
 
 /**
@@ -757,9 +758,7 @@ export function isMultiHDUFits(pv) {
  * @param {PlotView} pv
  * @return {boolean} true if there are any image cube in the PlotView
  */
-export function hasImageCubes(pv) {
-    return getNumberOfCubesInPV(pv)>0;
-}
+export const hasImageCubes = (pv) => getNumberOfCubesInPV(pv)>0;
 
 /**
  * Count the number of cubes
@@ -805,29 +804,60 @@ export function getPrimaryPlotHdu(pv) {
  * @param {WebPlot} plot
  * @return {number} the HDU number, single images will always return 0
  */
-export function getHDU(plot) {
-    if (!plot || !isImage(plot) ) return 0;
-    return Number(get(plot,'header.SPOT_EXT.value', '0'));
-}
+export const getHDU= (plot) => getNumberHeader(plot,FitsHdr.SPOT_EXT,0);
+
 
 /**
  * get the plane index of this plot in cube
  * @param {WebPlot} plot
  * @return {number} the plane index, -1 if not in a cube
  */
-export function getImageCubeIdx(plot) {
-    if (!plot || !isImage(plot) ) return -1;
-    return Number(get(plot,'header.SPOT_PL.value', '-1'));
-}
+export const getImageCubeIdx = (plot) => getNumberHeader(plot,FitsHdr.SPOT_PL,-1);
+
 
 /**
  * plot is plane in a image cube
  * @param {WebPlot} plot
  * @return {boolean} true if plot is a plane in a cube, otherwise false
  */
-export function isImageCube(plot) {
-    if (!plot || !isImage(plot) ) return false;
-    return getImageCubeIdx(plot) > -1;
+export const isImageCube = (plot) => getImageCubeIdx(plot) > -1;
+
+
+/**
+ * return a header value given a header key
+ * @param {WebPlot} plot image WebPlot
+ * @param {string} headerKey key
+ * @param {string} [defVal] the default value
+ * @return {string} the value of the header if it exist, otherwise the default value
+ */
+export function getHeader(plot,headerKey, defVal= undefined) {
+    if (!plot || !isImage(plot) ) return defVal;
+    return get(plot,['header',headerKey,'value'], defVal);
+}
+
+/**
+ * return a header number value given a header key
+ * @param {WebPlot} plot image WebPlot
+ * @param {string} headerKey key
+ * @param {number} [defVal] the default value
+ * @return {number} the number value of the header if it exist and can be converted to a number, otherwise the default value
+ */
+export function getNumberHeader(plot, headerKey, defVal= NaN) {
+    const v= getHeader(plot,headerKey,'');
+    if (v==='') return defVal;
+    const n= Number(v);
+    return isNaN(n) ? defVal : n;
+}
+
+/**
+ * return a header description given a header key
+ * @param {WebPlot} plot image WebPlot
+ * @param {string} headerKey key
+ * @return {string} the description of the header if it exist otherwise an empty string
+ */
+export function getHeaderDesc(plot,headerKey) {
+    if (!plot || !isImage(plot) ) return '';
+    return get(plot,['header',headerKey,'comment'], '');
 }
 
 
