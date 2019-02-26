@@ -219,7 +219,7 @@ function SpatialSearch({groupKey, fields}) {
 
     const doSpatialSearch = () => {
         return (
-            <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center'}}>
+            <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', marginTop: 5}}>
                 {selectSpatialSearchMethod(groupKey, fields)}
                 {setSpatialSearchSize(fields)}
             </div>
@@ -231,11 +231,11 @@ function SpatialSearch({groupKey, fields}) {
         <FieldGroupCollapsible header={<Header title={'Spatial'}  helpID={'basics.searching'}/>}
                                initialState={{ value: 'open' }}
                                fieldKey='spatialSearchPanel'
-                               headerStyle={HeaderFont} >
+                               headerStyle={HeaderFont}>
             <div style={{marginTop: 5}}>
                 {showCenterColumns()}
+                {doSpatialSearch()}
             </div>
-            {doSpatialSearch()}
         </FieldGroupCollapsible>
     );
 }
@@ -357,7 +357,7 @@ function WavelengthSearch({groupKey, fields}) {
         <FieldGroupCollapsible header={<Header title={'Wavelength'}/>}
                                initialState={{ value: 'closed' }}
                                fieldKey='wavelengthSearchPanel'
-                               headerStyle={HeaderFont} >
+                               headerStyle={HeaderFont}>
             <div style={{width: 100, height: 50}}>
                 {showWavelengthColumns()}
             </div>
