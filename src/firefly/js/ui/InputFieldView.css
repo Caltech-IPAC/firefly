@@ -34,8 +34,3 @@
 .firefly-inputfield-view-error-msg {
     padding : 3px;
 }
-
-.firefly-inputfield-view-calendar {
-    background: white url('/images/datetime_picker_24x24.png') right no-repeat;
-    padding-right: 25px;
-}
