@@ -481,8 +481,13 @@ function setupTableOps(tbl_id, nrequest) {
     const tableModel = TblUtil.getTblById(tbl_id);
     if (!tableModel) return;
 
-    const {request, tableMeta, selectInfo} = tableModel;
-    const tableData = pick(tableModel.tableData, 'columns');
+    const {request, tableMeta, selectInfo, origTableModel} = tableModel;
+    // We'd like to preserve the columns so that the table renders while we are waiting for the response.
+    // With server-side tables filtering and sorting preserves the number of columns.
+    // There is no need to preserve columns for client-side tables.
+    // Additionally, removing sort/filters on client-table can reduce the number of columns (ORIG_IDX removed),
+    // which would cause smartMerge bugs, if we preserve columns.
+    const tableData = origTableModel? {} : pick(tableModel.tableData, 'columns');
     const nreq = merge({}, request, nrequest);
     return {tbl_id, request:nreq, tableMeta, selectInfo, tableData};
 }
@@ -535,7 +540,8 @@ function tableFilterSelrow(action) {
         const filterInfoCls = FilterInfo.parse(filters);
 
         if (tableModel.origTableModel) {
-            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ROW_IDX') || idx).toString();
+            const selRowIds = selected.map((idx) => TblUtil.getCellValue(tableModel, idx, 'ORIG_IDX') || idx).toString();
+            // using addFilter instead of setFilter, so that each filter is removable on its own in free-form box
             filterInfoCls.addFilter('ROW_IDX', `IN (${selRowIds})`);
             request = Object.assign({}, request, {filters: filterInfoCls.serialize()});
             dispatchTableFilter(request, hlRowIdx);

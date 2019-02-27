@@ -136,7 +136,7 @@ export class CatalogConstraintsPanel extends PureComponent {
             <div style={{padding:'0 0 5px'}}>
                 <div
                     style={{display:'flex', flexDirection:'column',
-                            margin:'0px 10px 5px 5px', padding:'0 0 0 10px',
+                            margin:'0px 10px 5px 5px', padding:'0px 5px',
                             border:'1px solid #a3aeb9'}}>
                     <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
                         {!error && showFormType && formTypeList()}
@@ -372,6 +372,18 @@ class ConstraintPanel extends PureComponent {
             this.props.onTableChanged, {width: '100%', boxSizing: 'border-box'});
     }
 
+    componentDidMount() {
+        // make sure field value is consistent with the table
+        this.props.onTableChanged();
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (get(prevProps, ['tableModel','tbl_id']) !== get(this.props, ['tableModel','tbl_id'])) {
+            // make sure field value is consistent with the table
+            this.props.onTableChanged();
+        }
+    }
+    
     render() {
         const {tableModel, onTableChanged} = this.props;
         const tbl_ui_id = tableModel.tbl_id + '-ui';
@@ -381,9 +393,8 @@ class ConstraintPanel extends PureComponent {
         const totalCol = columns ? (columns.length-1) : 0;
 
         return (
-
             <div style={{display:'inline-block',
-                     width: '97%', height: '170px', padding: '5px 5px'}}>
+                width: 'calc(100% - 10px)', height: '170px', padding: '5px 5px'}}>
                 <div style={{ position: 'relative', width: '100%', height: '100%'}}>
                     <div className='TablePanel'>
                         <div className={'TablePanel__wrapper--border'}>
@@ -398,29 +409,14 @@ class ConstraintPanel extends PureComponent {
                                     currentPage={1}
                                     key={tableModel.tbl_id}
                                     error={tableModel.error}
-                                    callbacks={
-                                        {
-                                           onRowSelect: updateRowSelected(tableModel.tbl_id, onTableChanged),
-                                           onSelectAll: updateRowSelected(tableModel.tbl_id, onTableChanged)
-                                        }
-                                    }
-                                    renderers={
-                                        {
-                                            name:
-                                                { cellRenderer:
-                                                    createLinkCell(
-                                                        {
-                                                            hrefColIdx: totalCol
-                                                        }
-                                                    )
-                                                },
-                                            constraints:
-                                                {
-                                                    cellRenderer: this.newInputCell
-
-                                                }
-                                        }
-                                    }
+                                    callbacks={{
+                                        onRowSelect: updateRowSelected(tableModel.tbl_id, onTableChanged),
+                                        onSelectAll: updateRowSelected(tableModel.tbl_id, onTableChanged)
+                                    }}
+                                    renderers={{
+                                        name: { cellRenderer: createLinkCell({hrefColIdx: totalCol})},
+                                        constraints: { cellRenderer: this.newInputCell}
+                                    }}
                                 />
                             </div>
                         </div>

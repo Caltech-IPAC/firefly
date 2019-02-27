@@ -11,37 +11,31 @@ import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest} from '../../tables/TableRequestUtil.js';
-import {getColumnValues, onTableLoaded, getTblById} from '../../tables/TableUtil.js';
-import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {getColumnValues} from '../../tables/TableUtil.js';
 
-import {CatalogConstraintsPanel, getTblId} from '../../visualize/ui/CatalogConstraintsPanel.jsx';
-import {validateSql} from '../../visualize/ui/CatalogSelectViewPanel.jsx';
 import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
-import {loadTapTables, loadTapSchemas} from './TapUtil.js';
+import {loadTapColumns, loadTapTables, loadTapSchemas, getTapBrowserState, setTapBrowserState} from './TapUtil.js';
 import {NameSelect, NameSelectField, selectTheme} from './Select.jsx';
 import {showYesNoPopup} from '../PopupUtil.jsx';
 
 import './TableSelectViewPanel.css';
 import {dispatchHideDialog} from '../../core/ComponentCntlr';
+import {TableColumnsConstraints} from './TableColumnsConstraints.jsx';
+import {resetConstraints} from './ColumnConstraintsPanel.jsx';
 
 /**
  * group key for fieldgroup comp
  */
-const componentKey = 'TAP_BROWSER'; // key to store component state
+
 const gkey = 'TAP_SEARCH_PANEL';
-
-
-const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
-
-
 
 // on the left tap tables browser
 // on the bottom - column constraints
 export class TapSearchPanel extends PureComponent {
     constructor(props) {
         super(props);
-        const serviceUrl = get(getComponentState(componentKey), 'serviceUrl', TAP_SERVICE_OPTIONS[0].value);
+        const serviceUrl = get(getTapBrowserState(), 'serviceUrl', TAP_SERVICE_OPTIONS[0].value);
         this.state = {serviceUrl, freeForm: getFieldVal(gkey, 'tabs') === 'adql'};
 
         this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
@@ -141,21 +135,16 @@ export class TapSearchPanel extends PureComponent {
 }
 
 
-function getTapBrowserState() {
-    const tapBrowserState = getComponentState(componentKey);
-    const {schemaOptions, schemaName, tableOptions, tableName} = tapBrowserState || {};
-    return {error: undefined, schemaOptions, schemaName, tableOptions, tableName};
-}
-
 
 
 class TapSchemaBrowser extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.state = getTapBrowserState();
+        this.state = Object.assign({error: undefined}, getTapBrowserState());
         this.loadSchemas = this.loadSchemas.bind(this);
         this.loadTables = this.loadTables.bind(this);
+        this.loadColumns = this.loadColumns.bind(this);
     }
 
     componentDidMount() {
@@ -174,9 +163,8 @@ class TapSchemaBrowser extends PureComponent {
 
     componentWillUnmount() {
         this.iAmMounted = false;
-        const {schemaOptions, schemaName, tableOptions, tableName} = this.state;
-        dispatchComponentStateChange(componentKey,
-            {serviceUrl: this.props.serviceUrl, schemaOptions, schemaName, tableOptions, tableName});
+        const {schemaOptions, schemaName, tableOptions, tableName, columnsModel} = this.state;
+        setTapBrowserState({serviceUrl: this.props.serviceUrl, schemaOptions, schemaName, tableOptions, tableName, columnsModel});
     }
 
     
@@ -186,13 +174,6 @@ class TapSchemaBrowser extends PureComponent {
 
         if (error) {
             return (<div>{error}</div>);
-        }
-        
-        let columnsUrl = undefined;
-        if (tableOptions && tableOptions.length > 0) {
-            columnsUrl = serviceUrl + qFragment +
-                'QUERY=SELECT+column_name,description,unit,datatype,ucd,utype,principal+' +
-                'FROM+TAP_SCHEMA.columns+WHERE+table_name+like+\'' + tableName + '\'';
         }
 
         // need to set initialState on list fields so that the initial value that is not the first index
@@ -216,51 +197,42 @@ class TapSchemaBrowser extends PureComponent {
                                 options={tableOptions}
                                 value={tableName}
                                 onSelect = {(selectedTapTable) => {
-                                    const columnsTblId = getTblId(selectedTapTable);
-                                    onTableLoaded(getTblId(selectedTapTable)).then( () => {
-                                        this.setState({columnsModel: getTblById(columnsTblId)});
-                                    });
-                                    this.setState({tableOptions, tableName: selectedTapTable, columnsModel: undefined});
+                                    this.loadColumns(serviceUrl, schemaName, selectedTapTable);
                                 }}
                             />
                         </div>
                     </div>
                     <div className='searchmethods'>
-                        {columnsModel &&
-                        <div>
-                            <TableSearchMethods columnsModel={columnsModel}/>
-                        </div>}
+                        {columnsModel ?
+                            <TableSearchMethods columnsModel={columnsModel}/> : false
+                        }
                     </div>
                 </div>
                 <div className='columnconstraints'>
-                    {!tableName ? false :
-                            <CatalogConstraintsPanel fieldKey={'tableconstraints'}
-                                                     catname={tableName}
-                                                     showFormType={false}
-                                                     processId={'IpacTableFromSource'}
-                                                     groupKey={gkey}
-                                                     createDDRequest={()=>{
-                                                         return {id: 'IpacTableFromSource', source: columnsUrl};
-                                                     }}
-                            />
-                    }
+                    <TableColumnsConstraints key={tableName}
+                                             groupKey={gkey}
+                                             fieldKey={'tableconstraints'}
+                                             tableName={tableName}
+                                             columnsModel={columnsModel}
+                    />
                 </div>
             </div>
         );
     }
 
     loadSchemas(serviceUrl, schemaName=undefined, tableName=undefined) {
-        this.setState({error: undefined, schemaOptions: undefined, schemaName: undefined, tableOptions: undefined, tableName: undefined});
+        this.setState({error: undefined, schemaOptions: undefined, schemaName: undefined,
+            tableOptions: undefined, tableName: undefined, columnsModel: undefined});
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapSchemas(serviceUrl).then((tableModel) => {
-            if (this.props.serviceUrl !== serviceUrl) {
+            if (this.props.serviceUrl !== serviceUrl || !this.iAmMounted) {
                 // no action if another TAP service is now used
                 return;
             }
             if (tableModel.error) {
                 this.setState({error: tableModel.error});
-            } else {
+            } else  {
                 const schemas = getColumnValues(tableModel, 'schema_name');
                 const schemaDescriptions = getColumnValues(tableModel, 'description');
 
@@ -276,17 +248,17 @@ class TapSchemaBrowser extends PureComponent {
                     return {label, value: e};
                 });
 
-                if (this.iAmMounted) this.setState({schemaOptions, schemaName});
+                this.setState({schemaOptions, schemaName});
             }
         });
     }
 
     loadTables(serviceUrl, schemaName, tableName) {
-        this.setState({schemaName, tableOptions: undefined, tableName: undefined});
+        this.setState({schemaName, tableOptions: undefined, tableName: undefined, columnsModel: undefined});
         dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: undefined});
 
         loadTapTables(serviceUrl, schemaName).then((tableModel) => {
-            if (this.props.serviceUrl !== serviceUrl || this.state.schemaName !== schemaName) {
+            if (this.props.serviceUrl !== serviceUrl || this.state.schemaName !== schemaName || !this.iAmMounted) {
                 // no action if another TAP service or schema are now used
                 return;
             }
@@ -296,20 +268,37 @@ class TapSchemaBrowser extends PureComponent {
 
                 if (tables.length > 0) {
                     if (!tableName || !tables.includes(tableName)) { tableName = tables[0]; }
+                    this.loadColumns(serviceUrl, schemaName, tableName);
+                } else {
+                    tableName = undefined;
                 }
 
                 const tableOptions = tables.map((e, i) => {
                     const label = tableDescriptions[i] ? tableDescriptions[i] : `[${e}]`;
                     return {label, value: e};
                 });
-                const columnsTblId = getTblId(tableName);
-                onTableLoaded(columnsTblId).then( () => {
-                    if (this.iAmMounted) this.setState({columnsModel: getTblById(columnsTblId)});
-                });
-                if (this.iAmMounted) this.setState({serviceUrl, tableOptions, tableName, columnsModel: undefined});
+
+                this.setState({serviceUrl, tableOptions, tableName, columnsModel: undefined});
                 dispatchValueChange({groupKey: gkey, fieldKey: 'tableName', value: tableName});
             }
+        });
+    }
 
+    loadColumns(serviceUrl, schemaName, tableName) {
+        resetConstraints(gkey, 'tableconstraints');
+        this.setState({tableName, columnsModel: undefined});
+
+        loadTapColumns(serviceUrl, schemaName, tableName).then((columnsModel) => {
+
+            if (this.props.serviceUrl !== serviceUrl || this.state.schemaName !== schemaName ||
+                this.state.tableName !== tableName || !this.iAmMounted) {
+                // no action if another TAP service or schema or table are now used
+                return;
+            }
+
+            setTapBrowserState({serviceUrl, schemaOptions: this.state.schemaOptions, schemaName,
+                tableOptions: this.state.tableOptions, tableName, columnsModel});
+            this.setState({columnsModel});
         });
     }
 
@@ -373,30 +362,26 @@ function getAdqlQuery() {
 
     if (!tableName) return;
 
-    const whereClause = tableSearchMethodsConstraints(getTblById(getTblId(tableName)));
+    const {columnsModel} = getTapBrowserState();
+    const whereClause = tableSearchMethodsConstraints(columnsModel);
     if (!whereClause.valid) {
         return null;
     }
     let constraints = whereClause.where || '';
-    //let constraints = tableSearchMethodsConstraints(getTblById(getTblId(tableName))) || '';
     let selcols = '*';
-    let addAnd = Boolean(constraints);
+    const addAnd = Boolean(constraints);
 
     if (tableconstraints) {
         if (tableconstraints.constraints.length > 0) {
             constraints += (addAnd ? ' AND ' : '') + addParens(tableconstraints.constraints);
-            addAnd = true;
         }
-        const colsSearched = tableconstraints.selcols.lastIndexOf(',') > 0 ? tableconstraints.selcols.substring(0, tableconstraints.selcols.lastIndexOf(',')) : tableconstraints.selcols;
-        if (colsSearched.length > 0) {
-            selcols = colsSearched;
+        const colsToSelect = tableconstraints.selcols.lastIndexOf(',') > 0 ?
+            tableconstraints.selcols.substring(0, tableconstraints.selcols.lastIndexOf(',')) : tableconstraints.selcols;
+        if (colsToSelect.length > 0) {
+            selcols = colsToSelect;
         }
     }
 
-    const sqlTxt = get(FieldGroupUtils.getGroupFields(gkey), ['txtareasql', 'value'], '').trim();
-    if (sqlTxt && sqlTxt.length > 0) {
-        constraints += (addAnd ? ' AND ' : '') + addParens(validateSql(sqlTxt));
-    }
     if (constraints) {
         constraints = `WHERE ${constraints}`;
     }
@@ -418,6 +403,11 @@ const TAP_SERVICES = [
         label: 'IRSA https://irsa.ipac.caltech.edu/TAP',
         value: 'https://irsa.ipac.caltech.edu/TAP',
         query: 'SELECT * FROM fp_psc WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,1.0))=1'
+    },
+    {
+        label: 'NED https://ned.ipac.caltech.edu/tap',
+        value: 'https://ned.ipac.caltech.edu/tap/',
+        query: 'SELECT * FROM public.ned_objdir WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,0.01))=1'
     },
     {
         label: 'CADC http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',

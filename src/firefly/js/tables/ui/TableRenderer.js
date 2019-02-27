@@ -90,7 +90,8 @@ class Filter extends SimpleComponent{
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
         const onEnumClicked = () => {
-            showDropDown({id: tblDropDownId(tbl_id), content, atElRef, locDir: 33, style: {marginLeft: -10}});
+            showDropDown({id: tblDropDownId(tbl_id), content, atElRef, locDir: 33, style: {marginLeft: -10},
+                wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
         };
 
         return (

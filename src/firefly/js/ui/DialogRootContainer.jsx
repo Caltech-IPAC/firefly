@@ -6,7 +6,7 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {PopupStoreConnection} from './PopupStoreConnection.jsx';
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 
 
 const DIALOG_DIV= 'dialogRootDiv';
@@ -35,11 +35,13 @@ var dropDownEl;
  * @param p.style       overrideable style
  * @param p.atElRef     the element reference used to apply locDir to.
  * @param p.locDir      location and direction of the drop-down.  see desc for more info
+ * @param p.wrapperStyle style to apply to dropdown wrapper div, ex. zIndex
  */
-export function showDropDown({id='',content, style={}, atElRef, locDir}) {
-    if (!dropDownEl) dropDownEl = createDiv(DROPDOWN_DIV+'-root');
+export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperStyle}) {
+    if (!dropDownEl) dropDownEl = createDiv({id: DROPDOWN_DIV+'-root', wrapperStyle});
 
-    const ddDiv = document.getElementById(DROPDOWN_DIV + '_' + id) || createDiv(DROPDOWN_DIV + '_' + id, dropDownEl);
+    const ddDiv = document.getElementById(DROPDOWN_DIV + '_' + id) ||
+        createDiv({id: DROPDOWN_DIV + '_' + id, appendTo: dropDownEl, wrapperStyle});
     ReactDOM.render( <DropDown {...{id, content, style, atElRef, locDir}}/>, ddDiv);
     return ddDiv;
 }
@@ -190,10 +192,10 @@ function showTmpPopup(popup) {
 
 
 function init() {
-    divElement= createDiv(DIALOG_DIV);
+    divElement= createDiv({id: DIALOG_DIV});
 }
 
-function createDiv(id, appendTo=document.body) {
+function createDiv({id, appendTo=document.body, wrapperStyle={}}) {
     const el= document.createElement('div');
     appendTo.appendChild(el);
     el.id= id;
@@ -202,6 +204,9 @@ function createDiv(id, appendTo=document.body) {
     el.style.position = 'absolute';
     el.style.left= 0;
     el.style.top= 0;
+    Object.entries(wrapperStyle).forEach(([k,v]) => {
+        set(el.style, [k], v);
+    });
     return el;
 }
 

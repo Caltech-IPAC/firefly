@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty}  from 'lodash';
+import {get, isEmpty}  from 'lodash';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
@@ -15,7 +15,7 @@ function getCurrentValueArr(value) {
     }
 }
 
-const convertValue= (value,options) => (!value) ? options[0].value : value;
+const convertValue= (value,options) => (!value) ? get(options, [0, 'value']) : value;
 
 
 export function ListBoxInputFieldView({inline, value, onChange, fieldKey, options,

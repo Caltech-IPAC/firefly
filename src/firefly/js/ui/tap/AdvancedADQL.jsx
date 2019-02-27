@@ -190,7 +190,7 @@ function convertToTreeNode(data) {
         }
         return <TreeNode {...item} isLeaf={item.isLeaf}/>;
     });
-};
+}
 
 
 function insertAtCursor (input, textToInsert, fieldKey, groupKey) {
