@@ -475,9 +475,12 @@ function makeSpatialConstraints(fields, columnsModel) {
     const makeColPairs = () => {
         return centerColumns.value.split('\n').reduce((p, onePair) => {
             const oneP = onePair.trim();
-            const pair = oneP && oneP.split(',');
+            const pair = oneP && oneP.split(',').reduce((prev, n) => {
+                    if (n.trim()) prev.push(n.trim());
+                    return prev;
+                }, []);
             if (pair && pair.length === 2) {
-                p.push([pair[0].trim(), pair[1].trim()]);
+                p.push([pair[0], pair[1]]);
             }
             return p;
         }, []);
@@ -576,12 +579,8 @@ function makeSpatialConstraints(fields, columnsModel) {
 
 function makeTemporalConstraints(fields) {
     const retval = {valid: true, where: '', title: 'temporal search error'};
-    const timeColumns = get(fields, [TemporalColumns, 'value'], '').split(',').reduce((p, c) => {
-        const colName = c.trim();
-
-        if (colName) {
-            p.push(colName);
-        }
+    const timeColumns = get(fields, [TemporalColumns, 'value'], '').trim().split(',').reduce((p, c) => {
+        if (c.trim()) p.push(c.trim());
         return p;
     }, []);
 
@@ -675,103 +674,119 @@ function tapSearchMethodReducer(columnsModel) {
             const {fieldKey, value}= action.payload;
             const rFields = clone(inFields);
 
+            const onChangePolygonCoordinates = () => {
+                rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'user'});
+            };
+
+            const onChangeToPolygonMethod = () => {
+                const cornerCalcV = get(inFields.imageCornerCalc, 'value', 'user');
+                const pv = getActivePlotView(visRoot());
+
+
+                if (pv && (cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
+                    const plot = primePlot(pv);
+
+                    if (plot) {
+                        const sel = plot.attributes[PlotAttribute.SELECTION];
+                        if (!sel && cornerCalcV === 'area-selection') {
+                            rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'image'});
+                        }
+                        const {value:cornerCalcV2}= rFields.imageCornerCalc;
+                        const v = calcCornerString(pv, cornerCalcV2);
+                        rFields.polygoncoords = clone(inFields.polygoncoords, {value: v});
+                    }
+                }
+            };
+
+            const onChangeTimeField = () => {
+                // only update picker & mjd when there is no pop-up picker (time input -> picker or mjd)
+                if (!isDialogVisible(POPUP_DIALOG_ID)) {
+                    const {valid, message} = get(inFields, fieldKey, {});
+                    const timeMode = get(inFields, [TimeOptions, 'value']);
+                    const mjdKey = get(timeKeyMap, [fieldKey, MJD]);
+                    const isoKey = get(timeKeyMap, [fieldKey, ISO]);
+                    const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value)): value);
+
+                    // convert value for the other time mode
+                    const crtFieldKey = timeMode === MJD ? mjdKey : isoKey;
+                    const convertFunc = timeMode === MJD ? convertMJDToISO : convertISOToMJD;
+                    const validateFunc = timeMode === MJD ? validateDateTime : validateMJD;
+                    const secondFieldKey = timeMode === MJD ? isoKey : mjdKey;
+
+                    const secondVal = convertFunc(updateValue);
+                    const secondValInfo = validateFunc(secondVal);
+
+                    rFields[crtFieldKey] = clone(inFields[crtFieldKey], {value: updateValue, valid, message});
+                    rFields[secondFieldKey] = clone(inFields[secondFieldKey], {
+                        value: secondValInfo.value,
+                        valid: secondValInfo.valid,
+                        message: secondValInfo.message
+                    });
+                }
+            };
+
+            const onChangeTimeMode = () => {
+                // update Time fields (from and to) and the feedback below based on the selected mode, iso or mjd
+                const timeInfos = [TimeFrom, TimeTo].map((tKey) => {
+                    return [ISO, MJD].reduce((prev, option) => {
+                        const valKey = get(timeKeyMap, [tKey, option]);
+                        prev[option] = get(inFields, [valKey]);
+
+                        return prev;
+                    }, {});
+                });
+                const timeMode = value;
+
+                [TimeFrom, TimeTo].forEach((timeKey, idx) => {
+                    const showHelp = isShowHelp(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
+                    const feedback = formFeedback(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
+
+                    rFields[timeKey] = clone(inFields[timeKey], { value: timeInfos[idx][timeMode].value,
+                        valid: timeInfos[idx][timeMode].valid,
+                        message: timeInfos[idx][timeMode].message,
+                        showHelp, feedback, timeMode});
+                });
+            };
+
+            const onChangeDateTimePicker = () => {
+                // update MJD & TimeFrom (TimeTo) when there is pop-up picker (picker -> time field & mjd)
+                if (isDialogVisible(POPUP_DIALOG_ID)) {
+                    const {valid, message} = get(inFields, fieldKey) || {};
+                    const timeKey = (fieldKey === TimePickerFrom) ? TimeFrom : TimeTo;
+                    const mjdKey = get(timeKeyMap, [timeKey, 'mjd']);
+
+                    const mjdVal = convertISOToMJD(value);
+                    const mjdInfo = validateMJD(mjdVal);
+
+                    rFields[mjdKey] = clone(inFields[mjdKey], {
+                        value: mjdInfo.value, valid: mjdInfo.valid,
+                        message: mjdInfo.message
+                    });
+                    const showHelp = isShowHelp(value, mjdInfo.value);
+                    const feedback = formFeedback(value, mjdInfo.value);
+
+                    rFields[timeKey] = clone(inFields[timeKey], {value, message, valid, showHelp, feedback,
+                        timeMode: ISO});
+                }
+            };
+
             switch (action.type) {
                 case FieldGroupCntlr.VALUE_CHANGE:
                     if (fieldKey === PolygonCorners) {
-                        rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'user'});
-                    } else if (fieldKey === SpatialMethod &&
-                        get(inFields, [SpatialMethod, 'value']) === TapSpatialSearchMethod.Polygon.key) {
-                        const cornerCalcV = get(inFields.imageCornerCalc, 'value', 'user');
-                        const pv = getActivePlotView(visRoot());
-
-
-                        if (pv && (cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
-                            const plot = primePlot(pv);
-
-                            if (plot) {
-                                const sel = plot.attributes[PlotAttribute.SELECTION];
-                                if (!sel && cornerCalcV === 'area-selection') {
-                                    rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'image'});
-                                }
-                                const {value:cornerCalcV2}= rFields.imageCornerCalc;
-                                const v = calcCornerString(pv, cornerCalcV2);
-                                rFields.polygoncoords = clone(inFields.polygoncoords, {value: v});
-                            }
-                        }
-                    } else if (fieldKey === TimeFrom || fieldKey === TimeTo) {
-
-                        // only update picker & mjd when there is no pop-up picker (time input -> picker or mjd)
-                        if (!isDialogVisible(POPUP_DIALOG_ID)) {
-                            const {valid, message} = get(inFields, fieldKey, {});
-                            const timeMode = get(inFields, [TimeOptions, 'value']);
-                            const mjdKey = get(timeKeyMap, [fieldKey, MJD]);
-                            const isoKey = get(timeKeyMap, [fieldKey, ISO]);
-                            const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value)): value);
-
-                            // convert value for the other time mode
-                            const crtFieldKey = timeMode === MJD ? mjdKey : isoKey;
-                            const convertFunc = timeMode === MJD ? convertMJDToISO : convertISOToMJD;
-                            const validateFunc = timeMode === MJD ? validateDateTime : validateMJD;
-                            const secondFieldKey = timeMode === MJD ? isoKey : mjdKey;
-
-                            const secondVal = convertFunc(updateValue);
-                            const secondValInfo = validateFunc(secondVal);
-
-                            rFields[crtFieldKey] = clone(inFields[crtFieldKey],
-                                                         {value: updateValue, valid, message});
-                            rFields[secondFieldKey] = clone(inFields[secondFieldKey], {
-                                value: secondValInfo.value,
-                                valid: secondValInfo.valid,
-                                message: secondValInfo.message
-                            });
-                        }
+                        onChangePolygonCoordinates(rFields);
+                    } else if (fieldKey === SpatialMethod && value === TapSpatialSearchMethod.Polygon.key) {
+                        onChangeToPolygonMethod();
+                    } else if (fieldKey === TimeFrom || fieldKey === TimeTo) { // update mjd & picker
+                        onChangeTimeField();
                     } else if (fieldKey === TimeOptions) {    // time mode changes => update timefrom and timeto value
-                        // [{iso: {value, message, valid, ...}, mjd:{value, message, valid,...}}, {...for TimeTo....}]
-                        const timeInfos = [TimeFrom, TimeTo].map((tKey) => {
-                            return [ISO, MJD].reduce((prev, option) => {
-                                const valKey = get(timeKeyMap, [tKey, option]);
-                                prev[option] = get(inFields, [valKey]);
-
-                                return prev;
-                            }, {});
-                        });
-                        const timeMode = value;
-
-                        [TimeFrom, TimeTo].forEach((timeKey, idx) => {
-                            const showHelp = isShowHelp(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
-                            const feedback = formFeedback(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
-
-                            rFields[timeKey] = clone(inFields[timeKey], { value: timeInfos[idx][timeMode].value,
-                                                                          valid: timeInfos[idx][timeMode].valid,
-                                                                          message: timeInfos[idx][timeMode].message,
-                                                                          showHelp, feedback, timeMode});
-                        });
-                    } else if (fieldKey === TimePickerFrom || fieldKey === TimePickerTo) {
-
-                        // only update MJD & Time input when there is pop-up picker (picker -> time input & mjd)
-                        if (isDialogVisible(POPUP_DIALOG_ID)) {
-                            const {valid, message} = get(inFields, fieldKey) || {};
-                            const timeKey = (fieldKey === TimePickerFrom) ? TimeFrom : TimeTo;
-                            const mjdKey = get(timeKeyMap, [timeKey, 'mjd']);
-
-                            const mjdVal = convertISOToMJD(value);
-                            const mjdInfo = validateMJD(mjdVal);
-
-                            rFields[mjdKey] = clone(inFields[mjdKey], {
-                                value: mjdInfo.value, valid: mjdInfo.valid,
-                                message: mjdInfo.message
-                            });
-                            const showHelp = isShowHelp(value, mjdInfo.value);
-                            const feedback = formFeedback(value, mjdInfo.value);
-
-                            rFields[timeKey] = clone(inFields[timeKey], {value, message, valid, showHelp, feedback,
-                                                                         timeMode: ISO});
-                        }
+                        onChangeTimeMode();
+                    } else if (fieldKey === TimePickerFrom || fieldKey === TimePickerTo) { // update mjd & time fields
+                        onChangeDateTimePicker();
                     }
+
                     break;
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
-                        if (columnsModel.tbl_id !== get(inFields, [CrtColumnsModel, 'value'])) {
-                        //columnsModel = getTblById(columnsTableId);
+                    if (columnsModel.tbl_id !== get(inFields, [CrtColumnsModel, 'value'])) {
                         set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
                         const centerColStr = formCenterColumnStr(columnsModel);
                         set(rFields, [CenterColumns, 'validator'], centerColumnValidator(columnsModel));
@@ -812,9 +827,9 @@ function centerColumnValidator(columnsTable) {
     return (val) => {
         let   retval = {valid: true, message: ''};
         const columnNames = getColumnValues(columnsTable, 'column_name');
-        const names = val.trim().split(',');
+        const names = val.trim().split(',').map((n) => n.trim());
 
-        if (names.length !== 2) {
+        if (val.trim() && (names.length !== 2 || (!names[0] || !names[1]))) {
             retval = {valid: false,
                       message: "invalid format, please enter the column pair like '<column name 1>,<column name 2>'"};
         } else {
@@ -841,11 +856,16 @@ function temporalColumnValidator(columnsTable) {
         const columnNames = getColumnValues(columnsTable, 'column_name');
         const names = val.trim().split(',').map((n) => n.trim());
 
-        const invalidName = names.find((oneName) => {
-            return oneName && !columnNames.includes(oneName);
-        });
-        if (invalidName) {
-            retval = {valid: false, message: 'invalid column name: ' + invalidName};
+        if (val.trim() && names.length >= 2) {
+            retval = {valid: false,
+                      message: 'please enter a single column name like <column name>'};
+        } else {
+            const invalidName = names.find((oneName) => {
+                return oneName && !columnNames.includes(oneName);
+            });
+            if (invalidName) {
+                retval = {valid: false, message: 'invalid column name: ' + invalidName};
+            }
         }
         return retval;
     };
@@ -928,7 +948,7 @@ function fieldInit(columnsTable) {
                 fieldKey: TemporalColumns,
                 value: '',
                 tooltip: 'columns for temporal search, multiple column names are separated by ","',
-                label: 'Temporal Columns:',
+                label: 'Temporal Column:',
                 labelWidth: LabelWidth,
                 validator: temporalColumnValidator(columnsTable)
             },
