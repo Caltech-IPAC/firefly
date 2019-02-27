@@ -15,7 +15,8 @@ import './HelpIcon.css';
 export function HelpIcon({helpId, size='small'}) {
     var imgSrc = (size === 'small') ? smallHelp : largeHelp;
 
-    var onClick = () => {
+    var onClick = (e) => {
+        e.stopPropagation();
         flux.process({
             type: HELP_LOAD,
             payload: {helpId}

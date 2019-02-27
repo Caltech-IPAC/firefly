@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {flux} from '../../Firefly.js';
 import {get, set} from 'lodash';
 import Enum from 'enum';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {getColumnValues} from '../../tables/TableUtil.js';
@@ -12,7 +12,7 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
-import {getColumnIdx} from '../../tables/TableUtil.js';
+import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {convert} from '../../visualize/VisUtil.js';
 import {primePlot, getActivePlotView} from '../../visualize/PlotViewUtil.js';
@@ -22,11 +22,17 @@ import {renderPolygonDataArea,  calcCornerString, initRadiusArcSec} from '../Cat
 import {clone} from '../../util/WebUtil.js';
 import {ValidationField} from '../ValidationField.jsx';
 import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
+import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
+import {validateMJD, validateDateTime, convertISOToMJD, convertMJDToISO, DateTimePickerField, fMoment,
+        tryConvertToMoment} from '../DateTimePickerField.jsx';
+import {TimePanel, isShowHelp, formFeedback} from '../TimePanel.jsx';
+import {showInfoPopup, showOptionsPopup, POPUP_DIALOG_ID} from '../PopupUtil.jsx';
+import {isDialogVisible} from '../../core/ComponentCntlr.js';
+import {HeaderFont, MJD, ISO} from './TapUtil.js';
+import {HelpIcon} from '../HelpIcon.jsx';
 
 const skey = 'TABLE_SEARCH_METHODS';
 const ColWithUCD = 'colWithUCD';
-// field key under skey
-//const ColUCDWithPOS = 'poscolsWithUCD';
 const CenterColumns = 'centerColumns';
 const SpatialMethod = 'spatialMethod';
 const RadiusSize = 'coneSize';
@@ -35,6 +41,17 @@ const ImageCornerCalc = 'imageCornerCalc';
 const TemporalColumns = 'temporalColumns';
 const WavelengthColumns = 'wavelengthColumns';
 const CrtColumnsModel = 'crtColumnsModel';
+const DatePickerOpenStatus = 'datePickerOpenStatus';
+const TimePickerFrom = 'timePickerFrom';
+const TimePickerTo = 'timePickerTo';
+const MJDFrom = 'mjdfrom';
+const MJDTo = 'mjdto';
+const TimeFrom = 'timeFrom';
+const TimeTo = 'timeTo';
+const TimeOptions = 'timeOptions';
+const LeftInSearch = 8;
+const LabelWidth = 106;
+
 
 const TapSpatialSearchMethod = new Enum({
     'Cone': 'Cone',
@@ -42,13 +59,47 @@ const TapSpatialSearchMethod = new Enum({
     'All Sky': 'AllSky'
 });
 
-
 import '../CatalogSearchMethodType.css';
+import './react-datetime.css';
+
+const  FROM = 0;
+const  TO  = 1;
+const  DateTimePicker = 'datePicker';
+const  timeKeyMap = {
+                     [TimeFrom]: {
+                         [MJD]: MJDFrom,
+                         [ISO]: TimePickerFrom,
+                         title: 'From'
+                     },
+                     [TimeTo]: {
+                         [MJD]: MJDTo,
+                         [ISO]: TimePickerTo,
+                         title: 'To'
+                     }
+                };
+
+// size used
+const Width_Time = 175;
+const Width_Time_Wrapper = Width_Time+30;
+
+
+function Header({title, helpID=''}) {
+    return (
+        <div style={{display: 'inline-flex', alignItems: 'center'}}>
+            <div style={{...HeaderFont, marginRight: 5}}>{title}</div>
+            <HelpIcon helpId={helpID}/>
+        </div>
+    );
+}
+Header.propTypes = {
+    title: PropTypes.string,
+    helpID: PropTypes.string
+};
 
 export class TableSearchMethods extends PureComponent {
     constructor(props) {
         super(props);
-        this.state = this.nextState(props);
+        this.state = Object.assign(this.nextState(props));
     }
 
     componentWillUnmount() {
@@ -63,52 +114,51 @@ export class TableSearchMethods extends PureComponent {
 
     storeUpdate() {
         if (this.iAmMounted) {
-            this.setState(this.nextState(this.props));
+            this.setState(this.nextState());
         }
     }
 
-    nextState(props) {
-        const {columnsModel} = props;
-        const ucds = getColumnValues(columnsModel, 'ucd');
-        const column_names = getColumnValues(columnsModel, 'column_name');
-        const options = ucds.reduce((p,c,i) => {
-            if (c) { p.push({value: column_names[i], label: `[${column_names[i]}] ${c}`}); }
-            return p;
-        }, []);
-        const posCols = ucds.reduce((p,c,i) => {
-            if (c && c.includes('pos.')) { p.push({name: column_names[i], ucd: c}); }
-            return p;
-        }, []);
-        const fields = FieldGroupUtils.getGroupFields(skey);
+    updateUCDOptions(columnsModel) {
+        if (!columnsModel) return [];
 
-        return {ucds, column_names, options, posCols,fields};
+        const column_names = getColumnValues(columnsModel, 'column_name');
+        const ucds = getColumnValues(columnsModel, 'ucd');
+        return ucds.reduce((p, c, i) => {
+            if (c) {
+                p.push({value: column_names[i], label: `[${column_names[i]}] ${c}`});
+            }
+            return p;
+        }, []);
+    }
+
+    nextState(props) {
+        const fields = FieldGroupUtils.getGroupFields(skey);
+        const columnsModel =  props ? props.columnsModel : getTblById(get(fields, [CrtColumnsModel, 'value']));
+        const options =  this.updateUCDOptions(columnsModel);
+
+        return {options, fields, columnsModel};
     }
 
     render() {
         const groupKey = skey;
-        const {fields, options} = this.state;
-        const {columnsModel} = this.props;
+        const {fields, options, columnsModel} = this.state;
 
         return (
             <FieldGroup groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
                 <div>
                     <UCDColumnList {...{options}} />
                 </div>
-                <div style={{height: 250, overflow: 'auto'}}>
-                    <div>
-                        <SpatialSearch {...{groupKey, fields}} />
-                    </div>
-                    <div>
-                        <TemporalSearch {...{groupKey}} />
-                    </div>
-                    <div>
-                        <WavelengthSearch {...{groupKey}} />
-                    </div>
+                <div style={{height: 280, width: 650, overflow: 'auto'}}>
+                    <SpatialSearch {...{groupKey, fields}} />
+                    <TemporalSearch {...{groupKey, fields}} />
+                    <WavelengthSearch {...{groupKey, fields}} />
                 </div>
             </FieldGroup>
         );
     }
 }
+
+
 
 function UCDColumnList({options}) {
     return (
@@ -127,54 +177,39 @@ function UCDColumnList({options}) {
 UCDColumnList.propTypes = {
     options: PropTypes.array
 };
-/*
-// parse the selected position column pairs shown in center columns text area
-function getPosColumns(groupKey, fields, posCols)  {
+
+const showTimePicker = (loc, show) => {
+    const timeKey = loc === FROM ? TimeFrom : TimeTo;
+    const title = loc === FROM ? 'select "from" time' : 'select "to" time';
+    const valueInfo = getTimeValueInfo(ISO, skey, timeKey);
+    const pickerKey = get(timeKeyMap, [timeKey, ISO]);
+
+    const content = (
+            <DateTimePickerField fieldKey={pickerKey}
+                                 groupKey={skey}
+                                 showInput={false}
+                                 openPicker={true}
+                                 value={valueInfo.value}
+                                 inputStyle={{marginBottom: 3}}
+            />);
+
+    showOptionsPopup({content, title, modal: true, show});
+};
+
+
+
+function changeDatePickerOpenStatus(loc) {
     return () => {
-        let cols = FieldGroupUtils.getFldValue(fields, ColUCDWithPOS);
-        const colAry = cols && cols.split(',');
-        const reOrderPair = (ra_dec_cols, ucd1 = 'ra', ucd2 = 'dec') => {
-            if (ra_dec_cols[0].ucd.includes(ucd1) && ra_dec_cols[1].ucd.includes(ucd2) &&
-                ra_dec_cols[0].ucd.replace(ucd1, ucd2) === ra_dec_cols[1].ucd) {
-                return [ra_dec_cols[0], ra_dec_cols[1]];
-            } else if (ra_dec_cols[0].ucd.includes(ucd2) && ra_dec_cols[1].ucd.includes(ucd1) &&
-                ra_dec_cols[0].ucd.replace(ucd2, ucd1) === ra_dec_cols[1].ucd) {
-                return [ra_dec_cols[1], ra_dec_cols[0]];
-            }  else {
-                return null;
-            }
-        };
+        const show = !isDialogVisible(POPUP_DIALOG_ID);
 
-        if (!cols || !colAry || colAry.length !== 2) return;
-
-        let centerColContent = FieldGroupUtils.getFldValue(fields, CenterColumns, '');
-        let ra_dec_cols = posCols.reduce((p, oneCol) => {
-            if (colAry.includes(oneCol.name)) {
-                p.push(oneCol);
-            }
-            return p;
-        }, []);
-
-        if (ra_dec_cols.length === 2) {
-            ra_dec_cols = reOrderPair(ra_dec_cols) || reOrderPair(ra_dec_cols, 'lon', 'lat');
-
-            if (ra_dec_cols.length === 0) return;
-
-            cols = ra_dec_cols[0].name + ',' + ra_dec_cols[1].name;
-
-            if (!centerColContent.includes(cols)) {
-                centerColContent += cols + '\n';
-                dispatchValueChange({fieldKey: CenterColumns, groupKey, value: centerColContent});
-            }
-        }
+        showTimePicker(loc, show);
     };
 }
-*/
 
 function SpatialSearch({groupKey, fields}) {
     const showCenterColumns = () => {
         return (
-            <div style={{marginLeft: 8}}>
+            <div style={{marginLeft: LeftInSearch}}>
                 <ValidationField fieldKey={CenterColumns}
                                  style={{overflow:'auto', height:12, width: 200}}
                 />
@@ -184,7 +219,7 @@ function SpatialSearch({groupKey, fields}) {
 
     const doSpatialSearch = () => {
         return (
-            <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center'}}>
+            <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', marginTop: 5}}>
                 {selectSpatialSearchMethod(groupKey, fields)}
                 {setSpatialSearchSize(fields)}
             </div>
@@ -192,104 +227,123 @@ function SpatialSearch({groupKey, fields}) {
     };
 
 
-    /* the part is kept as comment for future reference if needed
-        // show selected center column pairs
-        const areaForCenterColumns = () => {
-            return (
-                <div style={{paddingLeft: 10,  display: 'flex', alignItems: 'flex-end'}}>
-                    <button type='button' className='button std'
-                            onClick={getPosColumns(groupKey, fields, posCols)}>Add position columns</button>
-                    <InputAreaFieldConnected fieldKey={CenterColumns}
-                                             style={{overflow:'auto',height: SpatialUCDH, width: 150}}
-                                             initialState={{
-                                                        tooltip:'Enter center columns'
-                                                  }}
-                                             label=''
-                    />
-                </div>
-            );
-        };
-
-        // show position column candidates
-        const showPosCandidate = () => {
-            const options = posCols.reduce((p, pos) => {
-                if (!isEmpty(pos)) { p.push({value: pos.name, label: `[${pos.name}] ${pos.ucd}`}); }
-                return p;
-            }, []);
-
-            return (
-                <div style={{display:'flex', alignItems:'flex-end'}}>
-                    <ListBoxInputField   fieldKey={ColUCDWithPOS}
-                                         options={options}
-                                         multiple={true}
-                                         label='Position Columns with UCDs'
-                                         tooltip='List of UCDs of position columns for the selected table columns'
-                                         labelWidth={LableWidth}
-                                         selectStyle={{height: SpatialUCDH}}
-                    />
-                    <div style={{whiteSpace: 'nowrap', display: 'block'}}>
-                         {!withPositionCols() ? null : areaForCenterColumns()}
-                    </div>
-               </div>
-            );
-        };
-     */
-
     return (
-        <FieldGroupCollapsible header='Spatial'
+        <FieldGroupCollapsible header={<Header title={'Spatial'}  helpID={'basics.searching'}/>}
                                initialState={{ value: 'open' }}
-                               fieldKey='spatialSearchPanel' >
+                               fieldKey='spatialSearchPanel'
+                               headerStyle={HeaderFont}>
             <div style={{marginTop: 5}}>
                 {showCenterColumns()}
+                {doSpatialSearch()}
             </div>
-            {doSpatialSearch()}
         </FieldGroupCollapsible>
     );
 }
 
 SpatialSearch.propTypes = {
     groupKey: PropTypes.string,
-    posCols: PropTypes.array,
     fields: PropTypes.object
 };
 
-function TemporalSearch({groupKey}) {
+
+function getTimeValueInfo(timeMode, groupKey, timeFieldKey) {
+    const timeKey = get(timeKeyMap, [timeFieldKey, timeMode]);
+    const fields = FieldGroupUtils.getGroupFields(groupKey);
+    const {value='', valid=true, message=''} = get(fields, timeKey);
+
+    return {value, valid, message};
+}
+
+
+function TemporalSearch({groupKey, fields}) {
     const showTemporalColumns = () => {
         return (
-            <div style={{marginLeft: 8}}>
+            <div style={{marginLeft: LeftInSearch}}>
                 <ValidationField fieldKey={TemporalColumns}
-                                 initialState={{ label: 'Temporal Columns:',
-                                                 labelWidth: 100,
-                                                 tooltip: 'Columns for temporal search'
-                                           }}
                                  style={{overflow:'auto', height:12, width: 200}}
                 />
             </div>
         );
     };
 
+    const showTimeRange = () => {
+        const timeOptions = [{label: 'ISO', value: ISO},
+                             {label: 'MJD', value: MJD}];
+        const crtTimeMode = get(fields, [TimeOptions, 'value'], ISO);
+        const fromValInfo = getTimeValueInfo(crtTimeMode, skey, TimeFrom);
+        const toValInfo = getTimeValueInfo(crtTimeMode, skey, TimeTo);
+        const icon = crtTimeMode === ISO ? 'calendar' : '';
+
+        //  radio field is styled with padding right in consistent with the label part of 'temporal columns' entry
+        return (
+            <div style={{display: 'flex', marginLeft: LeftInSearch, marginTop: 5}}>
+                <RadioGroupInputField fieldKey={TimeOptions}
+                                      options={timeOptions}
+                                      alignment={'horizontal'}
+                                      wrapperStyle={{width: LabelWidth, paddingRight:'4px'}}
+                />
+                <div style={{width: Width_Time_Wrapper}}>
+                    <TimePanel fieldKey={TimeFrom}
+                                 groupKey={skey}
+                                 timeMode={crtTimeMode}
+                                 value={fromValInfo.value}
+                                 valid={fromValInfo.valid}
+                                 message={fromValInfo.message}
+                                 icon={icon}
+                                 onClickIcon={changeDatePickerOpenStatus(FROM)}
+                                 feedbackStyle={{height: 100}}
+                                 tooltip={'select a from time'}
+                                 inputWidth={Width_Time}
+                                 inputStyle={{overflow:'auto', height:16}}
+                    />
+                </div>
+                <div style={{width: Width_Time_Wrapper}}>
+                    <TimePanel fieldKey={TimeTo}
+                               groupKey={skey}
+                               timeMode={crtTimeMode}
+                               value={toValInfo.value}
+                               valid={toValInfo.valid}
+                               message={toValInfo.message}
+                               icon={icon}
+                               onClickIcon={changeDatePickerOpenStatus(TO)}
+                               feedbackStyle={{height: 100}}
+                               tooltip={'select a from time'}
+                               inputWidth={Width_Time}
+                               inputStyle={{overflow:'auto', height:16}}
+                    />
+               </div>
+            </div>
+        );
+    };
 
     return (
-        <FieldGroupCollapsible header='Temporal'
+        <FieldGroupCollapsible header={<Header title={'Temporal'}/>}
                                initialState={{ value: 'closed' }}
-                               fieldKey='temporalSearchPanel' >
-            <div style={{width: 100, height: 50}}>
-                {showTemporalColumns()}
-            </div>
+                               fieldKey='temporalSearchPanel'
+                               headerStyle={HeaderFont}>
+                <div style={{marginTop: 5, height: 100}}>
+                    {showTemporalColumns()}
+                    {showTimeRange()}
+                </div>
         </FieldGroupCollapsible>
     );
 }
+
+
 TemporalSearch.propTypes = {
-   groupKey: PropTypes.string
+   groupKey: PropTypes.string,
+   fields: PropTypes.object
 };
 
-function WavelengthSearch({groupKey}) {
+
+
+function WavelengthSearch({groupKey, fields}) {
     const showWavelengthColumns = () => {
         return (
             <div style={{marginLeft: 8}}>
                 <ValidationField fieldKey={WavelengthColumns}
                                  initialState={{ label: 'Wavelength Columns:',
-                                                 labelWidth: 106,
+                                                 labelWidth: LabelWidth,
                                                  tooltip: 'Columns for wavelength search'
                                            }}
                                  style={{overflow:'auto', height:12, width: 200}}
@@ -300,9 +354,10 @@ function WavelengthSearch({groupKey}) {
 
 
     return (
-        <FieldGroupCollapsible header='Wavelength'
+        <FieldGroupCollapsible header={<Header title={'Wavelength'}/>}
                                initialState={{ value: 'closed' }}
-                               fieldKey='wavelengthSearchPanel' >
+                               fieldKey='wavelengthSearchPanel'
+                               headerStyle={HeaderFont}>
             <div style={{width: 100, height: 50}}>
                 {showWavelengthColumns()}
             </div>
@@ -310,7 +365,8 @@ function WavelengthSearch({groupKey}) {
     );
 }
 WavelengthSearch.propTypes = {
-    groupKey: PropTypes.string
+    groupKey: PropTypes.string,
+    fields: PropTypes.object
 };
 
 
@@ -409,17 +465,22 @@ radiusInField.propTypes = {
     label: PropTypes.string
 };
 
+
 function makeSpatialConstraints(fields, columnsModel) {
     const NOConstraint = '';
+    const retval = {valid: true, where: '', title: 'spatial search error'};
     const {centerColumns, spatialMethod} = fields;
 
     // find column pairs [[pair_1_ra, pair_1_dec]...[pair_n_ra, pair_n_dec]]
     const makeColPairs = () => {
         return centerColumns.value.split('\n').reduce((p, onePair) => {
             const oneP = onePair.trim();
-            const pair = oneP && oneP.split(',');
+            const pair = oneP && oneP.split(',').reduce((prev, n) => {
+                    if (n.trim()) prev.push(n.trim());
+                    return prev;
+                }, []);
             if (pair && pair.length === 2) {
-                p.push([pair[0].trim(), pair[1].trim()]);
+                p.push([pair[0], pair[1]]);
             }
             return p;
         }, []);
@@ -447,7 +508,9 @@ function makeSpatialConstraints(fields, columnsModel) {
     };
 
     const pairs = makeColPairs();
-    if (pairs.length !== 1) return NOConstraint;
+    if (pairs.length !== 1) {
+        return retval;
+    }
 
     const ucdCoord = getUCDCoord(pairs[0][0]);
     const worldSys = posCol[ucdCoord.key].coord;
@@ -461,7 +524,9 @@ function makeSpatialConstraints(fields, columnsModel) {
         const worldPt = parseWorldPt(get(fields, [ServerParams.USER_TARGET_WORLD_PT, 'value']));
         const size = coneSize.value;
 
-        if (!worldPt || !size) return NOConstraint;
+        if (!worldPt || !size) {
+            return retval;
+        }
 
         newWpt = convert(worldPt, worldSys);
         userArea = `CIRCLE('${adqlCoordSys}', ${newWpt.x}, ${newWpt.y}, ${size})`;
@@ -469,7 +534,9 @@ function makeSpatialConstraints(fields, columnsModel) {
     } else if (spatialMethod.value === TapSpatialSearchMethod.Polygon.value) {
         const {polygoncoords} = fields;
 
-        if (!polygoncoords.value) return '';
+        if (!polygoncoords.value) {
+            return retval;
+        }
 
         const newCorners = polygoncoords.value.trim().split(',').reduce((p, onePoint) => {
             const corner = onePoint.trim().split(' ');
@@ -483,7 +550,15 @@ function makeSpatialConstraints(fields, columnsModel) {
             return p;
         }, []);
 
-        if (!newCorners || newCorners.length < 3 || newCorners.length > 15) return '';
+        if (!newCorners || newCorners.length < 3 || newCorners.length > 15) {
+            if (newCorners && newCorners.length >= 1) {
+                retval.valid = false;
+                retval.message = 'too few or too many corner specified';
+                return retval;
+            } else {
+                return retval;
+            }
+        }
 
         const cornerStr = newCorners.reduce((p, oneCorner, idx) => {
             p += oneCorner.x + ', ' + oneCorner.y;
@@ -498,7 +573,49 @@ function makeSpatialConstraints(fields, columnsModel) {
         userArea = NOConstraint;
     }
 
-    return userArea ? `CONTAINS(${point},${userArea})=1` : userArea;
+    retval.where = userArea ? `CONTAINS(${point},${userArea})=1`:userArea;
+    return retval;
+}
+
+function makeTemporalConstraints(fields) {
+    const retval = {valid: true, where: '', title: 'temporal search error'};
+    const timeColumns = get(fields, [TemporalColumns, 'value'], '').trim().split(',').reduce((p, c) => {
+        if (c.trim()) p.push(c.trim());
+        return p;
+    }, []);
+
+    const mjdRange = [TimeFrom, TimeTo].map((timeKey) => {
+        const mjdKey =  timeKeyMap[timeKey][MJD];
+        return get(fields, [mjdKey, 'value'], '');
+    });
+
+
+    if (mjdRange[FROM] && mjdRange[TO]) {
+        if (Number(mjdRange[FROM]) > Number(mjdRange[TO])) {
+            retval.valid = false;
+            retval.message = 'the start time is greater than the end time';
+            return retval;
+        }
+    }
+
+    let where = '';
+    if (timeColumns.length === 1) {
+        const mjdSqls = mjdRange.map((oneRange, idx) => {
+            if (!oneRange) {
+                return '';
+            } else {
+                return idx === FROM ? `${timeColumns[0]} >= ${oneRange}` : `${timeColumns[0]} <= ${oneRange}`;
+            }
+        });
+
+        if (!mjdSqls[FROM] || !mjdSqls[TO]) {
+            where = mjdSqls[FROM] + mjdSqls[TO];
+        } else {
+            where =`(${mjdSqls[FROM]} AND ${mjdSqls[TO]})`;
+        }
+    }
+    retval.where = where;
+    return retval;
 }
 
 /**
@@ -509,9 +626,43 @@ function makeSpatialConstraints(fields, columnsModel) {
 export function tableSearchMethodsConstraints(columnsModel) {
     // construct ADQL string here
     const fields = FieldGroupUtils.getGroupFields(skey);
-    const adqlConstraints = makeSpatialConstraints(fields, columnsModel);
 
-    return adqlConstraints;
+    let   adql;
+    const validInfo = validateConstraints(fields);
+    if (!validInfo.valid) {
+         adql = {valid: false, message: validInfo.message, title: 'constraints entry error'};
+         showInfoPopup(adql.message, adql.title);
+         return adql;
+    }
+
+    const spatialConstraints = makeSpatialConstraints(fields, columnsModel);
+    const timeConstraints = makeTemporalConstraints(fields);
+
+    adql = [spatialConstraints, timeConstraints].reduce((p, oneCondition) => {
+        p.valid = p.valid && oneCondition.valid;
+        if (!p.valid) {
+            p.where = '';
+            if (oneCondition.message && !p.message) {
+                p.message = oneCondition.message;
+                p.title = oneCondition.title;
+            }
+        } else {
+            if (p.where && oneCondition.where) {
+                p.where += ' AND ' + oneCondition.where;
+            } else {
+                p.where += oneCondition.where;
+            }
+        }
+
+        return p;
+
+    }, {where: '', valid: true, message: '', title: ''});
+
+    if (!adql.valid) {
+        showInfoPopup((adql.message || 'search constraints error'),  (adql.title ||'search error'));
+    }
+
+    return adql;
 }
 
 function tapSearchMethodReducer(columnsModel) {
@@ -520,40 +671,129 @@ function tapSearchMethodReducer(columnsModel) {
         if (!inFields)  {
              return fieldInit(columnsModel);
         } else {
-            const {fieldKey}= action.payload;
+            const {fieldKey, value}= action.payload;
             const rFields = clone(inFields);
+
+            const onChangePolygonCoordinates = () => {
+                rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'user'});
+            };
+
+            const onChangeToPolygonMethod = () => {
+                const cornerCalcV = get(inFields.imageCornerCalc, 'value', 'user');
+                const pv = getActivePlotView(visRoot());
+
+
+                if (pv && (cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
+                    const plot = primePlot(pv);
+
+                    if (plot) {
+                        const sel = plot.attributes[PlotAttribute.SELECTION];
+                        if (!sel && cornerCalcV === 'area-selection') {
+                            rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'image'});
+                        }
+                        const {value:cornerCalcV2}= rFields.imageCornerCalc;
+                        const v = calcCornerString(pv, cornerCalcV2);
+                        rFields.polygoncoords = clone(inFields.polygoncoords, {value: v});
+                    }
+                }
+            };
+
+            const onChangeTimeField = () => {
+                // only update picker & mjd when there is no pop-up picker (time input -> picker or mjd)
+                if (!isDialogVisible(POPUP_DIALOG_ID)) {
+                    const {valid, message} = get(inFields, fieldKey, {});
+                    const timeMode = get(inFields, [TimeOptions, 'value']);
+                    const mjdKey = get(timeKeyMap, [fieldKey, MJD]);
+                    const isoKey = get(timeKeyMap, [fieldKey, ISO]);
+                    const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value)): value);
+
+                    // convert value for the other time mode
+                    const crtFieldKey = timeMode === MJD ? mjdKey : isoKey;
+                    const convertFunc = timeMode === MJD ? convertMJDToISO : convertISOToMJD;
+                    const validateFunc = timeMode === MJD ? validateDateTime : validateMJD;
+                    const secondFieldKey = timeMode === MJD ? isoKey : mjdKey;
+
+                    const secondVal = convertFunc(updateValue);
+                    const secondValInfo = validateFunc(secondVal);
+
+                    rFields[crtFieldKey] = clone(inFields[crtFieldKey], {value: updateValue, valid, message});
+                    rFields[secondFieldKey] = clone(inFields[secondFieldKey], {
+                        value: secondValInfo.value,
+                        valid: secondValInfo.valid,
+                        message: secondValInfo.message
+                    });
+                }
+            };
+
+            const onChangeTimeMode = () => {
+                // update Time fields (from and to) and the feedback below based on the selected mode, iso or mjd
+                const timeInfos = [TimeFrom, TimeTo].map((tKey) => {
+                    return [ISO, MJD].reduce((prev, option) => {
+                        const valKey = get(timeKeyMap, [tKey, option]);
+                        prev[option] = get(inFields, [valKey]);
+
+                        return prev;
+                    }, {});
+                });
+                const timeMode = value;
+
+                [TimeFrom, TimeTo].forEach((timeKey, idx) => {
+                    const showHelp = isShowHelp(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
+                    const feedback = formFeedback(timeInfos[idx][ISO].value, timeInfos[idx][MJD].value);
+
+                    rFields[timeKey] = clone(inFields[timeKey], { value: timeInfos[idx][timeMode].value,
+                        valid: timeInfos[idx][timeMode].valid,
+                        message: timeInfos[idx][timeMode].message,
+                        showHelp, feedback, timeMode});
+                });
+            };
+
+            const onChangeDateTimePicker = () => {
+                // update MJD & TimeFrom (TimeTo) when there is pop-up picker (picker -> time field & mjd)
+                if (isDialogVisible(POPUP_DIALOG_ID)) {
+                    const {valid, message} = get(inFields, fieldKey) || {};
+                    const timeKey = (fieldKey === TimePickerFrom) ? TimeFrom : TimeTo;
+                    const mjdKey = get(timeKeyMap, [timeKey, 'mjd']);
+
+                    const mjdVal = convertISOToMJD(value);
+                    const mjdInfo = validateMJD(mjdVal);
+
+                    rFields[mjdKey] = clone(inFields[mjdKey], {
+                        value: mjdInfo.value, valid: mjdInfo.valid,
+                        message: mjdInfo.message
+                    });
+                    const showHelp = isShowHelp(value, mjdInfo.value);
+                    const feedback = formFeedback(value, mjdInfo.value);
+
+                    rFields[timeKey] = clone(inFields[timeKey], {value, message, valid, showHelp, feedback,
+                        timeMode: ISO});
+                }
+            };
 
             switch (action.type) {
                 case FieldGroupCntlr.VALUE_CHANGE:
                     if (fieldKey === PolygonCorners) {
-                        rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'user'});
-                    } else if (fieldKey === SpatialMethod &&
-                        get(inFields, [SpatialMethod, 'value']) === TapSpatialSearchMethod.Polygon.key) {
-                        const cornerCalcV = get(inFields.imageCornerCalc, 'value', 'user');
-                        const pv = getActivePlotView(visRoot());
-
-
-                        if (pv && (cornerCalcV === 'image' || cornerCalcV === 'viewport' || cornerCalcV === 'area-selection')) {
-                            const plot = primePlot(pv);
-
-                            if (plot) {
-                                const sel = plot.attributes[PlotAttribute.SELECTION];
-                                if (!sel && cornerCalcV === 'area-selection') {
-                                    rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'image'});
-                                }
-                                const {value:cornerCalcV2}= rFields.imageCornerCalc;
-                                const v = calcCornerString(pv, cornerCalcV2);
-                                rFields.polygoncoords = clone(inFields.polygoncoords, {value: v});
-                            }
-                        }
+                        onChangePolygonCoordinates(rFields);
+                    } else if (fieldKey === SpatialMethod && value === TapSpatialSearchMethod.Polygon.key) {
+                        onChangeToPolygonMethod();
+                    } else if (fieldKey === TimeFrom || fieldKey === TimeTo) { // update mjd & picker
+                        onChangeTimeField();
+                    } else if (fieldKey === TimeOptions) {    // time mode changes => update timefrom and timeto value
+                        onChangeTimeMode();
+                    } else if (fieldKey === TimePickerFrom || fieldKey === TimePickerTo) { // update mjd & time fields
+                        onChangeDateTimePicker();
                     }
+
                     break;
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
                     if (columnsModel.tbl_id !== get(inFields, [CrtColumnsModel, 'value'])) {
+                        set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
                         const centerColStr = formCenterColumnStr(columnsModel);
                         set(rFields, [CenterColumns, 'validator'], centerColumnValidator(columnsModel));
+                        set(rFields, [TemporalColumns, 'validator'], temporalColumnValidator(columnsModel));
                         set(rFields, [CenterColumns, 'value'], centerColStr);
-                        set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
+                        set(rFields, [TemporalColumns, 'value'], '');
+
                     }
                     break;
             }
@@ -562,6 +802,13 @@ function tapSearchMethodReducer(columnsModel) {
         }
     };
 }
+
+
+function timeValidator(val) {
+    const timeMode = getFieldVal(skey, TimeOptions) || ISO;
+    return (timeMode === MJD) ? validateMJD(val) : validateDateTime(val);
+}
+
 
 function formCenterColumnStr(columnsTable) {
     const centerCols = findCenterColumnsByColumnsModel(columnsTable);
@@ -580,9 +827,9 @@ function centerColumnValidator(columnsTable) {
     return (val) => {
         let   retval = {valid: true, message: ''};
         const columnNames = getColumnValues(columnsTable, 'column_name');
-        const names = val.trim().split(',');
+        const names = val.trim().split(',').map((n) => n.trim());
 
-        if (names.length !== 2) {
+        if (val.trim() && (names.length !== 2 || (!names[0] || !names[1]))) {
             retval = {valid: false,
                       message: "invalid format, please enter the column pair like '<column name 1>,<column name 2>'"};
         } else {
@@ -598,18 +845,112 @@ function centerColumnValidator(columnsTable) {
 }
 
 
+/**
+ * temporal column validator
+ * @param columnsTable
+ * @returns {Function}
+ */
+function temporalColumnValidator(columnsTable) {
+    return (val) => {
+        let   retval = {valid: true, message: ''};
+        const columnNames = getColumnValues(columnsTable, 'column_name');
+        const names = val.trim().split(',').map((n) => n.trim());
+
+        if (val.trim() && names.length >= 2) {
+            retval = {valid: false,
+                      message: 'please enter a single column name like <column name>'};
+        } else {
+            const invalidName = names.find((oneName) => {
+                return oneName && !columnNames.includes(oneName);
+            });
+            if (invalidName) {
+                retval = {valid: false, message: 'invalid column name: ' + invalidName};
+            }
+        }
+        return retval;
+    };
+}
+
+/**
+ * validate the constraint entry
+ * @param fields
+ * @returns {*}
+ */
+function validateConstraints(fields) {
+    // spatial constraints
+    const checkField = (fieldKey) => {
+       const {valid=true, message, feedback} = get(fields, fieldKey) || {};
+
+        if (!valid) {
+            return {valid, message: (message ||  feedback || 'entry error')};
+        } else {
+            return {valid};
+        }
+    };
+
+    let retval = checkField(CenterColumns);
+    if (!retval.valid) return retval;
+
+    const searchMethod = get(fields, [SpatialMethod, 'value']);
+
+    if (searchMethod ===  TapSpatialSearchMethod.Cone.value) {
+        retval = checkField(ServerParams.USER_TARGET_WORLD_PT);
+        if (!retval.valid) return retval;
+
+        retval = checkField(RadiusSize);
+        if (!retval.valid) return retval;
+    } else if (searchMethod === TapSpatialSearchMethod.Polygon.value) {
+        const {polygoncoords} = fields;
+
+        // check any polygon pair is valid
+        if (polygoncoords.value) {
+            const badCorner = polygoncoords.value.trim().split(',').find((onePoint) => {
+                const corner = onePoint.trim().split(' ');
+
+                return (corner.length !== 2) || isNaN(Number(corner[0])) || isNaN(Number(corner[1]));
+            });
+
+            if (badCorner) {
+                retval.valid = false;
+                retval.message = 'wrong corner pair';
+                return retval;
+            }
+        }
+    }
+
+    // check temporal
+    retval = checkField(TemporalColumns);
+    if (!retval.valid) return retval;
+
+    retval = checkField(TimeFrom);
+    if (!retval.valid) return retval;
+
+    retval = checkField(TimeTo);
+    if (!retval.valid) return retval;
+
+    return {valid: true};
+}
+
 function fieldInit(columnsTable) {
     const centerColStr = formCenterColumnStr(columnsTable);
 
     return (
         {
             [CenterColumns]: {
-               fieldKey: CenterColumns,
-               value: centerColStr,
-               tooltip:"Center columns for spatial search, the format is like '<column name 1>,<column name 2>'",
-               label: 'Position Columns:',
-               labelWidth: 100,
-               validator: centerColumnValidator(columnsTable)
+                fieldKey: CenterColumns,
+                value: centerColStr,
+                tooltip: "Center columns for spatial search, the format is like '<column name 1>,<column name 2>'",
+                label: 'Position Columns:',
+                labelWidth: LabelWidth,
+                validator: centerColumnValidator(columnsTable)
+            },
+            [TemporalColumns]: {
+                fieldKey: TemporalColumns,
+                value: '',
+                tooltip: 'columns for temporal search, multiple column names are separated by ","',
+                label: 'Temporal Column:',
+                labelWidth: LabelWidth,
+                validator: temporalColumnValidator(columnsTable)
             },
             [SpatialMethod]: {
                 fieldKey: SpatialMethod,
@@ -625,8 +966,41 @@ function fieldInit(columnsTable) {
             [CrtColumnsModel]: {
                 fieldKey: CrtColumnsModel,
                 value: columnsTable.tbl_id
+            },
+            [DatePickerOpenStatus]: {
+                fieldKey: DatePickerOpenStatus,
+                value: [false, false]
+            },
+            [TimePickerFrom]: {
+                fieldKey: TimePickerFrom,
+                value: ''
+            },
+            [TimePickerTo]: {
+                fieldKey: TimePickerTo,
+                value: ''
+            },
+            [TimeOptions]: {
+                fieldKey: TimeOptions,
+                value: DateTimePicker
+            },
+            [MJDFrom]: {
+                fieldKey: MJDFrom,
+                value: ''
+            },
+            [MJDTo]: {
+                fieldKey: MJDTo,
+                value: ''
+            },
+            [TimeFrom]:{
+                fieldKey: TimeFrom,
+                value: '',
+                validator: timeValidator
+            },
+            [TimeTo]:{
+                fieldKey: TimeTo,
+                value: '',
+                validator: timeValidator
             }
         }
     );
 }
-

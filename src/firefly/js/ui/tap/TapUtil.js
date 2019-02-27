@@ -4,6 +4,10 @@ import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.
 import {sortInfoString} from '../../tables/SortInfo.js';
 
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
+export const HeaderFont={fontSize: 12, fontWeight: 'bold'};
+
+export const  MJD = 'mjd';
+export const  ISO = 'iso';
 
 
 export function loadTapSchemas(serviceUrl) {
