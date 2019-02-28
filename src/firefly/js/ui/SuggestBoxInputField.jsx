@@ -219,11 +219,12 @@ class SuggestBoxInputFieldView extends PureComponent {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popupIndex} = this.props;
+        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popStyle, popupIndex} = this.props;
 
         const leftOffset = (labelWidth?labelWidth:0)+4;
         const minWidth = (inputWidth?inputWidth-4:50);
         const style = Object.assign({display: inline?'inline-block':'block'}, wrapperStyle);
+        const pStyle = Object.assign({left: leftOffset, minWidth, zIndex: popupIndex}, popStyle);
 
         return (
             <div className={'SuggestBoxInputField'} style={style} onKeyDown={this.handleKeyPress}>
@@ -240,7 +241,7 @@ class SuggestBoxInputFieldView extends PureComponent {
                     />
                 </div>
 
-                {isOpen && <div className={'SuggestBoxPopup'} style={{left: leftOffset, minWidth, zIndex: popupIndex}} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
+                {isOpen && <div className={'SuggestBoxPopup'} style={pStyle} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
                     <SuggestBox
                         suggestions={suggestions}
                         highlightedIdx={highlightedIdx}
@@ -263,6 +264,7 @@ SuggestBoxInputFieldView.propTypes = {
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
     labelWidth : PropTypes.number,
+    popStyle : PropTypes.object, //style for the popup list
     wrapperStyle: PropTypes.object,     //style to merge into the container div
     getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),

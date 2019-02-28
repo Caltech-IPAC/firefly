@@ -129,8 +129,7 @@ function renderNaifid(fields){
            <NaifidPanel fieldKey='mTargetName' labelWidth={110}
                         initialState={{value: 'ceres', size: 4, label: 'Moving Target Name:'}}
            />
-           <ValidationField style={{marginTop:4, width:125}}
-                             labelWidth={110} fieldKey='nfid' initialState={{size: 4, label: 'NAIF ID:'}}/>
+
         </div>
     );
 }
