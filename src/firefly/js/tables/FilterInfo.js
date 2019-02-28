@@ -365,7 +365,7 @@ function likeToRegexp(text) {
     newText = replaceWildCard(newText, '_', '.', '_');
 
     try {
-        return new RegExp('^' + newText + '$');
+        return new RegExp('^' + newText + '$', 'm'); //allow multiline
     }
     catch (e) {
         showInfoPopup('invalid filtering condition: ' + text, 'table filtering');
