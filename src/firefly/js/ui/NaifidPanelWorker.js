@@ -5,6 +5,7 @@
 //-----------------
 import {getRootPath} from '../util/BrowserUtil.js';
 import {fetchUrl} from '../util/WebUtil.js';
+import {ServerParams} from '../data/ServerParams';
 
 
 export {formatPosForTextField} from '../data/form/PositionFieldDef.js';
@@ -42,7 +43,7 @@ function makeResolverPromise(objName) {
 
 function makeSearchPromise(objName) {
     let rejectFunc= null;
-    const url= `${getRootPath()}sticky/CmdSrv?objName=${objName}&cmd=CmdResolveNaifid`;
+    const url= `${getRootPath()}sticky/CmdSrv?objName=${objName}&cmd=${ServerParams.RESOLVE_NAIFID}`;
     const searchPromise= new Promise(
         function(resolve, reject) {
             let fetchOptions = {};

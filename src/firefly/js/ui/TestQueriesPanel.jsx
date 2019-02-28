@@ -127,7 +127,8 @@ function renderNaifid(fields){
     return(
         <div style={{height:100, margin:5}}>
            <NaifidPanel fieldKey='mTargetName' labelWidth={110}
-                        initialState={{value: 'ceres', size: 4, label: 'Moving Target Name:'}}
+                        initialState={{value: '', size: 4, label: 'Moving Target Name:'}}
+                        popStyle={{width: 300, padding:2}}
            />
 
         </div>

@@ -41,7 +41,7 @@ public class ResolveServerCommands {
             }
         }
 
-        public boolean getCanCreateJson() { return true; }
+        public boolean getCanCreateJson() { return false; }
     }
 
     public static class ResolveNaifidName extends ServCommand {
