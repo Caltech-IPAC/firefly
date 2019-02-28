@@ -17,8 +17,9 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
  */
 export function ColConstraintsPanel({tableModel, onTableChanged}) {
     useEffect( () => {
-        // when table id changes, we need to sync the new table with the field group
+        // when table changes, we need to sync the new table with the field group
         // currently doing it in TableColumnsConstraints
+        onTableChanged && onTableChanged();
 
         return watchTableChanges(tableModel.tbl_id,
                 [TblCntlr.TABLE_SELECT, TblCntlr.TABLE_LOADED],
