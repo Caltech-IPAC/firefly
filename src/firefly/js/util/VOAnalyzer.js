@@ -416,8 +416,8 @@ class TableRecognizer {
             let lonCol;
             let latCol;
             if (useReg) {
-                const reLon= new RegExp(`^[A-z]*?[-_]?(${lon})[1-9]*$`);
-                const reLat= new RegExp(`^[A-z]*?[-_]?(${lat})[1-9]*$`);
+                const reLon= new RegExp(`^[A-z]*[-_]?(${lon})[1-9]*$`);
+                const reLat= new RegExp(`^[A-z]*[-_]?(${lat})[1-9]*$`);
                 lonCol = findColumn(lon,reLon);
                 latCol = findColumn(lat,reLat);
             }
