@@ -577,6 +577,19 @@ export function processRequest(origTableModel, tableRequest, hlRowIdx) {
     nTable.tableData.data = data;
     nTable.tableData.columns = columns;
 
+    // set selections from the original table
+    const idxCol = getColumnIdx(nTable, 'ORIG_IDX');
+    if (idxCol >= 0) {
+        const nTableSelectInfoCls = SelectInfo.newInstance({rowCount: data.length});
+        const origSelectInfoCls = SelectInfo.newInstance(get(origTableModel, 'selectInfo'));
+        data.forEach((row, i) => {
+            const origIdx = parseInt(row[idxCol]);
+            // set selection
+            nTableSelectInfoCls.setRowSelect(i, origSelectInfoCls.isSelected(origIdx));
+        });
+        nTable.selectInfo = nTableSelectInfoCls.data;
+    }
+
     return nTable;
 }
 

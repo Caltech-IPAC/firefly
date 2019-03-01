@@ -107,7 +107,7 @@ export class FilterInfo {
     static isConditionValid(conditions) {
         return !conditions || conditions.split(';').reduce( (rval, v) => {
                 const [cname, op, val] = parseInput(v);
-                return rval && op && val && !cname;
+                return Boolean(rval && op && val && !cname);
         }, true);
     }
 
@@ -365,7 +365,7 @@ function likeToRegexp(text) {
     newText = replaceWildCard(newText, '_', '.', '_');
 
     try {
-        return new RegExp('^' + newText + '$');
+        return new RegExp('^' + newText + '$', 'm'); //allow multiline
     }
     catch (e) {
         showInfoPopup('invalid filtering condition: ' + text, 'table filtering');

@@ -18,7 +18,7 @@ export function uiReducer(state={ui:{}}, action={}) {
         {
             const {tbl_ui_id} = action.payload;
             const payload = onUiUpdate(action.payload);
-            return updateMerge(root, tbl_ui_id, payload);
+            return updateMerge(root, [tbl_ui_id], payload);
         }
         case (Cntlr.TABLE_REMOVE)    :
         case (Cntlr.TBL_RESULTS_REMOVE)    :
@@ -28,7 +28,7 @@ export function uiReducer(state={ui:{}}, action={}) {
         {
             const {tbl_ui_id, tbl_id} = action.payload;
             const options = onUiUpdate(get(action, 'payload.options', {}));
-            return updateSet(root, tbl_ui_id, {tbl_ui_id, tbl_id, ...options});
+            return updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, ...options});
         }
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
@@ -97,7 +97,7 @@ function uiStateReducer(ui, tableModel) {
 function onUiUpdate(uiData) {
     if (!get(uiData, 'showToolbar', true)) {
         // if showToolbar is false, make the other related UI props to be fasl
-        uiData =  Object.assign(uiData, {showFilters:false, showTitle:false, showPaging:false, showSave:false, showFilterButton:false});
+        uiData =  Object.assign(uiData, {showTitle:false, showPaging:false, showSave:false, showFilterButton:false});
     }
     return uiData;
 }

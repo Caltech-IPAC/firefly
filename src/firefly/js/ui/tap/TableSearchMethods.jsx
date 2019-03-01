@@ -32,7 +32,6 @@ import {HeaderFont, MJD, ISO} from './TapUtil.js';
 import {HelpIcon} from '../HelpIcon.jsx';
 
 const skey = 'TABLE_SEARCH_METHODS';
-const ColWithUCD = 'colWithUCD';
 const CenterColumns = 'centerColumns';
 const SpatialMethod = 'spatialMethod';
 const RadiusSize = 'coneSize';
@@ -118,37 +117,21 @@ export class TableSearchMethods extends PureComponent {
         }
     }
 
-    updateUCDOptions(columnsModel) {
-        if (!columnsModel) return [];
-
-        const column_names = getColumnValues(columnsModel, 'column_name');
-        const ucds = getColumnValues(columnsModel, 'ucd');
-        return ucds.reduce((p, c, i) => {
-            if (c) {
-                p.push({value: column_names[i], label: `[${column_names[i]}] ${c}`});
-            }
-            return p;
-        }, []);
-    }
 
     nextState(props) {
         const fields = FieldGroupUtils.getGroupFields(skey);
         const columnsModel =  props ? props.columnsModel : getTblById(get(fields, [CrtColumnsModel, 'value']));
-        const options =  this.updateUCDOptions(columnsModel);
 
-        return {options, fields, columnsModel};
+        return {fields, columnsModel};
     }
 
     render() {
         const groupKey = skey;
-        const {fields, options, columnsModel} = this.state;
+        const {fields, columnsModel} = this.state;
 
         return (
             <FieldGroup groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
-                <div>
-                    <UCDColumnList {...{options}} />
-                </div>
-                <div style={{height: 280, width: 650, overflow: 'auto'}}>
+                <div style={{height: 280, overflow: 'auto'}}>
                     <SpatialSearch {...{groupKey, fields}} />
                     <TemporalSearch {...{groupKey, fields}} />
                     <WavelengthSearch {...{groupKey, fields}} />
@@ -158,25 +141,6 @@ export class TableSearchMethods extends PureComponent {
     }
 }
 
-
-
-function UCDColumnList({options}) {
-    return (
-            <ListBoxInputField key='ucdList'
-                               fieldKey= {ColWithUCD}
-                               options={options}
-                               multiple={false}
-                               label='Columns with UCDs:'
-                               tooltip='List of UCDs for the selected table columns'
-                               labelWidth={100}
-                               wrapperStyle={{paddingBottom: 2}}
-            />
-    );
-}
-
-UCDColumnList.propTypes = {
-    options: PropTypes.array
-};
 
 const showTimePicker = (loc, show) => {
     const timeKey = loc === FROM ? TimeFrom : TimeTo;
