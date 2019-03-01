@@ -1,8 +1,6 @@
 /* eslint-env node */
 
 import webpack from 'webpack';
-import ExtractTextPlugin from 'extract-text-webpack-plugin';
-import UglifyJsPlugin from 'uglifyjs-webpack-plugin';
 import Visualizer from 'webpack-visualizer-plugin';
 import path from 'path';
 import fs from 'fs';
@@ -94,7 +92,6 @@ export default function makeWebpackConfig(config) {
     /*------------------------ PLUGIINS -----------------------------*/
     const plugins = [
         new webpack.DefinePlugin(globals),
-        new ExtractTextPlugin(`${config.name}.css`),
     ];
     if (ENV_DEV_MODE) {
         plugins.push( dev_progress() );
@@ -110,42 +107,6 @@ export default function makeWebpackConfig(config) {
         );
     }
 
-    if (ENV_PROD) {
-        plugins.push(
-            // if using the latest uglifyjs-webpack-plugin, based on UglifyJSv3, understanding es6 modules
-            // this uglifier also minimizes the code, no LoaderOptionsPlugin is needed
-            new UglifyJsPlugin({
-                sourceMap : true,
-                uglifyOptions: {
-                    warnings: false, // false is default
-                    compress: {
-                        ecma: 6, // 5 is default
-                        dead_code: true, // true is default
-                        unused: true,    // true is default
-                    },
-                    output: {
-                        ecma: 6
-                    }
-                }
-            })
-
-            // included with webpack3 is UglifyJSv2
-            // https://github.com/webpack-contrib/uglifyjs-webpack-plugin/tree/version-0.4
-            // new webpack.optimize.UglifyJsPlugin({
-            //     sourceMap : false,
-            //     compress : {
-            //         warnings  : false,
-            //         unused    : true,
-            //         dead_code : true
-            //     }
-            // }),
-            // new webpack.LoaderOptionsPlugin({
-            //     minimize: true
-            // })
-        );
-    }
-
-
     /*------------------------ MODULE -----------------------------*/
     const rules = [
         {   test : /\.(js|jsx)$/,
@@ -158,7 +119,7 @@ export default function makeWebpackConfig(config) {
                     ['env',
                         {
                             targets: {
-                                browsers: ['safari >= 9', 'chrome >= 62', 'firefox >= 56', 'edge >= 14']
+                                browsers: ['safari >= 10', 'chrome >= 67', 'firefox >= 60', 'edge >= 16']
                             },
                             debug: !ENV_PROD,
                             modules: false,  // preserve application module style - in our case es6 modules
@@ -178,9 +139,6 @@ export default function makeWebpackConfig(config) {
                 {
                     loader: `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
                 },
-                {
-                    loader: 'postcss-loader'
-                }
             ]
         },
         {   test: /\.(png|jpg|gif)$/,
@@ -189,15 +147,6 @@ export default function makeWebpackConfig(config) {
             }]
         }
     ];
-
-    // commented out for now.. may want to use it later on.
-    // Compile CSS to its own file in production..
-    // rules = rules.map((rule) => {
-    //     if (/css/.test(rule.test)) {
-    //         rule.use = ExtractTextPlugin.extract({fallback: rule.use[0], use: rule.use.slice(1)});
-    //     }
-    //    return rule;
-    // });
 
 
     if (config.do_lint) {
@@ -231,8 +180,11 @@ export default function makeWebpackConfig(config) {
 
     const webpack_config = {
         name    : config.name,
+        // mode    : 'none',
+        mode    : ENV_PROD ? 'production' : 'development',
         target  : 'web',
         devtool : 'source-map',
+        // optimization,
         entry   : config.entry,
         resolve : {
             extensions : ['.js', '.jsx'],
@@ -276,7 +228,6 @@ export default function makeWebpackConfig(config) {
 function firefly_loader(loadScript, outpath, debug=true) {
     return function () {
         this.plugin('done', function (stats) {
-            // console.log(Object.keys(stats.compilation));
             const hash = debug ? 'dev' : stats.hash;
             //var cxt_name = stats.compilation.name;
 
@@ -290,7 +241,6 @@ function firefly_loader(loadScript, outpath, debug=true) {
 
 function dev_progress() {
     return new webpack.ProgressPlugin(function (percent, msg) {
-        //console.log(msg);
         if (msg.startsWith('compiling')) {
             process.stdout.write('\n\x1b[1;31m> Compiling new changes\x1b[0m');   // set color to red.  for more options.. import a color lib.
         }
