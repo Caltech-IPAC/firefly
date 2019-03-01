@@ -179,6 +179,8 @@ const bgSlightGray= {background: 'rgba(255,255,255,.2)'};
 const bgFFGray= {background: '#e3e3e3'};
 
 function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools, showDelete) {
+    const useInlineToolbar = toolsAnno.includes(pv.plotViewCtx.annotationOps);
+    const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
     const tb= !isExpanded && visRoot.useFloatToolbar;
     const lVis= BrowserInfo.isTouchInput() || (visRoot.useFloatToolbar && pv && mousePlotId===pv.plotId);
     const style= (lVis || tb) && handleInlineTools ? bgFFGray : bgSlightGray;
@@ -193,8 +195,6 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId, handleInlineTools,
     }
     if (!pv) return false;
 
-    const useInlineToolbar = toolsAnno.includes(pv.plotViewCtx.annotationOps);
-    const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
 
     if (!useInlineToolbar) return false;
     if (isExpanded) {
