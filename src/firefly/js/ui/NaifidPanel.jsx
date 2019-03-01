@@ -47,19 +47,20 @@ class NaifidPanelView extends PureComponent {
             const rval = resolveNaifidObj(val);
             if (!rval.p) return undefined;
             return rval.p.then((response)=>{
-                if(response.valid) {
-                    let suggestionsList = response.data || [];
+                const [result] = response;
+                if(result.success) {
+                    let suggestionsList = result.data || [];
 
                     if(this.iAmMounted && this.state.suggestions !== suggestionsList) {
                         this.setState({suggestions: suggestionsList});
-                    }else if(this.state.suggestions === suggestionsList){
+                    }else if(this.iAmMounted && this.state.suggestions === suggestionsList){
                         this.setState({suggestions:''});
                     }
 
-                    return Object.keys(suggestionsList).map( (k) => `Name:${k}, Naifid:${suggestionsList[k]}`);
+                    return Object.keys(suggestionsList).map( (k) => `Object Name:${k}, NAIF ID:${suggestionsList[k]}`);
 
                 }else {
-                   console.error("Error: "+response.feedback);
+                   console.error("Error: "+result.error);
                 }
             });
     }
@@ -179,21 +180,24 @@ function replaceValue(v,props) {
     return retVal;
 }
 
+/** Parses the selected option, and returns the value which gets populated in the input field of the suggestion box*/
 function getNaifidValue(onCallBack) {
     return (val, str) => {
         if (! str) return;
-
-        const naifId = (str.match(/Naifid:.*/))[0].split('Naifid:').pop();
+        //const [,naifId] = str.match(/NAIF ID:(.*)/) || [];
+        const [,naifId] = str.match(/Object Name:(.*),/) || [];
         onCallBack(str);
         return naifId;
     }
 }
 
-function renderSuggestion(str){
-    let name = str.split(',')[0].split('Name:');
-    let naifid = str.split(',')[1].split('Naifid:');
 
-    return  <span>Name:<b>{name}</b>, Naifid: <b>{naifid}</b></span>;
+/** renders suggestion list's popup */
+function renderSuggestion(str){
+    let name = str.split(',')[0].split('Object Name:');
+    let naifid = str.split(',')[1].split('NAIF ID:');
+
+    return  <span>Name:<b>{name}</b>, NAIF ID: <b>{naifid}</b></span>;
 }
 
 export const NaifidPanel= fieldGroupConnector(NaifidPanelView,getProps,null,connectorDefaultProps, replaceValue);

@@ -93,7 +93,7 @@ function resolveObject(objName) {
     }
 
     let {p}= makeResolverPromise(objName);
-    p= p.then( (results) =>
+    p.then( (results) =>
         {
             if (results) {
                 if (results[0].success) {
@@ -134,7 +134,6 @@ function resolveObject(objName) {
             wpt: null
         };
     });
-
     return {p};
 
 }
