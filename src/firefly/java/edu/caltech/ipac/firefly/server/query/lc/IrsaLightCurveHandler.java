@@ -21,13 +21,11 @@ import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 
 import static edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest.LC_FILE;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
@@ -216,9 +214,11 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         URL url = null;
         try {
             url = new URL(source);
-            inf = "input=" + url.toString();
+            inf = "input=" + URLEncoder.encode(url.toString(),"UTF-8");
         } catch (MalformedURLException e) {
             inf = ServerContext.convertToFile(source).getAbsolutePath();
+        } catch (UnsupportedEncodingException e) {
+            LOG.error("Unsupported encoding error URL:"+url.toString());
         }
         return inf;
     }
