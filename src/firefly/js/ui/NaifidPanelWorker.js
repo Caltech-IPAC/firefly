@@ -6,6 +6,7 @@
 import {getRootPath} from '../util/BrowserUtil.js';
 import {fetchUrl} from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams';
+import {toBoolean} from "../util/WebUtil";
 
 
 export {formatPosForTextField} from '../data/form/PositionFieldDef.js';
@@ -93,10 +94,10 @@ function resolveObject(objName) {
     }
 
     let {p}= makeResolverPromise(objName);
-    p.then( (results) =>
+    p= p.then( (results) =>
         {
             if (results) {
-                if (results[0].success) {
+                if (toBoolean(results[0].success)) {
                     return{
                         data: results[0].data,
                         showHelp: false,

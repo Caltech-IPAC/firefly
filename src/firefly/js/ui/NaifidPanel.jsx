@@ -47,9 +47,9 @@ class NaifidPanelView extends PureComponent {
             const rval = resolveNaifidObj(val);
             if (!rval.p) return undefined;
             return rval.p.then((response)=>{
-                const [result] = response;
-                if(result.success) {
-                    let suggestionsList = result.data || [];
+                //const [result] = response;
+                if(response.valid) {
+                    let suggestionsList = response.data || [];
 
                     if(this.iAmMounted && this.state.suggestions !== suggestionsList) {
                         this.setState({suggestions: suggestionsList});
@@ -60,7 +60,7 @@ class NaifidPanelView extends PureComponent {
                     return Object.keys(suggestionsList).map( (k) => `Object Name:${k}, NAIF ID:${suggestionsList[k]}`);
 
                 }else {
-                   console.error("Error: "+result.error);
+                   //console.error("Error: "+response.feedback);
                 }
             });
     }
