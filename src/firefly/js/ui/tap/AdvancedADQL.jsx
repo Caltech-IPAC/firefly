@@ -100,7 +100,7 @@ export function AdvancedADQL({fieldKey, origFieldKey, groupKey, serviceUrl, styl
 
 
     return (
-            <SplitPane split='vertical' defaultSize={300} style={{position: 'relative', height: 600, ...style}}>
+            <SplitPane split='vertical' defaultSize={200} style={{position: 'relative', ...style}}>
                 <SplitContent style={{overflow: 'auto'}}>
                     <b>Schema -> Table -> Column</b>
                     <Tree defaultExpandAll showLine loadData={onLoadData} onSelect={onSelect}>

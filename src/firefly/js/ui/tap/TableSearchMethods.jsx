@@ -130,12 +130,11 @@ export class TableSearchMethods extends PureComponent {
         const {fields, columnsModel} = this.state;
 
         return (
-            <FieldGroup groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
-                <div style={{height: 280, overflow: 'auto'}}>
+            <FieldGroup style={{height: '100%', overflow: 'auto'}}
+                groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
                     <SpatialSearch {...{groupKey, fields}} />
                     <TemporalSearch {...{groupKey, fields}} />
                     <WavelengthSearch {...{groupKey, fields}} />
-                </div>
             </FieldGroup>
         );
     }

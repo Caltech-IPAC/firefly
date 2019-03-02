@@ -1,13 +1,13 @@
-import React, {PureComponent} from 'react';
+import React, {PureComponent, Fragment} from 'react';
+import SplitPane from 'react-split-pane';
 
+import {SplitContent} from '../panel/DockLayoutPanel';
 import CreatableSelect from 'react-select/lib/Creatable';
 import {get, pick} from 'lodash';
 import {FormPanel} from '../FormPanel.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
-import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
 import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
+import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest} from '../../tables/TableRequestUtil.js';
@@ -19,10 +19,13 @@ import {loadTapColumns, loadTapTables, loadTapSchemas, getTapBrowserState, setTa
 import {NameSelect, NameSelectField, selectTheme} from './Select.jsx';
 import {showYesNoPopup} from '../PopupUtil.jsx';
 
-import './TableSelectViewPanel.css';
 import {dispatchHideDialog} from '../../core/ComponentCntlr';
-import {TableColumnsConstraints} from './TableColumnsConstraints.jsx';
+import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
 import {resetConstraints} from './ColumnConstraintsPanel.jsx';
+import {RadioGroupInputField} from '../RadioGroupInputField';
+
+
+import './TableSelectViewPanel.css';
 
 /**
  * group key for fieldgroup comp
@@ -35,70 +38,100 @@ const gkey = 'TAP_SEARCH_PANEL';
 export class TapSearchPanel extends PureComponent {
     constructor(props) {
         super(props);
-        const serviceUrl = get(getTapBrowserState(), 'serviceUrl', TAP_SERVICE_OPTIONS[0].value);
-        this.state = {serviceUrl, freeForm: getFieldVal(gkey, 'tabs') === 'adql'};
+        const {serviceUrl=TAP_SERVICE_OPTIONS[0].value, ...others} = getTapBrowserState();
+        this.state = {serviceUrl, ...others};       // initialize state.. default serviceUrl if not given
+
 
         this.populateAndEditAdql = this.populateAndEditAdql.bind(this);
         this.onTapServiceOptionSelect = this.onTapServiceOptionSelect.bind(this);
-        this.onTabSelect = this.onTabSelect.bind(this);
     }
 
     componentDidMount() {
+
+        this.removeListener = FieldGroupUtils.bindToStore( gkey, (fields) => {
+            if (!this.isUnmounted && fields) {
+                const vals = Object.entries(fields)
+                            .reduce((org, [k,v]) => {
+                                org[k] = v.value;
+                                return org;
+                            }, {});
+                this.setState(vals);
+            }
+        });
+
         if (!getFieldVal(gkey,'adqlQuery')) {
             const sampleQuery = getSampleQuery(this.state.serviceUrl);
             dispatchValueChange({groupKey: gkey, fieldKey: 'adqlQuery', placeholder: sampleQuery, value: sampleQuery});
         }
     }
 
-    render() {
-        const {serviceUrl, freeForm} = this.state;
+    componentWillUnmount() {
+        this.removeListener && this.removeListener();
+        this.isUnmounted = true;
+    }
 
-        // keep all tabs the same size
-        const tabWrapper = {padding:5, width:1100, minHeight:100};
+    render() {
+
+
+        const {serviceUrl, selectBy='basic'} = this.state;
 
         const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
 
-        const rightBtns = freeForm ? [] : [{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql}];
+        const rightBtns = selectBy === 'basic' ?[{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql}] :  [];
+
+        const style = {resize: 'both', overflow: 'hidden', paddingBottom: 5, height: 600, width: 915, minHeight: 600, minWidth: 915};
 
         return (
-            <div style={{position: 'relative', padding: 10}}>
-                <div style={{paddingBottom:5}}>
-                    <CreatableSelect
-                        options={TAP_SERVICE_OPTIONS}
-                        isClearable={true}
-                        onChange={this.onTapServiceOptionSelect}
-                        placeholder={placeholder}
-                        theme={selectTheme}
-                    />
-                </div>
-                <FormPanel
-                    groupKey={gkey}
-                    params={{hideOnInvalid: false}}
-                    onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
-                    extraButtons={rightBtns}>
+            <div style={style}>
+                <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+                            groupKey={gkey}
+                            params={{hideOnInvalid: false}}
+                            onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
+                            extraButtons={rightBtns}
+                            submitBarStyle={{padding: '2px 17px 3px 3px'}}
+                >
 
-                    <FieldGroup groupKey={gkey} keepState={true}>
-                        <FieldGroupTabs initialState={{ value:'ui' }}
-                                        fieldKey='tabs'
-                                        resizable={true}
-                                        onTabSelect={this.onTabSelect}>
-                            <Tab name='Set Parameters' id='ui'>
-                                <div style={Object.assign({position: 'relative'}, tabWrapper)}>
-                                    <TapSchemaBrowser serviceUrl={serviceUrl}/>
-                                </div>
-                            </Tab>
-                            <Tab name='ADQL' id='adql'>
-                                <div style={tabWrapper}>
-                                    <AdvancedADQL fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>
-                                </div>
-                            </Tab>
-                        </FieldGroupTabs>
-                    </FieldGroup>
-                    
-                </FormPanel>
+                <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1}}>
+
+                    <div className='TapSearch'>
+                        <div className='TapSearch__title'>TAP Searches</div>
+
+                        <div className='TapSearch__section'>
+                            <div className='TapSearch__section--title'>1. Service Provider</div>
+                            <div style={{flexGrow: 1, marginRight: 3}}>
+                                <CreatableSelect
+                                    options={TAP_SERVICE_OPTIONS}
+                                    isClearable={true}
+                                    onChange={this.onTapServiceOptionSelect}
+                                    placeholder={placeholder}
+                                    theme={selectTheme}
+                                />
+                            </div>
+                        </div>
+
+                        <div className='TapSearch__section'>
+                            <div className='TapSearch__section--title'>2. Select By</div>
+                            <RadioGroupInputField
+                                fieldKey = 'selectBy'
+                                initialState = {{
+                                    defaultValue: 'basic',
+                                    options: [{label: 'Basic', value: 'basic'}, {label: 'ADQL', value: 'adql'}],
+                                    tooltip: 'Please select an interface type to use'
+                                }}
+                            />
+                        </div>
+                        {selectBy === 'basic' && <BasicUI  serviceUrl={serviceUrl}/>}
+                        {selectBy === 'adql' && <AdqlUI fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>}
+
+                    </div>
+
+                </FieldGroup>
+            </FormPanel>
             </div>
         );
     }
+
+    /*---------- supporting member functions --------------*/
 
     onTapServiceOptionSelect(selectedOption) {
         if (selectedOption) {
@@ -114,10 +147,6 @@ export class TapSearchPanel extends PureComponent {
         }
     }
 
-    onTabSelect(index,id) {
-        this.setState({freeForm: id === 'adql'});
-    }
-
     populateAndEditAdql() {
         const adql = getAdqlQuery();
         if (adql) {
@@ -126,18 +155,33 @@ export class TapSearchPanel extends PureComponent {
                 [
                     {fieldKey: 'adqlQueryOriginal', value: adql},
                     {fieldKey: 'adqlQuery', value: adql},
-                    {fieldKey: 'tabs', value: 'adql'},
+                    {fieldKey: 'selectBy', value: 'adql'},
                 ]
             );
-            this.setState({freeForm: true});
         }
     }
 }
 
+function AdqlUI({serviceUrl, schemaName, tableName}) {
+
+    return (
+
+        <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
+            <div style={{ display: 'inline-flex', alignItems: 'center'}}>
+                <div className='TapSearch__section--title'>3. Advanced ADQL</div>
+                <div style={{color: 'brown', fontSize: 'larger'}}>The query composed here will be ignored when switched to <b>Basic</b> view</div>
+            </div>
 
 
+            <div className='expandable'>
+                <AdvancedADQL fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>
+            </div>
+        </div>
 
-class TapSchemaBrowser extends PureComponent {
+    );
+}
+
+class BasicUI extends PureComponent {
     constructor(props) {
         super(props);
 
@@ -171,6 +215,7 @@ class TapSchemaBrowser extends PureComponent {
     render() {
         const {serviceUrl} = this.props;
         const {error, schemaOptions, tableOptions, schemaName, tableName, columnsModel}= this.state;
+        const tbl_id = get(columnsModel, 'tbl_id');
 
         if (error) {
             return (<div>{error}</div>);
@@ -179,10 +224,11 @@ class TapSchemaBrowser extends PureComponent {
         // need to set initialState on list fields so that the initial value that is not the first index
         // is set correctly after unmount and mount
         return (
-            <div>
-                <div className={'taptablepanel'}>
-                    <div className='tableselectors'>
-                        <div style={{width: 400}}>
+            <Fragment>
+                <div className='TapSearch__section'>
+                    <div className='TapSearch__section--title'>3. Select Data Set</div>
+                    <div style={{display: 'inline-flex', width: '100%', marginRight: 3}}>
+                        <div style={{flexGrow: 1}}>
                             <NameSelect type='Schema'
                                         options={schemaOptions}
                                         value={schemaName}
@@ -190,7 +236,9 @@ class TapSchemaBrowser extends PureComponent {
                                             this.loadTables(serviceUrl, selectedTapSchema);
                                         }}
                             />
-                            <div style={{height: 5}}/>
+                        </div>
+                        <div style={{width: 10}}/>
+                        <div style={{flexGrow: 1}}>
                             <NameSelectField
                                 fieldKey='tableName'
                                 type='Table'
@@ -202,21 +250,41 @@ class TapSchemaBrowser extends PureComponent {
                             />
                         </div>
                     </div>
-                    <div className='searchmethods'>
-                        {columnsModel ?
-                            <TableSearchMethods columnsModel={columnsModel}/> : false
-                        }
+                </div>
+
+                <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
+                    <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between'}}>
+                        <div className='TapSearch__section--title'>4. Select Constraints</div>
+                        <TableColumnsConstraintsToolbar key={tableName}
+                                                        groupKey={gkey}
+                                                        fieldKey={'tableconstraints'}
+                                                        tableName={tableName}
+                                                        columnsModel={columnsModel}
+                        />
+                    </div>
+                    <div className='expandable'>
+                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={'60%'}>
+                            <SplitContent>
+                                {columnsModel ?  <TableSearchMethods columnsModel={columnsModel}/>
+                                    : <div className='loading-mask'/>
+                                }
+                            </SplitContent>
+                            <SplitContent>
+                                { tbl_id ?
+                                    <TableColumnsConstraints
+                                        key={tableName}
+                                        fieldKey={'tableconstraints'}
+                                        columnsModel={columnsModel}
+                                    />
+                                    : <div className='loading-mask'/>
+
+                                }
+                            </SplitContent>
+                        </SplitPane>
                     </div>
                 </div>
-                <div className='columnconstraints'>
-                    <TableColumnsConstraints key={tableName}
-                                             groupKey={gkey}
-                                             fieldKey={'tableconstraints'}
-                                             tableName={tableName}
-                                             columnsModel={columnsModel}
-                    />
-                </div>
-            </div>
+
+            </Fragment>
         );
     }
 

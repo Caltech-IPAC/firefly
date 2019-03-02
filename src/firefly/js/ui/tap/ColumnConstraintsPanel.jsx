@@ -15,7 +15,7 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
  * @param {Object} props
  * @returns {Object} constraint table
  */
-export function ColConstraintsPanel({tableModel, onTableChanged}) {
+export function ColConstraintsPanel({tableModel, onTableChanged, style}) {
     useEffect( () => {
         // when table changes, we need to sync the new table with the field group
         // currently doing it in TableColumnsConstraints
@@ -36,8 +36,7 @@ export function ColConstraintsPanel({tableModel, onTableChanged}) {
     const tbl_ui_id = tableModel.tbl_id + '-ui';
 
     return (
-        <div style={{display:'inline-block',
-            width: 'calc(100% - 10px)', height: '170px', padding: '5px 5px'}}>
+        <div style={style}>
             <div style={{ position: 'relative', width: '100%', height: '100%'}}>
                 <div className='TablePanel'>
                     <div className={'TablePanel__wrapper--border'}>
@@ -50,6 +49,7 @@ export function ColConstraintsPanel({tableModel, onTableChanged}) {
                                 showFilters={true}
                                 selectable={true}
                                 showOptionButton={true}
+                                border= {false}
                                 renderers={{
                                     //name: { cellRenderer: createLinkCell({hrefColIdx: totalCol})},
                                     constraints: { cellRenderer: newInputCell}
