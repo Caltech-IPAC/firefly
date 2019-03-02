@@ -420,6 +420,9 @@ class TableRecognizer {
                 const reLat= new RegExp(`^[A-z]*[-_]?(${lat})[1-9]*$`);
                 lonCol = findColumn(lon,reLon);
                 latCol = findColumn(lat,reLat);
+                if (lonCol && latCol) {
+                    if (lonCol.name.replace(lon,'') !== latCol.name.replace(lat,'')) return undefined;
+                }
             }
             else {
                 lonCol = findColumn(lon);

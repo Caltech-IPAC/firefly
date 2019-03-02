@@ -351,6 +351,38 @@ describe('Center columns tests, isCatalog test', () => {
         result = isCatalog(table);
         expect(result).toBeFalsy();
 
+
+        table.tableMeta= {CatalogOverlayType: 'true'};
+        table.tableData.columns= [  // test that the matching columns match each other
+            {name: 'xra1'},
+            {name: 'xdec2'},
+        ];
+        result = isCatalog(table);
+        expect(result).toBeFalsy();
+
+        table.tableData.columns= [  // test that the columns that should match
+            {name: 'coord_ra1'},
+            {name: 'coord_dec1'},
+        ];
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+        table.tableData.columns= [  // test that the columns that should match
+            {name: 'coordra'},
+            {name: 'coorddec'},
+        ];
+        result = isCatalog(table);
+        expect(result).toBeTruthy();
+
+        table.tableData.columns= [  // test that the columns that should fail
+            {name: 'coord_ra1a'},
+            {name: 'coord_dec1a'},
+        ];
+        result = isCatalog(table);
+        expect(result).toBeFalsy();
+
+
+
     });
 
     /**
@@ -462,6 +494,7 @@ describe('Center columns tests, isCatalog test', () => {
         ];
         result = hasCoverageData(table);
         expect(result).toBeTruthy();
+
 
     });
 
