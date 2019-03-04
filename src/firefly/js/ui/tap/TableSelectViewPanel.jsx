@@ -91,7 +91,7 @@ export class TapSearchPanel extends PureComponent {
                             submitBarStyle={{padding: '2px 17px 3px 3px'}}
                 >
 
-                <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1}}>
+                <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
 
                     <div className='TapSearch'>
                         <div className='TapSearch__title'>TAP Searches</div>
@@ -174,7 +174,9 @@ function AdqlUI({serviceUrl, schemaName, tableName}) {
 
 
             <div className='expandable'>
-                <AdvancedADQL fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>
+                <div style={{flexGrow: 1}}>
+                    <AdvancedADQL fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>
+                </div>
             </div>
         </div>
 
