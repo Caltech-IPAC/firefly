@@ -197,7 +197,11 @@ public class TableUtil {
     public static void consumeColumnMeta(DataGroup dg, TableServerRequest treq) {
         if (treq != null && treq.getMeta() != null) {
             treq.getMeta().forEach((k,v) -> {
-                dg.getTableMeta().setAttribute(k, v);
+                if (k.equals(TableServerRequest.TITLE)) {
+                    dg.setTitle(v);
+                } else {
+                    dg.getTableMeta().setAttribute(k, v);
+                }
             });
         }
         IpacTableUtil.consumeColumnInfo(dg);
