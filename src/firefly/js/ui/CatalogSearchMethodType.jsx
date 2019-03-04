@@ -60,7 +60,7 @@ export class CatalogSearchMethodType extends PureComponent {
         });
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         // const fields= FieldGroupUtils.getGroupFields(this.nextProps.groupKey);
         const {coneMax, boxMax, groupKey}= nextProps;
         if (coneMax && boxMax && groupKey) {
@@ -420,10 +420,6 @@ CatalogSearchMethodType.propTypes = {
     boxMax: PropTypes.number,
     withPos: PropTypes.bool
 };
-
-/*CatalogSearchMethodType.contextTypes = {
- groupKey: PropTypes.string
- };*/
 
 // Enumerate spatial methods - see SearchMethod values in edu.caltech.ipac.firefly.server.catquery.GatorQuery
 export const SpatialMethod = new Enum({

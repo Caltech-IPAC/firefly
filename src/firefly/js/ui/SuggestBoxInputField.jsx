@@ -124,11 +124,14 @@ class SuggestBoxInputFieldView extends PureComponent {
         this.updateSuggestions = debounce(this.updateSuggestions.bind(this), 200);
     }
 
-    componentWillReceiveProps(nextProps) {
-        const {valid, message, value} = nextProps;
-        if (valid !== this.state.valid || message !== this.state.message || value !== this.state.displayValue) {
-            this.setState({valid, message, displayValue: value});
+
+
+    static getDerivedStateFromProps(props,state) {
+        const {valid, message, value} = props;
+        if (valid !== state.valid || message !== state.message || value !== state.displayValue) {
+            return {valid, message, displayValue: value};
         }
+        return null;
     }
 
     onValueChange(ev) {

@@ -16,6 +16,8 @@ import {readoutRoot} from '../../visualize/MouseReadoutCntlr.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {NewPlotMode} from '../MultiViewCntlr.js';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+
 // import {ExpandedTools} from '../iv/ExpandedTools.jsx';
 
 
@@ -30,10 +32,6 @@ export class ApiFullImageDisplay extends PureComponent {
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();
         if (this.removeMouseListener) this.removeMouseListener();
-    }
-
-    getChildContext() {
-        return {renderTreeId : this.props.renderTreeId };
     }
 
     componentDidMount() {
@@ -57,32 +55,34 @@ export class ApiFullImageDisplay extends PureComponent {
         const {closeFunc, viewerId}= this.props;
         const {visRoot,currMouseState, readout, showHealpixPixel}= this.state;
         return (
-            <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
-                         alignItems:'stretch', flexDirection:'column'}}>
-                <div style={{position: 'relative', marginBottom:'6px',
-                         display:'flex', flexWrap:'nowrap', flexDirection:'row', justifyContent: 'center'}}
-                     className='banner-background'>
-                    <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end'}}>
-                        <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}
-                                       showHealpixPixel={showHealpixPixel}/>
+            <RenderTreeIdCtx.Provider value={{renderTreeId : this.props.renderTreeId}}>
+                <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
+                    alignItems:'stretch', flexDirection:'column'}}>
+                    <div style={{position: 'relative', marginBottom:'6px',
+                        display:'flex', flexWrap:'nowrap', flexDirection:'row', justifyContent: 'center'}}
+                         className='banner-background'>
+                        <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end'}}>
+                            <VisHeaderView visRoot={visRoot} currMouseState={currMouseState} readout={readout}
+                                           showHealpixPixel={showHealpixPixel}/>
+                        </div>
+                    </div>
+                    <div>
+                        <VisToolbar messageUnder={Boolean(closeFunc)}/>
+                    </div>
+                    <div style={{flex: '1 1 auto', display:'flex'}}>
+                        <MultiImageViewer viewerId= {viewerId}
+                                          insideFlex={true}
+                                          canReceiveNewPlots={NewPlotMode.create_replace.key}
+                                          Toolbar={MultiViewStandardToolbar}/>
+                    </div>
+                    <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end', position: 'absolute',
+                        bottom: 3, right: 4, borderTop: '2px ridge', borderLeft: '2px ridge'
+                    }}
+                    >
+                        <VisPreview {...{showPreview:true, visRoot, currMouseState, readout}}/>
                     </div>
                 </div>
-                <div>
-                    <VisToolbar messageUnder={Boolean(closeFunc)}/>
-                </div>
-                <div style={{flex: '1 1 auto', display:'flex'}}>
-                    <MultiImageViewer viewerId= {viewerId}
-                                      insideFlex={true}
-                                      canReceiveNewPlots={NewPlotMode.create_replace.key}
-                                      Toolbar={MultiViewStandardToolbar}/>
-                </div>
-                <div style={{display:'flex', flexDirection:'row', alignItems:'flex-end', position: 'absolute',
-                             bottom: 3, right: 4, borderTop: '2px ridge', borderLeft: '2px ridge'
-                           }}
-                >
-                    <VisPreview {...{showPreview:true, visRoot, currMouseState, readout}}/>
-                </div>
-            </div>
+            </RenderTreeIdCtx.Provider>
             );
     }
 }
@@ -98,6 +98,3 @@ ApiFullImageDisplay.defaultProps= {
     closeFunc:null
 };
 
-ApiFullImageDisplay.childContextTypes= {
-    renderTreeId : PropTypes.string
-};

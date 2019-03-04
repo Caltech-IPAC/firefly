@@ -73,14 +73,19 @@ class ShapePickerWrapper extends PureComponent {
     }
 
 
-    componentWillReceiveProps(nextProps) {
-        var {size, symbol} = nextProps.drawingDef;
-        var {width} = DrawUtil.getDrawingSize(size, symbol);
-        var validSize = (width >= MINSIZE) && (width <= MAXSIZE);
+    componentDidUpdate(prevProps) {
+        const {size, symbol} = this.props.drawingDef;
+        const {size:prevSize, symbol:prevSymbol} = prevProps.drawingDef;
+        const {width} = DrawUtil.getDrawingSize(size, symbol);
+        const {width:prevWidth} = DrawUtil.getDrawingSize(prevSize, prevSymbol);
 
-        this.setState({drawingDef: nextProps.drawingDef, size: `${width}`, validSize}); // sizexsize: the overal size shown on UI
-        this.displayGroupId = nextProps.displayGroupId;
-        this.plotId = nextProps.plotId;
+        if (size!==prevSize || symbol!==prevSymbol || width!==prevWidth) {
+            const validSize = (width >= MINSIZE) && (width <= MAXSIZE);
+            this.setState({drawingDef: this.props.drawingDef, size: `${width}`, validSize}); // sizexsize: the overal size shown on UI
+        }
+        this.displayGroupId = this.props.displayGroupId;
+        this.plotId = this.props.plotId;
+
     }
 
     componentDidMount() {

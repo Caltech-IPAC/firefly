@@ -45,7 +45,6 @@ export const Templates = {
     HydraViewer
 };
 
-
 /**
  * @global
  * @public
@@ -320,3 +319,4 @@ function getCookie(name) {
         .split(';')
         .shift();
 }
+

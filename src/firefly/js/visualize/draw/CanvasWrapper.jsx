@@ -96,7 +96,7 @@ class CanvasWrapper extends Component {
         super(props);
         this.drawer= null;
         this.lastDrawLayer= null;
-        
+        this.drawer= Drawer.makeDrawer();
     }
 
     shouldComponentUpdate(nProps) {
@@ -125,10 +125,6 @@ class CanvasWrapper extends Component {
         window.requestAnimationFrame(() => {
             if (this.drawer) updateDrawer(this.drawer,plot,width,height,dl,force);
         });
-    }
-
-    componentWillMount() {
-        this.drawer= Drawer.makeDrawer();
     }
 
     componentDidMount() {

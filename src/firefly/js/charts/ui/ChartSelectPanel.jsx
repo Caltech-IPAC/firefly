@@ -20,6 +20,7 @@ import {BasicOptions} from './options/BasicOptions.jsx';
 import {ScatterOptions} from './options/ScatterOptions.jsx';
 import {HeatmapOptions} from './options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 const chartActionPanelKey = 'ChartSelectPanel-actions';
 const chartActionKey = 'chartAction';
@@ -104,7 +105,7 @@ export class ChartSelectPanel extends SimpleComponent {
         this.state = this.getNextState();
     }
 
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         const {chartId, tbl_id, chartAction} = this.props;
         const oldChartAction = getFieldVal(chartActionPanelKey, chartActionKey);
         let newChartAction = chartAction;
@@ -168,9 +169,7 @@ ChartSelectPanel.defaultProps = {
     showMultiTrace: true,
 
 };
-ChartSelectPanel.contextTypes= {
-    renderTreeId: PropTypes.string
-};
+ChartSelectPanel.contextType= RenderTreeIdCtx;
 
 function ChartAction(props) {
 

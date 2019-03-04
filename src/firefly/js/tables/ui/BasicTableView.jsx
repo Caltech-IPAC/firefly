@@ -49,7 +49,7 @@ class BasicTableViewInternal extends PureComponent {
         return (hlRowIdx === index) ? 'tablePanel__Row_highlighted' : '';
     }
 
-    componentWillReceiveProps(nProps) {
+    UNSAFE_componentWillReceiveProps(nProps) {
         if (isEmpty(this.state.columnWidths) && !isEmpty(nProps.columns)) {
             this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data)});
         }

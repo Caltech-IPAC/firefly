@@ -46,8 +46,8 @@ export class CollapsiblePanel extends PureComponent {
         this.getContentHeight = this.getContentHeight.bind(this);
     }
 
-    componentWillReceiveProps(nextProps) {
-        this.setState( () => collapsibleStateFromProps(nextProps));
+    static getDerivedStateFromProps(props) {
+        return collapsibleStateFromProps(props);
     }
 
     handleClick() {

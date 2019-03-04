@@ -70,7 +70,7 @@ export class CatalogConstraintsPanel extends PureComponent {
         this.fetchDD(catname, makeFormType(showFormType, dd_short), createDDRequest, true, this.afterFetchDD); //short form as default
     }
 
-    componentWillReceiveProps(np) {
+    UNSAFE_componentWillReceiveProps(np) {
         const ddShort = makeFormType(np.showFormType, np.dd_short);
 
         if (np.processId !== this.props.processId) {

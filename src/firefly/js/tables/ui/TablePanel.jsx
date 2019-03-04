@@ -70,7 +70,7 @@ export class TablePanel extends PureComponent {
         return Object.assign({}, this.props, uiState);
     }
 
-    componentWillReceiveProps(props) {
+    UNSAFE_componentWillReceiveProps(props) {
         if (!shallowequal(this.props, props)) {
             this.setState(this.setupInitState(props));
         }

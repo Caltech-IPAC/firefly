@@ -43,11 +43,12 @@ export class Errors extends PureComponent {
         };
     }
 
-    componentWillUpdate(nextProps) {
-        const {axis, groupKey, activeTrace} = nextProps;
-        this.setState({
+    static getDerivedStateFromProps(props,state) {
+        const {axis, groupKey, activeTrace} = props;
+        return {
             selectedErrType : getFieldVal(groupKey, errorTypeFieldKey(activeTrace, axis), 'none')
-        });
+        };
+
     }
 
     componentDidMount() {

@@ -18,9 +18,20 @@ import {getExpandedChartProps, getChartData} from '../ChartsCntlr.js';
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 
 import {MultiChartToolbarStandard, MultiChartToolbarExpanded} from './MultiChartToolbar.jsx';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 export function getActiveViewerItemId(viewerId) {
     return getViewer(getMultiViewRoot(), viewerId).customData.activeItemId;
+}
+
+
+function nextState(props, state) {
+    const {viewerId}= props;
+    const viewer= getViewer(getMultiViewRoot(),viewerId);
+    if (viewer!==state.viewer) {
+        return {viewer};
+    }
+    return null;
 }
 
 export class MultiChartViewer extends PureComponent {
@@ -30,17 +41,23 @@ export class MultiChartViewer extends PureComponent {
         this.state= {viewer : getViewer(getMultiViewRoot(), props.viewerId)};
     }
 
-    componentWillReceiveProps(nextProps) {
-        if (this.props.viewerId!==nextProps.viewerId) {
-            const {renderTreeId}= this.context;
-            dispatchAddViewer(nextProps.viewerId,nextProps.canReceiveNewItems,PLOT2D,true,renderTreeId);
-            dispatchViewerUnmounted(this.props.viewerId);
-        } else if (nextProps.expandedMode && this.props.expandedMode!==nextProps.expandedMode) {
-            const {chartId} = getExpandedChartProps();
-            dispatchUpdateCustom(nextProps.viewerId, {activeItemId: chartId});
-        }
-        this.storeUpdate(nextProps);
+    static getDerivedStateFromProps(props,state) {
+        return nextState(props,state);
     }
+
+    componentDidUpdate(prevProps) {
+        const {viewerId}= this.props;
+        if (prevProps.viewerId!==viewerId) {
+            const {renderTreeId}= this.context;
+            dispatchAddViewer(viewerId,this.props.canReceiveNewItems,PLOT2D,true,renderTreeId);
+            dispatchViewerUnmounted(viewerId);
+        } else if (this.props.expandedMode && prevProps.expandedMode!==this.props.expandedMode) {
+            const {chartId} = getExpandedChartProps();
+            dispatchUpdateCustom(viewerId, {activeItemId: chartId});
+        }
+
+    }
+
 
     componentWillUnmount() {
         this.iAmMounted= false;
@@ -49,7 +66,7 @@ export class MultiChartViewer extends PureComponent {
 
     }
 
-    componentWillMount() {
+    componentDidMount() {
         const {viewerId, canReceiveNewItems, expandedMode}= this.props;
         const {renderTreeId}= this.context;
         dispatchAddViewer(viewerId,canReceiveNewItems,PLOT2D,true, renderTreeId);
@@ -57,21 +74,14 @@ export class MultiChartViewer extends PureComponent {
             const {chartId} = getExpandedChartProps();
             dispatchUpdateCustom(viewerId, {activeItemId: chartId});
         }
-    }
-
-    componentDidMount() {
         this.iAmMounted= true;
-        this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
+        this.removeListener= flux.addListener(() => this.storeUpdate());
     }
 
 
-    storeUpdate(props) {
-        var {state}= this;
-        var {viewerId}= props;
-        var viewer= getViewer(getMultiViewRoot(),viewerId);
-        if (viewer!==state.viewer) {
-            if (this.iAmMounted) this.setState({viewer});
-        }
+    storeUpdate() {
+        const ns= nextState(this.props,this.state);
+        if (this.iAmMounted && ns) this.setState(ns);
     }
 
     render() {
@@ -152,9 +162,7 @@ export class MultiChartViewer extends PureComponent {
 
 const stopPropagation= (ev) => ev.stopPropagation();
 
-MultiChartViewer.contextTypes= {
-    renderTreeId: PropTypes.string
-};
+MultiChartViewer.contextType= RenderTreeIdCtx;
 
 MultiChartViewer.propTypes= {
     viewerId : PropTypes.string,

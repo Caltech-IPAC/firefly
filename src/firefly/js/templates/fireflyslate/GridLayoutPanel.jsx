@@ -15,6 +15,7 @@ import {MultiChartViewer} from '../../charts/ui/MultiChartViewer.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {LO_VIEW, getGridDim, dispatchUpdateGridView} from '../../core/LayoutCntlr.js';
 import {NewPlotMode} from '../../visualize/MultiViewCntlr.js';
+import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 import './react-grid-layout_styles.css';
 import './react-resizable_styles.css';
@@ -139,15 +140,13 @@ class SlateView extends Component {
 }
 
 
+SlateView.contextType= RenderTreeIdCtx;
+
 SlateView.propTypes= {
     gridView : PropTypes.array.isRequired,
     size: PropTypes.object.isRequired,
     gridColumns : PropTypes.number.isRequired
 };
-SlateView.contextTypes= {
-    renderTreeId: PropTypes.string
-};
-
 
 const sizeMeHOC = sizeMe(config);
 

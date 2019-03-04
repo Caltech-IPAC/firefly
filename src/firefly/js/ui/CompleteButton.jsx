@@ -2,10 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
+import React, {useContext} from 'react';
 import PropTypes from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
+import {GroupKeyCtx} from './FieldGroup';
 
 
 
@@ -48,8 +49,9 @@ function onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounte
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
-                          style={}, changeMasking}, context) {
-    if (!groupKey && context) groupKey= context.groupKey;
+                          style={}, changeMasking}) {
+    const context= useContext(GroupKeyCtx);
+    if (!groupKey && context) groupKey= context;
     const onComplete = () => onClick(onSuccess,onFail,closeOnValid,groupKey,dialogId,includeUnmounted,changeMasking);
     return (
         <div style={style}>
@@ -70,11 +72,5 @@ CompleteButton.propTypes= {
     includeUnmounted : PropTypes.bool,
     changeMasking: PropTypes.func
 };
-
-CompleteButton.contextTypes= {
-    groupKey: PropTypes.string
-};
-
-CompleteButton.defaultProps= { includeUnmounted : false };
 
 export default CompleteButton;

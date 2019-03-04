@@ -4,6 +4,7 @@ import {get,omit} from 'lodash';
 import {dispatchMountComponent,dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {flux} from '../Firefly.js';
+import {GroupKeyCtx} from './FieldGroup';
 
 const defaultConfirmInitValue= (v) => v;
 
@@ -52,6 +53,7 @@ export function fieldGroupConnector(FieldComponent,
                 fieldState = FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || props.initialState;
             }
             this.state = {fieldState};
+            this.prevContext= context;
         }
 
         fireValueChange(payload) {
@@ -62,19 +64,22 @@ export function fieldGroupConnector(FieldComponent,
             dispatchValueChange(modPayload);
         }
 
-        componentWillReceiveProps(nextProps, context) {
-            const {fieldKey}= nextProps;
-            const groupKey= getGroupKey(this.props,this.context);
-            const nGroupKey= getGroupKey(nextProps, context);
-            if (this.props.fieldKey!==fieldKey || nGroupKey !== groupKey) {
+        componentDidUpdate(prevProps) {
+            const {fieldKey}= this.props;
+            const groupKey= getGroupKey(prevProps, this.prevContext);
+            const nGroupKey= getGroupKey(this.props, this.context);
+            if (prevProps.fieldKey!==fieldKey || nGroupKey !== groupKey) {
+                this.prevContext= this.context;
                 const fieldState= get(FieldGroupUtils.getGroupFields(nGroupKey),fieldKey);
-                this.storeUnmount(this.props.fieldKey,groupKey);
-                this.reinit(nextProps,fieldState, context);
+                this.storeUnmount(prevProps.fieldKey,groupKey);
+                this.reinit(this.props,fieldState, this.context);
             }
             else {
-                this.updateFieldState(nextProps, context);
+                this.updateFieldState(this.props, this.context);
             }
+
         }
+
 
         updateFieldState(props, context) {
             var {fieldKey}= props;
@@ -134,7 +139,7 @@ export function fieldGroupConnector(FieldComponent,
         }
     }
 
-    FGConnector.contextTypes = { groupKey: PropTypes.string };
+    FGConnector.contextType = GroupKeyCtx;
 
     FGConnector.propTypes = {
         fieldKey: PropTypes.string,
@@ -185,5 +190,5 @@ function getDisplayName(Component) {
 }
 
 
-const getGroupKey= (props,context)=> props.groupKey || get(context,'groupKey');
+const getGroupKey= (props,context)=> props.groupKey || context;
 

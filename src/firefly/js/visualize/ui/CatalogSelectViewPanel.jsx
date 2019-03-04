@@ -297,11 +297,6 @@ class CatalogSelectView extends PureComponent {
             this.state = {master: {catmaster, cols}};
         } else {
             this.state = {master: {}};
-        }
-    }
-
-    componentWillMount() {
-        if (isEmpty(catmaster)) {
             this.loadMasterCatalogTable();
         }
     }

@@ -63,23 +63,19 @@ export class ColorBandPanel extends PureComponent {
         this.mouseMove= this.mouseMove.bind(this);
         this.mouseLeave= this.mouseLeave.bind(this);
         this.bandReplot= debounce(getReplotFunc(props.groupKey, props.band), 600);
+        const {plot,band}= props;
+        this.initImages(plot,band);
     }
-
-
-    componentWillReceiveProps(nextProps) {
-        const {plot:nPlot}= nextProps;
-        const {plot}= this.props;
+    
+    componentDidUpdate(prevProps) {
+        const {plot:nPlot}= this.props;
+        const {plot}= prevProps;
         if (nPlot.plotId!==plot.plotId || nPlot.plotState!==plot.plotState) {
-            this.initImages(nPlot,nextProps.band);
+            this.initImages(nPlot,this.props.band);
         }
-        if (nextProps.groupKey !== this.props.groupKey) {
+        if (this.props.groupKey !== prevProps.groupKey) {
             this.bandReplot= debounce(getReplotFunc(this.props.groupKey, this.props.band), 600);
         }
-    }
-
-    componentWillMount() {
-        const {plot,band}= this.props;
-        this.initImages(plot,band);
     }
 
     initImages(plot,band) {

@@ -603,10 +603,10 @@ export class CysConverter {
     /**
      * @desc Return the sky coordinates given a image x (fsamp) and  y (fline)
      * @param {PointPt} pt  the point to convert
-     * @param  {CoordinateSys} outputCoordSys (optional) The coordinate system to return, default to coordinate system of image
+     * @param  {CoordinateSys} [outputCoordSys] (optional) The coordinate system to return, default to coordinate system of image
      * @returns {WorldPt} the translated coordinates
      */
-    getWorldCoords(pt, outputCoordSys) {
+    getWorldCoords(pt, outputCoordSys= undefined) {
         if (!isValidPoint(pt)) return null;
 
         let retval = null;

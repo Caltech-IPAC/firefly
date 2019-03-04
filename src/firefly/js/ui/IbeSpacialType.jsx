@@ -23,6 +23,7 @@ import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
+import {GroupKeyCtx} from './FieldGroup';
 
 
 const mcenTip= `Specifies whether to return only the most centered (in pixel space)
@@ -43,7 +44,8 @@ export class IbeSpacialType extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted= true;
-        this.removeListener= FieldGroupUtils.bindToStore(this.context.groupKey, (fields) => {
+        const groupKey= this.context;
+        this.removeListener= FieldGroupUtils.bindToStore(groupKey, (fields) => {
             this.setState({fields});
         });
     }
@@ -82,6 +84,10 @@ export class IbeSpacialType extends PureComponent {
 
 
 }
+
+
+IbeSpacialType.contextType = GroupKeyCtx;
+
 
 function renderSearchRegion(visible) {
     
@@ -132,12 +138,5 @@ function renderMostCenter(visible) {
         />
     );
 }
-
-
-
-
-
-
-IbeSpacialType.contextTypes = { groupKey: PropTypes.string };
 
 

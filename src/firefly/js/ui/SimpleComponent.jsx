@@ -9,7 +9,7 @@ export class SimpleComponent extends PureComponent {
         this.state = this.getNextState(props);
     }
 
-    componentWillReceiveProps(np) {
+    UNSAFE_componentWillReceiveProps(np) {
         if (!this.isUnmounted) {
             if (!shallowequal(this.props, np)) {
                 this.setState(this.getNextState(np));
