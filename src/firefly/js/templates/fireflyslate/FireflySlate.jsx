@@ -101,25 +101,23 @@ export class FireflySlate extends PureComponent {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
             return (
+                <RenderTreeIdCtx.Provider value={{renderTreeId : this.props.renderTreeId}}>
                     <div id='App' className='rootStyle' style={style}>
                         <header>
                             <BannerSection {...{menu, appTitle, appIcon, altAppIcon}}/>
                             <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                            <RenderTreeIdCtx.Provider value={{renderTreeId : this.props.renderTreeId}}>
-                                <DropDownContainer
-                                    key='dropdown'
-                                    footer={footer}
-                                    visible={!!visible}
-                                    selected={view}
-                                    {...{dropdownPanels} } />
-                            </RenderTreeIdCtx.Provider>
+                            <DropDownContainer
+                                key='dropdown'
+                                footer={footer}
+                                visible={!!visible}
+                                selected={view}
+                                {...{dropdownPanels} } />
                         </header>
                         <main style={{height:'100%'}}>
-                            <RenderTreeIdCtx.Provider value={{renderTreeId : this.props.renderTreeId}}>
-                                {mainView({expanded, gridView, gridColumns})}
-                            </RenderTreeIdCtx.Provider>
+                            {mainView({expanded, gridView, gridColumns})}
                         </main>
                     </div>
+                </RenderTreeIdCtx.Provider>
             );
         }
     }
