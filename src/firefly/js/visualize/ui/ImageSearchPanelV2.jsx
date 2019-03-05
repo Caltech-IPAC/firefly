@@ -164,7 +164,7 @@ export function showImageSelPanel(popTitle, renderTreeId) {
 
     const popup = (
         <PopupPanel title={popTitle}>
-            <ImageSearchPanel {...{resizable:true, gridSupport:false, submitText: 'Load', onSubmit, onCancel}}/>
+            <ImageSearchPanel {...{resizable:true, gridSupport:false, submitText: 'Load', onSubmit, onCancel, multiSelect}}/>
         </PopupPanel>
     );
 
