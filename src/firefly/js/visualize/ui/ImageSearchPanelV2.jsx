@@ -73,8 +73,10 @@ export const genHiPSPlotId = getHiPSPlotId();
  * @property {string} viewerId  The viewerId to add to.
  * @property {string} multiSelect ImageSelect mode to render in.
  */
+
 /**
  * returns the context information
+ * @param [renderTreeId]
  * @returns {ContextInfo}
  */
 function getContexInfo(renderTreeId) {
@@ -105,7 +107,7 @@ function getContexInfo(renderTreeId) {
 /* search panel used in drop-down                                                          */
 /*-----------------------------------------------------------------------------------------*/
 
-function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel}) {
+function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel=dispatchHideDropDown}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
     const resize = resizable ? {resize: 'both', overflow: 'hidden', paddingBottom: 5} : {};
     const dim = {height: 600, width: 725, minHeight: 600, minWidth: 725};
@@ -119,7 +121,7 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
                         submitText={submitText}
                         onSubmit = {onSubmit}
                         onError = {searchFailed}
-                        onCancel = {dispatchHideDropDown}
+                        onCancel = {onCancel}
                         help_id = {'basics.searching'}>
                 <ImageSearchPanelV2 {...{multiSelect, archiveName}}/>
                 {gridSupport && <GridSupport/>}
