@@ -5,7 +5,7 @@ import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
-export const HeaderFont={fontSize: 12, fontWeight: 'bold'};
+export const HeaderFont={fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
 export const  MJD = 'mjd';
 export const  ISO = 'iso';

@@ -26,12 +26,14 @@ import {RadioGroupInputField} from '../RadioGroupInputField';
 
 
 import './TableSelectViewPanel.css';
+import {HelpIcon} from '../HelpIcon';
 
 /**
  * group key for fieldgroup comp
  */
 
 const gkey = 'TAP_SEARCH_PANEL';
+export const tapHelpId = (id) => `tapSearches.${id}`;
 
 // on the left tap tables browser
 // on the bottom - column constraints
@@ -77,7 +79,7 @@ export class TapSearchPanel extends PureComponent {
 
         const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
 
-        const rightBtns = selectBy === 'basic' ?[{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql}] :  [];
+        const rightBtns = selectBy === 'basic' ?[{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql, style: {marginLeft: 50}}] :  [];
 
         const style = {resize: 'both', overflow: 'hidden', paddingBottom: 5, height: 600, width: 915, minHeight: 600, minWidth: 915};
 
@@ -88,7 +90,9 @@ export class TapSearchPanel extends PureComponent {
                             params={{hideOnInvalid: false}}
                             onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
                             extraButtons={rightBtns}
-                            submitBarStyle={{padding: '2px 17px 3px 3px'}}
+                            buttonStyle={{justifyContent: 'left'}}
+                            submitBarStyle={{padding: '2px 3px 3px'}}
+                            help_id = {tapHelpId('form')}
                 >
 
                 <FieldGroup groupKey={gkey} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
@@ -97,7 +101,7 @@ export class TapSearchPanel extends PureComponent {
                         <div className='TapSearch__title'>TAP Searches</div>
 
                         <div className='TapSearch__section'>
-                            <div className='TapSearch__section--title'>1. Service Provider</div>
+                            <div className='TapSearch__section--title'>1. TAP Service <HelpIcon helpId={tapHelpId('tapService')}/> </div>
                             <div style={{flexGrow: 1, marginRight: 3}}>
                                 <CreatableSelect
                                     options={TAP_SERVICE_OPTIONS}
@@ -110,12 +114,12 @@ export class TapSearchPanel extends PureComponent {
                         </div>
 
                         <div className='TapSearch__section'>
-                            <div className='TapSearch__section--title'>2. Select By</div>
+                            <div className='TapSearch__section--title'>2. Select Query Type  <HelpIcon helpId={tapHelpId('selectBy')}/> </div>
                             <RadioGroupInputField
                                 fieldKey = 'selectBy'
                                 initialState = {{
                                     defaultValue: 'basic',
-                                    options: [{label: 'Basic', value: 'basic'}, {label: 'ADQL', value: 'adql'}],
+                                    options: [{label: 'Single Table', value: 'basic'}, {label: 'ADQL', value: 'adql'}],
                                     tooltip: 'Please select an interface type to use'
                                 }}
                             />
@@ -139,7 +143,7 @@ export class TapSearchPanel extends PureComponent {
             const sampleQuery = getSampleQuery(selectedTapService);
             dispatchMultiValueChange(gkey,
                 [
-                    {fieldKey: 'adqlQueryOriginal', value: sampleQuery},
+                    {fieldKey: 'defAdqlKey', value: sampleQuery},
                     {fieldKey: 'adqlQuery', placeholder: sampleQuery, value: sampleQuery}
                 ]
             );
@@ -153,7 +157,7 @@ export class TapSearchPanel extends PureComponent {
             //set adql and switch tab to ADQL
             dispatchMultiValueChange(gkey,
                 [
-                    {fieldKey: 'adqlQueryOriginal', value: adql},
+                    {fieldKey: 'defAdqlKey', value: adql},
                     {fieldKey: 'adqlQuery', value: adql},
                     {fieldKey: 'selectBy', value: 'adql'},
                 ]
@@ -162,20 +166,20 @@ export class TapSearchPanel extends PureComponent {
     }
 }
 
-function AdqlUI({serviceUrl, schemaName, tableName}) {
+function AdqlUI({serviceUrl}) {
 
     return (
 
         <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
             <div style={{ display: 'inline-flex', alignItems: 'center'}}>
-                <div className='TapSearch__section--title'>3. Advanced ADQL</div>
+                <div className='TapSearch__section--title'>3. Advanced ADQL  <HelpIcon helpId={tapHelpId('adql')}/> </div>
                 <div style={{color: 'brown', fontSize: 'larger'}}>The query composed here will be ignored when switched to <b>Basic</b> view</div>
             </div>
 
 
             <div className='expandable'>
                 <div style={{flexGrow: 1}}>
-                    <AdvancedADQL fieldKey='adqlQuery' origFieldKey='adqlQueryOriginal' groupKey={gkey} serviceUrl={serviceUrl}/>
+                    <AdvancedADQL groupKey={gkey} adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName' serviceUrl={serviceUrl}/>
                 </div>
             </div>
         </div>
@@ -228,7 +232,7 @@ class BasicUI extends PureComponent {
         return (
             <Fragment>
                 <div className='TapSearch__section'>
-                    <div className='TapSearch__section--title'>3. Select Data Set</div>
+                    <div className='TapSearch__section--title'>3. Select Table <HelpIcon helpId={tapHelpId('selectTable')}/> </div>
                     <div style={{display: 'inline-flex', width: '100%', marginRight: 3}}>
                         <div style={{flexGrow: 1}}>
                             <NameSelect type='Schema'
@@ -256,7 +260,7 @@ class BasicUI extends PureComponent {
 
                 <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
                     <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between'}}>
-                        <div className='TapSearch__section--title'>4. Select Constraints</div>
+                        <div className='TapSearch__section--title'>4. Select Constraints <HelpIcon helpId={tapHelpId('constraints')}/> </div>
                         <TableColumnsConstraintsToolbar key={tableName}
                                                         groupKey={gkey}
                                                         fieldKey={'tableconstraints'}
@@ -380,7 +384,7 @@ function hideSearchPanel() {
 }
 
 function onSearchSubmit(request,serviceUrl) {
-    const isADQL = (request.tabs === 'adql');
+    const isADQL = (request.selectBy === 'adql');
     let adql = undefined;
     let title = undefined;
     if (isADQL) {

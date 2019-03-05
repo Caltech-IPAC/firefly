@@ -30,6 +30,7 @@ import {showInfoPopup, showOptionsPopup, POPUP_DIALOG_ID} from '../PopupUtil.jsx
 import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import {HeaderFont, MJD, ISO} from './TapUtil.js';
 import {HelpIcon} from '../HelpIcon.jsx';
+import {tapHelpId} from './TableSelectViewPanel.jsx';
 
 const skey = 'TABLE_SEARCH_METHODS';
 const CenterColumns = 'centerColumns';
@@ -191,7 +192,7 @@ function SpatialSearch({groupKey, fields}) {
 
 
     return (
-        <FieldGroupCollapsible header={<Header title={'Spatial'}  helpID={'basics.searching'}/>}
+        <FieldGroupCollapsible header={<Header title={'Spatial'}  helpID={tapHelpId('spatial')}/>}
                                initialState={{ value: 'open' }}
                                fieldKey='spatialSearchPanel'
                                headerStyle={HeaderFont}>
@@ -280,7 +281,7 @@ function TemporalSearch({groupKey, fields}) {
     };
 
     return (
-        <FieldGroupCollapsible header={<Header title={'Temporal'}/>}
+        <FieldGroupCollapsible header={<Header title={'Temporal'} helpID={tapHelpId('temporal')}/>}
                                initialState={{ value: 'closed' }}
                                fieldKey='temporalSearchPanel'
                                headerStyle={HeaderFont}>
@@ -317,7 +318,7 @@ function WavelengthSearch({groupKey, fields}) {
 
 
     return (
-        <FieldGroupCollapsible header={<Header title={'Wavelength'}/>}
+        <FieldGroupCollapsible header={<Header title={'Wavelength'} helpID={tapHelpId('wavelength')}/>}
                                initialState={{ value: 'closed' }}
                                fieldKey='wavelengthSearchPanel'
                                headerStyle={HeaderFont}>

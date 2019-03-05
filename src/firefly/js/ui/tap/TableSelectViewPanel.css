@@ -46,6 +46,8 @@
 }
 
 .TapSearch__section--title {
+    display: inline-flex;
+    align-items: center;
     color: #005da4;
     font-size: larger;
     font-weight: bold;
@@ -53,5 +55,9 @@
     width: 175px;
     white-space: nowrap;
     flex-shrink: 0;
+}
+
+.TapSearch__section--title > * {
+    margin-left: 5px;
 }
 
