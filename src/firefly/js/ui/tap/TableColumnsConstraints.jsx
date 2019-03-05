@@ -8,32 +8,29 @@ import {ColumnConstraintsPanel, resetConstraints} from './ColumnConstraintsPanel
 
 const COLS_TO_DISPLAY = ['column_name','description','unit','datatype','ucd','utype','principal'];
 
-export function TableColumnsConstraints({groupKey, fieldKey, columnsModel}) {
+
+export function TableColumnsConstraints({fieldKey, columnsModel}) {
+
     const tbl_id = get(columnsModel, 'tbl_id');
     const [tableModel, setTableModel] = useState(getTblById(tbl_id));
-    
+
+    useEffect( () => tableEffect(columnsModel, setTableModel, tbl_id), [columnsModel]);
+
+    if (isEmpty(tableModel)) {
+        return <div/>;
+    } else {
+        return <ColumnConstraintsPanel style={{height: '100%'}} {...{tableModel, fieldKey}} />;
+    }
+
+}
+
+export function TableColumnsConstraintsToolbar({groupKey, fieldKey, columnsModel}) {
+    const tbl_id = get(columnsModel, 'tbl_id');
+    const [tableModel, setTableModel] = useState(getTblById(tbl_id));
     const filters = get(tableModel, 'request.filters', '');
     const [filterCount, setFilterCount] = useState(filters ? filters.split(';').length : 0);
 
-    useEffect( () => {
-        if (!columnsModel || columnsModel.error) {
-            setTableModel(columnsModel);
-        } else {
-            setTableModel(reorganizeTableModel(columnsModel, COLS_TO_DISPLAY));
-
-            return watchTableChanges(tbl_id,
-                [TABLE_LOADED],
-                (action) => {
-                    const {tableModel} = action.payload;
-                    // sync filter count with table model
-                    if (get(tableModel, 'tbl_id') === tbl_id) {
-                        const filterInfo = get(tableModel, 'request.filters', '');
-                        setFilterCount(filterInfo ? filterInfo.split(';').length : 0);
-                    }
-                },
-                `ucd-${tbl_id}-filterCnt`); // watcher id for debugging
-        }
-    }, [columnsModel]);
+    useEffect( () => tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount), [columnsModel]);
 
     const {error} = tableModel || {};
 
@@ -55,30 +52,42 @@ export function TableColumnsConstraints({groupKey, fieldKey, columnsModel}) {
     };
 
     return (
-        <div style={{padding:'0 0 5px'}}>
-            <div
-                style={{display:'flex', flexDirection:'column',
-                        margin:'0px 10px 5px 5px', padding:'0px 5px',
-                        border:'1px solid #a3aeb9'}}>
-                <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0', height: 20}}>
-                    {!error && resetButton()}
-                    {!error && filterCount > 0 &&
-                        <Fragment>
-                            <button style={{padding: '0 5px 0 5px', margin: '0 2px 0 10px'}}
-                                   onClick={() => dispatchTableFilter({tbl_id: tableModel.tbl_id, filters: ''})}>Remove column filters
-                            </button>
-                            <span style={{color: 'blue', alignSelf: 'center'}}>{`(${filterCount} filter${filterCount>1?'s':''})`}</span>
-                        </Fragment>
-                    }
-                </div>
-                <div>
-                    <ColumnConstraintsPanel {...{tableModel, fieldKey}} />
-                </div>
-            </div>
+        <div style={{display:'inline-flex', padding:'0 0 2px', height: 20}}>
+            {!error && resetButton()}
+            {!error && filterCount > 0 &&
+                <Fragment>
+                    <button style={{padding: '0 5px 0 5px', margin: '0 2px 0 10px'}}
+                           onClick={() => dispatchTableFilter({tbl_id: tableModel.tbl_id, filters: ''})}>Remove column filters
+                    </button>
+                    <span style={{color: 'blue', alignSelf: 'center'}}>{`(${filterCount} filter${filterCount>1?'s':''})`}</span>
+                </Fragment>
+            }
         </div>
     );
-
 }
+
+function tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount) {
+
+    if (!columnsModel || columnsModel.error) {
+        setTableModel(columnsModel);
+    } else {
+        setTableModel(reorganizeTableModel(columnsModel, COLS_TO_DISPLAY));
+
+        if (setFilterCount) {
+            return watchTableChanges(tbl_id,
+                [TABLE_LOADED],
+                (action) => {
+                    const {tableModel} = action.payload;
+                    // sync filter count with table model
+                    if (get(tableModel, 'tbl_id') === tbl_id) {
+                        const filterInfo = get(tableModel, 'request.filters', '');
+                        setFilterCount && setFilterCount(filterInfo ? filterInfo.split(';').length : 0);
+                    }
+                }, `ucd-${tbl_id}-filterCnt`); // watcher id for debugging
+        }
+    }
+}
+
 
 /**
  * Returns true, if table model has 'principal' column and at least 3 values in it are not 0

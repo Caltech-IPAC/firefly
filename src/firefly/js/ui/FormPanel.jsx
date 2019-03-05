@@ -47,11 +47,12 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 
 export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey,
-        action, params, title, style, inputStyle, submitBarStyle,
+        action, params, title,
         submitText='Search',cancelText='Cancel', help_id, changeMasking,
         includeUnmounted=false, extraButtons=[]} = props;
+    let { style, inputStyle, submitBarStyle, buttonStyle} = props;
 
-    const childrenStyle = Object.assign({
+    inputStyle = Object.assign({
         backgroundColor: 'white',
         border: '1px solid rgba(0,0,0,0.2)',
         padding: 5,
@@ -59,41 +60,41 @@ export const FormPanel = function (props) {
         boxSizing: 'border-box',
         flexGrow: 1
     }, inputStyle);
-    const mStyle = Object.assign({height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}, style);
-    const barStyle = Object.assign({flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', boxSizing: 'border-box',
+    style = Object.assign({height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}, style);
+    submitBarStyle = Object.assign({flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', boxSizing: 'border-box',
                                   width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}, submitBarStyle);
+    buttonStyle = Object.assign({flexGrow: 0, display: 'inline-flex', width: '100%', justifyContent: 'space-between'}, buttonStyle);
 
     return (
-        <div style={mStyle}>
-            <div style={childrenStyle}>
+        <div style={style}>
+            <div style={inputStyle}>
                 {children}
             </div>
-            <div style={barStyle}>
-                <div>
-                    <CompleteButton style={{display: 'inline-block', marginRight: 10}}
-                                    includeUnmounted={includeUnmounted}
-                                    groupKey={groupKey}
-                                    onSuccess={onSuccess||createSuccessHandler(action, params, title, onSubmit)}
-                                    onFail={onError || handleFailfure}
-                                    text = {submitText} changeMasking={changeMasking}
-                    />
-                    <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>{cancelText}</button>
+            <div style={submitBarStyle}>
+                <div style={buttonStyle}>
+                    <div style={{display: 'inline-flex'}}>
+                        <CompleteButton style={{display: 'inline-block', marginRight: 10}}
+                                        includeUnmounted={includeUnmounted}
+                                        groupKey={groupKey}
+                                        onSuccess={onSuccess||createSuccessHandler(action, params, title, onSubmit)}
+                                        onFail={onError || handleFailfure}
+                                        text = {submitText} changeMasking={changeMasking}
+                        />
+                        <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>{cancelText}</button>
+                    </div>
 
-                </div>
-                <div>
                     {extraButtons && extraButtons.map((e,i,arr)=>{
-                        const marginRight = i < arr.length-1 || help_id ? 10 : 0;
+                        const {text, onClick, style={}} = e;
                         return (
-                            <button style={{display: 'inline-block', marginRight}}
+                            <button style={style}
                                     type='button' className='button std'
-                                    onClick={e.onClick} key={'extraBtn'+i}>
-                                {e.text}
+                                    onClick={onClick} key={'extraBtn'+i}>
+                                {text}
                             </button>
                         );
                     })}
-                    {help_id && <HelpIcon helpId={help_id} />}
-
                 </div>
+                {help_id && <HelpIcon helpId={help_id} />}
             </div>
         </div>
     );
@@ -110,6 +111,7 @@ FormPanel.propTypes = {
     style: PropTypes.object,
     inputStyle: PropTypes.object,
     submitBarStyle: PropTypes.object,
+    buttonStyle: PropTypes.object,
     onSubmit: PropTypes.func, // onSubmit(request) - callback that accepts table request, use with action, params, and title props
     onSuccess: PropTypes.func, // onSuccess(fields) - callback that takes fields object, its keys are the field keys for fields in the given group
     onCancel: PropTypes.func,

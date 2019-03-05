@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
@@ -17,22 +17,27 @@ import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
+const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace'}};
+var cFetchKey = undefined;
 
-export function AdvancedADQL({fieldKey, origFieldKey, groupKey, serviceUrl, style={}}) {
+export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={}}) {
 
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
-    const [prevServiceUrl, setPrevServiceUrl] = useState(null);                 // using a useState hook
     const adqlEl = useRef(null);                                                // using a useRef hook
 
-    const reloadSchemas = (serviceUrl) => {
+    useEffect(() => {
+        cFetchKey = Date.now();
+        const key = cFetchKey;
         loadTapSchemas(serviceUrl).then((tm) => {
-
-            const tableData = get(tm, 'tableData.data', []);
-            const cidx = getColumnIdx(tm, 'schema_name');
-            const treeData = tableData.map( (row) => ({key: `schema--${row[cidx]}`, title: row[cidx]}) );
-            setTreeData(treeData);
+            if (key === cFetchKey) {
+                const tableData = get(tm, 'tableData.data', []);
+                const cidx = getColumnIdx(tm, 'schema_name');
+                const treeData = tableData.map( (row) => ({key: `schema--${key}--${row[cidx]}`, title: row[cidx]}) );
+                setTreeData(treeData);
+            }
         });
-    };
+        // reload TAP schema when serviceUrl changes
+    }, [serviceUrl]);
 
     const onSelect = (p) => {
 
@@ -40,73 +45,49 @@ export function AdvancedADQL({fieldKey, origFieldKey, groupKey, serviceUrl, styl
         const textArea = node && node.firstChild;
 
         const [key=''] = p;
-        const [type, value] = key.split('--');
+        const [type, , value] = key.split('--');
         if (type === 'table') {
-            insertNewLine(textArea, `SELECT TOP 1000 * FROM ${value}`, fieldKey, groupKey);
+            insertNewLine(textArea, `SELECT TOP 1000 * FROM ${value}`, adqlKey, groupKey);
         } else if (type === 'column') {
-            insertAtCursor(textArea, `${value}`, fieldKey, groupKey);
+            insertAtCursor(textArea, `${value}`, adqlKey, groupKey);
         }
     };
 
     const onLoadData = (treeNode) => {
         return new Promise((resolve) => {
             const {eventKey, schema, title} = treeNode.props;
-
             if (schema) {
                 // it has schema info.. must be a table node.
-                loadTapColumns(serviceUrl, schema, title).then( (tm) => {
-                    const tableData = get(tm, 'tableData.data', []);
-                    const nidx = getColumnIdx(tm, 'column_name');
-                    const didx = getColumnIdx(tm, 'description');
-                    const cols = tableData.map( (row) => {
-                        const key = `column--${row[nidx]}`;
-                        const title = row[nidx] + (row[didx] ? ` (${row[didx]})` : '');
-                        return {key, title, isLeaf: true};
-                    });
-                    addChildNodes(treeData, eventKey, cols);
-                    setTreeData(cloneDeep(treeData));
-                    resolve();
-                });
+                expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeData)
+                    .then(() => resolve());
             } else {
-                loadTapTables(serviceUrl, title).then( (tm) => {
-                    const tableData = get(tm, 'tableData.data', []);
-                    const cidx = getColumnIdx(tm, 'table_name');
-                    const tables = tableData.map( (row) => ({key: `table--${row[cidx]}`, title: row[cidx], schema: title}) );
-                    addChildNodes(treeData, eventKey, tables);
-                    setTreeData(cloneDeep(treeData));
-                    resolve();
-                });
+                expandTables(serviceUrl, title, treeData, eventKey, setTreeData)
+                    .then(() => resolve());
             }
         });
     };
 
     const onClear = () => {
-        dispatchValueChange({fieldKey, groupKey, value: '', valid: true});
+        dispatchValueChange({fieldKey:adqlKey, groupKey, value: '', valid: true});
     };
 
     const onReset = () => {
-        const value = getFieldVal(groupKey, origFieldKey, '');
-        dispatchValueChange({fieldKey, groupKey, value, valid: true});
+        const value = getFieldVal(groupKey, defAdqlKey, '');
+        dispatchValueChange({fieldKey:adqlKey, groupKey, value, valid: true});
     };
 
     const treeNodes = convertToTreeNode(treeData);
-    const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace'}};
-
-
-    if (serviceUrl !== prevServiceUrl) {
-        reloadSchemas(serviceUrl);
-        setPrevServiceUrl(serviceUrl);
-    }
 
 
     return (
-            <SplitPane split='vertical' defaultSize={300} style={{position: 'relative', height: 600, ...style}}>
-                <SplitContent style={{overflow: 'auto'}}>
+            <SplitPane split='vertical' defaultSize={200} style={{position: 'relative', ...style}}>
+                <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
                     <b>Schema -> Table -> Column</b>
-                    <Tree defaultExpandAll showLine loadData={onLoadData} onSelect={onSelect}>
-                        {treeNodes}
-                    </Tree>
-
+                    <div  style={{overflow: 'auto', flexGrow: 1}}>
+                        <Tree defaultExpandAll showLine loadData={onLoadData} onSelect={onSelect}>
+                            {treeNodes}
+                        </Tree>
+                    </div>
                 </SplitContent>
                 <SplitContent style={{overflow: 'auto'}}>
                     <div className='flex-full'>
@@ -120,7 +101,7 @@ export function AdvancedADQL({fieldKey, origFieldKey, groupKey, serviceUrl, styl
                         <InputAreaFieldConnected
                             ref={adqlEl}
                             style={{width: 'calc(100% - 30px)', resize: 'none'}} rows={10}
-                            fieldKey={fieldKey}
+                            fieldKey={adqlKey}
                             tooltip='ADQL to submit to the selected TAP service'
                         />
                         <div style={{color: '#4c4c4c'}}>
@@ -163,12 +144,46 @@ export function AdvancedADQL({fieldKey, origFieldKey, groupKey, serviceUrl, styl
 }
 
 AdvancedADQL.propTypes= {
-    fieldKey:       PropTypes.string,
-    origFieldKey:   PropTypes.string,               // used for reset
     groupKey:       PropTypes.string,
+    adqlKey:        PropTypes.string,
+    tblNameKey:     PropTypes.string,
+    defAdqlKey:     PropTypes.string,      // used for reset
     serviceUrl:     PropTypes.string,
     style:          PropTypes.object
 };
+
+
+function expandTables(serviceUrl, title, treeData, eventKey, setTreeData) {
+    const key = cFetchKey;
+    return loadTapTables(serviceUrl, title).then( (tm) => {
+        if (cFetchKey === key) {
+            const tableData = get(tm, 'tableData.data', []);
+            const cidx = getColumnIdx(tm, 'table_name');
+            const tables = tableData.map( (row) => ({key: `table--${key}--${row[cidx]}`, title: row[cidx], schema: title}) );
+            addChildNodes(treeData, eventKey, tables);
+            setTreeData(cloneDeep(treeData));
+        }
+    });
+}
+
+function expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeData) {
+
+    const key = cFetchKey;
+    return loadTapColumns(serviceUrl, schema, title).then( (tm) => {
+        if (cFetchKey === key) {
+            const tableData = get(tm, 'tableData.data', []);
+            const nidx = getColumnIdx(tm, 'column_name');
+            const didx = getColumnIdx(tm, 'description');
+            const cols = tableData.map( (row) => {
+                const key = `column--${key}--${row[nidx]}`;
+                const title = row[nidx] + (row[didx] ? ` (${row[didx]})` : '');
+                return {key, title, isLeaf: true};
+            });
+            addChildNodes(treeData, eventKey, cols);
+            setTreeData(cloneDeep(treeData));
+        }
+    });
+}
 
 function addChildNodes(data, key, children) {
     for (let idx = 0; idx < data.length; idx++) {

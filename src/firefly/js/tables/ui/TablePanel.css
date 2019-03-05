@@ -160,7 +160,6 @@
 }
 
 .TablePanel__options--small {
-    z-index: 1;
     position: absolute;
     top: 1px;
     right: 1px;
