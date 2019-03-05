@@ -235,10 +235,10 @@ function stringAryToWorldPt(wpParts) {
  * @summary A point on the sky with a coordinate system
  * @param {number|string} lon - longitude in degrees, strings are converted to numbers
  * @param {number|string} lat - latitude in degrees, strings are converted to numbers
- * @param {CoordinateSys} coordSys - The coordinate system of this worldPt
+ * @param {CoordinateSys} [coordSys] - The coordinate system of this worldPt
  *
  * @param {String} [objName] -  object name used to create this worldPt
- * @param resolver - the resolver used to create this worldPt
+ * @param [resolver] - the resolver used to create this worldPt
  * @return {WorldPt}
  *
  *
@@ -246,7 +246,7 @@ function stringAryToWorldPt(wpParts) {
  * @public
  * @global
  */
-export function makeWorldPt(lon,lat,coordSys,objName,resolver) {
+export function makeWorldPt(lon,lat,coordSys= undefined,objName= undefined,resolver= undefined) {
     return new WorldPt(Number(lon),Number(lat),coordSys,objName,resolver) ;
 }
 

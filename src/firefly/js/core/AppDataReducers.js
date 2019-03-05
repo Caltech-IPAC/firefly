@@ -2,8 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
-
 import {SHOW_DROPDOWN} from './LayoutCntlr.js';
 import * as AppDataCntlr from './AppDataCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
@@ -93,31 +91,31 @@ const addTaskCount= function(state,action) {
     else {
         taskArray= [...taskArray,taskId];
     }
-    const taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
+    const taskCounters= Object.assign({}, state.taskCounters, {[componentId]:taskArray});
     return Object.assign({},state, {taskCounters});
 };
 
 const removeTaskCount= function(state,action) {
-    var {componentId,taskId}= action.payload;
+    const {componentId,taskId}= action.payload;
     if (!componentId && !taskId) return state;
-    var taskArray= state.taskCounters[componentId] || [];
+    let taskArray= state.taskCounters[componentId] || [];
     taskArray= taskArray.filter( (id) => id!==taskId);
-    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
+    const taskCounters= Object.assign({}, state.taskCounters, {[componentId]:taskArray});
     return Object.assign({},state, {taskCounters});
 };
 
 function addPreference(state,action) {
     if (!action.payload) return state;
-    var {name,value}= action.payload;
-    var preferences= Object.assign({},state.preferences,{[name]:value} );
+    const {name,value}= action.payload;
+    const preferences= Object.assign({},state.preferences,{[name]:value} );
     BrowserCache.put(APP_PREFERENCES,preferences);
     return Object.assign({},state,{preferences});
 }
 
 function removePreference(state,action) {
     if (!action.payload) return state;
-    var {name}= action.payload;
-    var preferences= Object.assign({},state.preferences);
+    const {name}= action.payload;
+    const preferences= Object.assign({},state.preferences);
     Reflect.deleteProperty(preferences,name);
     BrowserCache.put(APP_PREFERENCES,preferences);
     return Object.assign({},state,{preferences});
@@ -126,7 +124,7 @@ function removePreference(state,action) {
 function setUserInfo(state,action) {
     const userInfo = action.payload;
     return Object.assign({}, state, {userInfo});
-};
+}
 
 
 /**
@@ -171,7 +169,7 @@ function getInitState() {
 }
 
 function initPreferences() {
-    var prefs= BrowserCache.get(APP_PREFERENCES);
+    const prefs= BrowserCache.get(APP_PREFERENCES);
     return prefs || {};
 }
 

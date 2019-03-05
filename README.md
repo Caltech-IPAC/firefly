@@ -92,6 +92,16 @@ Goto http://localhost:8080/firefly to launch Firefly Viewer.
 The documentation is accessible via http://localhost:8080/firefly/docs/js/index.html
 
 
+#### Supported Browsers
+
+Firefly supports the following  browsers:
+
+ - safari >= 10, 
+ - chrome >= 67
+ - firefox >= 60 
+ - edge >= 16
+
+
 ## More Docs
 
 ####Firefly JavaScript API overview

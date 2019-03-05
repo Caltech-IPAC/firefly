@@ -219,7 +219,7 @@ export class RangeValues {
             a= alStrToConst[algorithm.toLowerCase()];
         }
 
-        return new RangeValues.make( btValue, lowerValue, btValue, upperValue,Number.NaN,2, a);
+        return RangeValues.make( btValue, lowerValue, btValue, upperValue,Number.NaN,2, a);
 
     }
 
