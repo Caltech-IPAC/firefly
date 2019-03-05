@@ -60,6 +60,7 @@ export const catalogWatcherDef = {
 export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 
 
+    const {tableManaged}= params;
     if (isEmpty(visRoot().plotViewAry) && !tableManaged) {
         return {tableManaged: false, ...params}; // no plots? , don't start until there are plots
     }
@@ -70,7 +71,6 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
     }
 
     const {payload}= action;
-    const {tableManaged}= params;
     if (payload.tbl_id && payload.tbl_id!==tbl_id) return params;
 
     if (!tableManaged && action.type!==TABLE_LOADED) {
