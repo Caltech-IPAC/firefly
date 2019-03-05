@@ -89,7 +89,7 @@ export default function makeWebpackConfig(config) {
     }
     const output =  {filename, path: out_path};
 
-    /*------------------------ PLUGIINS -----------------------------*/
+    /*------------------------ PLUGINS -----------------------------*/
     const plugins = [
         new webpack.DefinePlugin(globals),
     ];
@@ -107,9 +107,10 @@ export default function makeWebpackConfig(config) {
         );
     }
 
-    /*------------------------ MODULE -----------------------------*/
+    /*------------------------ RULES -----------------------------*/
     const rules = [
-        {   test : /\.(js|jsx)$/,
+        {
+            test : /\.(js|jsx)$/,
             include: [config.src, config.firefly_dir],
             loader: 'babel-loader',
             query: {
@@ -131,7 +132,8 @@ export default function makeWebpackConfig(config) {
                 plugins: ['transform-runtime']
             }
         },
-        {   test    : /\.css$/,
+        {
+            test    : /\.css$/,
             use: [
                 {
                     loader: 'style-loader'
@@ -141,7 +143,8 @@ export default function makeWebpackConfig(config) {
                 },
             ]
         },
-        {   test: /\.(png|jpg|gif)$/,
+        {
+            test: /\.(png|jpg|gif)$/,
             use: [{
                 loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
             }]
@@ -193,10 +196,10 @@ export default function makeWebpackConfig(config) {
         module: {rules},
         output,
         plugins,
-        stats: {maxModules: 0}
+        stats: {maxModules: 0},
+        performance: { hints: false }  // Warning disabled the references: https://webpack.js.org/guides/code-splitting/
     };
 
-    // console.log (JSON.stringify(webpack_config, null, 2));
     return webpack_config;
 }
 // ----------------------------------
