@@ -104,7 +104,7 @@ function adjustHighlightedRow(tableModel, highlightedRow) {
  */
 function adjustSelectInfo(tableModel, selectInfo) {
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
-    const newSelectCls = new SelectInfo.newInstance({rowCount: tableModel.totalRows}, selectInfoCls.offset);
+    const newSelectCls = SelectInfo.newInstance({rowCount: tableModel.totalRows}, selectInfoCls.offset);
 
     let   bNew = false;
 
