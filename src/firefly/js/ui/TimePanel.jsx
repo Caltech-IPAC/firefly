@@ -15,7 +15,7 @@ import {MJD, ISO} from './tap/TapUtil.js';
 import CALENDAR from 'html/images/datetime_picker_16x16.png';
 const invalidDate = 'invalid date/time';
 
-const iconMap = {'calendar': {icon: CALENDAR, title: 'show the calendar for selection'}};
+const iconMap = {'calendar': {icon: CALENDAR, title: 'Show the calendar for selecting date/time'}};
 
 
 
@@ -48,8 +48,8 @@ class TimePanelView extends PureComponent {
              </div>) : null;
 
         const spaceForImage = 16+ImagePadding*2;
-        const newInputStyle = Object.assign({paddingRight: iconField ? spaceForImage : 1}, inputStyle,
-                                            {width: iconField ? inputWidth - spaceForImage : inputWidth-1});
+        const newInputStyle = Object.assign({paddingRight: iconField ? spaceForImage : 2}, inputStyle,
+                                            {width: iconField ? inputWidth - spaceForImage+2 : inputWidth});
         const placeHolder = timeMode === ISO ? 'YYYY-MM-DD HH:mm:ss' : 'float number .... ';
         const newWrapperStyle = clone(wrapperStyle, (iconField ? {width: '%100'} : {}));
         const inputFields = {
@@ -82,7 +82,6 @@ class TimePanelView extends PureComponent {
 TimePanelView.propTypes = {
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
-    label : PropTypes.string,
     showHelp   : PropTypes.bool,
     feedback: PropTypes.string,
     feedbackStyle: PropTypes.object,

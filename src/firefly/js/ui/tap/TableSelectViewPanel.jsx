@@ -13,7 +13,7 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
 import {getColumnValues} from '../../tables/TableUtil.js';
 
-import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
+import {TableSearchMethods, tableSearchMethodsConstraints, SpattialPanelWidth} from './TableSearchMethods.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
 import {loadTapColumns, loadTapTables, loadTapSchemas, getTapBrowserState, setTapBrowserState} from './TapUtil.js';
 import {NameSelect, NameSelectField, selectTheme} from './Select.jsx';
@@ -27,6 +27,8 @@ import {RadioGroupInputField} from '../RadioGroupInputField';
 import './TableSelectViewPanel.css';
 import {HelpIcon} from '../HelpIcon';
 import {showInfoPopup} from '../PopupUtil.jsx';
+
+const MINWIDTH = 915;
 
 /**
  * group key for fieldgroup comp
@@ -81,7 +83,7 @@ export class TapSearchPanel extends PureComponent {
 
         const rightBtns = selectBy === 'basic' ?[{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql, style: {marginLeft: 50}}] :  [];
 
-        const style = {resize: 'both', overflow: 'hidden', paddingBottom: 5, height: 600, width: 915, minHeight: 600, minWidth: 915};
+        const style = {resize: 'both', overflow: 'hidden', paddingBottom: 5, height: 600, width: 915, minHeight: 600, minWidth: MINWIDTH};
 
         return (
             <div style={style}>
@@ -160,7 +162,7 @@ export class TapSearchPanel extends PureComponent {
                 [
                     {fieldKey: 'defAdqlKey', value: adql},
                     {fieldKey: 'adqlQuery', value: adql},
-                    {fieldKey: 'selectBy', value: 'adql'},
+                    {fieldKey: 'selectBy', value: 'adql'}
                 ]
             );
         }
@@ -223,6 +225,10 @@ class BasicUI extends PureComponent {
         const {serviceUrl} = this.props;
         const {error, schemaOptions, tableOptions, schemaName, tableName, columnsModel}= this.state;
 
+        const tapSearchMinWidth = MINWIDTH - 20;  // less than the size of min-width of TAP Search panel
+        const splitDef = Math.min(SpattialPanelWidth+80, tapSearchMinWidth);
+        const splitMax =   Math.min(SpattialPanelWidth+150, tapSearchMinWidth);
+
         if (error) {
             return (<div>{error}</div>);
         }
@@ -267,7 +273,7 @@ class BasicUI extends PureComponent {
                         />
                     </div>
                     <div className='expandable'>
-                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={540}>
+                        <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                             <SplitContent>
                                 {columnsModel ?  <TableSearchMethods columnsModel={columnsModel}/>
                                     : <div className='loading-mask'/>
