@@ -254,7 +254,7 @@ public class HorizonsEphPairs {
             name = args[0];
             ;
         } else {
-            name = "2150642";
+            name = "jupiter";
         }
         System.out.println("name = " + name);
 

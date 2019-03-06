@@ -46,6 +46,7 @@ import {HiPSId, URL_COL} from '../visualize/HiPSListUtil.js';
 import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel,
         getHiPSSourcesChecked, sourcesPerChecked} from './HiPSSurveyListDisplay.jsx';
 import {getCellValue} from '../tables/TableUtil.js';
+import {NaifidPanel} from "./NaifidPanel";
 
 
 export class TestQueriesPanel extends PureComponent {
@@ -94,6 +95,9 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='Periodogram' id='periodogram'>
                                  <div>{renderPeriodogram(fields)}</div>
                             </Tab>
+                            <Tab name='NAIF-ID' id='naifid'>
+                                <div>{renderNaifid(fields)}</div>
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -116,6 +120,19 @@ TestQueriesPanel.defaultProps = {
 
 function hideSearchPanel() {
     dispatchHideDropDown();
+}
+
+
+function renderNaifid(fields){
+    return(
+        <div style={{height:100, margin:5}}>
+           <NaifidPanel fieldKey='mTargetName' labelWidth={110}
+                        initialState={{value: '', size: 4, label: 'Moving Target Name:'}}
+                        popStyle={{width: 300, padding:2}}
+           />
+
+        </div>
+    );
 }
 
 

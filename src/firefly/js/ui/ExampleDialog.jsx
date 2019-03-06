@@ -26,6 +26,7 @@ import {updateSet} from '../util/WebUtil.js';
 import {CollapsiblePanel} from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
+import {NaifidPanel} from "./NaifidPanel";
 
 
 
@@ -342,6 +343,7 @@ function FieldGroupTestView ({fields}) {
                     reducerFunc={exDialogReducer} keepState={true}>
             <InputGroup labelWidth={110}>
                 <TargetPanel examples={defaultExamples} />
+                <NaifidPanel label={'NAIF-ID:'} popStyle={{width: 300, padding:2}}/>
                 <SuggestBoxInputField
                     fieldKey='suggestion1'
                     initialState= {{

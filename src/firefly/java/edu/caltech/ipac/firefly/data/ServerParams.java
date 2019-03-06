@@ -130,6 +130,7 @@ public class ServerParams {
     public static final String DELETE = "CmdDelete";
     public static final String JSON_DATA = "JsonData";
     public static final String RESOLVE_NAME= "CmdResolveName";
+    public static final String RESOLVE_NAIFID = "CmdResolveNaifid";
     public static final String PROGRESS = "CmdProgress";
     public static final String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";
     public static final String GET_STATUS= "status";

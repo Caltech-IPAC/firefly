@@ -116,6 +116,7 @@ export const ServerParams = {
         RAW_DATA_SET : 'RawDataSet',
         JSON_DATA : 'JsonData',
         RESOLVE_NAME: 'CmdResolveName',
+        RESOLVE_NAIFID: 'CmdResolveNaifid',
         PROGRESS : 'CmdProgress',
         SUB_BACKGROUND_SEARCH: 'subBackgroundSearch',
         GET_STATUS: 'status',
