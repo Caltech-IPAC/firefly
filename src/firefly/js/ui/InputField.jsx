@@ -48,11 +48,11 @@ export class InputField extends PureComponent {
         this.setState(nState);
     }
 
-
-
-    static getDerivedStateFromProps(props) {
-        return {value: props.value};
+    UNSAFE_componentWillReceiveProps(nProps) {
+            this.setState({value: nProps.value});
     }
+
+
 
     render() {
 
