@@ -1,9 +1,8 @@
-import React, {PureComponent} from 'react';
+import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {has, get, isNil} from 'lodash';
 
-import {InputFieldView} from './InputFieldView.jsx';
-import {NOT_CELL_DATA} from '../tables/ui/TableRenderer.js';
+import {InputFieldView, propTypes} from './InputFieldView.jsx';
+import {NOT_CELL_DATA} from '../tables/ui/TableRenderer.js';        // this is not right.. should revisit
 
 
 function shouldAct(e, actOn) {
@@ -16,105 +15,57 @@ function shouldAct(e, actOn) {
     }
 }
 
-function newState({fieldKey='undef', valid=true, message='', value=''}) {
-    return {fieldKey, valid, message, value};
-}
+export const InputFieldActOn = React.memo(({View, fieldKey, valid=true, value, onChange, validator, actOn, ...others}) => {
+    const [fieldState, setFieldState] = useState({valid, value, message:''});
 
-export class InputField extends PureComponent {
-    constructor(props) {
-        super(props);
+    useEffect(() => {
+        setFieldState({...fieldState, value});
+    }, [value]);
 
-        this.state = newState({value: props.value});
-        this.handleChanges = this.handleChanges.bind(this);
-    }
-
-    handleChanges(e) {
-        var {fieldKey, validator, onChange, label='', actOn} = this.props;
-        const value = e.target.value;
-        const nState = {fieldKey, value, notValidate: true};
+    const handleChanges = (e) => {
+        var {label=''} = others;
+        let value = e.target.value;
+        const {message, valid} = fieldState;
         if (shouldAct(e, actOn)) {
-            var {valid, message, ...others} = validator ? validator(value) : {valid: true, message: ''};
-            var vadVal = get(others, 'value');  // vadVal has value as undefined in case no validator exists.
+            const {valid, message, value:vadVal} = validator ? validator(value) : {valid: true, message: ''};
             if (vadVal && vadVal !== NOT_CELL_DATA) {
-                nState.value = others.value;
+                value = vadVal;
             }
-
-            nState.valid = valid;
-            nState.message = valid ? '' : (label + message).replace('::', ':');
-            nState.notValidate = false;
-            onChange && onChange(nState);
+            const nMessage = valid ? '' : (label + message).replace('::', ':');
+            onChange && onChange({fieldKey, valid, value, message: nMessage});
         }
 
-        this.setState(nState);
-    }
-
-    UNSAFE_componentWillReceiveProps(nProps) {
-            this.setState({value: nProps.value});
-    }
-
-
-
-    render() {
-
-        var {label, labelWidth, tooltip, visible, inline, size, placeholder,
-             showWarning, style, wrapperStyle, labelStyle, validator, form} = this.props;
-        var {value, notValidate} = this.state;
-        var {valid=true, message=''} = (!isNil(notValidate) && notValidate)? {} : (validator ? validator(value) : {});
-
-        return (
-            <InputFieldView
-                valid={valid}
-                visible= {visible}
-                message={message}
-                onChange={this.handleChanges}
-                onBlur={this.handleChanges}
-                onKeyPress={this.handleChanges}
-                value={value}
-                tooltip={tooltip}
-                label={label}
-                style={style}
-                inline={inline}
-                labelWidth={labelWidth}
-                size={size}
-                showWarning={showWarning}
-                wrapperStyle={wrapperStyle}
-                labelStyle={labelStyle}
-                placeholder={placeholder}
-                form={form}
-            />
-        );
-
+        setFieldState({valid, value, message});
     };
 
-}
+    return (
+        <View
+            {...others}
+            {...fieldState}
+            onChange={handleChanges}
+            onBlur={handleChanges}
+            onKeyPress={handleChanges}
+        />
+    );
+});
 
+
+export const InputField = (props) => <InputFieldActOn View={InputFieldView} {...props}/>;
 
 InputField.propTypes = {
+    ...propTypes,
     fieldKey: PropTypes.string,
-    label: PropTypes.string,
-    labelWidth: PropTypes.number,
-    validator: PropTypes.func,
-    tooltip: PropTypes.string,
-    visible: PropTypes.bool,
-    inline: PropTypes.bool,
-    size: PropTypes.number,
-    style: PropTypes.object,
-    wrapperStyle: PropTypes.object,
-    labelStyle: PropTypes.object,
-    value: PropTypes.string,
-    valid: PropTypes.bool,
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
-    showWarning : PropTypes.bool,
-    placeholder: PropTypes.string,
-    form: PropTypes.string
+    validator: PropTypes.func
 };
 
 InputField.defaultProps = {
+    fieldKey:'undef',
+    value: '',
     showWarning : true,
     actOn: ['changes'],
     labelWidth: 0,
-    value: '',
     inline: false,
     visible: true
 };

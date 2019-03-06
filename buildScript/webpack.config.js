@@ -8,6 +8,8 @@ import fs from 'fs';
 
 const exclude_dirs = /(node_modules|java|python|config|test)/;
 
+process.traceDeprecation = true;
+
 /**
  * A helper function to create the webpack config object to be sent to webpack module bundler.
  * @param {Object}  config configuration parameters used to create the webpack config object.
@@ -230,7 +232,7 @@ export default function makeWebpackConfig(config) {
 
 function firefly_loader(loadScript, outpath, debug=true) {
     return function () {
-        this.plugin('done', function (stats) {
+        this.hooks.done.tap('done', function (stats) {
             const hash = debug ? 'dev' : stats.hash;
             //var cxt_name = stats.compilation.name;
 

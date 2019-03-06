@@ -73,6 +73,7 @@ describe('TableUtil:', () => {
         const sInfoCls = SelectInfo.newInstance({rowCount: 3});
         sInfoCls.setRowSelect(1, true);
         sInfoCls.setRowSelect(2, true);
+        tableInfo.selectInfo = sInfoCls.data;
         TableUtil.getSelectedData('mocked', ['a', 'b', 'd'])
             .then(({totalRows, tableData}) => {
 

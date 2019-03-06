@@ -71,13 +71,24 @@ export class HeaderCell extends PureComponent {
     }
 }
 
+const blurEnter = ['blur','enter'];
 class Filter extends SimpleComponent{
+
+    constructor(props) {
+        super(props);
+        this.validator = (cond) => {
+            const {tbl_id} = this.props;
+            const name = get(this.state, 'col.name');
+            return FilterInfo.conditionValidator(cond, tbl_id, name);
+        };
+    }
 
     getNextState(np) {
         const {col={}, tbl_id} = np;
         const ncol = getColumn(getTblById((tbl_id)), col.name);
         return {col: ncol};
     }
+
     render() {
         const {onFilter, filterInfo, tbl_id} = this.props;
         const {col} = this.state;
@@ -86,7 +97,6 @@ class Filter extends SimpleComponent{
         if (!filterable) return <div style={{height:19}} />;      // column is not filterable
 
         let atElRef;
-        const validator = (cond) => FilterInfo.conditionValidator(cond, tbl_id, name);
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
         const onEnumClicked = () => {
@@ -97,12 +107,12 @@ class Filter extends SimpleComponent{
         return (
             <div style={{height:29, display: 'inline-flex', alignItems: 'center', width: '100%'}}>
                 <InputField
-                    validator={validator}
+                    validator={this.validator}
                     fieldKey={name}
                     tooltip={FILTER_CONDITION_TTIPS}
                     value={filterInfoCls.getFilter(name)}
-                    onChange={(v) => onFilter(v)}
-                    actOn={['blur','enter']}
+                    onChange={onFilter}
+                    actOn={blurEnter}
                     showWarning={false}
                     style={filterStyle}
                     wrapperStyle={filterStyle}/>

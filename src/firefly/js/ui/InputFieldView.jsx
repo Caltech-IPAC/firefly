@@ -156,3 +156,4 @@ InputFieldView.defaultProps= {
     type: 'text'
 };
 
+export const propTypes = InputFieldView.propTypes;

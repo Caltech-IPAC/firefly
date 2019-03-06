@@ -147,3 +147,4 @@ InputAreaFieldView.defaultProps= {
     cols:50
 };
 
+export const propTypes = InputAreaFieldView.propTypes;

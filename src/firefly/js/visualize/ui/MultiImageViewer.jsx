@@ -77,7 +77,8 @@ export class MultiImageViewer extends PureComponent {
         const {viewerId,gridDefFunc}= this.props;
         const {viewer,visRoot,dlAry}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
-        if (!viewer || isEmpty(viewer.itemIdAry)) {
+        if (!viewer) return false;
+        if (isEmpty(viewer.itemIdAry)) {
             if (!gridDefFunc) return false;
             if (isEmpty(gridDefFunc([]))) return false; // it is possible the function will returns some messages
         }
