@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import {get, isEmpty} from 'lodash';
 import {createInputCell} from '../../tables/ui/TableRenderer.js';
-import {FILTER_TTIPS, FilterInfo} from '../../tables/FilterInfo.js';
+import {FILTER_CONDITION_TTIPS, FilterInfo} from '../../tables/FilterInfo.js';
 
 import {getColumnIdx, getTblById, watchTableChanges} from '../../tables/TableUtil.js';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
@@ -28,7 +28,7 @@ export function ColConstraintsPanel({tableModel, onTableChanged, style}) {
     }, [tableModel]);
 
 
-    const newInputCell = createInputCell(FILTER_TTIPS,
+    const newInputCell = createInputCell(FILTER_CONDITION_TTIPS,
                 15,
                 FilterInfo.conditionValidatorNoAutoCorrect,
                 onTableChanged, {width: '100%', boxSizing: 'border-box'});

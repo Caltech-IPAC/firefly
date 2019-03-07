@@ -13,7 +13,7 @@ import {BasicTableView} from '../../tables/ui/BasicTableView.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
-import {FilterInfo, FILTER_TTIPS} from '../../tables/FilterInfo.js';
+import {FilterInfo, FILTER_CONDITION_TTIPS} from '../../tables/FilterInfo.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
@@ -366,7 +366,7 @@ class ConstraintPanel extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.newInputCell = createInputCell(FILTER_TTIPS,
+        this.newInputCell = createInputCell(FILTER_CONDITION_TTIPS,
             15,
             FilterInfo.conditionValidatorNoAutoCorrect,
             this.props.onTableChanged, {width: '100%', boxSizing: 'border-box'});
