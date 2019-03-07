@@ -1,32 +1,24 @@
-import React, {useEffect} from 'react';
-import {get, isEmpty} from 'lodash';
+import React from 'react';
+import {get, isEmpty, uniqueId} from 'lodash';
 import {createInputCell} from '../../tables/ui/TableRenderer.js';
 import {FILTER_TTIPS, FilterInfo} from '../../tables/FilterInfo.js';
 
-import {getColumnIdx, getTblById, watchTableChanges} from '../../tables/TableUtil.js';
-import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
-import * as TblCntlr from '../../tables/TablesCntlr.js';
+import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
-import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
-import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 
 /**
- * @summary component to display the data restrictions into a tabular format
+ * @summary component to display column constraints and selections using a table
+ * Constraints table is represented by a client table.
+ * Its original table model holds all constraints and selections.
  * @param {Object} props
  * @returns {Object} constraint table
  */
-export function ColConstraintsPanel({tableModel, onTableChanged, style}) {
-    useEffect( () => {
-        // when table changes, we need to sync the new table with the field group
-        // currently doing it in TableColumnsConstraints
-        onTableChanged && onTableChanged();
-
-        return watchTableChanges(tableModel.tbl_id,
-                [TblCntlr.TABLE_SELECT, TblCntlr.TABLE_LOADED],
-                (action) => onTableChanged && onTableChanged(),
-                `ucd-${tableModel.tbl_id}-select`); // watcher id for debugging
-    }, [tableModel]);
-
+export function ColumnConstraintsPanel({tableModel, style}) {
+    const onTableChanged = () => {
+        const tbl = getTblById(tableModel.tbl_id);
+        if (!tbl) return;
+        mergeConstraintsIntoOrig(tbl);
+    };
 
     const newInputCell = createInputCell(FILTER_TTIPS,
                 15,
@@ -42,7 +34,7 @@ export function ColConstraintsPanel({tableModel, onTableChanged, style}) {
                     <div className={'TablePanel__wrapper--border'}>
                         <div className='TablePanel__table' style={{top: 0}}>
                             <TablePanel
-                                key={tableModel.tbl_id}
+                                key={uniqueId()}
                                 tbl_ui_id={tbl_ui_id}
                                 tableModel={tableModel}
                                 showToolbar={false}
@@ -63,30 +55,16 @@ export function ColConstraintsPanel({tableModel, onTableChanged, style}) {
     );
 }
 
-export const ColumnConstraintsPanel = fieldGroupConnector(ColConstraintsPanel, getProps, null, null);
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params,
-        {
-            onTableChanged: () => handleOnTableChanged(params, fireValueChange)
-        });
-}
-
-/**
- * @summary update the state based on the change of column search constraints or column selection
- * @param {Object} params
- * @param {Function} fireValueChange
- */
-function handleOnTableChanged(params, fireValueChange) {
-    const {tbl_id} = params.tableModel;
-    const tbl = getTblById(tbl_id);
-
-    if (!tbl) return;
-
+export function getTableConstraints(tbl_id) {
+    const tbl = get(getTblById(tbl_id), 'origTableModel');
+    if (!tbl) {
+        return;
+    }
     const tbl_data = tbl.tableData.data;
     const sel_info  =  tbl.selectInfo;
     const filters = {};
-    let sqlTxt = '';
+    let whereFragment = '';
     let errors = '';
 
     if (!tbl_data) return;
@@ -103,10 +81,10 @@ function handleOnTableChanged(params, fireValueChange) {
                 const {valid, value} = FilterInfo.conditionValidatorNoAutoCorrect(v);
 
                 if (!valid) {
-                    errors += (errors.length > 0 ? ` ${value}` : `Invalid constraints: ${value}`);
+                    errors += (errors.length > 0 ? `, "${value}"` : `Invalid constraints: "${value}"`);
                 } else if (v) {
-                    const oneSql = `${colName} ${v}`;
-                    sqlTxt += (sqlTxt.length > 0 ? ` AND ${oneSql}` : oneSql);
+                    const oneConstraint = `${colName} ${v}`;
+                    whereFragment += (whereFragment.length > 0 ? ` AND ${oneConstraint}` : oneConstraint);
                 }
             });
         }
@@ -114,8 +92,7 @@ function handleOnTableChanged(params, fireValueChange) {
 
     // collect the names of all selected columns
     let allSelected = true;
-
-    let selCols = tbl_data.reduce((prev, d, idx) => {
+    let selcolsFragment = tbl_data.reduce((prev, d, idx) => {
             if ((sel_info.selectAll && (!sel_info.exceptions.has(idx))) ||
                 (!sel_info.selectAll && (sel_info.exceptions.has(idx)))) {
                 prev += d[0] + ',';
@@ -125,38 +102,11 @@ function handleOnTableChanged(params, fireValueChange) {
             return prev;
         }, '');
 
-    if (isEmpty(selCols)) {
-        selCols = '';
+    if (isEmpty(selcolsFragment) || allSelected) {
+        selcolsFragment = '';
     }
 
-    // the value of this input field is a string
-    const val = getFieldVal(params.groupKey, params.fieldKey); //get(params, 'value', '');
-    // ++++++++++++++++++++++++++++
-    // ++++++ WARNING!!!!!+++++++++
-    // ++++++++++++++++++++++++++++
-    // YOU ONLY CARE ABOUT CHANGES ON SELECTED COLUMNS AND CONSTRAINTS  INPUT FIELD
-    //
-    // CHECK IF FIREVALUE IS REQUIRED HERE EVERYTIME IF PREVIOUS VALUE HAS CHANGED
-    // BECAUSE THIS WILL GET CALLED TWICE (TABLE AND FIELDGROUP) AND
-    // CAN BECOME AN ENDLESS LOOP IF IT FIRES AGAIN WITHOUT CHECKING
-    // BASICALLY IMPLEMENTING HERE THE 'ONCHANGE' OF THE TABLEVIEW USED IN A FORM
-
-    if (val.constraints !== sqlTxt || val.selcols !== selCols || errors !== val.errorConstraints) {
-        mergeConstraintsIntoOrig(tbl);
-        fireValueChange({
-            value:  {constraints: sqlTxt, selcols: selCols, errorConstraints: errors, filters}
-        });
-    }
-}
-
-/**
- * @summary reset table constraints state
- * @param {string} groupKey
- * @param {string} fieldKey
- */
-export function resetConstraints(groupKey, fieldKey) {
-    const value = {constraints: '', selcols: '', filters: {}, errorConstraints:''};
-    dispatchValueChange({value, fieldKey, groupKey, valid: true});
+    return {whereFragment, selcolsFragment, errors, filters};
 }
 
 /**

@@ -262,3 +262,11 @@ export function setSelectInfo(request, selectInfo) {
         set(request, 'META_INFO.selectInfo', SelectInfo.newInstance(selectInfo).toString());
     }
 }
+
+/**
+ * set timestamp parameter to prevent search results from caching
+ * @param {TableRequest} request
+ */
+export function setNoCache(request) {
+    set(request, '__searchID', Date.now());
+}

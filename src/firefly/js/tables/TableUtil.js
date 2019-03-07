@@ -688,7 +688,7 @@ export function getAsyncTableSourceUrl(tbl_ui_id, params) {
     const blob = new Blob([ipacTable]);
     //const file = new File([new Blob([ipacTable])], filename);
     return doUpload(blob).then( ({status, cacheKey}) => {
-        const request = makeFileRequest('save as text', cacheKey, {pageSize: MAX_ROW});
+        const request = makeFileRequest('save as text', cacheKey, null, {pageSize: MAX_ROW});
         return makeTableSourceUrl(columns, request, params);
     });
 }
