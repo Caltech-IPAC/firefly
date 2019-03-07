@@ -25,14 +25,17 @@ export const InputFieldActOn = React.memo(({View, fieldKey, valid=true, value, o
     const handleChanges = (e) => {
         var {label=''} = others;
         let value = e.target.value;
-        const {message, valid} = fieldState;
+        let {message, valid} = fieldState;
         if (shouldAct(e, actOn)) {
-            const {valid, message, value:vadVal} = validator ? validator(value) : {valid: true, message: ''};
-            if (vadVal && vadVal !== NOT_CELL_DATA) {
-                value = vadVal;
+            if (validator) {
+                const rval = validator(value) || {};
+                valid = rval.valid;
+                message = valid ? '' : (label + rval.message).replace('::', ':');
+                if (rval.value !== NOT_CELL_DATA) {
+                    value = rval.value;
+                }
             }
-            const nMessage = valid ? '' : (label + message).replace('::', ':');
-            onChange && onChange({fieldKey, valid, value, message: nMessage});
+            onChange && onChange({fieldKey, valid, value, message});
         }
 
         setFieldState({valid, value, message});
