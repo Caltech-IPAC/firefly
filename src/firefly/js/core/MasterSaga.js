@@ -64,12 +64,15 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  * @public
  * @name TableWatchFunc
  * @function
- * @desc Like a normal watch with following exceptions:
- *         - one started per table
- *         - tbl_id is first parameter.
- *         - The params object with always include a options and a sharedData property. They may be undefined.
- *         - The options object should be thought of as read only. It should not be modified.
- *         - It is call the first time with the action undefined.  This can be for initialization.  The table will beloaded
+ * @summary Table watcher function
+ * @description Like a normal watch with following exceptions:
+ * <ul>
+ * <li> one started per table
+ * <li> tbl_id is first parameter.
+ * <li> The params object with always include a options and a sharedData property. They may be undefined.
+ * <li> The options object should be thought of as read only. It should not be modified.
+ * <li> It is call the first time with the action undefined.  This can be for initialization.  The table will beloaded
+ * </ul>
  * @param {String} tbl_id the table id
  * @param {Action} action - the action
  * @param {Function} cancelSelf - function to cancel, should be call when table is removed
@@ -101,18 +104,16 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  * @summary Add a table type watcher definition. Test every table (existing or new) and if the test is passed then create
  * a table type watcher for that table.
  *
- * @global
- * @public
- *
- *
- * A table type watcher, by using the payload definition will start a single watch for ever table that is newly loaded
+ * @description A table type watcher, by using the payload definition will start a single watch for ever table that is newly loaded
  * or previously loaded that passes the 'testTable' function test.
  * These watchers will have the same life time of the table they are watching.
  * A  TableType watcher is like a normal watcher with following exceptions:
- *         - tbl_id is first parameter.
- *         - The params object with always include a options and a sharedData property. They may be undefined.
- *         - The options object should be thought of as read only. It should not be modified.
- *         - It is call the first time with the action undefined.  This can be for initialization.  The table will beloaded
+ * <ul>
+ * <li> tbl_id is first parameter.
+ * <li> The params object with always include a options and a sharedData property. They may be undefined.
+ * <li> The options object should be thought of as read only. It should not be modified.
+ * <li> It is call the first time with the action undefined.  This can be for initialization.  The table will beloaded
+ * </ul>
  *
  * @param {object}   p
  * @param {String} p.id a unique identifier for this watcher
@@ -130,6 +131,9 @@ export function dispatchAddActionWatcher({id, actions, callback, params={}}) {
  * @see TableWatchFunc
  * @see TestWatchFunc
  *
+ * @public
+ * @function dispatchAddTableTypeWatcherDef
+ * @memberof firefly.action
  */
 export function dispatchAddTableTypeWatcherDef({id, actions, excludes= [], testTable= ()=>true,
                                              watcher, options={}, enabled= true, stopPropagation= false,
