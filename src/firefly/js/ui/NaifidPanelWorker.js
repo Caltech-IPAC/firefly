@@ -3,10 +3,10 @@
  */
 
 //-----------------
-import {getRootPath} from '../util/BrowserUtil.js';
+import {getRootURL} from '../util/BrowserUtil.js';
 import {fetchUrl} from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams';
-import {toBoolean} from "../util/WebUtil";
+import {toBoolean} from '../util/WebUtil';
 
 
 export {formatPosForTextField} from '../data/form/PositionFieldDef.js';
@@ -44,7 +44,7 @@ function makeResolverPromise(objName) {
 
 function makeSearchPromise(objName) {
     let rejectFunc= null;
-    const url= `${getRootPath()}sticky/CmdSrv?objName=${objName}&cmd=${ServerParams.RESOLVE_NAIFID}`;
+    const url= `${getRootURL()}sticky/CmdSrv?objName=${objName}&cmd=${ServerParams.RESOLVE_NAIFID}`;
     const searchPromise= new Promise(
         function(resolve, reject) {
             let fetchOptions = {};
