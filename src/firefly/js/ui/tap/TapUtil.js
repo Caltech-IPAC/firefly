@@ -1,8 +1,9 @@
 import {logError} from '../../util/WebUtil.js';
-import {makeFileRequest} from '../../tables/TableRequestUtil.js';
+import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {hashCode} from '../../util/WebUtil.js';
 
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
 export const HeaderFont={fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
@@ -29,15 +30,15 @@ export function updateTapBrowserState(updates) {
     return Object.assign({}, tapBrowserState, updates);
 }
 
-export function getColumnsTblId(tableName) {
+export function getColumnsTblId(serviceUrl, tableName) {
     // table name is unique across schemas
-    return `${tableName}-tapCols`;
+    return `${tableName}-tapCols-${hashCode(serviceUrl)}`;
 }
 
 export function loadTapSchemas(serviceUrl) {
 
     const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.schemas';
-    const request = makeFileRequest('schemas', url);
+    const request = makeFileRequest('schemas', url, null, {pageSize: MAX_ROW});
 
     return doFetchTable(request).then((tableModel) => {
         if (tableModel.error) {
@@ -64,7 +65,7 @@ export function loadTapSchemas(serviceUrl) {
 export function loadTapTables(serviceUrl, schemaName) {
 
     const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.tables+WHERE+schema_name+like+\'' + schemaName + '\'';
-    const request = makeFileRequest('tables', url);
+    const request = makeFileRequest('tables', url, null, {pageSize: MAX_ROW});
 
     return doFetchTable(request).then((tableModel) => {
         if (tableModel.error) {
@@ -97,7 +98,7 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
         // 'QUERY=SELECT+column_name,description,unit,datatype,ucd,utype,principal+' +
         // 'FROM+TAP_SCHEMA.columns+WHERE+table_name+like+\'' + tableName + '\'';
 
-    const request = makeFileRequest('columns', url, undefined, {tbl_id: getColumnsTblId(tableName)});
+    const request = makeFileRequest('columns', url, undefined, {tbl_id: getColumnsTblId(serviceUrl, tableName), pageSize: MAX_ROW});
 
     return doFetchTable(request).then((tableModel) => {
         if (tableModel.error) {

@@ -57,9 +57,9 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
     for (let i = 0; i < colValStats.length; i++) {
             data[i] = [
                         colValStats[i].name,
-                        colValStats[i].unit,
+                        colValStats[i].units,
                         colValStats[i].type,
-                        colValStats[i].descr
+                        colValStats[i].desc
             ];
     }
 

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Select, {components} from 'react-select';
 import {truncate} from 'lodash';
 import LOADING from 'html/images/gxt/loading.gif';
-import {HeaderFont} from './TapUtil.js';
 
 import {fieldGroupConnector} from '../FieldGroupConnector';
 
@@ -73,7 +72,7 @@ function formatGroupLabel(data) {
     return (
         <div style={groupStyles}>
             <span>{data.options.length} {data.label} </span>
-            <span>(todo: browser)</span>
+            {false && <span>(todo: browser)</span>}
         </div>
     );
 }

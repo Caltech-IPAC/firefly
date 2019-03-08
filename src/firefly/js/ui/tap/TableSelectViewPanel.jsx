@@ -10,7 +10,7 @@ import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/Fi
 import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {makeTblRequest} from '../../tables/TableRequestUtil.js';
+import {makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
 import {getColumnValues} from '../../tables/TableUtil.js';
 
 import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
@@ -20,13 +20,13 @@ import {NameSelect, NameSelectField, selectTheme} from './Select.jsx';
 import {showYesNoPopup} from '../PopupUtil.jsx';
 
 import {dispatchHideDialog} from '../../core/ComponentCntlr';
-import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
-import {resetConstraints} from './ColumnConstraintsPanel.jsx';
+import {TableColumnsConstraints, TableColumnsConstraintsToolbar, tableColumnsConstraints} from './TableColumnsConstraints.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField';
 
 
 import './TableSelectViewPanel.css';
 import {HelpIcon} from '../HelpIcon';
+import {showInfoPopup} from '../PopupUtil.jsx';
 
 /**
  * group key for fieldgroup comp
@@ -62,7 +62,7 @@ export class TapSearchPanel extends PureComponent {
         });
 
         if (!getFieldVal(gkey,'adqlQuery')) {
-            const sampleQuery = getSampleQuery(this.state.serviceUrl);
+            const sampleQuery = ''; //getSampleQuery(this.state.serviceUrl);
             dispatchValueChange({groupKey: gkey, fieldKey: 'adqlQuery', placeholder: sampleQuery, value: sampleQuery});
         }
     }
@@ -122,6 +122,7 @@ export class TapSearchPanel extends PureComponent {
                                     options: [{label: 'Single Table', value: 'basic'}, {label: 'ADQL', value: 'adql'}],
                                     tooltip: 'Please select an interface type to use'
                                 }}
+                                wrapperStyle={{alignSelf: 'center'}}
                             />
                         </div>
                         {selectBy === 'basic' && <BasicUI  serviceUrl={serviceUrl}/>}
@@ -140,7 +141,7 @@ export class TapSearchPanel extends PureComponent {
     onTapServiceOptionSelect(selectedOption) {
         if (selectedOption) {
             const selectedTapService = selectedOption.value;
-            const sampleQuery = getSampleQuery(selectedTapService);
+            const sampleQuery = ''; //getSampleQuery(selectedTapService);
             dispatchMultiValueChange(gkey,
                 [
                     {fieldKey: 'defAdqlKey', value: sampleQuery},
@@ -173,7 +174,7 @@ function AdqlUI({serviceUrl}) {
         <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
             <div style={{ display: 'inline-flex', alignItems: 'center'}}>
                 <div className='TapSearch__section--title'>3. Advanced ADQL  <HelpIcon helpId={tapHelpId('adql')}/> </div>
-                <div style={{color: 'brown', fontSize: 'larger'}}>The query composed here will be ignored when switched to <b>Basic</b> view</div>
+                <div style={{color: 'brown', fontSize: 'larger'}}>ADQL edits below will not be reflected in <b>Single Table</b> view</div>
             </div>
 
 
@@ -221,7 +222,6 @@ class BasicUI extends PureComponent {
     render() {
         const {serviceUrl} = this.props;
         const {error, schemaOptions, tableOptions, schemaName, tableName, columnsModel}= this.state;
-        const tbl_id = get(columnsModel, 'tbl_id');
 
         if (error) {
             return (<div>{error}</div>);
@@ -262,21 +262,19 @@ class BasicUI extends PureComponent {
                     <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between'}}>
                         <div className='TapSearch__section--title'>4. Select Constraints <HelpIcon helpId={tapHelpId('constraints')}/> </div>
                         <TableColumnsConstraintsToolbar key={tableName}
-                                                        groupKey={gkey}
-                                                        fieldKey={'tableconstraints'}
                                                         tableName={tableName}
                                                         columnsModel={columnsModel}
                         />
                     </div>
                     <div className='expandable'>
-                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={'60%'}>
+                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={540}>
                             <SplitContent>
                                 {columnsModel ?  <TableSearchMethods columnsModel={columnsModel}/>
                                     : <div className='loading-mask'/>
                                 }
                             </SplitContent>
                             <SplitContent>
-                                { tbl_id ?
+                                { columnsModel ?
                                     <TableColumnsConstraints
                                         key={tableName}
                                         fieldKey={'tableconstraints'}
@@ -359,7 +357,6 @@ class BasicUI extends PureComponent {
     }
 
     loadColumns(serviceUrl, schemaName, tableName) {
-        resetConstraints(gkey, 'tableconstraints');
         this.setState({tableName, columnsModel: undefined});
 
         loadTapColumns(serviceUrl, schemaName, tableName).then((columnsModel) => {
@@ -403,6 +400,7 @@ function onSearchSubmit(request,serviceUrl) {
             const options = {};
 
             const treq = makeTblRequest('AsyncTapQuery', title, params, options);
+            setNoCache(treq);
             dispatchTableSearch(treq, {backgroundable: true});
 
         };
@@ -429,37 +427,44 @@ function onSearchSubmit(request,serviceUrl) {
     return false;
 }
 
+/**
+ * @typedef {Object} AdqlFragment
+ * @property {string} where - ADQL where fragment
+ * @property {string} selcols - ADQL select columns fragment
+ * @property {boolean} valid - true if the ADQL is valid
+ * @property {string} message - error message, if invalid
+ */
+
 function getAdqlQuery() {
     const fields = FieldGroupUtils.getGroupFields(gkey);
-    const tableconstraints = get(fields, ['tableconstraints', 'value']);
     const tableName = get(fields, ['tableName', 'value']);
 
     if (!tableName) return;
 
     const {columnsModel} = getTapBrowserState();
-    const whereClause = tableSearchMethodsConstraints(columnsModel);
-    if (!whereClause.valid) {
+
+    // spatial and temporal constraints
+    const whereFragment = tableSearchMethodsConstraints(columnsModel);
+    if (!whereFragment.valid) {
         return null;
     }
-    let constraints = whereClause.where || '';
-    let selcols = '*';
+    let constraints = whereFragment.where || '';
     const addAnd = Boolean(constraints);
 
-    if (tableconstraints) {
-        if (tableconstraints.constraints.length > 0) {
-            constraints += (addAnd ? ' AND ' : '') + addParens(tableconstraints.constraints);
-        }
-        const colsToSelect = tableconstraints.selcols.lastIndexOf(',') > 0 ?
-            tableconstraints.selcols.substring(0, tableconstraints.selcols.lastIndexOf(',')) : tableconstraints.selcols;
-        if (colsToSelect.length > 0) {
-            selcols = colsToSelect;
-        }
+    // table column constraints and column selections
+    const adqlFragment = tableColumnsConstraints(columnsModel);
+    if (!adqlFragment.valid) {
+        showInfoPopup(adqlFragment.message, 'Error');
+        return null;
     }
+    if (adqlFragment.where) {
+        constraints += (addAnd ? ' AND ' : '') + addParens(adqlFragment.where);
+    }
+    const selcols = adqlFragment.selcols || '*';
 
     if (constraints) {
         constraints = `WHERE ${constraints}`;
     }
-
 
     return `SELECT TOP 10000 ${selcols} FROM ${tableName} ${constraints}`;
 }
@@ -484,18 +489,18 @@ const TAP_SERVICES = [
         query: 'SELECT * FROM public.ned_objdir WHERE CONTAINS(POINT(\'ICRS\',ra,dec),CIRCLE(\'ICRS\',210.80225,54.34894,0.01))=1'
     },
     {
-        label: 'CADC http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
-        value: 'http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
+        label: 'CADC https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
+        value: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
         query: 'SELECT TOP 10000 * FROM ivoa.ObsCore WHERE CONTAINS(POINT(\'ICRS\', s_ra, s_dec),CIRCLE(\'ICRS\', 10.68479, 41.26906, 0.028))=1'
     },
     {
-        label: 'GAIA http://gea.esac.esa.int/tap-server/tap',
-        value: 'http://gea.esac.esa.int/tap-server/tap',
+        label: 'GAIA https://gea.esac.esa.int/tap-server/tap',
+        value: 'https://gea.esac.esa.int/tap-server/tap',
         query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
     },
     {
-        label: 'MAST http://vao.stsci.edu/CAOMTAP/TapService.aspx',
-        value: 'http://vao.stsci.edu/CAOMTAP/TapService.aspx',
+        label: 'MAST https://vao.stsci.edu/CAOMTAP/TapService.aspx',
+        value: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx',
         query: 'SELECT * FROM ivoa.obscore WHERE CONTAINS(POINT(\'ICRS\',s_ra,s_dec),CIRCLE(\'ICRS\',32.69,-51.01,1.0))=1'
     },
     {
@@ -516,11 +521,6 @@ const TAP_SERVICES = [
         query: 'SELECT * FROM wise_00.allwise_p3as_psd '+
             'WHERE CONTAINS(POINT(\'ICRS\', ra, decl),'+
             'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
-    },
-    {
-        label: 'LSST TEST http://tap.lsst.rocks/tap',
-        value: 'http://tap.lsst.rocks/tap',
-        query: 'SELECT TOP 5000 * FROM gaiadr2.gaia_source'
     }
 ];
 

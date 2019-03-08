@@ -6,13 +6,12 @@ import Enum from 'enum';
 import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
-import {getColumnValues} from '../../tables/TableUtil.js';
 import {findCenterColumnsByColumnsModel, posCol, UCDCoord} from '../../util/VOAnalyzer.js';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
-import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
+import {getColumnValues, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {convert} from '../../visualize/VisUtil.js';
 import {primePlot, getActivePlotView} from '../../visualize/PlotViewUtil.js';
@@ -20,7 +19,6 @@ import {PlotAttribute} from '../../visualize/WebPlot.js';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {renderPolygonDataArea,  calcCornerString, initRadiusArcSec} from '../CatalogSearchMethodType.jsx';
 import {clone} from '../../util/WebUtil.js';
-import {ValidationField} from '../ValidationField.jsx';
 import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {validateMJD, validateDateTime, convertISOToMJD, convertMJDToISO, DateTimePickerField, fMoment,
@@ -31,9 +29,11 @@ import {isDialogVisible} from '../../core/ComponentCntlr.js';
 import {HeaderFont, MJD, ISO} from './TapUtil.js';
 import {HelpIcon} from '../HelpIcon.jsx';
 import {tapHelpId} from './TableSelectViewPanel.jsx';
+import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
 
 const skey = 'TABLE_SEARCH_METHODS';
-const CenterColumns = 'centerColumns';
+const CenterLonColumns = 'centerLonColumns';
+const CenterLatColumns = 'centerLatColumns';
 const SpatialMethod = 'spatialMethod';
 const RadiusSize = 'coneSize';
 const PolygonCorners = 'polygoncoords';
@@ -82,7 +82,6 @@ const  timeKeyMap = {
 const Width_Time = 175;
 const Width_Time_Wrapper = Width_Time+30;
 
-
 function Header({title, helpID=''}) {
     return (
         <div style={{display: 'inline-flex', alignItems: 'center'}}>
@@ -130,12 +129,13 @@ export class TableSearchMethods extends PureComponent {
         const groupKey = skey;
         const {fields, columnsModel} = this.state;
 
+        const cols = getAvailableColumns(columnsModel);
         return (
             <FieldGroup style={{height: '100%', overflow: 'auto'}}
-                groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
-                    <SpatialSearch {...{groupKey, fields}} />
-                    <TemporalSearch {...{groupKey, fields}} />
-                    <WavelengthSearch {...{groupKey, fields}} />
+                        groupKey={skey} keepState={true} reducerFunc={tapSearchMethodReducer(columnsModel)}>
+                <SpatialSearch {...{cols, groupKey, fields}} />
+                <TemporalSearch {...{cols, groupKey, fields}} />
+                {false && <WavelengthSearch {...{cols, groupKey, fields}} />}
             </FieldGroup>
         );
     }
@@ -170,12 +170,19 @@ function changeDatePickerOpenStatus(loc) {
     };
 }
 
-function SpatialSearch({groupKey, fields}) {
+function SpatialSearch({cols, groupKey, fields}) {
     const showCenterColumns = () => {
         return (
             <div style={{marginLeft: LeftInSearch}}>
-                <ValidationField fieldKey={CenterColumns}
-                                 style={{overflow:'auto', height:12, width: 200}}
+                <ColumnFld fieldKey={CenterLonColumns}
+                           groupKey={groupKey}
+                           cols={cols}
+                           name='lontitude column' // label that appears in column chooser
+                />
+                <ColumnFld fieldKey={CenterLatColumns}
+                           groupKey={groupKey}
+                           cols={cols}
+                           name='latitude column' // label that appears in column chooser
                 />
             </div>
         );
@@ -205,6 +212,7 @@ function SpatialSearch({groupKey, fields}) {
 }
 
 SpatialSearch.propTypes = {
+    cols: ColsShape,
     groupKey: PropTypes.string,
     fields: PropTypes.object
 };
@@ -219,12 +227,14 @@ function getTimeValueInfo(timeMode, groupKey, timeFieldKey) {
 }
 
 
-function TemporalSearch({groupKey, fields}) {
+function TemporalSearch({cols, groupKey, fields}) {
     const showTemporalColumns = () => {
         return (
             <div style={{marginLeft: LeftInSearch}}>
-                <ValidationField fieldKey={TemporalColumns}
-                                 style={{overflow:'auto', height:12, width: 200}}
+                <ColumnFld fieldKey={TemporalColumns}
+                           groupKey={groupKey}
+                           cols={cols}
+                           name='temporal column' // label that appears in column chooser
                 />
             </div>
         );
@@ -293,30 +303,30 @@ function TemporalSearch({groupKey, fields}) {
     );
 }
 
-
 TemporalSearch.propTypes = {
-   groupKey: PropTypes.string,
-   fields: PropTypes.object
+    cols: ColsShape,
+    groupKey: PropTypes.string,
+    fields: PropTypes.object
 };
 
 
 
-function WavelengthSearch({groupKey, fields}) {
+function WavelengthSearch({cols, groupKey, fields}) {
     const showWavelengthColumns = () => {
         return (
-            <div style={{marginLeft: 8}}>
-                <ValidationField fieldKey={WavelengthColumns}
-                                 initialState={{ label: 'Wavelength Columns:',
-                                                 labelWidth: LabelWidth,
-                                                 tooltip: 'Columns for wavelength search'
-                                           }}
-                                 style={{overflow:'auto', height:12, width: 200}}
+            <div style={{marginLeft: LeftInSearch}}>
+                <ColumnFld fieldKey={WavelengthColumns}
+                           groupKey={groupKey}
+                           cols={cols}
+                           name='wavelength column' // label that appears in column chooser
+                           label='Wavelength Column:'
+                           labelWidth={LabelWidth}
+                           tooltip={'Columns for wavelength search'}
                 />
             </div>
         );
     };
-
-
+    
     return (
         <FieldGroupCollapsible header={<Header title={'Wavelength'} helpID={tapHelpId('wavelength')}/>}
                                initialState={{ value: 'closed' }}
@@ -328,7 +338,9 @@ function WavelengthSearch({groupKey, fields}) {
         </FieldGroupCollapsible>
     );
 }
+
 WavelengthSearch.propTypes = {
+    cols: ColsShape,
     groupKey: PropTypes.string,
     fields: PropTypes.object
 };
@@ -433,22 +445,7 @@ radiusInField.propTypes = {
 function makeSpatialConstraints(fields, columnsModel) {
     const NOConstraint = '';
     const retval = {valid: true, where: '', title: 'spatial search error'};
-    const {centerColumns, spatialMethod} = fields;
-
-    // find column pairs [[pair_1_ra, pair_1_dec]...[pair_n_ra, pair_n_dec]]
-    const makeColPairs = () => {
-        return centerColumns.value.split('\n').reduce((p, onePair) => {
-            const oneP = onePair.trim();
-            const pair = oneP && oneP.split(',').reduce((prev, n) => {
-                    if (n.trim()) prev.push(n.trim());
-                    return prev;
-                }, []);
-            if (pair && pair.length === 2) {
-                p.push([pair[0], pair[1]]);
-            }
-            return p;
-        }, []);
-    };
+    const {centerLonColumns, centerLatColumns, spatialMethod} = fields;
 
     // find ucd coordinate in type of UCDCoord
     const getUCDCoord = (colName) => {
@@ -471,15 +468,14 @@ function makeSpatialConstraints(fields, columnsModel) {
 
     };
 
-    const pairs = makeColPairs();
-    if (pairs.length !== 1) {
+    if (!centerLonColumns.value || !centerLatColumns.value) {
         return retval;
     }
 
-    const ucdCoord = getUCDCoord(pairs[0][0]);
+    const ucdCoord = getUCDCoord(centerLonColumns.value);
     const worldSys = posCol[ucdCoord.key].coord;
     const adqlCoordSys = posCol[ucdCoord.key].adqlCoord;
-    const point = `POINT('${adqlCoordSys}', ${pairs[0][0]}, ${pairs[0][1]})`;
+    const point = `POINT('${adqlCoordSys}', ${centerLonColumns.value}, ${centerLatColumns.value})`;
     let   userArea;
     let   newWpt;
 
@@ -585,7 +581,7 @@ function makeTemporalConstraints(fields) {
 /**
  * Get constraints as ADQL
  * @param {object} columnsModel
- * @returns {string}
+ * @returns {AdqlFragment}
  */
 export function tableSearchMethodsConstraints(columnsModel) {
     // construct ADQL string here
@@ -751,11 +747,14 @@ function tapSearchMethodReducer(columnsModel) {
                     break;
                 case FieldGroupCntlr.MOUNT_FIELD_GROUP:
                     if (columnsModel.tbl_id !== get(inFields, [CrtColumnsModel, 'value'])) {
+                        const cols = getAvailableColumns(columnsModel);
                         set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
-                        const centerColStr = formCenterColumnStr(columnsModel);
-                        set(rFields, [CenterColumns, 'validator'], centerColumnValidator(columnsModel));
+                        const centerColObj = formCenterColumns(columnsModel);
+                        set(rFields, [CenterLonColumns, 'validator'], getColValidator(cols, false, false));
+                        set(rFields, [CenterLatColumns, 'validator'], getColValidator(cols, false, false));
                         set(rFields, [TemporalColumns, 'validator'], temporalColumnValidator(columnsModel));
-                        set(rFields, [CenterColumns, 'value'], centerColStr);
+                        set(rFields, [CenterLonColumns, 'value'], centerColObj.lon);
+                        set(rFields, [CenterLatColumns, 'value'], centerColObj.lat);
                         set(rFields, [TemporalColumns, 'value'], '');
 
                     }
@@ -767,6 +766,17 @@ function tapSearchMethodReducer(columnsModel) {
     };
 }
 
+function getAvailableColumns(columnsModel){
+    const name = getColumnValues(columnsModel, 'column_name');
+    const units = getColumnValues(columnsModel, 'unit');
+    const type = getColumnValues(columnsModel, 'datatype');
+    const desc = getColumnValues(columnsModel, 'description');
+    const cols = [];
+    for (let i=0; i< name.length; i++) {
+        cols.push({name: name[i], units: units[i], type: type[i], desc: desc[i]});
+    }
+    return cols;
+}
 
 function timeValidator(val) {
     const timeMode = getFieldVal(skey, TimeOptions) || ISO;
@@ -774,40 +784,13 @@ function timeValidator(val) {
 }
 
 
-function formCenterColumnStr(columnsTable) {
+function formCenterColumns(columnsTable) {
     const centerCols = findCenterColumnsByColumnsModel(columnsTable);
-    const centerColStr = (centerCols && centerCols.lonCol && centerCols.latCol) ?
-                         centerCols.lonCol.column_name + ',' + centerCols.latCol.column_name: '';
+    const centerColObj = (centerCols && centerCols.lonCol && centerCols.latCol) ?
+        {lon: centerCols.lonCol.column_name, lat: centerCols.latCol.column_name} : {lon: '', lat: ''};
 
-    return centerColStr;
+    return centerColObj;
 }
-
-/**
- * center column validator
- * @param columnsTable
- * @returns {Function}
- */
-function centerColumnValidator(columnsTable) {
-    return (val) => {
-        let   retval = {valid: true, message: ''};
-        const columnNames = getColumnValues(columnsTable, 'column_name');
-        const names = val.trim().split(',').map((n) => n.trim());
-
-        if (val.trim() && (names.length !== 2 || (!names[0] || !names[1]))) {
-            retval = {valid: false,
-                      message: "invalid format, please enter the column pair like '<column name 1>,<column name 2>'"};
-        } else {
-            const invalidName = names.find((oneName) => {
-                return !columnNames.includes(oneName.trim());
-            });
-            if (invalidName) {
-                retval = {valid: false, message: 'invalid column name: ' + invalidName};
-            }
-        }
-        return retval;
-    };
-}
-
 
 /**
  * temporal column validator
@@ -852,7 +835,10 @@ function validateConstraints(fields) {
         }
     };
 
-    let retval = checkField(CenterColumns);
+    let retval = checkField(CenterLonColumns);
+    if (!retval.valid) return retval;
+
+    retval = checkField(CenterLatColumns);
     if (!retval.valid) return retval;
 
     const searchMethod = get(fields, [SpatialMethod, 'value']);
@@ -896,17 +882,26 @@ function validateConstraints(fields) {
 }
 
 function fieldInit(columnsTable) {
-    const centerColStr = formCenterColumnStr(columnsTable);
+    const centerColObj = formCenterColumns(columnsTable);
+    const cols = getAvailableColumns(columnsTable);
 
     return (
         {
-            [CenterColumns]: {
-                fieldKey: CenterColumns,
-                value: centerColStr,
-                tooltip: "Center columns for spatial search, the format is like '<column name 1>,<column name 2>'",
-                label: 'Position Columns:',
+            [CenterLonColumns]: {
+                fieldKey: CenterLonColumns,
+                value: centerColObj.lon,
+                tooltip: 'Center longitude column for spatial search',
+                label: 'Longitude Column:',
                 labelWidth: LabelWidth,
-                validator: centerColumnValidator(columnsTable)
+                validator: getColValidator(cols, false, false)
+            },
+            [CenterLatColumns]: {
+                fieldKey: CenterLatColumns,
+                value: centerColObj.lat,
+                tooltip: 'Center latitude column for spatial search',
+                label: 'Latitude Column:',
+                labelWidth: LabelWidth,
+                validator: getColValidator(cols, false, false)
             },
             [TemporalColumns]: {
                 fieldKey: TemporalColumns,
