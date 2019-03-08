@@ -1,7 +1,7 @@
 import React from 'react';
 import {get, isEmpty, uniqueId} from 'lodash';
 import {createInputCell} from '../../tables/ui/TableRenderer.js';
-import {FILTER_TTIPS, FilterInfo} from '../../tables/FilterInfo.js';
+import {FILTER_CONDITION_TTIPS, FilterInfo} from '../../tables/FilterInfo.js';
 
 import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
@@ -20,7 +20,7 @@ export function ColumnConstraintsPanel({tableModel, style}) {
         mergeConstraintsIntoOrig(tbl);
     };
 
-    const newInputCell = createInputCell(FILTER_TTIPS,
+    const newInputCell = createInputCell(FILTER_CONDITION_TTIPS,
                 15,
                 FilterInfo.conditionValidatorNoAutoCorrect,
                 onTableChanged, {width: '100%', boxSizing: 'border-box'});
