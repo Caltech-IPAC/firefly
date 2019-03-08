@@ -62,7 +62,7 @@ export class UploadOptionsDialog extends PureComponent {
 
     render() {
         const {where, isLoading} = this.state;
-        const {labelWidth, dialogWidth, preloadWsFile=true, style} = this.props;
+        const {labelWidth, dialogWidth, preloadWsFile=true, style={}} = this.props;
 
 
         const showUploadLocation = () => {
