@@ -62,7 +62,7 @@ export class UploadOptionsDialog extends PureComponent {
 
     render() {
         const {where, isLoading} = this.state;
-        const {labelWidth, dialogWidth, preloadWsFile=true} = this.props;
+        const {labelWidth, dialogWidth, preloadWsFile=true, style={}} = this.props;
 
 
         const showUploadLocation = () => {
@@ -109,7 +109,7 @@ export class UploadOptionsDialog extends PureComponent {
 
         
         return (
-            <div style={{width: dialogWidth}} >
+            <div style={{width: dialogWidth, ...style}} >
                 {this.workspace && showUploadLocation()}
                 {showFileUploadButton()}
             </div>
@@ -124,5 +124,6 @@ UploadOptionsDialog.propTypes = {
     fieldKeys: PropTypes.object,
     tooltips: PropTypes.object,
     preloadWsFile: PropTypes.bool,
-    workspace: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
+    workspace: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    style: PropTypes.object
 };
