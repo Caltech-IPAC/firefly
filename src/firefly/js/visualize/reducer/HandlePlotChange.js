@@ -462,6 +462,7 @@ function flipPv(pv, isY) {
     if (isY) pv.flipY= !pv.flipY;
     else     pv.flipX= !pv.flipX;
     const cc= CysConverter.make(primePlot(pv));
+    if (!cc) return pv;
     const {width,height}= pv.viewDim;
     const centerOfDev= makeDevicePt(width/2,height/2);
     const ipt= cc.getImageCoords(centerOfDev);
