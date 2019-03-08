@@ -28,8 +28,7 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
     const [tableModel, setTableModel] = useState(getTblById(tbl_id));
     const filters = get(tableModel, 'request.filters', '');
     const [filterCount, setFilterCount] = useState(filters ? filters.split(';').length : 0);
-    const selectInfo=get(tableModel, 'origTableModel.selectInfo');
-    const [selectedCount, setSelectedCount] = useState( selectInfo ? (new SelectInfo(selectInfo)).getSelectedCount() : 0);
+    const [selectedCount, setSelectedCount] = useState(0);
 
     useEffect( () => tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount, setSelectedCount), [columnsModel]);
 
@@ -73,9 +72,16 @@ function tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount, setSel
     if (!columnsModel || columnsModel.error) {
         setTableModel(columnsModel);
     } else {
-        setTableModel(reorganizeTableModel(columnsModel, COLS_TO_DISPLAY));
+        const tbl = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY);
+        setTableModel(tbl);
 
         if (setFilterCount || setSelectedCount) {
+            if (setSelectedCount) {
+                // principal columns are preselected
+                let si = get(tbl, 'origTableModel.selectInfo') || get(tbl, 'selectInfo');
+                const selectInfoCls = new SelectInfo(si);
+                setSelectedCount(selectInfoCls.getSelectedCount());
+            }
             return watchTableChanges(tbl_id,
                 [TABLE_LOADED, TABLE_SELECT],
                 (action) => {
