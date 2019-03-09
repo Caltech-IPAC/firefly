@@ -62,13 +62,14 @@ const WavelengthColumns = 'wavelengthColumns';
 
 const CrtColumnsModel = 'crtColumnsModel';
 
-const SomeFieldInvalid = 'some field value is invalid';
+const SomeFieldInvalid = 'invalid input';
 const PanelValid = 'panelValid';
 const PanelMessage = 'panelMessage';
 
 const LeftInSearch = 8;
 const LabelWidth = 106;
 const LableSaptail = 100;
+const SpatialWidth = 400;
 
 const fieldsMap = {[Spatial]: {
                         [SpatialPanel]: {label: Spatial},
@@ -113,7 +114,7 @@ const  timeKeyMap = {
 // size used
 const Width_Column = 175;
 const Width_Time_Wrapper = Width_Column + 30;
-export const SpattialPanelWidth = Width_Time_Wrapper*2 + LabelWidth + 10;
+export const SpattialPanelWidth = Math.max(Width_Time_Wrapper*2, SpatialWidth) + LabelWidth + 10;
 
 
 function Header({title, helpID='', checkID, message}) {
@@ -262,7 +263,7 @@ function SpatialSearch({cols, groupKey, fields}) {
     const doSpatialSearch = () => {
         return (
             <div style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap',
-                         width: '390px', marginLeft: `${LabelWidth + 10}px`, marginTop: 5}}>
+                         width: SpatialWidth, marginLeft: `${LabelWidth + LeftInSearch}px`, marginTop: 5}}>
                 {selectSpatialSearchMethod(groupKey, fields)}
                 {setSpatialSearchSize(fields)}
             </div>
@@ -276,6 +277,7 @@ function SpatialSearch({cols, groupKey, fields}) {
                                        checkID={SpatialCheck}   message={message}/>}
                                initialState={{ value: 'open' }}
                                fieldKey={SpatialPanel}
+                               wrapperStyle={{marginBottom: 15}}
                                headerStyle={HeaderFont}>
             <div style={{marginTop: 5}}>
                 {showCenterColumns()}
@@ -360,6 +362,7 @@ function TemporalSearch({cols, groupKey, fields}) {
                                         checkID={TemporalCheck} message={message}/>}
                                initialState={{ value: 'closed' }}
                                fieldKey={TemporalPanel}
+                               wrapperStyle={{marginBottom: 15}}
                                headerStyle={HeaderFont}>
                 <div style={{marginTop: 5, height: 100}}>
                     {showTemporalColumns()}
@@ -679,7 +682,7 @@ export function tableSearchMethodsConstraints(columnsModel) {
             }
         } else {
             if (p.where && oneCondition.where) {
-                p.where += ' AND ' + oneCondition.where;
+                p.where += ' AND (' + oneCondition.where + ')';
             } else {
                 p.where += oneCondition.where;
             }
@@ -702,11 +705,32 @@ function tapSearchMethodReducer(columnsModel) {
         if (!inFields)  {
              return fieldInit(columnsModel);
         } else {
-            const {fieldKey, value}= action.payload;
+            const {fieldKey, value, displayValue}= action.payload;
             const rFields = clone(inFields);
+
+            const setSearchPanelChecked = (key) => {
+                const panel = [ServerParams.USER_TARGET_WORLD_PT, RadiusSize, PolygonCorners].includes(key) ? Spatial :
+                    ([TimeFrom, TimeTo, TimePickerFrom, TimePickerTo].includes(key) ? Temporal : null);
+
+                if (panel && !isPanelChecked(panel, rFields)) {
+                    const val = () => {
+                        if (displayValue || typeof value !== 'string') {
+                            return displayValue;
+                        } else {
+                            return value;
+                        }
+                    };
+
+                    if (val()) {
+                        const panelChk = panel.toLowerCase()+'Check';
+                        set(rFields, [panelChk, 'value'], panel);
+                    }
+                }
+            };
 
             const onChangePolygonCoordinates = () => {
                 rFields.imageCornerCalc = clone(inFields.imageCornerCalc, {value: 'user'});
+                setSearchPanelChecked(fieldKey);
                 validateSpatialConstraints(inFields, rFields);
             };
 
@@ -755,6 +779,7 @@ function tapSearchMethodReducer(columnsModel) {
                         valid: secondValInfo.valid,
                         message: secondValInfo.message
                     });
+                    setSearchPanelChecked(fieldKey);
                     validateTemporalConstraints(inFields, rFields);
                 }
             };
@@ -803,6 +828,8 @@ function tapSearchMethodReducer(columnsModel) {
 
                     rFields[timeKey] = clone(inFields[timeKey], {value, message, valid, showHelp, feedback,
                         timeMode: ISO});
+
+                    setSearchPanelChecked(fieldKey);
                     validateTemporalConstraints(inFields, rFields);
                 }
             };
@@ -820,16 +847,17 @@ function tapSearchMethodReducer(columnsModel) {
                 set(rFields, [CrtColumnsModel, 'value'], columnsModel.tbl_id );
                 const centerColObj = formCenterColumns(columnsModel);
                 Object.assign(rFields[CenterLonColumns],
-                                       {validator: getColValidator(cols, false), value: centerColObj.lon, valid: true});
+                                       {validator: getColValidator(cols, false, false), value: centerColObj.lon, valid: true});
                 Object.assign(rFields[CenterLatColumns],
-                                       {validator: getColValidator(cols, false), value: centerColObj.lat, valid: true});
+                                       {validator: getColValidator(cols, false, false), value: centerColObj.lat, valid: true});
 
                 Object.assign(rFields[TemporalColumns],
-                                        {validator: getColValidator(cols, false), value: '', valid: true});
+                                        {validator: getColValidator(cols, false, false), value: '', valid: true});
 
                 validateSpatialConstraints(inFields, rFields);
                 validateTemporalConstraints(inFields, rFields);
             };
+
 
             switch (action.type) {
                 case FieldGroupCntlr.VALUE_CHANGE:
@@ -848,6 +876,8 @@ function tapSearchMethodReducer(columnsModel) {
                     } else if (fieldKey === SpatialCheck || fieldKey === TemporalCheck || fieldKey === WavelengthCheck) {
                         onChangeSearchCheckBox(fieldKey);
                     } else {
+                        setSearchPanelChecked(fieldKey);
+
                         const panel = isFieldInPanel(fieldKey);
 
                         if (panel) {
@@ -901,6 +931,7 @@ function formCenterColumns(columnsTable) {
  * @param columnsTable
  * @returns {Function}
  */
+/*
 function temporalColumnValidator(columnsTable) {
     return (val) => {
         let   retval = {valid: true, message: ''};
@@ -921,7 +952,7 @@ function temporalColumnValidator(columnsTable) {
         return retval;
     };
 }
-
+*/
 
 const getFieldValidity  = (fields, fieldKey, nullAllowed) => {
     const {valid=true, message, value, displayValue} = get(fields, fieldKey) || {};
@@ -1173,7 +1204,7 @@ function fieldInit(columnsTable) {
                 tooltip: 'Column for temporal search',
                 label: getLabel(TemporalColumns, ':'),
                 labelWidth: LabelWidth,
-                validator: temporalColumnValidator(columnsTable)
+                validator: getColValidator(cols, false, false)
             },
             [SpatialMethod]: {
                 fieldKey: SpatialMethod,

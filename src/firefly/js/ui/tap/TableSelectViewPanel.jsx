@@ -83,7 +83,7 @@ export class TapSearchPanel extends PureComponent {
 
         const rightBtns = selectBy === 'basic' ?[{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql, style: {marginLeft: 50}}] :  [];
 
-        const style = {resize: 'both', overflow: 'hidden', paddingBottom: 5, height: 600, width: 915, minHeight: 600, minWidth: MINWIDTH};
+        const style = {resize: 'both', overflow: 'hidden', paddingBottom: 5, height: 600, width: 915, minHeight: 650, minWidth: MINWIDTH};
 
         return (
             <div style={style}>
@@ -227,7 +227,7 @@ class BasicUI extends PureComponent {
 
         const tapSearchMinWidth = MINWIDTH - 20;  // less than the size of min-width of TAP Search panel
         const splitDef = Math.min(SpattialPanelWidth+80, tapSearchMinWidth);
-        const splitMax =   Math.min(SpattialPanelWidth+150, tapSearchMinWidth);
+        const splitMax = Math.min(SpattialPanelWidth+80, tapSearchMinWidth);
 
         if (error) {
             return (<div>{error}</div>);

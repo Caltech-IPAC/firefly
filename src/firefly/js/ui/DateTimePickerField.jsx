@@ -37,7 +37,10 @@ export function tryConvertToMoment(str_or_moment, force = false) {
  * @returns {*}
  */
 function aMoment(str, utc=true) {
-    return utc ? Moment.utc(str) : Moment(str);  // utc or local
+    const m = Moment.utc(str);
+    if (!m.isValid()) return m;
+
+    return utc ? Moment(m.format()) : Moment(m.format());  // utc or local
 }
 
 /**
