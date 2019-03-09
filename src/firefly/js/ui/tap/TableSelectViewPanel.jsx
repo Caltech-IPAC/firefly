@@ -81,7 +81,7 @@ export class TapSearchPanel extends PureComponent {
 
         const rightBtns = selectBy === 'basic' ?[{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql, style: {marginLeft: 50}}] :  [];
 
-        const style = {resize: 'both', overflow: 'hidden', paddingBottom: 5, height: 600, width: 915, minHeight: 600, minWidth: 915};
+        const style = {width: '100%'};
 
         return (
             <div style={style}>

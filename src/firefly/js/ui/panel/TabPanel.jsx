@@ -130,9 +130,10 @@ export class Tabs extends PureComponent {
         }
 
         const contentClsName = borderless ? 'TabPanel__Content borderless' : 'TabPanel__Content';
+        const fullHeight = useFlex ? {flexGrow: 1} : {height: '100%'};
 
         return (
-            <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
+            <div style={{display: 'flex', flexDirection: 'column', overflow: 'hidden', ...fullHeight}}>
                 <TabsHeader {...{resizable, headerStyle}}>{newChildren}</TabsHeader>
                 <div ref='contentRef' style={contentStyle} className={contentClsName}>
                     {(content) ? content : ''}
