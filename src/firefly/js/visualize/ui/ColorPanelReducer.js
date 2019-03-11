@@ -458,7 +458,7 @@ function makeHuePreserveRangeValuesFromFields(fields) {
             const lowerWhichVal= useZ ? ZSCALE : fields[lowerWhich].value;
             //scalingK is between 0.1 and 10, while range slider values are from -1 to 1
             const scalingKVal = scalingKFromFieldVal(fields[scalingK].value);
-            return new RangeValues.makeRV({
+            return RangeValues.makeRV({
                 lowerWhich: lowerWhichVal,
                 lowerValue: fields[lowerRange].value,
                 upperWhich: ZSCALE,
