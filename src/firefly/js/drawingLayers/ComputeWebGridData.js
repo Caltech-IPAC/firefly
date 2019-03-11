@@ -1219,7 +1219,8 @@ function computeHipGridLines(cc, csys,  screenWidth, nGridLines, labelFormat, pl
 
 
     var dist=10000, d;
-    for (var i=0; i<levels[0].length; i++){
+    let i;
+    for (i=0; i<levels[0].length; i++){
         if (!levels[0][i] || levels[0][i].toFixed(4)===centerWp.x.toFixed(4)) continue;
         d = Math.abs(levels[0][i]-centerWp.x);
         if (d<dist){
@@ -1239,7 +1240,7 @@ function computeHipGridLines(cc, csys,  screenWidth, nGridLines, labelFormat, pl
     var yLines = [];
     var offset = 0;
     var points=[];
-    for (let i=0; i<2; i++) {
+    for (i=0; i<2; i++) {
         for (let j=0; j<levels[i].length; j++) {
             points= findLine(cc, csys, i, levels[i][j], range, screenWidth, plot.plotType);
             xLines[offset] = points[0];
