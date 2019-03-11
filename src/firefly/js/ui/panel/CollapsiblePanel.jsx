@@ -65,7 +65,7 @@ export class CollapsiblePanel extends PureComponent {
     }
 
     getContentHeight() {
-        return this.state.isOpen ? {visibility: 'visible'} : {visibility: 'collapse'};
+        return this.state.isOpen ? {height: 'initial'} : {height: 0};
     }
 
     render () {
@@ -89,7 +89,7 @@ export class CollapsiblePanel extends PureComponent {
             contentClassName += contentBorderClassName[borderStyle];
         }
 
-        contentStyle = Object.assign({display: 'table'}, contentStyle, this.getContentHeight());
+        contentStyle = Object.assign({display: 'block'}, contentStyle, this.getContentHeight());
         const headerContent = isFunction(header) ? header() : header;
 
         return (
