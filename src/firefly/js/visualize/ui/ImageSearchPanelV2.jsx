@@ -109,11 +109,12 @@ function getContexInfo(renderTreeId) {
 
 function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText, onCancel=dispatchHideDropDown}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
-    const resize = resizable ? {resize: 'both', overflow: 'hidden', paddingBottom: 5} : {};
+    const resize = {resize: 'both', overflow: 'hidden', paddingBottom: 5};
     const dim = {height: 600, width: 725, minHeight: 600, minWidth: 725};
+    const style = resizable ? {...dim, ...resize} : {width: '100%'};
 
     return (
-        <div style={{...resize, ...dim}}>
+        <div style={style}>
             <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                         submitBarStyle = {{flexShrink: 0, padding: '0 4px 3px'}}
                         groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
@@ -130,7 +131,7 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
     );
 }
 
-export function ImageSearchDropDown({gridSupport, resizable=true}) {
+export function ImageSearchDropDown({gridSupport, resizable=false}) {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId);
     const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport, renderTreeId});
@@ -277,7 +278,7 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
         <div className='flex-full' style={{marginTop: 5}}>
             <Tabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true} borderless={true}
                   contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
-                  headerStyle={{display:'inline-flex', justifyContent:'center'}}>
+                  headerStyle={{display:'inline-flex', marginLeft: 185}}>
                 <Tab key='ImageSearchRed' name='red' label={<div style={{width:40, color:'red'}}>Red</div>}>
                     <SingleChannel {...{groupKey: FG_KEYS.red, imageMasterData, multiSelect, archiveName}}/>
                 </Tab>
@@ -365,7 +366,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 
 function SelectArchive({groupKey,  imageMasterData, multiSelect}) {
     const title = '4. Select Data Set';
-    const targetStyle = {height: 40};
+    const targetStyle = {height: 40, width: 450};
     const sizeStyle = {margin: '-5px 0 0 36px'};
     const isHips = isHipsImgType();
     const sizeLabel = isHips ? 'Field of view (optional):' : 'Cutout size (leave blank for full size):';

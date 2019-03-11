@@ -12,6 +12,7 @@
 }
 
 .DD-ToolBar__content {
+    display: flex;
     box-shadow:0 0 1px #000000;
     background-color: #E5E5E5;
     margin: 5px 3px;

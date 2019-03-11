@@ -5,7 +5,7 @@
 import React, {Component, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
-import {get, pick} from 'lodash';
+import {get, pick, isEmpty} from 'lodash';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {flux, getVersion} from '../Firefly.js';
@@ -24,19 +24,21 @@ import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import './DropDownContainer.css';
 
+const flexGrowWithMax = {width: '100%', maxWidth: 900};
+
 export const dropDownMap = {
-    Search: <SearchPanel />,
-    TestSearch: <TestSearchPanel />,
-    TestSearches: <TestQueriesPanel />,
-    TestTAPSearch: <TapSearchPanel />,
-    ImageSearchPanelV2: <ImageSearchDropDown/>,
-    ImageSelectDropDownCmd: <ImageSearchDropDown/>,
-    ImageSelectDropDownSlateCmd: <ImageSearchDropDown gridSupport={true}/>,
-    ChartSelectDropDownCmd: <ChartSelectDropdown />,
-    IrsaCatalogDropDown: <CatalogSelectViewPanel/>,
-    LsstCatalogDropDown: <LSSTCatalogSelectViewPanel/>,
-    FileUploadDropDownCmd: <FileUploadDropdown />,
-    WorkspaceDropDownCmd: <WorkspaceDropdown />
+    Search: {view: <SearchPanel />},
+    TestSearch: {view: <TestSearchPanel />},
+    TestSearches: {view: <TestQueriesPanel />},
+    TestTAPSearch: {view: <TapSearchPanel />, layout: {width: '100%'}},
+    ImageSearchPanelV2: {view: <ImageSearchDropDown />, layout: flexGrowWithMax},
+    ImageSelectDropDownCmd: {view: <ImageSearchDropDown />, layout: flexGrowWithMax},
+    ImageSelectDropDownSlateCmd: {view: <ImageSearchDropDown gridSupport={true} />, layout: flexGrowWithMax},
+    ChartSelectDropDownCmd: {view: <ChartSelectDropdown />},
+    IrsaCatalogDropDown: {view: <CatalogSelectViewPanel />},
+    LsstCatalogDropDown: {view: <LSSTCatalogSelectViewPanel />},
+    FileUploadDropDownCmd: {view: <FileUploadDropdown />},
+    WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
 };
 
 
@@ -54,14 +56,14 @@ export class DropDownContainer extends Component {
         super(props);
 
         React.Children.forEach(this.props.children, (el) => {
-            const key = get(el, 'props.name');
-            if (key) dropDownMap[key] = el;
+            const {name:key, layout} = get(el, 'props', {});
+            if (key) dropDownMap[key] = {view: el, layout};
         });
 
         if (props.dropdownPanels) {
             props.dropdownPanels.forEach( (el) => {
-                const key = get(el, 'props.name');
-                if (key) dropDownMap[key] = el;
+                const {name:key, layout} = get(el, 'props', {});
+                if (key) dropDownMap[key] = {view: el, layout};
             } );
         }
 
@@ -98,16 +100,19 @@ export class DropDownContainer extends Component {
     render() {
         const {footer, alerts} = this.props;
         const { visible, selected }= this.state;
-        const view = dropDownMap[selected];
-        const {BuildMajor, BuildMinor, BuildRev, Build, BuildType, BuildDate, BuildCommit, BuildCommitFirefly} = getVersion() || {};
+        const {view, layout={}} = dropDownMap[selected] || {};
 
         if (!visible) return <div/>;
+
+        const contentWrapStyle = isEmpty(layout) ? {} : {display: 'flex', width: '100%', justifyContent: 'center'};
+        const contentStyle = {flexGrow: 1, ...layout};
+
         return (
             <div>
                 <div className='DD-ToolBar'>
                     {alerts || <Alerts />}
-                    <div style={{flexGrow: 1}}>
-                        <div className='DD-ToolBar__content'>
+                    <div style={{flexGrow: 1, ...contentWrapStyle}}>
+                        <div style={contentStyle} className='DD-ToolBar__content'>
                             {view}
                         </div>
                     </div>
