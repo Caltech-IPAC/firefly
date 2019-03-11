@@ -24,7 +24,7 @@ import {showInfoPopup} from '../ui/PopupUtil.jsx';
 
 import './DropDownContainer.css';
 
-const flexGrowWithMax = {width: '100%', maxWidth: 1600};
+const flexGrowWithMax = {width: '100%', maxWidth: 900};
 
 export const dropDownMap = {
     Search: {view: <SearchPanel />},

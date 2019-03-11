@@ -102,7 +102,7 @@ export class TapSearchPanel extends PureComponent {
 
                         <div className='TapSearch__section'>
                             <div className='TapSearch__section--title'>1. TAP Service <HelpIcon helpId={tapHelpId('tapService')}/> </div>
-                            <div style={{flexGrow: 1, marginRight: 3}}>
+                            <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000}}>
                                 <CreatableSelect
                                     options={TAP_SERVICE_OPTIONS}
                                     isClearable={true}
@@ -233,7 +233,7 @@ class BasicUI extends PureComponent {
             <Fragment>
                 <div className='TapSearch__section'>
                     <div className='TapSearch__section--title'>3. Select Table <HelpIcon helpId={tapHelpId('selectTable')}/> </div>
-                    <div style={{display: 'inline-flex', width: '100%', marginRight: 3}}>
+                    <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
                         <div style={{flexGrow: 1}}>
                             <NameSelect type='Schema'
                                         options={schemaOptions}
