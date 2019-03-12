@@ -15,8 +15,13 @@ Or 'IN', followed by a list of values separated by commas.
 Examples:  > 12345; != 3000; IN a,b,c,d`;
 
 export const FILTER_TTIPS =
-`Filters are "column_name operator condition" separated by commas.
-${FILTER_CONDITION_TTIPS}`;
+`Conditional statements in the form of "column_name" operator value separated by semicolon.
+* operator is one of =, >, <, !=, >=, <=, LIKE, IN, IS, IS NOT
+* column_name must be enclosed in double quotes
+* string value must be enclosed in single quotes
+* when IN is used, enclose the values in parentheses
+Examples:  "ra" > 12345; "color" != 'blue'; "band" IN (1,2,3)
+`;
 
 /**
  * return [column_name, operator, value] triplet.
