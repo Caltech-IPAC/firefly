@@ -33,7 +33,7 @@ import {findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
 export const catalogWatcherDef = {
     id : 'CatalogWatcher',
     watcher : watchCatalogs,
-    testTable : (table) => isCatalog(table),
+    testTable : (table) => !isLsstFootprintTable(table) && isCatalog(table),
     actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE,
               TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS]
 };
