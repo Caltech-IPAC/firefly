@@ -127,7 +127,8 @@ ColumnOrExpression.propTypes = {
     nullAllowed: PropTypes.bool
 };
 
-export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column', name, nullAllowed, canBeExpression=false}) {
+export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',
+                           name, nullAllowed, canBeExpression=false, inputStyle}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
     const {valid=true, message=''} = value ? colValidator(value) : {};
@@ -158,6 +159,7 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
                 fieldKey={fieldKey}
                 groupKey={groupKey}
                 {...labelProps}
+                inputStyle={inputStyle}
             />
             <div style={{display: 'inline-block', cursor:'pointer', paddingLeft: 2, verticalAlign: 'top'}}
                  title={`Select ${name} column`}
@@ -178,6 +180,7 @@ ColumnFld.propTypes = {
     name: PropTypes.string.isRequired,
     tooltip: PropTypes.string,
     nullAllowed: PropTypes.bool,
-    canBeExpression: PropTypes.bool
+    canBeExpression: PropTypes.bool,
+    inputStyle: PropTypes.object
 };
 

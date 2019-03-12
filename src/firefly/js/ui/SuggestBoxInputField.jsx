@@ -222,7 +222,7 @@ class SuggestBoxInputFieldView extends PureComponent {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popStyle, popupIndex} = this.props;
+        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popStyle, popupIndex, inputStyle} = this.props;
 
         const leftOffset = (labelWidth?labelWidth:0)+4;
         const minWidth = (inputWidth?inputWidth-4:50);
@@ -241,6 +241,7 @@ class SuggestBoxInputFieldView extends PureComponent {
                         label={label}
                         labelWidth={labelWidth}
                         tooltip={tooltip}
+                        style={inputStyle}
                     />
                 </div>
 
@@ -272,7 +273,8 @@ SuggestBoxInputFieldView.propTypes = {
     getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
     renderSuggestion : PropTypes.func,   // ReactElem = renderSuggestion(suggestion)
-    popupIndex: PropTypes.number
+    popupIndex: PropTypes.number,
+    inputStyle: PropTypes.object
 };
 
 

@@ -15,7 +15,7 @@ import {MJD, ISO} from './tap/TapUtil.js';
 import CALENDAR from 'html/images/datetime_picker_16x16.png';
 const invalidDate = 'invalid date/time';
 
-const iconMap = {'calendar': {icon: CALENDAR, title: 'show the calendar for selection'}};
+const iconMap = {'calendar': {icon: CALENDAR, title: 'Show the calendar for selecting date/time'}};
 
 
 
@@ -26,9 +26,9 @@ class TimePanelView extends PureComponent {
 
 
     render() {
-        const {showHelp, feedback, feedbackStyle, examples,
+        const {showHelp, feedback, feedbackStyle, examples, label, labelStyle, labelPosition,
             valid, message, onChange, value, icon, onClickIcon, tooltip = 'select time',
-            labelWidth, inputStyle, wrapperStyle, inputWidth, timeMode=ISO}= this.props;
+            inputStyle, wrapperStyle, inputWidth, timeMode=ISO}= this.props;
         const ImagePadding = 3;
 
         const iconStyle = {
@@ -48,13 +48,13 @@ class TimePanelView extends PureComponent {
              </div>) : null;
 
         const spaceForImage = 16+ImagePadding*2;
-        const newInputStyle = Object.assign({paddingRight: iconField ? spaceForImage : 1}, inputStyle,
-                                            {width: iconField ? inputWidth - spaceForImage : inputWidth-1});
+        const newInputStyle = Object.assign({paddingRight: iconField ? spaceForImage : 2}, inputStyle,
+                                            {width: iconField ? inputWidth - spaceForImage+2 : inputWidth});
         const placeHolder = timeMode === ISO ? 'YYYY-MM-DD HH:mm:ss' : 'float number .... ';
         const newWrapperStyle = clone(wrapperStyle, (iconField ? {width: '%100'} : {}));
         const inputFields = {
             valid, visible: true, message, onChange,
-            value, tooltip, wrapperStyle: newWrapperStyle, style: newInputStyle, labelWidth,
+            value, tooltip, wrapperStyle: newWrapperStyle, style: newInputStyle,
             placeHolder
         };
 
@@ -68,21 +68,28 @@ class TimePanelView extends PureComponent {
                                     : (timeField);
 
         const newFeedbackStyle = clone(feedbackStyle, {width: inputWidth});
-        return (
+        const lStyle = clone(labelStyle, {whiteSpace:'nowrap'});
+        const labelDiv = (<div style={lStyle}>{label}</div>);
+        const timeDiv = (
             <div>
                 {timePart}
                 <TimeFeedback {...{showHelp, feedback, feedbackStyle: newFeedbackStyle, examples, timeMode}}/>
             </div>
         );
+        const flexDirection = (labelPosition && labelPosition === 'top') ? 'column' : 'row';
+
+        return (
+            <div style={{display: 'flex', flexDirection}}>
+                {labelDiv}
+                {timeDiv}
+            </div>
+        );
     }
-
-
 }
 
 TimePanelView.propTypes = {
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
-    label : PropTypes.string,
     showHelp   : PropTypes.bool,
     feedback: PropTypes.string,
     feedbackStyle: PropTypes.object,
@@ -91,14 +98,15 @@ TimePanelView.propTypes = {
     onChange: PropTypes.func,
     valid   : PropTypes.bool.isRequired,
     value : PropTypes.string.isRequired,
-    labelWidth : PropTypes.number,
+    labelStyle : PropTypes.object,
+    label: PropTypes.string,
     tooltip: PropTypes.string,
     inputStyle: PropTypes.object,
     wrapperStyle: PropTypes.object,
     timeMode: PropTypes.string,
     icon: PropTypes.string,
     onClickIcon: PropTypes.func,
-    labelPosition: PropTypes.string,
+    labelPosition: PropTypes.oneOf(['top', 'left']),
     inputWidth: PropTypes.number
 };
 

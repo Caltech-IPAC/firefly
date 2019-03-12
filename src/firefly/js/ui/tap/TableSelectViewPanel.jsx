@@ -13,7 +13,7 @@ import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
 import {getColumnValues} from '../../tables/TableUtil.js';
 
-import {TableSearchMethods, tableSearchMethodsConstraints} from './TableSearchMethods.jsx';
+import {TableSearchMethods, tableSearchMethodsConstraints, SpattialPanelWidth} from './TableSearchMethods.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
 import {loadTapColumns, loadTapTables, loadTapSchemas, getTapBrowserState, setTapBrowserState} from './TapUtil.js';
 import {NameSelect, NameSelectField, selectTheme} from './Select.jsx';
@@ -160,7 +160,7 @@ export class TapSearchPanel extends PureComponent {
                 [
                     {fieldKey: 'defAdqlKey', value: adql},
                     {fieldKey: 'adqlQuery', value: adql},
-                    {fieldKey: 'selectBy', value: 'adql'},
+                    {fieldKey: 'selectBy', value: 'adql'}
                 ]
             );
         }
@@ -222,6 +222,8 @@ class BasicUI extends PureComponent {
     render() {
         const {serviceUrl} = this.props;
         const {error, schemaOptions, tableOptions, schemaName, tableName, columnsModel}= this.state;
+        const splitDef = SpattialPanelWidth+80;
+        const splitMax = SpattialPanelWidth+80;
 
         if (error) {
             return (<div>{error}</div>);
@@ -267,7 +269,7 @@ class BasicUI extends PureComponent {
                         />
                     </div>
                     <div className='expandable'>
-                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={540}>
+                        <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                             <SplitContent>
                                 {columnsModel ?  <TableSearchMethods columnsModel={columnsModel}/>
                                     : <div className='loading-mask'/>
