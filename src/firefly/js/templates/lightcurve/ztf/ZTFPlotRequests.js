@@ -64,7 +64,7 @@ export function getWebPlotRequestViaZTFIbe(tableModel, hlrow, cutoutSize, params
         let wp = null;
         sr.setParam('doCutout', 'false');
         if (!isNil(ra) && !isNil(dec)) {
-            sr.setParam('center', `${cra},${cdec}`);
+            sr.setParam('center', `${ra},${dec}`);
             sr.setParam('in_ra', `${ra}`);
             sr.setParam('in_dec', `${dec}`);
             wp = makeWorldPt(ra, dec, CoordinateSys.EQ_J2000);
