@@ -15,15 +15,13 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.visualize.hips.HiPSMasterListEntry.PARAMS;
-import nom.tam.fits.Data;
+import edu.caltech.ipac.table.LinkInfo;
 
-import java.io.File;
 import java.util.*;
 import java.io.IOException;
+
+import static edu.caltech.ipac.visualize.VisConstants.INFO_ICON_STUB;
 
 /**
  * @author Cindy Wang
@@ -181,6 +179,13 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
                 colDT.setVisibility(DataType.Visibility.hidden);
             }
         }
+
+        // turn Properties column into a link.
+        DataType col = dg.getDataDefintion("Properties");
+        col.setWidth(4);
+        col.setFilterable(false);
+        col.setSortable(false);
+        col.setLinkInfos(Collections.singletonList(new LinkInfo(null, INFO_ICON_STUB, null, "link to HiPS properties", null, null, null)));
     }
 
     private static DataGroup createTableDataFromListEntry(List<HiPSMasterListEntry> hipsMaps) {

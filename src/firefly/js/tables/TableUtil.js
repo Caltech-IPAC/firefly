@@ -322,6 +322,23 @@ export function getColumn(tableModel, colName) {
     }
 }
 
+/**
+ * returns column information for the given ID.
+ * @param {TableModel} tableModel
+ * @param {string} ID
+ * @returns {TableColumn}
+ * @public
+ * @func getColumn
+ * @memberof firefly.util.table
+ */
+export function getColumnByID(tableModel, ID) {
+    const colIdx = getColumns(tableModel).findIndex((col) => col.ID === ID);
+    if (colIdx >= 0) {
+        return get(tableModel, `tableData.columns.${colIdx}`);
+    }
+}
+
+
 export function getFilterCount(tableModel) {
     const filterInfo = get(tableModel, 'request.filters');
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;

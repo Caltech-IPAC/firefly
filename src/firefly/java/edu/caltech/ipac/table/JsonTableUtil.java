@@ -377,8 +377,10 @@ public class JsonTableUtil {
             applyIfNotEmpty(link.getID(),       v -> json.put("ID", v));
             applyIfNotEmpty(link.getHref(),     v -> json.put("href", v));
             applyIfNotEmpty(link.getTitle(),    v -> json.put("title", v));
+            applyIfNotEmpty(link.getValue(),    v -> json.put("value", v));
             applyIfNotEmpty(link.getRole(),     v -> json.put("role", v));
             applyIfNotEmpty(link.getType(),     v -> json.put("type", v));
+            applyIfNotEmpty(link.getAction(),   v -> json.put("action", v));
             return json;
         }).collect(Collectors.toList());
     }

@@ -203,6 +203,8 @@ public class VoTableReader {
         applyIfNotEmpty(el.getAttribute("content-type"), li::setType);
         applyIfNotEmpty(el.getAttribute("title"), li::setTitle);
         applyIfNotEmpty(el.getAttribute("href"), li::setHref);
+        applyIfNotEmpty(el.getAttribute("value"), li::setValue);
+        applyIfNotEmpty(el.getAttribute("action"), li::setAction);
         return li;
     }
 
@@ -701,6 +703,18 @@ public class VoTableReader {
             String desc = cinfo.getDescription();
             if (desc != null) {
                 dt.setDesc(desc.replace("\n", " "));
+            }
+
+            // attribute type  .. this is not yet standard, mentioned in appendix
+            // used for generating links and link substitutions
+            DescribedValue type = cinfo.getAuxDatumByName("Type");
+            if (type != null) {
+                String val = String.valueOf(type.getValue());
+                if (val.equals(DataType.LOCATION)) {
+                    dt.setTypeDesc(val);
+                } else if (val.equals("hidden")) {
+                    dt.setVisibility(DataType.Visibility.hidden);
+                }
             }
 
             // child elements <LINK> and <VALUES>
