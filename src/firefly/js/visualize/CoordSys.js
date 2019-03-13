@@ -72,7 +72,7 @@ export const CoordinateSys = function () {
             coordSys = SCREEN_PIXEL;
         } else if (desc===PIXEL.toString()) {
             coordSys = PIXEL;
-        } else if (desc===ZEROBASED.toString()) {
+        } else if (desc===ZEROBASED.toString() || desc==='ZERO_BASED') {
             coordSys = ZEROBASED;
         } else if (desc===FITSPIXEL.toString()) {
             coordSys = FITSPIXEL;
