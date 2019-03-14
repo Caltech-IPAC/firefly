@@ -50,11 +50,11 @@ export class TablesContainer extends PureComponent {
     }
 
     render() {
-        const {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active} = this.state;
+        const {closeable, tbl_group, expandedMode, tables, tableOptions, layout, active, style} = this.state;
         if (expandedMode) {
             return <ExpandedView {...{active, tables, tableOptions, layout, expandedMode, closeable, tbl_group}} />;
         } else {
-            return isEmpty(tables) ? <div></div> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group}} />;
+            return isEmpty(tables) ? <div></div> : <StandardView {...{active, tables, tableOptions, expandedMode, tbl_group, style}} />;
         }
     }
 }
@@ -63,6 +63,7 @@ TablesContainer.propTypes = {
     expandedMode: PropTypes.bool,
     closeable: PropTypes.bool,
     tbl_group: PropTypes.string,
+    style: PropTypes.object,
     mode: PropTypes.oneOf(['expanded', 'standard', 'both'])
 };
 TablesContainer.defaultProps = {
@@ -94,7 +95,7 @@ function ExpandedView(props) {
 
 
 function StandardView(props) {
-    const {tables, tableOptions, expandedMode, active, tbl_group} = props;
+    const {tables, tableOptions, expandedMode, active, tbl_group, style={}} = props;
 
     var activeIdx = Object.keys(tables).findIndex( (tbl_ui_id) => get(tables,[tbl_ui_id,'tbl_id']) === active);
     activeIdx = activeIdx === -1 ? 0 : activeIdx;
@@ -107,7 +108,7 @@ function StandardView(props) {
         return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode} tableOptions={tableOptions}/>;
     } else {
         return (
-            <Tabs defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
+            <Tabs style={{height: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
             </Tabs>
         );

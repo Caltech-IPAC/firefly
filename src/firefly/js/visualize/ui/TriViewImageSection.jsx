@@ -38,7 +38,7 @@ import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
  */
 export function TriViewImageSection({showCoverage=false, showFits=false, selectedTab='fits',
                                      showMeta=false, imageExpandedMode=false, closeable=true,
-                                     metaDataTableId}) {
+                                     metaDataTableId, style={}}) {
 
     if (imageExpandedMode) {
         return  ( <ImageExpandedMode
@@ -55,7 +55,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
 
     if (showCoverage || showFits || showMeta) {
         return (
-            <Tabs onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true} resizable={true}>
+            <Tabs style={{height: '100%', ...style}} onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true} resizable={true}>
                 { showFits &&
                     <Tab name='Images' removable={false} id='fits'>
                         <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID}
@@ -98,7 +98,8 @@ TriViewImageSection.propTypes= {
     imageExpandedMode : PropTypes.bool,
     closeable: PropTypes.bool,
     metaDataTableId: PropTypes.string,
-    selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage'])
+    selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage']),
+    style: PropTypes.object
 };
 
 export function launchTableTypeWatchers() {
