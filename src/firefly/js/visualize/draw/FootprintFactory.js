@@ -13,19 +13,31 @@ const PRELIM = 'prelim.';
 const NoPRELIM = '';
 
 // SPITZER is not included  06/24/2016
-export const FootprintList = ['HST', 'JWST', 'WFIRST', 'SPITZER'];
-export const FOOTPRINT = new Enum({HST: NoPRELIM, SPITZER: NoPRELIM, JWST: PRELIM, WFIRST: NoPRELIM});
+export const FootprintList = ['HST', 'JWST', 'WFIRST', 'SPITZER', 'SOFIA'];
+export const FOOTPRINT = new Enum({HST: NoPRELIM, SPITZER: NoPRELIM, JWST: PRELIM, WFIRST: NoPRELIM, SOFIA:NoPRELIM});
 const JWST_INST = new Enum(['FGS', 'MIRI', 'NIRCAM', 'NIS', 'NIRSPEC']);
 const HST_INST = new Enum(['NICMOS', 'WFPC2', 'ACS/WFC', 'ACS/HRC', 'ACS/SBC', 'WFC3/UVIS', 'WFC3/IR']);
 const SPITZER_INST = new Enum(['IRAC36', 'IRAC45']);
 
+//To add a new instrument, add it in SOFIA_INST.  It the new instrument has submenu, create a menu list like SOFIA_INST_FORCAST_TEXT
+//and then add it to SOFIA_INSTRUMENTS
+const SOFIA_INST = new Enum(['FORCAST', 'FIFI-LS']);
+export const SOFIA_INST_FORCAST_TEXT = new Enum({FORCAST_IMAG:'FORCAST Imaging',
+    FORCAST_GRISMS_A: 'FORCAST Grisms a',FORCAST_GRISMS_B:'FORCAST Grisms b' });
+
+export const SOFIA_INST_FIFILS_TEXT = new Enum({'FIFI-LS_Blue':'FIFI-LS Blue (50-120 microns)', 'FIFI-LS_Red':'FIFI-LS Red (110-200 microns)'
+    });
+export const SOFIA_INSTRUMENTS = {
+    FORCAST: SOFIA_INST_FORCAST_TEXT,
+    'FIFI-LS': SOFIA_INST_FIFILS_TEXT
+};
 
 export const INSTRUMENTS = {
     [FOOTPRINT.HST.key]: HST_INST,
     [FOOTPRINT.SPITZER.key]: SPITZER_INST,
-    [FOOTPRINT.JWST.key]: JWST_INST
+    [FOOTPRINT.JWST.key]: JWST_INST,
+    [FOOTPRINT.SOFIA.key]:SOFIA_INST
 };
-
 
 export class FootprintFactory {
     /**
@@ -34,8 +46,9 @@ export class FootprintFactory {
      * @returns {array}
      */
     static getInstruments(mission) {
-        var enumFP = FOOTPRINT.enums.find( (fp) => fp.key === mission);
-        return (enumFP&&has(INSTRUMENTS, mission)) ? INSTRUMENTS[mission].enums.map((inst) => inst.key) : [];
+            var enumFP = FOOTPRINT.enums.find( (fp) => fp.key === mission);
+            return (enumFP&&has(INSTRUMENTS, mission)) ? INSTRUMENTS[mission].enums.map((inst) => inst.key) : [];
+
     }
 
     /**

@@ -114,6 +114,14 @@ public class VisContext {
         footprintMap.put("SPITZER_IRAC36", "footprint/Footprint_SPITZER.reg");
         footprintMap.put("SPITZER_IRAC45", "footprint/Footprint_SPITZER.reg");
         footprintMap.put("WFIRST",      "footprint/Footprint_WFIRST.reg");
+        footprintMap.put("SOFIA",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_FORCAST_IMAG",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_FIFI-LS_Blue",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_FIFI-LS_Red",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_FORCAST_GRISMS_A",      "footprint/Footprint_SOFIA.reg");
+        footprintMap.put("SOFIA_FORCAST_GRISMS_B",      "footprint/Footprint_SOFIA.reg");
+
+
     }
 
     static public void addFootprint(String key, String path) {
