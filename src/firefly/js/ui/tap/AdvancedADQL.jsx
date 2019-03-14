@@ -18,7 +18,7 @@ import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
 const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace'}};
-var cFetchKey = undefined;
+var cFetchKey = Date.now();
 
 export function AdvancedADQL({adqlKey, defAdqlKey, groupKey, serviceUrl, style={}}) {
 
@@ -175,9 +175,9 @@ function expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeDat
             const nidx = getColumnIdx(tm, 'column_name');
             const didx = getColumnIdx(tm, 'description');
             const cols = tableData.map( (row) => {
-                const key = `column--${key}--${row[nidx]}`;
+                const colkey = `column--${key}--${row[nidx]}`;
                 const title = row[nidx] + (row[didx] ? ` (${row[didx]})` : '');
-                return {key, title, isLeaf: true};
+                return {key: colkey, title, isLeaf: true};
             });
             addChildNodes(treeData, eventKey, cols);
             setTreeData(cloneDeep(treeData));

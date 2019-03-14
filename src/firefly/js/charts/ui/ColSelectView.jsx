@@ -51,24 +51,31 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
         {name: 'Name'},
         {name: 'Unit'},
         {name: 'Type'},
+        {name: '', visibility: 'hidden'},
         {name: '', visibility: 'hidden'}
     ];
     const data = [];
     for (let i = 0; i < colValStats.length; i++) {
-            data[i] = [
-                        colValStats[i].name,
-                        colValStats[i].units,
-                        colValStats[i].type,
-                        colValStats[i].desc
-            ];
+        data[i] = [
+            colValStats[i].name,
+            colValStats[i].units,
+            colValStats[i].type,
+            colValStats[i].ucd || '',
+            colValStats[i].desc
+        ];
     }
 
     const widths = calcColumnWidths(columns, data);
     columns[0].prefWidth = Math.min(widths[0], 30);  // adjust width of column for optimum display.
     columns[1].prefWidth = Math.min(widths[1], 15);
     columns[2].prefWidth = Math.min(widths[2], 15);
-    if (widths[3]) {
-        columns[3] = {name: 'Description', prefWidth: widths[3], visibility: 'show'};
+    let idx = 3;
+    if (widths[idx]) {
+        columns[idx] = {name: 'UCD', prefWidth: widths[idx], visibility: 'show'};
+    }
+    idx++;
+    if (widths[idx]) {
+        columns[idx] = {name: 'Description', prefWidth: widths[idx], visibility: 'show'};
     }
 
     const tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};

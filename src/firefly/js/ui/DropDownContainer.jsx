@@ -30,7 +30,7 @@ export const dropDownMap = {
     Search: {view: <SearchPanel />},
     TestSearch: {view: <TestSearchPanel />},
     TestSearches: {view: <TestQueriesPanel />},
-    TestTAPSearch: {view: <TapSearchPanel />, layout: {width: '100%'}},
+    TAPSearch: {view: <TapSearchPanel />, layout: {width: '100%'}},
     ImageSearchPanelV2: {view: <ImageSearchDropDown />, layout: flexGrowWithMax},
     ImageSelectDropDownCmd: {view: <ImageSearchDropDown />, layout: flexGrowWithMax},
     ImageSelectDropDownSlateCmd: {view: <ImageSearchDropDown gridSupport={true} />, layout: flexGrowWithMax},

@@ -3,11 +3,14 @@ import SplitPane from 'react-split-pane';
 
 import {SplitContent} from '../panel/DockLayoutPanel';
 import CreatableSelect from 'react-select/lib/Creatable';
-import {get, pick} from 'lodash';
+import {isArray, get, pick} from 'lodash';
 import {FormPanel} from '../FormPanel.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
+import {HelpIcon} from '../HelpIcon';
+import {showInfoPopup} from '../PopupUtil.jsx';
 import {dispatchMultiValueChange, dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils';
+import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
@@ -25,8 +28,8 @@ import {RadioGroupInputField} from '../RadioGroupInputField';
 
 
 import './TableSelectViewPanel.css';
-import {HelpIcon} from '../HelpIcon';
-import {showInfoPopup} from '../PopupUtil.jsx';
+
+
 
 /**
  * group key for fieldgroup comp
@@ -40,7 +43,7 @@ export const tapHelpId = (id) => `tapSearches.${id}`;
 export class TapSearchPanel extends PureComponent {
     constructor(props) {
         super(props);
-        const {serviceUrl=TAP_SERVICE_OPTIONS[0].value, ...others} = getTapBrowserState();
+        const {serviceUrl=get(getTapServiceOptions(), [0, 'value']), ...others} = getTapBrowserState();
         this.state = {serviceUrl, ...others};       // initialize state.. default serviceUrl if not given
 
 
@@ -104,7 +107,7 @@ export class TapSearchPanel extends PureComponent {
                             <div className='TapSearch__section--title'>1. TAP Service <HelpIcon helpId={tapHelpId('tapService')}/> </div>
                             <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000}}>
                                 <CreatableSelect
-                                    options={TAP_SERVICE_OPTIONS}
+                                    options={getTapServiceOptions()}
                                     isClearable={true}
                                     onChange={this.onTapServiceOptionSelect}
                                     placeholder={placeholder}
@@ -479,6 +482,9 @@ function addParens(condition) {
     return '(' + condition + ')';
 }
 
+
+
+
 const TAP_SERVICES = [
     {
         label: 'IRSA https://irsa.ipac.caltech.edu/TAP',
@@ -526,18 +532,26 @@ const TAP_SERVICES = [
     }
 ];
 
-const TAP_SERVICE_OPTIONS = TAP_SERVICES.map((e)=>pick(e, ['label', 'value']));
 
+
+function getTapServices() {
+    let tapServices = get(getAppOptions(), 'tap.services');
+    if (!tapServices || !isArray(tapServices) || !tapServices.length) {
+        tapServices = TAP_SERVICES;
+    }
+    return tapServices;
+}
+
+function getTapServiceOptions() {
+    return getTapServices().map((e)=>pick(e, ['label', 'value']));
+}
 
 function getSampleQuery(serviceUrl) {
-    const idx = TAP_SERVICES.findIndex((e) => e.value === serviceUrl);
+    const idx = getTapServices().findIndex((e) => e.value === serviceUrl);
     let sampleQuery = '';
     if (idx >= 0) {
         sampleQuery = TAP_SERVICES[idx].query;
     }
     return sampleQuery;
 }
-
-
-
 

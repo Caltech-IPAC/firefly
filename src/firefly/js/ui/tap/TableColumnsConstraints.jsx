@@ -6,7 +6,7 @@ import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchTableFilter, dispatchTableAddLocal, TABLE_LOADED, TABLE_REPLACE, TABLE_SELECT} from '../../tables/TablesCntlr.js';
 import {ColumnConstraintsPanel, getTableConstraints} from './ColumnConstraintsPanel.jsx';
 
-const COLS_TO_DISPLAY = ['column_name','description','unit','datatype','ucd','utype','principal'];
+const COLS_TO_DISPLAY_FIRST = ['column_name','unit','ucd','description','datatype','arraysize','utype','xtype','principal'];
 
 
 export function TableColumnsConstraints({columnsModel}) {
@@ -43,7 +43,7 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
             <button style={{padding: '0 5px 0 5px', margin: '0 2px 0 5px'}}
                     title='Reset table below to the default'
                     onClick={ () => {
-                        const tblModel = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY, true);
+                        const tblModel = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY_FIRST, true);
                         dispatchTableAddLocal(tblModel, {}, false);
                     }}>Reset
             </button>
@@ -72,14 +72,14 @@ function tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount, setSel
     if (!columnsModel || columnsModel.error) {
         setTableModel(columnsModel);
     } else {
-        const tbl = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY);
+        const tbl = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY_FIRST);
         setTableModel(tbl);
 
         if (setFilterCount || setSelectedCount) {
             if (setSelectedCount) {
                 // principal columns are preselected
-                let si = get(tbl, 'origTableModel.selectInfo') || get(tbl, 'selectInfo');
-                const selectInfoCls = new SelectInfo(si);
+                const si = get(tbl, 'origTableModel.selectInfo') || get(tbl, 'selectInfo');
+                const selectInfoCls = si? new SelectInfo(si) : SelectInfo.newInstance(si);
                 setSelectedCount(selectInfoCls.getSelectedCount());
             }
             return watchTableChanges(tbl_id,
@@ -99,7 +99,7 @@ function tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount, setSel
                             selectInfo = get(getTblById(tbl_id), 'origTableModel.selectInfo');
                         }
                     }
-                    const selectInfoCls = new SelectInfo(selectInfo);
+                    const selectInfoCls = selectInfo ? new SelectInfo(selectInfo) : SelectInfo.newInstance(selectInfo);
                     setSelectedCount && setSelectedCount(selectInfoCls.getSelectedCount());
                 }, `ucd-${tbl_id}-filterCnt`); // watcher id for debugging
         } else {
@@ -141,8 +141,10 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
     // keep only the columns that are present in tableModel
     const colNames = columnNames.filter((c) => getColumn(tableModel, c));
 
-    // make sure all original table columns are included
-    colNames.push(...getColumns(tableModel).map((c)=>c.name).filter((name)=>!colNames.includes(name)));
+    // make sure all original table columns are included, exept table_name and schema_name
+    colNames.push(...getColumns(tableModel).map((c)=>c.name).filter((name)=>
+        !['table_name', 'schema_name'].includes(name) && !colNames.includes(name))
+    );
 
     const columns = colNames.map((name) => cloneDeep(getColumn(tableModel, name)));
 

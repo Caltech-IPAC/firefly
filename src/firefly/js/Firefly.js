@@ -23,7 +23,7 @@ import {reduxFlux} from './core/ReduxFlux.js';
 import {wsConnect} from './core/messaging/WebSocketClient.js';
 import {ActionEventHandler} from './core/messaging/MessageHandlers.js';
 import {init} from './rpc/CoreServices.js';
-import {getPropsWith, mergeObjectOnly, clone} from './util/WebUtil.js';
+import {getPropsWith, mergeObjectOnly} from './util/WebUtil.js';
 import {initLostConnectionWarning} from './ui/LostConnection.jsx';
 
 export const flux = reduxFlux;
@@ -129,6 +129,20 @@ const defFireflyOptions = {
     },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
+    },
+    tap : {
+        services: [
+            { label: 'IRSA https://irsa.ipac.caltech.edu/TAP',
+                value: 'https://irsa.ipac.caltech.edu/TAP' },
+            { label: 'NED https://ned.ipac.caltech.edu/tap',
+                value: 'https://ned.ipac.caltech.edu/tap/' },
+            { label: 'CADC https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap',
+                value: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap' },
+            { label: 'GAIA https://gea.esac.esa.int/tap-server/tap',
+                value: 'https://gea.esac.esa.int/tap-server/tap' },
+            { label: 'MAST https://vao.stsci.edu/CAOMTAP/TapService.aspx',
+                value: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx' }
+        ]
     }
 };
 
@@ -186,7 +200,7 @@ function fireflyInit(props, options={}) {
  * @param {Object} options
  * @return {Object} return object has two properties unrender and render
  */
-export function startAsAppFromApi(divId, props={}, options={}, ) {
+export function startAsAppFromApi(divId, props={}, options={}) {
     const defProps= {...defAppProps};
     props = mergeObjectOnly(defProps, props);
     props= {...props, ...{div:divId}};
