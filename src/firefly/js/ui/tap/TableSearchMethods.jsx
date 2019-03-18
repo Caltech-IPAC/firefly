@@ -84,7 +84,11 @@ const fieldsMap = {[Spatial]: {
                         [TemporalPanel]: {label:Temporal},
                         [TemporalColumns]: {label: 'Temporal Column'},
                         [TimeFrom]: {label: 'From'},
-                        [TimeTo]: {label: 'To'}},
+                        [TimeTo]: {label: 'To'},
+                        [MJDFrom]: {label: 'MJD (From)'},
+                        [MJDTo]: {label: 'MJD (To)'},
+                        [TimePickerFrom]: {label: 'ISO (From)'},
+                        [TimePickerTo]: {label: 'ISO (To)'}},
                    [Wavelength]: {
                         [WavelengthPanel]: {label: Wavelength},
                         [WavelengthColumns]: {label: 'Wavelength Column'}}};
@@ -356,7 +360,7 @@ function TemporalSearch({cols, groupKey, fields}) {
         );
     };
 
-    const message = get(fields, [TemporalPanel, PanelMessage], '');
+    const message = get(fields, [TemporalCheck, 'value']) === Temporal ?get(fields, [TemporalPanel, PanelMessage], '') :'';
     return (
         <FieldGroupCollapsible header={<Header title={Temporal} helpID={tapHelpId('temporal')}
                                         checkID={TemporalCheck} message={message}/>}
@@ -1112,7 +1116,7 @@ function validateSpatialConstraints(fields, newFields, nullAllowed) {
  * @returns {{valid: boolean}}
  */
 function validateTemporalConstraints(fields, newFields, nullAllowed) {
-    const allowEmptyFields = [TimeFrom, TimeTo];
+    const allowEmptyFields = [TimeFrom, TimeTo, MJDFrom, MJDTo, TimePickerFrom, TimePickerTo];
 
     let allValid = true;
     if (isUndefined(nullAllowed) && newFields) {
@@ -1159,6 +1163,24 @@ function validateTemporalConstraints(fields, newFields, nullAllowed) {
     retval = checkField(TimeTo);
     if (!newFields && !retval.valid) {
         return updateRetMessage(TimeTo);
+    }
+
+    let mjdRet = checkField(MJDFrom);
+    let isoRet = checkField(TimePickerFrom);
+
+    if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
+        retval.valid = false;
+        retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
+        return updateRetMessage(!isoRet.valid ? TimePickerFrom : MJDFrom);
+    }
+
+    mjdRet = checkField(MJDTo);
+    isoRet = checkField(TimePickerTo);
+
+    if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
+        retval.valid = false;
+        retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
+        return updateRetMessage(!!isoRet.valid  ? TimePickerTo : MJDTo);
     }
 
     if (newFields) {

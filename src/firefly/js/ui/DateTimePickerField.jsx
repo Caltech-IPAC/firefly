@@ -251,7 +251,7 @@ export function validateMJD(tStr, nullAllowed=true) {
     const retval = {valid: true, value: tStr};
 
     const min = Number.MIN_VALUE;
-    const max = Number.MAX_VALUE;
+    const max = 2973483.999988426;  // for ISO 9999-12-31T23:59:59Z
 
     retval.valid = (!tStr && nullAllowed) ? true : Validate.floatRange(min, max, 6, 'Time range in MJD', tStr).valid;
     if (!retval.valid) {
