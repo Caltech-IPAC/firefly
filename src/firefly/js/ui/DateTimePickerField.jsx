@@ -1,4 +1,4 @@
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import {isNaN, get} from 'lodash';
 import PropTypes from 'prop-types';
 import Moment from 'moment';
@@ -8,7 +8,7 @@ import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 import {clone} from '../util/WebUtil.js';
 
 import './tap/react-datetime.css';
-import {FieldGroupEnable} from './FieldGroupEnable';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 /**
  * try to convert date/time string to Moment, if not, keep the string
  * @param str_or_moment
@@ -209,28 +209,11 @@ function handleOnChange(momentVal, params, fireValueChange) {
     fireValueChange({value, valid, message});
 }
 
-// export const DateTimePickerField = fieldGroupConnector(DateTimePicker, getProps, propTypes);
-
-export class DateTimePickerField extends PureComponent {
-
-    render()  {
-        const {fieldKey, groupKey}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        return <DateTimePicker {...clone(this.props, propsFromStore)}
-                                               onChange={(momentVal) => handleOnChange(momentVal,propsFromStore, fireValueChange)}/> ;
-                    }
-
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
-
-
+export const DateTimePickerField= memo( (props) => {
+    const {viewProps, fireValueChange}= useFieldGroupConnector(props);
+    return (<DateTimePicker {...viewProps}
+                           onChange={(momentVal) => handleOnChange(momentVal,viewProps, fireValueChange)}/>);
+});
 
 
 const DiffUnixMJD = 40587.0;

@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
 import {TargetFeedback} from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
@@ -210,33 +210,24 @@ function replaceValue(v,props) {
 
 
 
-export class TargetPanel extends PureComponent {
-    render()  {
 
-        const {fieldKey= 'UserTargetWorldPt', initialState= { fieldKey : 'UserTargetWorldPt' }}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState} confirmInitialValue={replaceValue}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        const newProps= computeProps(propsFromStore, this.props);
-                        return <TargetPanelView {...newProps}
-                                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/> ;
-                    }
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
+export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt', initialState= { fieldKey : 'UserTargetWorldPt' }, ...restOfProps}) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({fieldKey, initialState, confirmInitialValue:replaceValue});
+    const newProps= computeProps(viewProps, restOfProps);
+    return <TargetPanelView {...newProps}
+                            onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/> ;
+});
 
 
-function computeProps(propsFromStore, componentProps) {
 
-    let feedback= propsFromStore.feedback|| '';
-    let value= propsFromStore.displayValue;
-    let showHelp= get(propsFromStore,'showHelp', true);
-    const resolver= propsFromStore.resolver || nedThenSimbad;
-    const wpStr= propsFromStore.value;
+
+function computeProps(viewProps, componentProps) {
+
+    let feedback= viewProps.feedback|| '';
+    let value= viewProps.displayValue;
+    let showHelp= get(viewProps,'showHelp', true);
+    const resolver= viewProps.resolver || nedThenSimbad;
+    const wpStr= viewProps.value;
     const wp= parseWorldPt(wpStr);
 
     if (isValidPoint(wp) && !value) {
@@ -245,7 +236,7 @@ function computeProps(propsFromStore, componentProps) {
         showHelp= false;
     }
 
-    return Object.assign({}, propsFromStore,
+    return Object.assign({}, viewProps,
         {
             visible: true,
             label: 'Name or Position:',

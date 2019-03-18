@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Select, {components} from 'react-select';
 import {truncate} from 'lodash';
 import LOADING from 'html/images/gxt/loading.gif';
-import {FieldGroupEnable} from '../FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from '../FieldGroupEnable.jsx';
 
 export const selectTheme = (theme) => ({
       ...theme,
@@ -120,21 +120,13 @@ export function NameSelect({options, value, onSelect, type, selectProps={}}) {
 }
 
 
-export const NameSelectField = memo( ({fieldKey, groupKey, onSelect, ...otherProps} ) => {
-    return (
-        <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} >
-            {
-                (propsFromStore, fireValueChange) => {
-                    return (
-                        <NameSelect {...{...otherProps, value:propsFromStore.value} }
-                                       onSelect={(selectedValue) => {
-                                           fireValueChange({value: selectedValue});
-                                           if (onSelect) onSelect(selectedValue);
-                                       } }/>
-                    );
-                }
-            }
-        </FieldGroupEnable>
+export const NameSelectField = memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return ( <NameSelect {...viewProps }
+                         onSelect={(selectedValue) => {
+                             fireValueChange({value: selectedValue});
+                             if (viewProps.onSelect) viewProps.onSelect(selectedValue);
+                         } }/>
     );
 
 });

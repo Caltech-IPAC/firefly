@@ -5,7 +5,7 @@
 import React, {PureComponent, Component, memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, get} from 'lodash';
-import {FieldGroupEnable} from '../../ui/FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from '../../ui/FieldGroupEnable.jsx';
 import './CatalogTableListField.css';
 
 export class CatalogTableView extends Component {
@@ -72,18 +72,10 @@ export class CatalogTableView extends Component {
     }
 }
 
-export const CatalogTableListField = memo( ({fieldKey, groupKey, ...otherProps} ) => {
+export const CatalogTableListField = memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
     return (
-        <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} {...otherProps} >
-            {
-                (propsFromStore, fireValueChange) => {
-                    return (
-                        <CatalogTableView {...propsFromStore}
-                                         onClick= {(ev) => handleOnClick(ev, propsFromStore, fireValueChange)} />
-                    );
-                }
-            }
-        </FieldGroupEnable>
+        <CatalogTableView {...viewProps} onClick= {(ev) => handleOnClick(ev, viewProps, fireValueChange)} />
     );
 
 });

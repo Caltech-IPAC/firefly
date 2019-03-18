@@ -1,7 +1,7 @@
-import React, {PureComponent} from 'react';
+import React, {memo} from 'react';
 import {has} from 'lodash';
 import {clone} from '../util/WebUtil.js';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 
 
@@ -13,22 +13,8 @@ function onChange(ev, validator, fireValueChange) {
 }
 
 
-
-export class ValidationField extends PureComponent {
-
-    render()  {
-        const {fieldKey, initialState, forceReinit}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState} forceReinit={forceReinit}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        return <InputFieldView {...clone(this.props, propsFromStore)}
-                                               onChange={(ev) => onChange(ev,propsFromStore.validator, fireValueChange)}/> ;
-                    }
-
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
+export const ValidationField = memo( (props) => {
+        const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+        return <InputFieldView {...clone(props, viewProps)}
+                               onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/> ;
+});

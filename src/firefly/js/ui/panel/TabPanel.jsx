@@ -3,11 +3,11 @@
  */
 
 import './TabPanel.css';
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import sizeMe from 'react-sizeme';
-import {FieldGroupEnable} from '../FieldGroupEnable.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {useFieldGroupConnector} from '../FieldGroupEnable';
 
 
 
@@ -221,38 +221,27 @@ Tab.defaultProps= { selected: false };
 
 
 
-function onChange(idx,id, name, propsFromStore, fireValueChange) {
+function onChange(idx,id, name, viewProps, fireValueChange) {
     let value= id||name;
     if (!value) value= idx;
 
     fireValueChange({ value});
-    if (propsFromStore.onTabSelect) {
-        propsFromStore.onTabSelect(idx, id, name);
+    if (viewProps.onTabSelect) {
+        viewProps.onTabSelect(idx, id, name);
     }
 }
 
-export class FieldGroupTabs extends PureComponent {
 
-    render()  {
-        const {fieldKey, initialState, forceReinit, onTabSelect}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState} forceReinit={forceReinit} onTabSelect={onTabSelect}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        const newProps= Object.assign({}, this.props, propsFromStore,
-                            { defaultSelected : propsFromStore.value,
-                              useFlex: true,
-                              onTabSelect: (idx,id,name) => onChange(idx,id,name,propsFromStore, fireValueChange)
-                            });
-                        return <Tabs {...newProps} /> ;
-                    }
-
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
+export const FieldGroupTabs= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const newProps= {
+        ...viewProps,
+        defaultSelected : viewProps.value,
+        useFlex: true,
+        onTabSelect: (idx,id,name) => onChange(idx,id,name,viewProps, fireValueChange)
+        };
+    return (<Tabs {...newProps} />);
+});
 
 FieldGroupTabs.propTypes= {
     fieldKey: PropTypes.string,
@@ -261,5 +250,6 @@ FieldGroupTabs.propTypes= {
     resizable: PropTypes.bool,
     headerStyle: PropTypes.object,
     contentStyle: PropTypes.object,
-    borderless: PropTypes.bool
+    borderless: PropTypes.bool,
+    forceReinit: PropTypes.bool
 };

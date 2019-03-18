@@ -1,8 +1,8 @@
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import { has, isNaN} from 'lodash';
 import {RangeSliderView, checkMarksObject} from './RangeSliderView.jsx';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 
 /**
  * @summary callback to handle slider value change
@@ -30,24 +30,12 @@ function handleOnChange(value, params, fireValueChange){
 // export const RangeSlider = fieldGroupConnector(RangeSliderView, getProps, propTypes, null);
 
 
-export class RangeSlider extends PureComponent {
+export const RangeSlider= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return (<RangeSliderView {...viewProps}
+                            handleChange={(value) => handleOnChange(value,viewProps, fireValueChange)}/>);
+});
 
-    render()  {
-        const {fieldKey, groupKey, onValueChange, ...restOfProps}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} onValueChange={onValueChange} {...restOfProps}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        const newProps= Object.assign({}, restOfProps, { value:propsFromStore.value});
-                        return <RangeSliderView {...newProps}
-                                           handleChange={(value) => handleOnChange(value,propsFromStore, fireValueChange)}/> ;
-                    }
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
 
 RangeSlider.propTypes={
     fieldKey: PropTypes.string,

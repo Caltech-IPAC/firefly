@@ -1,11 +1,12 @@
-import React, {PureComponent} from 'react';
+import React, {memo} from 'react';
 import {bool, array, string, number, object} from 'prop-types';
 import {isEmpty, isUndefined, get}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 
 
-const assureValue= (value,options,defaultValue) => {
+const assureValue= (props) => {
+    const {value,options, defaultValue}= props;
     if (value) return value;
     return isUndefined(defaultValue) ? options[0].value : defaultValue;
 };
@@ -18,8 +19,6 @@ function handleOnChange(ev, params, fireValueChange) {
     }
 }
 
-
-
 function checkForUndefined(v,props) {
     const {options=[], defaultValue, isGrouped=false} = props;
     const optionContain = (v) => v && options.find((op) => op.value === v);
@@ -30,29 +29,12 @@ function checkForUndefined(v,props) {
     }
 }
 
-export class RadioGroupInputField extends PureComponent {
-
-    render()  {
-        const {fieldKey, initialState, forceReinit, options, isGrouped, defaultValue}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState}
-                              forceReinit={forceReinit} options={options}
-                              isGrouped={isGrouped} defaultValue={defaultValue}
-                              confirmInitialValue={checkForUndefined}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        const {options, defaultValue}= propsFromStore;
-                        const value= assureValue(propsFromStore.value,options, defaultValue);
-                        const newProps= Object.assign({}, this.props, propsFromStore, { value});
-                        return <RadioGroupInputFieldView {...newProps}
-                                           onChange={(ev) => handleOnChange(ev,propsFromStore, fireValueChange)}/> ;
-                    }
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
+export const RadioGroupInputField= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmInitialValue:checkForUndefined});
+    const newProps= {...viewProps,  value: assureValue(viewProps)};
+    return <RadioGroupInputFieldView {...newProps}
+                                     onChange={(ev) => handleOnChange(ev,viewProps, fireValueChange)}/> ;
+});
 
 
 RadioGroupInputField.propTypes= {

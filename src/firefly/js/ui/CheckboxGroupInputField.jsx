@@ -1,7 +1,7 @@
-import React, {PureComponent} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {InputFieldLabel} from './InputFieldLabel.jsx';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable';
 
 
 const isChecked= (val,fieldValue) => (fieldValue.split(',').indexOf(val) > -1);
@@ -52,11 +52,11 @@ CheckboxGroupInputFieldView.propTypes= {
 
 
 
-function handleOnChange(ev, propsFromStore, fireValueChange) {
+function handleOnChange(ev, viewProps, fireValueChange) {
     // when a checkbox is checked or unchecked
     // the array, representing the value of the group,
     // needs to be updated
-    const value= convertValue(propsFromStore.value,propsFromStore.options);
+    const value= convertValue(viewProps.value,viewProps.options);
 
     const val = ev.target.value;
     const checked = ev.target.checked;
@@ -68,41 +68,24 @@ function handleOnChange(ev, propsFromStore, fireValueChange) {
     else {
         if (idx > -1) curValueArr.splice(idx, 1); // remove val from the array
     }
-    const {valid,message} = propsFromStore.validator(curValueArr.toString());
+    const {valid,message} = viewProps.validator(curValueArr.toString());
 
     fireValueChange({ value: curValueArr.toString(), message, valid });
 
-    if (propsFromStore.onChange) {
-        propsFromStore.onChange(ev);
+    if (viewProps.onChange) {
+        viewProps.onChange(ev);
     }
 }
 
-
-
-export class CheckboxGroupInputField extends PureComponent {
-
-    render()  {
-        const {fieldKey, initialState, forceReinit, options}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState}
-                               forceReinit={forceReinit} options={options}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        const {value,options}= propsFromStore;
-                        const newProps= Object.assign({}, this.props, propsFromStore,
-                                                         { value: convertValue(value,options)});
-                        return (
-                            <CheckboxGroupInputFieldView {...newProps}
-                                               onChange={(ev) => handleOnChange(ev,propsFromStore, fireValueChange)}/>
-                        );
-                    }
-
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
+export const CheckboxGroupInputField = memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const newProps= {
+        ...viewProps,
+        value: convertValue(viewProps.value,viewProps.options),
+        onChange: (ev) => handleOnChange(ev,viewProps, fireValueChange)
+    };
+    return ( <CheckboxGroupInputFieldView {...newProps} /> );
+});
 
 CheckboxGroupInputField.propTypes= {
     options : PropTypes.array.isRequired,

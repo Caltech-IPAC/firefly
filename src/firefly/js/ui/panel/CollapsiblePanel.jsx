@@ -3,12 +3,12 @@
  */
 
 import './CollapsiblePanel.css';
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {isBoolean, isFunction} from 'lodash';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
-import {FieldGroupEnable} from '../FieldGroupEnable.jsx';
 import {clone} from '../../util/WebUtil.js';
+import {useFieldGroupConnector} from '../FieldGroupEnable';
 
 
 export const CollapseBorder = {
@@ -106,6 +106,16 @@ export class CollapsiblePanel extends PureComponent {
     }
 }
 
+
+export const FieldGroupCollapsible= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const newProps= {...viewProps,
+            isOpen: Boolean(viewProps.value === 'open'),
+            onToggle: (isOpen) => fireValueChange({ value: isOpen ? 'open' : 'closed' })
+        };
+    return ( <CollapsiblePanel {...newProps} /> );
+});
+
 CollapsiblePanel.propTypes = {
     componentKey: PropTypes.string, // if need to preserve state and is not part of the field group
     header: PropTypes.node,
@@ -123,28 +133,5 @@ CollapsiblePanel.defaultProps= {
     borderStyle: CollapseBorder.Oneborder,
     isOpen: false
 };
-
-export class FieldGroupCollapsible extends PureComponent {
-
-    render()  {
-        const {fieldKey, groupKey, onValueChange, ...restOfProps}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} onValueChange={onValueChange} {...restOfProps}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        const newProps= clone(restOfProps,
-                            {
-                                value: propsFromStore.value,
-                                isOpen: Boolean(propsFromStore.value === 'open'),
-                                onToggle: (isOpen) => fireValueChange({ value: isOpen ? 'open' : 'closed' })
-                            });
-                        return <CollapsiblePanel {...newProps} /> ;
-                    }
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
 
 

@@ -1,8 +1,8 @@
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
-import {FieldGroupEnable} from './FieldGroupEnable';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 
 import {logError} from '../util/WebUtil.js';
 
@@ -271,26 +271,12 @@ SuggestBoxInputFieldView.propTypes = {
 };
 
 
-// export const SuggestBoxInputField = fieldGroupConnector(SuggestBoxInputFieldView, getProps, SuggestBoxInputFieldView.propTypes, null);
+export const SuggestBoxInputField= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return <SuggestBoxInputFieldView {...{...viewProps, fireValueChange}} /> ;
 
+});
 
-
-export class SuggestBoxInputField extends PureComponent {
-
-    render()  {
-        const {fieldKey, groupKey, ...restOfProps}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} {...restOfProps}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        return <SuggestBoxInputFieldView {...{...propsFromStore, fireValueChange}} /> ;
-                    }
-                }
-            </FieldGroupEnable>
-        );
-
-    }
-}
 
 SuggestBoxInputField.propTypes = {
     value:  PropTypes.string,

@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {has} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 import {convertISOToMJD, convertMJDToISO, validateDateTime, validateMJD, fMoment} from './DateTimePickerField.jsx';
 import {MJD, ISO} from './tap/TapUtil.js';
 
@@ -211,20 +211,10 @@ export const isShowHelp = (utc, mjd) => {
     return !utc && !mjd;
 };
 
-export const TimePanel= memo( ({fieldKey, groupKey, ...otherProps} ) => {
-    return (
-        <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} >
-            {
-                (propsFromStore, fireValueChange) => {
-                    const newProps= {...otherProps, value:propsFromStore.value || '' };
-                    return <TimePanelView
-                        {...newProps}
-                        onChange={(ev) => handleOnChange(ev,propsFromStore, fireValueChange)}/> ;
-                }
-            }
-        </FieldGroupEnable>
-    );
-
+export const TimePanel= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const newProps= {...viewProps, value:viewProps.value || '' };
+    return (<TimePanelView {...newProps} onChange={(ev) => handleOnChange(ev,viewProps, fireValueChange)}/>);
 });
 
 TimePanel.propTypes = {

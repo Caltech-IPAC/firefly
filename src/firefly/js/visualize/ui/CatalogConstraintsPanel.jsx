@@ -16,7 +16,7 @@ import {SelectInfo} from '../../tables/SelectInfo.js';
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../../tables/FilterInfo.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
-import {FieldGroupEnable} from '../../ui/FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from '../../ui/FieldGroupEnable.jsx';
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
 import '../../tables/ui/TablePanel.css';
@@ -427,20 +427,12 @@ class ConstraintPanel extends PureComponent {
     }
 }
 
-export const TablePanelConnected= memo( ({fieldKey, groupKey, ...otherProps} ) => {
+export const TablePanelConnected= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
     return (
-        <FieldGroupEnable fieldKey={fieldKey} groupKey={groupKey} {...otherProps} >
-            {
-                (propsFromStore, fireValueChange) => {
-                    return (
-                        <ConstraintPanel {...propsFromStore}
-                             onTableChanged= {() => handleOnTableChanged(propsFromStore, fireValueChange)} />
-                    );
-                }
-            }
-        </FieldGroupEnable>
+        <ConstraintPanel {...viewProps}
+                         onTableChanged= {() => handleOnTableChanged(viewProps, fireValueChange)} />
     );
-
 });
 
 

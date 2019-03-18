@@ -1,13 +1,12 @@
-import React, {PureComponent} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {get, has, isFunction, isNil} from 'lodash';
-import {clone} from '../util/WebUtil.js';
 
 import {InputFieldView} from './InputFieldView.jsx';
 import {fetchUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
-import {FieldGroupEnable} from './FieldGroupEnable';
+import {useFieldGroupConnector} from './FieldGroupEnable';
 
 import LOADING from 'html/images/gxt/loading.gif';
 const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
@@ -90,46 +89,30 @@ FileUploadView.defaultProps = {
     labelWidth: 0
 };
 
-export class FileUpload extends PureComponent {
-
-    render()  {
-        const {props}= this;
-        const {isFromURL}= props;
-        return (
-            <FieldGroupEnable {...props}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        let viewProps;
-                        if (isFromURL) {
-                            viewProps= clone(props,
-                                {
-                                    onChange: (ev) => onUrlChange(ev, propsFromStore, fireValueChange),
-                                    value:  propsFromStore.displayValue,
-                                    message: propsFromStore.message,
-                                    key: propsFromStore.key,
-                                    onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, props.fileType,
-                                        props.fileAnalysis)
-                                }
-                            );
-                        } else {
-                            viewProps= clone(this.props,
-                                {
-                                    value: propsFromStore.displayValue,
-                                    message: propsFromStore.message,
-                                    key: propsFromStore.key,
-                                    onChange: (ev) => handleChange(ev, fireValueChange, props.fileType, props.fileAnalysis)
-                                }
-                            );
-                        }
-                        return <FileUploadView {...viewProps } /> ;
-                    }
-
-                }
-            </FieldGroupEnable>
-        );
-
+export const FileUpload= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    let modViewProps;
+    if (viewProps.isFromURL) {
+        modViewProps= {
+            ...viewProps,
+            onChange: (ev) => onUrlChange(ev, viewProps, fireValueChange),
+            value:  viewProps.displayValue,
+            onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, viewProps.fileType, viewProps.fileAnalysis)
+        };
     }
-}
+    else {
+        modViewProps= {
+            ...viewProps,
+            value: viewProps.displayValue,
+            onChange: (ev) => handleChange(ev, fireValueChange, viewProps.fileType, viewProps.fileAnalysis)
+        };
+    }
+    return <FileUploadView {...modViewProps } /> ;
+});
+
+
+
+
 
 
 

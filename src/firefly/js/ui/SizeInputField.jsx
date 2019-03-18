@@ -7,7 +7,7 @@ import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
 import {toMaxFixed} from '../util/MathUtil.js';
 import validator from 'validator';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 
 const invalidSizeMsg = 'size is not set properly or size is out of range';
 const DECDIGIT = 6;
@@ -205,21 +205,15 @@ SizeInputFieldView.defaultProps = {
     showFeedback: false
 };
 
-export const SizeInputFields = memo( ({fieldKey, initialState, ...otherProps} ) => {
-    return (
-        <FieldGroupEnable fieldKey={fieldKey} initialState={initialState}>
-            {
-                (propsFromStore, fireValueChange) => {
-                    const {unit, valid, value, displayValue} = updateSizeInfo(propsFromStore);
-                    return <SizeInputFieldView
-                        {...{...propsFromStore, ...otherProps, unit, valid, value, displayValue}}
-                        onChange= {(ev, sizeInfo) => handleOnChange(ev, sizeInfo, propsFromStore, fireValueChange)}
-                    />;
-                }
-            }
-        </FieldGroupEnable>
-    );
 
+export const SizeInputFields = memo( (props) => {
+
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const {unit, valid, value, displayValue} = updateSizeInfo(viewProps);
+    return (<SizeInputFieldView
+             {...{...viewProps, unit, valid, value, displayValue}}
+             onChange= {(ev, sizeInfo) => handleOnChange(ev, sizeInfo, viewProps, fireValueChange)} />
+             );
 });
 
 

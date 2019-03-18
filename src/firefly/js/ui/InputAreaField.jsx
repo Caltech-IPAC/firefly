@@ -1,9 +1,8 @@
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 
 import {InputAreaFieldView, propTypes} from './InputAreaFieldView.jsx';
-import {clone} from '../util/WebUtil.js';
-import {FieldGroupEnable} from './FieldGroupEnable';
+import {useFieldGroupConnector} from './FieldGroupEnable';
 import {InputFieldActOn} from './InputField';
 
 export const InputAreaField = (props) => <InputFieldActOn View={InputAreaFieldView} {...props}/>;
@@ -14,24 +13,13 @@ function onChange(ev, validator, fireValueChange) {
     fireValueChange({ value : ev.target.value, message, valid });
 }
 
-export class InputAreaFieldConnected extends PureComponent {
 
-    render()  {
-        const {fieldKey, initialState, forceReinit}= this.props;
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState} forceReinit={forceReinit}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        return <InputAreaFieldView {...clone(this.props, propsFromStore)}
-                                               onChange={(ev) => onChange(ev,propsFromStore.validator, fireValueChange)}/> ;
-                    }
+export const InputAreaFieldConnected = memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return (<InputAreaFieldView {...viewProps} onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/>);
+});
 
-                }
-            </FieldGroupEnable>
-        );
 
-    }
-}
 
 InputAreaFieldConnected.defaultProps = {
     showWarning: true,

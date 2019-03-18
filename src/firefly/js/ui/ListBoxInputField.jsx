@@ -1,7 +1,7 @@
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {get, isEmpty}  from 'lodash';
-import {FieldGroupEnable} from './FieldGroupEnable.jsx';
+import {useFieldGroupConnector} from './FieldGroupEnable.jsx';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
@@ -94,22 +94,17 @@ function checkForUndefined(v,props) {
             (!v ? props.options[0].value : (optionContain(v) ? v : props.options[0].value));
 }
 
-export const ListBoxInputField = memo( ({fieldKey, initialState, forceReinit, options, ...otherProps} ) => {
-        return (
-            <FieldGroupEnable fieldKey={fieldKey} initialState={initialState}
-                              forceReinit={forceReinit} options={options}
-                              confirmInitialValue={checkForUndefined}>
-                {
-                    (propsFromStore, fireValueChange) => {
-                        const newProps= {...otherProps, ...propsFromStore, value: convertValue(propsFromStore.value, options)};
-                        return <ListBoxInputFieldView {...newProps}
-                                                     onChange={(ev) => handleOnChange(ev,propsFromStore, fireValueChange)}/> ;
-                    }
-                }
-            </FieldGroupEnable>
-        );
 
-    });
+export const ListBoxInputField= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmInitialValue:checkForUndefined});
+    const newProps= {
+        ...viewProps,
+        value: convertValue(viewProps.value, viewProps.options),
+        onChange: (ev) => handleOnChange(ev,viewProps, fireValueChange)
+    };
+    return (<ListBoxInputFieldView {...newProps} />);
+});
+
 
 
 ListBoxInputField.propTypes= {
