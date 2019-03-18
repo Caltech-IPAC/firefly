@@ -34,7 +34,9 @@ ext {
 
     ehcache_lib = [':ehcache-2.7.4',
                    ':slf4j-api-1.6.6',
-                   ':ehcache-web-2.0.4']
+                   ':ehcache-web-2.0.4',
+                   ':jedis-3.1.0-m1',
+                   ':commons-pool2-2.6.1']
 
     j2ee_rt_lib = [':wsdl4j-1.5.1',
                    ':jaxrpc',

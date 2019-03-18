@@ -1,0 +1,79 @@
+
+prepareWebapp {
+    from("${fireflyPath}/config/web.xml") {
+        into 'WEB-INF/'
+    }
+    from("${fireflyPath}/config/") {
+        include "ehcache.xml"
+        include "log4j.properties"
+        include "common.prop"
+        into 'WEB-INF/config'
+    }
+    from("${fireflyPath}/config/") {
+        include "logging.properties"
+        into 'WEB-INF/classes'
+    }
+}
+
+
+
+// make sure node_modules exists.  if it does not, use the one from firefly's
+import java.nio.file.*;
+
+Path target_node_module = Paths.get("${fireflyPath}/node_modules");
+if (!Files.exists(target_node_module)) {
+    Files.createDirectory(target_node_module);
+}
+
+Path node_modules = Paths.get("${rootDir.path}/node_modules");
+if (!Files.exists(node_modules)) {
+    try {
+// creates node_module symlink
+        Files.createSymbolicLink(node_modules, target_node_module);
+    } catch (Exception ex) {
+        System.err.println(ex);
+    }
+}
+
+Path pjson = Paths.get("${rootDir.path}/package.json");
+if (!Files.exists(pjson)) {
+    try {
+// creates package.json symlink
+        Path target_pjson = Paths.get("${fireflyPath}/package.json");
+        Files.createSymbolicLink(pjson, target_pjson);
+    } catch (Exception ex) {
+        System.err.println(ex);
+    }
+}
+
+Path lockf = Paths.get("${rootDir.path}/yarn.lock");
+if (!Files.exists(lockf)) {
+    try {
+// creates yarn.lock symlink
+        Path target_lockf = Paths.get("${fireflyPath}/yarn.lock");
+        Files.createSymbolicLink(lockf, target_lockf);
+    } catch (Exception ex) {
+        System.err.println(ex);
+    }
+}
+
+Path test_config = Paths.get("${rootDir.path}/config/test");
+if (!Files.exists(test_config)) {
+    try {
+// creates config/test symlink
+        Files.createSymbolicLink(test_config, Paths.get("${fireflyPath}/config/test"));
+    } catch (Exception ex) {
+        System.err.println(ex);
+    }
+}
+
+Path jest = Paths.get("${rootDir.path}/__jest__");
+if (!Files.exists(jest)) {
+    try {
+// creates __jest__ symlink
+        Path target_jest = Paths.get("${fireflyPath}/__jest__");
+        Files.createSymbolicLink(jest, target_jest);
+    } catch (Exception ex) {
+        System.err.println(ex);
+    }
+}
