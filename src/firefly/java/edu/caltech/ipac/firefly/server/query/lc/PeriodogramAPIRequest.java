@@ -61,6 +61,9 @@ public class PeriodogramAPIRequest extends TableServerRequest {
     public String getLcSource() {
         return getParam(LC_FILE);
     }
+    public void setLcSource(String lcSource) {
+        setParam(LC_FILE, lcSource);
+    }
 
     /**
      * Usually 'mjd', but who knows...

@@ -13,7 +13,7 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
 import {getTblById, getResultSetRequest} from '../../tables/TableUtil.js';
-import {makeTblRequest} from '../../tables/TableRequestUtil.js';
+import {makeTblRequest, setSelectInfo} from '../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch, dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
@@ -31,6 +31,7 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {updateSet} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
+import {MAX_ROW} from '../../tables/TableRequestUtil.js';
 
 
 const algorOptions = [
@@ -505,7 +506,8 @@ function periodogramSuccess(popupId, hideDropDown = false) {
     return (request) => {
         const tbl = getTblById(LC.RAW_TABLE);
         const layoutInfo = getLayouInfo();
-        let srcFile = get(tbl, 'request.source');
+
+        let srcFile = JSON.stringify(get(tbl, 'request'));
         srcFile = srcFile || get(tbl, 'request.alt_source');
         if (!srcFile) {
             srcFile = getResultSetRequest(LC.RAW_TABLE);

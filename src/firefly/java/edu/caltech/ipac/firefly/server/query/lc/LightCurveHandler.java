@@ -31,7 +31,7 @@ public interface LightCurveHandler {
      *
      * @return periodogram (power vs period) file
      */
-    public DataGroup getPeriodogramTable(PeriodogramAPIRequest request);
+    DataGroup getPeriodogramTable(PeriodogramAPIRequest request);
 
     /**
      * Return the table which contains N peaks, N integer from request object
@@ -39,7 +39,7 @@ public interface LightCurveHandler {
      * @return peaks table
      * @see PeriodogramAPIRequest#getNumberPeaks()
      */
-    public DataGroup getPeaksTable(PeriodogramAPIRequest request);
+    DataGroup getPeaksTable(PeriodogramAPIRequest request);
 
     /**
      * TODO add extra output parameters getter that might be interesting
