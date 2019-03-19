@@ -1,3 +1,4 @@
+import {get} from 'lodash';
 import {logError} from '../../util/WebUtil.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
@@ -121,5 +122,30 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
         logError(error);
         return {error};
     });
+}
+
+/**
+ * Get a value of the column attribute using TAP_SCHEMA.columns table
+ * @param columnsModel - table model of columns table
+ * @param colName - column name
+ * @param attrName - column name in the columnsModel table, ex. 'ucd', 'datatype'
+ */
+export function getColumnAttribute(columnsModel, colName, attrName) {
+
+    const nameIdx = getColumnIdx(columnsModel, 'column_name');
+    const attrIdx = getColumnIdx(columnsModel, attrName);
+    if (nameIdx < 0 || attrIdx < 0) {
+        return;
+    }
+
+    const targetRow = get(columnsModel, ['tableData', 'data'], []).find((oneRow) => {
+        return (oneRow[nameIdx] === colName);
+    });
+
+    if (!targetRow) {
+        return;
+    }
+
+    return targetRow[attrIdx];
 }
 

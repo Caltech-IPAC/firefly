@@ -246,9 +246,16 @@ class TableRecognizer {
                     pairs.push([metaMainPair[0][i], metaMainPair[1][i]]);    //TODO: need rules to match the rest pair
                 }
             }
-        } else if (posPairs[0].length === posPairs[1].length) {
-            for (let i = 0; i < posPairs[0].length; i++) {
-                pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the rest pair
+        } else if (posPairs[0].length > 0 && posPairs[1].length > 0){
+            // find first exact match
+            const basicPair = posPairs.map((cols, i)=>cols.find((c) => c.UCD === centerColUCDs[0][i]));
+            if (basicPair[0] && basicPair[1]) {
+                pairs.push(basicPair);
+            } else if (posPairs[0].length === posPairs[1].length) {
+                // TODO: how do we separate positions from the related fields, like variance?
+                for (let i = 0; i < posPairs[0].length; i++) {
+                    pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the rest pair
+                }
             }
         }
 
@@ -574,9 +581,16 @@ class ColumnRecognizer {
                     pairs.push([metaMainPair[0][i], metaMainPair[1][i]]);    //TODO: need rules to match the rest pair
                 }
             }
-        } else if (posPairs[0].length === posPairs[1].length) {
-            for (let i = 0; i < posPairs[0].length; i++) {
-                pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the rest pair
+        } else if (posPairs[0].length > 0 && posPairs[1].length > 0){
+            // find first exact match
+            const basicPair = posPairs.map((cols, i)=>cols.find((c) => c.ucd === centerColUCDs[0][i]));
+            if (basicPair[0] && basicPair[1]) {
+                pairs.push(basicPair);
+            } else if (posPairs[0].length === posPairs[1].length) {
+                // TODO: how do we separate positions from the related fields, like variance?
+                for (let i = 0; i < posPairs[0].length; i++) {
+                    pairs.push([posPairs[0][i], posPairs[1][i]]);    //TODO: need rules to match the rest pair
+                }
             }
         }
 

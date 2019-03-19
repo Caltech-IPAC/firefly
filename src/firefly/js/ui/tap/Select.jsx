@@ -86,7 +86,17 @@ export function NameSelect({options, value, onSelect, type, selectProps={}}) {
             }
         ),
         valueContainer: (styles) => (
-            { ...styles, height: 50 })
+            { ...styles, height: 50 }),
+        singleValue: () => {
+            return {
+                color: 'black',
+                marginLeft: 2,
+                marginRight: 2,
+                maxWidth: 'calc(100% - 8px)',
+                position: 'absolute'
+            };
+        }
+
     };
 
     const placeholder = value ? `${type} <${value}>. Replace...` : `Select ${type}...`;

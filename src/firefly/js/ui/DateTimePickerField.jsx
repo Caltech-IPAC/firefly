@@ -208,6 +208,10 @@ function handleOnChange(momentVal, params, fireValueChange) {
     fireValueChange({value, valid, message});
 }
 
+function convertMomentToMJD(m) {
+    return m.isValid() ? `${(m.valueOf()/msecPerDay + DiffUnixMJD)}`: '';
+}
+
 export const DateTimePickerField = fieldGroupConnector(DateTimePicker, getProps, propTypes);
 
 const DiffUnixMJD = 40587.0;
@@ -215,6 +219,8 @@ const DiffUnixJD = 2440587.5;
 const DiffMJDJD = 2400000.5;
 const msecPerDay = 86400000.0;
 
+const MIN_VAL_MJD = 1; // for ISO 1858-11-18T00:00:00Z
+const MAX_VAL_MJD = 2973483;  // for ISO 9999-12-31T00:00:00Z
 
 /**
  * validate time in moment or date-time string format
@@ -231,7 +237,15 @@ export function validateDateTime(mVal, nullAllowed=true) {
 
     if (retval.valid) {
         if (retval.moment.isValid()) {
-            retval.unitT = retval.moment.valueOf();
+            // make sure the date is within the valid range
+            // valid range is defined for MJD
+            if (get(validateMJD(convertMomentToMJD(retval.moment)), 'valid')) {
+                retval.unitT = retval.moment.valueOf();
+            } else {
+                retval.unitT = null;
+                retval.valid = false;
+                retval.message = `ISO date is out of range ${convertMJDToISO(MIN_VAL_MJD)} to ${convertMJDToISO(MAX_VAL_MJD)}`;
+            }
         }
     } else {
         retval.unitT = null;
@@ -250,12 +264,9 @@ export function validateDateTime(mVal, nullAllowed=true) {
 export function validateMJD(tStr, nullAllowed=true) {
     const retval = {valid: true, value: tStr};
 
-    const min = Number.MIN_VALUE;
-    const max = Number.MAX_VALUE;
-
-    retval.valid = (!tStr && nullAllowed) ? true : Validate.floatRange(min, max, 6, 'Time range in MJD', tStr).valid;
+    retval.valid = (!tStr && nullAllowed) ? true : Validate.floatRange(MIN_VAL_MJD, MAX_VAL_MJD, 6, 'Time range in MJD', tStr).valid;
     if (!retval.valid) {
-        retval.message = 'not a valid MJD value';
+        retval.message = `MJD value is not valid or out of range ${MIN_VAL_MJD} to ${MAX_VAL_MJD}`;
     }
 
     return retval;
@@ -269,7 +280,7 @@ export function validateMJD(tStr, nullAllowed=true) {
 export function convertISOToMJD(timeInISO) {
     const m =  tryConvertToMoment(timeInISO, true);   // empty string => empty string of MJD
 
-    return m.isValid() ? `${(m.valueOf()/msecPerDay + DiffUnixMJD)}`: '';
+    return convertMomentToMJD(m);
 }
 
 /**
@@ -277,7 +288,7 @@ export function convertISOToMJD(timeInISO) {
  * @param mjdVal
  */
 export function convertMJDToISO(mjdVal) {
-    if (isNaN(mjdVal) || !mjdVal) return '';
+    if (!mjdVal || isNaN(Number(mjdVal)) ) return '';
 
     const m = Moment((Number(mjdVal) - DiffUnixMJD) * msecPerDay);
 

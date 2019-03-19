@@ -11,7 +11,7 @@ import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
-import {getColumnValues, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
+import {getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {convert} from '../../visualize/VisUtil.js';
 import {primePlot, getActivePlotView} from '../../visualize/PlotViewUtil.js';
@@ -26,7 +26,7 @@ import {validateMJD, validateDateTime, convertISOToMJD, convertMJDToISO, DateTim
 import {TimePanel, isShowHelp, formFeedback} from '../TimePanel.jsx';
 import {showInfoPopup, showOptionsPopup, POPUP_DIALOG_ID} from '../PopupUtil.jsx';
 import {isDialogVisible} from '../../core/ComponentCntlr.js';
-import {HeaderFont, MJD, ISO} from './TapUtil.js';
+import {getColumnAttribute, HeaderFont, MJD, ISO} from './TapUtil.js';
 import {HelpIcon} from '../HelpIcon.jsx';
 import {tapHelpId} from './TableSelectViewPanel.jsx';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression';
@@ -84,7 +84,11 @@ const fieldsMap = {[Spatial]: {
                         [TemporalPanel]: {label:Temporal},
                         [TemporalColumns]: {label: 'Temporal Column'},
                         [TimeFrom]: {label: 'From'},
-                        [TimeTo]: {label: 'To'}},
+                        [TimeTo]: {label: 'To'},
+                        [MJDFrom]: {label: 'MJD (From)'},
+                        [MJDTo]: {label: 'MJD (To)'},
+                        [TimePickerFrom]: {label: 'ISO (From)'},
+                        [TimePickerTo]: {label: 'ISO (To)'}},
                    [Wavelength]: {
                         [WavelengthPanel]: {label: Wavelength},
                         [WavelengthColumns]: {label: 'Wavelength Column'}}};
@@ -356,7 +360,7 @@ function TemporalSearch({cols, groupKey, fields}) {
         );
     };
 
-    const message = get(fields, [TemporalPanel, PanelMessage], '');
+    const message = get(fields, [TemporalCheck, 'value']) === Temporal ?get(fields, [TemporalPanel, PanelMessage], '') :'';
     return (
         <FieldGroupCollapsible header={<Header title={Temporal} helpID={tapHelpId('temporal')}
                                         checkID={TemporalCheck} message={message}/>}
@@ -525,23 +529,13 @@ function makeSpatialConstraints(fields, columnsModel) {
 
     // find ucd coordinate in type of UCDCoord
     const getUCDCoord = (colName) => {
-        const nameIdx = getColumnIdx(columnsModel, 'column_name');
-        const ucdIdx = getColumnIdx(columnsModel, 'ucd');
-        if (nameIdx < 0 || ucdIdx < 0) {
+        const ucdVal = getColumnAttribute(columnsModel, colName, 'ucd');
+
+        if (!ucdVal) {
             return UCDCoord.eq;
+        } else {
+            return UCDCoord.enums.find((enumItem) => (ucdVal.includes(enumItem.key))) || UCDCoord.eq;
         }
-        const targetRow = get(columnsModel, ['tableData', 'data'], []).find((oneRow) => {
-                return (oneRow[nameIdx] === colName);
-            });
-
-
-        if (!targetRow) {
-            return UCDCoord.eq;
-        }
-
-        const ucdVal = targetRow[ucdIdx];
-        return UCDCoord.enums.find((enumItem) => (ucdVal.includes(enumItem.key))) || UCDCoord.eq;
-
     };
 
     const ucdCoord = getUCDCoord(centerLonColumns.value);
@@ -609,7 +603,7 @@ function makeSpatialConstraints(fields, columnsModel) {
     return retval;
 }
 
-function makeTemporalConstraints(fields) {
+function makeTemporalConstraints(fields, columnsModel) {
     const retval = clone(defaultTemporalConstraints);
     const timeColumns = get(fields, [TemporalColumns, 'value'], '').trim().split(',').reduce((p, c) => {
         if (c.trim()) p.push(c.trim());
@@ -632,18 +626,31 @@ function makeTemporalConstraints(fields) {
 
     let where = '';
     if (timeColumns.length === 1) {
-        const mjdSqls = mjdRange.map((oneRange, idx) => {
+        const timeColumn = timeColumns[0];
+
+        // use MJD if time column has a numeric type, ISO otherwise
+        const datatype = getColumnAttribute(columnsModel, timeColumn, 'datatype').toLowerCase();
+        // ISO types: char, varchar, timestamp, ?
+        const useISO = !['double', 'float', 'real', 'int', 'long', 'short'].some((e) => datatype.includes(e));
+
+        let timeRange = mjdRange;
+        if (useISO) {
+            timeRange = mjdRange.map((value) => convertMJDToISO(value));
+        }
+
+        const timeConstraints = timeRange.map((oneRange, idx) => {
             if (!oneRange) {
                 return '';
             } else {
-                return idx === FROM ? `${timeColumns[0]} >= ${oneRange}` : `${timeColumns[0]} <= ${oneRange}`;
+                const limit  = useISO ? `'${oneRange}'` : oneRange;
+                return idx === FROM ? `${timeColumn} >= ${limit}` : `${timeColumn} <= ${limit}`;
             }
         });
 
-        if (!mjdSqls[FROM] || !mjdSqls[TO]) {
-            where = mjdSqls[FROM] + mjdSqls[TO];
+        if (!timeConstraints[FROM] || !timeConstraints[TO]) {
+            where = timeConstraints[FROM] + timeConstraints[TO];
         } else {
-            where =`(${mjdSqls[FROM]} AND ${mjdSqls[TO]})`;
+            where =`(${timeConstraints[FROM]} AND ${timeConstraints[TO]})`;
         }
     }
     retval.where = where;
@@ -669,7 +676,7 @@ export function tableSearchMethodsConstraints(columnsModel) {
 
     const spatialConstraints = isPanelChecked(Spatial, fields) ? makeSpatialConstraints(fields, columnsModel)
                                                                : clone(defaultSpatialConstraints);
-    const timeConstraints = isPanelChecked(Temporal, fields) ? makeTemporalConstraints(fields)
+    const timeConstraints = isPanelChecked(Temporal, fields) ? makeTemporalConstraints(fields, columnsModel)
                                                              : clone(defaultTemporalConstraints);
 
     adql = [spatialConstraints, timeConstraints].reduce((p, oneCondition) => {
@@ -762,7 +769,7 @@ function tapSearchMethodReducer(columnsModel) {
                     const timeMode = get(inFields, [TimeOptions, 'value']);
                     const mjdKey = get(timeKeyMap, [fieldKey, MJD]);
                     const isoKey = get(timeKeyMap, [fieldKey, ISO]);
-                    const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value)): value);
+                    const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value, true)): value);
 
                     // convert value for the other time mode
                     const crtFieldKey = timeMode === MJD ? mjdKey : isoKey;
@@ -901,16 +908,25 @@ function tapSearchMethodReducer(columnsModel) {
     };
 }
 
+/**
+ * Assembles an array of objects with column attributes in the format that ColumnFld accepts
+ * @param columnsModel
+ */
 function getAvailableColumns(columnsModel){
-    const name = getColumnValues(columnsModel, 'column_name');
-    const units = getColumnValues(columnsModel, 'unit');
-    const type = getColumnValues(columnsModel, 'datatype');
-    const desc = getColumnValues(columnsModel, 'description');
-    const cols = [];
-    for (let i=0; i< name.length; i++) {
-        cols.push({name: name[i], units: units[i], type: type[i], desc: desc[i]});
-    }
-    return cols;
+    const attrIdx  = [
+        //[<column name in columnModel>, <column attribute name ColumnFld wants>]
+        ['column_name', 'name'],
+        ['unit', 'units'],
+        ['datatype', 'type'],
+        ['ucd', 'ucd'],
+        ['description', 'desc']
+    ].map(([c,k])=>[k,getColumnIdx(columnsModel, c)]);
+
+    return get(columnsModel, ['tableData', 'data'], []).map((r) => {
+        const col = {};
+        attrIdx.forEach(([k,i]) => { col[k] = r[i]; });
+        return col;
+    });
 }
 
 function timeValidator(val) {
@@ -1097,7 +1113,7 @@ function validateSpatialConstraints(fields, newFields, nullAllowed) {
  * @returns {{valid: boolean}}
  */
 function validateTemporalConstraints(fields, newFields, nullAllowed) {
-    const allowEmptyFields = [TimeFrom, TimeTo];
+    const allowEmptyFields = [TimeFrom, TimeTo, MJDFrom, MJDTo, TimePickerFrom, TimePickerTo];
 
     let allValid = true;
     if (isUndefined(nullAllowed) && newFields) {
@@ -1145,6 +1161,25 @@ function validateTemporalConstraints(fields, newFields, nullAllowed) {
     if (!newFields && !retval.valid) {
         return updateRetMessage(TimeTo);
     }
+
+    // mark field invalid if either ISO or MJD is invalid
+    // let mjdRet = checkField(MJDFrom);
+    // let isoRet = checkField(TimePickerFrom);
+    //
+    // if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
+    //     retval.valid = false;
+    //     retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
+    //     return updateRetMessage(!isoRet.valid ? TimePickerFrom : MJDFrom);
+    // }
+    //
+    // mjdRet = checkField(MJDTo);
+    // isoRet = checkField(TimePickerTo);
+    //
+    // if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
+    //     retval.valid = false;
+    //     retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
+    //     return updateRetMessage(!!isoRet.valid  ? TimePickerTo : MJDTo);
+    // }
 
     if (newFields) {
         retval = {valid: allValid, message: allValid ? '' : SomeFieldInvalid};
