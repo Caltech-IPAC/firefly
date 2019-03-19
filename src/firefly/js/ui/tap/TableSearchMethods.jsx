@@ -772,7 +772,7 @@ function tapSearchMethodReducer(columnsModel) {
                     const timeMode = get(inFields, [TimeOptions, 'value']);
                     const mjdKey = get(timeKeyMap, [fieldKey, MJD]);
                     const isoKey = get(timeKeyMap, [fieldKey, ISO]);
-                    const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value)): value);
+                    const updateValue = timeMode === MJD ? value : (valid ? fMoment(tryConvertToMoment(value, true)): value);
 
                     // convert value for the other time mode
                     const crtFieldKey = timeMode === MJD ? mjdKey : isoKey;
