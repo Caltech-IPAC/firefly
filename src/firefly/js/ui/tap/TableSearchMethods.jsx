@@ -635,10 +635,7 @@ function makeTemporalConstraints(fields, columnsModel) {
 
         let timeRange = mjdRange;
         if (useISO) {
-            timeRange = [TimeFrom, TimeTo].map((timeKey) => {
-                const isoKey =  timeKeyMap[timeKey][ISO];
-                return get(fields, [isoKey, 'value'], '');
-            });
+            timeRange = mjdRange.map((value) => convertMJDToISO(value));
         }
 
         const timeConstraints = timeRange.map((oneRange, idx) => {
@@ -1165,23 +1162,24 @@ function validateTemporalConstraints(fields, newFields, nullAllowed) {
         return updateRetMessage(TimeTo);
     }
 
-    let mjdRet = checkField(MJDFrom);
-    let isoRet = checkField(TimePickerFrom);
-
-    if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
-        retval.valid = false;
-        retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
-        return updateRetMessage(!isoRet.valid ? TimePickerFrom : MJDFrom);
-    }
-
-    mjdRet = checkField(MJDTo);
-    isoRet = checkField(TimePickerTo);
-
-    if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
-        retval.valid = false;
-        retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
-        return updateRetMessage(!!isoRet.valid  ? TimePickerTo : MJDTo);
-    }
+    // mark field invalid if either ISO or MJD is invalid
+    // let mjdRet = checkField(MJDFrom);
+    // let isoRet = checkField(TimePickerFrom);
+    //
+    // if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
+    //     retval.valid = false;
+    //     retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
+    //     return updateRetMessage(!isoRet.valid ? TimePickerFrom : MJDFrom);
+    // }
+    //
+    // mjdRet = checkField(MJDTo);
+    // isoRet = checkField(TimePickerTo);
+    //
+    // if (!newFields && (!mjdRet.valid || !isoRet.valid)) {
+    //     retval.valid = false;
+    //     retval.message = !isoRet.valid ? isoRet.message : mjdRet.message;
+    //     return updateRetMessage(!!isoRet.valid  ? TimePickerTo : MJDTo);
+    // }
 
     if (newFields) {
         retval = {valid: allValid, message: allValid ? '' : SomeFieldInvalid};
