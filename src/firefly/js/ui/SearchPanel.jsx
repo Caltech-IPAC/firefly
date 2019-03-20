@@ -27,7 +27,7 @@ export class SearchPanel extends SimpleComponent {
             return (
                 <div>
                     {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                    <SearchForm searchItem={searchItem} />
+                    <SearchForm style={{height: 'auto'}} searchItem={searchItem} />
                 </div>
             );
         }
@@ -82,11 +82,11 @@ function searchesAsTabs(allSearchItems) {
 
 
 
-function SearchForm({searchItem}) {
-    const {name, form, } = searchItem;
+function SearchForm({searchItem, style}) {
+    const {name, form} = searchItem;
     const {render:Render, ...rest} = form;
     return (
-        <FormPanel groupKey={name} {...rest}>
+        <FormPanel groupKey={name} style={style} {...rest}>
             <Render {...{searchItem}} />
         </FormPanel>
     );

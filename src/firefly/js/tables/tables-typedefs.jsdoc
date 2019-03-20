@@ -105,9 +105,11 @@
  * @typedef {object} LINK
  * @prop {string} ID     ID used to reference this LINK.
  * @prop {string} href   href of this LINK.
+ * @prop {string} value  text of this LINK.
  * @prop {string} title  title/label of this LINK.
  * @prop {string} role   role,  see VOTable content-role
  * @prop {string} type   type, see VOTable content-type
+ * @prop {string} action see VOTable LINK action
  *
  * @global
  * @public

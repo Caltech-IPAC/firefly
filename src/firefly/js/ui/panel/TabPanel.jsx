@@ -109,7 +109,7 @@ export class Tabs extends PureComponent {
 
     render () {
         const { selectedIdx}= this.state;
-        const {children, useFlex, resizable, borderless, headerStyle, contentStyle={}} = this.props;
+        const {children, useFlex, resizable, borderless, style={}, headerStyle, contentStyle={}} = this.props;
 
         let  content;
         const newChildren = React.Children.toArray(children).filter((el) => !!el).map((child, index) => {
@@ -132,7 +132,7 @@ export class Tabs extends PureComponent {
         const contentClsName = borderless ? 'TabPanel__Content borderless' : 'TabPanel__Content';
 
         return (
-            <div style={{display: 'flex', height: '100%', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
+            <div style={{display: 'flex', flexDirection: 'column', overflow: 'hidden', ...style}}>
                 <TabsHeader {...{resizable, headerStyle}}>{newChildren}</TabsHeader>
                 <div ref='contentRef' style={contentStyle} className={contentClsName}>
                     {(content) ? content : ''}
@@ -150,6 +150,7 @@ Tabs.propTypes= {
     onTabSelect: PropTypes.func,
     useFlex: PropTypes.bool,
     resizable: PropTypes.bool,
+    style: PropTypes.object,
     headerStyle: PropTypes.object,
     contentStyle: PropTypes.object,
     borderless: PropTypes.bool

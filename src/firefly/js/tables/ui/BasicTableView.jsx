@@ -15,6 +15,7 @@ import {SortInfo} from '../SortInfo.js';
 import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
 
 import './TablePanel.css';
+import {LinkCell} from './TableRenderer';
 
 const {Table, Column} = FixedDataTable;
 const noDataMsg = 'No Data Found';
@@ -251,7 +252,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showT
     var colsEl = columns.map((col, idx) => {
         if (col.visibility && col.visibility !== 'show') return false;
         const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
-        const CellRenderer = get(renderers, [col.name, 'cellRenderer'], TextCell);
+        const CellRenderer = get(renderers, [col.name, 'cellRenderer'], getDefaultRenderer(col, tbl_id));
         const fixed = col.fixed || false;
         const style = col.fixed && {backgroundColor: bgColor};
 
@@ -260,7 +261,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showT
                 key={col.name}
                 columnKey={idx}
                 header={<HeadRenderer {...{col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
-                cell={<CellRenderer style={style} data={data} colIdx={idx} />}
+                cell={<CellRenderer {...{style, data, tbl_id, colIdx:idx}} />}
                 fixed={fixed}
                 width={columnWidths[idx]}
                 isResizable={true}
@@ -284,4 +285,10 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showT
     return colsEl.filter((c) => c);
 }
 
+function getDefaultRenderer(col={}, tbl_id) {
+    if (col.type === 'location' || !isEmpty(col.links)) {
+        return ((props) => <LinkCell {...props} {...{tbl_id, col}}/>);
+    }
 
+    return TextCell;
+}

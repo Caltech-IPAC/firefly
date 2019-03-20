@@ -4,7 +4,7 @@
 
 import {get, has, isArray, isEmpty, isObject, isString} from 'lodash';
 import Enum from 'enum';
-import {getColumn, getColumnIdx, getColumnValues, getColumns, getTblById} from '../tables/TableUtil.js';
+import {getColumn, getColumnIdx, getColumnValues, getColumns, getTblById, getCellValue, getColumnByID} from '../tables/TableUtil.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
@@ -764,4 +764,30 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @prop {CoordinateSys} csys - the coordinate system to use
  */
 
+
+/**
+ * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
+ * A.1 link substitution
+ * @param tableModel    table model with data and columns info
+ * @param href          the href value of the LINK
+ * @param rowIdx        row index to be resolved
+ * @param defval        the field's value, or cell data.  Append field's value to href, if no substitution is needed.
+ * @returns {string}    the resolved href after subsitution
+ */
+export function resolveHRefVal(tableModel, href='', rowIdx, defval='') {
+    const vars = href.match(/\${[\w -.]+}/g);
+    if (vars) {
+        let rhref = href;
+        vars.forEach((v) => {
+            const [,cname] = v.match(/\${([\w -.]+)}/) || [];
+            const col = getColumnByID(tableModel, cname) || getColumn(tableModel, cname);
+            const rval = getCellValue(tableModel, rowIdx, col.name);
+            rhref = rhref.replace(v, rval);
+        });
+        return rhref;
+    } else {
+        return href + defval;
+    }
+
+}
 
