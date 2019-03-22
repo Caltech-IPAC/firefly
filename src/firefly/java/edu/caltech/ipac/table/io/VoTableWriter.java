@@ -21,13 +21,11 @@ import uk.ac.starlink.votable.*;
 import nom.tam.fits.FitsFactory;
 
 /**
- * This class handles an action to save a catalog in IPAC table format to local file.
+ * This class handles an action to save a catalog in VOTable (metadata, binary, binary2, fits) format to local file.
  *
- * @author Xiuqin Wu
- * @see DataGroup
- * @see DataObject
- * @see DataType
- * @version $Id: IpacTableWriter.java,v 1.11 2012/08/10 20:58:28 tatianag Exp $
+ * @author  Cindy Wang
+ * @see     DataGroup
+ * @see     DataType
  */
 public class VoTableWriter {
 
@@ -58,17 +56,9 @@ public class VoTableWriter {
     public static void save(File file, DataGroup dataGroup, TableUtil.Format outputFormat, boolean isGenericOutput)
             throws IOException {
 
-        FitsFactory.useThreadLocalSettings(true);  // consistent with FitsTableReader
-        FitsFactory.setLongStringsEnabled(false);
 
-        StarTable st = formStarTableFrom(dataGroup);
-
-        if (isGenericOutput) {
-            writeGenericVotable(file, outputFormat, st);
-        } else {
-            writeVotable(new FileWriter(file), outputFormat, st);
-        }
-        FitsFactory.useThreadLocalSettings(false);
+        OutputStream ostream = new BufferedOutputStream( new FileOutputStream(file) );
+        save(ostream, dataGroup, outputFormat, isGenericOutput);
     }
 
 
@@ -78,12 +68,10 @@ public class VoTableWriter {
      * @param stream the output stream to write to
      * @param dataGroup data group
      * @param outputFormat votable output format
-     * @param isGenericOutput true for doing generic votable output by using Starlink provided functions to output
-     *                        a VOTable document with the simplest structure capable of holding TABLE element
-     *                        in a range of different format
-     *                        false for doing more detail votable output which includes the tagged
-     *                        elements under TABLE element such as DESCRIPTION, LINK, GROUP, PARAM, INFO, FIELD
-     *                        and child elements under those elements.
+     * @param isGenericOutput true for doing generic votable output by using Starlink provided functions to output VOTable
+     *                        document with simplest structure.
+     *                        false for doing more detail voatable output.
+     *                        please see save(File file, ....)
      * @throws IOException on error
      */
     public static void save(OutputStream stream, DataGroup dataGroup, TableUtil.Format outputFormat, boolean isGenericOutput)
@@ -107,7 +95,7 @@ public class VoTableWriter {
 
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
 
-            // this should return only visible columns
+        // this should return only visible columns
         headers = headers.stream()
                     .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt))
                     .collect(Collectors.toList());
@@ -124,13 +112,6 @@ public class VoTableWriter {
 
         ColumnInfo[] colInfos = colList.toArray(new ColumnInfo[colList.size()]);
         return new DataGroupStarTable(dataGroup, colInfos, headers);
-    }
-
-
-    private static void writeGenericVotable(File file, TableUtil.Format outputFormat, StarTable st) throws IOException
-    {
-        VOTableWriter voWriter = new VOTableWriter(getDataFormat(outputFormat), true, getVotVersion(outputFormat));
-        voWriter.writeStarTable(st, file.getName(), new StarTableOutput());
     }
 
     private static void writeGenericVotable(OutputStream stream, TableUtil.Format outputFormat, StarTable st) throws IOException
