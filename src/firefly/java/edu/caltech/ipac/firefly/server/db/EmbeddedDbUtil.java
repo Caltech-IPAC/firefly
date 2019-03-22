@@ -410,7 +410,8 @@ public class EmbeddedDbUtil {
                             dt.getRef(),
                             dt.getMaxValue(),
                             dt.getMinValue(),
-                            dt.getLinkInfos()
+                            dt.getLinkInfos(),
+                            dt.getDataOptions(),
                     }
             );
         }
@@ -449,6 +450,7 @@ public class EmbeddedDbUtil {
                 applyIfNotEmpty(rs.getString("maxValue"), dtype::setMaxValue);
                 applyIfNotEmpty(rs.getString("minValue"), dtype::setMinValue);
                 applyIfNotEmpty(rs.getObject("links"), v -> dtype.setLinkInfos((List<LinkInfo>) v));
+                applyIfNotEmpty(rs.getString("dataOptions"), dtype::setDataOptions);
 
             } while (rs.next());
         } catch (SQLException e) {

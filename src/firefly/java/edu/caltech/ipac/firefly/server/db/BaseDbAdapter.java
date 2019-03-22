@@ -33,7 +33,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     private static Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static EmbeddedDbStats dbStats = new EmbeddedDbStats();
 
-    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String DD_INSERT_SQL = "insert into %s_dd values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_dd "+
             "(" +
             "  cname    varchar(64000)" +
@@ -57,6 +57,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             ", maxValue varchar(64000)" +
             ", minValue varchar(64000)" +
             ", links    other" +
+            ", dataOptions varchar(64000)" +
             ")";
 
     private static final String META_INSERT_SQL = "insert into %s_meta values (?,?,?)";

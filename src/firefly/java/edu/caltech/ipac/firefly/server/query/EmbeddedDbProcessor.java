@@ -11,6 +11,7 @@ import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -265,6 +266,12 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     break;
                 case TSV:
                     DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.TDF);
+                    break;
+                case VO_TABLE_TABLEDATA:
+                case VO_TABLE_BINARY:
+                case VO_TABLE_BINARY2:
+                case VO_TABLE_FITS:
+                    VoTableWriter.save(out, page.getData(), format);
                     break;
                 default:
                     IpacTableWriter.save(out, page.getData(), true);

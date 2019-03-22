@@ -47,7 +47,7 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                 </div>
             );
         } else {
-            let fPos = {marginLeft: -150, width: '12em'};
+            let fPos = {marginLeft: -150, width: '30em'};
 
             if (!isNil(fileNameStyle)) fPos = Object.assign(fPos, fileNameStyle);
             return (

@@ -150,6 +150,7 @@ function doCatalog(request) {
     if (spatial === SpatialMethod.get('Multi-Object').value) {
         var filename = get(spacPart, 'fileUpload');
 
+        title += '-MultiObject';
         tReq = makeIrsaCatalogRequest(title, catPart.project, catPart.cattable, {
             filename,
             radius: conesize,
@@ -158,6 +159,9 @@ function doCatalog(request) {
         });
     } else {
         title += ` (${spatial}`;
+        if (spatial === SpatialMethod.Elliptical.value) {
+            title += Number(get(spacPart, 'posangle', 0)) + '_' + Number(get(spacPart, 'axialratio', 0.26));
+        }
         if (spatial === SpatialMethod.Box.value || spatial === SpatialMethod.Cone.value || spatial === SpatialMethod.Elliptical.value) {
             title += ':' + conesize + '\'\'';
         }
@@ -425,18 +429,24 @@ class CatalogSelectView extends PureComponent {
                     </Tab>
                     <Tab name='Load Catalog' id='loadcat'>
                         <div style={tabWrapper}>
-                            <UploadOptionsDialog fromGroupKey={gkey}
-                                                 preloadWsFile={false}
-                                                 fieldKeys={{local: 'fileUpload',
-                                                            workspace: 'workspaceUpload',
-                                                            location: 'fileLocation'}}
-                                                 workspace={getWorkspaceConfig()}
-                                                 tooltips={{local: 'Select an IPAC catalog table file to upload',
-                                                 workspace: 'Select an IPAC catalog table file from workspace to upload'}}/>
-                            <div>
-                                <em style={{color:'gray'}}>Custom catalog in IPAC table format</em>
-                                <HelpIcon
-                                    helpId={'basics.loadcatalog'}/>
+                            <div style={{width:750, height:'calc(100% - 40px)', padding: 20, display: 'flex', flexDirection:'column', justifyContent: 'space-between'}}>
+                                <div style={{width: '70%'}}>
+                                    <UploadOptionsDialog fromGroupKey={gkey}
+                                                         preloadWsFile={false}
+                                                         fieldKeys={{local: 'fileUpload',
+                                                                    workspace: 'workspaceUpload',
+                                                                    location: 'fileLocation'}}
+                                                         workspace={getWorkspaceConfig()}
+                                                         tooltips={{local: 'Select an IPAC catalog table file to upload',
+                                                         workspace: 'Select an IPAC catalog table file from workspace to upload'}}/>
+                                    <div>
+                                        <em style={{color:'gray'}}>Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format</em>
+                                    </div>
+                                 </div>
+                                <div style={{display:'flex',flexDirection:'column', alignItems:'flex-end'}}>
+                                    <HelpIcon
+                                        helpId={'catalogs.owncatalogs'}/>
+                                </div>
                             </div>
                         </div>
                     </Tab>

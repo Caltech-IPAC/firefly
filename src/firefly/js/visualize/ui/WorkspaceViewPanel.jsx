@@ -27,7 +27,7 @@ function displayWorkspacePopup() {
                     <div style={{width: 500, height: 600, margin: 10, overflow: 'auto', border: '1px solid #a3aeb9'}}>
                         <WorkspaceViewField fieldKey={'files'}
                                             files={newList}
-                                            wrapperStyle={{width: 'calc(100% - 10px)', height: 'calc(100%-10px)', marginTop: 15}}/>
+                                            wrapperStyle={{width: 'calc(100% - 10px)', height: 'calc(100% - 10px)', marginTop: 15}}/>
                     </div>
                 </FieldGroup>
                 <div style={{display: 'flex', margin: '30px 10px 10px 10px', justifyContent:'space-between'}} >
