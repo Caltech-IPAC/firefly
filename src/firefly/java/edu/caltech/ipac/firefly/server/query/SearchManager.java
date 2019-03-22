@@ -84,12 +84,11 @@ public class SearchManager {
         return dgp;
     }
 
-    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, TableUtil.Format format,
-                         String formatDetails) throws DataAccessException {
+    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, TableUtil.Format format) throws DataAccessException {
         try {
             SearchProcessor processor = getProcessor(dataRequest.getRequestId());
             if (dataRequest != null) {
-                return processor.writeData(saveTo, dataRequest, format, formatDetails);
+                return processor.writeData(saveTo, dataRequest, format);
             } else {
                 throw new DataAccessException("Request fail inspection.  Operation aborted.");
             }

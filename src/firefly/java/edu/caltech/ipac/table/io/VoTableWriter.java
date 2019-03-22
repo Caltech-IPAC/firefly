@@ -4,7 +4,6 @@
 package edu.caltech.ipac.table.io;
 import edu.caltech.ipac.table.*;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 import java.io.*;
 import java.util.Map;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import edu.caltech.ipac.table.TableUtil;
 
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.*;
@@ -31,24 +31,14 @@ import nom.tam.fits.FitsFactory;
  */
 public class VoTableWriter {
 
-    public static void save(File file, DataGroup dataGroup, String outputFormat)
+    public static void save(File file, DataGroup dataGroup, TableUtil.Format outputFormat)
             throws IOException {
-        save(file, dataGroup, outputFormat, false, true);
+        save(file, dataGroup, outputFormat, false);
     }
 
-    public static void save(File file, DataGroup dataGroup, String outputFormat, boolean isGenericOutput)
-        throws IOException {
-        save(file, dataGroup, outputFormat, false, isGenericOutput);
-    }
-
-    public static void save(OutputStream stream, DataGroup dataGroup, String outputFormat)
+    public static void save(OutputStream stream, DataGroup dataGroup, TableUtil.Format outputFormat)
             throws IOException {
-        save(stream, dataGroup, outputFormat, false, true);
-    }
-
-    public static void save(OutputStream stream, DataGroup dataGroup, String outputFormat, boolean isGenericOutput)
-            throws IOException {
-        save(stream, dataGroup, outputFormat, false, isGenericOutput);
+        save(stream, dataGroup, outputFormat, false);
     }
 
     /**
@@ -57,21 +47,28 @@ public class VoTableWriter {
      * @param file the file to be saved
      * @param dataGroup data group
      * @param outputFormat votable output format
+     * @param isGenericOutput true for doing generic votable output by using Starlink provided functions to output
+     *                        a VOTable document with the simplest structure capable of holding TABLE element
+     *                        in a range of different format
+     *                        false for doing more detail votable output which includes the tagged
+     *                        elements under TABLE element such as DESCRIPTION, LINK, GROUP, PARAM, INFO, FIELD
+     *                        and child elements under those elements.
      * @throws IOException on error
      */
-    public static void save(File file, DataGroup dataGroup, String outputFormat, boolean forExport, boolean isGenericOutput)
+    public static void save(File file, DataGroup dataGroup, TableUtil.Format outputFormat, boolean isGenericOutput)
             throws IOException {
 
         FitsFactory.useThreadLocalSettings(true);  // consistent with FitsTableReader
         FitsFactory.setLongStringsEnabled(false);
 
-        StarTable st = formStarTableFrom(dataGroup, forExport, outputFormat);
+        StarTable st = formStarTableFrom(dataGroup);
 
         if (isGenericOutput) {
             writeGenericVotable(file, outputFormat, st);
         } else {
             writeVotable(new FileWriter(file), outputFormat, st);
         }
+        FitsFactory.useThreadLocalSettings(false);
     }
 
 
@@ -79,47 +76,50 @@ public class VoTableWriter {
      * save the catalogs to a stream, stream is not closed
      *
      * @param stream the output stream to write to
-     *
      * @param dataGroup data group
      * @param outputFormat votable output format
+     * @param isGenericOutput true for doing generic votable output by using Starlink provided functions to output
+     *                        a VOTable document with the simplest structure capable of holding TABLE element
+     *                        in a range of different format
+     *                        false for doing more detail votable output which includes the tagged
+     *                        elements under TABLE element such as DESCRIPTION, LINK, GROUP, PARAM, INFO, FIELD
+     *                        and child elements under those elements.
      * @throws IOException on error
      */
-    public static void save(OutputStream stream, DataGroup dataGroup, String outputFormat, boolean forExport, boolean isGenericOutput)
+    public static void save(OutputStream stream, DataGroup dataGroup, TableUtil.Format outputFormat, boolean isGenericOutput)
             throws IOException {
 
         FitsFactory.useThreadLocalSettings(true);  // consistent with FitsTableReader
         FitsFactory.setLongStringsEnabled(false);
 
-        StarTable st = formStarTableFrom(dataGroup, forExport, outputFormat);
+        StarTable st = formStarTableFrom(dataGroup);
 
         if (isGenericOutput) {
             writeGenericVotable(stream, outputFormat, st);
         } else {
             writeVotable(new OutputStreamWriter(stream), outputFormat, st);
         }
+        FitsFactory.useThreadLocalSettings(false);
     }
 
-    private static List<DataType> getColumnsForVotable(DataGroup dataGroup, boolean forExport) {
+
+    private static List<DataType> getColumnsForVotable(DataGroup dataGroup) {
 
         List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
 
-        if (forExport) {
             // this should return only visible columns
-            headers = headers.stream()
-                    .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt)
-                            && !dt.getKeyName().equals(DataGroup.ROW_IDX)
-                            && !dt.getKeyName().equals(DataGroup.ROW_NUM))
+        headers = headers.stream()
+                    .filter(dt -> IpacTableUtil.isVisible(dataGroup, dt))
                     .collect(Collectors.toList());
-        }
 
         return headers;
     }
 
-    private static StarTable formStarTableFrom(DataGroup dataGroup, boolean forExport, String outputFormat) {
+    private static StarTable formStarTableFrom(DataGroup dataGroup) {
 
-        List<DataType> headers = getColumnsForVotable(dataGroup, forExport);
+        List<DataType> headers = getColumnsForVotable(dataGroup);
         List<ColumnInfo> colList = headers.stream()
-                .map((dt) -> DataGroupStarTable.convertToColumnInfo(dt, outputFormat))
+                .map((dt) -> DataGroupStarTable.convertToColumnInfo(dt))
                 .collect(Collectors.toList());
 
         ColumnInfo[] colInfos = colList.toArray(new ColumnInfo[colList.size()]);
@@ -127,13 +127,13 @@ public class VoTableWriter {
     }
 
 
-    private static void writeGenericVotable(File file, String outputFormat, StarTable st) throws IOException
+    private static void writeGenericVotable(File file, TableUtil.Format outputFormat, StarTable st) throws IOException
     {
         VOTableWriter voWriter = new VOTableWriter(getDataFormat(outputFormat), true, getVotVersion(outputFormat));
         voWriter.writeStarTable(st, file.getName(), new StarTableOutput());
     }
 
-    private static void writeGenericVotable(OutputStream stream, String outputFormat, StarTable st) throws IOException
+    private static void writeGenericVotable(OutputStream stream, TableUtil.Format outputFormat, StarTable st) throws IOException
     {
         VOTableWriter voWriter = new VOTableWriter(getDataFormat(outputFormat), true, getVotVersion(outputFormat));
         voWriter.writeStarTable(st, stream);
@@ -145,7 +145,7 @@ public class VoTableWriter {
         }
     }
 
-    private static void writeVotable(Writer writer, String outputFormat, StarTable st) throws IOException
+    private static void writeVotable(Writer writer, TableUtil.Format outputFormat, StarTable st) throws IOException
     {
         BufferedWriter out = new BufferedWriter(writer);
         DataGroup dataGroup = ((DataGroupStarTable)st).getDataGroup();
@@ -172,22 +172,22 @@ public class VoTableWriter {
     }
 
 
-    private static DataFormat getDataFormat(String outputFormat) {
-        String outF = outputFormat.toLowerCase();
+    private static DataFormat getDataFormat(TableUtil.Format outputFormat) {
 
-        if (outF.contains("binary2")) {
+
+        if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2)) {
             return DataFormat.BINARY2;
-        } else if (outF.contains("binary")) {
+        } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY)) {
             return DataFormat.BINARY;
-        } else if (outF.contains("fits")) {
+        } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_FITS)) {
             return DataFormat.FITS;
         } else {
             return DataFormat.TABLEDATA;
         }
     }
 
-    private static VOTableVersion getVotVersion(String outputFormat) {
-        return outputFormat.toLowerCase().contains("binary2") ? VOTableVersion.V13 : VOTableVersion.V12;
+    private static VOTableVersion getVotVersion(TableUtil.Format outputFormat) {
+        return outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2) ? VOTableVersion.V13 : VOTableVersion.V12;
     }
 
 
@@ -218,6 +218,7 @@ public class VoTableWriter {
             dataTypeMap.put(Character.class, "char");
             dataTypeMap.put(Float.class, "float");
             dataTypeMap.put(Double.class, "double");
+            dataTypeMap.put(Date.class, "char");
         }
 
 
@@ -316,7 +317,7 @@ public class VoTableWriter {
                           getArraySize(dt.getDataType()) +
                           elementAtt("width", width) +
                           elementAtt("precision",
-                                     (!isEmpty(prec) && prec.startsWith("F")) ? prec.substring(1) : prec) +
+                                     (!isEmpty(prec) && prec.startsWith("G")) ? prec.substring(1) : prec) +
                           elementAtt("unit", dt.getUnits()) +
                           elementAtt(TableMeta.UTYPE, dt.getUType()) +
                           elementAtt(TableMeta.REF, dt.getRef());

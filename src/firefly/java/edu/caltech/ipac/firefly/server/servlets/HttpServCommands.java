@@ -37,7 +37,10 @@ public class HttpServCommands {
             allFormats.put("ipac", TableUtil.Format.IPACTABLE);
             allFormats.put("csv", TableUtil.Format.CSV);
             allFormats.put("tsv", TableUtil.Format.TSV);
-            allFormats.put("votable", TableUtil.Format.VO_TABLE);
+            allFormats.put("votable-tabledata", TableUtil.Format.VO_TABLE_TABLEDATA);
+            allFormats.put("votable-binary-inline", TableUtil.Format.VO_TABLE_BINARY);
+            allFormats.put("votable-binary2-inline", TableUtil.Format.VO_TABLE_BINARY2);
+            allFormats.put("votable-fits-inline", TableUtil.Format.VO_TABLE_FITS);
             allFormats.put("fits", TableUtil.Format.FITS);
         }
 
@@ -53,7 +56,7 @@ public class HttpServCommands {
                 formatInMap = "ipac";
             } else {
                 Object[] formats = allFormats.keySet().stream()
-                        .filter((t) -> fileFormat.startsWith(t))
+                        .filter((t) -> fileFormat.equals(t))
                         .toArray();
                 formatInMap = (formats.length != 1) ? "ipac" : (String)formats[0];
             }
@@ -71,7 +74,7 @@ public class HttpServCommands {
             res.setHeader("Content-Disposition", "attachment; filename=" + fileName + fileNameExt);
             SearchManager am = new SearchManager();
 
-            FileInfo fi = am.save(res.getOutputStream(), request, tblFormat, fileFormat);
+            FileInfo fi = am.save(res.getOutputStream(), request, tblFormat);
             if (fi != null) {
                 long length = 0;
                 if (fi != null) {

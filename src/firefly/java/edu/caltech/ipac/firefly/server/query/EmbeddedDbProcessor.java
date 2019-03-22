@@ -255,7 +255,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return ipacTable;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format, String formatDetails) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format) throws DataAccessException {
         try {
             TableServerRequest treq = (TableServerRequest) request;
             DataGroupPart page = getData(request);
@@ -267,8 +267,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 case TSV:
                     DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.TDF);
                     break;
-                case VO_TABLE:
-                    VoTableWriter.save(out, page.getData(), formatDetails, true, false);
+                case VO_TABLE_TABLEDATA:
+                case VO_TABLE_BINARY:
+                case VO_TABLE_BINARY2:
+                case VO_TABLE_FITS:
+                    VoTableWriter.save(out, page.getData(), format);
                     break;
                 default:
                     IpacTableWriter.save(out, page.getData(), true);

@@ -116,25 +116,12 @@ public class DataGroupStarTable extends RandomStarTable {
     public static DescribedValue convertToDescribedValue(ParamInfo p) {
         if (p == null) return null;
 
-        ValueInfo cInfo = convertToValueInfo(p);
+        ValueInfo cInfo = convertToColumnInfo(p);
 
         return new DescribedValue(cInfo, p.getValue());
     }
 
-
-    public static DescribedValue convertToDescribedValue(DataGroup.Attribute att) {
-        if (att == null) return null;
-
-        ColumnInfo col = new ColumnInfo(att.getKey(), String.class, null);
-
-        return new DescribedValue(col, att.getValue());
-    }
-
-    public static ValueInfo convertToValueInfo(DataType dt) {
-        return convertToColumnInfo(dt, null);
-    }
-
-    public static ColumnInfo convertToColumnInfo(DataType dt, String outputFormat) {
+    public static ColumnInfo convertToColumnInfo(DataType dt) {
         Class dType = dt.getDataType();
 
         // name, datatype, <DESCRIPTION>
