@@ -2,13 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent} from 'react';
-import ReactDOM from 'react-dom';
+import React, {Component, PureComponent, Fragment} from 'react';
 import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS} from '../FilterInfo.js';
-import {isNumericType, tblDropDownId} from '../TableUtil.js';
+import {isNumericType, tblDropDownId, getCellValue, getTblById, getColumn, getColumnByID} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -22,11 +21,18 @@ import {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
-import {getTblById, getColumn} from '../TableUtil.js';
+import {resolveHRefVal} from '../../util/VOAnalyzer.js';
 
 const {Cell} = FixedDataTable;
 const html_regex = /<.+>/;
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
+
+import infoIcon from 'html/images/info-icon.png';
+
+const imageStubMap = {
+    info: <img style={{width:'14px'}} src={infoIcon} alt='info'/>
+};
+
 
 /*---------------------------- COLUMN HEADER RENDERERS ----------------------------*/
 
@@ -262,6 +268,37 @@ export class TextCell extends Component {
     }
 }
 
+/**
+ * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
+ * LinkCell is implementing A.4 using link substitution based on A.1
+ */
+export const LinkCell = React.memo(({tbl_id, col, rowIndex, height, style={}}) => {
+    const tableModel = getTblById(tbl_id);
+    const val = getCellValue(tableModel, rowIndex, col.name);
+    const {links} = col;
+
+    style = {lineHeight: `${height - 6}px`, ...style};
+    if (links) {
+        return (
+            <Fragment>
+                {
+                    links.map( (link={}, idx) => {
+                        const {href, title, value=val, action} = link;
+                        const target = action || '_blank';
+                        const rvalue = resolveHRefVal(tableModel, value, rowIndex);
+                        const rhref = resolveHRefVal(tableModel, href, rowIndex, val);
+                        return (<ATag key={'ATag_' + idx} href={rhref}
+                                      {...{value:rvalue, title, target, style}}
+                                />);
+                    })
+                }
+            </Fragment>
+        );
+    } else {
+        return <ATag href={val} value={val} target='_blank' style={style}/>;
+    }
+});
+
 
 /**
  * @param {{rowIndex,data,colIdx}}
@@ -340,4 +377,17 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
     };
 };
 
+function ATag({value='', title, href, target, style={}}) {
+    const [,imgStubKey] = value.match(/<img +data-src='(\w+)' *\/>/i) || [];
+
+    if (imgStubKey) {
+        value = imageStubMap[imgStubKey] || <img data-src={imgStubKey}/>;   // if a src is given but, not found.. show bad img.
+    }
+
+    return (
+        <div style={{display: 'inline-flex', height: '100%', alignItems: 'center', padding: '0 3px', ...style}}>
+            <a {...{title, href, target}}> {value} </a>
+        </div>
+    );
+};
 

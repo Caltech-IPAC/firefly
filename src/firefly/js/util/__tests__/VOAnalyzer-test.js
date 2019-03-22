@@ -1,10 +1,11 @@
 // import initTest from '../InitTest.js';
 
 import {reject} from 'lodash';
-import {findTableCenterColumns, isCatalog, hasCoverageData, isMetaDataTable} from '../VOAnalyzer';
+import {findTableCenterColumns, isCatalog, hasCoverageData, isMetaDataTable, resolveHRefVal} from '../VOAnalyzer';
+import {SelectInfo} from '../../tables/SelectInfo';
 
 
-describe('Center columns tests, isCatalog test', () => {
+describe('VOAnalyzer:', () => {
 
     /**
      * guessing column name; ra/dec or lon/lat
@@ -279,7 +280,7 @@ describe('Center columns tests, isCatalog test', () => {
     /**
      * check the isCatalog works as expected
      */
-    test('test isCatalog', () => {
+    test('isCatalog', () => {
         const table = {
             tableData: {
                 columns: [
@@ -388,7 +389,7 @@ describe('Center columns tests, isCatalog test', () => {
     /**
      * check the hasCoverageData works as expected
      */
-    test('test hasCoverageData', () => {
+    test('hasCoverageData', () => {
         const table = {
             totalRows: 2,
             tableData: {
@@ -501,7 +502,7 @@ describe('Center columns tests, isCatalog test', () => {
     /**
      * check the isMetaDataTable works as expected
      */
-    test('test isMetaDataTable', () => {
+    test('isMetaDataTable', () => {
         const table = {
             totalRows: 2,
             tableData: {
@@ -532,6 +533,32 @@ describe('Center columns tests, isCatalog test', () => {
         table.tableMeta= {ImageSourceId:'wise'};
         result= isMetaDataTable(table);
         expect(result).toBeTruthy();
+
+    });
+
+    /**
+     * guessing column name; ra/dec or lon/lat
+     */
+    test('resolveHRefVal', () => {
+
+        const tableModel = {
+                tableData: {
+                    columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
+                    data: [
+                        ['a-1', 'b-1', 'b-1'],
+                        ['a-2', 'b-2', 'c-2'],
+                        ['a-3', 'b-3', 'c-3'],
+                    ],
+                }
+            };
+
+        // no substitution, simply append value to end of href
+        let result = resolveHRefVal(tableModel, 'https://acme.org/abc?p=', 1, 'b-2');
+        expect(result).toBe('https://acme.org/abc?p=b-2');
+
+        // substituting values from column a and c into the href
+        result = resolveHRefVal(tableModel, 'https://acme.org/abc?x=${a}&y=${c}', 1, 'b-2');
+        expect(result).toBe('https://acme.org/abc?x=a-2&y=c-2');
 
     });
 

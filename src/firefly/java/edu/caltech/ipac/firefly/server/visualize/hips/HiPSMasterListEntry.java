@@ -71,9 +71,9 @@ public class HiPSMasterListEntry {
     private static List<DataType> cols = new ArrayList<>();
 
     // columns included in the HiPS list table, some column may be hidden, URL, SOURCE
-    private static PARAMS[] orderCols = new PARAMS[]{PARAMS.TYPE, PARAMS.TITLE, PARAMS.WAVELENGTH,
+    private static PARAMS[] orderCols = new PARAMS[]{PARAMS.TYPE,  PARAMS.PROPERTIES, PARAMS.TITLE, PARAMS.WAVELENGTH,
                                             PARAMS.RELEASEDATE, PARAMS.FRAME, PARAMS.ORDER, PARAMS.PIXELSCALE,
-                                            PARAMS.FRACTION,  PARAMS.PROPERTIES, PARAMS.URL,
+                                            PARAMS.FRACTION, PARAMS.URL,
                                             PARAMS.SOURCE, PARAMS.IVOID};
     static {
         for (PARAMS param : orderCols) {

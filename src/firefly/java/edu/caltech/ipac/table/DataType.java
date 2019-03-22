@@ -24,6 +24,7 @@ public class DataType implements Serializable, Cloneable {
 
     private static final String DOUBLE = "double";
     private static final String REAL = "real";
+    public static final String LOCATION = "location";
 
     private static final String FLOAT = "float";
     private static final String INTEGER = "int";
@@ -39,6 +40,7 @@ public class DataType implements Serializable, Cloneable {
     private static final String S_CHAR = "c";
     private static final String S_BOOL = "b";
     public static final String LONG_STRING = "long_string";
+
     private static final List<String> FLOATING_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
     private static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
     public static final List<String> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
@@ -495,6 +497,8 @@ public class DataType implements Serializable, Cloneable {
             case BOOL:
             case S_BOOL:
                 return Boolean.class;
+            case LOCATION:
+                return String.class;
             default:
                 return String.class;
         }

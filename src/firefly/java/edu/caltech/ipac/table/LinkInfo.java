@@ -8,13 +8,25 @@ import edu.caltech.ipac.util.StringUtils;
  * Created by cwang on 9/28/18.
  */
 public class LinkInfo  implements Serializable, Cloneable {
+    private String ID;            // LINK ID
+    private String value;
     private String href;     // LINK href
     private String title;    // LINK title
     private String contentRole;   // LINK content-role
     private String contentType;   // LINK content-type
-    private String ID;            // LINK ID
+    private String action;
 
     public LinkInfo() {}
+
+    public LinkInfo(String ID, String value, String href, String title, String contentRole, String contentType, String action) {
+        this.ID = ID;
+        this.value = value;
+        this.href = href;
+        this.title = title;
+        this.contentRole = contentRole;
+        this.contentType = contentType;
+        this.action = action;
+    }
 
     public void setHref(String href) { this.href = href; }
     public String getHref() {
@@ -38,14 +50,18 @@ public class LinkInfo  implements Serializable, Cloneable {
         return contentType;
     }
 
-
-
     public void setID(String id) {
         this.ID = id;
     }
     public String getID() {
         return ID;
     }
+
+    public String getValue() { return value; }
+    public void setValue(String value) { this.value = value; }
+
+    public String getAction() { return action; }
+    public void setAction(String action) { this.action = action;}
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();

@@ -19,6 +19,9 @@ public class VisConstants {
     public final static double    ARCSEC_TO_DEG = .00027777778;
     public final static double    DEG_TO_ARCMIN = 60.0;
     public final static double    DEG_TO_ARCSEC = 3600.0;
+
+    // a template to be converted into an <img> tag with src keyed by 'info'
+    public final static String INFO_ICON_STUB = "<img data-src='info'/>";
 }
 
 
