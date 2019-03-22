@@ -273,7 +273,9 @@ public class VoTableWriter {
             atts.add(elementAtt("content-role", link.getRole()));
             atts.add(elementAtt("content-type", link.getType()));
             atts.add(elementAtt("title" , link.getTitle()));
+            atts.add(elementAtt("value", link.getValue()));
             atts.add(elementAtt("href", link.getHref()));
+            atts.add(elementAtt("action", link.getAction()));
 
             String attsInElement =  atts.stream()
                                     .filter( v -> !isEmpty(v))
