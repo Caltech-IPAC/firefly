@@ -26,8 +26,8 @@ export const ZoomType= {
     UP:  makeZT('UP',zoomUp,'Zoom the image in',UserZoomTypes.UP),
     DOWN:makeZT('DOWN',zoomDown,'Zoom the image out',UserZoomTypes.DOWN),
     ONE: makeZT('ONE',zoomOriginal,'Zoom to the original size',UserZoomTypes.ONE),
-    FIT: makeZT('FIT',zoomFit,'Zoom the image to fit into the visible space', UserZoomTypes.FIT),
-    FILL:makeZT('FILL',zoomFill, 'Zoom the image to Fill the visible space', UserZoomTypes.FILL)
+    FIT: makeZT('FIT',zoomFit,'Zoom the image to fit entirely within its frame', UserZoomTypes.FIT),
+    FILL:makeZT('FILL',zoomFill, 'Zoom the image to fill its frame horizontally', UserZoomTypes.FILL)
 };
 
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
