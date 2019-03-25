@@ -50,7 +50,7 @@ export class MultiChartViewer extends PureComponent {
         if (prevProps.viewerId!==viewerId) {
             const {renderTreeId}= this.context;
             dispatchAddViewer(viewerId,this.props.canReceiveNewItems,PLOT2D,true,renderTreeId);
-            dispatchViewerUnmounted(viewerId);
+            dispatchViewerUnmounted(prevProps.viewerId);
         } else if (this.props.expandedMode && prevProps.expandedMode!==this.props.expandedMode) {
             const {chartId} = getExpandedChartProps();
             dispatchUpdateCustom(viewerId, {activeItemId: chartId});
