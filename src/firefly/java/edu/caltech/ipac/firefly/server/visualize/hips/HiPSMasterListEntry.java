@@ -24,20 +24,22 @@ public class HiPSMasterListEntry {
     private Map<String, String> mapInfo = new HashMap<>();
 
     public enum PARAMS{
-        TITLE("Title", "Title", String.class, "Data set title"),
-        ORDER("Order", "Order", Integer.class, "HiPS order"),
-        TYPE("Type", "Type", String.class, "Type of data, 'image', 'cube', 'catalog'"),
-        FRACTION("Coverage", "Coverage", Float.class, "Fraction of the sky covers by the MOC associated to the HiPS"),
-        FRAME("Frame", "Frame", String.class, "Coordinate frame reference"),
+        TITLE("Title", "Title", String.class, "Dataset title (obs_title)"),
+        ORDER("Order", "HiPS Order", Integer.class, "HEALPix order of the highest-resolution layer of the HiPS dataset (hips_order)"),
+        TYPE("Type", "Type", String.class, "Image or cube (dataproduct_type)"),
+        FRACTION("Coverage", "Coverage", Float.class, "Sky coverage fraction measured in the MOC system (moc_sky_fraction)"),
+        FRAME("Frame", "Frame", String.class, "Coordinate frame in which the HEALPix tiling of the dataset was constructed;"+
+                " also default coordinate system used in display (hips_frame)"),
         URL("Url", "Url", String.class, "HiPS url"),
         ID("ID", "ID",  String.class, "HiPS id"),
-        IVOID("CreatorID", "CreatorID", String.class, "Unique id of HiPS"), // note- don't change this unless you change the client also
-        WAVELENGTH("Wavelength", "Wavelength", String.class, "General wavelength, Radio, Millimeter, Infared, Optical, " +
-                "UV, EUV, X-ray, Gamma-ray"),
-        RELEASEDATE("Release_date", "Release_date", String.class, "Last HiPS update date, YYYY-mm-ddTHH:MMZ"),
-        PIXELSCALE("Pixel_scale", "Pixel_scale", Float.class, "pixel angular resolution at the highest order", "degrees"),
+        IVOID("CreatorID", "Dataset IVOA ID", String.class, "Unique ID of the dataset preserved across mirrors (creator_did)"), // note- don't change this unless you change the client also
+        WAVELENGTH("Wavelength", "Waveband", String.class, "Wavelength regime, e.g.: "+
+                "Radio, Millimeter, Infrared, Optical, UV, EUV, X-ray, Gamma-ray (obs_regime)"),
+        RELEASEDATE("Release_date", "Release Date", String.class, "Last HiPS update date (hips_release_date)"),
+        PIXELSCALE("Pixel_scale", "Pixel Size", Float.class, "Median angular resolution of the highest-resolution "+
+                "layer of the HiPS dataset (s_pixel_scale, converted to arcsec)", "degrees"),
         SOURCE("Source", "Source", String.class, "HiPS source"),
-        PROPERTIES("Properties", "Properties", String.class, "HiPS properties url"),
+        PROPERTIES("Properties", "Properties", String.class, "URL for the HiPS properties file (derived from hips_service_url)"),
         STATUS("Status", "Status", String.class, "HiPS Status");
 
         String key;
@@ -72,9 +74,8 @@ public class HiPSMasterListEntry {
 
     // columns included in the HiPS list table, some column may be hidden, URL, SOURCE
     private static PARAMS[] orderCols = new PARAMS[]{PARAMS.TYPE,  PARAMS.PROPERTIES, PARAMS.TITLE, PARAMS.WAVELENGTH,
-                                            PARAMS.RELEASEDATE, PARAMS.FRAME, PARAMS.ORDER, PARAMS.PIXELSCALE,
-                                            PARAMS.FRACTION, PARAMS.URL,
-                                            PARAMS.SOURCE, PARAMS.IVOID};
+                                            PARAMS.FRACTION, PARAMS.PIXELSCALE, PARAMS.ORDER, PARAMS.FRAME,
+                                            PARAMS.RELEASEDATE, PARAMS.URL, PARAMS.SOURCE, PARAMS.IVOID};
     static {
         for (PARAMS param : orderCols) {
             DataType dt = new DataType(param.getKey(), param.getTitle(), param.getMetaClass()) ;
