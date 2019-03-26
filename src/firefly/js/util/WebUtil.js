@@ -10,13 +10,7 @@ import {getRootURL} from './BrowserUtil.js';
 import {getWsConnId, getWsChannel} from '../core/AppDataCntlr.js';
 import {getDownloadProgress, DownloadProgress} from '../rpc/SearchServicesJson.js';
 
-// todo: we want to replace react-addons-update with immutability-helper. However there is some behavior difference with error
-// todo: handling, I observed it when updateMerge is called from ChartsCntrl.js,reduceData,case CHART_DATA_FETCH, line 415
-// todo: In this case can an exception is thrown. to reproduce: just do catalog search
-// todo: import update from 'immutability-helper';
-import update from 'react-addons-update';
-
-
+import update from 'immutability-helper';
 
 
 const MEG          = 1048576;

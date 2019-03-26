@@ -183,6 +183,11 @@ export default function makeWebpackConfig(config) {
         );
     }
 
+    if (!ENV_DEV_MODE) { // Adding this so we see it in the log file of our builds
+        console.log('Building client with Global Props:');
+        console.log(globals.__PROPS__);
+    }
+
     const webpack_config = {
         name    : config.name,
         // mode    : 'none',
