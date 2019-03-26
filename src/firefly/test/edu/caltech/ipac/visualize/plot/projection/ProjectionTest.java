@@ -173,7 +173,13 @@ public class ProjectionTest {
      */
     public static void main(String[] args) throws Exception {
 
-        String path="./firefly_test_data/edu/caltech/ipac/visualize/plot/";//"/Users/zhang/lsstDev/testingData/projectionTestingData/";
+
+          String path="/Users/zhang/hydra/cm/firefly_test_data/edu/caltech/ipac/visualize/plot/projection/";
+          //use either of these two when run in IntelliJ
+          /*"/Users/zhang/lsstDev/testingData/projectionTestingData/";
+           "/Users/zhang/hydra/cm/firefly_test_data/edu/caltech/ipac/visualize/plot/";
+           */
+       // String path = FileLoader.getDataPath(ProjectionTest.class);  //this does not work when run in IntelliJ
         String[] fNames = {
                 "ztf-TPV.fits",
                 "1904-66_SFL.fits",                                      //SFL or GLS  SANSON-FLAMSTEED
@@ -195,8 +201,8 @@ public class ProjectionTest {
 
         for (int i=0; i<fNames.length; i++) {
             try {
-                path = FileLoader.getDataPath(ProjectionTest.class);
-                        FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[i]);
+
+                FitsHeaderToJson.writeImageHeaderProjectionToJson(path + fNames[i]);
             }
             catch (FitsException e) {
                 System.out.println("========ERROR=========="+fNames[i]+"===============");
