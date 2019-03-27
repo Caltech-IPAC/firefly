@@ -467,7 +467,7 @@ function handleOnTableChanged(params, fireValueChange) {
     const {tbl_id} = params.tableModel;
     const tbl = getTblById(tbl_id);
 
-    if (!tbl) return;
+    if (!tbl || tbl.error) return;
 
     const tbl_data = tbl.tableData.data;
     const sel_info  =  tbl.selectInfo;
