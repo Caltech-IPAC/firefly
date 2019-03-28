@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -26,9 +27,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by zhang on 10/12/16.
@@ -66,11 +65,12 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         _log.briefDebug("Getting metadata: " + url);
 
         File file = createFile(request, ".json");
-        Map<String, String> requestHeader=new HashMap<>();
-        requestHeader.put("Accept", "application/json");
+
+        HttpServiceInput inputs = HttpServiceInput.createWithCredential(LSSTQuery.getMetaservURL());
+        inputs.setHeader("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();
-        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),null,null,  requestHeader, file, null, timeout);
+        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),null, inputs.getCookies(), inputs.getHeaders(), file, null, timeout);
         _log.briefDebug("Metadata call took " + (System.currentTimeMillis() - cTime) + "ms");
 
         if (fileData.getResponseCode() >= 400) {
