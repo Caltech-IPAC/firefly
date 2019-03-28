@@ -1,9 +1,9 @@
 package edu.caltech.ipac.firefly.server.query.lsst;
 
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.table.TableMeta;
@@ -12,11 +12,9 @@ import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.util.download.URLDownload;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -25,7 +23,6 @@ import org.json.simple.parser.ParseException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.List;
 
@@ -43,8 +40,7 @@ import java.util.List;
 public class LSSTMetaSearch  extends IpacTablePartProcessor{
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
-    //set default timeout to 30 seconds
-    private int timeout  = AppProperties.getIntProperty("lsst.database.timeoutLimit" , 30);
+    // default connection timeout is 5sec
 
     private DataGroup  getDataFromURL(TableServerRequest request) throws Exception {
 
@@ -58,10 +54,10 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         }
 
         //use fully specified path, which includes logical database, schema, and table name
-        //ex. URL http://lsst-qserv-dax01:5000/meta/v1/db/W13_sdss_v2/sdss_stripe82_01/tables/RunDeepForcedSource
+        //ex. URL http://lsst-qserv-dax01:5000/meta/v1/db/W13_sdss_v2/sdss_stripe82_01/tables/RunDeepForcedSource/
         String url = LSSTQuery.getMetaservURL() + URLEncoder.encode(parts[0], "UTF-8") + "/" +
                 URLEncoder.encode(parts[1], "UTF-8") + "/tables/"  +
-                URLEncoder.encode(parts[2], "UTF-8");
+                URLEncoder.encode(parts[2], "UTF-8") + "/";
         _log.briefDebug("Getting metadata: " + url);
 
         File file = createFile(request, ".json");
@@ -70,12 +66,12 @@ public class LSSTMetaSearch  extends IpacTablePartProcessor{
         inputs.setHeader("Accept", "application/json");
 
         long cTime = System.currentTimeMillis();
-        FileInfo fileData = URLDownload.getDataToFileUsingPost(new URL(url),null, inputs.getCookies(), inputs.getHeaders(), file, null, timeout);
+        HttpServices.Status status = HttpServices.getData(url, file, inputs);
         _log.briefDebug("Metadata call took " + (System.currentTimeMillis() - cTime) + "ms");
 
-        if (fileData.getResponseCode() >= 400) {
+        if (status.isError()) {
             String err = LSSTQuery.getErrorMessageFromFile(file);
-            throw new DataAccessException("[DAX] " + (err == null ? fileData.getResponseCodeMsg() : err));
+            throw new DataAccessException("[DAX] " + (err == null ? status.getErrMsg() : err));
         }
         return getMetaData(file);
     }
