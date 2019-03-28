@@ -235,7 +235,7 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
         }
     }
 
-    if (drawLayer.canSelect) {
+    if (drawLayer.canSelect || drawLayer.canShowSelect) {
         newDD.selectIdxs= factory.getDrawData(SELECTED_IDXS, null, drawLayer, action, drawData.selectIdxs);
     }
 

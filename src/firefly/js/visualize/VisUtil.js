@@ -21,6 +21,7 @@ import Point, {makeImageWorkSpacePt, makeImagePt, makeScreenPt,
 import {Matrix} from 'transformation-matrix-js';
 import {getPixScaleDeg, getFluxUnits} from './WebPlot.js';
 import {SelectedShape} from '../drawingLayers/SelectArea.js';
+import {SHAPE_DATA_OBJ} from './draw/ShapeDataObj.js';
 
 
 
@@ -72,7 +73,7 @@ export function computeDistance(p1, p2) {
 
     if (Math.abs(cosine) > 1.0) cosine = cosine / Math.abs(cosine);
     return RtoD * Math.acos(cosine);
-};
+}
 
 /**
  *
@@ -685,7 +686,6 @@ function getSelectedPtsFromEllipse(selection, plot, objList) {
  * @return {Array} indexes from the objList array that are selected
  */
 function getSelectedPtsFromRect(selection, plot, objList) {
-    const selectedList= [];
     if (selection && plot && objList && objList.length) {
         const cc= CysConverter.make(plot);
         const pt0= cc.getDeviceCoords(selection.pt0);

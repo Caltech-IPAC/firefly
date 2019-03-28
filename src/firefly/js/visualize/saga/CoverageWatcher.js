@@ -3,7 +3,7 @@
  */
 
 import Enum from 'enum';
-import {get,isEmpty,isObject, flattenDeep, values, isUndefined} from 'lodash';
+import {get,isEmpty,isObject, flattenDeep, values, isUndefined, set} from 'lodash';
 import {WebPlotRequest, TitleOptions} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
@@ -22,11 +22,13 @@ import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
+import {TableSelectOptions} from '../../drawingLayers/CatalogUI.jsx';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
-import {findTableCenterColumns, isCatalog, hasCoverageData} from '../../util/VOAnalyzer.js';
+import {findTableCenterColumns, isCatalog, hasCoverageData, findTableRegionColumn} from '../../util/VOAnalyzer.js';
+import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 
-export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
+export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ALL', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
@@ -46,7 +48,7 @@ export const PLOT_ID= 'CoveragePlot';
  *
  * @prop {string} title
  * @prop {string} tip
- * @prop {string} coverageType - one of 'GUESS', 'BOX', 'BOTH', or 'X' default is 'BOTH'
+ * @prop {string} coverageType - one of 'GUESS', 'BOX', 'REGION', 'ALL', or 'X' default is 'ALL'
  * @prop {string} overlayPosition search position point to overlay, e.g '149.08;68.739;EQ_J2000'
  * @prop {string|Object.<String,String>} symbol - symbol name one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE','BOXCIRCLE', 'ARROW'
  * @prop {string|Object.<String,Number>} symbolSize - a number of the symbol size or an object keyed by table id and value the symbol size
@@ -63,7 +65,7 @@ const defOptions= {
     title: '2MASS K_s',
     tip: 'Coverage',
     getCoverageBaseTitle : (table) => '',   // eslint-disable-line no-unused-vars
-    coverageType : CoverageType.BOTH,
+    coverageType : CoverageType.ALL,
     symbol : DrawSymbol.SQUARE,
     symbolSize : 5,
     overlayPosition: null,
@@ -188,12 +190,25 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             break;
 
         case TABLE_SELECT:
-            dispatchModifyCustomField(tbl_id, {selectInfo:action.payload.selectInfo});
+            const covType = getCoverageType(options, decimatedTables[tbl_id]);
+            if (covType === CoverageType.REGION) {
+                dispatchModifyCustomField(tbl_id + '_center', {selectInfo: action.payload.selectInfo});
+                dispatchModifyCustomField(tbl_id + '_region', {selectInfo: action.payload.selectInfo});
+            } else {
+                dispatchModifyCustomField(tbl_id, {selectInfo: action.payload.selectInfo});
+            }
             break;
 
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
-            dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
+            const cType = getCoverageType(options, decimatedTables[tbl_id]);
+
+            if (cType === CoverageType.REGION) {
+                dispatchModifyCustomField(tbl_id+'_center', {highlightedRow: action.payload.highlightedRow});
+                dispatchModifyCustomField(tbl_id+'_region', {highlightedRow: action.payload.highlightedRow});
+            } else {
+                dispatchModifyCustomField(tbl_id, {highlightedRow: action.payload.highlightedRow});
+            }
             break;
 
         case MultiViewCntlr.VIEWER_UNMOUNTED:
@@ -325,8 +340,8 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
             [COVERAGE_TARGET]: avgOfCenters,
             [COVERAGE_RADIUS]: maxRadius,
             [COVERAGE_TABLE]: tbl_id,
-            [COVERAGE_CREATED]: true,
-        },
+            [COVERAGE_CREATED]: true
+        }
     });
 }
 
@@ -372,6 +387,9 @@ function computeSize(options, decimatedTables, usesRadians) {
                 case CoverageType.BOX:
                     ptAry= getBoxAryFromTable(options,t, usesRadians);
                     break;
+                case CoverageType.REGION:
+                    ptAry = getRegionAryFromTable(options, t, usesRadians);
+                    break;
 
             }
             return flattenDeep(ptAry);
@@ -382,6 +400,7 @@ function computeSize(options, decimatedTables, usesRadians) {
 
 function makeOverlayCoverageDrawing() {
     const drawingOptions= {};
+    const selectOps = {};
     /**
      *
      * @param decimatedTables
@@ -399,6 +418,7 @@ function makeOverlayCoverageDrawing() {
         const layer= getDrawLayerById(getDlAry(), tbl_id);
         if (layer) {
             drawingOptions[tbl_id]= layer.drawingDef;
+            selectOps[tbl_id] = layer.selectOption;
             dispatchDestroyDrawLayer(tbl_id);
         }
 
@@ -409,7 +429,7 @@ function makeOverlayCoverageDrawing() {
             if (!drawingOptions[id].color) drawingOptions[id].color= lookupOption(options,'color',id) || getNextColor();
             const oriTable= getTblById(id);
             const arTable= decimatedTables[id];
-            if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions[id]);
+            if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions[id], selectOps[id]);
 
         });
     };
@@ -423,38 +443,56 @@ function makeOverlayCoverageDrawing() {
  * @param {TableData} table
  * @param {TableData} allRowsTable
  * @param {string} drawOp
+ * @param {object} selectOp  select option for the drawing layer
  */
-function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
+function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, selectOp) {
 
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
-
-    const boxData= covType===CoverageType.BOTH || covType===CoverageType.BOX;
-    const {tbl_id}= table;
     const {tableMeta, tableData}= allRowsTable;
-    const columns = boxData ? getCornersColumns(table) : findTableCenterColumns(table);
-    if (isEmpty(columns)) { return; }
     const angleInRadian= isTableUsingRadians(tableMeta);
-    const dl= getDlAry().find( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogId===table.tbl_id);
-    if (!dl) {
-        dispatchCreateDrawLayer(Catalog.TYPE_ID, {
-            catalogId: table.tbl_id,
-            title: `Coverage: ${table.title || table.tbl_id}`,
-            color: drawOp.color,
-            tableData,
-            tableMeta,
-            tableRequest: table.request,
-            highlightedRow: table.highlightedRow,
-            catalog: !boxData,
-            columns,
-            symbol: drawOp.symbol || lookupOption(options,'symbol',tbl_id),
-            size: drawOp.size || lookupOption(options,'symbolSize',tbl_id),
-            boxData,
-            selectInfo: table.selectInfo,
-            angleInRadian,
-            dataTooBigForSelection: table.totalRows>10000
-        });
-        dispatchAttachLayerToPlot(table.tbl_id, plotId);
+
+    const createDrawLayer = (tbl_id, dataType, isFromRegion=false) => {
+        const columns = dataType === CoverageType.REGION ? findTableRegionColumn(allRowsTable) :
+                        (covType === CoverageType.BOX ? getCornersColumns(allRowsTable) : findTableCenterColumns(allRowsTable));
+        if (isEmpty(columns)) return;
+
+        const dl = getDlAry().find((dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogId === tbl_id);
+        if (!dl) {
+            dispatchCreateDrawLayer(Catalog.TYPE_ID, {
+                catalogId: tbl_id,
+                title: `Coverage: ${table.title || table.tbl_id}` +
+                             (isFromRegion ? (dataType===CoverageType.REGION ? ' regions' : ' positions') : ''),
+                color: drawOp.color,
+                tableData,
+                tableMeta,
+                tableRequest: table.request,
+                highlightedRow: table.highlightedRow,
+                catalog: (dataType === CoverageType.X || dataType === CoverageType.REGION),
+                dataType: dataType.key,
+                columns,
+                symbol: drawOp.symbol || lookupOption(options, 'symbol', tbl_id),
+                size: drawOp.size || lookupOption(options, 'symbolSize', tbl_id),
+                boxData: dataType !== CoverageType.X,
+                selectInfo: table.selectInfo,
+                angleInRadian,
+                dataTooBigForSelection: table.totalRows > 10000,
+                isFromRegion,
+                tableSelection: (dataType === CoverageType.REGION) ? (selectOp || TableSelectOptions.all.key) : null
+            });
+            dispatchAttachLayerToPlot(tbl_id, plotId);
+        }
+    };
+
+    if (covType === CoverageType.BOX) {
+        createDrawLayer(table.tbl_id, covType);
+    } else if (covType === CoverageType.X) {
+        createDrawLayer(table.tbl_id, covType);
+    } else if (covType === CoverageType.REGION) {
+        const layerType = [CoverageType.X, CoverageType.REGION];
+        const layerId = [table.tbl_id + '_center', table.tbl_id + '_region'];
+
+        layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], true));
     }
 }
 
@@ -474,9 +512,11 @@ function lookupOption(options, key, tbl_id) {
 
 function getCoverageType(options,table) {
     if (options.coverageType===CoverageType.GUESS ||
+        options.coverageType===CoverageType.REGION ||
         options.coverageType===CoverageType.BOX ||
-        options.coverageType===CoverageType.BOTH) {
-         return hasCorners(options,table) ? CoverageType.BOX : CoverageType.X;
+        options.coverageType===CoverageType.ALL) {
+         return  hasRegion(table) ? CoverageType.REGION :
+                                    (hasCorners(options,table) ? CoverageType.BOX : CoverageType.X);
     }
     return options.coverageType;
 }
@@ -488,6 +528,16 @@ function hasCorners(options, table) {
         cornerColumns.every( (cDef) => row[cDef.lonIdx]!=='' && row[cDef.latIdx]!=='') ? tot+1 : tot
     ,0);
     return dataCnt/table.tableData.data.length > .1;
+}
+
+function hasRegion(table) {
+    const rCol = findTableRegionColumn(table);
+
+    if (isEmpty(rCol)) return false;
+    const {data} = table.tableData;
+
+    const dataCnt = data.reduce( (tot, row) => (row[rCol.regionIdx] ? tot+1 : tot), 0);
+    return dataCnt/data.length > .1;
 }
 
 function toAngle(d, radianToDegree)  {
@@ -519,12 +569,26 @@ function getBoxAryFromTable(options,table, usesRadians){
 }
 
 
+function getRegionAryFromTable(options, table, usesRadians) {
+    const cDefAry = [findTableRegionColumn(table)];
+
+    const vertAry = table.tableData.data.map((row) => {
+            return cDefAry.map((rCol) => {
+                const cornerInfo = parseObsCoreRegion(row[rCol.regionIdx], rCol.unit, true);
+
+                return cornerInfo.valid ? cornerInfo.corners : [];
+            }).filter ( (c) => !isEmpty(c));
+        }).filter((r) => !isEmpty(r));
+
+    return vertAry;
+}
+
 function getCovColumnsForQuery(options, table) {
-    const cAry= [...getCornersColumns(table), findTableCenterColumns(table)];
+    const cAry= [...getCornersColumns(table), findTableCenterColumns(table), findTableRegionColumn(table)];
     // column names should be in quotes
     // there should be no duplicates
     const base = cAry.filter((c)=>!isEmpty(c))
-            .map( (c)=> `"${c.lonCol}","${c.latCol}"`)
+            .map( (c)=> (c.type === 'region') ? `"${c.regionCol}"` : `"${c.lonCol}","${c.latCol}"`)
             .filter((v,i,a) => a.indexOf(v) === i)
             .join();
     return base+',"ROW_IDX"';

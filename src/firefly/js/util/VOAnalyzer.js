@@ -33,7 +33,7 @@ const OBSTAPCOLUMNS = [
     ['s_ra',              'pos.eq.ra',                  'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'],
     ['s_dec',             'pos.eq.dec',                 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'],
     ['s_fov',             'phys.angSize;instr.fov',     'Char.SpatialAxis.Coverage.Bounds.Extent.diameter'],
-    ['s_region',          'pos.outline;obs.field',      'Char.SpatialAxis.Coverage.Support.Area'],
+    ['s_region',          'pos.outline;obs.field',     'Char.SpatialAxis.Coverage.Support.Area'],
     ['s_resolution',      'pos.angResolution',          'Char.SpatialAxis.Resolution.Refval.value'],
     ['s_xel1',            'meta.number',                'Char.SpatialAxis.numBins1'],
     ['s_xel2',            'meta.number',                'Char.SpatialAxis.numBins2'],
@@ -100,6 +100,7 @@ export const posCol = {[UCDCoord.eq.key]: {ucd: [['pos.eq.ra', 'pos.eq.dec'],...
     [UCDCoord.galactic.key]: {ucd: [['pos.galactic.lon', 'pos.galactic.lat']],
                               coord: CoordinateSys.GALACTIC, adqlCoord: 'GALATIC'}};
 
+const voRegionColumn = {ucd: ['pos.outline', 'obs.field'], name: 's_region'};
 
 function getLonLatIdx(tableModel, lonCol, latCol) {
     const lonIdx =  getColumnIdx(tableModel, lonCol);
@@ -120,11 +121,19 @@ function centerColumnUTypesFromObsTap() {
     return centerUTypes.findIndex((oneUtype) => !oneUtype) >= 0 ? null : centerUTypes;
 }
 
+function regionColumnUTypeFromObsTap() {
+    return get(OBSTAPCOLUMNS.find((col) => col[ColNameIdx] === voRegionColumn.name), UtypeColIdx, null);
+
+}
+
 const UCDSyntax = new Enum(['primary', 'secondary', 'any'], {ignoreCase: true});
 const ucdSyntaxMap = {
             'pos.eq.ra':  UCDSyntax.any,
             'pos.eq.dec': UCDSyntax.any,
-            'meta.main':  UCDSyntax.secondary};
+            'meta.main':  UCDSyntax.secondary,
+            [voRegionColumn.ucd[0]]: UCDSyntax.primary,
+            [voRegionColumn.ucd[1]]: UCDSyntax.secondary
+};
 
 
 /**
@@ -155,6 +164,7 @@ class TableRecognizer {
         this.posCoord = posCoord;
         this.centerColumnsInfo = null;
         this.centerColumnCandidatePairs = null;
+        this.regionColumnInfo = null;
     }
 
     isObsCoreTable() {
@@ -193,6 +203,7 @@ class TableRecognizer {
 
             if (idxs) {
                 this.centerColumnsInfo = {
+                    type: 'center',
                     lonCol,
                     latCol,
                     lonIdx: idxs.lonIdx,
@@ -202,6 +213,22 @@ class TableRecognizer {
             }
         }
         return this.centerColumnsInfo;
+    }
+
+    setRegionColumnInfo(col) {
+        this.regionColumnInfo = null;
+
+        const idx = getColumnIdx(this.tableModel, col.name);
+        if (idx >= 0) {
+            this.regionColumnInfo = {
+                type: 'region',
+                regionCol: col.name,
+                regionIdx: idx,
+                unit: col.units
+            };
+        }
+
+        return this.regionColumnInfo;
     }
 
     /**
@@ -228,7 +255,7 @@ class TableRecognizer {
     }
 
     /**
-     * get columns containing ucd word
+     * get columns containing ucd word by given table columns
      * @param cols
      * @param ucdWord
      * @returns {array}
@@ -480,7 +507,6 @@ class TableRecognizer {
         return (guess('ra','dec') || guess('lon', 'lat') || guess('ra','dec',true) || guess('lon', 'lat',true));
     }
 
-
     /**
      * find center columns as defined in some vo standard
      * @returns {null|CoordColsDescription}
@@ -490,8 +516,6 @@ class TableRecognizer {
             this.getCenterColumnsOnObsCoreUType(this.centerColumnCandidatePairs) ||
             this.getCenterColumnsOnObsCoreName(this.centerColumnCandidatePairs);
     }
-
-
 
 
     /**
@@ -507,8 +531,64 @@ class TableRecognizer {
                 (isEmpty(this.centerColumnCandidatePairs) && this.guessCenterColumnsByName());
     }
 
+    getRegionColumnOnUCD(cols) {
+        this.regionColumnInfo = null;
+        const columns = cols ? cols : this.columns;
+
+        const regionCols = get(voRegionColumn, 'ucd', []).reduce((prev, oneUcd) => {
+            if (prev.length > 0) {
+                prev = this.getColumnsWithUCDWord(prev, oneUcd);
+            }
+            return prev;
+        }, columns);
+
+        if (regionCols.length > 0) {
+            this.setRegionColumnInfo(regionCols[0]);
+        }
+        return this.regionColumnInfo;
+    }
+
+    getRegionColumnOnObsCoreUType(cols) {
+        const columns = cols ? cols : this.columns;
+        const obsUtype = regionColumnUTypeFromObsTap();
+
+        this.regionColumnInfo = null;
+
+        const regionCol = !isEmpty(columns) && columns.find((col) => {
+            return  (has(col, 'utype') && col.utype.includes(obsUtype));
+        });
+
+        if (regionCol) {
+            this.setRegionColumnInfo(regionCol);
+        }
+        return this.regionColumnInfo;
+    }
+
+    getRegionColumnOnObsCoreName(cols) {
+        this.regionColumnInfo = null;
+        const columns = cols ? cols : this.columns;
+
+        const regionCol = !isEmpty(columns) && columns.find((oneCol) => oneCol.name.toLowerCase() === voRegionColumn.name);
+        if (regionCol) {
+            this.setRegionColumnInfo(regionCol);
+        }
+        return this.regionColumnInfo;
+
+    }
+    /**
+     * return region column by checking column name or UCD values
+     * @returns {null|ColDescription}
+     */
+    getVODefinedRegionColumn() {
+        return this.getRegionColumnOnUCD() ||
+               this.getRegionColumnOnObsCoreUType() ||
+               this.getRegionColumnOnObsCoreName();
+    }
 
 
+    getRegionColumn() {
+        return this.getVODefinedRegionColumn();
+    }
 
     static newInstance(tableModel) {
         return new TableRecognizer(tableModel);
@@ -526,6 +606,11 @@ export function findTableCenterColumns(table) {
    return tblRecog && tblRecog.getCenterColumns();
 }
 
+
+export function findTableRegionColumn(table) {
+    const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
+    return tblRecog && tblRecog.getRegionColumn();
+}
 /**
  * Given a TableModel or a table id return a table model
  * @param {TableModel|String} tableOrId - a table model or a table id
@@ -738,8 +823,16 @@ export function isCatalog(tableOrId) {
         return Boolean(TableRecognizer.newInstance(table).getCenterColumns());
     }
     else {
-        return Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
+        return (!isTableWithRegion(table)) && Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
     }
+}
+
+
+export function isTableWithRegion(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table) return false;
+
+    return Boolean(TableRecognizer.newInstance(table).getVODefinedRegionColumn());
 }
 
 /**
@@ -751,7 +844,7 @@ export function hasCoverageData(tableOrId) {
     const table= getTableModel(tableOrId);
     if (!table) return false;
     if (!table.totalRows) return false;
-    return !isEmpty(findTableCenterColumns(table)) || !isEmpty(getCornersColumns(table));
+    return !isEmpty(findTableRegionColumn(table)) || !isEmpty(findTableCenterColumns(table)) || !isEmpty(getCornersColumns(table));
 }
 
 
@@ -895,6 +988,17 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @prop {CoordinateSys} csys - the coordinate system to use
  */
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} ColsDescription
+ *
+ * @summary An object that describe a single column in a table
+ *
+ * @prop {string} colName - name of the column
+ * @prop {number} colIdx - column index for the column
+ * @prop {string} unit - unit for the column
+ */
 
 /**
  * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}

@@ -24,7 +24,7 @@ const FONT_FALLBACK= ',sans-serif';
 const UnitType= new Enum(['PIXEL','ARCSEC','IMAGE_PIXEL']);
 export const ShapeType= new Enum(['Line', 'Text','Circle', 'Rectangle', 'Ellipse',
                          'Annulus', 'BoxAnnulus', 'EllipseAnnulus', 'Polygon'], { ignoreCase: true });
-const SHAPE_DATA_OBJ= 'ShapeDataObj';
+export const SHAPE_DATA_OBJ= 'ShapeDataObj';
 const DEF_WIDTH = 1;
 
 const compositeObj = [ShapeType.Annulus, ShapeType.BoxAnnulus, ShapeType.EllipseAnnulus, ShapeType.Polygon];
@@ -258,6 +258,9 @@ function makeDrawParams(drawObj,def={}) {
     };
 }
 
+const getCenter = (obj) => {
+    draw.getCenterPt(obj);
+};
 
 const draw=  {
 
@@ -299,7 +302,7 @@ const draw=  {
         if (drawObj.sType === ShapeType.Line ) return distToLine(drawObj.pts, plot, pt);
         if (drawObj.sType === ShapeType.Polygon) return distanceToPolygon(drawObj, plot, pt);
 
-        const testPt = plot.getScreenCoords(this.getCenterPt(drawObj));
+        const testPt = plot.getScreenCoords(getCenter(drawObj));
 
 
         if (testPt) {    // distance to center, it can be updated to be the distance between the pt and the boundary
@@ -1796,7 +1799,7 @@ export function distToLine(pts, cc, pt) {
 
 export function distanceToPolygon(drawObj, cc, pt) {
     const spt = cc.getScreenCoords(pt);
-    if (isScreenPtInRegion(drawObj, spt, cc)) return 0;
+    if (isScreenPtInRegion(drawObj, spt, cc).inside) return 0;
 
     const dist = Number.MAX_VALUE;
     const {pts} = drawObj;
@@ -1807,12 +1810,9 @@ export function distanceToPolygon(drawObj, cc, pt) {
     const len = corners.length;
 
     return corners.reduce((prev, pt, idx) => {
-        let d;
-        if (idx < len-1) {
-            d = distToLine([pt[idx], pt[idx+1]], cc, spt);
-        } else {
-            d = distToLine(pt[idx], pt[0],cc, spt);
-        }
+        const nIdx = (idx+1)%len;
+        const d = distToLine([corners[idx], corners[nIdx]], cc, spt);
+
         if (d < prev) {
             prev = d;
         }

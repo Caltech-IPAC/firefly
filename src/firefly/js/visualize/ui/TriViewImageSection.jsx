@@ -21,7 +21,7 @@ import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/
 import {getAppOptions, REINIT_APP} from '../../core/AppDataCntlr.js';
 import {startCoverageWatcher} from '../saga/CoverageWatcher.js';
 import {startImageMetadataWatcher} from '../saga/ImageMetaDataWatcher.js';
-import {isCatalog, isMetaDataTable} from '../../util/VOAnalyzer.js';
+import {isCatalog, isMetaDataTable, isTableWithRegion} from '../../util/VOAnalyzer.js';
 
 
 /**
@@ -181,6 +181,7 @@ function closeExpanded() {
 }
 const hasCatalogTable= (tblList) => tblList.some( (id) => isCatalog(id) );
 const hasMetaTable= (tblList) => tblList.some( (id) => isMetaDataTable(id) );
+const hasRegionTable = (tblList) => tblList.some ( (id) => isTableWithRegion(id));
 const findFirstMetaTable= (tblList) => tblList.find( (id) => isMetaDataTable(id) );
 const shouldShowFits= () => !isEmpty(getViewerItemIds(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID));
 
@@ -191,7 +192,8 @@ function handleNewTable(layoutInfo, action) {
     let {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
     const isMeta = isMetaDataTable(tbl_id);
     
-    if ((isMeta || isCatalog(tbl_id)) && showTables ) {
+
+    if ((isMeta || isCatalog(tbl_id) || isTableWithRegion(tbl_id)) && showTables ) {
         if (!showFits) selectedTab = 'coverage';
         showFits= showFits || shouldShowFits();
         // coverageLockedOn= !showFits||coverageLockedOn;
@@ -230,12 +232,14 @@ function onActiveTable (layoutInfo, action) {
     // check for catalog or meta images
     const anyHasCatalog= hasCatalogTable(tblList);
     const anyHasMeta= hasMetaTable(tblList);
+    const anyHasRegion = hasRegionTable(tblList);
+
 
     // if (coverageLockedOn) {
     //     coverageLockedOn= anyHasCatalog || anyHasMeta;
     // }
 
-    if (anyHasCatalog || anyHasMeta) {
+    if (anyHasCatalog || anyHasMeta || anyHasRegion) {
         showCoverage = true;
         showImages = true;
     } else {
