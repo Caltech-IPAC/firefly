@@ -14,6 +14,7 @@ import {TargetFeedback} from './TargetFeedback';
 const LABEL_DEFAULT='Moving Target Name:';
 
 const makeValidRet= (valid,message='') => ({valid,message});
+const defValidator= (val) => val ? makeValidRet(false,'Naif name not found') : makeValidRet(true);
 
 class NaifidPanelView extends PureComponent {
 
@@ -21,7 +22,7 @@ class NaifidPanelView extends PureComponent {
         super(props);
         this.state = {suggestions: ''};
         this.getSuggestions = this.getSuggestions.bind(this);
-        this.activeValidator= () => makeValidRet(true);
+        this.activeValidator= defValidator;
     }
 
     componentWillUnmount() {
@@ -34,12 +35,12 @@ class NaifidPanelView extends PureComponent {
     }
 
 
-    getSuggestions(val) {
+    getSuggestions(val= '') {
+            // if (val.length<2) return Promise.resolve([]);
+            this.activeValidator= defValidator;
+            if (val.length<2) return [];
             const rval = resolveNaifidObj(val);
-            if (!rval.p) return undefined;
-            this.activeValidator= (val) => {
-                return val ? makeValidRet(false,'Naif name not found') : makeValidRet(true);
-            };
+            if (!rval.p) return [];
             return rval.p.then((response)=>{
                 //const [result] = response;
                 if(response.valid) {
@@ -52,6 +53,7 @@ class NaifidPanelView extends PureComponent {
                     }
 
                     this.activeValidator= (val= '') => {
+                        if (!val) return makeValidRet(true);
                         if (Object.keys(suggestionsList).find((k) => k.toUpperCase()===val.toUpperCase())) {
                             return makeValidRet(true);
                         }

@@ -144,7 +144,7 @@ export class SuggestBoxInputFieldView extends PureComponent {
             if (arrayOrPromise === this.suggestionsPromise && isArray(suggestions) && suggestions.length > 0) {
                 this.setState({isOpen: true, suggestions});
             } else {
-                this.setState({isOpen: false, suggestions: []});
+                if (this.state.isOpen) this.setState({isOpen: false, suggestions: []});
             }
         }).catch((err) => logError(err));
     }

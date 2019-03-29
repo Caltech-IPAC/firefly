@@ -220,9 +220,17 @@ export const SizeInputFields = memo( (props) => {
 SizeInputFields.propTypes={
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
-    initialState:  PropTypes.object,
+    initialState: PropTypes.shape({
+        value: PropTypes.any,
+        tooltip:  PropTypes.string,
+        unit:  PropTypes.string,
+        min:   PropTypes.number,
+        max:   PropTypes.number,
+        labelWidth:  PropTypes.number,
+        nullAllowed: PropTypes.bool,
+        displayValue: PropTypes.string,
+        label:  PropTypes.string,
+    }),
     label:       PropTypes.string,
-    labelWidth:  PropTypes.number,
-    unit:        PropTypes.string,
     showFeedback:    PropTypes.bool
 };

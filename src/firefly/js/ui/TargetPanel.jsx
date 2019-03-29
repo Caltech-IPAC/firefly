@@ -25,8 +25,8 @@ const simbadThenNed= 'simbadthenned';
 class TargetPanelView extends PureComponent {
 
     componentWillUnmount() {
-        const {onUnmountCB, fieldKey, groupKey}= this.props;
-        if (onUnmountCB) onUnmountCB(fieldKey,groupKey, this.props);
+        const {onUnmountCB}= this.props;
+        if (onUnmountCB) onUnmountCB(this.props);
     }
 
     render() {
@@ -69,8 +69,6 @@ class TargetPanelView extends PureComponent {
 
 
 TargetPanelView.propTypes = {
-    fieldKey : PropTypes.string,
-    groupKey : PropTypes.string,
     label : PropTypes.string,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
@@ -97,40 +95,6 @@ function didUnmount(fieldKey,groupKey, props) {
         dispatchActiveTarget(wp);
     }
 }
-
-
-
-function getProps(params, fireValueChange) {
-
-    var feedback= params.feedback|| '';
-    var value= params.displayValue;
-    var resolver= params.resolver || nedThenSimbad;
-    var showHelp= get(params,'showHelp', true);
-    const wpStr= params.value;
-    const wp= parseWorldPt(wpStr);
-
-    if (isValidPoint(wp) && !value) {
-        feedback= getFeedback(wp);
-        value= wp.objName || formatPosForTextField(wp);
-        showHelp= false;
-    }
-
-    return Object.assign({}, params,
-        {
-            visible: true,
-            onChange: (value,source) => handleOnChange(value,source,params, fireValueChange),
-            label: params.label || LABEL_DEFAULT,
-            tooltip: 'Enter a target',
-            value,
-            feedback,
-            resolver,
-            showHelp,
-            nullAllowed:params.nullAllowed,
-            onUnmountCB: didUnmount
-        });
-}
-
-
 
 
 function handleOnChange(value, source, params, fireValueChange) {
@@ -212,11 +176,11 @@ function replaceValue(v,props) {
 
 
 
-export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt', initialState= { fieldKey : 'UserTargetWorldPt' }, ...restOfProps}) => {
-    const {viewProps, fireValueChange}=  useFieldGroupConnector({fieldKey, initialState, confirmInitialValue:replaceValue});
-    const newProps= computeProps(viewProps, restOfProps);
-    return <TargetPanelView {...newProps}
-                            onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/> ;
+export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {}, ...restOfProps}) => {
+    const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({fieldKey, initialState, confirmInitialValue:replaceValue});
+    const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
+    return ( <TargetPanelView {...newProps}
+                              onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
 });
 
 
@@ -226,11 +190,12 @@ TargetPanel.propTypes = {
     groupKey: PropTypes.string,
     examples: PropTypes.object,
     labelWidth : PropTypes.number,
-    nullAllowed: PropTypes.bool
+    nullAllowed: PropTypes.bool,
+    initialState: PropTypes.object
 };
 
 
-function computeProps(viewProps, componentProps) {
+function computeProps(viewProps, componentProps, fieldKey, groupKey) {
 
     let feedback= viewProps.feedback|| '';
     let value= viewProps.displayValue;
@@ -245,15 +210,15 @@ function computeProps(viewProps, componentProps) {
         showHelp= false;
     }
 
-    return Object.assign({}, viewProps,
-        {
-            visible: true,
-            label: 'Name or Position:',
-            tooltip: 'Enter a target',
-            value,
-            feedback,
-            resolver,
-            showHelp,
-            onUnmountCB: didUnmount
-        }, componentProps);
+    return {
+        ...viewProps,
+        visible: true,
+        label: 'Name or Position:',
+        tooltip: 'Enter a target',
+        value,
+        feedback,
+        resolver,
+        showHelp,
+        onUnmountCB: (props) => didUnmount(fieldKey,groupKey,props),
+        ...componentProps};
 }

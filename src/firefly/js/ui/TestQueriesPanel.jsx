@@ -46,7 +46,7 @@ import {HiPSId, URL_COL} from '../visualize/HiPSListUtil.js';
 import {HiPSPopupMsg, HiPSSurveyListSelection, getTblModelOnPanel,
         getHiPSSourcesChecked, sourcesPerChecked} from './HiPSSurveyListDisplay.jsx';
 import {getCellValue} from '../tables/TableUtil.js';
-import {NaifidPanel} from "./NaifidPanel";
+import {NaifidPanel} from './NaifidPanel';
 
 
 export class TestQueriesPanel extends PureComponent {

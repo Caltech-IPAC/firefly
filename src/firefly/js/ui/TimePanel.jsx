@@ -88,8 +88,6 @@ class TimePanelView extends PureComponent {
 }
 
 TimePanelView.propTypes = {
-    fieldKey : PropTypes.string,
-    groupKey : PropTypes.string,
     showHelp   : PropTypes.bool,
     feedback: PropTypes.string,
     feedbackStyle: PropTypes.object,
@@ -220,6 +218,12 @@ export const TimePanel= memo( (props) => {
 TimePanel.propTypes = {
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
-    timeMode: PropTypes.string
+    timeMode: PropTypes.string,
+    icon: PropTypes.string,
+    onClickIcon: PropTypes.func,
+    feedbackStyle: PropTypes.object,
+    labelPosition: PropTypes.oneOf(['top', 'left']),
+    inputStyle: PropTypes.object,
+    inputWidth: PropTypes.number
 };
 
