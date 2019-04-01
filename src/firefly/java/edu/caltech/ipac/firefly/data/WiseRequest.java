@@ -101,41 +101,26 @@ public class WiseRequest extends TableServerRequest {
     };
 
 
-    // mappings of the dataset selected to the wise table and table source values.
-    // table name is in the first entry, table source is in the 2nd
-    private static HashMap<String, String[]> TABLE_MAP = new HashMap<String, String[]>(){
+    public final static Map<String,String> CATALOG_MAP = new HashMap<String,String>(){
         {
-            put(PRELIM+"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
-            put(PRELIM+"|3a", new String[]{"p3am_cdd", "p3as_psd"});
-            put(PRELIM_POSTCRYO +"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
-            put(ALLWISE_MULTIBAND+"|3a", new String[]{"p3am_cdd", "p3as_psd"}); // TODO: change for production, changed XW
-            put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
-            put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
-            put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});
-            put(CRYO_3BAND+"|3a",   new String[]{"3band_p3am_cdd", "p3as_psd"});  // currently they are different: p1bm_frm and p3am_cdd
-            put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
-            put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
-            put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
-            put(NEOWISER +"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
+            put(PRELIM,"prelim_p1bs_psd");
+            put(PRELIM_POSTCRYO,"prelim_2band_p1bs_psd");
+            put(ALLWISE_MULTIBAND,"allwise_p3as_psd");
+            put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
+            put(CRYO_3BAND,"allsky_3band_p1bs_psd");
+            put(POSTCRYO,"allsky_2band_p1bs_psd");
+            put(NEOWISER,"neowiser_q1bs_psd");
+            put(PASS1,"pass1_i1bs_psd_view");
+            put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
+            put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
+            put(PASS2_2BAND, "pass2_2band_i1bs_psd_view");
+            put(NEOWISER_YR1,"neowiser_p1bs_psd");
+            put(NEOWISER_YR2,"neowiser_p1bs_psd");
+            put(NEOWISER_YR3,"neowiser_p1bs_psd");
+            put(NEOWISER_YR4,"neowiser_p1bs_psd");
+            put(NEOWISER_YR5,"neowiser_p1bs_psd");
+            put(NEOWISER_YR6,"neowiser_i1bs_psd");
 
-            put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
-            put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
-            put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
-            put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
-            put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
-            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_p1bm_frm", "yr2_p1bs_psd"});
-            put(NEOWISER_YR3 +"|1b", new String[]{"yr3_p1bm_frm", "yr3_p1bs_psd"});
-            put(NEOWISER_YR4 +"|1b", new String[]{"yr4_p1bm_frm", "yr4_p1bs_psd"});
-            put(NEOWISER_YR5 +"|1b", new String[]{"yr5_p1bm_frm", "yr5_p1bs_psd"});  // TODO: check
-            put(NEOWISER_YR6 +"|1b", new String[]{"yr6_i1bm_frm", "yr6_i1bs_psd"});  // TODO: check
-            put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
-            put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
-            put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
-            put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
-            put(PASS2_3BAND+"|1b", new String[]{"3band_i1bm_frm", "3band_i1bs_psd"});
-            put(PASS2_3BAND+"|3a", new String[]{"3band_i3am_cdd", "3band_i3as_psd"});
-            put(PASS2_2BAND+"|1b",  new String[]{"2band_i1bm_frm", "2band_i1bs_psd"});
-          //put(PASS2_2BAND+"|3a",  new String[]{"notknown", "notknown"});
         }
     };
 
@@ -195,27 +180,41 @@ public class WiseRequest extends TableServerRequest {
 
         }
     };
-
-    public final static Map<String,String> CATALOG_MAP = new HashMap<String,String>(){
+    // mappings of the dataset selected to the wise table and table source values.
+    // table name is in the first entry, table source is in the 2nd
+    private static HashMap<String, String[]> TABLE_MAP = new HashMap<String, String[]>(){
         {
-            put(PRELIM,"prelim_p1bs_psd");
-            put(PRELIM_POSTCRYO,"prelim_2band_p1bs_psd");
-            put(ALLWISE_MULTIBAND,"allwise_p3as_psd");
-            put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
-            put(CRYO_3BAND,"allsky_3band_p1bs_psd");
-            put(POSTCRYO,"allsky_2band_p1bs_psd");
-            put(NEOWISER,"neowiser_p1bs_psd");
-            put(PASS1,"pass1_i1bs_psd_view");
-            put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
-            put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
-            put(PASS2_2BAND, "pass2_2band_i1bs_psd_view");
-            put(NEOWISER_YR1,"neowiser_p1bs_psd");
-            put(NEOWISER_YR2,"neowiser_p1bs_psd");
-            put(NEOWISER_YR3,"neowiser_p1bs_psd");
-            put(NEOWISER_YR4,"neowiser_p1bs_psd");
-            put(NEOWISER_YR5,"neowiser_p1bs_psd");
-            put(NEOWISER_YR6,"neowiser_i1bs_psd");
+            put(PRELIM+"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
+            put(PRELIM+"|3a", new String[]{"p3am_cdd", "p3as_psd"});
+            put(PRELIM_POSTCRYO +"|1b",  new String[]{"p1bm_frm", "p1bs_psd"});
+            put(ALLWISE_MULTIBAND+"|3a", new String[]{"p3am_cdd", "p3as_psd"}); // TODO: change for production, changed XW
+            put(ALLSKY_4BAND+"|1b", new String[]{"4band_p1bm_frm", "4band_p1bs_psd"});
+            put(ALLSKY_4BAND+"|3a", new String[]{"4band_p3am_cdd", "4band_p3as_psd"});
+            put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});
+            put(CRYO_3BAND+"|3a",   new String[]{"3band_p3am_cdd", "p3as_psd"});  // currently they are different: p1bm_frm and p3am_cdd
+            put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
+            put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_q1bs_psd"});
+            put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
+            put(NEOWISER +"|1b", new String[]{"q1bm_frm", "q1bs_psd"});
 
+            put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
+            put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
+            put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
+            put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
+            put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
+            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_p1bm_frm", "yr2_p1bs_psd"});
+            put(NEOWISER_YR3 +"|1b", new String[]{"yr3_p1bm_frm", "yr3_p1bs_psd"});
+            put(NEOWISER_YR4 +"|1b", new String[]{"yr4_p1bm_frm", "yr4_p1bs_psd"});
+            put(NEOWISER_YR5 +"|1b", new String[]{"yr5_p1bm_frm", "yr5_p1bs_psd"});  // TODO: check
+            put(NEOWISER_YR6 +"|1b", new String[]{"yr6_i1bm_frm", "yr6_i1bs_psd"});  // TODO: check
+            put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
+            put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
+            put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
+            put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
+            put(PASS2_3BAND+"|1b", new String[]{"3band_i1bm_frm", "3band_i1bs_psd"});
+            put(PASS2_3BAND+"|3a", new String[]{"3band_i3am_cdd", "3band_i3as_psd"});
+            put(PASS2_2BAND+"|1b",  new String[]{"2band_i1bm_frm", "2band_i1bs_psd"});
+          //put(PASS2_2BAND+"|3a",  new String[]{"notknown", "notknown"});
         }
     };
 
