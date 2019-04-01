@@ -47,7 +47,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
     }
 
     protected boolean identityAware() {
-        return false;
+        return true;
     }
 
     public String getFileExtension()  { return ""; }

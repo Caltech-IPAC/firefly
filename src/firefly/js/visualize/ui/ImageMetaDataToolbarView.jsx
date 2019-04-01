@@ -36,7 +36,7 @@ const toolsStyle= {
 };
 
 
-export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds, layoutType, dlAry, wcsMatchType,
+export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=[], layoutType, dlAry, wcsMatchType,
                                           activeTable, converterFactory, handleInlineTools=true }) {
 
     const {dataId,converter}= converterFactory(activeTable) || {};
@@ -48,7 +48,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds,
     const vr= visRoot();
     const pv= getPlotViewById(vr, activePlotId);
     const pvDlAry= getAllDrawLayersForPlot(dlAry,activePlotId,true);
-    let   cIdx = cIdx= viewerPlotIds.findIndex( (plotId) => plotId===activePlotId);
+    let   cIdx = viewerPlotIds.findIndex( (plotId) => plotId===activePlotId);
     if (cIdx<0) cIdx= 0;
 
     // single mode stuff
