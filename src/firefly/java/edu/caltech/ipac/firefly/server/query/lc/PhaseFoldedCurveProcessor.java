@@ -52,13 +52,6 @@ public class PhaseFoldedCurveProcessor extends IpacTablePartProcessor {
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         PeriodogramAPIRequest req = QueryUtil.assureType(PeriodogramAPIRequest.class, request);
-        String tblType = req.getParam(PeriodogramAPIRequest.TABLE_NAME);
-        String tblName = (tblType != null && tblType.equalsIgnoreCase(PeriodogramAPIRequest.FOLDED_TABLE))
-                ? FOLDED_TABLE_NAME : "ERROR.tbl";
-
-        float period = req.getFloatParam("period");
-        String lcTable = req.getParam("original_table");
-
 
         //Votable containing 2 tables:periodogram and peaks
         File resTable = null;
@@ -73,53 +66,11 @@ public class PhaseFoldedCurveProcessor extends IpacTablePartProcessor {
 
     protected File phaseFoldedTable(PeriodogramAPIRequest req) throws InterruptedException {
 
-        File phaseFoldedTable = irsaLcHandler.toPhaseFoldedTable(getSourceFile(req.getLcSource(), req), req.getPeriod(), req.getTimeColName());
+        File phaseFoldedTable = irsaLcHandler.toPhaseFoldedTable(ServerContext.convertToFile(req.getLcSource()), req.getPeriod(), req.getTimeColName());
+
 
         return phaseFoldedTable;
     }
 
-    private File getSourceFile(String source, TableServerRequest request) {
 
-        // handle case when LC_FILE is a JSON TableRequest
-        File srcFile = irsaLcHandler.getSourceFileFromJsonReqest(request);
-        if (srcFile != null) {
-            return  srcFile;
-        }
-
-        File inf = null;
-        try {
-            URL url = makeUrl(source);
-            if (url == null) {
-                inf = ServerContext.convertToFile(source);
-            } else {
-                HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
-                int rcode = conn.getResponseCode();
-                if (rcode >= 200 && rcode < 400) {
-                    String sfname = URLDownload.getSugestedFileName(conn);
-                    if (sfname == null) {
-                        sfname = url.getPath();
-                    }
-                    String ext = sfname == null ? null : FileUtil.getExtension(sfname);
-                    ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
-                    inf = createFile(request, ext);
-                    URLDownload.getDataToFile(conn, inf, null, false, true, true, Long.MAX_VALUE);
-                }
-            }
-        } catch (Exception ex) {
-            inf = null;
-        }
-        if (inf != null && inf.canRead()) {
-            return inf;
-        }
-
-        return null;
-    }
-
-    private URL makeUrl(String source) {
-        try {
-            return new URL(source);
-        } catch (MalformedURLException e) {
-            return null;
-        }
-    }
 }
