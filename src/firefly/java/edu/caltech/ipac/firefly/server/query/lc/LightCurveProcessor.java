@@ -3,22 +3,15 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.io.IpacTableWriter;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import java.io.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 
 /**
  * This class takes care of the LC api call and return result IpacTable Data.
@@ -27,8 +20,6 @@ import java.net.URL;
 @SearchProcessorImpl(id = "LightCurveProcessor")
 
 public class LightCurveProcessor extends IpacTablePartProcessor {
-
-    private static final String PERIODOGRAM_API_URL = AppProperties.getProperty("periodogram.host", "default_periodogram_host_url");
 
     // API will return votable, depending on the request, return either peaks or periodogram table, which names are predefined here:
     private static final String PERIODOGRAM_TABLE_NAME = "periodogram_table.tbl";

@@ -3,9 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.data.ServerRequest;
+
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -14,21 +15,11 @@ import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
-
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-
-import static edu.caltech.ipac.firefly.server.query.lc.PeriodogramAPIRequest.LC_FILE;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 
 
 /**
@@ -59,10 +50,6 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
 
     public DataGroup getPeriodogramTable(PeriodogramAPIRequest request) {
 
-        // handle case when 'getLcSource' is a JSON TableServerRequest
-        applyIfNotEmpty(getSourceFileFromJsonReqest(request), f -> request.setParam(LC_FILE, f.getPath()));
-
-
         return getDataFromAPI(request, RESULT_TABLES_IDX.PERIODOGRAM);
     }
 
@@ -71,9 +58,6 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
      * @return peaks table (default: 50 rows)
      */
     public DataGroup getPeaksTable(PeriodogramAPIRequest request) {
-
-        // handle case when 'getLcSource' is a JSON TableServerRequest
-        applyIfNotEmpty(getSourceFileFromJsonReqest(request), f -> request.setParam(LC_FILE, f.getPath()));
 
         return getDataFromAPI(request, RESULT_TABLES_IDX.PEAKS);
     }
@@ -97,10 +81,9 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
             plc.addPhaseCol(dg, period, timeColName);
             tempFile = createPhaseFoldedTempFile();
             IpacTableWriter.save(tempFile, dg);
-        } catch (IpacTableException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        catch (IOException  | IpacTableException e) {
+            LOG.error(e);
         }
 
         return tempFile;
@@ -115,125 +98,92 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
             DataGroup[] dataGroups = VoTableReader.voToDataGroups(votableResult.getAbsolutePath());
 
             return dataGroups[resultTable.ordinal()];
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        catch (IOException e) {
+            LOG.error(e);
         }
         return null;
     }
 
     protected DataGroup getDataFromAPI(PeriodogramAPIRequest request, RESULT_TABLES_IDX resultTable) {
+
         try {
-            File apiResult = apiDownlaod(request);
+            File apiResult = apiDownload(request);
 
             return extractTblFrom(apiResult, resultTable);
 
-        } catch (IOException | FailedRequestException e) {
-            e.printStackTrace();
+        }
+        catch (IOException e) {
+             LOG.error(e);
         }
         return null;
     }
 
-    protected File apiDownlaod(PeriodogramAPIRequest request) throws IOException, FailedRequestException {
-        File apiResultTempFile = makeApiResultTempFile();
+    /**
+     * This method will get the "origin_table"'s parameter value from request.  The value can be a json string passing
+     * from the TimeSeries UI or passed from Gator.  This json strin gis converted to a TableServerRequest.
+     * The data is found and saved to a file.  The file name is lcInputTable.tbl.  After testing, the same file can be
+     * overwritten.  Thus, there is no need to have different file name.  After the file is saved, set the LC_FILE key
+     * parameter in the request to the "lcInputTable.tbl".
+     *
+     * Periodogram and peak table calculations are all based on this input table.  There is no need to handle the saving
+     * in other places.
+     *
+     * @param request
+     */
+    void saveInputToTable(PeriodogramAPIRequest request){
+        TableServerRequest sreq = QueryUtil.convertToServerRequest(request.getLcSource());
+        sreq.setPageSize(Integer.MAX_VALUE);               // ensure you're getting the full table
+        sreq.removeParam(INCL_COLUMNS);
+        try {
+            File file = File.createTempFile("lcInputTable.tbl", ".tbl", ServerContext.getTempWorkDir());
+            OutputStream out = new FileOutputStream(file, false);
+            new SearchManager().save(out, sreq, TableUtil.Format.IPACTABLE);
+            out.close();
+            request.setLcSource(file.getAbsolutePath());
+        }
+        catch (IOException | DataAccessException e) {
+            LOG.error(e);
+        }
+
+    }
+    protected File apiDownload(PeriodogramAPIRequest request) throws IOException{
+        File apiResultTempFile = File.createTempFile("lc-api-result-", ".xml", ServerContext.getTempWorkDir());
         /**
          * @see LightCurveProcessor#computePeriodogram(PeriodogramAPIRequest, java.lang.String)
          */
-        if (isPost(request)) {
-            MultiPartPostBuilder _postBuilder = new MultiPartPostBuilder(rootApiUrl);
-            insertPostParams(request, _postBuilder);
-            BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(apiResultTempFile), 10240);
-            _postBuilder.post(writer);
-            writer.close();
+        //save the the input to a table first and then use it to calculate the peak table or periodogram table
+        saveInputToTable(request);
 
-        } else {
-            // Col definition time, data
-            String tmpUrl = rootApiUrl;
+        //do a HTTP post
+        HttpServiceInput httpInputs = getHttpInput(request);
+        BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(apiResultTempFile), 10240);
+        HttpServices.postData(rootApiUrl, writer, httpInputs);
+        writer.close();
 
-            tmpUrl += "?" + getSourceFile(request.getLcSource()) + "&";
-            int i = 0;
-            for (String key : apiKey) {
-                String val = request.getParam(key);
-                if (val != null) {
-                    tmpUrl += key + "=" + val;
-                }
-                if (i < apiKey.length-1) {
-                    tmpUrl += "&";
-                }
-                i++;
-            }
-
-            URLConnection aconn = URLDownload.makeConnection(new URL(tmpUrl));
-            aconn.setRequestProperty("Accept", "*/*");
-            URLDownload.getDataToFile(aconn, apiResultTempFile);
-        }
         return apiResultTempFile;
     }
 
-    boolean isPost(PeriodogramAPIRequest url) {
-        return url.getLcSource().indexOf("http") < 0;
-    }
 
-    void insertPostParams(PeriodogramAPIRequest request, MultiPartPostBuilder posBuilder) {
-        //        rootApiUrl+= "alg=ls"+"&"; //Optional
-        // Col definition time, data
-        String src = getSourceFile(request.getLcSource());
-        posBuilder.addFile("upload", new File(src));
+    /**
+     * create the HttpServiceInput to call Http's post method
+     * @param request
+     * @return
+     */
+    private HttpServiceInput getHttpInput(PeriodogramAPIRequest request) {
+        HttpServiceInput httpInputs = new HttpServiceInput();
+
+        String src = ServerContext.convertToFile(request.getLcSource()).getAbsolutePath();
+        httpInputs.setFile("upload", new File(src));
 
         for (String key : apiKey) {
             String val = request.getParam(key);
             if (val != null) {
-                posBuilder.addParam(key, val);
+                httpInputs.setParam(key, val);
             }
         }
-//        posBuilder.addParam("x", request.getTimeColName());
-//        posBuilder.addParam("y", request.getDataColName());
-//        posBuilder.addParam("alg", request.getAlgoName());
-//        posBuilder.addParam("peaks", "" + request.getNumberPeaks());
-    }
-
-    protected File makeResultTempFile(RESULT_TABLES_IDX resultTable) throws IOException {
-        String prefix = "error";
-        switch (resultTable) {
-            case PERIODOGRAM:
-                prefix = "periodogram-";
-                break;
-            case PEAKS:
-                prefix = "peaks-";
-                break;
-        }
-
-        return File.createTempFile(prefix, ".tbl", ServerContext.getTempWorkDir());
-    }
-
-    protected File makeApiResultTempFile() throws IOException {
-        return File.createTempFile("lc-api-result-", ".xml", ServerContext.getTempWorkDir());
-    }
-
-    private String getSourceFile(String source) {
-        String inf = null;
-        URL url = null;
-        try {
-            url = new URL(source);
-            inf = "input=" + URLEncoder.encode(url.toString(),"UTF-8");
-        } catch (MalformedURLException e) {
-            inf = ServerContext.convertToFile(source).getAbsolutePath();
-        } catch (UnsupportedEncodingException e) {
-            LOG.error("Unsupported encoding error URL:"+url.toString());
-        }
-        return inf;
-    }
-
-    File getSourceFileFromJsonReqest(TableServerRequest request) {
-        TableServerRequest tsr = QueryUtil.convertToServerRequest(request.getParam(LC_FILE));
-        if (!tsr.getRequestId().equals(ServerRequest.ID_NOT_DEFINED)) {
-            try {
-                FileInfo fi = new SearchManager().getFileInfo(tsr);
-                return fi.getFile();
-            } catch (DataAccessException e) {
-                LOG.error(e);
-            }
-        }
-        return null;
+        httpInputs.setParam("peaks", "" + request.getNumberPeaks());
+        return httpInputs;
     }
 
 }

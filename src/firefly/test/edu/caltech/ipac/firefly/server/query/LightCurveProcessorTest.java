@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.query.lc.IrsaLightCurveHandler;
@@ -41,7 +40,7 @@ public class LightCurveProcessorTest extends ConfigTest {
         boolean deleteOnExit = true;
         LightCurveHandler t = new IrsaLightCurveHandler() {
 
-            @Override
+
             protected File makeResultTempFile(RESULT_TABLES_IDX resultTable) throws IOException {
                 File tmpFile = File.createTempFile("period-test-", ".tbl", new File("."));
                 if (deleteOnExit) {
@@ -73,7 +72,7 @@ public class LightCurveProcessorTest extends ConfigTest {
         boolean deleteOnExit = true;
         LightCurveHandler t = new IrsaLightCurveHandler() {
 
-            @Override
+
             protected File makeResultTempFile(RESULT_TABLES_IDX resultTable) throws IOException {
                 File tmpFile = File.createTempFile("peaks-test-", ".tbl", new File("."));
                 if (deleteOnExit) {
