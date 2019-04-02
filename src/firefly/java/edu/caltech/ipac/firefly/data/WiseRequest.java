@@ -193,7 +193,7 @@ public class WiseRequest extends TableServerRequest {
             put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});
             put(CRYO_3BAND+"|3a",   new String[]{"3band_p3am_cdd", "p3as_psd"});  // currently they are different: p1bm_frm and p3am_cdd
             put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
-            put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_q1bs_psd"});
+            put(MERGE+"|1b-q", new String[]{"merge_p1bm_frm", "merge_q1bs_psd"});
             put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(NEOWISER +"|1b", new String[]{"q1bm_frm", "q1bs_psd"});
 
