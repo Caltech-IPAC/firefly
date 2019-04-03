@@ -48,7 +48,8 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
     }
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
     const table= getTblById(metaDataTableId);
-    const metaTitle= get(table,'tableMeta.title')  || 'Image Meta Data';
+    const title= get(table,'title', '');
+    const metaTitle= `Data Product${title?': ' : ''}${title}`;
 
 
     // showCoverage= true; // todo - let the application control is coverage is visible
@@ -86,7 +87,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
 
     }
     else {
-        return <div>todo</div>;
+        return <div/>;
     }
 }
 
@@ -191,14 +192,12 @@ function handleNewTable(layoutInfo, action) {
     const isMeta = isMetaDataTable(tbl_id);
     
     if ((isMeta || isCatalog(tbl_id)) && showTables ) {
-        if (!showFits) {
-            // only show coverage if there are not images or coverage is showing
-            showFits= shouldShowFits();
-            coverageLockedOn= !showFits||coverageLockedOn;
-            selectedTab = 'coverage';
-            showCoverage = coverageLockedOn;
-            showImages = true;
-        }
+        if (!showFits) selectedTab = 'coverage';
+        showFits= showFits || shouldShowFits();
+        // coverageLockedOn= !showFits||coverageLockedOn;
+        coverageLockedOn= true;
+        showCoverage = coverageLockedOn;
+        showImages = true;
     }
     if (isMeta && showTables) {
         showImages = true;
@@ -219,7 +218,7 @@ function onActiveTable (layoutInfo, action) {
 
     if (!tbl_id) {
         images = {showMeta: false, showCoverage: false, showFits, metaDataTableId: null};
-        return smartMerge(layoutInfo, {images, showImages:showFits, coverageLockedOn:false});
+        return smartMerge(layoutInfo, {images, showImages:showFits, coverageLockedOn:true});
     }
 
     const tblGroup= findGroupByTblId(tbl_id);
@@ -232,12 +231,12 @@ function onActiveTable (layoutInfo, action) {
     const anyHasCatalog= hasCatalogTable(tblList);
     const anyHasMeta= hasMetaTable(tblList);
 
-    if (coverageLockedOn) {
-        coverageLockedOn= anyHasCatalog || anyHasMeta;
-    }
+    // if (coverageLockedOn) {
+    //     coverageLockedOn= anyHasCatalog || anyHasMeta;
+    // }
 
     if (anyHasCatalog || anyHasMeta) {
-        showCoverage = coverageLockedOn;
+        showCoverage = true;
         showImages = true;
     } else {
         showCoverage = false;
@@ -258,11 +257,12 @@ function onActiveTable (layoutInfo, action) {
 function onPlotDelete(layoutInfo, action) {
     const {images={}}  = layoutInfo;
     let {showImages} = layoutInfo;
-    let {coverageLockedOn} = images;
+    let {coverageLockedOn, metaDataTableId} = images;
     const showFits = shouldShowFits();
     if (!get(visRoot(), 'plotViewAry.length', 0)) {
-        coverageLockedOn = false;
-        showImages = false;
+        coverageLockedOn = true;
+        showImages= metaDataTableId ? true : false;
+        // showImages = false;
     }
     return smartMerge(layoutInfo, {showImages, images:{coverageLockedOn, showFits}});
 }
@@ -276,10 +276,12 @@ function onNewImage(layoutInfo, action) {
         // select meta tab when new images are added to meta image group.
         selectedTab = 'meta';
         showMeta = true;
+        coverageLockedOn = true;
     } else if (viewerId === DEFAULT_FITS_VIEWER_ID) {
         // select fits tab when new images are added to default group.
         selectedTab = 'fits';
         showFits = true;
+        coverageLockedOn = true;
     } else {
         // why lock coverage here?
         coverageLockedOn = true;

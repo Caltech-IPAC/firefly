@@ -15,6 +15,7 @@ export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 //const obsPrefix = 'obscore:';
 const ColNameIdx = 0;
 //const UCD = 1;
+const UcdColIdx = 1;
 const UtypeColIdx = 2;
 const mainMeta = 'meta.main';
 const obsCorePosColumns = ['s_ra', 's_dec'];
@@ -51,6 +52,45 @@ const OBSTAPCOLUMNS = [
     ['facility_name',     'meta.id;instr.tel',          'Provenance.ObsConfig.Facility.name'],
     ['instrument_name',   'meta.id;instr',              'Provenance.ObsConfig.Instrument.name']
 ];
+
+
+function getObsTabColEntry(title) {
+    const e= OBSTAPCOLUMNS.find( (entry) => entry[ColNameIdx]===title);
+    return e && {name:e[ColNameIdx], ucd: e[UcdColIdx], utype: e[UtypeColIdx]};
+}
+
+function getObsCoreTableColumn(tableOrId, name) {
+    const entry= getObsTabColEntry(name);
+    if (!entry) return;
+    const table= getTableModel(tableOrId);
+    const tblRec= TableRecognizer.newInstance(table);
+    let cols= tblRec.getTblColumnsOnUType(entry.utype);
+    if (cols.length) {
+        if (cols.length===1) return cols[0];
+        const prefUtype= cols.find( (c) => c.name===name);
+        return prefUtype ? prefUtype : cols[0];
+    }
+    cols= tblRec.getTblColumnsOnUCD(entry.ucd);
+    if (cols.length) {
+        if (cols.length===1) return cols[0];
+        const prefUcd= cols.find( (c) => c.name===name);
+        return prefUcd ? prefUcd : cols[0];
+    }
+    return getColumn(table,name);
+}
+
+
+function getObsCoreTableColumnName(tableOrId,name) {
+    const col = getObsCoreTableColumn(tableOrId,name);
+    return col ? col.name : '';
+}
+
+export function getObsCoreCellValue(tableOrId, rowIdx, obsColName) {
+    const table= getTableModel(tableOrId);
+    if (!table) return '';
+    return getCellValue(table, rowIdx, getObsCoreTableColumnName(table, obsColName)) || '';
+}
+
 
 const alternateMainPos = [['POS_EQ_RA_MAIN', 'POS_EQ_DEC_MAIN']];
 export const posCol = {[UCDCoord.eq.key]: {ucd: [['pos.eq.ra', 'pos.eq.dec'],...alternateMainPos],
@@ -313,13 +353,11 @@ class TableRecognizer {
     getCenterColumnMetaEntry() {
         this.centerColumnsInfo = null;
 
+        //note: CATALOG_COORD_COLS,POSITION_COORD_COLS are both deprecated and will removed in the future
         const {tableMeta} = this.tableModel || {};
-
-        if (!tableMeta ||
-            (!tableMeta[MetaConst.CATALOG_COORD_COLS] && !tableMeta[MetaConst.CENTER_COLUMN])) {
-            return undefined;
-        }
-        return tableMeta[MetaConst.CENTER_COLUMN] || tableMeta[MetaConst.CATALOG_COORD_COLS];
+        const {CATALOG_COORD_COLS,POSITION_COORD_COLS,CENTER_COLUMN}= MetaConst;
+        if (!tableMeta) return undefined;
+        return tableMeta[CENTER_COLUMN] || tableMeta[CATALOG_COORD_COLS] || tableMeta[POSITION_COORD_COLS];
     }
 
     /**
@@ -734,10 +772,103 @@ export function isMetaDataTable(tableOrId) {
 
     const hasDsCol = Boolean(Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceUpper));
 
-    return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] || hasDsCol);
+    return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] ||
+        hasDsCol || hasObsCoreLikeDataProducts(table));
 }
 
 
+
+/**
+ * Return true this this table can be access as an ObsCore data
+ * @param tableOrId
+ * @return {boolean}
+ */
+export function hasObsCoreLikeDataProducts(tableOrId) {
+    const table= getTableModel(tableOrId);
+    const hasUrl= getObsCoreTableColumn(table,'access_url');
+    const hasFormat= getObsCoreTableColumn(table,'access_format');
+    const hasProdType= getObsCoreProdTypeCol(table);
+    return Boolean(hasUrl && hasFormat && hasProdType);
+
+}
+
+
+/**
+ * return access_format cell data
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {string}
+ */
+export const getObsCoreAccessFormat= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'access_format');
+/**
+ * return access_url cell data
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {string}
+ */
+export const getObsCoreAccessURL= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'access_url');
+/**
+ * return dataproduct_type cell data
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {string}
+ */
+export const getObsCoreProdType= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'dataproduct_type');
+
+/**
+ * Return the dataproduct_type column
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @return {TableColumn}
+ */
+export const getObsCoreProdTypeCol= (tableOrId) => getObsCoreTableColumn(tableOrId, 'dataproduct_type');
+
+/**
+ * check to see if dataproduct_type cell a votable
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {boolean}
+ */
+export const isFormatVoTable= (tableOrId, rowIdx) => getObsCoreAccessFormat(tableOrId, rowIdx).toLowerCase().includes('votable');
+
+
+/**
+ * check to see if dataproduct_type is a datalink
+ * @param {TableModel|String} tableOrId - a table model or a table id
+ * @param rowIdx
+ * @return {boolean}
+ */
+export function isFormatDataLink(tableOrId, rowIdx) {
+    const accessFormat= getObsCoreAccessFormat(tableOrId,rowIdx).toLowerCase();
+    return accessFormat.includes('votable') && accessFormat.includes('content=datalink');
+}
+
+
+
+/**
+ *
+ * @param {TableModel|string} originTableOrId
+ * @param {TableModel} dataLinkTable
+ * @param {string} filterStr a string to filter out content_type of the results by
+ * @param {number} maxSize if defined, don't return anything greater then max size
+ * @return {Array.<{url, contentType, size, semantics}>} return an array of objects with url and contentType keys
+ */
+export function getDataLinkAccessUrls(originTableOrId, dataLinkTable, filterStr='', maxSize=0 ) {
+    const originTable= getTableModel(originTableOrId);
+    const data= get(dataLinkTable, 'tableData.data', []);
+    if (!data.length) return [];
+    const urlOptions= dataLinkTable.tableData.data.map( (row,idx) => {
+        const url= getCellValue(dataLinkTable,idx,'access_url' );
+        const contentType= getCellValue(dataLinkTable,idx,'content_type' );
+        const size= Number(getCellValue(dataLinkTable,idx,'content_length' ));
+        const semantics= getCellValue(dataLinkTable,idx,'semantics' );
+        return {url,contentType, size, semantics  };
+    }).filter( ({url}) => url && url.startsWith('http'));
+    return filterStr||maxSize ?
+        urlOptions.filter( ({contentType,size}) =>
+            contentType.toLowerCase()
+                .includes(filterStr) && (maxSize===0 || size<=maxSize )) :
+        urlOptions;
+}
 
 const DEFAULT_TNAME_OPTIONS = [
     'name',         // generic

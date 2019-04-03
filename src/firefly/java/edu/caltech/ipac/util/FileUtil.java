@@ -697,11 +697,10 @@ public class FileUtil
 
 
 
-    public static String getSizeAsString(long size) {
-        return getSizeAsString(size,false);
-    }
+    public static String getSizeAsString(long size) { return getSizeAsString(size,false, false); }
+    public static String getSizeAsString(long size,boolean truncate) { return getSizeAsString(size,truncate, false); }
 
-    public static String getSizeAsString(long size, boolean verbose) {
+    public static String getSizeAsString(long size, boolean truncate, boolean verbose) {
         String retval= "0";
         String kStr= "K";
         String mStr= "M";
@@ -718,8 +717,13 @@ public class FileUtil
         else if (size >= (1*MEG) && size <  (2*GIG) ) {
             long megs = size / MEG;
             long remain= size % MEG;
-            long decimal = remain / MEG_TENTH;
-            retval= megs +"."+ decimal + mStr;
+            if (truncate) {
+                retval= megs+ mStr;
+            }
+            else {
+                long decimal = remain / MEG_TENTH;
+                retval= megs +"."+ decimal + mStr;
+            }
         }
         else if (size >= (2*GIG) ) {
             long gigs = size / GIG;

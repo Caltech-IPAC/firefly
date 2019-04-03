@@ -11,11 +11,11 @@ import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView, disp
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
-import {primePlot, getPlotViewById, getActivePlotView} from '../PlotViewUtil.js';
-import MultiViewCntlr, {dispatchReplaceViewerItems, dispatchUpdateCustom, getViewerItemIds,
+import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
+import MultiViewCntlr, {dispatchReplaceViewerItems, getViewerItemIds,
                         dispatchChangeViewerLayout, isImageViewerSingleLayout,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
-import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
+import {converterFactory, init3ColorDisplayManagement} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {isImageDataRequeestedEqual} from '../WebPlotRequest.js';
@@ -58,7 +58,7 @@ export function startImageMetadataWatcher({viewerId= 'ViewImageMetaData', paused
  */
 function watchImageMetadata(tbl_id, action, cancelSelf, params) {
     const {options:{viewerId='ImageMetaData'}} = params;
-    let {paused= true} = params;
+    let {paused= true, abortPromise:abortLastPromise} = params;
 
     if (!action) {
         if (paused) paused= !Boolean(getViewer(getMultiViewRoot(), viewerId));
@@ -77,6 +77,7 @@ function watchImageMetadata(tbl_id, action, cancelSelf, params) {
         cancelSelf();
         return;
     }
+    let abortPromise= abortLastPromise;
 
     switch (action.type) {
 
@@ -84,26 +85,26 @@ function watchImageMetadata(tbl_id, action, cancelSelf, params) {
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
         case TBL_RESULTS_ACTIVE:
-            if (!paused) updateImagePlots(tbl_id, viewerId);
+            if (!paused) abortPromise= updateImagePlots(tbl_id, viewerId, abortLastPromise);
             break;
 
         case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
         case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
-            if (!paused) updateImagePlots(tbl_id, viewerId, true);
+            if (!paused) abortPromise= updateImagePlots(tbl_id, viewerId, abortLastPromise, true);
             break;
 
 
         case MultiViewCntlr.ADD_VIEWER:
-            init3Color(viewerId);
+            init3ColorDisplayManagement(viewerId);
             if (payload.mounted) {
-                updateImagePlots(tbl_id, viewerId);
+                abortPromise= updateImagePlots(tbl_id, viewerId, abortLastPromise);
                 paused= false;
             }
             break;
 
         case MultiViewCntlr.VIEWER_MOUNTED:
             paused= false;
-            updateImagePlots(tbl_id, viewerId);
+            abortPromise= updateImagePlots(tbl_id, viewerId, abortLastPromise);
             break;
 
         case MultiViewCntlr.VIEWER_UNMOUNTED:
@@ -126,7 +127,7 @@ function watchImageMetadata(tbl_id, action, cancelSelf, params) {
             cancelSelf();
             break;
     }
-    return {paused};
+    return {paused, abortPromise};
 }
 
 
@@ -136,12 +137,16 @@ const getKey= (threeOp, band) => Object.keys(threeOp).find( (k) => threeOp[k].co
  * 
  * @param tbl_id
  * @param viewerId
+ * @param {function} abortLastPromise
  * @param layoutChange
- * @return {Array}
+ * @return {function} a function to abort any unfinished promises
  */
-function updateImagePlots(tbl_id, viewerId, layoutChange= false) {
+function updateImagePlots(tbl_id, viewerId, abortLastPromise, layoutChange= false) {
 
-    var viewer = getViewer(getMultiViewRoot(), viewerId);
+    abortLastPromise && abortLastPromise();
+    let continuePromise= true;
+    const abortPromise= () => continuePromise= false;
+    let viewer = getViewer(getMultiViewRoot(), viewerId);
 
     if (!viewer) return;
 
@@ -149,16 +154,14 @@ function updateImagePlots(tbl_id, viewerId, layoutChange= false) {
     // check to see if tableData is available in this range.
     if (!table || !isTblDataAvail(table.highlightedRow, table.highlightedRow + 1, table)) {
         removeAllPlotsInViewer(viewerId);
-        return [];
+        return;
     }
 
-    var reqRet;
     const converterData = converterFactory(table);
-    if (!converterData) return [];
+    if (!converterData) return;
     const {dataId, converter}= converterData;
     var highlightPlotId;
     var threeColorOps;
-    var threeReqAry;
 
 
     if (viewer.layout === GRID && viewer.layoutDetail !== GRID_FULL && !converter.hasRelatedBands) {
@@ -200,37 +203,43 @@ function updateImagePlots(tbl_id, viewerId, layoutChange= false) {
         return;
     }
 
-
     if (viewer.layout===SINGLE) {
-        const {single}= converter.makeRequest(table,highlightedRow,true);
-        if (!single) return [];
-        reqAry= [single];
-        single.setPlotId(`${dataId}-singleview`,0);
-        single.setRelatedTableRow(highlightedRow);
-        highlightPlotId= single.getPlotId();
+        converter.makeRequest(table,highlightedRow,true).then( ({single}) => {
+            if (!single) return;
+            single.setPlotId(`${dataId}-singleview`,0);
+            single.setRelatedTableRow(highlightedRow);
+            single.setRelatedTableId(tbl_id);
+            if (continuePromise) replot([single], undefined, single.getPlotId(), viewerId, dataId, tbl_id);
+        });
     }
     else if (viewer.layout===GRID && viewer.layoutDetail===GRID_FULL) {
         const plotRows= findGridTableRows(table,Math.min(converter.maxPlots,MAX_GRID_SIZE),`${dataId}-gridfull`);
-        var reqAry= plotRows.map( (pR) => {
-            const {single}= converter.makeRequest(table,pR.row,true);
-            if (!single) return [];
-            single.setRelatedTableRow(pR.row);
-            single.setPlotId(pR.plotId);
-            return single;
-        } );
-        const pR= plotRows.filter( (pR) => pR.highlight).find( (pR) => pR.plotId);
-        highlightPlotId= pR && pR.plotId;
+        const pAry= plotRows.map( (pR) => converter.makeRequest(table,pR.row,true));
+
+        Promise.all(pAry).then ( (resultAry) => {
+            const reqAry= resultAry.map( (pResult,idx) => {
+                const {single}= pResult;
+                if (!single) return undefined;
+                single.setRelatedTableRow(plotRows[idx].row);
+                single.setRelatedTableId(tbl_id);
+                single.setPlotId(plotRows[idx].plotId);
+                return single;
+            } );
+            const pR= plotRows.filter( (pR) => pR.highlight).find( (pR) => pR.plotId);
+            const highlightPlotId= pR && pR.plotId;
+            if (continuePromise) replot(reqAry, undefined, highlightPlotId, viewerId, dataId, tbl_id);
+
+        });
     }
     else if (viewer.layout===GRID) {
-        reqRet= converter.makeRequest(table,highlightedRow,false,true,threeColorOps);
-        reqRet.highlightPlotId = viewer.highlightPlotId;
-        //highlightPlotId= reqRet.highlightPlotId;
-        reqAry= reqRet.standard;
-        if (isEmpty(reqAry)) return [];
-        threeReqAry= reqRet.threeColor;
+        converter.makeRequest(table,highlightedRow,false,true,threeColorOps).then( (reqRet) => {
+            reqRet.highlightPlotId = viewer.highlightPlotId;
+            if (isEmpty(reqRet.standard)) return;
+            if (continuePromise) replot(reqRet.standard, reqRet.threeColor, highlightPlotId, viewerId, dataId, tbl_id);
+        });
     }
+    return abortPromise;
 
-    replot(reqAry, threeReqAry, highlightPlotId, viewerId, dataId, tbl_id);
 }
 
 
@@ -243,7 +252,8 @@ function removeAllPlotsInViewer(viewerId) {
 
 function replot(reqAry, threeReqAry, activeId, viewerId, dataId, tbl_id)  {
     const groupId= `${viewerId}-${dataId}-standard`;
-    var plottingIds= reqAry.map( (r) =>  r.getPlotId());
+    reqAry= reqAry.filter( (r) => r);
+    var plottingIds= reqAry.map( (r) =>  r && r.getPlotId()).filter( (id) => id);
     var threeCPlotId;
     var plottingThree= false;
     if (!isEmpty(threeReqAry)) {
@@ -279,6 +289,7 @@ function replot(reqAry, threeReqAry, activeId, viewerId, dataId, tbl_id)  {
                            attributes: { tbl_id }
         });
     }
+    // if (activeId && !isEmpty(wpRequestAry)) dispatchChangeActivePlotView(activeId);
     if (activeId) dispatchChangeActivePlotView(activeId);
 
 
@@ -324,18 +335,6 @@ function make3ColorPlottingList(req3cAry) {
     const match= allBandAry.every( (b) => isImageDataRequeestedEqual(plotState.getWebPlotRequest(b),req3cAry[b.value]));
     return match ? [] : req3cAry;
 }
-
-
-
-function init3Color(viewerId) {
-    var customEntry= Object.keys(converters).reduce( (newObj,key) => {
-        if (!converters[key].threeColor) return newObj;
-        newObj[key]= Object.assign({}, converters[key].threeColorBands, {threeColorVisible:false});
-        return newObj;
-    }, {});
-    dispatchUpdateCustom(viewerId, customEntry);
-}
-
 
 function changeActivePlotView(plotId,tbl_id) {
     const plot= primePlot(visRoot(), plotId);

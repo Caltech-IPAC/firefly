@@ -64,24 +64,25 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
         };
     }
     const showThreeColorButton= converter.threeColor && viewer.layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
-    const showPager= activeTable && viewer.layoutDetail===GRID_FULL;
+    const showPager= activeTable && converter.canGrid && viewer.layoutDetail===GRID_FULL;
+    const showMultiImageOps= converter.canGrid || converter.hasRelatedBands;
 
 
 
     return (
         <div style={toolsStyle}>
             <div style={{whiteSpace: 'nowrap'}}>
-                <ToolbarButton icon={ONE} tip={'Show single image at full size'}
+                {showMultiImageOps && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                enabled={true} visible={true}
                                horizontal={true}
-                               onClick={() => handleViewerLayout(viewerId,SINGLE)}/>
+                               onClick={() => handleViewerLayout(viewerId,SINGLE)}/>}
 
-                <ToolbarButton icon={FULL_GRID} tip={'Show full grid'}
+                {converter.canGrid && <ToolbarButton icon={FULL_GRID} tip={'Show full grid'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                additionalStyle={{marginLeft: 5}}
-                               onClick={() => handleViewerLayout(viewerId,'grid',GRID_FULL)}/>
+                               onClick={() => handleViewerLayout(viewerId,'grid',GRID_FULL)}/>}
 
                 {converter.hasRelatedBands  &&
                             <ToolbarButton icon={GRID_GROUP} tip={'Show all as tiles'}
@@ -107,7 +108,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
                                  onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
             </div>
-            <WcsMatchOptions activePlotId={activePlotId} wcsMatchType={wcsMatchType} />
+            {showMultiImageOps && <WcsMatchOptions activePlotId={activePlotId} wcsMatchType={wcsMatchType} />}
             {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} />}
             {handleInlineTools && <InlineRightToolbarWrapper visRoot={vr} pv={pv} dlAry={pvDlAry} />}
         </div>

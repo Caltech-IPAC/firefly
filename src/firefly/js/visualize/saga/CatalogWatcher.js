@@ -102,7 +102,7 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 
         case ImagePlotCntlr.PLOT_HIPS:
         case ImagePlotCntlr.PLOT_IMAGE:
-            attachToCatalog(tbl_id, payload.pvNewPlotInfoAry);
+            attachToCatalog(tbl_id, payload);
             break;
     }
     return {tableManaged:true};
@@ -224,10 +224,13 @@ function updateDrawingLayer(tbl_id, title, tableData, tableMeta, tableRequest,
     }
 }
 
-function attachToCatalog(tbl_id, pvNewPlotInfoAry=[]) {
+function attachToCatalog(tbl_id, payload) {
+    const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry} = payload;
     const dl= getDrawLayerById(dlRoot(), tbl_id);
     if (!dl) return;
-    pvNewPlotInfoAry.forEach( (info) => {
+    pvNewPlotInfoAry.forEach( (info, idx) => {
+        const r= wpRequest || wpRequestAry[idx];
+        if (!r || r.getRelatedTableId()===tbl_id) return;
         dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId);
         const pv= getPlotViewById(visRoot(), info.plotId);
         const pvSubGroup= get(pv, 'drawingSubGroupId');

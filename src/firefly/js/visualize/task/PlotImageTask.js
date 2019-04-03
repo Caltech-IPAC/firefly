@@ -408,6 +408,7 @@ function makePlot(wpInit,plotId, attributes) {
     plot.title= makePostPlotTitle(plot,r);
     if (r.isMinimalReadout()) plot.attributes[PlotAttribute.MINIMAL_READOUT]= true;
     if (r.getRelatedTableRow()>-1) plot.attributes[PlotAttribute.TABLE_ROW]= r.getRelatedTableRow();
+    if (r.getRelatedTableId()) plot.attributes[PlotAttribute.TABLE_ID]= r.getRelatedTableId();
     Object.assign(plot.attributes,attributes);
     return plot;
 }

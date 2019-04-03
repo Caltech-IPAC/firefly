@@ -67,7 +67,7 @@ public class Downloader {
         String outStr;
         Date startDate = null;
         TimeStats timeStats = null;
-        int informInc = (int) (30* FileUtil.MEG) / BUFFER_SIZE;
+        int informInc = (int) (15* FileUtil.MEG) / BUFFER_SIZE;
         long totalRead = 0;
         boolean elapseIncreased = false;
         long lastElapse = 0;
