@@ -87,7 +87,7 @@ function getSuggestions(cols, canBeExpression=true) {
             }
         }
         const matches = allSuggestions.filter( (idx)=>{return cols[idx].name.toLowerCase().startsWith(token.toLowerCase());} );
-        return matches.length ? matches : allSuggestions;
+        return matches.length ? matches : [];
     };
 }
 
