@@ -48,4 +48,6 @@ sso.user.profile.url=@sso.user.profile.url@
 
 help.base.url=@__$help.base.url@
 
+tap.maxrec.maxval=@__$tap.maxrec.hardlimit@
+
 visualize.fits.MaxSizeInBytes= @visualize.fits.MaxSizeInBytes@

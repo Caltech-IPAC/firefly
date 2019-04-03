@@ -6,6 +6,23 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 import {fieldGroupConnector} from '../FieldGroupConnector';
 
+export const commonSelectStyles = {
+    option: (styles) => (
+        {...styles,
+            color: 'black', // avoid switching to white for selected item
+            height: '100%'
+        }
+    ),
+    singleValue: () => {
+        return {
+            color: 'black',
+            marginLeft: 2,
+            marginRight: 2,
+            maxWidth: 'calc(100% - 8px)',
+            position: 'absolute'
+        };
+    }
+};
 
 export const selectTheme = (theme) => ({
       ...theme,
@@ -78,26 +95,10 @@ function formatGroupLabel(data) {
 }
 
 export function NameSelect({options, value, onSelect, type, selectProps={}}) {
-    const selectStyles = {
-        option: (styles) => (
-            {...styles,
-                color: 'black', // avoid switching to white for selected item
-                height: '100%'
-            }
-        ),
-        valueContainer: (styles) => (
-            { ...styles, height: 50 }),
-        singleValue: () => {
-            return {
-                color: 'black',
-                marginLeft: 2,
-                marginRight: 2,
-                maxWidth: 'calc(100% - 8px)',
-                position: 'absolute'
-            };
-        }
-
-    };
+    const selectStyles = Object.assign({
+            valueContainer: (styles) => (
+                { ...styles, height: 50 }),
+        }, commonSelectStyles);
 
     const placeholder = value ? `${type} <${value}>. Replace...` : `Select ${type}...`;
 

@@ -233,6 +233,7 @@
  * @prop {boolean} [showPaging=true]    enable/disable paging feature.  When false, all data will be displayed.
  * @prop {boolean} [showSave=true]
  * @prop {boolean} [showFilterButton=true]
+ * @prop {boolean} [showInfoButton=false] when true, shows additional information about table, if available
  * @prop {boolean} [showOptionButton=true]
  * @prop {boolean} [showUnits=true]
  * @prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.

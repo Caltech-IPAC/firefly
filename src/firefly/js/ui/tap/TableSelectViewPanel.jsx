@@ -4,7 +4,7 @@ import SplitPane from 'react-split-pane';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import CreatableSelect from 'react-select/lib/Creatable';
 import {isArray, get, pick} from 'lodash';
-import {FormPanel} from '../FormPanel.jsx';
+import {FormPanel, ExtraButton} from '../FormPanel.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {HelpIcon} from '../HelpIcon';
 import {showInfoPopup} from '../PopupUtil.jsx';
@@ -15,19 +15,22 @@ import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
 import {getColumnValues} from '../../tables/TableUtil.js';
+import {intValidator} from '../../util/Validate.js';
 
 import {TableSearchMethods, tableSearchMethodsConstraints, SpattialPanelWidth} from './TableSearchMethods.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
-import {loadTapColumns, loadTapTables, loadTapSchemas, getTapBrowserState, setTapBrowserState} from './TapUtil.js';
-import {NameSelect, NameSelectField, selectTheme} from './Select.jsx';
+import {loadTapColumns, loadTapTables, loadTapSchemas, getMaxrecHardLimit, getTapBrowserState, setTapBrowserState} from './TapUtil.js';
+import {commonSelectStyles, NameSelect, NameSelectField, selectTheme} from './Select.jsx';
 import {showYesNoPopup} from '../PopupUtil.jsx';
 
 import {dispatchHideDialog} from '../../core/ComponentCntlr';
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar, tableColumnsConstraints} from './TableColumnsConstraints.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField';
+import {ValidationField} from '../ValidationField';
 
 
 import './TableSelectViewPanel.css';
+
 
 
 
@@ -82,7 +85,31 @@ export class TapSearchPanel extends PureComponent {
 
         const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
 
-        const rightBtns = selectBy === 'basic' ?[{text: 'Populate and edit ADQL', onClick: this.populateAndEditAdql, style: {marginLeft: 50}}] :  [];
+        const rightBtn = selectBy === 'basic' ?
+            <ExtraButton key='editADQL'
+                         text='Populate and edit ADQL'
+                         onClick={this.populateAndEditAdql}
+                         style={{marginLeft: 30}}
+            /> : undefined;
+        const maxrecFld = (
+            <ValidationField fieldKey='maxrec'
+                             key='maxrec'
+                             groupKey={gkey}
+                             initialState= {{
+                                 fieldKey: 'maxrec',
+                                 value: get(getAppOptions(), 'tap.defaultMaxrec', 50000),
+                                 validator: intValidator(0, getMaxrecHardLimit(), 'Maximum number of rows'),
+                                 tooltip: 'Maximum number of rows to return',
+                                 label: 'Row Limit:',
+                                 labelWidth: 0
+                             }}
+                             wrapperStyle={{marginLeft: 30, height: '100%', alignSelf: 'center'}}
+                             style={{height: 17, width: 70}}
+            />
+        );
+
+        const extraWidgets = [maxrecFld];
+        if (selectBy === 'basic') extraWidgets.push(rightBtn);
 
         const style = {width: '100%'};
 
@@ -92,7 +119,7 @@ export class TapSearchPanel extends PureComponent {
                             groupKey={gkey}
                             params={{hideOnInvalid: false}}
                             onSubmit={(request) => onSearchSubmit(request, serviceUrl)}
-                            extraButtons={rightBtns}
+                            extraWidgets={extraWidgets}
                             buttonStyle={{justifyContent: 'left'}}
                             submitBarStyle={{padding: '2px 3px 3px'}}
                             help_id = {tapHelpId('form')}
@@ -112,6 +139,7 @@ export class TapSearchPanel extends PureComponent {
                                     onChange={this.onTapServiceOptionSelect}
                                     placeholder={placeholder}
                                     theme={selectTheme}
+                                    styles={commonSelectStyles}
                                 />
                             </div>
                         </div>
@@ -389,6 +417,7 @@ function onSearchSubmit(request,serviceUrl) {
     const isADQL = (request.selectBy === 'adql');
     let adql = undefined;
     let title = undefined;
+    let maxrec = request.maxrec;
     if (isADQL) {
         adql = request.adqlQuery;
         // use service name for title
@@ -399,19 +428,22 @@ function onSearchSubmit(request,serviceUrl) {
         title = request.tableName;
     }
     if (adql) {
+        const hasMaxrec = !Number.isNaN(parseInt(maxrec));
         adql = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
         const doSubmit = () => {
             const params = {serviceUrl, QUERY: adql};
+            if (hasMaxrec) params.MAXREC = maxrec;
             const options = {};
 
             const treq = makeTblRequest('AsyncTapQuery', title, params, options);
             setNoCache(treq);
-            dispatchTableSearch(treq, {backgroundable: true});
+            dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
 
         };
-        if (!adql.toUpperCase().match(/ TOP | WHERE /)) {
+        if (!hasMaxrec && !adql.toUpperCase().match(/ TOP | WHERE /)) {
             const msg = (
                 <div style={{width: 260}}>
+                    Disabling the row limit is not recommended. <br/>
                     You are about to submit a query without a TOP or WHERE constraint. <br/>
                     This may results in a HUGE amount of data. <br/><br/>
                     Are you sure you want to continue?
@@ -443,6 +475,7 @@ function onSearchSubmit(request,serviceUrl) {
 function getAdqlQuery() {
     const fields = FieldGroupUtils.getGroupFields(gkey);
     const tableName = get(fields, ['tableName', 'value']);
+    const maxrec = get(fields, ['maxrec', 'value']);
 
     if (!tableName) return;
 
@@ -471,7 +504,10 @@ function getAdqlQuery() {
         constraints = `WHERE ${constraints}`;
     }
 
-    return `SELECT TOP 10000 ${selcols} FROM ${tableName} ${constraints}`;
+    // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
+    // overflow indicator will not be included with the results
+    // and we will not know if the results were truncated
+    return `SELECT ${selcols} FROM ${tableName} ${constraints}`;
 }
 
 /**
