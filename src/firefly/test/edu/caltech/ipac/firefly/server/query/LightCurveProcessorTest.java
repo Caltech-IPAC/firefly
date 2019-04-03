@@ -34,7 +34,7 @@ public class LightCurveProcessorTest extends ConfigTest {
         req = new PeriodogramAPIRequestTest();
     }
 
-    @Test
+   // @Test
     public void testGetPeriodogram() {
 
         boolean deleteOnExit = true;
@@ -66,7 +66,7 @@ public class LightCurveProcessorTest extends ConfigTest {
         Assert.assertTrue("expected " + dgjList.size(), dgjList.size() > 0);
     }
 
-    @Test
+   // @Test
     public void testGetPeaks() {
 
         boolean deleteOnExit = true;
@@ -100,7 +100,7 @@ public class LightCurveProcessorTest extends ConfigTest {
 
     }
 
-    @Test
+   // @Test
     public void testPhaseFoldedCurve() {
 
         File rlc = FileLoader.resolveFile(LightCurveProcessorTest.class, "/AllWISE-MEP-m82-2targets-10arsecs-oneTarget.tbl");
