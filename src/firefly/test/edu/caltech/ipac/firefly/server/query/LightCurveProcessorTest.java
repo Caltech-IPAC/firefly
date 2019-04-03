@@ -49,7 +49,6 @@ public class LightCurveProcessorTest extends ConfigTest {
                 return tmpFile;
             }
 
-            @Override
             protected File makeApiResultTempFile() throws IOException {
                 File tmpFile = File.createTempFile("votable-test-", ".xml", new File("."));
                 if (deleteOnExit) {
@@ -81,7 +80,6 @@ public class LightCurveProcessorTest extends ConfigTest {
                 return tmpFile;
             }
 
-            @Override
             protected File makeApiResultTempFile() throws IOException {
                 File tmpFile = File.createTempFile("votable-test-", ".xml", new File("."));
                 if (deleteOnExit) {
