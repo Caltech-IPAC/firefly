@@ -4,7 +4,7 @@ import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
-import {hashCode} from '../../util/WebUtil.js';
+import {getProp, hashCode} from '../../util/WebUtil.js';
 
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
 export const HeaderFont={fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
@@ -13,6 +13,15 @@ export const  MJD = 'mjd';
 export const  ISO = 'iso';
 
 const tapBrowserComponentKey = 'TAP_BROWSER';
+
+export function getMaxrecHardLimit() {
+    const defaultValue = Number.parseInt(getProp('tap.maxrec.hardlimit'));
+    if (Number.isNaN(defaultValue)) {
+        return 5000000;
+    } else {
+        return defaultValue;
+    }
+}
 
 export function getTapBrowserState() {
     const tapBrowserState = getComponentState(tapBrowserComponentKey);

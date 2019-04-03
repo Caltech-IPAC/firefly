@@ -49,7 +49,7 @@ export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey,
         action, params, title,
         submitText='Search',cancelText='Cancel', help_id, changeMasking,
-        includeUnmounted=false, extraButtons=[]} = props;
+        includeUnmounted=false, extraWidgets=[]} = props;
     let { style, inputStyle, submitBarStyle, buttonStyle} = props;
 
     inputStyle = Object.assign({
@@ -82,17 +82,7 @@ export const FormPanel = function (props) {
                         />
                         <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>{cancelText}</button>
                     </div>
-
-                    {extraButtons && extraButtons.map((e,i,arr)=>{
-                        const {text, onClick, style={}} = e;
-                        return (
-                            <button style={style}
-                                    type='button' className='button std'
-                                    onClick={onClick} key={'extraBtn'+i}>
-                                {text}
-                            </button>
-                        );
-                    })}
+                    {extraWidgets}
                 </div>
                 {help_id && <HelpIcon helpId={help_id} />}
             </div>
@@ -122,9 +112,22 @@ FormPanel.propTypes = {
     help_id: PropTypes.string,
     changeMasking: PropTypes.func,
     includeUnmounted: PropTypes.bool,
-    extraButtons: PropTypes.arrayOf(
-        PropTypes.shape({
-            text: PropTypes.string,
-            onClick: PropTypes.func
-        }))
+    extraWidgets: PropTypes.arrayOf(PropTypes.element)
+};
+
+export function ExtraButton(props) {
+    const {text, onClick, style={}} = props;
+    return (
+        <button style={style}
+                type='button' className='button std'
+                onClick={onClick}>
+            {text}
+        </button>
+    );
+}
+
+ExtraButton.propTypes = {
+    text: PropTypes.string,
+    onClick: PropTypes.func,
+    style: PropTypes.object
 };

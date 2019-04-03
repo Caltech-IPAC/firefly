@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.LinkInfo;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.Header;
@@ -21,19 +22,33 @@ import java.io.*;
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
         @ParamDoc(name = "serviceUrl", desc = "base TAP url endpoint excluding '/async'"),
         @ParamDoc(name = "QUERY", desc = "query string"),
-        @ParamDoc(name = "LANG", desc = "defaults to ADQL")
+        @ParamDoc(name = "LANG", desc = "defaults to ADQL"),
+        @ParamDoc(name = "MAXREC", desc = "maximum number of records to be returned")
 })
 public class AsyncTapQuery extends AsyncSearchProcessor {
     public static final String ID = "AsyncTapQuery";
 
+    private static int MAXREC_HARD = AppProperties.getIntProperty("tap.maxrec.hardlimit", 10000000);
+
     public AsyncJob submitRequest(ServerRequest request) throws DataAccessException {
         String serviceUrl = request.getParam("serviceUrl");
-        String lang = request.getParam("LANG");
         String queryStr = createQueryString(request);
+        String lang = request.getParam("LANG");
+        String maxrecStr = request.getParam("MAXREC");
+        int maxrec = -1; // maxrec is not set
+        if (!StringUtils.isEmpty(maxrecStr)) {
+            maxrec = Integer.parseInt(maxrecStr);
+            if (maxrec < 0 || maxrec > MAXREC_HARD) {
+                maxrec = -1;
+                throw new IllegalArgumentException("MAXREC value "+Integer.toString(maxrec)+
+                        " is not in (0,"+MAXREC_HARD+") range.");
+            }
+        }
 
         HttpServiceInput inputs = HttpServiceInput.createWithCredential();
         if (!StringUtils.isEmpty(queryStr)) inputs.setParam("QUERY", queryStr);
         if (StringUtils.isEmpty(lang)) { lang = "ADQL"; }
+        if (maxrec > -1) { inputs.setParam("MAXREC", Integer.toString(maxrec)); }
         inputs.setParam("LANG", lang); // in tap 1.0, lang param is required
         inputs.setParam("request", "doQuery"); // in tap 1.0, request param is required
         

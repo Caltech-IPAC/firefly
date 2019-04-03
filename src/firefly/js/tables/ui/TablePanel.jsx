@@ -123,7 +123,7 @@ export class TablePanel extends PureComponent {
     render() {
         const {tableConnector} = this;
         const { selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
-            showToolbar, showTitle, showInfoButton=get(getAppOptions(), 'tables.showInfoButton'),
+            showToolbar, showTitle, showInfoButton,
             showOptionButton, showPaging, showSave, showFilterButton,
             totalRows, showLoading, columns, showUnits, showTypes, showFilters, textView,
             tbl_id, error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask,
@@ -271,9 +271,9 @@ TablePanel.propTypes = {
     showTitle: PropTypes.bool,
     showPaging: PropTypes.bool,
     showSave: PropTypes.bool,
-    showInfoButton: PropTypes.bool,
     showOptionButton: PropTypes.bool,
     showFilterButton: PropTypes.bool,
+    showInfoButton: PropTypes.bool,
     leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
     rightButtons: PropTypes.arrayOf(PropTypes.func),  // an array of functions that returns a button-like component laid out on the right side of this table header.
     renderers: PropTypes.objectOf(
@@ -293,6 +293,7 @@ TablePanel.defaultProps = {
     showSave: true,
     showOptionButton: true,
     showFilterButton: true,
+    showInfoButton: false,
     selectable: true,
     expandedMode: false,
     expandable: true,

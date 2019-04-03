@@ -140,9 +140,12 @@ const defFireflyOptions = {
                 value: 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap' },
             { label: 'GAIA https://gea.esac.esa.int/tap-server/tap',
                 value: 'https://gea.esac.esa.int/tap-server/tap' },
+            { label: 'GAVO http://dc.g-vo.org/tap',
+                value: 'http://dc.g-vo.org/tap'},
             { label: 'MAST https://vao.stsci.edu/CAOMTAP/TapService.aspx',
                 value: 'https://vao.stsci.edu/CAOMTAP/TapService.aspx' }
-        ]
+        ],
+        defaultMaxrec: 50000
     }
 };
 

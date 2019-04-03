@@ -44,7 +44,6 @@ public class AsyncTapQueryTest extends ConfigTest {
     /**
      * test results based on the constructed TableServerRequest
      */
-    @Ignore  // unable to parse return doc yet.
     @Test
     public void testError() {
         try {

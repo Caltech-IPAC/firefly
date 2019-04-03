@@ -36,9 +36,6 @@ var options = {
         mergedListPriority: 'Irsa'
     },
     coverage : { // example of using DSS and wise combination for coverage (not that anyone would want to combination)
-    },
-    tables : {
-        showInfoButton: true // info about table : title, table links, etc.
     }
 };
 
