@@ -136,7 +136,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         sreq.setPageSize(Integer.MAX_VALUE);               // ensure you're getting the full table
         sreq.removeParam(INCL_COLUMNS);
         try {
-            File file = File.createTempFile("lcInputTable.tbl", ".tbl", ServerContext.getTempWorkDir());
+            File file = File.createTempFile("lcInputTable", ".tbl", ServerContext.getTempWorkDir());
             OutputStream out = new FileOutputStream(file, false);
             new SearchManager().save(out, sreq, TableUtil.Format.IPACTABLE);
             out.close();
