@@ -3,13 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import com.google.gwt.editor.client.Editor;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.table.DataGroup;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class AsyncTapQueryTest extends ConfigTest {
@@ -53,9 +51,11 @@ public class AsyncTapQueryTest extends ConfigTest {
             req.setParam("PHASE","RUN");
 
             DataGroup results = new AsyncTapQuery().fetchDataGroup(req);
+			Assert.fail("testError did not produce exception on error");
 
         } catch (Exception e) {
-            Assert.fail("testExecRequestQuery failed with exception: " + e.getMessage());
+            Assert.assertTrue("data access exception",e instanceof DataAccessException);
+            Assert.assertTrue(e.getMessage().startsWith("Invalid table"));
         }
     }
 
