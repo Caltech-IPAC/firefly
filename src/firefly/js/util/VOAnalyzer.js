@@ -33,7 +33,7 @@ const OBSTAPCOLUMNS = [
     ['s_ra',              'pos.eq.ra',                  'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1'],
     ['s_dec',             'pos.eq.dec',                 'Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C2'],
     ['s_fov',             'phys.angSize;instr.fov',     'Char.SpatialAxis.Coverage.Bounds.Extent.diameter'],
-    ['s_region',          'pos.outline;obs.field',     'Char.SpatialAxis.Coverage.Support.Area'],
+    ['s_region',          'pos.outline;obs.field',      'Char.SpatialAxis.Coverage.Support.Area'],
     ['s_resolution',      'pos.angResolution',          'Char.SpatialAxis.Resolution.Refval.value'],
     ['s_xel1',            'meta.number',                'Char.SpatialAxis.numBins1'],
     ['s_xel2',            'meta.number',                'Char.SpatialAxis.numBins2'],
@@ -121,8 +121,8 @@ function centerColumnUTypesFromObsTap() {
     return centerUTypes.findIndex((oneUtype) => !oneUtype) >= 0 ? null : centerUTypes;
 }
 
-function regionColumnUTypeFromObsTap() {
-    return get(OBSTAPCOLUMNS.find((col) => col[ColNameIdx] === voRegionColumn.name), UtypeColIdx, null);
+function columnUTypeFromObsTap(name) {
+    return get(OBSTAPCOLUMNS.find((col) => col[ColNameIdx] === name), UtypeColIdx, null);
 
 }
 
@@ -533,7 +533,7 @@ class TableRecognizer {
 
     getRegionColumnOnUCD(cols) {
         this.regionColumnInfo = null;
-        const columns = cols ? cols : this.columns;
+        const columns = !isEmpty(cols) ? cols : this.columns;
 
         const regionCols = get(voRegionColumn, 'ucd', []).reduce((prev, oneUcd) => {
             if (prev.length > 0) {
@@ -542,47 +542,55 @@ class TableRecognizer {
             return prev;
         }, columns);
 
-        if (regionCols.length > 0) {
+        if (regionCols.length === 1) {
             this.setRegionColumnInfo(regionCols[0]);
+        } else if (regionCols.length > 1) {
+            if (!this.getRegionColumnOnObsCoreName(regionCols)) {
+                this.setRegionColumnInfo(regionCols[0]);
+            }
         }
         return this.regionColumnInfo;
     }
 
     getRegionColumnOnObsCoreUType(cols) {
-        const columns = cols ? cols : this.columns;
-        const obsUtype = regionColumnUTypeFromObsTap();
+        const columns = !isEmpty(cols) ? cols : this.columns;
+        const obsUtype = columnUTypeFromObsTap(voRegionColumn.name);
 
         this.regionColumnInfo = null;
 
-        const regionCol = !isEmpty(columns) && columns.find((col) => {
+        const regionCols = !isEmpty(columns) && columns.filter((col) => {
             return  (has(col, 'utype') && col.utype.includes(obsUtype));
         });
 
-        if (regionCol) {
-            this.setRegionColumnInfo(regionCol);
+        if (regionCols.length === 1) {
+            this.setRegionColumnInfo(regionCols[0]);
+        } else if (regionCols.length > 1) {
+            if (!this.getRegionColumnOnObsCoreName(regionCols)) {
+                this.setRegionColumnInfo(regionCols[0]);
+            }
         }
+
         return this.regionColumnInfo;
     }
 
     getRegionColumnOnObsCoreName(cols) {
         this.regionColumnInfo = null;
-        const columns = cols ? cols : this.columns;
+        const columns = !isEmpty(cols) ? cols : this.columns;
 
         const regionCol = !isEmpty(columns) && columns.find((oneCol) => oneCol.name.toLowerCase() === voRegionColumn.name);
         if (regionCol) {
             this.setRegionColumnInfo(regionCol);
         }
         return this.regionColumnInfo;
-
     }
     /**
      * return region column by checking column name or UCD values
      * @returns {null|ColDescription}
      */
     getVODefinedRegionColumn() {
-        return this.getRegionColumnOnUCD() ||
-               this.getRegionColumnOnObsCoreUType() ||
-               this.getRegionColumnOnObsCoreName();
+         return this.getRegionColumnOnUCD() ||
+                this.getRegionColumnOnObsCoreUType()||
+                this.getRegionColumnOnObsCoreName();
     }
 
 

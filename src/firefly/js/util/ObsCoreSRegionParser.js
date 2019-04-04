@@ -12,16 +12,16 @@ import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import VisUtil from '../visualize/VisUtil.js';
 
 const regionShape = new Enum(['circle', 'box', 'polygon', 'position']);
-const CoordSys = new Enum(['ECLIPTIC', 'FK4', 'FK5', 'GALACTIC', 'ICRS', 'UNKNOWNFRAME']);
+const CoordSys = new Enum(['ECLIPTIC', 'FK4', 'FK5', 'J2000', 'GALACTIC', 'ICRS', 'UNKNOWNFRAME']);
 const RefPos = new Enum(['BARYCENTER', 'GEOCENTER', 'HELIOCENTER', 'LSR', 'TOPOCENTER', 'RELOCATABLE', 'UNKNOWNREFPOS']);
 const Flavor = new Enum(['CARTESIAN2', 'CARTESIAN3', 'SPHERICAL2']);
 
 const CoordPos = 1;
-const Coord1 = 2;
-const Coord2 = 3;
-const Width = 4;
-const Height = 5;
-const Radius = 4;
+const Coord1 = 1;
+const Coord2 = 2;
+const Width = 3;
+const Height = 4;
+const Radius = 3;
 
 const ErrorRegion = new Enum(['notSupportCoordSys', 'errorShape','errorNumber', 'invalidRegion' ]);
 const errorMessage = {[ErrorRegion.notSupportCoordSys.key]: 'coordinate system is not supported',
@@ -85,7 +85,7 @@ function  getCornersByCenter(centerPt, w, h) {
 }
 
 const resetPos = (count) => {
-    const rPos = (pos) => (pos+count-1);
+    const rPos = (pos) => (pos+count);
 
     return { coord1: rPos(Coord1), coord2: rPos(Coord2),
              width: rPos(Width), height: rPos(Height),
@@ -244,6 +244,7 @@ function parseCoordinateSys(sAry) {
             break;
         case CoordSys.FK5.key:
         case CoordSys.ICRS.key:
+        case CoordSys.J2000.key:
             cs = CoordinateSys.EQ_J2000;
             break;
         case CoordSys.GALACTIC.key:
@@ -274,6 +275,10 @@ function parseCoordinateSys(sAry) {
         count++;
     } else {
         flavor = null;
+    }
+
+    if (count === 0) {
+        cs = CoordinateSys.EQ_J2000;
     }
 
     return {coordSys: cs, ref, flavor, count};

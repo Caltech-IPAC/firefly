@@ -33,15 +33,16 @@ import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
 
+
 const TYPE_ID= 'CATALOG_TYPE';
-const helpText= 'Click on point to highlight';
 const CatalogType = new Enum(['X', 'BOX', 'REGION']);
 
 
 const findColIdx= (columns,colId) => columns.findIndex( (c) => c.name===colId);
 const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,getUIComponent);
-
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
+
+
 
 //---------------------------------------------------------------------
 //---------------------------------------------------------------------
@@ -54,8 +55,8 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 function creator(initPayload, presetDefaults) {
     const {catalogId, tableData, tableMeta, title,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
-           symbol, size,
-           dataTooBigForSelection=false, catalog=true,boxData=false,
+           symbol, size, tblId,
+           dataTooBigForSelection=false, catalog=true,
            dataType=CatalogType.X.key, tableSelection, isFromRegion=false}= initPayload;
 
     const drawingDef= Object.assign(makeDrawingDef(),
@@ -70,15 +71,16 @@ function creator(initPayload, presetDefaults) {
     };
 
     drawingDef.color= (color || get(tableMeta,MetaConst.DEFAULT_COLOR) || getNextColor());
-
+    const helpText= `Click on ${(dataType == CatalogType.REGION.key) ? 'region' : 'point'} to highlight`;
     const options= {
         hasPerPlotData:false,
-        isPointData:!boxData,
+        isPointData: catalog,
         canUserDelete: true,
         canUseMouse:true,
         canHighlight: true,
         canSelect: catalog,
-        canFilter: catalog,
+        canShowSelect: dataType === CatalogType.REGION.key,
+        canFilter: dataType !== CatalogType.REGION.key,
         dataTooBigForSelection,
         helpLine : helpText,
         canUserChangeColor: ColorChangeType.DYNAMIC,
@@ -101,6 +103,7 @@ function creator(initPayload, presetDefaults) {
     dl.angleInRadian= angleInRadian;
     dl.selectOption = tableSelection;
     dl.isFromRegion = isFromRegion;
+    dl.tblId = tblId ? tblId : catalogId;
 
     return dl;
 }
@@ -138,12 +141,15 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
             window.clearInterval(id);
             const {tableMeta, tableData}= drawLayer;
             if (closestIdx > -1) {
+                // for data representing the selected region from region data
+                if (data[closestIdx].fromRow) closestIdx = data[closestIdx].fromRow;
+
                 if (tableMeta.decimate_key) {
                     const colIdx= tableData.columns.findIndex((c) => c.name==='rowidx');
-                    dispatchTableHighlight(drawLayer.drawLayerId,tableData.data[closestIdx][colIdx],tableRequest);
+                    dispatchTableHighlight(drawLayer.tblId,tableData.data[closestIdx][colIdx],tableRequest);
                 }
                 else {
-                    dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+                    dispatchTableHighlight(drawLayer.tblId,closestIdx,tableRequest);
                 }
             }
         }
@@ -158,14 +164,17 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
                 if (dist > -1 && dist < minDist) {
                     minDist = dist;
                     closestIdx= idx;
+                    if (minDist === 0) break;
                 }
             }
             idx++;
         }
-        done= (idx===data.length);
+        done= (idx===data.length) || (minDist === 0);
     },0);
     return () => window.clearInterval(id);
 }
+
+
 
 
 function getLayerChanges(drawLayer, action) {
@@ -197,6 +206,7 @@ function getLayerChanges(drawLayer, action) {
  * @returns {*}
  */
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
+
     const{tableData, columns}= drawLayer;
 
     switch (dataType) {
@@ -206,9 +216,10 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
             return isEmpty(lastDataRet) ? 
                           computeHighlightLayer(drawLayer, columns) : lastDataRet;
         case DataTypes.SELECTED_IDXS:
-            if (!drawLayer.catalog) return null;
-            return isEmpty(lastDataRet) ?
-                computeSelectedIdxAry(drawLayer) : lastDataRet;
+            if (drawLayer.catalog || drawLayer.catalogType === CatalogType.REGION) {
+                return isEmpty(lastDataRet) ?
+                    computeSelectedIdxAry(drawLayer) : lastDataRet;
+            }
     }
     return null;
 }
@@ -307,10 +318,11 @@ function computeRegionSelected(drawLayer, tableData, regionCols) {
         const colObjs = idxAry.map((idx) => {
             const row = tableData.data[idx];
 
-            const objInfo = row[oneRegionCol.regionIdx] ? parseObsCoreRegion(row[oneRegionCol.regionIdx], unit) : null;
+            const objInfo = parseObsCoreRegion(row[oneRegionCol.regionIdx], unit);
             const obj = objInfo.valid ? objInfo.drawObj : undefined;
             if (obj) {
                 obj.color = selectedColor;
+                obj.fromRow = idx;
             }
 
             return obj;
@@ -326,7 +338,6 @@ function computeRegionSelected(drawLayer, tableData, regionCols) {
 
 function computeHighlightLayer(drawLayer, columns) {
     let objs = null;
-    const {selectOption} = drawLayer;
 
     switch (drawLayer.catalogType) {
         case CatalogType.REGION:
@@ -351,8 +362,7 @@ function computeHighlightLayer(drawLayer, columns) {
  */
 function computePointHighlightLayer(drawLayer, columns) {
 
-
-    const tbl= getTblById(drawLayer.drawLayerId);
+    const tbl= getTblById(drawLayer.tblId);
     if (!tbl) return null;
     const {angleInRadian:rad}= drawLayer;
     const raStr= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
@@ -394,7 +404,7 @@ function computeRegionHighlightLayer(drawLayer, columns) {
 
     return regionColAry.reduce((prev, oneRegionCol) => {
         const {unit='deg'} = oneRegionCol;
-        const fpObjInfo = d[oneRegionCol.regionIdx] && parseObsCoreRegion(d[oneRegionCol.regionIdx], unit);
+        const fpObjInfo = parseObsCoreRegion(d[oneRegionCol.regionIdx], unit);
         const fpObj = fpObjInfo.valid ? fpObjInfo.drawObj : undefined;
 
         if (!isEmpty(fpObj)) {
@@ -436,17 +446,19 @@ export function selectCatalog(pv,dlAry) {
     const catDlAry= getLayers(pv,dlAry);
     const selectedShape = getSelectedShape(pv, dlAry);
     if (catDlAry.length) {
-        const tooBig= catDlAry.some( (dl) => dl.dataTooBigForSelection);
+        const tooBig= catDlAry.some( (dl) => dl.canSelect && dl.dataTooBigForSelection);
         if (tooBig) {
             showInfoPopup('Your data set is too large to select. You must filter it down first.',
                 `Can't Select`); // eslint-disable-line quotes
         }
         else {
             catDlAry.forEach( (dl) => {
-                const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
-                getSelectedPts(sel,p,dl.drawData.data, selectedShape)
-                    .forEach( (idx) => selectInfoCls.setRowSelect(idx, true));
-                dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
+                if (dl.canSelect) {
+                    const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
+                    getSelectedPts(sel, p, dl.drawData.data, selectedShape)
+                        .forEach((idx) => selectInfoCls.setRowSelect(idx, true));
+                    dispatchTableSelect(dl.tblId, selectInfoCls.data);
+                }
             });
             detachSelectArea(pv);
         }
@@ -456,8 +468,10 @@ export function selectCatalog(pv,dlAry) {
 export function unselectCatalog(pv,dlAry) {
     getLayers(pv,dlAry)
         .forEach( (dl) => {
-            const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
-            dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
+            if (dl.canSelect) {
+                const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
+                dispatchTableSelect(dl.tblId, selectInfoCls.data);
+            }
         });
 }
 
@@ -476,19 +490,21 @@ export function filterCatalog(pv,dlAry) {
     if (!catDlAry.length) return;
 
     const selectedShape = getSelectedShape(pv, dlAry);
-    catDlAry.forEach((dl) =>doFilter(dl,p,sel, selectedShape));
+    catDlAry.forEach((dl) => dl.canFilter && doFilter(dl,p,sel, selectedShape));
     detachSelectArea(pv);
 }
 
 
 function doClearFilter(dl) {
-    dispatchTableFilter({tbl_id: dl.drawLayerId, filters: ''});
+    if (dl.canFilter) {
+        dispatchTableFilter({tbl_id: dl.tblId, filters: ''});
+    }
 }
 
 
 function doFilter(dl,p,sel, selectedShape) {
 
-    const tbl= getTblById(dl.drawLayerId);
+    const tbl= getTblById(dl.tblId);
     if (!tbl) return;
     const filterInfo = get(tbl, 'request.filters');
     const filterInfoCls = FilterInfo.parse(filterInfo);

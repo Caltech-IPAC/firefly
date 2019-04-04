@@ -68,7 +68,6 @@ export const DEFAULT_FONT_SIZE = '9pt';
  * @prop {String} fontWeight default: 'normal',
  * @prop {String} fontStyle default: 'normal',
  * @prop {String} selectedColor color css style
- * @prep {String} selectOptions data select options
  * 
  */
 
