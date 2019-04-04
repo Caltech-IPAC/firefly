@@ -47,7 +47,7 @@ export class PagingBar extends Component {
                         style={{textAlign: 'right'}}
                         validator = {intValidator(1,totalPages, 'Page Number')}
                         tooltip = 'Jump to this page'
-                        size = {2}
+                        size = {currentPage.toString().length}
                         value = {currentPage+''}
                         onChange = {onPageChange}
                         actOn={['blur','enter']}
