@@ -85,12 +85,12 @@ export class TapSearchPanel extends PureComponent {
 
         const placeholder = serviceUrl ? `Using <${serviceUrl}>. Replace...` : 'Select TAP...';
 
-        const rightBtn = selectBy === 'basic' ?
+        const rightBtn = selectBy === 'basic' ? (
             <ExtraButton key='editADQL'
                          text='Populate and edit ADQL'
                          onClick={this.populateAndEditAdql}
                          style={{marginLeft: 30}}
-            /> : undefined;
+            /> ) : undefined;
         const maxrecFld = (
             <ValidationField fieldKey='maxrec'
                              key='maxrec'
@@ -99,7 +99,7 @@ export class TapSearchPanel extends PureComponent {
                                  fieldKey: 'maxrec',
                                  value: get(getAppOptions(), 'tap.defaultMaxrec', 50000),
                                  validator: intValidator(0, getMaxrecHardLimit(), 'Maximum number of rows'),
-                                 tooltip: 'Maximum number of rows to return',
+                                 tooltip: 'Maximum number of rows to return (via MAXREC)',
                                  label: 'Row Limit:',
                                  labelWidth: 0
                              }}
@@ -417,7 +417,7 @@ function onSearchSubmit(request,serviceUrl) {
     const isADQL = (request.selectBy === 'adql');
     let adql = undefined;
     let title = undefined;
-    let maxrec = request.maxrec;
+    const maxrec = request.maxrec;
     if (isADQL) {
         adql = request.adqlQuery;
         // use service name for title
@@ -475,7 +475,7 @@ function onSearchSubmit(request,serviceUrl) {
 function getAdqlQuery() {
     const fields = FieldGroupUtils.getGroupFields(gkey);
     const tableName = get(fields, ['tableName', 'value']);
-    const maxrec = get(fields, ['maxrec', 'value']);
+    //const maxrec = get(fields, ['maxrec', 'value']);
 
     if (!tableName) return;
 
