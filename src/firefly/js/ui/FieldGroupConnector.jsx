@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useContext, useState, useEffect, useRef} from 'react';
+import {useContext, useState, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
-import {get,omit, isUndefined} from 'lodash';
+import {get,omit} from 'lodash';
 import {dispatchMountComponent,dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {flux} from '../Firefly.js';
@@ -111,7 +111,7 @@ export const fgMinPropTypes= {
 /**
  *
  * Hook to connect a field to the FieldGroup Store. Pass the props object, make sure it includes the required props
- * to connect to the store (fieldKey is the only requirement, see below). The hooks returns qn object with the new
+ * to connect to the store (fieldKey is the only requirement, see below). The hooks returns an object with the new
  * props that you should be able to pass directly to the view.
  *
  * the props object parameter can contain any that should be kept in the store. The parameters below are special.
