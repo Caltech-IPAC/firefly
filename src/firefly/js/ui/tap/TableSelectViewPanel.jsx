@@ -257,7 +257,12 @@ class BasicUI extends PureComponent {
         const splitMax = SpattialPanelWidth+80;
 
         if (error) {
-            return (<div>{error}</div>);
+            return (
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '10px 5px'}}>
+                    <b>Error:</b>
+                    <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{error}</pre>
+                </div>
+            );
         }
 
         // need to set initialState on list fields so that the initial value that is not the first index

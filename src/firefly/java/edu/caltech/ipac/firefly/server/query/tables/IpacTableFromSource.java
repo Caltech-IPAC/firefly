@@ -131,6 +131,8 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 File nFile = createFile(request, ext);
 
                 HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
+                // set connect timeout in milliseconds
+                conn.setConnectTimeout(10000);
                 if (res == null) {
                     URLDownload.getDataToFile(conn, nFile, null, false, true, false, Long.MAX_VALUE);
                     res = nFile;
@@ -147,9 +149,8 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 return res;
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            throw new DataAccessException(ex.getMessage());
         }
-        return null;
     }
 
     @Override

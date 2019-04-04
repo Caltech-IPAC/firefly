@@ -735,7 +735,7 @@ class LsstCatalogDDList extends PureComponent {
                         {isEmpty(options) ? false :
                             <RadioGroupInputField
                                 inline={false}
-                                initialState={{value: options&&options[0],
+                                initialState={{value: options&&options[0].value,
                                                tooltip: `${LSSTTableTypes[cattype]} tables of ${project}`,
                                                fieldKey: 'cattable'}}
                                 alignment={'vertical'}
