@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 import {parseTarget, getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
 import {TargetFeedback} from './TargetFeedback.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
@@ -25,8 +25,8 @@ const simbadThenNed= 'simbadthenned';
 class TargetPanelView extends PureComponent {
 
     componentWillUnmount() {
-        const {onUnmountCB, fieldKey, groupKey}= this.props;
-        if (onUnmountCB) onUnmountCB(fieldKey,groupKey, this.props);
+        const {onUnmountCB}= this.props;
+        if (onUnmountCB) onUnmountCB(this.props);
     }
 
     render() {
@@ -69,8 +69,6 @@ class TargetPanelView extends PureComponent {
 
 
 TargetPanelView.propTypes = {
-    fieldKey : PropTypes.string,
-    groupKey : PropTypes.string,
     label : PropTypes.string,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
@@ -82,7 +80,8 @@ TargetPanelView.propTypes = {
     value : PropTypes.string.isRequired,
     labelWidth : PropTypes.number,
     onUnmountCB : PropTypes.func,
-    feedbackStyle: PropTypes.object
+    feedbackStyle: PropTypes.object,
+    nullAllowed: PropTypes.bool
 };
 
 
@@ -96,40 +95,6 @@ function didUnmount(fieldKey,groupKey, props) {
         dispatchActiveTarget(wp);
     }
 }
-
-
-
-function getProps(params, fireValueChange) {
-
-    var feedback= params.feedback|| '';
-    var value= params.displayValue;
-    var resolver= params.resolver || nedThenSimbad;
-    var showHelp= get(params,'showHelp', true);
-    const wpStr= params.value;
-    const wp= parseWorldPt(wpStr);
-
-    if (isValidPoint(wp) && !value) {
-        feedback= getFeedback(wp);
-        value= wp.objName || formatPosForTextField(wp);
-        showHelp= false;
-    }
-
-    return Object.assign({}, params,
-        {
-            visible: true,
-            onChange: (value,source) => handleOnChange(value,source,params, fireValueChange),
-            label: params.label || LABEL_DEFAULT,
-            tooltip: 'Enter a target',
-            value,
-            feedback,
-            resolver,
-            showHelp,
-            nullAllowed:params.nullAllowed,
-            onUnmountCB: didUnmount
-        });
-}
-
-
 
 
 function handleOnChange(value, source, params, fireValueChange) {
@@ -197,12 +162,6 @@ function makePayloadAndUpdateActive(displayValue, parseResults, resolvePromise, 
     return payload;
 }
 
-const connectorDefaultProps = {
-    fieldKey : 'UserTargetWorldPt',
-    initialState  : {
-        fieldKey : 'UserTargetWorldPt'
-    }
-};
 
 function replaceValue(v,props) {
     const t= getActiveTarget();
@@ -215,5 +174,51 @@ function replaceValue(v,props) {
 }
 
 
-export const TargetPanel= fieldGroupConnector(TargetPanelView,getProps,null,connectorDefaultProps, replaceValue);
 
+
+export const TargetPanel = memo( ({fieldKey= 'UserTargetWorldPt',initialState= {}, ...restOfProps}) => {
+    const {viewProps, fireValueChange, groupKey}=  useFieldGroupConnector({fieldKey, initialState, confirmInitialValue:replaceValue});
+    const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
+    return ( <TargetPanelView {...newProps}
+                              onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
+});
+
+
+
+TargetPanel.propTypes = {
+    fieldKey: PropTypes.string,
+    groupKey: PropTypes.string,
+    examples: PropTypes.object,
+    labelWidth : PropTypes.number,
+    nullAllowed: PropTypes.bool,
+    initialState: PropTypes.object
+};
+
+
+function computeProps(viewProps, componentProps, fieldKey, groupKey) {
+
+    let feedback= viewProps.feedback|| '';
+    let value= viewProps.displayValue;
+    let showHelp= get(viewProps,'showHelp', true);
+    const resolver= viewProps.resolver || nedThenSimbad;
+    const wpStr= viewProps.value;
+    const wp= parseWorldPt(wpStr);
+
+    if (isValidPoint(wp) && !value) {
+        feedback= getFeedback(wp);
+        value= wp.objName || formatPosForTextField(wp);
+        showHelp= false;
+    }
+
+    return {
+        ...viewProps,
+        visible: true,
+        label: 'Name or Position:',
+        tooltip: 'Enter a target',
+        value,
+        feedback,
+        resolver,
+        showHelp,
+        onUnmountCB: (props) => didUnmount(fieldKey,groupKey,props),
+        ...componentProps};
+}

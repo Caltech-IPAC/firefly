@@ -31,7 +31,7 @@ export const InputFieldActOn = React.memo(({View, fieldKey, valid=true, value, o
                 const rval = validator(value) || {};
                 valid = rval.valid;
                 message = valid ? '' : (label + rval.message).replace('::', ':');
-                if (rval.value !== NOT_CELL_DATA) {
+                if (rval.value && rval.value !== NOT_CELL_DATA) {
                     value = rval.value;
                 }
             }

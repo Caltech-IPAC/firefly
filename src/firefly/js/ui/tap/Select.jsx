@@ -1,10 +1,9 @@
-import React from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import Select, {components} from 'react-select';
 import {truncate} from 'lodash';
 import LOADING from 'html/images/gxt/loading.gif';
-
-import {fieldGroupConnector} from '../FieldGroupConnector';
+import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
 
 export const commonSelectStyles = {
     option: (styles) => (
@@ -133,23 +132,26 @@ export function NameSelect({options, value, onSelect, type, selectProps={}}) {
 }
 
 
-export const NameSelectField = fieldGroupConnector(NameSelect, getProps, NameSelect.propTypes, null);
+export const NameSelectField = memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return ( <NameSelect {...viewProps }
+                         onSelect={(selectedValue) => {
+                             fireValueChange({value: selectedValue});
+                             if (viewProps.onSelect) viewProps.onSelect(selectedValue);
+                         } }/>
+    );
 
-NameSelect.propTypes = {
+});
+
+NameSelectField.propTypes = {
+    fieldKey : PropTypes.string,
+    groupKey : PropTypes.string,
     options: PropTypes.array,
-    value: PropTypes.string,
     onSelect: PropTypes.func,
     type: PropTypes.string,
-    selectProps: PropTypes.object
+    selectProps: PropTypes.object,
+    initialState: PropTypes.shape({
+        value: PropTypes.string,
+    })
 };
 
-function getProps(params, fireValueChange) {
-    return Object.assign({}, params, {
-        onSelect: (selectedValue) => {
-            fireValueChange({value: selectedValue});
-            if (params.onSelect) {
-                params.onSelect(selectedValue);
-            }
-        }
-    });
-}

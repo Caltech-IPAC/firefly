@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {get, isEmpty}  from 'lodash';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
@@ -65,23 +65,6 @@ ListBoxInputFieldView.propTypes= {
     wrapperStyle: PropTypes.object
 };
 
-function getProps(params, fireValueChange) {
-
-    var {value,options}= params;
-    value= convertValue(value,options);
-
-    return Object.assign({}, params,
-        { value,
-          onChange: (ev) => {
-            handleOnChange(ev,params, fireValueChange);
-            if (params.onChange) {
-                params.onChange(ev);
-            }
-          }
-        });
-}
-
-
 function handleOnChange(ev, params, fireValueChange) {
     var options = ev.target.options;
     var val = [];
@@ -99,15 +82,10 @@ function handleOnChange(ev, params, fireValueChange) {
         message,
         valid
     });
+    if (params.onChange) params.onChange(ev);
 }
 
 
-const propTypes= {
-    inline : PropTypes.bool,
-    options : PropTypes.array.isRequired,
-    multiple : PropTypes.bool,
-    labelWidth : PropTypes.number
-};
 
 function checkForUndefined(v,props) {
     var optionContain = (v) => props.options.find ( (op) => op.value === v );
@@ -116,6 +94,31 @@ function checkForUndefined(v,props) {
             (!v ? props.options[0].value : (optionContain(v) ? v : props.options[0].value));
 }
 
-export const ListBoxInputField = fieldGroupConnector(ListBoxInputFieldView,
-                                                     getProps,propTypes,null,checkForUndefined);
+
+export const ListBoxInputField= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmInitialValue:checkForUndefined});
+    const newProps= {
+        ...viewProps,
+        value: convertValue(viewProps.value, viewProps.options),
+        onChange: (ev) => handleOnChange(ev,viewProps, fireValueChange)
+    };
+    return (<ListBoxInputFieldView {...newProps} />);
+});
+
+
+
+ListBoxInputField.propTypes= {
+    fieldKey : PropTypes.string,
+    groupKey : PropTypes.string,
+    forceReinit:  PropTypes.bool,
+    initialState: PropTypes.shape({
+        value: PropTypes.string,
+        tooltip: PropTypes.string,
+        label:  PropTypes.string,
+    }),
+    inline : PropTypes.bool,
+    options : PropTypes.array.isRequired,
+    multiple : PropTypes.bool,
+    labelWidth : PropTypes.number
+};
 

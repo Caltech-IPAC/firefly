@@ -1,12 +1,12 @@
-import React from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {get, has, isFunction, isNil} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 import {fetchUrl} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
 const UL_URL = `${getRootURL()}sticky/CmdSrv?${ServerParams.COMMAND}=${ServerParams.UPLOAD}`;
@@ -89,7 +89,48 @@ FileUploadView.defaultProps = {
     labelWidth: 0
 };
 
-export const FileUpload = fieldGroupConnector(FileUploadView, getProps);
+export const FileUpload= memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    let modViewProps;
+    if (viewProps.isFromURL) {
+        modViewProps= {
+            ...viewProps,
+            onChange: (ev) => onUrlChange(ev, viewProps, fireValueChange),
+            value:  viewProps.displayValue,
+            onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, viewProps.fileType, viewProps.fileAnalysis)
+        };
+    }
+    else {
+        modViewProps= {
+            ...viewProps,
+            value: viewProps.displayValue,
+            onChange: (ev) => handleChange(ev, fireValueChange, viewProps.fileType, viewProps.fileAnalysis)
+        };
+    }
+    return <FileUploadView {...modViewProps } /> ;
+});
+
+FileUpload.propTypes = {
+    fieldKey : PropTypes.string.isRequired,
+    isFromURL: PropTypes.bool,
+    innerStyle: PropTypes.object,
+    label: PropTypes.string,
+    labelWidth: PropTypes.number,
+    wrapperStyle: PropTypes.object,
+    fileNameStyle: PropTypes.object,
+    fileAnalysis: PropTypes.func,
+
+    initialState: PropTypes.shape({
+        tooltip: PropTypes.string,
+        label:  PropTypes.string,
+    }),
+};
+
+
+
+
+
+
 
 /*---------------------------- private ----------------------------*/
 
@@ -104,25 +145,6 @@ function onUrlChange(ev, store, fireValueChange) {
     fireValueChange({ value, message, valid, displayValue, analysisResult:''});
 }
 
-function getProps(params, fireValueChange) {
-    if (has(params, 'isFromURL') && params.isFromURL) {
-        return Object.assign({}, params,
-            {
-                onChange: (ev) => onUrlChange(ev, params, fireValueChange),
-                value: params.displayValue,
-                onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, params.fileType,
-                                                                                params.fileAnalysis)
-            }
-        );
-    } else {
-        return Object.assign({}, params,
-            {
-                value: params.displayValue,
-                onChange: (ev) => handleChange(ev, fireValueChange, params.fileType, params.fileAnalysis)
-            }
-        );
-    }
-}
 
 function doUrlAnalysis(value, fireValueChange, type, fileAnalysis) {
      fireValueChange({value: makeDoUpload(value, type, true, fileAnalysis)()});

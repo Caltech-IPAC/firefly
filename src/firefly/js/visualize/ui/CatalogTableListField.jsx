@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent, Component} from 'react';
+import React, {PureComponent, Component, memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, get} from 'lodash';
-import {fieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
+import {useFieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 import './CatalogTableListField.css';
 
 export class CatalogTableView extends Component {
@@ -72,7 +72,20 @@ export class CatalogTableView extends Component {
     }
 }
 
-export const CatalogTableListField = fieldGroupConnector(CatalogTableView, getProps, CatalogTableView.propTypes, null);
+export const CatalogTableListField = memo( (props) => {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    return (
+        <CatalogTableView {...viewProps} onClick= {(ev) => handleOnClick(ev, viewProps, fireValueChange)} />
+    );
+
+});
+
+CatalogTableListField.propTypes= {
+    fieldKey: PropTypes.string,
+    ...CatalogTableView.propTypes,
+};
+
+
 
 CatalogTableView.propTypes = {
     data: PropTypes.array.isRequired,
@@ -86,15 +99,6 @@ CatalogTableView.defaultProps = {
     data: [],
     cols: []
 };
-
-
-function getProps(params, fireValueChange) {
-
-    return Object.assign({}, params,
-        {
-            onClick: (ev) => handleOnClick(ev, params, fireValueChange)
-        });
-}
 
 function handleOnClick(ev, params, fireValueChange) {
     const value = ev.currentTarget.value || ev.currentTarget.attributes['value'].value;

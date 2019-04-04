@@ -2,30 +2,27 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
-import {getFeedback, formatPosForTextField} from './TargetPanelWorker.js';
 import {resolveNaifidObj} from  './NaifidPanelWorker.js';
-import {fieldGroupConnector} from './FieldGroupConnector.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
-import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
-import {SuggestBoxInputField} from './SuggestBoxInputField';
-import {flux} from 'firefly/Firefly.js';
+import {SuggestBoxInputFieldView} from './SuggestBoxInputField';
+import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {TargetFeedback} from './TargetFeedback';
-import {dispatchValueChange} from '../fieldGroup/FieldGroupCntlr';
 
 
 const LABEL_DEFAULT='Moving Target Name:';
 
+const makeValidRet= (valid,message='') => ({valid,message});
+const defValidator= (val) => val ? makeValidRet(false,'Naif name not found') : makeValidRet(true);
 
 class NaifidPanelView extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {suggestions: '',fld: FieldGroupUtils.getGroupFields(this.props.groupKey)};
+        this.state = {suggestions: ''};
         this.getSuggestions = this.getSuggestions.bind(this);
+        this.activeValidator= defValidator;
     }
 
     componentWillUnmount() {
@@ -35,17 +32,15 @@ class NaifidPanelView extends PureComponent {
 
     componentDidMount() {
         this.iAmMounted = true;
-        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => {
-            if (fields !== this.state && this.iAmMounted) {
-                this.setState({fields});
-            }
-        });
     }
 
 
-    getSuggestions(val) {
+    getSuggestions(val= '') {
+            // if (val.length<2) return Promise.resolve([]);
+            this.activeValidator= defValidator;
+            if (val.length<2) return [];
             const rval = resolveNaifidObj(val);
-            if (!rval.p) return undefined;
+            if (!rval.p) return [];
             return rval.p.then((response)=>{
                 //const [result] = response;
                 if(response.valid) {
@@ -57,6 +52,16 @@ class NaifidPanelView extends PureComponent {
                         this.setState({suggestions:''});
                     }
 
+                    this.activeValidator= (val= '') => {
+                        if (!val) return makeValidRet(true);
+                        if (Object.keys(suggestionsList).find((k) => k.toUpperCase()===val.toUpperCase())) {
+                            return makeValidRet(true);
+                        }
+                        else {
+                            return makeValidRet(false,'Choose naif name from list');
+                        }
+                    };
+
                     return Object.keys(suggestionsList).map( (k) => `Object Name:${k}, NAIF ID:${suggestionsList[k]}`);
 
                 }else {
@@ -67,23 +72,35 @@ class NaifidPanelView extends PureComponent {
 
 
     render() {
-        const {fieldKey, groupKey, showHelp, valid, message, feedback, value,
-            labelWidth, feedbackStyle, popStyle, label= LABEL_DEFAULT}= this.props;
+        const {showHelp, valid, message, feedback, value,
+            labelWidth, feedbackStyle, popStyle, label= LABEL_DEFAULT, fireValueChange}= this.props;
 
-        let positionField = (<SuggestBoxInputField
-            fieldKey = {fieldKey}
+
+        const validator=  (val) => {
+            return this.activeValidator(val);
+        };
+
+
+        const positionField = (<SuggestBoxInputFieldView
             wrapperStyle={{width:200}}
             label = {label}
             labelWidth={labelWidth}
             style={{width: 50}}
+            valid={valid}
             popStyle={popStyle}
             message={message}
             value={value}
-            valueOnSuggestion={getNaifidValue((selectedSugg) => updateFeedback(selectedSugg, fieldKey, groupKey, valid))}
+            valueOnSuggestion={getNaifidValue((selectedSugg) => {
+                updateFeedback(selectedSugg, true, fireValueChange);
+            })}
             getSuggestions={this.getSuggestions}
             renderSuggestion={renderSuggestion}
+            fireValueChange={(payload) => {
+                fireValueChange({message:payload.message, valid:payload.valid, displayValue:payload.value});
+            }}
+            validator={validator}
         />);
-        let naifidFeedback = (<TargetFeedback {...{feedback}} {...{feedbackStyle}}/>);
+        const naifidFeedback = (<TargetFeedback {...{feedback}} {...{feedbackStyle}}/>);
 
         return (
             <div>
@@ -96,8 +113,6 @@ class NaifidPanelView extends PureComponent {
 }
 
 NaifidPanelView.propTypes = {
-    fieldKey : PropTypes.string,
-    groupKey : PropTypes.string,
     label : PropTypes.string,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
@@ -107,98 +122,72 @@ NaifidPanelView.propTypes = {
     labelWidth : PropTypes.number,
     popStyle : PropTypes.object, //style for the suggestion box popup list
     onUnmountCB : PropTypes.func,
-    feedbackStyle: PropTypes.object
+    feedbackStyle: PropTypes.object,
+    fireValueChange: PropTypes.func
 };
 
 
 
-function didUnmount(fieldKey,groupKey, props) {
-    const wp= parseWorldPt(FieldGroupUtils.getFldValue(FieldGroupUtils.getGroupFields(groupKey),fieldKey));
-
-    if (props.nullAllowed && !wp) {
-        dispatchActiveTarget(null);
-    }
-    else if (isValidPoint(wp)) {
-        dispatchActiveTarget(wp);
-    }
-}
-
-
-
-function getProps(params) {
-    let feedback= params.feedback|| '';
-    let value= params.displayValue;
-    let showHelp= get(params,'showHelp', true);
-    const wpStr= params.value;
-    const wp= parseWorldPt(wpStr);
-
-    if (isValidPoint(wp) && !value) {
-        feedback= getFeedback(wp);
-        value= wp.objName || formatPosForTextField(wp);
-        showHelp= false;
-    }
-
-    return Object.assign({}, params,
-        {
-            visible: true,
-            label: params.label || LABEL_DEFAULT,
-            tooltip: 'Enter a target',
-            value,
-            feedback,
-            showHelp,
-            nullAllowed:params.nullAllowed,
-            onUnmountCB: didUnmount
-        });
-}
-
-
-function updateFeedback(value, fieldKey, groupKey, valid){
+function updateFeedback(resolvedStr, valid, fireValueChange){
+   const {objName, naifId}=  parseNaifPair(resolvedStr);
    const payload={
-       fieldKey: fieldKey,
-       groupKey: groupKey,
-       feedback: value,
-       valid: valid
+       feedback: resolvedStr,
+       valid,
+       displayValue: objName,
+       value: naifId,
    };
-   dispatchValueChange(payload);
-}
-
-
-const connectorDefaultProps = {
-    fieldKey : 'UserTargetWorldPt',
-    initialState  : {
-        fieldKey : 'UserTargetWorldPt'
-    }
-};
-
-function replaceValue(v,props) {
-    const t= getActiveTarget();
-    // if (props.nullAllowed && !v) return v;
-    let retVal= v;
-    if (t && t.worldPt) {
-        if (get(t,'worldPt')) retVal= t.worldPt.toString();
-    }
-    return retVal;
+   fireValueChange(payload);
 }
 
 /** Parses the selected option, and returns the value which gets populated in the input field of the suggestion box*/
 function getNaifidValue(onCallBack) {
     return (val, str) => {
         if (! str) return;
-        //const [,naifId] = str.match(/NAIF ID:(.*)/) || [];
-        const [,naifId] = str.match(/Object Name:(.*),/) || [];
+        const result= parseNaifPair(str);
         onCallBack(str);
-        return naifId;
-    }
+        return result.objName;
+    };
+}
+
+function parseNaifPair(str) {
+    const [,objName=''] = str.match(/Object Name:(.*),/) || [];
+    const [,naifId=''] = str.match(/NAIF ID:(.*)/) || [];
+    return {objName,naifId};
 }
 
 
 /** renders suggestion list's popup */
 function renderSuggestion(str){
-    let name = str.split(',')[0].split('Object Name:');
-    let naifid = str.split(',')[1].split('NAIF ID:');
-
-    return  <span>Name:<b>{name}</b>, NAIF ID: <b>{naifid}</b></span>;
+    const {objName, naifId}=  parseNaifPair(str);
+    return  <span>Name:<b>{objName}</b>, NAIF ID: <b>{naifId}</b></span>;
 }
 
-export const NaifidPanel= fieldGroupConnector(NaifidPanelView,getProps,null,connectorDefaultProps, replaceValue);
 
+function handleValueChange(payload, fireValueChange) {
+    const newPayload= {...payload};
+    if (!payload.valid) {
+        newPayload.value= '';
+        newPayload.feedback= '';
+    }
+    fireValueChange(newPayload) ;
+}
+
+export const NaifidPanel= memo( (props) => {
+    const {fieldKey= 'NaifId'}= props;
+    const {viewProps, fireValueChange}=  useFieldGroupConnector({fieldKey, ...props});
+
+
+    const newProps=
+        {
+            ...viewProps,
+            visible: true,
+            label: viewProps.label || LABEL_DEFAULT,
+            tooltip: 'Enter a target',
+            value: viewProps.displayValue,
+            feedback: viewProps.feedback|| '',
+            showHelp: get(viewProps,'showHelp', true),
+            fireValueChange: (payload) => handleValueChange(payload,fireValueChange)
+        };
+
+    return <NaifidPanelView {...newProps} /> ;
+});
