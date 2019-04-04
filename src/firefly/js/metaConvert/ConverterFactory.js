@@ -15,21 +15,28 @@ import {getCellValue} from '../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
+import {hasObsCoreLikeDataProducts} from '../util/VOAnalyzer.js';
+import {dispatchUpdateCustom} from '../visualize/MultiViewCntlr.js';
+import {makeObsCoreConverter, makeRequestForObsCore} from './ObsCoreConverter';
 
 
 //const URL= 'URL';
 const FILE= 'FILE';
 
+function promiseWrap(makeReq) {
+    return (table, row, includeSingle, includeStandard, threeColorOps) =>
+             Promise.resolve( makeReq(table, row, includeSingle, includeStandard, threeColorOps));
+}
 
 
 
-export const converters = {
+export const converterTemplates = {
     'wise' : {
         threeColor : true,
         hasRelatedBands : true,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : makeWisePlotRequest,
+        makeRequest : promiseWrap(makeWisePlotRequest),
         threeColorBands : {
             b1 : {color : Band.RED, title: 'Band 1'},
             b2 : {color : Band.GREEN, title: 'Band 2'},
@@ -41,14 +48,14 @@ export const converters = {
         hasRelatedBands : true,
         canGrid : true,
         maxPlots : 5,
-        makeRequest : makeAtlasPlotRequest
+        makeRequest : promiseWrap(makeAtlasPlotRequest)
     },
     'twomass' : {
         threeColor : true,
         hasRelatedBands : true,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : make2MassPlotRequest,
+        makeRequest : promiseWrap(make2MassPlotRequest),
         threeColorBands : {
             J : {color : Band.RED, title: 'J'},
             H : {color : Band.GREEN, title: 'H'},
@@ -60,7 +67,7 @@ export const converters = {
         hasRelatedBands : true,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : makeLsstSdssPlotRequest,
+        makeRequest : promiseWrap(makeLsstSdssPlotRequest),
         threeColorBands : {
             u : {color : null, title: 'u'},
             g : {color : Band.RED, title: 'g'},
@@ -74,7 +81,7 @@ export const converters = {
         hasRelatedBands : true,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : makeLsstWisePlotRequest,
+        makeRequest : promiseWrap(makeLsstWisePlotRequest),
         threeColorBands : {
             b1 : {color : Band.RED, title: 'Band 1'},
             b2 : {color : Band.GREEN, title: 'Band 2'},
@@ -82,30 +89,52 @@ export const converters = {
             b4 : {color : Band.BLUE, title: 'Band 4'}
         }
     },
+    'ObsCore' : {
+        threeColor : false,
+        hasRelatedBands : false,
+        canGrid : true,
+        maxPlots : 12,
+        makeRequest : makeRequestForObsCore
+    },
     'UNKNOWN' : {
         threeColor : false,
         hasRelatedBands : false,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : makeRequestForUnknown
+        makeRequest : promiseWrap(makeRequestForUnknown)
     },
     'SimpleMoving' : {
         threeColor : false,
         hasRelatedBands : false,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : makeRequestSimpleMoving
+        makeRequest : promiseWrap(makeRequestSimpleMoving)
     }
 };
 
 
+export function init3ColorDisplayManagement(viewerId) {
+     const customEntry= Object.keys(converterTemplates).reduce( (newObj, key) => {
+        if (!converterTemplates[key].threeColor) return newObj;
+        newObj[key]= {...converterTemplates[key].threeColorBands, threeColorVisible:false};
+        return newObj;
+    }, {});
+    dispatchUpdateCustom(viewerId, customEntry);
+}
 
 
 export function converterFactory(table) {
     const dataId= get(table, ['tableMeta', MetaConst.IMAGE_SOURCE_ID]) ||
                   get(table, ['tableMeta', MetaConst.DATASET_CONVERTER]);
-    const converter= dataId ? converters[dataId] : converters['UNKNOWN'];
-    return converter && {converter,dataId};
+    if (dataId) {
+        return {converter:{...converterTemplates[dataId]},dataId};
+    }
+    else if (hasObsCoreLikeDataProducts(table)) {
+        return {converter:makeObsCoreConverter(table,converterTemplates['ObsCore']),dataId:`ObsCore-${table.tbl_id}`};
+    }
+    else {
+        return {converter:{...converterTemplates['UNKNOWN']},dataId:'UNKNOWN'};
+    }
 }
 
 

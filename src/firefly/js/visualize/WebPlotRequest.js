@@ -150,6 +150,7 @@ const C= {
     PLOT_ID : 'plotId',
     OVERLAY_IDS: 'PredefinedOverlayIds',
     RELATED_TABLE_ROW : 'RELATED_TABLE_ROW',
+    RELATED_TABLE_ID : 'RELATED_TABLE_ID',
     HIPS_ROOT_URL: 'hipsRootUrl',
     HIPS_SURVEYS_ID: 'hipsSurveysId',
 
@@ -1293,6 +1294,11 @@ export class WebPlotRequest extends ServerRequest {
     setRelatedTableRow(id) { this.setParam(C.RELATED_TABLE_ROW,id); }
 
     getRelatedTableRow() { return this.getIntParam(C.RELATED_TABLE_ROW,-1); }
+
+    setRelatedTableId(id) { this.setParam(C.RELATED_TABLE_ID,id); }
+
+    getRelatedTableId() { return this.getParam(C.RELATED_TABLE_ID); }
+
 
     setDownloadFileNameRoot(nameRoot) { this.setParam(C.DOWNLOAD_FILENAME_ROOT, nameRoot); }
 

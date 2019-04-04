@@ -169,6 +169,7 @@ export const PlotAttribute= {
     MINIMAL_READOUT : 'MINIMAL_READOUT',
 
     TABLE_ROW : 'TABLE_ROW',
+    TABLE_ID : 'TABLE_ID',
 
 
     UNIQUE_KEY : 'UNIQUE_KEY'

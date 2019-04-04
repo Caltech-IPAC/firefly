@@ -349,14 +349,15 @@ function startTableTypeWatchersForTable(tbl_id, action, getDefList) {
                 stopProp= stopPropagation;
                 excludeList= union(excludeList, excludes);
                 let abort= false;
-                d.watcher(tbl_id, undefined, ()=> (abort=true), {sharedData, options});
+                const initParams= d.watcher(tbl_id, undefined, ()=> (abort=true), {sharedData, options});
                 if (abort) return;
                 dispatchAddActionWatcher({
                     id:`${TTW_PREFIX}${id}-${tbl_id}`,
                     actions,
                     callback: (action,cancelSelf,params) => {
                         return d.watcher(tbl_id, action, cancelSelf, {...params, sharedData, options});
-                    } } );
+                    },
+                    params:initParams});
             }
         });
     });

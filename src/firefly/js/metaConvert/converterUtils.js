@@ -86,13 +86,14 @@ export const computePlotId= (plotIdRoot ,plotIdx) => `${plotIdRoot}-row-${plotId
  */
 export function findGridTableRows(table,maxRows, plotIdRoot) {
 
-    const {startIdx, endIdx, highlightedRow}= getTblInfo(table, maxRows);
+    const {startIdx, endIdx, hlRowIdx}= getTblInfo(table, maxRows);
 
     let j= 0;
     const retval= [];
 
     for(let i=startIdx; (i<endIdx );i++) {
-        retval[j++] = {plotId: computePlotId(plotIdRoot, i), row: i, highlight: i === highlightedRow};
+        retval[j] = {plotId: computePlotId(plotIdRoot, i), row: i, highlight: j === hlRowIdx};
+        j++;
     }
     return retval;
 }
