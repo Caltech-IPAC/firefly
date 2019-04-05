@@ -169,13 +169,13 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
         return {paused:false};
     }
 
+    if (action.type===TABLE_LOADED) decimatedTables[tbl_id]= undefined;
     if (paused) return {paused};
 
     switch (action.type) {
 
         case TABLE_LOADED:
             if (!getTableInGroup(tbl_id)) return {paused};
-            decimatedTables[tbl_id]= undefined;
             updateCoverage(tbl_id, viewerId, decimatedTables, options, tblCatIdMap);
             break;
 
