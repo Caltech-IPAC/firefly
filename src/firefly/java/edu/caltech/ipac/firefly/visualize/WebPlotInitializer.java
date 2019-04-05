@@ -29,7 +29,7 @@ public class WebPlotInitializer {
     private WebFitsData   _fitsData[];
     private String        _desc;
     private String        _dataDesc;
-    private Header headerAry[];
+    private Header headerAry[]; //passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
     private transient List<RelatedData> relatedData;
 //    private transient Projection _projection;
 

@@ -9,6 +9,7 @@ import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from
 import {callCrop, callChangeColor, callRecomputeStretch} from '../../rpc/PlotServicesJson.js';
 import WebPlotResult from '../WebPlotResult.js';
 import {WebPlot} from '../WebPlot.js';
+import {populateFromHeader} from './PlotImageTask';
 
 
 
@@ -172,7 +173,9 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
         const resultAry= getResultAry(result);
 
         if (resultAry[0].success) {
-            let plotAry = resultAry[0].data[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit, pv));
+            const {PlotCreateHeader:plotCreateHeader, PlotCreate:plotCreate}=resultAry[0].data;
+            populateFromHeader(plotCreateHeader, plotCreate);
+            let plotAry = plotCreate.map((pc) => makePlot(pc, plotCreateHeader, pv));
             if (plotAry.length===1 && pv.plots.length>1) {
                 const newP= plotAry[0];
                 plotAry= pv.plots.map( (p,idx) => idx===pv.primeIdx ? newP : p);
@@ -198,7 +201,7 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
 
 function getResultAry(result) {
     if (result.PlotCreate) {
-        return [{success:true, data:{PlotCreate:result.PlotCreate}}];
+        return [{success:true, data:{PlotCreate:result.PlotCreate, PlotCreateHeader: result.PlotCreateHeader}}];
     }
     else if (result[WebPlotResult.RESULT_ARY]) {
         return result[WebPlotResult.RESULT_ARY];
@@ -209,9 +212,10 @@ function getResultAry(result) {
 }
 
 
-function makePlot(wpInit,pv) {
-    const plot= WebPlot.makeWebPlotData(pv.plotId, wpInit, primePlot(pv).attributes);
-    plot.title= primePlot(pv).title;
+function makePlot(pc,plotCreateHeader, pv) {
+    const oldPlot= primePlot(pv);
+    const plot= WebPlot.makeWebPlotData(pv.plotId, pc, oldPlot.attributes, false, oldPlot.cubeCtx);
+    plot.title= oldPlot.title;
     return plot;
 }
 

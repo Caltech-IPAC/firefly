@@ -26,7 +26,9 @@ import WebGrid from '../../drawingLayers/WebGrid.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
-import {dispatchRecenter} from '../ImagePlotCntlr';
+import {dispatchPlotProgressUpdate, dispatchRecenter} from '../ImagePlotCntlr';
+import {isDefined} from '../../util/WebUtil';
+import {FitsHdr} from '../WebPlot';
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -260,8 +262,14 @@ export function modifyRequest(pvCtx, r, band, useCtxMods) {
  * @param {object} payload the payload of the original action
  * @param {object} result the result of the search
  */
+
+/**
+ *
+ * @param dispatcher
+ * @param {object} payload the payload of the original action
+ * @param {object} result the result of the search
+ */
 export function processPlotImageSuccessResponse(dispatcher, payload, result) {
-    let resultPayload;
     let successAry= [];
     let failAry= [];
 
@@ -277,20 +285,25 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
         else                failAry= [{data:result}];
     }
 
+    successAry.forEach( (r) => {
+        const plotState= PlotState.makePlotStateWithJson(r.data.PlotCreate[0].plotState);
+        const wpRequest= r.data.PlotCreateHeader ?  WebPlotRequest.parse(r.data.PlotCreateHeader.plotRequestSerialize) : plotState.getWebPlotRequest();
+        dispatchPlotProgressUpdate(wpRequest.getPlotId(), 'Loading Images', false,wpRequest.getRequestKey());
+    });
+    setTimeout( () => processPlotImageResponseDeferred(dispatcher, payload, successAry, failAry) , 5);
 
-    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccessfulCall(r.data.PlotCreate,payload, r.data.requestKey) );
-    resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
+}
+
+export function processPlotImageResponseDeferred(dispatcher, payload, successAry, failAry) {
+
     if (successAry.length) {
+        const pvNewPlotInfoAry= successAry.map( (r) => handleSuccessfulCall(r.data.PlotCreate, r.data.PlotCreateHeader,payload, r.data.requestKey) );
+        const resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
         dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
         const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry}});
 
-        // if (isEmpty(payload.oldOverlayPlotViews)) {
-            matchAndActivateOverlayPlotViewsByGroup(plotIdAry);
-        // }
-        // else {
-        //     matchAndActivateOverlayPlotViews(plotIdAry, payload.oldOverlayPlotViews);
-        // }
+        matchAndActivateOverlayPlotViewsByGroup(plotIdAry);
 
 
         pvNewPlotInfoAry
@@ -310,22 +323,15 @@ export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     failAry.forEach( (r) => {
         const {data}= r;
         if (payload.plotId) dispatchAddViewerItems(EXPANDED_MODE_RESERVED, [payload.plotId], IMAGE);
-        /*
-        const req = payload.wpRequestAry.find((req) => req.getParam('plotId') === data.plotId);
-        let   reason = req && req.getParam('userFailReason');
-        reason = reason ? get(reason, [data.userFailReason.toLowerCase()], '') : '';
-        */
-
-        resultPayload= Object.assign({},payload);
-        // todo: add failure stuff to resultPayload here
-        resultPayload.briefDescription= data.briefFailReason;
-        resultPayload.description= 'Failed- ' + data.userFailReason;
-        //resultPayload.description= reason || ('Failed- ' + data.userFailReason);
-        resultPayload.detailFailReason= data.detailFailReason;
-        resultPayload.plotId= data.plotId;
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:resultPayload} );
+        const failPayload= {
+            ...payload,
+            briefDescription: data.briefFailReason,
+            description: 'Failed- ' + data.userFailReason,
+            detailFailReason: data.detailFailReason,
+            plotId: data.plotId,
+        };
+        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:failPayload} );
     });
-
 }
 
 
@@ -385,25 +391,86 @@ export function addDrawLayers(request, plot ) {
  *
  */
 
+ function findCubePlane(plotCreate) {
+     const plotState= PlotState.makePlotStateWithJson(plotCreate.plotState);
+     if (plotState.isThreeColor()) return -1;
+     if (plotCreate.headerAry && isDefined(plotCreate.headerAry[0][FitsHdr.SPOT_PL])) { // this should be the zero plane of the cube
+         return Number(plotCreate.headerAry[0][FitsHdr.SPOT_PL].value);
+     }
+     else if (!plotCreate.headerAry) {  // if no headerAry, it is a plane of the cube
+         return plotState.getCubePlaneNumber();
+     }
+     else {
+         return -1;
+     }
+ }
+
+
+
+ function populateBandStateFromHeader(bandState, plotCreateHeader) {
+     bandState.plotRequestSerialize = plotCreateHeader.plotRequestSerialize;
+     bandState.uploadFileNameStr= plotCreateHeader.uploadFileNameStr;
+     bandState.originalFitsFileStr= plotCreateHeader.originalFitsFileStr;
+     bandState.workingFitsFileStr= plotCreateHeader.workingFitsFileStr;
+ }
+
+
+/**
+ * readds the data into each plotCreate from the plotCreateHeader.
+ * The data in the header is replicated in each plot and was clear for network transfere
+ * efficiency. This optimization is very import for large cubes.
+ * Note- data is modified in place plotCreate will me changed, no new object is created.
+ * @param plotCreateHeader
+ * @param plotCreate
+ */
+export function populateFromHeader(plotCreateHeader, plotCreate) {
+     if (!plotCreateHeader) return;
+     for(let i=0; i<plotCreate.length; i++) {
+         if (isArray(plotCreate[0].bandStateAry)) {
+             for (let j = 0; j < 3; j++) {
+                 if (plotCreate[0].bandStateAry[j]) {
+                     populateBandStateFromHeader(plotCreate[i].plotState.bandStateAry[j],plotCreateHeader);
+                 }
+             }
+         }
+         else {
+             populateBandStateFromHeader(plotCreate[i].plotState.bandStateAry,plotCreateHeader);
+         }
+         plotCreate[i].dataDesc= plotCreateHeader.dataDesc;
+     }
+ }
 
 /**
  *
  * @param plotCreate
+ * @param plotCreateHeader
  * @param payload
  * @param requestKey
  * @return {PvNewPlotInfo}
  */
-const handleSuccessfulCall= function(plotCreate, payload, requestKey) {
+function handleSuccessfulCall(plotCreate, plotCreateHeader, payload, requestKey) {
+    // const plotCreate= plotCreateStrAry.map( (s) => JSON.parse(s));
+
+    populateFromHeader(plotCreateHeader, plotCreate);
+    let cubeStartIdx=-1;
+    const cubeCtxAry= plotCreate
+        .map( (pC,idx) => {
+            const cubePlane= findCubePlane(pC);
+            if (cubePlane===0) cubeStartIdx= idx;
+            return cubePlane>-1 ? {cubePlane,cubeHeaderAry:plotCreate[cubeStartIdx].headerAry} : undefined;
+        });
+
+
     const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
     const plotId= plotState.getWebPlotRequest().getPlotId();
 
-    const plotAry= plotCreate.map((wpInit) => makePlot(wpInit,plotId, payload.attributes));
+    const plotAry= plotCreate.map((wpInit,idx) => makePlot(wpInit,plotId, payload.attributes, cubeCtxAry[idx]) );
     if (plotAry.length) updateActiveTarget(plotAry[0]);
     return {plotId, requestKey, plotAry, overlayPlotViews:null};
-};
+}
 
-function makePlot(wpInit,plotId, attributes) {
-    const plot= WebPlot.makeWebPlotData(plotId, wpInit);
+function makePlot(wpInit,plotId, attributes, cubeCtx) {
+    const plot= WebPlot.makeWebPlotData(plotId, wpInit, {}, false, cubeCtx);
     const r= plot.plotState.getWebPlotRequest();
     plot.title= makePostPlotTitle(plot,r);
     if (r.isMinimalReadout()) plot.attributes[PlotAttribute.MINIMAL_READOUT]= true;

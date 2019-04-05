@@ -79,6 +79,7 @@ public class WebPlotResultSerializer {
                     ary.add(VisJsonSerializer.serializeWebPlotInitializerDeep(wpInit));
                 }
                 map.put(WebPlotResult.PLOT_CREATE, ary);
+                map.put(WebPlotResult.PLOT_CREATE_HEADER, VisJsonSerializer.serializeWebPlotHeaderInitializer(cr.getInitHeader()));
             }
             if (res.containsKey(WebPlotResult.DATA_HIST_IMAGE_URL)) {
                 String s= res.getStringResult(WebPlotResult.DATA_HIST_IMAGE_URL);

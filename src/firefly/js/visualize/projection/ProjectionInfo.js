@@ -82,12 +82,9 @@ const startsWithAny= (s,strAry) => Boolean(strAry.find( (sTest) => s.startsWith(
 
 function getBasicHeaderValues(parse) {
 
-    const naxis= parse.getIntValue('NAXIS');
     return {
-        naxis,
         naxis1: parse.getIntValue('NAXIS1'),
         naxis2: parse.getIntValue('NAXIS2'),
-        naxis3: (naxis > 2) ? parse.getIntValue('NAXIS3') : 1,
         cdelt2: parse.getDoubleValue('CDELT2', 0),
         bscale: parse.getDoubleValue('BSCALE', 1.0),
         bzero: parse.getDoubleValue('BZERO', 0.0),
@@ -432,12 +429,11 @@ function getJsys(params) {
 
 
 
-export function makeDirectFileAccessData(header) {
+export function makeDirectFileAccessData(header,cubePlane) {
 
     const parse= makeHeaderParse(header);
     const dataOffset = parse.getIntValue(FitsHdr.SPOT_OFF,0)+ parse.getIntValue(FitsHdr.SPOT_HS,0);
-    const planeNumber= parse.getIntValue(FitsHdr.SPOT_PL,0);
-    const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber};
+    const miniHeader= {...getBasicHeaderValues(parse), dataOffset, planeNumber:cubePlane>-1?cubePlane:0};
     miniHeader.bitpix= parse.getValue(FitsHdr.SPOT_BP);
 
     if (parse.getValue(ORIGIN,'').startsWith(PALOMAR_ID)) {

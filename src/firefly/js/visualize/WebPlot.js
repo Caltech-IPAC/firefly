@@ -4,7 +4,7 @@
 
 
 
-import {get,isEmpty} from 'lodash';
+import {get,isEmpty,isArray} from 'lodash';
 import {RequestType} from './RequestType.js';
 import {clone} from '../util/WebUtil.js';
 import CoordinateSys from './CoordSys.js';
@@ -202,6 +202,7 @@ export const PlotAttribute= {
  * @prop {String} plotImageId,  - plot image id, id of this WebPlot , immutable
  * @prop {Object} serverImage, immutable
  * @prop {String} title - the title
+ * @prop {{cubePlane,cubeHeaderAry}} cubeCtx
  * @prop {PlotState} plotState - the plot state, immutable
  * @prop {number} dataWidth - the width of the image data
  * @prop {number} dataHeight - the height of the image data
@@ -386,12 +387,13 @@ export const WebPlot= {
      * @param wpInit init data returned from server
      * @param {object} attributes any attributes to initialize
      * @param {boolean} asOverlay
+     * @param {{cubePlane,cubeHeaderAry}}  cubeCtx
      * @return {WebPlot} the plot
      */
-    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false) {
+    makeWebPlotData(plotId, wpInit, attributes= {}, asOverlay= false, cubeCtx) {
 
         const plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
-        const headerAry= wpInit.headerAry;
+        const headerAry= !cubeCtx ? wpInit.headerAry : [cubeCtx.cubeHeaderAry[0]];
         const header= headerAry[plotState.firstBand().value];
         const processHeader= parseSpacialHeaderInfo(header);
         const projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
@@ -400,7 +402,7 @@ export const WebPlot= {
         const zf= plotState.getZoomLevel();
 
         for(let i= 0; (i<3); i++) {
-            if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i]);
+            if (headerAry[i]) plotState.get(i).directFileAccessData= makeDirectFileAccessData(headerAry[i], cubeCtx?cubeCtx.cubePlane:-1);
         }
 
         //original plot state come with header information for getting flux.
@@ -416,6 +418,7 @@ export const WebPlot= {
             relatedData     : null,
             header,
             headerAry,
+            cubeCtx,
             // processHeader: parseSpacialHeaderInfo(header),
             plotState,
             projection,
@@ -426,7 +429,7 @@ export const WebPlot= {
             title : '',
             plotDesc        : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
-            webFitsData     : wpInit.fitsData,
+            webFitsData     : isArray(wpInit.fitsData) ? wpInit.fitsData : [wpInit.fitsData],
             //=== Mutable =====================
             screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
             zoomFactor: zf,

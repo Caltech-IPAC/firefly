@@ -296,7 +296,8 @@ public class PlotOutput {
         int width= defTileSize;
         int height;
         File file;
-        BufferedImage defImage= createImage(defTileSize,defTileSize, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
+        BufferedImage defImage= null;
+        if (createOnly>0) defImage= createImage(defTileSize,defTileSize, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
 
         ImageDataGroup imageDataGrp= plot.getImageData();
         List<TileFileInfo> retList= new ArrayList<TileFileInfo>(imageDataGrp.size());
@@ -309,12 +310,13 @@ public class PlotOutput {
 
         for(int x= 0; (x<screenWidth);  x+=width) {
             for(int y= 0; (y<screenHeight);  y+=height) {
+                image= null;
                 width= ((x+defTileSize) > screenWidth-defTileSize) ? screenWidth - x : defTileSize;
                 height= ((y+defTileSize) > screenHeight-defTileSize) ? screenHeight - y : defTileSize;
                 if (width==defTileSize && height==defTileSize) {
                     image= defImage;
                 }
-                else {
+                else if (createTile) {
                     image= createImage(width,height, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
                 }
                 file= getTileFile(dir,baseName,x,y,ext);

@@ -812,7 +812,7 @@ export const getHDU= (plot) => getNumberHeader(plot,FitsHdr.SPOT_EXT,0);
  * @param {WebPlot} plot
  * @return {number} the plane index, -1 if not in a cube
  */
-export const getImageCubeIdx = (plot) => getNumberHeader(plot,FitsHdr.SPOT_PL,-1);
+export const getImageCubeIdx = (plot) => (plot && plot.cubeCtx) ? plot.cubeCtx.cubePlane : -1;
 
 
 /**

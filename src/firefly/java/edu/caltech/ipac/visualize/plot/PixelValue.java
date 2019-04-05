@@ -132,7 +132,7 @@ public class PixelValue {
 	    System.out.println("Fetching value for x = " + x + "  y = " + y);
 	    try
 	    {
-        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,naxis,naxis1,naxis2,naxis3,
+        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,naxis1,naxis2,
                                                  cdelt2,bscale,bzero,blank_value,data_offset);
 		pixel_data = PixelValue.pixelVal(fits_file, x, y, miniHeader);
 		fits_file.close();
@@ -168,10 +168,8 @@ public class PixelValue {
 
     int plane_number   = header.getPlaneNumber();
     int bitpix         = header.getBixpix();
-    int naxis          = header.getNaxis();
     int naxis1         = header.getNaxis1();
     int naxis2         = header.getNaxis2();
-    int naxis3         = header.getNaxis3();
     double cdelt2      = header.getCDelt2();
     double bscale      = header.getBScale();
     double bzero       = header.getBZero();

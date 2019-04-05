@@ -44,6 +44,18 @@ export class BandState {
     }
 
     /**
+     *
+     */
+    getCubePlaneNumber() { return this.cubePlaneNumber; }
+
+    /**
+     *
+     * @return {number}
+     */
+    getCubeCnt() { return this.cubeCnt; }
+
+
+    /**
      * get a copy of the WebPlotRequest for this BandState.  Any changes to the object will not be reflected in
      * BandState you must set it back in
      * @return {WebPlotRequest}

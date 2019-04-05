@@ -20,28 +20,32 @@ public class CreatorResults implements Iterable<WebPlotInitializer>, Serializabl
 
     private final static String SPLIT_TOKEN= "--CreatorResults--";
 
-    WebPlotInitializer _wpInit[];
+    private WebPlotHeaderInitializer wpHeader;
+    private WebPlotInitializer[] wpInit;
 
-    public CreatorResults(WebPlotInitializer wpInit[]) {
-        _wpInit= wpInit;
+    public CreatorResults(WebPlotHeaderInitializer wpHeader, WebPlotInitializer[] wpInit) {
+        this.wpInit = wpInit;
+        this.wpHeader= wpHeader;
     }
 
     public Iterator<WebPlotInitializer> iterator() {
-        return Arrays.asList(_wpInit).iterator();
+        return Arrays.asList(wpInit).iterator();
     }
+
+    public WebPlotHeaderInitializer  getInitHeader() { return wpHeader; }
 
     public WebPlotInitializer[] getInitializers() {
-        return _wpInit;
+        return wpInit;
     }
 
-    public int size() { return _wpInit.length; }
+    public int size() { return wpInit.length; }
 
     @Override
     public String toString() {
         StringBuilder sb= new StringBuilder(1000);
-        for(int i= 0; (i<_wpInit.length);i++) {
-            sb.append(_wpInit[i]);
-            if (i<_wpInit.length-1) sb.append(SPLIT_TOKEN);
+        for(int i = 0; (i< wpInit.length); i++) {
+            sb.append(wpInit[i]);
+            if (i< wpInit.length-1) sb.append(SPLIT_TOKEN);
         }
         return sb.toString();
     }
