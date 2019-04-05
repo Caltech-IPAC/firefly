@@ -266,7 +266,10 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options, tblCatIdMap)
                 (allRowsTable) => {
                     if (get(allRowsTable, ['tableData', 'data'], []).length > 0) {
                         decimatedTables[tbl_id] = allRowsTable;
-                        tblCatIdMap[tbl_id] = isTableWithRegion(allRowsTable) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id];
+                        const isRegion = isTableWithRegion(allRowsTable);
+                        //const isCatalog = findTableCenterColumns(allRowsTable);
+
+                        tblCatIdMap[tbl_id] = (isRegion) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id];
                         updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table), tblCatIdMap);
                     }
                 }

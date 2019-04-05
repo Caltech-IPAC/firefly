@@ -14,6 +14,7 @@ import {DataTypes} from '../visualize/draw/DrawLayer.js';
 import {showInfoPopup, INFO_POPUP} from '../ui/PopupUtil.jsx';
 import {isDialogVisible, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import EXCLAMATION from 'html/images/exclamation16x16.gif';
+import infoIcon from 'html/images/info-icon.png';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
 export const getUIComponent = (drawLayer,pv) => <CatalogUI drawLayer={drawLayer} pv={pv}/>;
@@ -41,9 +42,11 @@ function CatalogUI({drawLayer,pv}) {
         // for region layer
         if (selectOption && tOptions.find((oneOp) => oneOp.value === selectOption)) {
             const message = composeRegionMessage(drawLayer, selectOption);
+            const helpRef = 'http://www.ivoa.net/documents/TAP/20100327/REC-TAP-1.0.pdf';
+
             const errorIcon = !message ? null : (
                             <div style={{width: 16, height: 16, marginLeft: 10}}
-                                 onClick={() => showInfoPopup(message, 'region column error')} >
+                                 onClick={() => showErrorPopup(message, 'region column error', helpRef)} >
                                 <img src={EXCLAMATION}/>
                             </div>
                     );
@@ -91,6 +94,15 @@ function CatalogUI({drawLayer,pv}) {
     );
 }
 
+const showErrorPopup = (message, title, helpRef) => {
+    const InfoIcon = () => helpRef && (
+        <a onClick={(e) => e.stopPropagation()} target='_blank' href={helpRef}>
+                <img style={{width:'14px'}} src={infoIcon} alt='info'/></a>
+    );
+
+    const content = (<div> {message} {InfoIcon()} </div>);
+    showInfoPopup(content, title, true);
+};
 
 function composeRegionMessage(dl, selectOption) {
     const dd = Object.assign({},dl.drawData);
@@ -103,8 +115,8 @@ function composeRegionMessage(dl, selectOption) {
         }, 0);
 
     return (invalidRows === 0) ? '' :
-            `${invalidRows} out of ${dataAry.length} rows are not identified as valid regions due to unsupported` +
-            ' or invalid region values';
+            `${invalidRows} out of ${dataAry.length} rows are not displayable as regions due to unsupported` +
+            ' or invalid s_region values.';
 }
 
 function changeTableSelection(drawLayer, pv, value, preValue) {

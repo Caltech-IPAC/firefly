@@ -110,7 +110,6 @@ export function parseObsCoreRegion(sRegionVal, unit='deg', isCorners=false) {
     let  message = '';
     const corners = [];
 
-
     const sAry = sRegionVal.split(/\s+/);
 
     const retVal = (v, m) => {
@@ -172,7 +171,7 @@ export function parseObsCoreRegion(sRegionVal, unit='deg', isCorners=false) {
             if (coordCount >= 6 && coordCount%2 === 0) {
                 const wptAry = [];
 
-                for (let i = 2; i < sAry.length; i += 2) {
+                for (let i = coord1; i < sAry.length; i += 2) {
                     pairCoord = getPairCoord(sAry, [i, i + 1]);
                     if (pairCoord.length === 2) {
                         wptAry.push(makeWpt(pairCoord, coordSys, unit));

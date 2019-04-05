@@ -813,10 +813,10 @@ export function findCenterColumnsByColumnsModel(columnsModel) {
  * @see MetaConst.CATALOG_OVERLAY_TYPE
  */
 export function isCatalog(tableOrId) {
-
     const table= getTableModel(tableOrId);
 
     if (!table) return false;
+    if (isTableWithRegion(table)) return false;
     const {tableMeta, tableData}= table;
     if (!get(tableData, 'columns') || !tableMeta) return false;
 
@@ -825,7 +825,7 @@ export function isCatalog(tableOrId) {
         return Boolean(TableRecognizer.newInstance(table).getCenterColumns());
     }
     else {
-        return (!isTableWithRegion(table)) && Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
+        return Boolean(TableRecognizer.newInstance(table).getVODefinedCenterColumns());
     }
 }
 
