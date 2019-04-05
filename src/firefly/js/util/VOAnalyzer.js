@@ -14,11 +14,11 @@ export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 
 //const obsPrefix = 'obscore:';
 const ColNameIdx = 0;
-//const UCD = 1;
 const UcdColIdx = 1;
 const UtypeColIdx = 2;
 const mainMeta = 'meta.main';
 const obsCorePosColumns = ['s_ra', 's_dec'];
+const obsCoreRegionColumn = 's_region';
 
 const OBSTAPCOLUMNS = [
     ['dataproduct_type',  'meta.id',                    'ObsDataset.dataProductType'],
@@ -100,8 +100,6 @@ export const posCol = {[UCDCoord.eq.key]: {ucd: [['pos.eq.ra', 'pos.eq.dec'],...
     [UCDCoord.galactic.key]: {ucd: [['pos.galactic.lon', 'pos.galactic.lat']],
                               coord: CoordinateSys.GALACTIC, adqlCoord: 'GALATIC'}};
 
-const voRegionColumn = {ucd: ['pos.outline', 'obs.field'], name: 's_region'};
-
 function getLonLatIdx(tableModel, lonCol, latCol) {
     const lonIdx =  getColumnIdx(tableModel, lonCol);
     const latIdx =  getColumnIdx(tableModel, latCol);
@@ -121,18 +119,13 @@ function centerColumnUTypesFromObsTap() {
     return centerUTypes.findIndex((oneUtype) => !oneUtype) >= 0 ? null : centerUTypes;
 }
 
-function columnUTypeFromObsTap(name) {
-    return get(OBSTAPCOLUMNS.find((col) => col[ColNameIdx] === name), UtypeColIdx, null);
-
-}
-
 const UCDSyntax = new Enum(['primary', 'secondary', 'any'], {ignoreCase: true});
 const ucdSyntaxMap = {
             'pos.eq.ra':  UCDSyntax.any,
             'pos.eq.dec': UCDSyntax.any,
             'meta.main':  UCDSyntax.secondary,
-            [voRegionColumn.ucd[0]]: UCDSyntax.primary,
-            [voRegionColumn.ucd[1]]: UCDSyntax.secondary
+            'pos.outline': UCDSyntax.primary,
+            'obs.field': UCDSyntax.secondary
 };
 
 
@@ -534,8 +527,9 @@ class TableRecognizer {
     getRegionColumnOnUCD(cols) {
         this.regionColumnInfo = null;
         const columns = !isEmpty(cols) ? cols : this.columns;
+        const ucds = get(getObsTabColEntry(obsCoreRegionColumn), 'ucd', '').split(';');
 
-        const regionCols = get(voRegionColumn, 'ucd', []).reduce((prev, oneUcd) => {
+        const regionCols = ucds.reduce((prev, oneUcd) => {
             if (prev.length > 0) {
                 prev = this.getColumnsWithUCDWord(prev, oneUcd);
             }
@@ -554,11 +548,11 @@ class TableRecognizer {
 
     getRegionColumnOnObsCoreUType(cols) {
         const columns = !isEmpty(cols) ? cols : this.columns;
-        const obsUtype = columnUTypeFromObsTap(voRegionColumn.name);
+        const obsUtype = get(getObsTabColEntry(obsCoreRegionColumn), 'utype', '');
 
         this.regionColumnInfo = null;
 
-        const regionCols = !isEmpty(columns) && columns.filter((col) => {
+        const regionCols = (obsUtype) && !isEmpty(columns) && columns.filter((col) => {
             return  (has(col, 'utype') && col.utype.includes(obsUtype));
         });
 
@@ -577,7 +571,7 @@ class TableRecognizer {
         this.regionColumnInfo = null;
         const columns = !isEmpty(cols) ? cols : this.columns;
 
-        const regionCol = !isEmpty(columns) && columns.find((oneCol) => oneCol.name.toLowerCase() === voRegionColumn.name);
+        const regionCol = !isEmpty(columns) && columns.find((oneCol) => oneCol.name.toLowerCase() === obsCoreRegionColumn);
         if (regionCol) {
             this.setRegionColumnInfo(regionCol);
         }
