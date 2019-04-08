@@ -868,7 +868,7 @@ export function isMetaDataTable(tableOrId) {
     const hasDsCol = Boolean(Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceUpper));
 
     return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] ||
-        hasDsCol || hasObsCoreLikeDataProducts(table));
+        hasDsCol || hasObsCoreLikeDataProducts(table) || isTableWithRegion(tableOrId));
 }
 
 

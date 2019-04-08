@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import {isUndefined, isString} from 'lodash';
 import CompleteButton from './CompleteButton.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {ModalDialog} from './ModalDialog.jsx';
@@ -76,7 +77,8 @@ export function showOptionsPopup({content, title='Options', modal = false, show=
  * @param {boolean} isCopyable
  * @return {object}
  */
-export function showInfoPopup(content, title='Information', isCopyable = false) {
+export function showInfoPopup(content, title='Information', isCopyable) {
+    if (isUndefined(isCopyable)) isCopyable = isString(content);
     var results= (
         <PopupPanel title={title} >
             {makeContent(content, isCopyable)}

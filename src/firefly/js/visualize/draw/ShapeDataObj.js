@@ -258,10 +258,6 @@ function makeDrawParams(drawObj,def={}) {
     };
 }
 
-const getCenter = (obj) => {
-    draw.getCenterPt(obj);
-};
-
 const draw=  {
 
 
@@ -296,16 +292,17 @@ const draw=  {
         }
     },
 
+
     getScreenDist(drawObj,plot, pt) {
         let dist = -1;
 
-        if (drawObj.sType === ShapeType.Line ) return distToLine(drawObj.pts, plot, pt);
-        if (drawObj.sType === ShapeType.Polygon) return distanceToPolygon(drawObj, plot, pt);
+        if (drawObj.sType === ShapeType.Line ) return VisUtil.distToLine(drawObj.pts, plot, pt);
+        if (drawObj.sType === ShapeType.Polygon) return VisUtil.distanceToPolygon(drawObj.pts, plot, pt);
         if (drawObj.sType === ShapeType.Circle) return distanceToCircle(drawObj, plot, pt);
         if (drawObj.sType === ShapeType.Rectangle) return distanceToRectangle(drawObj, plot, pt);
 
         if (isScreenPtInRegion(drawObj, pt, plot).inside) return 0;
-        const testPt = plot.getScreenCoords(getCenter(drawObj));
+        const testPt = plot.getScreenCoords(draw.getCenterPt(drawObj));
 
         if (testPt) {    // distance to center, it can be updated to be the distance between the pt and the boundary
             const spt = plot.getScreenCoords(pt);
@@ -1772,78 +1769,14 @@ export function heightAfterRotation(width, height, angle) {
     return Math.max(Math.abs(wsin-hcos), Math.abs(wsin+hcos));
 }
 
-
-export function distToLine(pts, cc, pt) {
-    const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
-    const pt0 = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
-    const pt1 = cc ? cc.getScreenCoords(pts[1]) : makeScreenPt(pts[1].x, pts[1].y);
-    const e1 = makeScreenPt((pt1.x - pt0.x), (pt1.y - pt0.y));
-    const e2 = makeScreenPt((spt.x - pt0.x), (spt.y - pt0.y));
-    const e3 = makeScreenPt((pt0.x - pt1.x), (pt0.y - pt1.y));
-    const e4 = makeScreenPt((spt.x - pt1.x), (spt.y - pt1.y));
-    // projection spt on pts:
-    // e1 * dotprod(e1, e2)/(|e1|^2) + pts[0]
-
-    const dpe1e2 = e1.x * e2.x + e1.y * e2.y;
-    const dpe3e4 = e3.x * e4.x + e3.y * e4.y;
-    const e1len2 = e1.x * e1.x + e1.y * e1.y;
-    let ppt;
-
-    if (dpe1e2 > 0 && dpe3e4 > 0) { // spt projects between pt1 & pt2
-        ppt = makeScreenPt(dpe1e2 * e1.x / e1len2 + pt0.x, dpe1e2 * e1.y / e1len2 + pt0.y);
-    } else if (dpe1e2 <= 0) {       // spt projects to right side of pt2
-        ppt = pt0;
-    } else {                        // spt projects to left side of pt1
-        ppt = pt1;
-    }
-    return computeScreenDistance(spt.x, spt.y, ppt.x, ppt.y);
-}
-
-export function distanceToPolygon(drawObj, cc, pt) {
-    const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
-    //if (isScreenPtInRegion(drawObj, spt, cc).inside) return 0;
-
-    const dist = Number.MAX_VALUE;
-    const {pts} = drawObj;
-
-    if (pts.length < 3) return dist;
-
-    const corners = pts.map((pt) => (cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y)));
-    const len = corners.length;
-
-    return corners.reduce((prev, pt, idx) => {
-        const nIdx = (idx+1)%len;
-        const d = distToLine([corners[idx], corners[nIdx]], cc, spt);
-
-        if (d < prev) {
-            prev = d;
-        }
-        return prev;
-    }, dist);
-}
-
 export function distanceToCircle(drawObj, cc, pt) {
-    const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
-    const {radius, unitType, pts} = drawObj;
+    let   {radius, unitType} = drawObj;
 
-    let dist = Number.MAX_VALUE;
-    let r, center;
-
-    if (!radius && pts) {
-        const p0 = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
-        const p1 = cc ? cc.getScreenCoords(pts[1]) : makeScreenPt(pts[1].x, pts[1].y);
-
-        r = VisUtil.computeSimpleDistance(p0, p1)/2;
-        center = makeScreenPt((p0.x + p1.x)/2, (p0.y + p1.y)/2);
-    } else if (unitType && radius && pts) {
-        r = cc ? lengthToScreenPixel(radius, cc, unitType) : radius;
-        center = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
-    } else {
-        return dist;
+    if (radius) {
+        radius = cc ? lengthToScreenPixel(radius, cc, unitType) : radius;
     }
 
-    dist = Math.abs(VisUtil.computeSimpleDistance(center, spt) - r);
-    return dist;
+    return VisUtil.distanceToCircle(radius, drawObj.pts, cc, pt);
 }
 
 export function distanceToRectangle(drawObj, cc, pt) {
@@ -1881,7 +1814,7 @@ export function distanceToRectangle(drawObj, cc, pt) {
 
     return corners.reduce((prev, pt, idx) => {
         const nIdx = (idx+1)%4;
-        const d = distToLine([corners[idx], corners[nIdx]], cc, spt);
+        const d = VisUtil.distToLine([corners[idx], corners[nIdx]], cc, spt);
 
         if (d < prev) {
             prev = d;
