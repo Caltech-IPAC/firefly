@@ -96,6 +96,8 @@ export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
  * @param {boolean} [options.canHighlight] if the layer can highlight
  * @param {boolean} [options.canSelect]    supports a selected array of objects, must be able to produce a selected data array,
  *                               only used with isPointData
+ * @param {boolean} [options.canShowSelect]  supports a selected array of objects, must be able to produce a selected data array,
+ *                               used to show the selected data
  * @param {boolean} [options.canFilter]    drawing layer can be used with the filter controls,
  *                               only used with canSelect and isPointData
  * @param {boolean} [options.canUseMouse]  drawing layer has mouse interaction, must set up actionTypeAry
@@ -156,6 +158,8 @@ function makeDrawLayer(drawLayerId,
            // should be set in the options parameter
         doAsyncDrawing: false,
         canHighlight: false,
+        canSelect: false,
+        canShowSelect: false,
         dataTooBigForSelection : false,
         canUseMouse: false,
         hasPerPlotData: false,

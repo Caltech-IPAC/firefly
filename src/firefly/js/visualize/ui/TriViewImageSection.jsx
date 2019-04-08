@@ -191,6 +191,7 @@ function handleNewTable(layoutInfo, action) {
     let {coverageLockedOn, showFits, showMeta, showCoverage, selectedTab, metaDataTableId} = images;
     const isMeta = isMetaDataTable(tbl_id);
     
+
     if ((isMeta || isCatalog(tbl_id)) && showTables ) {
         if (!showFits) selectedTab = 'coverage';
         showFits= showFits || shouldShowFits();
@@ -230,6 +231,7 @@ function onActiveTable (layoutInfo, action) {
     // check for catalog or meta images
     const anyHasCatalog= hasCatalogTable(tblList);
     const anyHasMeta= hasMetaTable(tblList);
+
 
     // if (coverageLockedOn) {
     //     coverageLockedOn= anyHasCatalog || anyHasMeta;

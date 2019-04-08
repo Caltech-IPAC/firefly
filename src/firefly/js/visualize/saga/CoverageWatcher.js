@@ -22,11 +22,13 @@ import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
                          dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
 import Catalog from '../../drawingLayers/Catalog.js';
+import {TableSelectOptions} from '../../drawingLayers/CatalogUI.jsx';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
-import {findTableCenterColumns, isCatalog, hasCoverageData} from '../../util/VOAnalyzer.js';
+import {findTableCenterColumns, isCatalog, isTableWithRegion, hasCoverageData, findTableRegionColumn} from '../../util/VOAnalyzer.js';
+import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 
-export const CoverageType = new Enum(['X', 'BOX', 'BOTH', 'GUESS']);
+export const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ALL', 'GUESS']);
 export const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
@@ -46,7 +48,7 @@ export const PLOT_ID= 'CoveragePlot';
  *
  * @prop {string} title
  * @prop {string} tip
- * @prop {string} coverageType - one of 'GUESS', 'BOX', 'BOTH', or 'X' default is 'BOTH'
+ * @prop {string} coverageType - one of 'GUESS', 'BOX', 'REGION', 'ALL', or 'X' default is 'ALL'
  * @prop {string} overlayPosition search position point to overlay, e.g '149.08;68.739;EQ_J2000'
  * @prop {string|Object.<String,String>} symbol - symbol name one of 'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE','BOXCIRCLE', 'ARROW'
  * @prop {string|Object.<String,Number>} symbolSize - a number of the symbol size or an object keyed by table id and value the symbol size
@@ -63,7 +65,7 @@ const defOptions= {
     title: '2MASS K_s',
     tip: 'Coverage',
     getCoverageBaseTitle : (table) => '',   // eslint-disable-line no-unused-vars
-    coverageType : CoverageType.BOTH,
+    coverageType : CoverageType.ALL,
     symbol : DrawSymbol.SQUARE,
     symbolSize : 5,
     overlayPosition: null,
@@ -89,7 +91,7 @@ const defOptions= {
     autoConvertOnZoom: false,
     fovDegMinSize: 100/3600, //defaults to 100 arcsec
     viewerId:'DefCoverageId',
-    paused: true,
+    paused: true
 };
 
 
@@ -105,7 +107,7 @@ export function startCoverageWatcher(options) {
 export const coverageWatcherDef = {
     id : 'CoverageWatcher',
     testTable : (table) => hasCoverageData(table),
-    sharedData: { decimatedTables: {}},
+    sharedData: { decimatedTables: {}, tblCatIdMap: {}},
     watcher : watchCoverage,
     actions: [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE, TBL_RESULTS_ACTIVE,
         ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
@@ -113,7 +115,8 @@ export const coverageWatcherDef = {
 };
 
 const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
-
+const centerId = (tbl_id) => (tbl_id+'_center');
+const regionId = (tbl_id) => (tbl_id+'_region');
 
 /**
  * Action watcher callback: watch the tables and update coverage display
@@ -136,7 +139,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
     const options= getOptions(params.options);
     const {viewerId}= options;
     let paused = isUndefined(params.paused) ? options.paused : params.paused;
-    const {decimatedTables}= sharedData;
+    const {decimatedTables, tblCatIdMap}= sharedData;
 
     if (paused) {
         paused= !get(getViewer(getMultiViewRoot(), viewerId),'mounted', false);
@@ -144,7 +147,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
     if (!action) {
         if (!paused) {
             decimatedTables[tbl_id]= undefined;
-            updateCoverage(tbl_id, viewerId, sharedData.decimatedTables, options);
+            updateCoverage(tbl_id, viewerId, sharedData.decimatedTables, options, tblCatIdMap);
         }
         return params;
     }
@@ -162,38 +165,42 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
     }
 
     if (action.type===MultiViewCntlr.VIEWER_MOUNTED || action.type===MultiViewCntlr.ADD_VIEWER)  {
-        updateCoverage(tbl_id, viewerId, decimatedTables, options);
+        updateCoverage(tbl_id, viewerId, decimatedTables, options, tblCatIdMap);
         return {paused:false};
     }
 
+    if (action.type===TABLE_LOADED) decimatedTables[tbl_id]= undefined;
     if (paused) return {paused};
 
     switch (action.type) {
 
         case TABLE_LOADED:
             if (!getTableInGroup(tbl_id)) return {paused};
-            decimatedTables[tbl_id]= undefined;
-            updateCoverage(tbl_id, viewerId, decimatedTables, options);
+            updateCoverage(tbl_id, viewerId, decimatedTables, options, tblCatIdMap);
             break;
 
         case TBL_RESULTS_ACTIVE:
             if (!getTableInGroup(tbl_id)) return {paused};
-            updateCoverage(tbl_id, viewerId, decimatedTables, options);
+            updateCoverage(tbl_id, viewerId, decimatedTables, options, tblCatIdMap);
             break;
 
         case TABLE_REMOVE:
             removeCoverage(payload.tbl_id, decimatedTables);
-            if (!isEmpty(decimatedTables)) updateCoverage(getActiveTableId(), viewerId, decimatedTables, options);
+            if (!isEmpty(decimatedTables)) updateCoverage(getActiveTableId(), viewerId, decimatedTables, options, tblCatIdMap);
             cancelSelf();
             break;
 
         case TABLE_SELECT:
-            dispatchModifyCustomField(tbl_id, {selectInfo:action.payload.selectInfo});
+            tblCatIdMap[tbl_id].forEach(( cId ) => {
+                dispatchModifyCustomField(cId, {selectInfo: action.payload.selectInfo});
+            });
             break;
 
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
-            dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
+            tblCatIdMap[tbl_id].forEach(( cId ) => {
+                dispatchModifyCustomField(cId, {highlightedRow: action.payload.highlightedRow});
+            });
             break;
 
         case MultiViewCntlr.VIEWER_UNMOUNTED:
@@ -202,7 +209,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
 
         case ImagePlotCntlr.PLOT_IMAGE:
         case ImagePlotCntlr.PLOT_HIPS:
-            if (action.payload.plotId===PLOT_ID) overlayCoverageDrawing(decimatedTables,options);
+            if (action.payload.plotId===PLOT_ID) overlayCoverageDrawing(decimatedTables,options, tblCatIdMap);
             break;
             
     }
@@ -223,8 +230,9 @@ function removeCoverage(tbl_id, decimatedTables) {
  * @param {string} viewerId
  * @param decimatedTables
  * @param {CoverageOptions} options
+ * @param {object} tblCatIdMap
  */
-function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
+function updateCoverage(tbl_id, viewerId, decimatedTables, options, tblCatIdMap) {
 
     try {
         const table = getTblById(tbl_id);
@@ -250,7 +258,7 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
         req.tbl_id = `cov-${tbl_id}`;
 
         if (decimatedTables[tbl_id] /*&& decimatedTables[tbl_id].tableMeta.resultSetID===table.tableMeta.resultSetID*/) { //todo support decimated data
-            updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table));
+            updateCoverageWithData(viewerId, table, options, tbl_id, decimatedTables[tbl_id], decimatedTables, isTableUsingRadians(table), tblCatIdMap);
         }
         else {
             decimatedTables[tbl_id] = 'WORKING';
@@ -258,12 +266,17 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
                 (allRowsTable) => {
                     if (get(allRowsTable, ['tableData', 'data'], []).length > 0) {
                         decimatedTables[tbl_id] = allRowsTable;
-                        updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table));
+                        const isRegion = isTableWithRegion(allRowsTable);
+                        //const isCatalog = findTableCenterColumns(allRowsTable);
+
+                        tblCatIdMap[tbl_id] = (isRegion) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id];
+                        updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, isTableUsingRadians(table), tblCatIdMap);
                     }
                 }
             ).catch(
                 (reason) => {
                     decimatedTables[tbl_id] = undefined;
+                    tblCatIdMap[tbl_id] = undefined;
                     logError(`Failed to catalog plot data: ${reason}`, reason);
                 }
             );
@@ -285,8 +298,9 @@ function updateCoverage(tbl_id, viewerId, decimatedTables, options) {
  * @param allRowsTable
  * @param decimatedTables
  * @param usesRadians
+ * @param {object} tblCatIdMap
  */
-function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians) {
+function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, decimatedTables, usesRadians, tblCatIdMap) {
     const {maxRadius, avgOfCenters}= computeSize(options, decimatedTables, usesRadians);
     if (!avgOfCenters || maxRadius<=0) return;
 
@@ -294,7 +308,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
     if (plot &&
         pointEquals(avgOfCenters,plot.attributes[COVERAGE_TARGET]) && plot.attributes[COVERAGE_RADIUS]===maxRadius ) {
-        overlayCoverageDrawing(decimatedTables, options);
+        overlayCoverageDrawing(decimatedTables, options, tblCatIdMap);
         return;
     }
 
@@ -325,8 +339,8 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
             [COVERAGE_TARGET]: avgOfCenters,
             [COVERAGE_RADIUS]: maxRadius,
             [COVERAGE_TABLE]: tbl_id,
-            [COVERAGE_CREATED]: true,
-        },
+            [COVERAGE_CREATED]: true
+        }
     });
 }
 
@@ -372,6 +386,9 @@ function computeSize(options, decimatedTables, usesRadians) {
                 case CoverageType.BOX:
                     ptAry= getBoxAryFromTable(options,t, usesRadians);
                     break;
+                case CoverageType.REGION:
+                    ptAry = getRegionAryFromTable(options, t, usesRadians);
+                    break;
 
             }
             return flattenDeep(ptAry);
@@ -382,12 +399,14 @@ function computeSize(options, decimatedTables, usesRadians) {
 
 function makeOverlayCoverageDrawing() {
     const drawingOptions= {};
+    const selectOps = {};
     /**
      *
      * @param decimatedTables
      * @param {CoverageOptions} options
+     * @param {object} tblCatIdMap
      */
-    return (decimatedTables, options) => {
+    return (decimatedTables, options, tblCatIdMap) => {
         const plot=  primePlot(visRoot(),PLOT_ID);
         if (!plot) return;
         const tbl_id=  plot.attributes[COVERAGE_TABLE];
@@ -396,20 +415,28 @@ function makeOverlayCoverageDrawing() {
 
         if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
 
-        const layer= getDrawLayerById(getDlAry(), tbl_id);
-        if (layer) {
-            drawingOptions[tbl_id]= layer.drawingDef;
-            dispatchDestroyDrawLayer(tbl_id);
+        if (tblCatIdMap[tbl_id]) {
+            tblCatIdMap[tbl_id].forEach((cId) => {
+                const layer = getDrawLayerById(getDlAry(), cId);
+                if (layer) {
+                    drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
+                    selectOps[cId] = layer.selectOption;
+                    dispatchDestroyDrawLayer(cId);
+                }
+            });
         }
 
         const overlayAry=  Object.keys(decimatedTables);
 
         overlayAry.forEach( (id) => {
-            if (!drawingOptions[id]) drawingOptions[id]= {};
-            if (!drawingOptions[id].color) drawingOptions[id].color= lookupOption(options,'color',id) || getNextColor();
+            tblCatIdMap[id] && tblCatIdMap[id].forEach((cId) => {
+                if (!drawingOptions[cId]) drawingOptions[cId] = {};
+                if (!drawingOptions[cId].color) drawingOptions[cId].color = lookupOption(options, 'color', cId) || getNextColor();
+                if (selectOps[cId]) drawingOptions[cId].selectOption = selectOps[cId];
+            });
             const oriTable= getTblById(id);
             const arTable= decimatedTables[id];
-            if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions[id]);
+            if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions);
 
         });
     };
@@ -428,33 +455,51 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp) {
 
     if (allRowsTable==='WORKING') return;
     const covType= getCoverageType(options,allRowsTable);
-
-    const boxData= covType===CoverageType.BOTH || covType===CoverageType.BOX;
-    const {tbl_id}= table;
     const {tableMeta, tableData}= allRowsTable;
-    const columns = boxData ? getCornersColumns(table) : findTableCenterColumns(table);
-    if (isEmpty(columns)) { return; }
     const angleInRadian= isTableUsingRadians(tableMeta);
-    const dl= getDlAry().find( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogId===table.tbl_id);
-    if (!dl) {
-        dispatchCreateDrawLayer(Catalog.TYPE_ID, {
-            catalogId: table.tbl_id,
-            title: `Coverage: ${table.title || table.tbl_id}`,
-            color: drawOp.color,
-            tableData,
-            tableMeta,
-            tableRequest: table.request,
-            highlightedRow: table.highlightedRow,
-            catalog: !boxData,
-            columns,
-            symbol: drawOp.symbol || lookupOption(options,'symbol',tbl_id),
-            size: drawOp.size || lookupOption(options,'symbolSize',tbl_id),
-            boxData,
-            selectInfo: table.selectInfo,
-            angleInRadian,
-            dataTooBigForSelection: table.totalRows>10000
-        });
-        dispatchAttachLayerToPlot(table.tbl_id, plotId);
+
+    const createDrawLayer = (cId, dataType, isFromRegion=false) => {
+        const columns = dataType === CoverageType.REGION ? findTableRegionColumn(allRowsTable) :
+                        (covType === CoverageType.BOX ? getCornersColumns(allRowsTable) : findTableCenterColumns(allRowsTable));
+        if (isEmpty(columns)) return;
+
+        const dl = getDlAry().find((dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogId === cId);
+        if (!dl) {
+            dispatchCreateDrawLayer(Catalog.TYPE_ID, {
+                catalogId: cId,
+                tblId: table.tbl_id,
+                title: `Coverage: ${table.title || table.tbl_id}` +
+                             (isFromRegion ? (dataType===CoverageType.REGION ? ' regions' : ' positions') : ''),
+                color:  drawOp[cId].color,
+                tableData,
+                tableMeta,
+                tableRequest: table.request,
+                highlightedRow: table.highlightedRow,
+                catalog: dataType === CoverageType.X,
+                boxData: dataType !== CoverageType.X,
+                dataType: dataType.key,
+                isFromRegion,
+                columns,
+                symbol: drawOp.symbol || lookupOption(options, 'symbol', cId),
+                size: drawOp.size || lookupOption(options, 'symbolSize', cId),
+                selectInfo: table.selectInfo,
+                angleInRadian,
+                dataTooBigForSelection: table.totalRows > 10000,
+                tableSelection: (dataType === CoverageType.REGION) ? (drawOp[cId].selectOption || TableSelectOptions.all.key) : null
+            });
+            dispatchAttachLayerToPlot(cId, plotId);
+        }
+    };
+
+    if (covType === CoverageType.BOX) {
+        createDrawLayer(table.tbl_id, covType);
+    } else if (covType === CoverageType.X) {
+        createDrawLayer(table.tbl_id, covType);
+    } else if (covType === CoverageType.REGION) {
+        const layerType = [CoverageType.X, CoverageType.REGION];
+        const layerId = [centerId(table.tbl_id), regionId(table.tbl_id)];
+
+        layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], true));
     }
 }
 
@@ -474,9 +519,11 @@ function lookupOption(options, key, tbl_id) {
 
 function getCoverageType(options,table) {
     if (options.coverageType===CoverageType.GUESS ||
+        options.coverageType===CoverageType.REGION ||
         options.coverageType===CoverageType.BOX ||
-        options.coverageType===CoverageType.BOTH) {
-         return hasCorners(options,table) ? CoverageType.BOX : CoverageType.X;
+        options.coverageType===CoverageType.ALL) {
+         return  isTableWithRegion(table) ? CoverageType.REGION :
+                                    (hasCorners(options,table) ? CoverageType.BOX : CoverageType.X);
     }
     return options.coverageType;
 }
@@ -489,6 +536,7 @@ function hasCorners(options, table) {
     ,0);
     return dataCnt/table.tableData.data.length > .1;
 }
+
 
 function toAngle(d, radianToDegree)  {
     const v= Number(d);
@@ -519,12 +567,22 @@ function getBoxAryFromTable(options,table, usesRadians){
 }
 
 
+function getRegionAryFromTable(options, table, usesRadians) {
+    const rCol = findTableRegionColumn(table);
+
+    return table.tableData.data.map((row) => {
+             const cornerInfo = parseObsCoreRegion(row[rCol.regionIdx], rCol.unit, true);
+
+            return cornerInfo.valid ? cornerInfo.corners : [];
+        }).filter((r) => !isEmpty(r));
+}
+
 function getCovColumnsForQuery(options, table) {
-    const cAry= [...getCornersColumns(table), findTableCenterColumns(table)];
+    const cAry= [...getCornersColumns(table), findTableCenterColumns(table), findTableRegionColumn(table)];
     // column names should be in quotes
     // there should be no duplicates
     const base = cAry.filter((c)=>!isEmpty(c))
-            .map( (c)=> `"${c.lonCol}","${c.latCol}"`)
+            .map( (c)=> (c.type === 'region') ? `"${c.regionCol}"` : `"${c.lonCol}","${c.latCol}"`)
             .filter((v,i,a) => a.indexOf(v) === i)
             .join();
     return base+',"ROW_IDX"';

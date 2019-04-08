@@ -14,11 +14,11 @@ export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 
 //const obsPrefix = 'obscore:';
 const ColNameIdx = 0;
-//const UCD = 1;
 const UcdColIdx = 1;
 const UtypeColIdx = 2;
 const mainMeta = 'meta.main';
 const obsCorePosColumns = ['s_ra', 's_dec'];
+const obsCoreRegionColumn = 's_region';
 
 const OBSTAPCOLUMNS = [
     ['dataproduct_type',  'meta.id',                    'ObsDataset.dataProductType'],
@@ -100,7 +100,6 @@ export const posCol = {[UCDCoord.eq.key]: {ucd: [['pos.eq.ra', 'pos.eq.dec'],...
     [UCDCoord.galactic.key]: {ucd: [['pos.galactic.lon', 'pos.galactic.lat']],
                               coord: CoordinateSys.GALACTIC, adqlCoord: 'GALATIC'}};
 
-
 function getLonLatIdx(tableModel, lonCol, latCol) {
     const lonIdx =  getColumnIdx(tableModel, lonCol);
     const latIdx =  getColumnIdx(tableModel, latCol);
@@ -124,7 +123,10 @@ const UCDSyntax = new Enum(['primary', 'secondary', 'any'], {ignoreCase: true});
 const ucdSyntaxMap = {
             'pos.eq.ra':  UCDSyntax.any,
             'pos.eq.dec': UCDSyntax.any,
-            'meta.main':  UCDSyntax.secondary};
+            'meta.main':  UCDSyntax.secondary,
+            'pos.outline': UCDSyntax.primary,
+            'obs.field': UCDSyntax.secondary
+};
 
 
 /**
@@ -155,6 +157,7 @@ class TableRecognizer {
         this.posCoord = posCoord;
         this.centerColumnsInfo = null;
         this.centerColumnCandidatePairs = null;
+        this.regionColumnInfo = null;
     }
 
     isObsCoreTable() {
@@ -193,6 +196,7 @@ class TableRecognizer {
 
             if (idxs) {
                 this.centerColumnsInfo = {
+                    type: 'center',
                     lonCol,
                     latCol,
                     lonIdx: idxs.lonIdx,
@@ -202,6 +206,22 @@ class TableRecognizer {
             }
         }
         return this.centerColumnsInfo;
+    }
+
+    setRegionColumnInfo(col) {
+        this.regionColumnInfo = null;
+
+        const idx = getColumnIdx(this.tableModel, col.name);
+        if (idx >= 0) {
+            this.regionColumnInfo = {
+                type: 'region',
+                regionCol: col.name,
+                regionIdx: idx,
+                unit: col.units
+            };
+        }
+
+        return this.regionColumnInfo;
     }
 
     /**
@@ -228,7 +248,7 @@ class TableRecognizer {
     }
 
     /**
-     * get columns containing ucd word
+     * get columns containing ucd word by given table columns
      * @param cols
      * @param ucdWord
      * @returns {array}
@@ -480,7 +500,6 @@ class TableRecognizer {
         return (guess('ra','dec') || guess('lon', 'lat') || guess('ra','dec',true) || guess('lon', 'lat',true));
     }
 
-
     /**
      * find center columns as defined in some vo standard
      * @returns {null|CoordColsDescription}
@@ -490,8 +509,6 @@ class TableRecognizer {
             this.getCenterColumnsOnObsCoreUType(this.centerColumnCandidatePairs) ||
             this.getCenterColumnsOnObsCoreName(this.centerColumnCandidatePairs);
     }
-
-
 
 
     /**
@@ -507,8 +524,73 @@ class TableRecognizer {
                 (isEmpty(this.centerColumnCandidatePairs) && this.guessCenterColumnsByName());
     }
 
+    getRegionColumnOnUCD(cols) {
+        this.regionColumnInfo = null;
+        const columns = !isEmpty(cols) ? cols : this.columns;
+        const ucds = get(getObsTabColEntry(obsCoreRegionColumn), 'ucd', '').split(';');
+
+        const regionCols = ucds.reduce((prev, oneUcd) => {
+            if (prev.length > 0) {
+                prev = this.getColumnsWithUCDWord(prev, oneUcd);
+            }
+            return prev;
+        }, columns);
+
+        if (regionCols.length === 1) {
+            this.setRegionColumnInfo(regionCols[0]);
+        } else if (regionCols.length > 1) {
+            if (!this.getRegionColumnOnObsCoreName(regionCols)) {
+                this.setRegionColumnInfo(regionCols[0]);
+            }
+        }
+        return this.regionColumnInfo;
+    }
+
+    getRegionColumnOnObsCoreUType(cols) {
+        const columns = !isEmpty(cols) ? cols : this.columns;
+        const obsUtype = get(getObsTabColEntry(obsCoreRegionColumn), 'utype', '');
+
+        this.regionColumnInfo = null;
+
+        const regionCols = (obsUtype) && !isEmpty(columns) && columns.filter((col) => {
+            return  (has(col, 'utype') && col.utype.includes(obsUtype));
+        });
+
+        if (regionCols.length === 1) {
+            this.setRegionColumnInfo(regionCols[0]);
+        } else if (regionCols.length > 1) {
+            if (!this.getRegionColumnOnObsCoreName(regionCols)) {
+                this.setRegionColumnInfo(regionCols[0]);
+            }
+        }
+
+        return this.regionColumnInfo;
+    }
+
+    getRegionColumnOnObsCoreName(cols) {
+        this.regionColumnInfo = null;
+        const columns = !isEmpty(cols) ? cols : this.columns;
+
+        const regionCol = !isEmpty(columns) && columns.find((oneCol) => oneCol.name.toLowerCase() === obsCoreRegionColumn);
+        if (regionCol) {
+            this.setRegionColumnInfo(regionCol);
+        }
+        return this.regionColumnInfo;
+    }
+    /**
+     * return region column by checking column name or UCD values
+     * @returns {null|ColDescription}
+     */
+    getVODefinedRegionColumn() {
+         return this.getRegionColumnOnUCD() ||
+                this.getRegionColumnOnObsCoreUType()||
+                this.getRegionColumnOnObsCoreName();
+    }
 
 
+    getRegionColumn() {
+        return this.getVODefinedRegionColumn();
+    }
 
     static newInstance(tableModel) {
         return new TableRecognizer(tableModel);
@@ -526,6 +608,11 @@ export function findTableCenterColumns(table) {
    return tblRecog && tblRecog.getCenterColumns();
 }
 
+
+export function findTableRegionColumn(table) {
+    const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
+    return tblRecog && tblRecog.getRegionColumn();
+}
 /**
  * Given a TableModel or a table id return a table model
  * @param {TableModel|String} tableOrId - a table model or a table id
@@ -726,10 +813,10 @@ export function findCenterColumnsByColumnsModel(columnsModel) {
  * @see MetaConst.CATALOG_OVERLAY_TYPE
  */
 export function isCatalog(tableOrId) {
-
     const table= getTableModel(tableOrId);
 
     if (!table) return false;
+    if (isTableWithRegion(table)) return false;
     const {tableMeta, tableData}= table;
     if (!get(tableData, 'columns') || !tableMeta) return false;
 
@@ -742,6 +829,14 @@ export function isCatalog(tableOrId) {
     }
 }
 
+
+export function isTableWithRegion(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table) return false;
+
+    return Boolean(TableRecognizer.newInstance(table).getVODefinedRegionColumn());
+}
+
 /**
  * @summary check if there is center column or corner columns defined, if so this table has coverage information
  * @param {TableModel|String} tableOrId - a table model or a table id
@@ -751,7 +846,7 @@ export function hasCoverageData(tableOrId) {
     const table= getTableModel(tableOrId);
     if (!table) return false;
     if (!table.totalRows) return false;
-    return !isEmpty(findTableCenterColumns(table)) || !isEmpty(getCornersColumns(table));
+    return !isEmpty(findTableRegionColumn(table)) || !isEmpty(findTableCenterColumns(table)) || !isEmpty(getCornersColumns(table));
 }
 
 
@@ -773,7 +868,7 @@ export function isMetaDataTable(tableOrId) {
     const hasDsCol = Boolean(Object.keys(tableMeta).find((key) => key.toUpperCase() === dataSourceUpper));
 
     return Boolean(tableMeta[MetaConst.IMAGE_SOURCE_ID] || tableMeta[MetaConst.DATASET_CONVERTER] ||
-        hasDsCol || hasObsCoreLikeDataProducts(table));
+        hasDsCol || hasObsCoreLikeDataProducts(table) || isTableWithRegion(tableOrId));
 }
 
 
@@ -895,6 +990,17 @@ export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OP
  * @prop {CoordinateSys} csys - the coordinate system to use
  */
 
+/**
+ * @global
+ * @public
+ * @typedef {Object} ColsDescription
+ *
+ * @summary An object that describe a single column in a table
+ *
+ * @prop {string} colName - name of the column
+ * @prop {number} colIdx - column index for the column
+ * @prop {string} unit - unit for the column
+ */
 
 /**
  * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}

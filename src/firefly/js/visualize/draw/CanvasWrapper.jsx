@@ -46,7 +46,7 @@ function updateDrawer(drawer,plot, width, height, drawLayer,force=false) {
  */
 function makeCanvasLayers(drawLayer,drawer,w,h, idx, plotId) {
 
-    const {drawLayerId,canSelect,canHighlight}= drawLayer;
+    const {drawLayerId,canSelect,canHighlight, canShowSelect}= drawLayer;
     const style={width:w, height:h, left:0, right:0, position:'absolute'};
     const retAry= [];
 
@@ -55,7 +55,7 @@ function makeCanvasLayers(drawLayer,drawer,w,h, idx, plotId) {
                         id={mainId}
                         ref={(c) => drawer.setPrimCanvas(c,w,h)}/>);
 
-    if (canSelect) {
+    if (canSelect || canShowSelect) {
         const sKey= drawLayerId+'-Select';
         const sId= plotId && `${CANVAS_DL_ID_START}${idx}.2-${plotId}`;
         retAry.push(<canvas style={style} key={sKey} width={w+''} height={h+''}

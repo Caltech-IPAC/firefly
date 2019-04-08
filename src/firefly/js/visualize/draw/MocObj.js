@@ -3,7 +3,6 @@ import {makeWorldPt} from '../Point.js';
 import {isEmpty, has, set, get, isUndefined} from 'lodash';
 import {makeRegionPolygon} from '../region/Region.js';
 import {drawRegions} from '../region/RegionDrawer.js';
-import {distanceToPolygon} from './ShapeDataObj.js';
 import {getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
         isTileVisibleByPosition, initSidePoints, NSIDE4} from '../HiPSMocUtil.js';
 import {getHealpixCornerTool,  getAllVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
@@ -11,6 +10,7 @@ import DrawOp from './DrawOp.js';
 import CsysConverter from '../CsysConverter.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import {rateOpacity} from '../../util/Color.js';
+import VisUtil from '../VisUtil.js';
 
 const MOC_OBJ= 'MOCObj';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -90,7 +90,7 @@ const draw=  {
 
 		if (drawObjAry) {
 			drawObjAry.forEach( (dObj) => {
-				const d = distanceToPolygon(dObj, plot, pt);
+				const d = VisUtil.distanceToPolygon(dObj.pts, plot, pt);
 				if (d < minDist) {
 					minDist = d;
 				}

@@ -4,12 +4,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import Enum from 'enum';
+import {isEmpty, startCase} from 'lodash';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField, dispatchChangeVisibility} from '../visualize/DrawLayerCntlr.js';
 import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {GroupingScope} from '../visualize/DrawLayerCntlr.js';
+import {DataTypes} from '../visualize/draw/DrawLayer.js';
+import {showInfoPopup, INFO_POPUP} from '../ui/PopupUtil.jsx';
+import {isDialogVisible, dispatchHideDialog} from '../core/ComponentCntlr.js';
+import EXCLAMATION from 'html/images/exclamation16x16.gif';
+import infoIcon from 'html/images/info-icon.png';
 
-
+export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
 export const getUIComponent = (drawLayer,pv) => <CatalogUI drawLayer={drawLayer} pv={pv}/>;
 
 function CatalogUI({drawLayer,pv}) {
@@ -19,11 +26,63 @@ function CatalogUI({drawLayer,pv}) {
                    {label: 'Image', value: 'SINGLE'}
     ];
 
-    if (!drawLayer.supportSubgroups) return null;
+    const showTableOptions = () => {
+        let tableOptions = null;
+        const {selectOption, isFromRegion, columns} = drawLayer;
+
+        const tOptions = TableSelectOptions.enums.reduce((prev, eItem) => {
+            prev.push({label: startCase(eItem.key), value: eItem.key});
+            return prev;
+        }, []);
+
+        const subTitle = (!isFromRegion) ? null :
+            (<div>{columns.type === 'region' ? `column: ${columns.regionCol}` : `columns: ${columns.lonCol}, ${columns.latCol}`}
+             </div>);
+
+        // for region layer
+        if (selectOption && tOptions.find((oneOp) => oneOp.value === selectOption)) {
+            const message = composeRegionMessage(drawLayer, selectOption);
+            const helpRef = 'http://www.ivoa.net/documents/TAP/20100327/REC-TAP-1.0.pdf';
+
+            const errorIcon = !message ? null : (
+                            <div style={{width: 16, height: 16, marginLeft: 10}}
+                                 onClick={() => showErrorPopup(message, 'region column error', helpRef)} >
+                                <img src={EXCLAMATION}/>
+                            </div>
+                    );
+
+            tableOptions = (
+                <div>
+                    <div style={{marginBottom: 8, height: 16, display:'flex'}}>
+                        {subTitle}
+                        {errorIcon}
+                    </div>
+                    <div>
+                        <div style={{display:'inline-block', padding: '2px 3px 2px 3px',
+                                     border: '1px solid rgba(60,60,60,.2', borderRadius: '5px'}}>
+                            <RadioGroupInputFieldView options={tOptions} value={selectOption}
+                                                      buttonGroup={true}
+                                                      onChange={(ev) => changeTableSelection(drawLayer, pv, ev.target.value, selectOption)}/>
+                        </div>
+                    </div>
+                </div>
+            );
+        } else {
+            tableOptions = subTitle;
+        }
+        return tableOptions;
+    };
+
+    if (!drawLayer.supportSubgroups) {
+        return (
+          showTableOptions()
+        );
+    }
 
     const value= drawLayer.groupingScope ? drawLayer.groupingScope.toString() : 'GROUP';
     return (
         <div>
+            {showTableOptions()}
             <div>
                 Overlay:
                 <div style={{display:'inline-block', paddingLeft:7}}>
@@ -35,6 +94,39 @@ function CatalogUI({drawLayer,pv}) {
     );
 }
 
+const showErrorPopup = (message, title, helpRef) => {
+    const InfoIcon = () => helpRef && (
+        <a onClick={(e) => e.stopPropagation()} target='_blank' href={helpRef}>
+                <img style={{width:'14px'}} src={infoIcon} alt='info'/></a>
+    );
+
+    const content = (<div> {message} {InfoIcon()} </div>);
+    showInfoPopup(content, title, true);
+};
+
+function composeRegionMessage(dl, selectOption) {
+    const dd = Object.assign({},dl.drawData);
+    const dataAry = (selectOption === TableSelectOptions.highlighted.key) ? dd[DataTypes.HIGHLIGHT_DATA] : dd[DataTypes.DATA];
+
+    const invalidRows = isEmpty(dataAry) ? 0 :
+        dataAry.reduce((prev, row) => {
+            prev = !row ? prev+1 : prev;
+            return prev;
+        }, 0);
+
+    return (invalidRows === 0) ? '' :
+            `${invalidRows} out of ${dataAry.length} rows are not displayable as regions due to unsupported` +
+            ' or invalid s_region values.';
+}
+
+function changeTableSelection(drawLayer, pv, value, preValue) {
+    if (value !== preValue) {
+        if (isDialogVisible(INFO_POPUP)) {
+            dispatchHideDialog(INFO_POPUP);
+        }
+        dispatchModifyCustomField(drawLayer.drawLayerId, {selectOption: value}, pv.plotId);
+    }
+}
 
 function changeVisibilityScope(drawLayer,pv,value) {
     const groupingScope= GroupingScope.get(value);

@@ -3,7 +3,8 @@
  */
 
 
-import {isEmpty,get} from 'lodash';
+import {isEmpty,get, isArray} from 'lodash';
+import Enum from 'enum';
 import {primePlot,getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
@@ -24,21 +25,20 @@ import {dispatchTableSelect} from '../tables/TablesCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {getTblById,getCellValue} from '../tables/TableUtil.js';
-import {getUIComponent} from './CatalogUI.jsx';
+import {getUIComponent, TableSelectOptions} from './CatalogUI.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import SelectArea, {SelectedShape} from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {CysConverter} from '../visualize/CsysConverter.js';
+import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
+
 
 const TYPE_ID= 'CATALOG_TYPE';
-
-const helpText= 'Click on point to highlight';
-
+const CatalogType = new Enum(['X', 'BOX', 'REGION']);
 
 
 const findColIdx= (columns,colId) => columns.findIndex( (c) => c.name===colId);
-
 const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,getUIComponent);
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -55,8 +55,9 @@ export default {factoryDef, TYPE_ID}; // every draw layer must default export wi
 function creator(initPayload, presetDefaults) {
     const {catalogId, tableData, tableMeta, title,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
-           symbol, size,
-           dataTooBigForSelection=false, catalog=true,boxData=false }= initPayload;
+           symbol, size, tblId,
+           dataTooBigForSelection=false, catalog=true,
+           dataType=CatalogType.X.key, tableSelection, isFromRegion=false}= initPayload;
 
     const drawingDef= Object.assign(makeDrawingDef(),
         {
@@ -70,15 +71,16 @@ function creator(initPayload, presetDefaults) {
     };
 
     drawingDef.color= (color || get(tableMeta,MetaConst.DEFAULT_COLOR) || getNextColor());
-
+    const helpText= `Click on ${(dataType == CatalogType.REGION.key) ? 'region' : 'point'} to highlight`;
     const options= {
         hasPerPlotData:false,
-        isPointData:!boxData,
+        isPointData: catalog,
         canUserDelete: true,
         canUseMouse:true,
         canHighlight: true,
         canSelect: catalog,
-        canFilter: true,
+        canShowSelect: dataType === CatalogType.REGION.key,
+        canFilter: dataType !== CatalogType.REGION.key,
         dataTooBigForSelection,
         helpLine : helpText,
         canUserChangeColor: ColorChangeType.DYNAMIC,
@@ -88,6 +90,7 @@ function creator(initPayload, presetDefaults) {
     const dl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID, 
                                       title || `Catalog: ${get(tableMeta,'title',catalogId)}`,
                                       options, drawingDef, null, pairs );
+    const catalogType = dataType.toUpperCase();
     dl.catalogId= catalogId;
     dl.tableData= tableData;
     dl.tableMeta= tableMeta;
@@ -96,8 +99,11 @@ function creator(initPayload, presetDefaults) {
     dl.highlightedRow= highlightedRow;
     dl.columns= columns;
     dl.catalog= catalog;
-    dl.boxData= boxData;
+    dl.catalogType = Object.keys(CatalogType).includes(catalogType) ? CatalogType.get(catalogType) : CatalogType.X;
     dl.angleInRadian= angleInRadian;
+    dl.selectOption = tableSelection;
+    dl.isFromRegion = isFromRegion;
+    dl.tblId = tblId ? tblId : catalogId;
 
     return dl;
 }
@@ -135,12 +141,15 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
             window.clearInterval(id);
             const {tableMeta, tableData}= drawLayer;
             if (closestIdx > -1) {
+                // for data representing the selected region from region data
+                if (data[closestIdx].fromRow) closestIdx = data[closestIdx].fromRow;
+
                 if (tableMeta.decimate_key) {
                     const colIdx= tableData.columns.findIndex((c) => c.name==='rowidx');
-                    dispatchTableHighlight(drawLayer.drawLayerId,tableData.data[closestIdx][colIdx],tableRequest);
+                    dispatchTableHighlight(drawLayer.tblId,tableData.data[closestIdx][colIdx],tableRequest);
                 }
                 else {
-                    dispatchTableHighlight(drawLayer.drawLayerId,closestIdx,tableRequest);
+                    dispatchTableHighlight(drawLayer.tblId,closestIdx,tableRequest);
                 }
             }
         }
@@ -155,11 +164,12 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
                 if (dist > -1 && dist < minDist) {
                     minDist = dist;
                     closestIdx= idx;
+                    if (minDist === 0) break;
                 }
             }
             idx++;
         }
-        done= (idx===data.length);
+        done= (idx===data.length) || (minDist === 0);
     },0);
     return () => window.clearInterval(id);
 }
@@ -170,11 +180,18 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
 function getLayerChanges(drawLayer, action) {
     if  (action.type!==DrawLayerCntlr.MODIFY_CUSTOM_FIELD) return null;
 
-    const {changes}= action.payload;
     const dd= Object.assign({},drawLayer.drawData);
+    const {changes}= action.payload;
+    const {selectOption} = drawLayer;
+
     dd[DataTypes.HIGHLIGHT_DATA]= null;
-    if (changes.tableData) dd[DataTypes.DATA]= null;
-    if (changes.selectInfo) dd[DataTypes.SELECTED_IDXS]= null;
+
+    if (changes.tableData || changes.selectOption ||
+        (changes.selectInfo && selectOption === TableSelectOptions.selected.key)) {
+        dd[DataTypes.DATA]= null;
+    }
+    if (changes.selectInfo || changes.selectOption) dd[DataTypes.SELECTED_IDXS]= null;
+
     return Object.assign({}, changes,{drawData:dd});
 }
 
@@ -191,6 +208,7 @@ function getLayerChanges(drawLayer, action) {
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     const{tableData, columns}= drawLayer;
+
     switch (dataType) {
         case DataTypes.DATA:
             return isEmpty(lastDataRet) ? computeDrawLayer(drawLayer, tableData, columns) : lastDataRet;
@@ -198,9 +216,10 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
             return isEmpty(lastDataRet) ? 
                           computeHighlightLayer(drawLayer, columns) : lastDataRet;
         case DataTypes.SELECTED_IDXS:
-            if (!drawLayer.catalog) return null;
-            return isEmpty(lastDataRet) ?
-                computeSelectedIdxAry(drawLayer.selectInfo) : lastDataRet;
+            if (drawLayer.catalog || drawLayer.catalogType === CatalogType.REGION) {
+                return isEmpty(lastDataRet) ?
+                    computeSelectedIdxAry(drawLayer) : lastDataRet;
+            }
     }
     return null;
 }
@@ -214,10 +233,29 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
  * @returns {Array} build and return an array of PointDataObj for drawing.
  */
 function computeDrawLayer(drawLayer, tableData, columns) {
-    return drawLayer.boxData ? computeBoxDrawLayer(drawLayer, tableData,columns) : computePointDrawLayer(drawLayer, tableData,columns);
+    let objs = null;
+    const {selectOption} = drawLayer;
 
+    switch (drawLayer.catalogType) {
+        case CatalogType.REGION:
+            if (!selectOption || selectOption !== TableSelectOptions.highlighted.key) {
+                objs = (!selectOption || selectOption === TableSelectOptions.all.key) ?
+                    computeRegionLayer(drawLayer, tableData, columns) :
+                    computeRegionSelected(drawLayer, tableData, columns);
+            } else {
+                objs = [];
+            }
+            break;
+        case CatalogType.BOX:
+            objs = computeBoxDrawLayer(drawLayer, tableData, columns);
+            break;
+        case CatalogType.X:
+            objs = computePointDrawLayer(drawLayer, tableData, columns);
+            break;
+    }
+
+    return objs;
 }
-
 
 function toAngle(d, radianToDegree)  {
     const v= Number(d);
@@ -250,9 +288,69 @@ function computeBoxDrawLayer(drawLayer, tableData, columns) {
     });
 }
 
+function computeRegionLayer(drawLayer, tableData, regionCols) {
+    const regionColAry = isArray(regionCols) ? regionCols : [regionCols];
+
+    return regionColAry.reduce((prev, oneRegionCol) => {
+        const {unit='deg'} = oneRegionCol;
+
+        const colObjs = tableData.data.map((oneRow) => {
+            const regionInfo = parseObsCoreRegion(oneRow[oneRegionCol.regionIdx], unit);
+
+            return regionInfo.valid ? regionInfo.drawObj : undefined;
+        });
+        prev.push(...colObjs);
+        return prev;
+    }, []);
+}
+
+function computeRegionSelected(drawLayer, tableData, regionCols) {
+    const regionColAry = isArray(regionCols) ? regionCols : [regionCols];
+    const {selectedColor} = drawLayer.drawingDef;
+    const {selectInfo} = drawLayer;
+
+    const si= SelectInfo.newInstance(selectInfo);
+    if (!si.getSelectedCount()) return [];
+    const idxAry = [...si.getSelected()];
+
+    const selectedData =  regionColAry.reduce((prev, oneRegionCol) => {
+        const {unit='deg'} = oneRegionCol;
+        const colObjs = idxAry.map((idx) => {
+            const row = tableData.data[idx];
+
+            const objInfo = parseObsCoreRegion(row[oneRegionCol.regionIdx], unit);
+            const obj = objInfo.valid ? objInfo.drawObj : undefined;
+            if (obj) {
+                obj.color = selectedColor;
+                obj.fromRow = idx;
+            }
+
+            return obj;
+
+        });
+
+        prev.push(...colObjs);
+        return prev;
+    }, []);
+
+    return selectedData;
+}
+
 function computeHighlightLayer(drawLayer, columns) {
-    return drawLayer.boxData ? computeBoxHighlightLayer(drawLayer,columns, drawLayer.highlightedRow) :
-                               computePointHighlightLayer(drawLayer,columns);
+    let objs = null;
+
+    switch (drawLayer.catalogType) {
+        case CatalogType.REGION:
+            objs = computeRegionHighlightLayer(drawLayer, columns);
+            break;
+        case CatalogType.BOX:
+            objs = computeBoxHighlightLayer(drawLayer, columns, drawLayer.highlightedRow);
+            break;
+        case CatalogType.X:
+            objs = computePointHighlightLayer(drawLayer, columns);
+            break;
+    }
+    return objs;
 }
 
 
@@ -264,8 +362,7 @@ function computeHighlightLayer(drawLayer, columns) {
  */
 function computePointHighlightLayer(drawLayer, columns) {
 
-
-    const tbl= getTblById(drawLayer.drawLayerId);
+    const tbl= getTblById(drawLayer.tblId);
     if (!tbl) return null;
     const {angleInRadian:rad}= drawLayer;
     const raStr= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
@@ -297,8 +394,35 @@ function computeBoxHighlightLayer(drawLayer, columns, highlightedRow) {
     return [fpObj];
 }
 
-function computeSelectedIdxAry(selectInfo) {
-    if (!selectInfo) return null;
+
+function computeRegionHighlightLayer(drawLayer, columns) {
+    const {tableData, highlightedRow=0}= drawLayer;
+    const d= tableData.data[highlightedRow];
+    if (!d) return null;
+
+    const regionColAry = isArray(columns) ? columns : [columns];
+
+    return regionColAry.reduce((prev, oneRegionCol) => {
+        const {unit='deg'} = oneRegionCol;
+        const fpObjInfo = parseObsCoreRegion(d[oneRegionCol.regionIdx], unit);
+        const fpObj = fpObjInfo.valid ? fpObjInfo.drawObj : undefined;
+
+        if (!isEmpty(fpObj)) {
+            fpObj.lineWidth = 3;
+            fpObj.color= COLOR_HIGHLIGHTED_PT;
+        }
+        prev.push(fpObj);
+        return prev;
+    }, []);
+}
+
+
+function computeSelectedIdxAry(drawLayer) {
+    const {selectInfo} = drawLayer;
+    const {selectOption} = drawLayer;
+    if (!selectInfo || (selectOption && selectOption !== TableSelectOptions.all.key)) {
+        return null;
+    }
     const si= SelectInfo.newInstance(selectInfo);
     if (!si.getSelectedCount()) return null;
     return (idx) => si.isSelected(idx);
@@ -322,17 +446,19 @@ export function selectCatalog(pv,dlAry) {
     const catDlAry= getLayers(pv,dlAry);
     const selectedShape = getSelectedShape(pv, dlAry);
     if (catDlAry.length) {
-        const tooBig= catDlAry.some( (dl) => dl.dataTooBigForSelection);
+        const tooBig= catDlAry.some( (dl) => dl.canSelect && dl.dataTooBigForSelection);
         if (tooBig) {
             showInfoPopup('Your data set is too large to select. You must filter it down first.',
                 `Can't Select`); // eslint-disable-line quotes
         }
         else {
             catDlAry.forEach( (dl) => {
-                const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
-                getSelectedPts(sel,p,dl.drawData.data, selectedShape)
-                    .forEach( (idx) => selectInfoCls.setRowSelect(idx, true));
-                dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
+                if (dl.canSelect) {
+                    const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
+                    getSelectedPts(sel, p, dl.drawData.data, selectedShape)
+                        .forEach((idx) => selectInfoCls.setRowSelect(idx, true));
+                    dispatchTableSelect(dl.tblId, selectInfoCls.data);
+                }
             });
             detachSelectArea(pv);
         }
@@ -342,8 +468,10 @@ export function selectCatalog(pv,dlAry) {
 export function unselectCatalog(pv,dlAry) {
     getLayers(pv,dlAry)
         .forEach( (dl) => {
-            const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
-            dispatchTableSelect(dl.drawLayerId, selectInfoCls.data);
+            if (dl.canSelect) {
+                const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
+                dispatchTableSelect(dl.tblId, selectInfoCls.data);
+            }
         });
 }
 
@@ -362,19 +490,21 @@ export function filterCatalog(pv,dlAry) {
     if (!catDlAry.length) return;
 
     const selectedShape = getSelectedShape(pv, dlAry);
-    catDlAry.forEach((dl) =>doFilter(dl,p,sel, selectedShape));
+    catDlAry.forEach((dl) => dl.canFilter && doFilter(dl,p,sel, selectedShape));
     detachSelectArea(pv);
 }
 
 
 function doClearFilter(dl) {
-    dispatchTableFilter({tbl_id: dl.drawLayerId, filters: ''});
+    if (dl.canFilter) {
+        dispatchTableFilter({tbl_id: dl.tblId, filters: ''});
+    }
 }
 
 
 function doFilter(dl,p,sel, selectedShape) {
 
-    const tbl= getTblById(dl.drawLayerId);
+    const tbl= getTblById(dl.tblId);
     if (!tbl) return;
     const filterInfo = get(tbl, 'request.filters');
     const filterInfoCls = FilterInfo.parse(filterInfo);

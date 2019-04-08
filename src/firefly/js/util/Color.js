@@ -1,7 +1,8 @@
 import validator from 'validator';
 import {get, isArray} from 'lodash';
 
-export default { toRGBA, toRGB, getRGBA, toHex, brighter, darker, makeSimpleColorMap, getBWBackground, getComplementaryColor, toRGBAString, shadeColor};
+export default { toRGBA, toRGB, getRGBA, toHex, brighter, darker, makeSimpleColorMap, getBWBackground, getComplementaryColor,
+                 toRGBAString, shadeColor, rateOpacity};
 
 const colours = {
     aliceblue:'#f0f8ff',antiquewhite:'#faebd7',aqua:'#00ffff',aquamarine:'#7fffd4',azure:'#f0ffff',

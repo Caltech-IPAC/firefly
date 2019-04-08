@@ -72,7 +72,7 @@ export function computeDistance(p1, p2) {
 
     if (Math.abs(cosine) > 1.0) cosine = cosine / Math.abs(cosine);
     return RtoD * Math.acos(cosine);
-};
+}
 
 /**
  *
@@ -1014,6 +1014,94 @@ export function findIntersectionPt(seg1x1, seg1y1, seg1x2, seg1y2, seg2x1, sec2y
     };
 }
 
+/**
+ * distance between point and line defined by two end points
+ * @param pts
+ * @param cc
+ * @param pt
+ * @returns {number}
+ */
+export function distToLine(pts, cc, pt) {
+    const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
+    const pt0 = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
+    const pt1 = cc ? cc.getScreenCoords(pts[1]) : makeScreenPt(pts[1].x, pts[1].y);
+    const e1 = makeScreenPt((pt1.x - pt0.x), (pt1.y - pt0.y));
+    const e2 = makeScreenPt((spt.x - pt0.x), (spt.y - pt0.y));
+    const e3 = makeScreenPt((pt0.x - pt1.x), (pt0.y - pt1.y));
+    const e4 = makeScreenPt((spt.x - pt1.x), (spt.y - pt1.y));
+
+    const dpe1e2 = e1.x * e2.x + e1.y * e2.y;
+    const dpe3e4 = e3.x * e4.x + e3.y * e4.y;
+    const e1len2 = e1.x * e1.x + e1.y * e1.y;
+    let ppt;
+
+    if (dpe1e2 > 0 && dpe3e4 > 0) { // spt projects between pt1 & pt2
+        ppt = makeScreenPt(dpe1e2 * e1.x / e1len2 + pt0.x, dpe1e2 * e1.y / e1len2 + pt0.y);
+    } else if (dpe1e2 <= 0) {       // spt projects to right side of pt2
+        ppt = pt0;
+    } else {                        // spt projects to left side of pt1
+        ppt = pt1;
+    }
+    return computeScreenDistance(spt.x, spt.y, ppt.x, ppt.y);
+}
+
+/**
+ * distance between point to polygon boundary
+ * @param pts
+ * @param cc
+ * @param pt
+ * @returns {*}
+ */
+export function distanceToPolygon(pts, cc, pt) {
+    const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
+    const dist = Number.MAX_VALUE;
+
+    if (pts.length < 3) return dist;
+
+    const corners = pts.map((pt) => (cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y)));
+    const len = corners.length;
+
+    return corners.reduce((prev, pt, idx) => {
+        const nIdx = (idx+1)%len;
+        const d = distToLine([corners[idx], corners[nIdx]], cc, spt);
+
+        if (d < prev) {
+            prev = d;
+        }
+        return prev;
+    }, dist);
+}
+
+/**
+ * distance between point to circle boundary
+ * @param radius  in screen pixel
+ * @param pts  center in any domain
+ * @param cc
+ * @param pt
+ * @returns {Number}
+ */
+export function distanceToCircle(radius, pts, cc, pt) {
+    const spt = cc ? cc.getScreenCoords(pt) : makeScreenPt(pt.x, pt.y);
+    let dist = Number.MAX_VALUE;
+    let r, center;
+
+    if (!radius && pts) {
+        const p0 = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
+        const p1 = cc ? cc.getScreenCoords(pts[1]) : makeScreenPt(pts[1].x, pts[1].y);
+
+        r = computeSimpleDistance(p0, p1)/2;
+        center = makeScreenPt((p0.x + p1.x)/2, (p0.y + p1.y)/2);
+    } else if (radius && pts) {
+        center = cc ? cc.getScreenCoords(pts[0]) : makeScreenPt(pts[0].x, pts[0].y);
+        r = radius;
+    } else {
+        return dist;
+    }
+
+    dist = Math.abs(computeSimpleDistance(center, spt) - r);
+    return dist;
+}
+
 export default {
     DtoR,RtoD,FullType,computeScreenDistance, computeDistance,
     computeSimpleDistance,convert,convertToJ2000,
@@ -1022,7 +1110,8 @@ export default {
     isPlotNorth, getEstimatedFullZoomFactor,
     intersects, contains, containsRec,containsCircle,
     getArrowCoords, getSelectedPts, calculatePosition, getCorners,
-    makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees, convertAngle
+    makePt, getWorldPtRepresentation, getCenterPtOfPlot, toDegrees, convertAngle,
+    distToLine, distanceToPolygon, distanceToCircle
 };
 
 

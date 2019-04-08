@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import {isUndefined, isString} from 'lodash';
 import CompleteButton from './CompleteButton.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {ModalDialog} from './ModalDialog.jsx';
@@ -10,7 +11,7 @@ import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js'
 import DialogRootContainer from './DialogRootContainer.jsx';
 
 export const INFO_POPUP= 'InfoPopup';
-
+import './PopupPanel.css';
 
 // ------------------------------------------------------------
 // ------------------------------------------------------------
@@ -70,24 +71,28 @@ export function showOptionsPopup({content, title='Options', modal = false, show=
 }
 /**
  * Show a simple information popup
+ *
  * @param {string | object} content can be a string or a react component
  * @param {string} title
+ * @param {boolean} isCopyable
  * @return {object}
  */
-export function showInfoPopup(content, title='Information') {
+export function showInfoPopup(content, title='Information', isCopyable) {
+    if (isUndefined(isCopyable)) isCopyable = isString(content);
     var results= (
         <PopupPanel title={title} >
-            {makeContent(content)}
+            {makeContent(content, isCopyable)}
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(INFO_POPUP, results);
     dispatchShowDialog(INFO_POPUP);
 }
 
-function makeContent(content) {
+function makeContent(content, isCopyable) {
     return (
         <div style={{padding:5}}>
-            <div style={{minWidth:190, maxWidth: 400, padding:10, fontSize:'120%', overflow: 'hidden'}}>
+            <div style={{minWidth:190, maxWidth: 400, padding:10, fontSize:'120%', overflow: 'hidden'}}
+                 className={isCopyable ? 'popup-panel-textcopyable' : ''}>
                 {content}
             </div>
             <div style={{padding:'0 0 5px 10px'}}>
