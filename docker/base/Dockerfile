@@ -70,6 +70,9 @@ RUN chmod +x ${CATALINA_BASE}/launchTomcat.sh ${CATALINA_BASE}/setupSharedCacheJ
 # setenv.sh is used to defined CATALINA_OPTS and JAVA_OPTS
 COPY setenv.sh ${CATALINA_BASE}/bin/
 
+# increase max header size to avoid failing on large auth token
+RUN sed -i 's/Connector port="8080"/Connector maxHttpHeaderSize="24576" port="8080"/g' ${CATALINA_BASE}/conf/server.xml
+
 # 8080 - http
 # 5050 - debug
 EXPOSE 8080 5050
