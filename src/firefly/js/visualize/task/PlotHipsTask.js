@@ -35,6 +35,7 @@ import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, makeMocTableId, isMOCFitsFromUploadAnalsysis, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {doUpload} from '../../ui/FileUpload.jsx';
+import CoordinateSys from '../CoordSys';
 
 const PROXY= true;
 
@@ -496,7 +497,11 @@ export function matchHiPSToImage(pv, hipsPVidAry) {
         Object.entries(attributes).forEach( (entry) => dispatchAttributeChange(id, false, entry[0], entry[1]));
         dispatchAttachLayerToPlot(ImageOutline.TYPE_ID, id);
         dispatchChangeCenterOfProjection({plotId:id, centerProjPt:wpCenter});
-        dispatchChangeHiPS( {plotId:id,  coordSys:plot.imageCoordSys});
+        //Since HiPs map only support JS2000 and Galactic coordinates, only the image is plotted with these two coordinates
+        //the change is dispatched. If not, do nothing
+        if (plot.imageCoordSys===CoordinateSys.EQ_J2000 || plot.imageCoordSys===CoordinateSys.GALACTIC) {
+            dispatchChangeHiPS({plotId: id, coordSys: plot.imageCoordSys});
+        }
         const hipsPv= getPlotViewById(visRoot(), id);
         const hipsPlot= primePlot(hipsPv);
         // const {width,height}= pv.viewDim;
