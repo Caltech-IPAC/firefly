@@ -121,6 +121,20 @@ export function drawEmptyRecTile(x,y,w,h,ctx,plotView ) {
 
 }
 
+
+export function createEmptyTile(w,h) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = 'rgb(0,0,0)';
+    ctx.fillRect(0, 0, w, h);
+    return c;
+}
+
+
+
+
 // -- keeping this function around for a while
 // export function drawEmptyQuadTile(devPtAry,ctx,plotView ) {
 //     const xAry= devPtAry.map( (pt) => pt.x);

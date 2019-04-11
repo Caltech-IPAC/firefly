@@ -6,8 +6,10 @@ import {initOffScreenCanvas} from './TileDrawHelper.jsx';
 
 const MAX_TILE_IMAGES= 150;
 const MAX_ALLSKY_IMAGES= 20;
+const MAX_FAIL_TILE_IMAGES= 400;
 
 let cachedImages= new Map();
+let failedCachedImages= new Map();
 let cachedAllSkyImages= new Map();
 
 /**
@@ -55,7 +57,18 @@ export function addTileCachedImage(url, image, emptyTile= false) {
     }
 }
 
+export function addFailedImage(url) {
+    const result=  cachedImages.get(url);
+    if (!result) failedCachedImages.set(url, Date.now());
+}
 
+export function isInFailTileCached(url) {
+    const time=  failedCachedImages.get(url);
+    if (!time) return false;
+    const found= Date.now()-time < (1000 * 10); // search less than 10 seconds old
+    if (!found) failedCachedImages.delete(url);
+    return found;
+}
 
 
 
