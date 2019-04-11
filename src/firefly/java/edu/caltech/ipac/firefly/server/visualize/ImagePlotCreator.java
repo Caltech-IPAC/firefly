@@ -55,7 +55,7 @@ public class ImagePlotCreator {
              readInfo= readAry[i];
              WebPlotRequest req= stateAry[i].getWebPlotRequest();
 
-             boolean notify= readAry.length<5 || i % ((readAry.length/5)+1)==0;
+             boolean notify= readAry.length<5 || i % ((readAry.length/10)+1)==0;
              if (notify) {
                  if (readAry.length > 3) {
                      PlotServUtils.updatePlotCreateProgress(req, ProgressStat.PType.CREATING,
