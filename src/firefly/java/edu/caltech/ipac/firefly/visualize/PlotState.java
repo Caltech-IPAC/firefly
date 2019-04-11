@@ -318,6 +318,27 @@ public class PlotState {
         return sb.toString();
     }
 
+    public PlotState makeCopy() {
+        PlotState p= new PlotState();
+        p.multiImage= this.multiImage;
+        p.ctxStr= this.ctxStr;
+        p.newPlot= this.newPlot;
+        p.zoomLevel= this.zoomLevel;
+        p.threeColor= this.threeColor;
+        p.colorTableId= this.colorTableId;
+        p.rotationType= this.rotationType;
+        p.rotaNorthType = this.rotaNorthType;
+        p.flippedY = this.flippedY;
+        p.rotationAngle = this.rotationAngle;
+        p.ops = this.ops;
+        for(int i= 0; (i< bandStateAry.length); i++) {
+            if (this.bandStateAry[i]!=null) {
+                p.bandStateAry[i]= this.bandStateAry[i].makeCopy();
+            }
+        }
+        return p;
+    }
+
 
     public boolean equals(Object o) {
         boolean retval= false;

@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
+import edu.caltech.ipac.firefly.visualize.WebPlotHeaderInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.ComparisonUtil;
@@ -43,27 +44,44 @@ import java.util.Map;
 public class VisJsonSerializer {
 
 
+    public static JSONObject serializeWebPlotHeaderInitializer(WebPlotHeaderInitializer wpHeader) {
+        JSONObject map = null;
+        if (wpHeader!=null) {
+            map = new JSONObject();
+            map.put("workingFitsFileStr", wpHeader.getWorkingFitsFileStr());
+            map.put("originalFitsFileStr", wpHeader.getOriginalFitsFileStr());
+            if (wpHeader.getUploadFileNameStr()!=null) map.put("uploadFileNameStr", wpHeader.getUploadFileNameStr());
+            if (wpHeader.isThreeColor()) map.put("threeColor", wpHeader.isThreeColor());
+            map.put("plotRequestSerialize", wpHeader.getRequest().toString());
+            map.put("dataDesc", wpHeader.getDataDesc());
+        }
+        return map;
+    }
 
 
     public static JSONObject serializeWebPlotInitializerDeep(WebPlotInitializer wpInit) {
         JSONObject map = new JSONObject();
-        map.put("JSON", true);
 
         map.put("imageCoordSys", wpInit.getCoordinatesOfPlot().toString());
-        map.put("headerAry", serializeHeaderAry(wpInit.getHeaderAry()));
-        map.put("relatedData", serializeRelatedDataArray(wpInit.getRelatedData()));
+        if (wpInit.getHeaderAry()!=null) map.put("headerAry", serializeHeaderAry(wpInit.getHeaderAry()));
+        if (wpInit.getRelatedData()!=null) map.put("relatedData", serializeRelatedDataArray(wpInit.getRelatedData()));
         map.put("dataWidth", wpInit.getDataWidth());
         map.put("dataHeight", wpInit.getDataHeight());
         map.put("imageScaleFactor", wpInit.getImageScaleFactor());
         map.put("initImages", serializePlotImages(wpInit.getInitImages()));
         map.put("plotState", serializePlotState(wpInit.getPlotState()));
         map.put("desc", wpInit.getPlotDesc());
-        map.put("dataDesc", wpInit.getDataDesc());
+        if (wpInit.getDataDesc()!=null) map.put("dataDesc", wpInit.getDataDesc());
 
         JSONArray ary= new JSONArray();
 
-        for(WebFitsData wfd : wpInit.getFitsData()) ary.add(serializeWebFitsData(wfd));
-        map.put("fitsData", ary);
+        if (wpInit.getPlotState().isThreeColor()) {
+            for(WebFitsData wfd : wpInit.getFitsData()) ary.add(serializeWebFitsData(wfd));
+            map.put("fitsData", ary);
+        }
+        else {
+            map.put("fitsData", serializeWebFitsData(wpInit.getFitsData()[0]));
+        }
 
         return map;
     }
@@ -126,6 +144,7 @@ public class VisJsonSerializer {
 //    }
 
     public static JSONArray serializeHeaderAry(Header headerAry[]) {
+        if (headerAry==null) return null;
         JSONArray retAry= new JSONArray();
         for(int i=0; (i<headerAry.length); i++) retAry.add(serializeHeader(headerAry[i]));
         return retAry;
@@ -169,7 +188,6 @@ public class VisJsonSerializer {
 
     public static JSONObject serializeInsertBandInitializer(InsertBandInitializer bInit) {
         JSONObject map = new JSONObject();
-        map.put("JSON", true);
         map.put("initImages", serializePlotImages(bInit.getImages()));
         map.put("plotState", serializePlotState(bInit.getPlotState()));
         map.put("fitsData", serializeWebFitsData(bInit.getFitsData()));
@@ -184,7 +202,6 @@ public class VisJsonSerializer {
     public static JSONObject serializePlotImages(PlotImages pi) {
         if (pi==null) return null;
         JSONObject map = new JSONObject();
-        map.put("JSON", true);
 
         map.put("templateName", pi.getTemplateName());
         map.put("screenWidth", pi.getScreenWidth());
@@ -210,8 +227,8 @@ public class VisJsonSerializer {
             imageMap.put("y", image.getYoff());
             imageMap.put("width", image.getWidth());
             imageMap.put("height", image.getHeight());
-            imageMap.put("index", image.getIndex());
-            imageMap.put("created", image.isCreated());
+//            imageMap.put("index", image.getIndex()); // not used
+//            imageMap.put("created", image.isCreated()); // not used
             imageAry.add(imageMap);
         }
         map.put("images", imageAry);
@@ -236,7 +253,7 @@ public class VisJsonSerializer {
 
         map.put("ctxStr", s.getContextString());
         map.put("zoomLevel", s.getZoomLevel());
-        map.put("colorTableId", s.getColorTableId());
+        if (s.getColorTableId()>0) map.put("colorTableId", s.getColorTableId());
 
 
         // don't pass if defaulted
@@ -257,15 +274,21 @@ public class VisJsonSerializer {
 
 
         // band state array
-        JSONArray list = new JSONArray();
         BandState bandStateAry[]= s.getBandStateAry();
-        for(int i= 0; (i< bandStateAry.length); i++) {
-            list.add(bandStateAry[i]==null || !bandStateAry[i].hasRequest() ?
-                                                   null : serializeBandState(bandStateAry[i]));
+        if (s.isThreeColor()) {
+            JSONArray list = new JSONArray();
+            for(BandState bs : bandStateAry) {
+                list.add((bs==null || (!bs.hasRequest() && bs.getOriginalFitsFileStr()==null)) ? null : serializeBandState(bs));
+            }
+            for(int i= 0; (i< bandStateAry.length); i++) {
+                list.add((bandStateAry[i]==null || (!bandStateAry[i].hasRequest() && bandStateAry[i].getOriginalFitsFileStr()==null)) ?
+                        null : serializeBandState(bandStateAry[i]));
+            }
+            map.put("bandStateAry", list);
         }
-        map.put("bandStateAry", list);
-
-
+        else  {
+            map.put("bandStateAry", serializeBandState(bandStateAry[0]));
+        }
         return map;
     }
 
@@ -356,22 +379,23 @@ public class VisJsonSerializer {
 
     public static JSONObject serializeBandState(BandState b) {
         JSONObject map = new JSONObject();
-        map.put("JSON", true);
-        map.put("workingFitsFileStr", b.getWorkingFitsFileStr());
-        if (!ComparisonUtil.equals(b.getWorkingFitsFileStr(), b.getOriginalFitsFileStr())) {
-            map.put("originalFitsFileStr", b.getOriginalFitsFileStr());
+        if (b.getWorkingFitsFileStr()!=null) {
+            map.put("workingFitsFileStr", b.getWorkingFitsFileStr());
         }
-        if (b.getUploadedFileName()!=null) {
-            map.put("uploadFileNameStr", b.getUploadedFileName());
+        if (b.getOriginalFitsFileStr()!=null) {
+            if (!ComparisonUtil.equals(b.getWorkingFitsFileStr(), b.getOriginalFitsFileStr())) {
+                map.put("originalFitsFileStr", b.getOriginalFitsFileStr());
+            }
         }
+        if (b.getUploadedFileName()!=null) map.put("uploadFileNameStr", b.getUploadedFileName());
         if (b.getImageIdx()>0) map.put("imageIdx", b.getImageIdx());
         if (b.getOriginalImageIdx()>0) map.put("originalImageIdx", b.getOriginalImageIdx());
-        map.put("plotRequestSerialize", b.getWebPlotRequestSerialized());
-        map.put("rangeValuesSerialize", b.getRangeValuesSerialized());
+        if (b.getWebPlotRequestSerialized()!=null) map.put("plotRequestSerialize", b.getWebPlotRequestSerialized());
         if (b.isMultiImageFile()) map.put("multiImageFile", b.isMultiImageFile());
         if (b.isTileCompress()) map.put("tileCompress", b.isTileCompress());
         if (b.getCubeCnt()>0) map.put("cubeCnt", b.getCubeCnt());
         if (b.getCubePlaneNumber()>0) map.put("cubePlaneNumber", b.getCubePlaneNumber());
+        map.put("rangeValuesSerialize", b.getRangeValuesSerialized());
         return map;
     }
 

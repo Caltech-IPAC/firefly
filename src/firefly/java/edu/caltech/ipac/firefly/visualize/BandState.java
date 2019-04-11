@@ -149,6 +149,25 @@ public class BandState implements Serializable {
 
     public void setUploadedFileName(String uploadFile) { uploadFileNameStr = uploadFile; }
     public String getUploadedFileName() { return uploadFileNameStr; }
+    
+    public BandState makeCopy() {
+        BandState b= new BandState();
+        b.workingFitsFileStr = this.workingFitsFileStr;
+        b.originalFitsFileStr = this.originalFitsFileStr;
+        b.uploadFileNameStr = this.uploadFileNameStr;
+        b.imageIdx = this.imageIdx;
+        b.originalImageIdx = this.originalImageIdx;
+
+        b.plotRequestSerialize = this.plotRequestSerialize;
+        b.rangeValuesSerialize = this.rangeValuesSerialize;
+        b.directFileAcessData= this.directFileAcessData;
+        b.bandVisible = this.bandVisible;
+        b.multiImageFile = this.multiImageFile;
+        b.tileCompress = this.tileCompress;
+        b.cubeCnt = this.cubeCnt;
+        b.cubePlaneNumber = this.cubePlaneNumber;
+        return b;
+    }
 
 
     public String toString() {

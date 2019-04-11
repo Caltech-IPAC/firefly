@@ -83,8 +83,8 @@ export class Tabs extends PureComponent {
         this.state= tabsStateFromProps(props);
     }
 
-    static getDerivedStateFromProps(props) {
-        return tabsStateFromProps(props);
+    static getDerivedStateFromProps(props,state) {
+        return props.componentKey ? tabsStateFromProps(props) : state;
     }
 
     componentWillUnmount() {

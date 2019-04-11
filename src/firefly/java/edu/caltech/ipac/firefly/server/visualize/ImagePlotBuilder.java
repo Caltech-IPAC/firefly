@@ -3,8 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.imageretrieve.ImageFileRetrieverFactory;
@@ -13,20 +13,18 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 import static edu.caltech.ipac.firefly.visualize.Band.*;
 
@@ -126,36 +124,37 @@ public class ImagePlotBuilder {
         return new Results(pInfo,zoomChoice, findElapse,readElapse);
     }
 
-    static Results buildFromFile(WebPlotRequest request,
-                                 FileInfo fileData,
-                                 FitsRead fitsRead,
-                                 int imageIdx,
-                                 PlotState state) throws Exception {
-
-
-        ImagePlotInfo pInfo[];
-        // ------------ read the FITS files
-        long readStart = System.currentTimeMillis();
-        PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
-        long readElapse = System.currentTimeMillis() - readStart;
-
-
-        Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.processFitsRead(fileData,request,fitsRead,imageIdx);
-
-        Map<Band,WebPlotRequest> requestMap= new HashMap<>(1);
-        requestMap.put(Band.NO_BAND,request);
-
-        // ------------ make the ImagePlot(s)
-        ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap);
-        if (state == null) {
-            pInfo = makeNewPlots(readInfoMap, requestMap, zoomChoice, PlotState.MultiImageAction.USE_FIRST, false);
-        } else {
-            pInfo = new ImagePlotInfo[1];
-            pInfo[0] = recreatePlot(state, readInfoMap, zoomChoice);
-        }
-
-        return new Results(pInfo,zoomChoice, 0,readElapse);
-    }
+// Unused code commented out 3/5/2019 - keep around for awhile
+//    static Results buildFromFile(WebPlotRequest request,
+//                                 FileInfo fileData,
+//                                 FitsRead fitsRead,
+//                                 int imageIdx,
+//                                 PlotState state) throws Exception {
+//
+//
+//        ImagePlotInfo pInfo[];
+//        // ------------ read the FITS files
+//        long readStart = System.currentTimeMillis();
+//        PlotServUtils.updatePlotCreateProgress(request, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
+//        long readElapse = System.currentTimeMillis() - readStart;
+//
+//
+//        Map<Band, FileReadInfo[]> readInfoMap = WebPlotReader.processFitsRead(fileData,request,fitsRead,imageIdx);
+//
+//        Map<Band,WebPlotRequest> requestMap= new HashMap<>(1);
+//        requestMap.put(Band.NO_BAND,request);
+//
+//        // ------------ make the ImagePlot(s)
+//        ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap);
+//        if (state == null) {
+//            pInfo = makeNewPlots(readInfoMap, requestMap, zoomChoice, PlotState.MultiImageAction.USE_FIRST, false);
+//        } else {
+//            pInfo = new ImagePlotInfo[1];
+//            pInfo[0] = recreatePlot(state, readInfoMap, zoomChoice);
+//        }
+//
+//        return new Results(pInfo,zoomChoice, 0,readElapse);
+//    }
 
 
 

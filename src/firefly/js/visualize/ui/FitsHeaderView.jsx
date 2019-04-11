@@ -21,11 +21,12 @@ import numeral from 'numeral';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {TABLE_SORT, TABLE_REPLACE, dispatchTableSort} from '../../tables/TablesCntlr.js';
+import {getHDU, isThreeColor} from '../PlotViewUtil';
 
 const popupIdRoot = 'directFileAccessData';
 const popupPanelResizableStyle = {
     width: 450,
-    minWidth: 450,
+    minWidth: 448,
     height: 400,
     minHeight: 300,
     resize: 'both',
@@ -112,7 +113,8 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
 
 
     // update table sort when active image is changed
-    const watchActivePlotChange = (action, cancelSelf) => {
+    const watchActivePlotChange = (action, cancelSelf, params) => {
+        let {displayedPlotId, displayedHdu} = params;
         if (!isDialogVisible(popupId)) {
             cancelSelf();
         } else {
@@ -125,9 +127,14 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
                 return prev;
             }, false);
 
-            updatePopup(crtPlot, newTableInfo)();
+            if (isThreeColor(plot) || displayedPlotId!==crtPlot.plotId || displayedHdu!==getHDU(crtPlot)) {
+                updatePopup(crtPlot, newTableInfo)();
+            }
+            displayedPlotId= crtPlot.plotId;
+            displayedHdu= getHDU(crtPlot);
 
         }
+        return {displayedPlotId, displayedHdu};
     };
 
     const isFitsHeaderTable = (tbl) => {
@@ -139,7 +146,6 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element) {
         if (!isDialogVisible(popupId)) {
             cancelSelf();
         } else {
-            console.log('action.type = '+ action.type);
             let tblModel;
             if (action.type === TABLE_SORT) {
                 const {sortInfo='', tbl_id} = get(action.payload, ['request']) || {};
@@ -204,7 +210,7 @@ function renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId) {
     switch (bands.length){
         case 2:
         colorBandTabs = (
-                <Tabs defaultSelected={0} useFlex={true} onTabSelect={onBandSelected(fitsHeaderInfo)}>
+                <Tabs defaultSelected={0} useFlex={true} style={{flexGrow:1}} onTabSelect={onBandSelected(fitsHeaderInfo)}>
                     {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
                     {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
             </Tabs>
@@ -212,7 +218,7 @@ function renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId) {
             break;
         case 3:
             colorBandTabs = (
-                <Tabs defaultSelected={0} useFlex={true} onTabSelect={onBandSelected(fitsHeaderInfo)}>
+                <Tabs defaultSelected={0} useFlex={true} style={{flexGrow:1}} onTabSelect={onBandSelected(fitsHeaderInfo)}>
                     {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
                     {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
                     {renderSingleTab(plot, bands[2],fitsHeaderInfo )}

@@ -170,20 +170,20 @@ public class FitsReadUtil {
 
         Header newHeader = cloneHeaderFrom(header);
 
-        newHeader.deleteKey("BITPIX");
-        newHeader.setBitpix(-32);
-        newHeader.deleteKey("NAXIS");
-        newHeader.setNaxes(2);
-        newHeader.deleteKey("NAXIS1");
-        newHeader.setNaxis(1, pixels[0].length);
-        newHeader.deleteKey("NAXIS2");
-        newHeader.setNaxis(2, pixels.length);
+//        newHeader.deleteKey("BITPIX");
+//        newHeader.setBitpix(-32);
+//        newHeader.deleteKey("NAXIS");
+//        newHeader.setNaxes(2);
+//        newHeader.deleteKey("NAXIS1");
+//        newHeader.setNaxis(1, pixels[0].length);
+//        newHeader.deleteKey("NAXIS2");
+//        newHeader.setNaxis(2, pixels.length);
 
-        newHeader.deleteKey("DATAMAX");
-        newHeader.deleteKey("DATAMIN");
-        newHeader.deleteKey("NAXIS3");
-        newHeader.deleteKey("NAXIS4");
-        newHeader.deleteKey("BLANK");
+//        newHeader.deleteKey("DATAMAX");
+//        newHeader.deleteKey("DATAMIN");
+//        newHeader.deleteKey("NAXIS3");
+//        newHeader.deleteKey("NAXIS4");
+//        newHeader.deleteKey("BLANK");
 
         ImageData new_image_data = new ImageData(pixels);
         hdu = new ImageHDU(newHeader, new_image_data);
@@ -234,8 +234,9 @@ public class FitsReadUtil {
     private static void insertPositionIntoHeader(Header header, int pos, long hduOffset) throws FitsException {
         if (hduOffset<0) hduOffset= 0;
         if (pos<0) pos= 0;
+        long headerSize= header.getOriginalSize()>0 ? header.getOriginalSize() : header.getSize();
         int bitpix = header.getIntValue("BITPIX", -1);
-        header.addLine(new HeaderCard( "SPOT_HS", header.getOriginalSize(), "Header block size on disk (added by Firefly)"));
+        header.addLine(new HeaderCard( "SPOT_HS", headerSize, "Header block size on disk (added by Firefly)"));
         header.addLine(new HeaderCard( "SPOT_EXT", pos, "Extension Number (added by Firefly)"));
         header.addLine(new HeaderCard( "SPOT_OFF", hduOffset, "Extension Offset (added by Firefly)"));
         header.addLine(new HeaderCard( "SPOT_BP", bitpix, "Original Bitpix value (added by Firefly)"));
@@ -252,7 +253,8 @@ public class FitsReadUtil {
         BasicHDU[] hduList = new BasicHDU[hdu.getHeader().getIntValue("NAXIS3", 0)];
         for (int i = 0; i < hduList.length; i++) {
             hduList[i] = makeHDU(hdu,data32[i] );
-            hduList[i].addValue("SPOT_PL", i, "Plane of FITS cube (added by Firefly)");
+            int bitpix = hduList[i].getHeader().getIntValue("BITPIX", -1);
+            hduList[i].getHeader().addLine(new HeaderCard("SPOT_PL", i, "Plane of FITS cube (added by Firefly)"));
             hduList[i].getHeader().resetOriginalSize();
         }
         return hduList;

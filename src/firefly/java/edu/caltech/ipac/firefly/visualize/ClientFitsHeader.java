@@ -47,10 +47,8 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
 
     public ClientFitsHeader(int planeNumber,
                             int bitpix,
-                            int naxis,
                             int naxis1,
                             int naxis2,
-                            int naxis3,
                             double cdelt2,
                             double bscale,
                             double bzero,
@@ -58,10 +56,8 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
                             long dataOffset) {
         _headers.put(PLANE_NUMBER,planeNumber+"");
         _headers.put(BITPIX,      bitpix+"");
-        _headers.put(NAXIS,       naxis+"");
         _headers.put(NAXIS1,      naxis1+"");
         _headers.put(NAXIS2,      naxis2+"");
-        _headers.put(NAXIS3,      naxis3+"");
         _headers.put(CDELT2,      cdelt2+"");
         _headers.put(BSCALE,      bscale+"");
         _headers.put(BZERO,       bzero+"");
@@ -81,10 +77,8 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
 
     public int getPlaneNumber() { return getIntHeader(PLANE_NUMBER); }
     public int getBixpix() { return getIntHeader(BITPIX); }
-    public int getNaxis() { return getIntHeader(NAXIS); }
     public int getNaxis1() { return getIntHeader(NAXIS1); }
     public int getNaxis2() { return getIntHeader(NAXIS2); }
-    public int getNaxis3() { return getIntHeader(NAXIS3); }
     public double getCDelt2() { return getDoubleHeader(CDELT2); }
     public double getBScale() { return getDoubleHeader(BSCALE); }
     public double getBZero() { return getDoubleHeader(BZERO); }

@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.StretchData;
+import edu.caltech.ipac.firefly.visualize.WebPlotHeaderInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
@@ -106,9 +107,9 @@ public class VisServerOps {
      */
     public static WebPlotResult create3ColorPlot(WebPlotRequest redR, WebPlotRequest greenR, WebPlotRequest blueR) {
         try {
-            WebPlotInitializer wpInit[] = WebPlotFactory.createNew(redR, greenR, blueR);
-            WebPlotRequest req= wpInit[0].getPlotState().getPrimaryRequest();
-            WebPlotResult retval = makeNewPlotResult(wpInit,req.getProgressKey());
+            WebPlotFactory.WebPlotFactoryRet wpRet = WebPlotFactory.createNew(redR, greenR, blueR);
+            WebPlotRequest req= wpRet.getWpInit()[0].getPlotState().getPrimaryRequest();
+            WebPlotResult retval = makeNewPlotResult(wpRet.getWpInit(),wpRet.getWpHeader(), req.getProgressKey());
             CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
             counters.incrementVis("New 3 Color Plots");
             return retval;
@@ -158,24 +159,24 @@ public class VisServerOps {
      *
      * @return PlotCreationResult the results
      */
-    public static WebPlotResult[] createOneFileGroup(List<WebPlotRequest> rList) {
-
-        List<WebPlotResult> resultList = new ArrayList<>(rList.size());
-        try {
-            WebPlotInitializer wpInitAry[] = WebPlotFactory.createNewGroup(rList);
-            for (WebPlotInitializer wpInit : wpInitAry) {
-                WebPlotRequest req= wpInitAry[0].getPlotState().getPrimaryRequest();
-                resultList.add(makeNewPlotResult(new WebPlotInitializer[]{wpInit}, req.getProgressKey()));
-                CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
-                counters.incrementVis("New Plots");
-            }
-        } catch (Exception e) {
-            for (int i = 0; (i < resultList.size()); i++) {
-                resultList.add(createError("on createPlot", null, new WebPlotRequest[]{rList.get(i)}, e));
-            }
-        }
-        return resultList.toArray(new WebPlotResult[resultList.size()]);
-    }
+//    public static WebPlotResult[] createOneFileGroup(List<WebPlotRequest> rList) {
+//
+//        List<WebPlotResult> resultList = new ArrayList<>(rList.size());
+//        try {
+//            WebPlotInitializer wpInitAry[] = WebPlotFactory.createNewGroup(rList);
+//            for (WebPlotInitializer wpInit : wpInitAry) {
+//                WebPlotRequest req= wpInitAry[0].getPlotState().getPrimaryRequest();
+//                resultList.add(makeNewPlotResult(new WebPlotInitializer[]{wpInit}, req.getProgressKey()));
+//                CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
+//                counters.incrementVis("New Plots");
+//            }
+//        } catch (Exception e) {
+//            for (int i = 0; (i < resultList.size()); i++) {
+//                resultList.add(createError("on createPlot", null, new WebPlotRequest[]{rList.get(i)}, e));
+//            }
+//        }
+//        return resultList.toArray(new WebPlotResult[resultList.size()]);
+//    }
 
 
     /**
@@ -187,8 +188,8 @@ public class VisServerOps {
     public static WebPlotResult createPlot(WebPlotRequest request) {
 
         try {
-            WebPlotInitializer wpInit[] = WebPlotFactory.createNew(request);
-            WebPlotResult retval = makeNewPlotResult(wpInit, request.getProgressKey());
+            WebPlotFactory.WebPlotFactoryRet wpRet= WebPlotFactory.createNew(request);
+            WebPlotResult retval = makeNewPlotResult(wpRet.getWpInit(), wpRet.getWpHeader(), request.getProgressKey());
             CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
             counters.incrementVis("New Plots");
             return retval;
@@ -502,12 +503,12 @@ public class VisServerOps {
             }
 
 
-            WebPlotInitializer wpInitAry[] = (state.isThreeColor() && cropRequest.length == 3) ?
+            WebPlotFactory.WebPlotFactoryRet wpRet = (state.isThreeColor() && cropRequest.length == 3) ?
                     WebPlotFactory.createNew(cropRequest[0], cropRequest[1], cropRequest[2]) :
                     WebPlotFactory.createNew(cropRequest[0]);
 
             int imageIdx = 0;
-            for (WebPlotInitializer wpInit : wpInitAry) {
+            for (WebPlotInitializer wpInit : wpRet.getWpInit()) {
                 PlotState cropState = wpInit.getPlotState();
                 cropState.addOperation(PlotState.Operation.CROP);
                 cropState.setWorkingFitsFileStr(cropRequest[0].getFileName(), bands[0]);
@@ -522,7 +523,7 @@ public class VisServerOps {
             }
 
 
-            WebPlotResult cropResult = makeNewPlotResult(wpInitAry, null);
+            WebPlotResult cropResult = makeNewPlotResult(wpRet.getWpInit(), wpRet.getWpHeader(), null);
             CtxControl.updateCachedPlot(cropResult.getContextStr());
 
             counters.incrementVis("Crop");
@@ -1359,11 +1360,11 @@ public class VisServerOps {
 
 
 
-    private static WebPlotResult makeNewPlotResult(WebPlotInitializer wpInit[], String requestKey) {
+    private static WebPlotResult makeNewPlotResult(WebPlotInitializer[] wpInit, WebPlotHeaderInitializer wpHeader, String requestKey) {
         PlotState state = wpInit[0].getPlotState();
         WebPlotResult retval = new WebPlotResult(state.getContextString());
         if (requestKey!=null) retval.setRequestKey(requestKey);
-        retval.putResult(WebPlotResult.PLOT_CREATE, new CreatorResults(wpInit));
+        retval.putResult(WebPlotResult.PLOT_CREATE, new CreatorResults(wpHeader, wpInit));
         return retval;
     }
 

@@ -4,9 +4,9 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.visualize.fitseval.FitsDataEval;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.visualize.fitseval.FitsDataEval;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
@@ -17,7 +17,6 @@ import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -48,48 +47,49 @@ public class WebPlotReader {
     }
 
 
-    /**
-     * @param fd file data
-     * @param req WebPlotRequest from the search, usually the first
-     * @return the ReadInfo[] object
-     * @throws java.io.IOException        any io problem
-     * @throws nom.tam.fits.FitsException problem reading the fits file
-     * @throws edu.caltech.ipac.util.download.FailedRequestException any other problem
-     * @throws GeomException problem reprojecting
-     */
-    public static Map<Band, FileReadInfo[]> processFitsRead(FileInfo fd, WebPlotRequest req, FitsRead fitsRead, int imageIdx)
-            throws IOException,
-                   FitsException,
-                   FailedRequestException,
-                   GeomException {
-
-        FileReadInfo retval;
-
-        File originalFile = fd.getFile();
-        String uploadedName= null;
-        if (ServerContext.isInUploadDir(originalFile) || originalFile.getName().startsWith("upload_")) {
-            uploadedName= fd.getDesc();
-        }
-
-        ModFileWriter modFileWriter= null;
-        if (req!=null) {
-            WebPlotPipeline.PipelineRet pipeRet= WebPlotPipeline.applyPipeline(req, fitsRead, imageIdx, Band.NO_BAND, originalFile);
-            if (pipeRet.modFileWriter!=null && fitsRead!=pipeRet.fr) {
-                modFileWriter= pipeRet.modFileWriter;
-                FitsCacher.addFitsReadToCache(modFileWriter.getTargetFile(), new FitsRead[]{pipeRet.fr});
-                fitsRead= pipeRet.fr;
-            }
-        }
-        modFileWriter= checkUnzip(imageIdx,Band.NO_BAND,originalFile, modFileWriter);
-
-        retval= new FileReadInfo(originalFile, fitsRead, Band.NO_BAND, imageIdx,
-                                 fd.getDesc(), uploadedName, null, modFileWriter);
-
-        Map<Band, FileReadInfo[]> retMap= new HashMap<>(1);
-        retMap.put(Band.NO_BAND, new FileReadInfo[] {retval});
-
-        return retMap;
-    }
+// Unused code commented out 3/5/2019 - keep around for awhile
+//    /**
+//     * @param fd file data
+//     * @param req WebPlotRequest from the search, usually the first
+//     * @return the ReadInfo[] object
+//     * @throws java.io.IOException        any io problem
+//     * @throws nom.tam.fits.FitsException problem reading the fits file
+//     * @throws edu.caltech.ipac.util.download.FailedRequestException any other problem
+//     * @throws GeomException problem reprojecting
+//     */
+//    public static Map<Band, FileReadInfo[]> processFitsRead(FileInfo fd, WebPlotRequest req, FitsRead fitsRead, int imageIdx)
+//            throws IOException,
+//                   FitsException,
+//                   FailedRequestException,
+//                   GeomException {
+//
+//        FileReadInfo retval;
+//
+//        File originalFile = fd.getFile();
+//        String uploadedName= null;
+//        if (ServerContext.isInUploadDir(originalFile) || originalFile.getName().startsWith("upload_")) {
+//            uploadedName= fd.getDesc();
+//        }
+//
+//        ModFileWriter modFileWriter= null;
+//        if (req!=null) {
+//            WebPlotPipeline.PipelineRet pipeRet= WebPlotPipeline.applyPipeline(req, fitsRead, imageIdx, Band.NO_BAND, originalFile);
+//            if (pipeRet.modFileWriter!=null && fitsRead!=pipeRet.fr) {
+//                modFileWriter= pipeRet.modFileWriter;
+//                FitsCacher.addFitsReadToCache(modFileWriter.getTargetFile(), new FitsRead[]{pipeRet.fr});
+//                fitsRead= pipeRet.fr;
+//            }
+//        }
+//        modFileWriter= checkUnzip(imageIdx,Band.NO_BAND,originalFile, modFileWriter);
+//
+//        retval= new FileReadInfo(originalFile, fitsRead, Band.NO_BAND, imageIdx,
+//                                 fd.getDesc(), uploadedName, null, modFileWriter);
+//
+//        Map<Band, FileReadInfo[]> retMap= new HashMap<>(1);
+//        retMap.put(Band.NO_BAND, new FileReadInfo[] {retval});
+//
+//        return retMap;
+//    }
 
 
 

@@ -3,7 +3,7 @@
  */
 
 
-import {isEmpty} from 'lodash';
+import {isEmpty, isArray} from 'lodash';
 import {Band} from './Band.js';
 import {BandState} from './BandState.js';
 import CoordinateSys from './CoordSys.js';
@@ -135,6 +135,18 @@ export class PlotState {
      * @public
      */
     getWebPlotRequest(band) { return this.get(band || this.firstBand()).getWebPlotRequest(); }
+    /**
+     * @summary if a cube, checkout how many images it contains
+     * @param {Band} [band] the band check for, if not passed the used the primary band
+     * @return {number} the WebPlotRequest
+     * @public
+     */
+    getCubeCnt(band) { return this.get(band || this.firstBand()).getCubeCnt(); }
+
+
+    getCubePlaneNumber(band) {
+        return this.get(band || this.firstBand()).getCubePlaneNumber();
+    }
 
     /**
      * Get the range values for the plot.
@@ -142,6 +154,7 @@ export class PlotState {
      * @return {RangeValues}
      */
     getRangeValues(band) { return this.get(band || this.firstBand()).getRangeValues(); }
+
 
     /**
      *
@@ -223,11 +236,16 @@ export class PlotState {
         if (!psJson) return null;
         const state= PlotState.makePlotState();
 
-        state.bandStateAry= psJson.bandStateAry.map( (bJ) => BandState.makeBandStateWithJson(bJ));
+        if (isArray(psJson.bandStateAry)) {
+            state.bandStateAry= psJson.bandStateAry.map( (bJ) => BandState.makeBandStateWithJson(bJ));
+        }
+        else {
+            state.bandStateAry= [BandState.makeBandStateWithJson(psJson.bandStateAry)];
+        }
 
         state.ctxStr=psJson.ctxStr;
         state.zoomLevel= psJson.zoomLevel;
-        state.colorTableId= psJson.colorTableId;
+        state.colorTableId= psJson.colorTableId || 0;
 
         // if not include used defaulted values
         state.multiImage= psJson.multiImage; // if multiImage is not default we don't care

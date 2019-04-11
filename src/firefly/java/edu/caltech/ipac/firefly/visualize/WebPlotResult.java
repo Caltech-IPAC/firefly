@@ -20,6 +20,7 @@ public class WebPlotResult implements Iterable<Map.Entry<String,Object>> {
 
 
     public static final String PLOT_CREATE = "PlotCreate";
+    public static final String PLOT_CREATE_HEADER = "PlotCreateHeader";
     public static final String PLOT_STATE = "PlotState";
     public static final String INSERT_BAND_INIT = "InsertBand";
     public static final String STRING= "String";

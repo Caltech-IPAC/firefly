@@ -54,12 +54,15 @@ public class ImagePlotCreator {
          for(int i= 0; (i<readAry.length); i++)  {
              readInfo= readAry[i];
              WebPlotRequest req= stateAry[i].getWebPlotRequest();
-             if (readAry.length>3) {
-                 PlotServUtils.updatePlotCreateProgress(req, ProgressStat.PType.CREATING,
-                                              PlotServUtils.CREATING_MSG+": "+ (i+1)+" of "+readAry.length);
-             }
-             else  {
-                 PlotServUtils.updatePlotCreateProgress(req, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
+
+             boolean notify= readAry.length<5 || i % ((readAry.length/10)+1)==0;
+             if (notify) {
+                 if (readAry.length > 3) {
+                     PlotServUtils.updatePlotCreateProgress(req, ProgressStat.PType.CREATING,
+                             PlotServUtils.CREATING_MSG + ": " + (i + 1) + " of " + readAry.length);
+                 } else {
+                     PlotServUtils.updatePlotCreateProgress(req, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
+                 }
              }
              ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
              frGroup.setFitsRead(readInfo.getBand(),readInfo.getFitsRead());
