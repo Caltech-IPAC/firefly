@@ -5,7 +5,7 @@
  */
 
 
-import  {get, isBoolean} from 'lodash';
+import  {get, isBoolean, isEmpty} from 'lodash';
 import {clone} from '../util/WebUtil.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -145,8 +145,9 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      var screenWidth = plot.screenSize.width;
 
      var csysName = getPreference(COORDINATE_PREFERENCE);
-     if (!csysName) {
-         csysName = 'eq2000hms';//set default
+     if (!csysName || isEmpty(csysName) ) {
+         //set default
+         csysName = 'eq2000hms';
      }
      var csys=getCoordinateSystem(csysName);
      var labelFormat=csysName.endsWith('hms')? 'hms':'dcm';
