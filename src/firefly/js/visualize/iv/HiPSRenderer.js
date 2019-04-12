@@ -5,9 +5,11 @@
 import {isNil, get} from 'lodash';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
-import {findTileCachedImage, addTileCachedImage} from './HiPSTileCache.js';
+import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../../core/AppDataCntlr.js';
-import {createImageUrl, drawEmptyRecTile} from './TileDrawHelper.jsx';
+import {createImageUrl, createEmptyTile} from './TileDrawHelper.jsx';
+
+const emptyTileCanvas= createEmptyTile(512,512);
 
 /**
  * The object that can render a HiPS to the screen.
@@ -43,7 +45,6 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
      */
     const drawTileAsync= (src, tile) => {
         if (abortRender) return;
-        if (isBaseImage) drawEmptyRecTile(tile.devPtCorners,offscreenCtx,plotView);
         let inCache;
         let tileData;
         let emptyTile;
@@ -61,9 +62,25 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
         }
 
         const {tileAttributes, shouldProcess, processor}= tileProcessInfo;
-        const {promise, cancelImageLoad} = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
-        allImageCancelFuncs.push(cancelImageLoad);
-        promise.then((imageData) => {
+
+        let p;
+        if (isInFailTileCached(tileData)) {
+           p= Promise.reject();
+        }
+        else {
+            const {promise, cancelImageLoad} = retrieveAndProcessImage(tileData, tileAttributes, shouldProcess, processor);
+            allImageCancelFuncs.push(cancelImageLoad);
+            p= promise;
+        }
+
+        const doRenderNow= () => {
+            const now= Date.now();
+            return (renderedCnt === totalCnt ||
+                renderedCnt/totalCnt > .75 && now-firstRenderTime>1000 ||
+                now-firstRenderTime>2000);
+        };
+
+        p.then((imageData) => {
             renderedCnt++;
 
             if (!inCache && !emptyTile) addTileCachedImage(src, imageData);
@@ -74,18 +91,15 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, tile
                 tileSize, {x:tile.dx,y:tile.dy}, true, tile.nside);
 
 
-            const now= Date.now();
-            const renderNow= (renderedCnt === totalCnt ||
-                renderedCnt/totalCnt > .75 && now-firstRenderTime>1000 ||
-                now-firstRenderTime>2000);
-            // console.log(`${renderedCnt} of ${totalCnt}, renderNow: ${renderNow}, time diff ${(now-firstRenderTime)/1000}`);
-            if (renderNow) renderToScreen();
+            if (doRenderNow()) renderToScreen();
             renderComplete= (renderedCnt === totalCnt);
             if (renderComplete) removeTask();
         }).catch(() => {
             renderedCnt++;
             if (abortRender) return;
-            if (renderedCnt === totalCnt) {
+            drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, true, tile.nside);
+            addFailedImage(src);
+            if (doRenderNow()) {
                 removeTask();
                 renderComplete= true;
                 renderToScreen();
