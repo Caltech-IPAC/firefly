@@ -81,6 +81,7 @@ public class PlotServUtils {
     public static final String ENDING_READ_MSG = "Loading Data";
     public static final String CREATING_MSG =  "Creating Images";
     public static final String PROCESSING_MSG =  "Processing Images";
+    public static final String PROCESSING_COMPLETED_MSG =  "Processing Images Completed";
 
     static {
         _hostname= FileUtil.getHostname();

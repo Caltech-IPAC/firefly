@@ -14,17 +14,18 @@ import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner}
 import {ToolbarButton} from './ToolbarButton.jsx';
 
 
-function computeDropdownXY(divElement) {
+function computeDropdownXY(divElement, isIcon) {
     const bodyRect = document.body.parentElement.getBoundingClientRect();
+    const off= isIcon ? 0 : 6;
     const elemRect = divElement.getBoundingClientRect();
     const x = (elemRect.left - bodyRect.left);
-    const y = elemRect.top - bodyRect.top;
+    const y = elemRect.top - bodyRect.top- off;
     return {x,y};
 }
 
 
-function showDialog(divElement,dropDown,ownerId,offButtonCB) {
-    const {x,y}= computeDropdownXY(divElement);
+function showDialog(divElement,dropDown,ownerId,offButtonCB, isIcon) {
+    const {x,y}= computeDropdownXY(divElement, isIcon);
 
     const dropDownClone= React.cloneElement(dropDown, { toolbarElement:divElement });
     const dd= <DropDownMenuWrapper x={x} y={y} content={dropDownClone}/>;
@@ -77,6 +78,7 @@ export class DropDownToolbarButton extends PureComponent {
 
     handleDropDown(divElement,dropDown) {
         if (divElement) {
+            const isIcon= Boolean(this.props.icon);
             const {dropDownVisible, dropDownOwnerId}= this.state;
             if (dropDownVisible) {
                 if (dropDownOwnerId===this.ownerId) {
@@ -84,12 +86,12 @@ export class DropDownToolbarButton extends PureComponent {
                     document.removeEventListener('mousedown', this.docMouseDownCallback);
                 }
                 else {
-                    showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback);
+                    showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback, isIcon);
                 }
 
             }
             else {
-                showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback);
+                showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback, isIcon);
             }
         }
     }
@@ -117,9 +119,7 @@ DropDownToolbarButton.propTypes= {
     visible : PropTypes.bool,
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func,
+    hasHorizontalLayoutSep: PropTypes.bool,
     dropDown : PropTypes.object.isRequired
-};
-
-DropDownToolbarButton.defaultProps= {
 };
 

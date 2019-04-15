@@ -63,6 +63,7 @@ export const SINGLE='single';
 export const GRID='grid';
 export const IMAGE='image';
 export const PLOT2D='plot2d';
+export const WRAPPER='wrapper';
 export const DEFAULT_FITS_VIEWER_ID= 'DEFAULT_FITS_VIEWER_ID';
 export const DEFAULT_PLOT2D_VIEWER_ID= 'DEFAULT_PLOT2D_VIEWER_ID';
 export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
@@ -82,7 +83,7 @@ function initState() {
      * @prop {string} layout must be 'single' or 'grid'
      * @prop {boolean} canReceiveNewPlots - NewPlotMode.create_replace.key,
      * @prop {boolean} reservedContainer
-     * @prop {string} containerType - one of 'image', 'plot2d'
+     * @prop {string} containerType - one of 'image', 'plot2d', 'wrapper'
      * @prop {boolean} mounted - if the react component using the store is mounted
      * @prop {Object|String} layoutDetail - may be any object, string, etc- Hint for the UI, can be any string but with 2 reserved  GRID_RELATED, GRID_FULL
      * @prop {object} customData: {}
@@ -136,6 +137,19 @@ function initState() {
             customData: {},
             renderTreeId: undefined,
             lastActiveItemId: ''
+        },
+        {
+            viewerId:'some id',
+            itemIdAry:[],
+            viewType:SINGLE,
+            layout: SINGLE,
+            canReceiveNewPlots: NewPlotMode.none.key,
+            mounted: false,
+            containerType : WRAPPER,
+            layoutDetail : 'none',
+            customData: {},
+            renderTreeId: undefined,
+            lastActiveItemId: ''
         }
     ];
 }
@@ -154,11 +168,12 @@ function initState() {
  * @param {string} containerType a string with container type, IMAGE and PLOT2D are predefined
  * @param {boolean} mounted
  * @param {string} [renderTreeId] - used only with multiple rendered tree, like slate in jupyter lab
+ * @param {string} [layout] - layout type - SINGLE or GRID, defaults to GRID
  */
-export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false, renderTreeId) {
+export function dispatchAddViewer(viewerId, canReceiveNewPlots, containerType, mounted=false, renderTreeId, layout=GRID) {
     flux.process({
         type: ADD_VIEWER,
-        payload: {viewerId, canReceiveNewPlots, containerType, mounted, renderTreeId, lastActiveItemId:''}
+        payload: {viewerId, canReceiveNewPlots, containerType, mounted, renderTreeId, lastActiveItemId:'', layout}
     });
 }
 
@@ -187,9 +202,9 @@ export function dispatchAddViewerItems(viewerId, itemIdAry, containerType, rende
  * 
  * @param {string} viewerId
  * @param {string} layout single or grid
- * @param {string} layoutDetail more detail about the type of layout, hint to UI
+ * @param {string} layoutDetail more detail about the type of layout, hint to UI, typically detail is with GRID
  */
-export function dispatchChangeViewerLayout(viewerId, layout, layoutDetail) {
+export function dispatchChangeViewerLayout(viewerId, layout, layoutDetail=undefined) {
     flux.process({type: CHANGE_VIEWER_LAYOUT , payload: {viewerId, layout, layoutDetail} });
 }
 

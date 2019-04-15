@@ -607,37 +607,6 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
 }
 
 
-// function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConversion) {
-//     const {dispatchPlotImage, dispatchPlotHiPS, dispatchAddViewer}= llApi.action;
-//     const {IMAGE, NewPlotMode}= llApi.util.image;
-//     const {renderDOM}= llApi.util;
-//     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
-//
-//     highlevelImageInit(llApi);
-//
-//     request = validatePlotRequest(llApi, targetDiv, request);
-//
-//     const plotId= getPlotIdFromRequest(request);
-//     dispatchAddViewer(targetDiv, NewPlotMode.create_replace.key, IMAGE);
-//
-//
-//     if (isHiPS) {
-//         request.Type= 'HiPS';
-//         if (hipsImageConversion && !hipsImageConversion.hipsRequestRoot) {
-//             hipsImageConversion.hipsRequestRoot= request;
-//         }
-//         dispatchPlotHiPS({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
-//     }
-//     else {
-//         if (hipsImageConversion && !hipsImageConversion.imageRequestRoot) {
-//             hipsImageConversion.imageRequestRoot= request;
-//         }
-//         dispatchPlotImage({plotId, wpRequest:request, viewerId:targetDiv, hipsImageConversion});
-//     }
-//
-//     renderDOM(targetDiv, MultiImageViewer,
-//         {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
-// }
 
 
 

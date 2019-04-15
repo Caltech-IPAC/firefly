@@ -36,6 +36,7 @@ const toolsStyle= {
 
 export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                                           layoutType= 'grid', dlAry, handleInlineTools=true,
+                                          makeDropDown,
                                           alwaysShowToolbar= false}) {
     
     var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
@@ -98,6 +99,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                 }
                 {wcsMatch}
                 {layoutType==='grid' && <HiPSMatchingOptions  visRoot={visRoot} plotIdAry={viewerPlotIds}/>}
+                {makeDropDown && makeDropDown()}
             </div>
             {handleInlineTools && moreThanOne && makeInlineRightToolbar(visRoot,pv,pvDlAry)}
         </div>
@@ -132,6 +134,7 @@ MultiViewStandardToolbar.propTypes= {
     layoutType : PropTypes.string,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     handleInlineTools : PropTypes.bool,
-    alwaysShowToolbar : PropTypes.bool
+    alwaysShowToolbar : PropTypes.bool,
+    makeDropDownFunc: PropTypes.func
 };
 

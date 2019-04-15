@@ -37,12 +37,13 @@ const toolsStyle= {
 
 
 export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=[], layoutType, dlAry, wcsMatchType,
-                                          activeTable, converterFactory, handleInlineTools=true }) {
+                                          activeTable, makeDataProductsConverter, handleInlineTools=true, makeDropDown}) {
 
-    const {dataId,converter}= converterFactory(activeTable) || {};
+    const converter= makeDataProductsConverter(activeTable) || {};
     if (!converter) {
         return <div/>;
     }
+    const dataId= converter.converterId;
     var nextIdx, prevIdx, leftImageStyle;
     const viewer= getViewer(getMultiViewRoot(), viewerId);
     const vr= visRoot();
@@ -71,6 +72,7 @@ export function ImageMetaDataToolbarView({activePlotId, viewerId, viewerPlotIds=
 
     return (
         <div style={toolsStyle}>
+            {makeDropDown && makeDropDown()}
             <div style={{whiteSpace: 'nowrap'}}>
                 {showMultiImageOps && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
@@ -122,8 +124,9 @@ ImageMetaDataToolbarView.propTypes= {
     layoutType : PropTypes.string.isRequired,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     activeTable: PropTypes.object,
-    converterFactory: PropTypes.func,
-    handleInlineTools : PropTypes.bool
+    makeDataProductsConverter: PropTypes.func,
+    handleInlineTools : PropTypes.bool,
+    makeDropDown: PropTypes.func
 };
 
 function handleViewerLayout(viewerId, grid, gridLayout) {

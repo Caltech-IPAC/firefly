@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory.BAD_FORMAT_MSG;
+
 /**
  * @author Trey Roby
  */
@@ -69,8 +71,8 @@ public class FitsCacher {
                     return fitsDataEval;
                 } catch (FitsException e) {
                     File dir= fitsFile.getParentFile();
-                    if ( dir.equals(ServerContext.getVisCacheDir()) ||      // if in cache or upload dir, rename the file
-                            dir.equals(ServerContext.getUploadDir()) ) {
+                    if ( e.getMessage().equals(BAD_FORMAT_MSG) &&
+                            (dir.equals(ServerContext.getVisCacheDir()) ||  dir.equals(ServerContext.getUploadDir())) ) {    // if in cache or upload dir, rename the file
                         String newF= fitsFile.getAbsolutePath()+"--bad-file";
                         fitsFile.renameTo(new File(newF));
                         throw new FitsException("bad fits file renamed to: "+newF,e);

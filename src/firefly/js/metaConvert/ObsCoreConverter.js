@@ -12,11 +12,20 @@ import {
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {makeWorldPt} from '../visualize/Point.js';
+import {createGridImagesActivate, createSingleImageActivate} from './ImageDataProductsUtil.js';
+import {dispatchTableSearch} from '../tables/TablesCntlr';
 
 const GIG= 1048576 * 1024;
+const previewTableId= 'OBCORE-TBL';
 
-export function makeObsCoreConverter(table, converterTemplate) {
-    const ret= {...converterTemplate};
+/**
+ *
+ * @param {TableModel} table
+ * @param {DataProductsConvertType} converterTemplate
+ * @return {DataProductsConvertType}
+ */
+export function makeObsCoreConverter(table,converterTemplate) {
+    const ret= {...converterTemplate, converterId: `ObsCore-${table.tbl_id}`};
     ret.hasRelatedBands= false;
 
     const propTypeCol= getObsCoreProdTypeCol(table);
@@ -48,27 +57,48 @@ export function makeObsCoreConverter(table, converterTemplate) {
     return ret;
 }
 
+
+
+export function getObsCoreGridDataProduct(table, plotRows, activateParams) {
+    const pAry= plotRows.map( (pR) => getObsCoreSingleDataProduct(table,pR.row,activateParams,false));
+    return Promise.all(pAry).then ( (resultAry) => {
+        const {imageViewerId, converterId}= activateParams;
+        const requestAry= resultAry
+            .filter( (result) => result && result.displayType==='images')
+            .map( (result) => result.request);
+        const activate= createGridImagesActivate(requestAry,imageViewerId,converterId, table.tbl_id, plotRows);
+        return { displayType:'images', activate, requestAry, menu:undefined};
+    });
+}
+
+
+
 /**
  *  Support data the we don't know about
  * @param table
  * @param row
- * @param includeSingle
- * @param includeStandard
+ * @param {ActivateParams} activateParams
+ * @param {boolean} includeMenu - if true the build a menu if possible
  * @return {{}}
  */
-export function makeRequestForObsCore(table, row, includeSingle, includeStandard) {
+export function getObsCoreSingleDataProduct(table, row, activateParams, includeMenu= true) {
 
     const dataSource= getObsCoreAccessURL(table,row);
     const prodType= (getObsCoreProdType(table,row) || '').toLocaleLowerCase();
-    const canHandleProdType= prodType.includes('image') || prodType.includes('cube');
+    const imageType= prodType.includes('image') || prodType.includes('cube');
+    const tableType= prodType.includes('spectrum');
+    const canHandleProdType= imageType || tableType;
     const isVoTable= isFormatVoTable(table, row);
     const isDataLink= isFormatDataLink(table,row);
 
-    if (!dataSource || !canHandleProdType || (isVoTable && !isDataLink)) return Promise.resolve({});
+    if (!dataSource || (isVoTable && !isDataLink)) {
+        return Promise.resolve({displayType:'message', message: prodType +' is not yet supported'});
+    }
 
     let obsCollect= getCellValue(table,row,'obs_collection') || '';
     const iName= getCellValue(table,row,'instrument_name') || '';
     const obsId= getCellValue(table,row,'obs_id') || '';
+    const size= Number(getCellValue(table,row,'access_estsize')) || 0;
     if (obsCollect===iName) obsCollect= '';
 
     const titleStr= `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
@@ -81,10 +111,27 @@ export function makeRequestForObsCore(table, row, includeSingle, includeStandard
 
         return doFetchTable(tableReq).then(
             (datalinkTable) => {
-                const listOfUrls= getDataLinkAccessUrls(table, datalinkTable, 'fits', GIG);
-                let idx= listOfUrls.findIndex( (item) => item.semantics.includes('this'));
+                const dataLinkData= getDataLinkAccessUrls(table, datalinkTable);
+                const menu=  includeMenu && dataLinkData.length>2 ? createMenuRet(dataLinkData,positionWP, table, row, activateParams) : undefined;
+                const filterDLData= dataLinkData
+                    .filter(({contentType,size}) => {
+                        return (contentType.toLowerCase().includes('fits') && (size<=GIG));
+                    });
+                let idx= filterDLData.findIndex( (item) => item.semantics.includes('this'));
                 if (idx<0) idx= 0;
-                return (listOfUrls.length) ? makeRequestForObsCoreItem(listOfUrls[idx].url,positionWP,titleStr,includeSingle,includeStandard) : {};
+
+                const canHandle= filterDLData[idx].contentType.toLowerCase().includes('fits');
+                if (!canHandle) {
+                    return {displayType: 'message', message: filterDLData[idx].contentType+' is not yet supported', menu};
+                }
+                if (filterDLData.length)  {
+                    const req= makeObsCoreRequest(filterDLData[idx].url,positionWP,titleStr);
+                    return makeObsCoreImageDisplayType(req,table,row,menu,activateParams);
+                }
+                else {
+                    return {displayType: 'message', message : 'No data available for this row'};
+                }
+
             }
         ).catch(
             (reason) => {
@@ -94,21 +141,88 @@ export function makeRequestForObsCore(table, row, includeSingle, includeStandard
 
     }
     else {
-        return Promise.resolve(makeRequestForObsCoreItem(dataSource,positionWP,titleStr,includeSingle,includeStandard));
+        let retVal;
+        if (imageType) {
+            if (size<GIG) {
+                const req= makeObsCoreRequest(dataSource,positionWP,titleStr);
+                retVal= makeObsCoreImageDisplayType(req,table,row,undefined,activateParams);
+            }
+            else {
+                retVal= {
+                    displayType: 'message',
+                    message : 'Image data is too large to load',
+                    menu : [ { name: 'Download FITS: '+titleStr + ' (too large to show)', type : 'download', url : dataSource} ]
+                };
+            }
+        }
+        else if (tableType) {
+            retVal= {displayType:'table', menu:undefined, activate: createTableActivate(dataSource,titleStr, activateParams)};
+        }
+        else {
+            retVal= {
+                displayType: 'message',
+                message: prodType +' is not yet supported',
+                menu : [ { name: 'Download File: '+titleStr , type : 'download', url : dataSource} ]
+            };
+        }
+        return Promise.resolve(retVal);
     }
 }
 
-function makeRequestForObsCoreItem(dataSource, positionWP, titleStr, includeSingle, includeStandard) {
-    const retval= {};
-    if (includeSingle) {
-        retval.single= makeObsCoreRequest(dataSource,positionWP, titleStr);
-    }
 
-    if (includeStandard) {
-        retval.standard= [makeObsCoreRequest(dataSource,positionWP, titleStr)];
-        retval.highlightPlotId= retval.standard[0].getPlotId();
-    }
-    return retval;
+function makeName(s='', url, auxTot, autCnt) {
+    let name= s==='#this' ? 'Primary product (#this)' : s;
+    name= name[0]==='#' ? name.substring(1) : name;
+    name= (name==='auxiliary' && auxTot>1) ? `${name}: ${autCnt}` : name;
+    return name || url;
+}
+
+function createMenuRet(dataLinkData, positionWP, table, row, activateParams) {
+    const {imageViewerId, converterId}= activateParams;
+    const auxTot= dataLinkData.filter( (e) => e.semantics==='#auxiliary').length;
+    let auxCnt=0;
+    const originalMenu= dataLinkData.reduce( (resultAry,e) => {
+        const ct= e.contentType.toLowerCase();
+        const name= makeName(e.semantics, e.url, auxTot, auxCnt);
+        if (ct.includes('fits') || ct.includes('cube')) {
+            if (e.size<GIG) {
+                const request= makeObsCoreRequest(e.url,positionWP,e.semantics);
+                resultAry.push( {
+                    name: 'Show FITS Image: '+name,
+                    type : 'image',
+                    request,
+                    url: e.url,
+                    activate : createSingleImageActivate(request,imageViewerId,converterId,table.tbl_id,row),
+                    semantics: e.semantics
+                });
+            }
+            else {
+                resultAry.push( { name: 'Download FITS: '+name + '(too large to show)', type : 'download', url : e.url , semantics: e.semantics });
+            }
+        }
+        if (ct.includes('table') || ct.includes('spectrum') || e.semantics.includes('auxiliary')) {
+            resultAry.push( { name: 'Show Table: ' + name, type : 'table', url: e.url, semantics: e.semantics,
+                activate: createTableActivate(e.url, e.semantics, activateParams)});
+        }
+        if (ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gig')) {
+            resultAry.push({ name: 'Show PNG image: '+name, type : 'png', url : e.url, semantics: e.semantics  });
+        }
+        if (ct.includes('tar')|| ct.includes('gz')) {
+            resultAry.push({ name: 'Download file: '+name, type : 'download', url : e.url , semantics: e.semantics });
+        }
+        if (e.semantics==='#auxiliary') auxCnt++;
+        return resultAry;
+    }, []);
+
+    return originalMenu.sort((s1,s2) => s1.semantics==='#this' ? -1 : 0);
+
+
+}
+
+function makeObsCoreImageDisplayType(request, table, row, menu, activateParams) {
+    const {imageViewerId, converterId}= activateParams;
+    const activate= createSingleImageActivate(request,imageViewerId,converterId,table.tbl_id,row);
+    return { displayType:'images', activate, request, menu};
 }
 
 
@@ -131,3 +245,10 @@ function makeObsCoreRequest(dataSource, positionWP, titleStr) {
 }
 
 
+function createTableActivate(url, titleStr, activateParams) {
+    return () => {
+        const {tableGroupViewerId}= activateParams;
+        const dataTableReq= makeFileRequest(titleStr, url, undefined, { tbl_id:previewTableId, startIdx : 0, pageSize : 100});
+        dispatchTableSearch(dataTableReq, {noHistory: true, tbl_group: tableGroupViewerId,backgroundable: true, showFilters: true, showInfoButton: true});
+    };
+}

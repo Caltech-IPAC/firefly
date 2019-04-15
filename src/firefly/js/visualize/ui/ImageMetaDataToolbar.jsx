@@ -8,7 +8,7 @@ import {isEmpty,omit} from 'lodash';
 import {flux} from '../../Firefly.js';
 import shallowequal from 'shallowequal';
 import {ImageMetaDataToolbarView} from './ImageMetaDataToolbarView.jsx';
-import {converterFactory} from '../../metaConvert/ConverterFactory.js';
+import {makeDataProductsConverter} from '../../metaConvert/DataProductsFactory.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {SINGLE} from '../MultiViewCntlr.js';
 
@@ -52,12 +52,13 @@ export class ImageMetaDataToolbar extends Component {
     render() {
         const {activeTable}= this.state;
         
-        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, tableId}= this.props;
+        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown}= this.props;
         return (
             <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
                                       wcsMatchType={visRoot.wcsMatchType}
                                       viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
-                                      activeTable={activeTable} converterFactory={converterFactory}
+                                      activeTable={activeTable} makeDataProductsConverter={makeDataProductsConverter}
+                                      makeDropDown={makeDropDown}
                                         /> 
         );
     }
@@ -69,5 +70,6 @@ ImageMetaDataToolbar.propTypes= {
     viewerId : PropTypes.string.isRequired,
     layoutType : PropTypes.string.isRequired,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
-    tableId: PropTypes.string
+    tableId: PropTypes.string,
+    makeDropDown: PropTypes.func
 };

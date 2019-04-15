@@ -96,7 +96,8 @@ export class ToolbarButton extends PureComponent {
         const {
             icon,text,tip,badgeCount=0,enabled=true,
             horizontal=true, bgDark, visible=true, active,
-            imageStyle, lastTextItem=false, todo, additionalStyle} = this.props;
+            imageStyle, lastTextItem=false, todo, additionalStyle,
+            hasHorizontalLayoutSep} = this.props;
 
 
         var s= { position: 'relative'};
@@ -121,13 +122,13 @@ export class ToolbarButton extends PureComponent {
             s.fontSize= '10pt';
             s.position= 'relative';
             textCName= 'ff-menuItemHText';
-            const topStyle= Object.assign({display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
+            const topStyle= Object.assign({}, {display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
             return (
                 <div style={topStyle}>
                     <div style={{ display:'inline-block',
                               margin:'0 4px 0 4px',
                               height: 'calc(100% - 7px)',
-                              borderLeft : '1px solid rgba(0,0,0,.6)' }} />
+                              borderLeft : hasHorizontalLayoutSep ? '1px solid rgba(0,0,0,.6)':'none' }} />
                     <div title={tip} style={s} className={cName}
                          ref={this.setupRef}
                          onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
@@ -139,7 +140,8 @@ export class ToolbarButton extends PureComponent {
                     {lastTextItem ? <div style={{ display:'inline-block',
                                               margin:'0 4px 0 4px',
                                               height: 'calc(100% - 7px)',
-                                              borderLeft : '1px solid rgba(0,0,0,.6)' }} /> : false}
+                                              borderLeft : hasHorizontalLayoutSep ? '1px solid rgba(0,0,0,.6)':'none'
+                                              }} /> : false}
                 </div>
             );
 
@@ -184,6 +186,7 @@ ToolbarButton.propTypes= {
     bgDark: PropTypes.bool,
     todo: PropTypes.bool,
     useBorder : PropTypes.bool,
+    hasHorizontalLayoutSep: PropTypes.bool,
     onClick : PropTypes.func,
     horizontal : PropTypes.bool,
     visible : PropTypes.bool,
@@ -206,7 +209,8 @@ ToolbarButton.DefaultProps= {
     horizontal : true,
     todo : false,
     hideDropDowns: false,
-    visible : true
+    visible : true,
+    hasHorizontalLayoutSep :true
 };
 
 

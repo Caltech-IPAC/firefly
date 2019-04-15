@@ -13,6 +13,7 @@ import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+import {getActivePlotView} from '../PlotViewUtil';
 
 
 function nextState(props, state) {
@@ -43,13 +44,17 @@ export class MultiImageViewer extends PureComponent {
         const {props}= this;
         if (this.props.viewerId!==prevProps.viewerId) {
             const {renderTreeId}= this.context;
-            dispatchAddViewer(props.viewerId, props.canReceiveNewPlots, IMAGE,true, renderTreeId);
-            dispatchViewerUnmounted(prevProps.viewerId);
-
-            const viewer = getViewer(getMultiViewRoot(), props.viewerId);
-            if (viewer && viewer.lastActiveItemId) {
-                dispatchChangeActivePlotView(viewer.lastActiveItemId);
+            if (this.props.controlViewerMounting) {
+                dispatchAddViewer(props.viewerId, props.canReceiveNewPlots, IMAGE,true, renderTreeId);
+                dispatchViewerUnmounted(prevProps.viewerId);
             }
+
+        }
+        const pv= getActivePlotView(visRoot());
+        const viewer = getViewer(getMultiViewRoot(), props.viewerId);
+        if (!pv || !viewer) return;
+        if (viewer.lastActiveItemId && viewer.lastActiveItemId!==pv.plotId) {
+            setTimeout(() => dispatchChangeActivePlotView(viewer.lastActiveItemId), 5);
         }
 
     }
@@ -57,7 +62,7 @@ export class MultiImageViewer extends PureComponent {
     componentWillUnmount() {
         this.iAmMounted= false;
         if (this.removeListener) this.removeListener();
-        dispatchViewerUnmounted(this.props.viewerId);
+        if (this.props.controlViewerMounting) dispatchViewerUnmounted(this.props.viewerId);
     }
 
     componentDidMount() {
@@ -65,7 +70,7 @@ export class MultiImageViewer extends PureComponent {
         this.removeListener= flux.addListener(() => this.storeUpdate());
         const {viewerId, canReceiveNewPlots}= this.props;
         const {renderTreeId}= this.context;
-        dispatchAddViewer(viewerId,canReceiveNewPlots,IMAGE, true, renderTreeId);
+        if (this.props.controlViewerMounting) dispatchAddViewer(viewerId,canReceiveNewPlots,IMAGE, true, renderTreeId);
     }
 
     storeUpdate() {
@@ -85,6 +90,7 @@ export class MultiImageViewer extends PureComponent {
         const newProps= omit(this.props, ['viewerPlotIds']);
         const aId= viewer.itemIdAry.find( (id) => getPlotViewById(visRoot,id));
         const pv= getPlotViewById(visRoot, aId);
+        if (!pv) return false;
         return (
             <MultiImageViewerView {...newProps}
                                   viewerPlotIds={viewer.itemIdAry}
@@ -108,7 +114,8 @@ MultiImageViewer.propTypes= {
     insideFlex : PropTypes.bool,
     closeFunc : PropTypes.func,
     showWhenExpanded : PropTypes.bool,
-    handleInlineToolsWhenSingle : PropTypes.bool
+    handleInlineToolsWhenSingle : PropTypes.bool,
+    controlViewerMounting : PropTypes.bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, plotId:[string]}]
@@ -127,4 +134,5 @@ MultiImageViewer.contextType= RenderTreeIdCtx;
 MultiImageViewer.defaultProps= {
     canReceiveNewPlots : NewPlotMode.create_replace.key,
     showWhenExpanded : false,
+    controlViewerMounting : true,
 };
