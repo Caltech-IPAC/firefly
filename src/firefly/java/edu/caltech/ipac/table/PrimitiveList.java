@@ -6,6 +6,7 @@ package edu.caltech.ipac.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Date: 6/15/18
@@ -20,16 +21,34 @@ public interface PrimitiveList {
     int size();
     void clear();
     void trimToSize();
+    List<Class> numberTypeList = Arrays.asList(new Class[] {Byte.class, Short.class, Integer.class});
 
     default void add(Object val) {
         set(size(), val);
     }
 
     default void checkType(Object val) {
-        if (val != null && !val.getClass().isAssignableFrom(getDataClass())) {
+        int vIdx = val == null ? -1 : numberTypeList.indexOf(val.getClass());
+        int dIdx = numberTypeList.indexOf(getDataClass());
+
+        // number type value or non number type value
+        if ((vIdx >= 0 && dIdx >= 0 && vIdx > dIdx) ||
+            (vIdx < 0 && val != null && !val.getClass().isAssignableFrom(getDataClass()))) {
             throw new RuntimeException(String.format("Type mismatch(%s): expecting %s but found %s", val, getDataClass(), val.getClass()));
         }
     }
+
+    default int getIntValue(Object val) {
+        int toIdx = numberTypeList.indexOf(Integer.class);
+        int fromIdx = numberTypeList.indexOf(val.getClass());
+
+        if (toIdx == fromIdx) {
+            return ((Integer) val).intValue();
+        } else {
+            return (toIdx == 0) ? ((Byte) val).intValue() : ((Short) val).intValue();
+        }
+    }
+
 
     /**
      * returns a new capacity base on the given parameters
@@ -222,7 +241,7 @@ public interface PrimitiveList {
         public void set(int idx, Object val) {
             checkType(val);
             ensureCapacity(idx);
-            data[idx] = val == null ? Integer.MIN_VALUE : (int) val;
+            data[idx] = val == null ? Integer.MIN_VALUE : getIntValue(val);
             if (idx >= size()) size = idx+1;
         }
 

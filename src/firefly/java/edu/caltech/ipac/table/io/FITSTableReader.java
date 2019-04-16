@@ -398,7 +398,7 @@ public final class FITSTableReader
      * @throws FitsException
      */
     public static DataType convertToDataType(StarTable table, int colIdx, String strategy)
-            throws FitsException{
+        throws FitsException{
 
         ColumnInfo colInfo = table.getColumnInfo(colIdx);
         String colName = colInfo.getName();
