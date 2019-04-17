@@ -20,7 +20,7 @@
     "classnames": "^2.2.5",
     "core-js": "^2.6.4",
     "enum": "^2.5",
-    "fixed-data-table-2": "^0.8.9",
+    "fixed-data-table-2": "^0.8.22",
     "immutability-helper": "^3.0",
     "isomorphic-fetch": "^2.2.1",
     "local-storage": "^1.4.2",

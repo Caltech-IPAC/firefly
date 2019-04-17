@@ -2779,9 +2779,9 @@ findup-sync@^2.0.0:
     micromatch "^3.0.4"
     resolve-dir "^1.0.1"
 
-fixed-data-table-2@^0.8.9:
-  version "0.8.20"
-  resolved "https://registry.yarnpkg.com/fixed-data-table-2/-/fixed-data-table-2-0.8.20.tgz#5fd36235c4cc479ca7dc6dc3927e673f2017a205"
+fixed-data-table-2@^0.8.22:
+  version "0.8.22"
+  resolved "https://registry.yarnpkg.com/fixed-data-table-2/-/fixed-data-table-2-0.8.22.tgz#f30877aa350f751f1a91ba04c7fecff23746d883"
   dependencies:
     create-react-class "^15.5.2"
     prop-types "^15.5.8"
