@@ -4,14 +4,18 @@
 
 package edu.caltech.ipac.firefly.messaging;
 
+import com.google.gwt.thirdparty.guava.common.eventbus.Subscribe;
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
+import edu.caltech.ipac.firefly.util.Ref;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -25,58 +29,134 @@ import static org.junit.Assert.*;
  * @version $Id: $
  */
 public class MessengerTest extends ConfigTest {
+    private boolean isOffline;
+
+    @Before
+    public void checkAlive() {
+        if (Messenger.isOffline()) {
+            System.out.println("Messenger is offline; skipping test.");
+            isOffline = true;
+        }
+    }
+
 
     @Test
-    public void testMessenger() throws InterruptedException {
+    public void testMsgContent() throws InterruptedException {
 
-        if (Messenger.isOffline()) {
-            System.out.println("Messenger is offline; skipping MessengerTest.");
-            return;
-        }
+        if (isOffline) return;
+        LOG.debug("testMsgContent");
 
         String topic = "testPublish";
         String subject = "greetings";
         String body = "secrets";
-        AtomicInteger receiveCnt = new AtomicInteger(0);
+        CountDownLatch tester = new CountDownLatch(1);
 
-        LOG.debug("first subscriber");
-        Messenger.subscribe(topic, (msg) -> {
-            receiveCnt.incrementAndGet();
-            // verify that the content of the msg is correct
-            assertEquals(msg.getValue("", "subject"), subject);
-            assertEquals(msg.getValue("", "body"), body);
-        });
-
-        LOG.debug("second subscriber to a different topic");
-        Messenger.subscribe(topic + "diff", (msg) -> {
-            receiveCnt.incrementAndGet();
-            fail("Should not get any message here");
-        });
-
-        LOG.debug("third subscriber, but to same topic");
-        Messenger.subscribe(topic, (msg) -> {
-            receiveCnt.incrementAndGet();
-        });
+        Subscriber sub = Messenger.subscribe(topic, msg -> {
+                            LOG.debug("message received, testing content..");
+                            assertEquals(msg.getValue("", "subject"), subject);
+                            assertEquals(msg.getValue("", "body"), body);
+                            tester.countDown();
+                        });
 
         Message msg = new Message()
                 .setValue(subject, "subject")
                 .setValue(body, "body");
 
-        Messenger.publish(topic, msg);
-        Messenger.publish(topic, msg);
+        LOG.debug("sending message..");
         Messenger.publish(topic, msg);
 
-        LOG.debug("wait for the test to run through.. not the best approach for async unit tests.. should revisit later.");
-        Thread.sleep(500);
+        tester.await(1, TimeUnit.SECONDS);      // wait up to 1s for test to run.
 
-        LOG.debug("3 messages were sent to 2 subscribers.  The 3rd should not get any.");
-        assertEquals("Number of messages received", 6, receiveCnt.get());
+        // clean up
+        Messenger.unSubscribe(sub);
+        LOG.debug("testMsgContent.. done!");
+    }
 
-        LOG.debug("2 topics were subscribed to.  Expect to get 2 active connections");
-        assertEquals("Number of active connections", 2, Messenger.getConnectionCount());
+    @Test
+    public void testMsgCount() throws InterruptedException {
+
+        if (isOffline) return;
+        LOG.debug("testMsgCount");
+
+        Message testMsg = new Message();
+        String topic1 = "test1";
+        String topic2 = "test2";
+
+        Ref<CountDownLatch> tester = new Ref<>();       // using Ref due to inner class references
+        Subscriber sub11 = Messenger.subscribe(topic1, msg -> tester.getSource().countDown());
+        Subscriber sub12 = Messenger.subscribe(topic1, msg -> tester.getSource().countDown());
+        Subscriber sub21 = Messenger.subscribe(topic2, msg -> tester.getSource().countDown());
+        Subscriber sub22 =Messenger.subscribe(topic2, msg -> tester.getSource().countDown());
+
+        LOG.debug("1 msg to each topic x 2 subs per topic.. = 4");
+        tester.setSource(new CountDownLatch(4));
+        Messenger.publish(topic1, testMsg);
+        Messenger.publish(topic2, testMsg);
+        tester.getSource().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        assertEquals("latch(4) should drain", 0, tester.getSource().getCount());
+
+        LOG.debug("same as above, but 1 sub removed from topic1... = 3");
+        tester.setSource(new CountDownLatch(3));
+        Messenger.unSubscribe(sub11);
+        Messenger.publish(topic1, testMsg);
+        Messenger.publish(topic2, testMsg);
+        tester.getSource().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        assertEquals("latch(3)3 should drain", 0, tester.getSource().getCount());
+
+        LOG.debug("same as above, but remove both subs from topic1... = 2");
+        tester.setSource(new CountDownLatch(2));
+        Messenger.unSubscribe(sub12);
+        Messenger.publish(topic1, testMsg);
+        Messenger.publish(topic2, testMsg);
+        tester.getSource().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        assertEquals("latch(2) should drain", 0, tester.getSource().getCount());
+
+        // clean up
+        Messenger.unSubscribe(sub21);
+        Messenger.unSubscribe(sub22);
+        LOG.debug("testMsgCount.. done!");
+    }
+
+    @Test
+    public void testSubscribe() throws InterruptedException {
+
+        if (isOffline) return;
+        LOG.debug("testSubscribe");
+
+        String topic1 = "test1";
+        String topic2 = "test2";
+
+        Subscriber sub11 = Messenger.subscribe(topic1, msg -> msg = null);
+        Subscriber sub12 = Messenger.subscribe(topic1, msg -> msg = null);
+
+        Subscriber sub21 = Messenger.subscribe(topic2, msg -> msg = null);
+        Subscriber sub22 = Messenger.subscribe(topic2, msg -> msg = null);
+
+        LOG.debug("2 topics, 2 subs per topic.. = 2 connections");
+        Thread.sleep(100);
+        assertEquals("init", 2, Messenger.getConnectionCount());
+
+        LOG.debug("remove 1 sub from topic 1.. = 2 connections");
+        Messenger.unSubscribe(sub11);
+        Thread.sleep(100);
+        assertEquals("3 subs left", 2, Messenger.getConnectionCount());
+
+        LOG.debug("remove both subs from topic 1.. = 1 connections");
+        Messenger.unSubscribe(sub12);
+        Thread.sleep(100);
+        assertEquals("only topic2 left", 1, Messenger.getConnectionCount());
+
+        LOG.debug("remove both topic.. = 0 connections");
+        Messenger.unSubscribe(sub21);
+        Messenger.unSubscribe(sub22);
+        Thread.sleep(100);
+        assertEquals("no subs", 0, Messenger.getConnectionCount());
 
         LOG.debug("Messenger stats: " + Messenger.getStats());
+        LOG.debug("testSubscribe.. done!");
+
     }
+
 
     @Category({TestCategory.Perf.class})
     @Test

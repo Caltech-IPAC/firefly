@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 public class Messenger {
     private static final String REDIS_HOST = AppProperties.getProperty("redis.host", "127.0.0.1");
     private static final int REDIS_PORT = AppProperties.getIntProperty("redis.port", 6379);
+    private static final int MAX_POOL_SIZE = AppProperties.getIntProperty("redis.max.poolsize", 25);;
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     // message broker..  Jedis
@@ -40,37 +41,39 @@ public class Messenger {
     // to limit one thread per topic
     private static ConcurrentHashMap<String, SubscriberHandle> pubSubHandlers = new ConcurrentHashMap<>();
 
-    private static boolean isOffline;
-
     static  {
         try {
             JedisPoolConfig pconfig = new JedisPoolConfig();
             pconfig.setTestOnBorrow(true);
-            pconfig.setMaxTotal(25);
+            pconfig.setMaxTotal(MAX_POOL_SIZE);
             pconfig.setBlockWhenExhausted(true);                // wait.. if needed
             jedisPool = new JedisPool(pconfig, REDIS_HOST, REDIS_PORT);
-            jedisPool.getResource().close();    // test connection
         } catch (Exception ex) {
-            isOffline = true;
             LOG.error(ex, "Unable to connect to Redis at " + REDIS_HOST + ":" + REDIS_PORT);
         }
 
     }
 
     public static String getStats() {
+        JsonHelper stats = new JsonHelper();
         if (isOffline()) {
-            return "[ Messenger is offline ]";
+            return stats.setValue("Messenger is offline").toJson();
         } else {
-            String stats =  " active:" + jedisPool.getNumActive() +
-                            " idle:" + jedisPool.getNumIdle() +
-                            " max-wait:" + jedisPool.getMaxBorrowWaitTimeMillis() +
-                            " avg-wait:" + jedisPool.getMeanBorrowWaitTimeMillis();
-            return "[ " + stats + " ]";
+            return stats.setValue(jedisPool.getNumActive(), "active")
+                        .setValue(jedisPool.getNumIdle(), "idel")
+                        .setValue(jedisPool.getMaxBorrowWaitTimeMillis(), "max-wait")
+                        .setValue(jedisPool.getMeanBorrowWaitTimeMillis(), "avg-wait")
+                        .toJson();
         }
     }
 
     public static boolean isOffline() {
-        return isOffline;
+        try {
+            jedisPool.getResource().close();    // test connection
+            return false;
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     public static int getConnectionCount() {
@@ -87,13 +90,9 @@ public class Messenger {
             SubscriberHandle pubSub = pubSubHandlers.get(topic);
             pubSub.addSubscriber(subscriber);
         } else {
-            SubscriberHandle pubSub = new SubscriberHandle();
+            SubscriberHandle pubSub = new SubscriberHandle(topic);
             pubSub.addSubscriber(subscriber);
             pubSubHandlers.put(topic, pubSub);
-            pubSub.executor = Executors.newSingleThreadExecutor();
-            pubSub.executor.submit(() -> {
-                jedisPool.getResource().subscribe(pubSub.jPubSub, topic);
-            });
         }
         return subscriber;
     }
@@ -140,34 +139,57 @@ public class Messenger {
     static class SubscriberHandle {
 
         private CopyOnWriteArrayList<Subscriber> subscribers = new CopyOnWriteArrayList<>();
+        private String topic;
         ExecutorService executor;
-        private JedisPubSub jPubSub = new JedisPubSub() {
-            public void onMessage(String channel, String message) {
-                Message msg = Message.parse(message);
-                subscribers.forEach((sub) -> {
-                    try {
-                        sub.onMessage(msg);
-                    } catch (Exception e) {
-                        LOG.warn("Error while processing message: " + e.getMessage());
-                    }
-                });
-            }
-        };
+        private JedisPubSub jPubSub;
+
+        SubscriberHandle(String topic) {
+            this.topic = topic;
+        }
 
         void addSubscriber(Subscriber sub) {
             subscribers.add(sub);
+            if (subscribers.size() == 1) {
+                // first subscriber.. need to connect to redis
+                init();
+            }
         }
 
         void removeSubscriber(Subscriber sub) {
             subscribers.remove(sub);
             if (subscribers.size() == 0) {
-                executor.shutdown();
-                unsubscribe();
+                // no more subscrber.. disconnect from redis
+                cleanup();
             }
         }
 
-        void unsubscribe() {
-            jPubSub.unsubscribe();
+        void init() {
+            jPubSub = new JedisPubSub() {
+                public void onMessage(String channel, String message) {
+                    Message msg = Message.parse(message);
+                    subscribers.forEach((sub) -> {
+                        try {
+                            sub.onMessage(msg);
+                        } catch (Exception e) {
+                            LOG.warn("Error while processing message: " + e.getMessage());
+                        }
+                    });
+                }
+            };
+
+            executor = Executors.newSingleThreadExecutor();
+            executor.submit(() -> {
+                Jedis jedis = jedisPool.getResource();
+                jedis.subscribe(jPubSub, topic);
+                jedis.close();
+            });
+        }
+
+        void cleanup() {
+            if (jPubSub != null) jPubSub.unsubscribe();
+            jPubSub = null;
+            if (executor != null) executor.shutdown();
+            executor = null;
         }
     }
 

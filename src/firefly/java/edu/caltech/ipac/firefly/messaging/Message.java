@@ -32,7 +32,7 @@ public class Message {
     public void setHeader(Scope scope, String to, String subject, String from) {
         helper.setValue(scope.name(), "header", "scope");
         if (to != null) helper.setValue(to, "header", "to");
-        if (subject != null) helper.setValue(from, "header", "from");
+        if (from != null) helper.setValue(from, "header", "from");
         if (subject != null) helper.setValue(subject, "header", "subject");
     }
 
