@@ -17,6 +17,7 @@ import {selectedValues} from '../rpc/SearchServicesJson.js';
 import {trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/background/BackgroundUtil.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
+import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
 
 
 export const TABLE_SPACE_PATH = 'table_space';

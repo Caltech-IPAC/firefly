@@ -57,6 +57,11 @@ export const MetaConst = {
     /** the column name with the url or filename of the image data */
     DATA_SOURCE : 'DataSource',
 
+    /** the column name with access rights info;  true if (public, 1, or true), otherwise false  */
+    DATARIGHTS_COL : 'DATARIGHTS_COL',
+
+    /** the column name with public release date info;  null is considered not public */
+    RELEASE_DATE_COL : 'RELEASE_DATE_COL',
 
     /** @deprecated use CENTER_COLUMN */
     CATALOG_COORD_COLS : 'CatalogCoordColumns',

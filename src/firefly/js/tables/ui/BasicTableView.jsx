@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, useMemo} from 'react';
 import PropTypes from 'prop-types';
 import FixedDataTable from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, isEmpty} from 'lodash';
 
-import {tableTextView, getTableUiById} from '../TableUtil.js';
+import {tableTextView, getTableUiById, getProprietaryInfo, getTblById, hasRowAccess} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -31,7 +31,6 @@ class BasicTableViewInternal extends PureComponent {
         };
 
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
-        this.rowClassName = this.rowClassName.bind(this);
         this.onKeyDown    = this.onKeyDown.bind(this);
         this.onRowSelect  = this.onRowSelect.bind(this);
         this.onSelectAll  = this.onSelectAll.bind(this);
@@ -43,11 +42,6 @@ class BasicTableViewInternal extends PureComponent {
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
         var columnWidths = Object.assign({}, this.state.columnWidths, {[columnKey]: newColumnWidth});
         this.setState({columnWidths});
-    }
-
-    rowClassName(index) {
-        const {hlRowIdx} = this.props;
-        return (hlRowIdx === index) ? 'tablePanel__Row_highlighted' : '';
     }
 
     UNSAFE_componentWillReceiveProps(nProps) {
@@ -125,36 +119,44 @@ class BasicTableViewInternal extends PureComponent {
 
         if (!error && isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
 
-        // const filterInfoCls = FilterInfo.parse(filterInfo);
-        // const sortInfoCls = SortInfo.parse(sortInfo);
-        //
         const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
-                                  columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
-                                  onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
+                              columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
+                              onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, tbl_id};
 
         const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
 
-        return (
-            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame'>
-                {   error ? <div style={{padding: 10}}>{error}</div> :
-                    width === 0 ? <div /> :
-                    textView ? <TextView { ...{columns, data, showUnits, width, height} }/> :
-                    <Table
-                        rowHeight={rowHeight}
-                        headerHeight={headerHeight}
-                        rowsCount={data.length}
-                        isColumnResizing={false}
-                        onColumnResizeEndCallback={this.onColumnResizeEndCallback}
-                        onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
-                        rowClassNameGetter={this.rowClassName}
-                        scrollToRow={hlRowIdx}
-                        width={width}
-                        height={height}>
+        const content = () => {
+            if (error) {
+                return <div style={{padding: 10}}>{error}</div>;
+            } else if (width === 0 || showMask || isEmpty(columns)) {
+                return <div/>;
+            } else if (isEmpty(data)) {
+                return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
+            } else if (textView) {
+                return <TextView { ...{columns, data, showUnits, width, height} }/>;
+            } else {
+                return (
+                    <Table  rowHeight={rowHeight}
+                            headerHeight={headerHeight}
+                            rowsCount={data.length}
+                            isColumnResizing={false}
+                            onColumnResizeEndCallback={this.onColumnResizeEndCallback}
+                            onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
+                            rowClassNameGetter={rowClassNameGetter(tbl_id, hlRowIdx)}
+                            scrollToRow={hlRowIdx}
+                            width={width}
+                            height={height}>
+
                         { makeColumns(makeColumnsProps) }
                     </Table>
-                }
-                {!error && showMask && <div style={{top: 0}} className='loading-mask'/>}
-                {!error && !showMask && isEmpty(data) && <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>}
+                );
+            }
+        };
+
+        return (
+            <div tabIndex='-1' onKeyDown={this.onKeyDown} className='TablePanel__frame'>
+                {content()}
+                {showMask && <div style={{top: 0}} className='loading-mask'/>}
             </div>
         );
     }
@@ -245,33 +247,60 @@ function makeColWidth(columns, data) {
     }, {});
 }
 
-function makeColumns ({columns, columnWidths, data, selectable, showUnits, showTypes, showFilters, renderers, bgColor='white',
-            selectInfoCls, filterInfo, sortInfo, onRowSelect, onSelectAll, onSort, onFilter, onFilterSelected, tbl_id}) {
-    if (!columns) return false;
+function rowClassNameGetter(tbl_id, hlRowIdx) {
 
-    var colsEl = columns.map((col, idx) => {
-        if (col.visibility && col.visibility !== 'show') return false;
-        const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
-        const CellRenderer = get(renderers, [col.name, 'cellRenderer'], getDefaultRenderer(col, tbl_id));
-        const fixed = col.fixed || false;
-        const style = col.fixed && {backgroundColor: bgColor};
+    const tableModel = getTblById(tbl_id);
+    const hasProprietaryInfo = !isEmpty(getProprietaryInfo(tableModel));
 
-        return (
-            <Column
-                key={col.name}
-                columnKey={idx}
-                header={<HeadRenderer {...{col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
-                cell={<CellRenderer {...{style, data, tbl_id, colIdx:idx}} />}
-                fixed={fixed}
-                width={columnWidths[idx]}
-                isResizable={true}
-                allowCellsRecycling={true}
-            />
-        );
-    });
-    if (selectable) {
-        const checked = selectInfoCls.isSelectAll();
-        var cbox = (<Column
+    return (rowIndex) => {
+        if (hasProprietaryInfo && !hasRowAccess(tableModel, rowIndex)) {
+            return hlRowIdx === rowIndex ? 'TablePanel__no-access--highlighted' : 'TablePanel__no-access';
+        }
+        if (hlRowIdx === rowIndex) return 'tablePanel__Row_highlighted';
+    };
+}
+
+function makeColumns (props) {
+    const {columns} = props;
+
+    if (isEmpty(columns)) return false;
+
+    var colsEl = columns.map((col, idx) => makeColumnTag(props, col, idx));
+    const selBoxCol = makeSelColTag(props);
+    return [selBoxCol, ...colsEl].filter((c) => c);
+}
+
+
+function makeColumnTag(props, col, idx) {
+    const {data, columnWidths, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id, renderers, bgColor='white'} = props;
+
+    if (col.visibility && col.visibility !== 'show') return false;
+    const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
+    const CellRenderer = get(renderers, [col.name, 'cellRenderer'], getDefaultRenderer(col, tbl_id));
+    const fixed = col.fixed || false;
+    const style = col.fixed && {backgroundColor: bgColor};
+
+    return (
+        <Column
+            key={col.name}
+            columnKey={idx}
+            header={<HeadRenderer {...{col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id}} />}
+            cell={<CellRenderer {...{style, data, tbl_id, colIdx:idx}} />}
+            fixed={fixed}
+            width={columnWidths[idx]}
+            isResizable={true}
+            allowCellsRecycling={true}
+        />
+    );
+}
+
+function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, bgColor='white', selectInfoCls, onRowSelect}) {
+
+    if (!selectable) return false;
+
+    const checked = selectInfoCls.isSelectAll();
+    return (
+        <Column
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
             header={<SelectableHeader {...{checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected}} />}
@@ -279,10 +308,8 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showT
             fixed={true}
             width={25}
             allowCellsRecycling={true}
-        />);
-        colsEl.splice(0, 0, cbox);
-    }
-    return colsEl.filter((c) => c);
+        />
+    );
 }
 
 function getDefaultRenderer(col={}, tbl_id) {
@@ -292,3 +319,4 @@ function getDefaultRenderer(col={}, tbl_id) {
 
     return TextCell;
 }
+

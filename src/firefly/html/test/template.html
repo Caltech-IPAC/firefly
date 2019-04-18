@@ -65,15 +65,36 @@
             }
         }
 
+        function closePopout() {
+            window.template.iframeContainer.classList.remove('popout');
+            const handle = document.getElementById('tpl-popout');
+            handle.onclick = popout;
+            handle.textContent = "expand"
+            const container = document.getElementById('tpl-container');
+            container.classList.remove('fullHeight');
+        }
+
+        function popout() {
+            window.template.iframeContainer.classList.add('popout');
+            const handle = document.getElementById('tpl-popout');
+            handle.onclick = closePopout;
+            handle.textContent = "close"
+            const container = document.getElementById('tpl-container');
+            container.classList.add('fullHeight');
+        }
+
     </script>
 
 </head>
 
-<body style='height: 100%;'>
+<body style='height: 100%;margin: 0;'>
 
 
 <template id="test_template">
-    <div id="tpl-title"></div>
+    <div style="display: inline-flex">
+        <div id="tpl-title"></div>
+        <a id="tpl-popout" onclick="popout()" href="javascript:void(0)">expand</a>
+    </div>
     <div class="tpl-test-container">
         <div  class="tpl-item-box">
             <div class="tpl-label">expected:</div>

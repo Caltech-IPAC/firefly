@@ -7,7 +7,9 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.util.StringUtils;
 import netscape.javascript.JSObject;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * @author loi
@@ -370,7 +373,7 @@ public class JsonTableUtil {
      * @param linkInfos
      * @return
      */
-    private static List<JSONObject> toJsonLinkInfos(List<LinkInfo> linkInfos) {
+    public static List<JSONObject> toJsonLinkInfos(List<LinkInfo> linkInfos) {
 
         return linkInfos.stream().map(link -> {
             JSONObject json = new JSONObject();
@@ -383,6 +386,34 @@ public class JsonTableUtil {
             applyIfNotEmpty(link.getAction(),   v -> json.put("action", v));
             return json;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * The invert of #toJsonLinkInfos().  This convert the JSON linkInfos string into
+     * a List of LinkInfo.
+     * @param jsonLinkInfos     the string to parse into LinkInfo
+     * @return  a List of LinkInfo
+     */
+    public static List<LinkInfo> toLinkInfos(String jsonLinkInfos) {
+
+        List<LinkInfo> rval = new ArrayList<>();
+        if (!isEmpty(jsonLinkInfos)) {
+            JSONArray links = (JSONArray) JSONValue.parse(jsonLinkInfos);
+            for (int i = 0; i < links.size(); i++) {
+                JSONObject li = (JSONObject) links.get(i);
+                LinkInfo linkInfo = new LinkInfo();
+                applyIfNotEmpty(li.get("ID"),    v -> linkInfo.setID(v.toString()));
+                applyIfNotEmpty(li.get("href"),  v -> linkInfo.setHref(v.toString()));
+                applyIfNotEmpty(li.get("title"), v -> linkInfo.setTitle(v.toString()));
+                applyIfNotEmpty(li.get("value"), v -> linkInfo.setValue(v.toString()));
+                applyIfNotEmpty(li.get("role"),  v -> linkInfo.setRole(v.toString()));
+                applyIfNotEmpty(li.get("type"),  v -> linkInfo.setType(v.toString()));
+                applyIfNotEmpty(li.get("action"), v -> linkInfo.setAction(v.toString()));
+                rval.add(linkInfo);
+            }
+            return rval;
+        }
+        return null;
     }
 
     private static JSONObject toJsonMetaEntry(String key, String value, boolean isKeyword) {

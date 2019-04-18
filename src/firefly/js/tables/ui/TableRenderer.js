@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent, Fragment} from 'react';
+import React, {Component, PureComponent, Fragment, useRef, useCallback} from 'react';
 import FixedDataTable from 'fixed-data-table-2';
 import {set, get, isEqual, pick} from 'lodash';
 
@@ -20,7 +20,7 @@ import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
 import {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
-import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
+import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {resolveHRefVal} from '../../util/VOAnalyzer.js';
 
 const {Cell} = FixedDataTable;
@@ -71,63 +71,51 @@ export class HeaderCell extends PureComponent {
                     {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
                     {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic'}}>{typeVal}</div>}
                 </div>
-                {showFilters && <Filter {...{col, onFilter, filterInfo, tbl_id}}/>}
+                {showFilters && <Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>}
             </div>
         );
     }
 }
 
 const blurEnter = ['blur','enter'];
-class Filter extends SimpleComponent{
 
-    constructor(props) {
-        super(props);
-        this.validator = (cond) => {
-            const {tbl_id} = this.props;
-            const name = get(this.state, 'col.name');
-            return FilterInfo.conditionValidator(cond, tbl_id, name);
-        };
-    }
+function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
-    getNextState(np) {
-        const {col={}, tbl_id} = np;
-        const ncol = getColumn(getTblById((tbl_id)), col.name);
-        return {col: ncol};
-    }
+    const colGetter= () => getColumn(getTblById((tbl_id)), cname);
 
-    render() {
-        const {onFilter, filterInfo, tbl_id} = this.props;
-        const {col} = this.state;
-        const {name, filterable=true, enumVals} = col || {};
+    const [col={}] = useStoreConnector(colGetter);
+    const {name, filterable=true, enumVals} = col;
 
-        if (!filterable) return <div style={{height:19}} />;      // column is not filterable
+    const validator = useCallback((cond) => {
+        return FilterInfo.conditionValidator(cond, tbl_id, cname);
+    }, [tbl_id, cname]);
 
-        let atElRef;
-        const filterInfoCls = FilterInfo.parse(filterInfo);
-        const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
-        const onEnumClicked = () => {
-            showDropDown({id: tblDropDownId(tbl_id), content, atElRef, locDir: 33, style: {marginLeft: -10},
-                wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
-        };
+    if (!filterable) return <div style={{height:19}} />;      // column is not filterable
 
-        return (
-            <div style={{height:29, display: 'inline-flex', alignItems: 'center', width: '100%'}}>
-                <InputField
-                    validator={this.validator}
-                    fieldKey={name}
-                    tooltip={FILTER_CONDITION_TTIPS}
-                    value={filterInfoCls.getFilter(name)}
-                    onChange={onFilter}
-                    actOn={blurEnter}
-                    showWarning={false}
-                    style={filterStyle}
-                    wrapperStyle={filterStyle}/>
-                {enumVals && <div ref={(r) => atElRef=r} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 6, borderRadius: 2}}/>}
-            </div>
-        );
-    }
+    const enumArrowEl = useRef(null);
+    const filterInfoCls = FilterInfo.parse(filterInfo);
+    const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
+    const onEnumClicked = () => {
+        showDropDown({id: tblDropDownId(tbl_id), content, atElRef: enumArrowEl.current, locDir: 33, style: {marginLeft: -10},
+            wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
+    };
+
+    return (
+        <div style={{height:29, display: 'inline-flex', alignItems: 'center', width: '100%'}}>
+            <InputField
+                validator={validator}
+                fieldKey={name}
+                tooltip={FILTER_CONDITION_TTIPS}
+                value={filterInfoCls.getFilter(name)}
+                onChange={onFilter}
+                actOn={blurEnter}
+                showWarning={false}
+                style={filterStyle}
+                wrapperStyle={filterStyle}/>
+            {enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 6, borderRadius: 2}}/>}
+        </div>
+    );
 }
-
 
 function EnumSelect({col, tbl_id, filterInfo, filterInfoCls, onFilter}) {
     const {name, enumVals} = col || {};
@@ -236,8 +224,7 @@ export class SelectableCell extends Component {
 
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
-function getValue(props) {
-    const {rowIndex, data, columnKey} = props;
+function getValue({rowIndex, data, columnKey}) {
     return get(data, [rowIndex, columnKey], 'undef');
 }
 
@@ -272,30 +259,30 @@ export class TextCell extends Component {
  * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
  * LinkCell is implementing A.4 using link substitution based on A.1
  */
-export const LinkCell = React.memo(({tbl_id, col, rowIndex, height, style={}}) => {
-    const tableModel = getTblById(tbl_id);
-    const val = getCellValue(tableModel, rowIndex, col.name);
-    const {links} = col;
+export const LinkCell = React.memo((props) => {
+    const {tbl_id, col={}, rowIndex, height, style={}} = props;
+    const val = getValue(props) || '';
 
-    style = {lineHeight: `${height - 6}px`, ...style};
-    if (links) {
+    const mStyle = {lineHeight: `${height - 6}px`, ...style};
+    if (col.links) {
+        const tableModel = getTblById(tbl_id);
         return (
             <Fragment>
                 {
-                    links.map( (link={}, idx) => {
+                    col.links.map( (link={}, idx) => {
                         const {href, title, value=val, action} = link;
                         const target = action || '_blank';
                         const rvalue = resolveHRefVal(tableModel, value, rowIndex);
                         const rhref = resolveHRefVal(tableModel, href, rowIndex, val);
                         return (<ATag key={'ATag_' + idx} href={rhref}
-                                      {...{value:rvalue, title, target, style}}
+                                      {...{value:rvalue, title, target, style:mStyle}}
                                 />);
                     })
                 }
             </Fragment>
         );
     } else {
-        return <ATag href={val} value={val} target='_blank' style={style}/>;
+        return <ATag href={val} value={val} target='_blank' style={mStyle}/>;
     }
 });
 
@@ -377,7 +364,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
     };
 };
 
-function ATag({value='', title, href, target, style={}}) {
+const ATag = React.memo(({value='', title, href, target, style={}}) => {
     const [,imgStubKey] = value.match(/<img +data-src='(\w+)' *\/>/i) || [];
 
     if (imgStubKey) {
@@ -389,5 +376,5 @@ function ATag({value='', title, href, target, style={}}) {
             <a {...{title, href, target}}> {value} </a>
         </div>
     );
-};
+});
 

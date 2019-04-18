@@ -80,16 +80,16 @@ ul.expected-list li{
     padding: 3px;
     margin: 5px 10px;
     flex-direction: column;
+    min-height: 800px;
 }
 .tst-iframe-container {
     overflow: hidden;
+    margin: 5px 0;
 }
 
 .tst-iframe-container iframe {
     border: 0;
     width: 100%;
-    resize : both;
-    display: flex;
     background-color: rgba(0,0,0, .04);
     margin-bottom: 5px;
 }
@@ -98,6 +98,12 @@ ul.expected-list li{
     height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+#expected {
+    width: 400px;
+    white-space: normal;
+    padding-top: 2px;
 }
 
 .tpl-test-container {
@@ -137,3 +143,15 @@ ul.expected-list li{
     min-width: 0;
 }
 
+.tst-iframe-container.popout {
+    position: absolute;
+    border: 1px solid #b3b3b3;
+    height: calc(100% - 50px);
+    width: calc(100% - 50px);
+    background: #cccccc;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+#tpl-popout {
+    margin-left: 20px;
+}

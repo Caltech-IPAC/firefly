@@ -45,6 +45,7 @@ public class TableMeta implements Serializable {
     public static final String MIN_VALUE_TAG = "col.@.MinValue";
     public static final String MAX_VALUE_TAG = "col.@.MaxValue";
     public static final String VALUE_TAG = "col.@.Value";
+    public static final String LINKS_TAG = "col.@.Links";
 
 
     public static final String RESULTSET_ID = "resultSetID";            // this meta if exists contains the ID of the resultset returned.

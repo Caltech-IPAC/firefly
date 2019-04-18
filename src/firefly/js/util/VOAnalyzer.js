@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, has, isArray, isEmpty, isObject, isString} from 'lodash';
+import {get, has, isArray, isEmpty, isObject, isString, intersection} from 'lodash';
 import Enum from 'enum';
 import {getColumn, getColumnIdx, getColumnValues, getColumns, getTblById, getCellValue, getColumnByID} from '../tables/TableUtil.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
@@ -12,7 +12,7 @@ import {CoordinateSys} from '../visualize/CoordSys.js';
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 
-//const obsPrefix = 'obscore:';
+const obsPrefix = 'obscore:';
 const ColNameIdx = 0;
 const UcdColIdx = 1;
 const UtypeColIdx = 2;
@@ -53,6 +53,15 @@ const OBSTAPCOLUMNS = [
     ['instrument_name',   'meta.id;instr',              'Provenance.ObsConfig.Instrument.name']
 ];
 
+const OBSTAP_OPTIONAL_CNAMES = [
+    'dataproduct_subtype', 'target_class', 'obs_title', 'obs_creation_date', 'obs_creator_name',
+    'obs_creator_did', 'obs_release_date', 'publisher_id', 'bib_reference', 'data_rights', 's_resolution_max',
+    's_calib_status', 's_stat_error', 's_pixel_scale', 't_refpos', 't_calib_status', 't_stat_error',
+    'em_ucd', 'em_unit', 'em_calib_status', 'em_res_power_min', 'em_res_power_max', 'em_resolution',
+    'em_stat_error', 'o_unit', 'o_calib_status', 'o_stat_error', 'pol_states', 'proposal_id'
+];
+
+const OBSTAP_CNAMES = OBSTAPCOLUMNS.map((row) => row[ColNameIdx]).concat( OBSTAP_OPTIONAL_CNAMES);
 
 function getObsTabColEntry(title) {
     const e= OBSTAPCOLUMNS.find( (entry) => entry[ColNameIdx]===title);
@@ -1076,3 +1085,19 @@ export function resolveHRefVal(tableModel, href='', rowIdx, defval='') {
 
 }
 
+/**
+ * Guess if this table has enough ObsCore attributes to be considered an ObsCore table.
+ * - any column contains utype with 'obscore:' prefix
+ * - matches 3 or more of ObsCore column names
+ * @param tableModel
+ * @returns {boolean}
+ */
+export function isObsCoreLike(tableModel) {
+
+    const cols = getColumns(tableModel);
+    if (cols.findIndex((c) => get(c, 'utype', '').startsWith(obsPrefix)) >= 0) {
+        return true;
+    };
+    const v = intersection(cols.map( (c) => c.name), OBSTAP_CNAMES);
+    return v.length > 2;
+}

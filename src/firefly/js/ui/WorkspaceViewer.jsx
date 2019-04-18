@@ -164,7 +164,10 @@ export const WorkspacePickerPopup = memo( ({fieldKey='WorkspacePickerPopup', onC
 });
 
 
-WorkspacePickerPopup.propTypes = defaultWorkspaceFieldPropTypes;
+WorkspacePickerPopup.propTypes = {
+    defaultWorkspaceFieldPropTypes,
+    ...{fieldKey: PropTypes.string}
+};
 
 
 

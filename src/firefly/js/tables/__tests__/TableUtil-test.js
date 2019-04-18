@@ -1,7 +1,13 @@
+import {get} from 'lodash';
+
 import * as TblUtil from '../TableUtil.js';         // used for named import
 import TableUtil from '../TableUtil.js';            // using default import
 import {FilterInfo} from '../FilterInfo.js';
 import {SelectInfo} from '../SelectInfo';
+import {MetaConst} from '../../data/MetaConst';
+import {hasRowAccess} from '../TableUtil';
+import {dataReducer} from '../reducer/TableDataReducer.js';
+import {TABLE_LOADED} from '../TablesCntlr.js';
 
 
 describe('TableUtil:', () => {
@@ -42,7 +48,7 @@ describe('TableUtil:', () => {
                 tableData: {
                     columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
                     data: [
-                        ['a-1', 'b-1', 'b-1'],
+                        ['a-1', 'b-1', 'c-1'],
                         ['a-2', 'b-2', 'c-2'],
                         ['a-3', 'b-3', 'c-3'],
                     ],
@@ -88,6 +94,144 @@ describe('TableUtil:', () => {
                     ]
                 );
             });
+    });
+
+    test('DATARIGHTS_COL', () => {
+        const table = {
+            tableMeta: {[MetaConst.DATARIGHTS_COL]: 'a'},
+            totalRows: 6,
+            tableData: {
+                columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
+                data: [
+                    ['true' , 'b-1', 'c-1'],
+                    ['false', 'b-2', 'c-2'],
+                    ['1'    , 'b-3', 'c-3'],
+                    ['public', 'b-4', 'c-4'],
+                    ['secure', 'b-5', 'c-5'],           // authenticated, public access is allowed.
+                    ['0'    , 'b-6', 'c-6'],
+                    [''     , 'b-7', 'c-7'],
+                ],
+            }
+        };
+
+        expect(hasRowAccess(table, 0)).toBe(true);
+        expect(hasRowAccess(table, 1)).toBe(false);
+        expect(hasRowAccess(table, 2)).toBe(true);
+        expect(hasRowAccess(table, 3)).toBe(true);
+        expect(hasRowAccess(table, 4)).toBe(true);
+        expect(hasRowAccess(table, 5)).toBe(false);
+        expect(hasRowAccess(table, 6)).toBe(false);
+    });
+
+    test('RELEASE_DATE_COL', () => {
+        const table = {
+            tableMeta: {[MetaConst.RELEASE_DATE_COL]: 'a'},
+            totalRows: 3,
+            tableData: {
+                columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
+                data: [
+                    ['2018/01/01', 'b-1', 'c-1'],
+                    ['2100/01/01', 'b-2', 'c-2'],
+                    [''          , 'b-3', 'c-3'],
+                ],
+            }
+        };
+
+        expect(hasRowAccess(table, 0)).toBe(true);
+        expect(hasRowAccess(table, 1)).toBe(false);
+        expect(hasRowAccess(table, 2)).toBe(false);
+    });
+
+    test('both RELEASE_DATE_COL and DATARIGHTS_COL', () => {
+        const table = {
+            tableMeta: {
+                [MetaConst.RELEASE_DATE_COL]: 'a',
+                [MetaConst.DATARIGHTS_COL]: 'b'
+            },
+            totalRows: 3,
+            tableData: {
+                columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
+                data: [
+                    ['2018/01/01', 'false', 'c-1'],     // public release without data rights
+                    ['2100/01/01', 'true' , 'c-2'],     // not released, but has data rights
+                    [''          , 'false', 'c-3'],     // not released, and no data rights
+                ],
+            }
+        };
+
+        expect(hasRowAccess(table, 0)).toBe(true);
+        expect(hasRowAccess(table, 1)).toBe(true);
+        expect(hasRowAccess(table, 2)).toBe(false);
+    });
+
+    test('Proprietary data by ObsCore cnames', () => {
+        const table = {
+            tbl_id: 'id123',
+            totalRows: 3,
+            tableData: {
+                columns: [ {name: 'obs_release_date'}, {name: 'data_rights'}, {name: 'obs_id'}],
+                data: [
+                    ['2018/01/01', 'false', 'c-1'],     // public release without data rights
+                    ['2100/01/01', 'true' , 'c-2'],     // not released, but has data rights
+                    [''          , 'false', 'c-3'],     // not released, and no data rights
+                ],
+            }
+        };
+        TblUtil.getTblById = jest.fn().mockReturnValue(table);
+
+        const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
+        const otable = get(dataRoot, 'id123');
+
+        expect(hasRowAccess(otable, 0)).toBe(true);
+        expect(hasRowAccess(otable, 1)).toBe(true);
+        expect(hasRowAccess(otable, 2)).toBe(false);
+    });
+
+    test('Proprietary data by utype', () => {
+        const table = {
+            tbl_id: 'id123',
+            totalRows: 3,
+            tableData: {
+                columns: [ {name: 'a', utype: 'obscore:Curation.releaseDate'}, {name: 'b', utype: 'obscore:Curation.rights'}, {name: 'c'}],
+                data: [
+                    ['2018/01/01', 'false', 'c-1'],
+                    ['2100/01/01', 'true' , 'c-2'],
+                    [''          , 'false', 'c-3'],
+                ],
+            }
+        };
+        TblUtil.getTblById = jest.fn().mockReturnValue(table);
+
+        const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
+        const otable = get(dataRoot, 'id123');
+
+        expect(hasRowAccess(otable, 0)).toBe(true);
+        expect(hasRowAccess(otable, 1)).toBe(true);
+        expect(hasRowAccess(otable, 2)).toBe(false);
+    });
+
+    test('Proprietary data by UCD', () => {
+        const table = {
+            tbl_id: 'id123',
+            totalRows: 3,
+            tableData: {
+                columns: [ {name: 'a', UCD: 'time.release'}, {name: 'b'}, {name: 'c'}],
+                data: [
+                    ['2018/01/01', 'false', 'c-1'],
+                    ['2100/01/01', 'true' , 'c-2'],
+                    [''          , 'false', 'c-3'],
+                ],
+            }
+        };
+        TblUtil.getTblById = jest.fn().mockReturnValue(table);
+
+        const dataRoot = dataReducer({data:{id123: table}}, {type: TABLE_LOADED, payload: table});
+        const otable = get(dataRoot, 'id123');
+
+        // only release date matters
+        expect(hasRowAccess(otable, 0)).toBe(true);
+        expect(hasRowAccess(otable, 1)).toBe(false);
+        expect(hasRowAccess(otable, 2)).toBe(false);
     });
 
 });
