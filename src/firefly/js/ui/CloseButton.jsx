@@ -3,7 +3,7 @@
  */
 
 
-import React, {Component} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import './ToolbarButton.css';
 
@@ -22,15 +22,15 @@ const middleStyle= {
 };
 
 /**
- *
- * @param text
- * @param tip
- * @param onClick
- * @param style
+ * @param p
+ * @param p.text
+ * @param p.tip
+ * @param p.style
+ * @param p.onClick
  * @return react object
  */
-export function CloseButton({text='Close', tip='Close',style={}, onClick}) {
-    var s= Object.assign({cursor:'pointer', verticalAlign:'baseline', whiteSpace:'nowrap'},style);
+export function CloseButton({text='Close', tip='Close', style={}, onClick}) {
+    const s= Object.assign({cursor:'pointer', verticalAlign:'baseline', whiteSpace:'nowrap'},style);
     return (
         <div style={s} title={tip} onClick={onClick}>
             <img style={{verticalAlign:'bottom'}} src={BUTTON_START} />
@@ -42,8 +42,8 @@ export function CloseButton({text='Close', tip='Close',style={}, onClick}) {
 
 CloseButton.propTypes= {
     text : PropTypes.string,
-    style : PropTypes.object,
     tip : PropTypes.string,
+    style : PropTypes.object,
     onClick : PropTypes.func
 };
 

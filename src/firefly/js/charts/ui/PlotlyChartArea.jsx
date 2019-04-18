@@ -42,7 +42,14 @@ export class PlotlyChartArea extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {};
+
+        const {chartId} = this.props;
+        const {data, fireflyData, mounted} = getChartData(chartId);
+        if (mounted === 1) {
+            handleTableSourceConnections({chartId, data, fireflyData});
+        }
+        this.state = this.getNextState();
+        
         this.afterRedraw = this.afterRedraw.bind(this);
     }
 
@@ -51,15 +58,6 @@ export class PlotlyChartArea extends Component {
         const propsEqual = widthPx === this.props.widthPx && heightPx === this.props.heightPx && chartId === this.props.chartId;
         const stateEqual = shallowequal(ns, this.state);
         return !(propsEqual && stateEqual);
-    }
-
-    UNSAFE_componentWillMount() {
-        const {chartId} = this.props;
-        const {data, fireflyData, mounted} = getChartData(chartId);
-        if (mounted === 1) {
-            handleTableSourceConnections({chartId, data, fireflyData});
-        }
-        this.setState(this.getNextState());
     }
 
     componentDidMount() {

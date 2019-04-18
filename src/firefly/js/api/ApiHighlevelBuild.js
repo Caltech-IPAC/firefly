@@ -177,7 +177,10 @@ function buildChartPart(llApi) {
     /**
      * @summary The general function to plot a Plotly chart.
      * @param {string|HTMLDivElement} targetDiv - div to put the chart in.
-     * @param {{data: array.object, layout: object}} parameters - plotly parameters (possibly with firefly extensions)
+     * @param {object} parameters
+     * @param {array.object} parameters.data - plotly data array (possibly with firefly extensions)
+     * @param {object} parameters.layout - plotly layout object (possibly with firefly extensions)
+     * @param {boolean} parameters.noChartToolbar - set true for non-interactive chart with no toolbar
      * @memberof firefly
      * @public
      */
@@ -711,7 +714,8 @@ function doShowChart(llApi, targetDiv, params={}) {
             tbl_group,
             addDefaultChart: Boolean(tbl_group),
             closeable: false,
-            expandedMode: false
+            expandedMode: false,
+            noChartToolbar: params.noChartToolbar
         }
     );
 }

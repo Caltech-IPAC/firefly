@@ -2,13 +2,12 @@ import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {get, pick, uniqueId} from 'lodash';
 import {FormPanel} from './../../ui/FormPanel.jsx';
-import {FieldGroup} from './../../ui/FieldGroup.jsx';
-import {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
 
-import {getFieldVal, getReducerFunc} from '../../fieldGroup/FieldGroupUtils.js';
+import {getReducerFunc} from '../../fieldGroup/FieldGroupUtils.js';
 
-import {RadioGroupInputField} from './../../ui/RadioGroupInputField.jsx';
+import {RadioGroupInputFieldView} from './../../ui/RadioGroupInputFieldView.jsx';
 import {SimpleComponent} from './../../ui/SimpleComponent.jsx';
 import {CHART_UPDATE, dataLoadedUpdate, getChartData, dispatchChartTraceRemove} from '../ChartsCntlr.js';
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
@@ -22,8 +21,6 @@ import {HeatmapOptions} from './options/HeatmapOptions.jsx';
 import {FireflyHistogramOptions} from './options/FireflyHistogramOptions.jsx';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
-const chartActionPanelKey = 'ChartSelectPanel-actions';
-const chartActionKey = 'chartAction';
 
 export const [CHART_ADDNEW, CHART_TRACE_ADDNEW, CHART_TRACE_MODIFY, CHART_TRACE_REMOVE ] =
     ['chartAddnew', 'traceAddnew', 'traceModify', 'traceRemove'];
@@ -102,34 +99,18 @@ export class ChartSelectPanel extends SimpleComponent {
     constructor(props) {
         super(props);
 
-        this.state = this.getNextState();
-    }
-
-    UNSAFE_componentWillMount() {
         const {chartId, tbl_id, chartAction} = this.props;
-        const oldChartAction = getFieldVal(chartActionPanelKey, chartActionKey);
         let newChartAction = chartAction;
         const chartActions = getChartActions({chartId, tbl_id});
 
         if (!newChartAction || !chartActions.includes(newChartAction)) {
             newChartAction = chartActions[0];
         }
-        if (newChartAction !== oldChartAction) {
-            if (oldChartAction) {
-                dispatchValueChange({fieldKey: chartActionKey, groupKey: chartActionPanelKey, value: newChartAction, valid: true});
-            }
-            this.setState({chartAction: newChartAction});
-        }
-    }
 
-    getNextState(np) {
-        const chartAction = getFieldVal(chartActionPanelKey, chartActionKey) || this.props.chartAction;
-        return {chartAction};
+        this.state = {chartAction: newChartAction};
     }
-
 
     render() {
-
         const {tbl_id, chartId, inputStyle={}, hideDialog, showMultiTrace} = this.props;
         const {renderTreeId}= this.context;
 
@@ -137,8 +118,9 @@ export class ChartSelectPanel extends SimpleComponent {
         const {chartAction} = this.state;
         const groupKey = getGroupKey(chartId, chartAction);
 
-        return (
+        const chartActionChanged = (chartAction) => { this.setState({chartAction}); };
 
+        return (
             <div style={{padding: 10}}>
                 <FormPanel
                     groupKey={groupKey}
@@ -149,7 +131,7 @@ export class ChartSelectPanel extends SimpleComponent {
                     onCancel={hideDialog}
                     inputStyle = {inputStyle}
                     changeMasking={this.changeMasking}>
-                    {showMultiTrace && <ChartAction {...{chartActions, chartAction, groupKey: chartActionPanelKey, fieldKey: chartActionKey}}/>}
+                    {showMultiTrace && <ChartAction {...{chartActions, chartAction, chartActionChanged}}/>}
                     <ChartActionOptions {...{chartAction, tbl_id, chartId, groupKey, hideDialog,showMultiTrace}}/>
                 </FormPanel>
             </div>
@@ -173,7 +155,7 @@ ChartSelectPanel.contextType= RenderTreeIdCtx;
 
 function ChartAction(props) {
 
-    const {chartActions, chartAction, groupKey, fieldKey} = props;
+    const {chartActions, chartAction, chartActionChanged} = props;
 
     const options = [];
 
@@ -191,15 +173,23 @@ function ChartAction(props) {
     }
 
     if (options.length > 0) {
+
+        const onChartActionChange = (ev) => {
+            const val = get(ev, 'target.value', '');
+            const checked = get(ev, 'target.checked', false);
+            if (checked) {
+                chartActionChanged(val);
+            }
+        };
+
         return (
-                <FieldGroup style={{padding: 5}} keepState={true} groupKey={groupKey}>
-                    <RadioGroupInputField
-                        initialState={{value: chartAction, fieldKey }}
-                        alignment={'horizontal'}
-                        fieldKey={fieldKey}
-                        options={options}
-                    />
-                </FieldGroup>
+            <RadioGroupInputFieldView
+                options={options}
+                alignment={'horizontal'}
+                value={chartAction}
+                onChange={onChartActionChange}
+                wrapperStyle={{padding: 5}}
+            />
         );
     }
 }
@@ -207,8 +197,7 @@ function ChartAction(props) {
 ChartAction.propTypes = {
     chartActions: PropTypes.arrayOf(PropTypes.string),
     chartAction: PropTypes.string,
-    groupKey: PropTypes.string,
-    fieldKey: PropTypes.string
+    chartActionChanged: PropTypes.func
 };
 
 function ChartActionOptions(props) {

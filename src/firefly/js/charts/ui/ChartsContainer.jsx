@@ -99,7 +99,7 @@ export class ChartsContainer extends PureComponent {
 
     }
 
-    UNSAFE_componentWillMount() {
+    componentDidMount() {
         const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart, chartId} = this.props;
         if (tbl_group) {
             if (addDefaultChart) {
@@ -112,10 +112,6 @@ export class ChartsContainer extends PureComponent {
             // important when we use external viewer
             doUpdateViewer(viewerId, tbl_group, chartId);
         }
-    }
-
-    componentDidMount() {
-        const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart} = this.props;
 
         const monitor = watchTblGroup(viewerId, tbl_group, addDefaultChart);
         this.removeMonitor = monitor();
@@ -127,16 +123,37 @@ export class ChartsContainer extends PureComponent {
     }
 
     render() {
-        const {chartId, expandedMode, closeable, viewerId=DEFAULT_PLOT2D_VIEWER_ID} = this.props;
-
+        const {chartId, expandedMode, closeable, viewerId=DEFAULT_PLOT2D_VIEWER_ID, noChartToolbar} = this.props;
 
         if (chartId) {
-            return expandedMode ?
-                <ExpandedView key='chart-expanded' closeable={closeable} chartId={chartId}/> :
-                <ChartPanel key={chartId} expandable={true} chartId={chartId}/>;
+            if (expandedMode) {
+                return (
+                    <ExpandedView {...{
+                        key: 'chart-expanded',
+                        closeable,
+                        chartId,
+                        noChartToolbar
+                    }}/>
+                );
+            } else {
+                return (
+                    <ChartPanel {...{
+                        key: chartId,
+                        expandable: true,
+                        chartId,
+                        showToolbar: !Boolean(noChartToolbar),
+                        glass: Boolean(noChartToolbar)
+                    }}/>
+                );
+            }
         } else {
             return (
-                <MultiChartViewer {...{closeable, viewerId : viewerId, expandedMode}}/>
+                <MultiChartViewer {...{
+                    closeable,
+                    viewerId,
+                    expandedMode,
+                    noChartToolbar}}
+                />
             );
         }
     }
@@ -148,21 +165,33 @@ ChartsContainer.propTypes = {
     chartId: PropTypes.string,
     viewerId : PropTypes.string,
     tbl_group : PropTypes.string,
-    addDefaultChart : PropTypes.bool
+    addDefaultChart : PropTypes.bool,
+    noChartToolbar : PropTypes.bool
 };
 
 function ExpandedView(props) {
-    const {closeable, chartId} = props;
-
+    const {closeable, chartId, noChartToolbar} = props;
     return (
-        <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}>
-            <ChartPanel key={'expanded-'+chartId} expandedMode={true} expandable={false} chartId={chartId}/>
-            {closeable && <CloseButton style={{position: 'absolute', top: 0, left: 0, paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+        <div  style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}>
+            <ChartPanel {...{
+                key: 'expanded-'+chartId,
+                expandedMode: true,
+                expandable: false,
+                chartId,
+                showToolbar: !Boolean(noChartToolbar),
+                glass: Boolean(noChartToolbar)
+            }}/>
+            {closeable &&
+            <CloseButton
+                style={{position: 'absolute', top: 0, left: 0, paddingLeft: 10}}
+                onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>
+            }
         </div>
     );
 }
 
 ExpandedView.propTypes = {
     closeable: PropTypes.bool,
-    chartId: PropTypes.string
+    chartId: PropTypes.string,
+    noChartToolbar : PropTypes.bool
 };

@@ -23,21 +23,9 @@ class ChartPanelView extends PureComponent {
         if (showChart) {
             dispatchChartMounted(chartId);
         }
-        this.iAmMounted = true;
-    }
-
-    UNSAFE_componentWillReceiveProps(nextProps) {
-        const {chartId, showChart} = nextProps;
-        if (!chartId) { return; }
-
-        if (chartId !== this.props.chartId) {
-            if (this.props.showChart) { dispatchChartUnmounted(this.props.chartId); }
-            if (showChart) { dispatchChartMounted(chartId); }
-        }
     }
 
     componentWillUnmount() {
-        this.iAmMounted = false;
         const {chartId, showChart} = this.props;
         if (showChart) {
             dispatchChartUnmounted(chartId);
@@ -45,7 +33,7 @@ class ChartPanelView extends PureComponent {
     }
 
     render() {
-        const {chartId, chartData, deletable:deletableProp, expandable, expandedMode, Toolbar, showToolbar, showChart} = this.props;
+        const {chartId, chartData, deletable:deletableProp, expandable, expandedMode, Toolbar, showToolbar, showChart, glass} = this.props;
         const deletable = isUndefined(get(chartData, 'deletable')) ? deletableProp : get(chartData, 'deletable');
         const showMultiTrace = !singleTraceUI();
 
@@ -68,6 +56,7 @@ class ChartPanelView extends PureComponent {
                             <div className='ChartPanel__chartarea--withToolbar'>
                                 <ResizableChartArea
                                     {...Object.assign({}, this.props, {errors})} />
+                                {glass && <div className='ChartPanel__chartarea--withToolbar ChartPanel__glass'/>}
                                 { deletable &&
                                 <img style={{display: 'inline-block', position: 'absolute', top: 29, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                      title='Delete this chart'
@@ -85,6 +74,7 @@ class ChartPanelView extends PureComponent {
                         <div className='ChartPanel__chartarea'>
                             <ResizableChartArea
                                 {...Object.assign({}, this.props, {errors})} />
+                            {glass && <div className='ChartPanel__chartarea ChartPanel__glass'/>}
                             {deletable &&
                             <img style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                                  title='Delete this chart'
@@ -114,6 +104,7 @@ ChartPanelView.propTypes = {
     expandedMode: PropTypes.bool,
     showToolbar: PropTypes.bool,
     showChart: PropTypes.bool,
+    glass: PropTypes.bool, // for non-interactive chart area (when toolbar is missing)
     Chart: PropTypes.func,
     Toolbar: PropTypes.func
 };
@@ -214,7 +205,7 @@ export class ChartPanel extends PureComponent {
 
     render() {
         return (
-            <ChartPanelView {...this.props} {...this.state}/>
+            <ChartPanelView key={this.props.chartId} {...this.props} {...this.state}/>
         );
     }
 }
