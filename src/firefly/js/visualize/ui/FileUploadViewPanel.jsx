@@ -474,9 +474,7 @@ export class FileUploadViewPanel extends PureComponent {
                         fieldKey={fileId}
                         fileAnalysis={this.onLoading}
                         innerStyle={{width: 80}}
-                        initialState={{tooltip: 'Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format',
-                                           label: ''
-                                           }}/>
+                    />
 
                 );
             } else if (uploadSrc === urlId) {
@@ -487,9 +485,7 @@ export class FileUploadViewPanel extends PureComponent {
                         fileAnalysis={this.onLoading}
                         isFromURL={true}
                         innerStyle={{width: '70%'}}
-                        initialState={{tooltip: 'Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format',
-                                           label: 'Enter URL of a file:'
-                                         }}/>
+                    />
                 );
             } else if (uploadSrc === wsId) {
                 return (
@@ -499,9 +495,7 @@ export class FileUploadViewPanel extends PureComponent {
                         fieldKey={wsId}
                         isLoading={isUploading || isWsUpdating}
                         fileAnalysis={this.onLoading}
-                        initialState={{tooltip: 'Select a file in FITS, VOTABLE, CSV, TSV, or IPAC format from workspace',
-                                       label: ''
-                                       }}/>
+                    />
 
                 );
             }
@@ -1030,11 +1024,19 @@ function fieldInit() {
             },
             [fileId]: {
                 fieldKey: fileId,
-                value: ''
+                value: '',
+                tooltip: 'Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format'
             },
             [urlId]: {
                 fieldKey: urlId,
-                value: ''
+                value: '',
+                label: 'Enter URL of a file:',
+                tooltip: 'Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format'
+            },
+            [wsId]: {
+                fieldKey: wsId,
+                value: '',
+                tooltip: 'Select a file in FITS, VOTABLE, CSV, TSV, or IPAC format from workspace'
             }
         }
     );

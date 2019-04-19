@@ -31,6 +31,14 @@ public interface PrimitiveList {
         }
     }
 
+    default int getIntValue(Object val) {
+        if (val instanceof Integer) return (int)val;
+        else if (val instanceof Byte) return (int)(Byte)val;
+        else if (val instanceof Short) return (int)(Short)val;
+        throw new RuntimeException(String.format("%s is with type %s, can not be assigned to Integer", val, getDataClass()));
+    }
+
+
     /**
      * returns a new capacity base on the given parameters
      */
@@ -220,9 +228,9 @@ public interface PrimitiveList {
         }
 
         public void set(int idx, Object val) {
-            checkType(val);
+            int ival = val == null ? Integer.MIN_VALUE : getIntValue(val);
             ensureCapacity(idx);
-            data[idx] = val == null ? Integer.MIN_VALUE : (int) val;
+            data[idx] = ival;
             if (idx >= size()) size = idx+1;
         }
 

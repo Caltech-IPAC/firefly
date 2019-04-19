@@ -649,14 +649,7 @@ public class VoTableReader {
         for (int i = 0; i < table.getColumnCount(); i++) {
             ColumnInfo cinfo = table.getColumnInfo(i);
 
-            // attribute datatype, if the column is with data in array style, set the datatype to be "string" type
-            Class clz = cinfo.isArray() ? String.class : cinfo.getContentClass();
-
-            // attribute name & unit
-            DataType dt = new DataType(cinfo.getName(), clz, null, cinfo.getUnitString(), null, null);
-
-            if (cinfo.isArray()) dt.setTypeDesc(DataType.LONG_STRING);
-
+            DataType dt = convertToDataType(cinfo);
             // attribute precision
             if(cinfo.getAuxDatum(VOStarTable.PRECISION_INFO)!=null){
                 try{
@@ -795,7 +788,8 @@ public class VoTableReader {
                         if (dtype.getDataType().isAssignableFrom(String.class) && !(val instanceof String)) {
                             row.setDataElement(dtype, sval);   // array value
                         } else {
-                            if (val instanceof Double && Double.isNaN((Double) val)) {
+                            if ((val instanceof Double && Double.isNaN((Double) val)) ||
+                                (val instanceof Float && Float.isNaN((Float) val))    )    {
                                 val = null;
                             }
                             row.setDataElement(dtype, val);
@@ -814,6 +808,38 @@ public class VoTableReader {
         return dg;
     }
 
+    public static DataType convertToDataType(ColumnInfo cinfo) {
+        // attribute datatype, if the column is with data in array style, set the datatype to be "string" type
+        Class clz = cinfo.isArray() ? String.class : cinfo.getContentClass();
+        String nullString = null;
+
+        String classType = DefaultValueInfo.formatClass(clz);
+        Class java_class;
+
+        if ((classType.contains("boolean")) || (classType.contains("Boolean"))) {
+            java_class = Boolean.class;
+        } else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
+            java_class = Integer.class;
+        } else if ((classType.contains("short")) || (classType.contains("Short"))) {
+            java_class = Integer.class;
+        } else if ((classType.contains("int")) || (classType.contains("Integer"))) {
+            java_class = Integer.class;
+        } else if ((classType.contains("long")) || (classType.contains("Long"))) {
+            java_class = Long.class;
+        } else if ((classType.contains("float")) || (classType.contains("Float"))) {
+            java_class = Float.class;
+        } else if ((classType.contains("double")) || (classType.contains("Double"))) {
+            java_class = Double.class;
+        } else {        // char, string or else
+            java_class = String.class;
+        }
+
+        // attribute name & unit
+        DataType dt = new DataType(cinfo.getName(), java_class, null, cinfo.getUnitString(), nullString, null);
+        if (cinfo.isArray()) dt.setTypeDesc(DataType.LONG_STRING);
+
+        return dt;
+    }
 
 //====================================================================
 //  DOM based setters
