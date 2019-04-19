@@ -11,7 +11,7 @@ import {SizeInputFields} from '../../ui/SizeInputField.jsx';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
@@ -276,7 +276,7 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
 
     return (
         <div className='flex-full' style={{marginTop: 5}}>
-            <Tabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true} borderless={true}
+            <StatefulTabs componentKey='ImageSearchPanelV2' resizable={false} useFlex={true} borderless={true}
                   style={{flexGrow: 1}}
                   contentStyle={{backgroundColor: 'rgb(202, 202, 202)', paddingBottom: 2}}
                   headerStyle={{display:'inline-flex', marginLeft: 185}}>
@@ -289,7 +289,7 @@ function ThreeColor({imageMasterData, multiSelect, archiveName}) {
                 <Tab key='ImageSearchBlue' name='blue' label={<div style={{width:40, color:'blue'}}>Blue</div>}>
                     <SingleChannel {...{groupKey: FG_KEYS.blue, imageMasterData, multiSelect, archiveName}}/>
                 </Tab>
-            </Tabs>
+            </StatefulTabs>
         </div>
     );
 }

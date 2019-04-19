@@ -1,4 +1,4 @@
-import React, {PureComponent} from 'react';
+import React, {PureComponent, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 
 import {flux} from '../Firefly.js';
@@ -33,4 +33,37 @@ export class SimpleComponent extends PureComponent {
             this.setState(this.getNextState(this.props));
         }
     }
+}
+
+
+
+/**
+ * A replacement for SimpleComponent.
+ * This function make use of useState and useEffect to
+ * trigger a re-render of functional components when the value in the store changes.
+ *
+ * @param stateGetters  one or more functions returning a state
+ * @returns {Object[]}  an array of state's value in the order of the given stateGetters
+ */
+export function useStoreConnector(...stateGetters) {
+
+    const rval = [];
+    const setters = stateGetters.map((getter) => {
+        const [val, setter] = useState(getter());
+        rval.push(val);
+        return [getter, setter];
+    });
+
+    const isMounted = true;
+    useEffect(() => {
+        return flux.addListener(() => {
+            if (isMounted) {
+                setters.forEach(([getter, setter]) => {
+                    setter(getter());
+                });
+            }
+        });
+    }), [];     // only run once
+
+    return rval;
 }

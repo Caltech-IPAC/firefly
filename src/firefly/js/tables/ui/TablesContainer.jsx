@@ -9,7 +9,7 @@ import {isEmpty, get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
-import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {StatelessTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {dispatchTableRemove, dispatchActiveTableChanged} from '../TablesCntlr.js';
 
 
@@ -108,9 +108,9 @@ function StandardView(props) {
         return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode} tableOptions={tableOptions}/>;
     } else {
         return (
-            <Tabs style={{height: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
+            <StatelessTabs style={{height: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
-            </Tabs>
+            </StatelessTabs>
         );
     }
 }

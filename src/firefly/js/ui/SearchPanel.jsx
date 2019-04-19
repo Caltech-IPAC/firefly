@@ -9,7 +9,7 @@ import {dispatchUpdateAppData} from '../core/AppDataCntlr.js';
 import {getSearchInfo} from '../core/AppDataCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
 import {SimpleComponent} from './SimpleComponent.jsx';
-import {Tabs, Tab} from './panel/TabPanel.jsx';
+import {StatefulTabs, Tab} from './panel/TabPanel.jsx';
 
 export class SearchPanel extends SimpleComponent {
 
@@ -52,9 +52,9 @@ export class SearchPanel extends SimpleComponent {
             return (
                 <div>
                     {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                    <Tabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
+                    <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
                         {searchesAsTabs(allSearchItems)}
-                    </Tabs>
+                    </StatefulTabs>
                 </div>
             );
         }
