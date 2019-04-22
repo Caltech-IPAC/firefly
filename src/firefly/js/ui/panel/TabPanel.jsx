@@ -167,6 +167,7 @@ TabsView.defaultProps= {
 };
 
 
+/*----------------------------------------------------------------------------------------------*/
 /**
  * TabPanel with internal state
  * State will be lost after unload.

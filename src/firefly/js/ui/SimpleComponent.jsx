@@ -60,7 +60,7 @@ export function useStoreConnector(...stateGetters) {
                     setter(getter());
                 });
         });
-    }), [];     // only run once
+    }, []);     // only run once
 
     return rval;
 }
