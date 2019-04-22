@@ -25,16 +25,24 @@
 
 <div id="table-lg" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
-<div id="heatmapHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<div id="heatmapHere" style="display: inline-block; width: 800px; height: 550px; border: solid 1px;"></div>
+&nbsp;
+<div id="heatmapHereNT" style="display:inline-block; width: 800px; height: 550px;"></div>
 <br/><br/>
-<div id="histogramHere" style="width: 800px; height: 550px; border: solid 1px"></div>
+<div id="histogramHere" style="display: inline-block; width: 800px; height: 550px; border: solid 1px"></div>
+&nbsp;
+<div id="histogramHereNT" style="display: inline-block; width: 800px; height: 550px;"></div>
 <br/><br/>
-<div id="xyplotHere" style="width: 800px; height: 550px; border: solid 1px;"></div>
+<div id="xyplotHere" style="display: inline-block; width: 800px; height: 550px; border: solid 1px;"></div>
+&nbsp;
+<div id="xyplotHereNT" style="display: inline-block; width: 800px; height: 550px;"></div>
 <br/><br/>
-<div id="plotlyDiv" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
+<div id="plotlyDiv" style="display: inline-block; resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
+&nbsp;
+<div id="plotlyDivNT" style="display: inline-block; resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px;"></div>
 <br/><br/>
 <h3>Default chart for 'allwise' table group below</h3>
-<div id="defaultChart" style="resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px; border: solid 1px gray;"></div>
+<div id="defaultChartNT" style="display: inline-block; resize: both; overflow: auto; padding: 5px; width: 800px; height: 550px;"></div>
 <br/><br/>
 <div id="table-1" style="width: 800px; height: 550px; border: solid 1px;"></div>
 <br/><br/>
@@ -82,6 +90,7 @@
             ];
 
             firefly.showChart('histogramHere', {data: dataH});
+            firefly.showChart('histogramHereNT', {data: dataH, noChartToolbar: true});
 
 
             // show scatter chart, which has no table on display
@@ -107,6 +116,7 @@
                 });
             }
             firefly.showChart('xyplotHere', {data: traces});
+            firefly.showChart('xyplotHereNT', {data: traces, noChartToolbar: true});
 
 
             var trace1 = {
@@ -125,6 +135,7 @@
 
             var data = [trace1, trace2];
             firefly.showChart('plotlyDiv', {data: data});
+            firefly.showChart('plotlyDivNT', {data: data, noChartToolbar: true});
 
 
             var tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise-500', 'WISE', 'allwise_p3as_psd',
@@ -148,7 +159,9 @@
             firefly.showTable('table-1', tblReq, {tbl_group: 'allwise'});
             firefly.showTable('table-1', tblReqSm, {tbl_group: 'allwise'});
 
-            firefly.showChart('defaultChart', {tbl_group: 'allwise'});
+            //can not display both at the same time 
+            //firefly.showChart('defaultChart', {tbl_group: 'allwise'});
+            firefly.showChart('defaultChartNT', {tbl_group: 'allwise',  noChartToolbar: true});
 
             // using column expressions
             var tblReqXpr =  Object.assign({}, tblReq, {inclCols: '"ra" + "dec" as "radec", "ra", "dec", ln("dec") as "LnOfDec", power("ra", 2) as "ra_sq"'});
@@ -165,6 +178,7 @@
             };
 
             firefly.showChart('plotlyDiv', {data: [trace1]});
+            firefly.showChart('plotlyDivNT', {data: [trace1], noChartToolbar: true});
 
 
             var tblReqLg =  firefly.util.table.makeIrsaCatalogRequest('allwise_p3as_psd', 'WISE', 'allwise_p3as_psd',
@@ -204,6 +218,7 @@
             ];
 
             firefly.showChart('heatmapHere', {data: dataHM});
+            firefly.showChart('heatmapHereNT', {data: dataHM, noChartToolbar: true});
 
             // a static Plotly chart (no connection to a table)
             const props = {
