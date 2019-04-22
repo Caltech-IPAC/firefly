@@ -119,8 +119,8 @@
         use 230.0.0.1   for global
     -->
     <cacheManagerPeerProviderFactory
-            class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory"
-            properties="peerDiscovery=automatic,
+            class="edu.caltech.ipac.util.cache.CachePeerProviderFactory"
+            properties="peerDiscovery=@ehcache.peerDiscovery@,
                         multicastGroupAddress=@ehcache.multicast.address@,
                         multicastGroupPort=@ehcache.multicast.port@, timeToLive=@ehcache.multicast.ttl@"
             propertySeparator=","

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
@@ -10,13 +11,13 @@ import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CachePeerProviderFactory;
 import edu.caltech.ipac.util.cache.StringKey;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
 import net.sf.ehcache.statistics.StatisticsGateway;
-import org.json.simple.JSONArray;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -52,6 +53,9 @@ public class ServerStatus extends BaseHttpServlet {
             skip(writer);
 
             showPackagingStatus(writer);
+            skip(writer);
+
+            showMessagingStatus(writer);
             skip(writer);
 
             showEventsStatus(writer);
@@ -94,9 +98,14 @@ public class ServerStatus extends BaseHttpServlet {
         writer.println("Caches: ");
         Map<String, CacheManagerPeerProvider> peerProvs = cm.getCacheManagerPeerProviders();
         String[] cacheNames = cm.getCacheNames();
+        CachePeer cachePeer = CachePeerProviderFactory.getFirstLocalRmiCachePeer(cm);
         for(String n : cacheNames) {
             Ehcache c = cm.getCache(n);
-            writer.println("\t" + c.getName() + " @" + c.hashCode());
+            try {
+                writer.println("\t" + c.getName() + " @" + (cachePeer == null? c.hashCode() : cachePeer.getUrlBase()));
+            } catch (RemoteException e) {
+                // should not happen
+            }
             writer.println("\tCache Status    : " + c.getStatus());
             writer.println("\tMax Heap       : " + c.getCacheConfiguration().getMaxBytesLocalHeap()/(1024 * 1024) + "MB");
             writer.println("\tMax Entries    : " + c.getCacheConfiguration().getMaxEntriesLocalHeap());
@@ -165,6 +174,10 @@ public class ServerStatus extends BaseHttpServlet {
         w.println("  - Total events fired:" + ServerEventManager.getTotalEventCnt());
         w.println("  - Total events delivered:" + ServerEventManager.getDeliveredEventCnt());
         w.println("  - Total active queues:" + ServerEventManager.getActiveQueueCnt());
+    }
+
+    private static void showMessagingStatus(PrintWriter w) {
+        w.println("Messaging Pool: " + Messenger.getStats());
     }
 
     private static void showPackagingStatus(PrintWriter w) {

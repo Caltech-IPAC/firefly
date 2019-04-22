@@ -353,6 +353,7 @@ test {
     // set heap size for the test JVM(s)
     minHeapSize = "128m"
     maxHeapSize = "2g"
+    jvmArgs '-Djava.net.preferIPv4Stack=true'
 
     // listen to events in the test execution lifecycle
     beforeTest { descriptor ->

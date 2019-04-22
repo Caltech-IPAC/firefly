@@ -43,6 +43,44 @@ pct.vis.shared.mem.size=@pct.vis.shared.mem.size@
 # ~33 spaces
 ArrayRenderer.padding=\
 
+# default download data size in bytes (2 Meg)
+download.data.bytesize=2097152
+
+# async download minimum uncompressed size (in bytes)
+# everything smaller should be downloaded synchronously (20 Meg)
+download.async.bytesize=20971520
+
+# maximum bytes in a packaged bundle
+download.bundle.maxbytes=304857600
+
+# maximum length the queue can back before users starts getting warnings
+download.warning.queue.size= 30
+
+# maximum number of file list computation threads running before the user starts getting warnings
+download.warning.fileListTask.size= 15
+
+
+# default compression level
+# Use best speed level unless instructed otherwise.
+# 0 - no compression
+# 1 - best speed
+# ..
+# 6 - default compression
+# ..
+# 9 - best compression
+download.compression.level=1
+
+# mail session
+mail.session=MailSession
+mail.use.prop.file = true
+mail.transport.protocol = @mail.transport.protocol@
+mail.smtp.host = @mail.smtp.host@
+mail.smtp.auth = @mail.smtp.auth@
+mail.smtp.port = @mail.smtp.port@
+mail.smtp.from = @mail.smtp.from@
+mail.smtp.starttls.enable = @mail.smtp.starttls.enable@
+
+
 sso.server.url=@sso.server.url@
 sso.user.profile.url=@sso.user.profile.url@
 
@@ -51,3 +89,5 @@ help.base.url=@__$help.base.url@
 tap.maxrec.maxval=@__$tap.maxrec.hardlimit@
 
 visualize.fits.MaxSizeInBytes= @visualize.fits.MaxSizeInBytes@
+
+
