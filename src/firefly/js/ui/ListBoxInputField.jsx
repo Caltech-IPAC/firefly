@@ -117,7 +117,7 @@ ListBoxInputField.propTypes= {
         label:  PropTypes.string,
     }),
     inline : PropTypes.bool,
-    options : PropTypes.array.isRequired,
+    options : PropTypes.array,
     multiple : PropTypes.bool,
     labelWidth : PropTypes.number
 };

@@ -24,9 +24,9 @@ import FieldGroupUtils, {revalidateFields} from '../fieldGroup/FieldGroupUtils';
 import {updateSet} from '../util/WebUtil.js';
 
 import {CollapsiblePanel} from './panel/CollapsiblePanel.jsx';
-import {Tabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
+import {StatefulTabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
-import {NaifidPanel} from "./NaifidPanel";
+import {NaifidPanel} from './NaifidPanel.jsx';
 
 
 
@@ -203,7 +203,6 @@ function FieldGroupWithMasterDependent() {
 
 
 /// test
-
 export class AllTest extends PureComponent {
 
 
@@ -215,7 +214,7 @@ export class AllTest extends PureComponent {
         return (
             <div style={{padding:'5px', minWidth: 480}}>
                 <div>
-                    <Tabs componentKey='exampleOuterTabs' defaultSelected={0} useFlex={true}>
+                    <StatefulTabs componentKey='exampleOuterTabs' defaultSelected={0} useFlex={true}>
                         <Tab name='First'>
                             <FieldGroupTest />
                         </Tab>
@@ -231,7 +230,7 @@ export class AllTest extends PureComponent {
                                 <FieldGroupWithMasterDependent />
                             </div>
                         </Tab>
-                    </Tabs>
+                    </StatefulTabs>
                 </div>
 
             </div>

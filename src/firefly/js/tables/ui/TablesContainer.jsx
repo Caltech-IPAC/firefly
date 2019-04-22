@@ -9,8 +9,9 @@ import {isEmpty, get} from 'lodash';
 import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
-import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {TabsView, Tab} from '../../ui/panel/TabPanel.jsx';
 import {dispatchTableRemove, dispatchActiveTableChanged} from '../TablesCntlr.js';
+import {hashCode} from '../../util/WebUtil.js';
 
 
 import {LO_VIEW, LO_MODE, dispatchSetLayoutMode, getExpandedMode} from '../../core/LayoutCntlr.js';
@@ -107,10 +108,11 @@ function StandardView(props) {
     if (keys.length === 1) {
         return <SingleTable table={get(tables, [keys[0]])} expandedMode={expandedMode} tableOptions={tableOptions}/>;
     } else {
+        const uid = hashCode(keys.join());
         return (
-            <Tabs style={{height: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
+            <TabsView key={hashCode(keys.join())} style={{height: '100%', ...style}} defaultSelected={activeIdx} onTabSelect={onTabSelect} resizable={true}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
-            </Tabs>
+            </TabsView>
         );
     }
 }
