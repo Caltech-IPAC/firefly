@@ -15,7 +15,7 @@ import './TabPanel.css';
 
 
 /**
- * There are 4 implementations of TabPanel:  Tabs, StatelessTabs, StatefulTabs, and FieldGroupTabs
+ * There are 4 implementations of TabPanel:  Tabs, TabsView, StatefulTabs, and FieldGroupTabs
  * See each component description below for more details.
  */
 
@@ -109,7 +109,7 @@ Tab.defaultProps= { selected: false };
  * A strictly presentational(dumb) component.  No state is used.
  * The selected Tab is determine by defaultSelected which can be an index or the 'id' of its Tabs.
  */
-export const StatelessTabs = React.memo((props) => {
+export const TabsView = React.memo((props) => {
 
     const {children, onTabSelect, defaultSelected, useFlex, resizable, borderless, style={}, headerStyle, contentStyle={}} = props;
 
@@ -148,7 +148,7 @@ export const StatelessTabs = React.memo((props) => {
 });
 
 
-StatelessTabs.propTypes = {
+TabsView.propTypes = {
     defaultSelected:  PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     onTabSelect: PropTypes.func,
     useFlex: PropTypes.bool,
@@ -159,7 +159,7 @@ StatelessTabs.propTypes = {
     borderless: PropTypes.bool
 };
 
-StatelessTabs.defaultProps= {
+TabsView.defaultProps= {
     defaultSelected: 0,
     useFlex: false,
     resizable: false,
@@ -183,11 +183,11 @@ export const Tabs = React.memo( (props) => {
         }
     });
 
-    return (<StatelessTabs {...props} defaultSelected={selectedIdx} onTabSelect={onSelect} />);
+    return (<TabsView {...props} defaultSelected={selectedIdx} onTabSelect={onSelect} />);
 });
 
-Tabs.propTypes = StatelessTabs.propTypes;
-Tabs.defaultProps = StatelessTabs.defaultProps;
+Tabs.propTypes = TabsView.propTypes;
+Tabs.defaultProps = TabsView.defaultProps;
 
 
 /*----------------------------------------------------------------------------------------------*/
@@ -198,7 +198,7 @@ Tabs.defaultProps = StatelessTabs.defaultProps;
 export const StatefulTabs = React.memo( (props) => {
     const {children=[], defaultSelected=0, onTabSelect, componentKey} = props;
 
-    const [selectedIdx = defaultSelected] = useStoreConnector( () => {
+    let [selectedIdx = defaultSelected] = useStoreConnector( () => {
         return get(getComponentState(componentKey), 'selectedIdx');
     });
 
@@ -215,15 +215,15 @@ export const StatefulTabs = React.memo( (props) => {
         }
     });
 
-    return (<StatelessTabs {...props} onTabSelect={onSelect} defaultSelected={selectedIdx} />);
+    return (<TabsView {...props} onTabSelect={onSelect} defaultSelected={selectedIdx} />);
 
 });
 
 StatefulTabs.propTypes = {
     componentKey: PropTypes.string,
-    ...StatelessTabs.propTypes
+    ...TabsView.propTypes
 };
-StatefulTabs.defaultProps = StatelessTabs.defaultProps;
+StatefulTabs.defaultProps = TabsView.defaultProps;
 
 
 /*----------------------------------------------------------------------------------------------*/
