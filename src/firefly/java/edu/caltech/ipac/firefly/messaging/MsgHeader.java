@@ -12,13 +12,13 @@ import edu.caltech.ipac.firefly.data.ServerEvent;
  * @author loi
  * @version $Id: $
  */
-public class Header {
+public class MsgHeader {
     private ServerEvent.Scope scope;
     private String to;
     private String subject;
     private String from;
 
-    public Header(ServerEvent.Scope scope, String to, String subject) {
+    public MsgHeader(ServerEvent.Scope scope, String to, String subject) {
         this.scope = scope;
         this.to = to;
         this.subject = subject;

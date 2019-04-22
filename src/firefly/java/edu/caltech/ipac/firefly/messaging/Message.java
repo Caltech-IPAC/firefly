@@ -19,12 +19,12 @@ import edu.caltech.ipac.firefly.data.ServerEvent.Scope;
 public class Message {
     private JsonHelper helper = new JsonHelper();
 
-    public Header getHeader() {
+    public MsgHeader getHeader() {
         Scope scope = Scope.valueOf(helper.getValue(Scope.SELF.name(), "header", "scope"));
         String to = helper.getValue("", "header", "to");
         String from = helper.getValue("", "header", "from");
         String subject = helper.getValue("", "header", "subject");
-        Header header = new Header(scope, to, subject);
+        MsgHeader header = new MsgHeader(scope, to, subject);
         header.setFrom(from);
         return header;
     }
