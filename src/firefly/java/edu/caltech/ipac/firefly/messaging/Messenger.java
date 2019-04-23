@@ -180,15 +180,16 @@ public class Messenger {
             executor = Executors.newSingleThreadExecutor();
             executor.submit(() -> {
                 while (subscribers.size() > 0) {
-                    Jedis jedis = null;
-                    try {
-                         jedis = jedisPool.getResource();
+                    try (Jedis jedis = jedisPool.getResource()) {
                         jedis.subscribe(jPubSub, topic);
-                        Thread.sleep(5000);     // if disconnected and there's still subscribers to this topic, attempt to reconnect after a brief pause.
                     } catch (Exception e) {
-                        LOG.error("Messenger: Unexpected error (" + e.getMessage() + ")");
-                    } finally {
-                        if (jedis != null) jedis.close();
+                        // quietly ignores to avoid excessive error logs.
+                    }
+                    try {
+                        Thread.sleep(5000);     // if disconnected and there's still subscribers to this topic, attempt to reconnect after a brief pause.
+                    } catch (InterruptedException e) {
+                        cleanup();
+                        break;
                     }
                 }
             });
