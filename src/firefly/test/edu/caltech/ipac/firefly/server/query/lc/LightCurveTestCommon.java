@@ -29,7 +29,7 @@ public class LightCurveTestCommon extends ConfigTest {
 
     static PeriodogramAPIRequest periodogramAPIRequestForURL;
 
-    //static int n_peaks = 50;
+
     static String uploadFileName ="212027909.tbl";
     static File inputTbl = FileLoader.resolveFile(LightCurveProcessorTest.class, uploadFileName);
     static String url = "http://web.ipac.caltech.edu/staff/ejoliet/demo/AllWISE-MEP-m82-2targets-10arsecs.tbl";
@@ -46,7 +46,7 @@ public class LightCurveTestCommon extends ConfigTest {
         reqParamsCommon.put("tblType","notACatalog");
         reqParamsCommon.put("tbl_id", "raw_table");
 
-        String[] reqValues = new String[]{"x=BJD", "y=FLUX", "peaks=50", "alg=ls",
+        String[] reqValues = new String[]{"x=BJD", "y=FLUX", "peaks=10", "alg=ls",
                 "step_method=fixedf"};
         for (int i=0; i<reqValues.length; i++){
             String[] keyVal = reqValues[i].split("=");
@@ -54,7 +54,7 @@ public class LightCurveTestCommon extends ConfigTest {
         }
 
 
-        String[] reqValuesURL = new String[]{"x=mjd", "y=w1mpro_ep", "peaks=50", "alg=ls",
+        String[] reqValuesURL = new String[]{"x=mjd", "y=w1mpro_ep", "peaks=10", "alg=ls",
                 "step_method=fixedf"};
         for (int i=0; i<reqValues.length; i++){
             String[] keyVal = reqValuesURL[i].split("=");

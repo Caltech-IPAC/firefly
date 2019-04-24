@@ -167,7 +167,8 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         //do a HTTP post
         HttpServiceInput httpInputs = getHttpInput(request);
         BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(apiResultTempFile), 10240);
-        HttpServices.postData(rootApiUrl, writer, httpInputs);writer.close();
+        HttpServices.postData(rootApiUrl, writer, httpInputs);
+        writer.close();
 
         return apiResultTempFile;
     }

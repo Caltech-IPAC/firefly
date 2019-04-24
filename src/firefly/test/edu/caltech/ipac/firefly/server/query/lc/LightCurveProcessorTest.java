@@ -26,8 +26,8 @@
  *      -F alg=ls \
  *      -F x=xCol \
  *      -F y=yCol \
- *      -F peaks=50 \
- *       https://irsadev.ipac.caltech.edu:9028/cgi-bin/periodogram/nph-periodogram_api -o outputFile
+ *      -F peaks=10 \
+ *       https://irsa.ipac.caltech.edu:9028/cgi-bin/periodogram/nph-periodogram_api -o outputFile
  *
  *     The default peaks is 50.
  *
@@ -44,6 +44,7 @@
  */
 package edu.caltech.ipac.firefly.server.query.lc;
 
+import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.DataGroup;
@@ -52,7 +53,9 @@ import edu.caltech.ipac.table.DataType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Test;;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
 import java.io.File;
 import java.util.List;
 
@@ -60,6 +63,8 @@ import java.util.List;
 /**
  * Test IRSA LC API
  */
+
+@Category({TestCategory.Integration.class})
 public class LightCurveProcessorTest extends LightCurveTestCommon  {
 
 
@@ -68,6 +73,8 @@ public class LightCurveProcessorTest extends LightCurveTestCommon  {
     private File resultFile= FileLoader.resolveFile(LightCurveProcessorTest.class, resultFileName);
     private String withFilterResultFileName = "periodogramResult_212027909_filteredBJDLargeThan3270.voTbl";
     private File withFilterResultFile= FileLoader.resolveFile(LightCurveProcessorTest.class, withFilterResultFileName);
+
+
     @BeforeClass
     public static void setUp() {
 
@@ -81,7 +88,6 @@ public class LightCurveProcessorTest extends LightCurveTestCommon  {
     public void tearDown() {
         lcProcessor=null;
     }
-
 
     @Test
     public void testLightCurveProcessorFromUI() throws DataAccessException {
@@ -140,7 +146,8 @@ public class LightCurveProcessorTest extends LightCurveTestCommon  {
         }
     }
     private void validateDataObject( List<DataObject> expDGList,  List<DataObject> calDGList){
-        for (int i=0; i<expDGList.size(); i++){
+        //don't have to test every data object, to save time, we test everything 5 rows.
+        for (int i=0; i<expDGList.size(); i+=5){
            Assert.assertArrayEquals("The calculated data is not the same as expected data",
                    expDGList.get(i).getData(), calDGList.get(i).getData());
         }
