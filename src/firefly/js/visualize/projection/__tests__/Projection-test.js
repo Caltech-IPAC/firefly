@@ -66,11 +66,11 @@ describe('A test suite for projection.js', function () {
                 const jsProjection = makeProjection({'header':imageHeader, 'coorindateSys':'EQ_J2000'});
 
                 if (jsProjection) {
-                    console.log('the jsProject is:' + jsProjection.getProjectionName());
-                    console.log(jsonFiles[i]);
                     const projectionName = jsProjection.getProjectionName();
                     const maptype = imageHeader.maptype;
-                    assert.strictEqual(projTypes[projectionName], maptype);
+                    const msg = 'this jsProject:' + jsProjection.getProjectionName()+ ' is not the same as expected type '
+                        + maptype;
+                    assert.strictEqual(projTypes[projectionName], maptype, msg);
                 }
                 else {
                     console.log('jsProject is null');
@@ -83,9 +83,10 @@ describe('A test suite for projection.js', function () {
                 //the Assert is falling, the changes introduce the problem.
                 const expectedImagePt = jsonStr['expectedImagePt'];//replace(/[=]/g, ':');
 
-                //console.log(image_pt);
-               assert.equal( expectedImagePt.x.toFixed(precision), imagePt.x.toFixed(precision));
-               assert.equal( expectedImagePt.y.toFixed(precision), imagePt.y.toFixed(precision));
+                assert.equal( expectedImagePt.x.toFixed(precision), imagePt.x.toFixed(precision), 'The imagePt.x value in '+ jsonFiles[i] +
+                    ' is not the same as expected');
+                assert.equal( expectedImagePt.y.toFixed(precision), imagePt.y.toFixed(precision), 'The imagePt.y value in '+ jsonFiles[i] +
+                    ' is not the same as expected');
 
 
                 // assert.equal(expectedImagePt ,image_pt );
@@ -94,8 +95,10 @@ describe('A test suite for projection.js', function () {
                 // console.log(expectedWorldPt);
                 //var expectedWorldPt = JSON.parse(expectedWorldPtStr);
                const  worldPt = jsProjection.getWorldCoords(imagePt.x, imagePt.y);
-               assert.equal( expectedWorldPt.x.toFixed(precision),  worldPt.x.toFixed(precision));
-               assert.equal(  expectedWorldPt.y.toFixed(precision), worldPt.y.toFixed(precision));
+               assert.equal( expectedWorldPt.x.toFixed(precision),  worldPt.x.toFixed(precision), 'The worldPt.x value in '+ jsonFiles[i] +
+                   ' is not the same as expected');
+               assert.equal(  expectedWorldPt.y.toFixed(precision), worldPt.y.toFixed(precision), 'The worldPt.y value in '+ jsonFiles[i] +
+                   ' is not the same as expected');
 
             });
         }
