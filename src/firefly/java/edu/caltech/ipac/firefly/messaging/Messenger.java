@@ -41,35 +41,43 @@ public class Messenger {
     // to limit one thread per topic
     private static ConcurrentHashMap<String, SubscriberHandle> pubSubHandlers = new ConcurrentHashMap<>();
 
-    static  {
-        try {
-            JedisPoolConfig pconfig = new JedisPoolConfig();
-            pconfig.setTestOnBorrow(true);
-            pconfig.setMaxTotal(MAX_POOL_SIZE);
-            pconfig.setBlockWhenExhausted(true);                // wait.. if needed
-            jedisPool = new JedisPool(pconfig, REDIS_HOST, REDIS_PORT);
-        } catch (Exception ex) {
-            LOG.error(ex, "Unable to connect to Redis at " + REDIS_HOST + ":" + REDIS_PORT);
-        }
+    static boolean init() {
 
+        if (jedisPool == null) {
+            try {
+                JedisPoolConfig pconfig = new JedisPoolConfig();
+                pconfig.setTestOnBorrow(true);
+                pconfig.setMaxTotal(MAX_POOL_SIZE);
+                pconfig.setBlockWhenExhausted(true);                // wait.. if needed
+                jedisPool = new JedisPool(pconfig, REDIS_HOST, REDIS_PORT);
+                jedisPool.getResource().close();
+            } catch (Exception ex) {
+                LOG.error("Unable to connect to Redis at " + REDIS_HOST + ":" + REDIS_PORT);
+                jedisPool = null;
+                return false;
+            }
+        }
+        return true;
     }
 
     public static String getStats() {
+
         JsonHelper stats = new JsonHelper();
-        if (isOffline()) {
+        if (!init()) {
             return stats.setValue("Messenger is offline").toJson();
         } else {
             return stats.setValue(jedisPool.getNumActive(), "active")
-                        .setValue(jedisPool.getNumIdle(), "idel")
-                        .setValue(jedisPool.getMaxBorrowWaitTimeMillis(), "max-wait")
-                        .setValue(jedisPool.getMeanBorrowWaitTimeMillis(), "avg-wait")
-                        .toJson();
+                    .setValue(jedisPool.getNumIdle(), "idel")
+                    .setValue(jedisPool.getMaxBorrowWaitTimeMillis(), "max-wait")
+                    .setValue(jedisPool.getMeanBorrowWaitTimeMillis(), "avg-wait")
+                    .toJson();
         }
     }
 
     public static boolean isOffline() {
-        try {
-            jedisPool.getResource().close();    // test connection
+        if (!init()) return true;
+
+        try (Jedis ignored = jedisPool.getResource()) {    // test connection
             return false;
         } catch (Exception e) {
             return true;
@@ -77,6 +85,7 @@ public class Messenger {
     }
 
     public static int getConnectionCount() {
+        if (!init()) return -1;
         return jedisPool.getNumActive();
     }
 
@@ -86,6 +95,8 @@ public class Messenger {
      * @return the given subscriber.  Useful for functional programming.
      */
     public static Subscriber subscribe(String topic, Subscriber subscriber) {
+        if (!init()) return null;
+
         if (pubSubHandlers.containsKey(topic)) {
             SubscriberHandle pubSub = pubSubHandlers.get(topic);
             pubSub.addSubscriber(subscriber);
@@ -101,6 +112,8 @@ public class Messenger {
      * @param subscriber the subscriber to remove
      */
     public static void unSubscribe(Subscriber subscriber) {
+        if (!init()) return;
+
         pubSubHandlers.values().stream()
                 .filter(hdl -> hdl.subscribers.contains(subscriber))
                 .forEach(hdl -> hdl.removeSubscriber(subscriber));
@@ -112,10 +125,10 @@ public class Messenger {
      * @param msg     message to send
      */
     public static void publish(String topic, Message msg) {
-        try {
-            Jedis jedis = jedisPool.getResource();
+        if (!init()) return;
+
+        try (Jedis jedis = jedisPool.getResource()) {
             jedis.publish(topic, msg.toJson());
-            jedis.close();
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
@@ -151,7 +164,7 @@ public class Messenger {
             subscribers.add(sub);
             if (subscribers.size() == 1) {
                 // first subscriber.. need to connect to redis
-                init();
+                doSubscribe();
             }
         }
 
@@ -163,7 +176,7 @@ public class Messenger {
             }
         }
 
-        void init() {
+        void doSubscribe() {
             jPubSub = new JedisPubSub() {
                 public void onMessage(String channel, String message) {
                     Message msg = Message.parse(message);
@@ -181,11 +194,14 @@ public class Messenger {
             executor.submit(() -> {
                 try {
                     while (subscribers.size() > 0) {
-                        try (Jedis jedis = jedisPool.getResource()) {
-                            jedis.subscribe(jPubSub, topic);
-                        } catch (Exception e) {
-                            // quietly ignores to avoid excessive error logs.
+                        if (Messenger.init()) {
+                            try (Jedis jedis = jedisPool.getResource()) {
+                                jedis.subscribe(jPubSub, topic);
+                            } catch (Exception e) {
+                                // quietly ignores to avoid excessive error logs.
+                            }
                         }
+
                         Thread.sleep(5000);     // if disconnected and there's still subscribers to this topic, attempt to reconnect after a brief pause.
                     }
                 } catch (InterruptedException e) {
