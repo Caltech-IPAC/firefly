@@ -508,6 +508,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
         const layoutInfo = getLayouInfo();
 
         let srcFile = JSON.stringify(get(tbl, 'request'));
+
         srcFile = srcFile || get(tbl, 'request.alt_source');
         if (!srcFile) {
             srcFile = getResultSetRequest(LC.RAW_TABLE);

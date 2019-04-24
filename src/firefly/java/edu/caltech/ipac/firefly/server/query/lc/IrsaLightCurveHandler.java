@@ -37,6 +37,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
 
     private final String[] apiKey;
     public String rootApiUrl;
+    //public HttpServiceInput httpInputs; //this is to be submitted to the external api
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     /**
@@ -119,6 +120,13 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         return null;
     }
 
+    public TableServerRequest getTableServerRequest(PeriodogramAPIRequest request) {
+
+          TableServerRequest sreq = QueryUtil.convertToServerRequest(request.getLcSource());
+          sreq.setPageSize(Integer.MAX_VALUE);               // ensure you're getting the full table
+          sreq.removeParam(INCL_COLUMNS);
+          return sreq;
+    }
     /**
      * This method will get the "origin_table"'s parameter value from request.  The value can be a json string passing
      * from the TimeSeries UI or passed from Gator.  This json strin gis converted to a TableServerRequest.
@@ -132,9 +140,9 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
      * @param request
      */
     void saveInputToTable(PeriodogramAPIRequest request){
-        TableServerRequest sreq = QueryUtil.convertToServerRequest(request.getLcSource());
-        sreq.setPageSize(Integer.MAX_VALUE);               // ensure you're getting the full table
-        sreq.removeParam(INCL_COLUMNS);
+
+        TableServerRequest sreq  = getTableServerRequest(request);
+
         try {
             File file = File.createTempFile("lcInputTable", ".tbl", ServerContext.getTempWorkDir());
             OutputStream out = new FileOutputStream(file, false);
@@ -148,7 +156,8 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
 
     }
     protected File apiDownload(PeriodogramAPIRequest request) throws IOException{
-        File apiResultTempFile = File.createTempFile("lc-api-result-", ".xml", ServerContext.getTempWorkDir());
+       File apiResultTempFile = File.createTempFile("lc-api-result-", ".xml", ServerContext.getTempWorkDir());
+
         /**
          * @see LightCurveProcessor#computePeriodogram(PeriodogramAPIRequest, java.lang.String)
          */
@@ -165,12 +174,13 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
     }
 
 
+
     /**
      * create the HttpServiceInput to call Http's post method
      * @param request
      * @return
      */
-    private HttpServiceInput getHttpInput(PeriodogramAPIRequest request) {
+    public HttpServiceInput getHttpInput(PeriodogramAPIRequest request) {
         HttpServiceInput httpInputs = new HttpServiceInput();
 
         String src = ServerContext.convertToFile(request.getLcSource()).getAbsolutePath();
@@ -182,8 +192,10 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
                 httpInputs.setParam(key, val);
             }
         }
-        httpInputs.setParam("peaks", "" + request.getNumberPeaks());
+       // httpInputs.setParam("peaks", "" + request.getNumberPeaks());
         return httpInputs;
     }
+
+
 
 }

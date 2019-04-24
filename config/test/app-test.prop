@@ -12,7 +12,7 @@ stats.log.dir=./build/
 irsa.gator.service.periodogram.url=https://irsa.ipac.caltech.edu/cgi-bin/periodogram/nph-periodogram_api
 
 # Periodogram API request parameter list definition, separated by space
-irsa.gator.service.periodogram.keys=x y alg peaks
+irsa.gator.service.periodogram.keys=x y alg step_method pmin pmax step_size peaks
 
 workspace.host.url=https://irsa.ipac.caltech.edu
 
