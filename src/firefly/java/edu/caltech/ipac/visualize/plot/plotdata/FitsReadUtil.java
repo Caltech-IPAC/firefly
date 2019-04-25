@@ -243,21 +243,44 @@ public class FitsReadUtil {
         header.resetOriginalSize();
     }
 
-    
 
-    private static BasicHDU[] splitFitsCube(BasicHDU inHdu) throws FitsException {
-
+    private static BasicHDU[] splitFits3DCube(BasicHDU inHdu, float[][][] data32) throws FitsException {
         ImageHDU hdu = (inHdu instanceof ImageHDU) ? (ImageHDU) inHdu : ((CompressedImageHDU) inHdu).asImageHDU();  // if we have to uncompress a cube it could take a long time
-        float[][][] data32 = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
-
         BasicHDU[] hduList = new BasicHDU[hdu.getHeader().getIntValue("NAXIS3", 0)];
         for (int i = 0; i < hduList.length; i++) {
             hduList[i] = makeHDU(hdu,data32[i] );
-            int bitpix = hduList[i].getHeader().getIntValue("BITPIX", -1);
             hduList[i].getHeader().addLine(new HeaderCard("SPOT_PL", i, "Plane of FITS cube (added by Firefly)"));
             hduList[i].getHeader().resetOriginalSize();
         }
         return hduList;
+
+    }
+
+    private static BasicHDU[] splitFitsCube(BasicHDU inHdu) throws FitsException {
+        ImageHDU hdu = (inHdu instanceof ImageHDU) ? (ImageHDU) inHdu : ((CompressedImageHDU) inHdu).asImageHDU();  // if we have to uncompress a cube it could take a long time
+        int naxis = inHdu.getHeader().getIntValue("NAXIS", -1);
+
+        switch (naxis) {
+            case 3:
+
+                float[][][] data3D = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
+                return splitFits3DCube(inHdu,data3D);
+
+            case 4:
+               float[][][][] data4D = (float[][][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
+               ArrayList<BasicHDU> hduListArr = new ArrayList<>();
+                int naxis4 = inHdu.getHeader().getIntValue("NAXIS4", -1);
+                for (int i=0; i<naxis4; i++){
+                   BasicHDU[] hduList = splitFits3DCube(inHdu, data4D[i]);
+                   for (int k=0; k<hduList.length; k++){
+                       hduListArr.add( hduList[k]);
+                   }
+               }
+              return  hduListArr.toArray(new BasicHDU[0]);
+            default:
+                throw new IllegalArgumentException("naxis="+naxis + " is not supported");
+
+        }
     }
 
     private static boolean isImageGood(Header aHeader) {
