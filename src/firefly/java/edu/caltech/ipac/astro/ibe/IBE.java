@@ -148,8 +148,7 @@ public class IBE {
             qstr = addUrlParam(qstr, "gzip", param.isDoZip());
         }
 
-        //url += (qstr.length() > 0 ? "?" + qstr : "");
-        url += (qstr.length() > 0 ? "?" + URLEncoder.encode(qstr, "UTF-8") : "");
+        url += (qstr.length() > 0 ? "?" + qstr : "");
 
         return new URL(url);
     }
