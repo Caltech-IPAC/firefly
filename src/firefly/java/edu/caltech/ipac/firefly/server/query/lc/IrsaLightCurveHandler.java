@@ -138,7 +138,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         try {
             File file = File.createTempFile("lcInputTable", ".tbl", ServerContext.getTempWorkDir());
             OutputStream out = new FileOutputStream(file, false);
-            new SearchManager().save(out, sreq, TableUtil.Format.IPACTABLE);
+            new SearchManager().save(out, sreq);
             out.close();
             request.setLcSource(file.getAbsolutePath());
         }
